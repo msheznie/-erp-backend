@@ -12,6 +12,7 @@ use App\Services\TaxLedger\PRTaxLedgerService;
 use App\Services\TaxLedger\SalesInvoiceTaxLedgerService;
 use App\Services\TaxLedger\SRTaxLedgerService;
 use App\Services\TaxLedger\SupplierInvoiceTaxLedgerService;
+use App\Services\TaxLedger\PaymentVoucherTaxLedgerService;
 
 class TaxLedgerService
 {
@@ -41,6 +42,9 @@ class TaxLedgerService
                 break;
             case 11://Supplier Invoice
                 $result = SupplierInvoiceTaxLedgerService::processEntry($taxLedgerData, $masterModel);
+                break;
+            case 4://Payment Voucher
+                $result = PaymentVoucherTaxLedgerService::processEntry($taxLedgerData, $masterModel);
                 break;
             default:
                 # code...

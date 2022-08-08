@@ -93,9 +93,11 @@ class PaymentVoucherGlService
 
         $retentionData = PaySupplierInvoiceDetail::selectRaw("SUM(paymentLocalAmount) as localAmount, SUM(paymentComRptAmount) as rptAmount,SUM(supplierPaymentAmount) as transAmount,localCurrencyID,comRptCurrencyID as reportingCurrencyID,supplierPaymentCurrencyID as transCurrencyID,comRptER as reportingCurrencyER,localER as localCurrencyER,supplierPaymentER as transCurrencyER")->WHERE('PayMasterAutoId', $masterModel["autoID"])->WHERE('matchingDocID', 0)->WHERE('isRetention', 1)->first();
 
-        $dp = DirectPaymentDetails::with(['chartofaccount'])->selectRaw("SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount,SUM(DPAmount) as transAmount,SUM(bankAmount) as bankAmount,chartOfAccountSystemID as financeGLcodePLSystemID,glCode as financeGLcodePL,localCurrency as localCurrencyID,comRptCurrency as reportingCurrencyID,DPAmountCurrency as transCurrencyID,comRptCurrencyER as reportingCurrencyER,localCurrencyER,DPAmountCurrencyER as transCurrencyER,serviceLineSystemID,serviceLineCode,chartOfAccountSystemID,comments,bankCurrencyID")->WHERE('directPaymentAutoID', $masterModel["autoID"])->whereNotNull('serviceLineSystemID')->whereNotNull('chartOfAccountSystemID')->groupBy('serviceLineSystemID', 'chartOfAccountSystemID', 'comments')->get();
+        $dp = DirectPaymentDetails::with(['chartofaccount'])->selectRaw("SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount,SUM(DPAmount) as transAmount,SUM(bankAmount) as bankAmount,chartOfAccountSystemID as financeGLcodePLSystemID,glCode as financeGLcodePL,localCurrency as localCurrencyID,comRptCurrency as reportingCurrencyID,DPAmountCurrency as transCurrencyID,comRptCurrencyER as reportingCurrencyER,localCurrencyER,DPAmountCurrencyER as transCurrencyER,serviceLineSystemID,serviceLineCode,chartOfAccountSystemID,comments,bankCurrencyID,vatSubCategoryID,vatAmount,VATAmountLocal,VATAmountRpt")->WHERE('directPaymentAutoID', $masterModel["autoID"])->whereNotNull('serviceLineSystemID')->whereNotNull('chartOfAccountSystemID')->groupBy('serviceLineSystemID', 'chartOfAccountSystemID', 'comments')->get();
 
         $dpTotal = DirectPaymentDetails::selectRaw("SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount,SUM(DPAmount) as transAmount,chartOfAccountSystemID as financeGLcodePLSystemID,glCode as financeGLcodePL,localCurrency as localCurrencyID,comRptCurrency as reportingCurrencyID,DPAmountCurrency as transCurrencyID,comRptCurrencyER as reportingCurrencyER,localCurrencyER,DPAmountCurrencyER as transCurrencyER,serviceLineSystemID,serviceLineCode")->WHERE('directPaymentAutoID', $masterModel["autoID"])->first();
+
+        $exemptVatTotal = DirectPaymentDetails::selectRaw("SUM(vatAmount) as vatAmount, SUM(VATAmountLocal) as VATAmountLocal, SUM(VATAmountRpt) as VATAmountRpt")->WHERE('directPaymentAutoID', $masterModel["autoID"])->WHERE('vatSubCategoryID', 3)->first();
 
         $ap = AdvancePaymentDetails::selectRaw("SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount,SUM(supplierTransAmount) as transAmount,localCurrencyID,comRptCurrencyID as reportingCurrencyID,supplierTransCurrencyID as transCurrencyID,comRptER as reportingCurrencyER,localER as localCurrencyER,supplierTransER as transCurrencyER")->WHERE('PayMasterAutoId', $masterModel["autoID"])->first();
 
@@ -174,13 +176,20 @@ class PaymentVoucherGlService
                     }
 
                     if ($retentionData && $retentionData->transAmount > 0) {
+
+
+                        $retentionTransAmount = $retentionData->transAmount;
+                        $retentionLocalAmount = $retentionData->localAmount;
+                        $retentionRptAmount = $retentionData->rptAmount;
+
+
                         $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 13);
                         $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 13);
                         $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                         $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-                        $data['documentTransAmount'] = \Helper::roundValue($retentionData->transAmount);
-                        $data['documentLocalAmount'] = \Helper::roundValue($retentionData->localAmount);
-                        $data['documentRptAmount'] = \Helper::roundValue($retentionData->rptAmount);
+                        $data['documentTransAmount'] = \Helper::roundValue($retentionTransAmount);
+                        $data['documentLocalAmount'] = \Helper::roundValue($retentionLocalAmount);
+                        $data['documentRptAmount'] = \Helper::roundValue($retentionRptAmount);
                         array_push($finalData, $data);
                     }
 
@@ -188,6 +197,20 @@ class PaymentVoucherGlService
                         $transAmountTotal = $si->transAmount;
                         $localAmountTotal = $si->localAmount;
                         $rptAmountTotal = $si->rptAmount;
+
+                        $retationVATAmount = 0;
+                        $retentionLocalVatAmount = 0;
+                        $retentionRptVatAmount = 0;
+                        $retationVATAmount = TaxService::calculateRetentionVatAmount($masterModel["autoID"]);
+
+                        if ($retationVATAmount > 0) {
+                            $currencyConvertionRetention = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransCurrencyID, $masterData->supplierTransCurrencyID, $retationVATAmount);
+
+                            $retentionLocalVatAmount = $currencyConvertionRetention['localAmount'];
+                            $retentionRptVatAmount = $currencyConvertionRetention['reportingAmount'];
+                        }
+
+
 
                         $data['serviceLineSystemID'] = 24;
                         $data['serviceLineCode'] = 'X';
@@ -197,13 +220,26 @@ class PaymentVoucherGlService
                         $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                         $data['documentTransCurrencyID'] = $masterData->BPVbankCurrency;
                         $data['documentTransCurrencyER'] = $masterData->BPVbankCurrencyER;
-                        $data['documentTransAmount'] = \Helper::roundValue($si->transAmount) * -1;
+
+
+                        $data['documentTransAmount'] = \Helper::roundValue($si->transAmount + $retationVATAmount) * -1;
                         $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                         $data['documentLocalCurrencyER'] = $si->localAmount != 0 ? ($si->transAmount / $si->localAmount) : 0;
-                        $data['documentLocalAmount'] = \Helper::roundValue($si->localAmount) * -1;
+                        $data['documentLocalAmount'] = \Helper::roundValue($si->localAmount + $retentionLocalVatAmount) * -1;
                         $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
                         $data['documentRptCurrencyER'] = $si->rptAmount != 0 ? ($si->transAmount / $si->rptAmount) : 0;
-                        $data['documentRptAmount'] = \Helper::roundValue($si->rptAmount) * -1;
+                        $data['documentRptAmount'] = \Helper::roundValue($si->rptAmount + $retentionRptVatAmount) * -1;
+
+                        $retationRcmVATAmount = TaxService::calculateRCMRetentionVatAmount($masterModel["autoID"]);
+                        if ($retationRcmVATAmount > 0) {
+                            $data['documentTransAmount'] = \Helper::roundValue($si->transAmount) * -1;
+                            $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
+                            $data['documentLocalCurrencyER'] = $si->localAmount != 0 ? ($si->transAmount / $si->localAmount) : 0;
+                            $data['documentLocalAmount'] = \Helper::roundValue($si->localAmount) * -1;
+                            $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
+                            $data['documentRptCurrencyER'] = $si->rptAmount != 0 ? ($si->transAmount / $si->rptAmount) : 0;
+                            $data['documentRptAmount'] = \Helper::roundValue($si->rptAmount) * -1;
+                        }
                         $data['timestamp'] = \Helper::currentDateTime();
                         array_push($finalData, $data);
                     } else {
@@ -214,6 +250,20 @@ class PaymentVoucherGlService
                         $localAmountTotal = $convertAmount["localAmount"];
                         $rptAmountTotal = $convertAmount["reportingAmount"];
 
+
+                        $retationVATAmount = 0;
+                        $retentionLocalVatAmount = 0;
+                        $retentionRptVatAmount = 0;
+                        $retationVATAmount = TaxService::calculateRetentionVatAmount($masterModel["autoID"]);
+
+                        if ($retationVATAmount > 0) {
+                            $currencyConvertionRetention = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransCurrencyID, $masterData->supplierTransCurrencyID, $retationVATAmount);
+
+                            $retentionLocalVatAmount = $currencyConvertionRetention['localAmount'];
+                            $retentionRptVatAmount = $currencyConvertionRetention['reportingAmount'];
+                        }
+
+
                         $data['serviceLineSystemID'] = 24;
                         $data['serviceLineCode'] = 'X';
                         $data['chartOfAccountSystemID'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 5) :$masterData->bank->chartOfAccountSystemID;
@@ -222,13 +272,24 @@ class PaymentVoucherGlService
                         $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                         $data['documentTransCurrencyID'] = $masterData->BPVbankCurrency;
                         $data['documentTransCurrencyER'] = $masterData->BPVbankCurrencyER;
-                        $data['documentTransAmount'] = \Helper::roundValue($si->transAmount) * -1;
+                        $data['documentTransAmount'] = \Helper::roundValue($si->transAmount + $retationVATAmount) * -1;
                         $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                         $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
-                        $data['documentLocalAmount'] = $convertAmount["localAmount"] * -1;
+                        $data['documentLocalAmount'] = ($convertAmount["localAmount"] + $retentionLocalVatAmount) * -1;
                         $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
                         $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
-                        $data['documentRptAmount'] = $convertAmount["reportingAmount"] * -1;
+                        $data['documentRptAmount'] = ($convertAmount["reportingAmount"] + $retentionRptVatAmount) * -1;
+                        $retationRcmVATAmount = TaxService::calculateRCMRetentionVatAmount($masterModel["autoID"]);
+
+                        if ($retationRcmVATAmount > 0) {
+                            $data['documentTransAmount'] = \Helper::roundValue($si->transAmount) * -1;
+                            $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
+                            $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
+                            $data['documentLocalAmount'] = ($convertAmount["localAmount"]) * -1;
+                            $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
+                            $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
+                            $data['documentRptAmount'] = ($convertAmount["reportingAmount"]) * -1;
+                        }
                         $data['timestamp'] = \Helper::currentDateTime();
                         array_push($finalData, $data);
                     }
@@ -236,6 +297,12 @@ class PaymentVoucherGlService
                     $diffTrans = $transAmountTotal - $masterTransAmountTotal;
                     $diffLocal = $localAmountTotal - $masterLocalAmountTotal;
                     $diffRpt = $rptAmountTotal - $masterRptAmountTotal;
+
+                    Log::info('Payment Voucher xxxx' . date('H:i:s'));
+                    Log::info('Tras' . $diffTrans);
+                    Log::info('Local' . $diffLocal);
+                    Log::info('Rpt' . $diffRpt);
+
 
                     if (ABS(round($diffTrans)) != 0 || ABS(round($diffLocal, $masterData->localcurrency->DecimalPlaces)) != 0 || ABS(round($diffRpt, $masterData->rptcurrency->DecimalPlaces)) != 0) {
 
@@ -285,10 +352,10 @@ class PaymentVoucherGlService
                     }
 
                     if ($retentionData) {
-                        $retationVATAmount = TaxService::calculateRetentionVatAmount($masterModel["autoID"]);     
-                        
+                        $retationVATAmount = TaxService::calculateRetentionVatAmount($masterModel["autoID"]);
+
                         if ($retationVATAmount > 0) {
-                           $currencyConvertionRetention = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransCurrencyID, $masterData->supplierTransCurrencyID, $retationVATAmount);
+                            $currencyConvertionRetention = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransCurrencyID, $masterData->supplierTransCurrencyID, $retationVATAmount);
 
                             $taxConfigData = TaxService::getInputVATGLAccount($masterModel["companySystemID"]);
                             if (!empty($taxConfigData)) {
@@ -310,70 +377,20 @@ class PaymentVoucherGlService
                                     $taxLedgerData['inputVATGlAccountID'] = $chartOfAccountData->chartOfAccountSystemID;
 
                                 } else {
-                                    return ['status' => false, 'error' => ['message' => "Input Vat GL Account not assigned to company"]];
+                                    Log::info('Supplier Invoice VAT GL Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
+                                    Log::info('Input Vat GL Account not assigned to company' . date('H:i:s'));
                                 }
                             } else {
-                                return ['status' => false, 'error' => ['message' => "Input Vat GL Account not configured"]];
+                                Log::info('Supplier Invoice VAT GL Entry IssuesId :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
+                                Log::info('Input Vat Transfer GL Account not configured' . date('H:i:s'));
                             }
-
-                            $taxConfigData2 = TaxService::getInputVATTransferGLAccount($masterModel["companySystemID"]);
-                            if (!empty($taxConfigData2)) {
-                                $chartOfAccountData = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $taxConfigData2->inputVatTransferGLAccountAutoID)
-                                    ->where('companySystemID', $masterData->companySystemID)
-                                    ->first();
-
-                                if (!empty($chartOfAccountData)) {
-                                    $data['chartOfAccountSystemID'] = $chartOfAccountData->chartOfAccountSystemID;
-                                    $data['glCode'] = $chartOfAccountData->AccountCode;
-                                    $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
-                                    $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-                                    $data['documentTransAmount'] = \Helper::roundValue(ABS($retationVATAmount) * -1);
-                                    $data['documentLocalAmount'] = \Helper::roundValue(ABS($currencyConvertionRetention['localAmount']) * -1);
-                                    $data['documentRptAmount'] = \Helper::roundValue(ABS($currencyConvertionRetention['reportingAmount']) * -1);
-
-                                    array_push($finalData, $data);
-
-                                    $taxLedgerData['inputVatTransferAccountID'] = $chartOfAccountData->chartOfAccountSystemID;
-
-                                } else {
-                                    return ['status' => false, 'error' => ['message' => "Input Vat Transfer GL Account not assigned to company"]];
-                                }
-                            } else {
-                                return ['status' => false, 'error' => ['message' => "Input Vat Transfer GL Account not configured"]];
-                            }
-                        }       
+                        }
 
 
-                        $retationRcmVATAmount = TaxService::calculateRCMRetentionVatAmount($masterModel["autoID"]);     
-                        
+                        $retationRcmVATAmount = TaxService::calculateRCMRetentionVatAmount($masterModel["autoID"]);
+
                         if ($retationRcmVATAmount > 0) {
-                           $currencyConvertionRetention = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransCurrencyID, $masterData->supplierTransCurrencyID, $retationRcmVATAmount);
-
-                            $taxConfigData = TaxService::getOutputVATTransferGLAccount($masterModel["companySystemID"]);
-                            if (!empty($taxConfigData)) {
-                                $chartOfAccountData = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $taxConfigData->outputVatTransferGLAccountAutoID)
-                                    ->where('companySystemID', $masterData->companySystemID)
-                                    ->first();
-
-                                if (!empty($chartOfAccountData)) {
-                                    $data['chartOfAccountSystemID'] = $chartOfAccountData->chartOfAccountSystemID;
-                                    $data['glCode'] = $chartOfAccountData->AccountCode;
-                                    $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
-                                    $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-                                    $data['documentTransAmount'] = \Helper::roundValue(ABS($retationRcmVATAmount));
-                                    $data['documentLocalAmount'] = \Helper::roundValue(ABS($currencyConvertionRetention['localAmount']));
-                                    $data['documentRptAmount'] = \Helper::roundValue(ABS($currencyConvertionRetention['reportingAmount']));
-
-                                    array_push($finalData, $data);
-
-                                    $taxLedgerData['outputVatTransferGLAccountID'] = $chartOfAccountData->chartOfAccountSystemID;
-
-                                } else {
-                                    return ['status' => false, 'error' => ['message' => "Output Vat Transfer GL Account not assigned to company"]];
-                                }
-                            } else {
-                                return ['status' => false, 'error' => ['message' => "Output Vat Transfer GL Account not configured"]];
-                            }
+                            $currencyConvertionRetention = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransCurrencyID, $masterData->supplierTransCurrencyID, $retationRcmVATAmount);
 
                             $taxConfigData2 = TaxService::getOutputVATGLAccount($masterModel["companySystemID"]);
                             if (!empty($taxConfigData2)) {
@@ -382,24 +399,39 @@ class PaymentVoucherGlService
                                     ->first();
 
                                 if (!empty($chartOfAccountData)) {
+                                    $retationVATAmount = 0;
+                                    $retentionLocalVatAmount = 0;
+                                    $retentionRptVatAmount = 0;
+                                    $retationVATAmount = TaxService::calculateRetentionVatAmount($masterModel["autoID"]);
+
+                                    if ($retationVATAmount > 0) {
+                                        $currencyConvertionRetention = \Helper::currencyConversion($masterData->companySystemID, $masterData->supplierTransCurrencyID, $masterData->supplierTransCurrencyID, $retationVATAmount);
+
+                                        $retentionLocalVatAmount = $currencyConvertionRetention['localAmount'];
+                                        $retentionRptVatAmount = $currencyConvertionRetention['reportingAmount'];
+                                    }
+
                                     $data['chartOfAccountSystemID'] = $chartOfAccountData->chartOfAccountSystemID;
                                     $data['glCode'] = $chartOfAccountData->AccountCode;
                                     $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                                     $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-                                    $data['documentTransAmount'] = \Helper::roundValue(ABS($retationRcmVATAmount) * -1);
-                                    $data['documentLocalAmount'] = \Helper::roundValue(ABS($currencyConvertionRetention['localAmount']) * -1);
-                                    $data['documentRptAmount'] = \Helper::roundValue(ABS($currencyConvertionRetention['reportingAmount']) * -1);
+                                    $data['documentTransAmount'] = \Helper::roundValue(ABS($retationVATAmount) * -1);
+                                    $data['documentLocalAmount'] = \Helper::roundValue(ABS($retentionLocalVatAmount) * -1);
+                                    $data['documentRptAmount'] = \Helper::roundValue(ABS($retentionRptVatAmount) * -1);
 
                                     array_push($finalData, $data);
 
                                     $taxLedgerData['outputVatGLAccountID'] = $chartOfAccountData->chartOfAccountSystemID;
 
                                 } else {
-                                    return ['status' => false, 'error' => ['message' => "Output Vat GL Account not assigned to company"]];
+                                    Log::info('Supplier Invoice VAT GL Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
+                                    Log::info('Input Vat GL Account not assigned to company' . date('H:i:s'));
                                 }
                             } else {
-                                return ['status' => false, 'error' => ['message' => "Output Vat GL Account not configured"]];                            }
-                        }                                
+                                Log::info('Supplier Invoice VAT GL Entry IssuesId :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
+                                Log::info('Input Vat Transfer GL Account not configured' . date('H:i:s'));
+                            }
+                        }
                     }
                 }
             }
@@ -408,8 +440,8 @@ class PaymentVoucherGlService
                 if ($ap) {
                     $data['serviceLineSystemID'] = 24;
                     $data['serviceLineCode'] = 'X';
-                    $data['chartOfAccountSystemID'] = $masterData->supplierGLCodeSystemID;
-                    $data['glCode'] = $masterData->supplierGLCode;
+                    $data['chartOfAccountSystemID'] = $masterData->advanceAccountSystemID;
+                    $data['glCode'] = $masterData->AdvanceAccount;
                     $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                     $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                     $data['documentTransCurrencyID'] = $masterData->supplierTransCurrencyID;
@@ -444,112 +476,665 @@ class PaymentVoucherGlService
                 }
             }
 
+
             if ($masterData->invoiceType == 3) { //Direct Payment
 
-                $masterLocal = $masterData->payAmountCompLocal;
-                $masterRpt = $masterData->payAmountCompRpt;
-                $data['serviceLineSystemID'] = 24;
-                $data['serviceLineCode'] = 'X';
-                $data['chartOfAccountSystemID'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 5) :$masterData->bank->chartOfAccountSystemID;
-                $data['glCode'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 5) : $masterData->bank->glCodeLinked;
-                $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
-                $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-                $data['documentTransCurrencyID'] = $masterData->BPVbankCurrency;
-                $data['documentTransCurrencyER'] = $masterData->BPVbankCurrencyER;
-                $data['documentTransAmount'] = \Helper::roundValue($dpTotal->transAmount) * -1;
-                $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
-                $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
-                $data['documentLocalAmount'] = \Helper::roundValue($masterLocal) * -1;
-                $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
-                $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
-                $data['documentRptAmount'] = \Helper::roundValue($masterRpt) * -1;
-                $data['timestamp'] = \Helper::currentDateTime();
-                array_push($finalData, $data);
+                $tax = Taxdetail::selectRaw("SUM(localAmount) as localAmount, SUM(rptAmount) as rptAmount,SUM(amount) as transAmount,localCurrencyID,rptCurrencyID as reportingCurrencyID,currency as supplierTransactionCurrencyID,currencyER as supplierTransactionER,rptCurrencyER as companyReportingER,localCurrencyER,payeeSystemCode")
+                    ->WHERE('documentSystemCode', $masterModel["autoID"])
+                    ->WHERE('documentSystemID', $masterModel["documentSystemID"])
+                    ->groupBy('documentSystemCode')
+                    ->first();
 
-                $convertedLocalAmount = 0;
-                $convertedRpt = 0;
-                $convertedTrans = 0;
-                if ($dp) {
-                    foreach ($dp as $val) {
-                        if ($isBankCheck) {
-                            //calculate local amount
-                            if ($val->bankCurrencyID == $val->localCurrencyID) {
-                                $data['documentLocalAmount'] = \Helper::roundValue(($val->bankAmount));
-                                $convertedLocalAmount += $data['documentLocalAmount'];
-                            } else {
-                                $conversion = CurrencyConversion::where('masterCurrencyID', $val->bankCurrencyID)->where('subCurrencyID', $val->localCurrencyID)->first();
-                                $data['documentLocalCurrencyER'] = $conversion->conversion;
-                                if ($conversion->conversion > 1) {
-                                    if ($conversion->conversion > 1) {
-                                        $data['documentLocalAmount'] = \Helper::roundValue(($val->bankAmount) / $conversion->conversion);
-                                    } else {
-                                        $data['documentLocalAmount'] = \Helper::roundValue(($val->bankAmount) * $conversion->conversion);
-                                    }
-                                    $convertedLocalAmount += $data['documentLocalAmount'];
-                                } else {
-                                    if ($conversion->conversion > 1) {
-                                        $data['documentLocalAmount'] = \Helper::roundValue(($val->bankAmount) * $conversion->conversion);
-                                    } else {
-                                        $data['documentLocalAmount'] = \Helper::roundValue(($val->bankAmount) / $conversion->conversion);
-                                    }
-                                    $convertedLocalAmount += $data['documentLocalAmount'];
+                $isVATEligible = TaxService::checkCompanyVATEligible($masterData->companySystemID);
+
+                if ($isVATEligible == 1) {
+                    if($tax){
+                        if($masterData->rcmActivated == 0) {
+                            $masterLocal = $masterData->payAmountCompLocal;
+                            $masterRpt = $masterData->payAmountCompRpt;
+                            $data['serviceLineSystemID'] = 24;
+                            $data['serviceLineCode'] = 'X';
+                            $data['chartOfAccountSystemID'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 5) : $masterData->bank->chartOfAccountSystemID;
+                            $data['glCode'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 5) : $masterData->bank->glCodeLinked;
+                            $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                            $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                            $data['documentTransCurrencyID'] = $masterData->BPVbankCurrency;
+                            $data['documentTransCurrencyER'] = $masterData->BPVbankCurrencyER;
+                            $data['documentTransAmount'] = \Helper::roundValue($dpTotal->transAmount + $tax->transAmount) * -1;
+                            $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
+                            $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
+                            $data['documentLocalAmount'] = \Helper::roundValue($masterLocal + $tax->localAmount) * -1;
+                            $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
+                            $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
+                            $data['documentRptAmount'] = \Helper::roundValue($masterRpt + $tax->rptAmount) * -1;
+                            $data['timestamp'] = \Helper::currentDateTime();
+                            array_push($finalData, $data);
+
+
+                            $taxInputVATControl = TaxService::getInputVATGLAccount($masterData->companySystemID);
+                            if (!empty($taxInputVATControl)) {
+
+                                $chartOfAccountData = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $taxInputVATControl->inputVatGLAccountAutoID)
+                                    ->where('companySystemID', $masterData->companySystemID)
+                                    ->first();
+                                if (!empty($chartOfAccountData)) {
+
+                                    $data['serviceLineSystemID'] = 24;
+                                    $data['serviceLineCode'] = 'X';
+                                    $data['chartOfAccountSystemID'] = $chartOfAccountData->chartOfAccountSystemID;
+                                    $data['glCode'] = $chartOfAccountData->AccountCode;
+                                    $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                                    $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                                    $data['documentTransCurrencyID'] = $masterData->BPVbankCurrency;
+                                    $data['documentTransCurrencyER'] = $masterData->BPVbankCurrencyER;
+                                    $data['documentTransAmount'] = \Helper::roundValue($tax->transAmount - $exemptVatTotal->vatAmount);
+                                    $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
+                                    $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
+                                    $data['documentLocalAmount'] = \Helper::roundValue($tax->localAmount - $exemptVatTotal->VATAmountLocal);
+                                    $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
+                                    $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
+                                    $data['documentRptAmount'] = \Helper::roundValue($tax->rptAmount - $exemptVatTotal->VATAmountRpt);
+                                    $data['timestamp'] = \Helper::currentDateTime();
+                                    array_push($finalData, $data);
+                                    $taxLedgerData['inputVatGLAccountID'] = $data['chartOfAccountSystemID'];
                                 }
                             }
 
-                            //calculate reporting amount
-                            if ($val->bankCurrencyID == $val->reportingCurrencyID) {
-                                $data['documentRptAmount'] = \Helper::roundValue(($val->bankAmount));
-                                $convertedRpt += $data['documentRptAmount'];
-                            } else {
-                                $conversion = CurrencyConversion::where('masterCurrencyID', $val->bankCurrencyID)->where('subCurrencyID', $val->reportingCurrencyID)->first();
-                                $data['documentRptCurrencyER'] = $conversion->conversion;
-                                if ($conversion->conversion > 1) {
-                                    if ($conversion->conversion > 1) {
-                                        $data['documentRptAmount'] = \Helper::roundValue(($val->bankAmount) / $conversion->conversion);
+                            $convertedLocalAmount = 0;
+                            $convertedRpt = 0;
+                            $convertedTrans = 0;
+                            if ($dp) {
+                                foreach ($dp as $val) {
+                                    if ($isBankCheck) {
+                                        //calculate local amount
+                                        if ($val->bankCurrencyID == $val->localCurrencyID) {
+                                            if($val->vatSubCategoryID == 3) {
+                                                $data['documentLocalAmount'] = \Helper::roundValue(($val->bankAmount + $val->VATAmountLocal));
+                                            }
+                                            else{
+                                                $data['documentLocalAmount'] = \Helper::roundValue(($val->bankAmount));
+                                            }
+                                            $convertedLocalAmount += $data['documentLocalAmount'];
+                                        } else {
+                                            $conversion = CurrencyConversion::where('masterCurrencyID', $val->bankCurrencyID)->where('subCurrencyID', $val->localCurrencyID)->first();
+                                            $data['documentLocalCurrencyER'] = $conversion->conversion;
+                                            if ($conversion->conversion > 1) {
+                                                if ($conversion->conversion > 1) {
+                                                    if($val->vatSubCategoryID == 3) {
+                                                        $data['documentLocalAmount'] = \Helper::roundValue(($val->bankAmount + $val->VATAmountLocal) / $conversion->conversion);
+                                                    }
+                                                    else{
+
+                                                        $data['documentLocalAmount'] = \Helper::roundValue(($val->bankAmount) / $conversion->conversion);
+                                                    }
+                                                } else {
+                                                    if($val->vatSubCategoryID == 3) {
+
+                                                        $data['documentLocalAmount'] = \Helper::roundValue(($val->bankAmount + $val->VATAmountLocal) * $conversion->conversion);
+                                                    }
+                                                    else{
+                                                        $data['documentLocalAmount'] = \Helper::roundValue(($val->bankAmount) * $conversion->conversion);
+                                                    }
+                                                }
+                                                $convertedLocalAmount += $data['documentLocalAmount'];
+                                            } else {
+                                                if ($conversion->conversion > 1) {
+                                                    if($val->vatSubCategoryID == 3) {
+                                                        $data['documentLocalAmount'] = \Helper::roundValue(($val->bankAmount + $val->VATAmountLocal) * $conversion->conversion);
+                                                    }
+                                                    else{
+                                                        $data['documentLocalAmount'] = \Helper::roundValue(($val->bankAmount) * $conversion->conversion);
+                                                    }
+                                                } else {
+                                                    if($val->vatSubCategoryID == 3) {
+                                                        $data['documentLocalAmount'] = \Helper::roundValue(($val->bankAmount + $val->VATAmountLocal) / $conversion->conversion);
+                                                    }
+                                                    else{
+                                                        $data['documentLocalAmount'] = \Helper::roundValue(($val->bankAmount) / $conversion->conversion);
+                                                    }
+                                                }
+                                                $convertedLocalAmount += $data['documentLocalAmount'];
+                                            }
+                                        }
+
+                                        //calculate reporting amount
+                                        if ($val->bankCurrencyID == $val->reportingCurrencyID) {
+                                            if($val->vatSubCategoryID == 3) {
+                                                $data['documentRptAmount'] = \Helper::roundValue(($val->bankAmount + $val->VATAmountRpt));
+                                            }
+                                            else{
+                                                $data['documentRptAmount'] = \Helper::roundValue(($val->bankAmount));
+                                            }
+                                            $convertedRpt += $data['documentRptAmount'];
+                                        } else {
+                                            $conversion = CurrencyConversion::where('masterCurrencyID', $val->bankCurrencyID)->where('subCurrencyID', $val->reportingCurrencyID)->first();
+                                            $data['documentRptCurrencyER'] = $conversion->conversion;
+                                            if ($conversion->conversion > 1) {
+                                                if ($conversion->conversion > 1) {
+                                                    if($val->vatSubCategoryID == 3) {
+                                                        $data['documentRptAmount'] = \Helper::roundValue(($val->bankAmount + $val->VATAmountRpt) / $conversion->conversion);
+                                                    }
+                                                    else{
+                                                        $data['documentRptAmount'] = \Helper::roundValue(($val->bankAmount) / $conversion->conversion);
+                                                    }
+                                                } else {
+                                                    if($val->vatSubCategoryID == 3) {
+                                                        $data['documentRptAmount'] = \Helper::roundValue(($val->bankAmount + $val->VATAmountRpt) * $conversion->conversion);
+                                                    }
+                                                    else{
+                                                        $data['documentRptAmount'] = \Helper::roundValue(($val->bankAmount) * $conversion->conversion);
+                                                    }
+                                                }
+                                                $convertedRpt += $data['documentRptAmount'];
+                                            } else {
+                                                if ($conversion->conversion > 1) {
+                                                    if($val->vatSubCategoryID == 3) {
+                                                        $data['documentRptAmount'] = \Helper::roundValue(($val->bankAmount + $val->VATAmountRpt) * $conversion->conversion);
+                                                    }
+                                                    else{
+                                                        $data['documentRptAmount'] = \Helper::roundValue(($val->bankAmount) * $conversion->conversion);
+                                                    }
+                                                } else {
+                                                    if($val->vatSubCategoryID == 3) {
+                                                        $data['documentRptAmount'] = \Helper::roundValue(($val->bankAmount + $val->VATAmountRpt) / $conversion->conversion);
+                                                    }
+                                                    else{
+                                                        $data['documentRptAmount'] = \Helper::roundValue(($val->bankAmount) / $conversion->conversion);
+                                                    }
+                                                }
+                                                $convertedRpt += $data['documentRptAmount'];
+                                            }
+                                        }
                                     } else {
-                                        $data['documentRptAmount'] = \Helper::roundValue(($val->bankAmount) * $conversion->conversion);
+                                        $data['documentLocalCurrencyER'] = $val->localCurrencyER;
+                                        if($val->vatSubCategoryID == 3) {
+                                            $data['documentLocalAmount'] = \Helper::roundValue($val->localAmount + $val->VATAmountLocal);
+                                        }
+                                        else{
+                                            $data['documentLocalAmount'] = \Helper::roundValue($val->localAmount);
+                                        }
+                                        $data['documentRptCurrencyER'] = $val->reportingCurrencyER;
+                                        if($val->vatSubCategoryID == 3) {
+                                            $data['documentRptAmount'] = \Helper::roundValue($val->rptAmount + $val->VATAmountRpt);
+                                        }
+                                        else{
+                                            $data['documentRptAmount'] = \Helper::roundValue($val->rptAmount);
+                                        }
+                                        $convertedLocalAmount += \Helper::roundValue($data['documentLocalAmount']);
+                                        $convertedRpt += \Helper::roundValue( $data['documentRptAmount']);
                                     }
-                                    $convertedRpt += $data['documentRptAmount'];
-                                } else {
-                                    if ($conversion->conversion > 1) {
-                                        $data['documentRptAmount'] = \Helper::roundValue(($val->bankAmount) * $conversion->conversion);
-                                    } else {
-                                        $data['documentRptAmount'] = \Helper::roundValue(($val->bankAmount) / $conversion->conversion);
+
+                                    $data['serviceLineSystemID'] = $val->serviceLineSystemID;
+                                    $data['serviceLineCode'] = $val->serviceLineCode;
+                                    $data['chartOfAccountSystemID'] = $val->financeGLcodePLSystemID;
+                                    $data['glCode'] = $val->financeGLcodePL;
+                                    $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                                    $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                                    $data['documentNarration'] = $val->comments;
+                                    $data['documentTransCurrencyID'] = $val->transCurrencyID;
+                                    $data['documentTransCurrencyER'] = $val->transCurrencyER;
+                                    if($val->vatSubCategoryID == 3) {
+                                        $data['documentTransAmount'] = \Helper::roundValue($val->transAmount + $val->vatAmount);
                                     }
-                                    $convertedRpt += $data['documentRptAmount'];
+                                    else{
+                                        $data['documentTransAmount'] = \Helper::roundValue($val->transAmount);
+                                    }
+                                    $data['documentLocalCurrencyID'] = $val->localCurrencyID;
+                                    $data['documentRptCurrencyID'] = $val->reportingCurrencyID;
+                                    $data['timestamp'] = \Helper::currentDateTime();
+                                    $convertedTrans += \Helper::roundValue($data['documentTransAmount']);
+                                    array_push($finalData, $data);
                                 }
                             }
-                        } else {
-                            $data['documentLocalCurrencyER'] = $val->localCurrencyER;
-                            $data['documentLocalAmount'] = \Helper::roundValue($val->localAmount);
-                            $data['documentRptCurrencyER'] = $val->reportingCurrencyER;
-                            $data['documentRptAmount'] = \Helper::roundValue($val->rptAmount);
-                            $convertedLocalAmount += \Helper::roundValue($val->localAmount);
-                            $convertedRpt += \Helper::roundValue($val->rptAmount);
                         }
+                        if($masterData->rcmActivated == 1){
+                            $masterLocal = $masterData->payAmountCompLocal;
+                            $masterRpt = $masterData->payAmountCompRpt;
+                            $data['serviceLineSystemID'] = 24;
+                            $data['serviceLineCode'] = 'X';
+                            $data['chartOfAccountSystemID'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 5) : $masterData->bank->chartOfAccountSystemID;
+                            $data['glCode'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 5) : $masterData->bank->glCodeLinked;
+                            $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                            $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                            $data['documentTransCurrencyID'] = $masterData->BPVbankCurrency;
+                            $data['documentTransCurrencyER'] = $masterData->BPVbankCurrencyER;
+                            $data['documentTransAmount'] = \Helper::roundValue($dpTotal->transAmount + $exemptVatTotal->vatAmount) * -1;
+                            $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
+                            $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
+                            $data['documentLocalAmount'] = \Helper::roundValue($masterLocal + $exemptVatTotal->VATAmountLocal) * -1;
+                            $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
+                            $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
+                            $data['documentRptAmount'] = \Helper::roundValue($masterRpt + $exemptVatTotal->VATAmountRpt) * -1;
+                            $data['timestamp'] = \Helper::currentDateTime();
+                            array_push($finalData, $data);
 
-                        $data['serviceLineSystemID'] = $val->serviceLineSystemID;
-                        $data['serviceLineCode'] = $val->serviceLineCode;
-                        $data['chartOfAccountSystemID'] = $val->financeGLcodePLSystemID;
-                        $data['glCode'] = $val->financeGLcodePL;
+
+                            $taxInputVATControl = TaxService::getInputVATGLAccount($masterData->companySystemID);
+                            if (!empty($taxInputVATControl)) {
+
+                                $chartOfAccountData = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $taxInputVATControl->inputVatGLAccountAutoID)
+                                    ->where('companySystemID', $masterData->companySystemID)
+                                    ->first();
+                                if (!empty($chartOfAccountData)) {
+
+                                    $data['serviceLineSystemID'] = 24;
+                                    $data['serviceLineCode'] = 'X';
+                                    $data['chartOfAccountSystemID'] = $chartOfAccountData->chartOfAccountSystemID;
+                                    $data['glCode'] = $chartOfAccountData->AccountCode;
+                                    $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                                    $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                                    $data['documentTransCurrencyID'] = $masterData->BPVbankCurrency;
+                                    $data['documentTransCurrencyER'] = $masterData->BPVbankCurrencyER;
+                                    $data['documentTransAmount'] = \Helper::roundValue($tax->transAmount - $exemptVatTotal->vatAmount);
+                                    $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
+                                    $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
+                                    $data['documentLocalAmount'] = \Helper::roundValue($tax->localAmount - $exemptVatTotal->VATAmountLocal);
+                                    $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
+                                    $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
+                                    $data['documentRptAmount'] = \Helper::roundValue($tax->rptAmount - $exemptVatTotal->VATAmountRpt);
+                                    $data['timestamp'] = \Helper::currentDateTime();
+                                    array_push($finalData, $data);
+                                    $taxLedgerData['inputVatGLAccountID'] = $data['chartOfAccountSystemID'];
+
+                                }
+
+                            }
+
+
+                            $taxOutputVATControl = TaxService::getOutputVATGLAccount($masterData->companySystemID);
+                            if (!empty($taxOutputVATControl)) {
+
+                                $chartOfAccountData = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $taxOutputVATControl->outputVatGLAccountAutoID)
+                                    ->where('companySystemID', $masterData->companySystemID)
+                                    ->first();
+                                if (!empty($chartOfAccountData)) {
+
+                                    $data['serviceLineSystemID'] = 24;
+                                    $data['serviceLineCode'] = 'X';
+                                    $data['chartOfAccountSystemID'] = $chartOfAccountData->chartOfAccountSystemID;
+                                    $data['glCode'] = $chartOfAccountData->AccountCode;
+                                    $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                                    $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                                    $data['documentTransCurrencyID'] = $masterData->BPVbankCurrency;
+                                    $data['documentTransCurrencyER'] = $masterData->BPVbankCurrencyER;
+                                    $data['documentTransAmount'] = \Helper::roundValue($tax->transAmount - $exemptVatTotal->vatAmount) * -1;
+                                    $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
+                                    $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
+                                    $data['documentLocalAmount'] = \Helper::roundValue($tax->localAmount - $exemptVatTotal->VATAmountLocal) * -1;
+                                    $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
+                                    $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
+                                    $data['documentRptAmount'] = \Helper::roundValue($tax->rptAmount - $exemptVatTotal->VATAmountRpt) * -1;
+                                    $data['timestamp'] = \Helper::currentDateTime();
+                                    array_push($finalData, $data);
+                                    $taxLedgerData['outputVatGLAccountID'] = $data['chartOfAccountSystemID'];
+
+                                }
+
+                            }
+                            $convertedLocalAmount = 0;
+                            $convertedRpt = 0;
+                            $convertedTrans = 0;
+                            if ($dp) {
+                                foreach ($dp as $val) {
+                                    if ($isBankCheck) {
+                                        //calculate local amount
+                                        if ($val->bankCurrencyID == $val->localCurrencyID) {
+                                            if($val->vatSubCategoryID == 3) {
+                                                $data['documentLocalAmount'] = \Helper::roundValue(($val->bankAmount + $val->VATAmountLocal));
+                                            }
+                                            else{
+                                                $data['documentLocalAmount'] = \Helper::roundValue(($val->bankAmount));
+                                            }
+                                            $convertedLocalAmount += $data['documentLocalAmount'];
+                                        } else {
+                                            $conversion = CurrencyConversion::where('masterCurrencyID', $val->bankCurrencyID)->where('subCurrencyID', $val->localCurrencyID)->first();
+                                            $data['documentLocalCurrencyER'] = $conversion->conversion;
+                                            if ($conversion->conversion > 1) {
+                                                if ($conversion->conversion > 1) {
+                                                    if($val->vatSubCategoryID == 3) {
+                                                        $data['documentLocalAmount'] = \Helper::roundValue(($val->bankAmount + $val->VATAmountLocal) / $conversion->conversion);
+                                                    }
+                                                    else{
+
+                                                        $data['documentLocalAmount'] = \Helper::roundValue(($val->bankAmount) / $conversion->conversion);
+                                                    }
+                                                } else {
+                                                    if($val->vatSubCategoryID == 3) {
+
+                                                        $data['documentLocalAmount'] = \Helper::roundValue(($val->bankAmount + $val->VATAmountLocal) * $conversion->conversion);
+                                                    }
+                                                    else{
+                                                        $data['documentLocalAmount'] = \Helper::roundValue(($val->bankAmount) * $conversion->conversion);
+                                                    }
+                                                }
+                                                $convertedLocalAmount += $data['documentLocalAmount'];
+                                            } else {
+                                                if ($conversion->conversion > 1) {
+                                                    if($val->vatSubCategoryID == 3) {
+                                                        $data['documentLocalAmount'] = \Helper::roundValue(($val->bankAmount + $val->VATAmountLocal) * $conversion->conversion);
+                                                    }
+                                                    else{
+                                                        $data['documentLocalAmount'] = \Helper::roundValue(($val->bankAmount) * $conversion->conversion);
+                                                    }
+                                                } else {
+                                                    if($val->vatSubCategoryID == 3) {
+                                                        $data['documentLocalAmount'] = \Helper::roundValue(($val->bankAmount + $val->VATAmountLocal) / $conversion->conversion);
+                                                    }
+                                                    else{
+                                                        $data['documentLocalAmount'] = \Helper::roundValue(($val->bankAmount) / $conversion->conversion);
+                                                    }
+                                                }
+                                                $convertedLocalAmount += $data['documentLocalAmount'];
+                                            }
+                                        }
+
+                                        //calculate reporting amount
+                                        if ($val->bankCurrencyID == $val->reportingCurrencyID) {
+                                            if($val->vatSubCategoryID == 3) {
+                                                $data['documentRptAmount'] = \Helper::roundValue(($val->bankAmount + $val->VATAmountRpt));
+                                            }
+                                            else{
+                                                $data['documentRptAmount'] = \Helper::roundValue(($val->bankAmount));
+                                            }
+                                            $convertedRpt += $data['documentRptAmount'];
+                                        } else {
+                                            $conversion = CurrencyConversion::where('masterCurrencyID', $val->bankCurrencyID)->where('subCurrencyID', $val->reportingCurrencyID)->first();
+                                            $data['documentRptCurrencyER'] = $conversion->conversion;
+                                            if ($conversion->conversion > 1) {
+                                                if ($conversion->conversion > 1) {
+                                                    if($val->vatSubCategoryID == 3) {
+                                                        $data['documentRptAmount'] = \Helper::roundValue(($val->bankAmount + $val->VATAmountRpt) / $conversion->conversion);
+                                                    }
+                                                    else{
+                                                        $data['documentRptAmount'] = \Helper::roundValue(($val->bankAmount) / $conversion->conversion);
+                                                    }
+                                                } else {
+                                                    if($val->vatSubCategoryID == 3) {
+                                                        $data['documentRptAmount'] = \Helper::roundValue(($val->bankAmount + $val->VATAmountRpt) * $conversion->conversion);
+                                                    }
+                                                    else{
+                                                        $data['documentRptAmount'] = \Helper::roundValue(($val->bankAmount) * $conversion->conversion);
+                                                    }
+                                                }
+                                                $convertedRpt += $data['documentRptAmount'];
+                                            } else {
+                                                if ($conversion->conversion > 1) {
+                                                    if($val->vatSubCategoryID == 3) {
+                                                        $data['documentRptAmount'] = \Helper::roundValue(($val->bankAmount + $val->VATAmountRpt) * $conversion->conversion);
+                                                    }
+                                                    else{
+                                                        $data['documentRptAmount'] = \Helper::roundValue(($val->bankAmount) * $conversion->conversion);
+                                                    }
+                                                } else {
+                                                    if($val->vatSubCategoryID == 3) {
+                                                        $data['documentRptAmount'] = \Helper::roundValue(($val->bankAmount + $val->VATAmountRpt) / $conversion->conversion);
+                                                    }
+                                                    else{
+                                                        $data['documentRptAmount'] = \Helper::roundValue(($val->bankAmount) / $conversion->conversion);
+                                                    }
+                                                }
+                                                $convertedRpt += $data['documentRptAmount'];
+                                            }
+                                        }
+                                    } else {
+                                        $data['documentLocalCurrencyER'] = $val->localCurrencyER;
+                                        if($val->vatSubCategoryID == 3) {
+                                            $data['documentLocalAmount'] = \Helper::roundValue($val->localAmount + $val->VATAmountLocal);
+                                        }
+                                        else{
+                                            $data['documentLocalAmount'] = \Helper::roundValue($val->localAmount);
+                                        }
+                                        $data['documentRptCurrencyER'] = $val->reportingCurrencyER;
+                                        if($val->vatSubCategoryID == 3) {
+                                            $data['documentRptAmount'] = \Helper::roundValue($val->rptAmount + $val->VATAmountRpt);
+                                        }
+                                        else{
+                                            $data['documentRptAmount'] = \Helper::roundValue($val->rptAmount);
+                                        }
+                                        $convertedLocalAmount += \Helper::roundValue($data['documentLocalAmount']);
+                                        $convertedRpt += \Helper::roundValue( $data['documentRptAmount']);
+                                    }
+
+                                    $data['serviceLineSystemID'] = $val->serviceLineSystemID;
+                                    $data['serviceLineCode'] = $val->serviceLineCode;
+                                    $data['chartOfAccountSystemID'] = $val->financeGLcodePLSystemID;
+                                    $data['glCode'] = $val->financeGLcodePL;
+                                    $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                                    $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                                    $data['documentNarration'] = $val->comments;
+                                    $data['documentTransCurrencyID'] = $val->transCurrencyID;
+                                    $data['documentTransCurrencyER'] = $val->transCurrencyER;
+                                    if($val->vatSubCategoryID == 3) {
+                                        $data['documentTransAmount'] = \Helper::roundValue($val->transAmount + $val->vatAmount);
+                                    }
+                                    else{
+                                        $data['documentTransAmount'] = \Helper::roundValue($val->transAmount);
+                                    }
+                                    $data['documentLocalCurrencyID'] = $val->localCurrencyID;
+                                    $data['documentRptCurrencyID'] = $val->reportingCurrencyID;
+                                    $data['timestamp'] = \Helper::currentDateTime();
+                                    $convertedTrans += \Helper::roundValue($data['documentTransAmount']);
+                                    array_push($finalData, $data);
+                                }
+                            }
+
+                        }
+                    }
+                    else{
+                        $masterLocal = $masterData->payAmountCompLocal;
+                        $masterRpt = $masterData->payAmountCompRpt;
+                        $data['serviceLineSystemID'] = 24;
+                        $data['serviceLineCode'] = 'X';
+                        $data['chartOfAccountSystemID'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 5) : $masterData->bank->chartOfAccountSystemID;
+                        $data['glCode'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 5) : $masterData->bank->glCodeLinked;
                         $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                         $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-                        $data['documentNarration'] = $val->comments;
-                        $data['documentTransCurrencyID'] = $val->transCurrencyID;
-                        $data['documentTransCurrencyER'] = $val->transCurrencyER;
-                        $data['documentTransAmount'] = \Helper::roundValue($val->transAmount);
-                        $data['documentLocalCurrencyID'] = $val->localCurrencyID;
-                        $data['documentRptCurrencyID'] = $val->reportingCurrencyID;
+                        $data['documentTransCurrencyID'] = $masterData->BPVbankCurrency;
+                        $data['documentTransCurrencyER'] = $masterData->BPVbankCurrencyER;
+                        $data['documentTransAmount'] = \Helper::roundValue($dpTotal->transAmount) * -1;
+                        $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
+                        $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
+                        $data['documentLocalAmount'] = \Helper::roundValue($masterLocal) * -1;
+                        $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
+                        $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
+                        $data['documentRptAmount'] = \Helper::roundValue($masterRpt) * -1;
                         $data['timestamp'] = \Helper::currentDateTime();
-                        $convertedTrans += \Helper::roundValue($val->transAmount);
                         array_push($finalData, $data);
+
+                        $convertedLocalAmount = 0;
+                        $convertedRpt = 0;
+                        $convertedTrans = 0;
+                        if ($dp) {
+                            foreach ($dp as $val) {
+                                if ($isBankCheck) {
+                                    //calculate local amount
+                                    if ($val->bankCurrencyID == $val->localCurrencyID) {
+                                        $data['documentLocalAmount'] = \Helper::roundValue(($val->bankAmount));
+                                        $convertedLocalAmount += $data['documentLocalAmount'];
+                                    } else {
+                                        $conversion = CurrencyConversion::where('masterCurrencyID', $val->bankCurrencyID)->where('subCurrencyID', $val->localCurrencyID)->first();
+                                        $data['documentLocalCurrencyER'] = $conversion->conversion;
+                                        if ($conversion->conversion > 1) {
+                                            if ($conversion->conversion > 1) {
+                                                $data['documentLocalAmount'] = \Helper::roundValue(($val->bankAmount) / $conversion->conversion);
+                                            } else {
+                                                $data['documentLocalAmount'] = \Helper::roundValue(($val->bankAmount) * $conversion->conversion);
+                                            }
+                                            $convertedLocalAmount += $data['documentLocalAmount'];
+                                        } else {
+                                            if ($conversion->conversion > 1) {
+                                                $data['documentLocalAmount'] = \Helper::roundValue(($val->bankAmount) * $conversion->conversion);
+                                            } else {
+                                                $data['documentLocalAmount'] = \Helper::roundValue(($val->bankAmount) / $conversion->conversion);
+                                            }
+                                            $convertedLocalAmount += $data['documentLocalAmount'];
+                                        }
+                                    }
+
+                                    //calculate reporting amount
+                                    if ($val->bankCurrencyID == $val->reportingCurrencyID) {
+                                        $data['documentRptAmount'] = \Helper::roundValue(($val->bankAmount));
+                                        $convertedRpt += $data['documentRptAmount'];
+                                    } else {
+                                        $conversion = CurrencyConversion::where('masterCurrencyID', $val->bankCurrencyID)->where('subCurrencyID', $val->reportingCurrencyID)->first();
+                                        $data['documentRptCurrencyER'] = $conversion->conversion;
+                                        if ($conversion->conversion > 1) {
+                                            if ($conversion->conversion > 1) {
+                                                $data['documentRptAmount'] = \Helper::roundValue(($val->bankAmount) / $conversion->conversion);
+                                            } else {
+                                                $data['documentRptAmount'] = \Helper::roundValue(($val->bankAmount) * $conversion->conversion);
+                                            }
+                                            $convertedRpt += $data['documentRptAmount'];
+                                        } else {
+                                            if ($conversion->conversion > 1) {
+                                                $data['documentRptAmount'] = \Helper::roundValue(($val->bankAmount) * $conversion->conversion);
+                                            } else {
+                                                $data['documentRptAmount'] = \Helper::roundValue(($val->bankAmount) / $conversion->conversion);
+                                            }
+                                            $convertedRpt += $data['documentRptAmount'];
+                                        }
+                                    }
+                                } else {
+                                    $data['documentLocalCurrencyER'] = $val->localCurrencyER;
+                                    $data['documentLocalAmount'] = \Helper::roundValue($val->localAmount);
+                                    $data['documentRptCurrencyER'] = $val->reportingCurrencyER;
+                                    $data['documentRptAmount'] = \Helper::roundValue($val->rptAmount);
+                                    $convertedLocalAmount += \Helper::roundValue($val->localAmount);
+                                    $convertedRpt += \Helper::roundValue($val->rptAmount);
+                                }
+
+                                $data['serviceLineSystemID'] = $val->serviceLineSystemID;
+                                $data['serviceLineCode'] = $val->serviceLineCode;
+                                $data['chartOfAccountSystemID'] = $val->financeGLcodePLSystemID;
+                                $data['glCode'] = $val->financeGLcodePL;
+                                $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                                $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                                $data['documentNarration'] = $val->comments;
+                                $data['documentTransCurrencyID'] = $val->transCurrencyID;
+                                $data['documentTransCurrencyER'] = $val->transCurrencyER;
+                                $data['documentTransAmount'] = \Helper::roundValue($val->transAmount);
+                                $data['documentLocalCurrencyID'] = $val->localCurrencyID;
+                                $data['documentRptCurrencyID'] = $val->reportingCurrencyID;
+                                $data['timestamp'] = \Helper::currentDateTime();
+                                $convertedTrans += \Helper::roundValue($val->transAmount);
+                                array_push($finalData, $data);
+                            }
+                        }
+                    }
+                }
+                else{
+                    $masterLocal = $masterData->payAmountCompLocal;
+                    $masterRpt = $masterData->payAmountCompRpt;
+                    $data['serviceLineSystemID'] = 24;
+                    $data['serviceLineCode'] = 'X';
+                    $data['chartOfAccountSystemID'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 5) : $masterData->bank->chartOfAccountSystemID;
+                    $data['glCode'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 5) : $masterData->bank->glCodeLinked;
+                    $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                    $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                    $data['documentTransCurrencyID'] = $masterData->BPVbankCurrency;
+                    $data['documentTransCurrencyER'] = $masterData->BPVbankCurrencyER;
+                    $data['documentTransAmount'] = \Helper::roundValue($dpTotal->transAmount) * -1;
+                    $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
+                    $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
+                    $data['documentLocalAmount'] = \Helper::roundValue($masterLocal) * -1;
+                    $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
+                    $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
+                    $data['documentRptAmount'] = \Helper::roundValue($masterRpt) * -1;
+                    $data['timestamp'] = \Helper::currentDateTime();
+                    array_push($finalData, $data);
+
+                    $convertedLocalAmount = 0;
+                    $convertedRpt = 0;
+                    $convertedTrans = 0;
+                    if ($dp) {
+                        foreach ($dp as $val) {
+                            if ($isBankCheck) {
+                                //calculate local amount
+                                if ($val->bankCurrencyID == $val->localCurrencyID) {
+                                    $data['documentLocalAmount'] = \Helper::roundValue(($val->bankAmount));
+                                    $convertedLocalAmount += $data['documentLocalAmount'];
+                                } else {
+                                    $conversion = CurrencyConversion::where('masterCurrencyID', $val->bankCurrencyID)->where('subCurrencyID', $val->localCurrencyID)->first();
+                                    $data['documentLocalCurrencyER'] = $conversion->conversion;
+                                    if ($conversion->conversion > 1) {
+                                        if ($conversion->conversion > 1) {
+                                            $data['documentLocalAmount'] = \Helper::roundValue(($val->bankAmount) / $conversion->conversion);
+                                        } else {
+                                            $data['documentLocalAmount'] = \Helper::roundValue(($val->bankAmount) * $conversion->conversion);
+                                        }
+                                        $convertedLocalAmount += $data['documentLocalAmount'];
+                                    } else {
+                                        if ($conversion->conversion > 1) {
+                                            $data['documentLocalAmount'] = \Helper::roundValue(($val->bankAmount) * $conversion->conversion);
+                                        } else {
+                                            $data['documentLocalAmount'] = \Helper::roundValue(($val->bankAmount) / $conversion->conversion);
+                                        }
+                                        $convertedLocalAmount += $data['documentLocalAmount'];
+                                    }
+                                }
+
+                                //calculate reporting amount
+                                if ($val->bankCurrencyID == $val->reportingCurrencyID) {
+                                    $data['documentRptAmount'] = \Helper::roundValue(($val->bankAmount));
+                                    $convertedRpt += $data['documentRptAmount'];
+                                } else {
+                                    $conversion = CurrencyConversion::where('masterCurrencyID', $val->bankCurrencyID)->where('subCurrencyID', $val->reportingCurrencyID)->first();
+                                    $data['documentRptCurrencyER'] = $conversion->conversion;
+                                    if ($conversion->conversion > 1) {
+                                        if ($conversion->conversion > 1) {
+                                            $data['documentRptAmount'] = \Helper::roundValue(($val->bankAmount) / $conversion->conversion);
+                                        } else {
+                                            $data['documentRptAmount'] = \Helper::roundValue(($val->bankAmount) * $conversion->conversion);
+                                        }
+                                        $convertedRpt += $data['documentRptAmount'];
+                                    } else {
+                                        if ($conversion->conversion > 1) {
+                                            $data['documentRptAmount'] = \Helper::roundValue(($val->bankAmount) * $conversion->conversion);
+                                        } else {
+                                            $data['documentRptAmount'] = \Helper::roundValue(($val->bankAmount) / $conversion->conversion);
+                                        }
+                                        $convertedRpt += $data['documentRptAmount'];
+                                    }
+                                }
+                            } else {
+                                $data['documentLocalCurrencyER'] = $val->localCurrencyER;
+                                $data['documentLocalAmount'] = \Helper::roundValue($val->localAmount);
+                                $data['documentRptCurrencyER'] = $val->reportingCurrencyER;
+                                $data['documentRptAmount'] = \Helper::roundValue($val->rptAmount);
+                                $convertedLocalAmount += \Helper::roundValue($val->localAmount);
+                                $convertedRpt += \Helper::roundValue($val->rptAmount);
+                            }
+
+                            $data['serviceLineSystemID'] = $val->serviceLineSystemID;
+                            $data['serviceLineCode'] = $val->serviceLineCode;
+                            $data['chartOfAccountSystemID'] = $val->financeGLcodePLSystemID;
+                            $data['glCode'] = $val->financeGLcodePL;
+                            $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                            $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                            $data['documentNarration'] = $val->comments;
+                            $data['documentTransCurrencyID'] = $val->transCurrencyID;
+                            $data['documentTransCurrencyER'] = $val->transCurrencyER;
+                            $data['documentTransAmount'] = \Helper::roundValue($val->transAmount);
+                            $data['documentLocalCurrencyID'] = $val->localCurrencyID;
+                            $data['documentRptCurrencyID'] = $val->reportingCurrencyID;
+                            $data['timestamp'] = \Helper::currentDateTime();
+                            $convertedTrans += \Helper::roundValue($val->transAmount);
+                            array_push($finalData, $data);
+                        }
                     }
                 }
 
-                $diffTrans = $convertedTrans - $dpTotal->transAmount;
-                $diffLocal = $convertedLocalAmount - $masterLocal;
-                $diffRpt = $convertedRpt - $masterRpt;
 
+                if($exemptVatTotal) {
+                    $diffTrans = $convertedTrans - $dpTotal->transAmount - $exemptVatTotal->vatAmount;
+                    $diffLocal = $convertedLocalAmount - $masterLocal - $exemptVatTotal->VATAmountLocal;
+                    $diffRpt = $convertedRpt - $masterRpt - $exemptVatTotal->VATAmountRpt;
+                }
+                else{
+                    $diffTrans = $convertedTrans - $dpTotal->transAmount;
+                    $diffLocal = $convertedLocalAmount - $masterLocal;
+                    $diffRpt = $convertedRpt - $masterRpt;
+                }
                 if (ABS(round($diffTrans)) != 0 || ABS(round($diffLocal, $masterData->localcurrency->DecimalPlaces)) != 0 || ABS(round($diffRpt, $masterData->rptcurrency->DecimalPlaces)) != 0) {
 
                     $company = Company::find($masterData->companySystemID);

@@ -89,7 +89,7 @@ class SalesReturnGlService
         }], 'finance_period_by')->find($masterModel["autoID"]);
 
         //all acoount
-        $allAc = SalesReturnDetail::selectRaw("SUM(wacValueLocal*qtyReturned) as localAmount, SUM(wacValueReporting*qtyReturned) as rptAmount,SUM(transactionAmount) as transAmount,financeGLcodebBSSystemID as financeGLcodebBSSystemID,financeGLcodebBS as financeGLcodebBS,companyLocalCurrencyID as localCurrencyID,companyReportingCurrencyID as reportingCurrencyID,transactionCurrencyID as transCurrencyID,companyReportingCurrencyER as reportingCurrencyER,companyLocalCurrencyER as localCurrencyER,transactionCurrencyER as transCurrencyER, financeGLcodeRevenueSystemID")
+        $allAc = SalesReturnDetail::selectRaw("SUM(wacValueLocal*qtyReturned) as localAmount, SUM(wacValueReporting*qtyReturned) as rptAmount,SUM(transactionAmount) as transAmount, reasonCode, isPostItemLedger, reasonGLCode, financeGLcodebBSSystemID as financeGLcodebBSSystemID,financeGLcodebBS as financeGLcodebBS,companyLocalCurrencyID as localCurrencyID,companyReportingCurrencyID as reportingCurrencyID,transactionCurrencyID as transCurrencyID,companyReportingCurrencyER as reportingCurrencyER,companyLocalCurrencyER as localCurrencyER,transactionCurrencyER as transCurrencyER, financeGLcodeRevenueSystemID")
             ->WHERE('salesReturnID', $masterModel["autoID"])
             ->groupBy('financeGLcodebBSSystemID')
             ->get();
@@ -137,10 +137,10 @@ class SalesReturnGlService
                 $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
             } else {
                 $checkFromInvoice = SalesReturnDetail::where('salesReturnID', $masterModel["autoID"])
-                                                    ->whereHas('delivery_order', function($query) {
-                                                        $query->where('selectedForCustomerInvoice', -1);
-                                                    })
-                                                    ->first();
+                    ->whereHas('delivery_order', function($query) {
+                        $query->where('selectedForCustomerInvoice', -1);
+                    })
+                    ->first();
 
                 if ($checkFromInvoice) {
                     $data['chartOfAccountSystemID'] = $masterData->custGLAccountSystemID;
@@ -185,8 +185,17 @@ class SalesReturnGlService
             if ($allAc) {
                 foreach ($allAc as $val) {
                     $currencyConversionInv = \Helper::currencyConversion($masterData->companySystemID, $val->localCurrencyID, $val->transCurrencyID, $val->localAmount);
-                    $data['chartOfAccountSystemID'] = $val->financeGLcodebBSSystemID;
-                    $data['glCode'] = $val->financeGLcodebBS;
+                    if($val->isPostItemLedger == 0 && $val->reasonCode != null){
+                        $data['chartOfAccountSystemID'] = $val->reasonGLCode;
+                        $chartOfAccountAssigned = ChartOfAccountsAssigned::where('chartOfAccountSystemID',$val->reasonGLCode)->first();
+                        if($chartOfAccountAssigned){
+                            $data['glCode'] = $chartOfAccountAssigned->AccountCode;
+                        }
+                    }else{
+                        $data['chartOfAccountSystemID'] = $val->financeGLcodebBSSystemID;
+                        $data['glCode'] = $val->financeGLcodebBS;
+                    }
+
                     $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                     $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                     $data['documentTransCurrencyID'] = $val->transCurrencyID;
@@ -203,7 +212,7 @@ class SalesReturnGlService
                 }
             }
 
-             if ($COSGAc) {
+            if ($COSGAc) {
                 foreach ($COSGAc as $val) {
                     $currencyConversionCog = \Helper::currencyConversion($masterData->companySystemID, $val->localCurrencyID, $val->transCurrencyID, $val->localAmount);
 
@@ -246,9 +255,9 @@ class SalesReturnGlService
             }
 
             $erp_taxdetail = Taxdetail::where('companySystemID', $masterData->companySystemID)
-                                    ->where('documentSystemCode', $masterData->id)
-                                    ->where('documentSystemID', 87)
-                                    ->get();
+                ->where('documentSystemCode', $masterData->id)
+                ->where('documentSystemID', 87)
+                ->get();
 
             if (!empty($erp_taxdetail)) {
                 if ($masterData->returnType == 2) {
@@ -257,10 +266,10 @@ class SalesReturnGlService
                     $taxLedgerData['outputVatGLAccountID'] = $chartofaccountTaxID;
                 } else {
                     $checkFromInvoice = SalesReturnDetail::where('salesReturnID', $masterModel["autoID"])
-                                                        ->whereHas('delivery_order', function($query) {
-                                                            $query->where('selectedForCustomerInvoice', -1);
-                                                        })
-                                                        ->first();
+                        ->whereHas('delivery_order', function($query) {
+                            $query->where('selectedForCustomerInvoice', -1);
+                        })
+                        ->first();
 
                     if ($checkFromInvoice) {
                         $taxConfigData = TaxService::getOutputVATGLAccount($masterModel["companySystemID"]);
@@ -302,43 +311,15 @@ class SalesReturnGlService
                             array_push($finalData, $data);
                         }
                     } else {
-                         if ($masterData->returnType == 2) {
-                            return ['status' => false, 'error' => ['message' => "Output Vat GL Account not assigned to company"]];
-                        } else {
-                            $checkFromInvoice = SalesReturnDetail::where('salesReturnID', $masterModel["autoID"])
-                                                                ->whereHas('delivery_order', function($query) {
-                                                                    $query->where('selectedForCustomerInvoice', -1);
-                                                                })
-                                                                ->first();
-
-                            if ($checkFromInvoice) {
-                                return ['status' => false, 'error' => ['message' => "Output Vat GL Account not assigned to company"]];
-                            } else {
-                                return ['status' => false, 'error' => ['message' => "Output Vat Transfer GL Account not assigned to company"]];
-                            }
-                        }
+                        Log::info('Customer Invoice VAT GL Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
+                        Log::info('Output Vat GL Account not assigned to company' . date('H:i:s'));
                     }
                 } else {
-                    
-                    if ($masterData->returnType == 2) {
-                        return ['status' => false, 'error' => ['message' => "Output Vat GL Account not configured"]];
-                    } else {
-                        $checkFromInvoice = SalesReturnDetail::where('salesReturnID', $masterModel["autoID"])
-                                                            ->whereHas('delivery_order', function($query) {
-                                                                $query->where('selectedForCustomerInvoice', -1);
-                                                            })
-                                                            ->first();
-
-                        if ($checkFromInvoice) {
-                            return ['status' => false, 'error' => ['message' => "Output Vat GL Account not configured"]];
-                        } else {
-                            return ['status' => false, 'error' => ['message' => "Output Vat Transfer GL Account not configured"]];
-                        }
-                    }
+                    Log::info('Customer Invoice VAT GL Entry IssuesId :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
+                    Log::info('Output Vat GL Account not configured' . date('H:i:s'));
                 }
             }
         }
-
         return ['status' => true, 'message' => 'success', 'data' => ['finalData' => $finalData, 'taxLedgerData' => $taxLedgerData]];
     }
 }
