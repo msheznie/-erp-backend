@@ -358,6 +358,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getNotAssignedCompaniesByCustomer', 'CustomerAssignedAPIController@getNotAssignedCompaniesByCustomer');
         Route::post('exportCustomerMaster', 'CustomerMasterAPIController@exportCustomerMaster');
         Route::post('customerReOpen', 'CustomerMasterAPIController@customerReOpen');
+        Route::post('validateCustomerAmend', 'CustomerMasterAPIController@validateCustomerAmend');
 
         /** Bank master Created by Pasan  */
         Route::resource('bank/masters', 'BankMasterAPIController');
