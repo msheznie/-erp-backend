@@ -751,6 +751,8 @@ class GRVDetailsAPIController extends AppBaseController
                             return $this->sendError('GRV date can not be greater than current date', 500);
                         }
                     }
+                } else {
+                    return $this->sendError('GRV Date Not Selected', 500);
                 }
 
                 if (isset($grvMasterData['stampDate'])) {
@@ -761,6 +763,8 @@ class GRVDetailsAPIController extends AppBaseController
                     if ($grvMasterData['stampDate'] > $currentDate) {
                         return $this->sendError('Stamp date can not be greater than current date', 500);
                     }
+                } else {
+                    return $this->sendError('Stamp Date Not Selected', 500);
                 }
 
                 if(isset($grvMasterData['grvLocation'])){
