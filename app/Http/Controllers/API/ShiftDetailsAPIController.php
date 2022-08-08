@@ -20,6 +20,7 @@ use App\Models\CurrencyDenomination;
 use App\Models\GposInvoice;
 use App\Models\GposPaymentGlConfigDetail;
 use App\Models\OutletUsers;
+use App\Models\POSSOURCEShiftDetails;
 use App\Models\ShiftDetails;
 use App\Models\WarehouseMaster;
 use App\Repositories\ShiftDetailsRepository;
@@ -420,6 +421,18 @@ class ShiftDetailsAPIController extends AppBaseController
         $shiftDetails->delete();
 
         return $this->sendResponse($id, 'Shift Details deleted successfully');
+    }
+
+    public function getPosSourceShiftDetails(Request $request) {
+
+        $posSourceShiftDetails = POSSOURCEShiftDetails::selectRaw('shiftID as value,CONCAT(startTime, " | " ,endTime, " - ", createdUserName) as label')
+            ->get();
+
+        $output = array(
+            'posSourceShiftDetails' => $posSourceShiftDetails,
+        );
+
+        return $this->sendResponse($output, "Shift Details retrieved successfully");
     }
 
     public function getPosShiftDetails(Request $request)
