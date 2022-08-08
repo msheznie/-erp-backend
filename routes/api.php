@@ -2074,6 +2074,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('downloadQuotationItemUploadTemplate', 'QuotationMasterAPIController@downloadQuotationItemUploadTemplate');
         Route::get('downloadDeliveryOrderUploadTemplate', 'DeliveryOrderAPIController@downloadQuotationItemUploadTemplate');
         Route::post('poItemsUpload', 'ProcumentOrderAPIController@poItemsUpload');
+        Route::post('checkBudgetCutOffForPo', 'ProcumentOrderAPIController@checkBudgetCutOffForPo');
 
 
         Route::post('sales-order/is-link-item', 'DeliveryOrderAPIController@isLinkItem');
