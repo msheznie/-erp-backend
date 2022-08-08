@@ -373,7 +373,8 @@ class POSSOURCEShiftDetails extends Model
         'transactionCurrencyDecimalPlaces',
         'transactionCurrencyID',
         'transactionExchangeRate',
-        'wareHouseID'
+        'wareHouseID',
+        'isSync'
     ];
 
     /**
@@ -433,7 +434,8 @@ class POSSOURCEShiftDetails extends Model
         'transactionCurrencyDecimalPlaces' => 'integer',
         'transactionCurrencyID' => 'integer',
         'transactionExchangeRate' => 'float',
-        'wareHouseID' => 'integer'
+        'wareHouseID' => 'integer',
+        'isSync' => 'integer'
     ];
 
     /**
