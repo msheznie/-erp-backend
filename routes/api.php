@@ -3042,5 +3042,3 @@ Route::resource('bid_boqs', 'BidBoqAPIController');
 
 Route::resource('cash_flow_report_details', 'CashFlowReportDetailAPIController');
 Route::resource('tender_circulars', 'TenderCircularsAPIController'); 
-
-Route::resource('p_o_s_s_o_u_r_c_e_shift_details', 'POSSOURCEShiftDetailsAPIController');
