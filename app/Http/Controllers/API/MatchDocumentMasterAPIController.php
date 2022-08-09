@@ -2113,8 +2113,9 @@ class MatchDocumentMasterAPIController extends AppBaseController
         if($user_type == 2)
         {
 
-                $qry = 'SELECT
+                $qry1 = 'SELECT
                 employee_ledger.id,
+                1 as type,
                 employee_ledger.documentSystemCode as bookingInvSystemCode,
                 employee_ledger.supplierTransCurrencyID,
                 employee_ledger.supplierTransER,
@@ -2152,6 +2153,9 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 IFNULL(Sum( erp_paysupplierinvoicedetail.paymentBalancedAmount ),0) AS SumOfpaymentBalancedAmount 
             FROM
                 erp_paysupplierinvoicedetail
+                JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicedetail.PayMasterAutoId = erp_paysupplierinvoicemaster.PayMasterAutoId 
+            WHERE 
+                erp_paysupplierinvoicemaster.invoiceType = 6
             GROUP BY
                 erp_paysupplierinvoicedetail.apAutoID 
                 ) sid ON sid.apAutoID = employee_ledger.id
@@ -2187,6 +2191,110 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 AND employee_ledger.companySystemID = ' . $matchDocumentMasterData->companySystemID . ' 
                 AND employee_ledger.employeeSystemID = ' . $matchDocumentMasterData->employee_id . ' 
                 AND employee_ledger.supplierTransCurrencyID = ' . $matchDocumentMasterData->supplierTransCurrencyID . ' HAVING ROUND(paymentBalancedAmount, '.$decimalPlaces.') != 0 ORDER BY employee_ledger.id DESC';
+
+
+
+        $qry2 = 'SELECT
+                employee_ledger.id,
+                2 as type,
+                employee_ledger.documentSystemCode as bookingInvSystemCode,
+                employee_ledger.supplierTransCurrencyID,
+                employee_ledger.supplierTransER,
+                employee_ledger.localCurrencyID,
+                employee_ledger.localER,
+                employee_ledger.localAmount,
+                employee_ledger.comRptCurrencyID,
+                employee_ledger.comRptER,
+                employee_ledger.comRptAmount,
+                employee_ledger.companySystemID,
+                employee_ledger.companyID,
+                employee_ledger.documentSystemID as addedDocumentSystemID,
+                employee_ledger.documentID as addedDocumentID,
+                employee_ledger.documentCode as bookingInvDocCode,
+                employee_ledger.documentDate as bookingInvoiceDate,
+                employee_ledger.invoiceType as addedDocumentType,
+                employee_ledger.employeeSystemID,
+                employee_ledger.supplierInvoiceNo,
+                employee_ledger.supplierInvoiceDate,
+                employee_ledger.supplierDefaultCurrencyID,
+                employee_ledger.supplierDefaultCurrencyER,
+                employee_ledger.supplierDefaultAmount,
+                CurrencyCode,
+                DecimalPlaces,
+                IFNULL(supplierInvoiceAmount,0) as supplierInvoiceAmount,
+                IFNULL(supplierInvoiceAmount,0) - IFNULL(sid.SumOfsupplierPaymentAmount,0)- IFNULL(md.matchedAmount *- 1,0) as paymentBalancedAmount,
+                IFNULL(ABS(sid.SumOfsupplierPaymentAmount),0) + IFNULL(md.matchedAmount,0) as matchedAmount,
+                false as isChecked 
+            FROM
+                employee_ledger
+                LEFT JOIN (
+            SELECT
+                erp_paysupplierinvoicedetail.apAutoID,
+                IFNULL(Sum( erp_paysupplierinvoicedetail.supplierPaymentAmount ),0) AS SumOfsupplierPaymentAmount,
+                IFNULL(Sum( erp_paysupplierinvoicedetail.paymentBalancedAmount ),0) AS SumOfpaymentBalancedAmount 
+            FROM
+                erp_paysupplierinvoicedetail
+                JOIN erp_debitnote ON erp_paysupplierinvoicedetail.PayMasterAutoId = erp_debitnote.debitNoteAutoID 
+            WHERE 
+                    erp_debitnote.type = 2 AND erp_paysupplierinvoicedetail.documentSystemID = 15
+            GROUP BY
+                erp_paysupplierinvoicedetail.apAutoID 
+                ) sid ON sid.apAutoID = employee_ledger.id
+                LEFT JOIN (
+            SELECT
+                erp_matchdocumentmaster.PayMasterAutoId,
+                erp_matchdocumentmaster.companyID,
+                erp_matchdocumentmaster.companySystemID,
+                erp_matchdocumentmaster.documentSystemID,
+                erp_matchdocumentmaster.BPVcode,
+                erp_matchdocumentmaster.BPVsupplierID,
+                erp_matchdocumentmaster.supplierTransCurrencyID,
+                SUM(erp_matchdocumentmaster.matchedAmount) as matchedAmount,
+                SUM(erp_matchdocumentmaster.matchLocalAmount) as matchLocalAmount,
+                SUM(erp_matchdocumentmaster.matchRptAmount) as matchRptAmount
+            FROM
+                erp_matchdocumentmaster 
+            WHERE
+                erp_matchdocumentmaster.companySystemID = ' . $matchDocumentMasterData->companySystemID . ' 
+                AND erp_matchdocumentmaster.documentSystemID = 15
+                GROUP BY companySystemID,PayMasterAutoId,documentSystemID,BPVsupplierID,supplierTransCurrencyID
+                ) md ON md.documentSystemID = employee_ledger.documentSystemID 
+                AND md.PayMasterAutoId = employee_ledger.documentSystemCode 
+                AND md.BPVsupplierID = employee_ledger.employeeSystemID 
+                AND md.supplierTransCurrencyID = employee_ledger.supplierTransCurrencyID 
+                AND md.companySystemID = employee_ledger.companySystemID 
+                LEFT JOIN currencymaster ON employee_ledger.supplierTransCurrencyID = currencymaster.currencyID 
+            WHERE
+                employee_ledger.invoiceType IN ( 0, 1, 4, 7 ) 
+                AND DATE_FORMAT(employee_ledger.documentDate,"%Y-%m-%d") <= "' . $matchingDocdate . '" 
+                AND employee_ledger.selectedToPaymentInv = 0 
+                AND employee_ledger.fullyInvoice <> 2 
+                AND employee_ledger.companySystemID = ' . $matchDocumentMasterData->companySystemID . ' 
+                AND employee_ledger.employeeSystemID = ' . $matchDocumentMasterData->employee_id . ' 
+                AND employee_ledger.supplierTransCurrencyID = ' . $matchDocumentMasterData->supplierTransCurrencyID . ' HAVING ROUND(paymentBalancedAmount, '.$decimalPlaces.') != 0 ORDER BY employee_ledger.id DESC';
+
+
+              
+                $invMaster = DB::select($qry1);
+                $output = DB::select($qry2);
+
+                //$finalQry = 'SELECT * FROM (' . $qry2 . ' UNION ALL ' . $qry1 . ') as t1';
+                foreach($invMaster as $key=>$val)
+                {
+                    foreach($output as $out)
+                    {
+                        if($val->bookingInvDocCode == $out->bookingInvDocCode)
+                        {
+                            $invMaster[$key]->matchedAmount = $val->matchedAmount + $out->matchedAmount;
+                            $invMaster[$key]->paymentBalancedAmount = $val->supplierInvoiceAmount - $invMaster[$key]->matchedAmount;
+                            break;
+                        }
+                        
+                    }
+        
+                
+                
+                }
 
 
         }
@@ -2290,13 +2398,15 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 AND erp_accountspayableledger.supplierCodeSystem = $matchDocumentMasterData->BPVsupplierID
                 AND erp_accountspayableledger.supplierTransCurrencyID = $matchDocumentMasterData->supplierTransCurrencyID HAVING ROUND(paymentBalancedAmount,$decimalPlaces) != 0 ORDER BY erp_accountspayableledger.apAutoID DESC";
 
+        $invMaster = DB::select($qry);
+
         }
      
 
 
        
 
-        $invMaster = DB::select($qry);
+
 
         $col[0] = $input['order'][0]['column'];
         $col[1] = $input['order'][0]['dir'];
