@@ -1868,7 +1868,7 @@ class SupplierMasterAPIController extends AppBaseController
             $amendable['unbilledAmendable'] = false;
         } else {
             $successMessages[] = "Use of Unbilled Account checking is done in supplier invoice";
-            $amendable['unbilledAmendable'] = (!$amendable['unbilledAmendable']) ? true : false;
+            $amendable['unbilledAmendable'] = (!$amendable['unbilledAmendable']) ? false : true;
         }
 
         $suppInv = BookInvSuppMaster::where('supplierID', $input['supplierID'])->where('supplierGLCodeSystemID', $supplierMaster->liabilityAccountSysemID)->first();
