@@ -425,8 +425,8 @@ class ShiftDetailsAPIController extends AppBaseController
 
     public function getPosSourceShiftDetails(Request $request) {
 
-        $posSourceShiftDetails = POSSOURCEShiftDetails::selectRaw('shiftID as value,CONCAT(startTime, " | " ,endTime, " - ", createdUserName) as label')
-            ->get();
+        $posTypeID = $request->posTypeID;
+        $posSourceShiftDetails = POSSOURCEShiftDetails::selectRaw('shiftID as value,CONCAT(startTime, " | " ,endTime, " - ", createdUserName) as label')->where('posType', $posTypeID)->get();
 
         $output = array(
             'posSourceShiftDetails' => $posSourceShiftDetails,
