@@ -1731,7 +1731,13 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getPosGlConfigFormData', 'GposPaymentGlConfigDetailAPIController@getFormData');
         Route::get('getPosItemSearch', 'ItemMasterAPIController@getPosItemSearch');
         Route::get('getPosShiftDetails', 'ShiftDetailsAPIController@getPosShiftDetails');
+
         Route::get('getPosSourceShiftDetails', 'ShiftDetailsAPIController@getPosSourceShiftDetails');
+        Route::get('getPosCustomerMasterDetails', 'ShiftDetailsAPIController@getPosCustomerMasterDetails');
+        Route::get('getPosCustomerMasterDetails', 'ShiftDetailsAPIController@getPosCustomerMasterDetails');
+        Route::post('postPosCustomerMapping', 'ShiftDetailsAPIController@postPosCustomerMapping');
+        Route::post('postPosTaxMapping', 'ShiftDetailsAPIController@postPosTaxMapping');
+
         Route::resource('currency_denominations', 'CurrencyDenominationAPIController');
         Route::resource('shift_details', 'ShiftDetailsAPIController');
         Route::get('getPosCustomerSearch', 'CustomerMasterAPIController@getPosCustomerSearch');

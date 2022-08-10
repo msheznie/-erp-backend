@@ -17,17 +17,22 @@ use App\Http\Requests\API\UpdateShiftDetailsAPIRequest;
 use App\Models\Company;
 use App\Models\Counter;
 use App\Models\CurrencyDenomination;
+use App\Models\CustomerAssigned;
 use App\Models\GposInvoice;
 use App\Models\GposPaymentGlConfigDetail;
 use App\Models\OutletUsers;
+use App\Models\POSSourceCustomerMaster;
 use App\Models\POSSOURCEShiftDetails;
 use App\Models\ShiftDetails;
+use App\Models\TaxVatCategories;
+use App\Models\VatSubCategoryType;
 use App\Models\WarehouseMaster;
 use App\Repositories\ShiftDetailsRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
+use DB;
 use Response;
 
 /**
@@ -428,12 +433,73 @@ class ShiftDetailsAPIController extends AppBaseController
         $posTypeID = $request->posTypeID;
         $posSourceShiftDetails = POSSOURCEShiftDetails::selectRaw('shiftID as value,CONCAT(startTime, " | " ,endTime, " - ", createdUserName) as label')->where('posType', $posTypeID)->get();
 
+
         $output = array(
             'posSourceShiftDetails' => $posSourceShiftDetails,
         );
 
         return $this->sendResponse($output, "Shift Details retrieved successfully");
     }
+
+    public function getPosCustomerMasterDetails(Request $request) {
+
+        $shiftID = $request->shiftID;
+        $companySystemID = $request->companyId;
+        $shiftDetailLabels = POSSOURCEShiftDetails::selectRaw('startTime ,endTime, createdUserName')->where('shiftID', $shiftID)->first();
+
+        $posCustomers = DB::table('pos_source_invoice')
+            ->selectRaw('customerSystemCode, customerName, customerAutoID')
+            ->join('pos_source_customermaster', 'pos_source_customermaster.customerAutoID', '=', 'pos_source_invoice.customerID')
+            ->where('pos_source_invoice.shiftID', $shiftID)
+            ->where('pos_source_invoice.isCreditSales', 1)
+            ->where('pos_source_customermaster.erp_customer_master_id', 0)
+            ->where('pos_source_customermaster.companyID', $companySystemID)
+            ->get();
+
+        $customers = CustomerAssigned::selectRaw('customerCodeSystem as value,CONCAT(CutomerCode, " | " ,CustomerName) as label')->where('companySystemID', $companySystemID)->get();
+
+
+        $posTaxes = DB::table('pos_source_taxmaster')
+            ->selectRaw('taxMasterAutoID, taxDescription, taxShortCode')
+            ->where('pos_source_taxmaster.taxType', 1)
+            ->where('pos_source_taxmaster.erp_tax_master_id', 0)
+            ->where('pos_source_taxmaster.companyID', $companySystemID)
+            ->get();
+
+        $taxes = TaxVatCategories::selectRaw('taxVatSubCategoriesAutoID as value, subCategoryDescription as label')
+            ->join('erp_taxmaster', 'erp_taxmaster.taxMasterAutoID', '=', 'erp_tax_vat_sub_categories.taxMasterAutoID')
+            ->where('erp_taxmaster.companySystemID', $companySystemID)
+            ->get();
+
+        $output = array(
+            'shiftDetailLabels' => $shiftDetailLabels,
+            'posCustomers' => $posCustomers,
+            'customers' => $customers,
+            'posTaxes' => $posTaxes,
+            'taxes' => $taxes
+        );
+
+        return $this->sendResponse($output, "Shift Details retrieved successfully");
+    }
+
+    public function postPosCustomerMapping(Request $request) {
+
+        $cusPOSId = $request->cusPOSId;
+        $cusERPId = $request->cusERPId;
+        $output = POSSourceCustomerMaster::where('customerAutoID', $cusPOSId)->update(['erp_customer_master_id' => $cusERPId]);
+
+        return $this->sendResponse($output, "Shift Details retrieved successfully");
+    }
+
+    public function postPosTaxMapping(Request $request) {
+
+        $cusPOSId = $request->cusPOSId;
+        $cusERPId = $request->cusERPId;
+        $output = POS::where('customerAutoID', $cusPOSId)->update(['erp_customer_master_id' => $cusERPId]);
+
+        return $this->sendResponse($output, "Shift Details retrieved successfully");
+    }
+
 
     public function getPosShiftDetails(Request $request)
     {
