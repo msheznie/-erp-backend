@@ -23,7 +23,8 @@
         <td><B>{{ date('d/m/Y', strtotime($fromDate)) }}</B></td>
         <td><B>Period To:</B></td>
         <td><B>{{ date('d/m/Y', strtotime($toDate)) }}</B></td>
-
+        <td><B>Currency:</B></td>
+        <td><B>{{ $currency }}</B></td>
     </tr>
     </thead>
 </table>
