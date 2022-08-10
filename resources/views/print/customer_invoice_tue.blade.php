@@ -297,7 +297,9 @@
             <tr>
                 <td style="width: 50%; text-align: left">
                     <b>CUSTOMER NAME : {{$request->customer->ReportTitle}}</b><br>
-                    <b>ADDRESS : {{$request->customer->customerAddress1}}</b><br>
+                    <b>CUSTOMER ADDRESS : {{$request->customer->customerAddress1}}</b><br>
+                    <b>CUSTOMER TELEPHONE : {{isset($request->CustomerContactDetails->contactPersonTelephone)?$request->CustomerContactDetails->contactPersonTelephone:' '}}</b><br>
+                    <b>CUSTOMER FAX : {{isset($request->CustomerContactDetails->contactPersonFax)?$request->CustomerContactDetails->contactPersonFax:' '}}</b><br>
                     <b>CUSTOMER VATIN : {{$request->vatNumber}}</b>
                 </td>
                 <td style="width: 50%; text-align: right;direction: rtl;">
@@ -316,6 +318,7 @@
                 <tr style="background-color: #6798da;">
                     <th style="width:6%;">Item<br>رقم المنتج</th>
                     <th style="width:25%; text-align: center">Description<br>الوصف</th>
+                    <th style="width:10%;text-align: center">UOM<br>وحدة القياس</th>
                     <th style="width:6%;text-align: center">QTY<br>الكمية</th>
                     <th style="width:10%;text-align: center">Days(OP)<br>الايام عمل</th>
                     <th style="width:10%;text-align: center">Price(OP)<br>سعر العمل</th>
@@ -337,6 +340,7 @@
                         <tr style="border: 1px solid !important;">
                             <td>{{$x}}</td>
                             <td style="word-wrap:break-word;">{{$item->description}}</td>
+                            <td style="text-align: center;">{{isset($item->uom_issuing->UnitShortCode)?$item->uom_issuing->UnitShortCode:''}}</td>
                             <td style="text-align: right;">{{$item->Qty}}</td>
                             <td style="text-align: right;">{{$item->Days_OP}}</td>
                             <td style="text-align: right;">{{number_format($item->Price_OP,$numberFormatting)}}</td>
@@ -424,7 +428,7 @@
                         <td>{{$x}}</td>
                         <td>{{$item->glCode}}</td>
                         <td>{{$item->glCodeDes}}</td>
-                        <td style="text-align: left;">{{isset($item->uom_issuing->UnitShortCode)?$item->uom_issuing->UnitShortCode:''}}</td>
+                        <td style="text-align: center;">{{isset($item->unit->UnitShortCode)?$item->unit->UnitShortCode:''}}</td>
                         <td style="text-align: right;">{{number_format($item->invoiceQty,2)}}</td>
                         <td style="text-align: right;">{{number_format($item->unitCost,$numberFormatting)}}</td>
                         <td class="text-right">{{number_format($item->invoiceAmount,$numberFormatting)}}</td>
@@ -438,7 +442,7 @@
                         <td></td>
                         <td colspan="3" style="text-align: left; border-right: none !important;"><b>Total Before VAT ( الاجمالي قبل الضريبة )</b></td>
                         <td style="text-align: center; border-left: none !important"><b>{{empty($request->currency) ? '' : $request->currency->CurrencyCode}}</b></td>
-                        <td class="text-right">@if ($request->invoicedetails)
+                        <td colspan="2" class="text-right">@if ($request->invoicedetails)
                         {{number_format($directTraSubTotal, $numberFormatting)}}
                     @endif</td>
                     </tr>
@@ -448,29 +452,27 @@
                             <td></td>
                             <td colspan="3" style="text-align: left; border-right: none !important;"><b>Value Added Tax {{$request->tax->taxPercent}}% (ضريبة القيمة المضافة )</b></td>
                             <td style="text-align: center; border-left: none !important"><b>{{empty($request->currency) ? '' : $request->currency->CurrencyCode}}</b></td>
-                            <td class="text-right">{{number_format($request->tax->amount, $numberFormatting)}}</td>
+                            <td colspan="2" class="text-right">{{number_format($request->tax->amount, $numberFormatting)}}</td>
                         </tr>
 
                     <tr>
                         <td></td>
                         <td colspan="3" style="text-align: left; border-right: none !important;"><b>Total Amount Including VAT(القيمة الكلية متضمنة ضريبة القيمة المضافة)</b></td>
                         <td style="text-align: center; border-left: none !important"><b>{{empty($request->currency) ? '' : $request->currency->CurrencyCode}}</b></td>
-                        <td class="text-right">{{number_format($directTraSubTotal, $numberFormatting)}}</td>
+                        <td colspan="2" class="text-right">{{number_format($directTraSubTotal, $numberFormatting)}}</td>
                     </tr>
                     @endif
                     <tr>
                         <td></td>
-                        <td colspan="3" style="text-align: left; border-right: none !important;"><b>Total Amount in Word ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</b>
+                        <td colspan="4" style="text-align: left;"><b>Total Amount in Word ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</b>
                         </td>
-                        <td colspan="2" style="text-align: left; border-left: none !important;">
-                            <b>
-                                {{$request->amount_word}}
-                                @if ($request->floatAmt > 0)
-                                and
-                                {{$request->floatAmt}}/@if($request->currency->DecimalPlaces == 3)1000 @else 100 @endif
-                                @endif
-                                only
-                            </b>
+                        <td colspan="2" style="text-align: right;">
+                            {{$request->amount_word}}
+                            @if ($request->floatAmt > 0)
+                            and
+                            {{$request->floatAmt}}/@if($request->currency->DecimalPlaces == 3)1000 @else 100 @endif
+                            @endif
+                            only
                         </td>
                     </tr>
                 </tbody>
@@ -481,7 +483,7 @@
                 </tbody> -->
                 <tbody>
                     <tr>
-                        <td colspan="6">PLEASE ISSUE ALL PAYMENT ON BELOW BANK ACCOUNT DETAILS : </td>
+                        <td colspan="7">PLEASE ISSUE ALL PAYMENT ON BELOW BANK ACCOUNT DETAILS : </td>
                     </tr>
                 </tbody>
                 
