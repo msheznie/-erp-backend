@@ -1863,7 +1863,7 @@ class SupplierMasterAPIController extends AppBaseController
                                       ->whereIn('documentType', [0,2])
                                       ->first();
 
-        if ($grvMaster) {
+        if ($suppInvUn) {
             $errorMessages[] = "Unbilled Account cannot be amended. Since, it has been used in supplier invoice";
             $amendable['unbilledAmendable'] = false;
         } else {
