@@ -1737,6 +1737,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getPosCustomerMasterDetails', 'ShiftDetailsAPIController@getPosCustomerMasterDetails');
         Route::post('postPosCustomerMapping', 'ShiftDetailsAPIController@postPosCustomerMapping');
         Route::post('postPosTaxMapping', 'ShiftDetailsAPIController@postPosTaxMapping');
+        Route::post('postPosPayMapping', 'ShiftDetailsAPIController@postPosPayMapping');
 
         Route::resource('currency_denominations', 'CurrencyDenominationAPIController');
         Route::resource('shift_details', 'ShiftDetailsAPIController');

@@ -14,6 +14,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateShiftDetailsAPIRequest;
 use App\Http\Requests\API\UpdateShiftDetailsAPIRequest;
+use App\Models\BankAccount;
 use App\Models\Company;
 use App\Models\Counter;
 use App\Models\CurrencyDenomination;
@@ -22,7 +23,9 @@ use App\Models\GposInvoice;
 use App\Models\GposPaymentGlConfigDetail;
 use App\Models\OutletUsers;
 use App\Models\POSSourceCustomerMaster;
+use App\Models\POSSourcePaymentGlConfig;
 use App\Models\POSSOURCEShiftDetails;
+use App\Models\POSSourceTaxMaster;
 use App\Models\ShiftDetails;
 use App\Models\TaxVatCategories;
 use App\Models\VatSubCategoryType;
@@ -471,12 +474,25 @@ class ShiftDetailsAPIController extends AppBaseController
             ->where('erp_taxmaster.companySystemID', $companySystemID)
             ->get();
 
+        $posPayments = DB::table('pos_source_paymentglconfigdetail')
+            ->selectRaw('ID, description, GLCode')
+            ->join('pos_source_paymentglconfigmaster', 'pos_source_paymentglconfigmaster.autoID', '=', 'pos_source_paymentglconfigdetail.paymentConfigMasterID')
+            ->where('pos_source_paymentglconfigdetail.companyID', $companySystemID)
+            ->get();
+
+        foreach ($posPayments as $pt){
+            $pt->dropOptions = BankAccount::selectRaw('bankAccountAutoID as value, CONCAT(bankShortCode, " | " ,AccountNo) as label')->where('companySystemID', $companySystemID)->where('chartOfAccountSystemID', $pt->GLCode)
+                ->get();
+        }
+
+
         $output = array(
             'shiftDetailLabels' => $shiftDetailLabels,
             'posCustomers' => $posCustomers,
             'customers' => $customers,
             'posTaxes' => $posTaxes,
-            'taxes' => $taxes
+            'taxes' => $taxes,
+            'posPayments' => $posPayments,
         );
 
         return $this->sendResponse($output, "Shift Details retrieved successfully");
@@ -493,9 +509,18 @@ class ShiftDetailsAPIController extends AppBaseController
 
     public function postPosTaxMapping(Request $request) {
 
-        $cusPOSId = $request->cusPOSId;
-        $cusERPId = $request->cusERPId;
-        $output = POS::where('customerAutoID', $cusPOSId)->update(['erp_customer_master_id' => $cusERPId]);
+        $taxPOSId = $request->taxPOSId;
+        $taxERPId = $request->taxERPId;
+        $output = POSSourceTaxMaster::where('taxMasterAutoID', $taxPOSId)->update(['erp_tax_master_id' => $taxERPId]);
+
+        return $this->sendResponse($output, "Shift Details retrieved successfully");
+    }
+
+    public function postPosPayMapping(Request $request) {
+
+        $taxPOSId = $request->taxPOSId;
+        $taxERPId = $request->taxERPId;
+        $output = POSSourcePaymentGlConfig::where('taxMasterAutoID', $taxPOSId)->update(['erp_tax_master_id' => $taxERPId]);
 
         return $this->sendResponse($output, "Shift Details retrieved successfully");
     }
