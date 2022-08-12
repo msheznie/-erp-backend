@@ -807,9 +807,13 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 $decimalPlaceCollect = collect($outputRevenue)->pluck('documentRptCurrencyID')->toArray();
                 $decimalPlaceUnique = array_unique($decimalPlaceCollect);
 
-                $currencyId = $request->currencyID;
-                if (!empty($decimalPlaceUnique)) {
-                    $currencyId = $decimalPlaceUnique[0];
+                $selectedCurrency = $request->currencyID;
+                if ($selectedCurrency == 2) {
+                    $currencyId = $checkIsGroup->localCurrencyID;
+                } elseif ($selectedCurrency == 3) {
+                    $currencyId = $checkIsGroup->reportingCurrency;
+                } else {
+                    $currencyId = $checkIsGroup->localCurrencyID;
                 }
 
                 $requestCurrency = CurrencyMaster::where('currencyID', $currencyId)->first();
@@ -1305,9 +1309,13 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $decimalPlaceCollect = collect($outputRevenue)->pluck('documentRptCurrencyID')->toArray();
                     $decimalPlaceUnique = array_unique($decimalPlaceCollect);
     
-                    $currencyId = $request->currencyID;
-                    if (!empty($decimalPlaceUnique)) {
-                        $currencyId = $decimalPlaceUnique[0];
+                    $selectedCurrency = $request->currencyID;
+                    if ($selectedCurrency == 2) {
+                        $currencyId = $checkIsGroup->localCurrencyID;
+                    } elseif ($selectedCurrency == 3) {
+                        $currencyId = $checkIsGroup->reportingCurrency;
+                    } else {
+                        $currencyId = $checkIsGroup->localCurrencyID;
                     }
     
                     $requestCurrency = CurrencyMaster::where('currencyID', $currencyId)->first();
