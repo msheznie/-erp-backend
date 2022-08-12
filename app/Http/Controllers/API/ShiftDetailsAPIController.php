@@ -22,8 +22,10 @@ use App\Models\CustomerAssigned;
 use App\Models\GposInvoice;
 use App\Models\GposPaymentGlConfigDetail;
 use App\Models\OutletUsers;
+use App\Models\POSInvoiceSource;
 use App\Models\POSSourceCustomerMaster;
 use App\Models\POSSourcePaymentGlConfig;
+use App\Models\POSSourcePaymentGlConfigDetail;
 use App\Models\POSSOURCEShiftDetails;
 use App\Models\POSSourceTaxMaster;
 use App\Models\ShiftDetails;
@@ -478,6 +480,7 @@ class ShiftDetailsAPIController extends AppBaseController
             ->selectRaw('ID, description, GLCode')
             ->join('pos_source_paymentglconfigmaster', 'pos_source_paymentglconfigmaster.autoID', '=', 'pos_source_paymentglconfigdetail.paymentConfigMasterID')
             ->where('pos_source_paymentglconfigdetail.companyID', $companySystemID)
+            ->where('pos_source_paymentglconfigdetail.erp_bank_acc_id', 0)
             ->get();
 
         foreach ($posPayments as $pt){
@@ -518,11 +521,26 @@ class ShiftDetailsAPIController extends AppBaseController
 
     public function postPosPayMapping(Request $request) {
 
-        $taxPOSId = $request->taxPOSId;
-        $taxERPId = $request->taxERPId;
-        $output = POSSourcePaymentGlConfig::where('taxMasterAutoID', $taxPOSId)->update(['erp_tax_master_id' => $taxERPId]);
+        $payPOSId = $request->payPOSId;
+        $payERPId = $request->payERPId;
+        $output = POSSourcePaymentGlConfigDetail::where('ID', $payPOSId)->update(['erp_bank_acc_id' => $payERPId]);
 
         return $this->sendResponse($output, "Shift Details retrieved successfully");
+    }
+
+    public function postPosEntries(Request $request){
+
+        $shiftId = $request->shiftId;
+
+
+        $bankGL = DB::table('pos_source_invoice')
+            ->selectRaw('pos_source_invoice.netTotal, pos_source_invoice.invoiceID, pos_source_invoicepayments.GLCode, pos_source_invoice.shiftID')
+            ->join('pos_source_invoicepayments', 'pos_source_invoicepayments.invoiceID', '=', 'pos_source_invoice.invoiceID')
+            ->where('pos_source_invoice.shiftID', $shiftId)
+            ->get();
+
+        return $this->sendResponse($bankGL, "Shift Details retrieved successfully");
+
     }
 
 
