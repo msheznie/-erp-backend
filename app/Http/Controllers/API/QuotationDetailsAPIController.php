@@ -131,6 +131,7 @@ class QuotationDetailsAPIController extends AppBaseController
         $input = array_except($request->all(), 'unit');
         $input = $this->convertArrayToValue($input);
 
+     
 
         $employee = \Helper::getEmployeeInfo();
         $input['itemAutoID'] = isset( $input['itemAutoID']) ?  $input['itemAutoID'] : 0;
@@ -149,13 +150,34 @@ class QuotationDetailsAPIController extends AppBaseController
         }
 
 
+        $category = $item->financeCategoryMaster;
+
         if($input['itemAutoID']) {
             $itemExist = QuotationDetails::where('itemAutoID', $input['itemAutoID'])
             ->where('quotationMasterID', $input['quotationMasterID'])
             ->first();
 
-            if (!empty($itemExist)) {
-                return $this->sendError('Added item already exist');
+            if(($category != 2 )&& ($category != 4 ))
+            {
+                if (!empty($itemExist)) {
+                    return $this->sendError('Added item already exist');
+                }
+            }
+
+
+       
+        }
+        else if($input['itemCode']['id'])
+        {
+            $itemExist = QuotationDetails::where('itemAutoID', $input['itemCode']['id'])
+            ->where('quotationMasterID', $input['quotationMasterID'])
+            ->first();
+
+            if(($category != 2 )&& ($category != 4 ))
+            {
+                if (!empty($itemExist)) {
+                    return $this->sendError('Added item already exist');
+                }
             }
         }
 
@@ -788,11 +810,21 @@ WHERE
                     ->where('itemAutoID', $itemExist['itemAutoID'])
                     ->get();
 
+
+                    $item = ItemAssigned::with(['item_master'])
+                    ->where('itemCodeSystem', $itemExist['itemAutoID'])
+                    ->where('companySystemID', $itemExist['companySystemID'])
+                    ->first();
+
                 if (!empty($QuoDetailExist)) {
-                    foreach ($QuoDetailExist as $row) {
-                        $itemDrt = $row['itemSystemCode'] . " already exist";
-                        $itemExistArray[] = [$itemDrt];
+                    if($item->financeCategoryMaster != 2 && $item->financeCategoryMaster != 4 )
+                    {
+                        foreach ($QuoDetailExist as $row) {
+                            $itemDrt = $row['itemSystemCode'] . " already exist";
+                            $itemExistArray[] = [$itemDrt];
+                        }
                     }
+         
                 }
             }
         }
