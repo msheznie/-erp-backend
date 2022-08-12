@@ -810,7 +810,6 @@ WHERE
                     ->where('itemAutoID', $itemExist['itemAutoID'])
                     ->get();
 
-
                     $item = ItemAssigned::with(['item_master'])
                     ->where('itemCodeSystem', $itemExist['itemAutoID'])
                     ->where('companySystemID', $itemExist['companySystemID'])

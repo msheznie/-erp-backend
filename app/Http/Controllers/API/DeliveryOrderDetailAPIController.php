@@ -917,7 +917,6 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                     ->where('companySystemID', $itemExist['companySystemID'])
                     ->first();
                      
-
                     $QuoDetailExistDetails = DeliveryOrderDetail::where('deliveryOrderID', $deliveryOrderID)
                     ->where('itemCodeSystem', $itemExist['itemAutoID'])
                     ->first();
