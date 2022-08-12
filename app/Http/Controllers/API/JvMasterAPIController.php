@@ -686,6 +686,11 @@ class JvMasterAPIController extends AppBaseController
             $allSubCompanies = Company::whereIn("companySystemID", $subCompanies)->where("isGroup",0)->get();
         }
 
+        $assetAllocatePolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 61)
+        ->where('companySystemID', $companyId)
+        ->where('isYesNO', 1)
+        ->first();
+
         $output = array('yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
             'month' => $month,
@@ -694,6 +699,7 @@ class JvMasterAPIController extends AppBaseController
             'currencies' => $currencies,
             'financialYears' => $financialYears,
             'allSubCompanies' => $allSubCompanies,
+            'assetAllocatePolicy' => $assetAllocatePolicy ? true : false,
             'companyFinanceYear' => $companyFinanceYear,
             'segments' => $segments
         );
@@ -915,7 +921,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
     public function exportStandardJVFormat(Request $request)
     {
         $input = $request->all();
-        $disk = isset($input['companySystemID']) ? Helper::policyWiseDisk($input['companySystemID'], 'public') : 'public'; 
+        $disk = Helper::policyWiseDisk($input['companySystemID'], 'public');
         if ($exists = Storage::disk($disk)->exists('standard_jv_template/standard_jv_upload_template.xlsx')) {
             return Storage::disk($disk)->download('standard_jv_template/standard_jv_upload_template.xlsx', 'standard_jv_upload_template.xlsx');
         } else {
@@ -1444,6 +1450,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
         if (!empty($fetchJournalVoucherDetails)) {
             foreach ($fetchJournalVoucherDetails as $bookDetail) {
                 $bookDetail['timesReferred'] = $jvMasterData->timesReferred;
+                $bookDetail->setAppends([]);
             }
         }
 

@@ -314,6 +314,15 @@ class DirectPaymentDetails extends Model
         'pettyCashYN',
         'glCompanySystemID',
         'glCompanyID',
+        'vatMasterCategoryID',
+        'vatSubCategoryID',
+        'vatAmount',
+        'VATAmountLocal',
+        'VATAmountRpt',
+        'VATPercentage',
+        'netAmount',
+        'netAmountLocal',
+        'netAmountRpt',
         'toBankID',
         'toBankAccountID',
         'toBankCurrencyID',
@@ -328,7 +337,8 @@ class DirectPaymentDetails extends Model
         'toCompanyRptCurrencyID',
         'toCompanyRptCurrencyER',
         'toCompanyRptCurrencyAmount',
-        'timeStamp'
+        'timeStamp',
+        'detail_project_id'
     ];
 
     /**
@@ -384,7 +394,8 @@ class DirectPaymentDetails extends Model
         'toCompanyLocalCurrencyAmount' => 'float',
         'toCompanyRptCurrencyID' => 'integer',
         'toCompanyRptCurrencyER' => 'float',
-        'toCompanyRptCurrencyAmount' => 'float'
+        'toCompanyRptCurrencyAmount' => 'float',
+        'detail_project_id' => 'integer'
     ];
 
     /**

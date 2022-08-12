@@ -160,6 +160,10 @@ class InventoryReportAPIController extends AppBaseController
             $companiesByGroup = (array)$selectedCompanyId;
         }
 
+        
+        $company = Company::find($companiesByGroup[0]);
+        $company_name = $company->CompanyName;
+
         $warehouse = WarehouseMaster::whereIN('companySystemID', $companiesByGroup)->get();
         $document = DocumentMaster::where('departmentSystemID', 10)->get();
         $segment = SegmentMaster::ofCompany($companiesByGroup)->get();
@@ -179,6 +183,7 @@ class InventoryReportAPIController extends AppBaseController
             'document' => $document,
             'segment' => $segment,
             'item' => $item,
+            'company_name' => $company_name
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
@@ -249,7 +254,7 @@ class InventoryReportAPIController extends AppBaseController
                                     ->whereIn('wareHouseSystemCode', $warehouse)
                                     ->whereIn('itemPrimaryCode', $items)
                                     ->groupBy('itemPrimaryCode')
-                                    ->selectRaw('itemLedgerAutoID,unitOfMeasure, units.UnitShortCode, currencymaster.CurrencyName AS LocalCurrency,currencymaster.DecimalPlaces AS LocalCurrencyDecimals,itemLedgerAutoID,itemmaster.itemDescription,itemPrimaryCode,transactionDate,sum(case when transactionDate<"'.$toDate.'" then inOutQty else 0 end) as closing_balance_quantity,sum(case when transactionDate<"'.$toDate.'" then '.$cur.' * inOutQty else 0 end) as closing_balance_value,sum(case when transactionDate<"'.$fromDate.'" then inOutQty else 0 end) as opening_balance_quantity,sum(case when transactionDate<"'.$fromDate.'" then '.$cur.' * inOutQty else 0 end) as opening_balance_value,sum(case when (inOutQty<0 && transactionDate>"'.$fromDate.'" && transactionDate<"'.$toDate.'") then inOutQty else 0 end) as outwards_quantity,sum(case when (inOutQty<0 && transactionDate>"'.$fromDate.'" && transactionDate<"'.$toDate.'") then '.$cur.' * inOutQty else 0 end) as outwards_value,sum(case when (inOutQty>0 && transactionDate>"'.$fromDate.'" && transactionDate<"'.$toDate.'") then inOutQty else 0 end) as inwards_quantity,sum(case when (inOutQty>0 && transactionDate>"'.$fromDate.'" && transactionDate<"'.$toDate.'") then '.$cur.' * inOutQty else 0 end) as inwards_value,itemmaster.financeCategorySub,financeitemcategorysub.categoryDescription')
+                                    ->selectRaw('itemLedgerAutoID,unitOfMeasure, units.UnitShortCode, currencymaster.CurrencyName AS LocalCurrency,currencymaster.DecimalPlaces AS LocalCurrencyDecimals,itemLedgerAutoID,itemmaster.itemDescription,itemPrimaryCode,transactionDate,sum(case when transactionDate<"'.$toDate.'" then inOutQty else 0 end) as closing_balance_quantity,sum(case when transactionDate<"'.$toDate.'" then '.$cur.' * inOutQty else 0 end) as closing_balance_value,sum(case when transactionDate<"'.$fromDate.'" then inOutQty else 0 end) as opening_balance_quantity,sum(case when transactionDate<"'.$fromDate.'" then '.$cur.' * inOutQty else 0 end) as opening_balance_value,sum(case when (inOutQty<0 && transactionDate>"'.$fromDate.'" && transactionDate<"'.$toDate.'") then inOutQty else 0 end) as outwards_quantity,sum(case when (inOutQty<0 && transactionDate>"'.$fromDate.'" && transactionDate<"'.$toDate.'") then '.$cur.' * inOutQty else 0 end) as outwards_value,sum(case when (inOutQty>0 && transactionDate>"'.$fromDate.'" && transactionDate<"'.$toDate.'") then inOutQty else 0 end) as inwards_quantity,sum(case when (inOutQty>0 && transactionDate>"'.$fromDate.'" && transactionDate<"'.$toDate.'") then '.$cur.' * inOutQty else 0 end) as inwards_value,itemmaster.financeCategorySub,financeitemcategorysub.categoryDescription,itemmaster.secondaryItemCode')
                                     ->get();
 
     }
@@ -332,7 +337,6 @@ class InventoryReportAPIController extends AppBaseController
                 $input = $this->convertArrayToSelectedValue($request->all(), array('currency'));
                 $currency_id = $input['currency'];
                 $filter_val = $this->scrapInventoryReportSupplierWise($request->fromDate, $request->toDate,$request['category'],$request['Items'],$request['Suppliers'],$currency_id,$request->companySystemID);
-
                 $array = array();
                 if (!empty($filter_val)) {
                     foreach ($filter_val as $element)
@@ -439,6 +443,10 @@ class InventoryReportAPIController extends AppBaseController
                     } else {
                         $companyID = (array)$request->companySystemID;
                     }
+                    
+                    $company = Company::find($companyID[0]);
+                    $company_name = $company->CompanyName;
+
 
                     $warehouse = (array)$request->warehouse;
                     $warehouse = collect($warehouse)->pluck('wareHouseSystemCode');
@@ -506,6 +514,7 @@ class InventoryReportAPIController extends AppBaseController
                                 }
                             }
                         })
+                        ->with('company_name', $company_name)
                         ->addIndexColumn()
                         /*  ->with('orderCondition', $sort)*/
                         ->make(true);
@@ -535,7 +544,14 @@ class InventoryReportAPIController extends AppBaseController
                 $reportTypeID = $request->reportTypeID;
                 if ($reportTypeID == 'INVMMA') {
                     $output = $this->minAndMaxAnalysis($request);
-                    return $this->sendResponse($output, 'Items retrieved successfully');
+
+                    $company = Company::find($request->companySystemID);
+                    $company_name = $company->CompanyName;
+
+                    $detail['output'] = $output;
+                    $detail['company_name'] = $company_name;
+
+                    return $this->sendResponse($detail, 'Items retrieved successfully');
                 }
                 break;
             case 'INVIM':
@@ -574,6 +590,11 @@ class InventoryReportAPIController extends AppBaseController
         } else {
             $subCompanies = [$selectedCompanyId];
         }
+
+        
+        $company = Company::find($subCompanies[0]);
+        $company_name = $company->CompanyName;
+        
         $input = $request;
         if (array_key_exists('warehouse', $input)) {
             $warehouse = (array)$input['warehouse'];
@@ -802,7 +823,8 @@ class InventoryReportAPIController extends AppBaseController
         $output = array(
             'categories' => $finalArray,
             'grandWacLocal' => $GrandWacLocal,
-            'grandWacRpt' => $GrandWacRpt
+            'grandWacRpt' => $GrandWacRpt,
+            'company_name' => $company_name
         );
 
 
@@ -824,6 +846,9 @@ class InventoryReportAPIController extends AppBaseController
         } else {
             $subCompanies = [$selectedCompanyId];
         }
+        $company = Company::find($subCompanies[0]);
+        $company_name = $company->CompanyName;
+
         $warehouse = [];
         if (array_key_exists('warehouse', $input)) {
             $warehouse = (array)$input['warehouse'];
@@ -885,8 +910,8 @@ class InventoryReportAPIController extends AppBaseController
                 round( erp_itemledger.inOutQty * erp_itemledger.wacLocal, 3 ) AS localAmount,
                 currencymaster_1.CurrencyCode AS RepCurrency,
                 round( erp_itemledger.inOutQty * erp_itemledger.wacRpt, 2 ) AS rptAmount,
-                currencymaster.DecimalPlaces AS LocalCurrencyDecimals,
-                currencymaster_1.DecimalPlaces AS RptCurrencyDecimals,               
+                IFNULL(currencymaster.DecimalPlaces,0) AS LocalCurrencyDecimals,
+                IFNULL(currencymaster_1.DecimalPlaces,0) AS RptCurrencyDecimals,               
                 itemassigned.minimumQty as minimumQty,               
                 itemassigned.maximunQty as maximunQty      
             FROM
@@ -945,7 +970,8 @@ FROM
             'subCompanies' => $subCompanies,
             'grandWacLocal' => $GrandWacLocal,
             'grandWacRpt' => $GrandWacRpt,
-            'warehouse' => $request->warehouse
+            'warehouse' => $request->warehouse,
+            'company_name' => $company_name
         );
 
         return $output;
@@ -1108,6 +1134,7 @@ FROM
                 $items = $request['Items'];
                 $suppliers = $request['Suppliers'];
                 $companySystemID = $request->companySystemID;
+                $company = Company::with(['reportingcurrency', 'localcurrency'])->find($request->companySystemID);
 
                 $items = (array)$items;
                 $items = collect($items)->pluck('itemPrimaryCode');
@@ -1121,15 +1148,23 @@ FROM
                 $templateName = "export_report.scrap_inventory_supplier_wise_report";
                 $company = Company::with(['reportingcurrency', 'localcurrency'])->find($request->companySystemID);
 
-                $reportData = ['scrapDetails' => $items, 'fromDate' => $fromDate, 'toDate' => $toDate, 'suppliers' => $suppliers, 'companySystemID' => $companySystemID, 'currency_id' => $currency_id, 'company'=> $company];
+                $reportData = ['scrapDetails' => $items, 'Title'=>'Scrap Inventory Report', 'companyName' => $company->CompanyName,'fromDate' => $fromDate, 'toDate' => $toDate, 'suppliers' => $suppliers, 'companySystemID' => $companySystemID, 'currency_id' => $currency_id, 'company'=> $company];
 
-                \Excel::create('finance', function ($excel) use ($reportData, $templateName) {
-                    $excel->sheet('New sheet', function ($sheet) use ($reportData, $templateName) {
-                        $sheet->loadView($templateName, $reportData);
-                    });
-                })->download('csv');
 
-                return $this->sendResponse(array(), 'successfully export');
+                $file_type = $request->type;  
+                $fileName = 'scrap_inventory_report';
+                $path = 'inventory/report/scrap-inventory/excel/';
+                $basePath = CreateExcel::loadView($reportData,$file_type,$fileName,$path,$templateName);
+        
+                if($basePath == '')
+                {
+                    return $this->sendError('Unable to export excel');
+                }
+                else
+                {
+                    return $this->sendResponse($basePath, trans('custom.success_export'));
+                }
+                
 
                 break;
 
@@ -1140,6 +1175,8 @@ FROM
                  $items = $request['Items'];
                 $suppliers = $request['Suppliers'];
                 $companySystemID = $request->companySystemID;
+
+                $checkIsGroup = Company::find($request->companySystemID);
 
                 $items = (array)$items;
                 $items = collect($items)->pluck('itemPrimaryCode');
@@ -1152,20 +1189,28 @@ FROM
                 $toDate = $request->toDate;
 
                 $templateName = "export_report.scrap_inventory_report";
+                
 
-                $reportData = ['scrapDetails' => $items, 'fromDate' => $fromDate, 'toDate' => $toDate, 'suppliers' => $suppliers, 'companySystemID' => $companySystemID, 'currency_id' => $currency_id, 'company'=> $company];
+                $reportData = ['scrapDetails' => $items, 'Title'=>'Scrap Inventory Report', 'companyName' => $company->CompanyName, 'fromDate' => $fromDate, 'toDate' => $toDate, 'suppliers' => $suppliers, 'companySystemID' => $companySystemID, 'currency_id' => $currency_id, 'company'=> $company];
 
-                \Excel::create('finance', function ($excel) use ($reportData, $templateName) {
-                    $excel->sheet('New sheet', function ($sheet) use ($reportData, $templateName) {
-                        $sheet->loadView($templateName, $reportData);
-                    });
-                })->download('csv');
+                $file_type = $request->type;  
+                $fileName = 'scrap_inventory_report';
+                $path = 'inventory/report/scrap-inventory/excel/';
+                $basePath = CreateExcel::loadView($reportData,$file_type,$fileName,$path,$templateName);
         
-                return $this->sendResponse(array(), 'successfully export');
+                if($basePath == '')
+                {
+                    return $this->sendError('Unable to export excel');
+                }
+                else
+                {
+                    return $this->sendResponse($basePath, trans('custom.success_export'));
+                }
+                
 
                 break;
 
-                case 'INVIS':
+            case 'INVIS':
 
                 $input = $this->convertArrayToSelectedValue($request->all(), array('currency'));
                 $currency_id = $input['currency'];
@@ -1179,10 +1224,29 @@ FROM
                 $decimal_val = ($currency_id == 1) ? $company->localcurrency->DecimalPlaces : $company->reportingcurrency->DecimalPlaces;
 
 
+                
+                $company = Company::find($request->companySystemID);
+                $company_name = $company->CompanyName;
+
+                $from_date =  ((new Carbon($request->fromDate))->format('d/m/Y'));
+                $to_date =  ((new Carbon($request->toDate))->format('d/m/Y'));
+
+                $openeingBalanceTotal = 0;
+                $closingBalanceTotal = 0;
+                $InwardsTotal = 0;
+                $outwardTotal = 0;
+
                 foreach ($filter_val as $val) {
+
+                    $openeingBalanceTotal = round($openeingBalanceTotal,$decimal_val) + round($val->opening_balance_value,$decimal_val);
+                    $closingBalanceTotal = round($closingBalanceTotal,$decimal_val) + round($val->closing_balance_value,$decimal_val);
+                    $InwardsTotal = round($InwardsTotal,$decimal_val) + round($val->inwards_value,$decimal_val);
+                    $outwardTotal = round($outwardTotal,$decimal_val) + round($val->outwards_value,$decimal_val);
+
                     $data[] = array(
                         'Category' => $val->categoryDescription,
                         'Item Code' => $val->itemPrimaryCode,
+                        'Part No / Reference No' => $val->secondaryItemCode,
                         'Item Description' => $val->itemDescription,
                         'UOM' => $val->UnitShortCode,
                         'Opening Balance Qty' => $val->opening_balance_quantity,
@@ -1200,9 +1264,33 @@ FROM
 
 
 
+                $dataSorted = collect($data)->sortBy('Category');
+
+                $GrandTotal =  array(
+                    'Category' => '',
+                    'Item Code' => '',
+                    'Part No / Reference No' => '',
+                    'Item Description' => 'Grand Total',
+                    'UOM' => '',
+                    'Opening Balance Qty' => '',
+                    'Opening Balance Val ('.$currencyCode.')' =>  round($openeingBalanceTotal,3),
+                    'Inwards Qty' => '',
+                    'Inwards Val ('.$currencyCode.')' => $InwardsTotal,
+                    'Outwards Qty' => '',
+                    'Outwards Val ('.$currencyCode.')' => $outwardTotal,
+                    'Closing Balance Qty' => '',
+                    'Closing Balance Val ('.$currencyCode.')' => round($closingBalanceTotal,3),
+
+                );
+
+                $dataSorted->push($GrandTotal);
+
                 $fileName = 'inventory_summary_report';
+                $title = 'Inventory Summary Report';
                 $path = 'inventory/report/inventory_summary_report/excel/';
-                $basePath = CreateExcel::process($data,$request->type,$fileName,$path);
+                $cur = NULL;
+                $detail_array = array('type' => 1,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$cur,'title'=>$title);
+                $basePath = CreateExcel::process($dataSorted,$request->type,$fileName,$path,$detail_array);
         
                 if($basePath == '')
                 {
@@ -1228,6 +1316,14 @@ FROM
 
                     $endDate = new Carbon($request->toDate);
                     $endDate = $endDate->format('Y-m-d');
+
+
+                    $from_date =  ((new Carbon($request->fromDate))->format('d/m/Y'));
+                    $to_date =  ((new Carbon($request->toDate))->format('d/m/Y'));
+
+                    $company = Company::find($request->companySystemID);
+                    $company_name = $company->CompanyName;
+
 
                     $companyID = "";
                     $checkIsGroup = Company::find($request->companySystemID);
@@ -1345,8 +1441,11 @@ FROM
 
 
                     $fileName = 'stock_transaction';
+                    $title = 'Stock Transaction';
                     $path = 'inventory/report/stock_transaction/excel/';
-                    $basePath = CreateExcel::process($data,$type,$fileName,$path);
+                    $cur = NULL;
+                    $detail_array = array('type' => 1,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$cur,'title'=>$title);
+                    $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
             
                     if($basePath == '')
                     {
@@ -1366,7 +1465,12 @@ FROM
                     $input = $this->convertArrayToSelectedValue($input, array('currencyID', 'reportCategory'));
                     $input['reportCategory'] = isset($input['reportCategory']) ? $input['reportCategory'] : 1;
                     $output = $this->stockAgingQry($input, 1);
-                    $data = array();
+                    $from_date =  ((new Carbon($request->asOfDate))->format('d/m/Y'));
+                    $to_date =  ((new Carbon($request->asOfDate))->format('d/m/Y'));
+
+                    $company = Company::find($request->companySystemID);
+                    $company_name = $company->CompanyName;
+                    $data = array();    
                     if ($output) {
                         $x = 0;
 
@@ -1516,8 +1620,11 @@ FROM
                     // return $this->sendResponse(array(), 'successfully export');
 
                     $fileName = 'stock_aging';
+                    $title = 'Stock Aging Report';
                     $path = 'inventory/report/stock_aging/excel/';
-                    $basePath = CreateExcel::process($data,$type,$fileName,$path);
+                    $cur = NULL;
+                    $detail_array = array('type' => 2,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$cur,'title'=>$title);
+                    $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
             
                     if($basePath == '')
                     {
@@ -1530,6 +1637,13 @@ FROM
                 }
             case 'INVSD':
                 $data = [];
+
+                $from_date =  ((new Carbon($request->date))->format('d/m/Y'));
+                $to_date =  ((new Carbon($request->date))->format('d/m/Y'));
+
+                $company = Company::find($request->companySystemID);
+                $company_name = $company->CompanyName;
+
                 if ($request->detail == 1) {
                     $output = $this->stockDetailQry($request);
                     if ($output['categories']) {
@@ -1590,9 +1704,14 @@ FROM
 
 
                 
+
                 $fileName = 'stock_detail';
+                $title = 'Stock Details Report';
                 $path = 'inventory/report/stock_Detail/excel/';
-                $basePath = CreateExcel::process($data,$request->type,$fileName,$path);
+                $cur = NULL;
+                $detail_array = array('type' => 2,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$cur,'title'=>$title);
+
+                $basePath = CreateExcel::process($data,$request->type,$fileName,$path,$detail_array);
         
                 if($basePath == '')
                 {
@@ -1636,11 +1755,18 @@ FROM
                 // })->download('csv');
                 // return $this->sendResponse(array(), 'successfully export');
 
-
+                    
+                $company = Company::find($request->companySystemID);
+                $company_name = $company->CompanyName;
                 
                 $fileName = 'min_max_analysis';
+                $title = 'Inventory Min & Max Analysis';
                 $path = 'inventory/report/min_max_analysis/excel/';
-                $basePath = CreateExcel::process($data,$request->type,$fileName,$path);
+                $cur = NULL;
+                $from_date = null;
+                $to_date = null;
+                $detail_array = array('type' => 1,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$cur,'title'=>$title);
+                $basePath = CreateExcel::process($data,$request->type,$fileName,$path,$detail_array);
         
                 if($basePath == '')
                 {
@@ -1652,7 +1778,7 @@ FROM
                 }
 
                 break;
-            Case 'INVIM':
+            case 'INVIM':
 
                 $reportTypeID = $request->reportTypeID;
                 $data = array();

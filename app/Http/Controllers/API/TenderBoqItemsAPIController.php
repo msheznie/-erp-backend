@@ -427,7 +427,7 @@ class TenderBoqItemsAPIController extends AppBaseController
     public function downloadTenderBoqItemUploadTemplate(Request $request)
     {
         $input = $request->all();
-        $disk = (isset($input['companySystemID'])) ?  Helper::policyWiseDisk($input['companySystemID'], 'public') : 'public';
+        $disk = Helper::policyWiseDisk($input['companySystemID'], 'public');
         if ($exists = Storage::disk($disk)->exists('tender_boq_item_upload_template/tender_boq_item_upload_template.xlsx')) {
             return Storage::disk($disk)->download('tender_boq_item_upload_template/tender_boq_item_upload_template.xlsx', 'tender_boq_item_upload_template.xlsx');
         } else {
@@ -474,6 +474,7 @@ class TenderBoqItemsAPIController extends AppBaseController
             $validateUom = false;
             $validateQty = false;
             $totalItemCount = 0;
+            $existData = [];
 
             $allowItemToTypePolicy = false;
             $itemNotound = false;
@@ -492,14 +493,12 @@ class TenderBoqItemsAPIController extends AppBaseController
                 }
 
 
-                if ((isset($value['item']) && !is_null($value['item'])) || isset($value['uom']) && !is_null($value['uom']) || isset($value['qty']) && !is_null($value['qty'])) {
-                    $totalItemCount = $totalItemCount + 1;
+                if (!$validateItem || !$validateQty) {
+                    return $this->sendError('Items cannot be uploaded, as there are null values found', 500);
                 }
             }
 
-            if (!$validateItem || !$validateQty) {
-                return $this->sendError('Items cannot be uploaded, as there are null values found', 500);
-            }
+
 
             $record = \Excel::selectSheetsByIndex(0)->load(Storage::disk($disk)->url('app/' . $originalFileName), function ($reader) {
             })->select(array('item', 'description', 'uom', 'qty'))->get()->toArray();
@@ -507,43 +506,73 @@ class TenderBoqItemsAPIController extends AppBaseController
             $uploadSerialNumber = array_filter(collect($record)->toArray());
 
             if (count($record) > 0) {
-                foreach ($record as $vl){
-                    /*$unit = Unit::where('UnitShortCode','=',$vl['uom'])->first();
+                $dataToUpload = array_unique(array_column($record, 'item'));
 
+                $excelUploadDataN = (array_intersect_key($record, $dataToUpload));
 
-                    if(empty($unit)) {
-                        return $this->sendError('Uom '.$vl['uom'].' can not be found in unit of measure master', 500);
-                    }*/
+                $diff = array_diff(array_map('json_encode', $record), array_map('json_encode', $excelUploadDataN));
 
+                $duplicates = array_map('json_decode', $diff);
+
+                $duplicateEntries = [];
+                $success = 0;
+                $skipRecords = [];
+                $employee = \Helper::getEmployeeInfo();
+                foreach ($excelUploadDataN as $vl){
                     $exist = TenderBoqItems::where('item_name',$vl['item'])
                         ->where('main_work_id',$input['main_work_id'])->first();
 
-                    if(!empty($exist)){
-                        return $this->sendError('Item can not be duplicated', 500);
+                    if(empty($exist)){
+                        $units = Unit::where('UnitShortCode',$vl['uom'])->first();
+                        $data['main_work_id']=$input['main_work_id'];
+                        $data['item_name']=$vl['item'];
+                        if(isset($vl['description'])){
+                            $data['description']=$vl['description'];
+                        }else{
+                            $data['description']= '';
+                        }
+                        if(!empty($units)){
+                            $data['uom']=$units['UnitID'];
+                        }else{
+                            $data['uom']= '';
+                        }
+                        $data['qty']=$vl['qty'];
+                        $data['company_id']=$input['companySystemID'];
+                        $data['created_by'] = $employee->employeeSystemID;
+                        $result = TenderBoqItems::create($data);
+                        $success +=1;
+                    }else{
+                        array_push($duplicateEntries,$vl);
                     }
-                }
-                $employee = \Helper::getEmployeeInfo();
-                foreach ($record as $vl){
-                    $units = Unit::where('UnitShortCode',$vl['uom'])->first();
-                    $data['main_work_id']=$input['main_work_id'];
-                    $data['item_name']=$vl['item'];
-                    if(isset($vl['description'])){
-                        $data['description']=$vl['description'];
-                    }
-                    if(!empty($units)){
-                        $data['uom']=$units['UnitID'];
-                    }
-                    $data['qty']=$vl['qty'];
-                    $data['company_id']=$input['companySystemID'];
-                    $data['created_by'] = $employee->employeeSystemID;
-                    $result = TenderBoqItems::create($data);
                 }
             } else {
                 return $this->sendError('No Records found!', 500);
             }
 
+            if (!empty($duplicateEntries)) {
+                foreach ($duplicateEntries as $key => $dupl) {
+                    $dataItm['err'] = 'Item ' . $dupl['item'] . ' already exist and has been skipped';
+                    $dataItm['type'] = 'error';
+                    array_push($skipRecords, $dataItm);
+                }
+            }
+
+            if (!empty($duplicates)) {
+                foreach ($duplicates as $duple) {
+                    $dataItm['err'] = 'Item ' . $duple->item . ' duplicated and has been skipped';
+                    $dataItm['type'] = 'error';
+                    array_push($skipRecords, $dataItm);
+                }
+            }
             DB::commit();
-            return $this->sendResponse([], 'Items uploaded Successfully!!');
+            if (!empty($skipRecords)) {
+                $dataItm['err'] = $success.' Items successfully uploaded out of '.count($record);
+                $dataItm['type'] = 'success';
+                array_push($skipRecords, $dataItm);
+                return $this->sendError($skipRecords, 200);
+            }
+
+            return $this->sendResponse([], 'Items uploaded successfully!');
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());

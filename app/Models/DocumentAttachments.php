@@ -61,7 +61,9 @@ class DocumentAttachments extends Model
         'timeStamp',
         'isUploaded',
         'path',
-        'pullFromAnotherDocument'
+        'pullFromAnotherDocument',
+        'parent_id',
+        'envelopType'
     ];
 
     /**
@@ -83,7 +85,9 @@ class DocumentAttachments extends Model
         'sizeInKbs' => 'float',
         'isUploaded' => 'integer',
         'path' => 'string',
-        'pullFromAnotherDocument' => 'integer'
+        'pullFromAnotherDocument' => 'integer',
+        'parent_id' => 'integer',
+        'envelopType' => 'string'
     ];
 
     /**
@@ -414,6 +418,16 @@ class DocumentAttachments extends Model
 
     public function sales_return(){
         return $this->belongsTo('App\Models\SalesReturn','documentSystemCode','id')->where('documentSystemID',87);
+    }
+
+    public function tender_document_types()
+    {
+        return $this->hasOne('App\Models\TenderDocumentTypes', 'id', 'attachmentType');
+    }
+
+    public function document_attachments()
+    {
+        return $this->hasOne('App\Models\DocumentAttachments', 'parent_id', 'attachmentID');
     }
 
 

@@ -141,6 +141,7 @@ return [
     'bank_account_reffered_backs' => 'Bank Account Reffered Backs',
     'bank_assigns' => 'Bank Assigns',
     'bank_ledgers' => 'Bank Ledgers',
+    'cash_flow_report' => 'Cash Flow Report',
     'bank_reconciliation' => 'Bank Reconciliation',
     'you_cannot_edit_this_document_already_confirmed' => 'You cannot edit, This document already confirmed',
     'you_cannot_edit_this_item_already_added_to_bank_reconciliation' => 'You cannot edit, This item already added to bank reconciliation.',
@@ -343,4 +344,5 @@ return [
     'company_has_default_user_group' => 'The company already have a default user group',
     'currency_not_configured' => 'Currency not configured',
     'item_specification' => 'Item Specification',
+    'already_finance_year_has_been_created_for_this_date_range' => 'Already Finance Year has been created for this date range'
 ];

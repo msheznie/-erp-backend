@@ -122,7 +122,8 @@ class ItemMaster extends Model
         'trackingType',
         'faSubCatID',
         'faSubCatID2',
-        'faSubCatID3'
+        'faSubCatID3',
+        'pos_type'
     ];
 
     /**
@@ -179,7 +180,8 @@ class ItemMaster extends Model
         'faCatID'=>'integer',
         'faSubCatID'=>'integer',
         'faSubCatID2'=>'integer',
-        'faSubCatID3'=>'integer'
+        'faSubCatID3'=>'integer',
+        'pos_type' => 'integer'
     ];
 
     /**

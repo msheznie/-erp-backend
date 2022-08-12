@@ -342,7 +342,10 @@ class DebitNote extends Model
         'VATAmountRpt',
         'netAmount',
         'netAmountLocal',
-        'netAmountRpt'
+        'netAmountRpt',
+        'type',
+        'empID',
+        'empControlAccount'
     ];
 
     /**
@@ -449,6 +452,11 @@ class DebitNote extends Model
         return $this->belongsTo('App\Models\SupplierMaster', 'supplierID', 'supplierCodeSystem');
     }
 
+    public function employee()
+    {
+        return $this->belongsTo('App\Models\Employee', 'empID', 'employeeSystemID');
+    }
+
     public function approved_by()
     {
         return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'debitNoteAutoID');
@@ -507,5 +515,32 @@ class DebitNote extends Model
     public function audit_trial()
     {
         return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'debitNoteAutoID')->where('documentSystemID',15);
+    }
+
+    public function scopeDetailJoin($q)
+    {
+        return $q->join('erp_debitnotedetails','erp_debitnotedetails.debitNoteAutoID','erp_debitnote.debitNoteAutoID');
+    }
+    public function scopeEmployeeJoin($q,$as = 'employees' ,$column = 'createdUserSystemID',$columnAs = 'empName'){
+        $q->leftJoin('employees as '. $as, $as.'.employeeSystemID', '=', 'erp_debitnote.'.$column)
+            ->addSelect($as.".empName as ".$columnAs);
+    }
+
+    public function scopeCurrencyJoin($q,$as = 'currencymaster' ,$column = 'supplierTransactionCurrencyID',$columnAs = 'currencyByName'){
+        return $q->leftJoin('currencymaster as '.$as,$as.'.currencyID','=','erp_debitnote.'.$column)
+        ->addSelect($as.".CurrencyName as ".$columnAs);
+
+    }
+
+    public function scopeSupplierJoin($q,$as = 'supplier', $column = 'supplierID' , $columnAs = 'primarySupplierCode')
+    {
+        return $q->leftJoin('suppliermaster as '.$as,$as.'.supplierCodeSystem','erp_debitnote.'.$column)
+        ->addSelect($as.".supplierName as ".$columnAs);
+    }
+
+    public function scopeCompanyJoin($q,$as = 'companymaster', $column = 'companySystemID' , $columnAs = 'CompanyName')
+    {
+        return $q->leftJoin('companymaster as '.$as,$as.'.companySystemID','erp_debitnote.'.$column)
+        ->addSelect($as.".CompanyName as ".$columnAs);
     }
 }

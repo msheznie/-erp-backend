@@ -21,7 +21,7 @@
 
         .footer {
             bottom: 0;
-            height: 100px;
+            height: 60px;
         }
 
         .footer {
@@ -122,8 +122,8 @@
         }
 
         hr {
-            margin-top: 16px;
-            margin-bottom: 16px;
+            margin-top: 12px;
+            margin-bottom: 12px;
             border: 0;
             border-top: 1px solid
         }
@@ -172,43 +172,6 @@
 </head>
 <body>
 <div class="footer">
-    <table style="width:100%;">
-        <tr>
-            <td width="40%"><span
-                        class="font-weight-bold">Confirmed By :</span> {{ $masterdata->confirmed_by? $masterdata->confirmed_by->empFullName:'' }}
-            </td>
-            <td><span class="font-weight-bold">Review By :</span></td>
-        </tr>
-    </table>
-    <table style="width:100%;">
-        <tr>
-            <td><span class="font-weight-bold">Electronically Approved By :</span></td>
-        </tr>
-        <tr>
-            &nbsp;
-        </tr>
-    </table>
-    <table style="width:100%;">
-        <tr>
-            @if ($masterdata->approved_by)
-                @foreach ($masterdata->approved_by as $det)
-                    <td style="padding-right: 25px;font-size: 9px;">
-                        <div>
-                            @if($det->employee)
-                                {{$det->employee->empFullName }}
-                            @endif
-                        </div>
-                        <div><span>
-                @if(!empty($det->approvedDate))
-                                    {{ \App\helper\Helper::dateFormat($det->approvedDate)}}
-                                @endif
-              </span></div>
-                        <div style="width: 3px"></div>
-                    </td>
-                @endforeach
-            @endif
-        </tr>
-    </table>
     <table style="width:100%;">
         <tr>
             <td colspan="3" style="width:100%">
@@ -486,6 +449,8 @@
                     <th class="text-center">GL Code</th>
                     <th class="text-center">GL Code Description</th>
                     <th class="text-center">Segment</th>
+                    <th class="text-center">Amount</th>
+                    <th class="text-center">VAT</th>
                     <th class="text-center">Payment Amount</th>
                     <th class="text-center">Local Amt (
                         @if($masterdata->localCurrency)
@@ -502,6 +467,11 @@
                 </tr>
                 </thead>
                 <tbody>
+                @php
+                    $tot= 0;
+                    $totLocal= 0;
+                    $totRpt = 0;
+                @endphp
                 @foreach ($masterdata->directdetail as $item)
                     <tr style="border-top: 1px solid #ffffff !important;border-bottom: 1px solid #ffffff !important;">
                         <td>{{$loop->iteration}}</td>
@@ -512,17 +482,27 @@
                             @endif
                         </td>
                         <td class="text-right">{{number_format($item->DPAmount, $transDecimal)}}</td>
-                        <td class="text-right">{{number_format($item->localAmount, $transDecimal)}}</td>
-                        <td class="text-right">{{number_format($item->comRptAmount, $transDecimal)}}</td>
+                        <td class="text-right">{{number_format($item->vatAmount, $transDecimal)}}</td>
+                        <td class="text-right">{{number_format($item->DPAmount + $item->vatAmount, $transDecimal)}}</td>
+                        <td class="text-right">{{number_format($item->localAmount + $item->VATAmountLocal, $localDecimal)}}</td>
+                        <td class="text-right">{{number_format($item->comRptAmount + $item->VATAmountRpt, $rptDecimal)}}</td>
+                        @php
+                            $tot += $item->DPAmount + $item->vatAmount;
+                            $totLocal += $item->localAmount + $item->VATAmountLocal;
+                            $totRpt += $item->comRptAmount + $item->VATAmountRpt;
+                        @endphp
                     </tr>
                 @endforeach
                 <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
-                    <td colspan="3" class="text-right border-bottom-remov">&nbsp;</td>
+                    <td colspan="5" class="text-right border-bottom-remov">&nbsp;</td>
                     <td class="text-right" style="background-color: rgb(215,215,215)">Total Payment</td>
                     <td class="text-right"
-                        style="background-color: rgb(215,215,215)">{{number_format($directDetailTotTra, $transDecimal)}}</td>
-                    <td class="text-right border-bottom-remov"></td>
-                    <td class="text-right border-bottom-remov"></td>
+                        style="background-color: rgb(215,215,215)">{{number_format($tot, $transDecimal)}}</td>
+                    <td class="text-right"
+                        style="background-color: rgb(215,215,215)">{{number_format($totLocal, $localDecimal)}}</td>
+                    <td class="text-right"
+                        style="background-color: rgb(215,215,215)">{{number_format($totRpt, $rptDecimal)}}</td>
+                   
                 </tr>
                 </tbody>
             </table>
@@ -574,4 +554,41 @@
             </table>
         </div>
     @endif
+    <div style="padding-bottom: 20px!important; padding-top: 15px!important; page-break-inside: avoid; !important;">
+    <table style="width:100%;">
+        <tr>
+            <td width="40%"><span
+                        class="font-weight-bold">Confirmed By :</span> {{ $masterdata->confirmed_by? $masterdata->confirmed_by->empFullName:'' }}
+            </td>
+            <td><span class="font-weight-bold">Review By :</span></td>
+        </tr>
+        <tr>
+            <td><span class="font-weight-bold">Electronically Approved By :</span>
+                @if ($masterdata->approved_by)
+                    @foreach ($masterdata->approved_by as $det)
+                        <div style="padding-right: 25px;font-size: 9px;">
+                            <div>
+                                @if($det->employee)
+                                    {{$det->employee->empFullName }}
+                                @endif
+                            </div>
+                            <div><span>
+                @if(!empty($det->approvedDate))
+                                        {{ \App\helper\Helper::dateFormat($det->approvedDate)}}
+                                    @endif
+              </span></div>
+                        </div>
+                    @endforeach
+                @endif
+            </td>
+        </tr>
+        <tr>
+
+        </tr>
+    </table>
+    </div>
 </div>
+
+
+
+</body>

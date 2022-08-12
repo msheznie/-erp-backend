@@ -155,6 +155,14 @@ class CompanyFinanceYearAPIController extends AppBaseController
             return  $this->sendError(trans('custom.financial_year_must_contain_12_months'));
         }
 
+        $CheckBeginDate = CompanyFinanceYear::where('companySystemID',$input['companySystemID'])->where('bigginingDate', ">=", $input['bigginingDate'])->where('bigginingDate', "<=", $input['endingDate'])->first();
+
+        $CheckEndDate = CompanyFinanceYear::where('companySystemID',$input['companySystemID'])->where('endingDate', ">=", $input['bigginingDate'])->where('endingDate', "<=", $input['endingDate'])->first();
+
+        if($CheckBeginDate || $CheckEndDate){
+            return  $this->sendError(trans('custom.already_finance_year_has_been_created_for_this_date_range'));
+        }
+
         $employee = \Helper::getEmployeeInfo();
         $input['createdPcID'] = gethostname();
         $input['createdUserID'] = $employee->empID;
@@ -392,12 +400,12 @@ class CompanyFinanceYearAPIController extends AppBaseController
     {
         /** @var CompanyFinanceYear $companyFinanceYear */
         $companyFinanceYear = $this->companyFinanceYearRepository->findWithoutFail($id);
+        $employee = \Helper::getEmployeeInfo();
 
         if (empty($companyFinanceYear)) {
             return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.company_finance_years')]));
         }
-        $companyFinanceYear->update(['isActive' => 0,'isCurrent' => 0,'isClosed' => 0]);
-        $companyFinanceYear->delete();
+        $companyFinanceYear->update(['isActive' => 0,'isCurrent' => 0,'isClosed' => 0, 'deleted_at'=>date("Y-m-d H:i:s"), 'isDeleted'=>1,'deletedBy'=>$employee->empName]);
 
         return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.company_finance_years')]));
     }
@@ -422,7 +430,7 @@ class CompanyFinanceYearAPIController extends AppBaseController
             $subCompanies = [$selectedCompanyId];
         }
 
-        $companyFinancialYears = CompanyFinanceYear::with(['created_employee','modified_employee'])->whereIn('companySystemID', $subCompanies);
+        $companyFinancialYears = CompanyFinanceYear::with(['created_employee','modified_employee'])->where('isDeleted',0)->whereIn('companySystemID', $subCompanies);
 
         $search = $request->input('search.value');
 

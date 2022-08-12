@@ -112,4 +112,19 @@ class ExpenseAssetAllocation extends Model
     {
        return $this->belongsTo('App\Models\ItemIssueDetails', 'documentSystemCode', 'itemIssueAutoID');
     }
+
+    public function journal_voucher()
+    {
+       return $this->belongsTo('App\Models\JvMaster', 'documentSystemCode', 'jvMasterAutoId');
+    }
+
+    public function grv()
+    {
+       return $this->belongsTo('App\Models\GRVMaster', 'documentSystemCode', 'grvAutoID');
+    }
+
+    public function document()
+    {
+       return $this->belongsTo('App\Models\DocumentMaster', 'documentSystemID', 'documentSystemID');
+    }
 }

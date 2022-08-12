@@ -606,7 +606,11 @@ class AssetManagementReportAPIController extends AppBaseController
                 $grandTotalRpt = 0;
                 if ($output) {
                     foreach ($output as $val) {
-                        $outputArr[$val->chartOfAccountSystemID][] = $val;
+                        if (isset($request->groupByAsset) && $request->groupByAsset) {
+                            $outputArr[$val->assetID][] = $val;
+                        } else {
+                            $outputArr[$val->chartOfAccountSystemID][] = $val;
+                        }
                         $grandTotalLocal += $val->amountLocal;
                         $grandTotalRpt += $val->amountRpt;
                     }
@@ -1427,6 +1431,14 @@ class AssetManagementReportAPIController extends AppBaseController
                         } else if ($val->documentSystemID == 4){
                             $data[$x]['Document Code'] = isset($val->payment_voucher->BPVcode) ? $val->payment_voucher->BPVcode : "";
                             $data[$x]['Document Date'] = isset($val->payment_voucher->BPVdate) ? Carbon::parse($val->payment_voucher->BPVdate)->format('Y-m-d') : "";                         
+                        }
+                        else if ($val->documentSystemID == 3){
+                            $data[$x]['Document Code'] = isset($val->grv->grvPrimaryCode) ? $val->grv->grvPrimaryCode : "";
+                            $data[$x]['Document Date'] = isset($val->grv->grvDate) ? Carbon::parse($val->grv->grvDate)->format('Y-m-d') : "";                         
+                        }
+                        else if ($val->documentSystemID == 17){
+                            $data[$x]['Document Code'] = isset($val->journal_voucher->JVcode) ? $val->journal_voucher->JVcode : "";
+                            $data[$x]['Document Date'] = isset($val->journal_voucher->JVdate) ? Carbon::parse($val->journal_voucher->JVdate)->format('Y-m-d') : "";                         
                         } else {
                             $data[$x]['Document Code'] = isset($val->meterial_issue->itemIssueCode) ? $val->meterial_issue->itemIssueCode : "";
                             $data[$x]['Document Date'] = isset($val->meterial_issue->master->issueDate) ? Carbon::parse($val->meterial_issue->master->issueDate)->format('Y-m-d') : "";                         
@@ -1556,6 +1568,8 @@ FROM
         $assetIds = (isset($request->assets) && count($request->assets) > 0) ? collect($request->assets)->pluck('faID')->toArray() : [];
         $chartOfAccountIds = (isset($request->glAccounts) && count($request->glAccounts) > 0) ? collect($request->glAccounts)->pluck('chartOfAccountSystemID')->toArray() : [];
 
+     
+
         return $assetAllocations = ExpenseAssetAllocation::whereIn('chartOfAccountSystemID', $chartOfAccountIds)
                                                   ->whereIn('assetID', $assetIds)
                                                   ->with(['asset','chart_of_account', 'supplier_invoice' => function($query) use ($companyID, $fromDate, $toDate) {
@@ -1566,6 +1580,15 @@ FROM
                                                         $query->whereIn('companySystemID', $companyID)
                                                               ->whereDate('BPVdate', '>=', $fromDate)
                                                               ->whereDate('BPVdate', '<=', $toDate);
+                                                  },'journal_voucher'  => function($query) use ($companyID, $fromDate, $toDate) {
+                                                    $query->whereIn('companySystemID', $companyID)
+                                                          ->whereDate('JVdate', '>=', $fromDate)
+                                                          ->whereDate('JVdate', '<=', $toDate);
+                                                  }
+                                                  ,'grv'  => function($query) use ($companyID, $fromDate, $toDate) {
+                                                    $query->whereIn('companySystemID', $companyID)
+                                                          ->whereDate('grvDate', '>=', $fromDate)
+                                                          ->whereDate('grvDate', '<=', $toDate);
                                                   },'meterial_issue'  => function($query) use ($companyID, $fromDate, $toDate) {
                                                        $query->with(['master'=>function($query)use($companyID,$fromDate, $toDate){
                                                            $query->whereIn('companySystemID',$companyID)
@@ -1589,6 +1612,22 @@ FROM
                                                                               ->whereDate('BPVdate', '<=', $toDate);
                                                                     })
                                                                     ->where('documentSystemID', 4);
+                                                          })
+                                                          ->orWhere(function($query) use ($companyID, $fromDate, $toDate) {
+                                                            $query->whereHas('journal_voucher', function($query) use ($companyID, $fromDate, $toDate) {
+                                                                    $query->whereIn('companySystemID', $companyID)
+                                                                          ->whereDate('JVdate', '>=', $fromDate)
+                                                                          ->whereDate('JVdate', '<=', $toDate);
+                                                                })
+                                                                ->where('documentSystemID',17);
+                                                          })
+                                                          ->orWhere(function($query) use ($companyID, $fromDate, $toDate) {
+                                                            $query->whereHas('grv', function($query) use ($companyID, $fromDate, $toDate) {
+                                                                    $query->whereIn('companySystemID', $companyID)
+                                                                          ->whereDate('grvDate', '>=', $fromDate)
+                                                                          ->whereDate('grvDate', '<=', $toDate);
+                                                                })
+                                                                ->where('documentSystemID',3);
                                                           })
                                                           ->orWhere(function($query) use ($companyID, $fromDate, $toDate) {
                                                             $query->whereHas('meterial_issue', function($query) use ($companyID, $fromDate, $toDate) {

@@ -66,6 +66,11 @@ use App\Models\Unit;
 use App\Repositories\ItemMasterRepository;
 use App\Models\SupplierMaster;
 use App\helper\CreateExcel;
+use App\Models\CustomerInvoice;
+use App\Models\DeliveryOrder;
+use App\Models\CreditNote;
+use App\Models\CustomerReceivePayment;
+use App\Models\QuotationMaster;
 /**
  * Class CustomerMasterController
  * @package App\Http\Controllers\API
@@ -548,8 +553,8 @@ class CustomerMasterAPIController extends AppBaseController
                     if ($validator->fails()) {
                         return $this->sendError($validator->messages(), 422);
                     }
-                    $customerMasters = $this->customerMasterRepository->update(array_only($input,['creditLimit','creditDays','vatEligible','vatNumber','vatPercentage', 'customerSecondLanguage', 'reportTitleSecondLanguage', 'addressOneSecondLanguage', 'addressTwoSecondLanguage']), $customerId);
-                    CustomerAssigned::where('customerCodeSystem',$customerId)->update(array_only($input,['creditLimit','creditDays','vatEligible','vatNumber','vatPercentage']));
+                    $customerMasters = $this->customerMasterRepository->update(array_only($input,['creditLimit','creditDays','consignee_address','consignee_contact_no','consignee_name','payment_terms','vatEligible','vatNumber','vatPercentage', 'customerSecondLanguage', 'reportTitleSecondLanguage', 'addressOneSecondLanguage', 'addressTwoSecondLanguage','customerShortCode','CustomerName','ReportTitle','customerAddress1','customerAddress2','customerCategoryID','interCompanyYN','customerCountry','customerCity','isCustomerActive','custGLAccountSystemID','custUnbilledAccountSystemID']), $customerId);
+                    CustomerAssigned::where('customerCodeSystem',$customerId)->update(array_only($input,['creditLimit','creditDays','consignee_address','consignee_contact_no','consignee_name','payment_terms','vatEligible','vatNumber','vatPercentage','customerShortCode','CustomerName','ReportTitle','customerAddress1','customerAddress2','customerCategoryID','customerCountry','customerCity','custGLAccountSystemID','custUnbilledAccountSystemID']));
                     // user activity log table
                     if($customerMasters){
                         $old_array = array_only($customerMasterOld,['creditDays','vatEligible','vatNumber','vatPercentage', 'customerSecondLanguage', 'reportTitleSecondLanguage', 'addressOneSecondLanguage', 'addressTwoSecondLanguage']);
@@ -1004,7 +1009,7 @@ class CustomerMasterAPIController extends AppBaseController
     {
         $input = $request->all();
         $document_id = $input['document_id'];
-        $disk = (isset($input['companySystemID'])) ?  Helper::policyWiseDisk($input['companySystemID'], 'public') : 'public';
+        $disk = Helper::policyWiseDisk($input['companySystemID'], 'public');
 
         if ($exists = Storage::disk($disk)->exists('Master_Template/'.$document_id.'/template.xlsx')) {
             return Storage::disk($disk)->download('Master_Template/'.$document_id.'/template.xlsx', 'template.xlsx');
@@ -2863,4 +2868,109 @@ class CustomerMasterAPIController extends AppBaseController
 
         return $this->sendResponse(['allCompanies' => $allCompanies, 'interCompanyPolicy' => $hasPolicy], 'Record retrieved successfully');
     }
+
+    public function validateCustomerAmend(Request $request)
+    {
+        $input = $request->all();
+
+        $customerMaster = CustomerMaster::find($input['customerID']);
+
+        if (!$customerMaster) {
+            return $this->sendError('Customer Data not found');
+        }
+      
+
+        $errorMessages = [];
+        $successMessages = [];
+        $amendable = [];
+
+        $cusInvoice = CustomerInvoice::where('customerID', $input['customerID'])->where('customerGLSystemID', $customerMaster->custGLAccountSystemID)->first();//check GL account
+    
+        if ($cusInvoice) {
+            $errorMessages[] = "GL Account cannot be amended. it had used in customer Invoice";
+            $amendable['GLAmendable'] = false;
+        } else {
+            $successMessages[] = "Use of GL Account checking is done in customer Invoice";
+            $amendable['GLAmendable'] = true;
+        }
+
+
+       
+        $deliveryOrder = DeliveryOrder::where('customerID', $input['customerID'])
+                                      ->where('custUnbilledAccountSystemID', $customerMaster->custUnbilledAccountSystemID)
+                                      ->first();//check Unbilled Receivable Account
+
+        if ($deliveryOrder) {
+            $errorMessages[] = "Unbilled Account cannot be amended. it had used in delivery order";
+            $amendable['unbilledAmendable'] = false;
+        } else {
+            $successMessages[] = "Use of Unbilled Account checking is done in delivery order";
+            $amendable['unbilledAmendable'] = (!$amendable['unbilledAmendable']) ? true : false;
+        }
+        
+   
+
+        $cusInvoicee = CustomerInvoice::where('customerID', $input['customerID'])->where('approved','!=',-1)->first();//check unapproved customer invoice which include the current customer
+        if($cusInvoicee)
+        {
+            $errorMessages[] = "Unable to ammend isActive,customer used in Unapproved customer invoice";
+            $amendable['isActive'] = false;
+        }
+        else
+        {
+            $amendable['isActive'] = true;
+        }
+
+
+        
+        $credit = CreditNote::where('customerID', $input['customerID'])->where('approved','!=',-1)->first();//check unapproved customer invoice which include the current customer
+        if($credit)
+        {
+            $errorMessages[] = "Unable to ammend isActive,customer used in Unapproved credit Note";
+            $amendable['isActive'] = false;
+        }
+        else
+        {
+            $amendable['isActive'] = (!$amendable['isActive']) ? false : true;
+        }
+
+
+        $recived = CustomerReceivePayment::where('customerID', $input['customerID'])->where('approved','!=',-1)->first();//check unapproved customer invoice which include the current customer
+        if($recived)
+        {
+            $errorMessages[] = "Unable to ammend isActive,customer used in Unapproved Customer Receipt Voucher";
+            $amendable['isActive'] = false;
+        }
+        else
+        {
+            $amendable['isActive'] = (!$amendable['isActive']) ? false : true;
+        }
+
+        $QuotationMaster = QuotationMaster::where('customerSystemCode', $input['customerID'])->where('approvedYN','!=',-1)->first();//check unapproved QuotationMaster which include the current customer
+        if($QuotationMaster)
+        {
+            $errorMessages[] = "Unable to ammend isActive,customer used in Unapproved Quotation/Sales Order";
+            $amendable['isActive'] = false;
+        }
+        else
+        {
+            $amendable['isActive'] =(!$amendable['isActive']) ? false : true;
+        }
+
+
+        $deliveryOrderr = DeliveryOrder::where('customerID', $input['customerID'])->where('approvedYN','!=',-1)->first();//check unapproved deliverymaster which include the current customer 
+        if($deliveryOrderr)
+        {
+            $errorMessages[] = "Unable to ammend isActive,customer used in Unapproved delivery order Order";
+            $amendable['isActive'] = false;
+        }
+        else
+        {
+            $amendable['isActive'] =(!$amendable['isActive']) ? false : true;
+        }
+
+
+        return $this->sendResponse(['errorMessages' => $errorMessages, 'successMessages' => $successMessages, 'amendable'=> $amendable], "validated successfully");
+    }
+
 }

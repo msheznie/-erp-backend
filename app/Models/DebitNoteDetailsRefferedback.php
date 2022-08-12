@@ -182,7 +182,8 @@ class DebitNoteDetailsRefferedback extends Model
         'comRptAmount',
         'budgetYear',
         'timesReferred',
-        'timeStamp'
+        'timeStamp',
+        'detail_project_id'
     ];
 
     /**
@@ -214,7 +215,8 @@ class DebitNoteDetailsRefferedback extends Model
         'comRptCurrencyER' => 'float',
         'comRptAmount' => 'float',
         'budgetYear' => 'integer',
-        'timesReferred' => 'integer'
+        'timesReferred' => 'integer',
+        'detail_project_id' => 'integer'
     ];
 
     /**

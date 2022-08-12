@@ -335,6 +335,17 @@ class TenderBidClarificationsAPIController extends AppBaseController
     public function createResponse(Request $request)
     {
         $input = $request->all();
+        $messages = [
+            'comments.required' => 'Comment field is required.'
+        ];
+        $validator = \Validator::make($input, [
+            'comments' => 'required'
+        ],$messages);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        } 
+        
         $employeeId = Helper::getEmployeeSystemID();
         $response = $input['comments'];
         $id = $input['id'];
@@ -385,7 +396,17 @@ class TenderBidClarificationsAPIController extends AppBaseController
 
         if (empty($tenderPreBidClarification)) {
             return $this->sendError('Not Found');
-        }
+        } 
+
+        $isLastSupplierResponse = TenderBidClarifications::select('id')
+            ->where('tender_master_id', $tenderMasterId)
+            ->where('parent_id', $masterResponseId) 
+            ->where('posted_by_type', 0) 
+            ->orderBy('id', 'desc')
+            ->first();
+
+        $supplierId = ($isLastSupplierResponse['id'] ? $isLastSupplierResponse['id'] : 0);
+
         $tenderPreBidClarification->delete();
         DocumentAttachments::where('documentSystemID', 109)
             ->where('companySystemID', $companySystemID)
@@ -393,17 +414,7 @@ class TenderBidClarificationsAPIController extends AppBaseController
             ->delete();
 
 
-        $isLastSupplierResponse = TenderBidClarifications::select('id')
-            ->where('tender_master_id', $tenderMasterId)
-            ->where('parent_id', $masterResponseId)
-            ->where('posted_by_type', 0)
-            ->orderBy('id', 'asc')
-            ->first();
-
-        $supplierId = ($isLastSupplierResponse['id'] ? $isLastSupplierResponse['id'] : 0);
-
-
-        $isResponseExist = TenderBidClarifications::select('id')
+        $isResponseExist = TenderBidClarifications::select('ids')
             ->where('tender_master_id', $tenderMasterId)
             ->where('parent_id', $masterResponseId)
             ->where('posted_by_type', 1)
@@ -415,6 +426,7 @@ class TenderBidClarificationsAPIController extends AppBaseController
             TenderBidClarifications::where('id', $masterResponseId)
                 ->update($updateRec);
         }
+
         return $this->sendResponse($id, 'File Deleted');
     }
     public function getPreBidEditData(Request $request)
@@ -464,7 +476,7 @@ class TenderBidClarificationsAPIController extends AppBaseController
     {
         if (!empty($attachment) && isset($attachment['file'])) {
             $extension = $attachment['fileType'];
-            $allowExtensions = ['png', 'jpg', 'jpeg', 'pdf', 'txt', 'xlsx'];
+            $allowExtensions = ['png', 'jpg', 'jpeg', 'pdf', 'txt', 'xlsx','docx'];
 
             if (!in_array(strtolower($extension), $allowExtensions)) {
                 return $this->sendError('This type of file not allow to upload.', 500);

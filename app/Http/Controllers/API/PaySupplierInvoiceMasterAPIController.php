@@ -20,6 +20,7 @@ namespace App\Http\Controllers\API;
 
 use App\helper\CustomValidation;
 use App\helper\Helper;
+use App\helper\TaxService;
 use App\Http\Requests\API\CreatePaySupplierInvoiceMasterAPIRequest;
 use App\Http\Requests\API\UpdatePaySupplierInvoiceMasterAPIRequest;
 use App\Models\AccountsPayableLedger;
@@ -239,6 +240,13 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 return $this->sendError('Payment voucher date is not within financial period!', 500);
             }
 
+            if (isset($input['invoiceType']) && $input['invoiceType'] == 3 && isset($input['preCheck']) && $input['preCheck'] &&  !Helper::isLocalSupplier($input['BPVsupplierID'], $input['companySystemID'])) {
+                $company = Company::where('companySystemID', $input['companySystemID'])->first();
+                if (!empty($company) && $company->vatRegisteredYN == 1) {
+                    return $this->sendError('Do you want to activate Reverse Charge Mechanism for this Invoice', 500, array('type' => 'rcm_confirm'));
+                }
+            }
+
             $company = Company::find($input['companySystemID']);
             if ($company) {
                 $input['companyID'] = $company->CompanyID;
@@ -280,6 +288,8 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 if ($supDetail) {
                     $input['supplierGLCode'] = $supDetail->liabilityAccount;
                     $input['supplierGLCodeSystemID'] = $supDetail->liabilityAccountSysemID;
+                    $input['VATPercentage'] = $supDetail->vatPercentage;
+
                 }
                 $input['supplierTransCurrencyER'] = 1;
                 if ($supCurrency) {
@@ -329,6 +339,20 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     $input['directPaymentPayee'] = $emp->empFullName;
                 }
             }
+            if ($input['invoiceType'] == 5) {
+
+
+                $supDetail = SupplierAssigned::where('supplierCodeSytem', $input['BPVsupplierID'])->where('companySystemID', $input['companySystemID'])->first();
+
+                if($supDetail)
+                {
+                    $input['AdvanceAccount'] = $supDetail->AdvanceAccount;
+                    $input['advanceAccountSystemID'] = $supDetail->advanceAccountSystemID;
+                }
+          
+            }
+
+
 
             if ($input['invoiceType'] == 6) {
                 $checkEmployeeControlAccount = SystemGlCodeScenarioDetail::getGlByScenario($input['companySystemID'], $input['documentSystemID'], 12);
@@ -343,8 +367,8 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 $input['directPaymentPayee'] = $emp->empFullName;
             }
 
-            if (isset($input['chequePaymentYN'])) {
-                if ($input['chequePaymentYN'] && $input['paymentMode'] == 2) {
+            if (isset($input['paymentMode'])) {
+                if ($input['paymentMode'] == 2) {
                     $input['chequePaymentYN'] = -1;
                 } else {
                     $input['chequePaymentYN'] = 0;
@@ -518,6 +542,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     if ($supDetail) {
                         $input['supplierGLCode'] = $supDetail->liabilityAccount;
                         $input['supplierGLCodeSystemID'] = $supDetail->liabilityAccountSysemID;
+
                     }
                     $input['supplierTransCurrencyER'] = 1;
                     if ($supCurrency) {
@@ -603,6 +628,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
                 }
             }
+
 
             if ($paySupplierInvoiceMaster->invoiceType == 3) {
                 if ($input['payeeType'] == 3) {
@@ -1258,6 +1284,17 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             }
 
             if ($paySupplierInvoiceMaster->invoiceType == 5) {
+
+
+                $supDetail = SupplierAssigned::where('supplierCodeSytem', $input['BPVsupplierID'])->where('companySystemID', $companySystemID)->first();
+
+                if($supDetail)
+                {
+                    $input['AdvanceAccount'] = $supDetail->AdvanceAccount;
+                    $input['advanceAccountSystemID'] = $supDetail->advanceAccountSystemID;
+                }
+
+
                 $totalAmount = AdvancePaymentDetails::selectRaw("SUM(paymentAmount) as paymentAmount,SUM(localAmount) as localAmount, SUM(comRptAmount) as comRptAmount, SUM(supplierDefaultAmount) as supplierDefaultAmount, SUM(supplierTransAmount) as supplierTransAmount")->where('PayMasterAutoId', $id)->first();
 
                 if (!empty($totalAmount->supplierTransAmount)) {
@@ -1403,16 +1440,17 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             $documentSystemID = $paySupplierInvoiceMaster->documentSystemID;
             $input['companySystemID'] = $companySystemID;
 
-
+         
             if ($input['payeeType'] == 1) {
                 if (isset($input['BPVsupplierID']) && !empty($input['BPVsupplierID'])) {
                     $supDetail = SupplierAssigned::where('supplierCodeSytem', $input['BPVsupplierID'])->where('companySystemID', $companySystemID)->first();
 
                     $supCurrency = SupplierCurrency::where('supplierCodeSystem', $input['BPVsupplierID'])->where('isAssigned', -1)->where('isDefault', -1)->first();
-
+                
                     if ($supDetail) {
                         $input['supplierGLCode'] = $supDetail->liabilityAccount;
                         $input['supplierGLCodeSystemID'] = $supDetail->liabilityAccountSysemID;
+
                     }
                     $input['supplierTransCurrencyER'] = 1;
                     if ($supCurrency) {
@@ -1448,7 +1486,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 $emp = Employee::find($input["directPaymentPayeeEmpID"]);
                 $input['directPaymentPayee'] = $emp->empFullName;
             }
-
+            
 
             if ($paySupplierInvoiceMaster->expenseClaimOrPettyCash == 6 || $paySupplierInvoiceMaster->expenseClaimOrPettyCash == 7) {
                 if (isset($input['interCompanyToSystemID'])) {
@@ -1486,7 +1524,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 $input['BPVbankCurrency'] = 0;
                 $input['BPVbankCurrencyER'] = 0;
             }
-
+            
             $companyCurrency = \Helper::companyCurrency($companySystemID);
             if ($companyCurrency) {
                 $input['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;
@@ -1538,7 +1576,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     $input['directPaymentPayeeEmpID'] = null;
                 }
             }
-
+            
             $input['directPayeeCurrency'] = $input['supplierTransCurrencyID'];
 
             if (isset($input['chequePaymentYN'])) {
@@ -1568,7 +1606,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     $warningMessage = "Cheque number won't be generated. The bank currency and the local currency is not equal.";
                 }
             }
-
+            
             $input['BPVdate'] = new Carbon($input['BPVdate']);
             $input['BPVchequeDate'] = new Carbon($input['BPVchequeDate']);
             Log::useFiles(storage_path() . '/logs/pv_cheque_no_jobs.log');
@@ -1642,7 +1680,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     $input['FYPeriodDateFrom'] = $companyFinancePeriod["message"]->dateFrom;
                     $input['FYPeriodDateTo'] = $companyFinancePeriod["message"]->dateTo;
                 }
-
+                
                 unset($inputParam);
                 $validator = \Validator::make($input, [
                     'companyFinancePeriodID' => 'required|numeric|min:1',
@@ -1681,7 +1719,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                         'directPaymentPayeeEmpID' => 'required|numeric|min:1'
                     ]);
                 }
-
+                
                 if ($validator->fails()) {
                     return $this->sendError($validator->messages(), 422, ['type' => 'confirm']);
                 }
@@ -1703,6 +1741,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     return $this->sendError('Bank account is not linked to gl account', 500, ['type' => 'confirm']);
                 }
 
+              
                 $overPaymentErrorMessage = [];
                 // po payment
                 if ($paySupplierInvoiceMaster->invoiceType == 2 || $paySupplierInvoiceMaster->invoiceType == 6) {
@@ -1713,7 +1752,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     if (empty($pvDetailExist)) {
                         return $this->sendError('PV document cannot confirm without details', 500, ['type' => 'confirm']);
                     }
-
+                    
                     $checkAmountGreater = PaySupplierInvoiceDetail::selectRaw('SUM(supplierPaymentAmount) as supplierPaymentAmount')
                         ->where('PayMasterAutoId', $id)
                         ->first();
@@ -1881,22 +1920,27 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     foreach ($advancePaymentDetails as $val) {
                         $advancePayment = PoAdvancePayment::find($val->poAdvPaymentID);
 
-                        $advancePaymentDetailsSum = AdvancePaymentDetails::selectRaw('IFNULL( Sum( erp_advancepaymentdetails.paymentAmount ), 0 ) AS SumOfpaymentAmount ')
+                        if(isset($advancePayment))
+                        {
+                            $advancePaymentDetailsSum = AdvancePaymentDetails::selectRaw('IFNULL( Sum( erp_advancepaymentdetails.paymentAmount ), 0 ) AS SumOfpaymentAmount ')
                             ->where('companySystemID', $advancePayment->companySystemID)
                             ->where('poAdvPaymentID', $advancePayment->poAdvPaymentID)
                             ->where('purchaseOrderID', $advancePayment->poID)
                             ->first();
 
-                        if (($advancePayment->reqAmount == $advancePaymentDetailsSum->SumOfpaymentAmount) || $advancePayment->reqAmount < $advancePaymentDetailsSum->SumOfpaymentAmount) {
-                            $advancePayment->selectedToPayment = -1;
-                            $advancePayment->fullyPaid = 2;
-                            $advancePayment->save();
-                        } else {
-                            $advancePayment->selectedToPayment = 0;
-                            $advancePayment->fullyPaid = 1;
-                            $advancePayment->save();
+                            if (($advancePayment->reqAmount == $advancePaymentDetailsSum->SumOfpaymentAmount) || $advancePayment->reqAmount < $advancePaymentDetailsSum->SumOfpaymentAmount) {
+                                $advancePayment->selectedToPayment = -1;
+                                $advancePayment->fullyPaid = 2;
+                                $advancePayment->save();
+                            } else {
+                                $advancePayment->selectedToPayment = 0;
+                                $advancePayment->fullyPaid = 1;
+                                $advancePayment->save();
+                            }
+
                         }
 
+                  
                         $resValidate = $this->paySupplierInvoiceMasterRepository->validatePoPayment($val->purchaseOrderID, $id);
 
                         if (!$resValidate['status']) {
@@ -1905,7 +1949,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     }
 
                 }
-
+             
                 if (count($overPaymentErrorMessage) > 0) {
                     $confirmErrorOverPay = array('type' => 'confirm_error_over_payment', 'data' => $overPaymentErrorMessage);
                     return $this->sendError("You cannot confirm this document.", 500, $confirmErrorOverPay);
@@ -2219,6 +2263,16 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             }
 
             if ($paySupplierInvoiceMaster->invoiceType == 5) {
+
+                $supDetail = SupplierAssigned::where('supplierCodeSytem', $input['BPVsupplierID'])->where('companySystemID', $companySystemID)->first();
+
+                if($supDetail)
+                {
+                    $input['AdvanceAccount'] = $supDetail->AdvanceAccount;
+                    $input['advanceAccountSystemID'] = $supDetail->advanceAccountSystemID;
+                }
+
+
                 $totalAmount = AdvancePaymentDetails::selectRaw("SUM(paymentAmount) as paymentAmount,SUM(localAmount) as localAmount, SUM(comRptAmount) as comRptAmount, SUM(supplierDefaultAmount) as supplierDefaultAmount, SUM(supplierTransAmount) as supplierTransAmount")->where('PayMasterAutoId', $id)->first();
 
                 if (!empty($totalAmount->supplierTransAmount)) {
@@ -2731,7 +2785,9 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             ->exists();
 
             $projects = ErpProjectMaster::where('companySystemID', $companyId)->get();
-         
+
+            $isVATEligible = TaxService::checkCompanyVATEligible($companyId);
+
 
             $output = array(
                 'financialYears' => $financialYears,
@@ -2757,7 +2813,8 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 'deduction_type_drop' => $monthly_declarations_drop,
                 'paymentMode' => $paymentMode,
                 'isProjectBase' => $isProject_base,
-                'projects' => $projects,
+                'isVATEligible' => $isVATEligible,
+                'projects' => $projects
             );
         }
 
@@ -2812,6 +2869,29 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         return $this->sendResponse($bankAccount, 'Record retrieved successfully');
     }
 
+    public function getPaymentVoucherPendingAmountDetails(Request $request) {
+        $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->findWithoutFail($request["id"]);
+
+        if (empty($paySupplierInvoiceMaster)) {
+            return $this->sendError('Payment voucher not found');
+        }
+
+        if ($paySupplierInvoiceMaster->invoiceType == 6) {
+            $output1 = $this->getEmployeePaymentForPV($request, $paySupplierInvoiceMaster);
+            return $this->sendResponse($output1, 'Record retrieved successfully');
+        }
+
+        $decimalPlaces  = Helper::getCurrencyDecimalPlace($paySupplierInvoiceMaster->supplierTransCurrencyID);
+
+        $BPVdate = Carbon::parse($paySupplierInvoiceMaster->BPVdate)->format('Y-m-d');
+
+        $sql = 'SELECT * FROM erp_paysupplierinvoicedetail WHERE bookingInvSystemCode ='.$request["id"].' ORDER BY payDetailAutoID DESC';
+
+        $output = DB::select($sql);
+        return $this->sendResponse($output, 'Record retrieved successfully');
+
+    }
+
     public
     function getPOPaymentForPV(Request $request)
     {
@@ -2830,90 +2910,90 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
         $BPVdate = Carbon::parse($paySupplierInvoiceMaster->BPVdate)->format('Y-m-d');
         $sql = 'SELECT
-            	erp_accountspayableledger.apAutoID,
-            	erp_accountspayableledger.documentSystemCode as bookingInvSystemCode,
-            	erp_accountspayableledger.supplierTransCurrencyID,
-            	erp_accountspayableledger.supplierTransER,
-            	erp_accountspayableledger.localCurrencyID,
-            	erp_accountspayableledger.localER,
-            	erp_accountspayableledger.localAmount,
-            	erp_accountspayableledger.comRptCurrencyID,
-            	erp_accountspayableledger.comRptER,
-            	erp_accountspayableledger.comRptAmount,
-            	erp_accountspayableledger.companySystemID,
-            	erp_accountspayableledger.companyID,
-            	erp_accountspayableledger.documentSystemID as addedDocumentSystemID,
-            	erp_accountspayableledger.documentID as addedDocumentID,
-            	erp_accountspayableledger.documentCode as bookingInvDocCode,
-            	erp_accountspayableledger.documentDate as bookingInvoiceDate,
-            	erp_accountspayableledger.invoiceType as addedDocumentType,
-            	erp_accountspayableledger.supplierCodeSystem,
-            	erp_accountspayableledger.supplierInvoiceNo,
-            	erp_accountspayableledger.supplierInvoiceDate,
-            	erp_accountspayableledger.supplierDefaultCurrencyID,
-            	erp_accountspayableledger.supplierDefaultCurrencyER,
-            	erp_accountspayableledger.supplierDefaultAmount,
-                erp_accountspayableledger.purchaseOrderID,
-                erp_accountspayableledger.isRetention,
-                poid.purchaseOrderCode,
-            	CurrencyCode,
-            	DecimalPlaces,
-            	IFNULL(supplierInvoiceAmount,0) as supplierInvoiceAmount,
-            	IFNULL(supplierInvoiceAmount,0) - IFNULL(sid.SumOfsupplierPaymentAmount,0)- IFNULL(md.matchedAmount *- 1,0) as paymentBalancedAmount,
-            	IFNULL(ABS(sid.SumOfsupplierPaymentAmount),0) + IFNULL(md.matchedAmount,0) as matchedAmount,
-            	false as isChecked 
-            FROM
-            	erp_accountspayableledger
-                LEFT JOIN (
-                  SELECT
-                        erp_purchaseordermaster.purchaseOrderCode,
-                        erp_purchaseordermaster.purchaseOrderID
-                    FROM
-                        erp_purchaseordermaster
-                    ) poid ON poid.purchaseOrderID = erp_accountspayableledger.purchaseOrderID
-            	LEFT JOIN (
-            SELECT
-            	erp_paysupplierinvoicedetail.apAutoID,
-            	IFNULL(Sum( erp_paysupplierinvoicedetail.supplierPaymentAmount ),0) AS SumOfsupplierPaymentAmount,
-            	IFNULL(Sum( erp_paysupplierinvoicedetail.paymentBalancedAmount ),0) AS SumOfpaymentBalancedAmount 
-            FROM
-            	erp_paysupplierinvoicedetail 
-            GROUP BY
-            	erp_paysupplierinvoicedetail.apAutoID 
-            	) sid ON sid.apAutoID = erp_accountspayableledger.apAutoID
-            	LEFT JOIN (
-            SELECT
-            	erp_matchdocumentmaster.PayMasterAutoId,
-            	erp_matchdocumentmaster.companyID,
-            	erp_matchdocumentmaster.companySystemID,
-            	erp_matchdocumentmaster.documentSystemID,
-            	erp_matchdocumentmaster.BPVcode,
-            	erp_matchdocumentmaster.BPVsupplierID,
-            	erp_matchdocumentmaster.supplierTransCurrencyID,
-            	SUM(erp_matchdocumentmaster.matchedAmount) as matchedAmount,
-            	SUM(erp_matchdocumentmaster.matchLocalAmount) as matchLocalAmount,
-            	SUM(erp_matchdocumentmaster.matchRptAmount) as matchRptAmount
-            FROM
-            	erp_matchdocumentmaster 
-            WHERE
-            	erp_matchdocumentmaster.companySystemID = ' . $paySupplierInvoiceMaster->companySystemID . ' 
-            	AND erp_matchdocumentmaster.documentSystemID = 15
-            	GROUP BY companySystemID,PayMasterAutoId,documentSystemID,BPVsupplierID,supplierTransCurrencyID
-            	) md ON md.documentSystemID = erp_accountspayableledger.documentSystemID 
-            	AND md.PayMasterAutoId = erp_accountspayableledger.documentSystemCode 
-            	AND md.BPVsupplierID = erp_accountspayableledger.supplierCodeSystem 
-            	AND md.supplierTransCurrencyID = erp_accountspayableledger.supplierTransCurrencyID 
-            	AND md.companySystemID = erp_accountspayableledger.companySystemID 
-            	LEFT JOIN currencymaster ON erp_accountspayableledger.supplierTransCurrencyID = currencymaster.currencyID 
-            WHERE
-            	erp_accountspayableledger.invoiceType IN ( 0, 1, 4, 7 ) 
-            	AND DATE_FORMAT(erp_accountspayableledger.documentDate,"%Y-%m-%d") <= "' . $BPVdate . '" 
-            	AND erp_accountspayableledger.selectedToPaymentInv = 0 
-            	AND erp_accountspayableledger.fullyInvoice <> 2 
-            	AND erp_accountspayableledger.companySystemID = ' . $paySupplierInvoiceMaster->companySystemID . ' 
-            	AND erp_accountspayableledger.supplierCodeSystem = ' . $paySupplierInvoiceMaster->BPVsupplierID . ' 
-            	AND erp_accountspayableledger.supplierTransCurrencyID = ' . $paySupplierInvoiceMaster->supplierTransCurrencyID . ' HAVING ROUND(paymentBalancedAmount, '.$decimalPlaces.') != 0 ORDER BY erp_accountspayableledger.apAutoID DESC';
-
+                	erp_accountspayableledger.apAutoID,
+                	erp_accountspayableledger.documentSystemCode as bookingInvSystemCode,
+                	erp_accountspayableledger.supplierTransCurrencyID,
+                	erp_accountspayableledger.supplierTransER,
+                	erp_accountspayableledger.localCurrencyID,
+                	erp_accountspayableledger.localER,
+                	erp_accountspayableledger.localAmount,
+                	erp_accountspayableledger.comRptCurrencyID,
+                	erp_accountspayableledger.comRptER,
+                	erp_accountspayableledger.comRptAmount,
+                	erp_accountspayableledger.companySystemID,
+                	erp_accountspayableledger.companyID,
+                	erp_accountspayableledger.documentSystemID as addedDocumentSystemID,
+                	erp_accountspayableledger.documentID as addedDocumentID,
+                	erp_accountspayableledger.documentCode as bookingInvDocCode,
+                	erp_accountspayableledger.documentDate as bookingInvoiceDate,
+                	erp_accountspayableledger.invoiceType as addedDocumentType,
+                	erp_accountspayableledger.supplierCodeSystem,
+                	erp_accountspayableledger.supplierInvoiceNo,
+                	erp_accountspayableledger.supplierInvoiceDate,
+                	erp_accountspayableledger.supplierDefaultCurrencyID,
+                	erp_accountspayableledger.supplierDefaultCurrencyER,
+                	erp_accountspayableledger.supplierDefaultAmount,
+                    erp_accountspayableledger.purchaseOrderID,
+                    erp_accountspayableledger.isRetention,
+                    poid.purchaseOrderCode,
+                	CurrencyCode,
+                	DecimalPlaces,
+                	IFNULL(supplierInvoiceAmount,0) as supplierInvoiceAmount,
+                	IFNULL(supplierInvoiceAmount,0) - IFNULL(sid.SumOfsupplierPaymentAmount,0)- IFNULL(md.matchedAmount *- 1,0) as paymentBalancedAmount,
+                	IFNULL(ABS(sid.SumOfsupplierPaymentAmount),0) + IFNULL(md.matchedAmount,0) as matchedAmount,
+                	false as isChecked 
+                FROM
+                	erp_accountspayableledger
+                    LEFT JOIN (
+                      SELECT
+                            erp_purchaseordermaster.purchaseOrderCode,
+                            erp_purchaseordermaster.purchaseOrderID
+                        FROM
+                            erp_purchaseordermaster
+                        ) poid ON poid.purchaseOrderID = erp_accountspayableledger.purchaseOrderID
+                	LEFT JOIN (
+                        SELECT
+                        	erp_paysupplierinvoicedetail.apAutoID,
+                        	IFNULL(Sum( erp_paysupplierinvoicedetail.supplierPaymentAmount ),0) AS SumOfsupplierPaymentAmount,
+                        	IFNULL(Sum( erp_paysupplierinvoicedetail.paymentBalancedAmount ),0) AS SumOfpaymentBalancedAmount 
+                        FROM
+                        	erp_paysupplierinvoicedetail 
+                        GROUP BY
+                        	erp_paysupplierinvoicedetail.apAutoID 
+                        	) sid ON sid.apAutoID = erp_accountspayableledger.apAutoID
+                        	LEFT JOIN (
+                        SELECT
+                        	erp_matchdocumentmaster.PayMasterAutoId,
+                        	erp_matchdocumentmaster.companyID,
+                        	erp_matchdocumentmaster.companySystemID,
+                        	erp_matchdocumentmaster.documentSystemID,
+                        	erp_matchdocumentmaster.BPVcode,
+                        	erp_matchdocumentmaster.BPVsupplierID,
+                        	erp_matchdocumentmaster.supplierTransCurrencyID,
+                        	SUM(erp_matchdocumentmaster.matchedAmount) as matchedAmount,
+                        	SUM(erp_matchdocumentmaster.matchLocalAmount) as matchLocalAmount,
+                        	SUM(erp_matchdocumentmaster.matchRptAmount) as matchRptAmount
+                        FROM
+                        	erp_matchdocumentmaster 
+                        WHERE
+                        	erp_matchdocumentmaster.companySystemID = ' . $paySupplierInvoiceMaster->companySystemID . ' 
+                        	AND erp_matchdocumentmaster.documentSystemID = 15
+                        	GROUP BY companySystemID,PayMasterAutoId,documentSystemID,BPVsupplierID,supplierTransCurrencyID
+                        	) md ON md.documentSystemID = erp_accountspayableledger.documentSystemID 
+                	AND md.PayMasterAutoId = erp_accountspayableledger.documentSystemCode 
+                	AND md.BPVsupplierID = erp_accountspayableledger.supplierCodeSystem 
+                	AND md.supplierTransCurrencyID = erp_accountspayableledger.supplierTransCurrencyID 
+                	AND md.companySystemID = erp_accountspayableledger.companySystemID 
+                	LEFT JOIN currencymaster ON erp_accountspayableledger.supplierTransCurrencyID = currencymaster.currencyID 
+                WHERE
+                	erp_accountspayableledger.invoiceType IN ( 0, 1, 4, 7, 2,3 ) 
+                	AND erp_accountspayableledger.documentSystemID != 4
+                	AND DATE_FORMAT(erp_accountspayableledger.documentDate,"%Y-%m-%d") <= "' . $BPVdate . '" 
+                	AND erp_accountspayableledger.selectedToPaymentInv = 0 
+                	AND erp_accountspayableledger.fullyInvoice <> 2 
+                	AND erp_accountspayableledger.companySystemID = ' . $paySupplierInvoiceMaster->companySystemID . ' 
+                	AND erp_accountspayableledger.supplierCodeSystem = ' . $paySupplierInvoiceMaster->BPVsupplierID . ' 
+                	AND erp_accountspayableledger.supplierTransCurrencyID = ' . $paySupplierInvoiceMaster->supplierTransCurrencyID . ' HAVING ROUND(paymentBalancedAmount, '.$decimalPlaces.') != 0 ORDER BY erp_accountspayableledger.apAutoID DESC';
         $output = DB::select($sql);
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
@@ -2962,7 +3042,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 IFNULL(Sum( erp_paysupplierinvoicedetail.paymentBalancedAmount ),0) AS SumOfpaymentBalancedAmount 
             FROM
                 erp_paysupplierinvoicedetail
-            JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicedetail.PayMasterAutoId = erp_paysupplierinvoicemaster.PayMasterAutoId 
+                JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicedetail.PayMasterAutoId = erp_paysupplierinvoicemaster.PayMasterAutoId 
             WHERE 
                 erp_paysupplierinvoicemaster.invoiceType = 6
             GROUP BY
@@ -3001,8 +3081,107 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 AND employee_ledger.employeeSystemID = ' . $paySupplierInvoiceMaster->directPaymentPayeeEmpID . ' 
                 AND employee_ledger.supplierTransCurrencyID = ' . $paySupplierInvoiceMaster->supplierTransCurrencyID . ' HAVING ROUND(paymentBalancedAmount, '.$decimalPlaces.') != 0 ORDER BY employee_ledger.id DESC';
 
+
+        $sql1 = 'SELECT
+                employee_ledger.id,
+                employee_ledger.documentSystemCode as bookingInvSystemCode,
+                employee_ledger.supplierTransCurrencyID,
+                employee_ledger.supplierTransER,
+                employee_ledger.localCurrencyID,
+                employee_ledger.localER,
+                employee_ledger.localAmount,
+                employee_ledger.comRptCurrencyID,
+                employee_ledger.comRptER,
+                employee_ledger.comRptAmount,
+                employee_ledger.companySystemID,
+                employee_ledger.companyID,
+                employee_ledger.documentSystemID as addedDocumentSystemID,
+                employee_ledger.documentID as addedDocumentID,
+                employee_ledger.documentCode as bookingInvDocCode,
+                employee_ledger.documentDate as bookingInvoiceDate,
+                employee_ledger.invoiceType as addedDocumentType,
+                employee_ledger.employeeSystemID,
+                employee_ledger.supplierInvoiceNo,
+                employee_ledger.supplierInvoiceDate,
+                employee_ledger.supplierDefaultCurrencyID,
+                employee_ledger.supplierDefaultCurrencyER,
+                employee_ledger.supplierDefaultAmount,
+                CurrencyCode,
+                DecimalPlaces,
+                IFNULL(supplierInvoiceAmount,0) as supplierInvoiceAmount,
+                IFNULL(supplierInvoiceAmount,0) - IFNULL(sid.SumOfsupplierPaymentAmount,0)- IFNULL(md.matchedAmount *- 1,0) as paymentBalancedAmount,
+                IFNULL(ABS(sid.SumOfsupplierPaymentAmount),0) + IFNULL(md.matchedAmount,0) as matchedAmount,
+                false as isChecked 
+            FROM
+                employee_ledger
+                LEFT JOIN (
+            SELECT
+                erp_paysupplierinvoicedetail.apAutoID,
+                IFNULL(Sum( erp_paysupplierinvoicedetail.supplierPaymentAmount ),0) AS SumOfsupplierPaymentAmount,
+                IFNULL(Sum( erp_paysupplierinvoicedetail.paymentBalancedAmount ),0) AS SumOfpaymentBalancedAmount 
+            FROM
+                erp_paysupplierinvoicedetail
+                JOIN erp_debitnote ON erp_paysupplierinvoicedetail.PayMasterAutoId = erp_debitnote.debitNoteAutoID 
+            WHERE 
+                    erp_debitnote.type = 2 AND erp_paysupplierinvoicedetail.documentSystemID = 15
+            GROUP BY
+                erp_paysupplierinvoicedetail.apAutoID 
+                ) sid ON sid.apAutoID = employee_ledger.id
+                LEFT JOIN (
+            SELECT
+                erp_matchdocumentmaster.PayMasterAutoId,
+                erp_matchdocumentmaster.companyID,
+                erp_matchdocumentmaster.companySystemID,
+                erp_matchdocumentmaster.documentSystemID,
+                erp_matchdocumentmaster.BPVcode,
+                erp_matchdocumentmaster.BPVsupplierID,
+                erp_matchdocumentmaster.supplierTransCurrencyID,
+                SUM(erp_matchdocumentmaster.matchedAmount) as matchedAmount,
+                SUM(erp_matchdocumentmaster.matchLocalAmount) as matchLocalAmount,
+                SUM(erp_matchdocumentmaster.matchRptAmount) as matchRptAmount
+            FROM
+                erp_matchdocumentmaster 
+            WHERE
+                erp_matchdocumentmaster.companySystemID = ' . $paySupplierInvoiceMaster->companySystemID . ' 
+                AND erp_matchdocumentmaster.documentSystemID = 15
+                GROUP BY companySystemID,PayMasterAutoId,documentSystemID,BPVsupplierID,supplierTransCurrencyID
+                ) md ON md.documentSystemID = employee_ledger.documentSystemID 
+                AND md.PayMasterAutoId = employee_ledger.documentSystemCode 
+                AND md.BPVsupplierID = employee_ledger.employeeSystemID 
+                AND md.supplierTransCurrencyID = employee_ledger.supplierTransCurrencyID 
+                AND md.companySystemID = employee_ledger.companySystemID 
+                LEFT JOIN currencymaster ON employee_ledger.supplierTransCurrencyID = currencymaster.currencyID 
+            WHERE
+                employee_ledger.invoiceType IN ( 0, 1, 4, 7 ) 
+                AND DATE_FORMAT(employee_ledger.documentDate,"%Y-%m-%d") <= "' . $BPVdate . '" 
+                AND employee_ledger.selectedToPaymentInv = 0 
+                AND employee_ledger.fullyInvoice <> 2 
+                AND employee_ledger.companySystemID = ' . $paySupplierInvoiceMaster->companySystemID . ' 
+                AND employee_ledger.employeeSystemID = ' . $paySupplierInvoiceMaster->directPaymentPayeeEmpID . ' 
+                AND employee_ledger.supplierTransCurrencyID = ' . $paySupplierInvoiceMaster->supplierTransCurrencyID . ' HAVING ROUND(paymentBalancedAmount, '.$decimalPlaces.') != 0 ORDER BY employee_ledger.id DESC';
+
+
         $output = DB::select($sql);
-        return $output;
+        $output1 = (array)(DB::select($sql1));
+
+        foreach($output1 as $key=>$val)
+        {
+            foreach($output as $out)
+            {
+                if($val->bookingInvDocCode == $out->bookingInvDocCode)
+                {
+                    $output1[$key]->matchedAmount = $val->matchedAmount + $out->matchedAmount;
+                    $output1[$key]->paymentBalancedAmount = $val->supplierInvoiceAmount - $output1[$key]->matchedAmount;
+                    break;
+                }
+                
+            }
+   
+          
+          
+        }
+        return $output1;
+        
     }
 
     public function getADVPaymentForPV(Request $request)
@@ -3134,9 +3313,30 @@ WHERE
     {
         $input = $request->all();
 
-        if (!isset($input['BPVsupplierID']) || $input['BPVsupplierID'] == 0) {
-            return $this->sendError('Please select a supplier');
+        if ($input['matchType'] == 2) {
+            $user_type =  $input['userType'];
+
+            if($user_type == 1)
+            {
+                if (!isset($input['BPVsupplierID']) || $input['BPVsupplierID'] == 0) {
+                    return $this->sendError('Please select a supplier');
+                }
+            }
+            else{
+                if (!isset($input['employeeID']) || $input['employeeID'] == 0) {
+                    return $this->sendError('Please select a employee');
+                }
+            }
+
         }
+        else
+        {
+            if (!isset($input['BPVsupplierID']) || $input['BPVsupplierID'] == 0) {
+                return $this->sendError('Please select a supplier');
+            }
+        }
+
+     
 
         if ($input['matchType'] == 1) {
             $invoiceMaster = DB::select('SELECT
@@ -3160,6 +3360,7 @@ LEFT JOIN (
 		erp_matchdocumentmaster.documentSystemID,
 		erp_matchdocumentmaster.companySystemID,
 		erp_matchdocumentmaster.BPVcode,
+        erp_matchdocumentmaster.matchingOption,
 		COALESCE (
 			SUM(
 				erp_matchdocumentmaster.matchingAmount
@@ -3170,9 +3371,10 @@ LEFT JOIN (
 		erp_matchdocumentmaster
 	GROUP BY
 		erp_matchdocumentmaster.PayMasterAutoId,
-		erp_matchdocumentmaster.documentSystemID
+		erp_matchdocumentmaster.documentSystemID,
+        erp_matchdocumentmaster.matchingOption
 ) AS advd ON (
-	MASTER .PayMasterAutoId = advd.PayMasterAutoId AND MASTER.documentSystemID = advd.documentSystemID AND MASTER.companySystemID = advd.companySystemID
+	MASTER .PayMasterAutoId = advd.PayMasterAutoId AND MASTER.documentSystemID = advd.documentSystemID AND MASTER.companySystemID = advd.companySystemID AND advd.matchingOption IS NULL
 )
 WHERE
 	approved = - 1
@@ -3180,75 +3382,138 @@ AND invoiceType = 5
 AND matchInvoice <> 2
 AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID = ' . $input['BPVsupplierID'] . ' HAVING (ROUND(BalanceAmt, currency.DecimalPlaces) > 0)');
         } elseif ($input['matchType'] == 2) {
+
+            $user_type =  $input['userType'];
+
+            if($user_type == 1)
+            {
+                $col = 'supplierID';
+                $val = $input['BPVsupplierID'];
+            }
+            else{
+                $col = 'empID';
+                $val = $input['employeeID'];
+            }
+           
+
+
             $invoiceMaster = DB::select('SELECT
-	MASTER.debitNoteAutoID as masterAutoID,
-	MASTER.debitNoteCode as documentCode,
-	MASTER.debitNoteDate as docDate,
-	MASTER.debitAmountTrans as transAmount,
-	MASTER.supplierID,
-	currency.CurrencyCode,
-	currency.DecimalPlaces,
-	IFNULL(advd.SumOfmatchingAmount, 0) AS SumOfmatchingAmount,
-	IFNULL(payInvoice.SumOfsupplierPaymentAmount, 0) AS SumOfsupplierPaymentAmount,
-	(MASTER .debitAmountTrans - IFNULL(advd.SumOfmatchingAmount, 0) - (IFNULL(payInvoice.SumOfsupplierPaymentAmount, 0) * -1)
-	) AS BalanceAmt
-FROM
-	erp_debitnote AS MASTER
-INNER JOIN currencymaster AS currency ON currency.currencyID = MASTER .supplierTransactionCurrencyID
-LEFT JOIN (
-	SELECT
-		erp_matchdocumentmaster.PayMasterAutoId,
-		erp_matchdocumentmaster.documentSystemID,
-		erp_matchdocumentmaster.companySystemID,
-		erp_matchdocumentmaster.BPVcode,
-		COALESCE (
-			SUM(
-				erp_matchdocumentmaster.matchingAmount
-			),
-			0
-		) AS SumOfmatchingAmount
-	FROM
-		erp_matchdocumentmaster
-	GROUP BY
-		erp_matchdocumentmaster.PayMasterAutoId,
-		erp_matchdocumentmaster.documentSystemID
-) AS advd ON (
-	MASTER .debitNoteAutoID = advd.PayMasterAutoId
-	AND MASTER .documentSystemID = advd.documentSystemID
-	AND MASTER .companySystemID = advd.companySystemID
-)
-LEFT JOIN (
-	SELECT
-		erp_paysupplierinvoicedetail.PayMasterAutoId,
-		erp_paysupplierinvoicedetail.addedDocumentSystemID,
-		erp_paysupplierinvoicedetail.bookingInvSystemCode,
-		erp_paysupplierinvoicedetail.bookingInvDocCode,
-		erp_paysupplierinvoicedetail.companySystemID,
-		Sum(
-			erp_paysupplierinvoicedetail.supplierPaymentAmount
-		) AS SumOfsupplierPaymentAmount
-	FROM
-		erp_paysupplierinvoicedetail
-	GROUP BY
-		erp_paysupplierinvoicedetail.addedDocumentSystemID,
-		erp_paysupplierinvoicedetail.bookingInvSystemCode
-) AS payInvoice ON (
-	MASTER.debitNoteAutoID = payInvoice.bookingInvSystemCode
-	AND MASTER.documentSystemID = payInvoice.addedDocumentSystemID
-	AND MASTER.companySystemID = payInvoice.companySystemID
-)
-WHERE
-	approved = - 1
-AND matchInvoice <> 2
-AND MASTER.companySystemID = ' . $input['companySystemID'] . '
-AND supplierID = ' . $input['BPVsupplierID'] . '
-HAVING
-	(
-		ROUND(
-			BalanceAmt,
-			currency.DecimalPlaces
-		) > 0
-	)');
+                MASTER.debitNoteAutoID as masterAutoID,
+                MASTER.debitNoteCode as documentCode,
+                MASTER.debitNoteDate as docDate,
+                MASTER.debitAmountTrans as transAmount,
+                MASTER.supplierID,
+                currency.CurrencyCode,
+                currency.DecimalPlaces,
+                IFNULL(advd.SumOfmatchingAmount, 0) AS SumOfmatchingAmount,
+                IFNULL(payInvoice.SumOfsupplierPaymentAmount, 0) AS SumOfsupplierPaymentAmount,
+                (MASTER .debitAmountTrans - IFNULL(advd.SumOfmatchingAmount, 0) - (IFNULL(payInvoice.SumOfsupplierPaymentAmount, 0) * -1)
+                ) AS BalanceAmt
+            FROM
+                erp_debitnote AS MASTER
+            INNER JOIN currencymaster AS currency ON currency.currencyID = MASTER .supplierTransactionCurrencyID
+            LEFT JOIN (
+                SELECT
+                    erp_matchdocumentmaster.PayMasterAutoId,
+                    erp_matchdocumentmaster.documentSystemID,
+                    erp_matchdocumentmaster.companySystemID,
+                    erp_matchdocumentmaster.BPVcode,
+                    erp_matchdocumentmaster.matchingOption,
+                    erp_matchdocumentmaster.user_type,
+                    COALESCE (
+                        SUM(
+                            erp_matchdocumentmaster.matchingAmount
+                        ),
+                        0
+                    ) AS SumOfmatchingAmount
+                FROM
+                    erp_matchdocumentmaster
+                GROUP BY
+                    erp_matchdocumentmaster.PayMasterAutoId,
+                    erp_matchdocumentmaster.documentSystemID,
+                    erp_matchdocumentmaster.matchingOption
+            ) AS advd ON (
+                MASTER .debitNoteAutoID = advd.PayMasterAutoId
+                AND MASTER .documentSystemID = advd.documentSystemID
+                AND MASTER .companySystemID = advd.companySystemID
+                AND advd.matchingOption IS NULL
+                AND advd.user_type = ' . $user_type . '
+            )
+            LEFT JOIN (
+                SELECT
+                    erp_paysupplierinvoicedetail.PayMasterAutoId,
+                    erp_paysupplierinvoicedetail.addedDocumentSystemID,
+                    erp_paysupplierinvoicedetail.bookingInvSystemCode,
+                    erp_paysupplierinvoicedetail.bookingInvDocCode,
+                    erp_paysupplierinvoicedetail.companySystemID,
+                    Sum(
+                        erp_paysupplierinvoicedetail.supplierPaymentAmount
+                    ) AS SumOfsupplierPaymentAmount
+                FROM
+                    erp_paysupplierinvoicedetail
+                GROUP BY
+                    erp_paysupplierinvoicedetail.addedDocumentSystemID,
+                    erp_paysupplierinvoicedetail.bookingInvSystemCode
+            ) AS payInvoice ON (
+                MASTER.debitNoteAutoID = payInvoice.bookingInvSystemCode
+                AND MASTER.documentSystemID = payInvoice.addedDocumentSystemID
+                AND MASTER.companySystemID = payInvoice.companySystemID
+            )
+            WHERE
+                approved = - 1
+            AND matchInvoice <> 2
+            AND type = '.$user_type.'
+            AND MASTER.companySystemID = ' . $input['companySystemID'] . '
+            AND '.$col.' = ' . $val . '
+            HAVING
+                (
+                    ROUND(
+                        BalanceAmt,
+                        currency.DecimalPlaces
+                    ) > 0
+                )');
+        }
+        elseif ($input['matchType'] == 4) {
+            $invoiceMaster = DB::select('SELECT
+                MASTER.PayMasterAutoId as masterAutoID,
+                MASTER.BPVcode as documentCode,
+                MASTER.BPVdate as docDate,
+                MASTER.payAmountSuppTrans as transAmount,
+                MASTER.BPVsupplierID,
+                currency.CurrencyCode,
+                currency.DecimalPlaces,
+                IFNULL(advd.SumOfmatchingAmount, 0) as SumOfmatchingAmount,
+                (
+                    MASTER .payAmountSuppTrans - IFNULL(advd.SumOfmatchingAmount, 0)
+                ) AS BalanceAmt
+            FROM
+                erp_paysupplierinvoicemaster AS MASTER
+            INNER JOIN currencymaster AS currency ON currency.currencyID = MASTER .supplierTransCurrencyID
+            LEFT JOIN (
+                SELECT
+                    erp_matchdocumentmaster.PayMasterAutoId,
+                    erp_matchdocumentmaster.documentSystemID,
+                    erp_matchdocumentmaster.companySystemID,
+                    erp_matchdocumentmaster.BPVcode,
+                    COALESCE (
+                        SUM(
+                            erp_matchdocumentmaster.matchingAmount
+                        ),
+                        0
+                    ) AS SumOfmatchingAmount
+                FROM
+                    erp_matchdocumentmaster
+                GROUP BY
+                    erp_matchdocumentmaster.PayMasterAutoId,
+                    erp_matchdocumentmaster.documentSystemID
+            ) AS advd ON (
+                MASTER .PayMasterAutoId = advd.PayMasterAutoId AND MASTER.documentSystemID = advd.documentSystemID AND MASTER.companySystemID = advd.companySystemID
+            )
+            WHERE
+                approved = - 1
+            AND invoiceType = 3    
+            AND matchInvoice <> 2
+            AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID = ' . $input['BPVsupplierID'] . ' HAVING (ROUND(BalanceAmt, currency.DecimalPlaces) > 0)');
         }
         elseif ($input['matchType'] == 3) {
             $invoiceMaster = DB::select('SELECT
@@ -3272,6 +3537,7 @@ LEFT JOIN (
 		erp_matchdocumentmaster.documentSystemID,
 		erp_matchdocumentmaster.companySystemID,
 		erp_matchdocumentmaster.BPVcode,
+        erp_matchdocumentmaster.matchingOption,
 		COALESCE (
 			SUM(
 				erp_matchdocumentmaster.matchingAmount
@@ -3282,13 +3548,15 @@ LEFT JOIN (
 		erp_matchdocumentmaster
 	GROUP BY
 		erp_matchdocumentmaster.PayMasterAutoId,
-		erp_matchdocumentmaster.documentSystemID
+		erp_matchdocumentmaster.documentSystemID,
+        erp_matchdocumentmaster.matchingOption
 ) AS advd ON (
-	MASTER .PayMasterAutoId = advd.PayMasterAutoId AND MASTER.documentSystemID = advd.documentSystemID AND MASTER.companySystemID = advd.companySystemID
+	MASTER .PayMasterAutoId = advd.PayMasterAutoId AND MASTER.documentSystemID = advd.documentSystemID AND MASTER.companySystemID = advd.companySystemID AND advd.matchingOption = 1
 )
 WHERE
 	approved = - 1
-AND invoiceType = 3    
+AND invoiceType = 5   
+AND advancePaymentTypeID = 0    
 AND matchInvoice <> 2
 AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID = ' . $input['BPVsupplierID'] . ' HAVING (ROUND(BalanceAmt, currency.DecimalPlaces) > 0)');
         }
@@ -3450,17 +3718,21 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
                 $advancePaymentDetails = AdvancePaymentDetails::where('PayMasterAutoId', $id)->get();
                 foreach ($advancePaymentDetails as $val) {
                     $advancePayment = PoAdvancePayment::find($val->poAdvPaymentID);
-
-                    $advancePaymentDetailsSum = AdvancePaymentDetails::selectRaw('IFNULL( Sum( erp_advancepaymentdetails.paymentAmount ), 0 ) AS SumOfpaymentAmount ')
+                    if(isset($advancePayment))
+                    {
+                        $advancePaymentDetailsSum = AdvancePaymentDetails::selectRaw('IFNULL( Sum( erp_advancepaymentdetails.paymentAmount ), 0 ) AS SumOfpaymentAmount ')
                         ->where('companySystemID', $advancePayment->companySystemID)
                         ->where('poAdvPaymentID', $advancePayment->poAdvPaymentID)
                         ->where('purchaseOrderID', $advancePayment->poID)
                         ->first();
 
-                    if (($advancePayment->reqAmount > $advancePaymentDetailsSum->SumOfpaymentAmount) && ($advancePaymentDetailsSum->SumOfpaymentAmount > 0)) {
-                        $advancePayment->selectedToPayment = 1;
-                        $advancePayment->save();
+                        if (($advancePayment->reqAmount > $advancePaymentDetailsSum->SumOfpaymentAmount) && ($advancePaymentDetailsSum->SumOfpaymentAmount > 0)) {
+                            $advancePayment->selectedToPayment = 1;
+                            $advancePayment->save();
+                        }
                     }
+
+          
                 }
             }
 

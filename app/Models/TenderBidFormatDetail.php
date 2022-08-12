@@ -79,6 +79,7 @@ class TenderBidFormatDetail extends Model
         'label',
         'field_type',
         'is_disabled',
+        'boq_applicable',
         'created_by',
         'updated_by'
     ];
@@ -94,6 +95,7 @@ class TenderBidFormatDetail extends Model
         'label' => 'string',
         'field_type' => 'integer',
         'is_disabled' => 'integer',
+        'boq_applicable' => 'integer',
         'created_by' => 'integer',
         'updated_by' => 'integer'
     ];

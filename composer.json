@@ -29,6 +29,7 @@
         "s-ichikawa/laravel-sendgrid-driver": "^2.0",
         "seguce92/laravel-dompdf": "^2.1",
         "sentry/sentry-laravel": "^1.8",
+        "webpatser/laravel-uuid": "^4.0",
         "yajra/laravel-datatables-oracle": "^8.4"
     },
     "require-dev": {

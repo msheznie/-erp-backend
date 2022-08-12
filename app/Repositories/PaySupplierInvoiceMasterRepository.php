@@ -308,6 +308,7 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
 
             foreach ($dataSet as $val) {
                 $data[$x]['Payment Code'] = $val->BPVcode;
+                $data[$x]['PostedDate'] = $val->PostedDate;
                 $data[$x]['Type'] = StatusService::getInvoiceType($val->invoiceType);
                 $data[$x]['Supplier'] = $val->supplier? $val->supplier->supplierName : '';
                 $data[$x]['Invoice Date'] = \Helper::dateFormat($val->BPVdate);

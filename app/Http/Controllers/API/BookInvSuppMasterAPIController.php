@@ -776,11 +776,20 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 $isDetailConfigured = SystemGlCodeScenarioDetail::where('systemGLScenarioID', 13)->first();
 
                 if($isConfigured && $isDetailConfigured) {
-                    if ($isConfigured->isActive != 1 || $isDetailConfigured->chartOfAccountSystemID == null) {
+                    if ($isConfigured->isActive != 1 || $isDetailConfigured->chartOfAccountSystemID == null || $isDetailConfigured->chartOfAccountSystemID == 0) {
+                        return $this->sendError('Chart of account is not configured for retention control account', 500);
+                    }
+                    $isChartOfAccountConfigured = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $isDetailConfigured->chartOfAccountSystemID)->where('companySystemID', $isDetailConfigured->companySystemID)->first();
+                    if($isChartOfAccountConfigured){
+                        if ($isChartOfAccountConfigured->isActive != 1 || $isChartOfAccountConfigured->chartOfAccountSystemID == null || $isChartOfAccountConfigured->isAssigned != -1 || $isChartOfAccountConfigured->chartOfAccountSystemID == 0 || $isChartOfAccountConfigured->companySystemID == 0 || $isChartOfAccountConfigured->companySystemID == null) {
+                            return $this->sendError('Chart of account is not configured for retention control account', 500);
+                        }
+                    }
+                    else{
                         return $this->sendError('Chart of account is not configured for retention control account', 500);
                     }
                 }
-                if(isset($isDetailConfigured->chartOfAccountSystemID) == null){
+                else{
                     return $this->sendError('Chart of account is not configured for retention control account', 500);
                 }
             }
@@ -813,10 +822,12 @@ class BookInvSuppMasterAPIController extends AppBaseController
                         $allocatedSum = ExpenseEmployeeAllocation::where('documentDetailID', $value['directInvoiceDetailsID'])
                                                                           ->where('documentSystemID', $bookInvSuppMaster->documentSystemID)
                                                                           ->sum('amount');
-
-                        if ($allocatedSum != $detailTotalOfLine) {
-                            return $this->sendError("Please allocate the full amount of ".$value->glCode." - ".$value->glCodeDes);
+                        if ($input['documentType'] != 4){
+                            if ($allocatedSum != $detailTotalOfLine) {
+                                return $this->sendError("Please allocate the full amount of ".$value->glCode." - ".$value->glCodeDes);
+                            }
                         }
+
 
                         if ($bookInvSuppMaster->createMonthlyDeduction && (is_null($value->deductionType) || $value->deductionType == 0)) {
                             return $this->sendError("Please set deduction Type for ".$value->glCode." - ".$value->glCodeDes);
@@ -2184,9 +2195,13 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $employeeData = [];
         $currencies = [];
         if (isset($request['invoiceType']) && $request['invoiceType'] == 4) {
-            $employeeData = Employee::selectRaw('empID, empName, employeeSystemID')
-                                    ->where('discharegedYN', 0)
-                                    ->get();
+            $employeeData = Employee::selectRaw('empID, empName, employeeSystemID')->where('discharegedYN','<>', 2);
+            if(Helper::checkHrmsIntergrated($companyId)){
+                $employeeData = $employeeData->whereHas('hr_emp', function($q){
+                    $q->where('isDischarged', 0)->where('empConfirmedYN', 1);
+                });
+            }
+            $employeeData = $employeeData->get();
 
             $currencies = CurrencyMaster::select(DB::raw("currencyID,CONCAT(CurrencyCode, ' | ' ,CurrencyName) as CurrencyName"))
                                         ->get();
@@ -2379,6 +2394,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             'erp_bookinvsuppmaster.documentType',
             'erp_bookinvsuppmaster.supplierInvoiceNo',
             'erp_bookinvsuppmaster.supplierInvoiceDate',
+            'erp_bookinvsuppmaster.postedDate',
             'erp_documentapproved.documentApprovedID',
             'erp_documentapproved.rollLevelOrder',
             'currencymaster.DecimalPlaces As DecimalPlaces',
@@ -2473,6 +2489,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             'erp_bookinvsuppmaster.documentType',
             'erp_bookinvsuppmaster.supplierInvoiceNo',
             'erp_bookinvsuppmaster.supplierInvoiceDate',
+            'erp_bookinvsuppmaster.postedDate',
             'erp_documentapproved.documentApprovedID',
             'erp_documentapproved.rollLevelOrder',
             'currencymaster.DecimalPlaces As DecimalPlaces',
@@ -2495,7 +2512,6 @@ class BookInvSuppMasterAPIController extends AppBaseController
             ->where('erp_documentapproved.employeeSystemID', $empID);
 
         $search = $request->input('search.value');
-
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
             $grvMasters = $grvMasters->where(function ($query) use ($search) {

@@ -28,7 +28,10 @@ use App\Models\Company;
 use App\Models\CurrencyMaster;
 use App\Models\CountryMaster;
 use App\Models\DocumentReferedHistory;
+use App\Models\BookInvSuppMaster;
+use App\Models\GRVMaster;
 use App\Models\ProcumentOrder;
+use App\Models\PaySupplierInvoiceMaster;
 use App\Models\SegmentMaster;
 use App\Models\SupplierAssigned;
 use App\Models\SupplierCurrency;
@@ -503,7 +506,7 @@ class SupplierMasterAPIController extends AppBaseController
     {
         $input = $this->convertArrayToValue($request->all());
         $employee = \Helper::getEmployeeInfo();
-
+     
         if($input['UnbilledGRVAccountSystemID'] == $input['liabilityAccountSysemID'] ){
             return $this->sendError('Liability account and unbilled account cannot be same. Please select different chart of accounts.');
         }
@@ -537,9 +540,11 @@ class SupplierMasterAPIController extends AppBaseController
 
         $liabilityAccountSysemID = ChartOfAccount::where('chartOfAccountSystemID', $input['liabilityAccountSysemID'])->first();
         $unbilledGRVAccountSystemID = ChartOfAccount::where('chartOfAccountSystemID', $input['UnbilledGRVAccountSystemID'])->first();
+        $advanceAccountSystemID = ChartOfAccount::where('chartOfAccountSystemID', $input['advanceAccountSystemID'])->first();
 
         $input['liabilityAccount'] = $liabilityAccountSysemID['AccountCode'];
         $input['UnbilledGRVAccount'] = $unbilledGRVAccountSystemID['AccountCode'];
+        $input['AdvanceAccount'] = $advanceAccountSystemID['AccountCode'];
 
         if (isset($input['linkCustomerYN']) && isset($input['linkCustomerID']) && $input['linkCustomerYN'] == 1) {
             $checkLinkCustomer = SupplierMaster::where('primaryCompanySystemID', $input['primaryCompanySystemID'])->where('linkCustomerID',$input['linkCustomerID'])->where('linkCustomerYN',1)->first();
@@ -689,9 +694,11 @@ class SupplierMasterAPIController extends AppBaseController
 
         $liabilityAccountSysemID = ChartOfAccount::where('chartOfAccountSystemID', $input['liabilityAccountSysemID'])->first();
         $unbilledGRVAccountSystemID = ChartOfAccount::where('chartOfAccountSystemID', $input['UnbilledGRVAccountSystemID'])->first();
+        $advanceAccountSystemID = ChartOfAccount::where('chartOfAccountSystemID', $input['advanceAccountSystemID'])->first();
 
         $input['liabilityAccount'] = $liabilityAccountSysemID['AccountCode'];
         $input['UnbilledGRVAccount'] = $unbilledGRVAccountSystemID['AccountCode'];
+        $input['AdvanceAccount'] = $advanceAccountSystemID['AccountCode'];
 
         $supplierMaster = SupplierMaster::where('supplierCodeSystem', $id)->first();
         $supplierMasterOld = $supplierMaster->toArray();
@@ -757,12 +764,12 @@ class SupplierMasterAPIController extends AppBaseController
                     $input['blockedReason'] = null;
                 }
 
-                $supplierMaster = $this->supplierMasterRepository->update(array_only($input,['isLCCYN','isSMEYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','supCategoryMasterID','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','retentionPercentage','supplierImportanceID','supplierNatureID','supplierTypeID','supplier_category_id','supplier_group_id','jsrsNo','jsrsExpiry', 'isBlocked', 'blockedReason', 'blockedBy', 'blockedDate']), $id);
-                SupplierAssigned::where('supplierCodeSytem',$id)->update(array_only($input,['isLCCYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','supCategoryMasterID','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','supplierImportanceID','supplierNatureID','supplierTypeID','supplier_category_id','supplier_group_id','jsrsNo','jsrsExpiry', 'isBlocked', 'blockedReason', 'blockedBy', 'blockedDate']));
+                $supplierMaster = $this->supplierMasterRepository->update(array_only($input,['isLCCYN','isSMEYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','supCategoryMasterID','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','retentionPercentage','supplierImportanceID','supplierNatureID','supplierTypeID','supplier_category_id','supplier_group_id','jsrsNo','jsrsExpiry', 'isBlocked', 'blockedReason', 'blockedBy', 'blockedDate','advanceAccountSystemID','AdvanceAccount', 'liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount', 'isActive', 'supplierName', 'linkCustomerYN', 'linkCustomerID']), $id);
+                SupplierAssigned::where('supplierCodeSytem',$id)->update(array_only($input,['isLCCYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','supCategoryMasterID','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','supplierImportanceID','supplierNatureID','supplierTypeID','supplier_category_id','supplier_group_id','jsrsNo','jsrsExpiry', 'isBlocked', 'blockedReason', 'blockedBy', 'blockedDate','advanceAccountSystemID','AdvanceAccount', 'liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount', 'isActive', 'supplierName']));
                 // user activity log table
                 if($supplierMaster){
-                    $old_array = array_only($supplierMasterOld,['isLCCYN','isSMEYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','supCategoryMasterID','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','supplierImportanceID','supplierNatureID','supplierTypeID','jsrsNo','jsrsExpiry', 'isBlocked', 'blockedReason', 'blockedBy', 'blockedDate']);
-                    $modified_array = array_only($input,['isLCCYN','isSMEYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','supCategoryMasterID','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','supplierImportanceID','supplierNatureID','supplierTypeID','jsrsNo','jsrsExpiry', 'isBlocked', 'blockedReason', 'blockedBy', 'blockedDate']);
+                    $old_array = array_only($supplierMasterOld,['isLCCYN','isSMEYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','supCategoryMasterID','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','supplierImportanceID','supplierNatureID','supplierTypeID','jsrsNo','jsrsExpiry', 'isBlocked', 'blockedReason', 'blockedBy', 'blockedDate','advanceAccountSystemID','AdvanceAccount', 'liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount', 'isActive', 'supplierName', 'linkCustomerYN', 'linkCustomerID']);
+                    $modified_array = array_only($input,['isLCCYN','isSMEYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','supCategoryMasterID','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','supplierImportanceID','supplierNatureID','supplierTypeID','jsrsNo','jsrsExpiry', 'isBlocked', 'blockedReason', 'blockedBy', 'blockedDate','advanceAccountSystemID','AdvanceAccount', 'liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount', 'isActive', 'supplierName', 'linkCustomerYN', 'linkCustomerID']);
 
                     // update in to user log table
                     foreach ($old_array as $key => $old){
@@ -1742,7 +1749,7 @@ class SupplierMasterAPIController extends AppBaseController
 
         $isCreated = $this->registrationLinkRepository->save($request, $token);
         $loginUrl = env('SRM_LINK').$token.'/'.$apiKey;
-        if($isCreated){
+        if ($isCreated['status'] == true) { 
             Mail::to($request->input('email'))->send(new EmailForQueuing("Registration Link", "Dear Supplier,"."<br /><br />"." Please find the below link to register at ". $companyName ." supplier portal. It will expire in 48 hours. "."<br /><br />"."Click Here: "."</b><a href='".$loginUrl."'>".$loginUrl."</a><br /><br />"." Thank You"."<br /><br /><b>"));
 
             return $this->sendResponse($loginUrl, 'Supplier Registration Link Generated successfully');
@@ -1825,5 +1832,65 @@ class SupplierMasterAPIController extends AppBaseController
 
 
         return $this->sendResponse($suppliers->toArray(),'Data retrieved successfully');
+    }
+
+    public function validateSupplierAmend(Request $request)
+    {
+        $input = $request->all();
+
+        $supplierMaster = SupplierMaster::find($input['supplierID']);
+
+        if (!$supplierMaster) {
+            return $this->sendError('Supplier Data not found');
+        }
+
+        $errorMessages = [];
+        $successMessages = [];
+        $amendable = [];
+
+        $grvMaster = GRVMaster::where('supplierID', $input['supplierID'])->where('UnbilledGRVAccountSystemID', $supplierMaster->UnbilledGRVAccountSystemID)->first();
+
+        if ($grvMaster) {
+            $errorMessages[] = "Unbilled Account cannot be amended. Since, it has been used in good receipt voucher";
+            $amendable['unbilledAmendable'] = false;
+        } else {
+            $successMessages[] = "Use of Unbilled Account checking is done in good receipt voucher";
+            $amendable['unbilledAmendable'] = true;
+        }
+
+        $suppInvUn = BookInvSuppMaster::where('supplierID', $input['supplierID'])
+                                      ->where('UnbilledGRVAccountSystemID', $supplierMaster->UnbilledGRVAccountSystemID)
+                                      ->whereIn('documentType', [0,2])
+                                      ->first();
+
+        if ($suppInvUn) {
+            $errorMessages[] = "Unbilled Account cannot be amended. Since, it has been used in supplier invoice";
+            $amendable['unbilledAmendable'] = false;
+        } else {
+            $successMessages[] = "Use of Unbilled Account checking is done in supplier invoice";
+            $amendable['unbilledAmendable'] = (!$amendable['unbilledAmendable']) ? false : true;
+        }
+
+        $suppInv = BookInvSuppMaster::where('supplierID', $input['supplierID'])->where('supplierGLCodeSystemID', $supplierMaster->liabilityAccountSysemID)->first();
+
+        if ($suppInv) {
+            $errorMessages[] = "Liability Account cannot be amended. Since, it has been used in supplier invoice";
+            $amendable['liablityAmendable'] = false;
+        } else {
+            $successMessages[] = "Use of Liability Account checking is done in supplier invoice";
+            $amendable['liablityAmendable'] = true;
+        }
+
+        $paySupp = PaySupplierInvoiceMaster::where('BPVsupplierID', $input['supplierID'])->where('advanceAccountSystemID', $supplierMaster->advanceAccountSystemID)->first();
+
+        if ($paySupp) {
+            $errorMessages[] = "Advance Account cannot be amended. Since, it has been used in payment voucher";
+            $amendable['advanceAmendable'] = false;
+        } else {
+            $successMessages[] = "Use of Advance Account checking is done in payment voucher";
+            $amendable['advanceAmendable'] = true;
+        }
+
+        return $this->sendResponse(['errorMessages' => $errorMessages, 'successMessages' => $successMessages, 'amendable'=> $amendable], "validated successfully");
     }
 }

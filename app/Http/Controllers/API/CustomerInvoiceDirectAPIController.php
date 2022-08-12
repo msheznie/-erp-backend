@@ -24,6 +24,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Constants\ContractMasterType;
+use App\helper\CreateExcel;
 use App\helper\Helper;
 use App\helper\TaxService;
 use App\Http\Controllers\AppBaseController;
@@ -85,6 +86,10 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\Storage;
 use App\helper\ItemTracking;
+use App\Models\CustomerContactDetails;
+use App\Models\CustomerInvoiceLogistic;
+use App\Models\DeliveryTermsMaster;
+use App\Models\PortMaster;
 use Exception;
 use PHPExcel_Worksheet_Drawing;
 /**
@@ -287,6 +292,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $input['FYPeriodDateTo'] = $FYPeriodDateTo;
         $input['invoiceDueDate'] = Carbon::parse($input['invoiceDueDate'])->format('Y-m-d') . ' 00:00:00';
         $input['bookingDate'] = Carbon::parse($input['bookingDate'])->format('Y-m-d') . ' 00:00:00';
+        $input['date_of_supply'] = Carbon::parse($input['date_of_supply'])->format('Y-m-d') . ' 00:00:00';
         $input['customerInvoiceDate'] = $input['bookingDate'];
         $input['companySystemID'] = $input['companyID'];
         $input['companyID'] = $company['CompanyID'];
@@ -366,6 +372,23 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         if (empty($customerInvoiceDirect)) {
             return $this->sendError('Customer Invoice Direct not found');
         }
+
+         
+        $customerInvoiceLogisticData = [
+            'consignee_address'=>$customerInvoiceDirect->customer->consignee_address, 
+            'consignee_contact_no'=>$customerInvoiceDirect->customer->consignee_contact_no, 
+            'consignee_name'=>$customerInvoiceDirect->customer->consignee_name, 
+            'payment_terms'=>$customerInvoiceDirect->customer->payment_terms,
+            'custInvoiceDirectAutoID'=>$id
+        ];
+
+        $invoiceLogistic = CustomerInvoiceLogistic::where('custInvoiceDirectAutoID',$id)->first();
+        if($invoiceLogistic){
+            $customerInvoiceLogistic = CustomerInvoiceLogistic::where('id', $invoiceLogistic['id'])->update($customerInvoiceLogisticData);
+        } else {
+            $customerInvoiceLogistic = CustomerInvoiceLogistic::create($customerInvoiceLogisticData);
+        }
+
 
 
         return $this->sendResponse($customerInvoiceDirect->toArray(), 'Customer Invoice Direct retrieved successfully');
@@ -698,6 +721,12 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $_post['invoiceDueDate'] = Carbon::parse($input['invoiceDueDate'])->format('Y-m-d') . ' 00:00:00';
         } else {
             $_post['invoiceDueDate'] = null;
+        }
+
+        if ($input['date_of_supply'] != '') {
+            $_post['date_of_supply'] = Carbon::parse($input['date_of_supply'])->format('Y-m-d') . ' 00:00:00';
+        } else {
+            $_post['date_of_supply'] = null;
         }
 
         /*validaation*/
@@ -1952,7 +1981,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $createdDateAndTime = ($cusBasicData) ? Carbon::parse($cusBasicData->createdDateAndTime) : null;
 
         /** @var CustomerInvoiceDirect $customerInvoiceDirect */
-        $customerInvoiceDirect = $this->customerInvoiceDirectRepository->with(['company', 'secondarycompany' => function ($query) use ($createdDateAndTime) {
+        $customerInvoiceDirect = $this->customerInvoiceDirectRepository->with(['company','logistic', 'secondarycompany' => function ($query) use ($createdDateAndTime) {
                 $query->whereDate('cutOffDate', '<=', $createdDateAndTime);
         }, 'customer', 'tax', 'createduser', 'bankaccount', 'currency', 'report_currency', 'local_currency', 'approved_by' => function ($query) {
             $query->with('employee.details.designation')
@@ -2105,6 +2134,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         if (!$bankID && $id) {
             $bankID = $master->bankID;
         }
+
+        $output['portMasters'] = PortMaster::where('is_deleted', 0)->get();
+        $output['deliveryTermsMasters'] = DeliveryTermsMaster::where('is_deleted', 0)->get();
 
         $output['customer'] = CustomerAssigned::select(DB::raw("customerCodeSystem,CONCAT(CutomerCode, ' | ' ,CustomerName) as CustomerName,creditDays"))
             ->where('companySystemID', $companyId)
@@ -3178,9 +3210,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 $directTraSubTotal += $customerInvoice->tax->amount;
             }
         }
-
-
-        $amountSplit = explode(".", $directTraSubTotal);
+        $directTraSubTotalnumberformat=  number_format( $directTraSubTotal,empty($customerInvoice->currency) ? 2 : $customerInvoice->currency->DecimalPlaces);
+        $stringReplacedDirectTraSubTotal = str_replace(',', '', $directTraSubTotalnumberformat);
+        $amountSplit = explode(".", $stringReplacedDirectTraSubTotal);
         $intAmt = 0;
         $floatAmt = 00;
 
@@ -3191,7 +3223,6 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $intAmt = $amountSplit[0];
             $floatAmt = $amountSplit[1];
         }
-
         $numFormatter = new \NumberFormatter("ar", \NumberFormatter::SPELLOUT);
         $floatAmountInWords = '';
         $intAmountInWords = ($intAmt > 0) ? strtoupper($numFormatter->format($intAmt)) : '';
@@ -3199,8 +3230,30 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         $customerInvoice->amountInWords = ($floatAmountInWords != "") ? "الريال السعودي " . $intAmountInWords . $floatAmountInWords : "الريال السعودي " . $intAmountInWords . " فقط";
 
-
         $numFormatterEn = new \NumberFormatter("en", \NumberFormatter::SPELLOUT);
+
+        $customerInvoice->floatAmt = (string)$floatAmt;
+
+        //add zeros to decimal point
+        if($customerInvoice->floatAmt != 00){
+            $length = strlen($customerInvoice->floatAmt);
+            if($length<$customerInvoice->currency->DecimalPlaces){
+                $count = $customerInvoice->currency->DecimalPlaces-$length;
+                for ($i=0; $i<$count; $i++){
+                    $customerInvoice->floatAmt .= '0';
+                }
+            }
+        }
+        $customerInvoice->amount_word = ucfirst($numFormatterEn->format($intAmt));
+        $customerInvoice->amount_word = str_replace('-', ' ', $customerInvoice->amount_word);
+
+        $numberfrmtDirectTraSubTotal = number_format( $directTraSubTotal,empty($customerInvoice->currency) ? 2 : $customerInvoice->currency->DecimalPlaces);
+        $numberfrmtDirectTraSubTotal = str_replace(',', '', $numberfrmtDirectTraSubTotal);
+        $floatedDirectTraSubTotal = floatval($numberfrmtDirectTraSubTotal);
+        $floatedAmountInWordsEnglish = ucwords($numFormatterEn->format($floatedDirectTraSubTotal));
+        $customerInvoice->floatedAmountInWordsEnglish = $floatedAmountInWordsEnglish.' Only';
+
+
 
         $amountInWordsEnglish = ucwords($numFormatterEn->format($directTraSubTotal));
 
@@ -3245,11 +3298,27 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             }
         }
 
+        $customerID = $customerInvoice->customerID;
+        $CustomerContactDetails = CustomerContactDetails::where('customerID', $customerID)->where('isDefault', -1)->first();
+        if($CustomerContactDetails){
+            $customerInvoice['CustomerContactDetails'] = $CustomerContactDetails;
+        }
+       
+        $customerInvoiceLogistic = CustomerInvoiceLogistic::with('port_of_loading','port_of_discharge')
+                                                            ->where('custInvoiceDirectAutoID', $id)
+                                                            ->first();
         
+        if($customerInvoiceLogistic){
+            $customerInvoiceLogistic = $customerInvoiceLogistic->toArray();
+            $customerInvoice['customerInvoiceLogistic'] = $customerInvoiceLogistic;
+        }
+
+
         $array = array('type'=>$type,'request' => $customerInvoice, 'secondaryBankAccount' => $secondaryBankAccount);
         $time = strtotime("now");
         $fileName = 'customer_invoice_' . $id . '_' . $time . '.pdf';
         $fileName_csv = 'customer_invoice_' . $id . '_' . $time . '.csv';
+        $fileName_xls = 'customer_invoice_' . $id . '_' . $time;
 
      
 
@@ -3274,6 +3343,26 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                     });
                     
                 })->download('csv');
+            }
+        
+        } else if ($printTemplate['printTemplateID'] == 11) {
+            if($type == 1)
+            {
+                $html = view('print.chromite_customer_invoice', $array);
+                $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+                $mpdf->AddPage('P');
+                $mpdf->setAutoBottomMargin = 'stretch';
+                $mpdf->WriteHTML($html);
+                return $mpdf->Output($fileName, 'I');
+            }
+            else if($type == 2)
+            {
+                return \Excel::create($fileName_xls, function ($excel) use ($array) {
+                    $excel->sheet('New sheet', function ($sheet) use ($array) {
+                        $sheet->loadView('export_report.chromite_customer_invoice', $array)->with('no_asset', true);
+                    });
+                    
+                })->download('xls');
             }
         
         } else if ($printTemplate['printTemplateID'] == 1 || $printTemplate['printTemplateID'] == null) {

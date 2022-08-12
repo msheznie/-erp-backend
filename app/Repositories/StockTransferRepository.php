@@ -141,7 +141,8 @@ class StockTransferRepository extends BaseRepository
                 'erp_stocktransfer.approved',
                 'erp_stocktransfer.approvedDate',
                 'erp_stocktransfer.fullyReceived',
-                'erp_stocktransfer.refferedBackYN'
+                'erp_stocktransfer.refferedBackYN',
+                'erp_stocktransfer.postedDate'
             ]);
 
         if ($search) {

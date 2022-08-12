@@ -32,6 +32,8 @@ use App\Models\UnitConversion;
 use App\Repositories\CustomerInvoiceItemDetailsRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use App\Models\CustomerInvoiceLogistic;
+use App\Models\DeliveryTermsMaster;
 use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
@@ -136,7 +138,7 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
         $input = $request->all();
         $companySystemID = $input['companySystemID'];
 
-
+       
         if(isset($input['isInDOorCI'])) {
             unset($input['timesReferred']);
         $item = ItemAssigned::with(['item_master'])
@@ -157,10 +159,13 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
 
         $customerInvoiceDirect = CustomerInvoiceDirect::find($input['custInvoiceDirectAutoID']);
 
+       
+
         if (empty($customerInvoiceDirect)) {
             return $this->sendError('Customer Invoice Direct Not Found');
         }
 
+        $is_pref = $customerInvoiceDirect->isPerforma;
 
         if(CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID',$input['custInvoiceDirectAutoID'])->where('itemFinanceCategoryID','!=',$item->financeCategoryMaster)->exists()){
             return $this->sendError('Different finance category found. You can not add different finance category items for same invoice',500);
@@ -252,8 +257,10 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
 
             $input['sellingCostAfterMargin'] = $catalogDetail->localPrice;
             $input['marginPercentage'] = ($input['sellingCostAfterMargin'] - $input['sellingCost'])/$input['sellingCost']*100;
+            $input['part_no'] = $catalogDetail->partNo;
         }else{
             $input['sellingCostAfterMargin'] = $input['sellingCost'];
+            $input['part_no'] = $item->secondaryItemCode;
         }
 
         if(isset($input['marginPercentage']) && $input['marginPercentage'] != 0){
@@ -311,11 +318,18 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
             || !$input['financeGLcodeRevenueSystemID'] || !$input['financeGLcodeRevenue']) {
             return $this->sendError("Account code not updated.", 500);
         }*/
-
+       
         if ($input['itemFinanceCategoryID'] == 1 || $input['itemFinanceCategoryID'] == 2 || $input['itemFinanceCategoryID'] == 4) {
             $alreadyAdded = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID',$input['custInvoiceDirectAutoID'])->where('itemCodeSystem',$item->itemCodeSystem)->first();
+
+           
+
             if ($alreadyAdded) {
-                return $this->sendError("Selected item is already added. Please check again", 500);
+                if(($input['itemFinanceCategoryID'] != 2 )&& ($input['itemFinanceCategoryID'] != 4 ))
+                {
+                    return $this->sendError("Selected item is already added. Please check again", 500);
+                }
+                
             }
         }
 
@@ -747,6 +761,18 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
         return $this->sendResponse($customerInvoiceItemDetails->toArray(), $message);
     }
 
+    public function custItemDetailUpdate($id, UpdateCustomerInvoiceItemDetailsAPIRequest $request){
+        $comments = $request->comments;
+
+        $input = array();
+        $input['comments'] = $comments;
+        $message = "Item updated successfully";
+
+        $customerInvoiceItemDetails = $this->customerInvoiceItemDetailsRepository->update($input, $id);
+
+        return $this->sendResponse($customerInvoiceItemDetails->toArray(), $message);
+    }
+
     /**
      * @param int $id
      * @return Response
@@ -965,6 +991,23 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
         return $this->sendResponse($items->toArray(), 'Item Details retrieved successfully');
     }
 
+    public function getDeliveryTerms(Request $request)
+    {
+        $items = DeliveryTermsMaster::where('is_deleted', 0)
+            ->get();
+
+        return $this->sendResponse($items->toArray(), 'Delivery Terms retrieved successfully');
+    }
+
+    public function getDeliveryTermsFormData(Request $request)
+    {
+        $input = $request->all();
+        $id = $input[0];
+        $items = CustomerInvoiceLogistic::where('custInvoiceDirectAutoID', $id)->first();
+
+        return $this->sendResponse($items, 'Delivery Terms retrieved successfully');
+    }
+
     private function updateCostBySellingCost($input,$customerDirectInvoice){
         $output = array();
         if($customerDirectInvoice->custTransactionCurrencyID != $customerDirectInvoice->localCurrencyID){
@@ -1069,10 +1112,21 @@ WHERE
                 }
             }
         }
+        
 
+        $customerInvoioce = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->first(); 
+        $is_pref = $customerInvoioce->isPerforma;
+
+       
         $itemExistArray = array();
         //check added item exist
         foreach ($input['detailTable'] as $itemExist) {
+            $item = ItemAssigned::with(['item_master'])
+            ->where('itemCodeSystem', $itemExist['itemCodeSystem'])
+            ->where('companySystemID', $itemExist['companySystemID'])
+            ->first();
+            
+           
 
             if ($itemExist['isChecked'] && $itemExist['noQty'] > 0) {
                 $doDetailExist = CustomerInvoiceItemDetails::select(DB::raw('itemPrimaryCode'))
@@ -1080,20 +1134,26 @@ WHERE
                     ->where('itemCodeSystem', $itemExist['itemCodeSystem'])
                     ->get();
 
-                if (!empty($doDetailExist)) {
-                    foreach ($doDetailExist as $row) {
-                        $itemDrt = $row['itemPrimaryCode'] . " is already added";
-                        $itemExistArray[] = [$itemDrt];
+               
+                if($item->financeCategoryMaster != 2 && $item->financeCategoryMaster != 4 )
+                {
+                    if (!empty($doDetailExist)) {
+                        foreach ($doDetailExist as $row) {
+                            $itemDrt = $row['itemPrimaryCode'] . " is already added";
+                            $itemExistArray[] = [$itemDrt];
+                        }
                     }
                 }
+
+          
             }
         }
+        
 
         if (!empty($itemExistArray)) {
             return $this->sendError($itemExistArray, 422);
         }
-
-        $customerInvoioce = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->first();
+        
 
         foreach ($input['detailTable'] as $itemExist) {
 
@@ -1397,22 +1457,39 @@ WHERE
             }
         }
 
+        $customerInvoioce = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->first(); 
+        $is_pref = $customerInvoioce->isPerforma;
+   
+
         $itemExistArray = array();
         //check added item exist
         foreach ($input['detailTable'] as $itemExist) {
+
+
+            $item = ItemAssigned::with(['item_master'])
+            ->where('itemCodeSystem', $itemExist['itemAutoID'])
+            ->where('companySystemID', $itemExist['companySystemID'])
+            ->first();
+
 
             if ($itemExist['isChecked'] && $itemExist['noQty'] > 0) {
                 $doDetailExist = CustomerInvoiceItemDetails::select(DB::raw('itemPrimaryCode'))
                     ->where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)
                     ->where('itemCodeSystem', $itemExist['itemAutoID'])
                     ->get();
+                    
 
-                if (!empty($doDetailExist)) {
-                    foreach ($doDetailExist as $row) {
-                        $itemDrt = $row['itemPrimaryCode'] . " is already added";
-                        $itemExistArray[] = [$itemDrt];
+                    if($item->financeCategoryMaster != 2 && $item->financeCategoryMaster != 4 )
+                    {
+                        if (!empty($doDetailExist)) {
+                            foreach ($doDetailExist as $row) {
+                                $itemDrt = $row['itemPrimaryCode'] . " is already added";
+                                $itemExistArray[] = [$itemDrt];
+                            }
+                        }
                     }
-                }
+
+          
             }
         }
 
@@ -1420,8 +1497,8 @@ WHERE
             return $this->sendError($itemExistArray, 422);
         }
 
-        $customerInvoioce = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->first();
-
+    
+       
 
         // check qty and validations
 

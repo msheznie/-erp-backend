@@ -29,6 +29,13 @@ class ForgotToPunchInService{
     }
 
     public function run(){
+
+        $isHoliday = $this->isHoliday();
+
+        if($isHoliday){
+            return;
+        }
+
         $this->getDayId();
         $this->loadProceedShifts();
         $this->getShiftMasters();
@@ -131,6 +138,7 @@ class ForgotToPunchInService{
             ->where('shiftID', $shiftId) 
             ->whereRaw("('{$this->date}' BETWEEN startDate and endDate)")
             ->where('companyID', $this->companyId)
+            // ->where('isActive', 1)
             ->get();
 
         if($empArr->count() == 0){
@@ -249,6 +257,23 @@ class ForgotToPunchInService{
             ->select('DayID')
             ->where('DayDesc', $this->dayName)
             ->value('DayID');        
+    }
+
+    public function isHoliday(){
+                
+        $holiday = DB::table('srp_erp_calender')
+            ->select('holiday_flag')
+            ->where('companyID', $this->companyId)
+            ->where('fulldate', $this->date)
+            ->value('holiday_flag');
+            
+        if($holiday){
+            $this->insertToLogTb(
+                [ 'message'=> 'Holiday'], 'info'
+            );
+        }
+        
+        return $holiday;
     }
 
     public function insertToLogTb($logData, $logType = 'info'){

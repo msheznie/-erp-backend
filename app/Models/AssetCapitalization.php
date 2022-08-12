@@ -363,4 +363,41 @@ class AssetCapitalization extends Model
         return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'capitalizationID')->where('documentSystemID',63);
     }
 
+    public function scopeEmployeeJoin($q,$as = 'employees' ,$column = 'createdUserSystemID',$columnAs = 'empName'){
+        $q->leftJoin('employees as '. $as, $as.'.employeeSystemID', '=', 'erp_fa_assetcapitalization.'.$column)
+            ->addSelect($as.".empName as ".$columnAs);
+    }
+
+    public function scopeCompanyJoin($q,$as = 'companymaster', $column = 'companySystemID' , $columnAs = 'CompanyName')
+    {
+        return $q->leftJoin('companymaster as '.$as,$as.'.companySystemID','erp_fa_assetcapitalization.'.$column)
+        ->addSelect($as.".CompanyName as ".$columnAs);
+    }
+
+    public function scopeCharAccJoin($q,$as = 'chartofaccounts', $column = 'companySystemID' , $columnAs = 'AccountDescription')
+    {
+        return $q->leftJoin('chartofaccounts as '.$as,$as.'.chartOfAccountSystemID','erp_fa_assetcapitalization.'.$column)
+        ->addSelect($as.".AccountDescription as ".$columnAs);
+    }
+
+    
+    public function scopeAssetCatJoin($q,$as = 'erp_fa_category', $column = 'companySystemID' , $columnAs = 'catDescription')
+    {
+        return $q->leftJoin('erp_fa_category as '.$as,$as.'.faCatID','erp_fa_assetcapitalization.'.$column)
+        ->addSelect($as.".catDescription as ".$columnAs);
+    }
+
+        
+    public function scopeAssetJoin($q,$as = 'erp_fa_asset_master', $column = 'companySystemID' , $columnAs = 'assetDescription')
+    {
+        return $q->leftJoin('erp_fa_asset_master as '.$as,$as.'.faID','erp_fa_assetcapitalization.'.$column)
+        ->addSelect($as.".assetDescription as ".$columnAs);
+    }
+
+    public function scopeDetailJoin($q)
+    {
+        return $q->join('erp_fa_assetcapitalization_detail','erp_fa_assetcapitalization_detail.capitalizationID','erp_fa_assetcapitalization.capitalizationID');
+    }
+
+
 }

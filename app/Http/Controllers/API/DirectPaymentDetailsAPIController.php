@@ -14,6 +14,8 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\PaySupplier;
+use App\helper\TaxService;
 use App\Http\Requests\API\CreateDirectPaymentDetailsAPIRequest;
 use App\Http\Requests\API\UpdateDirectPaymentDetailsAPIRequest;
 use App\Models\BankAccount;
@@ -29,6 +31,7 @@ use App\Models\Employee;
 use App\Models\ExpenseClaimDetails;
 use App\Models\PaySupplierInvoiceMaster;
 use App\Models\SegmentMaster;
+use App\Models\Taxdetail;
 use App\Repositories\DirectPaymentDetailsRepository;
 use App\Repositories\ExpenseClaimRepository;
 use App\Repositories\PaySupplierInvoiceMasterRepository;
@@ -258,6 +261,15 @@ class DirectPaymentDetailsAPIController extends AppBaseController
             $input['budgetYear'] = CompanyFinanceYear::budgetYearByDate(now(), $input['companySystemID']);
         }
 
+        $isVATEligible = TaxService::checkCompanyVATEligible($payMaster->companySystemID);
+
+        if ($isVATEligible) {
+            $defaultVAT = TaxService::getDefaultVAT($payMaster->companySystemID, $payMaster->BPVsupplierID);
+            $input['vatSubCategoryID'] = $defaultVAT['vatSubCategoryID'];
+            $input['VATPercentage'] = $defaultVAT['percentage'];
+            $input['vatMasterCategoryID'] = $defaultVAT['vatMasterCategoryID'];
+        }
+
         $directPaymentDetails = $this->directPaymentDetailsRepository->create($input);
 
         return $this->sendResponse($directPaymentDetails->toArray(), 'Direct Payment Details saved successfully');
@@ -423,6 +435,41 @@ class DirectPaymentDetailsAPIController extends AppBaseController
         $input['comRptAmount'] = \Helper::roundValue($conversionAmount['reportingAmount']);
         $input['bankAmount'] = \Helper::roundValue($conversionAmount['defaultAmount']);
 
+
+        $isVATEligible = TaxService::checkCompanyVATEligible($payMaster->companySystemID);
+        if($payMaster->invoiceType == 3) {
+            if ($isVATEligible) {
+                $policy = CompanyPolicyMaster::where('companySystemID', $input['companySystemID'])
+                    ->where('companyPolicyCategoryID', 67)
+                    ->where('isYesNO', 1)
+                    ->first();
+                $policy = isset($policy->isYesNO) && $policy->isYesNO == 1;
+
+                $currencyConversionVAT = \Helper::currencyConversion($input['companySystemID'], $payMaster->supplierTransCurrencyID, $payMaster->supplierTransCurrencyID, $input['vatAmount']);
+                if ($policy == true) {
+                    $input['VATAmountLocal'] = \Helper::roundValue($input['vatAmount'] / $payMaster->localCurrencyER);
+                    $input['VATAmountRpt'] = \Helper::roundValue($input['vatAmount'] / $payMaster->companyRptCurrencyER);
+                }
+                if ($policy == false) {
+                    $input['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
+                    $input['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
+                }
+                $input['vatAmount'] = \Helper::roundValue($input['vatAmount']);
+
+                $input['netAmount'] = isset($input['netAmount']) ? \Helper::stringToFloat($input['netAmount']) : 0;
+                $totalCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $payMaster->supplierTransCurrencyID, $payMaster->supplierTransCurrencyID, $input['netAmount']);
+
+                if ($policy == true) {
+                    $input['netAmountLocal'] = \Helper::roundValue($input['netAmount'] / $payMaster->localCurrencyER);
+                    $input['netAmountRpt'] = \Helper::roundValue($input['netAmount'] / $payMaster->companyRptCurrencyER);
+                }
+                if ($policy == false) {
+                    $input['netAmountLocal'] = \Helper::roundValue($totalCurrencyConversion['localAmount']);
+                    $input['netAmountRpt'] = \Helper::roundValue($totalCurrencyConversion['reportingAmount']);
+                }
+            }
+        }
+
         if ($directPaymentDetails->glCodeIsBank) {
             $trasToDefaultER = $input["bankCurrencyER"];
             $bankAmount = 0;
@@ -527,7 +574,12 @@ class DirectPaymentDetailsAPIController extends AppBaseController
         }
 
         $directPaymentDetails = $this->directPaymentDetailsRepository->update($input, $id);
-        return $this->sendResponse($directPaymentDetails->toArray(), 'DirectPaymentDetails updated successfully');
+
+        // update master table
+        PaySupplier::updateMaster($input['directPaymentAutoID']);
+
+
+     return $this->sendResponse($directPaymentDetails->toArray(), 'DirectPaymentDetails updated successfully');
     }
 
     /**

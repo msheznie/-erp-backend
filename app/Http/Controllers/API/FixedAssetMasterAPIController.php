@@ -531,6 +531,12 @@ class FixedAssetMasterAPIController extends AppBaseController
                 }
             }
 
+            if (isset($input['accumulated_depreciation_date'])) {
+                if ($input['accumulated_depreciation_date']) {
+                    $input['accumulated_depreciation_date'] = new Carbon($input['accumulated_depreciation_date']);
+                }
+            }
+
             if (isset($input['lastVerifiedDate'])) {
                 if ($input['lastVerifiedDate']) {
                     $input['lastVerifiedDate'] = new Carbon($input['lastVerifiedDate']);
@@ -850,6 +856,13 @@ class FixedAssetMasterAPIController extends AppBaseController
                     $input['dateDEP'] = new Carbon($input['dateDEP']);
                 }
             }
+
+            if (isset($input['accumulated_depreciation_date'])) {
+                if ($input['accumulated_depreciation_date']) {
+                    $input['accumulated_depreciation_date'] = new Carbon($input['accumulated_depreciation_date']);
+                }
+            }
+
 
             if (isset($input['documentDate'])) {
                 if ($input['documentDate']) {
@@ -1903,7 +1916,7 @@ class FixedAssetMasterAPIController extends AppBaseController
     public function downloadAssetTemplate(Request $request)
     {
         $input = $request->all();
-        $disk = (isset($input['companySystemID'])) ?  Helper::policyWiseDisk($input['companySystemID'], 'public') : 'public';
+        $disk = Helper::policyWiseDisk($input['companySystemID']);
         if ($exists = Storage::disk($disk)->exists('asset_master_template/asset_upload_template.xlsx')) {
             return Storage::disk($disk)->download('asset_master_template/asset_upload_template.xlsx', 'asset_upload_template.xlsx');
         } else {

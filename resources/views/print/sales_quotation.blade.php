@@ -345,6 +345,21 @@
                             {{$masterdata->customerEmail}}
                         </td>
                     </tr>
+                     @if(($masterdata->documentSystemID == 67) || ($masterdata->documentSystemID == 68 && $masterdata->quotationType == 1))
+                     <tr>
+                        <td width="50px">
+                            <span class="font-weight-bold">Lead Time (In Days)</span>
+                        </td>
+                        <td width="10px">
+                            <span class="font-weight-bold">:</span>
+                        </td>
+                        <td>
+                            @if($masterdata->leadTime)
+                            {{$masterdata->leadTime}}
+                            @endif
+                        </td>
+                    </tr>
+                     @endif
                 </table>
             </td>
             <td style="width: 50%">
@@ -398,6 +413,7 @@
                             @endif
                         </td>
                     </tr>
+                   
                 </table>
             </td>
         </tr>

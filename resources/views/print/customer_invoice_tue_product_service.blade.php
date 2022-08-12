@@ -237,6 +237,10 @@
                                 {{$request->PONumber}}
                             @endif
                         </b><br>
+                        <b>Date Of Supply : @if(!empty($request->date_of_supply))
+                            {{\App\helper\Helper::dateFormat($request->date_of_supply) }}
+                            @endif
+                        </b><br>
                         <b>Contract / PO No : 
                              @if(!empty($request->invoicedetails) )
                                 {{isset($request->invoicedetails[0]->clientContractID)?$request->invoicedetails[0]->clientContractID:''}}
@@ -274,8 +278,10 @@
             <tr>
                 <td style="width: 50%; text-align: left">
                     <b>CUSTOMER NAME : {{$request->customer->ReportTitle}}</b><br>
-                    <b>ADDRESS : {{$request->customer->customerAddress1}}</b><br>
-                    <b>VAT NO : {{$request->vatNumber}}</b>
+                    <b>CUSTOMER ADDRESS : {{$request->customer->customerAddress1}}</b><br>
+                    <b>CUSTOMER TELEPHONE : {{isset($request->CustomerContactDetails->contactPersonTelephone)?$request->CustomerContactDetails->contactPersonTelephone:' '}}</b><br>
+                    <b>CUSTOMER FAX : {{isset($request->CustomerContactDetails->contactPersonFax)?$request->CustomerContactDetails->contactPersonFax:' '}}</b><br>
+                    <b>CUSTOMER VATIN : {{$request->vatNumber}}</b>
                 </td>
                 <td style="width: 50%; text-align: right;direction: rtl;">
                     <b>أسم العميل : {{$request->customer->reportTitleSecondLanguage}}</b><br>
@@ -293,8 +299,9 @@
                 <tr style="background-color: #6798da;">
                     <th style="width:5%;">Item<br>رقم المنتج</th>
                     <th style="width:20%; text-align: center">Our Reference<br>المرجع</th>
-                    <th style="width:20%;text-align: center">Client Reference<br>مرجع العميل</th>
-                    <th style="width:30%;text-align: center">Item Description<br>وصف السلعة</th>
+                    <th style="width:15%;text-align: center">Client Reference<br>مرجع العميل</th>
+                    <th style="width:25%;text-align: center">Item Description<br>وصف السلعة</th>
+                    <th style="width:10%;text-align: center">UOM<br>وحدة القياس</th>
                     <th style="width:5%;text-align: center">QTY<br>الكمية</th>
                     <th style="width:10%;text-align: center">Unit Rate<br> سعر الوحده</th>
                     <th style="width:10%;text-align: center">Total Amount<br>القيمة الكلية</th>
@@ -315,6 +322,7 @@
                                 <td style="word-wrap:break-word;">{{$item->OurRef}}</td>
                                 <td style="word-wrap:break-word;">{{$item->ClientRef}}</td>
                                 <td style="word-wrap:break-word;">{{$item->assetDescription}}</td>
+                                <td style="text-align: center;">{{isset($item->uom_issuing->UnitShortCode)?$item->uom_issuing->UnitShortCode:''}}</td>
                                 <td style="text-align: right;">{{$item->qty}}</td>
                                 <td style="text-align: right;">{{number_format($item->rate,$numberFormatting)}}</td>
                                 <td style="text-align: right;">{{number_format($item->amount,$numberFormatting)}}</td>
@@ -346,6 +354,17 @@
                         <td colspan="4" style="text-align: left; border-right: none !important;"><b>Total Amount Including VAT(القيمة الكلية متضمنة ضريبة القيمة المضافة)</b></td>
                         <td style="text-align: center; border-left: none !important"><b>{{empty($request->currency) ? '' : $request->currency->CurrencyCode}}</b></td>
                         <td class="text-right">{{number_format($directTraSubTotal, $numberFormatting)}}</td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td colspan="6" style="text-align: left; border-right: none !important;"><b>Total Amount in Word ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}}): ({{$request->amount_word}}
+                            @if ($request->floatAmt > 0)
+                            and
+                            {{$request->floatAmt}}/@if($request->currency->DecimalPlaces == 3)1000 @else 100 @endif
+                            @endif
+                            
+                            only)</b>
+                        </td>
                     </tr>
                 </tbody>
                 <tbody>

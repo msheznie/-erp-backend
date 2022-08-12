@@ -107,7 +107,7 @@ class EvaluationCriteriaDetails extends Model
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
-
+    protected $appends = ['active'];
 
 
     public $fillable = [
@@ -159,6 +159,10 @@ class EvaluationCriteriaDetails extends Model
         
     ];
 
+    public function getActiveAttribute(){
+        return false;
+    }
+
     public function evaluation_criteria_type()
     {
         return $this->belongsTo('App\Models\EvaluationCriteriaType', 'critera_type_id', 'id');
@@ -177,6 +181,11 @@ class EvaluationCriteriaDetails extends Model
     public function evaluation_criteria_score_config()
     {
         return $this->hasMany('App\Models\EvaluationCriteriaScoreConfig', 'criteria_detail_id', 'id');
+    }
+
+    public function bid_submission_detail()
+    {
+        return $this->hasOne('App\Models\BidSubmissionDetail', 'evaluation_detail_id', 'id');
     }
 
     

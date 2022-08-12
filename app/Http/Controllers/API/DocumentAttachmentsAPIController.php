@@ -28,6 +28,7 @@ use App\Repositories\DocumentAttachmentsRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
@@ -264,25 +265,43 @@ class DocumentAttachmentsAPIController extends AppBaseController
     public function update($id, UpdateDocumentAttachmentsAPIRequest $request)
     {
         $input = $request->all();
+        $attachmentType = $input['attachmentType'];
+        $attachmentDescription = $input['attachmentDescription'];
+        $companySystemID = $input['companySystemID'];
+        $documentSystemID = $input['documentSystemID'];
+        $documentSystemCode = $input['documentSystemCode'];
 
-        if (isset($input['docExpirtyDate'])) {
-            if ($input['docExpirtyDate']) {
-                $input['docExpirtyDate'] = new Carbon($input['docExpirtyDate']);
+        //Update check
+        $isExist = DocumentAttachments::where('companySystemID',$companySystemID)
+            ->where('attachmentID', '!=', $id)
+            ->where('documentSystemID',$documentSystemID)
+            ->where('attachmentType',$attachmentType)
+            ->where('documentSystemCode',$documentSystemCode)
+            ->where('attachmentDescription',$attachmentDescription)
+            ->count();
+
+        if($isExist >= 1){
+            return $this->sendError('Description already exists', 400);
+        } else {
+            if (isset($input['docExpirtyDate'])) {
+                if ($input['docExpirtyDate']) {
+                    $input['docExpirtyDate'] = new Carbon($input['docExpirtyDate']);
+                }
             }
+
+            $input = $this->convertArrayToValue($input);
+
+            /** @var DocumentAttachments $documentAttachments */
+            $documentAttachments = $this->documentAttachmentsRepository->findWithoutFail($id);
+
+            if (empty($documentAttachments)) {
+                return $this->sendError('Document Attachments not found');
+            }
+
+            $documentAttachments = $this->documentAttachmentsRepository->update($input, $id);
+
+            return $this->sendResponse($documentAttachments->toArray(), 'DocumentAttachments updated successfully');
         }
-
-        $input = $this->convertArrayToValue($input);
-
-        /** @var DocumentAttachments $documentAttachments */
-        $documentAttachments = $this->documentAttachmentsRepository->findWithoutFail($id);
-
-        if (empty($documentAttachments)) {
-            return $this->sendError('Document Attachments not found');
-        }
-
-        $documentAttachments = $this->documentAttachmentsRepository->update($input, $id);
-
-        return $this->sendResponse($documentAttachments->toArray(), 'DocumentAttachments updated successfully');
     }
 
     /**
@@ -970,5 +989,26 @@ class DocumentAttachmentsAPIController extends AppBaseController
         } else {
             return $this->sendError('Attachment is not attached', 404);
         }
+    }
+    public function storeTenderDocuments(CreateDocumentAttachmentsAPIRequest $request){ 
+        $input = $request->all();
+        $attachmentType = $input['attachmentType'];
+        $attachmentDescription = $input['attachmentDescription'];
+        $companySystemID = $input['companySystemID'];
+        $documentSystemID = $input['documentSystemID'];
+        $documentSystemCode = $input['documentSystemCode'];
+
+        $isExist = DocumentAttachments::where('companySystemID',$companySystemID)
+        ->where('documentSystemID',$documentSystemID)
+        ->where('attachmentType',$attachmentType)
+        ->where('documentSystemCode',$documentSystemCode)
+        ->where('attachmentDescription',$attachmentDescription)
+        ->count(); 
+        if($isExist >= 1){ 
+           return ['status' => false, 'message' => 'Description already exists'];  
+        }else { 
+            return self::store($request);
+        } 
+      
     }
 }

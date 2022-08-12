@@ -232,9 +232,11 @@
         <table style="width:100%">
             <tr>
                 <td style="width: 50%; text-align:left;vertical-align: top;">
-                    <b>{{$request->customer->ReportTitle}}</b><br>
-                    <b>{{$request->customer->customerAddress1}}</b><br>
-                    <b>{{$request->customer->customerAddress2}}</b><br>
+                    <b>CUSTOMER NAME : {{$request->customer->ReportTitle}}</b><br>
+                    <b>CUSTOMER ADDRESS : {{$request->customer->customerAddress1}}</b><br>
+                    <b>CUSTOMER TELEPHONE : {{isset($request->CustomerContactDetails->contactPersonTelephone)?$request->CustomerContactDetails->contactPersonTelephone:' '}}</b><br>
+                    <b>CUSTOMER FAX : {{isset($request->CustomerContactDetails->contactPersonFax)?$request->CustomerContactDetails->contactPersonFax:' '}}</b><br>
+                    <b>CUSTOMER VATIN : {{$request->vatNumber}}</b>
                 </td>
 
                 <td style="width: 50%; text-align:right;vertical-align: top;">
@@ -244,6 +246,10 @@
                         @endif
                     </b>
                     <br>
+                    <b>Date Of Supply : @if(!empty($request->date_of_supply))
+                        {{\App\helper\Helper::dateFormat($request->date_of_supply) }}
+                        @endif
+                    </b><br>
                     <b>INVOICE NO : {{$request->bookingInvCode}}</b><br>
                     <b>VAT NO : {{$request->vatNumber}}</b>
                 </td>
@@ -260,7 +266,7 @@
                 <thead>
                     <tr class="theme-tr-head">
                         <th style="width:80%;">Description</th>
-                        <th style="width:20%;text-align: center">Amount<br>({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
+                        <th style="width:20%;text-align: center">Total Amount<br>({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
                     </tr>
                 </thead>
 
@@ -288,7 +294,7 @@
                 </tbody>
                 <tbody class="foot-amount">
                     <tr>
-                        <td style="text-align: left; border-right: none !important;"><b>Total</b></td>
+                        <td style="text-align: left; border-right: none !important;"><b>Total Amount</b></td>
                         <td class="text-right" style="border-left: 1px solid !important">@if ($request->invoicedetails)
                                 {{number_format($directTraSubTotal, $numberFormatting)}}
                             @endif</td>
@@ -302,7 +308,13 @@
                         </tr>
 
                         <tr>
-                            <td  style="text-align: left; border-right: none !important;"><b>Total Payable: ({{$request->amountInWordsEnglish}})</b></td>
+                            <td  style="text-align: left; border-right: none !important;"><b>Total Payable in ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}}): ({{$request->amount_word}}
+                                @if ($request->floatAmt > 0)
+                                and
+                                {{$request->floatAmt}}/@if($request->currency->DecimalPlaces == 3)1000 @else 100 @endif
+                                @endif
+                                
+                                only)</b></td>
                             <td class="text-right" style="border-left: 1px solid !important">{{number_format($directTraSubTotal, $numberFormatting)}}</td>
                         </tr>
                     @endif
@@ -314,7 +326,7 @@
     <div class="row">
          <table style="width: 100%">
             <tr>
-                <td width="100px" colspan="3"><span class="font-weight-bold" style="text-decoration: underline;"><b>Bank Details </b></span></td>
+                <td width="100px" colspan="3"><span class="font-weight-bold" style="text-decoration: underline;"><b>Remittance Details </b></span></td>
             </tr>
             <tr>
                 <td width="100px"><span class="font-weight-bold">Bank Name</span></td>

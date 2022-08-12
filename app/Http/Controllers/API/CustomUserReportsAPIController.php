@@ -557,14 +557,14 @@ class CustomUserReportsAPIController extends AppBaseController
         // return date("Y");
         DB::enableQueryLog();
         $result = $this->getCustomReportQry($request);
-        
+       
 
-        
         if (!$result['success']) {
             return $this->sendError($result['message'], 500);
         }
-
+       
         $data = $result['data'];
+
         if($data){
             $data = $data->paginate($limit);
         }
@@ -599,14 +599,14 @@ class CustomUserReportsAPIController extends AppBaseController
 
     private function getCustomReportQry(Request $request)
     {
-
+       
         $output = array(
             'success' => false,
             'message' => '',
             'data' => [],
             'report' => []
         );
-
+        
         $input = $request->all();
         $report = $this->customUserReportsRepository->with(['columns' => function ($q) {
             $q->with(['column'])->orderBy('sort_order', 'asc');
@@ -614,12 +614,12 @@ class CustomUserReportsAPIController extends AppBaseController
             $q->with(['column'])
                 ->wherehas('column');
         },'summarize.column'])->find($input['id']);
-
+        
         if (empty($report)) {
             $output['message'] = 'Report not found';
             return $output;
         }
-        
+       
         $selectedCompanyId = $request['companyId'];
         $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
 
@@ -646,7 +646,7 @@ class CustomUserReportsAPIController extends AppBaseController
 
         // sort by columns
         $sortByColumns = $this->getSortByColumns($report['columns']);
-
+        
 
         $isMasterExist = $this->checkMasterColumn($report['columns'], 1, 'is_master'); // 1 - master, 0 - details
         $isDetailExist = false ; // $this->checkMasterColumn($report['columns'], 0, 'is_master'); // 1 - master, 0 - details
@@ -657,7 +657,7 @@ class CustomUserReportsAPIController extends AppBaseController
         
         $data = [];
         $templateData = array();
-
+        
         if (isset($report['columns']) && count($report['columns']) > 0) {
 
             // select columns
@@ -716,7 +716,7 @@ class CustomUserReportsAPIController extends AppBaseController
                     $templateData['timesReferredColumn'] = 'refferedBackYN';
                     $templateData['timesReferredValue'] = -1;
                     $templateData['tables'] = ['created_by', 'confirmed_by','department','category','supplier','canceled_by','manually_closed_by',
-                        'currency','currency_local', 'currency_reporting','unit','supplier_currency','supplier_country'];
+                        'currency_by','currency_local', 'currency_reporting','unit','supplier_currency','supplier_country','location'];
                     $templateData['statusColumns'] = ['PRConfirmedYN as confirmedYN', 'approved', 'documentSystemID',
                         'companySystemID','cancelledYN','refferedBackYN'];
                     $templateData['model'] = 'PurchaseRequest';
@@ -724,6 +724,470 @@ class CustomUserReportsAPIController extends AppBaseController
                     // $templateData['rptCurrency'] = ['poTotalComRptCurrency','GRVcostPerUnitComRptCur'];
                     // $templateData['transCurrency'] = ['poTotalSupplierTransactionCurrency','GRVcostPerUnitSupTransCur'];  
                     break;
+                case 2:  
+                    $masterTable = 'erp_bookinvsuppmaster';
+                    $primaryKey  = $masterTable . '.bookingSuppMasInvAutoID';
+                    $templateData['confirmedColumn'] = 'confirmedYN';
+                    $templateData['confirmedValue']  = 1;
+                    $templateData['approvedColumn']  = 'approved';
+                    $templateData['approvedValue']   = -1;
+                    $templateData['canceledColumn']  = 'cancelYN';
+                    $templateData['canceledValue']   =  -1;
+                    $templateData['model'] = 'BookInvSuppMaster';
+                    $templateData['tables'] = ['created_by','modified_by','confirmed_by','department','category','supplier','canceled_by','manually_closed_by',
+                    'currency_by','currency_local', 'currency_reporting','localcurrency','transactioncurrency','supplier_country','location','approved_by','modified_by','company'];
+                 
+                    break;   
+                case 3:  
+                    $masterTable = 'erp_debitnote';
+                    $detailTable = 'erp_debitnotedetails';
+                    $primaryKey  = $masterTable . '.debitNoteAutoID';
+                    $detailPrimaryKey = $detailTable . '.debitNoteDetailsID';
+                    $templateData['confirmedColumn'] = 'confirmedYN';
+                    $templateData['confirmedValue']  = 1;
+                    $templateData['approvedColumn']  = 'approved';
+                    $templateData['approvedValue']   = -1;
+                    $templateData['model'] = 'DebitNote';
+                    $templateData['tables'] = ['rptcurrency','created_by','modified_by','confirmed_by','department','category','supplier','canceled_by','manually_closed_by',
+                    'currency_by','currency_local', 'currency_reporting','localcurrency','transactioncurrency','supplier_country','location','approved_by','modified_by','company'];
+                    
+                    break;     
+                case 4:  
+                    $masterTable = 'erp_paysupplierinvoicemaster';
+                    $detailTable = 'erp_paysupplierinvoicedetail';
+                    $primaryKey  = $masterTable . '.PayMasterAutoId';
+                    $detailPrimaryKey = $detailTable . '.payDetailAutoID';
+                    $templateData['confirmedColumn'] = 'confirmedYN';
+                    $templateData['confirmedValue']  = 1;
+                    $templateData['approvedColumn']  = 'approved';
+                    $templateData['approvedValue']   = -1;
+                    $templateData['model'] = 'PaySupplierInvoiceMaster';
+                    $templateData['tables'] = ['supplierDefcurrency','suppliercurrency','bankcurrency','directPaycurrency','rptcurrency','created_by','modified_by','confirmed_by','department','category','supplier','canceled_by','manually_closed_by',
+                    'currency_by','currency_local', 'currency_reporting','localcurrency','transactioncurrency','supplier_country','location','approved_by','modified_by','company','bank'];
+                    
+                    break;    
+                case 5:  
+                    $masterTable = 'erp_custinvoicedirect';
+                    $detailTable = 'erp_custinvoicedirectdet';
+                    $primaryKey  = $masterTable . '.custInvoiceDirectAutoID';
+                    $detailPrimaryKey = $detailTable . '.custInvDirDetAutoID';
+                    $templateData['confirmedColumn'] = 'confirmedYN';
+                    $templateData['confirmedValue']  = 1;
+                    $templateData['approvedColumn']  = 'approved';
+                    $templateData['approvedValue']   = -1;
+                    $templateData['model'] = 'CustomerInvoiceDirect';
+                    $templateData['tables'] = ['customer','warehouse','supplierDefcurrency','suppliercurrency','bankcurrency','transCurrency','reportCurrency','created_by','modified_by','confirmed_by','department','category','supplier','canceled_by','manually_closed_by',
+                    'currency_by','currency_local', 'currency_reporting','local_currency','supplier_country','location','approve_by','modified_by','company','bank'];
+                    
+                    break;  
+                case 6:  
+                    $masterTable = 'erp_creditnote';
+                    $detailTable = 'erp_creditnotedetails';
+                    $primaryKey  = $masterTable . '.creditNoteAutoID';
+                    $detailPrimaryKey = $detailTable . '.creditNoteDetailsID';
+                    $templateData['confirmedColumn'] = 'confirmedYN';
+                    $templateData['confirmedValue']  = 1;
+                    $templateData['approvedColumn']  = 'approved';
+                    $templateData['approvedValue']   = -1;
+                    $templateData['model'] = 'CreditNote';
+                    $templateData['tables'] = ['customer','customer_currency','rpt_currency','created_by','modified_by','confirmed_by','supplier','canceled_by','manually_closed_by',
+                    'currency_by','currency_local', 'currency_reporting','local_currency','supplier_country','location','approve_by','modified_by','company'];
+                    
+                    break;  
+                case 7:  
+                    $masterTable = 'erp_customerreceivepayment';
+                    $detailTable = 'erp_custreceivepaymentdet';
+                    $primaryKey  = $masterTable . '.custReceivePaymentAutoID';
+                    $detailPrimaryKey = $detailTable . '.custRecivePayDetAutoID';
+                    $templateData['confirmedColumn'] = 'confirmedYN';
+                    $templateData['confirmedValue']  = 1;
+                    $templateData['approvedColumn']  = 'approved';
+                    $templateData['approvedValue']   = -1;
+                    $templateData['model'] = 'CustomerReceivePayment';
+                    $templateData['tables'] = ['customer','customer_tran_currency','rpt_currency','created_by','modified_by','confirmed_by','supplier','canceled_by','manually_closed_by',
+                    'currency_by','currency_local', 'currency_reporting','local_currency','payee_currency','location','approve_by','bank','bank_currency'];
+                    
+                    break;  
+                case 8:  
+                    $masterTable = 'erp_grvmaster';
+                    $detailTable = 'erp_grvdetails';
+                    $primaryKey  = $masterTable . '.grvAutoID';
+                    $detailPrimaryKey = $detailTable . '.grvDetailsID';
+                    $templateData['confirmedColumn'] = 'confirmedYN';
+                    $templateData['confirmedValue']  = 1;
+                    $templateData['approvedColumn']  = 'approved';
+                    $templateData['approvedValue']   = -1;
+                    $templateData['model'] = 'GRVMaster';
+                    $templateData['tables'] = ['company','customer','customer_tran_currency','rpt_currency','created_by','modified_by','confirmed_by','supplier','canceled_by','manually_closed_by',
+                    'currency_by','currency_local', 'sup_def_currency','local_currency','sup_tra_currency','warehouse','approved_by','bank','bank_currency'];
+                    
+                    break;  
+
+                case 12:  
+                    $masterTable = 'erp_request';
+                    $detailTable = 'erp_requestdetails';
+                    $primaryKey  = $masterTable . '.RequestID';
+                    $detailPrimaryKey = $detailTable . '.RequestDetailsID';
+                    $templateData['confirmedColumn'] = 'confirmedYN';
+                    $templateData['confirmedValue']  = 1;
+                    $templateData['approvedColumn']  = 'approved';
+                    $templateData['approvedValue']   = -1;
+                    $templateData['model'] = 'MaterielRequest';
+                    $templateData['tables'] = ['company','customer','priority','created_by','approved_by',
+                    'location_by'];
+                    $templateData['statusColumns'] = ['approved'];
+                    break; 
+
+                case 13:  
+                    $masterTable = 'erp_itemissuemaster';
+                    $detailTable = 'erp_itemissuedetails';
+                    $primaryKey  = $masterTable . '.itemIssueAutoID';
+                    $detailPrimaryKey = $detailTable . '.itemIssueDetailID';
+                    $templateData['confirmedColumn'] = 'confirmedYN';
+                    $templateData['confirmedValue']  = 1;
+                    $templateData['approvedColumn']  = 'approved';
+                    $templateData['approvedValue']   = -1;
+                    $templateData['model'] = 'ItemIssueMaster';
+                    $templateData['tables'] = ['company','customer','created_by','approved_by',
+                    'warehouse'];
+                    $templateData['statusColumns'] = ['approved'];
+                    break; 
+                    
+                case 14:  
+                    $masterTable = 'erp_itemreturnmaster';
+                    $detailTable = 'erp_itemreturndetails';
+                    $primaryKey  = $masterTable . '.itemReturnAutoID';
+                    $detailPrimaryKey = $detailTable . '.itemReturnDetailID';
+                    $templateData['confirmedColumn'] = 'confirmedYN';
+                    $templateData['confirmedValue']  = 1;
+                    $templateData['approvedColumn']  = 'approved';
+                    $templateData['approvedValue']   = -1;
+                    $templateData['model'] = 'ItemReturnMaster';
+                    $templateData['tables'] = ['company','customer','created_by','approved_by',
+                    'warehouse'];
+                    $templateData['statusColumns'] = ['approved','refferedBackYN','confirmedYN'];
+                    break; 
+                case 15:  
+                    $masterTable = 'erp_stocktransfer';
+                    $detailTable = 'erp_stocktransferdetails';
+                    $primaryKey  = $masterTable . '.stockTransferAutoID';
+                    $detailPrimaryKey = $detailTable . '.stockTransferDetailsID';
+                    $templateData['confirmedColumn'] = 'confirmedYN';
+                    $templateData['confirmedValue']  = 1;
+                    $templateData['approvedColumn']  = 'approved';
+                    $templateData['approvedValue']   = -1;
+                    $templateData['model'] = 'StockTransfer';
+                    $templateData['tables'] = ['company','created_by','approved_by',
+                    'warehouse','location_to','location_from','segment'];
+                    $templateData['statusColumns'] = ['approved','refferedBackYN','confirmedYN'];
+                    break; 
+                case 16:  
+                    $masterTable = 'erp_stockreceive';
+                    $detailTable = 'erp_stockreceivedetails';
+                    $primaryKey  = $masterTable . '.stockReceiveAutoID';
+                    $detailPrimaryKey = $detailTable . '.stockReceiveDetailsID';
+                    $templateData['confirmedColumn'] = 'confirmedYN';
+                    $templateData['confirmedValue']  = 1;
+                    $templateData['approvedColumn']  = 'approved';
+                    $templateData['approvedValue']   = -1;
+                    $templateData['model'] = 'StockReceive';
+                    $templateData['tables'] = ['company','created_by','approved_by',
+                    'warehouse','location_to','location_from','segment'];
+                    $templateData['statusColumns'] = ['approved','refferedBackYN','confirmedYN'];
+                    break; 
+                case 17:  
+                    $masterTable = 'erp_stockadjustment';
+                    $detailTable = 'erp_stockadjustmentdetails';
+                    $primaryKey  = $masterTable . '.stockAdjustmentAutoID';
+                    $detailPrimaryKey = $detailTable . '.stockAdjustmentDetailsAutoID';
+                    $templateData['confirmedColumn'] = 'confirmedYN';
+                    $templateData['confirmedValue']  = 1;
+                    $templateData['approvedColumn']  = 'approved';
+                    $templateData['approvedValue']   = -1;
+                    $templateData['model'] = 'StockAdjustment';
+                    $templateData['tables'] = ['company','created_by','approved_by',
+                    'warehouse','location','reason','segment'];
+                    $templateData['statusColumns'] = ['approved','refferedBackYN','confirmedYN'];
+                    break; 
+                case 18:  
+                    $masterTable = 'erp_purchasereturnmaster';
+                    $detailTable = 'erp_purchasereturndetails';
+                    $primaryKey  = $masterTable . '.purhaseReturnAutoID';
+                    $detailPrimaryKey = $detailTable . '.purhasereturnDetailID';
+                    $templateData['confirmedColumn'] = 'confirmedYN';
+                    $templateData['confirmedValue']  = 1;
+                    $templateData['approvedColumn']  = 'approved';
+                    $templateData['approvedValue']   = -1;
+                    $templateData['model'] = 'PurchaseReturn';
+                    $templateData['tables'] = ['company','created_by','approved_by',
+                    'warehouse','location','supplier_default_currency','supplier_tran_currency','company_reporting_currency','local_currency','segment'];
+                    $templateData['statusColumns'] = ['approved','refferedBackYN','confirmedYN'];
+                    break; 
+                case 19:  
+                    $masterTable = 'erp_stockcount';
+                    $detailTable = 'erp_stock_count_details';
+                    $primaryKey  = $masterTable . '.stockCountAutoID';
+                    $detailPrimaryKey = $detailTable . '.stockCountDetailsAutoID';
+                    $templateData['confirmedColumn'] = 'confirmedYN';
+                    $templateData['confirmedValue']  = 1;
+                    $templateData['approvedColumn']  = 'approved';
+                    $templateData['approvedValue']   = -1;
+                    $templateData['model'] = 'StockCount';
+                    $templateData['tables'] = ['company','created_by','approved_by',
+                    'warehouse','location','segment'];
+                    $templateData['statusColumns'] = ['approved','refferedBackYN','confirmedYN'];
+                    break; 
+                case 20:  
+                    $masterTable = 'erp_inventoryreclassification';
+                    $detailTable = 'erp_inventoryreclassificationdetail';
+                    $primaryKey  = $masterTable . '.inventoryreclassificationID';
+                    $detailPrimaryKey = $detailTable . '.inventoryReclassificationDetailID';
+                    $templateData['confirmedColumn'] = 'confirmedYN';
+                    $templateData['confirmedValue']  = 1;
+                    $templateData['approvedColumn']  = 'approved';
+                    $templateData['approvedValue']   = -1;
+                    $templateData['model'] = 'InventoryReclassification';
+                    $templateData['tables'] = ['company','created_by','approved_by',
+                    'wareHouse','location','modify_by'];
+                    $templateData['statusColumns'] = ['approved','confirmedYN'];
+                    break; 
+                case 21:  
+                    $masterTable = 'erp_quotationmaster';
+                    $detailTable = 'erp_quotationdetails';
+                    $primaryKey  = $masterTable . '.quotationMasterID';
+                    $detailPrimaryKey = $detailTable . '.quotationDetailsID';
+                    $templateData['confirmedColumn'] = 'confirmedYN';
+                    $templateData['confirmedValue']  = 1;
+                    $templateData['approvedColumn']  = 'approvedYN';
+                    $templateData['approvedValue']   = -1;
+                    $templateData['model'] = 'QuotationMaster';
+                    $templateData['tables'] = ['company','created_by','sales_person',
+                    'segment'];
+                    $templateData['statusColumns'] = ['approvedYN'];
+                    break; 
+                case 22:  
+                    $masterTable = 'erp_quotationmaster';
+                    $detailTable = 'erp_quotationdetails';
+                    $primaryKey  = $masterTable . '.quotationMasterID';
+                    $detailPrimaryKey = $detailTable . '.quotationDetailsID';
+                    $templateData['confirmedColumn'] = 'confirmedYN';
+                    $templateData['confirmedValue']  = 1;
+                    $templateData['approvedColumn']  = 'approvedYN';
+                    $templateData['approvedValue']   = -1;
+                    $templateData['model'] = 'QuotationMaster';
+                    $templateData['tables'] = ['company','created_by','sales_person',
+                    'segment'];
+                    $templateData['statusColumns'] = ['approvedYN'];
+                    break; 
+                case 23:  
+                    $masterTable = 'erp_delivery_order';
+                    $detailTable = 'erp_delivery_order_detail';
+                    $primaryKey  = $masterTable . '.deliveryOrderID';
+                    $detailPrimaryKey = $detailTable . '.deliveryOrderDetailID';
+                    $templateData['confirmedColumn'] = 'confirmedYN';
+                    $templateData['confirmedValue']  = 1;
+                    $templateData['approvedColumn']  = 'approvedYN';
+                    $templateData['approvedValue']   = -1;
+                    $templateData['model'] = 'DeliveryOrder';
+                    $templateData['tables'] = ['company','created_by','sales_person',
+                    'segment','customer','tran_currency','tran_currency_er','local_currency','local_currency_ET','reporting_currency','reporting_currency_ET','wareHouse'];
+                    $templateData['statusColumns'] = ['approvedYN'];
+                    break; 
+                case 24:  
+                    $masterTable = 'erp_jvmaster';
+                    $detailTable = 'erp_jvdetail';
+                    $primaryKey  = $masterTable . '.jvMasterAutoId';
+                    $detailPrimaryKey = $detailTable . '.jvDetailAutoID';
+                    $templateData['confirmedColumn'] = 'confirmedYN';
+                    $templateData['confirmedValue']  = 1;
+                    $templateData['approvedColumn']  = 'approved';
+                    $templateData['approvedValue']   = -1;
+                    $templateData['model'] = 'JvMaster';
+                    $templateData['tables'] = ['company','created_by','currency',
+                    'currency_rpt'];
+                    $templateData['statusColumns'] = ['approved'];
+                    break; 
+                case 25:  
+                    $masterTable = 'erp_budgetmaster';
+                    $detailTable = 'erp_budjetdetails_history';
+                    $primaryKey  = $masterTable . '.budgetmasterID';
+                    $detailPrimaryKey = $detailTable . '.budjetDetailsID';
+                    $templateData['confirmedColumn'] = 'confirmedYN';
+                    $templateData['confirmedValue']  = 1;
+                    $templateData['approvedColumn']  = 'approvedYN';
+                    $templateData['approvedValue']   = -1;
+                    $templateData['model'] = 'BudgetMaster';
+                    $templateData['tables'] = ['company','created_by','template',
+                    'confirm_by','approved_by','segment'];
+                    $templateData['statusColumns'] = ['approvedYN'];
+                    break; 
+                case 26:  
+                    $masterTable = 'erp_budgettransferform';
+                    $detailTable = 'erp_budgettransferformdetail';
+                    $primaryKey  = $masterTable . '.budgetTransferFormAutoID';
+                    $detailPrimaryKey = $detailTable . '.budgetTransferFormDetailAutoID';
+                    $templateData['confirmedColumn'] = 'confirmedYN';
+                    $templateData['confirmedValue']  = 1;
+                    $templateData['approvedColumn']  = 'approvedYN';
+                    $templateData['approvedValue']   = -1;
+                    $templateData['model'] = 'BudgetTransferForm';
+                    $templateData['tables'] = ['company','created_by',
+                    'approved_by'];
+                    $templateData['statusColumns'] = ['approvedYN'];
+                    break; 
+                case 27:  
+                    $masterTable = 'erp_budgetaddition';
+                    $detailTable = 'erp_budgetadditiondetail';
+                    $primaryKey  = $masterTable . '.id';
+                    $detailPrimaryKey = $detailTable . '.id';
+                    $templateData['confirmedColumn'] = 'confirmedYN';
+                    $templateData['confirmedValue']  = 1;
+                    $templateData['approvedColumn']  = 'approvedYN';
+                    $templateData['approvedValue']   = -1;
+                    $templateData['model'] = 'ErpBudgetAddition';
+                    $templateData['tables'] = ['company','created_by',
+                    'approved_by','template'];
+                    $templateData['statusColumns'] = ['approvedYN'];
+                    break; 
+                case 28:  
+                    $masterTable = 'erp_consolejvmaster';
+                    $detailTable = 'erp_consolejvdetail';
+                    $primaryKey  = $masterTable . '.consoleJvMasterAutoId';
+                    $detailPrimaryKey = $detailTable . '.consoleJvDetailAutoID';
+                    $templateData['confirmedColumn'] = 'confirmedYN';
+                    $templateData['confirmedValue']  = 1;
+                    $templateData['approvedColumn']  = 'approved';
+                    $templateData['approvedValue']   = -1;
+                    $templateData['model'] = 'ConsoleJVMaster';
+                    $templateData['tables'] = ['company','created_by',
+                    'approved_by','currency','local_currency','rpt_currency'];
+                    $templateData['statusColumns'] = ['approved'];
+                    break; 
+                case 29:  
+                    $masterTable = 'erp_budget_contingency';
+                    $primaryKey  = $masterTable . '.ID';
+                    $templateData['confirmedColumn'] = 'confirmedYN';
+                    $templateData['confirmedValue']  = 1;
+                    $templateData['approvedColumn']  = 'approvedYN';
+                    $templateData['approvedValue']   = -1;
+                    $templateData['model'] = 'ContingencyBudgetPlan';
+                    $templateData['tables'] = ['company','created_by',
+                    'approved_by','currency','confirmed_by','segment','modified_by','template'];
+                    $templateData['statusColumns'] = ['approvedYN'];
+                    break; 
+                case 30:  
+                    $masterTable = 'erp_fa_asset_master';
+                    $primaryKey  = $masterTable . '.faID';
+                    $templateData['confirmedColumn'] = 'confirmedYN';
+                    $templateData['confirmedValue']  = 1;
+                    $templateData['approvedColumn']  = 'approvedYN';
+                    $templateData['approvedValue']   = -1;
+                    $templateData['model'] = 'FixedAssetMaster';
+                    $templateData['tables'] = ['company','created_by',
+                    'approved_by','doc_origin_detail','confirmed_by','segment','modified_by','depratment','fa_cat','fa_cat_sub','fa_cat_sub_2','fa_cat_sub_3','finance_cat','location','asset_type'];
+                    $templateData['statusColumns'] = ['approvedYN'];
+                    break; 
+                case 31:  
+                    $masterTable = 'erp_fa_depmaster';
+                    $primaryKey  = $masterTable . '.depMasterAutoID';
+                    $templateData['confirmedColumn'] = 'confirmedYN';
+                    $templateData['confirmedValue']  = 1;
+                    $templateData['approvedColumn']  = 'approved';
+                    $templateData['approvedValue']   = -1;
+                    $templateData['model'] = 'FixedAssetDepreciationMaster';
+                    $templateData['tables'] = ['company','rpt_currency',
+                    'approved_by','local_currency','created_by'];
+                    $templateData['statusColumns'] = ['approved'];
+                    break; 
+                case 32:  
+                    $masterTable = 'erp_fa_asset_disposalmaster';
+                    $primaryKey  = $masterTable . '.assetdisposalMasterAutoID';
+                    $templateData['confirmedColumn'] = 'confirmedYN';
+                    $templateData['confirmedValue']  = 1;
+                    $templateData['approvedColumn']  = 'approvedYN';
+                    $templateData['approvedValue']   = -1;
+                    $templateData['model'] = 'AssetDisposalMaster';
+                    $templateData['tables'] = ['company','company_to','customer',
+                    'approved_by','dis_type','created_by','modified_by'];
+                    $templateData['statusColumns'] = ['approvedYN'];
+                    break; 
+                case 33:  
+                    $masterTable = 'erp_fa_assetcapitalization';
+                    $detailTable = 'erp_fa_assetcapitalization_detail';
+                    $primaryKey  = $masterTable . '.capitalizationID';
+                    $detailPrimaryKey = $detailTable . '.capitalizationDetailID';
+                    $templateData['confirmedColumn'] = 'confirmedYN';
+                    $templateData['confirmedValue']  = 1;
+                    $templateData['approvedColumn']  = 'approved';
+                    $templateData['approvedValue']   = -1;
+                    $templateData['model'] = 'AssetCapitalization';
+                    $templateData['tables'] = ['company','fa_cat','asset',
+                    'approved_by','chart_acc','created_by','modified_by','confirmed_by'];
+                    $templateData['statusColumns'] = ['approved'];
+                    break; 
+                case 34:  
+                    $masterTable = 'erp_fa_asset_verification';
+                    $detailTable = 'erp_fa_asset_verificationdetails';
+                    $primaryKey  = $masterTable . '.id';
+                    $detailPrimaryKey = $detailTable . '.id';
+                    $templateData['confirmedColumn'] = 'confirmedYN';
+                    $templateData['confirmedValue']  = 1;
+                    $templateData['approvedColumn']  = 'approved';
+                    $templateData['approvedValue']   = -1;
+                    $templateData['model'] = 'AssetVerification';
+                    $templateData['tables'] = ['company',
+                    'approved_by','created_by','modified_by','confirmed_by'];
+                    $templateData['statusColumns'] = ['approved'];
+                    break; 
+                case 35:  
+                    $masterTable = 'erp_fa_fa_asset_transfer';
+                    $detailTable = 'erp_fa_fa_asset_transfer_details';
+                    $primaryKey  = $masterTable . '.id';
+                    $detailPrimaryKey = $detailTable . '.id';
+                    $templateData['confirmedColumn'] = 'confirmed_yn';
+                    $templateData['confirmedValue']  = 1;
+                    $templateData['approvedColumn']  = 'approved_yn';
+                    $templateData['approvedValue']   = -1;
+                    $templateData['model'] = 'ERPAssetTransfer';
+                    $templateData['tables'] = ['location',
+                    'approved_by','created_by','modified_by','confirmed_by'];
+                    $templateData['statusColumns'] = ['approved_yn'];
+                    break; 
+                case 36:  
+                    $masterTable = 'erp_fa_fa_asset_request';
+                    $detailTable = 'erp_fa_fa_asset_request_details';
+                    $primaryKey  = $masterTable . '.id';
+                    $detailPrimaryKey = $detailTable . '.id';
+                    $templateData['confirmedColumn'] = 'confirmed_yn';
+                    $templateData['confirmedValue']  = 1;
+                    $templateData['approvedColumn']  = 'approved_yn';
+                    $templateData['approvedValue']   = -1;
+                    $templateData['model'] = 'AssetRequest';
+                    $templateData['tables'] = [''];
+                    $templateData['statusColumns'] = ['approved_yn'];
+                    break; 
+                case 37:  
+                    $masterTable = 'erp_generalledger';
+                    $primaryKey  = $masterTable . '.GeneralLedgerID';
+                    $templateData['confirmedColumn'] = '';
+                    $templateData['confirmedValue']  = 1;
+                    $templateData['approvedColumn']  = '';
+                    $templateData['approvedValue']   = -1;
+                    $templateData['model'] = 'GeneralLedger';
+                    $templateData['tables'] = ['created_by','rpt_currency','local_currency','doc_currency','document_approved_by','document_confirm_by','chart_acc','company_master','segment','company'];
+                    $templateData['statusColumns'] = [''];
+                    break; 
+                case 38:  
+                    $masterTable = 'erp_itemledger';
+                    $primaryKey  = $masterTable . '.itemLedgerAutoID';
+                    $templateData['confirmedColumn'] = '';
+                    $templateData['confirmedValue']  = 1;
+                    $templateData['approvedColumn']  = '';
+                    $templateData['approvedValue']   = -1;
+                    $templateData['model'] = 'ErpItemLedger';
+                    $templateData['tables'] = ['created_by','rpt_currency','local_currency','doc_currency','unit','warehouse','segment','company'];
+                    $templateData['statusColumns'] = [''];
+                    break; 
                 default;
                     break;
             }
@@ -733,18 +1197,17 @@ class CustomUserReportsAPIController extends AppBaseController
                     array_push($columns, $masterTable . '.' . $column);
                 }
             }
-
+          
             if ($isMasterExist) {
                 array_push($columns, $primaryKey . ' as masterId');
             }
-
+           
             if ($isDetailExist) {
                 array_push($columns, $detailPrimaryKey . ' as detailId');
             }
             $namespacedModel = 'App\Models\\' . $templateData['model'];
             $data = $namespacedModel::selectRaw(implode(",", $columns));
-
-
+            
             // join tables
             switch ($report->report_master_id) {
                 case 1:
@@ -856,7 +1319,7 @@ class CustomUserReportsAPIController extends AppBaseController
                     if ($isDetailExist) {
                     $data->detailJoin();
                     }
-
+                    
                         foreach ($templateData['tables'] as $table) {
                         if ($this->checkMasterColumn($report['columns'], $table, 'table') || $this->checkMasterColumn($report['filter_columns'], $table, 'table')) {
                             if ($table == 'created_by') {
@@ -871,27 +1334,1402 @@ class CustomUserReportsAPIController extends AppBaseController
                             } else if ($table == 'department') {
                                 $data->departmentJoin('department', 'serviceLineSystemID', 'ServiceLineDes');
                             }else if ($table == 'category') {
-                                $data->categoryJoin('category', 'financeCategory', 'claimcategoriesDescription');
+                                $data->categoryJoin('category', 'financeCategory', 'categoryDescription');
                             }else if($table == 'supplier'){
                                 $data->supplierJoin('supplier', 'supplierID', 'primarySupplierCode');
                             }else if ($table == 'currency_by') {
                                 $data->currencyJoin('currency_by', 'currency', 'currencyByName');
-                            } 
+                            }else if ($table == 'location') {
+                                $data->locationJoin('location', 'location', 'locationByName');
+                            }  
                         }
                     }
                     $data->whereIn($masterTable . '.companySystemID', $subCompanies);
                     break;
+                case 2:
+                    if ($isDetailExist) {
+                        $data->detailJoin();
+                        }
+
+                        if (!$this->checkMasterColumn($report['columns'], 'supplier', 'table') && !$this->checkMasterColumn($report['filter_columns'], 'supplier', 'table') &&
+                        ($this->checkMasterColumn($report['columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['columns'], 'supplier_country', 'table') ||
+                            $this->checkMasterColumn($report['filter_columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['filter_columns'], 'supplier_country', 'table'))) {
+                        $data->supplierJoin('supplier', 'supplierID', 'primarySupplierCode');
+                      }
+                    
+                        foreach ($templateData['tables'] as $table) {
+                            if ($this->checkMasterColumn($report['columns'], $table, 'table') || $this->checkMasterColumn($report['filter_columns'], $table, 'table')) {
+                                if ($table == 'created_by') {
+                                   
+                                    $data->employeeJoin('created_by', 'createdUserSystemID', 'createdByName');
+                                 }
+                                 else if ($table == 'transactioncurrency') {
+                                    
+                                    $data->currencyJoin('transactioncurrency', 'supplierTransactionCurrencyID', 'CurrencyName');
+                                } 
+                                else if($table == 'supplier'){
+                                    $data->supplierJoin('supplier', 'supplierID', 'primarySupplierCode');
+                                } 
+                                  else if ($table == 'company') {
+                                    $data->companyJoin('company', 'companySystemID', 'CompanyName');
+                                } 
+                                else if ($table == 'localcurrency') {
+                                    $data->currencyJoin('localcurrency', 'localCurrencyID', 'CurrencyName');
+                                } 
+                                else if ($table == 'approved_by') {
+                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'createdByName');
+                                } 
+                              
+                            }
+                        }
+                    $data->whereIn($masterTable . '.companySystemID', $subCompanies);
+                    break;
+                case 3:
+                        if ($isDetailExist) {
+                            $data->detailJoin();
+                            }
+    
+                            if (!$this->checkMasterColumn($report['columns'], 'supplier', 'table') && !$this->checkMasterColumn($report['filter_columns'], 'supplier', 'table') &&
+                            ($this->checkMasterColumn($report['columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['columns'], 'supplier_country', 'table') ||
+                                $this->checkMasterColumn($report['filter_columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['filter_columns'], 'supplier_country', 'table'))) {
+                            $data->supplierJoin('supplier', 'supplierID', 'primarySupplierCode');
+                          }
+                        
+                            foreach ($templateData['tables'] as $table) {
+                                if ($this->checkMasterColumn($report['columns'], $table, 'table') || $this->checkMasterColumn($report['filter_columns'], $table, 'table')) {
+                                    if ($table == 'created_by') {
+                                       
+                                        $data->employeeJoin('created_by', 'createdUserSystemID', 'createdByName');
+                                     }
+                                     else if ($table == 'transactioncurrency') {
+                                        
+                                        $data->currencyJoin('transactioncurrency', 'supplierTransactionCurrencyID', 'CurrencyName');
+                                    } 
+                                    else if ($table == 'rptcurrency') {
+                                        
+                                        $data->currencyJoin('rptcurrency', 'companyReportingCurrencyID', 'CurrencyName');
+                                    }
+                                    else if($table == 'supplier'){
+                                        $data->supplierJoin('supplier', 'supplierID', 'primarySupplierCode');
+                                    } 
+                                      else if ($table == 'company') {
+                                        $data->companyJoin('company', 'companySystemID', 'CompanyName');
+                                    } 
+                                    else if ($table == 'localcurrency') {
+                                        $data->currencyJoin('localcurrency', 'localCurrencyID', 'CurrencyName');
+                                    } 
+                                    else if ($table == 'approved_by') {
+                                        $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'createdByName');
+                                    } 
+                                  
+                                }
+                            }
+                        $data->whereIn($masterTable . '.companySystemID', $subCompanies);
+                        break;
+
+                case 4:
+                    if ($isDetailExist) {
+                        $data->detailJoin();
+                        }
+
+                        if (!$this->checkMasterColumn($report['columns'], 'supplier', 'table') && !$this->checkMasterColumn($report['filter_columns'], 'supplier', 'table') &&
+                        ($this->checkMasterColumn($report['columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['columns'], 'supplier_country', 'table') ||
+                            $this->checkMasterColumn($report['filter_columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['filter_columns'], 'supplier_country', 'table'))) {
+                        $data->supplierJoin('supplier', 'supplierID', 'primarySupplierCode');
+                        }
+                    
+                        foreach ($templateData['tables'] as $table) {
+                            if ($this->checkMasterColumn($report['columns'], $table, 'table') || $this->checkMasterColumn($report['filter_columns'], $table, 'table')) {
+                                if ($table == 'created_by') {
+                                    
+                                    $data->employeeJoin('created_by', 'createdUserSystemID', 'createdByName');
+                                    }
+                                    else if ($table == 'transactioncurrency') {
+                                    
+                                    $data->currencyJoin('transactioncurrency', 'supplierTransactionCurrencyID', 'CurrencyName');
+                                } 
+                                else if ($table == 'rptcurrency') {
+                                    
+                                    $data->currencyJoin('rptcurrency', 'companyRptCurrencyID', 'CurrencyName');
+                                }
+                                else if ($table == 'directPaycurrency') {
+                                    
+                                    $data->currencyJoin('directPaycurrency', 'directPayeeCurrency', 'CurrencyName');
+                                }
+                                else if ($table == 'bankcurrency') {
+                                    
+                                    $data->currencyJoin('bankcurrency', 'BPVbankCurrency', 'CurrencyName');
+                                }
+                                else if ($table == 'supplierDefcurrency') {
+                                    
+                                    $data->currencyJoin('supplierDefcurrency', 'supplierDefCurrencyID', 'CurrencyName');
+                                }
+                                else if ($table == 'suppliercurrency') {
+                                    
+                                    $data->currencyJoin('suppliercurrency', 'supplierTransCurrencyID', 'CurrencyName');
+                                }
+                                else if($table == 'supplier'){
+                                    $data->supplierJoin('supplier', 'BPVsupplierID', 'primarySupplierCode');
+                                } 
+                                else if ($table == 'company') {
+                                    $data->companyJoin('company', 'companySystemID', 'CompanyName');
+                                } 
+                                else if ($table == 'localcurrency') {
+                                    $data->currencyJoin('localcurrency', 'localCurrencyID', 'CurrencyName');
+                                } 
+                                else if ($table == 'approved_by') {
+                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'createdByName');
+                                } 
+                                else if ($table == 'bank') {
+                                    $data->bankJoin('bank', 'BPVbank', 'bankName');
+                                } 
+                                
+                            }
+                        }
+                        $data->whereIn($masterTable . '.companySystemID', $subCompanies);
+                        break;
+                        
+                case 5:
+                    if ($isDetailExist) {
+                        $data->detailJoin();
+                        }
+
+                        if (!$this->checkMasterColumn($report['columns'], 'supplier', 'table') && !$this->checkMasterColumn($report['filter_columns'], 'supplier', 'table') &&
+                        ($this->checkMasterColumn($report['columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['columns'], 'supplier_country', 'table') ||
+                            $this->checkMasterColumn($report['filter_columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['filter_columns'], 'supplier_country', 'table'))) {
+                        $data->supplierJoin('supplier', 'supplierID', 'primarySupplierCode');
+                        }
+                    
+                        foreach ($templateData['tables'] as $table) {
+                            if ($this->checkMasterColumn($report['columns'], $table, 'table') || $this->checkMasterColumn($report['filter_columns'], $table, 'table')) {
+                                if ($table == 'created_by') {
+                                    
+                                    $data->employeeJoin('created_by', 'createdUserSystemID', 'createdByName');
+                                    }
+                                    else if ($table == 'transCurrency') {
+                                    
+                                    $data->currencyJoin('transCurrency', 'custTransactionCurrencyID', 'CurrencyName');
+                                } 
+                                else if ($table == 'reportCurrency') {
+                                    
+                                    $data->currencyJoin('reportCurrency', 'companyReportingCurrencyID', 'CurrencyName');
+                                }
+                                
+                                else if ($table == 'local_currency') {
+                                    
+                                    $data->currencyJoin('local_currency', 'localCurrencyID', 'CurrencyName');
+                                }
+                                else if ($table == 'supplierDefcurrency') {
+                                    
+                                    $data->currencyJoin('supplierDefcurrency', 'supplierDefCurrencyID', 'CurrencyName');
+                                }
+                                else if ($table == 'suppliercurrency') {
+                                    
+                                    $data->currencyJoin('suppliercurrency', 'supplierTransCurrencyID', 'CurrencyName');
+                                }
+                                else if($table == 'supplier'){
+                                    $data->supplierJoin('supplier', 'BPVsupplierID', 'primarySupplierCode');
+                                } 
+                                else if ($table == 'company') {
+                                    $data->companyJoin('company', 'companySystemID', 'CompanyName');
+                                } 
+                                else if ($table == 'localcurrency') {
+                                    $data->currencyJoin('localcurrency', 'localCurrencyID', 'CurrencyName');
+                                } 
+                                else if ($table == 'approve_by') {
+                                    $data->employeeJoin('approve_by', 'approvedByUserID', 'createdByName');
+                                } 
+                                else if ($table == 'bank') {
+                                    $data->bankJoin('bank', 'bankID', 'bankName');
+                                } 
+                                else if ($table == 'warehouse') {
+                                    $data->wareHouseJoin('warehouse', 'wareHouseSystemCode', 'wareHouseDescription');
+                                } 
+                                else if ($table == 'customer') {
+                                    $data->customerJoin('customer', 'customerID', 'CustomerName');
+                                } 
+                            }
+                        }
+                        $data->whereIn($masterTable . '.companySystemID', $subCompanies);
+                        break;
+                case 6:
+                    if ($isDetailExist) {
+                        $data->detailJoin();
+                        }
+
+                        if (!$this->checkMasterColumn($report['columns'], 'supplier', 'table') && !$this->checkMasterColumn($report['filter_columns'], 'supplier', 'table') &&
+                        ($this->checkMasterColumn($report['columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['columns'], 'supplier_country', 'table') ||
+                            $this->checkMasterColumn($report['filter_columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['filter_columns'], 'supplier_country', 'table'))) {
+                        $data->supplierJoin('supplier', 'supplierID', 'primarySupplierCode');
+                        }
+                    
+                        foreach ($templateData['tables'] as $table) {
+                            if ($this->checkMasterColumn($report['columns'], $table, 'table') || $this->checkMasterColumn($report['filter_columns'], $table, 'table')) {
+                                if ($table == 'created_by') {
+                                    
+                                $data->employeeJoin('created_by', 'createdUserSystemID', 'createdByName');
+                                }
+                                else if ($table == 'customer_currency') {
+                                    
+                                    $data->currencyJoin('customer_currency', 'customerCurrencyID', 'CurrencyName');
+                                } 
+                                else if ($table == 'rpt_currency') {
+                                    
+                                    $data->currencyJoin('rpt_currency', 'companyReportingCurrencyID', 'CurrencyName');
+                                }
+                                
+                                else if ($table == 'local_currency') {
+                                    
+                                    $data->currencyJoin('local_currency', 'localCurrencyID', 'CurrencyName');
+                                }
+                                
+                                else if ($table == 'company') {
+                                    $data->companyJoin('company', 'companySystemID', 'CompanyName');
+                                } 
+                                else if ($table == 'approve_by') {
+                                    $data->employeeJoin('approve_by', 'approvedByUserID', 'createdByName');
+                                } 
+                                else if ($table == 'created_by') {
+                                    $data->employeeJoin('approve_by', 'createdUserSystemID', 'createdByName');
+                                }  
+                                else if ($table == 'customer') {
+                                    $data->customerJoin('customer', 'customerID', 'CustomerName');
+                                } 
+                            }
+                        }
+                        $data->whereIn($masterTable . '.companySystemID', $subCompanies);
+                        break;
+                case 7:
+                        if ($isDetailExist) {
+                            $data->detailJoin();
+                            }
+    
+                            if (!$this->checkMasterColumn($report['columns'], 'supplier', 'table') && !$this->checkMasterColumn($report['filter_columns'], 'supplier', 'table') &&
+                            ($this->checkMasterColumn($report['columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['columns'], 'supplier_country', 'table') ||
+                                $this->checkMasterColumn($report['filter_columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['filter_columns'], 'supplier_country', 'table'))) {
+                            $data->supplierJoin('supplier', 'supplierID', 'primarySupplierCode');
+                            }
+                        
+                            foreach ($templateData['tables'] as $table) {
+                                if ($this->checkMasterColumn($report['columns'], $table, 'table') || $this->checkMasterColumn($report['filter_columns'], $table, 'table')) {
+                                    if ($table == 'created_by') {
+                                        
+                                    $data->employeeJoin('created_by', 'createdUserSystemID', 'createdByName');
+                                    }
+                                    else if ($table == 'customer_tran_currency') {
+                                        
+                                        $data->currencyJoin('customer_tran_currency', 'custTransactionCurrencyID', 'CurrencyName');
+                                    } 
+                                    else if ($table == 'rpt_currency') {
+                                        
+                                        $data->currencyJoin('rpt_currency', 'companyRptCurrencyID', 'CurrencyName');
+                                    }
+                                    
+                                    else if ($table == 'local_currency') {
+                                        
+                                        $data->currencyJoin('local_currency', 'localCurrencyID', 'CurrencyName');
+                                    }
+                                    else if ($table == 'bank_currency') {
+                                        
+                                        $data->currencyJoin('bank_currency', 'bankCurrency', 'CurrencyName');
+                                    }
+                                    else if ($table == 'payee_currency') {
+                                        
+                                        $data->currencyJoin('payee_currency', 'PayeeCurrency', 'CurrencyName');
+                                    }
+                                    else if ($table == 'company') {
+                                        $data->companyJoin('company', 'companySystemID', 'CompanyName');
+                                    } 
+                                    else if ($table == 'approve_by') {
+                                        $data->employeeJoin('approve_by', 'approvedByUserID', 'createdByName');
+                                    } 
+                                    else if ($table == 'created_by') {
+                                        $data->employeeJoin('approve_by', 'createdUserSystemID', 'createdByName');
+                                    }  
+                                    else if ($table == 'customer') {
+                                        $data->customerJoin('customer', 'customerID', 'CustomerName');
+                                    } 
+                                    else if ($table == 'bank') {
+                                        $data->bankJoin('bank', 'bankID', 'bankName');
+                                    }  
+                                }
+                            }
+                            $data->whereIn($masterTable . '.companySystemID', $subCompanies);
+                            break;
+                case 8:
+                            if ($isDetailExist) {
+                                $data->detailJoin();
+                                }
+
+                                if (!$this->checkMasterColumn($report['columns'], 'supplier', 'table') && !$this->checkMasterColumn($report['filter_columns'], 'supplier', 'table') &&
+                                ($this->checkMasterColumn($report['columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['columns'], 'supplier_country', 'table') ||
+                                    $this->checkMasterColumn($report['filter_columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['filter_columns'], 'supplier_country', 'table'))) {
+                                $data->supplierJoin('supplier', 'supplierID', 'primarySupplierCode');
+                                }
+                            
+                                foreach ($templateData['tables'] as $table) {
+                                    if ($this->checkMasterColumn($report['columns'], $table, 'table') || $this->checkMasterColumn($report['filter_columns'], $table, 'table')) {
+                                        if ($table == 'created_by') {
+                                            
+                                        $data->employeeJoin('created_by', 'createdUserSystemID', 'createdByName');
+                                        }
+                                        else if ($table == 'customer_tran_currency') {
+                                            
+                                            $data->currencyJoin('customer_tran_currency', 'custTransactionCurrencyID', 'CurrencyName');
+                                        } 
+                                        else if ($table == 'rpt_currency') {
+                                            
+                                            $data->currencyJoin('rpt_currency', 'companyReportingCurrencyID', 'CurrencyName');
+                                        }
+                                        
+                                        else if ($table == 'local_currency') {
+                                            
+                                            $data->currencyJoin('local_currency', 'localCurrencyID', 'CurrencyName');
+                                        }
+                                        else if ($table == 'sup_tra_currency') {
+                                            
+                                            $data->currencyJoin('sup_tra_currency', 'supplierTransactionCurrencyID', 'CurrencyName');
+                                        }
+                                        else if ($table == 'sup_def_currency') {
+                                            
+                                            $data->currencyJoin('sup_def_currency', 'supplierDefaultCurrencyID', 'CurrencyName');
+                                        }
+                                        else if ($table == 'company') {
+                                            $data->companyJoin('company', 'companySystemID', 'CompanyName');
+                                        } 
+                                        else if ($table == 'approved_by') {
+                                            $data->employeeJoin('approved_by', 'approvedByUserID', 'createdByName');
+                                        } 
+                                        else if ($table == 'created_by') {
+                                            $data->employeeJoin('approve_by', 'createdUserSystemID', 'createdByName');
+                                        } 
+                                        else if ($table == 'warehouse') {
+                                            $data->wareHouseJoin('warehouse', 'grvLocation', 'wareHouseDescription');
+                                        }
+                                        else if($table == 'supplier'){
+                                            $data->supplierJoin('supplier', 'supplierID', 'primarySupplierCode');
+                                        } 
+                                    }
+                                }
+                                $data->whereIn($masterTable . '.companySystemID', $subCompanies);
+                                break;
+
+                case 12:
+                    if ($isDetailExist) {
+                        $data->detailJoin();
+                        }
+
+                        if (!$this->checkMasterColumn($report['columns'], 'supplier', 'table') && !$this->checkMasterColumn($report['filter_columns'], 'supplier', 'table') &&
+                        ($this->checkMasterColumn($report['columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['columns'], 'supplier_country', 'table') ||
+                            $this->checkMasterColumn($report['filter_columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['filter_columns'], 'supplier_country', 'table'))) {
+                        $data->supplierJoin('supplier', 'supplierID', 'primarySupplierCode');
+                        }
+                    
+                        foreach ($templateData['tables'] as $table) {
+                            if ($this->checkMasterColumn($report['columns'], $table, 'table') || $this->checkMasterColumn($report['filter_columns'], $table, 'table')) {
+                                if ($table == 'created_by') {
+                                    
+                                $data->employeeJoin('created_by', 'createdUserSystemID', 'createdByName');
+                                }
+                                else if ($table == 'approved_by') {
+                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'createdByName');
+                                } 
+                                else if ($table == 'location_by') {
+                                    $data->locationJoin('location_by', 'location', 'locationName');
+                                } 
+                                else if ($table == 'priority') {
+                                    $data->priorityJoin('priority', 'priority', 'priorityDescription');
+                                } 
+                                
+                            }
+                        }
+                        $data->whereIn($masterTable . '.companySystemID', $subCompanies);
+                        break;
+                case 13:
+                    if ($isDetailExist) {
+                        $data->detailJoin();
+                        }
+
+                        if (!$this->checkMasterColumn($report['columns'], 'supplier', 'table') && !$this->checkMasterColumn($report['filter_columns'], 'supplier', 'table') &&
+                        ($this->checkMasterColumn($report['columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['columns'], 'supplier_country', 'table') ||
+                            $this->checkMasterColumn($report['filter_columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['filter_columns'], 'supplier_country', 'table'))) {
+                        $data->supplierJoin('supplier', 'supplierID', 'primarySupplierCode');
+                        }
+                    
+                        foreach ($templateData['tables'] as $table) {
+                            if ($this->checkMasterColumn($report['columns'], $table, 'table') || $this->checkMasterColumn($report['filter_columns'], $table, 'table')) {
+                                if ($table == 'created_by') {
+                                    
+                                $data->employeeJoin('created_by', 'createdUserSystemID', 'createdByName');
+                                }
+                                else if ($table == 'approved_by') {
+                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'createdByName');
+                                } 
+                                else if ($table == 'customer') {
+                                    $data->customerJoin('customer', 'customerSystemID', 'CustomerName');
+                                } 
+                                else if ($table == 'company') {
+                                    $data->companyJoin('company', 'companySystemID', 'CompanyName');
+                                } 
+                                else if ($table == 'warehouse') {
+                                    $data->wareHouseJoin('warehouse', 'wareHouseFrom', 'wareHouseDescription');
+                                }
+                            }
+                        }
+                        $data->whereIn($masterTable . '.companySystemID', $subCompanies);
+                        break;
+                case 14:
+                    if ($isDetailExist) {
+                        $data->detailJoin();
+                        }
+
+                        if (!$this->checkMasterColumn($report['columns'], 'supplier', 'table') && !$this->checkMasterColumn($report['filter_columns'], 'supplier', 'table') &&
+                        ($this->checkMasterColumn($report['columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['columns'], 'supplier_country', 'table') ||
+                            $this->checkMasterColumn($report['filter_columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['filter_columns'], 'supplier_country', 'table'))) {
+                        $data->supplierJoin('supplier', 'supplierID', 'primarySupplierCode');
+                        }
+                    
+                        foreach ($templateData['tables'] as $table) {
+                            if ($this->checkMasterColumn($report['columns'], $table, 'table') || $this->checkMasterColumn($report['filter_columns'], $table, 'table')) {
+                                if ($table == 'created_by') {
+                                    
+                                $data->employeeJoin('created_by', 'createdUserSystemID', 'createdByName');
+                                }
+                                else if ($table == 'approved_by') {
+                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'createdByName');
+                                } 
+                                else if ($table == 'customer') {
+                                    $data->customerJoin('customer', 'customerID', 'CustomerName');
+                                } 
+                                else if ($table == 'company') {
+                                    $data->companyJoin('company', 'companySystemID', 'CompanyName');
+                                } 
+                                else if ($table == 'warehouse') {
+                                    $data->wareHouseJoin('warehouse', 'wareHouseLocation', 'wareHouseDescription');
+                                }
+                            }
+                        }
+                        $data->whereIn($masterTable . '.companySystemID', $subCompanies);
+                        break;
+                case 15:
+                    if ($isDetailExist) {
+                        $data->detailJoin();
+                        }
+
+                        if (!$this->checkMasterColumn($report['columns'], 'supplier', 'table') && !$this->checkMasterColumn($report['filter_columns'], 'supplier', 'table') &&
+                        ($this->checkMasterColumn($report['columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['columns'], 'supplier_country', 'table') ||
+                            $this->checkMasterColumn($report['filter_columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['filter_columns'], 'supplier_country', 'table'))) {
+                        $data->supplierJoin('supplier', 'supplierID', 'primarySupplierCode');
+                        }
+                    
+                        foreach ($templateData['tables'] as $table) {
+                            if ($this->checkMasterColumn($report['columns'], $table, 'table') || $this->checkMasterColumn($report['filter_columns'], $table, 'table')) {
+                                if ($table == 'created_by') {
+                                    
+                                $data->employeeJoin('created_by', 'createdUserSystemID', 'createdByName');
+                                }
+                                else if ($table == 'approved_by') {
+                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'createdByName');
+                                } 
+                                else if ($table == 'segment') {
+                                    $data->segmentJoin('segment', 'serviceLineSystemID', 'ServiceLineDes');
+                                } 
+                                else if ($table == 'company') {
+                                    $data->companyJoin('company', 'companySystemID', 'CompanyName');
+                                } 
+                                else if ($table == 'location_to') {
+                                    $data->wareHouseJoin('location_to', 'locationTo', 'wareHouseDescription');
+                                }
+                                else if ($table == 'location_from') {
+                                    $data->wareHouseJoin('location_from', 'locationFrom', 'wareHouseDescription');
+                                }
+                            }
+                        }
+                        $data->whereIn($masterTable . '.companySystemID', $subCompanies);
+                        break;
+                case 16:
+                    if ($isDetailExist) {
+                        $data->detailJoin();
+                        }
+
+                        if (!$this->checkMasterColumn($report['columns'], 'supplier', 'table') && !$this->checkMasterColumn($report['filter_columns'], 'supplier', 'table') &&
+                        ($this->checkMasterColumn($report['columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['columns'], 'supplier_country', 'table') ||
+                            $this->checkMasterColumn($report['filter_columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['filter_columns'], 'supplier_country', 'table'))) {
+                        $data->supplierJoin('supplier', 'supplierID', 'primarySupplierCode');
+                        }
+                    
+                        foreach ($templateData['tables'] as $table) {
+                            if ($this->checkMasterColumn($report['columns'], $table, 'table') || $this->checkMasterColumn($report['filter_columns'], $table, 'table')) {
+                                if ($table == 'created_by') {
+                                    
+                                $data->employeeJoin('created_by', 'createdUserSystemID', 'createdByName');
+                                }
+                                else if ($table == 'approved_by') {
+                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'createdByName');
+                                } 
+                                else if ($table == 'segment') {
+                                    $data->segmentJoin('segment', 'serviceLineSystemID', 'ServiceLineDes');
+                                } 
+                                else if ($table == 'company') {
+                                    $data->companyJoin('company', 'companySystemID', 'CompanyName');
+                                } 
+                                else if ($table == 'location_to') {
+                                    $data->wareHouseJoin('location_to', 'locationTo', 'wareHouseDescription');
+                                }
+                                else if ($table == 'location_from') {
+                                    $data->wareHouseJoin('location_from', 'locationFrom', 'wareHouseDescription');
+                                }
+                            }
+                        }
+                        $data->whereIn($masterTable . '.companySystemID', $subCompanies);
+                        break;
+                case 17:
+                    if ($isDetailExist) {
+                        $data->detailJoin();
+                        }
+
+                        if (!$this->checkMasterColumn($report['columns'], 'supplier', 'table') && !$this->checkMasterColumn($report['filter_columns'], 'supplier', 'table') &&
+                        ($this->checkMasterColumn($report['columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['columns'], 'supplier_country', 'table') ||
+                            $this->checkMasterColumn($report['filter_columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['filter_columns'], 'supplier_country', 'table'))) {
+                        $data->supplierJoin('supplier', 'supplierID', 'primarySupplierCode');
+                        }
+                    
+                        foreach ($templateData['tables'] as $table) {
+                            if ($this->checkMasterColumn($report['columns'], $table, 'table') || $this->checkMasterColumn($report['filter_columns'], $table, 'table')) {
+                                if ($table == 'created_by') {
+                                    
+                                $data->employeeJoin('created_by', 'createdUserSystemID', 'createdByName');
+                                }
+                                else if ($table == 'approved_by') {
+                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'createdByName');
+                                } 
+                                else if ($table == 'segment') {
+                                    $data->segmentJoin('segment', 'serviceLineSystemID', 'ServiceLineDes');
+                                } 
+                                else if ($table == 'company') {
+                                    $data->companyJoin('company', 'companySystemID', 'CompanyName');
+                                } 
+                                else if ($table == 'location') {
+                                    $data->wareHouseJoin('location', 'location', 'wareHouseDescription');
+                                }
+                                else if ($table == 'reason') {
+                                    $data->reasonJoin('reason', 'reason', 'reason');
+                                }
+                            }
+                        }
+                        $data->whereIn($masterTable . '.companySystemID', $subCompanies);
+                        break;   
+                case 18:
+                    if ($isDetailExist) {
+                        $data->detailJoin();
+                        }
+
+                        if (!$this->checkMasterColumn($report['columns'], 'supplier', 'table') && !$this->checkMasterColumn($report['filter_columns'], 'supplier', 'table') &&
+                        ($this->checkMasterColumn($report['columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['columns'], 'supplier_country', 'table') ||
+                            $this->checkMasterColumn($report['filter_columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['filter_columns'], 'supplier_country', 'table'))) {
+                        $data->supplierJoin('supplier', 'supplierID', 'primarySupplierCode');
+                        }
+                    
+                        foreach ($templateData['tables'] as $table) {
+                            if ($this->checkMasterColumn($report['columns'], $table, 'table') || $this->checkMasterColumn($report['filter_columns'], $table, 'table')) {
+                                if ($table == 'created_by') {
+                                    
+                                $data->employeeJoin('created_by', 'createdUserSystemID', 'createdByName');
+                                }
+                                else if ($table == 'approved_by') {
+                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'createdByName');
+                                } 
+                                else if ($table == 'segment') {
+                                    $data->segmentJoin('segment', 'serviceLineSystemID', 'ServiceLineDes');
+                                } 
+                                else if ($table == 'company') {
+                                    $data->companyJoin('company', 'companySystemID', 'CompanyName');
+                                } 
+                                else if ($table == 'location') {
+                                    $data->wareHouseJoin('location', 'purchaseReturnLocation', 'wareHouseDescription');
+                                }
+                                else if ($table == 'supplier_default_currency') {   
+                                    $data->currencyJoin('supplier_default_currency', 'supplierDefaultCurrencyID', 'CurrencyName');
+                                } 
+                                else if ($table == 'supplier_tran_currency') { 
+                                    $data->currencyJoin('supplier_tran_currency', 'supplierTransactionCurrencyID', 'CurrencyName');
+                                } 
+                                else if ($table == 'local_currency') {   
+                                    $data->currencyJoin('local_currency', 'localCurrencyID', 'CurrencyName');
+                                } 
+                                else if ($table == 'company_reporting_currency') {   
+                                    $data->currencyJoin('company_reporting_currency', 'companyReportingCurrencyID', 'CurrencyName');
+                                } 
+                            }
+                        }
+                        $data->whereIn($masterTable . '.companySystemID', $subCompanies);
+                        break;   
+                case 19:
+                    if ($isDetailExist) {
+                        $data->detailJoin();
+                        }
+
+                        if (!$this->checkMasterColumn($report['columns'], 'supplier', 'table') && !$this->checkMasterColumn($report['filter_columns'], 'supplier', 'table') &&
+                        ($this->checkMasterColumn($report['columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['columns'], 'supplier_country', 'table') ||
+                            $this->checkMasterColumn($report['filter_columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['filter_columns'], 'supplier_country', 'table'))) {
+                        $data->supplierJoin('supplier', 'supplierID', 'primarySupplierCode');
+                        }
+                    
+                        foreach ($templateData['tables'] as $table) {
+                            if ($this->checkMasterColumn($report['columns'], $table, 'table') || $this->checkMasterColumn($report['filter_columns'], $table, 'table')) {
+                                if ($table == 'created_by') {
+                                    
+                                $data->employeeJoin('created_by', 'createdUserSystemID', 'createdByName');
+                                }
+                                else if ($table == 'approved_by') {
+                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'createdByName');
+                                } 
+                                else if ($table == 'segment') {
+                                    $data->segmentJoin('segment', 'serviceLineSystemID', 'ServiceLineDes');
+                                } 
+                                else if ($table == 'company') {
+                                    $data->companyJoin('company', 'companySystemID', 'CompanyName');
+                                } 
+                                else if ($table == 'location') {
+                                    $data->wareHouseJoin('location', 'location', 'wareHouseDescription');
+                                }
+                                
+                            }
+                        }
+                        $data->whereIn($masterTable . '.companySystemID', $subCompanies);
+                        break;   
+                case 20:
+                    if ($isDetailExist) {
+                        $data->detailJoin();
+                        }
+
+                        if (!$this->checkMasterColumn($report['columns'], 'supplier', 'table') && !$this->checkMasterColumn($report['filter_columns'], 'supplier', 'table') &&
+                        ($this->checkMasterColumn($report['columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['columns'], 'supplier_country', 'table') ||
+                            $this->checkMasterColumn($report['filter_columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['filter_columns'], 'supplier_country', 'table'))) {
+                        $data->supplierJoin('supplier', 'supplierID', 'primarySupplierCode');
+                        }
+                    
+                        foreach ($templateData['tables'] as $table) {
+                            if ($this->checkMasterColumn($report['columns'], $table, 'table') || $this->checkMasterColumn($report['filter_columns'], $table, 'table')) {
+                                if ($table == 'created_by') {
+                                    
+                                $data->employeeJoin('created_by', 'createdUserSystemID', 'createdByName');
+                                }
+                                else if ($table == 'approved_by') {
+                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'createdByName');
+                                } 
+                                else if ($table == 'modify_by') {
+                                    $data->employeeJoin('modify_by', 'modifiedUserSystemID', 'createdByName');
+                                } 
+                                else if ($table == 'company') {
+                                    $data->companyJoin('company', 'companySystemID', 'CompanyName');
+                                } 
+                                else if ($table == 'wareHouse') {
+                                    $data->wareHouseJoin('wareHouse', 'wareHouseCode', 'wareHouseDescription');
+                                }
+                                
+                            }
+                        }
+                        $data->whereIn($masterTable . '.companySystemID', $subCompanies);
+                        break;  
+
+                case 21:
+                    if ($isDetailExist) {
+                        $data->detailJoin();
+                        }
+
+                        if (!$this->checkMasterColumn($report['columns'], 'supplier', 'table') && !$this->checkMasterColumn($report['filter_columns'], 'supplier', 'table') &&
+                        ($this->checkMasterColumn($report['columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['columns'], 'supplier_country', 'table') ||
+                            $this->checkMasterColumn($report['filter_columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['filter_columns'], 'supplier_country', 'table'))) {
+                        $data->supplierJoin('supplier', 'supplierID', 'primarySupplierCode');
+                        }
+                    
+                        foreach ($templateData['tables'] as $table) {
+                            if ($this->checkMasterColumn($report['columns'], $table, 'table') || $this->checkMasterColumn($report['filter_columns'], $table, 'table')) {
+                                if ($table == 'created_by') {
+                                    
+                                $data->employeeJoin('created_by', 'createdUserSystemID', 'createdByName');
+                                }
+                                else if ($table == 'sales_person') {
+                                    $data->salesPersonJoin('sales_person', 'salesPersonID', 'SalesPersonName');
+                                } 
+                                else if ($table == 'segment') {
+                                    $data->segmentJoin('segment', 'serviceLineSystemID', 'ServiceLineDes');
+                                }
+                                
+                            }
+                        }
+                        $data->whereIn($masterTable . '.companySystemID', $subCompanies);
+                        $data->where($masterTable . '.documentSystemID', 67);
+                        break;  
+                case 22:
+                    if ($isDetailExist) {
+                        $data->detailJoin();
+                        }
+
+                        if (!$this->checkMasterColumn($report['columns'], 'supplier', 'table') && !$this->checkMasterColumn($report['filter_columns'], 'supplier', 'table') &&
+                        ($this->checkMasterColumn($report['columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['columns'], 'supplier_country', 'table') ||
+                            $this->checkMasterColumn($report['filter_columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['filter_columns'], 'supplier_country', 'table'))) {
+                        $data->supplierJoin('supplier', 'supplierID', 'primarySupplierCode');
+                        }
+                    
+                        foreach ($templateData['tables'] as $table) {
+                            if ($this->checkMasterColumn($report['columns'], $table, 'table') || $this->checkMasterColumn($report['filter_columns'], $table, 'table')) {
+                                if ($table == 'created_by') {
+                                    
+                                $data->employeeJoin('created_by', 'createdUserSystemID', 'createdByName');
+                                }
+                                else if ($table == 'sales_person') {
+                                    $data->salesPersonJoin('sales_person', 'salesPersonID', 'SalesPersonName');
+                                } 
+                                else if ($table == 'segment') {
+                                    $data->segmentJoin('segment', 'serviceLineSystemID', 'ServiceLineDes');
+                                }
+                                
+                            }
+                        }
+                        $data->whereIn($masterTable . '.companySystemID', $subCompanies);
+                        $data->where($masterTable . '.documentSystemID', 68);
+                        break;  
+                case 23:
+                    if ($isDetailExist) {
+                        $data->detailJoin();
+                        }
+
+                        if (!$this->checkMasterColumn($report['columns'], 'supplier', 'table') && !$this->checkMasterColumn($report['filter_columns'], 'supplier', 'table') &&
+                        ($this->checkMasterColumn($report['columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['columns'], 'supplier_country', 'table') ||
+                            $this->checkMasterColumn($report['filter_columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['filter_columns'], 'supplier_country', 'table'))) {
+                        $data->supplierJoin('supplier', 'supplierID', 'primarySupplierCode');
+                        }
+                    
+                        foreach ($templateData['tables'] as $table) {
+                            if ($this->checkMasterColumn($report['columns'], $table, 'table') || $this->checkMasterColumn($report['filter_columns'], $table, 'table')) {
+                                if ($table == 'created_by') {
+                                    
+                                $data->employeeJoin('created_by', 'createdUserSystemID', 'createdByName');
+                                }
+                                else if ($table == 'sales_person') {
+                                    $data->salesPersonJoin('sales_person', 'salesPersonID', 'SalesPersonName');
+                                } 
+                                else if ($table == 'segment') {
+                                    $data->segmentJoin('segment', 'serviceLineSystemID', 'ServiceLineDes');
+                                }
+                                else if ($table == 'wareHouse') {
+                                    $data->wareHouseJoin('wareHouse', 'wareHouseSystemCode', 'wareHouseDescription');
+                                }
+                                else if ($table == 'tran_currency') {   
+                                    $data->currencyJoin('tran_currency', 'transactionCurrencyID', 'CurrencyName');
+                                } 
+                                else if ($table == 'tran_currency_er') {   
+                                    $data->currencyJoin('tran_currency_er', 'transactionCurrencyER', 'CurrencyName');
+                                } 
+                                else if ($table == 'local_currency') {   
+                                    $data->currencyJoin('local_currency', 'companyLocalCurrencyID', 'CurrencyName');
+                                } 
+                                else if ($table == 'local_currency_ET') {   
+                                    $data->currencyJoin('local_currency_ET', 'companyLocalCurrencyER', 'CurrencyName');
+                                } 
+                                else if ($table == 'reporting_currency') {   
+                                    $data->currencyJoin('reporting_currency', 'companyReportingCurrencyID', 'CurrencyName');
+                                } 
+                                else if ($table == 'reporting_currency_ET') {   
+                                    $data->currencyJoin('reporting_currency_ET', 'companyReportingCurrencyER', 'CurrencyName');
+                                } 
+                                else if ($table == 'company') {
+                                    $data->companyJoin('company', 'companySystemID', 'CompanyName');
+                                } 
+                                else if ($table == 'customer') {
+                                    $data->customerJoin('customer', 'customerID', 'CustomerName');
+                                } 
+                                
+                            }
+                        }
+                        $data->whereIn($masterTable . '.companySystemID', $subCompanies);
+                        break;              
+                case 24:
+                    if ($isDetailExist) {
+                        $data->detailJoin();
+                        }
+
+                        if (!$this->checkMasterColumn($report['columns'], 'supplier', 'table') && !$this->checkMasterColumn($report['filter_columns'], 'supplier', 'table') &&
+                        ($this->checkMasterColumn($report['columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['columns'], 'supplier_country', 'table') ||
+                            $this->checkMasterColumn($report['filter_columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['filter_columns'], 'supplier_country', 'table'))) {
+                        $data->supplierJoin('supplier', 'supplierID', 'primarySupplierCode');
+                        }
+                    
+                        foreach ($templateData['tables'] as $table) {
+                            if ($this->checkMasterColumn($report['columns'], $table, 'table') || $this->checkMasterColumn($report['filter_columns'], $table, 'table')) {
+                                if ($table == 'created_by') {
+                                    
+                                $data->employeeJoin('created_by', 'createdUserSystemID', 'createdByName');
+                                }
+                                else if ($table == 'currency') {   
+                                    $data->currencyJoin('currency', 'currencyID', 'CurrencyName');
+                                } 
+                                else if ($table == 'currency_rpt') {   
+                                    $data->currencyJoin('currency_rpt', 'rptCurrencyID', 'CurrencyName');
+                                } 
+                            
+                                else if ($table == 'company') {
+                                    $data->companyJoin('company', 'companySystemID', 'CompanyName');
+                                } 
+                                
+                            }
+                        }
+                        $data->whereIn($masterTable . '.companySystemID', $subCompanies);
+                        break;
+                case 25:
+                    if ($isDetailExist) {
+                        $data->detailJoin();
+                        }
+
+                        if (!$this->checkMasterColumn($report['columns'], 'supplier', 'table') && !$this->checkMasterColumn($report['filter_columns'], 'supplier', 'table') &&
+                        ($this->checkMasterColumn($report['columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['columns'], 'supplier_country', 'table') ||
+                            $this->checkMasterColumn($report['filter_columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['filter_columns'], 'supplier_country', 'table'))) {
+                        $data->supplierJoin('supplier', 'supplierID', 'primarySupplierCode');
+                        }
+                    
+                        foreach ($templateData['tables'] as $table) {
+                            if ($this->checkMasterColumn($report['columns'], $table, 'table') || $this->checkMasterColumn($report['filter_columns'], $table, 'table')) {
+                                if ($table == 'created_by') {
+                                    
+                                $data->employeeJoin('created_by', 'createdByUserSystemID', 'createdByName');
+                                }
+                                else if ($table == 'template') {   
+                                    $data->templateJoin('template', 'templateMasterID', 'reportName');
+                                } 
+                                else if ($table == 'confirm_by') {   
+                                    $data->employeeJoin('confirm_by', 'confirmedByEmpSystemID', 'createdByName');
+                                } 
+                                else if ($table == 'approved_by') {   
+                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'createdByName');
+                                } 
+                                else if ($table == 'company') {
+                                    $data->companyJoin('company', 'companySystemID', 'CompanyName');
+                                } 
+                                else if ($table == 'segment') {
+                                    $data->segmentJoin('segment', 'serviceLineSystemID', 'ServiceLineDes');
+                                }
+                                
+                            }
+                        }
+                        $data->whereIn($masterTable . '.companySystemID', $subCompanies);
+                        break;
+                case 26:
+                    if ($isDetailExist) {
+                        $data->detailJoin();
+                        }
+
+                        if (!$this->checkMasterColumn($report['columns'], 'supplier', 'table') && !$this->checkMasterColumn($report['filter_columns'], 'supplier', 'table') &&
+                        ($this->checkMasterColumn($report['columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['columns'], 'supplier_country', 'table') ||
+                            $this->checkMasterColumn($report['filter_columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['filter_columns'], 'supplier_country', 'table'))) {
+                        $data->supplierJoin('supplier', 'supplierID', 'primarySupplierCode');
+                        }
+                    
+                        foreach ($templateData['tables'] as $table) {
+                            if ($this->checkMasterColumn($report['columns'], $table, 'table') || $this->checkMasterColumn($report['filter_columns'], $table, 'table')) {
+                                if ($table == 'created_by') {
+                                    
+                                $data->employeeJoin('created_by', 'createdUserSystemID', 'createdByName');
+                                }
+                                else if ($table == 'approved_by') {   
+                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'createdByName');
+                                } 
+                                else if ($table == 'company') {
+                                    $data->companyJoin('company', 'companySystemID', 'CompanyName');
+                                }
+                                
+                            }
+                        }
+                        $data->whereIn($masterTable . '.companySystemID', $subCompanies);
+                break;
+                case 27:
+                    if ($isDetailExist) {
+                        $data->detailJoin();
+                        }
+
+                        if (!$this->checkMasterColumn($report['columns'], 'supplier', 'table') && !$this->checkMasterColumn($report['filter_columns'], 'supplier', 'table') &&
+                        ($this->checkMasterColumn($report['columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['columns'], 'supplier_country', 'table') ||
+                            $this->checkMasterColumn($report['filter_columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['filter_columns'], 'supplier_country', 'table'))) {
+                        $data->supplierJoin('supplier', 'supplierID', 'primarySupplierCode');
+                        }
+                    
+                        foreach ($templateData['tables'] as $table) {
+                            if ($this->checkMasterColumn($report['columns'], $table, 'table') || $this->checkMasterColumn($report['filter_columns'], $table, 'table')) {
+                                if ($table == 'created_by') {
+                                    
+                                $data->employeeJoin('created_by', 'createdUserSystemID', 'createdByName');
+                                }
+                                else if ($table == 'template') {   
+                                    $data->templateJoin('template', 'templatesMasterAutoID', 'reportName');
+                                } 
+                               
+                                else if ($table == 'approved_by') {   
+                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'createdByName');
+                                } 
+                                else if ($table == 'company') {
+                                    $data->companyJoin('company', 'companySystemID', 'CompanyName');
+                                } 
+                                
+                            }
+                        }
+                        $data->whereIn($masterTable . '.companySystemID', $subCompanies);
+                        break;
+                case 28:
+                    if ($isDetailExist) {
+                        $data->detailJoin();
+                        }
+
+                        if (!$this->checkMasterColumn($report['columns'], 'supplier', 'table') && !$this->checkMasterColumn($report['filter_columns'], 'supplier', 'table') &&
+                        ($this->checkMasterColumn($report['columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['columns'], 'supplier_country', 'table') ||
+                            $this->checkMasterColumn($report['filter_columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['filter_columns'], 'supplier_country', 'table'))) {
+                        $data->supplierJoin('supplier', 'supplierID', 'primarySupplierCode');
+                        }
+                    
+                        foreach ($templateData['tables'] as $table) {
+                            if ($this->checkMasterColumn($report['columns'], $table, 'table') || $this->checkMasterColumn($report['filter_columns'], $table, 'table')) {
+                                if ($table == 'created_by') {
+                                    
+                                $data->employeeJoin('created_by', 'createdUserSystemID', 'createdByName');
+                                }
+                                else if ($table == 'currency') {   
+                                    $data->currencyJoin('currency', 'currencyID', 'CurrencyName');
+                                } 
+                                else if ($table == 'local_currency') {   
+                                    $data->currencyJoin('local_currency', 'localCurrencyID', 'CurrencyName');
+                                } 
+                                else if ($table == 'rpt_currency') {   
+                                    $data->currencyJoin('rpt_currency', 'rptCurrencyID', 'CurrencyName');
+                                } 
+                                
+                                else if ($table == 'approved_by') {   
+                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'createdByName');
+                                } 
+                                else if ($table == 'company') {
+                                    $data->companyJoin('company', 'companySystemID', 'CompanyName');
+                                } 
+                                
+                            }
+                        }
+                        $data->whereIn($masterTable . '.companySystemID', $subCompanies);
+                        break;
+                case 29:
+                    if ($isDetailExist) {
+                        $data->detailJoin();
+                        }
+
+                        if (!$this->checkMasterColumn($report['columns'], 'supplier', 'table') && !$this->checkMasterColumn($report['filter_columns'], 'supplier', 'table') &&
+                        ($this->checkMasterColumn($report['columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['columns'], 'supplier_country', 'table') ||
+                            $this->checkMasterColumn($report['filter_columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['filter_columns'], 'supplier_country', 'table'))) {
+                        $data->supplierJoin('supplier', 'supplierID', 'primarySupplierCode');
+                        }
+                    
+                        foreach ($templateData['tables'] as $table) {
+                            if ($this->checkMasterColumn($report['columns'], $table, 'table') || $this->checkMasterColumn($report['filter_columns'], $table, 'table')) {
+                                if ($table == 'created_by') {
+                                    
+                                $data->employeeJoin('created_by', 'createdUserSystemID', 'createdByName');
+                                }
+                                else if ($table == 'modified_by') {   
+                                    $data->employeeJoin('modified_by', 'modifiedUserSystemID', 'createdByName');
+                                } 
+                                else if ($table == 'confirmed_by') {   
+                                    $data->employeeJoin('confirmed_by', 'confirmedByEmpSystemID', 'createdByName');
+                                } 
+                                else if ($table == 'currency') {   
+                                    $data->currencyJoin('currency', 'currencyID', 'CurrencyName');
+                                } 
+                                else if ($table == 'template') {   
+                                    $data->templateJoin('template', 'templateMasterID', 'reportName');
+                                } 
+                                
+                                else if ($table == 'approved_by') {   
+                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'createdByName');
+                                } 
+                                else if ($table == 'company') {
+                                    $data->companyJoin('company', 'companySystemID', 'CompanyName');
+                                } 
+                                else if ($table == 'segment') {
+                                    $data->segmentJoin('segment', 'serviceLineSystemID', 'ServiceLineDes');
+                                }
+                                
+                            }
+                        }
+                        $data->whereIn($masterTable . '.companySystemID', $subCompanies);
+                        break;
+                case 30:
+                    if ($isDetailExist) {
+                        $data->detailJoin();
+                        }
+
+                        if (!$this->checkMasterColumn($report['columns'], 'supplier', 'table') && !$this->checkMasterColumn($report['filter_columns'], 'supplier', 'table') &&
+                        ($this->checkMasterColumn($report['columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['columns'], 'supplier_country', 'table') ||
+                            $this->checkMasterColumn($report['filter_columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['filter_columns'], 'supplier_country', 'table'))) {
+                        $data->supplierJoin('supplier', 'supplierID', 'primarySupplierCode');
+                        }
+                    
+                        foreach ($templateData['tables'] as $table) {
+                            if ($this->checkMasterColumn($report['columns'], $table, 'table') || $this->checkMasterColumn($report['filter_columns'], $table, 'table')) {
+                                if ($table == 'created_by') {
+                                    
+                                $data->employeeJoin('created_by', 'createdUserSystemID', 'createdByName');
+                                }
+                                else if ($table == 'modified_by') {   
+                                    $data->employeeJoin('modified_by', 'modifiedUserSystemID', 'createdByName');
+                                } 
+                                else if ($table == 'confirmed_by') {   
+                                    $data->employeeJoin('confirmed_by', 'confirmedByEmpSystemID', 'createdByName');
+                                }
+                                else if ($table == 'approved_by') {   
+                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'createdByName');
+                                } 
+                                else if ($table == 'company') {
+                                    $data->companyJoin('company', 'companySystemID', 'CompanyName');
+                                } 
+                                else if ($table == 'segment') {
+                                    $data->segmentJoin('segment', 'serviceLineSystemID', 'ServiceLineDes');
+                                }
+                                else if ($table == 'depratment') {
+                                    $data->departmentJoin('depratment', 'departmentSystemID', 'DepartmentDescription');
+                                }
+                                else if ($table == 'asset_type') {
+                                    $data->assetTypeJoin('asset_type', 'assetType', 'typeDes');
+                                }
+                                else if ($table == 'fa_cat') {
+                                    $data->faCatTypeJoin('fa_cat', 'faCatID', 'catDescription');
+                                }
+                                else if ($table == 'fa_cat_sub') {
+                                    $data->faCatSubTypeJoin('fa_cat_sub', 'faSubCatID', 'catDescription');
+                                }
+                                else if ($table == 'fa_cat_sub_2') {
+                                    $data->faCatSubTypeJoin('fa_cat_sub_2', 'faSubCatID2', 'catDescription');
+                                }
+                                else if ($table == 'fa_cat_sub_3') {
+                                    $data->faCatSubTypeJoin('fa_cat_sub_3', 'faSubCatID3', 'catDescription');
+                                }
+                                else if ($table == 'doc_origin_detail') {
+                                    $data->docIdJoin('doc_origin_detail', 'docOriginDetailID', 'itemDescription');
+                                }
+                                else if ($table == 'location') {
+                                    $data->locationJoin('location', 'LOCATION', 'locationName');
+                                }
+                                else if ($table == 'finance_cat') {
+                                    $data->financeCatJoin('finance_cat', 'AUDITCATOGARY', 'financeCatDescription');
+                                }
+                                
+                                
+                            }
+                        }
+                        $data->whereIn($masterTable . '.companySystemID', $subCompanies);
+                        break;
+                case 31:
+                    if ($isDetailExist) {
+                        $data->detailJoin();
+                        }
+
+                        if (!$this->checkMasterColumn($report['columns'], 'supplier', 'table') && !$this->checkMasterColumn($report['filter_columns'], 'supplier', 'table') &&
+                        ($this->checkMasterColumn($report['columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['columns'], 'supplier_country', 'table') ||
+                            $this->checkMasterColumn($report['filter_columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['filter_columns'], 'supplier_country', 'table'))) {
+                        $data->supplierJoin('supplier', 'supplierID', 'primarySupplierCode');
+                        }
+                    
+                        foreach ($templateData['tables'] as $table) {
+                            if ($this->checkMasterColumn($report['columns'], $table, 'table') || $this->checkMasterColumn($report['filter_columns'], $table, 'table')) {
+                                if ($table == 'created_by') {
+                                    
+                                $data->employeeJoin('created_by', 'createdUserSystemID', 'createdByName');
+                                }
+                                else if ($table == 'confirmed_by') {   
+                                    $data->employeeJoin('confirmed_by', 'confirmedByEmpSystemID', 'createdByName');
+                                } 
+                                else if ($table == 'local_currency') {   
+                                    $data->currencyJoin('local_currency', 'depLocalCur', 'CurrencyName');
+                                } 
+                                else if ($table == 'rpt_currency') {   
+                                    $data->currencyJoin('rpt_currency', 'depRptCur', 'CurrencyName');
+                                } 
+                                else if ($table == 'approved_by') {   
+                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'createdByName');
+                                } 
+                                else if ($table == 'company') {
+                                    $data->companyJoin('company', 'companySystemID', 'CompanyName');
+                                } 
+                                
+                            }
+                        }
+                        $data->whereIn($masterTable . '.companySystemID', $subCompanies);
+                        break;
+                case 32:
+                    if ($isDetailExist) {
+                        $data->detailJoin();
+                        }
+
+                        if (!$this->checkMasterColumn($report['columns'], 'supplier', 'table') && !$this->checkMasterColumn($report['filter_columns'], 'supplier', 'table') &&
+                        ($this->checkMasterColumn($report['columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['columns'], 'supplier_country', 'table') ||
+                            $this->checkMasterColumn($report['filter_columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['filter_columns'], 'supplier_country', 'table'))) {
+                        $data->supplierJoin('supplier', 'supplierID', 'primarySupplierCode');
+                        }
+                    
+                        foreach ($templateData['tables'] as $table) {
+                            if ($this->checkMasterColumn($report['columns'], $table, 'table') || $this->checkMasterColumn($report['filter_columns'], $table, 'table')) {
+                                if ($table == 'created_by') {
+                                    
+                                $data->employeeJoin('created_by', 'createdUserSystemID', 'createdByName');
+                                }
+                                else if ($table == 'confirmed_by') {   
+                                    $data->employeeJoin('confirmed_by', 'confirmedByEmpSystemID', 'createdByName');
+                                } 
+                                else if ($table == 'modified_by') {   
+                                    $data->employeeJoin('modified_by', 'modifiedUserSystemID', 'createdByName');
+                                } 
+                                else if ($table == 'approved_by') {   
+                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'createdByName');
+                                } 
+                                else if ($table == 'company') {
+                                    $data->companyJoin('company', 'companySystemID', 'CompanyName');
+                                } 
+                                else if ($table == 'company_to') {
+                                    $data->companyJoin('company_to', 'toCompanySystemID', 'CompanyName');
+                                } 
+                                     else if ($table == 'dis_type') {
+                                    $data->disposTypeJoin('dis_type', 'disposalType', 'typeDescription');
+                                } 
+                                else if ($table == 'customer') {
+                                    $data->customerJoin('customer', 'customerID', 'CustomerName');
+                                } 
+                            }
+                        }
+                        $data->whereIn($masterTable . '.companySystemID', $subCompanies);
+                        break;
+                case 33:
+                    if ($isDetailExist) {
+                        $data->detailJoin();
+                        }
+
+                        if (!$this->checkMasterColumn($report['columns'], 'supplier', 'table') && !$this->checkMasterColumn($report['filter_columns'], 'supplier', 'table') &&
+                        ($this->checkMasterColumn($report['columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['columns'], 'supplier_country', 'table') ||
+                            $this->checkMasterColumn($report['filter_columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['filter_columns'], 'supplier_country', 'table'))) {
+                        $data->supplierJoin('supplier', 'supplierID', 'primarySupplierCode');
+                        }
+                    
+                        foreach ($templateData['tables'] as $table) {
+                            if ($this->checkMasterColumn($report['columns'], $table, 'table') || $this->checkMasterColumn($report['filter_columns'], $table, 'table')) {
+                                if ($table == 'created_by') {
+                                    
+                                $data->employeeJoin('created_by', 'createdUserSystemID', 'createdByName');
+                                }
+                                else if ($table == 'confirmed_by') {   
+                                    $data->employeeJoin('confirmed_by', 'confirmedByEmpSystemID', 'createdByName');
+                                } 
+                                else if ($table == 'modified_by') {   
+                                    $data->employeeJoin('modified_by', 'modifiedUserSystemID', 'createdByName');
+                                } 
+                                else if ($table == 'approved_by') {   
+                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'createdByName');
+                                } 
+                                else if ($table == 'company') {
+                                    $data->companyJoin('company', 'companySystemID', 'CompanyName');
+                                } 
+                                else if ($table == 'chart_acc') {   
+                                    $data->charAccJoin('chart_acc', 'contraAccountSystemID', 'AccountDescription');
+                                } 
+                                else if ($table == 'fa_cat') {
+                                    $data->assetCatJoin('fa_cat', 'faCatID', 'catDescription');
+                                } 
+                                else if ($table == 'asset') {
+                                    $data->assetJoin('asset', 'faID', 'assetDescription');
+                                } 
+                            }
+                        }
+                        $data->whereIn($masterTable . '.companySystemID', $subCompanies);
+                        break;
+                case 34:
+                    if ($isDetailExist) {
+                        $data->detailJoin();
+                        }
+
+                        if (!$this->checkMasterColumn($report['columns'], 'supplier', 'table') && !$this->checkMasterColumn($report['filter_columns'], 'supplier', 'table') &&
+                        ($this->checkMasterColumn($report['columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['columns'], 'supplier_country', 'table') ||
+                            $this->checkMasterColumn($report['filter_columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['filter_columns'], 'supplier_country', 'table'))) {
+                        $data->supplierJoin('supplier', 'supplierID', 'primarySupplierCode');
+                        }
+                    
+                        foreach ($templateData['tables'] as $table) {
+                            if ($this->checkMasterColumn($report['columns'], $table, 'table') || $this->checkMasterColumn($report['filter_columns'], $table, 'table')) {
+                                if ($table == 'created_by') {
+                                    
+                                $data->employeeJoin('created_by', 'createdUserSystemID', 'createdByName');
+                                }
+                                else if ($table == 'confirmed_by') {   
+                                    $data->employeeJoin('confirmed_by', 'confirmedByEmpSystemID', 'createdByName');
+                                } 
+                                else if ($table == 'modified_by') {   
+                                    $data->employeeJoin('modified_by', 'modifiedUserSystemID', 'createdByName');
+                                } 
+                                else if ($table == 'approved_by') {   
+                                    $data->employeeJoin('approved_by', 'approvedByUserSystemID', 'createdByName');
+                                } 
+                                else if ($table == 'company') {
+                                    $data->companyJoin('company', 'companySystemID', 'CompanyName');
+                                } 
+                            }
+                        }
+                        $data->whereIn($masterTable . '.companySystemID', $subCompanies);
+                        break;
+                case 35:
+                    if ($isDetailExist) {
+                        $data->detailJoin();
+                        }
+
+                        if (!$this->checkMasterColumn($report['columns'], 'supplier', 'table') && !$this->checkMasterColumn($report['filter_columns'], 'supplier', 'table') &&
+                        ($this->checkMasterColumn($report['columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['columns'], 'supplier_country', 'table') ||
+                            $this->checkMasterColumn($report['filter_columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['filter_columns'], 'supplier_country', 'table'))) {
+                        $data->supplierJoin('supplier', 'supplierID', 'primarySupplierCode');
+                        }
+                    
+                        foreach ($templateData['tables'] as $table) {
+                            if ($this->checkMasterColumn($report['columns'], $table, 'table') || $this->checkMasterColumn($report['filter_columns'], $table, 'table')) {
+                                if ($table == 'created_by') {
+                                    
+                                $data->employeeJoin('created_by', 'createdUserSystemID', 'createdByName');
+                                }
+                                else if ($table == 'confirmed_by') {   
+                                    $data->employeeJoin('confirmed_by', 'confirmed_by_emp_id', 'createdByName');
+                                } 
+                                else if ($table == 'approved_by') {   
+                                    $data->employeeJoin('approved_by', 'approved_by_emp_id', 'createdByName');
+                                } 
+                                else if ($table == 'location') {
+                                    $data->locationJoin('location', 'location', 'locationByName');
+                                }  
+                            }
+                        }
+                       
+                        $data->whereIn($masterTable . '.company_id', $subCompanies);
+                        break;
+                case 36:
+                    if ($isDetailExist) {
+                        $data->detailJoin();
+                        }
+
+                        if (!$this->checkMasterColumn($report['columns'], 'supplier', 'table') && !$this->checkMasterColumn($report['filter_columns'], 'supplier', 'table') &&
+                        ($this->checkMasterColumn($report['columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['columns'], 'supplier_country', 'table') ||
+                            $this->checkMasterColumn($report['filter_columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['filter_columns'], 'supplier_country', 'table'))) {
+                        $data->supplierJoin('supplier', 'supplierID', 'primarySupplierCode');
+                        }
+                       
+                     
+                        $data->whereIn($masterTable . '.company_id', $subCompanies);
+                       
+                        break;
+                case 37:
+                    if ($isDetailExist) {
+                        $data->detailJoin();
+                        }
+
+                        if (!$this->checkMasterColumn($report['columns'], 'supplier', 'table') && !$this->checkMasterColumn($report['filter_columns'], 'supplier', 'table') &&
+                        ($this->checkMasterColumn($report['columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['columns'], 'supplier_country', 'table') ||
+                            $this->checkMasterColumn($report['filter_columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['filter_columns'], 'supplier_country', 'table'))) {
+                        $data->supplierJoin('supplier', 'supplierID', 'primarySupplierCode');
+                        }
+                        
+                        
+                        foreach ($templateData['tables'] as $table) {
+                            if ($this->checkMasterColumn($report['columns'], $table, 'table') || $this->checkMasterColumn($report['filter_columns'], $table, 'table')) {
+                                if ($table == 'created_by') {
+                                    
+                                    $data->employeeJoin('created_by', 'createdUserSystemID', 'createdByName');
+                                    }
+                                   else if ($table == 'rpt_currency') {   
+                                       $data->currencyJoin('rpt_currency', 'documentRptCurrencyID', 'CurrencyName');
+                                   } 
+                                   else if ($table == 'local_currency') {   
+                                       $data->currencyJoin('local_currency', 'documentLocalCurrencyID', 'CurrencyName');
+                                   } 
+                                   else if ($table == 'doc_currency') {   
+                                       $data->currencyJoin('doc_currency', 'documentTransCurrencyID', 'CurrencyName');
+                                   } 
+                                   else if ($table == 'document_approved_by') {   
+                                       $data->employeeJoin('document_approved_by', 'documentFinalApprovedByEmpSystemID', 'createdByName');
+                                   } 
+                                   else if ($table == 'document_confirm_by') {   
+                                       $data->employeeJoin('document_confirm_by', 'documentConfirmedByEmpSystemID', 'createdByName');
+                                   } 
+                                   else if ($table == 'chart_acc') {
+                                       $data->chartOfAccountJoin('chart_acc', 'chartOfAccountSystemID', 'AccountCode');
+                                   }  
+                                   else if ($table == 'company_master') {
+                                       $data->companyJoin('company_master', 'masterCompanyID', 'CompanyName');
+                                   } 
+                                   else if ($table == 'company') {
+                                       $data->companyJoin('company', 'companySystemID', 'CompanyName');
+                                   } 
+                                   else if ($table == 'segment') {
+                                       $data->segmentJoin('segment', 'serviceLineSystemID', 'ServiceLineDes');
+                                   } 
+           
+                            }
+                        }
+
+                   
+                        $data->whereIn($masterTable . '.companySystemID', $subCompanies);
+                        
+                        break;
+                case 38:
+                    if ($isDetailExist) {
+                        $data->detailJoin();
+                        }
+
+                        if (!$this->checkMasterColumn($report['columns'], 'supplier', 'table') && !$this->checkMasterColumn($report['filter_columns'], 'supplier', 'table') &&
+                        ($this->checkMasterColumn($report['columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['columns'], 'supplier_country', 'table') ||
+                            $this->checkMasterColumn($report['filter_columns'], 'supplier_currency', 'table') ||$this->checkMasterColumn($report['filter_columns'], 'supplier_country', 'table'))) {
+                        $data->supplierJoin('supplier', 'supplierID', 'primarySupplierCode');
+                        }
+                        
+                        
+                        foreach ($templateData['tables'] as $table) {
+                            if ($this->checkMasterColumn($report['columns'], $table, 'table') || $this->checkMasterColumn($report['filter_columns'], $table, 'table')) {
+                                if ($table == 'created_by') {
+                                    
+                                    $data->employeeJoin('created_by', 'createdUserSystemID', 'createdByName');
+                                    }
+                                    else if ($table == 'rpt_currency') {   
+                                        $data->currencyJoin('rpt_currency', 'wacRptCurrencyID', 'CurrencyName');
+                                    } 
+                                    else if ($table == 'local_currency') {   
+                                        $data->currencyJoin('local_currency', 'wacLocalCurrencyID', 'CurrencyName');
+                                    }  
+                                    else if ($table == 'unit') {
+                                        $data->unitJoin('unit', 'unitOfMeasure', 'UnitShortCode');
+                                    }
+                                    else if ($table == 'company') {
+                                        $data->companyJoin('company', 'companySystemID', 'CompanyName');
+                                    } 
+                                    else if ($table == 'segment') {
+                                        $data->segmentJoin('segment', 'serviceLineSystemID', 'ServiceLineDes');
+                                    } 
+                                    else if ($table == 'warehouse') {
+                                        $data->wareHouseJoin('warehouse', 'wareHouseSystemCode', 'wareHouseDescription');
+                                    } 
+            
+                            }
+                        }
+
+                    
+                        $data->whereIn($masterTable . '.companySystemID', $subCompanies);
+                        
+                        break;
                 default:
                     $data = [];
                     break;
             }
-
-
+                
+           
             $uniqueId = $detailPrimaryKey;
             if (!$isDetailExist) {
                 $uniqueId = $primaryKey;
             }
-
+            
             $search = isset($input['search']) ? $input['search'] : '';
 
             /*  1 : 'equals',
@@ -906,8 +2744,10 @@ class CustomUserReportsAPIController extends AppBaseController
             */
 
             // filter
+           
             if (isset($report['filter_columns']) && count($report['filter_columns']) > 0) {
                 $filterColumns = $this->getFilterColumns($report['filter_columns']);
+                
                 foreach ($filterColumns as $column) {
                     $operator = $column['operator'];
 
@@ -1085,26 +2925,26 @@ class CustomUserReportsAPIController extends AppBaseController
                     }
                 });
             }
-
+            
             // sort by
             if (!$sortByColumns) {
                 array_push($sortByColumns, array('column' => $uniqueId, 'by' => 'desc'));
             }
-
+            
             foreach ($sortByColumns as $column) {
                 $data = $data->orderBy($column['column'], $column['by']);
             }
-
+            
             // group by columns
             $groupByColumns = $this->getGroupByColumns($report['columns'], $masterTable, $detailTable);
-
+           
             // group by
             if (!$groupByColumns) {
                 array_push($groupByColumns, $uniqueId);
             }
 
             $summarizeColumns = $this->getSummarizeColumns($report['summarize']);
-
+            
             if(count($summarizeColumns) > 0 && $data){
                 foreach ($summarizeColumns as $key => $summarizeColumn){
                     $tem = array(
@@ -1141,8 +2981,10 @@ class CustomUserReportsAPIController extends AppBaseController
 
                 }
             }
-
+            
             $data = $data->groupBy($groupByColumns);
+            
+          
             // paginate
         }
 

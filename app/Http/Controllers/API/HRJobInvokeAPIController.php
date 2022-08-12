@@ -19,10 +19,31 @@ use App\Services\hrms\attendance\ForgotToPunchOutService;
 use App\Services\hrms\attendance\AttendanceDataPullingService;
 use App\Services\hrms\attendance\AttendanceDailySummaryService;
 use App\Services\hrms\attendance\AttendanceWeeklySummaryService;
-use Exception;
+
 
 class HRJobInvokeAPIController extends AppBaseController
 {
+    public function attendanceClockIn(Request $request)
+    {        
+        
+        $tenantId = $request->input('tenantId'); 
+        $companyId = $request->input('companyId'); 
+        $pullingDate = $request->input('attendanceDate');
+        $isClockOutPulling = false;
+        
+        Log::useFiles( CommonJobService::get_specific_log_file('attendance-clockIn') );
+
+        $data = [
+            'tenantId'=> $tenantId, 'companyId'=> $companyId, 'attendanceDate'=> $pullingDate,
+        ];
+
+        Log::info('auto sync triggered', $data);
+
+        AttendancePullingJob::dispatch($tenantId, $companyId, $pullingDate, $isClockOutPulling);
+            //->delay(now()->addSeconds(10));
+    
+        return $this->sendResponse($data, 'clock in pulling job added to queue');
+    }
 
     function attendance_notification_debug(Request $request){
         $data = [];
@@ -78,24 +99,6 @@ class HRJobInvokeAPIController extends AppBaseController
 
         CommonJobService::db_switch($db);
     }
-  
-    public function attendanceClockIn(Request $request)
-    {
-        
-        $tenantId = $request->input('tenantId'); 
-        $companyId = $request->input('companyId'); 
-        $pullingDate = $request->input('attendanceDate');
-        $isClockOutPulling = false;
-        
-        AttendancePullingJob::dispatch($tenantId, $companyId, $pullingDate, $isClockOutPulling);
-            //->delay(now()->addSeconds(10));
-
-        $data = [
-            'tenantId'=> $tenantId, 'companyId'=> $companyId, 'attendanceDate'=> $pullingDate,
-        ];
-
-        return $this->sendResponse($data, 'clock in pulling job added to queue');
-    }
 
     function test2(Request $request){
         //$n = CommonJobService::get_active_companies('pull-attendance');
@@ -105,7 +108,7 @@ class HRJobInvokeAPIController extends AppBaseController
         echo '<pre>'; print_r($n); echo '</pre>';
     }
 
-    function test(Request $request){
+    function clockOutDebug(Request $request){
         
         $tenantId = $request->input('tenantId'); 
         $companyId = $request->input('companyId'); 
@@ -121,16 +124,26 @@ class HRJobInvokeAPIController extends AppBaseController
             return $this->sendError('db details not found.');
         }
 
+        $data = [
+            'tenantId'=> $tenantId, 'companyId'=> $companyId, 'attendanceDate'=> $pullingDate,
+        ];         
+
         CommonJobService::db_switch( $dbName );
+
+        DB::table('job_logs')->insert([
+            'company_id'=> $companyId,
+            'module'=> 'HRMS',
+            'description'=> 'attendance-clock-out-job',
+            'scenario_id'=> 0,
+            'processed_for'=> $pullingDate,
+            'logged_at'=> Carbon::now()->format('Y-m-d'),
+            'log_type'=> 'info',
+            'log_data'=> json_encode(['manually triggered', $data]),
+        ]);
 
         $obj = new AttendanceDataPullingService($companyId, $pullingDate, $isClockOutPulling);
         $resp = $obj->execute();
-        
-        $data = [
-            'tenantId'=> $tenantId, 'companyId'=> $companyId, 'attendanceDate'=> $pullingDate,
-        ];
 
         return $this->sendResponse($data, 'clock out pulling job added to queue');
-        //dd($resp);
     }
 }

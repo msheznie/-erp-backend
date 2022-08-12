@@ -142,6 +142,12 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  *          type="string",
  *          format="date-time"
  *      ),
+ *     @SWG\Property(
+ *          property="site_visit_end_date",
+ *          description="site_visit_end_date",
+ *          type="string",
+ *          format="date-time"
+ *      ),
  *      @SWG\Property(
  *          property="bid_submission_opening_date",
  *          description="bid_submission_opening_date",
@@ -232,6 +238,7 @@ class TenderMaster extends Model
         'pre_bid_clarification_end_date',
         'pre_bid_clarification_method',
         'site_visit_date',
+        'site_visit_end_date',
         'bid_submission_opening_date',
         'bid_submission_closing_date',
         'created_by',
@@ -254,7 +261,14 @@ class TenderMaster extends Model
         'timesReferred',
         'RollLevForApp_curr',
         'approved_by_emp_name',
-        'published_yn'
+        'published_yn',
+        'stage',
+        'no_of_alternative_solutions',
+        'commercial_weightage',
+        'technical_weightage',
+        'is_active_go_no_go',
+        'commercial_passing_weightage',
+        'technical_passing_weightage'
     ];
 
     /**
@@ -286,6 +300,7 @@ class TenderMaster extends Model
         'pre_bid_clarification_end_date' => 'datetime',
         'pre_bid_clarification_method' => 'integer',
         'site_visit_date' => 'datetime',
+        'site_visit_end_date' => 'datetime',
         'bid_submission_opening_date' => 'datetime',
         'bid_submission_closing_date' => 'datetime',
         'created_by' => 'integer',
@@ -308,7 +323,14 @@ class TenderMaster extends Model
         'timesReferred' => 'integer',
         'RollLevForApp_curr' => 'integer',
         'approved_by_emp_name' => 'string',
-        'published_yn' => 'integer'
+        'published_yn' => 'integer',
+        'stage' => 'integer',
+        'no_of_alternative_solutions' => 'integer',
+        'commercial_weightage' => 'integer',
+        'technical_weightage' => 'integer',
+        'is_active_go_no_go' => 'integer',
+        'commercial_passing_weightage'=> 'integer',
+        'technical_passing_weightage'=> 'integer',
     ];
 
     /**
@@ -355,5 +377,10 @@ class TenderMaster extends Model
     public function confirmed_by()
     {
         return $this->belongsTo('App\Models\Employee', 'confirmed_by_emp_system_id', 'employeeSystemID');
+    }
+
+    public function tenderSupplierAssignee()
+    {
+        return $this->hasMany('App\Models\TenderSupplierAssignee', 'tender_master_id', 'id');
     }
 }

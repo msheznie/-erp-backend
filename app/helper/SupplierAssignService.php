@@ -14,7 +14,7 @@ class SupplierAssignService
 
 
 		 $supplierMaster = SupplierMaster::selectRaw('supplierCodeSystem as supplierCodeSytem,primaryCompanySystemID as companySystemID,primaryCompanyID as companyID,uniqueTextcode,
-		 									primarySupplierCode,secondarySupplierCode,supplierName,liabilityAccountSysemID,liabilityAccount,UnbilledGRVAccountSystemID,UnbilledGRVAccount,address,countryID,supplierCountryID,telephone,fax,supEmail,webAddress,currency,nameOnPaymentCheque,creditLimit,creditPeriod,supCategoryMasterID,supCategorySubID,registrationNumber,registrationExprity,supplierImportanceID,supplierNatureID,supplierTypeID,WHTApplicable,vatEligible,vatNumber,vatPercentage,supCategoryICVMasterID,supCategorySubICVID,isLCCYN,-1 as isAssigned,markupPercentage,isMarkupPercentage,NOW() as timeStamp,jsrsNo,jsrsExpiry')->find($supplierCodeSystem);
+		 									primarySupplierCode,secondarySupplierCode,supplierName,liabilityAccountSysemID,liabilityAccount,UnbilledGRVAccountSystemID,UnbilledGRVAccount,advanceAccountSystemID,AdvanceAccount,address,countryID,supplierCountryID,telephone,fax,supEmail,webAddress,currency,nameOnPaymentCheque,creditLimit,creditPeriod,supCategoryMasterID,supCategorySubID,registrationNumber,registrationExprity,supplierImportanceID,supplierNatureID,supplierTypeID,WHTApplicable,vatEligible,vatNumber,vatPercentage,supCategoryICVMasterID,supCategorySubICVID,isLCCYN,-1 as isAssigned,markupPercentage,isMarkupPercentage,NOW() as timeStamp,jsrsNo,jsrsExpiry')->find($supplierCodeSystem);
 
 		 $checkSupplierAssignPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 51)
 					                                    ->where('companySystemID', $supplierMaster->companySystemID)

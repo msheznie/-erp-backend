@@ -25,7 +25,9 @@ class TenantEnforce
         $apiKeyRoutes = [
             'api/v1/srmRegistrationLink',
             'api/v1/srm/fetch',
-            'api/v1/suppliers/registration/approvals/status'
+            'api/v1/suppliers/registration/approvals/status',
+            'api/v1/sendSupplierInvitation',
+            'api/v1/reSendInvitaitonLink'
         ];
 
         $dbRoutes = [
@@ -38,6 +40,7 @@ class TenantEnforce
             'api/v1/updateGLEntries',
             'api/v1suppliers/registration/approvals/status',
             'api/v1/approveDocument',
+            'api/v1/posMappingRequest',
             'api/v1/uploadItems'
         ];
 
