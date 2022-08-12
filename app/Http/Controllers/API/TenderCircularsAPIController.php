@@ -7,6 +7,7 @@ use App\Http\Requests\API\UpdateTenderCircularsAPIRequest;
 use App\Models\DocumentAttachments;
 use App\Models\TenderCirculars;
 use App\Repositories\TenderCircularsRepository;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
@@ -324,7 +325,27 @@ class TenderCircularsAPIController extends AppBaseController
     public function getAttachmentDropCircular(Request $request)
     {
         $input = $request->all();
-        $data['attachmentDrop'] = DocumentAttachments::where('documentSystemID',108)->where('attachmentType',3)->where('documentSystemCode',$input['tenderMasterId'])->get();
+        $attachment = TenderCirculars::where('tender_id',$input['tenderMasterId'])->get();
+        $attchArray = array();
+        if(count($attachment) > 0){
+            $attchArray = $attachment->pluck('attachment_id');
+            $attchArray = $attchArray->filter();
+        }
+
+        $data['attachmentDrop'] = DocumentAttachments::whereNotIn('attachmentID',$attchArray)
+            ->where('documentSystemID',108)
+            ->where('attachmentType',3)
+            ->where('parent_id', null)
+            ->where('documentSystemCode',$input['tenderMasterId'])->get();
+
+        if(isset($input['circularId']) && $input['circularId'] > 0){
+           $circular = TenderCirculars::where('id',$input['circularId'])->first();
+           if($circular['attachment_id']>0){
+               $attachment = DocumentAttachments::where('attachmentID',$circular['attachment_id'])->first();
+               $data['attachmentDrop'][] = $attachment;
+           }
+
+        }
 
         return $data;
     }
@@ -335,7 +356,7 @@ class TenderCircularsAPIController extends AppBaseController
         $input = $this->convertArrayToSelectedValue($request->all(), array('attachment_id'));
 
         if(!isset($input['description']) && !isset($input['attachment_id'])){
-            return ['success' => false, 'message' => 'Description is required'];
+            return ['success' => false, 'message' => 'Description or Attachment is required'];
         }
 
         if(isset($input['id'])) {
@@ -357,13 +378,13 @@ class TenderCircularsAPIController extends AppBaseController
                 $exist = TenderCirculars::where('id','!=',$input['id'])->where('tender_id', $input['tenderMasterId'])->where('attachment_id', $input['attachment_id'])->where('company_id', $input['companySystemID'])->first();
 
                 if(!empty($exist)){
-                    return ['success' => false, 'message' => 'Selected Attachment has been used in different circular'];
+                    return ['success' => false, 'message' => 'Selected Attachment has been used in a different circular'];
                 }
             }else{
                $exist = TenderCirculars::where('attachment_id', $input['attachment_id'])->where('tender_id', $input['tenderMasterId'])->where('company_id', $input['companySystemID'])->first();
 
                 if(!empty($exist)){
-                    return ['success' => false, 'message' => 'Selected Attachment has been used in different circular'];
+                    return ['success' => false, 'message' => 'Selected Attachment has been used in a different circular'];
                 }
             }
         }
@@ -387,6 +408,7 @@ class TenderCircularsAPIController extends AppBaseController
 
             if(isset($input['id'])){
                 $data['updated_by'] = $employee->employeeSystemID;
+                $data['updated_at'] = Carbon::now();
                 $result = TenderCirculars::where('id',$input['id'])->update($data);
                 if($result){
                     DB::commit();
@@ -394,6 +416,7 @@ class TenderCircularsAPIController extends AppBaseController
                 }
             }else{
                 $data['created_by'] = $employee->employeeSystemID;
+                $data['created_at'] = Carbon::now();
                 $result = TenderCirculars::create($data);
                 if($result){
                     DB::commit();

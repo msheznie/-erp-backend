@@ -1293,6 +1293,124 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     break;
                 }
                 break;
+                case 'CRCR': //Customer Summary Report
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                    $checkIsGroup = Company::find($request->companySystemID);
+                    $outputRevenue = $this->getCustomerSummaryRevenueQRY($request);
+                    $outputCollection = $this->getCustomerSummaryCollectionQRY($request);
+                    //$outputOutstanding = $this->getCustomerSummaryOutstandingQRY($request);
+                    $outputOutstanding = array(); //$this->getCustomerSummaryOutstandingUpdatedQRY($request);
+                    $outputServiceLine = $this->getCustomerSummaryRevenueServiceLineBaseQRY($request);
+    
+                    $decimalPlaceCollect = collect($outputRevenue)->pluck('documentRptCurrencyID')->toArray();
+                    $decimalPlaceUnique = array_unique($decimalPlaceCollect);
+    
+                    $currencyId = $request->currencyID;
+                    if (!empty($decimalPlaceUnique)) {
+                        $currencyId = $decimalPlaceUnique[0];
+                    }
+    
+                    $requestCurrency = CurrencyMaster::where('currencyID', $currencyId)->first();
+    
+                    $decimalPlace = !empty($requestCurrency) ? $requestCurrency->DecimalPlaces : 2;
+    
+                    $revenueTotal = array();
+                    $collectionTotal = array();
+                    $outstandingTotal = array();
+                    $serviceLineTotal = array();
+    
+                    //revenue total calculation
+                    $revenueTotal['Jan'] = array_sum(collect($outputRevenue)->pluck('Jan')->toArray());
+                    $revenueTotal['Feb'] = array_sum(collect($outputRevenue)->pluck('Feb')->toArray());
+                    $revenueTotal['March'] = array_sum(collect($outputRevenue)->pluck('March')->toArray());
+                    $revenueTotal['April'] = array_sum(collect($outputRevenue)->pluck('April')->toArray());
+                    $revenueTotal['May'] = array_sum(collect($outputRevenue)->pluck('May')->toArray());
+                    $revenueTotal['June'] = array_sum(collect($outputRevenue)->pluck('June')->toArray());
+                    $revenueTotal['July'] = array_sum(collect($outputRevenue)->pluck('July')->toArray());
+                    $revenueTotal['Aug'] = array_sum(collect($outputRevenue)->pluck('Aug')->toArray());
+                    $revenueTotal['Sept'] = array_sum(collect($outputRevenue)->pluck('Sept')->toArray());
+                    $revenueTotal['Oct'] = array_sum(collect($outputRevenue)->pluck('Oct')->toArray());
+                    $revenueTotal['Nov'] = array_sum(collect($outputRevenue)->pluck('Nov')->toArray());
+                    $revenueTotal['Dece'] = array_sum(collect($outputRevenue)->pluck('Dece')->toArray());
+                    $revenueTotal['Total'] = array_sum(collect($outputRevenue)->pluck('Total')->toArray());
+    
+                    //collection total calculation
+                    $collectionTotal['Jan'] = array_sum(collect($outputCollection)->pluck('Jan')->toArray());
+                    $collectionTotal['Feb'] = array_sum(collect($outputCollection)->pluck('Feb')->toArray());
+                    $collectionTotal['March'] = array_sum(collect($outputCollection)->pluck('March')->toArray());
+                    $collectionTotal['April'] = array_sum(collect($outputCollection)->pluck('April')->toArray());
+                    $collectionTotal['May'] = array_sum(collect($outputCollection)->pluck('May')->toArray());
+                    $collectionTotal['June'] = array_sum(collect($outputCollection)->pluck('June')->toArray());
+                    $collectionTotal['July'] = array_sum(collect($outputCollection)->pluck('July')->toArray());
+                    $collectionTotal['Aug'] = array_sum(collect($outputCollection)->pluck('Aug')->toArray());
+                    $collectionTotal['Sept'] = array_sum(collect($outputCollection)->pluck('Sept')->toArray());
+                    $collectionTotal['Oct'] = array_sum(collect($outputCollection)->pluck('Oct')->toArray());
+                    $collectionTotal['Nov'] = array_sum(collect($outputCollection)->pluck('Nov')->toArray());
+                    $collectionTotal['Dece'] = array_sum(collect($outputCollection)->pluck('Dece')->toArray());
+                    $collectionTotal['Total'] = array_sum(collect($outputCollection)->pluck('Total')->toArray());
+    
+                    //outstanding total calculation
+                    $outstandingTotal['Jan'] = array_sum(collect($outputOutstanding)->pluck('balanceAmountJan')->toArray());
+                    $outstandingTotal['Feb'] = array_sum(collect($outputOutstanding)->pluck('balanceAmountFeb')->toArray());
+                    $outstandingTotal['March'] = array_sum(collect($outputOutstanding)->pluck('balanceAmountMar')->toArray());
+                    $outstandingTotal['April'] = array_sum(collect($outputOutstanding)->pluck('balanceAmountApr')->toArray());
+                    $outstandingTotal['May'] = array_sum(collect($outputOutstanding)->pluck('balanceAmountMay')->toArray());
+                    $outstandingTotal['June'] = array_sum(collect($outputOutstanding)->pluck('balanceAmountJun')->toArray());
+                    $outstandingTotal['July'] = array_sum(collect($outputOutstanding)->pluck('balanceAmountJul')->toArray());
+                    $outstandingTotal['Aug'] = array_sum(collect($outputOutstanding)->pluck('balanceAmountAug')->toArray());
+                    $outstandingTotal['Sept'] = array_sum(collect($outputOutstanding)->pluck('balanceAmountSep')->toArray());
+                    $outstandingTotal['Oct'] = array_sum(collect($outputOutstanding)->pluck('balanceAmountOct')->toArray());
+                    $outstandingTotal['Nov'] = array_sum(collect($outputOutstanding)->pluck('balanceAmountNov')->toArray());
+                    $outstandingTotal['Dece'] = array_sum(collect($outputOutstanding)->pluck('balanceAmountDec')->toArray());
+                    $outstandingTotal['Total'] = array_sum(collect($outputOutstanding)->pluck('balanceAmountTot')->toArray());
+    
+                    //Revenue ServiceLine total calculation
+                    $serviceLineTotal['Jan'] = array_sum(collect($outputServiceLine)->pluck('Jan')->toArray());
+                    $serviceLineTotal['Feb'] = array_sum(collect($outputServiceLine)->pluck('Feb')->toArray());
+                    $serviceLineTotal['March'] = array_sum(collect($outputServiceLine)->pluck('March')->toArray());
+                    $serviceLineTotal['April'] = array_sum(collect($outputServiceLine)->pluck('April')->toArray());
+                    $serviceLineTotal['May'] = array_sum(collect($outputServiceLine)->pluck('May')->toArray());
+                    $serviceLineTotal['June'] = array_sum(collect($outputServiceLine)->pluck('June')->toArray());
+                    $serviceLineTotal['July'] = array_sum(collect($outputServiceLine)->pluck('July')->toArray());
+                    $serviceLineTotal['Aug'] = array_sum(collect($outputServiceLine)->pluck('Aug')->toArray());
+                    $serviceLineTotal['Sept'] = array_sum(collect($outputServiceLine)->pluck('Sept')->toArray());
+                    $serviceLineTotal['Oct'] = array_sum(collect($outputServiceLine)->pluck('Oct')->toArray());
+                    $serviceLineTotal['Nov'] = array_sum(collect($outputServiceLine)->pluck('Nov')->toArray());
+                    $serviceLineTotal['Dece'] = array_sum(collect($outputServiceLine)->pluck('Dece')->toArray());
+                    $serviceLineTotal['Total'] = array_sum(collect($outputServiceLine)->pluck('Total')->toArray());
+    
+    
+                    $reportData = array(
+                        'fromDate' =>$request->fromDate,
+                        'year' =>$request->year,
+                        'revenueData' => $outputRevenue,
+                        'outputCollection' => $outputCollection,
+                        'outputOutstanding' => $outputOutstanding,
+                        'outputServiceLine' => $outputServiceLine,
+                        'companyName' => $checkIsGroup->CompanyName,
+                        'decimalPlace' => $decimalPlace,
+                        'revenueTotal' => $revenueTotal,
+                        'collectionTotal' => $collectionTotal,
+                        'outstandingTotal' => $outstandingTotal,
+                        'serviceLineTotal' => $serviceLineTotal,
+                        'currency' => $requestCurrency->CurrencyCode
+                    );
+                    $templateName = "export_report.customer-summary-report";
+                    $fileName = 'customer_summary_report';
+                    $path = 'accounts-receivable/report/customer-summary/excel/';
+                    $file_type = $request->type;
+                    $basePath = CreateExcel::loadView($reportData,$file_type,$fileName,$path,$templateName);
+            
+                    if($basePath == '')
+                    {
+                        return $this->sendError('Unable to export excel');
+                    }
+                    else
+                    {
+                        return $this->sendResponse($basePath, trans('custom.success_export'));
+                    }
+                    break;
+
             case 'CSR': //Customer Sales Register
                 $type = $request->type;
 

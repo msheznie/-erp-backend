@@ -606,7 +606,11 @@ class AssetManagementReportAPIController extends AppBaseController
                 $grandTotalRpt = 0;
                 if ($output) {
                     foreach ($output as $val) {
-                        $outputArr[$val->chartOfAccountSystemID][] = $val;
+                        if (isset($request->groupByAsset) && $request->groupByAsset) {
+                            $outputArr[$val->assetID][] = $val;
+                        } else {
+                            $outputArr[$val->chartOfAccountSystemID][] = $val;
+                        }
                         $grandTotalLocal += $val->amountLocal;
                         $grandTotalRpt += $val->amountRpt;
                     }

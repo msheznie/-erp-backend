@@ -123,6 +123,23 @@ class CompanyAPIController extends AppBaseController
             ->orderBy('AccountDescription', 'asc')
             ->get();
 
+        $assetAndLiabilityAccount = ChartOfAccount::
+        where(function ($query)  {
+            $query->where('controlAccountsSystemID', 3)
+                ->orWhere('controlAccountsSystemID', 4);
+        })
+         ->where('isBank',0)
+         ->where('isApproved',1)
+        ->where('catogaryBLorPL', '=', 'BS')
+        ->whereHas('chartofaccount_assigned',function($query) use($selectedCompanyId){
+            $query->where('companySystemID',$selectedCompanyId)->where('isAssigned',-1);
+        })
+        ->orderBy('AccountDescription', 'asc')
+        ->get();    
+
+
+
+
         /**Country Drop Down */
         $country = CountryMaster::orderBy('countryName', 'asc')
             ->get();
@@ -186,6 +203,7 @@ class CompanyAPIController extends AppBaseController
 
         $output = array('companies' => $companies->toArray(),
             'liabilityAccount' => $liabilityAccount,
+            'assetAndLiaAccount' => $assetAndLiabilityAccount,
             'country' => $country,
             'supplierCategoryMaster' => $supplierCategory,
             'currencyMaster' => $currencyMaster,

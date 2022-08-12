@@ -1,4 +1,34 @@
 <html>
+<table>
+        <thead>
+        <div>
+                <td colspan="3"></td>
+                <td><B>{{$Title}} </B></td>
+            </div>
+        </thead>
+    </table>
+    <table>
+        <thead>
+        <div>
+                <td colspan="3"></td>
+                <td><B>{{$company}}</B></td>
+            </div>
+        </thead>
+    </table>
+    <br>
+<table>
+    <thead>
+    <tr>
+        <td><B>Period From: </B></td>
+        <td><B>{{ date('d/m/Y', strtotime($fromDate)) }}</B></td>
+        <td><B>Period To:</B></td>
+        <td><B>{{ date('d/m/Y', strtotime($toDate)) }}</B></td>
+        <td><B>Currency:</B></td>
+        <td><B>{{ $currency }}</B></td>
+    </tr>
+    </thead>
+</table>
+
 
 <table>
     <thead> 

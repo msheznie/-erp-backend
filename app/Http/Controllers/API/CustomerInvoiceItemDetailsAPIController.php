@@ -138,7 +138,7 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
         $input = $request->all();
         $companySystemID = $input['companySystemID'];
 
-
+       
         if(isset($input['isInDOorCI'])) {
             unset($input['timesReferred']);
         $item = ItemAssigned::with(['item_master'])
@@ -166,6 +166,7 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
         }
 
         $is_pref = $customerInvoiceDirect->isPerforma;
+
         if(CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID',$input['custInvoiceDirectAutoID'])->where('itemFinanceCategoryID','!=',$item->financeCategoryMaster)->exists()){
             return $this->sendError('Different finance category found. You can not add different finance category items for same invoice',500);
         }
@@ -256,8 +257,10 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
 
             $input['sellingCostAfterMargin'] = $catalogDetail->localPrice;
             $input['marginPercentage'] = ($input['sellingCostAfterMargin'] - $input['sellingCost'])/$input['sellingCost']*100;
+            $input['part_no'] = $catalogDetail->partNo;
         }else{
             $input['sellingCostAfterMargin'] = $input['sellingCost'];
+            $input['part_no'] = $item->secondaryItemCode;
         }
 
         if(isset($input['marginPercentage']) && $input['marginPercentage'] != 0){
@@ -754,6 +757,18 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
         if (!$resVat['status']) {
            return $this->sendError($resVat['message']); 
         } 
+
+        return $this->sendResponse($customerInvoiceItemDetails->toArray(), $message);
+    }
+
+    public function custItemDetailUpdate($id, UpdateCustomerInvoiceItemDetailsAPIRequest $request){
+        $comments = $request->comments;
+
+        $input = array();
+        $input['comments'] = $comments;
+        $message = "Item updated successfully";
+
+        $customerInvoiceItemDetails = $this->customerInvoiceItemDetailsRepository->update($input, $id);
 
         return $this->sendResponse($customerInvoiceItemDetails->toArray(), $message);
     }

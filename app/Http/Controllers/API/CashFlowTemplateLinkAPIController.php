@@ -113,13 +113,13 @@ class CashFlowTemplateLinkAPIController extends AppBaseController
 
         $validator = \Validator::make($request->all(), [
             'glAutoID' => 'required'
-        ]);
+        ],[ 'glAutoID.required' => 'Please select a GL code' ]);
 
         if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
         }
 
-        $tempDetail = CashFlowTemplateLink::ofTemplate($input['templateMasterID'])->pluck('glAutoID')->toArray();
+        $tempDetail = CashFlowTemplateLink::ofTemplate($input['templateMasterID'])->where('templateDetailID',$input['templateDetailID'])->pluck('glAutoID')->toArray();
 
         $finalError = array(
             'already_gl_linked' => array(),
@@ -133,11 +133,10 @@ class CashFlowTemplateLinkAPIController extends AppBaseController
                     $error_count++;
                 }
             }
-
             $confirm_error = array('type' => 'already_gl_linked', 'data' => $finalError);
             if ($error_count > 0) {
                 return $this->sendError("You cannot add gl codes as it is already assigned", 500, $confirm_error);
-            }else{
+            } else {
                 foreach ($input['glAutoID'] as $key => $val) {
                     if (!in_array($val['chartOfAccountSystemID'], $tempDetail)) {
                         $data['templateMasterID'] = $input['templateMasterID'];
@@ -159,6 +158,8 @@ class CashFlowTemplateLinkAPIController extends AppBaseController
                 }
             }
         }
+
+        
 
         $updateTemplateDetailAsFinal = CashFlowTemplateDetail::where('id', $input['templateDetailID'])->update(['isFinalLevel' => 1]);
 

@@ -362,6 +362,11 @@ class PaySupplierInvoiceDetail extends Model
         return $this->hasOne('App\Models\MatchDocumentMaster', 'matchDocumentMasterAutoID', 'matchingDocID');
     }
 
+    public function debite_note()
+    {
+        return $this->hasOne('App\Models\DebitNote', 'debitNoteAutoID', 'PayMasterAutoId');
+    }
+
     public function pomaster()
     {
         return $this->belongsTo('App\Models\ProcumentOrder', 'purchaseOrderID', 'purchaseOrderID');

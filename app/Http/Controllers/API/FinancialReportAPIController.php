@@ -504,7 +504,33 @@ class FinancialReportAPIController extends AppBaseController
             $typeID = collect($typeID)->pluck('id');
         }
 
-        $data = DB::select('SELECT * FROM (SELECT
+        $data = DB::select('SELECT * FROM (
+    SELECT
+	erp_bookinvsuppmaster.bookingDate AS documentDate,
+	erp_bookinvsuppmaster.bookingInvCode AS documentCode,
+	erp_bookinvsuppmaster.comments AS description,
+	erp_bookinvsuppmaster.employeeID AS employeeID,
+	erp_bookinvsuppmaster.bookingAmountLocal AS amountLocal,
+	erp_bookinvsuppmaster.bookingAmountRpt AS amountRpt,
+    srp_erp_pay_monthlydeductionmaster.monthlyDeductionCode AS referenceDoc,
+    srp_erp_pay_monthlydeductionmaster.dateMD AS referenceDocDate,
+    srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID,
+    currencymaster.DecimalPlaces AS localCurrencyDecimals,
+    currencymasterRpt.DecimalPlaces As rptCurrencyDecimals,
+    4 AS type
+FROM
+	erp_bookinvsuppmaster
+    LEFT JOIN srp_erp_pay_monthlydeductionmaster ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = srp_erp_pay_monthlydeductionmaster.supplierInvoiceID
+    LEFT JOIN currencymaster ON erp_bookinvsuppmaster.localCurrencyID = currencymaster.currencyID
+    LEFT JOIN currencymaster AS currencymasterRpt ON erp_bookinvsuppmaster.companyReportingCurrencyID = currencymasterRpt.currencyID
+WHERE
+    DATE(erp_bookinvsuppmaster.bookingDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
+    erp_bookinvsuppmaster.approved = -1 AND
+    erp_bookinvsuppmaster.documentType = 4 AND
+    4 IN (' . join(',', json_decode($typeID)) . ') AND
+    erp_bookinvsuppmaster.companySystemID = "'.$companyID.'"
+    UNION ALL
+    SELECT
 	erp_bookinvsuppmaster.bookingDate AS documentDate,
 	erp_bookinvsuppmaster.bookingInvCode AS documentCode,
 	erp_bookinvsuppmaster.comments AS description,
@@ -586,6 +612,22 @@ WHERE
     srp_erp_payrolldetail.companyReportingAmount as referenceAmountRpt,
     srp_erp_payrolldetail.empID as employeeID
 FROM
+	erp_bookinvsuppmaster
+	    LEFT JOIN srp_erp_pay_monthlydeductionmaster ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = srp_erp_pay_monthlydeductionmaster.supplierInvoiceID
+    LEFT JOIN srp_erp_pay_monthlydeductiondetail ON srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID = srp_erp_pay_monthlydeductiondetail.monthlyDeductionMasterID
+    LEFT JOIN srp_erp_payrolldetail ON srp_erp_pay_monthlydeductiondetail.monthlyDeductionDetailID = srp_erp_payrolldetail.detailTBID
+    LEFT JOIN srp_erp_payrollmaster ON srp_erp_payrolldetail.payrollMasterID = srp_erp_payrollmaster.payrollMasterID
+WHERE
+    srp_erp_payrolldetail.fromTB = 'MD' AND
+    srp_erp_payrollmaster.approvedYN = 1 AND
+    erp_bookinvsuppmaster.documentType = 4 
+    UNION ALL
+    SELECT
+    srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID,
+    srp_erp_payrolldetail.companyLocalAmount as referenceAmountLocal,
+    srp_erp_payrolldetail.companyReportingAmount as referenceAmountRpt,
+    srp_erp_payrolldetail.empID as employeeID
+FROM
 	expense_employee_allocation
     LEFT JOIN employees ON expense_employee_allocation.employeeSystemID = employees.employeeSystemID
     LEFT JOIN erp_bookinvsuppmaster ON expense_employee_allocation.documentSystemCode = erp_bookinvsuppmaster.bookingSuppMasInvAutoID
@@ -632,6 +674,10 @@ srp_erp_ioubookingmaster.approvedYN = 1
             $da->isLine = 0;
             foreach($refAmounts as $amount) {
                 if($da->masterID == $amount->masterID && $da->type == 1 && $da->employeeID == $amount->employeeID) {
+                    $da->referenceAmountLocal = $amount->referenceAmountLocal;
+                    $da->referenceAmountRpt = $amount->referenceAmountRpt;
+                }
+                if($da->masterID == $amount->masterID && $da->type == 4 && $da->employeeID == $amount->employeeID) {
                     $da->referenceAmountLocal = $amount->referenceAmountLocal;
                     $da->referenceAmountRpt = $amount->referenceAmountRpt;
                 }
@@ -699,8 +745,22 @@ srp_erp_ioubookingmaster.approvedYN = 1
 
         $data = array_values($data);
 
-        $employees = DB::select('SELECT * FROM (SELECT
-	
+        $employees = DB::select('SELECT * FROM (
+     SELECT
+	erp_bookinvsuppmaster.employeeID AS employeeID,
+    employees.empName AS employeeName,
+    employees.empID AS empID
+FROM
+	erp_bookinvsuppmaster
+    LEFT JOIN employees ON erp_bookinvsuppmaster.employeeID = employees.employeeSystemID
+WHERE
+    DATE(erp_bookinvsuppmaster.bookingDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
+    erp_bookinvsuppmaster.approved = -1 AND
+    erp_bookinvsuppmaster.employeeID IN (' . join(',', json_decode($employeeDatas)) . ') AND
+    erp_bookinvsuppmaster.documentType = 4 AND
+    4 IN (' . join(',', json_decode($typeID)) . ')
+UNION ALL
+SELECT
 	expense_employee_allocation.employeeSystemID AS employeeID,
     employees.empName AS employeeName,
     employees.empID AS empID
@@ -858,7 +918,6 @@ WHERE
 
                 $output = $this->getGeneralLedger($request);
 
-                
                 // return $this->sendResponse($output, 'Record ');
                 // die();
 
@@ -2325,7 +2384,32 @@ WHERE
             $typeID = collect($typeID)->pluck('id');
         }
 
-        $data = DB::select('SELECT * FROM (SELECT
+        $data = DB::select('SELECT * FROM ( SELECT
+	erp_bookinvsuppmaster.bookingDate AS documentDate,
+	erp_bookinvsuppmaster.bookingInvCode AS documentCode,
+	erp_bookinvsuppmaster.comments AS description,
+	erp_bookinvsuppmaster.employeeID AS employeeID,
+	erp_bookinvsuppmaster.bookingAmountLocal AS amountLocal,
+	erp_bookinvsuppmaster.bookingAmountRpt AS amountRpt,
+    srp_erp_pay_monthlydeductionmaster.monthlyDeductionCode AS referenceDoc,
+    srp_erp_pay_monthlydeductionmaster.dateMD AS referenceDocDate,
+    srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID,
+    currencymaster.DecimalPlaces AS localCurrencyDecimals,
+    currencymasterRpt.DecimalPlaces As rptCurrencyDecimals,
+    4 AS type
+FROM
+	erp_bookinvsuppmaster
+    LEFT JOIN srp_erp_pay_monthlydeductionmaster ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = srp_erp_pay_monthlydeductionmaster.supplierInvoiceID
+    LEFT JOIN currencymaster ON erp_bookinvsuppmaster.localCurrencyID = currencymaster.currencyID
+    LEFT JOIN currencymaster AS currencymasterRpt ON erp_bookinvsuppmaster.companyReportingCurrencyID = currencymasterRpt.currencyID
+WHERE
+    DATE(erp_bookinvsuppmaster.bookingDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
+    erp_bookinvsuppmaster.approved = -1 AND
+    erp_bookinvsuppmaster.documentType = 4 AND
+    4 IN (' . join(',', json_decode($typeID)) . ') AND
+    erp_bookinvsuppmaster.companySystemID = "'.$companyID.'"
+    UNION ALL
+    SELECT
 	erp_bookinvsuppmaster.bookingDate AS documentDate,
 	erp_bookinvsuppmaster.bookingInvCode AS documentCode,
 	erp_bookinvsuppmaster.comments AS description,
@@ -2407,6 +2491,22 @@ WHERE
     srp_erp_payrolldetail.companyReportingAmount as referenceAmountRpt,
     srp_erp_payrolldetail.empID as employeeID
 FROM
+	erp_bookinvsuppmaster
+	LEFT JOIN srp_erp_pay_monthlydeductionmaster ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = srp_erp_pay_monthlydeductionmaster.supplierInvoiceID
+    LEFT JOIN srp_erp_pay_monthlydeductiondetail ON srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID = srp_erp_pay_monthlydeductiondetail.monthlyDeductionMasterID
+    LEFT JOIN srp_erp_payrolldetail ON srp_erp_pay_monthlydeductiondetail.monthlyDeductionDetailID = srp_erp_payrolldetail.detailTBID
+    LEFT JOIN srp_erp_payrollmaster ON srp_erp_payrolldetail.payrollMasterID = srp_erp_payrollmaster.payrollMasterID
+WHERE
+    srp_erp_payrolldetail.fromTB = 'MD' AND
+    srp_erp_payrollmaster.approvedYN = 1 AND
+    erp_bookinvsuppmaster.documentType = 4 
+    UNION ALL
+    SELECT
+    srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID,
+    srp_erp_payrolldetail.companyLocalAmount as referenceAmountLocal,
+    srp_erp_payrolldetail.companyReportingAmount as referenceAmountRpt,
+    srp_erp_payrolldetail.empID as employeeID
+FROM
 	expense_employee_allocation
     LEFT JOIN employees ON expense_employee_allocation.employeeSystemID = employees.employeeSystemID
     LEFT JOIN erp_bookinvsuppmaster ON expense_employee_allocation.documentSystemCode = erp_bookinvsuppmaster.bookingSuppMasInvAutoID
@@ -2453,6 +2553,10 @@ srp_erp_ioubookingmaster.approvedYN = 1
             $da->isLine = 0;
             foreach($refAmounts as $amount) {
                 if($da->masterID == $amount->masterID && $da->type == 1 && $da->employeeID == $amount->employeeID) {
+                    $da->referenceAmountLocal = $amount->referenceAmountLocal;
+                    $da->referenceAmountRpt = $amount->referenceAmountRpt;
+                }
+                if($da->masterID == $amount->masterID && $da->type == 4 && $da->employeeID == $amount->employeeID) {
                     $da->referenceAmountLocal = $amount->referenceAmountLocal;
                     $da->referenceAmountRpt = $amount->referenceAmountRpt;
                 }
@@ -2519,8 +2623,22 @@ srp_erp_ioubookingmaster.approvedYN = 1
 
         $data = array_values($data);
 
-        $employees = DB::select('SELECT * FROM (SELECT
-	
+        $employees = DB::select('SELECT * FROM (
+SELECT
+	erp_bookinvsuppmaster.employeeID AS employeeID,
+    employees.empName AS employeeName,
+    employees.empID AS empID
+FROM
+	erp_bookinvsuppmaster
+    LEFT JOIN employees ON erp_bookinvsuppmaster.employeeID = employees.employeeSystemID
+WHERE
+    DATE(erp_bookinvsuppmaster.bookingDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
+    erp_bookinvsuppmaster.approved = -1 AND
+    erp_bookinvsuppmaster.documentType = 4 AND
+    erp_bookinvsuppmaster.employeeID IN (' . join(',', json_decode($employeeDatas)) . ') AND
+    4 IN (' . join(',', json_decode($typeID)) . ')
+UNION ALL
+    SELECT
 	expense_employee_allocation.employeeSystemID AS employeeID,
     employees.empName AS employeeName,
     employees.empID AS empID
@@ -2589,6 +2707,7 @@ WHERE
                 $companyCurrency = \Helper::companyCurrency($request->companySystemID);
                 $checkIsGroup = Company::find($request->companySystemID);
                 $data = array();
+
                 if ($reportTypeID == 'FTB') {
                     if ($request->reportSD == 'company_wise_summary') {
                         $companyID = "";
@@ -2602,7 +2721,6 @@ WHERE
                         $subCompanies = Company::whereIn('companySystemID', $companyID)->get(['companySystemID', 'CompanyID', 'CompanyName']);
 
                         $output = $this->getTrialBalanceCompanyWise($request, $subCompanies);
-
                         if ($output) {
                             $x = 0;
                             foreach ($output as $val) {
@@ -2618,7 +2736,6 @@ WHERE
                         }
                     } else {
                         $output = $this->getTrialBalance($request);
-
                         $companyCurrency = \Helper::companyCurrency($request->companySystemID);
                         if($companyCurrency) {
                             $requestCurrencyLocal = $companyCurrency->localcurrency;
@@ -2632,6 +2749,15 @@ WHERE
                         $currencyLocal = $requestCurrencyLocal->CurrencyCode;
                         $currencyRpt = $requestCurrencyRpt->CurrencyCode;
 
+                        $totalOpeningBalanceRpt = 0;
+                        $totalOpeningBalanceLocal = 0;
+                        $totaldocumentLocalAmountDebit = 0;
+                        $totaldocumentRptAmountDebit = 0;
+                        $totaldocumentLocalAmountCredit= 0;
+                        $totaldocumentRptAmountCredit = 0;
+                        $totalClosingBalanceRpt = 0;
+                        $totalClosingBalanceLocal= 0;
+
                         if ($output) {
                             $x = 0;
                             foreach ($output as $val) {
@@ -2642,14 +2768,25 @@ WHERE
                                 $data[$x]['Account Code'] = $val->glCode;
                                 $data[$x]['Account Description'] = $val->AccountDescription;
                                 $data[$x]['Type'] = $val->glAccountType;
-
                                 if ($checkIsGroup->isGroup == 0 && $currencyId ==1 || $currencyId ==3) {
+                                    $totalOpeningBalanceLocal = round( $totalOpeningBalanceRpt,$decimalPlaceLocal) + round($val->openingBalLocal,$decimalPlaceLocal);
+                                    $totaldocumentLocalAmountDebit = round( $totaldocumentLocalAmountDebit,$decimalPlaceLocal) + round($val->documentLocalAmountDebit,$decimalPlaceLocal);
+                                    $totaldocumentLocalAmountCredit = round( $totaldocumentLocalAmountCredit,$decimalPlaceLocal) + round($val->documentLocalAmountCredit,$decimalPlaceLocal);
+
+                                    $totalClosingBalanceLocal = round( $totalClosingBalanceLocal,$decimalPlaceLocal) + round($val->openingBalLocal + ($val->documentLocalAmountDebit - $val->documentLocalAmountCredit),$decimalPlaceLocal);
+
                                     $data[$x]['Opening Balance (Local Currency - ' . $currencyLocal . ')'] = round((isset($val->openingBalLocal) ? $val->openingBalLocal : 0), $decimalPlaceLocal);
                                     $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = round($val->documentLocalAmountDebit, $decimalPlaceLocal);
                                     $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = round($val->documentLocalAmountCredit, $decimalPlaceLocal);
                                     $data[$x]['Closing Balance (Local Currency - ' . $currencyLocal . ')'] = round((isset($val->openingBalLocal) ? $val->openingBalLocal : 0) + $val->documentLocalAmountDebit - $val->documentLocalAmountCredit, $decimalPlaceLocal);
                                 }
                                 if($currencyId == 2 || $currencyId == 3) {
+                                    $totalOpeningBalanceRpt = round( $totalOpeningBalanceRpt,$decimalPlaceRpt) + round($val->openingBalRpt,$decimalPlaceRpt);
+                                    $totaldocumentRptAmountDebit = round( $totaldocumentRptAmountDebit,$decimalPlaceRpt) + round($val->documentRptAmountDebit,$decimalPlaceRpt);
+                                    $totalClosingBalanceRpt = round( $totalClosingBalanceRpt,$decimalPlaceRpt) + round($val->openingBalRpt + ($val->documentRptAmountDebit - $val->documentRptAmountCredit),$decimalPlaceRpt);
+
+                                    $totaldocumentRptAmountCredit = round( $totaldocumentRptAmountCredit,$decimalPlaceRpt) + round($val->documentRptAmountCredit,$decimalPlaceRpt);
+
                                     $data[$x]['Opening Balance (Reporting Currency - ' . $currencyRpt . ')'] = round(isset($val->openingBalRpt) ? $val->openingBalRpt : 0, $decimalPlaceRpt);
                                     $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->documentRptAmountDebit, $decimalPlaceRpt);
                                     $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->documentRptAmountCredit, $decimalPlaceRpt);
@@ -2659,12 +2796,75 @@ WHERE
                                 $x++;
                             }
                         }
+
+                        if ($request->reportSD == 'company_wise') {
+                            $data[$x]['Company ID'] = "";
+                            $data[$x]['Company Name'] = "";
+                        }
+                        $data[$x]['Account Code'] = "";
+                        $data[$x]['Account Description'] = "Grand Total";
+                        $data[$x]['Type'] = "";
+                        if ($checkIsGroup->isGroup == 0 && $currencyId ==1 || $currencyId ==3) { 
+                            $data[$x]['Opening Balance (Local Currency - ' . $currencyLocal . ')'] = $totalOpeningBalanceLocal;
+                            $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = $totaldocumentLocalAmountDebit;
+                            $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = $totaldocumentLocalAmountCredit;
+                            $data[$x]['Closing Balance (Local Currency - ' . $currencyLocal . ')'] = $totalClosingBalanceLocal;
+                        }
+                        if($currencyId == 2 || $currencyId == 3) { 
+                            $data[$x]['Opening Balance (Reporting Currency - ' . $currencyRpt . ')'] = $totalOpeningBalanceRpt;
+                            $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = $totaldocumentRptAmountDebit;
+                            $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = $totaldocumentRptAmountCredit;
+                            $data[$x]['Closing Balance (Reporting Currency - ' . $currencyRpt . ')'] = $totalClosingBalanceRpt;
+                        }
+
+
                     }
                 } else if ($reportTypeID == 'FTBM') {
                     $result = $this->getTrialBalanceMonthWise($request);
                     $output = $result['data'];
                     $headers = $result['headers'];
 
+                    $totalArray =  array(
+                        'Account Code' => '',
+                        'Account Description' => 'Grand Total',
+                        'Type' => '',
+                        'Opening Balance' => 0,
+                        'Jan' => 0,
+                        'JanClosing' => 0,
+                        'Feb' => 0,
+                        'FebClosing' => 0,
+                        'Mar' => 0,
+                        'MarClosing' => 0,
+                        'Apr' => 0,
+                        'AprClosing' => 0,
+                        'May' => 0,
+                        'MayClosing' => 0,
+                        'Jun' => 0,
+                        'JunClosing' => 0,
+                        'Jul' => 0,
+                        'JulClosing' => 0,
+                        'Aug'=> 0,
+                        'AugClosing'=> 0,
+                        'Sep' => 0,
+                        'SepClosing' => 0,
+                        'Oct' => 0,
+                        'OctClosing' => 0,
+                        'Nov' => 0,
+                        'NovClosing' => 0,
+                        'Dece' => 0,
+                        'DeceClosing' => 0
+                    );
+                    $opening_total = 0;
+                    foreach($output as $ou) {
+                        foreach($headers as $head) {
+                            $totalArray[$head] =  round($totalArray[$head] ,2) + round($ou->$head,2);
+                            $title = $head.'Closing';
+                            $totalArray[$head.'Closing'] = round($totalArray[$head.'Closing'],2) + round($ou->$title,2);
+                        }
+                        $opening_total += round($ou->Opening,2);
+                    }
+
+                    $totalArray['Opening Balance'] = round($opening_total,2);
 
                     $currencyIdLocal = 1;
                     $currencyIdRpt = 2;
@@ -2720,7 +2920,44 @@ WHERE
                             $x++;
                         }
                     }
+                    $data[$x]['Account Code'] = '';
+                    $data[$x]['Account Description'] = '';
+                    $data[$x]['Type'] = '';
+                    $data[$x]['Opening Balance'] = '';
+                    $data[$x]['Jan'] = '';
+                    $data[$x]['JanClosing'] = '';
+                    $data[$x]['Feb'] = '';
+                    $data[$x]['FebClosing'] = '';
+                    $data[$x]['Mar'] = '';
+                    $data[$x]['MarClosing'] = '';
+                    $data[$x]['Apr'] = '';
+                    $data[$x]['AprClosing'] = '';
+                    $data[$x]['May'] = '';
+                    $data[$x]['MayClosing'] = '';
+                    $data[$x]['Jun'] = '';
+                    $data[$x]['JunClosing'] = '';
+                    $data[$x]['Jul'] = '';
+                    $data[$x]['JulClosing'] = '';
+                    $data[$x]['Aug'] = '';
+                    $data[$x]['AugClosing'] = '';
+                    $data[$x]['Sep'] = '';
+                    $data[$x]['SepClosing'] = '';
+                    $data[$x]['Oct'] = '';
+                    $data[$x]['OctClosing'] = '';
+                    $data[$x]['May'] = '';
+                    $data[$x]['MayClosing'] = '';
+                    $data[$x]['Nov'] = '';
+                    $data[$x]['NovClosing'] = '';
+                    $data[$x]['Dece'] = '';
+                    $data[$x]['DeceClosing'] = '';
+    
+                    array_push($data,$totalArray);
+
                 }
+
+               
+              
+
          
                 $company_name = $companyCurrency->CompanyName;
                 $to_date = \Helper::dateFormat($request->toDate);
@@ -3225,6 +3462,7 @@ WHERE
                     $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($subTotalDebitRpt - $subTotalCreditRpt, $decimalPlaceRpt);
                 }
 
+
                 $company_name = $companyCurrency->CompanyName;
                 $to_date = \Helper::dateFormat($request->toDate);
                 $from_date = \Helper::dateFormat($request->fromDate);
@@ -3280,6 +3518,25 @@ WHERE
                             $data[$x]['Net Value'] = ($val->bookingAmountTrans - $val->taxTotalAmount);
                             $data[$x]['VAT'] = $val->taxTotalAmount;
                             $data[$x]['Due Amount'] = $val->bookingAmountTrans;
+                            $data[$x]['Posted Date'] = $val->postedDate;
+                            $x++;
+                        }
+                    }
+                }
+                else if ($request->tempType == 3) {
+                    if ($output) {
+                        $x = 0;
+                        foreach ($output as $val) {
+                            $data[$x]['Company ID'] = $val->companyID;
+                            $data[$x]['Document Code'] = $val->BPVcode;
+                            $data[$x]['PV Date'] = $val->bookingDate;
+                            $data[$x]['Narration'] = $val->BPVNarration;
+                            $data[$x]['Supplier Code'] = $val->primarySupplierCode;
+                            $data[$x]['Supplier Name'] = $val->supplierName;
+                            $data[$x]['Currency'] = $val->CurrencyCode;
+                            $data[$x]['Value'] = $val->payAmountSuppTrans;
+                            $data[$x]['Net Value'] = $val->payAmountSuppTrans + $val->taxTotalAmount;
+                            $data[$x]['VAT'] = $val->taxTotalAmount;
                             $data[$x]['Posted Date'] = $val->postedDate;
                             $x++;
                         }
@@ -4465,9 +4722,9 @@ WHERE
         }
 
         $glCodes = (array)$request->glCodes;
-        $type = $request->type;
-        $chartOfAccountId = array_filter(collect($glCodes)->pluck('chartOfAccountSystemID')->toArray());
 
+        $type = $request->type;
+        $chartOfAccountId = collect($glCodes)->pluck('chartOfAccountSystemID')->toArray();
         $departments = (array)$request->departments;
         $serviceLineId = array_filter(collect($departments)->pluck('serviceLineSystemID')->toArray());
 
@@ -4475,10 +4732,8 @@ WHERE
 
         $contracts = (array)$request->contracts;
         $contractsId = array_filter(collect($contracts)->pluck('contractUID')->toArray());
-
         array_push($contractsId, 159);
         //contracts
-
         $query = 'SELECT * 
                     FROM
                         (
@@ -4823,7 +5078,54 @@ WHERE DATE(MASTER.postedDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" 
 	MASTER.companySystemID IN (' . join(',', $companyID) . ')
 AND MASTER.approved = - 1
 AND MASTER.cancelYN = 0';
-        } else {
+        }
+        else if ($request->tempType == 3){
+           $query = 'SELECT
+	MASTER .companyID,
+	MASTER .BPVcode,
+	DATE_FORMAT(
+		MASTER .BPVdate,
+		"%d/%m/%Y"
+	) AS bookingDate,
+	MASTER .BPVNarration,
+	suppliermaster.primarySupplierCode,
+	suppliermaster.secondarySupplierCode,
+	suppliermaster.supplierName,
+	currencymaster.CurrencyCode,
+	currencymaster.DecimalPlaces,
+MASTER.payAmountSuppTrans,
+	IFNULL(tax.taxTotalAmount, 0) AS taxTotalAmount,
+	DATE_FORMAT(
+		MASTER .postedDate,
+		"%d/%m/%Y"
+	) AS postedDate
+FROM
+	erp_paysupplierinvoicemaster AS MASTER
+INNER JOIN suppliermaster ON suppliermaster.supplierCodeSystem = MASTER.BPVsupplierID
+INNER JOIN currencymaster ON currencymaster.currencyID = MASTER.supplierTransCurrencyID
+LEFT JOIN (
+	SELECT
+		taxdetail.documentSystemID,
+		taxdetail.companySystemID,
+		taxdetail.documentSystemCode,
+		IFNULL(Sum(taxdetail.amount), 0) AS taxTotalAmount
+	FROM
+		erp_taxdetail AS taxdetail
+	GROUP BY
+		taxdetail.documentSystemID,
+		taxdetail.companySystemID,
+		taxdetail.documentSystemCode
+) tax ON tax.documentSystemID = MASTER .documentSystemID
+AND tax.companySystemID = MASTER .companySystemID
+AND tax.documentSystemCode = MASTER .PayMasterAutoId
+WHERE
+	DATE(MASTER.postedDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"
+AND MASTER .companySystemID IN (' . join(',', $companyID) . ')
+AND MASTER .approved = - 1
+AND MASTER .cancelYN = 0
+AND MASTER .invoiceType = 3';
+       }
+        else {
             $query = 'SELECT
 	MASTER .companyID,
 	MASTER .bookingInvCode,
