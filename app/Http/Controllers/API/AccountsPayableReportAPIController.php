@@ -81,7 +81,15 @@ class AccountsPayableReportAPIController extends AppBaseController
 
         } else {
             $controlAccount = SupplierMaster::groupBy('liabilityAccountSysemID')->pluck('liabilityAccountSysemID');
-            $controlAccount = ChartOfAccount::whereIN('chartOfAccountSystemID', $controlAccount)->get();
+            $controlAccountAdv = SupplierMaster::groupBy('advanceAccountSystemID')->pluck('advanceAccountSystemID');
+
+            $merged = $controlAccountAdv->merge($controlAccount);
+
+            $unique = $merged->unique();
+ 
+            $allAc = $unique->values()->all();
+
+            $controlAccount = ChartOfAccount::whereIN('chartOfAccountSystemID', $allAc)->get();
 
             $departments = \Helper::getCompanyServiceline($selectedCompanyId);
 

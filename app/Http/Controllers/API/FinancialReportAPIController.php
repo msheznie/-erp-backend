@@ -3522,6 +3522,25 @@ WHERE
                             $x++;
                         }
                     }
+                }
+                else if ($request->tempType == 3) {
+                    if ($output) {
+                        $x = 0;
+                        foreach ($output as $val) {
+                            $data[$x]['Company ID'] = $val->companyID;
+                            $data[$x]['Document Code'] = $val->BPVcode;
+                            $data[$x]['PV Date'] = $val->bookingDate;
+                            $data[$x]['Narration'] = $val->BPVNarration;
+                            $data[$x]['Supplier Code'] = $val->primarySupplierCode;
+                            $data[$x]['Supplier Name'] = $val->supplierName;
+                            $data[$x]['Currency'] = $val->CurrencyCode;
+                            $data[$x]['Value'] = $val->payAmountSuppTrans;
+                            $data[$x]['Net Value'] = $val->payAmountSuppTrans + $val->taxTotalAmount;
+                            $data[$x]['VAT'] = $val->taxTotalAmount;
+                            $data[$x]['Posted Date'] = $val->postedDate;
+                            $x++;
+                        }
+                    }
                 } else {
                     if ($output) {
                         $x = 0;
@@ -5059,7 +5078,54 @@ WHERE DATE(MASTER.postedDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" 
 	MASTER.companySystemID IN (' . join(',', $companyID) . ')
 AND MASTER.approved = - 1
 AND MASTER.cancelYN = 0';
-        } else {
+        }
+        else if ($request->tempType == 3){
+           $query = 'SELECT
+	MASTER .companyID,
+	MASTER .BPVcode,
+	DATE_FORMAT(
+		MASTER .BPVdate,
+		"%d/%m/%Y"
+	) AS bookingDate,
+	MASTER .BPVNarration,
+	suppliermaster.primarySupplierCode,
+	suppliermaster.secondarySupplierCode,
+	suppliermaster.supplierName,
+	currencymaster.CurrencyCode,
+	currencymaster.DecimalPlaces,
+MASTER.payAmountSuppTrans,
+	IFNULL(tax.taxTotalAmount, 0) AS taxTotalAmount,
+	DATE_FORMAT(
+		MASTER .postedDate,
+		"%d/%m/%Y"
+	) AS postedDate
+FROM
+	erp_paysupplierinvoicemaster AS MASTER
+INNER JOIN suppliermaster ON suppliermaster.supplierCodeSystem = MASTER.BPVsupplierID
+INNER JOIN currencymaster ON currencymaster.currencyID = MASTER.supplierTransCurrencyID
+LEFT JOIN (
+	SELECT
+		taxdetail.documentSystemID,
+		taxdetail.companySystemID,
+		taxdetail.documentSystemCode,
+		IFNULL(Sum(taxdetail.amount), 0) AS taxTotalAmount
+	FROM
+		erp_taxdetail AS taxdetail
+	GROUP BY
+		taxdetail.documentSystemID,
+		taxdetail.companySystemID,
+		taxdetail.documentSystemCode
+) tax ON tax.documentSystemID = MASTER .documentSystemID
+AND tax.companySystemID = MASTER .companySystemID
+AND tax.documentSystemCode = MASTER .PayMasterAutoId
+WHERE
+	DATE(MASTER.postedDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"
+AND MASTER .companySystemID IN (' . join(',', $companyID) . ')
+AND MASTER .approved = - 1
+AND MASTER .cancelYN = 0
+AND MASTER .invoiceType = 3';
+       }
+        else {
             $query = 'SELECT
 	MASTER .companyID,
 	MASTER .bookingInvCode,
@@ -6474,7 +6540,7 @@ GROUP BY
             if (count($currentMonthColumn) > 0) {
                 foreach ($currentMonthColumn as $key => $val) {
                     $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m') = '" . $currentYearPeriodArr[$key] . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
-	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && (chartofaccounts.controlAccounts = 'BSL' OR chartofaccounts.controlAccounts = 'BSE'),$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
                     $columnHeaderArray[$val->shortCode] = $currentYearPeriodArr[$key];
                 }
             }
@@ -6483,7 +6549,7 @@ GROUP BY
             if (count($prevMonthColumn) > 0) {
                 foreach ($prevMonthColumn as $key => $val) {
                     $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m') = '" . $lastYearPeriodArr[$key] . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
-	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && (chartofaccounts.controlAccounts = 'BSL' OR chartofaccounts.controlAccounts = 'BSE'),$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
                     $columnHeaderArray[$val->shortCode] = $lastYearPeriodArr[$key];
                 }
             }
@@ -6491,32 +6557,32 @@ GROUP BY
             foreach ($columns as $val) {
                 if ($val->shortCode == 'CM') {
                     $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m') = '" . $currentMonth . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
-	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && (chartofaccounts.controlAccounts = 'BSL' OR chartofaccounts.controlAccounts = 'BSE'),$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
                     $columnHeaderArray[$val->shortCode] = $currentMonth;
                 }
                 if ($val->shortCode == 'CM-1') {
                     $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m') = '" . $prevMonth . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
-	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && (chartofaccounts.controlAccounts = 'BSL' OR chartofaccounts.controlAccounts = 'BSE'),$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
                     $columnHeaderArray[$val->shortCode] = $prevMonth;
                 }
                 if ($val->shortCode == 'CM-2') {
                     $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m') = '" . $prevMonth2 . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
-	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && (chartofaccounts.controlAccounts = 'BSL' OR chartofaccounts.controlAccounts = 'BSE'),$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
                     $columnHeaderArray[$val->shortCode] = $prevMonth2;
                 }
                 if ($val->shortCode == 'LYCM') {
                     $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m') = '" . $LCurrentMonth . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
-	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && (chartofaccounts.controlAccounts = 'BSL' OR chartofaccounts.controlAccounts = 'BSE'),$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
                     $columnHeaderArray[$val->shortCode] = $LCurrentMonth;
                 }
                 if ($val->shortCode == 'LYCM-1') {
                     $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m') = '" . $LPrevMonth . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
-	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && (chartofaccounts.controlAccounts = 'BSL' OR chartofaccounts.controlAccounts = 'BSE'),$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
                     $columnHeaderArray[$val->shortCode] = $LPrevMonth;
                 }
                 if ($val->shortCode == 'LYCM-2') {
                     $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m') = '" . $LPrevMonth2 . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
-	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && (chartofaccounts.controlAccounts = 'BSL' OR chartofaccounts.controlAccounts = 'BSE'),$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
                     $columnHeaderArray[$val->shortCode] = $LPrevMonth2;
                 }
                 if ($val->shortCode == 'CYYTD') {
@@ -6526,16 +6592,16 @@ GROUP BY
                             $toDate = Carbon::parse($period->dateTo)->format('Y-m-d');
                         }
                         $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') >= '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') <= '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
-	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && (chartofaccounts.controlAccounts = 'BSL' OR chartofaccounts.controlAccounts = 'BSE'),$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
                     } else if ($request->accountType == 1) {
                         if ($request->dateType == 2) {
                             $toDate = Carbon::parse($period->dateTo)->format('Y-m-d');
                         }
                         $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') <= '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
-	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && (chartofaccounts.controlAccounts = 'BSL' OR chartofaccounts.controlAccounts = 'BSE'),$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
                     } else if ($request->accountType == 3) {
                         $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') >= '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') <= '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
-	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && (chartofaccounts.controlAccounts = 'BSL' OR chartofaccounts.controlAccounts = 'BSE'),$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
                     }
 
                     $columnHeaderArray[$val->shortCode] = $val->shortCode . '-' . $currentYear;
@@ -6547,16 +6613,16 @@ GROUP BY
                             $toDate = Carbon::parse($period->dateTo)->subYear()->format('Y-m-d');
                         }
                         $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') >= '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') <= '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
-	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && (chartofaccounts.controlAccounts = 'BSL' OR chartofaccounts.controlAccounts = 'BSE'),$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
                     } else if ($request->accountType == 1) {
                         if ($request->dateType == 2) {
                             $toDate = Carbon::parse($financeYear->endingDate)->subYear()->format('Y-m-d');
                         }
                         $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') <= '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
-	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && (chartofaccounts.controlAccounts = 'BSL' OR chartofaccounts.controlAccounts = 'BSE'),$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
                     } else if ($request->accountType == 3) {
                         $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') >= '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') <= '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
-	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && chartofaccounts.controlAccounts = 'BSL',$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
+	$currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && (chartofaccounts.controlAccounts = 'BSL' OR chartofaccounts.controlAccounts = 'BSE'),$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
                     }
                     $columnHeaderArray[$val->shortCode] = $val->shortCode . '-' . $LYear;
                 }

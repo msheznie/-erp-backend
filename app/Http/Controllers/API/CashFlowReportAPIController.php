@@ -767,7 +767,7 @@ class CashFlowReportAPIController extends AppBaseController
                 $companyCurrency = \Helper::companyCurrency($companySystemID);
 
                 $companyCurrencyDecimal = isset($companyCurrency->localcurrency->DecimalPlaces) ? $companyCurrency->localcurrency->DecimalPlaces : 3;
-                $detail->cashFlowAmount = number_format($pv->localAmount,$companyCurrencyDecimal);
+                $detail->cashFlowAmount = number_format($pv->localAmount,$companyCurrencyDecimal,'.','');
             }
 
         }
@@ -921,7 +921,7 @@ class CashFlowReportAPIController extends AppBaseController
                 $companyCurrency = \Helper::companyCurrency($companySystemID);
 
                 $companyCurrencyDecimal = isset($companyCurrency->localcurrency->DecimalPlaces) ? $companyCurrency->localcurrency->DecimalPlaces : 3;
-                $detail->cashFlowAmount = number_format($brv->localAmount,$companyCurrencyDecimal);
+                $detail->cashFlowAmount = number_format($brv->localAmount,$companyCurrencyDecimal,'.','');
             }
         }
         $confimedYN = isset($confimedYN[0]) ? $confimedYN[0] : $confimedYN;

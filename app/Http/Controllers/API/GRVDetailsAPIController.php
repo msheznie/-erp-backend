@@ -751,6 +751,8 @@ class GRVDetailsAPIController extends AppBaseController
                             return $this->sendError('GRV date can not be greater than current date', 500);
                         }
                     }
+                } else {
+                    return $this->sendError('GRV Date Not Selected', 500);
                 }
 
                 if (isset($grvMasterData['stampDate'])) {
@@ -761,6 +763,8 @@ class GRVDetailsAPIController extends AppBaseController
                     if ($grvMasterData['stampDate'] > $currentDate) {
                         return $this->sendError('Stamp date can not be greater than current date', 500);
                     }
+                } else {
+                    return $this->sendError('Stamp Date Not Selected', 500);
                 }
 
                 if(isset($grvMasterData['grvLocation'])){
@@ -1072,30 +1076,34 @@ class GRVDetailsAPIController extends AppBaseController
                         $GRVDetail_arr['itemCode'] = $new['itemCode'];
                         $GRVDetail_arr['itemPrimaryCode'] = $new['itemPrimaryCode'];
                         $GRVDetail_arr['itemDescription'] = $new['itemDescription'];
-                        if ($new['itemFinanceCategoryID'] == 1 && WarehouseMaster::checkManuefactoringWareHouse($GRVMaster->grvLocation)) {
+                        // if ($new['itemFinanceCategoryID'] == 1 && WarehouseMaster::checkManuefactoringWareHouse($GRVMaster->grvLocation)) {
 
-                            if($financeCategorySub->includePLForGRVYN == -1)
-                            {
-                                $GRVDetail_arr['financeGLcodebBSSystemID'] = null;
-                                $GRVDetail_arr['financeGLcodebBS'] = null;
-                                $GRVDetail_arr['financeGLcodePLSystemID'] = WarehouseMaster::getWIPGLSystemID($GRVMaster->grvLocation);
-                                $GRVDetail_arr['financeGLcodePL'] = WarehouseMaster::getWIPGLCode($GRVMaster->grvLocation);
-                            }
-                            else
-                            {
-                                $GRVDetail_arr['financeGLcodebBSSystemID'] = WarehouseMaster::getWIPGLSystemID($GRVMaster->grvLocation);
-                                $GRVDetail_arr['financeGLcodebBS'] = WarehouseMaster::getWIPGLCode($GRVMaster->grvLocation);
-                                $GRVDetail_arr['financeGLcodePLSystemID'] = $financeGLcodePLSystemID;
-                                $GRVDetail_arr['financeGLcodePL'] = $financeGLcodePL;
-                            }
+                        //     if($financeCategorySub->includePLForGRVYN == -1)
+                        //     {
+                        //         $GRVDetail_arr['financeGLcodebBSSystemID'] = null;
+                        //         $GRVDetail_arr['financeGLcodebBS'] = null;
+                        //         $GRVDetail_arr['financeGLcodePLSystemID'] = WarehouseMaster::getWIPGLSystemID($GRVMaster->grvLocation);
+                        //         $GRVDetail_arr['financeGLcodePL'] = WarehouseMaster::getWIPGLCode($GRVMaster->grvLocation);
+                        //     }
+                        //     else
+                        //     {
+                        //         $GRVDetail_arr['financeGLcodebBSSystemID'] = WarehouseMaster::getWIPGLSystemID($GRVMaster->grvLocation);
+                        //         $GRVDetail_arr['financeGLcodebBS'] = WarehouseMaster::getWIPGLCode($GRVMaster->grvLocation);
+                        //         $GRVDetail_arr['financeGLcodePLSystemID'] = $financeGLcodePLSystemID;
+                        //         $GRVDetail_arr['financeGLcodePL'] = $financeGLcodePL;
+                        //     }
 
                         
-                        }  else {
-                            $GRVDetail_arr['financeGLcodebBSSystemID'] = $financeGLcodebBSSystemID;
-                            $GRVDetail_arr['financeGLcodebBS'] = $financeGLcodebBS;
-                            $GRVDetail_arr['financeGLcodePLSystemID'] = $financeGLcodePLSystemID;
-                            $GRVDetail_arr['financeGLcodePL'] = $financeGLcodePL;
-                        }
+                        // }  
+                        
+                       
+
+                        $GRVDetail_arr['financeGLcodebBSSystemID'] = $financeGLcodebBSSystemID;
+                        $GRVDetail_arr['financeGLcodebBS'] = $financeGLcodebBS;
+                        $GRVDetail_arr['financeGLcodePLSystemID'] = $financeGLcodePLSystemID;
+                        $GRVDetail_arr['financeGLcodePL'] = $financeGLcodePL;
+                        
+                    
                         $GRVDetail_arr['itemFinanceCategoryID'] = $new['itemFinanceCategoryID'];
                         $GRVDetail_arr['itemFinanceCategorySubID'] = $new['itemFinanceCategorySubID'];
                         $GRVDetail_arr['includePLForGRVYN'] = $new['includePLForGRVYN'];
@@ -1542,6 +1550,7 @@ class GRVDetailsAPIController extends AppBaseController
             $GRVDetail_arr['landingCost_RptCur'] = \Helper::roundValue($currency['reportingAmount']);
             $GRVDetail_arr['modifiedPc'] = gethostname();
             $GRVDetail_arr['modifiedUser'] = $user->empID;
+            $GRVDetail_arr['detail_project_id'] = $input['detail_project_id'];
 
             $item = $this->gRVDetailsRepository->update($GRVDetail_arr,$id);
 

@@ -241,7 +241,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
     public function update($id, UpdatePaySupplierInvoiceDetailAPIRequest $request)
     {
         $input = $request->all();
-
+        
         /** @var PaySupplierInvoiceDetail $paySupplierInvoiceDetail */
         $paySupplierInvoiceDetail = $this->paySupplierInvoiceDetailRepository->findWithoutFail($id);
 
@@ -250,6 +250,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
         }
 
         $payMaster = PaySupplierInvoiceMaster::find($input["PayMasterAutoId"]);
+        $invoi = $payMaster->invoiceType;
 
         if (empty($payMaster)) {
             return $this->sendError('Payment voucher not found');
@@ -279,24 +280,44 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             $input["supplierPaymentAmount"] = $paySupplierInvoiceDetail->paymentBalancedAmount;
         }
 
-        $supplierPaidAmountSum = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')->when($payMaster->invoiceType == 6, function($query) {
-                                                                                                    $query->whereHas('payment_master', function($query) {
-                                                                                                        $query->where('invoiceType',6);
+        $supplierPaidAmountSumPayment = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')
+                                                                                                ->whereHas('payment_master', function($query) use($invoi){
+                                                                                                    $query->when($invoi == 6,function($Q1){
+                                                                                                        $Q1->where('invoiceType',6);
+                                                                                                    })->when($invoi != 6,function($Q2){
+                                                                                                        $Q2->where('invoiceType','!=',6);
                                                                                                     });
-                                                                                                })->where('apAutoID', $input["apAutoID"])
+                                                                                                 })->where(function($query){
+                                                                                                    $query->where('documentSystemID', '=', NULL)
+                                                                                                            ->orWhere('documentSystemID', '=', 4);
+                                                                                                 })
+                                                                                                 ->where('apAutoID', $input["apAutoID"])
                                                                                                 ->where('payDetailAutoID', '<>', $id)
                                                                                                 ->groupBy('erp_paysupplierinvoicedetail.apAutoID')
                                                                                                 ->first();
+                                                                                                
+        $supplierPaidAmountSumDebit = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')
+                                                                                      ->whereHas('debite_note', function($query) use($invoi){
+                                                                                                $query->when($invoi == 6,function($Q1){
+                                                                                                    $Q1->where('type',2);
+                                                                                                })->when($invoi != 6,function($Q2){
+                                                                                                    $Q2->where('type',1);
+                                                                                                });
+                                                                                        })->where('documentSystemID', '=', 15)
+                                                                                        ->where('apAutoID', $input["apAutoID"])
+                                                                                        ->where('payDetailAutoID', '<>', $id)
+                                                                                        ->groupBy('erp_paysupplierinvoicedetail.apAutoID')
+                                                                                        ->first();                                                                                        
+   
+        $supplierPaidAmountSum["SumOfsupplierPaymentAmount"] = $supplierPaidAmountSumPayment["SumOfsupplierPaymentAmount"] + $supplierPaidAmountSumDebit["SumOfsupplierPaymentAmount"];
+          
 
-        if($payMaster->invoiceType == 6){
-            $supplierPaidAmountSum = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')->where('apAutoID', $input["apAutoID"])
-                ->where('payDetailAutoID', '<>', $id)
-                ->groupBy('erp_paysupplierinvoicedetail.apAutoID')
-                ->first();
-        }
+       
 
+                                                        
 
         $matchedAmount = MatchDocumentMaster::selectRaw('erp_matchdocumentmaster.PayMasterAutoId, erp_matchdocumentmaster.documentID, Sum(erp_matchdocumentmaster.matchedAmount) AS SumOfmatchedAmount')->where('PayMasterAutoId', $input["bookingInvSystemCode"])->where('documentSystemID', $input["addedDocumentSystemID"])->groupBy('erp_matchdocumentmaster.PayMasterAutoId', 'erp_matchdocumentmaster.documentSystemID')->first();
+        
 
         $machAmount = 0;
         if ($matchedAmount) {
@@ -304,6 +325,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
         }
 
         $paymentBalancedAmount = $paySupplierInvoiceDetail->supplierInvoiceAmount - ($supplierPaidAmountSum["SumOfsupplierPaymentAmount"] + ($machAmount * -1));
+
 
         if ($paySupplierInvoiceDetail->addedDocumentSystemID == 11) {
             //supplier invoice
@@ -316,7 +338,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                 return $this->sendError('Payment amount cannot be greater than balance amount', 500, ['type' => 'amountmismatch', 'amount' => $paymentBalancedAmount]);
             }
         }
-
+       
         if($input["isRetention"] == 1 && $input["bookingInvSystemCode"]){
             $bookInvMaster = BookInvSuppMaster::find($input["bookingInvSystemCode"]);
             if($bookInvMaster && $bookInvMaster->retentionAmount != 0){
@@ -341,6 +363,8 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
 
         $input["paymentBalancedAmount"] = $paymentBalancedAmount - $input["supplierPaymentAmount"];
 
+       
+
         $conversionAmount = \Helper::convertAmountToLocalRpt(4, $input["payDetailAutoID"], $input["supplierPaymentAmount"]);
         $input["paymentSupplierDefaultAmount"] = \Helper::roundValue($conversionAmount["defaultAmount"]);
         $input["paymentLocalAmount"] = $conversionAmount["localAmount"];
@@ -349,21 +373,43 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
 
         $paySupplierInvoiceDetail = $this->paySupplierInvoiceDetailRepository->update($input, $id);
 
-        $supplierPaidAmountSum = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')->when($payMaster->invoiceType == 6, function($query) {
-                                                                                                    $query->whereHas('payment_master', function($query) {
-                                                                                                        $query->where('invoiceType',6);
-                                                                                                    });
-                                                                                                })->where('apAutoID', $input["apAutoID"])->groupBy('erp_paysupplierinvoicedetail.apAutoID')->first();
+        $supplierPaidAmountSumPayment = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')
+                                            ->whereHas('payment_master', function($query) use($invoi){
+                                                $query->when($invoi == 6,function($Q1){
+                                                    $Q1->where('invoiceType',6);
+                                                })->when($invoi != 6,function($Q2){
+                                                    $Q2->where('invoiceType','!=',6);
+                                                });
+                                            })->where(function($query){
+                                                $query->where('documentSystemID', '=', NULL)
+                                                        ->orWhere('documentSystemID', '=', 4);
+                                            })
+                                            ->where('apAutoID', $input["apAutoID"])
+                                            ->groupBy('erp_paysupplierinvoicedetail.apAutoID')
+                                            ->first();
+
+         $supplierPaidAmountSumDebit = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')
+                                            ->whereHas('debite_note', function($query) use($invoi){
+                                                      $query->when($invoi == 6,function($Q1){
+                                                          $Q1->where('type',2);
+                                                      })->when($invoi != 6,function($Q2){
+                                                          $Q2->where('type',1);
+                                                      });
+                                              })->where('documentSystemID', '=', 15)
+                                              ->where('apAutoID', $input["apAutoID"])
+                                              ->groupBy('erp_paysupplierinvoicedetail.apAutoID')
+                                              ->first();  
 
         $matchedAmount = MatchDocumentMaster::selectRaw('erp_matchdocumentmaster.PayMasterAutoId, erp_matchdocumentmaster.documentID, Sum(erp_matchdocumentmaster.matchedAmount) AS SumOfmatchedAmount')->where('PayMasterAutoId', $input["bookingInvSystemCode"])->where('documentSystemID', $input["addedDocumentSystemID"])->groupBy('erp_matchdocumentmaster.PayMasterAutoId', 'erp_matchdocumentmaster.documentSystemID')->first();
+       
 
         $machAmount = 0;
         if ($matchedAmount) {
             $machAmount = $matchedAmount["SumOfmatchedAmount"];
         }
 
-        $totalPaidAmount = ($supplierPaidAmountSum["SumOfsupplierPaymentAmount"] + ($machAmount * -1));
-
+        $totalPaidAmount = ($supplierPaidAmountSumPayment["SumOfsupplierPaymentAmount"] + $supplierPaidAmountSumDebit["SumOfsupplierPaymentAmount"] + ($machAmount * -1));
+    
         if ($payMaster->invoiceType == 6) {
             if ($paySupplierInvoiceDetail->addedDocumentSystemID == 11) {
                 if ($totalPaidAmount == 0) {
@@ -833,32 +879,36 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
 
             $error_count = 0;
             $error_count_ap = 0;
+
             foreach ($input['detailTable'] as $item) {
+ 
                 if ($item['isChecked']) {
+                    // dd($item);
                     if ($isAdvancePaymentPaidChk) { // check advance payment already paid for the PO
                         if ($item['addedDocumentSystemID'] == 11) {
-                            $invoiceDet = BookInvSuppDet::where('bookingSuppMasInvAutoID', $item['bookingInvSystemCode'])->groupBy('purchaseOrderID')->get();
-                            if (count($invoiceDet) > 0) {
-                                foreach ($invoiceDet as $val) {
-                                    $chkRequestedAdvancePayment = PoAdvancePayment::where('poID', $val->purchaseOrderID)->groupBy('poID')->first();
-                                    if ($chkRequestedAdvancePayment) {
-                                        $chkPaidAdvancePayment = AdvancePaymentDetails::selectRaw('erp_advancepaymentdetails.purchaseOrderID, Sum(erp_advancepaymentdetails.paymentAmount) AS SumOfpaymentAmount, Sum(erp_advancepaymentdetails.supplierTransAmount) AS SumOfsupplierTransAmount, Sum(erp_advancepaymentdetails.localAmount) AS SumOflocalAmount, Sum(erp_advancepaymentdetails.comRptAmount) AS SumOfcomRptAmount,supplierTransCurrencyID')->with(['supplier_currency', 'purchaseorder_by'])->where('purchaseOrderID', $chkRequestedAdvancePayment->poID)->whereNotNull('erp_advancepaymentdetails.purchaseOrderID')->groupBy('erp_advancepaymentdetails.purchaseOrderID')->first();
-                                        if (!empty($chkPaidAdvancePayment)) {
-                                            $currencyCode = $chkPaidAdvancePayment->supplier_currency ? $chkPaidAdvancePayment->supplier_currency->CurrencyCode : '';
-                                            $decimalPl = $chkPaidAdvancePayment->supplier_currency ? $chkPaidAdvancePayment->supplier_currency->DecimalPlaces : 0;
-                                            $poCode = $chkPaidAdvancePayment->purchaseorder_by ? $chkPaidAdvancePayment->purchaseorder_by->purchaseOrderCode : '';
-                                            array_push($finalError_ap['advance_payment_paid'], 'Please note that an advance payment of ' . $currencyCode . ' ' . number_format($chkPaidAdvancePayment->SumOfpaymentAmount, $decimalPl) . ' is paid for this supplier for the selected Purchase Order ' . $poCode);
-                                            $error_count_ap++;
+              
+                                $invoiceDet = BookInvSuppDet::where('bookingSuppMasInvAutoID', $item['bookingInvSystemCode'])->groupBy('purchaseOrderID')->get();
+                           
+                                if (count($invoiceDet) > 0) {
+                                    foreach ($invoiceDet as $val) {
+                                        $chkRequestedAdvancePayment = PoAdvancePayment::where('poID', $val->purchaseOrderID)->groupBy('poID')->first();
+                                        if ($chkRequestedAdvancePayment) {
+                                            $chkPaidAdvancePayment = AdvancePaymentDetails::selectRaw('erp_advancepaymentdetails.purchaseOrderID, Sum(erp_advancepaymentdetails.paymentAmount) AS SumOfpaymentAmount, Sum(erp_advancepaymentdetails.supplierTransAmount) AS SumOfsupplierTransAmount, Sum(erp_advancepaymentdetails.localAmount) AS SumOflocalAmount, Sum(erp_advancepaymentdetails.comRptAmount) AS SumOfcomRptAmount,supplierTransCurrencyID')->with(['supplier_currency', 'purchaseorder_by'])->where('purchaseOrderID', $chkRequestedAdvancePayment->poID)->whereNotNull('erp_advancepaymentdetails.purchaseOrderID')->groupBy('erp_advancepaymentdetails.purchaseOrderID')->first();
+                                            if (!empty($chkPaidAdvancePayment)) {
+                                                $currencyCode = $chkPaidAdvancePayment->supplier_currency ? $chkPaidAdvancePayment->supplier_currency->CurrencyCode : '';
+                                                $decimalPl = $chkPaidAdvancePayment->supplier_currency ? $chkPaidAdvancePayment->supplier_currency->DecimalPlaces : 0;
+                                                $poCode = $chkPaidAdvancePayment->purchaseorder_by ? $chkPaidAdvancePayment->purchaseorder_by->purchaseOrderCode : '';
+                                                array_push($finalError_ap['advance_payment_paid'], 'Please note that an advance payment of ' . $currencyCode . ' ' . number_format($chkPaidAdvancePayment->SumOfpaymentAmount, $decimalPl) . ' is paid for this supplier for the selected Purchase Order ' . $poCode);
+                                                $error_count_ap++;
+                                            }
+    
                                         }
-
                                     }
                                 }
-                            }
+                            
                         }
                     }
-
                     $glCheck = GeneralLedger::selectRaw('Sum(erp_generalledger.documentLocalAmount) AS SumOfdocumentLocalAmount, Sum(erp_generalledger.documentRptAmount) AS SumOfdocumentRptAmount,erp_generalledger.documentSystemID, erp_generalledger.documentSystemCode,documentCode,documentID')->where('documentSystemID', $item['addedDocumentSystemID'])->where('companySystemID', $item['companySystemID'])->where('documentSystemCode', $item['bookingInvSystemCode'])->groupBY('companySystemID', 'documentSystemID', 'documentSystemCode')->first();
-
                     if ($glCheck) {
                         if (round($glCheck->SumOfdocumentLocalAmount) != 0 || round($glCheck->SumOfdocumentRptAmount) != 0) {
                             array_push($finalError['gl_amount_not_matching'], $item['addedDocumentID'] . ' | ' . $item['bookingInvDocCode']);
@@ -910,6 +960,9 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
 
             foreach ($input['detailTable'] as $new) {
                 if ($new['isChecked']) {
+                    if(isset($new['timeStamp'])) {
+                        unset($new['timeStamp'],$new['unit'],$new['vat_sub_category'],$new['created_at'], $new['updated_at']);
+                    }
                     $tempArray = $new;
                     $tempArray["supplierPaymentCurrencyID"] = $payMaster["BPVbankCurrency"];
                     $tempArray["supplierPaymentER"] = $payMaster["BPVbankCurrencyER"];
@@ -1217,6 +1270,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
     {
         $input = $request->all();
         
+        
         /** @var PaySupplierInvoiceDetail $paySupplierInvoiceDetail */
         $paySupplierInvoiceDetail = $this->paySupplierInvoiceDetailRepository->findWithoutFail($input['payDetailAutoID']);
 
@@ -1257,30 +1311,66 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
         if ($input['supplierPaymentAmount'] == "") {
             $input['supplierPaymentAmount'] = 0;
         }
-        
+       
+
+
         if($user_type == 2)
         {
-            $supplierPaidAmountSum = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')
-            ->where('apAutoID', $input["apAutoID"])
-            ->where('payDetailAutoID', '<>', $input['payDetailAutoID'])
-            ->whereHas('matching_master',function($query){
-                $query->where('user_type',2);
+            $supplierPaidAmountSumPayment = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')
+            ->whereHas('payment_master', function($query) {
+                    $query->where('invoiceType','=',6);
+             })->where('apAutoID', $input["apAutoID"])
+             ->where(function($query){
+                $query->where('documentSystemID', '=', NULL)
+                        ->orWhere('documentSystemID', '=', 4);
              })
-            ->groupBy('erp_paysupplierinvoicedetail.apAutoID')->first();
+            ->where('payDetailAutoID', '<>', $input["payDetailAutoID"])
+            ->groupBy('erp_paysupplierinvoicedetail.apAutoID')
+            ->first();
 
 
-            
+            $supplierPaidAmountSumDebit = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')
+            ->whereHas('debite_note', function($query) {
+                      $query->where('type',2);
+              })->where('apAutoID', $input["apAutoID"])
+              ->where('documentSystemID', '=', 15)
+              ->where('payDetailAutoID', '<>', $input['payDetailAutoID'])
+              ->groupBy('erp_paysupplierinvoicedetail.apAutoID')
+              ->first();  
+
+
+              $supplierPaidAmountSum["SumOfsupplierPaymentAmount"] = $supplierPaidAmountSumPayment["SumOfsupplierPaymentAmount"] + $supplierPaidAmountSumDebit["SumOfsupplierPaymentAmount"];
+
 
         }
         else if($user_type == 1)
         {
-            $supplierPaidAmountSum = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')
-            ->where('apAutoID', $input["apAutoID"])
-            ->where('payDetailAutoID', '<>', $input['payDetailAutoID'])
-            ->whereHas('matching_master',function($query){
-                $query->where('user_type',1);
+            $supplierPaidAmountSumPayment = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')
+            ->whereHas('payment_master', function($query) {
+                    $query->where('invoiceType','!=',6);
+             })->where('apAutoID', $input["apAutoID"])
+             ->where(function($query){
+                $query->where('documentSystemID', '=', NULL)
+                        ->orWhere('documentSystemID', '=', 4);
              })
-            ->groupBy('erp_paysupplierinvoicedetail.apAutoID')->first();
+            ->where('payDetailAutoID', '<>', $input["payDetailAutoID"])
+            ->groupBy('erp_paysupplierinvoicedetail.apAutoID')
+            ->first();
+
+
+            $supplierPaidAmountSumDebit = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')
+            ->whereHas('debite_note', function($query) {
+                      $query->where('type',1);
+              })->where('apAutoID', $input["apAutoID"])
+              ->where('documentSystemID', '=', 15)
+              ->where('payDetailAutoID', '<>', $input['payDetailAutoID'])
+              ->groupBy('erp_paysupplierinvoicedetail.apAutoID')
+              ->first();  
+
+
+
+            $supplierPaidAmountSum["SumOfsupplierPaymentAmount"] = $supplierPaidAmountSumPayment["SumOfsupplierPaymentAmount"] + $supplierPaidAmountSumDebit["SumOfsupplierPaymentAmount"];
+           
         }
         else
         {
@@ -1291,7 +1381,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             ->groupBy('erp_paysupplierinvoicedetail.apAutoID')->first();
         }
 
-       
+
 
         $matchedAmount = MatchDocumentMaster::selectRaw('erp_matchdocumentmaster.PayMasterAutoId, erp_matchdocumentmaster.documentID, Sum(erp_matchdocumentmaster.matchedAmount) AS SumOfmatchedAmount')->where('PayMasterAutoId', $input["bookingInvSystemCode"])->where('documentSystemID', $input["addedDocumentSystemID"])->groupBy('erp_matchdocumentmaster.PayMasterAutoId', 'erp_matchdocumentmaster.documentSystemID')->first();
 
@@ -1313,7 +1403,8 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
         $paymentBalancedAmount = $paySupplierInvoiceDetail->supplierInvoiceAmount - ($supplierPaidAmountSum["SumOfsupplierPaymentAmount"] + ($machAmount * -1));
 
     
-        
+       
+      
 
         if ($paySupplierInvoiceDetail->addedDocumentSystemID == 11) {
             //supplier invoice
@@ -1329,6 +1420,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
        
         $paymentBalancedAmount = $paymentBalancedAmount - $input["supplierPaymentAmount"];
 
+
         $input["paymentBalancedAmount"] = \Helper::roundValue($paymentBalancedAmount);
 
         $conversionAmount = \Helper::convertAmountToLocalRpt(4, $input["payDetailAutoID"], ABS($input["supplierPaymentAmount"]));
@@ -1342,22 +1434,59 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
 
         if($user_type == 2)
         {
-            $supplierPaidAmountSum = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')
-            ->where('apAutoID', $input["apAutoID"])
-            ->whereHas('matching_master',function($query){
-                $query->where('user_type',2);
+            $supplierPaidAmountSumPayment = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')
+            ->whereHas('payment_master', function($query) {
+                    $query->where('invoiceType','=',6);
+             })->where('apAutoID', $input["apAutoID"])
+             ->where(function($query){
+                $query->where('documentSystemID', '=', NULL)
+                        ->orWhere('documentSystemID', '=', 4);
              })
-            ->groupBy('erp_paysupplierinvoicedetail.apAutoID')->first();
+            ->groupBy('erp_paysupplierinvoicedetail.apAutoID')
+            ->first();
+
+
+            $supplierPaidAmountSumDebit = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')
+             ->whereHas('debite_note', function($query) {
+                      $query->where('type',2);
+              })->where('apAutoID', $input["apAutoID"])
+              ->where('documentSystemID', '=', 15)
+              ->groupBy('erp_paysupplierinvoicedetail.apAutoID')
+              ->first();  
+
+              
+
+
+            $supplierPaidAmountSum["SumOfsupplierPaymentAmount"] = $supplierPaidAmountSumPayment["SumOfsupplierPaymentAmount"] + $supplierPaidAmountSumDebit["SumOfsupplierPaymentAmount"];
+
 
         }
         else if($user_type == 1)
         {
-            $supplierPaidAmountSum = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')
-            ->where('apAutoID', $input["apAutoID"])
-            ->whereHas('matching_master',function($query){
-                $query->where('user_type',1);
+            $supplierPaidAmountSumPayment = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')
+            ->whereHas('payment_master', function($query) {
+                    $query->where('invoiceType','!=',6);
+             })->where('apAutoID', $input["apAutoID"])
+             ->where(function($query){
+                $query->where('documentSystemID', '=', NULL)
+                        ->orWhere('documentSystemID', '=', 4);
              })
-            ->groupBy('erp_paysupplierinvoicedetail.apAutoID')->first();
+            ->groupBy('erp_paysupplierinvoicedetail.apAutoID')
+            ->first();
+
+
+            $supplierPaidAmountSumDebit = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')
+             ->whereHas('debite_note', function($query) {
+                      $query->where('type',1);
+              })->where('apAutoID', $input["apAutoID"])
+              ->where('documentSystemID', '=', 15)
+              ->groupBy('erp_paysupplierinvoicedetail.apAutoID')
+              ->first();  
+
+              
+
+
+            $supplierPaidAmountSum["SumOfsupplierPaymentAmount"] = $supplierPaidAmountSumPayment["SumOfsupplierPaymentAmount"] + $supplierPaidAmountSumDebit["SumOfsupplierPaymentAmount"];
         }
         else
         {
@@ -1366,7 +1495,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             ->groupBy('erp_paysupplierinvoicedetail.apAutoID')->first();
 
         }
-
+       
 
         $matchedAmount = MatchDocumentMaster::selectRaw('erp_matchdocumentmaster.PayMasterAutoId, erp_matchdocumentmaster.documentID, Sum(erp_matchdocumentmaster.matchedAmount) AS SumOfmatchedAmount')->where('PayMasterAutoId', $input["bookingInvSystemCode"])->where('documentSystemID', $input["addedDocumentSystemID"])->groupBy('erp_matchdocumentmaster.PayMasterAutoId', 'erp_matchdocumentmaster.documentSystemID')->first();
 
@@ -1382,9 +1511,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
         }
 
         $totalPaidAmount = ($supplierPaidAmountSum["SumOfsupplierPaymentAmount"] + ($machAmount * -1));
-
-     
-
+    
         if ($paySupplierInvoiceDetail->addedDocumentSystemID == 11) {
 
             if($user_type == 2)
