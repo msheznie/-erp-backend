@@ -201,7 +201,8 @@ class PurchaseOrderDetails extends Model
         'vatSubCategoryID',
         'VATApplicableOn',
         'altUnit',
-        'altUnitValue'
+        'altUnitValue',
+        'detail_project_id'
     ];
 
     /**
@@ -298,7 +299,8 @@ class PurchaseOrderDetails extends Model
         'supplierCatalogMasterID' => 'integer',
         'supplierCatalogDetailID' => 'integer',
         'altUnit'  => 'integer',
-        'altUnitValue'  => 'float'
+        'altUnitValue'  => 'float',
+        'detail_project_id' => 'integer'
     ];
 
     /**

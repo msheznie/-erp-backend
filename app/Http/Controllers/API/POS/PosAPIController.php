@@ -18,6 +18,11 @@ use Illuminate\Http\Request;
 use App\Models\FinanceItemCategorySub;
 use App\Models\Employee;
 use App\Models\FinanceItemCategoryMaster;
+use App\Models\POSInvoiceSource;
+use App\Models\POSSourceMenuSalesMaster;
+use App\Models\POSSourceSalesReturn;
+use App\Models\POSSTAGInvoice;
+use App\Models\POSSTAGInvoiceDetail;
 use App\Services\POSService;
 
 class PosAPIController extends AppBaseController
@@ -258,7 +263,7 @@ class PosAPIController extends AppBaseController
             vatSubCategory as vat_sub_category_id,itemmaster.isActive as is_active,itemApprovedComment as comment, "" as is_sub_item_exist,"" as is_sub_item_applicable,
             "" as local_currency_id,"" as local_currency,"" as local_exchange_rate,"" as local_selling_price,"" as local_decimal_place,
             "" as reporting_currency_id,"" as reporting_currency,"" as reporting_exchange_rate,"" as reporting_selling_price,"" as reporting_decimal_place,
-            "" as is_deleted,"" as deleted_by,"" as deleted_date_time')
+            "" as is_deleted,"" as deleted_by,"" as deleted_date_time,itemmaster.pos_type')
                 ->join('financeitemcategorymaster', 'financeitemcategorymaster.itemCategoryID', '=', 'itemmaster.financeCategoryMaster')
                 ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
                 ->join('units', 'units.UnitID', '=', 'itemmaster.unit')
@@ -341,10 +346,9 @@ class PosAPIController extends AppBaseController
     public function handleRequest(Request $request)
     {
         define('INVOICE', 'INVOICE');
-
         switch ($request->input('request')) {
             case INVOICE:
-                return $this->POSService->posInvoice($request);
+                return $this->POSService->getMappingData($request);
             default:
                 return [
                     'success'   => false,
@@ -352,6 +356,196 @@ class PosAPIController extends AppBaseController
                     'data'      => null
                 ];
         }
-        
+    }
+
+    public function getAllInvoicesPos(Request $request)
+    {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $search = $request->input('search.value');
+
+        $posData = POSInvoiceSource::withCount([
+            'invoiceDetailSource AS qtyTotal' => function ($query) {
+                $query->select(DB::raw("SUM(qty) as qtyTotal"));
+            }
+        ])
+            ->with(['invoiceDetailSource', 'employee', 'invoicePaymentSource' => function ($q) {
+                $q->with(['paymentConfigMaster']);
+            }])
+            ->whereHas('invoiceDetailSource')
+            ->whereHas('invoicePaymentSource')
+            ->where('isVoid', 0);
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $posData = $posData->where(function ($query) use ($search) {
+                $query->where('invoiceCode', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::eloquent($posData)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('invoiceID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+    public function getPosInvoiceData(Request $request)
+    {
+        $input = $request->all();
+        $invoiceId = $input['invoiceId'];
+
+        $data['invoiceData'] = POSInvoiceSource::withCount(['invoiceDetailSource AS qtyTotal' => function ($query) {
+            $query->select(DB::raw("SUM(qty) as qtyTotal"));
+        }, 'invoiceDetailSource AS transactionAmountBeforeDiscountTotal' => function ($query) {
+            $query->select(DB::raw("SUM(transactionAmountBeforeDiscount) as transactionAmountBeforeDiscount"));
+        }, 'invoiceDetailSource AS taxAmountTotal' => function ($query) {
+            $query->select(DB::raw("SUM(taxAmount) as taxAmount"));
+        }])
+            ->with(['invoiceDetailSource' => function ($q) {
+                $q->with(['item_assigned' => function ($q1) {
+                    $q1->with(['item_master' => function ($q2) {
+                        $q2->with(['unit']);
+                    }]);
+                }]);
+            }, 'employee', 'invoicePaymentSource' => function ($q) {
+                $q->with(['paymentConfigMaster']);
+            }])
+            ->where('invoiceID', $invoiceId)->first();
+
+        return $data;
+    }
+
+    public function getAllInvoicesPosReturn(Request $request)
+    {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $search = $request->input('search.value');
+
+
+
+        $posDataReturn = POSSourceSalesReturn::with(['invoice', 'invoiceReturn' => function ($q) {
+            $q->with(['item_assigned' => function ($q1) {
+                $q1->with(['item_master' => function ($q2) {
+                    $q2->with(['unit']);
+                }]);
+            }]);
+        }, 'employee']);
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $posDataReturn = $posDataReturn->where(function ($query) use ($search) {
+                $query->whereHas('invoice', function ($q) use ($search) {
+                    $q->where('invoiceCode', 'LIKE', "%{$search}%");
+                });
+                $query->orWhere('documentSystemCode', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::eloquent($posDataReturn)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('salesReturnID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+    public function getPosInvoiceReturnData(Request $request)
+    {
+        $input = $request->all();
+        $salesReturnId = $input['salesReturnId'];
+
+        $data['invoiceReturnData'] =  POSSourceSalesReturn::withCount(['invoiceReturn AS taxAmountTotal' => function ($query) {
+            $query->select(DB::raw("SUM(taxAmount) as taxAmountTotal"));
+        }])
+            ->with(['invoice', 'invoiceReturn' => function ($q) {
+                $q->with(['item_assigned' => function ($q1) {
+                    $q1->with(['item_master' => function ($q2) {
+                        $q2->with(['unit']);
+                    }]);
+                }]);
+            }, 'employee'])
+            ->where('salesReturnID', $salesReturnId)
+            ->first();
+
+        return $data;
+    }
+
+    public function getAllInvoicesRPos(Request $request)
+    {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $search = $request->input('search.value'); 
+
+        $posDataRpos= POSSourceMenuSalesMaster::with(['wareHouseMaster'])
+        ->where('isVoid', 0)
+        ->where('isHold', 0)
+        ->groupBy('menuSalesID')
+        ->groupBy('wareHouseAutoID');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $posDataRpos = $posDataRpos->where(function ($query) use ($search) {
+                $query->whereHas('wareHouseMaster', function ($q) use ($search) {
+                    $q->where('wareHouseCode', 'LIKE', "%{$search}%");
+                });
+                $query->Orwhere('invoiceCode', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::eloquent($posDataRpos)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('menuSalesID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+    public function getRPOSInvoiceData(Request $request){ 
+        $input = $request->all(); 
+        $menuSalesID = $input['menuSalesID'];
+        $data['rposInvoiceData'] = POSSourceMenuSalesMaster::withCount(['menuSalesPayment AS menuSalesPaymentTotal' => function ($query) {
+            $query->select(DB::raw("SUM(amount) as menuSalesPaymentTotal"));
+        }]) 
+        ->with(['wareHouseMaster','menuSalesItems' => function ($q){ 
+            $q->with(['menuMaster']);
+        },'customerTypeMaster','menuSalesPayment' => function ($q2){ 
+            $q2->with(['paymentConfig']);
+        }])
+        ->where('menuSalesID',$menuSalesID)
+        ->first();
+        return $data;
     }
 }

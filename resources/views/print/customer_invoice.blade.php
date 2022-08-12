@@ -236,66 +236,33 @@
                     <br>
 
                     <table style="width: 100%; !important">
-                        @if($request->line_subcontractNo && !empty($request->invoicedetails) )
-                            <tr>
-                                @if (isset($request->invoicedetails[0]->clientContractID))
-                                    <td>{{$request->invoicedetails[0]->clientContractID}}</td>
-                                @else
-                                    <td></td>
+                        <tr>
+                            <td><b>Name Of Customer </b></td>
+                            <td>:@if($request->line_customerShortCode)
+                                    {{$request->customer->CutomerCode}} -
                                 @endif
-                            </tr>
-                        @endif
-                        @if($request->line_customerShortCode)
-                            <tr>
-                                <td>{{$request->customer->CutomerCode}}</td>
-                            </tr>
-                        @endif
-                        <tr>
-                            <td>{{$request->customer->ReportTitle}}</td>
+                                {{$request->customer->ReportTitle}}</td>
                         </tr>
 
-                        <tr>
-                            <td>
-                                <div style="width: 122px">{{$request->customer->customerAddress1}}</div>
-                            </td>
-                        </tr>
 
-                            @if(!$request->lineSecondAddress)
-                                <tr>
-                                <td>{{$request->customer->customerCity}}</td>
-                            </tr>
-                            <tr>
-                                <td></td>
-                            </tr>
-                            <tr>
-                                <td></td>
-                            </tr>
-                            <tr>
-                                <td></td>
-                            </tr>
-                        @endif
-                                <tr>
-                                    <td>Customer VATIN</td>
-                                    <td width="10px"><span class="font-weight-bold">-</span></td>
-                                    <td>{{$request->vatNumber}}</td>
-                                </tr>
                         <tr>
-                            <td>
-                                @if ($request->is_pdo_vendor) {{$request->vendorCode}}   @endif
-                            </td>
+                            <td><b>Customer Address </b></td>
+                            <td>:
+                                {{$request->customer->customerAddress1}}</td>
                         </tr>
-                        @if($request->is_pdo_vendor)
-                            <tr>
-                                <td>
-                                    &nbsp;
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>
-                                    &nbsp;
-                                </td>
-                            </tr>
-                        @endif
+                        <tr>
+                            <td><b>Customer telephone </b></td>
+                            <td>: {{isset($request->CustomerContactDetails->contactPersonTelephone)?$request->CustomerContactDetails->contactPersonTelephone:' '}}</td>
+                        </tr>
+                        <tr>
+                            <td><b>Customer Fax </b></td>
+                            <td>: {{isset($request->CustomerContactDetails->contactPersonFax)?$request->CustomerContactDetails->contactPersonFax:' '}}</td>
+                        </tr>
+                        <tr>
+                            <td><b>Customer VATIN</b></td>
+                            <td>:
+                                {{$request->vatNumber}}</td>
+                        </tr>
                     </table>
                 </fieldset>
             </td>
@@ -319,6 +286,15 @@
                             <td><span>
                                  @if(!empty($request->bookingDate))
                                         {{\App\helper\Helper::dateFormat($request->bookingDate) }}
+                                    @endif
+                            </span></td>
+                        </tr>
+                        <tr>
+                            <td width="120px"><span class="font-weight-bold">Date Of Supply</span></td>
+                            <td width="10px"><span class="font-weight-bold">-</span></td>
+                            <td><span>
+                                 @if(!empty($request->date_of_supply))
+                                        {{\App\helper\Helper::dateFormat($request->date_of_supply) }}
                                     @endif
                             </span></td>
                         </tr>
@@ -566,9 +542,10 @@
                     <th style="width:3%"></th>
                     <th style="width:10%;text-align: center">GL Code</th>
                     <th style="width:60%;text-align: center">GL Code Description</th>
+                    <th style="width:10%;text-align: center">UoM</th>
                     <th style="width:10%;text-align: center">QTY</th>
                     <th style="width:10%;text-align: center">Unit Rate</th>
-                    <th style="width:10%;text-align: right">Amount</th>
+                    <th style="width:10%;text-align: right">Total Amount</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -580,9 +557,10 @@
                     {{$directTraSubTotal +=$item->invoiceAmount}}
                     <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;">
                         <td>{{$x}}</td>
-                        <td>{{$item->glCode}}</td>
-                        <td>{{$item->glCodeDes}}</td>
-                        <td class="text-center" style="text-align: center">{{number_format($item->invoiceQty,2)}}</td>
+                        <td style="text-align: left">{{$item->glCode}}</td>
+                        <td style="text-align: left">{{$item->glCodeDes}}</td>
+                        <td class="text-center" style="text-align: center">{{$item->unit->UnitShortCode}}</td>
+                        <td class="text-left" style="text-align: left">{{number_format($item->invoiceQty,2)}}</td>
                         <td class="text-right">{{number_format($item->unitCost,$numberFormatting)}}</td>
                         <td class="text-right">{{number_format($item->invoiceAmount,$numberFormatting)}}</td>
                     </tr>
@@ -598,7 +576,7 @@
             <tbody>
             <tr>
                 <td style="border-bottom: none !important;border-left: none !important;width: 60%;">&nbsp;</td>
-                <td class="text-right" style="width: 20%;border-bottom: none !important"><span
+                <td class="text-left" style="width: 20%;border-bottom: none !important"><span
                             class="font-weight-bold"
                             style="border-bottom: none !important;font-size: 11.5px">Total:</span>
                 </td>
@@ -618,7 +596,7 @@
                     <td style="border:none !important;">
                         &nbsp;
                     </td>
-                    <td class="text-right" style="border:none !important;"><span
+                    <td class="text-left" style="border:none !important;"><span
                                 class="font-weight-bold"
                                 style="font-size: 11.5px">VAT Amount ({{$request->tax->taxPercent}} %)
                             </span></td>
@@ -632,7 +610,7 @@
                     <td style="border-bottom: none !important;border-top: none !important;border-left: none !important;">
                         &nbsp;
                     </td>
-                    <td class="text-right" style="border:none !important;"><span
+                    <td class="text-left" style="border:none !important;"><span
                                 class="font-weight-bold"
                                 style="font-size: 11.5px">Net Amount</span>
                     </td>
@@ -641,6 +619,30 @@
                             <span class="font-weight-bold">
 
                                     {{number_format($directTraSubTotal, $numberFormatting)}}
+
+                            </span>
+                    </td>
+                </tr>
+
+                <tr>
+                    <td style="border-bottom: none !important;border-top: none !important;border-left: none !important;">
+                        &nbsp;
+                    </td>
+                    <td class="text-left" style="border:none !important;"><span
+                                class="font-weight-bold"
+                                style="font-size: 11.5px">Net Amount in Word</span>
+                    </td>
+                    <td class="text-right"
+                        style="font-size: 11.5px;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;background-color: #EBEBEB">
+                            <span class="font-weight-bold">
+
+                                {{$request->amount_word}}
+                                @if ($request->floatAmt > 0)
+                                and
+                                {{$request->floatAmt}}/@if($request->currency->DecimalPlaces == 3)1000 @else 100 @endif
+                                @endif
+                                
+                                only
 
                             </span>
                     </td>
@@ -659,7 +661,7 @@
                     @endif
                     <table>
                         <tr>
-                            <td width="100px"><span class="font-weight-bold">Bank Details </span></td>
+                            <td width="100px"><span class="font-weight-bold">Remittance Details </span></td>
                             <td>-</td>
                         </tr>
                         <tr>
@@ -719,14 +721,14 @@
                         <table width="100%">
 
                             <tr>
-                                <td width="15%">
+                                {{-- <td width="15%">
                                     <span class="font-weight-bold">Prepared By :</span>
                                 </td>
                                 <td width="35%">
                                     @if($request->createduser)
                                         {{$request->createduser->empName}}
                                     @endif
-                                </td>
+                                </td> --}}
                                 @if(!$request->is_pdo_vendor)
                                     <td width="15%">
                                         <span class="font-weight-bold">Checked By :</span>
@@ -784,24 +786,6 @@
                     {{--SGG PDO ONLY--}}
                     <div class="" style="">
                         <table width="100%">
-                            <tr>
-                                <td width="15%">
-                                    <span class="font-weight-bold">Prepared By :</span>
-                                </td>
-                                <td width="35%">
-                                    @if($request->createduser)
-                                        {{$request->createduser->empName}}
-                                    @endif
-                                </td>
-                                <td width="30%" style="">
-
-                                </td>
-                                <td width="20%" style="text-align:center; border-top: 1px solid black;margin-top: 7px;">
-                                    <span class="font-weight-bold">Authorized  Signatory :</span>
-                                </td>
-
-
-                            </tr>
 
                         </table>
                     </div>

@@ -1,0 +1,103 @@
+<?php
+
+namespace App\Repositories;
+
+use App\Models\POSStagMenuSalesItem;
+use InfyOm\Generator\Common\BaseRepository;
+
+/**
+ * Class POSStagMenuSalesItemRepository
+ * @package App\Repositories
+ * @version July 27, 2022, 8:22 am +04
+ *
+ * @method POSStagMenuSalesItem findWithoutFail($id, $columns = ['*'])
+ * @method POSStagMenuSalesItem find($id, $columns = ['*'])
+ * @method POSStagMenuSalesItem first($columns = ['*'])
+*/
+class POSStagMenuSalesItemRepository extends BaseRepository
+{
+    /**
+     * @var array
+     */
+    protected $fieldSearchable = [
+        'wareHouseAutoID',
+        'menuSalesID',
+        'menuID',
+        'menuCategoryID',
+        'warehouseMenuID',
+        'warehouseMenuCategoryID',
+        'defaultUOM',
+        'unitOfMeasure',
+        'conversionRateUOM',
+        'qty',
+        'menuSalesPrice',
+        'salesPriceSubTotal',
+        'salesPriceAfterDiscount',
+        'salesPriceNetTotal',
+        'netRevenueTotal',
+        'totalMenuTaxAmount',
+        'totalMenuTaxAmountAfterDiscount',
+        'totalMenuServiceCharge',
+        'totalMenuServiceChargeAfterDiscount',
+        'discountPer',
+        'discountAmount',
+        'menuCost',
+        'kotID',
+        'kitchenNote',
+        'KOTAlarm',
+        'KOTFrontPrint',
+        'KOTStartDateTime',
+        'KOTEndDateTime',
+        'KOTDoneByEmpID',
+        'parentMenuSalesItemID',
+        'isSamplePrinted',
+        'TAXpercentage',
+        'TAXAmount',
+        'taxMasterID',
+        'isTaxEnabled',
+        'transactionCurrencyID',
+        'transactionCurrency',
+        'transactionAmount',
+        'transactionCurrencyDecimalPlaces',
+        'transactionExchangeRate',
+        'companyLocalCurrencyID',
+        'companyLocalCurrency',
+        'companyLocalAmount',
+        'companyLocalExchangeRate',
+        'companyLocalCurrencyDecimalPlaces',
+        'companyReportingCurrencyID',
+        'companyReportingCurrency',
+        'companyReportingAmount',
+        'companyReportingCurrencyDecimalPlaces',
+        'companyReportingExchangeRate',
+        'isOrderPending',
+        'isOrderInProgress',
+        'isOrderCompleted',
+        'companyID',
+        'companyCode',
+        'revenueGLAutoID',
+        'remarkes',
+        'createdUserGroup',
+        'createdPCID',
+        'createdUserID',
+        'createdDateTime',
+        'createdUserName',
+        'modifiedPCID',
+        'modifiedUserID',
+        'modifiedDateTime',
+        'modifiedUserName',
+        'timestamp',
+        'is_sync',
+        'id_store',
+        'isUpdated',
+        'transaction_log_id'
+    ];
+
+    /**
+     * Configure the Model
+     **/
+    public function model()
+    {
+        return POSStagMenuSalesItem::class;
+    }
+}
