@@ -1548,7 +1548,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $year = $request->year;
                     $fileName = 'Collection Report By Year -'.$year;
                     $title = 'Collection Report By Year -'.$year;
-                    $from_date = $request->fromDate;
+                    $from_date = \App\helper\Helper::dateFormat($request->fromDate);
                     $to_date = $request->fromDate;
                     $company = Company::find($request->companySystemID);
                     $company_name = $company->CompanyName;
@@ -1587,7 +1587,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 }
                 else
                 {
-                    $detail_array = array('type' => 3,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$requestCurrency,'title'=>$title);
+                    $detail_array = array('type' => 5,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$requestCurrency,'title'=>$title);
 
                     $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
                 }
