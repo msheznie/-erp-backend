@@ -951,7 +951,6 @@ class GeneralLedgerAPIController extends AppBaseController
         $fromDate = ((new Carbon($request->fromDate))->addDays(1)->format('Y-m-d'));
         $type = $request->currency;
         $company = $request->company;
-
         $details = $this->generateGLReport($fromDate,$toDate,$type,$company);
 
         return $this->sendResponse($details,'Posting date changed successfully');
@@ -972,16 +971,18 @@ class GeneralLedgerAPIController extends AppBaseController
 
         $checkIsGroup = Company::find($company);
         
+        $companyCurrency = \Helper::companyCurrency($company);
+ 
 
         $reportData = $this->generateGLReport($fromDate,$toDate,$type,$company);
-        $deb_cred = array("Debit","Credit","Total");
+        $deb_cred = array("Debit","Credit","Balance");
         $reportData['deb_cred'] = $deb_cred;
         $reportData['length'] = ($reportData['j']*3)+3;
         $reportData['fromDate'] = $fromDate;
         $reportData['toDate'] = $toDate;
+        $reportData['currency'] = ($type[0] == 1) ? $reportData['localcurrency']['CurrencyCode'] : $reportData['reportingcurrency']['CurrencyCode'];
         $reportData['company'] = $checkIsGroup->CompanyName;
         $reportData['Title'] = 'Segment Wise GL Report';
-
    
         
         $templateName = "export_report.segment-wise-gL-report";
@@ -1019,7 +1020,7 @@ class GeneralLedgerAPIController extends AppBaseController
             $amount = 'documentRptAmount';
             $cur = 'documentRptCurrencyID';
         }
-        $entries = ChartOfAccount::where('controlAccountsSystemID',2)->get();
+        $entries = ChartOfAccount::where('controlAccountsSystemID',2)->orderBy('AccountCode')->get();
 
         $data = [];
         $i = 0;
@@ -1036,6 +1037,11 @@ class GeneralLedgerAPIController extends AppBaseController
         $char_ac = ChartOfAccount::where('controlAccountsSystemID',2)->pluck('chartOfAccountSystemID');
         $seg_info = SegmentMaster::pluck('serviceLineSystemID');
 
+        $companyCurrency = \Helper::companyCurrency($company);
+        if($companyCurrency) {
+            $requestCurrencyLocal = $companyCurrency->localcurrency;
+            $requestCurrencyRpt = $companyCurrency->reportingcurrency;
+        }
 
         $collection =  DB::table('erp_generalledger')
         ->whereIn('serviceLineSystemID',$seg_info)
@@ -1044,15 +1050,13 @@ class GeneralLedgerAPIController extends AppBaseController
         ->groupBy(['serviceLineSystemID','chartOfAccountSystemID'])
          ->get();
 
-
-
         foreach($entries as $entry)
         {
 
            
 
 
-                $data[$i]['glAccountId'] =  $entry->AccountDescription.' - '.$entry->AccountCode;
+                $data[$i]['glAccountId'] = $entry->AccountCode.' | '.$entry->AccountDescription;
                 $j = 0;
                 $tot_credit = 0;
                 $tot_debit = 0;
@@ -1119,6 +1123,8 @@ class GeneralLedgerAPIController extends AppBaseController
         $details['data'] = $data;
         $details['segment'] = $segment_data;
         $details['company'] = $checkIsGroup->CompanyName;
+        $details['localcurrency'] = $requestCurrencyLocal;
+        $details['reportingcurrency'] = $requestCurrencyRpt;
         $details['j'] = $j;
 
         return $details;

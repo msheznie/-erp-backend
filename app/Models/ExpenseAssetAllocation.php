@@ -122,4 +122,9 @@ class ExpenseAssetAllocation extends Model
     {
        return $this->belongsTo('App\Models\GRVMaster', 'documentSystemCode', 'grvAutoID');
     }
+
+    public function document()
+    {
+       return $this->belongsTo('App\Models\DocumentMaster', 'documentSystemID', 'documentSystemID');
+    }
 }

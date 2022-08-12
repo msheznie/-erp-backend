@@ -3522,6 +3522,25 @@ WHERE
                             $x++;
                         }
                     }
+                }
+                else if ($request->tempType == 3) {
+                    if ($output) {
+                        $x = 0;
+                        foreach ($output as $val) {
+                            $data[$x]['Company ID'] = $val->companyID;
+                            $data[$x]['Document Code'] = $val->BPVcode;
+                            $data[$x]['PV Date'] = $val->bookingDate;
+                            $data[$x]['Narration'] = $val->BPVNarration;
+                            $data[$x]['Supplier Code'] = $val->primarySupplierCode;
+                            $data[$x]['Supplier Name'] = $val->supplierName;
+                            $data[$x]['Currency'] = $val->CurrencyCode;
+                            $data[$x]['Value'] = $val->payAmountSuppTrans;
+                            $data[$x]['Net Value'] = $val->payAmountSuppTrans + $val->taxTotalAmount;
+                            $data[$x]['VAT'] = $val->taxTotalAmount;
+                            $data[$x]['Posted Date'] = $val->postedDate;
+                            $x++;
+                        }
+                    }
                 } else {
                     if ($output) {
                         $x = 0;
@@ -5059,7 +5078,54 @@ WHERE DATE(MASTER.postedDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" 
 	MASTER.companySystemID IN (' . join(',', $companyID) . ')
 AND MASTER.approved = - 1
 AND MASTER.cancelYN = 0';
-        } else {
+        }
+        else if ($request->tempType == 3){
+           $query = 'SELECT
+	MASTER .companyID,
+	MASTER .BPVcode,
+	DATE_FORMAT(
+		MASTER .BPVdate,
+		"%d/%m/%Y"
+	) AS bookingDate,
+	MASTER .BPVNarration,
+	suppliermaster.primarySupplierCode,
+	suppliermaster.secondarySupplierCode,
+	suppliermaster.supplierName,
+	currencymaster.CurrencyCode,
+	currencymaster.DecimalPlaces,
+MASTER.payAmountSuppTrans,
+	IFNULL(tax.taxTotalAmount, 0) AS taxTotalAmount,
+	DATE_FORMAT(
+		MASTER .postedDate,
+		"%d/%m/%Y"
+	) AS postedDate
+FROM
+	erp_paysupplierinvoicemaster AS MASTER
+INNER JOIN suppliermaster ON suppliermaster.supplierCodeSystem = MASTER.BPVsupplierID
+INNER JOIN currencymaster ON currencymaster.currencyID = MASTER.supplierTransCurrencyID
+LEFT JOIN (
+	SELECT
+		taxdetail.documentSystemID,
+		taxdetail.companySystemID,
+		taxdetail.documentSystemCode,
+		IFNULL(Sum(taxdetail.amount), 0) AS taxTotalAmount
+	FROM
+		erp_taxdetail AS taxdetail
+	GROUP BY
+		taxdetail.documentSystemID,
+		taxdetail.companySystemID,
+		taxdetail.documentSystemCode
+) tax ON tax.documentSystemID = MASTER .documentSystemID
+AND tax.companySystemID = MASTER .companySystemID
+AND tax.documentSystemCode = MASTER .PayMasterAutoId
+WHERE
+	DATE(MASTER.postedDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"
+AND MASTER .companySystemID IN (' . join(',', $companyID) . ')
+AND MASTER .approved = - 1
+AND MASTER .cancelYN = 0
+AND MASTER .invoiceType = 3';
+       }
+        else {
             $query = 'SELECT
 	MASTER .companyID,
 	MASTER .bookingInvCode,

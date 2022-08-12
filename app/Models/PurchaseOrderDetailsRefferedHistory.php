@@ -616,7 +616,8 @@ class PurchaseOrderDetailsRefferedHistory extends Model
         'timeStamp',
         'madeLocallyYN',
         'altUnit',
-        'altUnitValue'
+        'altUnitValue',
+        'detail_project_id'
     ];
 
     /**
@@ -716,7 +717,8 @@ class PurchaseOrderDetailsRefferedHistory extends Model
         'modifiedUser' => 'string',
         'madeLocallyYN' => 'integer',
         'altUnit'  => 'integer',
-        'altUnitValue'  => 'float'
+        'altUnitValue'  => 'float',
+        'detail_project_id' => 'integer'
     ];
 
     /**

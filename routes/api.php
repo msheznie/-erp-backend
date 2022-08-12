@@ -358,6 +358,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getNotAssignedCompaniesByCustomer', 'CustomerAssignedAPIController@getNotAssignedCompaniesByCustomer');
         Route::post('exportCustomerMaster', 'CustomerMasterAPIController@exportCustomerMaster');
         Route::post('customerReOpen', 'CustomerMasterAPIController@customerReOpen');
+        Route::post('validateCustomerAmend', 'CustomerMasterAPIController@validateCustomerAmend');
 
         /** Bank master Created by Pasan  */
         Route::resource('bank/masters', 'BankMasterAPIController');
@@ -957,6 +958,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getPaymentVoucherMaster', 'PaySupplierInvoiceMasterAPIController@getPaymentVoucherMaster');
         Route::post('checkPVDocumentActive', 'PaySupplierInvoiceMasterAPIController@checkPVDocumentActive');
         Route::get('getPOPaymentForPV', 'PaySupplierInvoiceMasterAPIController@getPOPaymentForPV');
+        Route::post('getPaymentVoucherPendingAmountDetails', 'PaySupplierInvoiceMasterAPIController@getPaymentVoucherPendingAmountDetails');
+
+        
         Route::get('getBankAccount', 'PaySupplierInvoiceMasterAPIController@getBankAccount');
         Route::post('getMultipleAccountsByBank', 'PaySupplierInvoiceMasterAPIController@getMultipleAccountsByBank');
         Route::post('getAllPaymentVoucherByCompany', 'PaySupplierInvoiceMasterAPIController@getAllPaymentVoucherByCompany');
@@ -1386,6 +1390,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
         Route::resource('budget_masters', 'BudgetMasterAPIController');
         Route::post('getBudgetsByCompany', 'BudgetMasterAPIController@getBudgetsByCompany');
+        Route::post('updateCutOffPeriod', 'BudgetMasterAPIController@updateCutOffPeriod');
         Route::post('budgetReferBack', 'BudgetMasterAPIController@budgetReferBack');
         Route::post('getBudgetBlockedDocuments', 'BudgetMasterAPIController@getBudgetBlockedDocuments');
         Route::post('budgetReopen', 'BudgetMasterAPIController@budgetReopen');
@@ -2540,6 +2545,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('approveCalanderDelAppointment', 'AppointmentAPIController@approveCalanderDelAppointment');
         Route::post('rejectCalanderDelAppointment', 'AppointmentAPIController@rejectCalanderDelAppointment');
         Route::post('getAppointmentById', 'AppointmentAPIController@getAppointmentById');
+        Route::post('checkAssetAllocation', 'ExpenseAssetAllocationAPIController@checkAssetAllocation');
 
         Route::resource('supplier-category-conf', 'SupplierCategoryConfigurationController');
         Route::resource('supplier-group-conf', 'SupplierGroupConfigurationController');
@@ -2749,6 +2755,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     Route::get('getSupplierRegisterFormData', 'SupplierMasterAPIController@getSupplierRegisterFormData');
     Route::post('registerSupplier', 'SupplierMasterAPIController@registerSupplier');
     Route::post('supplierReOpen', 'SupplierMasterAPIController@supplierReOpen');
+    Route::post('validateSupplierAmend', 'SupplierMasterAPIController@validateSupplierAmend');
 
     Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
     Route::get('goodReceiptVoucherPrintPDF', 'GRVMasterAPIController@goodReceiptVoucherPrintPDF');
@@ -3035,4 +3042,4 @@ Route::resource('bid_boqs', 'BidBoqAPIController');
 
 
 Route::resource('cash_flow_report_details', 'CashFlowReportDetailAPIController');
-Route::resource('tender_circulars', 'TenderCircularsAPIController');
+Route::resource('tender_circulars', 'TenderCircularsAPIController'); 
