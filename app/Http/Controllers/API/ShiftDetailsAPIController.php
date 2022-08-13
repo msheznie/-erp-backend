@@ -22,6 +22,7 @@ use App\Models\CustomerAssigned;
 use App\Models\GposInvoice;
 use App\Models\GposPaymentGlConfigDetail;
 use App\Models\OutletUsers;
+use App\Models\POSFinanceLog;
 use App\Models\POSGLEntries;
 use App\Models\POSInvoiceSource;
 use App\Models\POSSourceCustomerMaster;
@@ -532,6 +533,19 @@ class ShiftDetailsAPIController extends AppBaseController
     public function postPosEntries(Request $request){
 
         $shiftId = $request->shiftId;
+
+        $shiftDetails = POSShiftDetails::find($shiftId);
+
+
+        $shiftLogArray = [
+            'startTime' => $shiftDetails->startTime,
+            'endTime' => $shiftDetails->endTime,
+            'status' => 1,
+            'postGroupNyYN' => 0,
+            'shiftId' => $shiftId
+        ];
+        POSFinanceLog::insert($shiftLogArray);
+
         $bankGLArray = array();
         $itemGLArray = array();
         $taxGLArray = array();
