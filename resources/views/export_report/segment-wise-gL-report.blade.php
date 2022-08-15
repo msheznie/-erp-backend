@@ -2,16 +2,14 @@
 <table>
         <thead>
         <div>
-                <td colspan="3"></td>
-                <td><B>{{$Title}} </B></td>
+                <td colspan="18"><h1 style="text-align: center">{{$company}} </h1></td>
             </div>
         </thead>
     </table>
     <table>
         <thead>
         <div>
-                <td colspan="3"></td>
-                <td><B>{{$company}}</B></td>
+                <td colspan="18"><h2 style="text-align: center">{{$Title}}</h2></td>
             </div>
         </thead>
     </table>
