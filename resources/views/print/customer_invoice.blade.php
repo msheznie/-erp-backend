@@ -506,7 +506,7 @@
                     <th style=" text-align: center">Details</th>
 
 
-                    <th style="width:140px;text-align: right">Amount</th>
+                    <th style="width:140px;text-align: right">Total Amount</th>
                 </tr>
                 </thead>
 
@@ -545,7 +545,7 @@
                     <th style="width:10%;text-align: center">UoM</th>
                     <th style="width:10%;text-align: center">QTY</th>
                     <th style="width:10%;text-align: center">Unit Rate</th>
-                    <th style="width:10%;text-align: right">Total Amount</th>
+                    <th style="width:10%;text-align: center">Total Amount</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -559,8 +559,8 @@
                         <td>{{$x}}</td>
                         <td style="text-align: left">{{$item->glCode}}</td>
                         <td style="text-align: left">{{$item->glCodeDes}}</td>
-                        <td class="text-center" style="text-align: center">{{$item->unit->UnitShortCode}}</td>
-                        <td class="text-left" style="text-align: left">{{number_format($item->invoiceQty,2)}}</td>
+                        <td class="text-left" style="text-align: left">{{$item->unit->UnitShortCode}}</td>
+                        <td class="text-right" style="text-align: right">{{number_format($item->invoiceQty,2)}}</td>
                         <td class="text-right">{{number_format($item->unitCost,$numberFormatting)}}</td>
                         <td class="text-right">{{number_format($item->invoiceAmount,$numberFormatting)}}</td>
                     </tr>

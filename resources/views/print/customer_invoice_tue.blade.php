@@ -340,7 +340,7 @@
                         <tr style="border: 1px solid !important;">
                             <td>{{$x}}</td>
                             <td style="word-wrap:break-word;">{{$item->description}}</td>
-                            <td style="text-align: center;">{{isset($item->uom_issuing->UnitShortCode)?$item->uom_issuing->UnitShortCode:''}}</td>
+                            <td style="text-align: left;">{{isset($item->uom_issuing->UnitShortCode)?$item->uom_issuing->UnitShortCode:''}}</td>
                             <td style="text-align: right;">{{$item->Qty}}</td>
                             <td style="text-align: right;">{{$item->Days_OP}}</td>
                             <td style="text-align: right;">{{number_format($item->Price_OP,$numberFormatting)}}</td>
@@ -428,7 +428,7 @@
                         <td>{{$x}}</td>
                         <td>{{$item->glCode}}</td>
                         <td>{{$item->glCodeDes}}</td>
-                        <td style="text-align: center;">{{isset($item->unit->UnitShortCode)?$item->unit->UnitShortCode:''}}</td>
+                        <td style="text-align: left;">{{isset($item->unit->UnitShortCode)?$item->unit->UnitShortCode:''}}</td>
                         <td style="text-align: right;">{{number_format($item->invoiceQty,2)}}</td>
                         <td style="text-align: right;">{{number_format($item->unitCost,$numberFormatting)}}</td>
                         <td class="text-right">{{number_format($item->invoiceAmount,$numberFormatting)}}</td>
