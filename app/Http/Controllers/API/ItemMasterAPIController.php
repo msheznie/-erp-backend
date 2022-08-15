@@ -60,6 +60,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Config;
 use App\helper\CreateExcel;
+use App\Models\CompanyPolicyMaster;
+
 /**
  * Class ItemMasterController
  * @package App\Http\Controllers\API
@@ -460,6 +462,15 @@ class ItemMasterAPIController extends AppBaseController
         $input = $request->all();
         $selectedCompanyId = $request['selectedCompanyId'];
 
+        $isPosIntegratedPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 69)
+                            ->where('companySystemID', $selectedCompanyId)
+                            ->first();
+        if(!empty($isPosIntegratedPolicy->isYesNO)){
+            $isPosIntegrated = $isPosIntegratedPolicy->isYesNO;
+        } else {
+            $isPosIntegrated = false;
+        }
+
         $warehouseSystemCode = isset($input['warehouseSystemCode']) ? $input['warehouseSystemCode'] : 0;
 
         $warehouse           =  WarehouseMaster::find($warehouseSystemCode);
@@ -557,7 +568,8 @@ class ItemMasterAPIController extends AppBaseController
             'isVatRegisteredYN' => $isVatRegisteredYN,
             'wareHouseBinLocations' => $wareHouseBinLocations,
             'vatSubCategory' => $vatSubCategory,
-            'masterCompany' => $masterCompany
+            'masterCompany' => $masterCompany,
+            'isPosIntegrated' => $isPosIntegrated
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
@@ -945,17 +957,19 @@ class ItemMasterAPIController extends AppBaseController
                 $itemMaster->itemUrl = $input['itemUrl'];
                 $itemMaster->isActive = $input['isActive'];
                 $itemMaster->itemPicture = $input['itemPicture'];
+                $itemMaster->pos_type = $input['pos_type'];
                 $itemMaster->save();
 
                 $updateData = [
                     'itemUrl' => $input['itemUrl'],
-                    'isActive' => $input['isActive']
+                    'isActive' => $input['isActive'],
+                    'pos_type' => $input['pos_type']
                 ];
 
                 $itemMasterOld = $itemMaster->toArray();
                 ItemAssigned::where('itemCodeSystem', $id)->update($updateData);
-                $old_array = array_only($itemMasterOld,['itemUrl', 'isActive', 'itemPicture']);
-                $modified_array = array_only($input,['itemUrl', 'isActive', 'itemPicture']);
+                $old_array = array_only($itemMasterOld,['itemUrl', 'isActive', 'itemPicture','pos_type']);
+                $modified_array = array_only($input,['itemUrl', 'isActive', 'itemPicture','pos_type']);
       
             
                 // update in to user log table
@@ -1020,7 +1034,7 @@ class ItemMasterAPIController extends AppBaseController
         }
         
         $afterConfirm = array('secondaryItemCode', 'barcode', 'itemDescription', 'itemShortDescription', 'itemUrl', 'unit',
-                         'itemPicture', 'isActive', 'itemConfirmedYN', 'modifiedPc', 'modifiedUser','financeCategorySub','modifiedUserSystemID','faFinanceCatID');
+                         'itemPicture', 'isActive', 'itemConfirmedYN', 'modifiedPc', 'modifiedUser','financeCategorySub','modifiedUserSystemID','faFinanceCatID','pos_type');
                        
         foreach ($input as $key => $value) {
             if ($itemMaster->itemConfirmedYN == 1) {

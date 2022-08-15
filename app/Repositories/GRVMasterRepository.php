@@ -286,6 +286,7 @@ class GRVMasterRepository extends BaseRepository
                 'erp_grvmaster.refferedBackYN',
                 'erp_grvmaster.grvTypeID',
                 'erp_grvmaster.projectID',
+                'erp_grvmaster.companySystemID',
                 'erp_grvmaster.companySystemID'
             ]);
             

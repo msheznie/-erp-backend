@@ -498,9 +498,9 @@ class ProcumentOrderAPIController extends AppBaseController
         $advancedPayment = PoPaymentTerms::where('poID',$id)->sum('comAmount');
         $supplierCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($procumentOrder->supplierTransactionCurrencyID);
         $newlyUpdatedPoTotalAmountWithoutRound = $poMasterSum['masterTotalSum'] + $poAddonMasterSum['addonTotalSum']+ ($procumentOrder->rcmActivated ? 0 : $poMasterVATSum['masterTotalVATSum']);
-        //$newlyUpdatedPoTotalAmount = round($newlyUpdatedPoTotalAmountWithoutRound, $supplierCurrencyDecimalPlace);
+        $newlyUpdatedPoTotalAmount = round($newlyUpdatedPoTotalAmountWithoutRound, $supplierCurrencyDecimalPlace);
        // $newlyUpdatedPoTotalAmount = bcdiv($newlyUpdatedPoTotalAmountWithoutRound,1,$supplierCurrencyDecimalPlace);
-        $newlyUpdatedPoTotalAmount = floatval(sprintf("%.".$supplierCurrencyDecimalPlace."f", $newlyUpdatedPoTotalAmountWithoutRound));
+        // return $newlyUpdatedPoTotalAmount = floatval(sprintf("%.".$supplierCurrencyDecimalPlace."f", $newlyUpdatedPoTotalAmountWithoutRound));
     
         if(isset($input['isConfirm']) && $input['isConfirm']) {
             $epsilon = 0.00001;
@@ -508,8 +508,6 @@ class ProcumentOrderAPIController extends AppBaseController
             if(abs($advancedPayment - $newlyUpdatedPoTotalAmount) > $epsilon) {
                 return $this->sendError('Total of Payment terms amount is not equal to PO amount');
             }
-            
-         
         }
 
         
@@ -7814,6 +7812,18 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 $temp2['docAutoID'] = $value2['payment_master']['PayMasterAutoId'];
                 $temp2['title'] = "{Doc Code :} " . $value2['payment_master']['BPVcode'] . " -- {Doc Date :} " . Carbon::parse($value2['payment_master']['BPVdate'])->format('Y-m-d') . " -- {Currency :} " . $value2['payment_master']['transactioncurrency']['CurrencyCode'] . " -- {Amount :} " . number_format($value2['payment_master']['payAmountSuppTrans'], $value2['payment_master']['transactioncurrency']['DecimalPlaces']);
 
+            }
+            
+            if (isset($value2['matching_master'])) {
+                if ($type == "debit" && ($debitNoteID == $value2['matching_master']['PayMasterAutoId'])) {
+                    $temp2['cssClass'] = "ngx-org-step-two root-tracing-node";
+                } else {
+                    $temp2['cssClass'] = "ngx-org-step-two";
+                }
+                $temp2['name'] = "Debit Note";
+                $temp2['documentSystemID'] = $value2['matching_master']['documentSystemID'];
+                $temp2['docAutoID'] = $value2['matching_master']['PayMasterAutoId'];
+                $temp2['title'] = "{Doc Code :} " . $value2['matching_master']['BPVcode'] . " -- {Doc Date :} " . Carbon::parse($value2['matching_master']['BPVdate'])->format('Y-m-d') . " -- {Currency :} " . $value2['matching_master']['transactioncurrency']['CurrencyCode'] . " -- {Amount :} " . number_format($value2['matching_master']['payAmountSuppTrans'], $value2['matching_master']['transactioncurrency']['DecimalPlaces']);
             }
             
             $tracingData['childs'][] = $temp2;
