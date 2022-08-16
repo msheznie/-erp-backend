@@ -35,7 +35,9 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\helper\ItemTracking;
-
+Use App\Models\UserToken;
+use GuzzleHttp\Client;
+use Carbon\Carbon;
 /**
  * Class ItemReturnDetailsController
  * @package App\Http\Controllers\API
@@ -415,6 +417,46 @@ class ItemReturnDetailsAPIController extends AppBaseController
         if (empty($itemReturnMaster)) {
             return $this->sendError('Item Return not found');
         }
+
+
+
+        $bytes = random_bytes(10);
+        $hashKey = bin2hex($bytes);
+        $empID = \Helper::getEmployeeSystemID();
+
+        $insertData = [
+        'employee_id' => $empID,
+        'token' => $hashKey,
+        'expire_time' => Carbon::now()->addDays(1),
+        'module_id' => 1
+          ];
+
+        $resData = UserToken::create($insertData);
+
+        $client = new Client();
+        $res = $client->request('GET', 'http://manu.uat-gears-int.com/index.php/MFQ_Api/getAllocatedJobs?companyID='.$itemReturnMaster->companySystemID.'&documentSystemID='.$itemReturnMaster->documentSystemID.'&documentsystemcode=120&itemautoID='.$itemReturnDetails->itemCodeSystem, [
+            'headers' => [
+            'Content-Type'=> 'application/json',
+            'token' => $hashKey,
+            'api_key' => '31da9d7e0ad66713c6505c5132426baf'
+            ]
+        ]);
+
+        if ($res->getStatusCode() == 200) { 
+            $job = json_decode($res->getBody(), true);
+
+
+            if(count($job) > 0)
+            {
+                return $this->sendError('The selected item is has allocated to job');
+            }
+        }
+        else
+        {
+            return $this->sendError('Unable to get the MFQJob Status');
+        }
+
+ 
 
         if ($input['itemUnitOfMeasure'] != $input['unitOfMeasureIssued']) {
             $unitConvention = UnitConversion::where('masterUnitID', $input['itemUnitOfMeasure'])

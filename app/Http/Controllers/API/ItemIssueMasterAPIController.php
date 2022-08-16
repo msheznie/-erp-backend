@@ -60,7 +60,8 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use SwaggerFixures\Customer;
 use App\helper\ItemTracking;
-
+Use App\Models\UserToken;
+use GuzzleHttp\Client;
 /**
  * Class ItemIssueMasterController
  * @package App\Http\Controllers\API
@@ -415,6 +416,47 @@ class ItemIssueMasterAPIController extends AppBaseController
         if (empty($itemIssueMaster)) {
             return $this->sendError('Item Issue Master not found');
         }
+
+        if($itemIssueMaster->mfqJobID)
+        {
+            $bytes = random_bytes(10);
+            $hashKey = bin2hex($bytes);
+            $empID = \Helper::getEmployeeSystemID();
+    
+            Carbon::now()->addDays(1);
+            $insertData = [
+            'employee_id' => $empID,
+            'token' => $hashKey,
+            'expire_time' => Carbon::now()->addDays(1),
+            'module_id' => 1
+              ];
+    
+            $resData = UserToken::create($insertData);
+    
+            $client = new Client();
+            $res = $client->request('GET', 'http://manu.uat-gears-int.com/index.php/MFQ_Api/getJobStatus?JobID='.$itemIssueMaster->mfqJobID, [
+                'headers' => [
+                'Content-Type'=> 'application/json',
+                'token' => $hashKey,
+                'api_key' => '31da9d7e0ad66713c6505c5132426baf'
+                ]
+            ]);
+
+            if ($res->getStatusCode() == 200) { 
+                $job = json_decode($res->getBody(), true);
+
+                if($job['closedYN'] == 1)
+                {
+                    return $this->sendError('The selected job is closed');
+                }
+            }
+            else
+            {
+                return $this->sendError('Unable to get the MFQJob Status');
+            }
+        }
+
+
 
         if (isset($input['serviceLineSystemID'])) {
             $checkDepartmentActive = SegmentMaster::find($input['serviceLineSystemID']);
@@ -1072,7 +1114,46 @@ class ItemIssueMasterAPIController extends AppBaseController
         $contracts = "";
 
         $units = Unit::all();
-        $job = [["id"=>1,"number"=>23],["id"=>2,"number"=>456]];
+
+
+        $bytes = random_bytes(10);
+        $hashKey = bin2hex($bytes);
+        $empID = \Helper::getEmployeeSystemID();
+
+        Carbon::now()->addDays(1);
+        $insertData = [
+        'employee_id' => $empID,
+        'token' => $hashKey,
+        'expire_time' => Carbon::now()->addDays(1),
+        'module_id' => 1
+          ];
+
+        $resData = UserToken::create($insertData);
+
+        $client = new Client();
+        $res = $client->request('GET', 'http://manu.uat-gears-int.com/index.php/MFQ_Api/getOpenJobs?company_id'.$companyId.'=&warehouse=&segment=', [
+            'headers' => [
+            'Content-Type'=> 'application/json',
+            'token' => $hashKey,
+            'api_key' => '31da9d7e0ad66713c6505c5132426baf'
+            ]
+        ]);
+
+       
+
+        if ($res->getStatusCode() == 200) { 
+            $job = json_decode($res->getBody(), true);
+        }
+        else
+        {
+            $job = [];
+        }
+
+        foreach($job as $key=>$val)
+        {
+            $job[$key]['jobID'] = intval($val['jobID']);
+        }
+
         $output = array(
             'job_no' => $job,
             'segments' => $segments,
