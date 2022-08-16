@@ -3366,7 +3366,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             }
         
         } else if ($printTemplate['printTemplateID'] == 1 || $printTemplate['printTemplateID'] == null) {
-          
+            
             if($type == 1)
             {
                 $html = view('print.customer_invoice', $array);
