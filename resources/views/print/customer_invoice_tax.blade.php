@@ -492,17 +492,17 @@
         <table style="width:100%;" class="table table-bordered">
             <tbody>
             <tr>
-                <td style="border:none !important;">
+                <td style="border:none !important; width: 40%">
                     &nbsp;&nbsp;&nbsp;
                 </td>
-                <td class="text-right" style="border:none !important;width: 50%">
+                <td class="text-left" style="border:none !important;width: 30%">
                         <span class="font-weight-bold" style="font-size: 11.5px">
                             Subtotal (Excluding VAT)
                         </span>
                 </td>
 
                 <td class="text-right"
-                    style="font-size: 11.5px;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;"><span
+                    style="font-size: 11.5px;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;width: 30%"><span
                             class="font-weight-bold">@if ($request->invoicedetails){{number_format($directTraSubTotal, $numberFormatting)}}@endif</span>
                 </td>
             </tr>
@@ -510,44 +510,44 @@
             {{$totalVATAmount = (($request->tax && $request->tax->amount) ? $request->tax->amount : 0)}}
             {{$directTraSubTotal+= $totalVATAmount}}
             <tr>
-                <td style="border:none !important;">
+                <td style="border:none !important;width: 40%">
                     &nbsp;
                 </td>
-                <td class="text-right" style="border:none !important;width: 50%">
+                <td class="text-left" style="border:none !important;width: 30%">
                         <span class="font-weight-bold" style="font-size: 11.5px">
                             Total VAT ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}}) ({{round( ( ($request->tax && $request->tax->taxPercent ) ? $request->tax->taxPercent : 0 ), 2)}} %)
                         </span>
                 </td>
                 <td class="text-right"
-                    style="font-size: 11.5px;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;"><span class="font-weight-bold">{{number_format($totalVATAmount, $numberFormatting)}}</span>
+                    style="font-size: 11.5px;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;width: 30%"><span class="font-weight-bold">{{number_format($totalVATAmount, $numberFormatting)}}</span>
                 </td>
             </tr>
 
             <tr>
-                <td style="border:none !important;">
+                <td  style="border:none !important;width: 40%">
                     &nbsp;
                 </td>
-                <td class="text-right" style="border:none !important;width: 50%">
+                <td class="text-left" style="border:none !important;width: 30%">
                         <span class="font-weight-bold" style="font-size: 11.5px">
                             Total Amount Payable
                         </span>
                 </td>
                 <td class="text-right"
-                    style="font-size: 11.5px;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;"><span
+                    style="font-size: 11.5px;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;width: 30%"><span
                             class="font-weight-bold">{{number_format($directTraSubTotal, $numberFormatting)}}</span>
                 </td>
             </tr>
             <tr>
-                <td style="border:none !important;">
+                <td  style="border:none !important;width: 40%">
                     &nbsp;
                 </td>
-                <td class="text-right" style="border:none !important;width: 50%">
+                <td class="text-left" style="border:none !important;width: 30%">
                         <span class="font-weight-bold" style="font-size: 11.5px">
                             Total Amount Payable in word
                         </span>
                 </td>
                 <td class="text-right"
-                    style="font-size: 11.5px;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;">
+                    style="font-size: 11.5px;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;width: 30%">
                     <span
                             class="font-weight-bold">                                
                             {{$request->amount_word}}
