@@ -296,7 +296,7 @@
                     <th style="text-align: center">Well</th>
                     <th style="text-align: center">Network</th>
                     <th style="text-align: center">SE</th>
-                    <th style="text-align: right">Total Amount({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
+                    <th style="text-align: center">Total Amount({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -334,7 +334,7 @@
                     <th style="text-align: center">UOM</th>
                     <th style="text-align: center">Qty</th>
                     <th style="text-align: center">Unit Rate</th>
-                    <th style="text-align: right">Total Amount ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
+                    <th style="text-align: center">Total Amount ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -351,8 +351,8 @@
                             <td style="width: 12%">{{$item->pl3}}</td>
                         @endif
                         <td>{{$item->assetDescription}}</td>
-                        <td>{{isset($item->uom_issuing->UnitShortCode)?$item->uom_issuing->UnitShortCode:''}}</td>
-                        <td style="width: 8%;text-align: center">{{number_format($item->qty,2)}}</td>
+                        <td style="text-align: left">{{isset($item->uom_issuing->UnitShortCode)?$item->uom_issuing->UnitShortCode:''}}</td>
+                        <td style="width: 8%;text-align: right">{{number_format($item->qty,2)}}</td>
                         <td style="width: 10%;text-align: right">{{number_format($item->rate,$numberFormatting)}}</td>
 
                         <td style="width: 10%"
@@ -375,7 +375,7 @@
                     <th style=" text-align: center">Details</th>
 
 
-                    <th style="width:140px;text-align: right">Amount ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
+                    <th style="width:140px;text-align: center">Total Amount ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
                 </tr>
                 </thead>
 
@@ -415,7 +415,7 @@
                     <th style="width:10%;text-align: center">QTY</th>
                     <th style="width:10%;text-align: center">Unit Rate</th>
                     <th style="width:10%;text-align: center">VAT Per Unit</th>    
-                    <th style="width:10%;text-align: right">Total Amount ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
+                    <th style="width:10%;text-align: center">Total Amount ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -429,8 +429,8 @@
                         <td>{{$x}}</td>
                         <td>{{$item->glCode}}</td>
                         <td>{{$item->glCodeDes}}</td>
-                        <td style="text-align: center">{{isset($item->unit->UnitShortCode)?$item->unit->UnitShortCode:''}}</td>
-                        <td class="text-center" style="text-align: center">{{number_format($item->invoiceQty,2)}}</td>
+                        <td style="text-align: left">{{isset($item->unit->UnitShortCode)?$item->unit->UnitShortCode:''}}</td>
+                        <td class="text-center" style="text-align: right">{{number_format($item->invoiceQty,2)}}</td>
                         <td class="text-right">{{number_format($item->unitCost,$numberFormatting)}}</td>
                         <td class="text-right">{{number_format($item->VATAmountLocal,$numberFormatting)}}</td>
                         <td class="text-right">{{number_format($item->invoiceAmount,$numberFormatting)}}</td>
@@ -452,10 +452,10 @@
                     <th style="width:5%;text-align: center">UOM</th>
                     <th style="width:5%;text-align: center">Quantity</th>
                     <th style="width:10%;text-align: center">Unit Price</th>
-                    <th style="width:10%;text-align: right">Taxable Amount ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
-                    <th style="width:5%;text-align: right">Taxable Rate</th>
-                    <th style="width:10%;text-align: right">Tax ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
-                    <th style="width:10%;text-align: right">Total Amount ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
+                    <th style="width:10%;text-align: center">Taxable Amount ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
+                    <th style="width:5%;text-align: center">Taxable Rate</th>
+                    <th style="width:10%;text-align: center">Tax ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
+                    <th style="width:10%;text-align: center">Total Amount ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -471,8 +471,8 @@
                                 <td>{{$x}}</td>
                                 <td>{{$item->itemPrimaryCode.' - '.$item->itemDescription}}</td>
                                 <td class="text-center" style="text-align: center">{{$item->part_no}}</td>
-                                <td>{{isset($item->uom_issuing->UnitShortCode)?$item->uom_issuing->UnitShortCode:''}}</td>
-                                <td class="text-center" style="text-align: center">{{$item->qtyIssued}}</td>
+                                <td style="text-align: left">{{isset($item->uom_issuing->UnitShortCode)?$item->uom_issuing->UnitShortCode:''}}</td>
+                                <td class="text-right" style="text-align: right">{{$item->qtyIssued}}</td>
                                 <td class="text-right">{{number_format($item->sellingCostAfterMargin,$numberFormatting)}}</td>
                                 <td  class="text-right">{{number_format($item->VATAmount,$numberFormatting)}}</td>
                                 <td  class="text-right">{{$item->VATPercentage}}</td>
