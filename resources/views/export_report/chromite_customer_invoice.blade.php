@@ -345,6 +345,12 @@
                     only
                 </td>
             </tr>
+            <tr style="border: 1px solid !important;">
+                <td colspan="1"></td>
+                <td colspan="21" style="text-align: left;">We certify that the goods mentioned in this invoice are of Sultanate of Oman origin: Manufacturer Oman Chromite Company
+                    (SAOG)-Commodity chrome ore.</td>
+
+            </tr>
         </tbody>
     </table>
 
