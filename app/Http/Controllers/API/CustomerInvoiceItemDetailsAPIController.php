@@ -313,14 +313,20 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
             || !$input['financeGLcodeRevenueSystemID'] || !$input['financeGLcodeRevenue']) {
             return $this->sendError("Account code not updated.", 500);
         }*/
+        
 
         if ($input['itemFinanceCategoryID'] == 1 || $input['itemFinanceCategoryID'] == 2 || $input['itemFinanceCategoryID'] == 4) {
             $alreadyAdded = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID',$input['custInvoiceDirectAutoID'])->where('itemCodeSystem',$item->itemCodeSystem)->first();
+         
+        
             if ($alreadyAdded) {
-                return $this->sendError("Selected item is already added. Please check again", 500);
-            }
+                if(($input['itemFinanceCategoryID'] != 2 )&& ($input['itemFinanceCategoryID'] != 4 ))
+                {
+                    return $this->sendError("Selected item is already added. Please check again", 500);
+                }
+               
         }
-
+    }
         // check policy 18
 
         $allowPendingApproval = CompanyPolicyMaster::where('companyPolicyCategoryID', 18)
@@ -1093,16 +1099,24 @@ WHERE
         //check added item exist
         foreach ($input['detailTable'] as $itemExist) {
 
+            $item = ItemAssigned::with(['item_master'])
+            ->where('itemCodeSystem', $itemExist['itemCodeSystem'])
+            ->where('companySystemID', $itemExist['companySystemID'])
+            ->first();
+
             if ($itemExist['isChecked'] && $itemExist['noQty'] > 0) {
                 $doDetailExist = CustomerInvoiceItemDetails::select(DB::raw('itemPrimaryCode'))
                     ->where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)
                     ->where('itemCodeSystem', $itemExist['itemCodeSystem'])
                     ->get();
 
-                if (!empty($doDetailExist)) {
-                    foreach ($doDetailExist as $row) {
-                        $itemDrt = $row['itemPrimaryCode'] . " is already added";
-                        $itemExistArray[] = [$itemDrt];
+                if($item->financeCategoryMaster != 2 && $item->financeCategoryMaster != 4 )
+                {
+                    if (!empty($doDetailExist)) {
+                        foreach ($doDetailExist as $row) {
+                            $itemDrt = $row['itemPrimaryCode'] . " is already added";
+                            $itemExistArray[] = [$itemDrt];
+                        }
                     }
                 }
             }
@@ -1420,18 +1434,28 @@ WHERE
         //check added item exist
         foreach ($input['detailTable'] as $itemExist) {
 
+             $item = ItemAssigned::with(['item_master'])
+            ->where('itemCodeSystem', $itemExist['itemAutoID'])
+            ->where('companySystemID', $itemExist['companySystemID'])
+            ->first();
+
+
             if ($itemExist['isChecked'] && $itemExist['noQty'] > 0) {
                 $doDetailExist = CustomerInvoiceItemDetails::select(DB::raw('itemPrimaryCode'))
                     ->where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)
                     ->where('itemCodeSystem', $itemExist['itemAutoID'])
                     ->get();
 
-                if (!empty($doDetailExist)) {
-                    foreach ($doDetailExist as $row) {
-                        $itemDrt = $row['itemPrimaryCode'] . " is already added";
-                        $itemExistArray[] = [$itemDrt];
+            
+                    if($item->financeCategoryMaster != 2 && $item->financeCategoryMaster != 4 )
+                    {
+                        if (!empty($doDetailExist)) {
+                            foreach ($doDetailExist as $row) {
+                                $itemDrt = $row['itemPrimaryCode'] . " is already added";
+                                $itemExistArray[] = [$itemDrt];
+                            }
+                        }
                     }
-                }
             }
         }
 

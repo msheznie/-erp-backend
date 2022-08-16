@@ -141,7 +141,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
         if(empty($deliveryOrderMaster)){
             return $this->sendError('Delivery order not found',500);
         }
-
+        $category = $item->financeCategoryMaster;
 
         $alreadyAdded = DeliveryOrder::where('deliveryOrderID', $input['deliveryOrderID'])
             ->whereHas('detail', function ($query) use ($input) {
@@ -149,9 +149,12 @@ class DeliveryOrderDetailAPIController extends AppBaseController
             })
             ->exists();
 
-        if ($alreadyAdded) {
-            return $this->sendError("Selected item is already added. Please check again", 500);
-        }
+            if(($category != 2 )&& ($category != 4 ))
+            {
+                if ($alreadyAdded) {
+                    return $this->sendError("Selected item is already added. Please check again", 500);
+                }
+            }
 
         if(DeliveryOrderDetail::where('deliveryOrderID',$input['deliveryOrderID'])->where('itemFinanceCategoryID','!=',$item->financeCategoryMaster)->exists()){
             return $this->sendError('Different finance category found. You can not add different finance category items for same order',500);
@@ -906,22 +909,36 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                     ->where('deliveryOrderID', $deliveryOrderID)
                     ->where('itemCodeSystem', $itemExist['itemAutoID'])
                     ->get();
+
+                $item = ItemAssigned::with(['item_master'])
+                ->where('itemCodeSystem', $itemExist['itemAutoID'])
+                ->where('companySystemID', $itemExist['companySystemID'])
+                ->first();
+
                 
                 $QuoDetailExistDetails = DeliveryOrderDetail::where('deliveryOrderID', $deliveryOrderID)
                     ->where('itemCodeSystem', $itemExist['itemAutoID'])
                     ->first();
                 if (!empty($QuoDetailExistDetails)) {
-                    if($QuoDetailExistDetails->qtyIssued + (int) $inputDetails[0]['noQty'] <= $QuoDetailExistDetails->requestedQty) {
-                    $QuoDetailExistDetails->qtyIssued += (int)$inputDetails[0]['noQty'];
-                    $QuoDetailExistDetails->save();
-                 }
-                }else {
-                    if (!empty($QuoDetailExist)) {
-                    foreach ($QuoDetailExist as $row) {
-                        $itemDrt = $row['itemPrimaryCode'] . " already exist";
-                        $itemExistArray[] = [$itemDrt];
+                    if($item->financeCategoryMaster != 2 && $item->financeCategoryMaster != 4 )
+                    {
+                        if($QuoDetailExistDetails->qtyIssued + (int) $inputDetails[0]['noQty'] <= $QuoDetailExistDetails->requestedQty) {
+                            $QuoDetailExistDetails->qtyIssued += (int)$inputDetails[0]['noQty'];
+                            $QuoDetailExistDetails->save();
                     }
                 }
+                }else {
+                    if (!empty($QuoDetailExist)) 
+                    {
+                        if($item->financeCategoryMaster != 2 && $item->financeCategoryMaster != 4 )
+                        {
+                            foreach ($QuoDetailExist as $row) {
+                                $itemDrt = $row['itemPrimaryCode'] . " already exist";
+                                $itemExistArray[] = [$itemDrt];
+                            }
+                        }
+
+                    }
                 }
                 
             }
