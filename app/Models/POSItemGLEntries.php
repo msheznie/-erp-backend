@@ -50,7 +50,8 @@ class POSItemGLEntries extends Model
 {
 
     public $table = 'pos_item_gl';
-    
+    public $timestamps = false;
+
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
