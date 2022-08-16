@@ -726,7 +726,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         if ($input['date_of_supply'] != '') {
             $_post['date_of_supply'] = Carbon::parse($input['date_of_supply'])->format('Y-m-d') . ' 00:00:00';
         } else {
-            $_post['date_of_supply'] = null;
+            return $this->sendError('Date of supply is required', 500);
         }
 
         /*validaation*/
@@ -3366,7 +3366,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             }
         
         } else if ($printTemplate['printTemplateID'] == 1 || $printTemplate['printTemplateID'] == null) {
-          
+            
             if($type == 1)
             {
                 $html = view('print.customer_invoice', $array);

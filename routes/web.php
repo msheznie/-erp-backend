@@ -11,3 +11,5 @@ Route::resource('barcodeConfigurations', 'BarcodeConfigurationController');
 Route::resource('thirdPartySystems', 'ThirdPartySystemsController');
 
 Route::resource('thirdPartyIntegrationKeys', 'ThirdPartyIntegrationKeysController');
+
+Route::resource('iOUBookingMasters', 'IOUBookingMasterController');

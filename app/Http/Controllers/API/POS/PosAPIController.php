@@ -346,8 +346,10 @@ class PosAPIController extends AppBaseController
     public function handleRequest(Request $request)
     {
         define('INVOICE', 'INVOICE');
+        define('INVOICE_RPOS', 'INVOICE_RPOS');
         switch ($request->input('request')) {
             case INVOICE:
+            case INVOICE_RPOS:
                 return $this->POSService->getMappingData($request);
             default:
                 return [

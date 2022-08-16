@@ -1747,14 +1747,37 @@ class SupplierMasterAPIController extends AppBaseController
         $token = md5(Carbon::now()->format('YmdHisu'));
         $apiKey = $request->input('api_key');
 
-        $isCreated = $this->registrationLinkRepository->save($request, $token);
-        $loginUrl = env('SRM_LINK').$token.'/'.$apiKey;
-        if ($isCreated['status'] == true) { 
-            Mail::to($request->input('email'))->send(new EmailForQueuing("Registration Link", "Dear Supplier,"."<br /><br />"." Please find the below link to register at ". $companyName ." supplier portal. It will expire in 48 hours. "."<br /><br />"."Click Here: "."</b><a href='".$loginUrl."'>".$loginUrl."</a><br /><br />"." Thank You"."<br /><br /><b>"));
+        $isExist = SupplierRegistrationLink::select('id', 'STATUS', 'token')
+            ->where('company_id', $request->input('company_id'))
+            ->where('email', $request->input('email'))
+            ->where('registration_number', $request->input('registration_number'))
+            ->orderBy("id", "desc")
+            ->first();
 
-            return $this->sendResponse($loginUrl, 'Supplier Registration Link Generated successfully');
-        }else{
-            return $this->sendError('Supplier Registration Link Generation Failed',500);
+        if (!empty($isExist)) {
+            if($isExist['STATUS'] === 1){
+                return $this->sendError('Supplier Registration Details Already Exist',402);
+            } else if ($isExist['STATUS'] === 0){
+                $loginUrl = env('SRM_LINK') . $isExist['token'] . '/' . $apiKey;
+                $updateRec['token_expiry_date_time'] = Carbon::now()->addHours(48);
+                $isUpdated = SupplierRegistrationLink::where('id', $isExist['id'])->update($updateRec);
+                if ($isUpdated) {
+                    Mail::to($request->input('email'))->send(new EmailForQueuing("Registration Link", "Dear Supplier,"."<br /><br />"." Please find the below link to register at ". $companyName ." supplier portal. It will expire in 48 hours. "."<br /><br />"."Click Here: "."</b><a href='".$loginUrl."'>".$loginUrl."</a><br /><br />"." Thank You"."<br /><br /><b>"));
+                    return $this->sendResponse($loginUrl, 'Supplier Registration Link Generated successfully');
+                } else{
+                    return $this->sendError('Supplier Registration Link Generation Failed',500);
+                }
+            }
+        } else {
+            $loginUrl = env('SRM_LINK').$token.'/'.$apiKey;
+            $isCreated = $this->registrationLinkRepository->save($request, $token);
+            if ($isCreated['status'] == true) {
+                Mail::to($request->input('email'))->send(new EmailForQueuing("Registration Link", "Dear Supplier,"."<br /><br />"." Please find the below link to register at ". $companyName ." supplier portal. It will expire in 48 hours. "."<br /><br />"."Click Here: "."</b><a href='".$loginUrl."'>".$loginUrl."</a><br /><br />"." Thank You"."<br /><br /><b>"));
+
+                return $this->sendResponse($loginUrl, 'Supplier Registration Link Generated successfully');
+            } else {
+                return $this->sendError('Supplier Registration Link Generation Failed',500);
+            }
         }
     }
 

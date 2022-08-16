@@ -2905,7 +2905,7 @@ class CustomerMasterAPIController extends AppBaseController
             $amendable['unbilledAmendable'] = false;
         } else {
             $successMessages[] = "Use of Unbilled Account checking is done in delivery order";
-            $amendable['unbilledAmendable'] = (!$amendable['unbilledAmendable']) ? true : false;
+            $amendable['unbilledAmendable'] = true;
         }
         
    

@@ -1595,6 +1595,10 @@ FROM
                                                            ->whereDate('issueDate', '>=', $fromDate)
                                                            ->whereDate('issueDate', '<=', $toDate);
                                                        }]);
+                                                  },'ioue'  => function($query) use ($companyID, $fromDate, $toDate) {
+                                                    $query->whereIn('companyID', $companyID)
+                                                    ->whereDate('bookingDate', '>=', $fromDate)
+                                                    ->whereDate('bookingDate', '<=', $toDate);
                                                   }])
                                                   ->where(function($query) use ($companyID, $fromDate, $toDate) {
                                                       $query->where(function($query) use ($companyID, $fromDate, $toDate) {
@@ -1603,7 +1607,7 @@ FROM
                                                                               ->whereDate('bookingDate', '>=', $fromDate)
                                                                               ->whereDate('bookingDate', '<=', $toDate);
                                                                     })
-                                                                    ->where('documentSystemID', 11);
+                                                                    ->where('documentSystemID', 11)->where('module_id', 1);
                                                           })
                                                          ->orWhere(function($query) use ($companyID, $fromDate, $toDate) {
                                                                 $query->whereHas('payment_voucher', function($query) use ($companyID, $fromDate, $toDate) {
@@ -1611,7 +1615,7 @@ FROM
                                                                               ->whereDate('BPVdate', '>=', $fromDate)
                                                                               ->whereDate('BPVdate', '<=', $toDate);
                                                                     })
-                                                                    ->where('documentSystemID', 4);
+                                                                    ->where('documentSystemID', 4)->where('module_id', 1);
                                                           })
                                                           ->orWhere(function($query) use ($companyID, $fromDate, $toDate) {
                                                             $query->whereHas('journal_voucher', function($query) use ($companyID, $fromDate, $toDate) {
@@ -1619,7 +1623,7 @@ FROM
                                                                           ->whereDate('JVdate', '>=', $fromDate)
                                                                           ->whereDate('JVdate', '<=', $toDate);
                                                                 })
-                                                                ->where('documentSystemID',17);
+                                                                ->where('documentSystemID',17)->where('module_id', 1);
                                                           })
                                                           ->orWhere(function($query) use ($companyID, $fromDate, $toDate) {
                                                             $query->whereHas('grv', function($query) use ($companyID, $fromDate, $toDate) {
@@ -1627,7 +1631,7 @@ FROM
                                                                           ->whereDate('grvDate', '>=', $fromDate)
                                                                           ->whereDate('grvDate', '<=', $toDate);
                                                                 })
-                                                                ->where('documentSystemID',3);
+                                                                ->where('documentSystemID',3)->where('module_id', 1);
                                                           })
                                                           ->orWhere(function($query) use ($companyID, $fromDate, $toDate) {
                                                             $query->whereHas('meterial_issue', function($query) use ($companyID, $fromDate, $toDate) {
@@ -1637,6 +1641,13 @@ FROM
                                                                             ->whereDate('issueDate', '<=', $toDate);
                                                                 });
                                                                 });
+                                                      })->orWhere(function($query) use ($companyID, $fromDate, $toDate) {
+                                                        $query->whereHas('ioue', function($query) use ($companyID, $fromDate, $toDate) {
+                                                                $query->whereIn('companyID', $companyID)
+                                                                ->whereDate('bookingDate', '>=', $fromDate)
+                                                                ->whereDate('bookingDate', '<=', $toDate);
+                                                            })
+                                                            ->where('documentSystemID',161)->where('module_id', 2);
                                                       });
                                                   })
                                                   ->get();

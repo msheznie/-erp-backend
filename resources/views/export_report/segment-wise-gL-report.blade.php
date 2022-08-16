@@ -2,16 +2,14 @@
 <table>
         <thead>
         <div>
-                <td colspan="3"></td>
-                <td><B>{{$Title}} </B></td>
+                <td colspan="18"><h1 style="text-align: center">{{$company}} </h1></td>
             </div>
         </thead>
     </table>
     <table>
         <thead>
         <div>
-                <td colspan="3"></td>
-                <td><B>{{$company}}</B></td>
+                <td colspan="18"><h2 style="text-align: center">{{$Title}}</h2></td>
             </div>
         </thead>
     </table>
@@ -43,7 +41,7 @@
             <th class=""></th>
             @foreach($segment as $data1)
 
-                <th colspan="3" >
+                <th colspan="4" >
                 {{$data1}}
                 </th>
              @endforeach
@@ -59,7 +57,7 @@
                     {{$info}}
                 </th>
              @endforeach
-         
+             <th></th>
             @endforeach
 
         </tr>
@@ -76,6 +74,7 @@
                     <td>{{$dt[$key]['debit']}}</td>
                     <td>{{$dt[$key]['credit']}}</td>
                     <td>{{$dt[$key]['total']}}</td>
+                    <td></td>
                 @endforeach
             </tr>
         @endforeach

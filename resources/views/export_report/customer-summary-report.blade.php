@@ -3,22 +3,22 @@
     <div class="row">
         <div class="col-md-12">
             <table>
-                <thead>
                     <tr></tr>
                     <tr>
-                        <th colspan="22"  style="text-align: center;">
-                            Customer Summary Report
-                        </th>
+                        <td colspan="22" style="text-align:center;">
+                            <h1>{{$companyName}}</h1>
+                        </td>
                     </tr>
                     <tr>
-                        <th colspan="22" style="text-align:center;">
-                            {{$companyName}}
-                        </th>
+                        <td colspan="22"  style="text-align: center;">
+                            <h2>Customer Summary Report </h2> 
+                        </td>
                     </tr>
+
                     <tr></tr>
                     <tr>
                         <th colspan="1" style="text-align:left;">As of </th>
-                        <th colspan="2" style="text-align:left;">{{ $fromDate }}</th>
+                        <th colspan="2" style="text-align:left;">{{\App\helper\Helper::dateFormat($fromDate) }}</th>
                     </tr>
                     <tr>
                         <th colspan="1" style="text-align:left;">Year </th>
@@ -32,7 +32,6 @@
                     </tr>
                     <tr></tr>
                     <tr></tr>
-                </thead>
             </table>
         </div>
     </div>
@@ -47,20 +46,20 @@
     <table>
         <thead>
             <tr style="background-color: #d6e6f4">
-                <th colspan="2">company</th>
-                <th colspan="1">jan</th>
-                <th colspan="1">feb</th>
-                <th colspan="1">mar</th>
-                <th colspan="1">apr</th>
-                <th colspan="1">may</th>
-                <th colspan="1">jun</th>
-                <th colspan="1">jul</th>
-                <th colspan="1">aug</th>
-                <th colspan="1">sep</th>
-                <th colspan="1">oct</th>
-                <th colspan="1">nov</th>
-                <th colspan="1">dec</th>
-                <th colspan="7">total</th>
+                <th colspan="2">Company</th>
+                <th colspan="1">Jan</th>
+                <th colspan="1">Feb</th>
+                <th colspan="1">Mar</th>
+                <th colspan="1">Apr</th>
+                <th colspan="1">May</th>
+                <th colspan="1">Jun</th>
+                <th colspan="1">Jul</th>
+                <th colspan="1">Aug</th>
+                <th colspan="1">Sep</th>
+                <th colspan="1">Oct</th>
+                <th colspan="1">Nov</th>
+                <th colspan="1">Dec</th>
+                <th colspan="7">Total</th>
             </tr>
         </thead>
         <tbody>
@@ -146,20 +145,20 @@
     <table>
         <thead>
             <tr style="background-color: #d6e6f4">
-                <th colspan="2">company</th>
-                <th colspan="1">jan</th>
-                <th colspan="1">feb</th>
-                <th colspan="1">mar</th>
-                <th colspan="1">apr</th>
-                <th colspan="1">may</th>
-                <th colspan="1">jun</th>
-                <th colspan="1">jul</th>
-                <th colspan="1">aug</th>
-                <th colspan="1">sep</th>
-                <th colspan="1">oct</th>
-                <th colspan="1">nov</th>
-                <th colspan="1">dec</th>
-                <th colspan="7">total</th>
+                <th colspan="2">Company</th>
+                <th colspan="1">Jan</th>
+                <th colspan="1">Feb</th>
+                <th colspan="1">Mar</th>
+                <th colspan="1">Apr</th>
+                <th colspan="1">May</th>
+                <th colspan="1">Jun</th>
+                <th colspan="1">Jul</th>
+                <th colspan="1">Aug</th>
+                <th colspan="1">Sep</th>
+                <th colspan="1">Oct</th>
+                <th colspan="1">Nov</th>
+                <th colspan="1">Dec</th>
+                <th colspan="7">Total</th>
             </tr>
         </thead>
         <tbody>
@@ -241,21 +240,21 @@
     <table>
         <thead>
             <tr style="background-color: #d6e6f4">
-                <th colspan="2">company</th>
+                <th colspan="2">Company</th>
                 <th colspan="5">Segment</th>
-                <th colspan="1">jan</th>
-                <th colspan="1">feb</th>
-                <th colspan="1">mar</th>
-                <th colspan="1">apr</th>
-                <th colspan="1">may</th>
-                <th colspan="1">jun</th>
-                <th colspan="1">jul</th>
-                <th colspan="1">aug</th>
-                <th colspan="1">sep</th>
-                <th colspan="1">oct</th>
-                <th colspan="1">nov</th>
-                <th colspan="1">dec</th>
-                <th colspan="2">total</th>
+                <th colspan="1">Jan</th>
+                <th colspan="1">Feb</th>
+                <th colspan="1">Mar</th>
+                <th colspan="1">Apr</th>
+                <th colspan="1">May</th>
+                <th colspan="1">Jun</th>
+                <th colspan="1">Jul</th>
+                <th colspan="1">Aug</th>
+                <th colspan="1">Sep</th>
+                <th colspan="1">Oct</th>
+                <th colspan="1">Nov</th>
+                <th colspan="1">Dec</th>
+                <th colspan="2">Total</th>
             </tr>
         </thead>
         <tbody>
