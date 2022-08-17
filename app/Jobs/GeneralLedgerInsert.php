@@ -5381,7 +5381,6 @@ class GeneralLedgerInsert implements ShouldQueue
                         array_push($finalData, $data);
                     }
 
-                        Log::warning('case 110 ' . date('H:i:s'));
                         break;
                     case 111:
 
@@ -5399,8 +5398,8 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['serviceLineSystemID'] = null;
                             $data['serviceLineCode'] = null;
                             $data['masterCompanyID'] = null;
-                            $data['documentSystemID'] = 110;
-                            $data['documentID'] = 'GPOSS';
+                            $data['documentSystemID'] = 111;
+                            $data['documentID'] = 'RPOSS';
                             $data['documentSystemCode'] = $gl->documentSystemId;
                             $data['documentCode'] = $gl->documentCode;
                             $data['documentDate'] = date('Y-m-d H:i:s');
@@ -5427,7 +5426,6 @@ class GeneralLedgerInsert implements ShouldQueue
                             array_push($finalData, $data);
                         }
 
-                        Log::warning('case 110 ' . date('H:i:s'));
                         break;
                     default:
                         Log::warning('Document ID not found ' . date('H:i:s'));
