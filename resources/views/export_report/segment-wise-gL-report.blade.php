@@ -46,14 +46,13 @@
                 </th>
              @endforeach
         </tr>   
-
         <tr>
             <th class=""></th>
             <th class=""></th>
             <th class=""></th>
             @foreach($segment as $data1)
              @foreach($deb_cred as $info)
-                 <th >
+                 <th>
                     {{$info}}
                 </th>
              @endforeach
@@ -63,6 +62,7 @@
 
 
     </thead>
+
     <tbody>
         @foreach($data as $dt)
             <tr>
@@ -77,6 +77,7 @@
             </tr>
         @endforeach
     </tbody>
+
     <tfoot>
     <tfoot>
         <tr >
