@@ -751,6 +751,8 @@ class GRVDetailsAPIController extends AppBaseController
                             return $this->sendError('GRV date can not be greater than current date', 500);
                         }
                     }
+                } else {
+                    return $this->sendError('GRV Date Not Selected', 500);
                 }
 
                 if (isset($grvMasterData['stampDate'])) {
@@ -761,6 +763,8 @@ class GRVDetailsAPIController extends AppBaseController
                     if ($grvMasterData['stampDate'] > $currentDate) {
                         return $this->sendError('Stamp date can not be greater than current date', 500);
                     }
+                } else {
+                    return $this->sendError('Stamp Date Not Selected', 500);
                 }
 
                 if(isset($grvMasterData['grvLocation'])){
@@ -1399,31 +1403,31 @@ class GRVDetailsAPIController extends AppBaseController
             //return WarehouseMaster::checkManuefactoringWareHouse($grvMaster->grvLocation);
 
            
-            if ($itemAssign->financeCategoryMaster == 1 && WarehouseMaster::checkManuefactoringWareHouse($grvMaster->grvLocation)) // check inventory and manufacturing
-            {
-                if($financeCategorySub->includePLForGRVYN == -1)
-                {
-                    $GRVDetail_arr['financeGLcodePLSystemID'] = WarehouseMaster::getWIPGLSystemID($grvMaster->grvLocation);
-                    $GRVDetail_arr['financeGLcodePL'] = WarehouseMaster::getWIPGLCode($grvMaster->grvLocation);
-                    $GRVDetail_arr['financeGLcodebBSSystemID'] = null;
-                    $GRVDetail_arr['financeGLcodebBS'] = null;
-                }
-                else
-                {
-                    $GRVDetail_arr['financeGLcodebBSSystemID'] = WarehouseMaster::getWIPGLSystemID($grvMaster->grvLocation);
-                    $GRVDetail_arr['financeGLcodebBS'] = WarehouseMaster::getWIPGLCode($grvMaster->grvLocation);
-                    $GRVDetail_arr['financeGLcodePLSystemID'] = $financeCategorySub->financeGLcodePLSystemID;
-                    $GRVDetail_arr['financeGLcodePL'] = $financeCategorySub->financeGLcodePL;
-                }
+            // if ($itemAssign->financeCategoryMaster == 1 && WarehouseMaster::checkManuefactoringWareHouse($grvMaster->grvLocation)) // check inventory and manufacturing
+            // {
+            //     if($financeCategorySub->includePLForGRVYN == -1)
+            //     {
+            //         $GRVDetail_arr['financeGLcodePLSystemID'] = WarehouseMaster::getWIPGLSystemID($grvMaster->grvLocation);
+            //         $GRVDetail_arr['financeGLcodePL'] = WarehouseMaster::getWIPGLCode($grvMaster->grvLocation);
+            //         $GRVDetail_arr['financeGLcodebBSSystemID'] = null;
+            //         $GRVDetail_arr['financeGLcodebBS'] = null;
+            //     }
+            //     else
+            //     {
+            //         $GRVDetail_arr['financeGLcodebBSSystemID'] = WarehouseMaster::getWIPGLSystemID($grvMaster->grvLocation);
+            //         $GRVDetail_arr['financeGLcodebBS'] = WarehouseMaster::getWIPGLCode($grvMaster->grvLocation);
+            //         $GRVDetail_arr['financeGLcodePLSystemID'] = $financeCategorySub->financeGLcodePLSystemID;
+            //         $GRVDetail_arr['financeGLcodePL'] = $financeCategorySub->financeGLcodePL;
+            //     }
                 
     
-            } else {
+            // } else {
           
                 $GRVDetail_arr['financeGLcodebBSSystemID'] = $financeCategorySub->financeGLcodebBSSystemID;
                 $GRVDetail_arr['financeGLcodebBS'] = $financeCategorySub->financeGLcodebBS;
                 $GRVDetail_arr['financeGLcodePLSystemID'] = $financeCategorySub->financeGLcodePLSystemID;
                 $GRVDetail_arr['financeGLcodePL'] = $financeCategorySub->financeGLcodePL;
-            }
+          //  }
 
         
         

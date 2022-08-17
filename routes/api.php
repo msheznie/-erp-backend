@@ -358,6 +358,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getNotAssignedCompaniesByCustomer', 'CustomerAssignedAPIController@getNotAssignedCompaniesByCustomer');
         Route::post('exportCustomerMaster', 'CustomerMasterAPIController@exportCustomerMaster');
         Route::post('customerReOpen', 'CustomerMasterAPIController@customerReOpen');
+        Route::post('validateCustomerAmend', 'CustomerMasterAPIController@validateCustomerAmend');
 
         /** Bank master Created by Pasan  */
         Route::resource('bank/masters', 'BankMasterAPIController');
@@ -3044,7 +3045,8 @@ Route::resource('bid_boqs', 'BidBoqAPIController');
 Route::resource('cash_flow_report_details', 'CashFlowReportDetailAPIController');
 Route::resource('tender_circulars', 'TenderCircularsAPIController');
 
-
 Route::resource('po_cutoff_jobs', 'PoCutoffJobAPIController');
 
 Route::resource('po_cutoff_job_datas', 'PoCutoffJobDataAPIController');
+
+Route::resource('i_o_u_booking_masters', 'IOUBookingMasterAPIController');
