@@ -442,7 +442,7 @@ class ItemReturnDetailsAPIController extends AppBaseController
             'headers' => [
             'Content-Type'=> 'application/json',
             'token' => $hashKey,
-            'api_key' => $$api_key
+            'api_key' => $api_key
             ]
         ]);
 
