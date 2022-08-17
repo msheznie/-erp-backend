@@ -3043,3 +3043,8 @@ Route::resource('bid_boqs', 'BidBoqAPIController');
 
 Route::resource('cash_flow_report_details', 'CashFlowReportDetailAPIController');
 Route::resource('tender_circulars', 'TenderCircularsAPIController');
+
+
+Route::resource('po_cutoff_jobs', 'PoCutoffJobAPIController');
+
+Route::resource('po_cutoff_job_datas', 'PoCutoffJobDataAPIController');
