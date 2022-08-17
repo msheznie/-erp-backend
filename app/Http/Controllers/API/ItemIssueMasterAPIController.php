@@ -403,12 +403,15 @@ class ItemIssueMasterAPIController extends AppBaseController
     public function update($id, UpdateItemIssueMasterAPIRequest $request)
     {
         $input = $request->all();
+        $api_key = $request['api_key'];
         $input = array_except($input, ['created_by', 'confirmedByName', 'finance_period_by', 'finance_year_by','customer_by',
-            'confirmedByEmpID', 'confirmedDate', 'confirmed_by', 'confirmedByEmpSystemID','segment_by','warehouse_by']);
+            'confirmedByEmpID', 'confirmedDate', 'confirmed_by', 'confirmedByEmpSystemID','segment_by','warehouse_by','api_key']);
 
         $input = $this->convertArrayToValue($input);
         $wareHouseError = array('type' => 'wareHouse');
         $serviceLineError = array('type' => 'serviceLine');
+
+       
 
         /** @var ItemIssueMaster $itemIssueMaster */
         $itemIssueMaster = $this->itemIssueMasterRepository->findWithoutFail($id);
@@ -438,7 +441,7 @@ class ItemIssueMasterAPIController extends AppBaseController
                 'headers' => [
                 'Content-Type'=> 'application/json',
                 'token' => $hashKey,
-                'api_key' => '31da9d7e0ad66713c6505c5132426baf'
+                'api_key' => $api_key
                 ]
             ]);
 
@@ -1049,6 +1052,7 @@ class ItemIssueMasterAPIController extends AppBaseController
     public function getMaterielIssueFormData(Request $request)
     {
         $companyId = $request['companyId'];
+        $api_key = $request['api_key'];
 
         $segments = SegmentMaster::where("companySystemID", $companyId);
         if (isset($request['type']) && $request['type'] != 'filter') {
@@ -1135,7 +1139,7 @@ class ItemIssueMasterAPIController extends AppBaseController
             'headers' => [
             'Content-Type'=> 'application/json',
             'token' => $hashKey,
-            'api_key' => '31da9d7e0ad66713c6505c5132426baf'
+            'api_key' => $api_key
             ]
         ]);
 

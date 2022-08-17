@@ -401,9 +401,13 @@ class ItemReturnDetailsAPIController extends AppBaseController
      */
     public function update($id, UpdateItemReturnDetailsAPIRequest $request)
     {
-        $input = array_except($request->all(), ['uom_issued', 'uom_receiving', 'issue','item_by']);
+       
+    
+        $api_key = $request['api_key'];
+        $input = array_except($request->all(), ['uom_issued', 'uom_receiving', 'issue','item_by','api_key']);
         $input = $this->convertArrayToValue($input);
         $qtyError = array('type' => 'qty');
+        
 
         /** @var ItemReturnDetails $itemReturnDetails */
         $itemReturnDetails = $this->itemReturnDetailsRepository->findWithoutFail($id);
@@ -438,7 +442,7 @@ class ItemReturnDetailsAPIController extends AppBaseController
             'headers' => [
             'Content-Type'=> 'application/json',
             'token' => $hashKey,
-            'api_key' => '31da9d7e0ad66713c6505c5132426baf'
+            'api_key' => $$api_key
             ]
         ]);
 
@@ -522,7 +526,7 @@ class ItemReturnDetailsAPIController extends AppBaseController
             $input['qtyIssued'] = 0;
             $input['qtyIssuedDefaultMeasure'] = 0;
         }
-
+       
         $itemReturnDetails = $this->itemReturnDetailsRepository->update($input, $id);
 
         return $this->sendResponse($itemReturnDetails->toArray(), 'ItemReturnDetails updated successfully');
