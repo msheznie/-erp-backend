@@ -162,7 +162,7 @@ class QuotationDetailsAPIController extends AppBaseController
                 }
             }
         }
-        else if($input['itemCode']['id'])
+        else if(isset($input['itemCode']['id']) && $input['itemCode']['id']) 
         {
             $itemExist = QuotationDetails::where('itemAutoID', $input['itemCode']['id'])
             ->where('quotationMasterID', $input['quotationMasterID'])
