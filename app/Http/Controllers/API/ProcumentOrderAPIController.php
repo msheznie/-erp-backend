@@ -480,6 +480,18 @@ class ProcumentOrderAPIController extends AppBaseController
             unset($input['VATAmountPreview']);
         }
 
+        if (isset($input['totalSubOrderAmountPreview'])) {
+            unset($input['totalSubOrderAmountPreview']);
+        }
+        
+        if (isset($input['totalAddonAmountPreview'])) {
+            unset($input['totalAddonAmountPreview']);
+        }
+
+        if (isset($input['totalOrderAmountPreview'])) {
+            unset($input['totalOrderAmountPreview']);
+        }
+
         // po total vat
         $poMasterVATSum = PurchaseOrderDetails::select(DB::raw('COALESCE(SUM(VATAmount * noQty),0) as masterTotalVATSum'))
             ->where('purchaseOrderMasterID', $input['purchaseOrderID'])

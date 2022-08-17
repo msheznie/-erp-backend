@@ -41,29 +41,28 @@
             <th class=""></th>
             @foreach($segment as $data1)
 
-                <th colspan="4" >
+                <th colspan="3" >
                 {{$data1}}
                 </th>
              @endforeach
         </tr>   
-
         <tr>
             <th class=""></th>
             <th class=""></th>
             <th class=""></th>
             @foreach($segment as $data1)
              @foreach($deb_cred as $info)
-                 <th >
+                 <th>
                     {{$info}}
                 </th>
              @endforeach
-             <th></th>
             @endforeach
 
         </tr>
 
 
     </thead>
+
     <tbody>
         @foreach($data as $dt)
             <tr>
@@ -74,11 +73,11 @@
                     <td>{{$dt[$key]['debit']}}</td>
                     <td>{{$dt[$key]['credit']}}</td>
                     <td>{{$dt[$key]['total']}}</td>
-                    <td></td>
                 @endforeach
             </tr>
         @endforeach
     </tbody>
+
     <tfoot>
     <tfoot>
         <tr >

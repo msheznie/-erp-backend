@@ -237,7 +237,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
             if (($input['BPVdate'] >= $monthBegin) && ($input['BPVdate'] <= $monthEnd)) {
             } else {
-                return $this->sendError('Payment voucher date is not within financial period!', 500);
+                return $this->sendError('Payment voucher date is not within financial period!', 500,array('type' => 'finance_period'));
             }
 
             if (isset($input['invoiceType']) && $input['invoiceType'] == 3 && isset($input['preCheck']) && $input['preCheck'] &&  !Helper::isLocalSupplier($input['BPVsupplierID'], $input['companySystemID'])) {
