@@ -1733,6 +1733,15 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getPosGlConfigFormData', 'GposPaymentGlConfigDetailAPIController@getFormData');
         Route::get('getPosItemSearch', 'ItemMasterAPIController@getPosItemSearch');
         Route::get('getPosShiftDetails', 'ShiftDetailsAPIController@getPosShiftDetails');
+
+        Route::get('getPosSourceShiftDetails', 'ShiftDetailsAPIController@getPosSourceShiftDetails');
+        Route::get('getPosCustomerMasterDetails', 'ShiftDetailsAPIController@getPosCustomerMasterDetails');
+        Route::get('getPosCustomerMasterDetails', 'ShiftDetailsAPIController@getPosCustomerMasterDetails');
+        Route::post('postPosCustomerMapping', 'ShiftDetailsAPIController@postPosCustomerMapping');
+        Route::post('postPosTaxMapping', 'ShiftDetailsAPIController@postPosTaxMapping');
+        Route::post('postPosPayMapping', 'ShiftDetailsAPIController@postPosPayMapping');
+        Route::post('postPosEntries', 'ShiftDetailsAPIController@postPosEntries');
+
         Route::resource('currency_denominations', 'CurrencyDenominationAPIController');
         Route::resource('shift_details', 'ShiftDetailsAPIController');
         Route::get('getPosCustomerSearch', 'CustomerMasterAPIController@getPosCustomerSearch');
@@ -3045,4 +3054,5 @@ Route::resource('bid_boqs', 'BidBoqAPIController');
 Route::resource('cash_flow_report_details', 'CashFlowReportDetailAPIController');
 Route::resource('tender_circulars', 'TenderCircularsAPIController'); 
 
+Route::resource('p_o_s_s_o_u_r_c_e_shift_details', 'POSSOURCEShiftDetailsAPIController');
 Route::resource('i_o_u_booking_masters', 'IOUBookingMasterAPIController');
