@@ -983,21 +983,6 @@ class ShiftDetailsAPIController extends AppBaseController
                                 $companySystemID = $input2['companySystemID'];
 
 
-//                        if (isset($input2['isInDOorCI'])) {
-//                            unset($input2['timesReferred']);
-//                            $item = ItemAssigned::with(['item_master'])
-//                                ->where('itemCodeSystem', $item->itemAutoID)
-//                                ->where('companySystemID', $companySystemID)
-//                                ->first();
-//
-//                        } else {
-//                            $item = ItemAssigned::with(['item_master'])
-//                                ->where('idItemAssigned',$item->itemAutoID)
-//                                ->where('companySystemID', $companySystemID)
-//                                ->first();
-//
-//                        }
-
                                 $item = ItemAssigned::with(['item_master'])
                                     ->where('itemCodeSystem', $item->itemAutoID)
                                     ->where('companySystemID', $companySystemID)
@@ -1012,10 +997,6 @@ class ShiftDetailsAPIController extends AppBaseController
                                     return $this->sendError('Customer Invoice Direct Not Found');
                                 }
 
-
-//                                if (CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $input2['custInvoiceDirectAutoID'])->where('itemFinanceCategoryID', '!=', $item->financeCategoryMaster)->exists()) {
-//                                    return $this->sendError('Different finance category found. You can not add different finance category items for same invoice', 500);
-//                                }
 
                                 $input2['itemCodeSystem'] = $item->itemCodeSystem;
                                 $input2['itemPrimaryCode'] = $item->itemPrimaryCode;
@@ -1053,23 +1034,6 @@ class ShiftDetailsAPIController extends AppBaseController
                                 $input2['issueCostLocal'] = $itemCurrentCostAndQty['wacValueLocal'];
                                 $input2['issueCostRpt'] = $itemCurrentCostAndQty['wacValueReporting'];
 
-//                                if ($item->financeCategoryMaster == 1) {
-//                                    if ($input2['currentStockQty'] <= 0) {
-//                                        return $this->sendError("Stock Qty is 0. You cannot issue.", 500);
-//                                    }
-//
-//                                    if ($input2['currentWareHouseStockQty'] <= 0) {
-//                                        return $this->sendError("Warehouse stock Qty is 0. You cannot issue.", 500);
-//                                    }
-//
-//                                    if ($input2['issueCostLocal'] == 0 || $input2['issueCostRpt'] == 0) {
-//                                        return $this->sendError("Cost is 0. You cannot issue.", 500);
-//                                    }
-//
-//                                    if ($input2['issueCostLocal'] < 0 || $input2['issueCostRpt'] < 0) {
-//                                        return $this->sendError("Cost is negative. You cannot issue.", 500);
-//                                    }
-//                                }
 
 
                                 $input2['issueCostLocalTotal'] = $input2['issueCostLocal'] * $input2['qtyIssuedDefaultMeasure'];
@@ -1148,26 +1112,6 @@ class ShiftDetailsAPIController extends AppBaseController
                                     return $this->sendError("Finance Item category sub assigned not found", 500);
                                 }
 
-//                                if ((!$input2['financeGLcodebBS'] || !$input2['financeGLcodebBSSystemID']) && $input2['itemFinanceCategoryID'] != 2) {
-//                                    return $this->sendError('BS account cannot be null for ' . $item->itemPrimaryCode . '-' . $item->itemDescription, 500);
-//                                } elseif (!$input2['financeGLcodePL'] || !$input2['financeGLcodePLSystemID']) {
-//                                    return $this->sendError('Cost account cannot be null for ' . $item->itemPrimaryCode . '-' . $item->itemDescription, 500);
-//                                } elseif (!$input2['financeGLcodeRevenueSystemID'] || !$input2['financeGLcodeRevenue']) {
-//                                    return $this->sendError('Revenue account cannot be null for ' . $item->itemPrimaryCode . '-' . $item->itemDescription, 500);
-//                                }
-
-                                /*if (!$input2['financeGLcodebBS'] || !$input2['financeGLcodebBSSystemID']
-                                    || !$input2['financeGLcodePL'] || !$input2['financeGLcodePLSystemID']
-                                    || !$input2['financeGLcodeRevenueSystemID'] || !$input2['financeGLcodeRevenue']) {
-                                    return $this->sendError("Account code not updated.", 500);
-                                }*/
-
-//                                if ($input2['itemFinanceCategoryID'] == 1 || $input2['itemFinanceCategoryID'] == 2 || $input2['itemFinanceCategoryID'] == 4) {
-//                                    $alreadyAdded = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $input2['custInvoiceDirectAutoID'])->where('itemCodeSystem', $item->itemCodeSystem)->first();
-//                                    if ($alreadyAdded) {
-//                                        return $this->sendError("Selected item is already added. Please check again", 500);
-//                                    }
-//                                }
 
                                 // check policy 18
 
@@ -1199,13 +1143,9 @@ class ShiftDetailsAPIController extends AppBaseController
                                         ->first();
                                     /* approved=0*/
 
-//                    if (!empty($checkWhether)) {
-//                        return $this->sendError("There is a Customer Invoice (" . $checkWhether->bookingInvCode . ") pending for approval for the item you are trying to add. Please check again.", 500);
-//                    }
 
 
                                     $checkWhetherItemIssueMaster = ItemIssueMaster::where('companySystemID', $companySystemID)
-//            ->where('wareHouseFrom', $customerInvoiceDirect->wareHouseSystemCode)
                                         ->select([
                                             'erp_itemissuemaster.itemIssueAutoID',
                                             'erp_itemissuemaster.companySystemID',
@@ -1232,7 +1172,6 @@ class ShiftDetailsAPIController extends AppBaseController
                                     }
 
                                     $checkWhetherStockTransfer = StockTransfer::where('companySystemID', $companySystemID)
-//            ->where('locationFrom', $customerInvoiceDirect->wareHouseSystemCode)
                                         ->select([
                                             'erp_stocktransfer.stockTransferAutoID',
                                             'erp_stocktransfer.companySystemID',
@@ -1505,9 +1444,6 @@ class ShiftDetailsAPIController extends AppBaseController
                 }
                 POSTaxGLEntries::insert($taxGLArray1);
 
-
-
-
                 foreach ($taxItems2 as $gl) {
 
                     $documentCode = ('GPOS\\' . str_pad($gl->shiftId, 6, '0', STR_PAD_LEFT));
@@ -1644,7 +1580,7 @@ class ShiftDetailsAPIController extends AppBaseController
             GeneralLedgerInsert::dispatch($masterData);
             POSItemLedgerInsert::dispatch($masterData);
 
-//            BankLedgerInsert::dispatch($masterData);
+            BankLedgerInsert::dispatch($masterData);
             $taxLedgerData = null;
             TaxLedgerInsert::dispatch($masterData, $taxLedgerData);
 
@@ -1924,17 +1860,18 @@ class ShiftDetailsAPIController extends AppBaseController
 
                     \Illuminate\Support\Facades\DB::commit();
                 }
-            } catch (\Exception $exception) {
+            }
+            catch (\Exception $exception) {
                 \Illuminate\Support\Facades\DB::rollback();
                 return $this->sendError('Error Occurred'. $exception->getMessage() . 'Line :' . $exception->getLine());
             }
         }
 
 
-//            POSTaxGLEntries::where('shiftId', $shiftId)->delete();
-//            POSItemGLEntries::where('shiftId', $shiftId)->delete();
-//            POSBankGLEntries::where('shiftId', $shiftId)->delete();
-//            POSGLEntries::where('shiftId', $shiftId)->delete();
+            POSTaxGLEntries::where('shiftId', $shiftId)->delete();
+            POSItemGLEntries::where('shiftId', $shiftId)->delete();
+            POSBankGLEntries::where('shiftId', $shiftId)->delete();
+            POSGLEntries::where('shiftId', $shiftId)->delete();
 
          $logs=POSFinanceLog::where('shiftId', $shiftId)->update(['status' => 2]);
 
