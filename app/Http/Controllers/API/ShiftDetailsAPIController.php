@@ -609,6 +609,7 @@ class ShiftDetailsAPIController extends AppBaseController
                     ->selectRaw('pos_source_invoice.netTotal as amount, pos_source_invoice.invoiceID as invoiceID, pos_source_invoicepayments.GLCode as glCode, pos_source_invoice.shiftID as shiftId, pos_source_invoice.companyID as companyID')
                     ->join('pos_source_invoicepayments', 'pos_source_invoicepayments.invoiceID', '=', 'pos_source_invoice.invoiceID')
                     ->where('pos_source_invoice.shiftID', $shiftId)
+                    ->groupBy('pos_source_invoice.shiftID')
                     ->where('pos_source_invoice.isCreditSales', 0)
                     ->get();
 
@@ -1349,6 +1350,7 @@ class ShiftDetailsAPIController extends AppBaseController
                     ->selectRaw('pos_source_menusalesmaster.netTotal as amount, pos_source_menusalesmaster.menuSalesID as invoiceID, pos_source_menusalespayments.GLCode as glCode, pos_source_menusalesmaster.shiftID as shiftId, pos_source_menusalesmaster.companyID as companyID')
                     ->join('pos_source_menusalespayments', 'pos_source_menusalespayments.menuSalesID', '=', 'pos_source_menusalesmaster.menuSalesID')
                     ->where('pos_source_menusalesmaster.shiftID', $shiftId)
+                    ->groupBy('pos_source_menusalesmaster.shiftID')
                     ->get();
 
 
@@ -1587,13 +1589,12 @@ class ShiftDetailsAPIController extends AppBaseController
             \Illuminate\Support\Facades\DB::beginTransaction();
 
             try {
-                $invoice = DB::table('pos_source_menusalesitems')
+                $invoices = DB::table('pos_source_menusalesmaster')
                     ->selectRaw('pos_source_menusalesmaster.*')
-                    ->join('pos_source_menusalesmaster', 'pos_source_menusalesmaster.menuSalesID', '=', 'pos_source_menusalesitems.menuSalesID')
-                    ->join('pos_source_menusalesitemdetails', 'pos_source_menusalesitemdetails.menuSalesItemID', '=', 'pos_source_menusalesitems.menuSalesItemID')
                     ->where('pos_source_menusalesmaster.shiftID', $shiftId)
+                    ->where('pos_source_menusalesmaster.isCreditSales', 1)
                     ->first();
-                if($invoice) {
+                foreach ($invoices as $invoice) {
 
                     $companyFinanceYear = CompanyFinanceYear::where('bigginingDate', "<", $invoice->menuSalesDate)->where('endingDate', ">", $invoice->menuSalesDate)->where('companySystemID', $shiftDetails->companyID)->first();
 
@@ -1733,11 +1734,10 @@ class ShiftDetailsAPIController extends AppBaseController
                         $customerInvoiceDirects = $this->customerInvoiceDirectRepository->create($input);
                         $items = DB::table('pos_source_menusalesitems')
                             ->selectRaw('pos_source_menusalesitems.*')
-                            ->join('pos_source_menusalesmaster', 'pos_source_menusalesmaster.menuSalesID', '=', 'pos_source_menusalesitems.menuSalesID')
                             ->join('pos_source_menusalesitemdetails', 'pos_source_menusalesitemdetails.menuSalesItemID', '=', 'pos_source_menusalesitems.menuSalesItemID')
                             ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'pos_source_menusalesitemdetails.itemAutoID')
                             ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
-                            ->where('pos_source_menusalesmaster.shiftID', $shiftId)
+                            ->where('pos_source_menusalesitems.menuSalesID', $invoice->menuSalesID)
                             ->get();
                         foreach ($items as $item) {
                             /* $amount = $request['amount'];
@@ -1860,6 +1860,7 @@ class ShiftDetailsAPIController extends AppBaseController
 
                     \Illuminate\Support\Facades\DB::commit();
                 }
+                \Illuminate\Support\Facades\DB::commit();
             }
             catch (\Exception $exception) {
                 \Illuminate\Support\Facades\DB::rollback();
@@ -1868,10 +1869,10 @@ class ShiftDetailsAPIController extends AppBaseController
         }
 
 
-            POSTaxGLEntries::where('shiftId', $shiftId)->delete();
-            POSItemGLEntries::where('shiftId', $shiftId)->delete();
-            POSBankGLEntries::where('shiftId', $shiftId)->delete();
-            POSGLEntries::where('shiftId', $shiftId)->delete();
+//            POSTaxGLEntries::where('shiftId', $shiftId)->delete();
+//            POSItemGLEntries::where('shiftId', $shiftId)->delete();
+//            POSBankGLEntries::where('shiftId', $shiftId)->delete();
+//            POSGLEntries::where('shiftId', $shiftId)->delete();
 
          $logs=POSFinanceLog::where('shiftId', $shiftId)->update(['status' => 2]);
 
