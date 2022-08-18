@@ -438,7 +438,7 @@ class ItemReturnDetailsAPIController extends AppBaseController
         $resData = UserToken::create($insertData);
 
         $client = new Client();
-        $res = $client->request('GET', 'http://manu.uat-gears-int.com/index.php/MFQ_Api/getAllocatedJobs?companyID='.$itemReturnMaster->companySystemID.'&documentSystemID='.$itemReturnMaster->documentSystemID.'&documentsystemcode=120&itemautoID='.$itemReturnDetails->itemCodeSystem, [
+        $res = $client->request('GET', 'http://manu.uat-gears-int.com/index.php/MFQ_Api/getAllocatedJobs?companyID='.$itemReturnMaster->companySystemID.'&documentSystemID='.$itemReturnMaster->documentSystemID.'&documentsystemcode='.$itemReturnMaster->itemReturnAutoID.'&itemautoID='.$itemReturnDetails->itemCodeSystem, [
             'headers' => [
             'Content-Type'=> 'application/json',
             'token' => $hashKey,
