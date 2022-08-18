@@ -232,9 +232,11 @@
         <table style="width:100%">
             <tr>
                 <td style="width: 50%; text-align:left;vertical-align: top;">
-                    <b>{{$request->customer->ReportTitle}}</b><br>
-                    <b>{{$request->customer->customerAddress1}}</b><br>
-                    <b>Customer VATIN : {{$request->vatNumber}}</b><br>
+                    <b>CUSTOMER NAME : {{$request->customer->ReportTitle}}</b><br>
+                    <b>CUSTOMER ADDRESS : {{$request->customer->customerAddress1}}</b><br>
+                    <b>CUSTOMER TELEPHONE : {{isset($request->CustomerContactDetails->contactPersonTelephone)?$request->CustomerContactDetails->contactPersonTelephone:' '}}</b><br>
+                    <b>CUSTOMER FAX : {{isset($request->CustomerContactDetails->contactPersonFax)?$request->CustomerContactDetails->contactPersonFax:' '}}</b><br>
+                    <b>CUSTOMER VATIN : {{$request->vatNumber}}</b>
                 </td>
 
                 <td style="width: 50%; text-align:right;vertical-align: top;">
@@ -292,7 +294,7 @@
                 </tbody>
                 <tbody class="foot-amount">
                     <tr>
-                        <td style="text-align: left; border-right: none !important;"><b>Total</b></td>
+                        <td style="text-align: left; border-right: none !important;"><b>Total Amount</b></td>
                         <td class="text-right" style="border-left: 1px solid !important">@if ($request->invoicedetails)
                                 {{number_format($directTraSubTotal, $numberFormatting)}}
                             @endif</td>

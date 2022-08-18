@@ -3535,7 +3535,7 @@ WHERE
                             $data[$x]['Supplier Name'] = $val->supplierName;
                             $data[$x]['Currency'] = $val->CurrencyCode;
                             $data[$x]['Value'] = $val->payAmountSuppTrans;
-                            $data[$x]['Net Value'] = $val->payAmountSuppTrans + $val->taxTotalAmount;
+                            $data[$x]['Net Value'] = $val->payAmountSuppTrans;
                             $data[$x]['VAT'] = $val->taxTotalAmount;
                             $data[$x]['Posted Date'] = $val->postedDate;
                             $x++;

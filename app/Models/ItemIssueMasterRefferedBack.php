@@ -410,7 +410,9 @@ class ItemIssueMasterRefferedBack extends Model
         'contRefNo',
         'is_closed',
         'RollLevForApp_curr',
-        'timestamp'
+        'timestamp',
+        'mfqJobID',
+        'mfqJobNo'
     ];
 
     /**

@@ -27,8 +27,13 @@ class TenantEnforce
             'api/v1/srm/fetch',
             'api/v1/suppliers/registration/approvals/status',
             'api/v1/sendSupplierInvitation',
-            'api/v1/reSendInvitaitonLink'
+            'api/v1/reSendInvitaitonLink',
+            'api/v1/getMaterielIssueFormData',
+            'api/v1/item_issue_masters/{item_issue_master}',
+            'api/v1/item_return_details/{item_return_detail}'
         ];
+
+
 
         $dbRoutes = ['api/v1/purchase-request-add-all-items','api/v1/poItemsUpload','api/v1/createPrMaterialRequest','api/v1/uploadItemsDeliveryOrder','api/v1/uploadItems','api/v1/posMappingRequest'];
 
