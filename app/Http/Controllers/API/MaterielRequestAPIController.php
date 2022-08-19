@@ -1388,5 +1388,29 @@ class MaterielRequestAPIController extends AppBaseController
         }
         
     }
+
+    public function returnMaterialRequestPreCheck(Request $request)
+    {
+        $input = $request->all();
+        
+        $materialRequest = MaterielRequest::with(['confirmed_by'])->find($input['materialRequestID']);
+
+        if (empty($materialRequest)) {
+            return $this->sendError('Purchase Request not found');
+        }
+
+        if ($materialRequest->ClosedYN == 1) {
+            return $this->sendError('You cannot revert back this request as it is closed manually');
+        }
+
+        $checkPo = PurchaseOrderDetails::where('purchaseRequestID', $input['purchaseRequestID'])->count();
+
+        if ($checkPo > 0) {
+            return $this->sendError('Cannot return back to amend. Order is created for this request');
+        }
+
+        return $this->sendResponse($purchaseRequest, 'Purchase Request successfully return back to amend');
+    }
+
     
 }
