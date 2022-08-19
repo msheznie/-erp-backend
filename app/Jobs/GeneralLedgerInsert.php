@@ -5355,7 +5355,7 @@ class GeneralLedgerInsert implements ShouldQueue
                         $data['masterCompanyID'] = null;
                         $data['documentSystemID'] = 110;
                         $data['documentID'] = 'GPOSS';
-                        $data['documentSystemCode'] = $gl->documentSystemId;
+                        $data['documentSystemCode'] = $masterModel["autoID"];
                         $data['documentCode'] = $gl->documentCode;
                         $data['documentDate'] = date('Y-m-d H:i:s');
                         $data['documentYear'] = \Helper::dateYear(date('Y-m-d H:i:s'));
@@ -5400,7 +5400,7 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['masterCompanyID'] = null;
                             $data['documentSystemID'] = 111;
                             $data['documentID'] = 'RPOSS';
-                            $data['documentSystemCode'] = $gl->documentSystemId;
+                            $data['documentSystemCode'] = $masterModel["autoID"];
                             $data['documentCode'] = $gl->documentCode;
                             $data['documentDate'] = date('Y-m-d H:i:s');
                             $data['documentYear'] = \Helper::dateYear(date('Y-m-d H:i:s'));
