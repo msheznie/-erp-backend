@@ -70,6 +70,7 @@ use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyPolicyMaster;
 use App\Models\CurrencyMaster;
 use App\Models\CustomerInvoiceDirect;
+use App\Models\BudgetMaster;
 use App\Models\CustomerInvoiceDirectDetail;
 use App\Models\CustomerInvoiceItemDetails;
 use App\Models\CustomerReceivePayment;
@@ -151,6 +152,7 @@ use App\helper\CancelDocument;
 use App\Jobs\GeneralLedgerInsert;
 use App\Models\GeneralLedger;
 use App\helper\CreateExcel;
+use App\helper\BudgetConsumptionService;
 /**
  * Class ProcumentOrderController
  * @package App\Http\Controllers\API
@@ -8998,5 +9000,46 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             DB::rollBack();
             return $this->sendError($exception->getMessage());
         }
+    }
+
+    public function checkBudgetCutOffForPo(Request $request)
+    {
+        $input = $request->all();
+
+        $purchaseOrder = ProcumentOrder::find($input['purchaseOrderID']);
+
+        if (!$purchaseOrder) {
+            return $this->sendError("Purchase Order not found");
+        }
+
+        $checkBudget = CompanyPolicyMaster::where('companyPolicyCategoryID', 17)
+                                        ->where('companySystemID', $purchaseOrder->companySystemID)
+                                        ->first();
+
+
+        $notifyCutOffDate = false;
+        $notifyCutOffDateMessages = [];
+        if ($checkBudget && $checkBudget->isYesNO) {
+            $budgetConsumedData = BudgetConsumptionService::getConsumptionData($input['documentSystemID'], $input['purchaseOrderID']);
+            
+            if (count($budgetConsumedData['budgetmasterIDs']) > 0) {
+                $budgetIds = array_unique($budgetConsumedData['budgetmasterIDs']);
+                
+                foreach ($budgetIds as $key => $value) {
+                    $budgetMaster = BudgetMaster::with(['finance_year_by'])->find($value);
+
+                    if ($budgetMaster && $budgetMaster->finance_year_by) {
+                        $cutOffDate = Carbon::parse($budgetMaster->finance_year_by->endingDate)->addMonths($budgetMaster->cutOffPeriod);
+
+                        if (Carbon::parse($purchaseOrder->expectedDeliveryDate) > $cutOffDate) {
+                            $notifyCutOffDate = true;
+                            $notifyCutOffDateMessages[] = "Expected delivery date ".Carbon::parse($purchaseOrder->expectedDeliveryDate)->format('Y-m-d')." of this document is greater than budget cutoff date ".$cutOffDate->format('Y-m-d');
+                        }
+                    }
+                }
+            }
+        }
+
+        return $this->sendResponse(['notifyCutOffDate' => $notifyCutOffDate, 'messages' => $notifyCutOffDateMessages], 'cut off date checked successfully!!');
     }
 }
