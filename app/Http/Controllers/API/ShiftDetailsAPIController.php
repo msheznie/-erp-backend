@@ -55,11 +55,11 @@ use App\Models\POSFinanceLog;
 use App\Models\POSGLEntries;
 use App\Models\POSInvoiceSource;
 use App\Models\POSItemGLEntries;
-use App\Models\POSSourceCustomerMaster;
+use App\Models\POSSOURCECustomerMaster;
 use App\Models\POSSourcePaymentGlConfig;
-use App\Models\POSSourcePaymentGlConfigDetail;
+use App\Models\POSSOURCEPaymentGlConfigDetail;
 use App\Models\POSSOURCEShiftDetails;
-use App\Models\POSSourceTaxMaster;
+use App\Models\POSSOURCETaxMaster;
 use App\Models\POSTaxGLEntries;
 use App\Models\PurchaseReturn;
 use App\Models\QuotationDetails;
@@ -555,7 +555,7 @@ class ShiftDetailsAPIController extends AppBaseController
 
         $cusPOSId = $request->cusPOSId;
         $cusERPId = $request->cusERPId;
-        $output = POSSourceCustomerMaster::where('customerAutoID', $cusPOSId)->update(['erp_customer_master_id' => $cusERPId]);
+        $output = POSSOURCECustomerMaster::where('customerAutoID', $cusPOSId)->update(['erp_customer_master_id' => $cusERPId]);
 
         return $this->sendResponse($output, "Shift Details retrieved successfully");
     }
@@ -564,7 +564,7 @@ class ShiftDetailsAPIController extends AppBaseController
 
         $taxPOSId = $request->taxPOSId;
         $taxERPId = $request->taxERPId;
-        $output = POSSourceTaxMaster::where('taxMasterAutoID', $taxPOSId)->update(['erp_tax_master_id' => $taxERPId]);
+        $output = POSSOURCETaxMaster::where('taxMasterAutoID', $taxPOSId)->update(['erp_tax_master_id' => $taxERPId]);
 
         return $this->sendResponse($output, "Shift Details retrieved successfully");
     }
@@ -573,7 +573,7 @@ class ShiftDetailsAPIController extends AppBaseController
 
         $payPOSId = $request->payPOSId;
         $payERPId = $request->payERPId;
-        $output = POSSourcePaymentGlConfigDetail::where('ID', $payPOSId)->update(['erp_bank_acc_id' => $payERPId]);
+        $output = POSSOURCEPaymentGlConfigDetail::where('ID', $payPOSId)->update(['erp_bank_acc_id' => $payERPId]);
 
         return $this->sendResponse($output, "Shift Details retrieved successfully");
     }
