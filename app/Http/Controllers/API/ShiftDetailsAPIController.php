@@ -606,10 +606,11 @@ class ShiftDetailsAPIController extends AppBaseController
             if($isPostGroupBy == 0) {
 
                 $bankGL = DB::table('pos_source_invoice')
-                    ->selectRaw('pos_source_invoice.netTotal as amount, pos_source_invoice.invoiceID as invoiceID, pos_source_invoicepayments.GLCode as glCode, pos_source_invoice.shiftID as shiftId, pos_source_invoice.companyID as companyID')
+                    ->selectRaw('SUM(pos_source_invoice.netTotal) as amount, pos_source_invoice.invoiceID as invoiceID, pos_source_invoicepayments.GLCode as glCode, pos_source_invoice.shiftID as shiftId, pos_source_invoice.companyID as companyID')
                     ->join('pos_source_invoicepayments', 'pos_source_invoicepayments.invoiceID', '=', 'pos_source_invoice.invoiceID')
                     ->where('pos_source_invoice.shiftID', $shiftId)
                     ->groupBy('pos_source_invoice.shiftID')
+                    ->groupBy('pos_source_invoice.invoiceID')
                     ->where('pos_source_invoice.isCreditSales', 0)
                     ->get();
 
@@ -625,7 +626,7 @@ class ShiftDetailsAPIController extends AppBaseController
 
 
                 $taxItems = DB::table('pos_source_invoicedetail')
-                    ->selectRaw('pos_source_invoicedetail.companyLocalAmount as amount, pos_source_invoice.invoiceID as invoiceID, pos_source_invoice.shiftID as shiftId, pos_source_invoice.companyID as companyID, pos_source_invoicedetail.itemAutoID as itemID, itemmaster.financeCategorySub as financeCategorySub, financeitemcategorysub.financeGLcodeRevenueSystemID as glCode, pos_source_taxledger.amount as taxAmount, pos_source_taxledger.taxMasterID as taxMasterID, erp_taxmaster_new.outputVatGLAccountAutoID as outputVatGLCode')
+                    ->selectRaw('pos_source_taxledger.amount as amount, pos_source_invoice.invoiceID as invoiceID, pos_source_invoice.shiftID as shiftId, pos_source_invoice.companyID as companyID, pos_source_invoicedetail.itemAutoID as itemID, itemmaster.financeCategorySub as financeCategorySub, financeitemcategorysub.financeGLcodeRevenueSystemID as glCode, pos_source_taxledger.amount as taxAmount, pos_source_taxledger.taxMasterID as taxMasterID, erp_taxmaster_new.outputVatGLAccountAutoID as outputVatGLCode')
                     ->join('pos_source_invoice', 'pos_source_invoice.invoiceID', '=', 'pos_source_invoicedetail.invoiceID')
                     ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'pos_source_invoicedetail.itemAutoID')
                     ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
@@ -636,11 +637,13 @@ class ShiftDetailsAPIController extends AppBaseController
                     ->get();
 
                 $bankItems = DB::table('pos_source_invoice')
-                    ->selectRaw('pos_source_invoice.netTotal as amount, pos_source_invoice.invoiceID as invoiceID, pos_source_paymentglconfigdetail.erp_bank_acc_id as bankID, pos_source_invoicepayments.GLCode as glCode, pos_source_invoice.shiftID as shiftId, pos_source_invoice.companyID as companyID, pos_source_invoicepayments.paymentConfigDetailID as payDetailID')
+                    ->selectRaw('SUM(pos_source_invoice.netTotal) as amount, pos_source_invoice.invoiceID as invoiceID, pos_source_paymentglconfigdetail.erp_bank_acc_id as bankID, pos_source_invoicepayments.GLCode as glCode, pos_source_invoice.shiftID as shiftId, pos_source_invoice.companyID as companyID, pos_source_invoicepayments.paymentConfigDetailID as payDetailID')
                     ->join('pos_source_invoicepayments', 'pos_source_invoicepayments.invoiceID', '=', 'pos_source_invoice.invoiceID')
                     ->join('pos_source_paymentglconfigdetail', 'pos_source_paymentglconfigdetail.ID', '=', 'pos_source_invoicepayments.paymentConfigDetailID')
                     ->where('pos_source_invoice.shiftID', $shiftId)
                     ->where('pos_source_invoice.isCreditSales', 0)
+                    ->groupBy('pos_source_invoice.shiftID')
+                    ->groupBy('pos_source_invoice.invoiceID')
                     ->get();
 
             }
@@ -651,6 +654,7 @@ class ShiftDetailsAPIController extends AppBaseController
                     ->join('pos_source_invoicepayments', 'pos_source_invoicepayments.invoiceID', '=', 'pos_source_invoice.invoiceID')
                     ->where('pos_source_invoice.shiftID', $shiftId)
                     ->groupBy('pos_source_invoice.shiftID')
+                    ->groupBy('pos_source_invoice.invoiceID')
                     ->where('pos_source_invoice.isCreditSales', 0)
                     ->get();
 
@@ -667,7 +671,7 @@ class ShiftDetailsAPIController extends AppBaseController
 
 
                 $taxItems = DB::table('pos_source_invoicedetail')
-                    ->selectRaw('SUM(pos_source_invoicedetail.companyLocalAmount) as amount, pos_source_invoice.invoiceID as invoiceID, pos_source_invoice.shiftID as shiftId, pos_source_invoice.companyID as companyID, pos_source_invoicedetail.itemAutoID as itemID, itemmaster.financeCategorySub as financeCategorySub, financeitemcategorysub.financeGLcodeRevenueSystemID as glCode, SUM(pos_source_taxledger.amount) as taxAmount, pos_source_taxledger.taxMasterID as taxMasterID, erp_taxmaster_new.outputVatGLAccountAutoID as outputVatGLCode')
+                    ->selectRaw('SUM(pos_source_taxledger.amount) as amount, pos_source_invoice.invoiceID as invoiceID, pos_source_invoice.shiftID as shiftId, pos_source_invoice.companyID as companyID, pos_source_invoicedetail.itemAutoID as itemID, itemmaster.financeCategorySub as financeCategorySub, financeitemcategorysub.financeGLcodeRevenueSystemID as glCode, SUM(pos_source_taxledger.amount) as taxAmount, pos_source_taxledger.taxMasterID as taxMasterID, erp_taxmaster_new.outputVatGLAccountAutoID as outputVatGLCode')
                     ->join('pos_source_invoice', 'pos_source_invoice.invoiceID', '=', 'pos_source_invoicedetail.invoiceID')
                     ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'pos_source_invoicedetail.itemAutoID')
                     ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
@@ -675,6 +679,7 @@ class ShiftDetailsAPIController extends AppBaseController
                     ->join('erp_taxmaster_new', 'erp_taxmaster_new.taxMasterAutoID', '=', 'pos_source_taxledger.taxMasterID')
                     ->where('pos_source_invoice.shiftID', $shiftId)
                     ->groupBy('pos_source_invoice.shiftID')
+                    ->groupBy('pos_source_invoice.invoiceID')
                     ->where('pos_source_invoice.isCreditSales', 0)
                     ->get();
 
@@ -686,6 +691,7 @@ class ShiftDetailsAPIController extends AppBaseController
                     ->join('pos_source_paymentglconfigdetail', 'pos_source_paymentglconfigdetail.ID', '=', 'pos_source_invoicepayments.paymentConfigDetailID')
                     ->where('pos_source_invoice.shiftID', $shiftId)
                     ->groupBy('pos_source_invoice.shiftID')
+                    ->groupBy('pos_source_invoice.invoiceID')
                     ->where('pos_source_invoice.isCreditSales', 0)
                     ->get();
 
@@ -824,8 +830,8 @@ class ShiftDetailsAPIController extends AppBaseController
 
             $masterData = ['documentSystemID' => 110, 'autoID' => $shiftId, 'companySystemID' => $shiftDetails->companyID, 'employeeSystemID' => $logged_user, 'companyID' => $shiftDetails->companyCode];
             GeneralLedgerInsert::dispatch($masterData);
-            BankLedgerInsert::dispatch($masterData);
             POSItemLedgerInsert::dispatch($masterData);
+            BankLedgerInsert::dispatch($masterData);
             $taxLedgerData = null;
             TaxLedgerInsert::dispatch($masterData,$taxLedgerData);
 
@@ -1347,10 +1353,11 @@ class ShiftDetailsAPIController extends AppBaseController
             if ($isPostGroupBy == 0) {
 
                 $bankGL = DB::table('pos_source_menusalesmaster')
-                    ->selectRaw('pos_source_menusalesmaster.cashAmount as amount, pos_source_menusalesmaster.menuSalesID as invoiceID, pos_source_menusalespayments.GLCode as glCode, pos_source_menusalesmaster.shiftID as shiftId, pos_source_menusalesmaster.companyID as companyID')
+                    ->selectRaw('SUM(pos_source_menusalesmaster.cashReceivedAmount) as amount, pos_source_menusalesmaster.menuSalesID as invoiceID, pos_source_menusalespayments.GLCode as glCode, pos_source_menusalesmaster.shiftID as shiftId, pos_source_menusalesmaster.companyID as companyID')
                     ->join('pos_source_menusalespayments', 'pos_source_menusalespayments.menuSalesID', '=', 'pos_source_menusalesmaster.menuSalesID')
                     ->where('pos_source_menusalesmaster.shiftID', $shiftId)
                     ->groupBy('pos_source_menusalesmaster.shiftID')
+                    ->groupBy('pos_source_menusalesmaster.menuSalesID')
                     ->get();
 
 
@@ -1379,18 +1386,21 @@ class ShiftDetailsAPIController extends AppBaseController
                     ->get();
 
                 $bankItems = DB::table('pos_source_menusalesmaster')
-                    ->selectRaw('pos_source_menusalesmaster.netTotal as amount, pos_source_menusalesmaster.menuSalesID as invoiceID, pos_source_paymentglconfigdetail.erp_bank_acc_id as bankID, pos_source_menusalespayments.GLCode as glCode, pos_source_menusalesmaster.shiftID as shiftId, pos_source_menusalesmaster.companyID as companyID, pos_source_menusalespayments.paymentConfigDetailID as payDetailID')
+                    ->selectRaw('SUM(pos_source_menusalesmaster.cashReceivedAmount) as amount, pos_source_menusalesmaster.menuSalesID as invoiceID, pos_source_paymentglconfigdetail.erp_bank_acc_id as bankID, pos_source_menusalespayments.GLCode as glCode, pos_source_menusalesmaster.shiftID as shiftId, pos_source_menusalesmaster.companyID as companyID, pos_source_menusalespayments.paymentConfigDetailID as payDetailID')
                     ->join('pos_source_menusalespayments', 'pos_source_menusalespayments.menuSalesID', '=', 'pos_source_menusalesmaster.menuSalesID')
                     ->join('pos_source_paymentglconfigdetail', 'pos_source_paymentglconfigdetail.ID', '=', 'pos_source_menusalespayments.paymentConfigDetailID')
                     ->where('pos_source_menusalesmaster.shiftID', $shiftId)
+                    ->groupBy('pos_source_menusalesmaster.menuSalesID')
+                    ->groupBy('pos_source_menusalesmaster.shiftID')
                     ->get();
 
             }
             if ($isPostGroupBy == 1) {
                 $bankGL = DB::table('pos_source_menusalesmaster')
-                    ->selectRaw('SUM(pos_source_menusalesmaster.netTotal) as amount, pos_source_menusalesmaster.menuSalesID as invoiceID, pos_source_menusalespayments.GLCode as glCode, pos_source_menusalesmaster.shiftID as shiftId, pos_source_menusalesmaster.companyID as companyID')
+                    ->selectRaw('SUM(pos_source_menusalesmaster.cashReceivedAmount) as amount, pos_source_menusalesmaster.menuSalesID as invoiceID, pos_source_menusalespayments.GLCode as glCode, pos_source_menusalesmaster.shiftID as shiftId, pos_source_menusalesmaster.companyID as companyID')
                     ->join('pos_source_menusalespayments', 'pos_source_menusalespayments.menuSalesID', '=', 'pos_source_menusalesmaster.menuSalesID')
                     ->where('pos_source_menusalesmaster.shiftID', $shiftId)
+                    ->groupBy('pos_source_menusalesmaster.menuSalesID')
                     ->groupBy('pos_source_menusalesmaster.shiftID')
                     ->get();
 
@@ -1423,10 +1433,11 @@ class ShiftDetailsAPIController extends AppBaseController
                     ->get();
 
                 $bankItems = DB::table('pos_source_menusalesmaster')
-                    ->selectRaw('pos_source_menusalesmaster.netTotal as amount, pos_source_menusalesmaster.menuSalesID as invoiceID, pos_source_paymentglconfigdetail.erp_bank_acc_id as bankID, pos_source_menusalespayments.GLCode as glCode, pos_source_menusalesmaster.shiftID as shiftId, pos_source_menusalesmaster.companyID as companyID, pos_source_menusalespayments.paymentConfigDetailID as payDetailID')
+                    ->selectRaw('SUM(pos_source_menusalesmaster.cashReceivedAmount) as amount, pos_source_menusalesmaster.menuSalesID as invoiceID, pos_source_paymentglconfigdetail.erp_bank_acc_id as bankID, pos_source_menusalespayments.GLCode as glCode, pos_source_menusalesmaster.shiftID as shiftId, pos_source_menusalesmaster.companyID as companyID, pos_source_menusalespayments.paymentConfigDetailID as payDetailID')
                     ->join('pos_source_menusalespayments', 'pos_source_menusalespayments.menuSalesID', '=', 'pos_source_menusalesmaster.menuSalesID')
                     ->join('pos_source_paymentglconfigdetail', 'pos_source_paymentglconfigdetail.ID', '=', 'pos_source_menusalespayments.paymentConfigDetailID')
                     ->where('pos_source_menusalesmaster.shiftID', $shiftId)
+                    ->groupBy('pos_source_menusalesmaster.menuSalesID')
                     ->groupBy('pos_source_menusalesmaster.shiftID')
                     ->get();
             }
@@ -1876,7 +1887,7 @@ class ShiftDetailsAPIController extends AppBaseController
 
          $logs=POSFinanceLog::where('shiftId', $shiftId)->update(['status' => 2]);
 
-        return $this->sendResponse([$sumQty, $invItems], "Shift Details retrieved successfully");
+        return $this->sendResponse([$logs, $invItems], "Shift Details retrieved successfully");
 
     }
 

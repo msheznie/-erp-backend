@@ -1320,18 +1320,33 @@ class TaxLedgerInsert implements ShouldQueue
 
                         $masterDocumentDate = date('Y-m-d H:i:s');
 
+                        $ledgerData['documentCode'] = $taxEntries->documentCode;
+                        $ledgerData['documentDate'] = $masterDocumentDate;
+                        $ledgerData['documentFianlApprovedByEmpSystemID'] = $empID->employeeSystemID;
+                        $taxItems = DB::table('pos_source_invoicedetail')
+                            ->selectRaw('SUM(pos_source_taxledger.amount) as amount, pos_source_taxledger.taxMasterID as taxID, pos_source_invoice.companyReportingExchangeRate as rptER, pos_source_invoice.transactionExchangeRate as transER, pos_source_invoice.companyLocalExchangeRate as localER')
+                            ->join('pos_source_invoice', 'pos_source_invoice.invoiceID', '=', 'pos_source_invoicedetail.invoiceID')
+                            ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'pos_source_invoicedetail.itemAutoID')
+                            ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
+                            ->join('pos_source_taxledger', 'pos_source_taxledger.documentDetailAutoID', '=', 'pos_source_invoicedetail.invoiceDetailsID')
+                            ->join('erp_taxmaster_new', 'erp_taxmaster_new.taxMasterAutoID', '=', 'pos_source_taxledger.taxMasterID')
+                            ->where('pos_source_invoice.shiftID', $masterModel["autoID"])
+                            ->groupBy('pos_source_invoice.shiftID')
+                            ->groupBy('pos_source_invoice.invoiceID')
+                            ->where('pos_source_invoice.isCreditSales', 0)
+                            ->first();
 
-                        $ledgerData['subCategoryID'] = 1;
-                        $ledgerData['masterCategoryID'] = 1;
-                        $ledgerData['localAmount'] = 1;
-                        $ledgerData['rptAmount'] = 1;
-                        $ledgerData['transAmount'] = 1;
-                        $ledgerData['transER'] = 1;
-                        $ledgerData['localER'] = 1;
-                        $ledgerData['comRptER'] = 1;
-                        $ledgerData['localCurrencyID'] = 1;
-                        $ledgerData['rptCurrencyID'] = 1;
-                        $ledgerData['transCurrencyID'] = 1;
+                        $ledgerData['subCategoryID'] = $taxItems->taxID;
+                        $ledgerData['masterCategoryID'] = $taxItems->taxID;
+                        $ledgerData['localAmount'] = $taxItems->amount;
+                        $ledgerData['rptAmount'] = $taxItems->amount/$taxItems->rptER;
+                        $ledgerData['transAmount'] = $taxItems->amount;
+                        $ledgerData['transER'] = $taxItems->transER;
+                        $ledgerData['localER'] = $taxItems->localER;
+                        $ledgerData['comRptER'] = $taxItems->rptER;
+                        $ledgerData['localCurrencyID'] = $taxItems->companyLocalCurrencyID;
+                        $ledgerData['rptCurrencyID'] = $taxItems->companyReportingCurrencyID;
+                        $ledgerData['transCurrencyID'] = $taxItems->transactionCurrencyID;
 
                         array_push($finalData, $ledgerData);
 
