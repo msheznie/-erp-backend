@@ -722,7 +722,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('cancelMaterielRequest', 'MaterielRequestAPIController@cancelMaterielRequest');
         Route::get('update-qnty-by-location', 'MaterielRequestAPIController@updateQntyByLocation');
         Route::get('materiel_request/details/{id}', 'MaterielRequestAPIController@getMaterielRequestDetails');
-
+        Route::get('returnMaterialRequestPreCheck', 'MaterielRequestAPIController@returnMaterialRequestPreCheck');
+        Route::post('returnMaterialRequest', 'MaterielRequestAPIController@returnMaterialRequest');
 
        
 
