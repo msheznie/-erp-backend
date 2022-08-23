@@ -214,9 +214,9 @@ class GeneralLedgerPostingService
                     } else if ($masterModel["documentSystemID"] == 15) {
                         $debitNoteData = DebitNote::find($masterModel["autoID"]);
                         if ($debitNoteData->type == 2) {
-                            $apLedgerInsert = \App\Jobs\EmployeeLedgerInsert::dispatch($masterModel);
+                            $apLedgerInsert = \App\Jobs\EmployeeLedgerInsert::dispatch($masterModel,$dataBase);
                         } else {
-                            $apLedgerInsert = \App\Jobs\AccountPayableLedgerInsert::dispatch($masterModel);
+                            $apLedgerInsert = \App\Jobs\AccountPayableLedgerInsert::dispatch($masterModel, $dataBase);
                         }
                     } else if ($masterModel["documentSystemID"] == 4) {
                         $suppInvData = PaySupplierInvoiceMaster::find($masterModel["autoID"]);
@@ -224,7 +224,7 @@ class GeneralLedgerPostingService
                             $apLedgerInsert = \App\Jobs\EmployeeLedgerInsert::dispatch($masterModel, $dataBase);
                         } else {
                             if ($suppInvData->invoiceType != 3) {
-                                $apLedgerInsert = \App\Jobs\AccountPayableLedgerInsert::dispatch($masterModel);
+                                $apLedgerInsert = \App\Jobs\AccountPayableLedgerInsert::dispatch($masterModel, $dataBase);
                             }
                         }
                     } else {
