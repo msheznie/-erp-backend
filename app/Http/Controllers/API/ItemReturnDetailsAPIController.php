@@ -236,15 +236,43 @@ class ItemReturnDetailsAPIController extends AppBaseController
             ->where('itemCategorySubID', $input['itemFinanceCategorySubID'])
             ->first();
 
+
         if (!empty($financeItemCategorySubAssigned)) {
-            $input['financeGLcodebBS'] = $financeItemCategorySubAssigned->financeGLcodebBS;
-            $input['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
-            $input['financeGLcodePL'] = $financeItemCategorySubAssigned->financeGLcodePL;
-            $input['financeGLcodePLSystemID'] = $financeItemCategorySubAssigned->financeGLcodePLSystemID;
+
+          
+
+            if(WarehouseMaster::checkManuefactoringWareHouse($itemReturn->wareHouseLocation))
+            {
+               if($financeItemCategorySubAssigned->includePLForGRVYN == -1)
+               {
+                   $input['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
+                   $input['financeGLcodebBS'] = $financeItemCategorySubAssigned->financeGLcodebBS;
+                   $input['financeGLcodePLSystemID'] = WarehouseMaster::getWIPGLSystemID($itemReturn->wareHouseLocation);
+                   $input['financeGLcodePL'] = WarehouseMaster::getWIPGLCode($itemReturn->wareHouseLocation);
+               }
+               else
+               {
+                $input['financeGLcodebBSSystemID'] = WarehouseMaster::getWIPGLSystemID($itemReturn->wareHouseLocation);
+                $input['financeGLcodebBS'] = WarehouseMaster::getWIPGLCode($itemReturn->wareHouseLocation);
+                $input['financeGLcodePLSystemID'] = $financeItemCategorySubAssigned->financeGLcodePLSystemID;
+                $input['financeGLcodePL'] = $financeItemCategorySubAssigned->financeGLcodePL;
+               }
+            }   
+            else
+            {
+                
+                $input['financeGLcodebBS'] = $financeItemCategorySubAssigned->financeGLcodebBS;
+                $input['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
+                $input['financeGLcodePL'] = $financeItemCategorySubAssigned->financeGLcodePL;
+                $input['financeGLcodePLSystemID'] = $financeItemCategorySubAssigned->financeGLcodePLSystemID;
+            }
+
             $input['includePLForGRVYN'] = $financeItemCategorySubAssigned->includePLForGRVYN;
+
         } else {
             return $this->sendError("Account code not updated.", 500);
         }
+
 
         if (!$input['financeGLcodebBS'] || !$input['financeGLcodebBSSystemID'] || !$input['financeGLcodePL'] || !$input['financeGLcodePLSystemID']) {
             return $this->sendError("Account code not updated.", 500);
