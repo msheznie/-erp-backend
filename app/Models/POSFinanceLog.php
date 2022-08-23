@@ -50,7 +50,6 @@ class POSFinanceLog extends Model
 {
 
     public $table = 'pos_finance_log';
-    public $timestamps = false;
 
 
     const CREATED_AT = 'created_at';
