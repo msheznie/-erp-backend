@@ -1946,7 +1946,7 @@ class ShiftDetailsAPIController extends AppBaseController
 
 
 
-        return $this->sendResponse([$logs,$invItemsRevenue], "Invoice Posting successfull");
+        return $this->sendResponse([$logs], "Invoice Posting successfull");
 
 
     }
