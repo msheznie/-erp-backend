@@ -596,17 +596,16 @@ class ShiftDetailsAPIController extends AppBaseController
         $postedShifts = POSFinanceLog::groupBy('shiftId')->where('status', 2)->get();
         $postedShifts = collect($postedShifts)->pluck('shiftId');
 
-        POSTaxGLEntries::whereIn('shiftId', $postedShifts)->delete();
+        POSGLEntries::where('shiftId', $shiftId)->delete();
+        POSItemGLEntries::where('shiftId', $shiftId)->delete();
+        POSBankGLEntries::where('shiftId', $shiftId)->delete();
+        POSTaxGLEntries::where('shiftId', $shiftId)->delete();
+
+        POSGLEntries::whereIn('shiftId', $postedShifts)->delete();
         POSItemGLEntries::whereIn('shiftId', $postedShifts)->delete();
         POSBankGLEntries::whereIn('shiftId', $postedShifts)->delete();
-        POSGLEntries::whereIn('shiftId', $postedShifts)->delete();
-        POSFinanceLog::whereIn('shiftId', $postedShifts)->delete();
+        POSTaxGLEntries::whereIn('shiftId', $postedShifts)->delete();
 
-            POSTaxGLEntries::where('shiftId', $shiftId)->delete();
-            POSItemGLEntries::where('shiftId', $shiftId)->delete();
-            POSBankGLEntries::where('shiftId', $shiftId)->delete();
-            POSGLEntries::where('shiftId', $shiftId)->delete();
-            POSFinanceLog::where('shiftId', $shiftId)->delete();
 
         if($shiftDetails->posType == 1){
 
@@ -638,6 +637,7 @@ class ShiftDetailsAPIController extends AppBaseController
                     ->where('pos_source_invoice.shiftID', $shiftId)
                     ->groupBy('pos_source_invoice.shiftID')
                     ->groupBy('pos_source_invoice.invoiceID')
+                    ->groupBy('pos_source_invoicepayments.GLCode')
                     ->where('pos_source_invoice.isCreditSales', 0)
                     ->get();
 
@@ -648,6 +648,18 @@ class ShiftDetailsAPIController extends AppBaseController
                     ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'pos_source_invoicedetail.itemAutoID')
                     ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
                     ->where('pos_source_invoice.shiftID', $shiftId)
+                    ->where('pos_source_invoice.isCreditSales', 0)
+                    ->get();
+
+
+                $invItemsRevenue = DB::table('pos_source_invoicedetail')
+                    ->selectRaw('pos_source_invoicedetail.companyLocalAmount as amount, pos_source_invoice.invoiceID as invoiceID, pos_source_invoice.shiftID as shiftId, pos_source_invoice.companyID as companyID, pos_source_invoicedetail.itemAutoID as itemID, itemmaster.financeCategorySub as financeCategorySub, financeitemcategorysub.financeGLcodeRevenueSystemID as glCode, itemmaster.financeCategoryMaster as categoryID, pos_source_invoicedetail.qty as qty, pos_source_invoicedetail.qty * itemassigned.wacValueLocal as price, pos_source_invoicedetail.UOMID as uom, pos_source_invoice.wareHouseAutoID as wareHouseID')
+                    ->join('pos_source_invoice', 'pos_source_invoice.invoiceID', '=', 'pos_source_invoicedetail.invoiceID')
+                    ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'pos_source_invoicedetail.itemAutoID')
+                    ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
+                    ->join('itemassigned', 'itemassigned.itemCodeSystem', '=', 'itemmaster.itemCodeSystem')
+                    ->where('pos_source_invoice.shiftID', $shiftId)
+                    ->where('itemassigned.companySystemID', $shiftDetails->companyID)
                     ->where('pos_source_invoice.isCreditSales', 0)
                     ->get();
 
@@ -681,6 +693,7 @@ class ShiftDetailsAPIController extends AppBaseController
                     ->join('pos_source_invoicepayments', 'pos_source_invoicepayments.invoiceID', '=', 'pos_source_invoice.invoiceID')
                     ->where('pos_source_invoice.shiftID', $shiftId)
                     ->groupBy('pos_source_invoice.shiftID')
+                    ->groupBy('pos_source_invoicepayments.GLCode')
                     ->groupBy('pos_source_invoice.invoiceID')
                     ->where('pos_source_invoice.isCreditSales', 0)
                     ->get();
@@ -693,6 +706,18 @@ class ShiftDetailsAPIController extends AppBaseController
                     ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
                     ->where('pos_source_invoice.shiftID', $shiftId)
                     ->groupBy('pos_source_invoice.shiftID')
+                    ->where('pos_source_invoice.isCreditSales', 0)
+                    ->get();
+
+                $invItemsRevenue = DB::table('pos_source_invoicedetail')
+                    ->selectRaw('pos_source_invoicedetail.companyLocalAmount as amount, pos_source_invoice.invoiceID as invoiceID, pos_source_invoice.shiftID as shiftId, pos_source_invoice.companyID as companyID, pos_source_invoicedetail.itemAutoID as itemID, itemmaster.financeCategorySub as financeCategorySub, financeitemcategorysub.financeGLcodeRevenueSystemID as glCode, itemmaster.financeCategoryMaster as categoryID, pos_source_invoicedetail.qty as qty, SUM(pos_source_invoicedetail.qty * itemassigned.wacValueLocal) as price, pos_source_invoicedetail.UOMID as uom, pos_source_invoice.wareHouseAutoID as wareHouseID')
+                    ->join('pos_source_invoice', 'pos_source_invoice.invoiceID', '=', 'pos_source_invoicedetail.invoiceID')
+                    ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'pos_source_invoicedetail.itemAutoID')
+                    ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
+                    ->join('itemassigned', 'itemassigned.itemCodeSystem', '=', 'itemmaster.itemCodeSystem')
+                    ->where('pos_source_invoice.shiftID', $shiftId)
+                    ->groupBy('pos_source_invoice.shiftID')
+                    ->where('itemassigned.companySystemID', $shiftDetails->companyID)
                     ->where('pos_source_invoice.isCreditSales', 0)
                     ->get();
 
@@ -739,7 +764,7 @@ class ShiftDetailsAPIController extends AppBaseController
 
                 }
 
-                foreach ($invItems as $gl) {
+                foreach ($invItemsRevenue as $gl) {
 
                     $documentCode = ('GPOS\\' . str_pad($gl->shiftId, 6, '0', STR_PAD_LEFT));
                     $itemGLArray[] = array(
@@ -748,7 +773,7 @@ class ShiftDetailsAPIController extends AppBaseController
                         'documentCode' => $documentCode,
                         'glCode' => $gl->glCode,
                         'logId' => $logs['id'],
-                        'amount' => $gl->amount * -1
+                        'amount' => $gl->price * -1
                     );
 
                 }
@@ -849,6 +874,7 @@ class ShiftDetailsAPIController extends AppBaseController
                         $isInsufficient = 1;
                     }
                 }
+
                 if($isInsufficient == 1){
                     $qtyArray = POSItemGLEntries::where('shiftId', $shiftId)->get();
                     return $this->sendResponse($qtyArray, "IE");
@@ -858,12 +884,6 @@ class ShiftDetailsAPIController extends AppBaseController
             $logged_user = \Helper::getEmployeeSystemID();
 
             $masterData = ['documentSystemID' => 110, 'autoID' => $shiftId, 'companySystemID' => $shiftDetails->companyID, 'employeeSystemID' => $logged_user, 'companyID' => $shiftDetails->companyCode];
-            GeneralLedgerInsert::dispatch($masterData);
-            POSItemLedgerInsert::dispatch($masterData);
-            BankLedgerInsert::dispatch($masterData);
-            $taxLedgerData = null;
-            TaxLedgerInsert::dispatch($masterData,$taxLedgerData);
-
 
             \Illuminate\Support\Facades\DB::beginTransaction();
 
@@ -880,7 +900,7 @@ class ShiftDetailsAPIController extends AppBaseController
 
                         $companyFinancePeriod = CompanyFinancePeriod::where('dateFrom', "<", $invoice->invoiceDate)->where('dateTo', ">", $invoice->invoiceDate)->where('companySystemID', $shiftDetails->companyID)->first();
 
-                        $input = ['bookingDate' => $invoice->invoiceDate, 'comments' => "Inv Created by POS System", 'companyFinancePeriodID' => $companyFinancePeriod->companyFinancePeriodID, 'companyFinanceYearID' => $companyFinanceYear->companyFinanceYearID, 'companyID' => 1, 'custTransactionCurrencyID' => 1, 'customerID' => 1, 'date_of_supply' => $invoice->invoiceDate, 'invoiceDueDate' => $invoice->invoiceDate, 'isPerforma' => 2, 'serviceLineSystemID' => 1, 'wareHouseSystemCode' => 1, 'customerInvoiceNo' => "abd-56", 'bankAccountID' => 1, 'bankID' => 2];
+                        $input = ['bookingDate' => $invoice->invoiceDate, 'comments' => "Inv Created by GPOS System. Bill No:".$invoice->invoiceCode, 'companyFinancePeriodID' => $companyFinancePeriod->companyFinancePeriodID, 'companyFinanceYearID' => $companyFinanceYear->companyFinanceYearID, 'companyID' => 1, 'custTransactionCurrencyID' => 1, 'customerID' => $invoice->customerID, 'date_of_supply' => $invoice->invoiceDate, 'invoiceDueDate' => $invoice->invoiceDate, 'isPerforma' => 2, 'serviceLineSystemID' => 1, 'wareHouseSystemCode' => 1, 'customerInvoiceNo' => "abd-56", 'bankAccountID' => 1, 'bankID' => 2];
 
 
                         if (isset($input['isPerforma']) && $input['isPerforma'] == 2) {
@@ -1002,8 +1022,11 @@ class ShiftDetailsAPIController extends AppBaseController
                         if ($input['bookingDate'] > $curentDate) {
                             return $this->sendResponse('e', 'Document date cannot be greater than current date');
                         }
-                        if (($input['bookingDate'] >= $FYPeriodDateFrom) && ($input['bookingDate'] <= $FYPeriodDateTo)) {
+
                             $customerInvoiceDirects = $this->customerInvoiceDirectRepository->create($input);
+
+
+
                             $items = DB::table('pos_source_invoicedetail')
                                 ->selectRaw('pos_source_invoicedetail.*')
                                 ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'pos_source_invoicedetail.itemAutoID')
@@ -1344,9 +1367,7 @@ class ShiftDetailsAPIController extends AppBaseController
                             if (!$resVat['status']) {
                                 return $this->sendError($resVat['message']);
                             };
-                        } else {
-                            return $this->sendResponse('e', 'Document date should be between financial period start date and end date');
-                        }
+
                     \Illuminate\Support\Facades\DB::commit();
 
                 }
@@ -1358,6 +1379,12 @@ class ShiftDetailsAPIController extends AppBaseController
                 \Illuminate\Support\Facades\DB::rollback();
                 return $this->sendError('Error Occurred'. $exception->getMessage() . 'Line :' . $exception->getLine());
             }
+
+            GeneralLedgerInsert::dispatch($masterData);
+            POSItemLedgerInsert::dispatch($masterData);
+            BankLedgerInsert::dispatch($masterData);
+            $taxLedgerData = null;
+            TaxLedgerInsert::dispatch($masterData,$taxLedgerData);
 
 
         }
@@ -1625,12 +1652,7 @@ class ShiftDetailsAPIController extends AppBaseController
             $logged_user = \Helper::getEmployeeSystemID();
 
             $masterData = ['documentSystemID' => 111, 'autoID' => $shiftId, 'companySystemID' => $shiftDetails->companyID, 'employeeSystemID' => $logged_user, 'companyID' => $shiftDetails->companyCode];
-            GeneralLedgerInsert::dispatch($masterData);
-            POSItemLedgerInsert::dispatch($masterData);
 
-            BankLedgerInsert::dispatch($masterData);
-            $taxLedgerData = null;
-            TaxLedgerInsert::dispatch($masterData, $taxLedgerData);
 
             \Illuminate\Support\Facades\DB::beginTransaction();
 
@@ -1776,7 +1798,6 @@ class ShiftDetailsAPIController extends AppBaseController
                     if ($input['bookingDate'] > $curentDate) {
                         return $this->sendResponse('e', 'Document date cannot be greater than current date');
                     }
-                    if (($input['bookingDate'] >= $FYPeriodDateFrom) && ($input['bookingDate'] <= $FYPeriodDateTo)) {
                         $customerInvoiceDirects = $this->customerInvoiceDirectRepository->create($input);
                         $items = DB::table('pos_source_menusalesitems')
                             ->selectRaw('pos_source_menusalesitems.*')
@@ -1902,7 +1923,7 @@ class ShiftDetailsAPIController extends AppBaseController
                         if (!$approve["success"]) {
                             return $this->sendError($approve["message"]);
                         }
-                    }
+
 
                     \Illuminate\Support\Facades\DB::commit();
                 }
@@ -1912,6 +1933,12 @@ class ShiftDetailsAPIController extends AppBaseController
                 \Illuminate\Support\Facades\DB::rollback();
                 return $this->sendError('Error Occurred'. $exception->getMessage() . 'Line :' . $exception->getLine());
             }
+
+            GeneralLedgerInsert::dispatch($masterData);
+            POSItemLedgerInsert::dispatch($masterData);
+            BankLedgerInsert::dispatch($masterData);
+            $taxLedgerData = null;
+            TaxLedgerInsert::dispatch($masterData, $taxLedgerData);
         }
 
          $logs = POSFinanceLog::where('shiftId', $shiftId)->update(['status' => 2]);
@@ -1919,7 +1946,7 @@ class ShiftDetailsAPIController extends AppBaseController
 
 
 
-        return $this->sendResponse([$logs, $invItems], "Invoice Posting successfull");
+        return $this->sendResponse([$logs], "Invoice Posting successfull");
 
 
     }
