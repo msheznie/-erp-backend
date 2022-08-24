@@ -60,7 +60,8 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use SwaggerFixures\Customer;
 use App\helper\ItemTracking;
-
+Use App\Models\UserToken;
+use GuzzleHttp\Client;
 /**
  * Class ItemIssueMasterController
  * @package App\Http\Controllers\API
@@ -402,12 +403,15 @@ class ItemIssueMasterAPIController extends AppBaseController
     public function update($id, UpdateItemIssueMasterAPIRequest $request)
     {
         $input = $request->all();
+        $api_key = $request['api_key'];
         $input = array_except($input, ['created_by', 'confirmedByName', 'finance_period_by', 'finance_year_by','customer_by',
-            'confirmedByEmpID', 'confirmedDate', 'confirmed_by', 'confirmedByEmpSystemID','segment_by','warehouse_by']);
+            'confirmedByEmpID', 'confirmedDate', 'confirmed_by', 'confirmedByEmpSystemID','segment_by','warehouse_by','api_key']);
 
         $input = $this->convertArrayToValue($input);
         $wareHouseError = array('type' => 'wareHouse');
         $serviceLineError = array('type' => 'serviceLine');
+
+       
 
         /** @var ItemIssueMaster $itemIssueMaster */
         $itemIssueMaster = $this->itemIssueMasterRepository->findWithoutFail($id);
@@ -415,6 +419,47 @@ class ItemIssueMasterAPIController extends AppBaseController
         if (empty($itemIssueMaster)) {
             return $this->sendError('Item Issue Master not found');
         }
+
+        if($itemIssueMaster->mfqJobID)
+        {
+            $bytes = random_bytes(10);
+            $hashKey = bin2hex($bytes);
+            $empID = \Helper::getEmployeeSystemID();
+    
+            Carbon::now()->addDays(1);
+            $insertData = [
+            'employee_id' => $empID,
+            'token' => $hashKey,
+            'expire_time' => Carbon::now()->addDays(1),
+            'module_id' => 1
+              ];
+    
+            $resData = UserToken::create($insertData);
+    
+            $client = new Client();
+            $res = $client->request('GET', 'http://manu.uat-gears-int.com/index.php/MFQ_Api/getJobStatus?JobID='.$itemIssueMaster->mfqJobID, [
+                'headers' => [
+                'Content-Type'=> 'application/json',
+                'token' => $hashKey,
+                'api_key' => $api_key
+                ]
+            ]);
+
+            if ($res->getStatusCode() == 200) { 
+                $job = json_decode($res->getBody(), true);
+
+                if($job['closedYN'] == 1)
+                {
+                    return $this->sendError('The selected job is closed');
+                }
+            }
+            else
+            {
+                return $this->sendError('Unable to get the MFQJob Status');
+            }
+        }
+
+
 
         if (isset($input['serviceLineSystemID'])) {
             $checkDepartmentActive = SegmentMaster::find($input['serviceLineSystemID']);
@@ -1007,6 +1052,7 @@ class ItemIssueMasterAPIController extends AppBaseController
     public function getMaterielIssueFormData(Request $request)
     {
         $companyId = $request['companyId'];
+        $api_key = $request['api_key'];
 
         $segments = SegmentMaster::where("companySystemID", $companyId);
         if (isset($request['type']) && $request['type'] != 'filter') {
@@ -1073,7 +1119,47 @@ class ItemIssueMasterAPIController extends AppBaseController
 
         $units = Unit::all();
 
+
+        $bytes = random_bytes(10);
+        $hashKey = bin2hex($bytes);
+        $empID = \Helper::getEmployeeSystemID();
+
+        Carbon::now()->addDays(1);
+        $insertData = [
+        'employee_id' => $empID,
+        'token' => $hashKey,
+        'expire_time' => Carbon::now()->addDays(1),
+        'module_id' => 1
+          ];
+
+        $resData = UserToken::create($insertData);
+
+        $client = new Client();
+        $res = $client->request('GET', 'http://manu.uat-gears-int.com/index.php/MFQ_Api/getOpenJobs?company_id'.$companyId.'=&warehouse=&segment=', [
+            'headers' => [
+            'Content-Type'=> 'application/json',
+            'token' => $hashKey,
+            'api_key' => $api_key
+            ]
+        ]);
+
+       
+
+        if ($res->getStatusCode() == 200) { 
+            $job = json_decode($res->getBody(), true);
+        }
+        else
+        {
+            $job = [];
+        }
+
+        foreach($job as $key=>$val)
+        {
+            $job[$key]['jobID'] = intval($val['jobID']);
+        }
+
         $output = array(
+            'job_no' => $job,
             'segments' => $segments,
             'yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
@@ -1456,6 +1542,13 @@ class ItemIssueMasterAPIController extends AppBaseController
         }
 
         return $itemIssue->details;
+
+    }
+
+    public function checkManWareHouse(Request $request)
+    {
+       $is_manu =  WarehouseMaster::checkManuefactoringWareHouse($request->wareHouseId);
+       return $this->sendResponse($is_manu, 'Data retrived!');
 
     }
 

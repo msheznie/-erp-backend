@@ -169,7 +169,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('getAllItemsMaster', 'ItemMasterAPIController@getAllItemsMaster');
         Route::post('getAssignedItemsForCompany', 'ItemMasterAPIController@getAssignedItemsForCompany');
         Route::post('getAllAssignedItemsForCompany', 'ItemMasterAPIController@getAllAssignedItemsForCompany');
-
+        Route::post('validateItemAmend', 'ItemMasterAPIController@validateItemAmend');
 
 
         Route::get('getAllFixedAssetItems', 'ItemMasterAPIController@getAllFixedAssetItems');
@@ -722,7 +722,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('cancelMaterielRequest', 'MaterielRequestAPIController@cancelMaterielRequest');
         Route::get('update-qnty-by-location', 'MaterielRequestAPIController@updateQntyByLocation');
         Route::get('materiel_request/details/{id}', 'MaterielRequestAPIController@getMaterielRequestDetails');
-
+        Route::get('returnMaterialRequestPreCheck', 'MaterielRequestAPIController@returnMaterialRequestPreCheck');
+        Route::post('returnMaterialRequest', 'MaterielRequestAPIController@returnMaterialRequest');
 
        
 
@@ -730,6 +731,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('material-issue/check/product/{id}/{companySystemID}', 'ItemIssueMasterAPIController@checkProductExistInIssues');
         Route::get('purchase_requests/check/product/{itemCode}/{companySystemID}', 'PurchaseRequestAPIController@checkProductExistInIssues');
         Route::post('get-item-qnty-by-pr', 'PurchaseRequestAPIController@getItemQntyByPR');
+        Route::get('checkManWareHouse', 'ItemIssueMasterAPIController@checkManWareHouse');
 
 
         Route::resource('item_issue_details', 'ItemIssueDetailsAPIController');
@@ -1732,6 +1734,15 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getPosGlConfigFormData', 'GposPaymentGlConfigDetailAPIController@getFormData');
         Route::get('getPosItemSearch', 'ItemMasterAPIController@getPosItemSearch');
         Route::get('getPosShiftDetails', 'ShiftDetailsAPIController@getPosShiftDetails');
+
+        Route::get('getPosSourceShiftDetails', 'ShiftDetailsAPIController@getPosSourceShiftDetails');
+        Route::get('getPosCustomerMasterDetails', 'ShiftDetailsAPIController@getPosCustomerMasterDetails');
+        Route::get('getPosCustomerMasterDetails', 'ShiftDetailsAPIController@getPosCustomerMasterDetails');
+        Route::post('postPosCustomerMapping', 'ShiftDetailsAPIController@postPosCustomerMapping');
+        Route::post('postPosTaxMapping', 'ShiftDetailsAPIController@postPosTaxMapping');
+        Route::post('postPosPayMapping', 'ShiftDetailsAPIController@postPosPayMapping');
+        Route::post('postPosEntries', 'ShiftDetailsAPIController@postPosEntries');
+
         Route::resource('currency_denominations', 'CurrencyDenominationAPIController');
         Route::resource('shift_details', 'ShiftDetailsAPIController');
         Route::get('getPosCustomerSearch', 'CustomerMasterAPIController@getPosCustomerSearch');
@@ -2075,6 +2086,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('downloadQuotationItemUploadTemplate', 'QuotationMasterAPIController@downloadQuotationItemUploadTemplate');
         Route::get('downloadDeliveryOrderUploadTemplate', 'DeliveryOrderAPIController@downloadQuotationItemUploadTemplate');
         Route::post('poItemsUpload', 'ProcumentOrderAPIController@poItemsUpload');
+        Route::post('checkBudgetCutOffForPo', 'ProcumentOrderAPIController@checkBudgetCutOffForPo');
 
 
         Route::post('sales-order/is-link-item', 'DeliveryOrderAPIController@isLinkItem');
@@ -3042,4 +3054,11 @@ Route::resource('bid_boqs', 'BidBoqAPIController');
 
 
 Route::resource('cash_flow_report_details', 'CashFlowReportDetailAPIController');
-Route::resource('tender_circulars', 'TenderCircularsAPIController'); 
+Route::resource('tender_circulars', 'TenderCircularsAPIController');
+
+Route::resource('po_cutoff_jobs', 'PoCutoffJobAPIController');
+
+Route::resource('po_cutoff_job_datas', 'PoCutoffJobDataAPIController');
+
+Route::resource('p_o_s_s_o_u_r_c_e_shift_details', 'POSSOURCEShiftDetailsAPIController');
+Route::resource('i_o_u_booking_masters', 'IOUBookingMasterAPIController');

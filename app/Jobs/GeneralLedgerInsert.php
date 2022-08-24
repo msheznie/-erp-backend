@@ -13,6 +13,7 @@ use App\Models\BookInvSuppMaster;
 use App\Models\CreditNote;
 use App\Models\CreditNoteDetails;
 use App\Models\CurrencyConversion;
+use App\Models\POSGLEntries;
 use App\Models\StockCount;
 use App\Models\StockCountDetail;
 use App\Models\CustomerInvoiceItemDetails;
@@ -5334,6 +5335,97 @@ class GeneralLedgerInsert implements ShouldQueue
                                 }
                             }
                         }
+                        break;
+
+                    case 110:
+
+                        $glEntries = POSGLEntries::where('shiftId', $masterModel["autoID"])->get();
+
+                    foreach($glEntries as $gl) {
+                        $invItems = DB::table('pos_source_invoice')
+                            ->selectRaw('pos_source_invoice.*')
+                            ->where('pos_source_invoice.shiftID', $masterModel["autoID"])
+                            ->first();
+                        $glCodes = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $gl->glCode)->first();
+
+                        $data['companySystemID'] = $masterModel['companySystemID'];
+                        $data['companyID'] = $masterModel["companyID"];
+                        $data['serviceLineSystemID'] = null;
+                        $data['serviceLineCode'] = null;
+                        $data['masterCompanyID'] = null;
+                        $data['documentSystemID'] = 110;
+                        $data['documentID'] = 'GPOS';
+                        $data['documentSystemCode'] = $masterModel["autoID"];
+                        $data['documentCode'] = $gl->documentCode;
+                        $data['documentDate'] = date('Y-m-d H:i:s');
+                        $data['documentYear'] = \Helper::dateYear(date('Y-m-d H:i:s'));
+                        $data['documentMonth'] = \Helper::dateMonth(date('Y-m-d H:i:s'));
+                        $data['createdDateTime'] = \Helper::currentDateTime();
+                        $data['createdUserID'] = $empID->empID;
+                        $data['createdUserSystemID'] = $empID->employeeSystemID;
+                        $data['createdUserPC'] = gethostname();
+                        $data['chartOfAccountSystemID'] = $gl->glCode;
+                        if ($glCodes) {
+                            $glCode = $glCodes->AccountCode;
+                            $data['glCode'] = $glCode;
+                        }
+                        $data['glAccountType'] = ChartOfAccount::getGlAccountType($gl->glCode);
+                        $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($gl->glCode);
+                        $data['documentLocalCurrencyID'] = $invItems->companyLocalCurrencyID;
+                        $data['documentLocalCurrencyER'] = $invItems->companyLocalExchangeRate;
+                        $data['documentLocalAmount'] = $gl->amount;
+                        $data['documentRptCurrencyID'] = $invItems->companyReportingCurrencyID;
+                        $data['documentRptCurrencyER'] = $invItems->companyReportingExchangeRate;
+                        $data['documentRptAmount'] = $gl->amount / $invItems->companyReportingExchangeRate;
+                        $data['timestamp'] = \Helper::currentDateTime();
+                        array_push($finalData, $data);
+                    }
+
+                        break;
+                    case 111:
+
+                        $glEntries = POSGLEntries::where('shiftId', $masterModel["autoID"])->get();
+
+                        foreach($glEntries as $gl) {
+                            $invItems = DB::table('pos_source_menusalesmaster')
+                                ->selectRaw('pos_source_menusalesmaster.*')
+                                ->where('pos_source_menusalesmaster.shiftID', $masterModel["autoID"])
+                                ->first();
+                            $glCodes = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $gl->glCode)->first();
+
+                            $data['companySystemID'] = $masterModel['companySystemID'];
+                            $data['companyID'] = $masterModel["companyID"];
+                            $data['serviceLineSystemID'] = null;
+                            $data['serviceLineCode'] = null;
+                            $data['masterCompanyID'] = null;
+                            $data['documentSystemID'] = 111;
+                            $data['documentID'] = 'RPOS';
+                            $data['documentSystemCode'] = $masterModel["autoID"];
+                            $data['documentCode'] = $gl->documentCode;
+                            $data['documentDate'] = date('Y-m-d H:i:s');
+                            $data['documentYear'] = \Helper::dateYear(date('Y-m-d H:i:s'));
+                            $data['documentMonth'] = \Helper::dateMonth(date('Y-m-d H:i:s'));
+                            $data['createdDateTime'] = \Helper::currentDateTime();
+                            $data['createdUserID'] = $empID->empID;
+                            $data['createdUserSystemID'] = $empID->employeeSystemID;
+                            $data['createdUserPC'] = gethostname();
+                            $data['chartOfAccountSystemID'] = $gl->glCode;
+                            if ($glCodes) {
+                                $glCode = $glCodes->AccountCode;
+                                $data['glCode'] = $glCode;
+                            }
+                            $data['glAccountType'] = ChartOfAccount::getGlAccountType($gl->glCode);
+                            $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($gl->glCode);
+                            $data['documentLocalCurrencyID'] = $invItems->companyLocalCurrencyID;
+                            $data['documentLocalCurrencyER'] = $invItems->companyLocalExchangeRate;
+                            $data['documentLocalAmount'] = $gl->amount;
+                            $data['documentRptCurrencyID'] = $invItems->companyReportingCurrencyID;
+                            $data['documentRptCurrencyER'] = $invItems->companyReportingExchangeRate;
+                            $data['documentRptAmount'] = $gl->amount / $invItems->companyReportingExchangeRate;
+                            $data['timestamp'] = \Helper::currentDateTime();
+                            array_push($finalData, $data);
+                        }
+
                         break;
                     default:
                         Log::warning('Document ID not found ' . date('H:i:s'));
