@@ -5354,7 +5354,7 @@ class GeneralLedgerInsert implements ShouldQueue
                         $data['serviceLineCode'] = null;
                         $data['masterCompanyID'] = null;
                         $data['documentSystemID'] = 110;
-                        $data['documentID'] = 'GPOSS';
+                        $data['documentID'] = 'GPOS';
                         $data['documentSystemCode'] = $masterModel["autoID"];
                         $data['documentCode'] = $gl->documentCode;
                         $data['documentDate'] = date('Y-m-d H:i:s');
@@ -5399,7 +5399,7 @@ class GeneralLedgerInsert implements ShouldQueue
                             $data['serviceLineCode'] = null;
                             $data['masterCompanyID'] = null;
                             $data['documentSystemID'] = 111;
-                            $data['documentID'] = 'RPOSS';
+                            $data['documentID'] = 'RPOS';
                             $data['documentSystemCode'] = $masterModel["autoID"];
                             $data['documentCode'] = $gl->documentCode;
                             $data['documentDate'] = date('Y-m-d H:i:s');

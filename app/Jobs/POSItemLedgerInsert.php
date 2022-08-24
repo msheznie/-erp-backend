@@ -50,7 +50,7 @@ class POSItemLedgerInsert implements ShouldQueue
                         $data['companySystemID'] = $masterModel['companySystemID'];
                         $data['companyID'] = $masterModel["companyID"];
                         $data['documentSystemID'] = 110;
-                        $data['documentID'] = 'GPOSS';
+                        $data['documentID'] = 'GPOS';
                         $data['documentSystemCode'] = $gl->documentSystemId;
                         $data['documentCode'] = $gl->documentCode;
                         $data['itemSystemCode'] = $item->itemAutoId;
@@ -98,7 +98,7 @@ class POSItemLedgerInsert implements ShouldQueue
                                 $data['companySystemID'] = $masterModel['companySystemID'];
                                 $data['companyID'] = $masterModel["companyID"];
                                 $data['documentSystemID'] = 111;
-                                $data['documentID'] = 'GPOSS';
+                                $data['documentID'] = 'GPOS';
                                 $data['documentSystemCode'] = $gl->documentSystemId;
                                 $data['documentCode'] = $gl->documentCode;
                                 $data['itemSystemCode'] = $item->itemAutoId;
