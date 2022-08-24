@@ -5350,8 +5350,16 @@ class GeneralLedgerInsert implements ShouldQueue
 
                         $data['companySystemID'] = $masterModel['companySystemID'];
                         $data['companyID'] = $masterModel["companyID"];
-                        $data['serviceLineSystemID'] = null;
-                        $data['serviceLineCode'] = null;
+                        $segments = DB::table('pos_source_shiftdetails')
+                            ->selectRaw('pos_source_shiftdetails.segmentID as segmentID, serviceline.ServiceLineCode as serviceLineCode')
+                            ->join('serviceline', 'serviceline.serviceLineSystemID', '=', 'pos_source_shiftdetails.segmentID')
+                            ->where('pos_source_shiftdetails.shiftID', $masterModel["autoID"])
+                            ->first();
+                        if($segments){
+                            $data['serviceLineSystemID'] = $segments->segmentID;
+                            $data['serviceLineCode'] = $segments->serviceLineCode;
+                        }
+
                         $data['masterCompanyID'] = null;
                         $data['documentSystemID'] = 110;
                         $data['documentID'] = 'GPOS';
@@ -5395,8 +5403,15 @@ class GeneralLedgerInsert implements ShouldQueue
 
                             $data['companySystemID'] = $masterModel['companySystemID'];
                             $data['companyID'] = $masterModel["companyID"];
-                            $data['serviceLineSystemID'] = null;
-                            $data['serviceLineCode'] = null;
+                            $segments = DB::table('pos_source_shiftdetails')
+                                ->selectRaw('pos_source_shiftdetails.segmentID as segmentID, serviceline.ServiceLineCode as serviceLineCode')
+                                ->join('serviceline', 'serviceline.serviceLineSystemID', '=', 'pos_source_shiftdetails.segmentID')
+                                ->where('pos_source_shiftdetails.shiftID', $masterModel["autoID"])
+                                ->first();
+                            if($segments){
+                                $data['serviceLineSystemID'] = $segments->segmentID;
+                                $data['serviceLineCode'] = $segments->serviceLineCode;
+                            }
                             $data['masterCompanyID'] = null;
                             $data['documentSystemID'] = 111;
                             $data['documentID'] = 'RPOS';
