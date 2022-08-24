@@ -408,7 +408,7 @@ class ItemReturnDetailsAPIController extends AppBaseController
         $input = $this->convertArrayToValue($input);
         $qtyError = array('type' => 'qty');
         
-
+      
    
         /** @var ItemReturnDetails $itemReturnDetails */
         $itemReturnDetails = $this->itemReturnDetailsRepository->findWithoutFail($id);
@@ -446,6 +446,8 @@ class ItemReturnDetailsAPIController extends AppBaseController
               ];
     
             $resData = UserToken::create($insertData);
+
+           
     
             $client = new Client();
             $res = $client->request('GET', 'http://manu.uat-gears-int.com/index.php/MFQ_Api/getAllocatedJobs?companyID='.$item_issue->companySystemID.'&documentID='.$item_issue->documentID.'&documentsystemcode='.$item_issue->itemIssueAutoID.'&itemautoID='.$itemReturnDetails->itemCodeSystem, [
@@ -462,7 +464,7 @@ class ItemReturnDetailsAPIController extends AppBaseController
     
                 if(count($job) > 0)
                 {
-                    return $this->sendError('The selected Material Issue has allocated to job');
+                    return $this->sendError('The selected Material Issue has allocated to following jobs', 500, ['type'=>'allocated_job','data' => $job]);
                 }
             }
             else
