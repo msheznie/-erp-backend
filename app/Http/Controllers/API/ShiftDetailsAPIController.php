@@ -1426,6 +1426,8 @@ class ShiftDetailsAPIController extends AppBaseController
                     ->where('pos_source_menusalesmaster.shiftID', $shiftId)
                     ->groupBy('pos_source_menusalesmaster.shiftID')
                     ->groupBy('pos_source_menusalesmaster.menuSalesID')
+                    ->groupBy('pos_source_menusalespayments.GLCode')
+                    ->where('pos_source_menusalesmaster.isCreditSales', 0)
                     ->get();
 
 
@@ -1436,6 +1438,19 @@ class ShiftDetailsAPIController extends AppBaseController
                     ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'pos_source_menusalesitemdetails.itemAutoID')
                     ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
                     ->where('pos_source_menusalesmaster.shiftID', $shiftId)
+                    ->where('pos_source_menusalesmaster.isCreditSales', 0)
+                    ->get();
+
+                $invItemsPLBS = DB::table('pos_source_menusalesitems')
+                    ->selectRaw('pos_source_menusalesitemdetails.qty * itemassigned.wacValueLocal as amount, pos_source_menusalesmaster.menuSalesID as invoiceID, pos_source_menusalesmaster.shiftID as shiftId, pos_source_menusalesmaster.companyID as companyID, pos_source_menusalesitemdetails.itemAutoID as itemID, pos_source_menusalesitems.revenueGLAutoID as glCode,  itemmaster.financeCategoryMaster as categoryID, financeitemcategorysub.financeGLcodebBSSystemID as bsGLCode, financeitemcategorysub.financeGLcodePLSystemID as plGLCode, financeitemcategorysub.includePLForGRVYN as glYN, pos_source_menusalesitemdetails.qty as qty, pos_source_menusalesitemdetails.cost as price, pos_source_menusalesitemdetails.UOMID as uom, pos_source_menusalesmaster.wareHouseAutoID as wareHouseID')
+                    ->join('pos_source_menusalesmaster', 'pos_source_menusalesmaster.menuSalesID', '=', 'pos_source_menusalesitems.menuSalesID')
+                    ->join('pos_source_menusalesitemdetails', 'pos_source_menusalesitemdetails.menuSalesItemID', '=', 'pos_source_menusalesitems.menuSalesItemID')
+                    ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'pos_source_menusalesitemdetails.itemAutoID')
+                    ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
+                    ->join('itemassigned', 'itemassigned.itemCodeSystem', '=', 'itemmaster.itemCodeSystem')
+                    ->where('pos_source_menusalesmaster.shiftID', $shiftId)
+                    ->where('itemassigned.companySystemID', $shiftDetails->companyID)
+                    ->where('pos_source_menusalesmaster.isCreditSales', 0)
                     ->get();
 
 
@@ -1444,6 +1459,7 @@ class ShiftDetailsAPIController extends AppBaseController
                     ->join('pos_source_menusalesoutlettaxes', 'pos_source_menusalesoutlettaxes.menuSalesID', '=', 'pos_source_menusalesmaster.menuSalesID')
                     ->join('erp_taxmaster_new', 'erp_taxmaster_new.taxMasterAutoID', '=', 'pos_source_menusalesoutlettaxes.taxMasterID')
                     ->where('pos_source_menusalesmaster.shiftID', $shiftId)
+                    ->where('pos_source_menusalesmaster.isCreditSales', 0)
                     ->get();
 
                 $taxItems2 = DB::table('pos_source_menusalesmaster')
@@ -1451,6 +1467,7 @@ class ShiftDetailsAPIController extends AppBaseController
                     ->join('pos_source_menusalestaxes', 'pos_source_menusalestaxes.menuSalesID', '=', 'pos_source_menusalesmaster.menuSalesID')
                     ->join('erp_taxmaster_new', 'erp_taxmaster_new.taxMasterAutoID', '=', 'pos_source_menusalestaxes.taxMasterID')
                     ->where('pos_source_menusalesmaster.shiftID', $shiftId)
+                    ->where('pos_source_menusalesmaster.isCreditSales', 0)
                     ->get();
 
                 $bankItems = DB::table('pos_source_menusalesmaster')
@@ -1460,6 +1477,7 @@ class ShiftDetailsAPIController extends AppBaseController
                     ->where('pos_source_menusalesmaster.shiftID', $shiftId)
                     ->groupBy('pos_source_menusalesmaster.menuSalesID')
                     ->groupBy('pos_source_menusalesmaster.shiftID')
+                    ->where('pos_source_menusalesmaster.isCreditSales', 0)
                     ->get();
 
             }
@@ -1470,6 +1488,8 @@ class ShiftDetailsAPIController extends AppBaseController
                     ->where('pos_source_menusalesmaster.shiftID', $shiftId)
                     ->groupBy('pos_source_menusalesmaster.menuSalesID')
                     ->groupBy('pos_source_menusalesmaster.shiftID')
+                    ->groupBy('pos_source_invoicepayments.GLCode')
+                    ->where('pos_source_menusalesmaster.isCreditSales', 0)
                     ->get();
 
 
@@ -1481,6 +1501,20 @@ class ShiftDetailsAPIController extends AppBaseController
                     ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
                     ->where('pos_source_menusalesmaster.shiftID', $shiftId)
                     ->groupBy('pos_source_menusalesmaster.shiftID')
+                    ->where('pos_source_menusalesmaster.isCreditSales', 0)
+                    ->get();
+
+                $invItemsPLBS = DB::table('pos_source_menusalesitems')
+                    ->selectRaw('pos_source_menusalesitemdetails.qty * itemassigned.wacValueLocal as amount, pos_source_menusalesmaster.menuSalesID as invoiceID, pos_source_menusalesmaster.shiftID as shiftId, pos_source_menusalesmaster.companyID as companyID, pos_source_menusalesitemdetails.itemAutoID as itemID, pos_source_menusalesitems.revenueGLAutoID as glCode,  itemmaster.financeCategoryMaster as categoryID, financeitemcategorysub.financeGLcodebBSSystemID as bsGLCode, financeitemcategorysub.financeGLcodePLSystemID as plGLCode, financeitemcategorysub.includePLForGRVYN as glYN, pos_source_menusalesitemdetails.qty as qty, pos_source_menusalesitemdetails.cost as price, pos_source_menusalesitemdetails.UOMID as uom, pos_source_menusalesmaster.wareHouseAutoID as wareHouseID')
+                    ->join('pos_source_menusalesmaster', 'pos_source_menusalesmaster.menuSalesID', '=', 'pos_source_menusalesitems.menuSalesID')
+                    ->join('pos_source_menusalesitemdetails', 'pos_source_menusalesitemdetails.menuSalesItemID', '=', 'pos_source_menusalesitems.menuSalesItemID')
+                    ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'pos_source_menusalesitemdetails.itemAutoID')
+                    ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
+                    ->join('itemassigned', 'itemassigned.itemCodeSystem', '=', 'itemmaster.itemCodeSystem')
+                    ->where('pos_source_menusalesmaster.shiftID', $shiftId)
+                    ->where('itemassigned.companySystemID', $shiftDetails->companyID)
+                    ->groupBy('pos_source_menusalesmaster.shiftID')
+                    ->where('pos_source_menusalesmaster.isCreditSales', 0)
                     ->get();
 
 
@@ -1490,6 +1524,7 @@ class ShiftDetailsAPIController extends AppBaseController
                     ->join('erp_taxmaster_new', 'erp_taxmaster_new.taxMasterAutoID', '=', 'pos_source_menusalesoutlettaxes.taxMasterID')
                     ->where('pos_source_menusalesmaster.shiftID', $shiftId)
                     ->groupBy('pos_source_menusalesmaster.shiftID')
+                    ->where('pos_source_menusalesmaster.isCreditSales', 0)
                     ->get();
 
                 $taxItems2 = DB::table('pos_source_menusalesmaster')
@@ -1498,6 +1533,7 @@ class ShiftDetailsAPIController extends AppBaseController
                     ->join('erp_taxmaster_new', 'erp_taxmaster_new.taxMasterAutoID', '=', 'pos_source_menusalestaxes.taxMasterID')
                     ->where('pos_source_menusalesmaster.shiftID', $shiftId)
                     ->groupBy('pos_source_menusalesmaster.shiftID')
+                    ->where('pos_source_menusalesmaster.isCreditSales', 0)
                     ->get();
 
                 $bankItems = DB::table('pos_source_menusalesmaster')
@@ -1507,6 +1543,7 @@ class ShiftDetailsAPIController extends AppBaseController
                     ->where('pos_source_menusalesmaster.shiftID', $shiftId)
                     ->groupBy('pos_source_menusalesmaster.menuSalesID')
                     ->groupBy('pos_source_menusalesmaster.shiftID')
+                    ->where('pos_source_menusalesmaster.isCreditSales', 0)
                     ->get();
             }
 
@@ -1603,7 +1640,7 @@ class ShiftDetailsAPIController extends AppBaseController
             POSGLEntries::insert($taxGLArray2);
 
 
-            foreach ($invItems as $gl) {
+            foreach ($invItemsPLBS as $gl) {
 
                 $documentCode = ('RPOS\\' . str_pad($gl->shiftId, 6, '0', STR_PAD_LEFT));
                 if ($gl->categoryID == 1) {
