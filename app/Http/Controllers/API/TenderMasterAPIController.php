@@ -894,10 +894,10 @@ WHERE
                         $calDt['created_by'] = $employee->employeeSystemID;
                         $calDt['created_at'] = Carbon::now();
 
-                        $created = CalendarDatesDetail::create($calDt);
+                        CalendarDatesDetail::create($calDt);
                     }
                 }
-                return ['success' => $created, 'message' => 'Successfully updated'];
+                return ['success' => true, 'message' => 'Successfully updated'];
             } else {
                 CalendarDatesDetail::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
             }
