@@ -277,14 +277,14 @@ class BankLedgerInsert implements ShouldQueue
                             array_push($finalData, $data);
                         }
                         break;
-                    case 110: // GPOSS
+                    case 110: // GPOS
                         $gl = POSGLEntries::where('shiftId', $masterModel["autoID"])->first();
                         $bankGL = POSBankGLEntries::where('shiftId', $masterModel["autoID"])->first();
                         if ($gl && $bankGL) {
                             $data['companySystemID'] = $masterModel['companySystemID'];
                             $data['companyID'] = $masterModel["companyID"];
                             $data['documentSystemID'] = 110;
-                            $data['documentID'] = 'GPOSS';
+                            $data['documentID'] = 'GPOS';
                             $data['documentSystemCode'] = $gl->documentSystemId;
                             $data['documentCode'] = $gl->documentCode;
                             $data['documentDate'] = date('Y-m-d H:i:s');
@@ -327,14 +327,14 @@ class BankLedgerInsert implements ShouldQueue
                             array_push($finalData, $data);
                         }
                         break;
-                    case 111: // RPOSS
+                    case 111: // RPOS
                         $gl = POSGLEntries::where('shiftId', $masterModel["autoID"])->first();
                         $bankGL = POSBankGLEntries::where('shiftId', $masterModel["autoID"])->first();
                         if ($gl && $bankGL) {
                             $data['companySystemID'] = $masterModel['companySystemID'];
                             $data['companyID'] = $masterModel["companyID"];
                             $data['documentSystemID'] = 111;
-                            $data['documentID'] = 'RPOSS';
+                            $data['documentID'] = 'RPOS';
                             $data['documentSystemCode'] = $gl->documentSystemId;
                             $data['documentCode'] = $gl->documentCode;
                             $data['documentDate'] = date('Y-m-d H:i:s');
