@@ -402,13 +402,14 @@ class ItemReturnDetailsAPIController extends AppBaseController
     public function update($id, UpdateItemReturnDetailsAPIRequest $request)
     {
        
-    
+       
         $api_key = $request['api_key'];
         $input = array_except($request->all(), ['uom_issued', 'uom_receiving', 'issue','item_by','api_key']);
         $input = $this->convertArrayToValue($input);
         $qtyError = array('type' => 'qty');
         
 
+   
         /** @var ItemReturnDetails $itemReturnDetails */
         $itemReturnDetails = $this->itemReturnDetailsRepository->findWithoutFail($id);
 
@@ -422,45 +423,55 @@ class ItemReturnDetailsAPIController extends AppBaseController
             return $this->sendError('Item Return not found');
         }
 
+        $isse_code = $input['issueCodeSystem'];
+        if($isse_code != 0)
+        {
+            $bytes = random_bytes(10);
+            $hashKey = bin2hex($bytes);
+            $empID = \Helper::getEmployeeSystemID();
 
 
-        $bytes = random_bytes(10);
-        $hashKey = bin2hex($bytes);
-        $empID = \Helper::getEmployeeSystemID();
+            $item_issue = ItemIssueMaster::find($isse_code);
 
-        $insertData = [
-        'employee_id' => $empID,
-        'token' => $hashKey,
-        'expire_time' => Carbon::now()->addDays(1),
-        'module_id' => 1
-          ];
-
-        $resData = UserToken::create($insertData);
-
-        $client = new Client();
-        $res = $client->request('GET', 'http://manu.uat-gears-int.com/index.php/MFQ_Api/getAllocatedJobs?companyID='.$itemReturnMaster->companySystemID.'&documentSystemID='.$itemReturnMaster->documentSystemID.'&documentsystemcode='.$itemReturnMaster->itemReturnAutoID.'&itemautoID='.$itemReturnDetails->itemCodeSystem, [
-            'headers' => [
-            'Content-Type'=> 'application/json',
+            if (empty($item_issue)) {
+                return $this->sendError('Item Issue not found');
+            }
+      
+    
+            $insertData = [
+            'employee_id' => $empID,
             'token' => $hashKey,
-            'api_key' => $api_key
-            ]
-        ]);
-
-        if ($res->getStatusCode() == 200) { 
-            $job = json_decode($res->getBody(), true);
-
-
-            if(count($job) > 0)
+            'expire_time' => Carbon::now()->addDays(1),
+            'module_id' => 1
+              ];
+    
+            $resData = UserToken::create($insertData);
+    
+            $client = new Client();
+            $res = $client->request('GET', 'http://manu.uat-gears-int.com/index.php/MFQ_Api/getAllocatedJobs?companyID='.$item_issue->companySystemID.'&documentID='.$item_issue->documentID.'&documentsystemcode='.$item_issue->itemIssueAutoID.'&itemautoID='.$itemReturnDetails->itemCodeSystem, [
+                'headers' => [
+                'Content-Type'=> 'application/json',
+                'token' => $hashKey,
+                'api_key' => $api_key
+                ]
+            ]);
+    
+            if ($res->getStatusCode() == 200) { 
+                $job = json_decode($res->getBody(), true);
+    
+    
+                if(count($job) > 0)
+                {
+                    return $this->sendError('The selected Material Issue has allocated to job');
+                }
+            }
+            else
             {
-                return $this->sendError('The selected item is has allocated to job');
+                return $this->sendError('Unable to get the response from allocated job for this Material Issue');
             }
         }
-        else
-        {
-            return $this->sendError('Unable to get the MFQJob Status');
-        }
 
- 
+   
 
         if ($input['itemUnitOfMeasure'] != $input['unitOfMeasureIssued']) {
             $unitConvention = UnitConversion::where('masterUnitID', $input['itemUnitOfMeasure'])
