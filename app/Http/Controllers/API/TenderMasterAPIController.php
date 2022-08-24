@@ -576,12 +576,15 @@ WHERE
             'procument_sub_cat_id', 'tender_type_id', 'envelop_type_id', 'evaluation_type_id'
         ));
 
-
-        $resValidate = $this->validateTenderHeader($input);
-
-        if (!$resValidate['status']) {
-            return $this->sendError($resValidate['message'], 422);
+        if($input['addCalendarDates'] === 0){
+            $resValidate = $this->validateTenderHeader($input);
+            if (!$resValidate['status']) {
+                return $this->sendError($resValidate['message'], 422);
+            }
+        } else {
+            return $this->updateCalenderDates($input);
         }
+
         $document_sales_start_date = new Carbon($input['document_sales_start_date']);
         $document_sales_start_date = $document_sales_start_date->format('Y-m-d');
 
@@ -682,7 +685,8 @@ WHERE
                 } else {
                     ProcumentActivity::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
                 }
-                if (isset($input['calendarDates'])) {
+
+               /*if (isset($input['calendarDates'])) {
                     if (count($input['calendarDates']) > 0) {
                         CalendarDatesDetail::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
                         foreach ($input['calendarDates'] as $calDate) {
@@ -727,7 +731,7 @@ WHERE
                     }
                 } else {
                     CalendarDatesDetail::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
-                }
+                }*/
 
 
                 if ($exist['site_visit_date'] != $site_visit_date) {
@@ -847,6 +851,58 @@ WHERE
             DB::rollback();
             Log::error($this->failed($e));
             return ['success' => false, 'message' => $e];
+        }
+    }
+
+    public function updateCalenderDates($input)
+    {
+        $employee = \Helper::getEmployeeInfo();
+        if (isset($input['calendarDates'])) {
+            if (count($input['calendarDates']) > 0) {
+                CalendarDatesDetail::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
+                foreach ($input['calendarDates'] as $calDate) {
+                    if (!empty($calDate['from_date'])) {
+                        $frm_date = new Carbon($calDate['from_date']);
+                        $frm_date = $frm_date->format('Y-m-d');
+                    } else {
+                        $frm_date = null;
+                    }
+                    if (!empty($calDate['to_date'])) {
+                        $to_date = new Carbon($calDate['to_date']);
+                        $to_date = $to_date->format('Y-m-d');
+                    } else {
+                        $to_date = null;
+                    }
+                    if (!empty($to_date) && empty($frm_date)) {
+                        return ['success' => false, 'message' => 'From date cannot be empty'];
+                    }
+                    if (!empty($frm_date) && empty($to_date)) {
+                        return ['success' => false, 'message' => 'To date cannot be empty'];
+                    }
+
+                    if (!empty($frm_date) && !empty($to_date)) {
+                        if ($frm_date > $to_date) {
+                            return ['success' => false, 'message' => 'From date cannot be greater than the To date'];
+                        }
+                    }
+                    if (!empty($to_date) || !empty($frm_date)) {
+                        $calDt['tender_id'] = $input['id'];
+                        $calDt['calendar_date_id'] = $calDate['id'];
+                        $calDt['from_date'] = $frm_date;
+                        $calDt['to_date'] = $to_date;
+                        $calDt['company_id'] = $input['company_id'];
+                        $calDt['created_by'] = $employee->employeeSystemID;
+                        $calDt['created_at'] = Carbon::now();
+
+                        $created = CalendarDatesDetail::create($calDt);
+                    }
+                }
+                return ['success' => $created, 'message' => 'Successfully updated'];
+            } else {
+                CalendarDatesDetail::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
+            }
+        } else {
+            CalendarDatesDetail::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
         }
     }
 
