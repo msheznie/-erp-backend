@@ -2,16 +2,14 @@
 <table>
         <thead>
         <div>
-                <td colspan="3"></td>
-                <td><B>{{$Title}} </B></td>
+                <td colspan="18"><h1 style="text-align: center">{{$company}} </h1></td>
             </div>
         </thead>
     </table>
     <table>
         <thead>
         <div>
-                <td colspan="3"></td>
-                <td><B>{{$company}}</B></td>
+                <td colspan="18"><h2 style="text-align: center">{{$Title}}</h2></td>
             </div>
         </thead>
     </table>
@@ -48,24 +46,23 @@
                 </th>
              @endforeach
         </tr>   
-
         <tr>
             <th class=""></th>
             <th class=""></th>
             <th class=""></th>
             @foreach($segment as $data1)
              @foreach($deb_cred as $info)
-                 <th >
+                 <th>
                     {{$info}}
                 </th>
              @endforeach
-         
             @endforeach
 
         </tr>
 
 
     </thead>
+
     <tbody>
         @foreach($data as $dt)
             <tr>
@@ -80,6 +77,7 @@
             </tr>
         @endforeach
     </tbody>
+
     <tfoot>
     <tfoot>
         <tr >

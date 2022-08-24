@@ -61,6 +61,14 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Config;
 use App\helper\CreateExcel;
 use App\Models\CompanyPolicyMaster;
+use App\Models\PurchaseRequestDetails;
+use App\Models\PurchaseOrderDetails;
+use App\Models\GRVDetails;
+use App\Models\MaterielRequestDetails;
+use App\Models\StockAdjustmentDetails;
+use App\Models\QuotationDetails;
+use App\Models\DeliveryOrderDetail;
+use App\Models\CustomerInvoiceItemDetails;
 
 /**
  * Class ItemMasterController
@@ -946,7 +954,8 @@ class ItemMasterAPIController extends AppBaseController
         }
 
 
-    
+        
+
 
         if($itemMaster->itemApprovedYN == 1){
             //check policy 9
@@ -958,12 +967,25 @@ class ItemMasterAPIController extends AppBaseController
                 $itemMaster->isActive = $input['isActive'];
                 $itemMaster->itemPicture = $input['itemPicture'];
                 $itemMaster->pos_type = $input['pos_type'];
-                $itemMaster->save();
+                $itemMaster->itemDescription = $input['itemDescription'];
+                $itemMaster->itemShortDescription = $input['itemShortDescription'];
+                $itemMaster->financeCategorySub = $input['financeCategorySub'];
+                $itemMaster->unit = $input['unit'];
+                $itemMaster->barcode = $input['barcode'];
+                $itemMaster->secondaryItemCode = $input['secondaryItemCode'];
 
+
+                $itemMaster->save();
+           
                 $updateData = [
                     'itemUrl' => $input['itemUrl'],
                     'isActive' => $input['isActive'],
-                    'pos_type' => $input['pos_type']
+                    'pos_type' => $input['pos_type'],
+                    'itemDescription' => $input['itemDescription'],
+                    'financeCategorySub' => $input['financeCategorySub'],
+                    'itemUnitOfMeasure' => $input['unit'],
+                    'barcode' => $input['barcode'],
+                    'secondaryItemCode' => $input['secondaryItemCode']
                 ];
 
                 $itemMasterOld = $itemMaster->toArray();
@@ -1626,5 +1648,140 @@ class ItemMasterAPIController extends AppBaseController
         }
 
         return $this->sendResponse($subCategoryData, 'Record retrieved successfully');
+    }
+
+    public function validateItemAmend(Request $request)
+    {
+        $input = $request->all();
+
+        $itemMaster = ItemMaster::find($input['itemID']);
+
+        if (!$itemMaster) {
+            return $this->sendError('Item Data not found');
+        }
+      $errorMessages = "Finance Sub Category,PartNO,Barcode,Unit Of measure cannot be amended ,the item used in ";
+      $successMessages = "Use of Finance Sub Category,PartNO,Barcode,Unit Of measure checking is done in ";
+      $purchase_request = PurchaseRequestDetails::where('itemCode', $input['itemID'])->first();
+
+
+      $is_amend = true;
+      $is_amend_suc = true;
+
+      if ($purchase_request) {
+        $errorMessages = $errorMessages."purchase request,";
+        $amendable['amendable'] = false;
+        $is_amend = false;
+        } else {
+            $successMessages = $successMessages."purchase request,";
+            $amendable['amendable'] = true;
+            $is_amend_suc = false;
+        }
+
+       $direct_purchased_order = PurchaseOrderDetails::where('itemCode', $input['itemID'])->first();
+            
+       if ($direct_purchased_order) {
+        $errorMessages = $errorMessages."direct purchase order,";
+        $amendable['amendable'] = false;
+        $is_amend = false;
+        } else {
+            $successMessages = $successMessages."purchase order,";
+            $amendable['amendable'] = (!$amendable['amendable']) ? false : true;
+            $is_amend_suc = false;
+        }
+
+
+        
+       $direct_grv= GRVDetails::where('itemCode', $input['itemID'])->first();
+            
+       if ($direct_grv) {
+        $errorMessages = $errorMessages."direct grv,";
+        $amendable['amendable'] = false;
+        $is_amend = false;
+        } else {
+            $successMessages = $successMessages."direct grv,";
+            $amendable['amendable'] = (!$amendable['amendable']) ? false : true;
+            $is_amend_suc = false;
+        }
+                
+       $material_request= MaterielRequestDetails::where('itemCode', $input['itemID'])->first();
+            
+       if ($material_request) {
+        $errorMessages = $errorMessages."material request,";
+        $amendable['amendable'] = false;
+        $is_amend = false;
+        } else {
+            $successMessages = $successMessages."material request,";
+            $amendable['amendable'] = (!$amendable['amendable']) ? false : true;
+            $is_amend_suc = false;
+        }
+
+
+        $stock_adjustment = StockAdjustmentDetails::where('itemCodeSystem', $input['itemID'])->first();
+            
+        if ($stock_adjustment) {
+            $errorMessages = $errorMessages."stock adjustment,";
+         $amendable['amendable'] = false;
+         $is_amend = false;
+         } else {
+            $successMessages = $successMessages."stock adjustment,";
+             $amendable['amendable'] = (!$amendable['amendable']) ? false : true;
+             $is_amend_suc = false;
+         }
+
+
+         $quatation = QuotationDetails::where('itemAutoID', $input['itemID'])->first();
+            
+         if ($quatation) {
+            $errorMessages = $errorMessages."quotation/sales order,";
+          $amendable['amendable'] = false;
+          $is_amend = false;
+          } else {
+            $successMessages = $successMessages."quotation/sales order,";
+              $amendable['amendable'] = (!$amendable['amendable']) ? false : true;
+              $is_amend_suc = false;
+          }
+
+          $delivery_order = DeliveryOrderDetail::where('itemCodeSystem', $input['itemID'])->first();
+            
+          if ($quatation) {
+            $errorMessages = $errorMessages."delivery order,";
+         $amendable['amendable'] = false;
+         $is_amend = false;
+         } else {
+            $successMessages = $successMessages."delivery order,";
+             $amendable['amendable'] = (!$amendable['amendable']) ? false : true;
+             $is_amend_suc = false;
+         }
+
+         
+          $customer_invoice_details = CustomerInvoiceItemDetails::where('itemCodeSystem', $input['itemID'])->first();
+            
+          if ($customer_invoice_details) {
+            $errorMessages = $errorMessages."customer invoice";
+           $amendable['amendable'] = false;
+           $is_amend = false;
+           } else {
+            $successMessages = $successMessages."customer invoice";
+               $amendable['amendable'] = (!$amendable['amendable']) ? false : true;
+               $is_amend_suc = false;
+           }
+
+           $erro_msg = [];
+           if(!$is_amend)
+           {
+            array_push($erro_msg,$errorMessages);
+           }
+           
+           $succes_msg = [];
+           if(!$is_amend_suc)
+           {
+            array_push($succes_msg,$successMessages);
+           }
+           
+
+            return $this->sendResponse(['errorMessages' => $erro_msg, 'successMessages' => $succes_msg, 'amendable'=> $amendable], "validated successfully");
+
+
+
     }
 }

@@ -279,7 +279,7 @@ class BudgetConsumptionService
 	    		$budgetFormData['glColumnName'] = "financeGLcodebBSSystemID";
 	    	}
 	    	$budgetData = self::budgetConsumptionByProject($budgetFormData);
-	    	return ['status' => true, 'data' => $budgetData, 'projectBased' => true, 'budgetCheckPolicy' => $budgetCheckPolicy, 'checkBudgetBasedOnGLPolicy' => $checkBudgetBasedOnGLPolicy, 'departmentWiseCheckBudgetPolicy' => $departmentWiseCheckBudgetPolicy, 'checkBudgetBasedOnGLPolicyProject' => $checkBudgetBasedOnGLPolicyProject, 'rptCurrency' => $rptCurrency];
+	    	return ['status' => true, 'data' => $budgetData, 'projectBased' => true, 'budgetCheckPolicy' => $budgetCheckPolicy, 'checkBudgetBasedOnGLPolicy' => $checkBudgetBasedOnGLPolicy, 'departmentWiseCheckBudgetPolicy' => $departmentWiseCheckBudgetPolicy, 'checkBudgetBasedOnGLPolicyProject' => $checkBudgetBasedOnGLPolicyProject, 'rptCurrency' => $rptCurrency, 'budgetmasterIDs' => []];
 	    }
 
 	    if ($checkBudget && $checkBudget->isYesNO == 1 && $documentLevelCheckBudget && !is_null($budgetFormData['financeCategory'])) {
@@ -305,7 +305,7 @@ class BudgetConsumptionService
 	    	$validateArray = self::validateBudget($budgetFormData);
 	    }
 
-	    return ['status' => true, 'data' => $budgetData, 'budgetCheckPolicy' => $budgetCheckPolicy, 'validateArray' => $validateArray, 'checkBudgetBasedOnGLPolicy' => $checkBudgetBasedOnGLPolicy, 'departmentWiseCheckBudgetPolicy' => $departmentWiseCheckBudgetPolicy, 'glCodes' => $budgetFormData['glCodes'], 'rptCurrency' => $rptCurrency];
+	    return ['status' => true, 'data' => (isset($budgetData['finalResData']) ? $budgetData['finalResData'] : []), 'budgetCheckPolicy' => $budgetCheckPolicy, 'validateArray' => $validateArray, 'checkBudgetBasedOnGLPolicy' => $checkBudgetBasedOnGLPolicy, 'departmentWiseCheckBudgetPolicy' => $departmentWiseCheckBudgetPolicy, 'glCodes' => $budgetFormData['glCodes'], 'rptCurrency' => $rptCurrency, 'budgetmasterIDs' => (isset($budgetData['budgetmasterIDs']) ? $budgetData['budgetmasterIDs'] : [])];
 	}
 
 	public static function budgetConsumptionByProject($budgetFormData)
@@ -440,9 +440,11 @@ class BudgetConsumptionService
 														 ->get();
 
 		$templateCategoryIDs = [];
+		$budgetmasterIDs = [];
 
 		if (count($checkBudgetConfiguration) > 0) {
 			$templateCategoryIDs = $checkBudgetConfiguration->pluck('templateDetailID')->toArray();
+			$budgetmasterIDs = $checkBudgetConfiguration->pluck('budgetmasterID')->toArray();
 
 			$budgetAmount = self::budgetAmountQry($budgetFormData, $templateCategoryIDs, $glCodes);
 
@@ -650,10 +652,10 @@ class BudgetConsumptionService
 				$finalResData[] = $value;
 			}
 
-			return $finalResData;
+			return ['finalResData' => $finalResData, 'budgetmasterIDs' => $budgetmasterIDs];
 
 		} else {
-			return [];
+			return ['finalResData' => [], 'budgetmasterIDs' => []];
 		}
 	}
 

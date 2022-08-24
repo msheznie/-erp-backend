@@ -322,7 +322,7 @@
                                 <td style="word-wrap:break-word;">{{$item->OurRef}}</td>
                                 <td style="word-wrap:break-word;">{{$item->ClientRef}}</td>
                                 <td style="word-wrap:break-word;">{{$item->assetDescription}}</td>
-                                <td style="text-align: center;">{{isset($item->uom_issuing->UnitShortCode)?$item->uom_issuing->UnitShortCode:''}}</td>
+                                <td style="text-align: left;">{{isset($item->uom_issuing->UnitShortCode)?$item->uom_issuing->UnitShortCode:''}}</td>
                                 <td style="text-align: right;">{{$item->qty}}</td>
                                 <td style="text-align: right;">{{number_format($item->rate,$numberFormatting)}}</td>
                                 <td style="text-align: right;">{{number_format($item->amount,$numberFormatting)}}</td>
