@@ -169,7 +169,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('getAllItemsMaster', 'ItemMasterAPIController@getAllItemsMaster');
         Route::post('getAssignedItemsForCompany', 'ItemMasterAPIController@getAssignedItemsForCompany');
         Route::post('getAllAssignedItemsForCompany', 'ItemMasterAPIController@getAllAssignedItemsForCompany');
-
+        Route::post('validateItemAmend', 'ItemMasterAPIController@validateItemAmend');
 
 
         Route::get('getAllFixedAssetItems', 'ItemMasterAPIController@getAllFixedAssetItems');
@@ -722,7 +722,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('cancelMaterielRequest', 'MaterielRequestAPIController@cancelMaterielRequest');
         Route::get('update-qnty-by-location', 'MaterielRequestAPIController@updateQntyByLocation');
         Route::get('materiel_request/details/{id}', 'MaterielRequestAPIController@getMaterielRequestDetails');
-
+        Route::get('returnMaterialRequestPreCheck', 'MaterielRequestAPIController@returnMaterialRequestPreCheck');
+        Route::post('returnMaterialRequest', 'MaterielRequestAPIController@returnMaterialRequest');
 
        
 
@@ -2085,6 +2086,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('downloadQuotationItemUploadTemplate', 'QuotationMasterAPIController@downloadQuotationItemUploadTemplate');
         Route::get('downloadDeliveryOrderUploadTemplate', 'DeliveryOrderAPIController@downloadQuotationItemUploadTemplate');
         Route::post('poItemsUpload', 'ProcumentOrderAPIController@poItemsUpload');
+        Route::post('checkBudgetCutOffForPo', 'ProcumentOrderAPIController@checkBudgetCutOffForPo');
 
 
         Route::post('sales-order/is-link-item', 'DeliveryOrderAPIController@isLinkItem');
@@ -3052,7 +3054,11 @@ Route::resource('bid_boqs', 'BidBoqAPIController');
 
 
 Route::resource('cash_flow_report_details', 'CashFlowReportDetailAPIController');
-Route::resource('tender_circulars', 'TenderCircularsAPIController'); 
+Route::resource('tender_circulars', 'TenderCircularsAPIController');
+
+Route::resource('po_cutoff_jobs', 'PoCutoffJobAPIController');
+
+Route::resource('po_cutoff_job_datas', 'PoCutoffJobDataAPIController');
 
 Route::resource('p_o_s_s_o_u_r_c_e_shift_details', 'POSSOURCEShiftDetailsAPIController');
 Route::resource('i_o_u_booking_masters', 'IOUBookingMasterAPIController');

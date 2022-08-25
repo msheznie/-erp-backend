@@ -327,8 +327,8 @@ class ItemIssueDetailsAPIController extends AppBaseController
         
 
         $itemMaster = ItemMaster::find($input['itemCodeSystem']);
-
-        $mfq_no = $itemMaster->mfqJobID;
+        
+        $mfq_no = $itemIssueMaster->mfqJobID;
 
         $input['trackingType'] = (isset($itemMaster->trackingType)) ? $itemMaster->trackingType : null;
       
@@ -379,19 +379,19 @@ class ItemIssueDetailsAPIController extends AppBaseController
         if (!empty($financeItemCategorySubAssigned)) {
 
 
-            if(!empty($itemMaster->mfqJobID) && WarehouseMaster::checkManuefactoringWareHouse($itemMaster->wareHouseFrom))
+            if(!empty($mfq_no) && WarehouseMaster::checkManuefactoringWareHouse($itemIssueMaster->wareHouseFrom))
             {
                if($financeItemCategorySubAssigned->includePLForGRVYN == -1)
                {
                    $input['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
                    $input['financeGLcodebBS'] = $financeItemCategorySubAssigned->financeGLcodebBS;
-                   $input['financeGLcodePLSystemID'] = WarehouseMaster::getWIPGLSystemID($itemMaster->wareHouseFrom);
-                   $input['financeGLcodePL'] = WarehouseMaster::getWIPGLCode($itemMaster->wareHouseFrom);
+                   $input['financeGLcodePLSystemID'] = WarehouseMaster::getWIPGLSystemID($itemIssueMaster->wareHouseFrom);
+                   $input['financeGLcodePL'] = WarehouseMaster::getWIPGLCode($itemIssueMaster->wareHouseFrom);
                }
                else
                {
-                $input['financeGLcodebBSSystemID'] = WarehouseMaster::getWIPGLSystemID($itemMaster->wareHouseFrom);
-                $input['financeGLcodebBS'] = WarehouseMaster::getWIPGLCode($itemMaster->wareHouseFrom);
+                $input['financeGLcodebBSSystemID'] = WarehouseMaster::getWIPGLSystemID($itemIssueMaster->wareHouseFrom);
+                $input['financeGLcodebBS'] = WarehouseMaster::getWIPGLCode($itemIssueMaster->wareHouseFrom);
                 $input['financeGLcodePLSystemID'] = $financeItemCategorySubAssigned->financeGLcodePLSystemID;
                 $input['financeGLcodePL'] = $financeItemCategorySubAssigned->financeGLcodePL;
                }

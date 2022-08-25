@@ -168,6 +168,12 @@
             background-color: #ffffff !important;
             border-right: 1px solid #ffffffff !important;
         }
+
+        .img_size
+        {
+            width: 160px;
+            height: auto;
+        }
     </style>
 </head>
 <body>
@@ -237,7 +243,7 @@
         <tr style="width: 100%">
             <td valign="top" style="width: 50%">
                 @if($masterdata->company)
-                    <img src="{{$masterdata->company->logo_url}}" width="180px" height="60px">
+                    <img src="{{$masterdata->company->logo_url}}" class="img_size">
                 @endif
                 <br>
 
