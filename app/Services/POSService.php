@@ -84,7 +84,7 @@ class POSService
                 }); 
                 foreach (array_chunk($dataUpdate2->toArray(),1000) as $t)  
                 {
-                    $namespacedModel::insert($dataUpdate2->toArray());
+                    $namespacedModel::insert($t);
                 }   
             }); 
             $LogTransactionCreate  = self::LogTransactionCreate($mapping_id, 2, 'u', $LogTransactionCreate['data']);
