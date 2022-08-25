@@ -908,13 +908,34 @@ class ShiftDetailsAPIController extends AppBaseController
 
                         $companyFinancePeriod = CompanyFinancePeriod::where('dateFrom', "<", $invoice->invoiceDate)->where('dateTo', ">", $invoice->invoiceDate)->where('companySystemID', $shiftDetails->companyID)->first();
 
-                        $customerID = 0;
+                        $customerID = null;
+                        $serviceLineSystemID = null;
+                        $serviceLineCode = null;
+                        $wareHouseID = null;
                         $customerID = POSSOURCECustomerMaster::where('customerAutoID',$invoice->customerID)->first();
                         if($customerID){
                             $customerID = $customerID->erp_customer_master_id;
                         }
+                    $segments = DB::table('pos_source_shiftdetails')
+                        ->selectRaw('pos_source_shiftdetails.segmentID as segmentID, serviceline.ServiceLineCode as serviceLineCode')
+                        ->join('serviceline', 'serviceline.serviceLineSystemID', '=', 'pos_source_shiftdetails.segmentID')
+                        ->where('pos_source_shiftdetails.shiftID', $shiftId)
+                        ->first();
+                    if($segments){
+                        $serviceLineSystemID = $segments->segmentID;
+                        $serviceLineCode = $segments->serviceLineCode;
+                    }
+                    $wareHouse = DB::table('pos_source_shiftdetails')
+                        ->selectRaw('pos_source_shiftdetails.wareHouseID as wareHouseID')
+                        ->where('pos_source_shiftdetails.shiftID', $shiftId)
+                        ->first();
+                    if($wareHouse){
+                        $wareHouseID = $wareHouse->wareHouseID;
+                    }
 
-                        $input = ['bookingDate' => $invoice->invoiceDate, 'comments' => "Inv Created by GPOS System. Bill No: ".$invoice->invoiceCode, 'companyFinancePeriodID' => $companyFinancePeriod->companyFinancePeriodID, 'companyFinanceYearID' => $companyFinanceYear->companyFinanceYearID, 'companyID' => 1, 'custTransactionCurrencyID' => 1, 'customerID' => $customerID, 'date_of_supply' => $invoice->invoiceDate, 'invoiceDueDate' => $invoice->invoiceDate, 'isPerforma' => 2, 'serviceLineSystemID' => 1, 'wareHouseSystemCode' => 1, 'customerInvoiceNo' => "abd-56", 'bankAccountID' => 1, 'bankID' => 2];
+                    $companyCurrency = \Helper::companyCurrency($shiftDetails->companyID);
+
+                        $input = ['bookingDate' => $invoice->invoiceDate, 'comments' => "Inv Created by GPOS System. Bill No: ".$invoice->invoiceCode, 'companyFinancePeriodID' => $companyFinancePeriod->companyFinancePeriodID, 'companyFinanceYearID' => $companyFinanceYear->companyFinanceYearID, 'companyID' => $shiftDetails->companyID, 'custTransactionCurrencyID' => $companyCurrency->localcurrency->currencyID, 'customerID' => $customerID, 'date_of_supply' => $invoice->invoiceDate, 'invoiceDueDate' => $invoice->invoiceDate, 'isPerforma' => 2, 'serviceLineSystemID' => $serviceLineSystemID, 'serviceLineCode' => $serviceLineCode, 'wareHouseSystemCode' => $wareHouseID, 'customerInvoiceNo' => $invoice->invoiceCode, 'bankAccountID' => 1, 'bankID' => 2];
 
 
                         if (isset($input['isPerforma']) && $input['isPerforma'] == 2) {
@@ -1733,13 +1754,34 @@ class ShiftDetailsAPIController extends AppBaseController
                         return $this->sendError('Financial year is not found', 500);
                     }
 
-                    $customerID = 0;
+                    $customerID = null;
+                    $serviceLineSystemID = null;
+                    $serviceLineCode = null;
+                    $wareHouseID = null;
                     $customerID = POSSOURCECustomerMaster::where('customerAutoID',$invoice->customerID)->first();
                     if($customerID){
-                        $customerID = $customer->erp_customer_master_id;
+                        $customerID = $customerID->erp_customer_master_id;
+                    }
+                    $segments = DB::table('pos_source_shiftdetails')
+                        ->selectRaw('pos_source_shiftdetails.segmentID as segmentID, serviceline.ServiceLineCode as serviceLineCode')
+                        ->join('serviceline', 'serviceline.serviceLineSystemID', '=', 'pos_source_shiftdetails.segmentID')
+                        ->where('pos_source_shiftdetails.shiftID', $shiftId)
+                        ->first();
+                    if($segments){
+                        $serviceLineSystemID = $segments->segmentID;
+                        $serviceLineCode = $segments->serviceLineCode;
+                    }
+                    $wareHouse = DB::table('pos_source_shiftdetails')
+                        ->selectRaw('pos_source_shiftdetails.wareHouseID as wareHouseID')
+                        ->where('pos_source_shiftdetails.shiftID', $shiftId)
+                        ->first();
+                    if($wareHouse){
+                        $wareHouseID = $wareHouse->wareHouseID;
                     }
 
-                    $input = ['bookingDate' => $invoice->menuSalesDate, 'comments' => "Inv Created by RPOS System", 'companyFinancePeriodID' => $companyFinancePeriod->companyFinancePeriodID, 'companyFinanceYearID' => $companyFinanceYear->companyFinanceYearID, 'companyID' => 1, 'custTransactionCurrencyID' => 1, 'customerID' => $customerID, 'date_of_supply' => $invoice->menuSalesDate, 'invoiceDueDate' => $invoice->menuSalesDate, 'isPerforma' => 0, 'serviceLineSystemID' => 1, 'wareHouseSystemCode' => 1, 'customerInvoiceNo' => "abd-56", 'bankAccountID' => 1, 'bankID' => 2];
+                    $companyCurrency = \Helper::companyCurrency($shiftDetails->companyID);
+
+                    $input = ['bookingDate' => $invoice->menuSalesDate, 'comments' => "Inv Created by RPOS System. Bill No: ".$invoice->invoiceCode, 'companyFinancePeriodID' => $companyFinancePeriod->companyFinancePeriodID, 'companyFinanceYearID' => $companyFinanceYear->companyFinanceYearID, 'companyID' => $shiftDetails->companyID, 'custTransactionCurrencyID' => $companyCurrency->localcurrency->currencyID, 'customerID' => $customerID, 'date_of_supply' => $invoice->menuSalesDate, 'invoiceDueDate' => $invoice->menuSalesDate, 'isPerforma' => 0, 'serviceLineSystemID' => $serviceLineSystemID,'serviceLineCode' => $serviceLineCode, 'wareHouseSystemCode' => $wareHouseID, 'customerInvoiceNo' => $invoice->invoiceCode, 'bankAccountID' => 1, 'bankID' => 2];
 
 
                     if (isset($input['isPerforma']) && $input['isPerforma'] == 2) {
