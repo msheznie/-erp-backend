@@ -239,28 +239,17 @@ class ItemReturnDetailsAPIController extends AppBaseController
 
         if (!empty($financeItemCategorySubAssigned)) {
 
-          
-
             if(WarehouseMaster::checkManuefactoringWareHouse($itemReturn->wareHouseLocation))
             {
-               if($financeItemCategorySubAssigned->includePLForGRVYN == -1)
-               {
-                   $input['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
-                   $input['financeGLcodebBS'] = $financeItemCategorySubAssigned->financeGLcodebBS;
-                   $input['financeGLcodePLSystemID'] = WarehouseMaster::getWIPGLSystemID($itemReturn->wareHouseLocation);
-                   $input['financeGLcodePL'] = WarehouseMaster::getWIPGLCode($itemReturn->wareHouseLocation);
-               }
-               else
-               {
-                $input['financeGLcodebBSSystemID'] = WarehouseMaster::getWIPGLSystemID($itemReturn->wareHouseLocation);
-                $input['financeGLcodebBS'] = WarehouseMaster::getWIPGLCode($itemReturn->wareHouseLocation);
-                $input['financeGLcodePLSystemID'] = $financeItemCategorySubAssigned->financeGLcodePLSystemID;
-                $input['financeGLcodePL'] = $financeItemCategorySubAssigned->financeGLcodePL;
-               }
+                $input['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
+                $input['financeGLcodebBS'] = $financeItemCategorySubAssigned->financeGLcodebBS;
+                $input['financeGLcodePLSystemID'] = WarehouseMaster::getWIPGLSystemID($itemReturn->wareHouseLocation);
+                $input['financeGLcodePL'] = WarehouseMaster::getWIPGLCode($itemReturn->wareHouseLocation);
             }   
             else
             {
-                
+
+
                 $input['financeGLcodebBS'] = $financeItemCategorySubAssigned->financeGLcodebBS;
                 $input['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
                 $input['financeGLcodePL'] = $financeItemCategorySubAssigned->financeGLcodePL;
@@ -474,9 +463,6 @@ class ItemReturnDetailsAPIController extends AppBaseController
               ];
     
             $resData = UserToken::create($insertData);
-
-           
-    
             $client = new Client();
             $res = $client->request('GET', 'http://manu.uat-gears-int.com/index.php/MFQ_Api/getAllocatedJobs?companyID='.$item_issue->companySystemID.'&documentID='.$item_issue->documentID.'&documentsystemcode='.$item_issue->itemIssueAutoID.'&itemautoID='.$itemReturnDetails->itemCodeSystem, [
                 'headers' => [
@@ -492,11 +478,17 @@ class ItemReturnDetailsAPIController extends AppBaseController
     
                 if(count($job) > 0)
                 {
+
+                    $update_item['issueCodeSystem'] = null;
+                    $this->itemReturnDetailsRepository->update($update_item, $id);
+
                     return $this->sendError('The selected Material Issue has allocated to following jobs', 500, ['type'=>'allocated_job','data' => $job]);
                 }
             }
             else
             {
+                    $update_item['issueCodeSystem'] = null;
+                    $this->itemReturnDetailsRepository->update($update_item, $id);
                 return $this->sendError('Unable to get the response from allocated job for this Material Issue');
             }
         }

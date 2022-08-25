@@ -381,20 +381,11 @@ class ItemIssueDetailsAPIController extends AppBaseController
 
             if(!empty($mfq_no) && WarehouseMaster::checkManuefactoringWareHouse($itemIssueMaster->wareHouseFrom))
             {
-               if($financeItemCategorySubAssigned->includePLForGRVYN == -1)
-               {
-                   $input['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
-                   $input['financeGLcodebBS'] = $financeItemCategorySubAssigned->financeGLcodebBS;
-                   $input['financeGLcodePLSystemID'] = WarehouseMaster::getWIPGLSystemID($itemIssueMaster->wareHouseFrom);
-                   $input['financeGLcodePL'] = WarehouseMaster::getWIPGLCode($itemIssueMaster->wareHouseFrom);
-               }
-               else
-               {
-                $input['financeGLcodebBSSystemID'] = WarehouseMaster::getWIPGLSystemID($itemIssueMaster->wareHouseFrom);
-                $input['financeGLcodebBS'] = WarehouseMaster::getWIPGLCode($itemIssueMaster->wareHouseFrom);
-                $input['financeGLcodePLSystemID'] = $financeItemCategorySubAssigned->financeGLcodePLSystemID;
-                $input['financeGLcodePL'] = $financeItemCategorySubAssigned->financeGLcodePL;
-               }
+                $input['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
+                $input['financeGLcodebBS'] = $financeItemCategorySubAssigned->financeGLcodebBS;
+                $input['financeGLcodePLSystemID'] = WarehouseMaster::getWIPGLSystemID($itemIssueMaster->wareHouseFrom);
+                $input['financeGLcodePL'] = WarehouseMaster::getWIPGLCode($itemIssueMaster->wareHouseFrom);
+
             }   
             else
             {
