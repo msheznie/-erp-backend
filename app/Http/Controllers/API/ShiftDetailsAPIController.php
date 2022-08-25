@@ -534,6 +534,7 @@ class ShiftDetailsAPIController extends AppBaseController
             ->where('pos_source_paymentglconfigdetail.companyID', $companySystemID)
             ->where('pos_source_paymentglconfigdetail.erp_bank_acc_id', 0)
             ->get();
+        $isAvailable = 0;
 
         foreach ($posPayments as $pt){
             $pt->dropOptions = BankAccount::selectRaw('bankAccountAutoID as value, CONCAT(bankShortCode, " | " ,AccountNo) as label')->where('companySystemID', $companySystemID)->where('chartOfAccountSystemID', $pt->GLCode)
@@ -541,6 +542,9 @@ class ShiftDetailsAPIController extends AppBaseController
             $pt->isDrop = 1;
             if($pt->dropOptions->isEmpty()) {
                 $pt->isDrop = 0;
+            }
+            else {
+                $isAvailable = 1;
             }
         }
 
@@ -552,6 +556,7 @@ class ShiftDetailsAPIController extends AppBaseController
             'posTaxes' => $posTaxes,
             'taxes' => $taxes,
             'posPayments' => $posPayments,
+            'isAvailable' => $isAvailable
         );
 
         return $this->sendResponse($output, "Shift Details retrieved successfully");
