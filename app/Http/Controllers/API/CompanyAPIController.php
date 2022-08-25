@@ -51,6 +51,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
 use Response;
 use Carbon\Carbon;
+use Image;
 
 /**
  * Class CompanyController
@@ -430,7 +431,7 @@ class CompanyAPIController extends AppBaseController
             }
         }
 
-        $disk = Helper::policyWiseDisk($company->masterCompanySystemIDReorting, 'local_public');
+        $disk = 'public';//Helper::policyWiseDisk($company->masterCompanySystemIDReorting, 'local_public');
         $awsPolicy = Helper::checkPolicy($company->masterCompanySystemIDReorting, 50);
 
         if (isset($input['jsrsExpiryDate'])) {
@@ -472,7 +473,14 @@ class CompanyAPIController extends AppBaseController
 
             $input['logoPath'] = $path;
 
-            Storage::disk($disk)->put($path, $decodeFile);
+            $photo = Image::make($file)
+            ->resize(400, 400)
+            ->encode('jpg',80);
+
+            return $this->sendResponse($photo, 'Company updated successfully');
+
+
+            Storage::disk($disk)->put($path, $photo);
         }
 
         $employee = Helper::getEmployeeInfo();
