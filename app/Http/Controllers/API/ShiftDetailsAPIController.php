@@ -908,7 +908,13 @@ class ShiftDetailsAPIController extends AppBaseController
 
                         $companyFinancePeriod = CompanyFinancePeriod::where('dateFrom', "<", $invoice->invoiceDate)->where('dateTo', ">", $invoice->invoiceDate)->where('companySystemID', $shiftDetails->companyID)->first();
 
-                        $input = ['bookingDate' => $invoice->invoiceDate, 'comments' => "Inv Created by GPOS System. Bill No: ".$invoice->invoiceCode, 'companyFinancePeriodID' => $companyFinancePeriod->companyFinancePeriodID, 'companyFinanceYearID' => $companyFinanceYear->companyFinanceYearID, 'companyID' => 1, 'custTransactionCurrencyID' => 1, 'customerID' => $invoice->customerID, 'date_of_supply' => $invoice->invoiceDate, 'invoiceDueDate' => $invoice->invoiceDate, 'isPerforma' => 2, 'serviceLineSystemID' => 1, 'wareHouseSystemCode' => 1, 'customerInvoiceNo' => "abd-56", 'bankAccountID' => 1, 'bankID' => 2];
+                        $customerID = 0;
+                        $customerID = POSSOURCECustomerMaster::where('customerAutoID',$invoice->customerID)->first();
+                        if($customerID){
+                            $customerID = $customerID->erp_customer_master_id;
+                        }
+
+                        $input = ['bookingDate' => $invoice->invoiceDate, 'comments' => "Inv Created by GPOS System. Bill No: ".$invoice->invoiceCode, 'companyFinancePeriodID' => $companyFinancePeriod->companyFinancePeriodID, 'companyFinanceYearID' => $companyFinanceYear->companyFinanceYearID, 'companyID' => 1, 'custTransactionCurrencyID' => 1, 'customerID' => $customerID, 'date_of_supply' => $invoice->invoiceDate, 'invoiceDueDate' => $invoice->invoiceDate, 'isPerforma' => 2, 'serviceLineSystemID' => 1, 'wareHouseSystemCode' => 1, 'customerInvoiceNo' => "abd-56", 'bankAccountID' => 1, 'bankID' => 2];
 
 
                         if (isset($input['isPerforma']) && $input['isPerforma'] == 2) {
@@ -1727,7 +1733,13 @@ class ShiftDetailsAPIController extends AppBaseController
                         return $this->sendError('Financial year is not found', 500);
                     }
 
-                    $input = ['bookingDate' => $invoice->menuSalesDate, 'comments' => "Inv Created by RPOS System", 'companyFinancePeriodID' => $companyFinancePeriod->companyFinancePeriodID, 'companyFinanceYearID' => $companyFinanceYear->companyFinanceYearID, 'companyID' => 1, 'custTransactionCurrencyID' => 1, 'customerID' => 1, 'date_of_supply' => $invoice->menuSalesDate, 'invoiceDueDate' => $invoice->menuSalesDate, 'isPerforma' => 0, 'serviceLineSystemID' => 1, 'wareHouseSystemCode' => 1, 'customerInvoiceNo' => "abd-56", 'bankAccountID' => 1, 'bankID' => 2];
+                    $customerID = 0;
+                    $customerID = POSSOURCECustomerMaster::where('customerAutoID',$invoice->customerID)->first();
+                    if($customerID){
+                        $customerID = $customer->erp_customer_master_id;
+                    }
+
+                    $input = ['bookingDate' => $invoice->menuSalesDate, 'comments' => "Inv Created by RPOS System", 'companyFinancePeriodID' => $companyFinancePeriod->companyFinancePeriodID, 'companyFinanceYearID' => $companyFinanceYear->companyFinanceYearID, 'companyID' => 1, 'custTransactionCurrencyID' => 1, 'customerID' => $customerID, 'date_of_supply' => $invoice->menuSalesDate, 'invoiceDueDate' => $invoice->menuSalesDate, 'isPerforma' => 0, 'serviceLineSystemID' => 1, 'wareHouseSystemCode' => 1, 'customerInvoiceNo' => "abd-56", 'bankAccountID' => 1, 'bankID' => 2];
 
 
                     if (isset($input['isPerforma']) && $input['isPerforma'] == 2) {
