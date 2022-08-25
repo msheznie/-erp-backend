@@ -236,7 +236,9 @@ class ItemReturnDetailsAPIController extends AppBaseController
             ->where('itemCategorySubID', $input['itemFinanceCategorySubID'])
             ->first();
 
+
         if (!empty($financeItemCategorySubAssigned)) {
+
             if(WarehouseMaster::checkManuefactoringWareHouse($itemReturn->wareHouseLocation))
             {
                 $input['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
@@ -247,6 +249,7 @@ class ItemReturnDetailsAPIController extends AppBaseController
             else
             {
 
+
                 $input['financeGLcodebBS'] = $financeItemCategorySubAssigned->financeGLcodebBS;
                 $input['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
                 $input['financeGLcodePL'] = $financeItemCategorySubAssigned->financeGLcodePL;
@@ -254,9 +257,11 @@ class ItemReturnDetailsAPIController extends AppBaseController
             }
 
             $input['includePLForGRVYN'] = $financeItemCategorySubAssigned->includePLForGRVYN;
+
         } else {
             return $this->sendError("Account code not updated.", 500);
         }
+
 
         if (!$input['financeGLcodebBS'] || !$input['financeGLcodebBSSystemID'] || !$input['financeGLcodePL'] || !$input['financeGLcodePLSystemID']) {
             return $this->sendError("Account code not updated.", 500);
@@ -414,7 +419,7 @@ class ItemReturnDetailsAPIController extends AppBaseController
     public function update($id, UpdateItemReturnDetailsAPIRequest $request)
     {
        
-    
+       
         $api_key = $request['api_key'];
         $input = array_except($request->all(), ['uom_issued', 'uom_receiving', 'issue','item_by','api_key']);
         $input = $this->convertArrayToValue($input);
@@ -458,9 +463,6 @@ class ItemReturnDetailsAPIController extends AppBaseController
               ];
     
             $resData = UserToken::create($insertData);
-
-           
-    
             $client = new Client();
             $res = $client->request('GET', 'http://manu.uat-gears-int.com/index.php/MFQ_Api/getAllocatedJobs?companyID='.$item_issue->companySystemID.'&documentID='.$item_issue->documentID.'&documentsystemcode='.$item_issue->itemIssueAutoID.'&itemautoID='.$itemReturnDetails->itemCodeSystem, [
                 'headers' => [
@@ -479,6 +481,7 @@ class ItemReturnDetailsAPIController extends AppBaseController
 
                     $update_item['issueCodeSystem'] = null;
                     $this->itemReturnDetailsRepository->update($update_item, $id);
+
                     return $this->sendError('The selected Material Issue has allocated to following jobs', 500, ['type'=>'allocated_job','data' => $job]);
                 }
             }
