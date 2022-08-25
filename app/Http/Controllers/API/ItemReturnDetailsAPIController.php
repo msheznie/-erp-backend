@@ -462,7 +462,7 @@ class ItemReturnDetailsAPIController extends AppBaseController
            
     
             $client = new Client();
-            $res = $client->request('GET', 'http://manu.uat-gears-int.com/index.php/MFQ_Api/getAllocatedJobs?companyID='.$item_issue->companySystemID.'&documentID='.$item_issue->documentID.'&documentsystemcode='.$item_issue->itemIssueAutoID.'&itemautoID='.$itemReturnDetails->itemCodeSystem, [
+            $res = $client->request('GET', env('HOST_URL').'/getAllocatedJobs?companyID='.$item_issue->companySystemID.'&documentID='.$item_issue->documentID.'&documentsystemcode='.$item_issue->itemIssueAutoID.'&itemautoID='.$itemReturnDetails->itemCodeSystem, [
                 'headers' => [
                 'Content-Type'=> 'application/json',
                 'token' => $hashKey,
