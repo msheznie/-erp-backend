@@ -510,14 +510,15 @@ class ProcumentOrderAPIController extends AppBaseController
         $advancedPayment = PoPaymentTerms::where('poID',$id)->sum('comAmount');
         $supplierCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($procumentOrder->supplierTransactionCurrencyID);
         $newlyUpdatedPoTotalAmountWithoutRound = $poMasterSum['masterTotalSum'] + $poAddonMasterSum['addonTotalSum']+ ($procumentOrder->rcmActivated ? 0 : $poMasterVATSum['masterTotalVATSum']);
-        $newlyUpdatedPoTotalAmount = round($newlyUpdatedPoTotalAmountWithoutRound, $supplierCurrencyDecimalPlace);
+        // $newlyUpdatedPoTotalAmount = round($newlyUpdatedPoTotalAmountWithoutRound, $supplierCurrencyDecimalPlace);
        // $newlyUpdatedPoTotalAmount = bcdiv($newlyUpdatedPoTotalAmountWithoutRound,1,$supplierCurrencyDecimalPlace);
-        // return $newlyUpdatedPoTotalAmount = floatval(sprintf("%.".$supplierCurrencyDecimalPlace."f", $newlyUpdatedPoTotalAmountWithoutRound));
+        $newlyUpdatedPoTotalAmount = floatval(sprintf("%.".$supplierCurrencyDecimalPlace."f", $newlyUpdatedPoTotalAmountWithoutRound));
+        $advancedPaymentCheckAmount = floatval(sprintf("%.".$supplierCurrencyDecimalPlace."f", $advancedPayment));
     
         if(isset($input['isConfirm']) && $input['isConfirm']) {
             $epsilon = 0.00001;
      
-            if(abs($advancedPayment - $newlyUpdatedPoTotalAmount) > $epsilon) {
+            if(abs($advancedPaymentCheckAmount - $newlyUpdatedPoTotalAmount) > $epsilon) {
                 return $this->sendError('Total of Payment terms amount is not equal to PO amount');
             }
         }
@@ -1110,11 +1111,12 @@ class ProcumentOrderAPIController extends AppBaseController
             if (!empty($poAdvancePaymentType)) {
                 foreach ($poAdvancePaymentType as $payment) {
                     if($payment['comAmount']) {
-                        $paymentPercentageAmount = $payment['comAmount'];
+                        $paymentPercentageAmount = floatval(sprintf("%.".$supplierCurrencyDecimalPlace."f", $payment['comAmount']));
                     }else {
                       $paymentPercentageAmount = round(($payment['comPercentage'] / 100) * (($newlyUpdatedPoTotalAmountWithoutRound - $input['poDiscountAmount'])), $supplierCurrencyDecimalPlace);
                     }
-                    $payAdCompAmount = round($payment['comAmount'], $supplierCurrencyDecimalPlace);
+                    // $payAdCompAmount = round($payment['comAmount'], $supplierCurrencyDecimalPlace);
+                    $payAdCompAmount = floatval(sprintf("%.".$supplierCurrencyDecimalPlace."f", $payment['comAmount']));
 
                     if (abs(($payAdCompAmount - $paymentPercentageAmount) / $paymentPercentageAmount) < 0.00001) {
                     } else {

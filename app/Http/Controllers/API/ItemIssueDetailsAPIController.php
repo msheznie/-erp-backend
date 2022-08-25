@@ -327,6 +327,8 @@ class ItemIssueDetailsAPIController extends AppBaseController
         
 
         $itemMaster = ItemMaster::find($input['itemCodeSystem']);
+        
+        $mfq_no = $itemIssueMaster->mfqJobID;
 
         $input['trackingType'] = (isset($itemMaster->trackingType)) ? $itemMaster->trackingType : null;
       
@@ -372,12 +374,29 @@ class ItemIssueDetailsAPIController extends AppBaseController
             ->where('itemCategorySubID', $input['itemFinanceCategorySubID'])
             ->first();
 
+
+
         if (!empty($financeItemCategorySubAssigned)) {
-            $input['financeGLcodebBS'] = $financeItemCategorySubAssigned->financeGLcodebBS;
-            $input['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
-            $input['financeGLcodePL'] = $financeItemCategorySubAssigned->financeGLcodePL;
-            $input['financeGLcodePLSystemID'] = $financeItemCategorySubAssigned->financeGLcodePLSystemID;
+
+
+            if(!empty($mfq_no) && WarehouseMaster::checkManuefactoringWareHouse($itemIssueMaster->wareHouseFrom))
+            {
+                $input['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
+                $input['financeGLcodebBS'] = $financeItemCategorySubAssigned->financeGLcodebBS;
+                $input['financeGLcodePLSystemID'] = WarehouseMaster::getWIPGLSystemID($itemIssueMaster->wareHouseFrom);
+                $input['financeGLcodePL'] = WarehouseMaster::getWIPGLCode($itemIssueMaster->wareHouseFrom);
+            }   
+            else
+            {
+                
+                $input['financeGLcodebBS'] = $financeItemCategorySubAssigned->financeGLcodebBS;
+                $input['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
+                $input['financeGLcodePL'] = $financeItemCategorySubAssigned->financeGLcodePL;
+                $input['financeGLcodePLSystemID'] = $financeItemCategorySubAssigned->financeGLcodePLSystemID;
+            }
+
             $input['includePLForGRVYN'] = $financeItemCategorySubAssigned->includePLForGRVYN;
+
         } else {
             return $this->sendError("Account code not updated.", 500);
         }
