@@ -437,7 +437,7 @@ class ItemIssueMasterAPIController extends AppBaseController
             $resData = UserToken::create($insertData);
     
             $client = new Client();
-            $res = $client->request('GET', 'http://manu.uat-gears-int.com/index.php/MFQ_Api/getJobStatus?JobID='.$itemIssueMaster->mfqJobID, [
+            $res = $client->request('GET', env('MANUFACTURING_URL').'/getJobStatus?JobID='.$itemIssueMaster->mfqJobID, [
                 'headers' => [
                 'Content-Type'=> 'application/json',
                 'token' => $hashKey,
@@ -1135,7 +1135,7 @@ class ItemIssueMasterAPIController extends AppBaseController
         $resData = UserToken::create($insertData);
 
         $client = new Client();
-        $res = $client->request('GET', 'http://manu.uat-gears-int.com/index.php/MFQ_Api/getOpenJobs?company_id'.$companyId.'=&warehouse=&segment=', [
+        $res = $client->request('GET', env('MANUFACTURING_URL').'/getOpenJobs?company_id'.$companyId.'=&warehouse=&segment=', [
             'headers' => [
             'Content-Type'=> 'application/json',
             'token' => $hashKey,
