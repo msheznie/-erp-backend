@@ -1138,45 +1138,6 @@ class ItemIssueMasterAPIController extends AppBaseController
 
         $units = Unit::all();
 
-
-        // $bytes = random_bytes(10);
-        // $hashKey = bin2hex($bytes);
-        // $empID = \Helper::getEmployeeSystemID();
-
-        // Carbon::now()->addDays(1);
-        // $insertData = [
-        // 'employee_id' => $empID,
-        // 'token' => $hashKey,
-        // 'expire_time' => Carbon::now()->addDays(1),
-        // 'module_id' => 1
-        //   ];
-
-        // $resData = UserToken::create($insertData);
-
-        // $client = new Client();
-        // $res = $client->request('GET', env('MANUFACTURING_URL').'/getOpenJobs?company_id'.$companyId.'=&warehouse=&segment=', [
-        //     'headers' => [
-        //     'Content-Type'=> 'application/json',
-        //     'token' => $hashKey,
-        //     'api_key' => $api_key
-        //     ]
-        // ]);
-
-       
-
-        // if ($res->getStatusCode() == 200) { 
-        //     $job = json_decode($res->getBody(), true);
-        // }
-        // else
-        // {
-        //     $job = [];
-        // }
-
-        // foreach($job as $key=>$val)
-        // {
-        //     $job[$key]['jobID'] = intval($val['jobID']);
-        // }
-
         $job = [];
         $output = array(
             'job_no' => $job,
