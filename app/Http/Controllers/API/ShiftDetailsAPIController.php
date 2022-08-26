@@ -548,6 +548,22 @@ class ShiftDetailsAPIController extends AppBaseController
             }
         }
 
+        $posLog = DB::table('pos_finance_log')
+            ->selectRaw('shiftId, status')
+            ->where('pos_finance_log.shiftId', $shiftID)
+            ->where('pos_finance_log.status', 1)
+            ->first();
+
+        $isPosInsufficient = 0;
+        $posInsufficient = DB::table('pos_item_gl')
+            ->selectRaw('*')
+            ->join('pos_finance_log', 'pos_finance_log.shiftId', '=', 'pos_item_gl.shiftId')
+            ->where('pos_item_gl.shiftId', $shiftID)
+            ->where('pos_finance_log.status', 1)
+            ->get();
+        if(!$posInsufficient->isEmpty()) {
+            $isPosInsufficient = 1;
+        }
 
         $output = array(
             'shiftDetailLabels' => $shiftDetailLabels,
@@ -556,7 +572,10 @@ class ShiftDetailsAPIController extends AppBaseController
             'posTaxes' => $posTaxes,
             'taxes' => $taxes,
             'posPayments' => $posPayments,
-            'isAvailable' => $isAvailable
+            'isAvailable' => $isAvailable,
+            'posLog' => $posLog,
+            'posInsufficient' => $posInsufficient,
+            'isPosInsufficient' => $isPosInsufficient
         );
 
         return $this->sendResponse($output, "Shift Details retrieved successfully");
