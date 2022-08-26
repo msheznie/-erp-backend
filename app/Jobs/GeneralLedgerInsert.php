@@ -5342,10 +5342,20 @@ class GeneralLedgerInsert implements ShouldQueue
                         $glEntries = POSGLEntries::where('shiftId', $masterModel["autoID"])->get();
 
                     foreach($glEntries as $gl) {
-                        $invItems = DB::table('pos_source_invoice')
-                            ->selectRaw('pos_source_invoice.*')
-                            ->where('pos_source_invoice.shiftID', $masterModel["autoID"])
-                            ->first();
+                        if($gl->isReturnYN == 1){
+                            $invItems = DB::table('pos_source_salesreturn')
+                                ->selectRaw('pos_source_salesreturn.*')
+                                ->where('pos_source_salesreturn.shiftID', $masterModel["autoID"])
+                                ->first();
+                        }else{
+                            $invItems = DB::table('pos_source_invoice')
+                                ->selectRaw('pos_source_invoice.*')
+                                ->where('pos_source_invoice.shiftID', $masterModel["autoID"])
+                                ->first();
+                        }
+
+
+
                         $glCodes = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $gl->glCode)->first();
 
                         $data['companySystemID'] = $masterModel['companySystemID'];
