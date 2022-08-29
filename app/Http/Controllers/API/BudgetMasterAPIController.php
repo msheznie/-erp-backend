@@ -2471,6 +2471,8 @@ class BudgetMasterAPIController extends AppBaseController
             return $this->sendError("You cannot update budget cutoff period");
         }        
 
+        $input['cutOffPeriod'] = ($input['cutOffPeriod']) ? $input['cutOffPeriod'] : 0;
+
         BudgetMaster::where('budgetmasterID', $input['budgetmasterID'])->update(['cutOffPeriod' => $input['cutOffPeriod']]);
         
         return $this->sendResponse([], 'updated successfully');
