@@ -618,6 +618,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 $input['confirmedDate'] = $customerReceivePaymentMaster->confirmedDate;
                 $input['approved'] = $customerReceivePaymentMaster->approved;
                 $input['approvedDate'] = $customerReceivePaymentMaster->approvedDate;
+
             } else if ($input['matchType'] == 2) {
 
                 $creditNoteMaster = CreditNote::find($input['custReceivePaymentAutoID']);
@@ -2624,9 +2625,10 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                             erp_creditnote.customerID,
                                             currency.CurrencyCode,
                                             currency.DecimalPlaces,
-                                            erp_creditnote.creditAmountTrans AS SumOfreceiveAmountTrans,
+                                            erp_creditnotedetails.creditAmount AS SumOfreceiveAmountTrans,
+                                            erp_creditnotedetails.creditNoteDetailsID AS creditNoteDetailsID,
                                             (
-                                                erp_creditnote.creditAmountTrans - (
+                                                erp_creditnotedetails.creditAmount - (
                                                     (IFNULL(
                                                         receipt.SumOfreceiptAmount,
                                                         0
@@ -2634,7 +2636,8 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                                 )
                                             ) AS BalanceAmt
                                         FROM
-                                            erp_creditnote
+                                            erp_creditnotedetails
+                                        INNER JOIN erp_creditnote AS erp_creditnote ON erp_creditnote.creditNoteAutoID = erp_creditnotedetails.creditNoteAutoID
                                         INNER JOIN currencymaster AS currency ON currency.currencyID = erp_creditnote.customerCurrencyID
                                         LEFT JOIN (
                                             SELECT
@@ -2684,8 +2687,9 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                             erp_creditnote.companySystemID = " . $input['companySystemID'] . "
                                         AND erp_creditnote.approved = - 1
                                         AND erp_creditnote.matchInvoice <> 2
-                                        AND customerID = " . $input['BPVsupplierID'] . "
+                                        AND erp_creditnote.customerID = " . $input['BPVsupplierID'] . "
                                         GROUP BY
+                                            erp_creditnotedetails.serviceLineSystemID,
                                             erp_creditnote.creditNoteAutoID,
                                             erp_creditnote.documentSystemiD,
                                             erp_creditnote.companySystemID,
@@ -2693,7 +2697,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                         HAVING
                                             (
                                                 ROUND(BalanceAmt, DecimalPlaces) > 0
-                                            )");
+                                            ) ORDER BY erp_creditnote.creditNoteDate");
         } else if ($input['matchType'] == 3) {
             $invoiceMaster = DB::select("SELECT *  FROM
                                         (SELECT
