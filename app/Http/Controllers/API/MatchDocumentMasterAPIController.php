@@ -621,7 +621,12 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
             } else if ($input['matchType'] == 2) {
 
-                $creditNoteMaster = CreditNote::find($input['custReceivePaymentAutoID']);
+                $creditNoteDetails = CreditNoteDetails::find($input['custReceivePaymentAutoID']);
+                if (empty($creditNoteDetails)) {
+                    return $this->sendError('Credit Note Details not found');
+                }
+
+                $creditNoteMaster = CreditNote::find($creditNoteDetails->creditNoteAutoID);
                 if (empty($creditNoteMaster)) {
                     return $this->sendError('Credit Note not found');
                 }
@@ -636,7 +641,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                     return $this->sendError('A matching document for the selected credit note is created and not confirmed. Please confirm the previously created document and try again.', 500);
                 }
 
-                $glCheck = GeneralLedger::selectRaw('Sum(erp_generalledger.documentLocalAmount) AS SumOfdocumentLocalAmount, Sum(erp_generalledger.documentRptAmount) AS SumOfdocumentRptAmount,erp_generalledger.documentSystemID, erp_generalledger.documentSystemCode,documentCode,documentID')->where('documentSystemID', $creditNoteMaster->documentSystemiD)->where('companySystemID', $creditNoteMaster->companySystemID)->where('documentSystemCode', $input['custReceivePaymentAutoID'])->groupBY('companySystemID', 'documentSystemID', 'documentSystemCode')->first();
+                $glCheck = GeneralLedger::selectRaw('Sum(erp_generalledger.documentLocalAmount) AS SumOfdocumentLocalAmount, Sum(erp_generalledger.documentRptAmount) AS SumOfdocumentRptAmount,erp_generalledger.documentSystemID, erp_generalledger.documentSystemCode,documentCode,documentID')->where('documentSystemID', $creditNoteMaster->documentSystemiD)->where('companySystemID', $creditNoteMaster->companySystemID)->where('documentSystemCode', $creditNoteDetails->creditNoteAutoID)->groupBY('companySystemID', 'documentSystemID', 'documentSystemCode')->first();
 
                 if ($glCheck) {
                     if (round($glCheck->SumOfdocumentLocalAmount, 0) != 0 || round($glCheck->SumOfdocumentRptAmount, 0) != 0) {
@@ -1679,7 +1684,15 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
         } elseif ($input['documentSystemID'] == 19) {
 
-            $creditNoteDataUpdateCHK = CreditNote::find($input['PayMasterAutoId']);
+            $creditNoteDetails = CreditNoteDetails::find($input['PayMasterAutoId']);
+            if (empty($creditNoteDetails)) {
+                return $this->sendError('Credit Note Details not found');
+            }
+
+            $creditNoteDataUpdateCHK = CreditNote::find($creditNoteDetails->creditNoteAutoID);
+            if (empty($creditNoteDataUpdateCHK)) {
+                return $this->sendError('Credit Note not found');
+            }
 
             $postedDate = date("Y-m-d", strtotime($creditNoteDataUpdateCHK->postedDate));
 
@@ -1892,8 +1905,15 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 $CustomerReceivePaymentDataUpdate->save();
             }
             if ($input['documentSystemID'] == 19) {
+                $creditNoteDetails = CreditNoteDetails::find($input['PayMasterAutoId']);
+                if (empty($creditNoteDetails)) {
+                    return $this->sendError('Credit Note Details not found');
+                }
 
-                $creditNoteDataUpdate = CreditNote::find($input['PayMasterAutoId']);
+                $creditNoteDataUpdate = CreditNote::find($creditNoteDetails->creditNoteAutoID);
+                if (empty($creditNoteDataUpdate)) {
+                    return $this->sendError('Credit Note not found');
+                }
 
                 //when adding a new matching, checking whether debit amount more than the document value
                 $customerSettleAmountSum = CustomerReceivePaymentDetail::selectRaw('erp_custreceivepaymentdet.bookingAmountTrans, addedDocumentSystemID, bookingInvCodeSystem, companySystemID, Sum(erp_custreceivepaymentdet.receiveAmountTrans) AS SumDetailAmount')
@@ -2627,6 +2647,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                             currency.DecimalPlaces,
                                             erp_creditnotedetails.creditAmount AS SumOfreceiveAmountTrans,
                                             erp_creditnotedetails.creditNoteDetailsID AS creditNoteDetailsID,
+                                            erp_creditnotedetails.serviceLineCode AS serviceLineCode,
                                             (
                                                 erp_creditnotedetails.creditAmount - (
                                                     (IFNULL(
