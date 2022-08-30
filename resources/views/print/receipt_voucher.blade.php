@@ -174,6 +174,10 @@
             width: 160px;
             height: auto;
         }
+        .container {
+            width: 150px;
+            height: auto;
+            }
     </style>
 </head>
 <body>
@@ -243,7 +247,8 @@
         <tr style="width: 100%">
             <td valign="top" style="width: 50%">
                 @if($masterdata->company)
-                    <img src="{{$masterdata->company->logo_url}}" >
+                <img src="{{$masterdata->company->logo_url}}" >
+             
                 @endif
                 <br>
 

@@ -390,7 +390,8 @@ class CompanyAPIController extends AppBaseController
     public function update($id, UpdateCompanyAPIRequest $request)
     {
         $input = $request->all();
-
+        
+        
         unset($input['reportingcurrency']);
         // $input = $this->convertArrayToValue($input);
         $input = $this->convertArrayToSelectedValue($input,['companyCountry','exchangeGainLossGLCodeSystemID','isActive','localCurrencyID','reportingCurrency','vatRegisteredYN']);
@@ -431,7 +432,7 @@ class CompanyAPIController extends AppBaseController
             }
         }
 
-        $disk = Helper::policyWiseDisk($company->masterCompanySystemIDReorting, 'local_public');
+        $disk =  Helper::policyWiseDisk($company->masterCompanySystemIDReorting, 'local_public');
         $awsPolicy = Helper::checkPolicy($company->masterCompanySystemIDReorting, 50);
 
         if (isset($input['jsrsExpiryDate'])) {
@@ -456,7 +457,9 @@ class CompanyAPIController extends AppBaseController
             }
 
             $file = $attachment['file'];
-            $decodeFile = base64_decode($file);
+            $explode = explode(",",$file);
+
+            $decodeFile = base64_decode($explode[1]);
 
             $input['companyLogo'] = $input['CompanyID'].'_logo.' . $extension;
 
@@ -473,13 +476,50 @@ class CompanyAPIController extends AppBaseController
 
             $input['logoPath'] = $path;
 
-            $photo = Image::make($decodeFile)
-            ->resize(180, 60);
+            // $photo = Image::make($file)
+            // ->resize(100, NULL, function ($constraint) {
+            //     $constraint->aspectRatio();
+            // })->encode($extension,80);
 
-           // return $this->sendResponse($photo, 'Company updated successfully');
+            // $max_height = 100;
+            // $height = $photo->height();
 
 
-            Storage::disk($disk)->put($path, $photo);
+            // if($photo->height() > $max_height)
+            // {
+            //     $height = $max_height;
+            // }
+
+            // $photo_resized = Image::make($file)
+            // ->resize(NULL, $height,function ($constraint) {
+            //     $constraint->aspectRatio();
+            // })->encode($extension,80);
+
+
+
+            // $photo = Image::make($file)
+            // ->resize(NULL, 100, function ($constraint) {
+            //     $constraint->aspectRatio();
+            // })->encode($extension,80);
+
+            // $max_width = 100;
+            // $width = $photo->width();
+
+           
+
+
+
+            // if($photo->width() > $max_width)
+            // {
+            //     $width = $max_width;
+            // }
+            // $photo_resized = Image::make($file)
+            // ->resize($width, NULL,function ($constraint) {
+            //     $constraint->aspectRatio();
+            // })->encode($extension,80);
+
+
+            Storage::disk($disk)->put($path, $decodeFile);
         }
 
         $employee = Helper::getEmployeeInfo();
