@@ -1104,8 +1104,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
                         if (count($groupby) != 0) {
 
-                            if (count($groupby) > 1 || count($groupbycontract) > 1) {
-                                return $this->sendError('You cannot continue . multiple Segment or contract exist in details.', 500);
+                            if (count($groupbycontract) > 1) {
+                                return $this->sendError('You cannot continue . multiple contract exist in details.', 500);
                             } else {
 
                                 // VAT configuration validation
