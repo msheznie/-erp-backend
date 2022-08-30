@@ -35,6 +35,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Symfony\Component\Finder\SplFileInfo;
 use App\helper\Helper;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Class DocumentAttachmentsController
@@ -152,85 +153,93 @@ class DocumentAttachmentsAPIController extends AppBaseController
      */
     public function store(CreateDocumentAttachmentsAPIRequest $request)
     {
+        DB::beginTransaction();
+        try {
 
-        $input = $request->all();
-        $extension = $input['fileType'];
+            $input = $request->all();
+            $extension = $input['fileType'];
 
-        $blockExtensions = [
-            'ace', 'ade', 'adp', 'ani', 'app', 'asp', 'aspx', 'asx', 'bas', 'bat', 'cla', 'cer', 'chm', 'cmd', 'cnt', 'com',
-            'cpl', 'crt', 'csh', 'class', 'der', 'docm', 'exe', 'fxp', 'gadget', 'hlp', 'hpj', 'hta', 'htc', 'inf', 'ins', 'isp', 'its', 'jar',
-            'js', 'jse', 'ksh', 'lnk', 'mad', 'maf', 'mag', 'mam', 'maq', 'mar', 'mas', 'mat', 'mau', 'mav', 'maw', 'mda', 'mdb', 'mde', 'mdt',
-            'mdw', 'mdz', 'mht', 'mhtml', 'msc', 'msh', 'msh1', 'msh1xml', 'msh2', 'msh2xml', 'mshxml', 'msi', 'msp', 'mst', 'ops', 'osd',
-            'ocx', 'pl', 'pcd', 'pif', 'plg', 'prf', 'prg', 'ps1', 'ps1xml', 'ps2', 'ps2xml', 'psc1', 'psc2', 'pst', 'reg', 'scf', 'scr',
-            'sct', 'shb', 'shs', 'tmp', 'url', 'vb', 'vbe', 'vbp', 'vbs', 'vsmacros', 'vss', 'vst', 'vsw', 'ws', 'wsc', 'wsf', 'wsh', 'xml',
-            'xbap', 'xnk', 'php'
-        ];
+            $blockExtensions = [
+                'ace', 'ade', 'adp', 'ani', 'app', 'asp', 'aspx', 'asx', 'bas', 'bat', 'cla', 'cer', 'chm', 'cmd', 'cnt', 'com',
+                'cpl', 'crt', 'csh', 'class', 'der', 'docm', 'exe', 'fxp', 'gadget', 'hlp', 'hpj', 'hta', 'htc', 'inf', 'ins', 'isp', 'its', 'jar',
+                'js', 'jse', 'ksh', 'lnk', 'mad', 'maf', 'mag', 'mam', 'maq', 'mar', 'mas', 'mat', 'mau', 'mav', 'maw', 'mda', 'mdb', 'mde', 'mdt',
+                'mdw', 'mdz', 'mht', 'mhtml', 'msc', 'msh', 'msh1', 'msh1xml', 'msh2', 'msh2xml', 'mshxml', 'msi', 'msp', 'mst', 'ops', 'osd',
+                'ocx', 'pl', 'pcd', 'pif', 'plg', 'prf', 'prg', 'ps1', 'ps1xml', 'ps2', 'ps2xml', 'psc1', 'psc2', 'pst', 'reg', 'scf', 'scr',
+                'sct', 'shb', 'shs', 'tmp', 'url', 'vb', 'vbe', 'vbp', 'vbs', 'vsmacros', 'vss', 'vst', 'vsw', 'ws', 'wsc', 'wsf', 'wsh', 'xml',
+                'xbap', 'xnk', 'php'
+            ];
 
-        if (in_array($extension, $blockExtensions)) {
-            return $this->sendError('This type of file not allow to upload.', 500);
-        }
-
-
-        if (isset($input['size'])) {
-            if ($input['size'] > env('ATTACH_UPLOAD_SIZE_LIMIT')) {
-                return $this->sendError("Maximum allowed file size is exceeded. Please upload lesser than ".\Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT')), 500);
+            if (in_array($extension, $blockExtensions)) {
+                return $this->sendError('This type of file not allow to upload.', 500);
             }
-        }
 
-        if (isset($input['docExpirtyDate'])) {
-            if ($input['docExpirtyDate']) {
-                $input['docExpirtyDate'] = new Carbon($input['docExpirtyDate']);
+
+            if (isset($input['size'])) {
+                if ($input['size'] > env('ATTACH_UPLOAD_SIZE_LIMIT')) {
+                    return $this->sendError("Maximum allowed file size is exceeded. Please upload lesser than ".\Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT')), 500);
+                }
             }
-        }
 
-        $input = $this->convertArrayToValue($input);
-
-        if (isset($input['documentSystemID'])) {
-
-            $documentMaster = DocumentMaster::where('documentSystemID', $input['documentSystemID'])->first();
-
-            if ($documentMaster) {
-                $input['documentID'] = $documentMaster->documentID;
+            if (isset($input['docExpirtyDate'])) {
+                if ($input['docExpirtyDate']) {
+                    $input['docExpirtyDate'] = new Carbon($input['docExpirtyDate']);
+                }
             }
-        }
 
-        $companyID = "";
-        if (isset($input['companySystemID'])) {
+            $input = $this->convertArrayToValue($input);
 
-            $companyMaster = Company::where('companySystemID', $input['companySystemID'])->first();
+            if (isset($input['documentSystemID'])) {
 
-            if ($companyMaster) {
-                $input['companyID'] = $companyMaster->CompanyID;
-                $companyID = $companyMaster->CompanyID;
+                $documentMaster = DocumentMaster::where('documentSystemID', $input['documentSystemID'])->first();
+
+                if ($documentMaster) {
+                    $input['documentID'] = $documentMaster->documentID;
+                }
             }
+
+            $companyID = "";
+            if (isset($input['companySystemID'])) {
+
+                $companyMaster = Company::where('companySystemID', $input['companySystemID'])->first();
+
+                if ($companyMaster) {
+                    $input['companyID'] = $companyMaster->CompanyID;
+                    $companyID = $companyMaster->CompanyID;
+                }
+            }
+
+            $documentAttachments = $this->documentAttachmentsRepository->create($input);
+
+            $file = $request->request->get('file');
+            $decodeFile = base64_decode($file);
+
+            $input['myFileName'] = $documentAttachments->companyID . '_' . $documentAttachments->documentID . '_' . $documentAttachments->documentSystemCode . '_' . $documentAttachments->attachmentID . '.' . $extension;
+
+            if ($documentAttachments->documentID == 'PRN') {
+                $documentAttachments->documentID =  $documentAttachments->documentID . 'I';
+            }
+
+
+            if (Helper::checkPolicy($input['companySystemID'], 50)) {
+                $path = $companyID . '/G_ERP/' . $documentAttachments->documentID . '/' . $documentAttachments->documentSystemCode . '/' . $input['myFileName'];
+            } else {
+                $path = $documentAttachments->documentID . '/' . $documentAttachments->documentSystemCode . '/' . $input['myFileName'];
+            }
+
+            Storage::disk(Helper::policyWiseDisk($input['companySystemID'], 'public'))->put($path, $decodeFile);
+
+            $input['isUploaded'] = 1;
+            $input['path'] = $path;
+
+            $documentAttachments = $this->documentAttachmentsRepository->update($input, $documentAttachments->attachmentID);
+            
+
+            DB::commit();
+            return $this->sendResponse($documentAttachments->toArray(), 'Document Attachments saved successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError('Unable to upload the attachment', 500);
         }
-
-        $documentAttachments = $this->documentAttachmentsRepository->create($input);
-
-        $file = $request->request->get('file');
-        $decodeFile = base64_decode($file);
-
-        $input['myFileName'] = $documentAttachments->companyID . '_' . $documentAttachments->documentID . '_' . $documentAttachments->documentSystemCode . '_' . $documentAttachments->attachmentID . '.' . $extension;
-
-        if ($documentAttachments->documentID == 'PRN') {
-            $documentAttachments->documentID =  $documentAttachments->documentID . 'I';
-        }
-
-
-        if (Helper::checkPolicy($input['companySystemID'], 50)) {
-            $path = $companyID . '/G_ERP/' . $documentAttachments->documentID . '/' . $documentAttachments->documentSystemCode . '/' . $input['myFileName'];
-        } else {
-            $path = $documentAttachments->documentID . '/' . $documentAttachments->documentSystemCode . '/' . $input['myFileName'];
-        }
-
-        Storage::disk(Helper::policyWiseDisk($input['companySystemID'], 'public'))->put($path, $decodeFile);
-
-        $input['isUploaded'] = 1;
-        $input['path'] = $path;
-
-        $documentAttachments = $this->documentAttachmentsRepository->update($input, $documentAttachments->attachmentID);
-
-        return $this->sendResponse($documentAttachments->toArray(), 'Document Attachments saved successfully');
     }
 
     /**

@@ -5342,16 +5342,34 @@ class GeneralLedgerInsert implements ShouldQueue
                         $glEntries = POSGLEntries::where('shiftId', $masterModel["autoID"])->get();
 
                     foreach($glEntries as $gl) {
-                        $invItems = DB::table('pos_source_invoice')
-                            ->selectRaw('pos_source_invoice.*')
-                            ->where('pos_source_invoice.shiftID', $masterModel["autoID"])
-                            ->first();
+                        if($gl->isReturnYN == 1){
+                            $invItems = DB::table('pos_source_salesreturn')
+                                ->selectRaw('pos_source_salesreturn.*')
+                                ->where('pos_source_salesreturn.shiftID', $masterModel["autoID"])
+                                ->first();
+                        }else{
+                            $invItems = DB::table('pos_source_invoice')
+                                ->selectRaw('pos_source_invoice.*')
+                                ->where('pos_source_invoice.shiftID', $masterModel["autoID"])
+                                ->first();
+                        }
+
+
+
                         $glCodes = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $gl->glCode)->first();
 
                         $data['companySystemID'] = $masterModel['companySystemID'];
                         $data['companyID'] = $masterModel["companyID"];
-                        $data['serviceLineSystemID'] = null;
-                        $data['serviceLineCode'] = null;
+                        $segments = DB::table('pos_source_shiftdetails')
+                            ->selectRaw('pos_source_shiftdetails.segmentID as segmentID, serviceline.ServiceLineCode as serviceLineCode')
+                            ->join('serviceline', 'serviceline.serviceLineSystemID', '=', 'pos_source_shiftdetails.segmentID')
+                            ->where('pos_source_shiftdetails.shiftID', $masterModel["autoID"])
+                            ->first();
+                        if($segments){
+                            $data['serviceLineSystemID'] = $segments->segmentID;
+                            $data['serviceLineCode'] = $segments->serviceLineCode;
+                        }
+
                         $data['masterCompanyID'] = null;
                         $data['documentSystemID'] = 110;
                         $data['documentID'] = 'GPOS';
@@ -5395,8 +5413,15 @@ class GeneralLedgerInsert implements ShouldQueue
 
                             $data['companySystemID'] = $masterModel['companySystemID'];
                             $data['companyID'] = $masterModel["companyID"];
-                            $data['serviceLineSystemID'] = null;
-                            $data['serviceLineCode'] = null;
+                            $segments = DB::table('pos_source_shiftdetails')
+                                ->selectRaw('pos_source_shiftdetails.segmentID as segmentID, serviceline.ServiceLineCode as serviceLineCode')
+                                ->join('serviceline', 'serviceline.serviceLineSystemID', '=', 'pos_source_shiftdetails.segmentID')
+                                ->where('pos_source_shiftdetails.shiftID', $masterModel["autoID"])
+                                ->first();
+                            if($segments){
+                                $data['serviceLineSystemID'] = $segments->segmentID;
+                                $data['serviceLineCode'] = $segments->serviceLineCode;
+                            }
                             $data['masterCompanyID'] = null;
                             $data['documentSystemID'] = 111;
                             $data['documentID'] = 'RPOS';

@@ -1057,6 +1057,8 @@ class GeneralLedgerAPIController extends AppBaseController
 
 
                 $data[$i]['glAccountId'] = $entry->AccountCode.' | '.$entry->AccountDescription;
+                $data[$i]['AccountCode'] = $entry->AccountCode;
+                $data[$i]['AccountDescription'] = $entry->AccountDescription;
                 $j = 0;
                 $tot_credit = 0;
                 $tot_debit = 0;

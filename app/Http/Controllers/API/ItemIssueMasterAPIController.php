@@ -412,54 +412,29 @@ class ItemIssueMasterAPIController extends AppBaseController
         $serviceLineError = array('type' => 'serviceLine');
 
        
-
+        
         /** @var ItemIssueMaster $itemIssueMaster */
         $itemIssueMaster = $this->itemIssueMasterRepository->findWithoutFail($id);
 
         if (empty($itemIssueMaster)) {
             return $this->sendError('Item Issue Master not found');
         }
+        
 
-        if($itemIssueMaster->mfqJobID)
-        {
-            $bytes = random_bytes(10);
-            $hashKey = bin2hex($bytes);
-            $empID = \Helper::getEmployeeSystemID();
-    
-            Carbon::now()->addDays(1);
-            $insertData = [
-            'employee_id' => $empID,
-            'token' => $hashKey,
-            'expire_time' => Carbon::now()->addDays(1),
-            'module_id' => 1
-              ];
-    
-            $resData = UserToken::create($insertData);
-    
-            $client = new Client();
-            $res = $client->request('GET', 'http://manu.uat-gears-int.com/index.php/MFQ_Api/getJobStatus?JobID='.$itemIssueMaster->mfqJobID, [
-                'headers' => [
-                'Content-Type'=> 'application/json',
-                'token' => $hashKey,
-                'api_key' => $api_key
-                ]
-            ]);
+        if ($itemIssueMaster->confirmedYN == 0 && $input['confirmedYN'] == 0) {
 
-            if ($res->getStatusCode() == 200) { 
-                $job = json_decode($res->getBody(), true);
+            $service_line_id = $itemIssueMaster->serviceLineSystemID;
+            $warehouse_id = $itemIssueMaster->wareHouseFrom;
 
-                if($job['closedYN'] == 1)
-                {
-                    return $this->sendError('The selected job is closed');
-                }
-            }
-            else
+            if($warehouse_id != $input['wareHouseFrom'] || $service_line_id != $input['serviceLineSystemID']  )
             {
-                return $this->sendError('Unable to get the MFQJob Status');
+                $input['mfqJobID'] = NULL;
+                $input['mfqJobNo'] = NULL;
             }
+    
+        
         }
-
-
+      
 
         if (isset($input['serviceLineSystemID'])) {
             $checkDepartmentActive = SegmentMaster::find($input['serviceLineSystemID']);
@@ -571,6 +546,50 @@ class ItemIssueMasterAPIController extends AppBaseController
             if (!$trackingValidation['status']) {
                 return $this->sendError($trackingValidation["message"], 500, ['type' => 'confirm']);
             }
+
+
+            if(isset($itemIssueMaster->mfqJobID))
+            {
+                $bytes = random_bytes(10);
+                $hashKey = bin2hex($bytes);
+                $empID = \Helper::getEmployeeSystemID();
+        
+                Carbon::now()->addDays(1);
+                $insertData = [
+                'employee_id' => $empID,
+                'token' => $hashKey,
+                'expire_time' => Carbon::now()->addDays(1),
+                'module_id' => 1
+                  ];
+        
+                $resData = UserToken::create($insertData);
+        
+                $client = new Client();
+                $res = $client->request('GET', env('MANUFACTURING_URL').'/getJobStatus?JobID='.$itemIssueMaster->mfqJobID, [
+                    'headers' => [
+                    'Content-Type'=> 'application/json',
+                    'token' => $hashKey,
+                    'api_key' => $api_key
+                    ]
+                ]);
+    
+                if ($res->getStatusCode() == 200) { 
+                    $job = json_decode($res->getBody(), true);
+    
+                    if($job['closedYN'] == 1)
+                    {
+                        return $this->sendError('The selected job is closed');
+                    }
+                }
+                else
+                {
+                    return $this->sendError('Unable to get the MFQJob Status');
+                }
+            }
+
+
+
+
 
             $inputParam = $input;
             $inputParam["departmentSystemID"] = 10;
@@ -708,6 +727,7 @@ class ItemIssueMasterAPIController extends AppBaseController
                  return $this->sendError($confirm["message"], 500);
              }
         }
+
 
         $employee = \Helper::getEmployeeInfo();
 
@@ -1052,7 +1072,6 @@ class ItemIssueMasterAPIController extends AppBaseController
     public function getMaterielIssueFormData(Request $request)
     {
         $companyId = $request['companyId'];
-        $api_key = $request['api_key'];
 
         $segments = SegmentMaster::where("companySystemID", $companyId);
         if (isset($request['type']) && $request['type'] != 'filter') {
@@ -1119,45 +1138,7 @@ class ItemIssueMasterAPIController extends AppBaseController
 
         $units = Unit::all();
 
-
-        $bytes = random_bytes(10);
-        $hashKey = bin2hex($bytes);
-        $empID = \Helper::getEmployeeSystemID();
-
-        Carbon::now()->addDays(1);
-        $insertData = [
-        'employee_id' => $empID,
-        'token' => $hashKey,
-        'expire_time' => Carbon::now()->addDays(1),
-        'module_id' => 1
-          ];
-
-        $resData = UserToken::create($insertData);
-
-        $client = new Client();
-        $res = $client->request('GET', 'http://manu.uat-gears-int.com/index.php/MFQ_Api/getOpenJobs?company_id'.$companyId.'=&warehouse=&segment=', [
-            'headers' => [
-            'Content-Type'=> 'application/json',
-            'token' => $hashKey,
-            'api_key' => $api_key
-            ]
-        ]);
-
-       
-
-        if ($res->getStatusCode() == 200) { 
-            $job = json_decode($res->getBody(), true);
-        }
-        else
-        {
-            $job = [];
-        }
-
-        foreach($job as $key=>$val)
-        {
-            $job[$key]['jobID'] = intval($val['jobID']);
-        }
-
+        $job = [];
         $output = array(
             'job_no' => $job,
             'segments' => $segments,
@@ -1547,8 +1528,64 @@ class ItemIssueMasterAPIController extends AppBaseController
 
     public function checkManWareHouse(Request $request)
     {
-       $is_manu =  WarehouseMaster::checkManuefactoringWareHouse($request->wareHouseId);
-       return $this->sendResponse($is_manu, 'Data retrived!');
+
+        $bytes = random_bytes(10);
+        $hashKey = bin2hex($bytes);
+        $empID = \Helper::getEmployeeSystemID();
+        $api_key = $request['api_key'];
+        $companyId = $request['companyId'];
+        $segmentId = $request['segmentId'];
+        $wareHouseId = $request['wareHouseId'];
+
+        $is_manu =  WarehouseMaster::checkManuefactoringWareHouse($wareHouseId);
+
+        
+        
+        $job = [];
+        if($is_manu)
+        {
+            Carbon::now()->addDays(1);
+            $insertData = [
+            'employee_id' => $empID,
+            'token' => $hashKey,
+            'expire_time' => Carbon::now()->addDays(1),
+            'module_id' => 1
+              ];
+    
+            $resData = UserToken::create($insertData);
+    
+            $client = new Client();
+            $res = $client->request('GET', env('MANUFACTURING_URL').'/getOpenJobs?company_id='.$companyId.'&warehouse='.$wareHouseId.'&segment='.$segmentId, [
+                'headers' => [
+                'Content-Type'=> 'application/json',
+                'token' => $hashKey,
+                'api_key' => $api_key
+                ]
+            ]);
+    
+           
+    
+            if ($res->getStatusCode() == 200) { 
+                $job = json_decode($res->getBody(), true);
+            }
+            else
+            {
+                $job = [];
+            }
+    
+            foreach($job as $key=>$val)
+            {
+                $job[$key]['jobID'] = intval($val['jobID']);
+            }
+        }
+
+
+
+        $details['jobs'] = $job;
+        $details['is_manu'] = $is_manu;
+
+      
+       return $this->sendResponse($details, 'Data retrived!');
 
     }
 
