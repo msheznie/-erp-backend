@@ -10,6 +10,7 @@ use App\Models\CustomerInvoiceDirect;
 use App\Models\CustomerReceivePayment;
 use App\Models\Employee;
 use App\Models\Taxdetail;
+use App\Models\CustomerInvoiceDirectDetail;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
@@ -179,16 +180,33 @@ class AccountReceivableLedgerInsert implements ShouldQueue
                                 $data['custInvoiceAmount'] = ABS($masterData->bookingAmountTrans + $taxTrans);
                                 $data['localAmount'] = \Helper::roundValue(ABS($masterData->bookingAmountLocal + $taxLocal));
                                 $data['comRptAmount'] = \Helper::roundValue(ABS($masterData->bookingAmountRpt + $taxRpt));
+                                array_push($finalData, $data);
                             }else if( $masterData->isPerforma == 1){
                                 $data['custInvoiceAmount'] = ABS($masterData->invoicedetails[0]->transAmount);
                                 $data['localAmount'] = \Helper::roundValue(ABS($masterData->invoicedetails[0]->localAmount));
                                 $data['comRptAmount'] = \Helper::roundValue(ABS($masterData->invoicedetails[0]->rptAmount));
+                                array_push($finalData, $data);
                             }else{
-                                $data['custInvoiceAmount'] = ABS($masterData->invoicedetails[0]->transAmount + $taxTrans);
-                                $data['localAmount'] = \Helper::roundValue(ABS($masterData->invoicedetails[0]->localAmount + $taxLocal));
-                                $data['comRptAmount'] = \Helper::roundValue(ABS($masterData->invoicedetails[0]->rptAmount + $taxRpt));
+                                if ($masterData->isPerforma == 0) {
+                                    $detail = CustomerInvoiceDirectDetail::selectRaw("sum(comRptAmount) as comRptAmount, comRptCurrency, sum(localAmount) as localAmount , localCurrencyER, localCurrency, sum(invoiceAmount) as invoiceAmount, invoiceAmountCurrencyER, invoiceAmountCurrency,comRptCurrencyER, customerID, clientContractID, comments, glSystemID,   serviceLineSystemID,serviceLineCode, sum(VATAmount) as VATAmount, sum(VATAmountLocal) as VATAmountLocal, sum(VATAmountRpt) as VATAmountRpt, sum(VATAmount*invoiceQty) as VATAmountTotal, sum(VATAmountLocal*invoiceQty) as VATAmountLocalTotal, sum(VATAmountRpt*invoiceQty) as VATAmountRptTotal")->with(['contract'])->WHERE('custInvoiceDirectID', $masterModel["autoID"])->groupBy('glCode', 'serviceLineCode', 'comments')->get();
+
+
+                                    foreach ($detail as $item) {
+                                        $data['serviceLineSystemID'] = $item->serviceLineSystemID;
+                                        $data['serviceLineCode'] = $item->serviceLineCode;
+                                        
+                                        $data['custInvoiceAmount'] = ABS($item->invoiceAmount + $item->VATAmountTotal);
+                                        $data['localAmount'] = \Helper::roundValue(ABS($item->localAmount + $item->VATAmountLocalTotal));
+                                        $data['comRptAmount'] = \Helper::roundValue(ABS($item->comRptAmount + $item->VATAmountRptTotal));
+                                        array_push($finalData, $data);
+                                    }
+                                } else {
+                                    $data['custInvoiceAmount'] = ABS($masterData->invoicedetails[0]->transAmount + $taxTrans);
+                                    $data['localAmount'] = \Helper::roundValue(ABS($masterData->invoicedetails[0]->localAmount + $taxLocal));
+                                    $data['comRptAmount'] = \Helper::roundValue(ABS($masterData->invoicedetails[0]->rptAmount + $taxRpt));
+                                    array_push($finalData, $data);
+                                }
                             }
-                            array_push($finalData, $data);
                         }
                         break;
                     case 21: // Receipt Voucher
