@@ -432,7 +432,7 @@ class CompanyAPIController extends AppBaseController
             }
         }
 
-        $disk =  Helper::policyWiseDisk($company->masterCompanySystemIDReorting, 'local_public');
+        $disk = Helper::policyWiseDisk($company->masterCompanySystemIDReorting, 'local_public');
         $awsPolicy = Helper::checkPolicy($company->masterCompanySystemIDReorting, 50);
 
         if (isset($input['jsrsExpiryDate'])) {
@@ -477,9 +477,7 @@ class CompanyAPIController extends AppBaseController
             $input['logoPath'] = $path;
 
             // $photo = Image::make($file)
-            // ->resize(100, NULL, function ($constraint) {
-            //     $constraint->aspectRatio();
-            // })->encode($extension,80);
+            // ->resize(100, 100)->encode($extension,80);
 
             // $max_height = 100;
             // $height = $photo->height();

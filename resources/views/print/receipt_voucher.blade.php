@@ -245,7 +245,7 @@
 <div class="card-body content" id="print-section">
     <table style="width: 100%">
         <tr style="width: 100%">
-            <td valign="top" style="width: 50%">
+            <td valign="top" style="width: 50%;padding-top:40px">
                 @if($masterdata->company)
                 <img src="{{$masterdata->company->logo_url}}" >
              
