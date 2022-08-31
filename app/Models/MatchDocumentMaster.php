@@ -475,6 +475,11 @@ class MatchDocumentMaster extends Model
         return $this->belongsTo(CustomerReceivePayment::class, 'PayMasterAutoId', 'custReceivePaymentAutoID');
     }
 
+    public function direct_receipt_details()
+    {
+        return $this->belongsTo(DirectReceiptDetail::class, 'PayMasterAutoId', 'directReceiptDetailsID');
+    }
+
     public function created_by()
     {
         return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');

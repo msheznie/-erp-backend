@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Models\AccountsReceivableLedger;
 use App\Models\CreditNote;
 use App\Models\CreditNoteDetails;
+use App\Models\DirectReceiptDetail;
 use App\Models\SalesReturn;
 use App\Models\CustomerInvoiceDirect;
 use App\Models\CustomerReceivePayment;
@@ -220,6 +221,11 @@ class AccountReceivableLedgerInsert implements ShouldQueue
                             $query->selectRaw('SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount,SUM(paymentAmount) as transAmount,custReceivePaymentAutoID');
                         },'finance_period_by'])->find($masterModel["autoID"]);
 
+                        $directReceipts = DirectReceiptDetail::selectRaw("SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount,SUM(DRAmount) as transAmount,chartOfAccountSystemID as financeGLcodePLSystemID,glCode as financeGLcodePL,localCurrency as localCurrencyID,comRptCurrency as reportingCurrencyID,DRAmountCurrency as transCurrencyID,comRptCurrencyER as reportingCurrencyER,localCurrencyER,DDRAmountCurrencyER as transCurrencyER,serviceLineSystemID,serviceLineCode")
+                            ->WHERE('directReceiptAutoID', $masterModel["autoID"])
+                            ->groupBy('serviceLineSystemID', 'chartOfAccountSystemID')
+                            ->get();
+
                         $masterDocumentDate = date('Y-m-d H:i:s');
 
                         if ($masterData) {
@@ -254,39 +260,43 @@ class AccountReceivableLedgerInsert implements ShouldQueue
                                 $transAmountLocal = \Helper::roundValue($transAmountLocal);
                                 $transAmountRpt = \Helper::roundValue($transAmountRpt);
 
+                                foreach ($directReceipts as $detail) {
 
-                                $data['companySystemID'] = $masterData->companySystemID;
-                                $data['companyID'] = $masterData->companyID;
-                                $data['documentSystemID'] = $masterData->documentSystemID;
-                                $data['documentID'] = $masterData->documentID;
-                                $data['documentCodeSystem'] = $masterModel["autoID"];
-                                $data['documentCode'] = $masterData->custPaymentReceiveCode;
-                                $data['documentDate'] = $masterDocumentDate;
-                                $data['customerID'] = $masterData->customerID;
-                                $data['InvoiceNo'] = null;
-                                $data['InvoiceDate'] = null;
-                                $data['custTransCurrencyID'] = $masterData->custTransactionCurrencyID;
-                                $data['custTransER'] = $masterData->custTransactionCurrencyER;
-                                $data['custInvoiceAmount'] = ($masterData->documentType == 15) ? (ABS($transAmount) * -1) : $transAmount;
-                                $data['custDefaultCurrencyID'] = 0;
-                                $data['custDefaultCurrencyER'] = 0;
-                                $data['custDefaultAmount'] = 0;
-                                $data['localCurrencyID'] = $masterData->localCurrencyID;
-                                $data['localER'] = $masterData->localCurrencyER;
-                                $data['localAmount'] = ($masterData->documentType == 15) ? (ABS($transAmountLocal) * -1) : $transAmountLocal;
-                                $data['comRptCurrencyID'] = $masterData->companyRptCurrencyID;
-                                $data['comRptER'] = $masterData->companyRptCurrencyER;
-                                $data['comRptAmount'] = ($masterData->documentType == 15) ? (ABS($transAmountRpt) * -1) : $transAmountRpt;
-                                $data['isInvoiceLockedYN'] = 0;
-                                $data['documentType'] = $masterData->documentType;
-                                $data['selectedToPaymentInv'] = 0;
-                                $data['fullyInvoiced'] = 0;
-                                $data['createdDateTime'] = \Helper::currentDateTime();
-                                $data['createdUserID'] = $empID->empID;
-                                $data['createdUserSystemID'] = $empID->employeeSystemID;
-                                $data['createdPcID'] = gethostname();
-                                $data['timeStamp'] = \Helper::currentDateTime();
-                                array_push($finalData, $data);
+                                    $data['companySystemID'] = $masterData->companySystemID;
+                                    $data['companyID'] = $masterData->companyID;
+                                    $data['documentSystemID'] = $masterData->documentSystemID;
+                                    $data['documentID'] = $masterData->documentID;
+                                    $data['documentCodeSystem'] = $masterModel["autoID"];
+                                    $data['documentCode'] = $masterData->custPaymentReceiveCode;
+                                    $data['documentDate'] = $masterDocumentDate;
+                                    $data['serviceLineSystemID'] = $detail->serviceLineSystemID;
+                                    $data['serviceLineCode'] = $detail->serviceLineCode;
+                                    $data['customerID'] = $masterData->customerID;
+                                    $data['InvoiceNo'] = null;
+                                    $data['InvoiceDate'] = null;
+                                    $data['custTransCurrencyID'] = $masterData->custTransactionCurrencyID;
+                                    $data['custTransER'] = $masterData->custTransactionCurrencyER;
+                                    $data['custInvoiceAmount'] = ($masterData->documentType == 15) ? (ABS($detail->transAmount) * -1) : $detail->transAmount;
+                                    $data['custDefaultCurrencyID'] = 0;
+                                    $data['custDefaultCurrencyER'] = 0;
+                                    $data['custDefaultAmount'] = 0;
+                                    $data['localCurrencyID'] = $masterData->localCurrencyID;
+                                    $data['localER'] = $masterData->localCurrencyER;
+                                    $data['localAmount'] = ($masterData->documentType == 15) ? (ABS($detail->localAmount) * -1) : $detail->localAmount;
+                                    $data['comRptCurrencyID'] = $masterData->companyRptCurrencyID;
+                                    $data['comRptER'] = $masterData->companyRptCurrencyER;
+                                    $data['comRptAmount'] = ($masterData->documentType == 15) ? (ABS($detail->rptAmount) * -1) : $detail->rptAmount;
+                                    $data['isInvoiceLockedYN'] = 0;
+                                    $data['documentType'] = $masterData->documentType;
+                                    $data['selectedToPaymentInv'] = 0;
+                                    $data['fullyInvoiced'] = 0;
+                                    $data['createdDateTime'] = \Helper::currentDateTime();
+                                    $data['createdUserID'] = $empID->empID;
+                                    $data['createdUserSystemID'] = $empID->employeeSystemID;
+                                    $data['createdPcID'] = gethostname();
+                                    $data['timeStamp'] = \Helper::currentDateTime();
+                                    array_push($finalData, $data);
+                                }
                             }
                         }
                         break;
