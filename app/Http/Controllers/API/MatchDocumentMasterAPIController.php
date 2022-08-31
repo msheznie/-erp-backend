@@ -673,11 +673,11 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 $input['companyRptCurrencyID'] = $creditNoteMaster->companyReportingCurrencyID;
                 $input['companyRptCurrencyER'] = $creditNoteMaster->companyReportingER;
                 //$input['payAmountBank'] = $creditNoteMaster->payAmountBank;
-                $input['payAmountSuppTrans'] = $creditNoteMaster->creditAmountTrans;
+                $input['payAmountSuppTrans'] = $creditNoteDetails->creditAmount;
                 //$input['payAmountSuppDef'] = $creditNoteMaster->debitAmountTrans;
                 //$input['suppAmountDocTotal'] = $creditNoteMaster->suppAmountDocTotal;
-                $input['payAmountCompLocal'] = $creditNoteMaster->creditAmountLocal;
-                $input['payAmountCompRpt'] = $creditNoteMaster->creditAmountRpt;
+                $input['payAmountCompLocal'] = $creditNoteDetails->localAmount;
+                $input['payAmountCompRpt'] = $creditNoteDetails->comRptAmount;
                 $input['invoiceType'] = $creditNoteMaster->documentType;
                 $input['matchingAmount'] = 0;
                 $input['confirmedYN'] = $creditNoteMaster->confirmedYN;
@@ -2645,11 +2645,11 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                             erp_creditnote.customerID,
                                             currency.CurrencyCode,
                                             currency.DecimalPlaces,
-                                            erp_creditnotedetails.creditAmount AS SumOfreceiveAmountTrans,
+                                            SUM(erp_creditnotedetails.creditAmount) AS SumOfreceiveAmountTrans,
                                             erp_creditnotedetails.creditNoteDetailsID AS creditNoteDetailsID,
                                             erp_creditnotedetails.serviceLineCode AS serviceLineCode,
                                             (
-                                                erp_creditnotedetails.creditAmount - (
+                                                SUM(erp_creditnotedetails.creditAmount) - (
                                                     (IFNULL(
                                                         receipt.SumOfreceiptAmount,
                                                         0
@@ -2700,7 +2700,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                                 erp_matchdocumentmaster.documentSystemID,
                                                 erp_matchdocumentmaster.companySystemID
                                         ) AS advd ON (
-                                            erp_creditnote.creditNoteAutoID = advd.PayMasterAutoId
+                                            erp_creditnotedetails.creditNoteDetailsID = advd.PayMasterAutoId
                                             AND erp_creditnote.documentSystemiD = advd.documentSystemID
                                             AND erp_creditnote.companySystemID = advd.companySystemID
                                         )
@@ -2846,6 +2846,11 @@ class MatchDocumentMasterAPIController extends AppBaseController
             return $this->sendError('Matching document not found');
         }
 
+        $creditNoteDetails = CreditNoteDetails::find($matchDocumentMasterData->PayMasterAutoId);
+        if (empty($creditNoteDetails)) {
+            return $this->sendError('Credit Note Details not found');
+        }
+
         $filter = '';
         $search = $request->input('search.value');
         if ($search) {
@@ -2947,6 +2952,7 @@ AND erp_accountsreceivableledger.documentSystemID = 20
 AND erp_accountsreceivableledger.selectedToPaymentInv = 0
 AND erp_accountsreceivableledger.fullyInvoiced <> 2
 AND erp_accountsreceivableledger.companySystemID =  $matchDocumentMasterData->companySystemID
+AND erp_accountsreceivableledger.serviceLineSystemID =  $creditNoteDetails->serviceLineSystemID
 AND erp_accountsreceivableledger.customerID = $matchDocumentMasterData->BPVsupplierID
 AND erp_accountsreceivableledger.custTransCurrencyID = $matchDocumentMasterData->supplierTransCurrencyID
 {$filter}

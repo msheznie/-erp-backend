@@ -89,6 +89,8 @@ class AccountReceivableLedgerInsert implements ShouldQueue
                             $data['documentCodeSystem'] = $masterModel["autoID"];
                             $data['documentCode'] = $masterData->creditNoteCode;
                             $data['documentDate'] = $masterDocumentDate;
+                                $data['serviceLineSystemID'] = $detail->serviceLineSystemID;
+                                $data['serviceLineCode'] = $detail->serviceLineCode;
                             $data['customerID'] = $masterData->customerID;
                             $data['InvoiceNo'] = null;
                             $data['InvoiceDate'] = null;
