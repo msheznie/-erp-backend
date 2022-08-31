@@ -7,8 +7,10 @@ use App\Models\CreditNote;
 use App\Models\SalesReturn;
 use App\Models\CustomerInvoiceDirect;
 use App\Models\CustomerReceivePayment;
+use App\Models\CustomerReceivePaymentDetail;
 use App\Models\Employee;
 use App\Models\Taxdetail;
+use App\Models\CustomerInvoiceDirectDetail;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
@@ -168,16 +170,33 @@ class AccountReceivableLedgerInsert implements ShouldQueue
                                 $data['custInvoiceAmount'] = ABS($masterData->bookingAmountTrans + $taxTrans);
                                 $data['localAmount'] = \Helper::roundValue(ABS($masterData->bookingAmountLocal + $taxLocal));
                                 $data['comRptAmount'] = \Helper::roundValue(ABS($masterData->bookingAmountRpt + $taxRpt));
+                                array_push($finalData, $data);
                             }else if( $masterData->isPerforma == 1){
                                 $data['custInvoiceAmount'] = ABS($masterData->invoicedetails[0]->transAmount);
                                 $data['localAmount'] = \Helper::roundValue(ABS($masterData->invoicedetails[0]->localAmount));
                                 $data['comRptAmount'] = \Helper::roundValue(ABS($masterData->invoicedetails[0]->rptAmount));
+                                array_push($finalData, $data);
                             }else{
-                                $data['custInvoiceAmount'] = ABS($masterData->invoicedetails[0]->transAmount + $taxTrans);
-                                $data['localAmount'] = \Helper::roundValue(ABS($masterData->invoicedetails[0]->localAmount + $taxLocal));
-                                $data['comRptAmount'] = \Helper::roundValue(ABS($masterData->invoicedetails[0]->rptAmount + $taxRpt));
+                                if ($masterData->isPerforma == 0) {
+                                    $detail = CustomerInvoiceDirectDetail::selectRaw("sum(comRptAmount) as comRptAmount, comRptCurrency, sum(localAmount) as localAmount , localCurrencyER, localCurrency, sum(invoiceAmount) as invoiceAmount, invoiceAmountCurrencyER, invoiceAmountCurrency,comRptCurrencyER, customerID, clientContractID, comments, glSystemID,   serviceLineSystemID,serviceLineCode, sum(VATAmount) as VATAmount, sum(VATAmountLocal) as VATAmountLocal, sum(VATAmountRpt) as VATAmountRpt, sum(VATAmount*invoiceQty) as VATAmountTotal, sum(VATAmountLocal*invoiceQty) as VATAmountLocalTotal, sum(VATAmountRpt*invoiceQty) as VATAmountRptTotal")->with(['contract'])->WHERE('custInvoiceDirectID', $masterModel["autoID"])->groupBy('glCode', 'serviceLineCode', 'comments')->get();
+
+
+                                    foreach ($detail as $item) {
+                                        $data['serviceLineSystemID'] = $item->serviceLineSystemID;
+                                        $data['serviceLineCode'] = $item->serviceLineCode;
+                                        
+                                        $data['custInvoiceAmount'] = ABS($item->invoiceAmount + $item->VATAmountTotal);
+                                        $data['localAmount'] = \Helper::roundValue(ABS($item->localAmount + $item->VATAmountLocalTotal));
+                                        $data['comRptAmount'] = \Helper::roundValue(ABS($item->comRptAmount + $item->VATAmountRptTotal));
+                                        array_push($finalData, $data);
+                                    }
+                                } else {
+                                    $data['custInvoiceAmount'] = ABS($masterData->invoicedetails[0]->transAmount + $taxTrans);
+                                    $data['localAmount'] = \Helper::roundValue(ABS($masterData->invoicedetails[0]->localAmount + $taxLocal));
+                                    $data['comRptAmount'] = \Helper::roundValue(ABS($masterData->invoicedetails[0]->rptAmount + $taxRpt));
+                                    array_push($finalData, $data);
+                                }
                             }
-                            array_push($finalData, $data);
                         }
                         break;
                     case 21: // Receipt Voucher
@@ -236,16 +255,13 @@ class AccountReceivableLedgerInsert implements ShouldQueue
                                 $data['InvoiceDate'] = null;
                                 $data['custTransCurrencyID'] = $masterData->custTransactionCurrencyID;
                                 $data['custTransER'] = $masterData->custTransactionCurrencyER;
-                                $data['custInvoiceAmount'] = ($masterData->documentType == 15) ? (ABS($transAmount) * -1) : $transAmount;
                                 $data['custDefaultCurrencyID'] = 0;
                                 $data['custDefaultCurrencyER'] = 0;
                                 $data['custDefaultAmount'] = 0;
                                 $data['localCurrencyID'] = $masterData->localCurrencyID;
                                 $data['localER'] = $masterData->localCurrencyER;
-                                $data['localAmount'] = ($masterData->documentType == 15) ? (ABS($transAmountLocal) * -1) : $transAmountLocal;
                                 $data['comRptCurrencyID'] = $masterData->companyRptCurrencyID;
                                 $data['comRptER'] = $masterData->companyRptCurrencyER;
-                                $data['comRptAmount'] = ($masterData->documentType == 15) ? (ABS($transAmountRpt) * -1) : $transAmountRpt;
                                 $data['isInvoiceLockedYN'] = 0;
                                 $data['documentType'] = $masterData->documentType;
                                 $data['selectedToPaymentInv'] = 0;
@@ -255,7 +271,28 @@ class AccountReceivableLedgerInsert implements ShouldQueue
                                 $data['createdUserSystemID'] = $empID->employeeSystemID;
                                 $data['createdPcID'] = gethostname();
                                 $data['timeStamp'] = \Helper::currentDateTime();
-                                array_push($finalData, $data);
+
+                                if ($masterData->documentType == 13) {
+                                    $receiptDetails = CustomerReceivePaymentDetail::with(['ar_data'])
+                                            ->WHERE('custReceivePaymentAutoID', $masterModel["autoID"])
+                                            ->get();
+
+                                    foreach ($receiptDetails as $key => $valueRe) {
+
+                                        $data['serviceLineSystemID'] = ($valueRe->ar_data) ? $valueRe->ar_data->serviceLineSystemID : 24;
+                                        $data['serviceLineCode'] =  ($valueRe->ar_data) ? $valueRe->ar_data->serviceLineCode : 'X';
+
+                                        $data['custInvoiceAmount'] = $valueRe->receiveAmountTrans;
+                                        $data['localAmount'] = $valueRe->receiveAmountLocal;
+                                        $data['comRptAmount'] = $valueRe->receiveAmountRpt;
+                                        array_push($finalData, $data);
+                                    }
+                                } else {
+                                    $data['custInvoiceAmount'] = ($masterData->documentType == 15) ? (ABS($transAmount) * -1) : $transAmount;
+                                    $data['localAmount'] = ($masterData->documentType == 15) ? (ABS($transAmountLocal) * -1) : $transAmountLocal;
+                                    $data['comRptAmount'] = ($masterData->documentType == 15) ? (ABS($transAmountRpt) * -1) : $transAmountRpt;
+                                    array_push($finalData, $data);
+                                }
                             }
                         }
                         break;

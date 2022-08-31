@@ -469,6 +469,10 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
     {
         $input = $request->all();
 
+        if (isset($input['ar_data'])) {
+            unset($input['ar_data']);
+        }
+
         $detail = CustomerReceivePaymentDetail::where('custRecivePayDetAutoID', $input['custRecivePayDetAutoID'])->first();
 
         if(empty($detail)){
