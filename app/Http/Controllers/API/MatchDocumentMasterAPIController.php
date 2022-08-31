@@ -2636,7 +2636,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                            )");
         } elseif ($input['matchType'] == 2) {
             $invoiceMaster = DB::select("SELECT
-                                            erp_creditnote.creditNoteAutoID AS masterAutoID,
+                                            erp_creditnote.creditNoteDetailsID AS masterAutoID,
                                             erp_creditnote.documentSystemID,
                                             erp_creditnote.companySystemID,
                                             erp_creditnote.companyID,
@@ -2646,7 +2646,6 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                             currency.CurrencyCode,
                                             currency.DecimalPlaces,
                                             SUM(erp_creditnotedetails.creditAmount) AS SumOfreceiveAmountTrans,
-                                            erp_creditnotedetails.creditNoteDetailsID AS creditNoteDetailsID,
                                             erp_creditnotedetails.serviceLineCode AS serviceLineCode,
                                             (
                                                 SUM(erp_creditnotedetails.creditAmount) - (
