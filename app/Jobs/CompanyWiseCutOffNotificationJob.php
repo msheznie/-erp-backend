@@ -49,6 +49,7 @@ class CompanyWiseCutOffNotificationJob implements ShouldQueue
      */
     public function handle()
     {
+        Log::useFiles(storage_path() . '/logs/budget-cutoff-po.log');  
         $db = $this->dispatch_db;
         $compAssignScenario = $this->compAssignScenarioData;
         CommonJobService::db_switch($db);
@@ -61,9 +62,10 @@ class CompanyWiseCutOffNotificationJob implements ShouldQueue
                                              ->get();
         
         Log::info('Company Name: ' . $compAssignScenario->company->CompanyName);
+        Log::info('PO count: ' . count($partiallyRecivedPos));
 
         if (count($compAssignScenario->notification_day_setup) == 0) {
-            Log::info('Notification day setup not exist');
+            Log::info('Notification day setup not exist in '.$db);
         } else {
             foreach ($compAssignScenario->notification_day_setup as $notDaySetup) {
                 $beforeAfter = $notDaySetup->beforeAfter;

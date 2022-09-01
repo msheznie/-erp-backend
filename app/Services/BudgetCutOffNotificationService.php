@@ -22,10 +22,10 @@ class BudgetCutOffNotificationService
 
     public static function sendBudgetCutOffNotification($dataBase = "")
     {
-        
+        Log::useFiles(storage_path() . '/logs/budget-cutoff-po.log');  
         $scenarios = NotificationService::getCompanyScenarioConfiguration(18);
         if (count($scenarios) == 0) {
-            Log::info('Notification Company Scenario not exist');
+            Log::info('Notification Company Scenario not exist in '.$dataBase);
         } else {
             $scenario_des = $scenarios[0]->notification_scenario->scenarioDescription;
 
