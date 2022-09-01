@@ -40,7 +40,7 @@ class BudgetCutOffScheduler extends Command
      */
     public function handle()
     {
-        Log::useFiles( CommonJobService::get_specific_log_file('budget-cut-off') );      
+        Log::useFiles(storage_path() . '/logs/budget-cutoff-po.log');     
         Log::info('Butget cutoff po Shedular'.now());
 
         $tenants = CommonJobService::tenant_list();
