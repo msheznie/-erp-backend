@@ -149,6 +149,7 @@ class QuotationDetailsAPIController extends AppBaseController
             ->first();
         }
 
+        $category = $item->financeCategoryMaster;
 
         $category = $item->financeCategoryMaster;
 
@@ -163,11 +164,8 @@ class QuotationDetailsAPIController extends AppBaseController
                     return $this->sendError('Added item already exist');
                 }
             }
-
-
-       
         }
-        else if($input['itemCode']['id'])
+        else if(isset($input['itemCode']['id']) && $input['itemCode']['id']) 
         {
             $itemExist = QuotationDetails::where('itemAutoID', $input['itemCode']['id'])
             ->where('quotationMasterID', $input['quotationMasterID'])
@@ -803,6 +801,12 @@ WHERE
         $itemExistArray = array();
         //check added item exist
         foreach ($input['detailTable'] as $itemExist) {
+
+                $item = ItemAssigned::with(['item_master'])
+                ->where('itemCodeSystem', $itemExist['itemAutoID'])
+                ->where('companySystemID', $itemExist['companySystemID'])
+                ->first();
+
 
             if ($itemExist['isChecked'] && $itemExist['noQty'] > 0) {
                 $QuoDetailExist = QuotationDetails::select(DB::raw('soQuotationDetailID,itemSystemCode'))

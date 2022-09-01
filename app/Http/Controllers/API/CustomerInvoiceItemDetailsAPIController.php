@@ -318,12 +318,11 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
             || !$input['financeGLcodeRevenueSystemID'] || !$input['financeGLcodeRevenue']) {
             return $this->sendError("Account code not updated.", 500);
         }*/
-       
+        
+
         if ($input['itemFinanceCategoryID'] == 1 || $input['itemFinanceCategoryID'] == 2 || $input['itemFinanceCategoryID'] == 4) {
             $alreadyAdded = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID',$input['custInvoiceDirectAutoID'])->where('itemCodeSystem',$item->itemCodeSystem)->first();
-
-           
-
+         
             if ($alreadyAdded) {
                 if(($input['itemFinanceCategoryID'] != 2 )&& ($input['itemFinanceCategoryID'] != 4 ))
                 {
@@ -331,8 +330,9 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
                 }
                 
             }
-        }
 
+        }
+    }
         // check policy 18
 
         $allowPendingApproval = CompanyPolicyMaster::where('companyPolicyCategoryID', 18)
@@ -1128,13 +1128,18 @@ WHERE
             
            
 
+            $item = ItemAssigned::with(['item_master'])
+            ->where('itemCodeSystem', $itemExist['itemCodeSystem'])
+            ->where('companySystemID', $itemExist['companySystemID'])
+            ->first();
+
             if ($itemExist['isChecked'] && $itemExist['noQty'] > 0) {
                 $doDetailExist = CustomerInvoiceItemDetails::select(DB::raw('itemPrimaryCode'))
                     ->where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)
                     ->where('itemCodeSystem', $itemExist['itemCodeSystem'])
                     ->get();
 
-               
+
                 if($item->financeCategoryMaster != 2 && $item->financeCategoryMaster != 4 )
                 {
                     if (!empty($doDetailExist)) {
@@ -1466,7 +1471,7 @@ WHERE
         foreach ($input['detailTable'] as $itemExist) {
 
 
-            $item = ItemAssigned::with(['item_master'])
+             $item = ItemAssigned::with(['item_master'])
             ->where('itemCodeSystem', $itemExist['itemAutoID'])
             ->where('companySystemID', $itemExist['companySystemID'])
             ->first();
@@ -1477,7 +1482,6 @@ WHERE
                     ->where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)
                     ->where('itemCodeSystem', $itemExist['itemAutoID'])
                     ->get();
-                    
 
                     if($item->financeCategoryMaster != 2 && $item->financeCategoryMaster != 4 )
                     {
@@ -1488,8 +1492,6 @@ WHERE
                             }
                         }
                     }
-
-          
             }
         }
 
