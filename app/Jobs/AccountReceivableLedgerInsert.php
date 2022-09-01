@@ -261,7 +261,6 @@ class AccountReceivableLedgerInsert implements ShouldQueue
                                 $transAmountLocal = \Helper::roundValue($transAmountLocal);
                                 $transAmountRpt = \Helper::roundValue($transAmountRpt);
 
-
                                 $data['companySystemID'] = $masterData->companySystemID;
                                 $data['companyID'] = $masterData->companyID;
                                 $data['documentSystemID'] = $masterData->documentSystemID;

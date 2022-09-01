@@ -4210,18 +4210,19 @@ class GeneralLedgerInsert implements ShouldQueue
                                     }
 
 
+                                    if ($masterData->documentType == 14) {
 
-                                    $data['chartOfAccountSystemID'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 6) :$masterData->bank->chartOfAccountSystemID;
-                                    $data['glCode'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 6) : $masterData->bank->glCodeLinked;
-                                    $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
-                                    $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-                                    $data['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
-                                    $data['documentTransCurrencyER'] = $masterData->custTransactionCurrencyER;
-                                    $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
-                                    $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
-                                    $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
-                                    $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
-                                    $data['timestamp'] = \Helper::currentDateTime();
+                                        $data['chartOfAccountSystemID'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 6) : $masterData->bank->chartOfAccountSystemID;
+                                        $data['glCode'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 6) : $masterData->bank->glCodeLinked;
+                                        $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                                        $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                                        $data['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
+                                        $data['documentTransCurrencyER'] = $masterData->custTransactionCurrencyER;
+                                        $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
+                                        $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
+                                        $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
+                                        $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
+                                        $data['timestamp'] = \Helper::currentDateTime();
                                         foreach ($dd as $key => $value) {
                                             $data['serviceLineSystemID'] = $value->serviceLineSystemID;
                                             $data['serviceLineCode'] = $value->serviceLineCode;
@@ -4231,6 +4232,8 @@ class GeneralLedgerInsert implements ShouldQueue
                                             $data['documentRptAmount'] = \Helper::roundValue($value->comRptAmountDR);
                                             array_push($finalData, $data);
                                         }
+                                    }
+
 
                                     if ($dd) {
                                         foreach ($dd as $val) {
