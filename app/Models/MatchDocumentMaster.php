@@ -465,6 +465,11 @@ class MatchDocumentMaster extends Model
         return $this->belongsTo(CreditNote::class, 'PayMasterAutoId', 'creditNoteAutoID');
     }
 
+    public function credit_note_details()
+    {
+        return $this->belongsTo(CreditNoteDetails::class, 'PayMasterAutoId', 'creditNoteDetailsID');
+    }
+
      public function reciept_voucher()
     {
         return $this->belongsTo(CustomerReceivePayment::class, 'PayMasterAutoId', 'custReceivePaymentAutoID');

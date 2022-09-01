@@ -2698,6 +2698,13 @@ class GeneralLedgerInsert implements ShouldQueue
                             ->groupBy('documentSystemCode')
                             ->first();
 
+                        //all details
+                        $detailsCreditNote = CreditNoteDetails::with(['chartofaccount'])
+                            ->selectRaw("SUM(netAmountLocal) as localAmount, SUM(netAmountRpt) as rptAmount, SUM(netAmount) as transAmount, SUM(VATAmount) as transTax, SUM(VATAmountLocal) as localTax, SUM(VATAmountRpt) as rptTax, chartOfAccountSystemID as financeGLcodePLSystemID,glCode as financeGLcodePL,localCurrency as localCurrencyID,comRptCurrency as reportingCurrencyID,creditAmountCurrency as transCurrencyID,comRptCurrencyER as reportingCurrencyER,localCurrencyER,creditAmountCurrencyER as transCurrencyER,serviceLineSystemID,serviceLineCode,clientContractID,contractUID,comments,chartOfAccountSystemID")
+                            ->WHERE('creditNoteAutoID', $masterModel["autoID"])
+                            ->groupBy('serviceLineSystemID', 'chartOfAccountSystemID', 'clientContractID', 'comments')
+                            ->get();
+
                         $taxGLCode = Company::find($masterModel["companySystemID"]);
 
                         $taxLocal = 0;
@@ -2716,65 +2723,62 @@ class GeneralLedgerInsert implements ShouldQueue
                         }
 
                         if ($masterData) {
-                            $data['companySystemID'] = $masterData->companySystemID;
-                            $data['companyID'] = $masterData->companyID;
-                            $data['masterCompanyID'] = null;
-                            $data['documentSystemID'] = $masterData->documentSystemiD;
-                            $data['documentID'] = $masterData->documentID;
-                            $data['documentSystemCode'] = $masterModel["autoID"];
-                            $data['documentCode'] = $masterData->creditNoteCode;
-                            $data['documentDate'] = $masterDocumentDate;
-                            $data['documentYear'] = \Helper::dateYear($masterDocumentDate);
-                            $data['documentMonth'] = \Helper::dateMonth($masterDocumentDate);
-                            $data['documentConfirmedDate'] = $masterData->confirmedDate;
-                            $data['documentConfirmedBy'] = $masterData->confirmedByEmpID;
-                            $data['documentConfirmedByEmpSystemID'] = $masterData->confirmedByEmpSystemID;
-                            $data['documentFinalApprovedDate'] = $masterData->approvedDate;
-                            $data['documentFinalApprovedBy'] = $masterData->approvedByUserID;
-                            $data['documentFinalApprovedByEmpSystemID'] = $masterData->approvedByUserSystemID;
-                            $data['documentNarration'] = $masterData->comments;
+                            foreach ($detailsCreditNote as $detail) {
+                                $data['companySystemID'] = $masterData->companySystemID;
+                                $data['companyID'] = $masterData->companyID;
+                                $data['masterCompanyID'] = null;
+                                $data['documentSystemID'] = $masterData->documentSystemiD;
+                                $data['documentID'] = $masterData->documentID;
+                                $data['documentSystemCode'] = $masterModel["autoID"];
+                                $data['documentCode'] = $masterData->creditNoteCode;
+                                $data['documentDate'] = $masterDocumentDate;
+                                $data['documentYear'] = \Helper::dateYear($masterDocumentDate);
+                                $data['documentMonth'] = \Helper::dateMonth($masterDocumentDate);
+                                $data['documentConfirmedDate'] = $masterData->confirmedDate;
+                                $data['documentConfirmedBy'] = $masterData->confirmedByEmpID;
+                                $data['documentConfirmedByEmpSystemID'] = $masterData->confirmedByEmpSystemID;
+                                $data['documentFinalApprovedDate'] = $masterData->approvedDate;
+                                $data['documentFinalApprovedBy'] = $masterData->approvedByUserID;
+                                $data['documentFinalApprovedByEmpSystemID'] = $masterData->approvedByUserSystemID;
+                                $data['documentNarration'] = $masterData->comments;
 
-                            $data['chartOfAccountSystemID'] = $masterData->customerGLCodeSystemID;
-                            $data['glCode'] = $masterData->customerGLCode;
-                            $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
-                            $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                                $data['chartOfAccountSystemID'] = $masterData->customerGLCodeSystemID;
+                                $data['glCode'] = $masterData->customerGLCode;
+                                $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                                $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
 
-                            $data['documentTransCurrencyID'] = $masterData->customerCurrencyID;
-                            $data['documentTransCurrencyER'] = $masterData->customerCurrencyER;
-                            $data['documentTransAmount'] = \Helper::roundValue(ABS($masterData->details[0]->transAmount + $taxTrans)) * -1;
-                            $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
-                            $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
-                            $data['documentLocalAmount'] = \Helper::roundValue(ABS($masterData->details[0]->localAmount + $taxLocal)) * -1;
-                            $data['documentRptCurrencyID'] = $masterData->companyReportingCurrencyID;
-                            $data['documentRptCurrencyER'] = $masterData->companyReportingER;
-                            $data['documentRptAmount'] = \Helper::roundValue(ABS($masterData->details[0]->rptAmount + $taxRpt)) * -1;
-                            if ($masterData->details[0]->serviceLineSystemID) {
-                                $data['serviceLineSystemID'] = $masterData->details[0]->serviceLineSystemID;
-                                $data['serviceLineCode'] = $masterData->details[0]->serviceLineCode;
-                            } else {
-                                $data['serviceLineSystemID'] = 24;
-                                $data['serviceLineCode'] = 'X';
+                                $data['documentTransCurrencyID'] = $masterData->customerCurrencyID;
+                                $data['documentTransCurrencyER'] = $masterData->customerCurrencyER;
+                                $data['documentTransAmount'] = \Helper::roundValue(ABS($detail->transAmount + $detail->transTax)) * -1;
+                                $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
+                                $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
+                                $data['documentLocalAmount'] = \Helper::roundValue(ABS($detail->localAmount + $detail->localTax)) * -1;
+                                $data['documentRptCurrencyID'] = $masterData->companyReportingCurrencyID;
+                                $data['documentRptCurrencyER'] = $masterData->companyReportingER;
+                                $data['documentRptAmount'] = \Helper::roundValue(ABS($detail->rptAmount + $detail->rptTax)) * -1;
+                                $data['serviceLineSystemID'] = $detail->serviceLineSystemID;
+                                $data['serviceLineCode'] = $detail->serviceLineCode;
+                                if ($detail->clientContractID) {
+                                    $data['clientContractID'] = $detail->clientContractID;
+                                    $data['contractUID'] = $detail->contractUID;
+                                } else {
+                                    $data['clientContractID'] = 'X';
+                                    $data['contractUID'] = 159;
+                                }
+                                $data['supplierCodeSystem'] = $masterData->customerID;
+                                $data['holdingShareholder'] = null;
+                                $data['holdingPercentage'] = 0;
+                                $data['nonHoldingPercentage'] = 0;
+                                $data['chequeNumber'] = 0;
+                                $data['invoiceNumber'] = 0;
+                                $data['documentType'] = $masterData->documentType;
+                                $data['createdDateTime'] = \Helper::currentDateTime();
+                                $data['createdUserID'] = $empID->empID;
+                                $data['createdUserSystemID'] = $empID->employeeSystemID;
+                                $data['createdUserPC'] = gethostname();
+                                $data['timestamp'] = \Helper::currentDateTime();
+                                array_push($finalData, $data);
                             }
-                            if ($masterData->details[0]->clientContractID) {
-                                $data['clientContractID'] = $masterData->details[0]->clientContractID;
-                                $data['contractUID'] = $masterData->details[0]->contractUID;
-                            } else {
-                                $data['clientContractID'] = 'X';
-                                $data['contractUID'] = 159;
-                            }
-                            $data['supplierCodeSystem'] = $masterData->customerID;
-                            $data['holdingShareholder'] = null;
-                            $data['holdingPercentage'] = 0;
-                            $data['nonHoldingPercentage'] = 0;
-                            $data['chequeNumber'] = 0;
-                            $data['invoiceNumber'] = 0;
-                            $data['documentType'] = $masterData->documentType;
-                            $data['createdDateTime'] = \Helper::currentDateTime();
-                            $data['createdUserID'] = $empID->empID;
-                            $data['createdUserSystemID'] = $empID->employeeSystemID;
-                            $data['createdUserPC'] = gethostname();
-                            $data['timestamp'] = \Helper::currentDateTime();
-                            array_push($finalData, $data);
 
                             if ($allAc) {
                                 foreach ($allAc as $val) {
@@ -2815,45 +2819,51 @@ class GeneralLedgerInsert implements ShouldQueue
                             }
 
                             if ($tax) {
+                                foreach ($detailsCreditNote as $detail) {
 
-                                $taxConfigData = TaxService::getOutputVATGLAccount($masterModel["companySystemID"]);
+                                    $taxConfigData = TaxService::getOutputVATGLAccount($masterModel["companySystemID"]);
 
-                                if (!empty($taxConfigData)) {
-                                    $chartOfAccountData = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $taxConfigData->outputVatGLAccountAutoID)
-                                        ->where('companySystemID', $masterData->companySystemID)
-                                        ->first();
+                                    if (!empty($taxConfigData)) {
+                                        $chartOfAccountData = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $taxConfigData->outputVatGLAccountAutoID)
+                                            ->where('companySystemID', $masterData->companySystemID)
+                                            ->first();
 
-                                    if (!empty($chartOfAccountData)) {
-                                        $data['chartOfAccountSystemID'] = $chartOfAccountData->chartOfAccountSystemID;
-                                        $data['glCode'] = $chartOfAccountData->AccountCode;
-                                        $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
-                                        $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                                        if (!empty($chartOfAccountData)) {
+                                            $data['chartOfAccountSystemID'] = $chartOfAccountData->chartOfAccountSystemID;
+                                            $data['glCode'] = $chartOfAccountData->AccountCode;
+                                            $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                                            $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
 
-                                        $taxLedgerData['outputVatGLAccountID'] = $chartOfAccountData->chartOfAccountSystemID;
+                                            $taxLedgerData['outputVatGLAccountID'] = $chartOfAccountData->chartOfAccountSystemID;
+                                        } else {
+                                            Log::info('Credit Note VAT GL Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
+                                            Log::info('Output Vat GL Account not assigned to company' . date('H:i:s'));
+                                        }
                                     } else {
-                                        Log::info('Credit Note VAT GL Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
-                                        Log::info('Output Vat GL Account not assigned to company' . date('H:i:s'));
+                                        Log::info('Credit Note VAT GL Entry IssuesId :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
+                                        Log::info('Output Vat GL Account not configured' . date('H:i:s'));
                                     }
-                                } else {
-                                    Log::info('Credit Note VAT GL Entry IssuesId :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
-                                    Log::info('Output Vat GL Account not configured' . date('H:i:s'));
+                                    $data['serviceLineSystemID'] = $detail->serviceLineSystemID;
+                                    $data['serviceLineCode'] = $detail->serviceLineCode;
+                                    if ($detail->clientContractID) {
+                                        $data['clientContractID'] = $detail->clientContractID;
+                                        $data['contractUID'] = $detail->contractUID;
+                                    } else {
+                                        $data['clientContractID'] = 'X';
+                                        $data['contractUID'] = 159;
+                                    }
+
+                                    $data['documentTransCurrencyID'] = $tax->supplierTransactionCurrencyID;
+                                    $data['documentTransCurrencyER'] = $tax->supplierTransactionER;
+                                    $data['documentTransAmount'] = \Helper::roundValue(ABS($detail->transTax));
+                                    $data['documentLocalCurrencyID'] = $tax->localCurrencyID;
+                                    $data['documentLocalCurrencyER'] = $tax->localCurrencyER;
+                                    $data['documentLocalAmount'] = \Helper::roundValue(ABS($detail->localTax));
+                                    $data['documentRptCurrencyID'] = $tax->reportingCurrencyID;
+                                    $data['documentRptCurrencyER'] = $tax->companyReportingER;
+                                    $data['documentRptAmount'] = \Helper::roundValue(ABS($detail->rptTax));
+                                    array_push($finalData, $data);
                                 }
-
-                                $data['serviceLineSystemID'] = 24;
-                                $data['serviceLineCode'] = 'X';
-                                $data['clientContractID'] = 'X';
-                                $data['contractUID'] = 159;
-
-                                $data['documentTransCurrencyID'] = $tax->supplierTransactionCurrencyID;
-                                $data['documentTransCurrencyER'] = $tax->supplierTransactionER;
-                                $data['documentTransAmount'] = \Helper::roundValue(ABS($taxTrans));
-                                $data['documentLocalCurrencyID'] = $tax->localCurrencyID;
-                                $data['documentLocalCurrencyER'] = $tax->localCurrencyER;
-                                $data['documentLocalAmount'] = \Helper::roundValue(ABS($taxLocal));
-                                $data['documentRptCurrencyID'] = $tax->reportingCurrencyID;
-                                $data['documentRptCurrencyER'] = $tax->companyReportingER;
-                                $data['documentRptAmount'] = \Helper::roundValue(ABS($taxRpt));
-                                array_push($finalData, $data);
                             }
 
                         }
