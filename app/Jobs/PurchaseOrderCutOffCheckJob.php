@@ -127,19 +127,22 @@ class PurchaseOrderCutOffCheckJob implements ShouldQueue
             Log::info('Budget cutoff PO count'.$poCutOffData->poCount);
             if ($poCutOffData->jobCount == $poCutOffData->poCount) {
                 $cutOffPos = PoCutoffJobData::all();
-                $subject = "Open Purchase Order/s Reaching budget cutoff period";
-                foreach ($emails as $key => $notificationUserVal) {
-                    $emailContent = BudgetCutOffNotificationService::getEmailContent($cutOffPos, $notificationUserVal[$key]['empName']);
 
-                    $sendEmail = NotificationService::emailNotification($companyIDFromScenario, $subject, $notificationUserVal[$key]['empEmail'], $emailContent);
+                if (count($cutOffPos) > 0) {
+                    $subject = "Open Purchase Order/s Reaching budget cutoff period";
+                    foreach ($emails as $key => $notificationUserVal) {
+                        $emailContent = BudgetCutOffNotificationService::getEmailContent($cutOffPos, $notificationUserVal[$key]['empName']);
 
-                    if (!$sendEmail["success"]) {
-                        Log::error($sendEmail["message"]);
+                        $sendEmail = NotificationService::emailNotification($companyIDFromScenario, $subject, $notificationUserVal[$key]['empEmail'], $emailContent);
+
+                        if (!$sendEmail["success"]) {
+                            Log::error($sendEmail["message"]);
+                        }
                     }
-                }
 
-                PoCutoffJobData::truncate();
+                }
                 PoCutoffJob::truncate();
+                PoCutoffJobData::truncate();
             }
         } else {
             PoCutoffJobData::truncate();
