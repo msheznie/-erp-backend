@@ -138,7 +138,7 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
         $input = $request->all();
         $companySystemID = $input['companySystemID'];
 
-
+       
         if(isset($input['isInDOorCI'])) {
             unset($input['timesReferred']);
         $item = ItemAssigned::with(['item_master'])
@@ -159,10 +159,13 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
 
         $customerInvoiceDirect = CustomerInvoiceDirect::find($input['custInvoiceDirectAutoID']);
 
+       
+
         if (empty($customerInvoiceDirect)) {
             return $this->sendError('Customer Invoice Direct Not Found');
         }
 
+        $is_pref = $customerInvoiceDirect->isPerforma;
 
         if(CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID',$input['custInvoiceDirectAutoID'])->where('itemFinanceCategoryID','!=',$item->financeCategoryMaster)->exists()){
             return $this->sendError('Different finance category found. You can not add different finance category items for same invoice',500);
@@ -254,8 +257,10 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
 
             $input['sellingCostAfterMargin'] = $catalogDetail->localPrice;
             $input['marginPercentage'] = ($input['sellingCostAfterMargin'] - $input['sellingCost'])/$input['sellingCost']*100;
+            $input['part_no'] = $catalogDetail->partNo;
         }else{
             $input['sellingCostAfterMargin'] = $input['sellingCost'];
+            $input['part_no'] = $item->secondaryItemCode;
         }
 
         if(isset($input['marginPercentage']) && $input['marginPercentage'] != 0){
@@ -318,13 +323,14 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
         if ($input['itemFinanceCategoryID'] == 1 || $input['itemFinanceCategoryID'] == 2 || $input['itemFinanceCategoryID'] == 4) {
             $alreadyAdded = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID',$input['custInvoiceDirectAutoID'])->where('itemCodeSystem',$item->itemCodeSystem)->first();
          
-        
             if ($alreadyAdded) {
                 if(($input['itemFinanceCategoryID'] != 2 )&& ($input['itemFinanceCategoryID'] != 4 ))
                 {
                     return $this->sendError("Selected item is already added. Please check again", 500);
                 }
-               
+                
+            }
+
         }
     }
         // check policy 18
@@ -755,6 +761,18 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
         return $this->sendResponse($customerInvoiceItemDetails->toArray(), $message);
     }
 
+    public function custItemDetailUpdate($id, UpdateCustomerInvoiceItemDetailsAPIRequest $request){
+        $comments = $request->comments;
+
+        $input = array();
+        $input['comments'] = $comments;
+        $message = "Item updated successfully";
+
+        $customerInvoiceItemDetails = $this->customerInvoiceItemDetailsRepository->update($input, $id);
+
+        return $this->sendResponse($customerInvoiceItemDetails->toArray(), $message);
+    }
+
     /**
      * @param int $id
      * @return Response
@@ -1094,10 +1112,21 @@ WHERE
                 }
             }
         }
+        
 
+        $customerInvoioce = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->first(); 
+        $is_pref = $customerInvoioce->isPerforma;
+
+       
         $itemExistArray = array();
         //check added item exist
         foreach ($input['detailTable'] as $itemExist) {
+            $item = ItemAssigned::with(['item_master'])
+            ->where('itemCodeSystem', $itemExist['itemCodeSystem'])
+            ->where('companySystemID', $itemExist['companySystemID'])
+            ->first();
+            
+           
 
             $item = ItemAssigned::with(['item_master'])
             ->where('itemCodeSystem', $itemExist['itemCodeSystem'])
@@ -1110,6 +1139,7 @@ WHERE
                     ->where('itemCodeSystem', $itemExist['itemCodeSystem'])
                     ->get();
 
+
                 if($item->financeCategoryMaster != 2 && $item->financeCategoryMaster != 4 )
                 {
                     if (!empty($doDetailExist)) {
@@ -1119,14 +1149,16 @@ WHERE
                         }
                     }
                 }
+
+          
             }
         }
+        
 
         if (!empty($itemExistArray)) {
             return $this->sendError($itemExistArray, 422);
         }
-
-        $customerInvoioce = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->first();
+        
 
         foreach ($input['detailTable'] as $itemExist) {
 
@@ -1430,9 +1462,14 @@ WHERE
             }
         }
 
+        $customerInvoioce = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->first(); 
+        $is_pref = $customerInvoioce->isPerforma;
+   
+
         $itemExistArray = array();
         //check added item exist
         foreach ($input['detailTable'] as $itemExist) {
+
 
              $item = ItemAssigned::with(['item_master'])
             ->where('itemCodeSystem', $itemExist['itemAutoID'])
@@ -1446,7 +1483,6 @@ WHERE
                     ->where('itemCodeSystem', $itemExist['itemAutoID'])
                     ->get();
 
-            
                     if($item->financeCategoryMaster != 2 && $item->financeCategoryMaster != 4 )
                     {
                         if (!empty($doDetailExist)) {
@@ -1463,8 +1499,8 @@ WHERE
             return $this->sendError($itemExistArray, 422);
         }
 
-        $customerInvoioce = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->first();
-
+    
+       
 
         // check qty and validations
 

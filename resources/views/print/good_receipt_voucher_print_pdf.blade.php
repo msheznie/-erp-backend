@@ -228,7 +228,12 @@
     <div class="row">
         <table style="width:100%">
             <tr>
-                <td style="text-align: center">
+                <div style="width:25%; position:'absolute'; margin-top:-8%; margin-bottom:4%;">
+                    @if($grvData->company_by)
+                        <img src="{{$grvData->company_by->logo_url}}" width="100" >
+                    @endif
+                </div>
+                <td style="text-align: center; width:100%;">
                     <h2>{{ $grvData->company_by?$grvData->company_by->CompanyName:'' }}</h2>
                     <h2>Good Receipt Voucher</h2>
                 </td>

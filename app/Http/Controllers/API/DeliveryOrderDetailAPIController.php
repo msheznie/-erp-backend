@@ -910,6 +910,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                     ->where('itemCodeSystem', $itemExist['itemAutoID'])
                     ->get();
 
+
                 $item = ItemAssigned::with(['item_master'])
                 ->where('itemCodeSystem', $itemExist['itemAutoID'])
                 ->where('companySystemID', $itemExist['companySystemID'])
@@ -917,6 +918,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
 
                 
                 $QuoDetailExistDetails = DeliveryOrderDetail::where('deliveryOrderID', $deliveryOrderID)
+
                     ->where('itemCodeSystem', $itemExist['itemAutoID'])
                     ->first();
                 if (!empty($QuoDetailExistDetails)) {
@@ -939,8 +941,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                         }
 
                     }
-                }
-                
+                }        
             }
         }
 

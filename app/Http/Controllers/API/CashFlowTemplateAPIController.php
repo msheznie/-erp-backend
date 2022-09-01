@@ -242,7 +242,7 @@ class CashFlowTemplateAPIController extends AppBaseController
             $data9['description'] = 'Investing activities';
             $data9['type'] = 1;
             $data9['masterID'] = null;
-            $data9['sortOrder'] = 3;
+            $data9['sortOrder'] = 2;
             $data9['subExits'] = 1;
             $data9['isDefault'] = 1;
             $data9['logicType'] = null;
@@ -271,7 +271,7 @@ class CashFlowTemplateAPIController extends AppBaseController
             $data11['description'] = 'Financing activities';
             $data11['type'] = 1;
             $data11['masterID'] = null;
-            $data11['sortOrder'] = 4;
+            $data11['sortOrder'] = 3;
             $data11['subExits'] = 1;
             $data11['isDefault'] = 1;
             $data11['manualGlMapping'] = 1;
@@ -301,7 +301,7 @@ class CashFlowTemplateAPIController extends AppBaseController
             $data13['type'] = 3;
             $data13['isFinalLevel'] = 1;
             $data13['masterID'] = null;
-            $data13['sortOrder'] = 5;
+            $data13['sortOrder'] = 4;
             $data13['subExits'] = 0;
             $data13['logicType'] = 2;
             $data13['isDefault'] = 1;
@@ -341,7 +341,7 @@ class CashFlowTemplateAPIController extends AppBaseController
             $data16['type'] = 3;
             $data16['isFinalLevel'] = 1;
             $data16['masterID'] = null;
-            $data16['sortOrder'] = 8;
+            $data16['sortOrder'] = 5;
             $data16['subExits'] = 0;
             $data16['logicType'] = 2;
             $data16['controlAccountType'] = null;

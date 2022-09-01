@@ -475,8 +475,15 @@ class SupplierInvoiceDirectItemAPIController extends AppBaseController
         $bookingSuppMasInvAutoID = $input['bookingSuppMasInvAutoID'];
 
         $items = SupplierInvoiceDirectItem::where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID)
+                 ->join('erp_accountspayableledger','documentSystemCode','=','bookingSuppMasInvAutoID')
             ->with(['unit' => function ($query) {
             }, 'vat_sub_category'])->get();
+
+        if(count($items) == 0) {
+            $items = SupplierInvoiceDirectItem::where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID)
+            ->with(['unit' => function ($query) {
+            }, 'vat_sub_category'])->get();
+        }
         
         return $this->sendResponse($items->toArray(), 'Item Details retrieved successfully');
     }

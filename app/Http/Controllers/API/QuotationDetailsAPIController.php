@@ -131,6 +131,7 @@ class QuotationDetailsAPIController extends AppBaseController
         $input = array_except($request->all(), 'unit');
         $input = $this->convertArrayToValue($input);
 
+     
 
         $employee = \Helper::getEmployeeInfo();
         $input['itemAutoID'] = isset( $input['itemAutoID']) ?  $input['itemAutoID'] : 0;
@@ -147,6 +148,8 @@ class QuotationDetailsAPIController extends AppBaseController
             ->where('companySystemID', $companySystemID)
             ->first();
         }
+
+        $category = $item->financeCategoryMaster;
 
         $category = $item->financeCategoryMaster;
 
@@ -811,6 +814,11 @@ WHERE
                     ->where('itemAutoID', $itemExist['itemAutoID'])
                     ->get();
 
+                    $item = ItemAssigned::with(['item_master'])
+                    ->where('itemCodeSystem', $itemExist['itemAutoID'])
+                    ->where('companySystemID', $itemExist['companySystemID'])
+                    ->first();
+
                 if (!empty($QuoDetailExist)) {
                     if($item->financeCategoryMaster != 2 && $item->financeCategoryMaster != 4 )
                     {
@@ -819,6 +827,7 @@ WHERE
                             $itemExistArray[] = [$itemDrt];
                         }
                     }
+         
                 }
             }
         }

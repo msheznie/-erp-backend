@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\DirectPaymentDetails;
 use App\Models\PaySupplierInvoiceMaster;
+use App\Models\POSTaxGLEntries;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
@@ -1307,6 +1308,152 @@ class TaxLedgerInsert implements ShouldQueue
                                 array_push($finalDetailData, $ledgerDetailsData);
                             }
                         }
+
+                        break;
+                    case 110:
+                        $taxEntries = POSTaxGLEntries::where('shiftId',$masterModel["autoID"])->get();
+
+                        $tax = DB::table('pos_source_invoice')
+                            ->selectRaw('pos_source_invoice.*')
+                            ->where('pos_source_invoice.shiftID', $masterModel["autoID"])
+                            ->first();
+
+                        $masterDocumentDate = date('Y-m-d H:i:s');
+
+                        $ledgerData['documentCode'] = $taxEntries->documentCode;
+                        $ledgerData['documentDate'] = $masterDocumentDate;
+                        $ledgerData['documentFianlApprovedByEmpSystemID'] = $empID->employeeSystemID;
+                        $taxItems = DB::table('pos_source_invoicedetail')
+                            ->selectRaw('SUM(pos_source_taxledger.amount) as amount, pos_source_taxledger.taxMasterID as taxID, pos_source_invoice.companyReportingExchangeRate as rptER, pos_source_invoice.transactionExchangeRate as transER, pos_source_invoice.companyLocalExchangeRate as localER')
+                            ->join('pos_source_invoice', 'pos_source_invoice.invoiceID', '=', 'pos_source_invoicedetail.invoiceID')
+                            ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'pos_source_invoicedetail.itemAutoID')
+                            ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
+                            ->join('pos_source_taxledger', 'pos_source_taxledger.documentDetailAutoID', '=', 'pos_source_invoicedetail.invoiceDetailsID')
+                            ->join('erp_taxmaster_new', 'erp_taxmaster_new.taxMasterAutoID', '=', 'pos_source_taxledger.taxMasterID')
+                            ->where('pos_source_invoice.shiftID', $masterModel["autoID"])
+                            ->groupBy('pos_source_invoice.shiftID')
+                            ->groupBy('pos_source_invoice.invoiceID')
+                            ->where('pos_source_invoice.isCreditSales', 0)
+                            ->first();
+
+                        $ledgerData['subCategoryID'] = $taxItems->taxID;
+                        $ledgerData['masterCategoryID'] = $taxItems->taxID;
+                        $ledgerData['localAmount'] = $taxItems->amount;
+                        $ledgerData['rptAmount'] = $taxItems->amount/$taxItems->rptER;
+                        $ledgerData['transAmount'] = $taxItems->amount;
+                        $ledgerData['transER'] = $taxItems->transER;
+                        $ledgerData['localER'] = $taxItems->localER;
+                        $ledgerData['comRptER'] = $taxItems->rptER;
+                        $ledgerData['localCurrencyID'] = $taxItems->companyLocalCurrencyID;
+                        $ledgerData['rptCurrencyID'] = $taxItems->companyReportingCurrencyID;
+                        $ledgerData['transCurrencyID'] = $taxItems->transactionCurrencyID;
+
+                        array_push($finalData, $ledgerData);
+
+
+                        foreach ($taxEntries as $key => $value) {
+                            $ledgerDetailsData['documentSystemID'] = $value->documentSystemID;
+                            $ledgerDetailsData['documentMasterAutoID'] = $value->shiftId;
+                            $ledgerDetailsData['documentDate'] = $masterDocumentDate;
+                            $ledgerDetailsData['postedDate'] = date('Y-m-d H:i:s');
+                            $ledgerDetailsData['chartOfAccountSystemID'] = $value->glCode;
+
+                            $chartOfAccountData = ChartOfAccount::find($value->glCode);
+
+                            if ($chartOfAccountData) {
+                                $ledgerDetailsData['accountCode'] = $chartOfAccountData->AccountCode;
+                                $ledgerDetailsData['accountDescription'] = $chartOfAccountData->AccountDescription;
+                            }
+
+                            $ledgerDetailsData['transactionCurrencyID'] = $tax->transactionCurrencyID;
+                            $ledgerDetailsData['originalInvoice'] = null;
+                            $ledgerDetailsData['originalInvoiceDate'] = null;
+                            $ledgerDetailsData['dateOfSupply'] = null;
+//                                $ledgerDetailsData['partyVATRegisteredYN'] = isset($masterData->supplier->vatEligible) ? $masterData->supplier->vatEligible : 0;
+//                                $ledgerDetailsData['partyVATRegNo'] = isset($masterData->supplier->vatNumber) ? $masterData->supplier->vatNumber : "";
+//                                $ledgerDetailsData['countryID'] = isset($masterData->supplier->supplierCountryID) ? $masterData->supplier->supplierCountryID : "";
+                            $ledgerDetailsData['itemSystemCode'] = null;
+                            $ledgerDetailsData['itemCode'] = null;
+                            $ledgerDetailsData['itemDescription'] = null;
+//                                $ledgerDetailsData['VATPercentage'] = $value->VATPercentage;
+                            $ledgerDetailsData['taxableAmount'] = $value->amount;
+                            $ledgerDetailsData['VATAmount'] = $value->amount;
+                            $ledgerDetailsData['recoverabilityAmount'] = $value->amount;
+                            $ledgerDetailsData['localER'] = $value->companyLocalExchangeRate;
+                            $ledgerDetailsData['reportingER'] = $value->companyReportingExchangeRate;
+                            $ledgerDetailsData['taxableAmountLocal'] = $value->amount;
+                            $ledgerDetailsData['taxableAmountReporting'] = $value->amount ;
+                            $ledgerDetailsData['VATAmountLocal'] = $value->VATAmountLocal;
+                            $ledgerDetailsData['VATAmountRpt'] = $value->VATAmountLocal;
+                            $ledgerDetailsData['localCurrencyID'] = $value->companyLocalCurrencyID;
+                            $ledgerDetailsData['rptCurrencyID'] = $value->companyReportingCurrencyID;
+
+                            array_push($finalDetailData, $ledgerDetailsData);
+                        }
+
+                        break;
+                    case 111:
+                        $taxEntries = POSTaxGLEntries::where('shiftId',$masterModel["autoID"])->get();
+
+                        $tax = DB::table('pos_source_menusalesmaster')
+                            ->selectRaw('pos_source_menusalesmaster.*')
+                            ->where('pos_source_menusalesmaster.shiftID', $masterModel["autoID"])
+                            ->first();
+
+                        $masterDocumentDate = date('Y-m-d H:i:s');
+
+                        $ledgerData['subCategoryID'] = 1;
+                        $ledgerData['masterCategoryID'] = 1;
+                        $ledgerData['localAmount'] = 1;
+                        $ledgerData['rptAmount'] = 1;
+                        $ledgerData['transAmount'] = 1;
+                        $ledgerData['transER'] = 1;
+                        $ledgerData['localER'] = 1;
+                        $ledgerData['comRptER'] = 1;
+                        $ledgerData['localCurrencyID'] = 1;
+                        $ledgerData['rptCurrencyID'] = 1;
+                        $ledgerData['transCurrencyID'] = 1;
+
+                        array_push($finalData, $ledgerData);
+
+
+                            foreach ($taxEntries as $key => $value) {
+                                $ledgerDetailsData['documentSystemID'] = $value->documentSystemID;
+                                $ledgerDetailsData['documentMasterAutoID'] = $value->shiftId;
+                                $ledgerDetailsData['documentDate'] = $masterDocumentDate;
+                                $ledgerDetailsData['postedDate'] = date('Y-m-d H:i:s');
+                                $ledgerDetailsData['chartOfAccountSystemID'] = $value->glCode;
+                                $ledgerDetailsData['documentNumber'] = $value->documentCode;
+
+                                $chartOfAccountData = ChartOfAccount::find($value->glCode);
+
+                                if ($chartOfAccountData) {
+                                    $ledgerDetailsData['accountCode'] = $chartOfAccountData->AccountCode;
+                                    $ledgerDetailsData['accountDescription'] = $chartOfAccountData->AccountDescription;
+                                }
+
+                                $ledgerDetailsData['transactionCurrencyID'] = $tax->transactionCurrencyID;
+                                $ledgerDetailsData['originalInvoice'] = null;
+                                $ledgerDetailsData['originalInvoiceDate'] = null;
+                                $ledgerDetailsData['dateOfSupply'] = null;
+
+                                $ledgerDetailsData['itemSystemCode'] = null;
+                                $ledgerDetailsData['itemCode'] = null;
+                                $ledgerDetailsData['itemDescription'] = null;
+                                $ledgerDetailsData['taxableAmount'] = $value->amount;
+                                $ledgerDetailsData['VATAmount'] = $value->amount;
+                                $ledgerDetailsData['recoverabilityAmount'] = $value->amount;
+                                $ledgerDetailsData['localER'] = $value->companyLocalExchangeRate;
+                                $ledgerDetailsData['reportingER'] = $value->companyReportingExchangeRate;
+                                $ledgerDetailsData['taxableAmountLocal'] = $value->amount;
+                                $ledgerDetailsData['taxableAmountReporting'] = $value->amount ;
+                                $ledgerDetailsData['VATAmountLocal'] = $value->VATAmountLocal;
+                                $ledgerDetailsData['VATAmountRpt'] = $value->VATAmountLocal;
+                                $ledgerDetailsData['localCurrencyID'] = $value->companyLocalCurrencyID;
+                                $ledgerDetailsData['rptCurrencyID'] = $value->companyReportingCurrencyID;
+
+                                array_push($finalDetailData, $ledgerDetailsData);
+                            }
 
                         break;
                     default:

@@ -1,16 +1,43 @@
 <html>
+<table>
+        <thead>
+        <div>
+                <td colspan="18"><h1 style="text-align: center">{{$company}} </h1></td>
+            </div>
+        </thead>
+    </table>
+    <table>
+        <thead>
+        <div>
+                <td colspan="18"><h2 style="text-align: center">{{$Title}}</h2></td>
+            </div>
+        </thead>
+    </table>
+    <br>
+<table>
+    <thead>
+    <tr>
+        <td><B>Period From: </B></td>
+        <td><B>{{ date('d/m/Y', strtotime($fromDate)) }}</B></td>
+        <td><B>Period To:</B></td>
+        <td><B>{{ date('d/m/Y', strtotime($toDate)) }}</B></td>
+        <td><B>Currency:</B></td>
+        <td><B>{{ $currency }}</B></td>
+    </tr>
+    </thead>
+</table>
+
 
 <table>
     <thead> 
         <tr>
-            <th colspan="10" ></th>
+            <th colspan="12" ></th>
             <th  colspan="{{$length}}" class="text-center">Segments</th>
             <th rowspan="2" ></th>
         </tr>
         <tr>
-            <th class=""></th>
-            <th class="border_rem text-center">Particulars</th>
-            <th class=""></th>
+            <th colspan="2" class="border_rem text-center">Account Code</th>
+            <th colspan="3" class="border_rem text-center">Account Description</th>
             @foreach($segment as $data1)
 
                 <th colspan="3" >
@@ -18,29 +45,30 @@
                 </th>
              @endforeach
         </tr>   
-
         <tr>
-            <th class=""></th>
-            <th class=""></th>
-            <th class=""></th>
+            <th colspan="2" class=""></th>
+            <th colspan="3" class=""></th>
             @foreach($segment as $data1)
              @foreach($deb_cred as $info)
-                 <th >
+                 <th>
                     {{$info}}
                 </th>
              @endforeach
-         
             @endforeach
 
         </tr>
 
 
     </thead>
+
     <tbody>
         @foreach($data as $dt)
             <tr>
+            <td colspan="2">
+                {{$dt['AccountCode']}}
+            </td>
             <td colspan="3">
-                {{$dt['glAccountId']}}
+                {{$dt['AccountDescription']}}
            </td>
                @foreach($segment as $key=>$val)
                     <td>{{$dt[$key]['debit']}}</td>
@@ -50,10 +78,11 @@
             </tr>
         @endforeach
     </tbody>
+
     <tfoot>
     <tfoot>
         <tr >
-                <td colspan="3" style="border-bottom-color:white !important;border-left-color:white !important"
+                <td colspan="5" style="border-bottom-color:white !important;border-left-color:white !important"
                     class="text-right"><b> Total:</b></td>
                     @foreach($segment as $key=>$val)
                         <td>
