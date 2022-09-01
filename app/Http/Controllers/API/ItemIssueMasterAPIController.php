@@ -434,6 +434,13 @@ class ItemIssueMasterAPIController extends AppBaseController
     
         
         }
+
+
+        if($input['mfqJobID'] == 0)
+        {
+            $input['mfqJobID'] = null;
+        }
+		
       
 
         if (isset($input['serviceLineSystemID'])) {
@@ -616,6 +623,16 @@ class ItemIssueMasterAPIController extends AppBaseController
 
             if ($validator->fails()) {
                 return $this->sendError($validator->messages(), 422);
+            }
+
+            $is_manu =  WarehouseMaster::checkManuefactoringWareHouse($input['wareHouseFrom']);
+            if($is_manu)
+            {   
+                if($input['mfqJobID'] == null)
+                {
+                    $err_msg['mfq_job'] = ['The Mfq Job field is required !'];
+                    return $this->sendError($err_msg, 422);
+                }
             }
 
             $documentDate = $input['issueDate'];

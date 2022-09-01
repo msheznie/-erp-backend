@@ -9,6 +9,7 @@ use App\Models\DirectReceiptDetail;
 use App\Models\SalesReturn;
 use App\Models\CustomerInvoiceDirect;
 use App\Models\CustomerReceivePayment;
+use App\Models\CustomerReceivePaymentDetail;
 use App\Models\Employee;
 use App\Models\Taxdetail;
 use App\Models\CustomerInvoiceDirectDetail;
@@ -238,19 +239,19 @@ class AccountReceivableLedgerInsert implements ShouldQueue
                                 $transAmountLocal = 0;
                                 $transAmountRpt = 0;
 
-                                if(isset($masterData->details) && count($masterData->details) > 0){
+                                if (isset($masterData->details) && count($masterData->details) > 0) {
                                     $transAmount = $transAmount + $masterData->details[0]->transAmount;
                                     $transAmountLocal = $transAmountLocal + $masterData->details[0]->localAmount;
                                     $transAmountRpt = $transAmountRpt + $masterData->details[0]->rptAmount;
                                 }
 
-                                if(isset($masterData->directdetails) && count($masterData->directdetails) > 0){
+                                if (isset($masterData->directdetails) && count($masterData->directdetails) > 0) {
                                     $transAmount = $transAmount + $masterData->directdetails[0]->transAmount;
                                     $transAmountLocal = $transAmountLocal + $masterData->directdetails[0]->localAmount;
                                     $transAmountRpt = $transAmountRpt + $masterData->directdetails[0]->rptAmount;
                                 }
 
-                                if(isset($masterData->advance_receipt_details) && count($masterData->advance_receipt_details) > 0){
+                                if (isset($masterData->advance_receipt_details) && count($masterData->advance_receipt_details) > 0) {
                                     $transAmount = $transAmount + $masterData->advance_receipt_details[0]->transAmount;
                                     $transAmountLocal = $transAmountLocal + $masterData->advance_receipt_details[0]->localAmount;
                                     $transAmountRpt = $transAmountRpt + $masterData->advance_receipt_details[0]->rptAmount;
@@ -260,41 +261,69 @@ class AccountReceivableLedgerInsert implements ShouldQueue
                                 $transAmountLocal = \Helper::roundValue($transAmountLocal);
                                 $transAmountRpt = \Helper::roundValue($transAmountRpt);
 
-                                foreach ($directReceipts as $detail) {
 
-                                    $data['companySystemID'] = $masterData->companySystemID;
-                                    $data['companyID'] = $masterData->companyID;
-                                    $data['documentSystemID'] = $masterData->documentSystemID;
-                                    $data['documentID'] = $masterData->documentID;
-                                    $data['documentCodeSystem'] = $masterModel["autoID"];
-                                    $data['documentCode'] = $masterData->custPaymentReceiveCode;
-                                    $data['documentDate'] = $masterDocumentDate;
-                                    $data['serviceLineSystemID'] = $detail->serviceLineSystemID;
-                                    $data['serviceLineCode'] = $detail->serviceLineCode;
-                                    $data['customerID'] = $masterData->customerID;
-                                    $data['InvoiceNo'] = null;
-                                    $data['InvoiceDate'] = null;
-                                    $data['custTransCurrencyID'] = $masterData->custTransactionCurrencyID;
-                                    $data['custTransER'] = $masterData->custTransactionCurrencyER;
-                                    $data['custInvoiceAmount'] = ($masterData->documentType == 15) ? (ABS($detail->transAmount) * -1) : $detail->transAmount;
-                                    $data['custDefaultCurrencyID'] = 0;
-                                    $data['custDefaultCurrencyER'] = 0;
-                                    $data['custDefaultAmount'] = 0;
-                                    $data['localCurrencyID'] = $masterData->localCurrencyID;
-                                    $data['localER'] = $masterData->localCurrencyER;
-                                    $data['localAmount'] = ($masterData->documentType == 15) ? (ABS($detail->localAmount) * -1) : $detail->localAmount;
-                                    $data['comRptCurrencyID'] = $masterData->companyRptCurrencyID;
-                                    $data['comRptER'] = $masterData->companyRptCurrencyER;
-                                    $data['comRptAmount'] = ($masterData->documentType == 15) ? (ABS($detail->rptAmount) * -1) : $detail->rptAmount;
-                                    $data['isInvoiceLockedYN'] = 0;
-                                    $data['documentType'] = $masterData->documentType;
-                                    $data['selectedToPaymentInv'] = 0;
-                                    $data['fullyInvoiced'] = 0;
-                                    $data['createdDateTime'] = \Helper::currentDateTime();
-                                    $data['createdUserID'] = $empID->empID;
-                                    $data['createdUserSystemID'] = $empID->employeeSystemID;
-                                    $data['createdPcID'] = gethostname();
-                                    $data['timeStamp'] = \Helper::currentDateTime();
+                                $data['companySystemID'] = $masterData->companySystemID;
+                                $data['companyID'] = $masterData->companyID;
+                                $data['documentSystemID'] = $masterData->documentSystemID;
+                                $data['documentID'] = $masterData->documentID;
+                                $data['documentCodeSystem'] = $masterModel["autoID"];
+                                $data['documentCode'] = $masterData->custPaymentReceiveCode;
+                                $data['documentDate'] = $masterDocumentDate;
+                                $data['customerID'] = $masterData->customerID;
+                                $data['InvoiceNo'] = null;
+                                $data['InvoiceDate'] = null;
+                                $data['custTransCurrencyID'] = $masterData->custTransactionCurrencyID;
+                                $data['custTransER'] = $masterData->custTransactionCurrencyER;
+                                $data['custDefaultCurrencyID'] = 0;
+                                $data['custDefaultCurrencyER'] = 0;
+                                $data['custDefaultAmount'] = 0;
+                                $data['localCurrencyID'] = $masterData->localCurrencyID;
+                                $data['localER'] = $masterData->localCurrencyER;
+                                $data['comRptCurrencyID'] = $masterData->companyRptCurrencyID;
+                                $data['comRptER'] = $masterData->companyRptCurrencyER;
+                                $data['isInvoiceLockedYN'] = 0;
+                                $data['documentType'] = $masterData->documentType;
+                                $data['selectedToPaymentInv'] = 0;
+                                $data['fullyInvoiced'] = 0;
+                                $data['createdDateTime'] = \Helper::currentDateTime();
+                                $data['createdUserID'] = $empID->empID;
+                                $data['createdUserSystemID'] = $empID->employeeSystemID;
+                                $data['createdPcID'] = gethostname();
+                                $data['timeStamp'] = \Helper::currentDateTime();
+
+                                if ($masterData->documentType == 13) {
+                                    $receiptDetails = CustomerReceivePaymentDetail::with(['ar_data'])
+                                        ->WHERE('custReceivePaymentAutoID', $masterModel["autoID"])
+                                        ->get();
+
+                                    foreach ($receiptDetails as $key => $valueRe) {
+
+                                        $data['serviceLineSystemID'] = ($valueRe->ar_data) ? $valueRe->ar_data->serviceLineSystemID : 24;
+                                        $data['serviceLineCode'] = ($valueRe->ar_data) ? $valueRe->ar_data->serviceLineCode : 'X';
+
+                                        $data['custInvoiceAmount'] = $valueRe->receiveAmountTrans;
+                                        $data['localAmount'] = $valueRe->receiveAmountLocal;
+                                        $data['comRptAmount'] = $valueRe->receiveAmountRpt;
+                                        array_push($finalData, $data);
+                                    }
+
+                                } elseif ($masterData->documentType == 15) {
+                                    foreach ($directReceipts as $detail) {
+                                        $data['serviceLineSystemID'] = $detail->serviceLineSystemID;
+                                        $data['serviceLineCode'] = $detail->serviceLineCode;
+                                        $data['custInvoiceAmount'] = $detail->transAmount;
+                                        $data['localAmount'] = $detail->localAmount;
+                                        $data['comRptAmount'] = $detail->rptAmount;
+                                        array_push($finalData, $data);
+                                    }
+
+                                }
+
+
+                                else {
+                                    $data['custInvoiceAmount'] = ($masterData->documentType == 15) ? (ABS($transAmount) * -1) : $transAmount;
+                                    $data['localAmount'] = ($masterData->documentType == 15) ? (ABS($transAmountLocal) * -1) : $transAmountLocal;
+                                    $data['comRptAmount'] = ($masterData->documentType == 15) ? (ABS($transAmountRpt) * -1) : $transAmountRpt;
                                     array_push($finalData, $data);
                                 }
                             }
