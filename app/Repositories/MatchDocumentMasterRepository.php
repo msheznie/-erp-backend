@@ -180,7 +180,7 @@ class MatchDocumentMasterRepository extends BaseRepository
 
         $invMaster = MatchDocumentMaster::where('companySystemID', $input['companySystemID']);
         $invMaster->whereIn('documentSystemID', [19, 21]);
-        $invMaster->with(['credit_note_details','created_by' => function ($query) {
+        $invMaster->with(['credit_note_details','direct_receipt_details','created_by' => function ($query) {
         }, 'customer' => function ($query) {
         }, 'transactioncurrency' => function ($query) {
         }, 'cancelled_by']);

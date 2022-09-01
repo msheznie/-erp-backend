@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Models\AccountsReceivableLedger;
 use App\Models\CreditNote;
 use App\Models\CreditNoteDetails;
+use App\Models\DirectReceiptDetail;
 use App\Models\SalesReturn;
 use App\Models\CustomerInvoiceDirect;
 use App\Models\CustomerReceivePayment;
@@ -221,6 +222,11 @@ class AccountReceivableLedgerInsert implements ShouldQueue
                             $query->selectRaw('SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount,SUM(paymentAmount) as transAmount,custReceivePaymentAutoID');
                         },'finance_period_by'])->find($masterModel["autoID"]);
 
+                        $directReceipts = DirectReceiptDetail::selectRaw("SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount,SUM(DRAmount) as transAmount,chartOfAccountSystemID as financeGLcodePLSystemID,glCode as financeGLcodePL,localCurrency as localCurrencyID,comRptCurrency as reportingCurrencyID,DRAmountCurrency as transCurrencyID,comRptCurrencyER as reportingCurrencyER,localCurrencyER,DDRAmountCurrencyER as transCurrencyER,serviceLineSystemID,serviceLineCode")
+                            ->WHERE('directReceiptAutoID', $masterModel["autoID"])
+                            ->groupBy('serviceLineSystemID', 'chartOfAccountSystemID')
+                            ->get();
+
                         $masterDocumentDate = date('Y-m-d H:i:s');
 
                         if ($masterData) {
@@ -233,19 +239,19 @@ class AccountReceivableLedgerInsert implements ShouldQueue
                                 $transAmountLocal = 0;
                                 $transAmountRpt = 0;
 
-                                if(isset($masterData->details) && count($masterData->details) > 0){
+                                if (isset($masterData->details) && count($masterData->details) > 0) {
                                     $transAmount = $transAmount + $masterData->details[0]->transAmount;
                                     $transAmountLocal = $transAmountLocal + $masterData->details[0]->localAmount;
                                     $transAmountRpt = $transAmountRpt + $masterData->details[0]->rptAmount;
                                 }
 
-                                if(isset($masterData->directdetails) && count($masterData->directdetails) > 0){
+                                if (isset($masterData->directdetails) && count($masterData->directdetails) > 0) {
                                     $transAmount = $transAmount + $masterData->directdetails[0]->transAmount;
                                     $transAmountLocal = $transAmountLocal + $masterData->directdetails[0]->localAmount;
                                     $transAmountRpt = $transAmountRpt + $masterData->directdetails[0]->rptAmount;
                                 }
 
-                                if(isset($masterData->advance_receipt_details) && count($masterData->advance_receipt_details) > 0){
+                                if (isset($masterData->advance_receipt_details) && count($masterData->advance_receipt_details) > 0) {
                                     $transAmount = $transAmount + $masterData->advance_receipt_details[0]->transAmount;
                                     $transAmountLocal = $transAmountLocal + $masterData->advance_receipt_details[0]->localAmount;
                                     $transAmountRpt = $transAmountRpt + $masterData->advance_receipt_details[0]->rptAmount;
@@ -254,7 +260,6 @@ class AccountReceivableLedgerInsert implements ShouldQueue
 
                                 $transAmountLocal = \Helper::roundValue($transAmountLocal);
                                 $transAmountRpt = \Helper::roundValue($transAmountRpt);
-
 
                                 $data['companySystemID'] = $masterData->companySystemID;
                                 $data['companyID'] = $masterData->companyID;
@@ -287,20 +292,34 @@ class AccountReceivableLedgerInsert implements ShouldQueue
 
                                 if ($masterData->documentType == 13) {
                                     $receiptDetails = CustomerReceivePaymentDetail::with(['ar_data'])
-                                            ->WHERE('custReceivePaymentAutoID', $masterModel["autoID"])
-                                            ->get();
+                                        ->WHERE('custReceivePaymentAutoID', $masterModel["autoID"])
+                                        ->get();
 
                                     foreach ($receiptDetails as $key => $valueRe) {
 
                                         $data['serviceLineSystemID'] = ($valueRe->ar_data) ? $valueRe->ar_data->serviceLineSystemID : 24;
-                                        $data['serviceLineCode'] =  ($valueRe->ar_data) ? $valueRe->ar_data->serviceLineCode : 'X';
+                                        $data['serviceLineCode'] = ($valueRe->ar_data) ? $valueRe->ar_data->serviceLineCode : 'X';
 
                                         $data['custInvoiceAmount'] = $valueRe->receiveAmountTrans;
                                         $data['localAmount'] = $valueRe->receiveAmountLocal;
                                         $data['comRptAmount'] = $valueRe->receiveAmountRpt;
                                         array_push($finalData, $data);
                                     }
-                                } else {
+
+                                } elseif ($masterData->documentType == 15) {
+                                    foreach ($directReceipts as $detail) {
+                                        $data['serviceLineSystemID'] = $detail->serviceLineSystemID;
+                                        $data['serviceLineCode'] = $detail->serviceLineCode;
+                                        $data['custInvoiceAmount'] = $detail->transAmount;
+                                        $data['localAmount'] = $detail->localAmount;
+                                        $data['comRptAmount'] = $detail->rptAmount;
+                                        array_push($finalData, $data);
+                                    }
+
+                                }
+
+
+                                else {
                                     $data['custInvoiceAmount'] = ($masterData->documentType == 15) ? (ABS($transAmount) * -1) : $transAmount;
                                     $data['localAmount'] = ($masterData->documentType == 15) ? (ABS($transAmountLocal) * -1) : $transAmountLocal;
                                     $data['comRptAmount'] = ($masterData->documentType == 15) ? (ABS($transAmountRpt) * -1) : $transAmountRpt;
