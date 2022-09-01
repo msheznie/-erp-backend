@@ -272,5 +272,8 @@ class CustomerReceivePaymentDetail extends Model
         return $this->belongsTo(MatchDocumentMaster::class, 'matchingDocID', 'matchDocumentMasterAutoID');
     }
 
-
+    public function ar_data()
+    {
+        return $this->belongsTo(AccountsReceivableLedger::class, 'arAutoID', 'arAutoID');
+    }
 }
