@@ -175,9 +175,17 @@
             height: auto;
         }
         .container {
-            width: 150px;
+            display: block;
+            max-width:200px;
+            max-height:250px;
+            width: auto;
             height: auto;
             }
+
+        .table_height
+        {
+            max-height: 250px !important;
+        }
     </style>
 </head>
 <body>
@@ -243,32 +251,18 @@
 </div>
 <div id="watermark"></div>
 <div class="card-body content" id="print-section">
-    <table style="width: 100%">
-        <tr style="width: 100%">
-            <td valign="top" style="width: 50%;padding-top:40px">
+    <table style="width: 100%" class="table_height">
+        <tr style="width: 100%" >
+            <td valign="top" style="width: 30%">
                 @if($masterdata->company)
-                <img src="{{$masterdata->company->logo_url}}" >
+                <img src="{{$masterdata->company->logo_url}}" class="container">
              
                 @endif
-                <br>
 
-                <div>
-                    <span style="font-size: 18px">
-                        @if($masterdata->documentType == 13)
-                            Customer Invoice Receipt
-                        @endif
-                        @if($masterdata->documentType == 14)
-                            Direct Receipt
-                        @endif
-                        @if($masterdata->documentType == 15)
-                            Advance Receipt
-                        @endif
-                    </span>
-                </div>
             </td>
-            <td valign="top" style="width: 50%">
+            <td valign="top" style="width: 70%">
                 @if($masterdata->company)
-                    <span style="font-size: 24px;font-weight: 400"> {{$masterdata->company->CompanyName}}</span>
+                    <span style="font-size: 24px;font-weight: 400">AKHI - Al Khuwair Hospitality And Investment Company SAOC</span>
                 @endif
                 <br>
                 <table>

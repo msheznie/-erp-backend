@@ -5,7 +5,7 @@ return [
     'user' => 'المستعمل',
     'user_logged_out_successfully' => 'تم تسجيل خروج المستخدم بنجاح',
     'something_went_wrong' => 'هناك خطأ ما',
-    'grv' => 'GRV'
+    'grv' => 'GRV',
 
     // Status
     'retrieve' => ':attribute تم استرجاعه بنجاح',
@@ -113,7 +113,7 @@ return [
     'asset_types' => 'أنواع الأصول',
     'audit_trails' => 'مسارات المراجعة',
     'login_failed_the_user_is_discharged_please_contact_admin' => 'فشل عملية الدخول! تم تصريف المستخدم. يرجى الاتصال بالمسؤول',
-    'login_failed_the_user_is_not_activated_please_contact_admin' => 'فشل عملية الدخول! لم يتم تنشيط المستخدم. يرجى الاتصال بالمسؤول'
+    'login_failed_the_user_is_not_activated_please_contact_admin' => 'فشل عملية الدخول! لم يتم تنشيط المستخدم. يرجى الاتصال بالمسؤول',
     'your_account_is_blocked' => 'تم حظر حسابك',
     'token_expired' => 'انتهت صلاحية الرمز',
     'error' => 'خطأ',
@@ -144,7 +144,7 @@ return [
     'bank_reconciliation' => 'التسويات المصرفية',
     'you_cannot_edit_this_document_already_confirmed' => 'لا يمكنك التحرير ، هذا المستند تم تأكيده بالفعل',
     'you_cannot_edit_this_item_already_added_to_bank_reconciliation' => 'لا يمكنك التحرير ، هذا العنصر مضاف بالفعل إلى التسوية البنكية',
-    'you_cannot_edit_this_payment_already_added_to_bank_transfer' => 'لا يمكنك التعديل ، هذه الدفعة مضافة بالفعل إلى التحويل المصرفي.'
+    'you_cannot_edit_this_payment_already_added_to_bank_transfer' => 'لا يمكنك التعديل ، هذه الدفعة مضافة بالفعل إلى التحويل المصرفي.',
     'you_cannot_edit_this_document_is_already_added_to_bank_reconciliation' => 'لا يمكنك التحرير ، هذا المستند مضاف بالفعل إلى التسوية البنكية.',
     'bank_amount_is_not_matching_with_gl_amount' => 'مبلغ البنك لا يتطابق مع مبلغ دفتر الأستاذ العام.',
     'gl_data_cannot_be_found_for_this_document' => 'لا يمكن العثور على بيانات دفتر الأستاذ العام لهذا المستند',
@@ -194,8 +194,8 @@ return [
     'you_cannot_reopen_this_budget_transfer_it_is_already_partially_approved' => 'لا يمكنك إعادة فتح "تحويل الميزانية" الذي تمت الموافقة عليه جزئيًا بالفعل',
     'you_cannot_reopen_this_budget_transfer_it_is_not_confirmed' => 'لا يمكنك إعادة فتح "تحويل الميزانية" هذا ، لأنه لم يتم تأكيده',
     'error_occurred' => 'حدث خطأ',
-    'there_is_a_bank_reconciliation' => 'هناك تسوية بنكية ('،
-    'waiting_for_approval_for_the_bank_reconciliation_you_are_trying_to_add_please_check_again' => ') في انتظار الموافقة على التسوية المصرفية التي تحاول إضافتها. يرجى التحقق مرة أخرى.'،
+    'there_is_a_bank_reconciliation' => 'هناك تسوية بنكية (',
+    'waiting_for_approval_for_the_bank_reconciliation_you_are_trying_to_add_please_check_again' => ') في انتظار الموافقة على التسوية المصرفية التي تحاول إضافتها. يرجى التحقق مرة أخرى.',
     'successfully' => 'بنجاح',
     'you_cannot_reopen_this_bank_reconciliation_it_is_already_fully_approved' => 'لا يمكنك إعادة فتح هذا التسوية البنكية التي تمت الموافقة عليها بالكامل بالفعل',
     'you_cannot_reopen_this_bank_reconciliation_it_is_already_partially_approved' => 'لا يمكنك إعادة فتح هذه التسوية البنكية التي تمت الموافقة عليها جزئيًا بالفعل',
@@ -236,7 +236,7 @@ return [
     'policy' => 'سياسة',
     'company_finance_periods' => 'فترات تمويل الشركة',
     'general_ledger_financial_period_is_not_active_you_cannot_activate_financial_period' => 'عام_فاتح_المالية_الفترة_التي_لا_نشاط_لا يمكنك_تنشيط_الفترة_المالية',
-    'company_already_has_a_current_financial_period_for_this_department' => ' الشركة لديها بالفعل فترة مالية حالية لهذا القسم '،
+    'company_already_has_a_current_financial_period_for_this_department' => ' الشركة لديها بالفعل فترة مالية حالية لهذا القسم ',
     'there_are_some_department_has_active_financial_period' => 'هناك قسم لديه فترة مالية نشطة',
     'finance_periods' => 'فترات التمويل',
     'company_finance_years' => 'سنوات تمويل الشركة',
