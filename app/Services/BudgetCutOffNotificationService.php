@@ -30,7 +30,7 @@ class BudgetCutOffNotificationService
             $scenario_des = $scenarios[0]->notification_scenario->scenarioDescription;
 
             Log::info('------------ Successfully start ' . $scenario_des . ' Service ' . date('H:i:s') .  ' ------------');
-
+            $scenarios = $scenarios->toArray();
             foreach ($scenarios as $compAssignScenario) {
                 CompanyWiseCutOffNotificationJob::dispatch($dataBase, $compAssignScenario);
             }

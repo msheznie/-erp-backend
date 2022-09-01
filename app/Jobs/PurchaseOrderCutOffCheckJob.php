@@ -71,11 +71,11 @@ class PurchaseOrderCutOffCheckJob implements ShouldQueue
 
         $now = Carbon::now();
         $checkBudget = CompanyPolicyMaster::where('companyPolicyCategoryID', 17)
-                                    ->where('companySystemID', $value->companySystemID)
+                                    ->where('companySystemID', $value['companySystemID'])
                                     ->first();
 
         if ($checkBudget && $checkBudget->isYesNO) {
-            $budgetConsumedData = BudgetConsumptionService::getConsumptionData($value->documentSystemID, $value->purchaseOrderID);
+            $budgetConsumedData = BudgetConsumptionService::getConsumptionData($value['documentSystemID'], $value['purchaseOrderID']);
 
             if (count($budgetConsumedData['budgetmasterIDs']) > 0) {
                 $budgetIds = array_unique($budgetConsumedData['budgetmasterIDs']);
@@ -88,29 +88,29 @@ class PurchaseOrderCutOffCheckJob implements ShouldQueue
 
                         $diff = $now->diffInDays($cutOffDate);
                         $temp = [];
-                        $temp['documentCode'] = $value->purchaseOrderCode;
+                        $temp['documentCode'] = $value['purchaseOrderCode'];
                         $temp['segment'] = ($budgetMaster && $budgetMaster->segment_by) ? $budgetMaster->segment_by->ServiceLineCode." - ".$budgetMaster->segment_by->ServiceLineDes : "";
-                        $temp['currency'] = ($value->currency) ? $value->currency->CurrencyCode : "";
-                        $temp['documentValue'] = ($value->currency) ? number_format($value->poTotalSupplierTransactionCurrency, $value->currency->DecimalPlaces) : number_format($value->poTotalSupplierTransactionCurrency, 2);
+                        $temp['currency'] = ($value['currency']) ? $value['currency']['CurrencyCode'] : "";
+                        $temp['documentValue'] = ($value['currency']) ? number_format($value['poTotalSupplierTransactionCurrency'], $value['currency']['DecimalPlaces']) : number_format($value['poTotalSupplierTransactionCurrency'], 2);
                         $temp['cutOffDate'] = $cutOffDate->format('Y-m-d');
 
                         if (($cutOffDate > $now) && $diff > 0) {
                             if ($type == 1 && ($diff == $days)) { // Before 
-                               $recivedValue = ($value->grvRecieved == 1)  ? GRVDetails::selectRaw('SUM(erp_grvdetails.GRVcostPerUnitSupTransCur*erp_grvdetails.noQty) as total')->where('purchaseOrderMastertID', $value->purchaseOrderID)->first()->total : 0;
-                               $temp['remainingValue'] = ($value->currency) ? number_format(($value->poTotalSupplierTransactionCurrency - $recivedValue), $value->currency->DecimalPlaces) : number_format(($value->poTotalSupplierTransactionCurrency - $recivedValue), 2);
+                               $recivedValue = ($value['grvRecieved'] == 1)  ? GRVDetails::selectRaw('SUM(erp_grvdetails.GRVcostPerUnitSupTransCur*erp_grvdetails.noQty) as total')->where('purchaseOrderMastertID', $value['purchaseOrderID'])->first()->total : 0;
+                               $temp['remainingValue'] = ($value['currency']) ? number_format(($value['poTotalSupplierTransactionCurrency'] - $recivedValue), $value['currency']['DecimalPlaces']) : number_format(($value['poTotalSupplierTransactionCurrency'] - $recivedValue), 2);
 
                                PoCutoffJobData::create($temp);
                             } 
                         } else if ($cutOffDate < $now && $diff > 0) {
                             if ($type == 2 && ($diff == $days)) { // After
-                               $recivedValue = ($value->grvRecieved == 1)  ? GRVDetails::selectRaw('SUM(erp_grvdetails.GRVcostPerUnitSupTransCur*erp_grvdetails.noQty) as total')->where('purchaseOrderMastertID', $value->purchaseOrderID)->first()->total : 0;
-                               $temp['remainingValue'] = ($value->currency) ? number_format(($value->poTotalSupplierTransactionCurrency - $recivedValue), $value->currency->DecimalPlaces) : number_format(($value->poTotalSupplierTransactionCurrency - $recivedValue), 2);
+                               $recivedValue = ($value['grvRecieved'] == 1)  ? GRVDetails::selectRaw('SUM(erp_grvdetails.GRVcostPerUnitSupTransCur*erp_grvdetails.noQty) as total')->where('purchaseOrderMastertID', $value['purchaseOrderID'])->first()->total : 0;
+                               $temp['remainingValue'] = ($value['currency']) ? number_format(($value['poTotalSupplierTransactionCurrency'] - $recivedValue), $value['currency']['DecimalPlaces']) : number_format(($value['poTotalSupplierTransactionCurrency'] - $recivedValue), 2);
                                PoCutoffJobData::create($temp);
                             }
                         } else {
                             if ($type == 0 && ($diff == 0)) { // Same Day
-                               $recivedValue = ($value->grvRecieved == 1)  ? GRVDetails::selectRaw('SUM(erp_grvdetails.GRVcostPerUnitSupTransCur*erp_grvdetails.noQty) as total')->where('purchaseOrderMastertID', $value->purchaseOrderID)->first()->total : 0;
-                               $temp['remainingValue'] = ($value->currency) ? number_format(($value->poTotalSupplierTransactionCurrency - $recivedValue), $value->currency->DecimalPlaces) : number_format(($value->poTotalSupplierTransactionCurrency - $recivedValue), 2);
+                               $recivedValue = ($value['grvRecieved'] == 1)  ? GRVDetails::selectRaw('SUM(erp_grvdetails.GRVcostPerUnitSupTransCur*erp_grvdetails.noQty) as total')->where('purchaseOrderMastertID', $value['purchaseOrderID'])->first()->total : 0;
+                               $temp['remainingValue'] = ($value['currency']) ? number_format(($value['poTotalSupplierTransactionCurrency'] - $recivedValue), $value['currency']['DecimalPlaces']) : number_format(($value['poTotalSupplierTransactionCurrency'] - $recivedValue), 2);
                                PoCutoffJobData::create($temp);
                             } 
                         }

@@ -54,24 +54,25 @@ class CompanyWiseCutOffNotificationJob implements ShouldQueue
         $compAssignScenario = $this->compAssignScenarioData;
         CommonJobService::db_switch($db);
 
-        $companyIDFromScenario = $compAssignScenario->companyID;
+        $companyIDFromScenario = $compAssignScenario['companyID'];
         $partiallyRecivedPos = ProcumentOrder::with(['currency'])
                                              ->where('grvRecieved', '!=', 2)
                                              ->where('approved', -1)
                                              ->where('companySystemID', $companyIDFromScenario)
                                              ->get();
         
-        Log::info('Company Name: ' . $compAssignScenario->company->CompanyName);
+        Log::info('Company Name: ' . $compAssignScenario['company']['CompanyName']);
         Log::info('PO count: ' . count($partiallyRecivedPos));
 
-        if (count($compAssignScenario->notification_day_setup) == 0) {
+        $partiallyRecivedPos = $partiallyRecivedPos->toArray();
+        if (count($compAssignScenario['notification_day_setup']) == 0) {
             Log::info('Notification day setup not exist in '.$db);
         } else {
-            foreach ($compAssignScenario->notification_day_setup as $notDaySetup) {
-                $beforeAfter = $notDaySetup->beforeAfter;
-                $days = $notDaySetup->days;
+            foreach ($compAssignScenario['notification_day_setup'] as $notDaySetup) {
+                $beforeAfter = $notDaySetup['beforeAfter'];
+                $days = $notDaySetup['days'];
 
-                $notificationUserSettings = NotificationService::notificationUserSettings($notDaySetup->id);
+                $notificationUserSettings = NotificationService::notificationUserSettings($notDaySetup['id']);
                 if (count($notificationUserSettings['email']) == 0) {
                     Log::info("User setup not found for scenario {$scenario_des}");
                     continue;
