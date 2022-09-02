@@ -192,7 +192,7 @@ class AccountReceivableLedgerInsert implements ShouldQueue
                                 array_push($finalData, $data);
                             }else{
                                 if ($masterData->isPerforma == 0) {
-                                    $detail = CustomerInvoiceDirectDetail::selectRaw("sum(comRptAmount) as comRptAmount, comRptCurrency, sum(localAmount) as localAmount , localCurrencyER, localCurrency, sum(invoiceAmount) as invoiceAmount, invoiceAmountCurrencyER, invoiceAmountCurrency,comRptCurrencyER, customerID, clientContractID, comments, glSystemID,   serviceLineSystemID,serviceLineCode, sum(VATAmount) as VATAmount, sum(VATAmountLocal) as VATAmountLocal, sum(VATAmountRpt) as VATAmountRpt, sum(VATAmount*invoiceQty) as VATAmountTotal, sum(VATAmountLocal*invoiceQty) as VATAmountLocalTotal, sum(VATAmountRpt*invoiceQty) as VATAmountRptTotal")->with(['contract'])->WHERE('custInvoiceDirectID', $masterModel["autoID"])->groupBy('glCode', 'serviceLineCode', 'comments')->get();
+                                    $detail = CustomerInvoiceDirectDetail::selectRaw("sum(comRptAmount) as comRptAmount, comRptCurrency, sum(localAmount) as localAmount , localCurrencyER, localCurrency, sum(invoiceAmount) as invoiceAmount, invoiceAmountCurrencyER, invoiceAmountCurrency,comRptCurrencyER, customerID, clientContractID, comments, glSystemID,   serviceLineSystemID,serviceLineCode, sum(VATAmount) as VATAmount, sum(VATAmountLocal) as VATAmountLocal, sum(VATAmountRpt) as VATAmountRpt, sum(VATAmount*invoiceQty) as VATAmountTotal, sum(VATAmountLocal*invoiceQty) as VATAmountLocalTotal, sum(VATAmountRpt*invoiceQty) as VATAmountRptTotal")->with(['contract'])->WHERE('custInvoiceDirectID', $masterModel["autoID"])->groupBy('serviceLineSystemID')->get();
 
 
                                     foreach ($detail as $item) {
@@ -225,6 +225,11 @@ class AccountReceivableLedgerInsert implements ShouldQueue
                         $directReceipts = DirectReceiptDetail::selectRaw("SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount,SUM(DRAmount) as transAmount,chartOfAccountSystemID as financeGLcodePLSystemID,glCode as financeGLcodePL,localCurrency as localCurrencyID,comRptCurrency as reportingCurrencyID,DRAmountCurrency as transCurrencyID,comRptCurrencyER as reportingCurrencyER,localCurrencyER,DDRAmountCurrencyER as transCurrencyER,serviceLineSystemID,serviceLineCode")
                             ->WHERE('directReceiptAutoID', $masterModel["autoID"])
                             ->groupBy('serviceLineSystemID', 'chartOfAccountSystemID')
+                            ->get();
+
+                        $directReceiptsBySegments = DirectReceiptDetail::selectRaw("SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount,SUM(DRAmount) as transAmount,chartOfAccountSystemID as financeGLcodePLSystemID,glCode as financeGLcodePL,localCurrency as localCurrencyID,comRptCurrency as reportingCurrencyID,DRAmountCurrency as transCurrencyID,comRptCurrencyER as reportingCurrencyER,localCurrencyER,DDRAmountCurrencyER as transCurrencyER,serviceLineSystemID,serviceLineCode")
+                            ->WHERE('directReceiptAutoID', $masterModel["autoID"])
+                            ->groupBy('serviceLineSystemID')
                             ->get();
 
                         $masterDocumentDate = date('Y-m-d H:i:s');
@@ -291,14 +296,16 @@ class AccountReceivableLedgerInsert implements ShouldQueue
                                 $data['timeStamp'] = \Helper::currentDateTime();
 
                                 if ($masterData->documentType == 13) {
-                                    $receiptDetails = CustomerReceivePaymentDetail::with(['ar_data'])
-                                        ->WHERE('custReceivePaymentAutoID', $masterModel["autoID"])
-                                        ->get();
+                                    $receiptDetails = CustomerReceivePaymentDetail::selectRaw('SUM(receiveAmountTrans) as receiveAmountTrans, SUM(receiveAmountLocal) as receiveAmountLocal, SUM(receiveAmountRpt) as receiveAmountRpt, erp_accountsreceivableledger.serviceLineSystemID as serviceLineSystemID, erp_accountsreceivableledger.serviceLineCode as serviceLineCode')
+                                            ->join('erp_accountsreceivableledger', 'erp_accountsreceivableledger.arAutoID', '=', 'erp_custreceivepaymentdet.arAutoID')
+                                            ->WHERE('custReceivePaymentAutoID', $masterModel["autoID"])
+                                            ->groupBy('erp_accountsreceivableledger.serviceLineSystemID')
+                                            ->get();
 
                                     foreach ($receiptDetails as $key => $valueRe) {
 
-                                        $data['serviceLineSystemID'] = ($valueRe->ar_data) ? $valueRe->ar_data->serviceLineSystemID : 24;
-                                        $data['serviceLineCode'] = ($valueRe->ar_data) ? $valueRe->ar_data->serviceLineCode : 'X';
+                                        $data['serviceLineSystemID'] = $valueRe->serviceLineSystemID;
+                                        $data['serviceLineCode'] = $valueRe->serviceLineCode;
 
                                         $data['custInvoiceAmount'] = $valueRe->receiveAmountTrans;
                                         $data['localAmount'] = $valueRe->receiveAmountLocal;
@@ -307,7 +314,7 @@ class AccountReceivableLedgerInsert implements ShouldQueue
                                     }
 
                                 } elseif ($masterData->documentType == 15) {
-                                    foreach ($directReceipts as $detail) {
+                                    foreach ($directReceiptsBySegments as $detail) {
                                         $data['serviceLineSystemID'] = $detail->serviceLineSystemID;
                                         $data['serviceLineCode'] = $detail->serviceLineCode;
                                         $data['custInvoiceAmount'] = $detail->transAmount;
