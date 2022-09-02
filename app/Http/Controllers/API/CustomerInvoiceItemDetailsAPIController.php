@@ -332,7 +332,7 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
             }
 
         }
-    }
+    
         // check policy 18
 
         $allowPendingApproval = CompanyPolicyMaster::where('companyPolicyCategoryID', 18)
