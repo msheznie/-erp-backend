@@ -9035,7 +9035,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
                         if (Carbon::parse($purchaseOrder->expectedDeliveryDate) > $cutOffDate) {
                             $notifyCutOffDate = true;
-                            $notifyCutOffDateMessages[] = "Expected delivery date ".Carbon::parse($purchaseOrder->expectedDeliveryDate)->format('Y-m-d')." of this document is greater than budget cutoff date ".$cutOffDate->format('Y-m-d');
+                            $notifyCutOffDateMessages[] = "Expected delivery date ".Carbon::parse($purchaseOrder->expectedDeliveryDate)->format('d-m-Y')." of this document is greater than budget cutoff date ".$cutOffDate->format('d-m-Y');
                         }
                     }
                 }
