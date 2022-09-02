@@ -328,7 +328,7 @@ class BarcodeConfigurationAPIController extends AppBaseController
             $subCompanies = [$selectedCompanyId];
         }
         $barCodeFonts = [["value"=>1,"label"=>"Code 128"],["value"=>2,"label"=>"Code 39"]];
-        $paper_szie = [["value"=>1,"label"=>"A3"],["value"=>2,"label"=>"A4"],["value"=>3,"label"=>"Custom Size"]];
+        $paper_szie = [["value"=>1,"label"=>"A3"],["value"=>2,"label"=>"A4"],["value"=>3,"label"=>"70mm x 400mm"]];
         $companies = Company::whereIn('companySystemID', $subCompanies)
             ->selectRaw('companySystemID as value,CONCAT(CompanyID, " - " ,CompanyName) as label')
             ->get();
