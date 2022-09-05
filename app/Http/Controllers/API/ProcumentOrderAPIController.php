@@ -9031,7 +9031,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                     $budgetMaster = BudgetMaster::with(['finance_year_by'])->find($value);
 
                     if ($budgetMaster && $budgetMaster->finance_year_by) {
-                        $cutOffDate = Carbon::parse($budgetMaster->finance_year_by->endingDate)->addMonths($budgetMaster->cutOffPeriod);
+                        $cutOffDate = Carbon::parse($budgetMaster->finance_year_by->endingDate)->addMonthsNoOverflow($budgetMaster->cutOffPeriod);
 
                         if (Carbon::parse($purchaseOrder->expectedDeliveryDate) > $cutOffDate) {
                             $notifyCutOffDate = true;
