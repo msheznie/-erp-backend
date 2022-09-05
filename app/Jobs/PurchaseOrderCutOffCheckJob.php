@@ -75,7 +75,7 @@ class PurchaseOrderCutOffCheckJob implements ShouldQueue
                                     ->first();
 
         if ($checkBudget && $checkBudget->isYesNO) {
-            $budgetConsumedData = BudgetConsumptionService::getConsumptionData($value['documentSystemID'], $value['purchaseOrderID']);
+            $budgetConsumedData = BudgetConsumptionService::getBudgetIdsByConsumption($value['documentSystemID'], $value['purchaseOrderID']);
 
             if (count($budgetConsumedData['budgetmasterIDs']) > 0) {
                 $budgetIds = array_unique($budgetConsumedData['budgetmasterIDs']);

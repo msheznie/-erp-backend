@@ -58,6 +58,9 @@ class CompanyWiseCutOffNotificationJob implements ShouldQueue
         $partiallyRecivedPos = ProcumentOrder::with(['currency'])
                                              ->where('grvRecieved', '!=', 2)
                                              ->where('approved', -1)
+                                             ->whereHas('budget_consumed_data', function($query) {
+                                                $query->whereHas('budget_master');
+                                             })
                                              ->where('companySystemID', $companyIDFromScenario)
                                              ->get();
         
