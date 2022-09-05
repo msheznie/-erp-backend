@@ -5,19 +5,19 @@
     <tr></tr>
     <tr>
         <td colspan="2"></td>
-        <td><h3>Asset Expenses Report</h3></td>
+        <td><h1>Asset Expenses Report</h1></td>
     </tr>
     <tr>
         <td colspan="2"></td>
-        <td><B>From {{(new \Illuminate\Support\Carbon($fromDate))->format('d/m/Y')}} - To {{(new \Illuminate\Support\Carbon($toDate))->format('d/m/Y')}}</B></td>
+        <th style="font-size:15px;">From {{(new \Illuminate\Support\Carbon($fromDate))->format('d/m/Y')}} - To {{(new \Illuminate\Support\Carbon($toDate))->format('d/m/Y')}}</B></th>
     </tr>
     <tr>
         <td colspan="2"></td>
         @if($currencyID == 2)
-        <td><B>Currency - {{$currency->localCurrency->CurrencyCode}}</B></td>
+        <th style="font-size:15px;">Currency - {{$currency->localCurrency->CurrencyCode}}</th>
         @endif
         @if($currencyID == 3)
-        <td><B>Currency - {{$currency->reportingcurrency->CurrencyCode}}</B></td>
+        <th style="font-size:15px;">Currency - {{$currency->reportingcurrency->CurrencyCode}}</th>
         @endif
     </tr>
     <tr></tr>
