@@ -1553,13 +1553,14 @@ class MatchDocumentMasterAPIController extends AppBaseController
                         $data['documentFinalApprovedDate'] = $matchDocumentMaster->matchingConfirmedDate;
                         $data['documentFinalApprovedBy'] = $masterData->approvedByUserID;
                         $data['documentFinalApprovedByEmpSystemID'] = $masterData->approvedByUserSystemID;
-                        $data['documentNarration'] = $matchDocumentMaster->BPVNarration;
+                        $data['documentNarration'] = "Matching Entry ".$matchDocumentMaster->matchingDocCode;
                         $data['clientContractID'] = 'X';
                         $data['contractUID'] = 159;
                         $data['supplierCodeSystem'] = $matchDocumentMaster->BPVsupplierID;
                         $data['holdingShareholder'] = null;
                         $data['holdingPercentage'] = 0;
                         $data['nonHoldingPercentage'] = 0;
+                        $data['contraYN'] = 1;
                         $data['chequeNumber'] = $masterData->BPVchequeNo;
                         $data['documentType'] = $masterData->invoiceType;
                         $data['createdDateTime'] = \Helper::currentDateTime();
