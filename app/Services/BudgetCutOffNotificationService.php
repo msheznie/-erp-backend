@@ -138,7 +138,13 @@ class BudgetCutOffNotificationService
         }
 
 
-        if (count($poData) > 0) {
+        if (!empty($poData)) {
+            Log::info('type - '.$type);
+            Log::info('days - '.$days);
+            Log::info('poData - ');
+            Log::info($poData);
+            Log::info('emails - ');
+            Log::info($emails);
             $subject = "Open Purchase Order/s Reaching budget cutoff period";
             foreach ($emails as $key => $notificationUserVal) {
                 $emailContent = BudgetCutOffNotificationService::getEmailContent($poData, $notificationUserVal[$key]['empName']);

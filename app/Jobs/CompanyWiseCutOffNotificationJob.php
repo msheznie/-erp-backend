@@ -79,7 +79,7 @@ class CompanyWiseCutOffNotificationJob implements ShouldQueue
 
                 $notificationUserSettings = NotificationService::notificationUserSettings($notDaySetup['id']);
                 if (count($notificationUserSettings['email']) == 0) {
-                    Log::info("User setup not found for scenario {$scenario_des}");
+                    Log::info("User setup not found for scenario");
                     continue;
                 }
 
