@@ -444,9 +444,9 @@ class BudgetConsumptionService
 
 		if (count($checkBudgetConfiguration) > 0) {
 			$templateCategoryIDs = $checkBudgetConfiguration->pluck('templateDetailID')->toArray();
-			$budgetmasterIDs = $checkBudgetConfiguration->pluck('budgetmasterID')->toArray();
 
 			$budgetAmount = self::budgetAmountQry($budgetFormData, $templateCategoryIDs, $glCodes);
+			$budgetmasterIDs = collect($budgetAmount)->pluck('budgetmasterID')->toArray();
 
 			$consumedAmount = self::consumedAmountQry($budgetFormData, $templateCategoryIDs, $glCodes);
 
@@ -646,6 +646,7 @@ class BudgetConsumptionService
 				}
 
 			}
+
 
 			$finalResData = [];
 			foreach ($finalData as $key => $value) {
