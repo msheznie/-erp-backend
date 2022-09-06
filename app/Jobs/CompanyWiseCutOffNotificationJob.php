@@ -71,6 +71,8 @@ class CompanyWiseCutOffNotificationJob implements ShouldQueue
         if (count($compAssignScenario['notification_day_setup']) == 0) {
             Log::info('Notification day setup not exist in '.$db);
         } else {
+            Log::info('notification_day_setup');
+            Log::info($compAssignScenario['notification_day_setup']);
             foreach ($compAssignScenario['notification_day_setup'] as $notDaySetup) {
                 $beforeAfter = $notDaySetup['beforeAfter'];
                 $days = $notDaySetup['days'];
@@ -80,6 +82,9 @@ class CompanyWiseCutOffNotificationJob implements ShouldQueue
                     Log::info("User setup not found for scenario {$scenario_des}");
                     continue;
                 }
+
+                Log::info('notification_day_setup_emails');
+                Log::info($notificationUserSettings['email']);
 
                 BudgetCutOffNotificationService::getCutOffPurchaseOrders($db, $partiallyRecivedPos, $beforeAfter, $days, $notificationUserSettings['email'], $companyIDFromScenario);
             }   
