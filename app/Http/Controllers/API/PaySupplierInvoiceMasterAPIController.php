@@ -403,6 +403,28 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         }
     }
 
+    public function paymentVoucherProjectUpdate(Request $request){
+        DB::beginTransaction();
+        try {
+            $input = $request->all();
+            $input = $this->convertArrayToValue($input);
+            $PayMasterAutoId = $input['PayMasterAutoId'];
+
+            $update_array = [
+                'projectID' => $input['projectID']
+            ];
+
+            $paymentVoucherProjectUpdate = PaySupplierInvoiceMaster::where('PayMasterAutoId', $PayMasterAutoId)->update($update_array);
+            $paymentVoucherProject = PaySupplierInvoiceMaster::where('PayMasterAutoId', $PayMasterAutoId)->first();
+
+            DB::commit();
+            return $this->sendResponse($paymentVoucherProject, 'Project updated successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+    }
+
     /**
      * @param int $id
      * @return Response
@@ -462,6 +484,8 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
         return $this->sendResponse($paySupplierInvoiceMaster->toArray(), 'Pay Supplier Invoice Master retrieved successfully');
     }
+
+
 
     /**
      * @param int $id
