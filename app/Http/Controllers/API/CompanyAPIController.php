@@ -457,9 +457,9 @@ class CompanyAPIController extends AppBaseController
             }
 
             $file = $attachment['file'];
-            $explode = explode(",",$file);
+            //$explode = explode(",",$file);
 
-            $decodeFile = base64_decode($explode[1]);
+            $decodeFile = base64_decode($file);
 
             $input['companyLogo'] = $input['CompanyID'].'_logo.' . $extension;
 
