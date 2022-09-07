@@ -30,8 +30,7 @@
         "seguce92/laravel-dompdf": "^2.1",
         "sentry/sentry-laravel": "^1.8",
         "webpatser/laravel-uuid": "^4.0",
-        "yajra/laravel-datatables-oracle": "^8.4",
-        "intervention/image" : "2.7.2"
+        "yajra/laravel-datatables-oracle": "^8.4"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "~2.4",
