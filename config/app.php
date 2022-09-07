@@ -182,8 +182,7 @@ return [
         Rap2hpoutre\LaravelLogViewer\LaravelLogViewerServiceProvider::class,
         LaravelFCM\FCMServiceProvider::class,
 
-        Barryvdh\Debugbar\ServiceProvider::class,
-        Intervention\Image\ImageServiceProvider::class
+        Barryvdh\Debugbar\ServiceProvider::class
     ],
 
     /*
@@ -244,8 +243,7 @@ return [
         //'PDF' => Barryvdh\DomPDF\Facade::class,
         'PDF' => Seguce92\DomPDF\Facade::class,
         'FCM'      => LaravelFCM\Facades\FCM::class,
-        'FCMGroup' => LaravelFCM\Facades\FCMGroup::class,
-        'Image' => Intervention\Image\Facades\Image::class
+        'FCMGroup' => LaravelFCM\Facades\FCMGroup::class
     ],
 
 ];
