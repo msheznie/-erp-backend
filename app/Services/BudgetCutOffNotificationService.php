@@ -98,7 +98,7 @@ class BudgetCutOffNotificationService
                         $budgetMaster = BudgetMaster::with(['finance_year_by', 'segment_by'])->find($value1);
 
                         if ($budgetMaster && $budgetMaster->finance_year_by) {
-                            $cutOffDate = Carbon::parse($budgetMaster->finance_year_by->endingDate)->addMonths($budgetMaster->cutOffPeriod);
+                            $cutOffDate = Carbon::parse($budgetMaster->finance_year_by->endingDate)->addMonthsNoOverflow($budgetMaster->cutOffPeriod);
 
                             $diff = $now->diffInDays($cutOffDate);
                             $temp = [];
