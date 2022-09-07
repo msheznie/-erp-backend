@@ -174,6 +174,19 @@
             width: 160px;
             height: auto;
         }
+        .container
+          {
+            display: block;
+            max-width:230px;
+            max-height:95px;
+            width: auto;
+            height: auto;
+            }
+
+        .table_height
+        {
+            max-height: 60px !important;
+        }
     </style>
 </head>
 <body>
@@ -239,31 +252,19 @@
 </div>
 <div id="watermark"></div>
 <div class="card-body content" id="print-section">
-    <table style="width: 100%">
+    <table style="width: 100%" class="table_height">
         <tr style="width: 100%">
-            <td valign="top" style="width: 50%">
+            <td valign="top" style="width: 20%">
                 @if($masterdata->company)
-                    <img src="{{$masterdata->company->logo_url}}" class="img_size">
+                <img src="{{$masterdata->company->logo_url}}" class="container">
+             
                 @endif
-                <br>
 
-                <div>
-                    <span style="font-size: 18px">
-                        @if($masterdata->documentType == 13)
-                            Customer Invoice Receipt
-                        @endif
-                        @if($masterdata->documentType == 14)
-                            Direct Receipt
-                        @endif
-                        @if($masterdata->documentType == 15)
-                            Advance Receipt
-                        @endif
-                    </span>
-                </div>
+
             </td>
-            <td valign="top" style="width: 50%">
+            <td valign="top" style="width: 80%">
                 @if($masterdata->company)
-                    <span style="font-size: 24px;font-weight: 400"> {{$masterdata->company->CompanyName}}</span>
+                    <span style="font-size: 24px;font-weight: 400">{{$masterdata->company->CompanyName}}</span>
                 @endif
                 <br>
                 <table>
@@ -310,7 +311,27 @@
             </td>
         </tr>
     </table>
+
     <hr style="color: #d3d9df">
+
+    <table style="width: 100%" class="table_height">
+        <tr style="width: 100%">
+ 
+        <div>
+            <span style="font-size: 18px">
+                @if($masterdata->documentType == 13)
+                    Customer Invoice Receipt
+                @endif
+                @if($masterdata->documentType == 14)
+                    Direct Receipt
+                @endif
+                @if($masterdata->documentType == 15)
+                    Advance Receipt
+                @endif
+            </span>
+        </div>
+        </tr>
+    </table>
     @if($masterdata->documentType == 13 || $masterdata->documentType == 15)
         <table style="width: 100%">
             <tr style="width:100%">

@@ -51,6 +51,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
 use Response;
 use Carbon\Carbon;
+use Image;
 
 /**
  * Class CompanyController
@@ -389,7 +390,8 @@ class CompanyAPIController extends AppBaseController
     public function update($id, UpdateCompanyAPIRequest $request)
     {
         $input = $request->all();
-
+        
+        
         unset($input['reportingcurrency']);
         // $input = $this->convertArrayToValue($input);
         $input = $this->convertArrayToSelectedValue($input,['companyCountry','exchangeGainLossGLCodeSystemID','isActive','localCurrencyID','reportingCurrency','vatRegisteredYN']);
@@ -455,6 +457,8 @@ class CompanyAPIController extends AppBaseController
             }
 
             $file = $attachment['file'];
+            //$explode = explode(",",$file);
+
             $decodeFile = base64_decode($file);
 
             $input['companyLogo'] = $input['CompanyID'].'_logo.' . $extension;
@@ -471,6 +475,47 @@ class CompanyAPIController extends AppBaseController
 
 
             $input['logoPath'] = $path;
+
+            // $photo = Image::make($file)
+            // ->resize(100, 100)->encode($extension,80);
+
+            // $max_height = 100;
+            // $height = $photo->height();
+
+
+            // if($photo->height() > $max_height)
+            // {
+            //     $height = $max_height;
+            // }
+
+            // $photo_resized = Image::make($file)
+            // ->resize(NULL, $height,function ($constraint) {
+            //     $constraint->aspectRatio();
+            // })->encode($extension,80);
+
+
+
+            // $photo = Image::make($file)
+            // ->resize(NULL, 100, function ($constraint) {
+            //     $constraint->aspectRatio();
+            // })->encode($extension,80);
+
+            // $max_width = 100;
+            // $width = $photo->width();
+
+           
+
+
+
+            // if($photo->width() > $max_width)
+            // {
+            //     $width = $max_width;
+            // }
+            // $photo_resized = Image::make($file)
+            // ->resize($width, NULL,function ($constraint) {
+            //     $constraint->aspectRatio();
+            // })->encode($extension,80);
+
 
             Storage::disk($disk)->put($path, $decodeFile);
         }
