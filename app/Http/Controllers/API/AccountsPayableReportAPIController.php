@@ -2075,6 +2075,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
                                 AND erp_generalledger.chartOfAccountSystemID = "' . $controlAccountsSystemID . '"
                                 AND erp_generalledger.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
+                                AND erp_generalledger.contraYN = 0
                                 GROUP BY erp_generalledger.companySystemID, erp_generalledger.supplierCodeSystem,erp_generalledger.chartOfAccountSystemID,erp_generalledger.documentSystemID,erp_generalledger.documentSystemCode
                                 ) AS MAINQUERY
                             LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = MAINQUERY.supplierCodeSystem
@@ -3129,6 +3130,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
                                 AND erp_generalledger.chartOfAccountSystemID = "' . $controlAccountsSystemID . '"
                                 AND erp_generalledger.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
+                                AND erp_generalledger.contraYN = 0
                                 GROUP BY erp_generalledger.companySystemID, erp_generalledger.supplierCodeSystem,erp_generalledger.chartOfAccountSystemID,erp_generalledger.documentSystemID,erp_generalledger.documentSystemCode
                                 ) AS MAINQUERY
                             LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = MAINQUERY.supplierCodeSystem
@@ -3457,6 +3459,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
                                 AND erp_generalledger.chartOfAccountSystemID = "' . $controlAccountsSystemID . '"
                                 AND erp_generalledger.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
+                                AND erp_generalledger.contraYN = 0
                                 GROUP BY erp_generalledger.companySystemID, erp_generalledger.supplierCodeSystem,erp_generalledger.chartOfAccountSystemID,erp_generalledger.documentSystemID,erp_generalledger.documentSystemCode
                                 ) AS MAINQUERY
                             LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = MAINQUERY.supplierCodeSystem
@@ -3779,6 +3782,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
                                 AND erp_generalledger.chartOfAccountSystemID = "' . $controlAccountsSystemID . '"
                                 AND erp_generalledger.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
+                                AND erp_generalledger.contraYN = 0
                                 GROUP BY erp_generalledger.companySystemID, erp_generalledger.supplierCodeSystem,erp_generalledger.chartOfAccountSystemID,erp_generalledger.documentSystemID,erp_generalledger.documentSystemCode
                                 ) AS MAINQUERY
                             LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = MAINQUERY.supplierCodeSystem
@@ -4102,6 +4106,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
                                 AND erp_generalledger.chartOfAccountSystemID = "' . $controlAccountsSystemID . '"
                                 AND erp_generalledger.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
+                                AND erp_generalledger.contraYN = 0
                                 GROUP BY erp_generalledger.companySystemID, erp_generalledger.supplierCodeSystem,erp_generalledger.chartOfAccountSystemID,erp_generalledger.documentSystemID,erp_generalledger.documentSystemCode
                                 ) AS MAINQUERY
                             LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = MAINQUERY.supplierCodeSystem
@@ -5143,6 +5148,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
                                 AND erp_generalledger.chartOfAccountSystemID  = "' . $controlAccountsSystemID . '"
                                 AND erp_generalledger.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
+                                AND erp_generalledger.contraYN = 0
                                 GROUP BY erp_generalledger.companySystemID, erp_generalledger.supplierCodeSystem,erp_generalledger.chartOfAccountSystemID,erp_generalledger.documentSystemID,erp_generalledger.documentSystemCode
                                 ) AS MAINQUERY
                             LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = MAINQUERY.supplierCodeSystem
