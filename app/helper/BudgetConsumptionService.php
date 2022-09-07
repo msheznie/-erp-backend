@@ -444,9 +444,9 @@ class BudgetConsumptionService
 
 		if (count($checkBudgetConfiguration) > 0) {
 			$templateCategoryIDs = $checkBudgetConfiguration->pluck('templateDetailID')->toArray();
-			$budgetmasterIDs = $checkBudgetConfiguration->pluck('budgetmasterID')->toArray();
 
 			$budgetAmount = self::budgetAmountQry($budgetFormData, $templateCategoryIDs, $glCodes);
+			$budgetmasterIDs = collect($budgetAmount)->pluck('budgetmasterID')->toArray();
 
 			$consumedAmount = self::consumedAmountQry($budgetFormData, $templateCategoryIDs, $glCodes);
 
@@ -646,6 +646,7 @@ class BudgetConsumptionService
 				}
 
 			}
+
 
 			$finalResData = [];
 			foreach ($finalData as $key => $value) {
@@ -2760,5 +2761,23 @@ class BudgetConsumptionService
 
         return ['pendingDocumentAmount' => $pendingDocumentAmount, 'actuallConsumptionAmount' => $actuallConsumptionAmount, 'committedAmount' => $committedAmount];
 
+    }
+
+    public static function getBudgetIdsByConsumption($documentSystemID, $documentSystemCode)
+    {
+    	$budgetConsumeData = BudgetConsumedData::with(['budget_master'])
+    										   ->whereHas('budget_master')
+    										   ->where('documentSystemID', $documentSystemID)
+    										   ->where('documentSystemCode', $documentSystemCode)
+    										   ->get();
+
+    	$budgetIds = [];
+    	if (count($budgetConsumeData) > 0) {
+    		foreach ($budgetConsumeData as $key => $value) {
+    			$budgetIds[] = ($value->budget_master) ? $value->budget_master->budgetmasterID : 0;
+    		}
+    	}
+
+    	return ['budgetmasterIDs' => ((count($budgetIds) > 0)  ? array_unique($budgetIds) : [])];
     }
 }

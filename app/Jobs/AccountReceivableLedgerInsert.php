@@ -4,11 +4,15 @@ namespace App\Jobs;
 
 use App\Models\AccountsReceivableLedger;
 use App\Models\CreditNote;
+use App\Models\CreditNoteDetails;
+use App\Models\DirectReceiptDetail;
 use App\Models\SalesReturn;
 use App\Models\CustomerInvoiceDirect;
 use App\Models\CustomerReceivePayment;
+use App\Models\CustomerReceivePaymentDetail;
 use App\Models\Employee;
 use App\Models\Taxdetail;
+use App\Models\CustomerInvoiceDirectDetail;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
@@ -55,6 +59,13 @@ class AccountReceivableLedgerInsert implements ShouldQueue
 
                         $tax = Taxdetail::selectRaw("SUM(localAmount) as localAmount, SUM(rptAmount) as rptAmount,SUM(amount) as transAmount,localCurrencyID,rptCurrencyID as reportingCurrencyID,currency as supplierTransactionCurrencyID,currencyER as supplierTransactionER,rptCurrencyER as companyReportingER,localCurrencyER")->WHERE('documentSystemCode', $masterModel["autoID"])->WHERE('documentSystemID', $masterModel["documentSystemID"])->first();
 
+                        //all details
+                        $detailsCreditNote = CreditNoteDetails::with(['chartofaccount'])
+                            ->selectRaw("netAmountLocal as localAmount, netAmountRpt as rptAmount, netAmount as transAmount, VATAmount as transTax, VATAmountLocal as localTax, VATAmountRpt as rptTax, chartOfAccountSystemID as financeGLcodePLSystemID,glCode as financeGLcodePL,localCurrency as localCurrencyID,comRptCurrency as reportingCurrencyID,creditAmountCurrency as transCurrencyID,comRptCurrencyER as reportingCurrencyER,localCurrencyER,creditAmountCurrencyER as transCurrencyER,serviceLineSystemID,serviceLineCode,clientContractID,contractUID,comments,chartOfAccountSystemID")
+                            ->WHERE('creditNoteAutoID', $masterModel["autoID"])
+                            ->groupBy('serviceLineSystemID', 'chartOfAccountSystemID', 'clientContractID', 'comments')
+                            ->get();
+
                         $taxLocal = 0;
                         $taxRpt = 0;
                         $taxTrans = 0;
@@ -71,28 +82,32 @@ class AccountReceivableLedgerInsert implements ShouldQueue
                         }
 
                         if ($masterData) {
-                            $data['companySystemID'] = $masterData->companySystemID;
+                            foreach ($detailsCreditNote as $detail) {
+
+                                $data['companySystemID'] = $masterData->companySystemID;
                             $data['companyID'] = $masterData->companyID;
                             $data['documentSystemID'] = $masterData->documentSystemiD;
                             $data['documentID'] = $masterData->documentID;
                             $data['documentCodeSystem'] = $masterModel["autoID"];
                             $data['documentCode'] = $masterData->creditNoteCode;
                             $data['documentDate'] = $masterDocumentDate;
+                                $data['serviceLineSystemID'] = $detail->serviceLineSystemID;
+                                $data['serviceLineCode'] = $detail->serviceLineCode;
                             $data['customerID'] = $masterData->customerID;
                             $data['InvoiceNo'] = null;
                             $data['InvoiceDate'] = null;
                             $data['custTransCurrencyID'] = $masterData->customerCurrencyID;
                             $data['custTransER'] = $masterData->customerCurrencyER;
-                            $data['custInvoiceAmount'] = ABS($masterData->details[0]->transAmount) * -1;
+                            $data['custInvoiceAmount'] = ABS($detail->transAmount + $detail->transTax) * -1;
                             $data['custDefaultCurrencyID'] = 0;
                             $data['custDefaultCurrencyER'] = 0;
                             $data['custDefaultAmount'] = 0;
                             $data['localCurrencyID'] = $masterData->localCurrencyID;
                             $data['localER'] = $masterData->localCurrencyER;
-                            $data['localAmount'] = \Helper::roundValue(ABS($masterData->details[0]->localAmount) * -1);
+                            $data['localAmount'] = \Helper::roundValue(ABS($detail->localAmount + $detail->localTax) * -1);
                             $data['comRptCurrencyID'] = $masterData->companyReportingCurrencyID;
                             $data['comRptER'] = $masterData->companyReportingER;
-                            $data['comRptAmount'] = \Helper::roundValue(ABS($masterData->details[0]->rptAmount) * -1);
+                            $data['comRptAmount'] = \Helper::roundValue(ABS($detail->rptAmount + $detail->rptTax) * -1);
                             $data['isInvoiceLockedYN'] = 0;
                             $data['documentType'] = $masterData->documentType;
                             $data['selectedToPaymentInv'] = 0;
@@ -103,6 +118,7 @@ class AccountReceivableLedgerInsert implements ShouldQueue
                             $data['createdPcID'] = gethostname();
                             $data['timeStamp'] = \Helper::currentDateTime();
                             array_push($finalData, $data);
+                            }
                         }
                         break;
                     case 20: // Customer Invoice
@@ -168,16 +184,33 @@ class AccountReceivableLedgerInsert implements ShouldQueue
                                 $data['custInvoiceAmount'] = ABS($masterData->bookingAmountTrans + $taxTrans);
                                 $data['localAmount'] = \Helper::roundValue(ABS($masterData->bookingAmountLocal + $taxLocal));
                                 $data['comRptAmount'] = \Helper::roundValue(ABS($masterData->bookingAmountRpt + $taxRpt));
+                                array_push($finalData, $data);
                             }else if( $masterData->isPerforma == 1){
                                 $data['custInvoiceAmount'] = ABS($masterData->invoicedetails[0]->transAmount);
                                 $data['localAmount'] = \Helper::roundValue(ABS($masterData->invoicedetails[0]->localAmount));
                                 $data['comRptAmount'] = \Helper::roundValue(ABS($masterData->invoicedetails[0]->rptAmount));
+                                array_push($finalData, $data);
                             }else{
-                                $data['custInvoiceAmount'] = ABS($masterData->invoicedetails[0]->transAmount + $taxTrans);
-                                $data['localAmount'] = \Helper::roundValue(ABS($masterData->invoicedetails[0]->localAmount + $taxLocal));
-                                $data['comRptAmount'] = \Helper::roundValue(ABS($masterData->invoicedetails[0]->rptAmount + $taxRpt));
+                                if ($masterData->isPerforma == 0) {
+                                    $detail = CustomerInvoiceDirectDetail::selectRaw("sum(comRptAmount) as comRptAmount, comRptCurrency, sum(localAmount) as localAmount , localCurrencyER, localCurrency, sum(invoiceAmount) as invoiceAmount, invoiceAmountCurrencyER, invoiceAmountCurrency,comRptCurrencyER, customerID, clientContractID, comments, glSystemID,   serviceLineSystemID,serviceLineCode, sum(VATAmount) as VATAmount, sum(VATAmountLocal) as VATAmountLocal, sum(VATAmountRpt) as VATAmountRpt, sum(VATAmount*invoiceQty) as VATAmountTotal, sum(VATAmountLocal*invoiceQty) as VATAmountLocalTotal, sum(VATAmountRpt*invoiceQty) as VATAmountRptTotal")->with(['contract'])->WHERE('custInvoiceDirectID', $masterModel["autoID"])->groupBy('serviceLineSystemID')->get();
+
+
+                                    foreach ($detail as $item) {
+                                        $data['serviceLineSystemID'] = $item->serviceLineSystemID;
+                                        $data['serviceLineCode'] = $item->serviceLineCode;
+                                        
+                                        $data['custInvoiceAmount'] = ABS($item->invoiceAmount + $item->VATAmountTotal);
+                                        $data['localAmount'] = \Helper::roundValue(ABS($item->localAmount + $item->VATAmountLocalTotal));
+                                        $data['comRptAmount'] = \Helper::roundValue(ABS($item->comRptAmount + $item->VATAmountRptTotal));
+                                        array_push($finalData, $data);
+                                    }
+                                } else {
+                                    $data['custInvoiceAmount'] = ABS($masterData->invoicedetails[0]->transAmount + $taxTrans);
+                                    $data['localAmount'] = \Helper::roundValue(ABS($masterData->invoicedetails[0]->localAmount + $taxLocal));
+                                    $data['comRptAmount'] = \Helper::roundValue(ABS($masterData->invoicedetails[0]->rptAmount + $taxRpt));
+                                    array_push($finalData, $data);
+                                }
                             }
-                            array_push($finalData, $data);
                         }
                         break;
                     case 21: // Receipt Voucher
@@ -188,6 +221,16 @@ class AccountReceivableLedgerInsert implements ShouldQueue
                         },'advance_receipt_details' => function($query) {
                             $query->selectRaw('SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount,SUM(paymentAmount) as transAmount,custReceivePaymentAutoID');
                         },'finance_period_by'])->find($masterModel["autoID"]);
+
+                        $directReceipts = DirectReceiptDetail::selectRaw("SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount,SUM(DRAmount) as transAmount,chartOfAccountSystemID as financeGLcodePLSystemID,glCode as financeGLcodePL,localCurrency as localCurrencyID,comRptCurrency as reportingCurrencyID,DRAmountCurrency as transCurrencyID,comRptCurrencyER as reportingCurrencyER,localCurrencyER,DDRAmountCurrencyER as transCurrencyER,serviceLineSystemID,serviceLineCode")
+                            ->WHERE('directReceiptAutoID', $masterModel["autoID"])
+                            ->groupBy('serviceLineSystemID', 'chartOfAccountSystemID')
+                            ->get();
+
+                        $directReceiptsBySegments = DirectReceiptDetail::selectRaw("SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount,SUM(DRAmount) as transAmount,chartOfAccountSystemID as financeGLcodePLSystemID,glCode as financeGLcodePL,localCurrency as localCurrencyID,comRptCurrency as reportingCurrencyID,DRAmountCurrency as transCurrencyID,comRptCurrencyER as reportingCurrencyER,localCurrencyER,DDRAmountCurrencyER as transCurrencyER,serviceLineSystemID,serviceLineCode")
+                            ->WHERE('directReceiptAutoID', $masterModel["autoID"])
+                            ->groupBy('serviceLineSystemID')
+                            ->get();
 
                         $masterDocumentDate = date('Y-m-d H:i:s');
 
@@ -201,19 +244,19 @@ class AccountReceivableLedgerInsert implements ShouldQueue
                                 $transAmountLocal = 0;
                                 $transAmountRpt = 0;
 
-                                if(isset($masterData->details) && count($masterData->details) > 0){
+                                if (isset($masterData->details) && count($masterData->details) > 0) {
                                     $transAmount = $transAmount + $masterData->details[0]->transAmount;
                                     $transAmountLocal = $transAmountLocal + $masterData->details[0]->localAmount;
                                     $transAmountRpt = $transAmountRpt + $masterData->details[0]->rptAmount;
                                 }
 
-                                if(isset($masterData->directdetails) && count($masterData->directdetails) > 0){
+                                if (isset($masterData->directdetails) && count($masterData->directdetails) > 0) {
                                     $transAmount = $transAmount + $masterData->directdetails[0]->transAmount;
                                     $transAmountLocal = $transAmountLocal + $masterData->directdetails[0]->localAmount;
                                     $transAmountRpt = $transAmountRpt + $masterData->directdetails[0]->rptAmount;
                                 }
 
-                                if(isset($masterData->advance_receipt_details) && count($masterData->advance_receipt_details) > 0){
+                                if (isset($masterData->advance_receipt_details) && count($masterData->advance_receipt_details) > 0) {
                                     $transAmount = $transAmount + $masterData->advance_receipt_details[0]->transAmount;
                                     $transAmountLocal = $transAmountLocal + $masterData->advance_receipt_details[0]->localAmount;
                                     $transAmountRpt = $transAmountRpt + $masterData->advance_receipt_details[0]->rptAmount;
@@ -222,7 +265,6 @@ class AccountReceivableLedgerInsert implements ShouldQueue
 
                                 $transAmountLocal = \Helper::roundValue($transAmountLocal);
                                 $transAmountRpt = \Helper::roundValue($transAmountRpt);
-
 
                                 $data['companySystemID'] = $masterData->companySystemID;
                                 $data['companyID'] = $masterData->companyID;
@@ -236,16 +278,13 @@ class AccountReceivableLedgerInsert implements ShouldQueue
                                 $data['InvoiceDate'] = null;
                                 $data['custTransCurrencyID'] = $masterData->custTransactionCurrencyID;
                                 $data['custTransER'] = $masterData->custTransactionCurrencyER;
-                                $data['custInvoiceAmount'] = ($masterData->documentType == 15) ? (ABS($transAmount) * -1) : $transAmount;
                                 $data['custDefaultCurrencyID'] = 0;
                                 $data['custDefaultCurrencyER'] = 0;
                                 $data['custDefaultAmount'] = 0;
                                 $data['localCurrencyID'] = $masterData->localCurrencyID;
                                 $data['localER'] = $masterData->localCurrencyER;
-                                $data['localAmount'] = ($masterData->documentType == 15) ? (ABS($transAmountLocal) * -1) : $transAmountLocal;
                                 $data['comRptCurrencyID'] = $masterData->companyRptCurrencyID;
                                 $data['comRptER'] = $masterData->companyRptCurrencyER;
-                                $data['comRptAmount'] = ($masterData->documentType == 15) ? (ABS($transAmountRpt) * -1) : $transAmountRpt;
                                 $data['isInvoiceLockedYN'] = 0;
                                 $data['documentType'] = $masterData->documentType;
                                 $data['selectedToPaymentInv'] = 0;
@@ -255,7 +294,44 @@ class AccountReceivableLedgerInsert implements ShouldQueue
                                 $data['createdUserSystemID'] = $empID->employeeSystemID;
                                 $data['createdPcID'] = gethostname();
                                 $data['timeStamp'] = \Helper::currentDateTime();
-                                array_push($finalData, $data);
+
+                                if ($masterData->documentType == 13) {
+                                    $receiptDetails = CustomerReceivePaymentDetail::selectRaw('SUM(receiveAmountTrans) as receiveAmountTrans, SUM(receiveAmountLocal) as receiveAmountLocal, SUM(receiveAmountRpt) as receiveAmountRpt, erp_accountsreceivableledger.serviceLineSystemID as serviceLineSystemID, erp_accountsreceivableledger.serviceLineCode as serviceLineCode')
+                                            ->join('erp_accountsreceivableledger', 'erp_accountsreceivableledger.arAutoID', '=', 'erp_custreceivepaymentdet.arAutoID')
+                                            ->WHERE('custReceivePaymentAutoID', $masterModel["autoID"])
+                                            ->groupBy('erp_accountsreceivableledger.serviceLineSystemID')
+                                            ->get();
+
+                                    foreach ($receiptDetails as $key => $valueRe) {
+
+                                        $data['serviceLineSystemID'] = $valueRe->serviceLineSystemID;
+                                        $data['serviceLineCode'] = $valueRe->serviceLineCode;
+
+                                        $data['custInvoiceAmount'] = $valueRe->receiveAmountTrans;
+                                        $data['localAmount'] = $valueRe->receiveAmountLocal;
+                                        $data['comRptAmount'] = $valueRe->receiveAmountRpt;
+                                        array_push($finalData, $data);
+                                    }
+
+                                } elseif ($masterData->documentType == 15) {
+                                    foreach ($directReceiptsBySegments as $detail) {
+                                        $data['serviceLineSystemID'] = $detail->serviceLineSystemID;
+                                        $data['serviceLineCode'] = $detail->serviceLineCode;
+                                        $data['custInvoiceAmount'] = $detail->transAmount;
+                                        $data['localAmount'] = $detail->localAmount;
+                                        $data['comRptAmount'] = $detail->rptAmount;
+                                        array_push($finalData, $data);
+                                    }
+
+                                }
+
+
+                                else {
+                                    $data['custInvoiceAmount'] = ($masterData->documentType == 15) ? (ABS($transAmount) * -1) : $transAmount;
+                                    $data['localAmount'] = ($masterData->documentType == 15) ? (ABS($transAmountLocal) * -1) : $transAmountLocal;
+                                    $data['comRptAmount'] = ($masterData->documentType == 15) ? (ABS($transAmountRpt) * -1) : $transAmountRpt;
+                                    array_push($finalData, $data);
+                                }
                             }
                         }
                         break;

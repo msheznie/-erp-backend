@@ -11,6 +11,7 @@
 namespace App\Models;
 
 use Eloquent as Model;
+use Awobaz\Compoships\Compoships;
 
 /**
  * @SWG\Definition(
@@ -83,7 +84,7 @@ use Eloquent as Model;
  */
 class BudgetMaster extends Model
 {
-
+    use Compoships;
     public $table = 'erp_budgetmaster';
     
     const CREATED_AT = 'createdDateTime';

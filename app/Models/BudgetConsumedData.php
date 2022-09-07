@@ -250,4 +250,10 @@ class BudgetConsumedData extends Model
     {
         return $this->belongsTo('App\Models\PaySupplierInvoiceMaster', ['documentSystemCode', 'documentSystemID'], ['PayMasterAutoId', 'documentSystemID']);
     }
+
+
+    public function budget_master()
+    {
+        return $this->belongsTo('App\Models\BudgetMaster', ['companyFinanceYearID', 'serviceLineSystemID', 'companySystemID'], ['companyFinanceYearID', 'serviceLineSystemID', 'companySystemID']);
+    }
 }

@@ -49,31 +49,42 @@ class CompanyWiseCutOffNotificationJob implements ShouldQueue
      */
     public function handle()
     {
+        Log::useFiles(storage_path() . '/logs/budget-cutoff-po.log');  
         $db = $this->dispatch_db;
         $compAssignScenario = $this->compAssignScenarioData;
         CommonJobService::db_switch($db);
 
-        $companyIDFromScenario = $compAssignScenario->companyID;
+        $companyIDFromScenario = $compAssignScenario['companyID'];
         $partiallyRecivedPos = ProcumentOrder::with(['currency'])
                                              ->where('grvRecieved', '!=', 2)
                                              ->where('approved', -1)
+                                             ->whereHas('budget_consumed_data', function($query) {
+                                                $query->whereHas('budget_master');
+                                             })
                                              ->where('companySystemID', $companyIDFromScenario)
                                              ->get();
         
-        Log::info('Company Name: ' . $compAssignScenario->company->CompanyName);
+        Log::info('Company Name: ' . $compAssignScenario['company']['CompanyName']);
+        Log::info('PO count: ' . count($partiallyRecivedPos));
 
-        if (count($compAssignScenario->notification_day_setup) == 0) {
-            Log::info('Notification day setup not exist');
+        $partiallyRecivedPos = $partiallyRecivedPos->toArray();
+        if (count($compAssignScenario['notification_day_setup']) == 0) {
+            Log::info('Notification day setup not exist in '.$db);
         } else {
-            foreach ($compAssignScenario->notification_day_setup as $notDaySetup) {
-                $beforeAfter = $notDaySetup->beforeAfter;
-                $days = $notDaySetup->days;
+            Log::info('notification_day_setup');
+            Log::info($compAssignScenario['notification_day_setup']);
+            foreach ($compAssignScenario['notification_day_setup'] as $notDaySetup) {
+                $beforeAfter = $notDaySetup['beforeAfter'];
+                $days = $notDaySetup['days'];
 
-                $notificationUserSettings = NotificationService::notificationUserSettings($notDaySetup->id);
+                $notificationUserSettings = NotificationService::notificationUserSettings($notDaySetup['id']);
                 if (count($notificationUserSettings['email']) == 0) {
-                    Log::info("User setup not found for scenario {$scenario_des}");
+                    Log::info("User setup not found for scenario");
                     continue;
                 }
+
+                Log::info('notification_day_setup_emails');
+                Log::info($notificationUserSettings['email']);
 
                 BudgetCutOffNotificationService::getCutOffPurchaseOrders($db, $partiallyRecivedPos, $beforeAfter, $days, $notificationUserSettings['email'], $companyIDFromScenario);
             }   
