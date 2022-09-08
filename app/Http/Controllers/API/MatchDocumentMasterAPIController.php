@@ -1618,11 +1618,6 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
                 }
 
-              
-
-              
-                 
-                
                
             }
 
@@ -2772,6 +2767,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                             AND erp_customerreceivepayment.matchInvoice < 2 
                                         GROUP BY
                                             erp_directreceiptdetails.serviceLineSystemID,
+                                            erp_directreceiptdetails.directReceiptAutoID,
                                             erp_customerreceivepayment.documentSystemID,
                                             erp_directreceiptdetails.companySystemID,
                                             erp_customerreceivepayment.customerID 
@@ -2882,6 +2878,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
         $qry = "SELECT
 	erp_accountsreceivableledger.arAutoID,
 	erp_accountsreceivableledger.documentCodeSystem AS bookingInvCodeSystem,
+	erp_accountsreceivableledger.serviceLineCode AS segment,
 	erp_accountsreceivableledger.custTransCurrencyID,
 	erp_accountsreceivableledger.custTransER,
 	erp_accountsreceivableledger.localCurrencyID,
