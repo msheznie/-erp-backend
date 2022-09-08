@@ -51,6 +51,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
 use Response;
 use Carbon\Carbon;
+use Image;
 
 /**
  * Class CompanyController
@@ -389,7 +390,8 @@ class CompanyAPIController extends AppBaseController
     public function update($id, UpdateCompanyAPIRequest $request)
     {
         $input = $request->all();
-
+        
+        
         unset($input['reportingcurrency']);
         // $input = $this->convertArrayToValue($input);
         $input = $this->convertArrayToSelectedValue($input,['companyCountry','exchangeGainLossGLCodeSystemID','isActive','localCurrencyID','reportingCurrency','vatRegisteredYN']);
@@ -455,6 +457,7 @@ class CompanyAPIController extends AppBaseController
             }
 
             $file = $attachment['file'];
+
             $decodeFile = base64_decode($file);
 
             $input['companyLogo'] = $input['CompanyID'].'_logo.' . $extension;

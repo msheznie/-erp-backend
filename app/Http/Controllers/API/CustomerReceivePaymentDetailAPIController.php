@@ -583,7 +583,7 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
 
     function getReceiptVoucherMatchDetails(Request $request)
     {
-        $data = CustomerReceivePaymentDetail::where('matchingDocID', $request->matchDocumentMasterAutoID)
+        $data = CustomerReceivePaymentDetail::with(['ar_data'])->where('matchingDocID', $request->matchDocumentMasterAutoID)
             ->get();
         return $this->sendResponse($data, 'Details saved successfully');
     }
