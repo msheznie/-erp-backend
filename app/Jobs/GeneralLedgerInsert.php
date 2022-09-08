@@ -4118,9 +4118,9 @@ class GeneralLedgerInsert implements ShouldQueue
                                         $directAmountBank = collect($directReceiptsBySegments)->firstWhere('serviceLineSystemID', $valueRe->serviceLineSystemID);
 
 
-                                        $data['documentTransAmount'] = abs(\Helper::roundValue(($valueRe->receiveAmountTrans + (isset($directAmountBank->transAmount) ? $directAmountBank->transAmount : 0))));
-                                        $data['documentLocalAmount'] = abs(\Helper::roundValue(($valueRe->receiveAmountLocal + (isset($directAmountBank->localAmount) ? $directAmountBank->localAmount : 0))));
-                                        $data['documentRptAmount'] = abs(\Helper::roundValue(($valueRe->receiveAmountRpt + (isset($directAmountBank->rptAmount) ? $directAmountBank->rptAmount : 0))));
+                                        $data['documentTransAmount'] = (\Helper::roundValue(($valueRe->receiveAmountTrans + (isset($directAmountBank->transAmount) ? $directAmountBank->transAmount : 0))));
+                                        $data['documentLocalAmount'] = (\Helper::roundValue(($valueRe->receiveAmountLocal + (isset($directAmountBank->localAmount) ? $directAmountBank->localAmount : 0))));
+                                        $data['documentRptAmount'] = (\Helper::roundValue(($valueRe->receiveAmountRpt + (isset($directAmountBank->rptAmount) ? $directAmountBank->rptAmount : 0))));
                                         $data['serviceLineSystemID'] = $valueRe->serviceLineSystemID;
                                         $data['serviceLineCode'] =  $valueRe->serviceLineCode;
                                         array_push($finalData, $data);
@@ -4133,9 +4133,9 @@ class GeneralLedgerInsert implements ShouldQueue
                                                                                 ->get();
                                     
                                     foreach ($directReceiptsBySegmentsData as $key => $val) {
-                                        $data['documentTransAmount'] = abs(\Helper::roundValue($val->transAmount));
-                                        $data['documentLocalAmount'] = abs(\Helper::roundValue($val->localAmount));
-                                        $data['documentRptAmount'] = abs(\Helper::roundValue($val->rptAmount));
+                                        $data['documentTransAmount'] = (\Helper::roundValue($val->transAmount));
+                                        $data['documentLocalAmount'] = (\Helper::roundValue($val->localAmount));
+                                        $data['documentRptAmount'] = (\Helper::roundValue($val->rptAmount));
                                         $data['serviceLineSystemID'] = $val->serviceLineSystemID;
                                         $data['serviceLineCode'] =  $val->serviceLineCode;
                                         array_push($finalData, $data);
