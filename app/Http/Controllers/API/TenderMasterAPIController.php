@@ -394,7 +394,7 @@ class TenderMasterAPIController extends AppBaseController
         $data['currentDate'] = now();
         $data['defaultCurrency'] = $company;
         $data['procurementCategory'] = TenderProcurementCategory::where('level', 0)->where('is_active', 1)->get();
-        $data['documentTypes'] = TenderDocumentTypes::where('company_id', $employee->empCompanySystemID)->whereNotIn('id', [1, 2, 3])->get();
+        $data['documentTypes'] = TenderDocumentTypes::where('company_id', $employee->empCompanySystemID)->whereNotIn('id', [1, 2])->orWhere('id', 3)->get();
 
         if (isset($input['tenderMasterId'])) {
             if ($tenderMaster['confirmed_yn'] == 1 && $category['is_active'] == 0) {
