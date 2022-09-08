@@ -1618,11 +1618,6 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
                 }
 
-              
-
-              
-                 
-                
                
             }
 
@@ -2882,6 +2877,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
         $qry = "SELECT
 	erp_accountsreceivableledger.arAutoID,
 	erp_accountsreceivableledger.documentCodeSystem AS bookingInvCodeSystem,
+	erp_accountsreceivableledger.serviceLineCode AS segment,
 	erp_accountsreceivableledger.custTransCurrencyID,
 	erp_accountsreceivableledger.custTransER,
 	erp_accountsreceivableledger.localCurrencyID,
