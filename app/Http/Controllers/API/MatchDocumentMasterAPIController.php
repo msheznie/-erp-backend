@@ -2767,6 +2767,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                             AND erp_customerreceivepayment.matchInvoice < 2 
                                         GROUP BY
                                             erp_directreceiptdetails.serviceLineSystemID,
+                                            erp_directreceiptdetails.directReceiptAutoID,
                                             erp_customerreceivepayment.documentSystemID,
                                             erp_directreceiptdetails.companySystemID,
                                             erp_customerreceivepayment.customerID 
