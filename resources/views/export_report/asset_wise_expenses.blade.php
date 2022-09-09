@@ -47,7 +47,7 @@
                     <td>{{$item['AccountCode']}}</td>
                     <td>{{$item['AccountDescription']}}</td>
                     <td>{{$item['DocumentCode']}}</td>
-                    <td>{{$item['DocumentDate']}}</td>
+                    <td>{{ \Carbon\Carbon::parse($item['DocumentDate'])->format("d/m/Y") }}</td>
                     <td>{{$item['Amount']}}</td>
                 </tr>
 

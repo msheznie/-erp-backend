@@ -1457,7 +1457,31 @@ class AssetManagementReportAPIController extends AppBaseController
                         $x++;
                     }
                 }
-                if($request->groupByAsset == false) {
+                if(isset($request->groupByAsset)) {
+                    if ($request->groupByAsset == false) {
+                        $headers = array();
+                        foreach ($data as $element) {
+                            $headers[$element['AccountCode']][] = $element;
+                        }
+
+
+                        $reportData = array('reportData' => $data, 'headers' => $headers, 'fromDate' => $fromDate, 'toDate' => $toDate, 'currency' => $companyCurrency, 'currencyID' => $request->currencyID);
+                        $templateName = "export_report.asset_expenses";
+
+                    }
+                    if ($request->groupByAsset == true) {
+                        $headers = array();
+                        foreach ($data as $element) {
+                            $headers[$element['AssetCode']][] = $element;
+                        }
+
+
+                        $reportData = array('reportData' => $data, 'headers' => $headers, 'fromDate' => $fromDate, 'toDate' => $toDate, 'currency' => $companyCurrency, 'currencyID' => $request->currencyID);
+                        $templateName = "export_report.asset_wise_expenses";
+
+                    }
+                }
+                else{
                     $headers = array();
                     foreach ($data as $element) {
                         $headers[$element['AccountCode']][] = $element;
@@ -1466,18 +1490,6 @@ class AssetManagementReportAPIController extends AppBaseController
 
                     $reportData = array('reportData' => $data, 'headers' => $headers, 'fromDate' => $fromDate, 'toDate' => $toDate, 'currency' => $companyCurrency, 'currencyID' => $request->currencyID);
                     $templateName = "export_report.asset_expenses";
-
-                }
-                if($request->groupByAsset == true) {
-                    $headers = array();
-                    foreach ($data as $element) {
-                        $headers[$element['AssetCode']][] = $element;
-                    }
-
-
-                    $reportData = array('reportData' => $data, 'headers' => $headers, 'fromDate' => $fromDate, 'toDate' => $toDate, 'currency' => $companyCurrency, 'currencyID' => $request->currencyID);
-                    $templateName = "export_report.asset_wise_expenses";
-
                 }
 
                 return \Excel::create('finance', function ($excel) use ($reportData, $templateName) {
