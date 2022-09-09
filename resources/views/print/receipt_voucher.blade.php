@@ -332,6 +332,8 @@
         </div>
         </tr>
     </table>
+    <br>
+    <br>
     @if($masterdata->documentType == 13 || $masterdata->documentType == 15)
         <table style="width: 100%">
             <tr style="width:100%">
