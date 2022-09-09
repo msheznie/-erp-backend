@@ -294,4 +294,30 @@ class TenderDocumentTypesAPIController extends AppBaseController
             return TenderDocumentTypes::where('company_id',$input['companySystemID'])->whereIn('id',$assignDocumentTypes)->orWhereIn('id', [1, 2])->get();
         }
     }
+
+    public function assignDocumentTypes(Request $request)
+    {
+        $input = $request->all();
+        Log::info($request);
+        $employee = \Helper::getEmployeeInfo();
+        try {
+            if (isset($input['document_types'])) {
+                if (count($input['document_types']) > 0) {
+                    TenderDocumentTypeAssign::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
+                    foreach ($input['document_types'] as $vl) {
+                        $docTypeAssign['tender_id'] = $input['id'];
+                        $docTypeAssign['document_type_id'] = $vl['id'];
+                        $docTypeAssign['company_id'] = $input['company_id'];
+                        $docTypeAssign['created_by'] = $employee->employeeSystemID;
+                        TenderDocumentTypeAssign::create($docTypeAssign);
+                    }
+                } else {
+                    TenderDocumentTypeAssign::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
+                }
+            }
+            return ['success' => true, 'message' => 'Successfully created'];
+        } catch (\Exception $e) {
+            return ['success' => false, 'message' => $e];
+        }
+    }
 }
