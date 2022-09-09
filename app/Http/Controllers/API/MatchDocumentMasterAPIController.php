@@ -497,12 +497,24 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
             if ($input['matchType'] == 1 || $input['matchType'] == 3) { // 1 - unallocation; 3 - advance receipt
 
-                $directReceiptDetails = DirectReceiptDetail::find($input['custReceivePaymentAutoID']);
-                if (empty($directReceiptDetails)) {
-                    return $this->sendError('Direct Receipt Details not found');
+               if($input['tableType'] == 1) {
+                   $directReceiptDetails = DirectReceiptDetail::find($input['custReceivePaymentAutoID']);
+               }
+                if($input['tableType'] == 2) {
+
+                    $directReceiptDetails = AdvanceReceiptDetails::find($input['custReceivePaymentAutoID']);
                 }
 
-                $customerReceivePaymentMaster = CustomerReceivePayment::find($directReceiptDetails->directReceiptAutoID);
+                if (empty($directReceiptDetails)) {
+                    return $this->sendError('Details not found');
+                }
+                if($input['tableType'] == 1) {
+                    $customerReceivePaymentMaster = CustomerReceivePayment::find($directReceiptDetails->directReceiptAutoID);
+                }
+                if($input['tableType'] == 2) {
+                    $customerReceivePaymentMaster = CustomerReceivePayment::find($directReceiptDetails->custReceivePaymentAutoID);
+                }
+
                 if (empty($customerReceivePaymentMaster)) {
                     return $this->sendError('Customer Receive Payment not found');
                 }
@@ -516,13 +528,25 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 if($existCheck){
                     return $this->sendError('A matching document for the selected receipt voucher is created and not confirmed. Please confirm the previously created document and try again.', 500);
                 }
+                if($input['tableType'] == 1) {
 
-                $glCheck = GeneralLedger::selectRaw('Sum(erp_generalledger.documentLocalAmount) AS SumOfdocumentLocalAmount, Sum(erp_generalledger.documentRptAmount) AS SumOfdocumentRptAmount,erp_generalledger.documentSystemID, erp_generalledger.documentSystemCode,documentCode,documentID')
-                                            ->where('documentSystemID', $customerReceivePaymentMaster->documentSystemID)
-                                            ->where('companySystemID', $customerReceivePaymentMaster->companySystemID)
-                                            ->where('documentSystemCode', $directReceiptDetails->directReceiptAutoID)
-                                            ->groupBY('companySystemID', 'documentSystemID', 'documentSystemCode')
-                                            ->first();
+                    $glCheck = GeneralLedger::selectRaw('Sum(erp_generalledger.documentLocalAmount) AS SumOfdocumentLocalAmount, Sum(erp_generalledger.documentRptAmount) AS SumOfdocumentRptAmount,erp_generalledger.documentSystemID, erp_generalledger.documentSystemCode,documentCode,documentID')
+                        ->where('documentSystemID', $customerReceivePaymentMaster->documentSystemID)
+                        ->where('companySystemID', $customerReceivePaymentMaster->companySystemID)
+                        ->where('documentSystemCode', $directReceiptDetails->directReceiptAutoID)
+                        ->groupBY('companySystemID', 'documentSystemID', 'documentSystemCode')
+                        ->first();
+                }
+
+                if($input['tableType'] == 2) {
+
+                    $glCheck = GeneralLedger::selectRaw('Sum(erp_generalledger.documentLocalAmount) AS SumOfdocumentLocalAmount, Sum(erp_generalledger.documentRptAmount) AS SumOfdocumentRptAmount,erp_generalledger.documentSystemID, erp_generalledger.documentSystemCode,documentCode,documentID')
+                        ->where('documentSystemID', $customerReceivePaymentMaster->documentSystemID)
+                        ->where('companySystemID', $customerReceivePaymentMaster->companySystemID)
+                        ->where('documentSystemCode', $directReceiptDetails->custReceivePaymentAutoID)
+                        ->groupBY('companySystemID', 'documentSystemID', 'documentSystemCode')
+                        ->first();
+                }
 
                 if ($glCheck) {
                     if (round($glCheck->SumOfdocumentLocalAmount, 0) != 0 || round($glCheck->SumOfdocumentRptAmount, 0) != 0) {
@@ -2739,7 +2763,8 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                             currency.DecimalPlaces 
                                             ) AS BalanceAmt,
                                             currency.CurrencyCode,
-                                            currency.DecimalPlaces 
+                                            currency.DecimalPlaces,
+                                            1 AS tableType
                                         FROM
                                             erp_customerreceivepayment
                                             INNER JOIN erp_directreceiptdetails ON erp_directreceiptdetails.directReceiptAutoID = erp_customerreceivepayment.custReceivePaymentAutoID
@@ -2750,6 +2775,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                             erp_matchdocumentmaster.documentSystemID,
                                             erp_matchdocumentmaster.companySystemID,
                                             erp_matchdocumentmaster.BPVcode,
+                                            erp_matchdocumentmaster.tableType,
                                             COALESCE ( SUM( erp_matchdocumentmaster.matchingAmount ), 0 ) AS SumOfmatchingAmount 
                                         FROM
                                             erp_matchdocumentmaster 
@@ -2758,7 +2784,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                             erp_matchdocumentmaster.PayMasterAutoId,
                                             erp_matchdocumentmaster.documentSystemID,
                                             erp_matchdocumentmaster.companySystemID 
-                                            ) AS advd ON ( erp_directreceiptdetails.directReceiptDetailsID = advd.PayMasterAutoId AND erp_customerreceivepayment.documentSystemID = advd.documentSystemID AND erp_customerreceivepayment.companySystemID = advd.companySystemID ) 
+                                            ) AS advd ON ( erp_directreceiptdetails.directReceiptDetailsID = advd.PayMasterAutoId AND erp_customerreceivepayment.documentSystemID = advd.documentSystemID AND erp_customerreceivepayment.companySystemID = advd.companySystemID AND advd.tableType = 1) 
                                         WHERE
                                             erp_directreceiptdetails.companySystemID = " . $input['companySystemID'] . " 
                                             AND erp_customerreceivepayment.documentType = 15 
@@ -2777,14 +2803,14 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                             Union 
                                             
                                             SELECT
-                                            erp_customerreceivepayment.custReceivePaymentAutoID AS masterAutoID,
+                                            erp_advancereceiptdetails.advanceReceiptDetailAutoID AS masterAutoID,
                                             erp_customerreceivepayment.documentSystemID,
                                             erp_customerreceivepayment.companySystemID,
                                             erp_customerreceivepayment.companyID,
                                             erp_customerreceivepayment.custPaymentReceiveCode AS docMatchedCode,
                                             erp_customerreceivepayment.custPaymentReceiveDate AS docMatchedDate,
                                             erp_customerreceivepayment.customerID,
-                                            NULL AS serviceLineCode,
+                                            erp_advancereceiptdetails.serviceLineCode AS serviceLineCode,
                                             Sum( erp_advancereceiptdetails.supplierTransAmount ) AS SumOfreceiveAmountTrans,
                                             Sum( erp_advancereceiptdetails.localAmount ) AS SumOfreceiveAmountLocal,
                                             Sum( erp_advancereceiptdetails.comRptAmount ) AS SumOfreceiveAmountRpt,
@@ -2794,7 +2820,8 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                             currency.DecimalPlaces 
                                             ) AS BalanceAmt,
                                             currency.CurrencyCode,
-                                            currency.DecimalPlaces 
+                                            currency.DecimalPlaces ,
+                                            2 AS tableType
                                         FROM
                                             erp_customerreceivepayment
                                             INNER JOIN erp_advancereceiptdetails ON erp_advancereceiptdetails.custReceivePaymentAutoID = erp_customerreceivepayment.custReceivePaymentAutoID
@@ -2805,6 +2832,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                             erp_matchdocumentmaster.documentSystemID,
                                             erp_matchdocumentmaster.companySystemID,
                                             erp_matchdocumentmaster.BPVcode,
+                                            erp_matchdocumentmaster.tableType,
                                             COALESCE ( SUM( erp_matchdocumentmaster.matchingAmount ), 0 ) AS SumOfmatchingAmount 
                                         FROM
                                             erp_matchdocumentmaster 
@@ -2813,7 +2841,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                             erp_matchdocumentmaster.PayMasterAutoId,
                                             erp_matchdocumentmaster.documentSystemID,
                                             erp_matchdocumentmaster.companySystemID 
-                                            ) AS advd ON ( erp_customerreceivepayment.custReceivePaymentAutoID = advd.PayMasterAutoId AND erp_customerreceivepayment.documentSystemID = advd.documentSystemID AND erp_customerreceivepayment.companySystemID = advd.companySystemID ) 
+                                            ) AS advd ON ( erp_advancereceiptdetails.advanceReceiptDetailAutoID = advd.PayMasterAutoId AND erp_customerreceivepayment.documentSystemID = advd.documentSystemID AND erp_customerreceivepayment.companySystemID = advd.companySystemID AND advd.tableType = 2) 
                                         WHERE
                                             erp_advancereceiptdetails.companySystemID = " . $input['companySystemID'] . "
                                             AND erp_customerreceivepayment.documentType = 15 
@@ -2822,6 +2850,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                             AND erp_customerreceivepayment.matchInvoice < 2 
                                         GROUP BY
                                             erp_advancereceiptdetails.custReceivePaymentAutoID,
+                                            erp_advancereceiptdetails.serviceLineSystemID,
                                             erp_customerreceivepayment.documentSystemID,
                                             erp_advancereceiptdetails.companySystemID,
                                             erp_customerreceivepayment.customerID 
@@ -2858,7 +2887,14 @@ class MatchDocumentMasterAPIController extends AppBaseController
        }
 
         if($matchDocumentMasterData->documentSystemID == 21) {
-            $directReceiptDetails = DirectReceiptDetail::find($matchDocumentMasterData->PayMasterAutoId);
+            if($matchDocumentMasterData->tableType == 1) {
+                $directReceiptDetails = DirectReceiptDetail::find($matchDocumentMasterData->PayMasterAutoId);
+            }
+            if($matchDocumentMasterData->tableType == 2) {
+
+                $directReceiptDetails = AdvanceReceiptDetails::find($matchDocumentMasterData->PayMasterAutoId);
+            }
+
             if (empty($directReceiptDetails)) {
                 return $this->sendError('Direct Receipt Details not found');
             }

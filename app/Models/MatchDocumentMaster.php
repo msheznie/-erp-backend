@@ -371,6 +371,7 @@ class MatchDocumentMaster extends Model
         'matchLocalAmount',
         'matchRptAmount',
         'matchingType',
+        'tableType',
         'matchingOption',
         'isExchangematch',
         'createdUserSystemID',
