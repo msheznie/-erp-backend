@@ -1441,7 +1441,12 @@ class AssetManagementReportAPIController extends AppBaseController
                         else if ($val->documentSystemID == 17){
                             $data[$x]['DocumentCode'] = isset($val->journal_voucher->JVcode) ? $val->journal_voucher->JVcode : "";
                             $data[$x]['DocumentDate'] = isset($val->journal_voucher->JVdate) ? Carbon::parse($val->journal_voucher->JVdate)->format('Y-m-d') : "";
-                        } else {
+                        }
+                        else if ($val->documentSystemID == 161){
+                            $data[$x]['DocumentCode'] = isset($val->ioue->bookingCode) ? $val->ioue->bookingCode : "";
+                            $data[$x]['DocumentDate'] = isset($val->ioue->bookingDate) ? Carbon::parse($val->ioue->bookingDate)->format('Y-m-d') : "";
+                        }
+                        else {
                             $data[$x]['DocumentCode'] = isset($val->meterial_issue->itemIssueCode) ? $val->meterial_issue->itemIssueCode : "";
                             $data[$x]['DocumentDate'] = isset($val->meterial_issue->master->issueDate) ? Carbon::parse($val->meterial_issue->master->issueDate)->format('Y-m-d') : "";
                         }
