@@ -285,17 +285,13 @@ class TenderDocumentTypesAPIController extends AppBaseController
     {
         $input = $request->all();
         $assignDocumentTypes = TenderDocumentTypeAssign::where('tender_id',$input['tenderMasterId'])->where('company_id',$input['companySystemID'])->pluck('document_type_id')->toArray();
-        Log::info($assignDocumentTypes);
         if (in_array(3, $assignDocumentTypes))
         {
             return TenderDocumentTypes::where('company_id',$input['companySystemID'])->whereIn('id',$assignDocumentTypes)->orWhereIn('id', [1, 2, 3])->get();
-            Log::info("found");
         }
         else
         {
             return TenderDocumentTypes::where('company_id',$input['companySystemID'])->whereIn('id',$assignDocumentTypes)->orWhereIn('id', [1, 2])->get();
-            Log::info("not found");
         }
-        //return TenderDocumentTypes::where('company_id',$input['companySystemID'])->whereIn('id',$assignDocumentTypes)->orWhereIn('id', [1, 2])->get();
     }
 }
