@@ -1457,21 +1457,34 @@ class AssetManagementReportAPIController extends AppBaseController
                         $x++;
                     }
                 }
-                $headers = array();
-                foreach ($data as $element) {
-                    $headers[$element['AccountCode']][] = $element;
+                if($request->groupByAsset == false) {
+                    $headers = array();
+                    foreach ($data as $element) {
+                        $headers[$element['AccountCode']][] = $element;
+                    }
+
+
+                    $reportData = array('reportData' => $data, 'headers' => $headers, 'fromDate' => $fromDate, 'toDate' => $toDate, 'currency' => $companyCurrency, 'currencyID' => $request->currencyID);
+                    $templateName = "export_report.asset_expenses";
+
                 }
+                if($request->groupByAsset == true) {
+                    $headers = array();
+                    foreach ($data as $element) {
+                        $headers[$element['AssetCode']][] = $element;
+                    }
 
 
-                $reportData = array('reportData' => $data, 'headers' => $headers, 'fromDate' => $fromDate, 'toDate'=>$toDate, 'currency'=>$companyCurrency, 'currencyID' => $request->currencyID);
-                $templateName = "export_report.asset_expenses";
+                    $reportData = array('reportData' => $data, 'headers' => $headers, 'fromDate' => $fromDate, 'toDate' => $toDate, 'currency' => $companyCurrency, 'currencyID' => $request->currencyID);
+                    $templateName = "export_report.asset_wise_expenses";
+
+                }
 
                 return \Excel::create('finance', function ($excel) use ($reportData, $templateName) {
                     $excel->sheet('New sheet', function ($sheet) use ($reportData, $templateName) {
                         $sheet->loadView($templateName, $reportData);
                     });
                 })->download('xlsx');
-
                 break;
             default:
                 return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.report_id')]));
