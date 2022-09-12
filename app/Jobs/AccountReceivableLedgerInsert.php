@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\AccountsReceivableLedger;
+use App\Models\AdvanceReceiptDetails;
 use App\Models\CreditNote;
 use App\Models\CreditNoteDetails;
 use App\Models\DirectReceiptDetail;
@@ -233,6 +234,11 @@ class AccountReceivableLedgerInsert implements ShouldQueue
                             ->groupBy('serviceLineSystemID')
                             ->get();
 
+                        $advReceiptsBySegments = AdvanceReceiptDetails::selectRaw("SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount,SUM(paymentAmount) as transAmount,serviceLineSystemID,serviceLineCode")
+                            ->WHERE('custReceivePaymentAutoID', $masterModel["autoID"])
+                            ->groupBy('serviceLineSystemID')
+                            ->get();
+
                         $masterDocumentDate = date('Y-m-d H:i:s');
 
                         if ($masterData) {
@@ -314,8 +320,20 @@ class AccountReceivableLedgerInsert implements ShouldQueue
                                         array_push($finalData, $data);
                                     }
 
-                                } elseif ($masterData->documentType == 15) {
+                                } else if ($masterData->documentType == 15) {
+
                                     foreach ($directReceiptsBySegments as $detail) {
+
+                                        $data['serviceLineSystemID'] = $detail->serviceLineSystemID;
+                                        $data['serviceLineCode'] = $detail->serviceLineCode;
+                                        $data['custInvoiceAmount'] = $detail->transAmount;
+                                        $data['localAmount'] = $detail->localAmount;
+                                        $data['comRptAmount'] = $detail->rptAmount;
+                                        array_push($finalData, $data);
+                                    }
+
+                                    foreach ($advReceiptsBySegments as $detail) {
+
                                         $data['serviceLineSystemID'] = $detail->serviceLineSystemID;
                                         $data['serviceLineCode'] = $detail->serviceLineCode;
                                         $data['custInvoiceAmount'] = $detail->transAmount;
