@@ -1415,33 +1415,40 @@ class AssetManagementReportAPIController extends AppBaseController
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                 $decimalPlaces = 2;
                 $output = $this->getAssetExpenseQRY($request);
+                $fromDate = $request->fromDate;
+                $toDate = $request->toDate;
                 $data = [];
                 $companyCurrency = Company::with(['localcurrency', 'reportingcurrency'])->find($request->companySystemID);
                 if (count($output) > 0) {
                     $x = 0;
                     foreach ($output as $val) {
-                        $data[$x]['Account Code'] = isset($val->chart_of_account->AccountCode) ? $val->chart_of_account->AccountCode : "";
-                        $data[$x]['Account Description'] = isset($val->chart_of_account->AccountDescription) ? $val->chart_of_account->AccountDescription : "";
-                        $data[$x]['Asset Code'] = isset($val->asset->faCode) ? $val->asset->faCode : "";
-                        $data[$x]['Asset Description'] = isset($val->asset->assetDescription) ? $val->asset->assetDescription : "";
+                        $data[$x]['AccountCode'] = isset($val->chart_of_account->AccountCode) ? $val->chart_of_account->AccountCode : "";
+                        $data[$x]['AccountDescription'] = isset($val->chart_of_account->AccountDescription) ? $val->chart_of_account->AccountDescription : "";
+                        $data[$x]['AssetCode'] = isset($val->asset->faCode) ? $val->asset->faCode : "";
+                        $data[$x]['AssetDescription'] = isset($val->asset->assetDescription) ? $val->asset->assetDescription : "";
 
                         if ($val->documentSystemID == 11) {
-                            $data[$x]['Document Code'] = isset($val->supplier_invoice->bookingInvCode) ? $val->supplier_invoice->bookingInvCode : "";
-                            $data[$x]['Document Date'] = isset($val->supplier_invoice->bookingDate) ? Carbon::parse($val->supplier_invoice->bookingDate)->format('Y-m-d') : "";
+                            $data[$x]['DocumentCode'] = isset($val->supplier_invoice->bookingInvCode) ? $val->supplier_invoice->bookingInvCode : "";
+                            $data[$x]['DocumentDate'] = isset($val->supplier_invoice->bookingDate) ? Carbon::parse($val->supplier_invoice->bookingDate)->format('Y-m-d') : "";
                         } else if ($val->documentSystemID == 4){
-                            $data[$x]['Document Code'] = isset($val->payment_voucher->BPVcode) ? $val->payment_voucher->BPVcode : "";
-                            $data[$x]['Document Date'] = isset($val->payment_voucher->BPVdate) ? Carbon::parse($val->payment_voucher->BPVdate)->format('Y-m-d') : "";                         
+                            $data[$x]['DocumentCode'] = isset($val->payment_voucher->BPVcode) ? $val->payment_voucher->BPVcode : "";
+                            $data[$x]['DocumentDate'] = isset($val->payment_voucher->BPVdate) ? Carbon::parse($val->payment_voucher->BPVdate)->format('Y-m-d') : "";
                         }
                         else if ($val->documentSystemID == 3){
-                            $data[$x]['Document Code'] = isset($val->grv->grvPrimaryCode) ? $val->grv->grvPrimaryCode : "";
-                            $data[$x]['Document Date'] = isset($val->grv->grvDate) ? Carbon::parse($val->grv->grvDate)->format('Y-m-d') : "";                         
+                            $data[$x]['DocumentCode'] = isset($val->grv->grvPrimaryCode) ? $val->grv->grvPrimaryCode : "";
+                            $data[$x]['DocumentDate'] = isset($val->grv->grvDate) ? Carbon::parse($val->grv->grvDate)->format('Y-m-d') : "";
                         }
                         else if ($val->documentSystemID == 17){
-                            $data[$x]['Document Code'] = isset($val->journal_voucher->JVcode) ? $val->journal_voucher->JVcode : "";
-                            $data[$x]['Document Date'] = isset($val->journal_voucher->JVdate) ? Carbon::parse($val->journal_voucher->JVdate)->format('Y-m-d') : "";                         
-                        } else {
-                            $data[$x]['Document Code'] = isset($val->meterial_issue->itemIssueCode) ? $val->meterial_issue->itemIssueCode : "";
-                            $data[$x]['Document Date'] = isset($val->meterial_issue->master->issueDate) ? Carbon::parse($val->meterial_issue->master->issueDate)->format('Y-m-d') : "";                         
+                            $data[$x]['DocumentCode'] = isset($val->journal_voucher->JVcode) ? $val->journal_voucher->JVcode : "";
+                            $data[$x]['DocumentDate'] = isset($val->journal_voucher->JVdate) ? Carbon::parse($val->journal_voucher->JVdate)->format('Y-m-d') : "";
+                        }
+                        else if ($val->documentSystemID == 161){
+                            $data[$x]['DocumentCode'] = isset($val->ioue->bookingCode) ? $val->ioue->bookingCode : "";
+                            $data[$x]['DocumentDate'] = isset($val->ioue->bookingDate) ? Carbon::parse($val->ioue->bookingDate)->format('Y-m-d') : "";
+                        }
+                        else {
+                            $data[$x]['DocumentCode'] = isset($val->meterial_issue->itemIssueCode) ? $val->meterial_issue->itemIssueCode : "";
+                            $data[$x]['DocumentDate'] = isset($val->meterial_issue->master->issueDate) ? Carbon::parse($val->meterial_issue->master->issueDate)->format('Y-m-d') : "";
                         }
 
                         if ($request->currencyID == 2) {
@@ -1455,21 +1462,46 @@ class AssetManagementReportAPIController extends AppBaseController
                         $x++;
                     }
                 }
+                if(isset($request->groupByAsset)) {
+                    if ($request->groupByAsset == false) {
+                        $headers = array();
+                        foreach ($data as $element) {
+                            $headers[$element['AccountCode']][] = $element;
+                        }
 
-                $fileName = 'asset_expenses';
-                $path = 'asset/report/asset_expenses/excel/';
-                $basePath = CreateExcel::process($data,$type,$fileName,$path);
 
-                if($basePath == '')
-                {
-                     return $this->sendError('Unable to export excel');
+                        $reportData = array('reportData' => $data, 'headers' => $headers, 'fromDate' => $fromDate, 'toDate' => $toDate, 'currency' => $companyCurrency, 'currencyID' => $request->currencyID);
+                        $templateName = "export_report.asset_expenses";
+
+                    }
+                    if ($request->groupByAsset == true) {
+                        $headers = array();
+                        foreach ($data as $element) {
+                            $headers[$element['AssetCode']][] = $element;
+                        }
+
+
+                        $reportData = array('reportData' => $data, 'headers' => $headers, 'fromDate' => $fromDate, 'toDate' => $toDate, 'currency' => $companyCurrency, 'currencyID' => $request->currencyID);
+                        $templateName = "export_report.asset_wise_expenses";
+
+                    }
                 }
-                else
-                {
-                     return $this->sendResponse($basePath, trans('custom.success_export'));
+                else{
+                    $headers = array();
+                    foreach ($data as $element) {
+                        $headers[$element['AccountCode']][] = $element;
+                    }
+
+
+                    $reportData = array('reportData' => $data, 'headers' => $headers, 'fromDate' => $fromDate, 'toDate' => $toDate, 'currency' => $companyCurrency, 'currencyID' => $request->currencyID);
+                    $templateName = "export_report.asset_expenses";
                 }
 
-
+                return \Excel::create('finance', function ($excel) use ($reportData, $templateName) {
+                    $excel->sheet('New sheet', function ($sheet) use ($reportData, $templateName) {
+                        $sheet->loadView($templateName, $reportData);
+                    });
+                })->download('xlsx');
                 break;
             default:
                 return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.report_id')]));

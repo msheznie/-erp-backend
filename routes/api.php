@@ -123,6 +123,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
         Route::get('supplierFormData', 'CompanyAPIController@getSupplierFormData');
 
+        Route::get('getAdvanceAccount', 'CompanyAPIController@getAdvanceAccount');
+
         Route::resource('country_masters', 'CountryMasterAPIController');
         Route::resource('supplier_category_masters', 'SupplierCategoryMasterAPIController');
         Route::resource('supplier_category_subs', 'SupplierCategorySubAPIController');
@@ -931,6 +933,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('generatePdcForPv', 'PaySupplierInvoiceMasterAPIController@generatePdcForPv');
         Route::post('updateBankBalance', 'PaySupplierInvoiceMasterAPIController@updateBankBalance');
         Route::put('paymentVoucherUpdateCurrency/{id}', 'PaySupplierInvoiceMasterAPIController@updateCurrency');
+        Route::put('paymentVoucherProjectUpdate/{id}', 'PaySupplierInvoiceMasterAPIController@paymentVoucherProjectUpdate');
         Route::get('getRetentionValues', 'PaySupplierInvoiceMasterAPIController@getRetentionValues');
 
 
