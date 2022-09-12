@@ -584,16 +584,16 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                                                      SUM(comRptAmount) as SumDetailAmountRpt,
                                                                      SUM(DRAmount) as SumDetailAmountTrans")
                                                                     ->where('directReceiptAutoID', $directReceiptDetails->directReceiptAutoID)
-                                                                    ->groupBy('directReceiptAutoID')
+                                                                    ->where('serviceLineSystemID', $directReceiptDetails->serviceLineSystemID)
+                                                                    ->groupBy('serviceLineSystemID')
                                                                     ->first();
 
                     // advance receipt details
                     $advReceiptDetails = AdvanceReceiptDetails::selectRaw("SUM(localAmount) as SumDetailAmountLocal, 
                                                                         SUM(comRptAmount) as SumDetailAmountRpt,
                                                                         SUM(paymentAmount) as SumDetailAmountTrans")
-                                                                ->where('custReceivePaymentAutoID', $directReceiptDetails->directReceiptAutoID)
-                                                                ->groupBy('custReceivePaymentAutoID')
-                                                                ->first();
+                                                                  ->where('custReceivePaymentAutoID', $directReceiptDetails->directReceiptAutoID)->where('serviceLineSystemID', $directReceiptDetails->serviceLineSystemID)->groupBy('serviceLineSystemID')
+                                                                   ->first();
 
 
 
@@ -631,11 +631,11 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 $input['companyRptCurrencyID'] = $customerReceivePaymentMaster->companyRptCurrencyID;
                 $input['companyRptCurrencyER'] = $customerReceivePaymentMaster->companyRptCurrencyER;
                 $input['payAmountBank'] = $customerReceivePaymentMaster->bankID;
-                $input['payAmountSuppTrans'] = $directReceiptDetails->DRAmount;
+                $input['payAmountSuppTrans'] = $receiveAmountTotTrans;
                 //$input['payAmountSuppDef'] = $customerReceivePaymentMaster->payAmountSuppDef;
                 //$input['suppAmountDocTotal'] = $customerReceivePaymentMaster->suppAmountDocTotal;
-                $input['payAmountCompLocal'] = $directReceiptDetails->localAmount;
-                $input['payAmountCompRpt'] = $directReceiptDetails->comRptAmount;
+                $input['payAmountCompLocal'] = $receiveAmountTotLocal;
+                $input['payAmountCompRpt'] = $receiveAmountTotRpt;
                 $input['invoiceType'] = $customerReceivePaymentMaster->documentType;
                 $input['matchInvoice'] = $customerReceivePaymentMaster->matchInvoice;
                 $input['matchingAmount'] = 0;
