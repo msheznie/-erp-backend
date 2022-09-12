@@ -9,7 +9,6 @@ use App\Repositories\TenderDocumentTypesRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use App\Models\TenderDocumentTypeAssign;
-use Illuminate\Support\Facades\Log;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -314,7 +313,7 @@ class TenderDocumentTypesAPIController extends AppBaseController
                     TenderDocumentTypeAssign::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
                 }
             }
-            return ['success' => true, 'message' => 'Successfully created'];
+            return ['success' => true, 'message' => 'Successfully updated'];
         } catch (\Exception $e) {
             return ['success' => false, 'message' => $e];
         }
