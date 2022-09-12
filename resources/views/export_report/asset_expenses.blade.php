@@ -25,6 +25,8 @@
     </thead>
     </table>
 </center>
+@php $grandTotal = 0 @endphp
+
 @foreach($headers as $header)
     <tr><th><B>{{ $header[0]['AccountCode'] }} - {{ $header[0]['AccountDescription'] }}</B></th></tr>
 <table>
@@ -45,7 +47,7 @@
             <td>{{$item['AssetCode']}}</td>
             <td>{{$item['AssetDescription']}}</td>
             <td>{{$item['DocumentCode']}}</td>
-            <td>{{$item['DocumentDate']}}</td>
+            <td>{{ \Carbon\Carbon::parse($item['DocumentDate'])->format("d/m/Y") }}</td>
             <td>{{$item['Amount']}}</td>
         </tr>
 
@@ -61,7 +63,13 @@
         <td>Total</td>
         <td>{{$total}}</td>
     </tr>
+    @php $grandTotal += $total @endphp
+
     </tfoot>
 </table>
 @endforeach
-
+<tr>
+    <td colspan="3"></td>
+    <td>Grand Total</td>
+    <td>{{$grandTotal}}</td>
+</tr>
