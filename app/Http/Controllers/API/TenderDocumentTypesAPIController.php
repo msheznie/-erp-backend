@@ -298,7 +298,6 @@ class TenderDocumentTypesAPIController extends AppBaseController
     public function assignDocumentTypes(Request $request)
     {
         $input = $request->all();
-        Log::info($request);
         $employee = \Helper::getEmployeeInfo();
         try {
             if (isset($input['document_types'])) {
