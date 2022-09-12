@@ -123,6 +123,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
         Route::get('supplierFormData', 'CompanyAPIController@getSupplierFormData');
 
+        Route::get('getAdvanceAccount', 'CompanyAPIController@getAdvanceAccount');
+
         Route::resource('country_masters', 'CountryMasterAPIController');
         Route::resource('supplier_category_masters', 'SupplierCategoryMasterAPIController');
         Route::resource('supplier_category_subs', 'SupplierCategorySubAPIController');
