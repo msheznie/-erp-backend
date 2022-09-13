@@ -1096,7 +1096,18 @@ class CreditNoteAPIController extends AppBaseController
                 $customerID = $input['customerID'];
                 $output['currencies'] = DB::table('customercurrency')->join('currencymaster', 'customercurrency.currencyID', '=', 'currencymaster.currencyID')->where('customerCodeSystem', $customerID)->where('isAssigned', -1)->select('currencymaster.currencyID', 'currencymaster.CurrencyCode', 'isDefault')->get();
                 break;
+            case 'getCreateData':
+                $customerID = $input['customerID'];
+                $isVATEligible = TaxService::checkCompanyVATEligible($companySystemID);
+                $output['percentage'] = 0;
 
+                if ($isVATEligible) {
+                    $defaultVAT = TaxService::getDefaultVAT($companySystemID, $customerID, 0);
+                    $vatPercentage = $defaultVAT['percentage'];
+                    $output['percentage'] = $vatPercentage;
+                }
+                $output['currencies'] = DB::table('customercurrency')->join('currencymaster', 'customercurrency.currencyID', '=', 'currencymaster.currencyID')->where('customerCodeSystem', $customerID)->where('isAssigned', -1)->select('currencymaster.currencyID', 'currencymaster.CurrencyCode', 'isDefault')->get();
+                break;
             case 'edit' :
                 $id = $input['id'];
                 $master = CreditNote::where('creditNoteAutoID', $id)->first();

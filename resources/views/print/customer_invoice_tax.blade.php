@@ -165,6 +165,19 @@
         font-size: 11.5px;
         color: black;
     }
+    .container
+          {
+            display: block;
+            max-width:230px;
+            max-height:95px;
+            width: auto;
+            height: auto;
+            }
+
+    .table_height
+    {
+        max-height: 60px !important;
+    }
 
 
 </style>
@@ -192,7 +205,7 @@
                     @if($request->logo)
                            @if($type == 1)
                             <img src="{{$request->companyLogo}}"
-                                width="180px" height="60px">
+                            class="container">
                           @else
                             image not found
                           @endif
