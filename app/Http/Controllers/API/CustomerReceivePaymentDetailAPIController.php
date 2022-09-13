@@ -712,6 +712,10 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
     {
         $input = $request->all();
 
+        if (isset($input['ar_data'])) {
+            unset($input['ar_data']);
+        }
+
         $receiptVoucherDetails = $this->customerReceivePaymentDetailRepository->findWithoutFail($input['custRecivePayDetAutoID']);
 
         if (empty($receiptVoucherDetails)) {
