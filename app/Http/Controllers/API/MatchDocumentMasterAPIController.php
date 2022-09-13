@@ -2685,7 +2685,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                                     (IFNULL(
                                                         receipt.SumOfreceiptAmount,
                                                         0
-                                                    ) * -1) + IFNULL(advd.SumOfmatchingAmount, 0)
+                                                    )) + IFNULL(advd.SumOfmatchingAmount, 0)
                                                 )
                                             ) AS BalanceAmt
                                         FROM
@@ -2698,20 +2698,24 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                                 addedDocumentSystemID,
                                                 bookingInvCodeSystem,
                                                 bookingInvCode,
-                                                companySystemID,
+                                                erp_custreceivepaymentdet.companySystemID,
+                                                erp_accountsreceivableledger.serviceLineSystemID,
                                                 COALESCE (SUM(receiveAmountTrans), 0) AS SumOfreceiptAmount
                                             FROM
                                                 erp_custreceivepaymentdet
+                                            INNER JOIN erp_accountsreceivableledger ON erp_accountsreceivableledger.arAutoID = erp_custreceivepaymentdet.arAutoID
                                             WHERE
                                                 bookingInvCode <> '0'
                                             GROUP BY
                                                 addedDocumentSystemID,
                                                 bookingInvCodeSystem,
-                                                companySystemID
+                                                companySystemID,
+                                                erp_accountsreceivableledger.serviceLineSystemID
                                         ) AS receipt ON (
                                             receipt.bookingInvCodeSystem = erp_creditnote.creditNoteAutoID
                                             AND receipt.addedDocumentSystemID = erp_creditnote.documentSystemiD
                                             AND receipt.companySystemID = erp_creditnote.companySystemID
+                                            AND receipt.serviceLineSystemID = erp_creditnotedetails.serviceLineSystemID
                                         )
                                         LEFT JOIN (
                                             SELECT
