@@ -2894,7 +2894,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
         }
 
        if($matchDocumentMasterData->documentSystemID == 19) {
-           $creditNoteDetails = CreditNoteDetails::find($matchDocumentMasterData->PayMasterAutoId);
+           $creditNoteDetails = CreditNoteDetails::where('creditNoteAutoID',$matchDocumentMasterData->PayMasterAutoId)->where('serviceLineSystemID',$matchDocumentMasterData->serviceLineSystemID)->first();
            if (empty($creditNoteDetails)) {
                return $this->sendError('Credit Note Details not found');
            }
@@ -2903,11 +2903,11 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
         if($matchDocumentMasterData->documentSystemID == 21) {
             if($matchDocumentMasterData->tableType == 1) {
-                $directReceiptDetails = DirectReceiptDetail::find($matchDocumentMasterData->PayMasterAutoId);
+                $directReceiptDetails = DirectReceiptDetail::where('directReceiptAutoID',$matchDocumentMasterData->PayMasterAutoId)->where('serviceLineSystemID',$matchDocumentMasterData->serviceLineSystemID)->first();
             }
             if($matchDocumentMasterData->tableType == 2) {
 
-                $directReceiptDetails = AdvanceReceiptDetails::find($matchDocumentMasterData->PayMasterAutoId);
+                $directReceiptDetails = AdvanceReceiptDetails::where('custReceivePaymentAutoID',$matchDocumentMasterData->PayMasterAutoId)->where('serviceLineSystemID',$matchDocumentMasterData->serviceLineSystemID)->first();
             }
 
             if (empty($directReceiptDetails)) {
