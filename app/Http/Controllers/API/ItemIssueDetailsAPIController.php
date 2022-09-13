@@ -385,6 +385,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
                 $input['financeGLcodebBS'] = $financeItemCategorySubAssigned->financeGLcodebBS;
                 $input['financeGLcodePLSystemID'] = WarehouseMaster::getWIPGLSystemID($itemIssueMaster->wareHouseFrom);
                 $input['financeGLcodePL'] = WarehouseMaster::getWIPGLCode($itemIssueMaster->wareHouseFrom);
+
             }   
             else
             {

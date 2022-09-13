@@ -326,6 +326,7 @@ class AccountsReceivableLedgerAPIController extends AppBaseController
                     erp_accountsreceivableledger.documentCode AS bookingInvDocCode,
                     erp_accountsreceivableledger.documentDate AS bookingInvoiceDate,
                     erp_accountsreceivableledger.customerID,
+                    erp_accountsreceivableledger.serviceLineCode,
                 erp_accountsreceivableledger.custInvoiceAmount as SumOfreceiveAmountTrans,
                     erp_accountsreceivableledger.localAmount as SumOfreceiveAmountLocal,
                         erp_accountsreceivableledger.comRptAmount as SumOfreceiveAmountRpt,

@@ -203,6 +203,11 @@ class AdvanceReceiptDetailsAPIController extends AppBaseController
                         $tempArray["customerTransER"] = 1;
                         $tempArray["customerDefaultCurrencyID"] = $new["currencyID"];
                         $tempArray["customerDefaultCurrencyER"] = 1;
+                        $salesOrderAdv = SalesOrderAdvPayment::where('soID', $new["salesOrderID"])->first();
+                        if($salesOrderAdv) {
+                            $tempArray["serviceLineSystemID"] = $salesOrderAdv->serviceLineSystemID;
+                            $tempArray["serviceLineCode"] = $salesOrderAdv->serviceLineID;
+                        }
 
                         $advancePayment = SalesOrderAdvPayment::find($new['soAdvPaymentID']);
 

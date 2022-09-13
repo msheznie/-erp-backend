@@ -195,6 +195,8 @@ class AccountsReceivableLedger extends Model
         'documentSystemID',
         'documentID',
         'documentCodeSystem',
+        'serviceLineSystemID',
+        'serviceLineCode',
         'documentCode',
         'documentDate',
         'customerID',
@@ -235,6 +237,8 @@ class AccountsReceivableLedger extends Model
     protected $casts = [
         'arAutoID' => 'integer',
         'companySystemID' => 'integer',
+        'serviceLineSystemID' => 'integer',
+        'serviceLineCode' => 'string',
         'companyID' => 'string',
         'documentSystemID' => 'integer',
         'documentID' => 'string',

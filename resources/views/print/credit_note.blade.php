@@ -301,7 +301,7 @@
             <thead>
             <tr class="theme-tr-head" style="width: 100%;">
                 <th style="text-align: center">Comments</th>
-                <th style="text-align: center">Department</th>
+                <th style="text-align: center">Segment</th>
                 <th style="text-align: center">Amount</th>
                 @if($request->isVATApplicable)
                     <th class="text-center">VAT Amount</th>

@@ -3531,8 +3531,8 @@ WHERE
                             $data[$x]['Document Code'] = $val->BPVcode;
                             $data[$x]['PV Date'] = $val->bookingDate;
                             $data[$x]['Narration'] = $val->BPVNarration;
-                            $data[$x]['Supplier Code'] = $val->primarySupplierCode;
-                            $data[$x]['Supplier Name'] = $val->supplierName;
+                            $data[$x]['Party Code'] = $val->primarySupplierCode;
+                            $data[$x]['Party Name'] = $val->supplierName;
                             $data[$x]['Currency'] = $val->CurrencyCode;
                             $data[$x]['Value'] = $val->payAmountSuppTrans;
                             $data[$x]['Net Value'] = $val->payAmountSuppTrans;
@@ -5088,12 +5088,12 @@ AND MASTER.cancelYN = 0';
 		"%d/%m/%Y"
 	) AS bookingDate,
 	MASTER .BPVNarration,
-	suppliermaster.primarySupplierCode,
+    CASE WHEN suppliermaster.primarySupplierCode IS NULL THEN employees.empID ELSE suppliermaster.primarySupplierCode END AS primarySupplierCode,
 	suppliermaster.secondarySupplierCode,
-	suppliermaster.supplierName,
+    CASE WHEN suppliermaster.supplierName IS NULL THEN employees.empName ELSE suppliermaster.supplierName END AS supplierName,
 	currencymaster.CurrencyCode,
 	currencymaster.DecimalPlaces,
-MASTER.payAmountSuppTrans,
+    MASTER.payAmountSuppTrans,
 	IFNULL(tax.taxTotalAmount, 0) AS taxTotalAmount,
 	DATE_FORMAT(
 		MASTER .postedDate,
@@ -5101,8 +5101,9 @@ MASTER.payAmountSuppTrans,
 	) AS postedDate
 FROM
 	erp_paysupplierinvoicemaster AS MASTER
-INNER JOIN suppliermaster ON suppliermaster.supplierCodeSystem = MASTER.BPVsupplierID
-INNER JOIN currencymaster ON currencymaster.currencyID = MASTER.supplierTransCurrencyID
+LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = MASTER.BPVsupplierID
+LEFT JOIN employees ON employees.employeeSystemID = MASTER.directPaymentPayeeEmpID
+LEFT JOIN currencymaster ON currencymaster.currencyID = MASTER.supplierTransCurrencyID
 LEFT JOIN (
 	SELECT
 		taxdetail.documentSystemID,

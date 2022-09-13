@@ -383,4 +383,9 @@ class TenderMaster extends Model
     {
         return $this->hasMany('App\Models\TenderSupplierAssignee', 'tender_master_id', 'id');
     }
+
+    public function srm_bid_submission_master()
+    {
+        return $this->hasMany('App\Models\BidSubmissionMaster', 'tender_id', 'id');
+    }
 }
