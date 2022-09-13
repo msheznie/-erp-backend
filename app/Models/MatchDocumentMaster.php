@@ -372,6 +372,7 @@ class MatchDocumentMaster extends Model
         'matchRptAmount',
         'matchingType',
         'tableType',
+        'serviceLineSystemID',
         'matchingOption',
         'isExchangematch',
         'createdUserSystemID',
