@@ -1717,12 +1717,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
         } elseif ($input['documentSystemID'] == 19) {
 
-            $creditNoteDetails = CreditNoteDetails::find($input['PayMasterAutoId']);
-            if (empty($creditNoteDetails)) {
-                return $this->sendError('Credit Note Details not found');
-            }
-
-            $creditNoteDataUpdateCHK = CreditNote::find($creditNoteDetails->creditNoteAutoID);
+            $creditNoteDataUpdateCHK = CreditNote::find($input['PayMasterAutoId']);
             if (empty($creditNoteDataUpdateCHK)) {
                 return $this->sendError('Credit Note not found');
             }
@@ -1938,12 +1933,8 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 $CustomerReceivePaymentDataUpdate->save();
             }
             if ($input['documentSystemID'] == 19) {
-                $creditNoteDetails = CreditNoteDetails::find($input['PayMasterAutoId']);
-                if (empty($creditNoteDetails)) {
-                    return $this->sendError('Credit Note Details not found');
-                }
 
-                $creditNoteDataUpdate = CreditNote::find($creditNoteDetails->creditNoteAutoID);
+                $creditNoteDataUpdate = CreditNote::find($input['PayMasterAutoId']);
                 if (empty($creditNoteDataUpdate)) {
                     return $this->sendError('Credit Note not found');
                 }
@@ -2685,7 +2676,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                                     (IFNULL(
                                                         receipt.SumOfreceiptAmount,
                                                         0
-                                                    )) + IFNULL(advd.SumOfmatchingAmount, 0)
+                                                    )* -1) + IFNULL(advd.SumOfmatchingAmount, 0)
                                                 )
                                             ) AS BalanceAmt
                                         FROM

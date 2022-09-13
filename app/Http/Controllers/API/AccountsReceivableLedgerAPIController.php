@@ -374,7 +374,8 @@ class AccountsReceivableLedgerAPIController extends AppBaseController
                 FROM
                     erp_matchdocumentmaster 
                 WHERE
-                    erp_matchdocumentmaster.companySystemID = $master->companySystemID  
+                    erp_matchdocumentmaster.companySystemID = $master->companySystemID
+                    AND erp_matchdocumentmaster.matchingConfirmedYN = 1
                     AND erp_matchdocumentmaster.documentSystemID IN (  19 ) 
                     GROUP BY 	erp_matchdocumentmaster.PayMasterAutoId,
                     erp_matchdocumentmaster.companyID,
