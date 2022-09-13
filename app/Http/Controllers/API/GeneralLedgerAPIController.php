@@ -948,7 +948,8 @@ class GeneralLedgerAPIController extends AppBaseController
         $input = $request->all();
 
         $toDate = (new   Carbon($request->toDate))->format('Y-m-d');
-        $fromDate = ((new Carbon($request->fromDate))->addDays(1)->format('Y-m-d'));
+
+        $fromDate = ((new Carbon($request->fromDate))->format('Y-m-d'));
         $type = $request->currency;
         $company = $request->company;
         $details = $this->generateGLReport($fromDate,$toDate,$type,$company);
@@ -964,7 +965,7 @@ class GeneralLedgerAPIController extends AppBaseController
         $input = $request->all();
 
         $toDate = (new   Carbon($request->toDate))->format('Y-m-d');
-        $fromDate = ((new Carbon($request->fromDate))->addDays(1)->format('Y-m-d'));
+        $fromDate = ((new Carbon($request->fromDate))->format('Y-m-d'));
         $type = $request->currency;
         $file_type = $request->type;
         $company = $request->company;

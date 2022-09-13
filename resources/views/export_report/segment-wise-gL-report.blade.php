@@ -69,7 +69,7 @@
             </td>
             <td colspan="3">
                 {{$dt['AccountDescription']}}
-           </td>
+            </td>
                @foreach($segment as $key=>$val)
                     <td>{{$dt[$key]['debit']}}</td>
                     <td>{{$dt[$key]['credit']}}</td>

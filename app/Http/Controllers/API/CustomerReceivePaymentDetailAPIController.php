@@ -469,6 +469,10 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
     {
         $input = $request->all();
 
+        if (isset($input['ar_data'])) {
+            unset($input['ar_data']);
+        }
+
         $detail = CustomerReceivePaymentDetail::where('custRecivePayDetAutoID', $input['custRecivePayDetAutoID'])->first();
 
         if(empty($detail)){
@@ -579,7 +583,7 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
 
     function getReceiptVoucherMatchDetails(Request $request)
     {
-        $data = CustomerReceivePaymentDetail::where('matchingDocID', $request->matchDocumentMasterAutoID)
+        $data = CustomerReceivePaymentDetail::with(['ar_data'])->where('matchingDocID', $request->matchDocumentMasterAutoID)
             ->get();
         return $this->sendResponse($data, 'Details saved successfully');
     }

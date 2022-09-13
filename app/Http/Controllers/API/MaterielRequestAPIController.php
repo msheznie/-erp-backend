@@ -54,6 +54,7 @@ use App\helper\CancelDocument;
 use Response;
 use App\Repositories\MaterielRequestDetailsRepository;
 use Auth;
+use App\Models\ItemIssueMaster;
 
 /**
  * Class MaterielRequestController
@@ -1388,5 +1389,129 @@ class MaterielRequestAPIController extends AppBaseController
         }
         
     }
+
+    public function returnMaterialRequestPreCheck(Request $request)
+    {
+        $input = $request->all();
+            
+        $materialRequest = MaterielRequest::with(['confirmed_by'])->find($input['materialRequestID']);
+
+        if (empty($materialRequest)) {
+            return $this->sendError('Purchase Request not found');
+        }
+  
+
+        if ($materialRequest->ClosedYN == 1) {
+            return $this->sendError('You cannot revert back this request as it is closed manually');
+        }
+
+        $checkMr = ItemIssueMaster::where('reqDocID', $input['materialRequestID']);
+
+
+        if ($checkMr->count() > 0) {
+
+            return $this->sendError('Cannot return back to amend.The Materiel Request linked with following Materiel Issues', 500, ['data' => $checkMr->pluck('itemIssueCode')]);
+        }
+
+        return $this->sendResponse($materialRequest, 'Purchase Request successfully return back to amend');
+    }
+
+    public function returnMaterialRequest(Request $request)
+    {
+      
+        $input = $request->all();
+            
+        $materialRequest = MaterielRequest::with(['confirmed_by'])->find($input['RequestID']);
+
+        if (empty($materialRequest)) {
+            return $this->sendError('Purchase Request not found');
+        }
+  
+
+        if ($materialRequest->ClosedYN == 1) {
+            return $this->sendError('You cannot revert back this request as it is closed manually');
+        }
+
+        $checkMr = ItemIssueMaster::where('reqDocID', $input['RequestID'])->count();
+        if ($checkMr > 0) {
+            return $this->sendError('Cannot return back to amend. Itemissue is created for this request');
+        }
+
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $emails = array();
+        $ids_to_delete = array();
+
+      
+
+        $document = DocumentMaster::where('documentSystemID', $materialRequest->documentSystemID)->first();
+
+        $cancelDocNameBody = $document->documentDescription . ' <b>' . $materialRequest->RequestCode . '</b>';
+        $cancelDocNameSubject = $document->documentDescription . ' ' . $materialRequest->RequestCode;
+       
+        $body = '<p>' . $cancelDocNameBody . ' is return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['ammendComments'] . '</p>';
+        $subject = $cancelDocNameSubject . ' is return back to amend';
+
+
+
+        if ($materialRequest->ConfirmedYN == 1) {
+            $emails[] = array('empSystemID' => $materialRequest->ConfirmedBySystemID,
+                'companySystemID' => $materialRequest->companySystemID,
+                'docSystemID' => $materialRequest->documentSystemID,
+                'alertMessage' => $subject,
+                'emailAlertMessage' => $body,
+                'docSystemCode' => $materialRequest->RequestID);
+        }
+
+        $materialRequest->ConfirmedYN = 0;
+        $materialRequest->ConfirmedBy = NULL;
+        $materialRequest->confirmedEmpName = NULL;
+        $materialRequest->ConfirmedBySystemID = NULL;
+        $materialRequest->ConfirmedDate = NULL;
+        $materialRequest->approved = 0;
+        $materialRequest->approvedDate = NULL;
+        $materialRequest->approvedByUserSystemID = NULL;
+        $materialRequest->RollLevForApp_curr = 1;
+        $materialRequest->save();
+
+        AuditTrial::createAuditTrial($materialRequest->documentSystemID,$input['RequestID'],$input['ammendComments'],'returned back to amend');
+
+
+
+
+        $documentApproval = DocumentApproved::where('companySystemID', $materialRequest->companySystemID)
+            ->where('documentSystemCode', $materialRequest->RequestID)
+            ->where('documentSystemID', $materialRequest->documentSystemID)
+            ->get();
+
+
+
+
+        foreach ($documentApproval as $da) {
+
+            if ($da->approvedYN == -1) {
+                $emails[] = array('empSystemID' => $da->employeeSystemID,
+                    'companySystemID' => $materialRequest->companySystemID,
+                    'docSystemID' => $materialRequest->documentSystemID,
+                    'alertMessage' => $subject,
+                    'emailAlertMessage' => $body,
+                    'docSystemCode' => $materialRequest->RequestID);
+            }
+
+            array_push($ids_to_delete, $da->documentApprovedID);
+        }
+
+        $sendEmail = \Email::sendEmail($emails);
+        if (!$sendEmail["success"]) {
+            return $this->sendError($sendEmail["message"], 500);
+        }
+
+        DocumentApproved::destroy($ids_to_delete);
+
+        return $this->sendResponse($materialRequest, 'Purchase Request successfully return back to amend');
+    }
+
+
     
 }
