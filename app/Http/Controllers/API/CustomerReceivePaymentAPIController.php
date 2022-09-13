@@ -3396,6 +3396,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                                 erp_salesorderadvpayment.companySystemID,
                                 erp_salesorderadvpayment.soID AS salesOrderID,
                                 erp_salesorderadvpayment.soCode AS salesOrderCode,
+                                erp_salesorderadvpayment.serviceLineID AS segment,
                                 erp_salesorderadvpayment.customerId,
                                 erp_salesorderadvpayment.narration AS comments,
                                 erp_salesorderadvpayment.currencyID,
