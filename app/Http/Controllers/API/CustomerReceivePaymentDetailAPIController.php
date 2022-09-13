@@ -473,6 +473,7 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
             $serviceLineSystemID = $input['ar_data']['serviceLineSystemID'];
         }
 
+
         if (isset($input['ar_data'])) {
             unset($input['ar_data']);
         }
@@ -504,6 +505,7 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
             ->where('companySystemID', $input["companySystemID"])
             ->where('PayMasterAutoId', $input["bookingInvCodeSystem"])
             ->where('documentSystemID', $input["addedDocumentSystemID"])
+            ->where('serviceLineSystemID', $serviceLineSystemID)
             ->groupBy('PayMasterAutoId', 'documentSystemID', 'BPVsupplierID', 'supplierTransCurrencyID')->first();
 
         if($input['tempType'] == 1){
