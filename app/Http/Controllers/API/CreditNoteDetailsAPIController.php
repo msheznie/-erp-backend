@@ -348,7 +348,7 @@ class CreditNoteDetailsAPIController extends AppBaseController
         if ($isVATEligible) {
             $defaultVAT = TaxService::getDefaultVAT($master->companySystemID, $master->customerID, 0);
             $inputData['vatSubCategoryID'] = $defaultVAT['vatSubCategoryID'];
-            $inputData['VATPercentage'] = $defaultVAT['percentage'];
+            $inputData['VATPercentage'] = $master->VATPercentage;
             $inputData['vatMasterCategoryID'] = $defaultVAT['vatMasterCategoryID'];
         }
 
