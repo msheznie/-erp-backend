@@ -1567,6 +1567,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                         $data['createdUserID'] = $created_by['empID'];
                         $data['createdUserSystemID'] = $created_by['employeeSystemID'];
                         $data['createdUserPC'] = gethostname();
+                        $data['matchDocumentMasterAutoID'] = $matchDocumentMaster->matchDocumentMasterAutoID;
                         $data['timestamp'] = \Helper::currentDateTime();
 
                         if ($ap) {
