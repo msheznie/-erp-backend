@@ -1717,12 +1717,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
         } elseif ($input['documentSystemID'] == 19) {
 
-            $creditNoteDetails = CreditNoteDetails::find($input['PayMasterAutoId']);
-            if (empty($creditNoteDetails)) {
-                return $this->sendError('Credit Note Details not found');
-            }
-
-            $creditNoteDataUpdateCHK = CreditNote::find($creditNoteDetails->creditNoteAutoID);
+            $creditNoteDataUpdateCHK = CreditNote::find($input['PayMasterAutoId']);
             if (empty($creditNoteDataUpdateCHK)) {
                 return $this->sendError('Credit Note not found');
             }
@@ -1938,12 +1933,8 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 $CustomerReceivePaymentDataUpdate->save();
             }
             if ($input['documentSystemID'] == 19) {
-                $creditNoteDetails = CreditNoteDetails::find($input['PayMasterAutoId']);
-                if (empty($creditNoteDetails)) {
-                    return $this->sendError('Credit Note Details not found');
-                }
 
-                $creditNoteDataUpdate = CreditNote::find($creditNoteDetails->creditNoteAutoID);
+                $creditNoteDataUpdate = CreditNote::find($input['PayMasterAutoId']);
                 if (empty($creditNoteDataUpdate)) {
                     return $this->sendError('Credit Note not found');
                 }
@@ -2685,7 +2676,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                                     (IFNULL(
                                                         receipt.SumOfreceiptAmount,
                                                         0
-                                                    ) * -1) + IFNULL(advd.SumOfmatchingAmount, 0)
+                                                    )* -1) + IFNULL(advd.SumOfmatchingAmount, 0)
                                                 )
                                             ) AS BalanceAmt
                                         FROM
@@ -2698,20 +2689,24 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                                 addedDocumentSystemID,
                                                 bookingInvCodeSystem,
                                                 bookingInvCode,
-                                                companySystemID,
+                                                erp_custreceivepaymentdet.companySystemID,
+                                                erp_accountsreceivableledger.serviceLineSystemID,
                                                 COALESCE (SUM(receiveAmountTrans), 0) AS SumOfreceiptAmount
                                             FROM
                                                 erp_custreceivepaymentdet
+                                            INNER JOIN erp_accountsreceivableledger ON erp_accountsreceivableledger.arAutoID = erp_custreceivepaymentdet.arAutoID
                                             WHERE
                                                 bookingInvCode <> '0'
                                             GROUP BY
                                                 addedDocumentSystemID,
                                                 bookingInvCodeSystem,
-                                                companySystemID
+                                                companySystemID,
+                                                erp_accountsreceivableledger.serviceLineSystemID
                                         ) AS receipt ON (
                                             receipt.bookingInvCodeSystem = erp_creditnote.creditNoteAutoID
                                             AND receipt.addedDocumentSystemID = erp_creditnote.documentSystemiD
                                             AND receipt.companySystemID = erp_creditnote.companySystemID
+                                            AND receipt.serviceLineSystemID = erp_creditnotedetails.serviceLineSystemID
                                         )
                                         LEFT JOIN (
                                             SELECT
