@@ -468,6 +468,11 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
     public function updateCustomerReciept(Request $request)
     {
         $input = $request->all();
+        $serviceLineSystemID = null;
+        if (isset($input['ar_data'])) {
+            $serviceLineSystemID = $input['ar_data']['serviceLineSystemID'];
+        }
+
 
         if (isset($input['ar_data'])) {
             unset($input['ar_data']);
@@ -500,6 +505,7 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
             ->where('companySystemID', $input["companySystemID"])
             ->where('PayMasterAutoId', $input["bookingInvCodeSystem"])
             ->where('documentSystemID', $input["addedDocumentSystemID"])
+            ->where('serviceLineSystemID', $serviceLineSystemID)
             ->groupBy('PayMasterAutoId', 'documentSystemID', 'BPVsupplierID', 'supplierTransCurrencyID')->first();
 
         if($input['tempType'] == 1){
@@ -539,6 +545,7 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
             ->where('companySystemID', $input["companySystemID"])
             ->where('PayMasterAutoId', $input["bookingInvCodeSystem"])
             ->where('documentSystemID', $input["addedDocumentSystemID"])
+            ->where('serviceLineSystemID', $serviceLineSystemID)
             ->groupBy('PayMasterAutoId', 'documentSystemID', 'BPVsupplierID', 'supplierTransCurrencyID')->first();
 
         $totReceiveAmount = $totalReceiveAmountTrans + $matchedAmount['SumOfmatchedAmount'];
@@ -704,6 +711,10 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
     public function updateReceiptVoucherMatchDetail(Request $request)
     {
         $input = $request->all();
+
+        if (isset($input['ar_data'])) {
+            unset($input['ar_data']);
+        }
 
         $receiptVoucherDetails = $this->customerReceivePaymentDetailRepository->findWithoutFail($input['custRecivePayDetAutoID']);
 

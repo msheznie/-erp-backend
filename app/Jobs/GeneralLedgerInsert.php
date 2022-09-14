@@ -2704,7 +2704,7 @@ class GeneralLedgerInsert implements ShouldQueue
                         $detailsCreditNote = CreditNoteDetails::with(['chartofaccount'])
                             ->selectRaw("SUM(netAmountLocal) as localAmount, SUM(netAmountRpt) as rptAmount, SUM(netAmount) as transAmount, SUM(VATAmount) as transTax, SUM(VATAmountLocal) as localTax, SUM(VATAmountRpt) as rptTax, chartOfAccountSystemID as financeGLcodePLSystemID,glCode as financeGLcodePL,localCurrency as localCurrencyID,comRptCurrency as reportingCurrencyID,creditAmountCurrency as transCurrencyID,comRptCurrencyER as reportingCurrencyER,localCurrencyER,creditAmountCurrencyER as transCurrencyER,serviceLineSystemID,serviceLineCode,clientContractID,contractUID,comments,chartOfAccountSystemID")
                             ->WHERE('creditNoteAutoID', $masterModel["autoID"])
-                            ->groupBy('serviceLineSystemID', 'chartOfAccountSystemID', 'clientContractID', 'comments')
+                            ->groupBy('serviceLineSystemID')
                             ->get();
 
                         $taxGLCode = Company::find($masterModel["companySystemID"]);
@@ -4009,9 +4009,14 @@ class GeneralLedgerInsert implements ShouldQueue
                             ->get();
 
 
-                        $directReceipts = DirectReceiptDetail::selectRaw("SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount,SUM(DRAmount) as transAmount,chartOfAccountSystemID as financeGLcodePLSystemID,glCode as financeGLcodePL,localCurrency as localCurrencyID,comRptCurrency as reportingCurrencyID,DRAmountCurrency as transCurrencyID,comRptCurrencyER as reportingCurrencyER,localCurrencyER,DDRAmountCurrencyER as transCurrencyER,serviceLineSystemID,serviceLineCode")
+                        $directReceipts = DirectReceiptDetail::selectRaw("SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount,SUM(DRAmount) as transAmount,chartOfAccountSystemID as financeGLcodePLSystemID,glCode as financeGLcodePL,localCurrency as localCurrencyID,comRptCurrency as reportingCurrencyID,DRAmountCurrency as transCurrencyID,comRptCurrencyER as reportingCurrencyER,localCurrencyER,DDRAmountCurrencyER as transCurrencyER,serviceLineSystemID,serviceLineCode, SUM(VATAmount) as VATAmount, SUM(VATAmountLocal) as VATAmountLocal, SUM(VATAmountRpt) as VATAmountRpt")
                             ->WHERE('directReceiptAutoID', $masterModel["autoID"])
                             ->groupBy('serviceLineSystemID', 'chartOfAccountSystemID')
+                            ->get();
+
+                        $advReceipts = AdvanceReceiptDetails::selectRaw("SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount, SUM(paymentAmount) as transAmount, localCurrencyID as localCurrencyID, comRptCurrencyID as reportingCurrencyID,customerTransCurrencyID as transCurrencyID, comRptER as reportingCurrencyER, localER, customerTransER as transCurrencyER,serviceLineSystemID,serviceLineCode, SUM(VATAmount) as VATAmount, SUM(VATAmountLocal) as VATAmountLocal, SUM(VATAmountRpt) as VATAmountRpt")
+                            ->WHERE('custReceivePaymentAutoID', $masterModel["autoID"])
+                            ->groupBy('serviceLineSystemID')
                             ->get();
 
                         $ddBySegments = DirectReceiptDetail::with(['chartofaccount'])
@@ -4200,6 +4205,28 @@ class GeneralLedgerInsert implements ShouldQueue
                                     $data['timestamp'] = \Helper::currentDateTime();
                                     array_push($finalData, $data);
                                 }
+
+                                    foreach ($advReceipts as $advReceipt)
+                                    {
+                                        $data['chartOfAccountSystemID'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 6) : $masterData->bank->chartOfAccountSystemID;
+                                        $data['glCode'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 6) : $masterData->bank->glCodeLinked;
+                                        $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                                        $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                                        $data['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
+                                        $data['documentTransCurrencyER'] = $masterData->custTransactionCurrencyER;
+                                        $data['documentTransAmount'] = \Helper::roundValue($advReceipt->transAmount);
+                                        $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
+                                        $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
+                                        $data['documentLocalAmount'] = \Helper::roundValue($advReceipt->localAmount);
+                                        $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
+                                        $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
+                                        $data['documentRptAmount'] = \Helper::roundValue($advReceipt->rptAmount);
+                                        $data['serviceLineSystemID'] = $advReceipt->serviceLineSystemID;
+                                        $data['serviceLineCode'] = $advReceipt->serviceLineCode;
+                                        $data['timestamp'] = \Helper::currentDateTime();
+                                        array_push($finalData, $data);
+                                    }
+
                                 }
 
                                 if ($masterData->documentType == 15) {
@@ -4223,6 +4250,27 @@ class GeneralLedgerInsert implements ShouldQueue
                                         $data['timestamp'] = \Helper::currentDateTime();
                                         array_push($finalData, $data);
                                     }
+
+                                    foreach ($advReceipts as $advReceipt) {
+                                        $data['serviceLineSystemID'] = $advReceipt->serviceLineSystemID;
+                                        $data['serviceLineCode'] = $advReceipt->serviceLineCode;
+                                        $data['chartOfAccountSystemID'] = $masterData->customerGLCodeSystemID;
+                                        $data['glCode'] = $masterData->customerGLCode;
+                                        $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                                        $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                                        $data['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
+                                        $data['documentTransCurrencyER'] = $masterData->custTransactionCurrencyER;
+                                        $data['documentTransAmount'] = \Helper::roundValue($advReceipt->transAmount) * -1;
+                                        $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
+                                        $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
+                                        $data['documentLocalAmount'] = \Helper::roundValue($advReceipt->localAmount) * -1;
+                                        $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
+                                        $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
+                                        $data['documentRptAmount'] = \Helper::roundValue($advReceipt->rptAmount) * -1;
+                                        $data['timestamp'] = \Helper::currentDateTime();
+                                        array_push($finalData, $data);
+                                    }
+
                                 }
 
                                 if ($totaldd) {
@@ -4350,12 +4398,22 @@ class GeneralLedgerInsert implements ShouldQueue
                                         array_push($finalData, $data);
                                     }
                                 } else {
-                                    $data['documentTransAmount'] = \Helper::roundValue(ABS($taxTrans)) * -1;
-                                    $data['documentLocalAmount'] = \Helper::roundValue(ABS($taxLocal)) * -1;
-                                    $data['documentRptAmount'] = \Helper::roundValue(ABS($taxRpt)) * -1;
-                                    $data['serviceLineSystemID'] = 24;
-                                    $data['serviceLineCode'] = 'X';
-                                    array_push($finalData, $data);
+                                    foreach ($directReceipts as $key => $value) {
+                                        $data['documentTransAmount'] = \Helper::roundValue(ABS($value->VATAmount)) * -1;
+                                        $data['documentLocalAmount'] = \Helper::roundValue(ABS($value->VATAmountLocal)) * -1;
+                                        $data['documentRptAmount'] = \Helper::roundValue(ABS($value->VATAmountRpt)) * -1;
+                                        $data['serviceLineSystemID'] = $value->serviceLineSystemID;
+                                        $data['serviceLineCode'] = $value->serviceLineCode;
+                                        array_push($finalData, $data);
+                                    }
+                                    foreach ($advReceipts as $key => $value) {
+                                        $data['documentTransAmount'] = \Helper::roundValue(ABS($value->VATAmount)) * -1;
+                                        $data['documentLocalAmount'] = \Helper::roundValue(ABS($value->VATAmountLocal)) * -1;
+                                        $data['documentRptAmount'] = \Helper::roundValue(ABS($value->VATAmountRpt)) * -1;
+                                        $data['serviceLineSystemID'] = $value->serviceLineSystemID;
+                                        $data['serviceLineCode'] = $value->serviceLineCode;
+                                        array_push($finalData, $data);
+                                    }
                                 }
 
 
@@ -4381,11 +4439,23 @@ class GeneralLedgerInsert implements ShouldQueue
                                         Log::info('Receipt voucher VAT GL Entry IssuesId :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
                                         Log::info('Output VAT transfer GL Account not configured' . date('H:i:s'));
                                     }
+                                    foreach ($directReceipts as $key => $value) {
+                                        $data['documentTransAmount'] = \Helper::roundValue(ABS($value->VATAmount));
+                                        $data['documentLocalAmount'] = \Helper::roundValue(ABS($value->VATAmountLocal));
+                                        $data['documentRptAmount'] = \Helper::roundValue(ABS($value->VATAmountRpt));
+                                        $data['serviceLineSystemID'] = $value->serviceLineSystemID;
+                                        $data['serviceLineCode'] = $value->serviceLineCode;
+                                        array_push($finalData, $data);
+                                    }
 
-                                    $data['documentTransAmount'] = \Helper::roundValue(ABS($taxTrans));
-                                    $data['documentLocalAmount'] = \Helper::roundValue(ABS($taxLocal));
-                                    $data['documentRptAmount'] = \Helper::roundValue(ABS($taxRpt));
-                                    array_push($finalData, $data);
+                                    foreach ($advReceipts as $key => $value) {
+                                        $data['documentTransAmount'] = \Helper::roundValue(ABS($value->VATAmount));
+                                        $data['documentLocalAmount'] = \Helper::roundValue(ABS($value->VATAmountLocal));
+                                        $data['documentRptAmount'] = \Helper::roundValue(ABS($value->VATAmountRpt));
+                                        $data['serviceLineSystemID'] = $value->serviceLineSystemID;
+                                        $data['serviceLineCode'] = $value->serviceLineCode;
+                                        array_push($finalData, $data);
+                                    }
                                 }
                             }
                         }

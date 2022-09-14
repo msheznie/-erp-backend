@@ -366,7 +366,7 @@ class AccountsReceivableLedgerAPIController extends AppBaseController
                     erp_matchdocumentmaster.BPVcode,
                     erp_matchdocumentmaster.BPVsupplierID,
                     erp_matchdocumentmaster.supplierTransCurrencyID,
-                
+                    erp_matchdocumentmaster.serviceLineSystemID,
                     erp_matchdocumentmaster.matchingConfirmedYN ,
                        sum( erp_matchdocumentmaster.matchedAmount ) as matchedAmount,
                     sum( erp_matchdocumentmaster.matchLocalAmount ) as matchLocalAmount,
@@ -374,7 +374,8 @@ class AccountsReceivableLedgerAPIController extends AppBaseController
                 FROM
                     erp_matchdocumentmaster 
                 WHERE
-                    erp_matchdocumentmaster.companySystemID = $master->companySystemID  
+                    erp_matchdocumentmaster.companySystemID = $master->companySystemID
+                    AND erp_matchdocumentmaster.matchingConfirmedYN = 1
                     AND erp_matchdocumentmaster.documentSystemID IN (  19 ) 
                     GROUP BY 	erp_matchdocumentmaster.PayMasterAutoId,
                     erp_matchdocumentmaster.companyID,
@@ -382,11 +383,12 @@ class AccountsReceivableLedgerAPIController extends AppBaseController
                     erp_matchdocumentmaster.BPVcode,
                     erp_matchdocumentmaster.BPVsupplierID,
                     erp_matchdocumentmaster.supplierTransCurrencyID,
-                
+                    erp_matchdocumentmaster.serviceLineSystemID,
                     erp_matchdocumentmaster.matchingConfirmedYN 
                     ) md ON md.documentSystemID = erp_accountsreceivableledger.documentSystemID 
                     AND md.PayMasterAutoId = erp_accountsreceivableledger.documentCodeSystem 
                     AND md.BPVsupplierID = erp_accountsreceivableledger.customerID 
+                    AND md.serviceLineSystemID = erp_accountsreceivableledger.serviceLineSystemID 
                     AND md.supplierTransCurrencyID = custTransCurrencyID
                     LEFT JOIN currencymaster ON custTransCurrencyID = currencymaster.currencyID 
                 WHERE

@@ -198,8 +198,11 @@ class AdvanceReceiptDetails extends Model
         'VATAmount',
         'VATAmountLocal',
         'VATAmountRpt',
+        'serviceLineSystemID',
+        'serviceLineCode',
         'timesReferred',
         'timeStamp'
+
     ];
 
     /**
