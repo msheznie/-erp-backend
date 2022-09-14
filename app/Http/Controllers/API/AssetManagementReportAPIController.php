@@ -1426,6 +1426,8 @@ class AssetManagementReportAPIController extends AppBaseController
                         $data[$x]['AccountDescription'] = isset($val->chart_of_account->AccountDescription) ? $val->chart_of_account->AccountDescription : "";
                         $data[$x]['AssetCode'] = isset($val->asset->faCode) ? $val->asset->faCode : "";
                         $data[$x]['AssetDescription'] = isset($val->asset->assetDescription) ? $val->asset->assetDescription : "";
+                        $data[$x]['ChartOfAccountSystemID'] = isset($val->chartOfAccountSystemID) ? $val->chartOfAccountSystemID : 0;
+                        $data[$x]['AssetID'] = isset($val->assetID) ? $val->assetID : 0;
 
                         if ($val->documentSystemID == 11) {
                             $data[$x]['DocumentCode'] = isset($val->supplier_invoice->bookingInvCode) ? $val->supplier_invoice->bookingInvCode : "";
@@ -1468,6 +1470,10 @@ class AssetManagementReportAPIController extends AppBaseController
                         foreach ($data as $element) {
                             $headers[$element['AccountCode']][] = $element;
                         }
+                        $headers = array_values($headers);
+
+                        usort($headers, function ($a, $b) {return $a[0]['ChartOfAccountSystemID'] > $b[0]['ChartOfAccountSystemID'];});
+
 
 
                         $reportData = array('reportData' => $data, 'headers' => $headers, 'fromDate' => $fromDate, 'toDate' => $toDate, 'currency' => $companyCurrency, 'currencyID' => $request->currencyID);
@@ -1479,7 +1485,9 @@ class AssetManagementReportAPIController extends AppBaseController
                         foreach ($data as $element) {
                             $headers[$element['AssetCode']][] = $element;
                         }
+                        $headers = array_values($headers);
 
+                        usort($headers, function ($a, $b) {return $a[0]['AssetID'] > $b[0]['AssetID'];});
 
                         $reportData = array('reportData' => $data, 'headers' => $headers, 'fromDate' => $fromDate, 'toDate' => $toDate, 'currency' => $companyCurrency, 'currencyID' => $request->currencyID);
                         $templateName = "export_report.asset_wise_expenses";
@@ -1491,7 +1499,9 @@ class AssetManagementReportAPIController extends AppBaseController
                     foreach ($data as $element) {
                         $headers[$element['AccountCode']][] = $element;
                     }
+                    $headers = array_values($headers);
 
+                    usort($headers, function ($a, $b) {return $a[0]['ChartOfAccountSystemID'] > $b[0]['ChartOfAccountSystemID'];});
 
                     $reportData = array('reportData' => $data, 'headers' => $headers, 'fromDate' => $fromDate, 'toDate' => $toDate, 'currency' => $companyCurrency, 'currencyID' => $request->currencyID);
                     $templateName = "export_report.asset_expenses";
