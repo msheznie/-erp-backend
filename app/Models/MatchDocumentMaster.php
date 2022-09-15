@@ -371,6 +371,8 @@ class MatchDocumentMaster extends Model
         'matchLocalAmount',
         'matchRptAmount',
         'matchingType',
+        'tableType',
+        'serviceLineSystemID',
         'matchingOption',
         'isExchangematch',
         'createdUserSystemID',
@@ -468,6 +470,10 @@ class MatchDocumentMaster extends Model
      public function reciept_voucher()
     {
         return $this->belongsTo(CustomerReceivePayment::class, 'PayMasterAutoId', 'custReceivePaymentAutoID');
+    }
+
+    public function segment(){
+        return $this->belongsTo('App\Models\SegmentMaster','serviceLineSystemID','serviceLineSystemID');
     }
 
     public function created_by()

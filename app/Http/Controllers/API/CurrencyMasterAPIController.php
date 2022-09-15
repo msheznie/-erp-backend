@@ -174,7 +174,6 @@ class CurrencyMasterAPIController extends AppBaseController
             return $this->sendError('Selected currency is assigned already',500);
         }
 
-
         $supplierCurrency = new SupplierCurrency();
         $supplierCurrency->supplierCodeSystem = $request['supplierId'];
         $supplierCurrency->currencyID = $request['currencyId'];

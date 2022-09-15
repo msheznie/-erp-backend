@@ -733,4 +733,9 @@ class ProcumentOrder extends Model
     {
         return $this->hasMany('App\Models\BudgetReviewTransferAddition', ['documentSystemCode', 'documentSystemID'], ['purchaseOrderID', 'documentSystemID']);
     }
+
+     public function budget_consumed_data()
+    {
+        return $this->hasMany('App\Models\BudgetConsumedData', ['documentSystemCode', 'documentSystemID'], ['purchaseOrderID', 'documentSystemID']);
+    }
 }
