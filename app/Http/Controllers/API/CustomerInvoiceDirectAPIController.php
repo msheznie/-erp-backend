@@ -3404,6 +3404,24 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 })->download('csv');
             }
 
+        } else if ($printTemplate['printTemplateID'] == 12) {
+            if($type == 1)
+            {
+                $html = view('print.rihal_customer_invoice', $array);
+                $pdf = \App::make('dompdf.wrapper');
+                $pdf->loadHTML($html);
+    
+                return $pdf->setPaper('a4')->setWarnings(false)->stream($fileName);
+            }
+            else if($type == 2)
+            {
+                return \Excel::create($fileName_csv, function ($excel) use ($array) {
+                    $excel->sheet('New sheet', function ($sheet) use ($array) {
+                        $sheet->loadView('export_report.rihal_customer_invoice', $array)->with('no_asset', true);
+                    });
+                })->download('csv');
+            }
+
         } else if ($printTemplate['printTemplateID'] == 6) {
 
             if($type == 1)
