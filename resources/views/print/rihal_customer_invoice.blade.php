@@ -190,9 +190,9 @@
 
 <div class="content">
     <div class="row">
-        <table style="width:100%">
+        <table class="table_height" style="width:100%">
             <tr>
-                <td width="50%">
+                <td width="20%">
                     @if($request->logo)
                            @if($type == 1)
                             <img src="{{$request->companyLogo}}"
@@ -205,7 +205,7 @@
                 </td>
 
 
-                <td width="50%" style="text-align: center;white-space: nowrap">
+                <td width="80%" style="text-align: center;white-space: nowrap">
                     <table style="width: 100%">
                         <tr>
                             <th>{{$request->CompanyName}}</th>
