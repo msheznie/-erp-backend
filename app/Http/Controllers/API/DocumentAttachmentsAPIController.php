@@ -613,9 +613,9 @@ class DocumentAttachmentsAPIController extends AppBaseController
                 'contract_details'=>function($query){
                     $query->select('purchaseRequestID','purchaseRequestCode','companySystemID','documentSystemID');
                 },*/
-                'mobile_bill' => function ($query) {
+               /* 'mobile_bill' => function ($query) {
                     $query->select('mobilebillMasterID', 'mobilebillmasterCode', 'documentSystemID');
-                },
+                },*/
                 /*'proforma'=>function($query){
                     $query->select('purchaseRequestID','purchaseRequestCode','companySystemID','documentSystemID');
                 },*/

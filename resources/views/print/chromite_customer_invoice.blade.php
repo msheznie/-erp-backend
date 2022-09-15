@@ -172,6 +172,19 @@
         font-weight: normal;
         font-size:10px;
     }
+    .container
+          {
+            display: block;
+            max-width:230px;
+            max-height:95px;
+            width: auto;
+            height: auto;
+            }
+
+    .table_height
+    {
+        max-height: 60px !important;
+    }
 
 
 </style>
