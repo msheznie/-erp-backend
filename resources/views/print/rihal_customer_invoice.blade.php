@@ -289,7 +289,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <td><b>segment </b></td>
+                            <td><b>Segment </b></td>
                             <td>: @if(!empty($request->segment->ServiceLineDes))
                                     {{$request->segment->ServiceLineDes}}
                                 @endif
@@ -487,14 +487,17 @@
                 <tr class="theme-tr-head">
                     <th style="width:3%"></th>
                     <th style="width:10%;text-align: center">GL Code</th>
-                    <th style="width:40%;text-align: center">GL Code Description</th>
-                    <th style="width:10%;text-align: center">UOM</th>
+                    <th style="width:35%;text-align: center">GL Code Description</th>
+                    <th style="width:7%;text-align: center">UOM</th>
                     <th style="width:10%;text-align: center">QTY</th>
                     <th style="width:10%;text-align: center">Unit Rate</th>
                     <th style="width:10%;text-align: center">Taxable Amount</th>
                     <th style="width:7%;text-align: center">VAT</th>
                     <th style="width:10%;text-align: center">VAT Amount</th>
-                    <th style="width:10%;text-align: center">Net Amount</th>
+                    <th style="width:18%;text-align: center">Net Amount @if(!empty($request->currency->CurrencyName))
+                                                                            ({{$request->currency->CurrencyCode}})
+                                                                        @endif
+                    </th>
                 </tr>
                 </thead>
                 <tbody>
@@ -537,7 +540,9 @@
                     <th style="width:10%;text-align: center">Taxable Amount</th>
                     <th style="width:7%;text-align: center">VAT</th>
                     <th style="width:10%;text-align: center">VAT Amount</th>
-                    <th style="width:10%;text-align: center">Net Amount</th>
+                    <th style="width:10%;text-align: center">Net Amount @if(!empty($request->currency->CurrencyName))
+                                                                            ({{$request->currency->CurrencyCode}})
+                                                                        @endif</th>
                 </tr>
                 </thead>
                 <tbody>
