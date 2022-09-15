@@ -371,6 +371,8 @@ class MatchDocumentMaster extends Model
         'matchLocalAmount',
         'matchRptAmount',
         'matchingType',
+        'tableType',
+        'serviceLineSystemID',
         'matchingOption',
         'isExchangematch',
         'createdUserSystemID',
@@ -465,19 +467,13 @@ class MatchDocumentMaster extends Model
         return $this->belongsTo(CreditNote::class, 'PayMasterAutoId', 'creditNoteAutoID');
     }
 
-    public function credit_note_details()
-    {
-        return $this->belongsTo(CreditNoteDetails::class, 'PayMasterAutoId', 'creditNoteDetailsID');
-    }
-
      public function reciept_voucher()
     {
         return $this->belongsTo(CustomerReceivePayment::class, 'PayMasterAutoId', 'custReceivePaymentAutoID');
     }
 
-    public function direct_receipt_details()
-    {
-        return $this->belongsTo(DirectReceiptDetail::class, 'PayMasterAutoId', 'directReceiptDetailsID');
+    public function segment(){
+        return $this->belongsTo('App\Models\SegmentMaster','serviceLineSystemID','serviceLineSystemID');
     }
 
     public function created_by()

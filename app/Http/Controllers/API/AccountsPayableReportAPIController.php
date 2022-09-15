@@ -2190,6 +2190,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                     AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
                                     AND YEAR ( erp_generalledger.documentDate ) = "' . $year . '"
                                     AND erp_generalledger.documentTransAmount > 0 
+                                    AND erp_generalledger.contraYN = 0
                                 ) AS MAINQUERY
                                 ) AS paymentsBySupplierSummary
                                 ORDER BY paymentsBySupplierSummary.documentRptAmount DESC');
@@ -2287,7 +2288,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 AND erp_generalledger.supplierCodeSystem > 0 
                                 AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
                                 AND YEAR ( erp_generalledger.documentDate ) = "' . $year . '"
-                                AND erp_generalledger.documentTransAmount > 0 
+                                AND erp_generalledger.documentTransAmount > 0
+                                AND erp_generalledger.contraYN = 0 
                             ) AS MAINQUERY
                             ) AS paymentsBySupplierSummary
                                 GROUP BY
@@ -2578,6 +2580,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ') 
                                 AND YEAR ( erp_generalledger.documentDate ) = "' . $year . '"
                                 AND erp_generalledger.documentTransAmount > 0 
+                                AND erp_generalledger.contraYN = 0
                             ) AS MAINQUERY
                             ) AS paymentsBySupplierSummary
                                 GROUP BY
@@ -2681,6 +2684,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                         AND (erp_generalledger.supplierCodeSystem IS NULL 
                                         OR erp_generalledger.supplierCodeSystem = 0) -- hard code filers
                                         AND YEAR ( erp_generalledger.documentDate ) = "' . $year . '" 
+                                        AND erp_generalledger.contraYN = 0
                                         AND erp_generalledger.documentTransAmount > 0 -- hard code this filter
                                         ) AS MAINQUERY 
                                         ) AS directPaymentsSummary 

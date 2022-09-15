@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\AccountsReceivableLedger;
+use App\Models\AdvanceReceiptDetails;
 use App\Models\CreditNote;
 use App\Models\CreditNoteDetails;
 use App\Models\DirectReceiptDetail;
@@ -61,9 +62,9 @@ class AccountReceivableLedgerInsert implements ShouldQueue
 
                         //all details
                         $detailsCreditNote = CreditNoteDetails::with(['chartofaccount'])
-                            ->selectRaw("netAmountLocal as localAmount, netAmountRpt as rptAmount, netAmount as transAmount, VATAmount as transTax, VATAmountLocal as localTax, VATAmountRpt as rptTax, chartOfAccountSystemID as financeGLcodePLSystemID,glCode as financeGLcodePL,localCurrency as localCurrencyID,comRptCurrency as reportingCurrencyID,creditAmountCurrency as transCurrencyID,comRptCurrencyER as reportingCurrencyER,localCurrencyER,creditAmountCurrencyER as transCurrencyER,serviceLineSystemID,serviceLineCode,clientContractID,contractUID,comments,chartOfAccountSystemID")
+                            ->selectRaw("SUM(netAmountLocal) as localAmount, SUM(netAmountRpt) as rptAmount, SUM(netAmount) as transAmount, SUM(VATAmount) as transTax, SUM(VATAmountLocal) as localTax, SUM(VATAmountRpt) as rptTax, chartOfAccountSystemID as financeGLcodePLSystemID,glCode as financeGLcodePL,localCurrency as localCurrencyID,comRptCurrency as reportingCurrencyID,creditAmountCurrency as transCurrencyID,comRptCurrencyER as reportingCurrencyER,localCurrencyER,creditAmountCurrencyER as transCurrencyER,serviceLineSystemID,serviceLineCode,clientContractID,contractUID,comments,chartOfAccountSystemID")
                             ->WHERE('creditNoteAutoID', $masterModel["autoID"])
-                            ->groupBy('serviceLineSystemID', 'chartOfAccountSystemID', 'clientContractID', 'comments')
+                            ->groupBy('serviceLineSystemID', 'clientContractID', 'comments')
                             ->get();
 
                         $taxLocal = 0;
@@ -83,41 +84,40 @@ class AccountReceivableLedgerInsert implements ShouldQueue
 
                         if ($masterData) {
                             foreach ($detailsCreditNote as $detail) {
-
                                 $data['companySystemID'] = $masterData->companySystemID;
-                            $data['companyID'] = $masterData->companyID;
-                            $data['documentSystemID'] = $masterData->documentSystemiD;
-                            $data['documentID'] = $masterData->documentID;
-                            $data['documentCodeSystem'] = $masterModel["autoID"];
-                            $data['documentCode'] = $masterData->creditNoteCode;
-                            $data['documentDate'] = $masterDocumentDate;
+                                $data['companyID'] = $masterData->companyID;
+                                $data['documentSystemID'] = $masterData->documentSystemiD;
+                                $data['documentID'] = $masterData->documentID;
+                                $data['documentCodeSystem'] = $masterModel["autoID"];
+                                $data['documentCode'] = $masterData->creditNoteCode;
+                                $data['documentDate'] = $masterDocumentDate;
                                 $data['serviceLineSystemID'] = $detail->serviceLineSystemID;
                                 $data['serviceLineCode'] = $detail->serviceLineCode;
-                            $data['customerID'] = $masterData->customerID;
-                            $data['InvoiceNo'] = null;
-                            $data['InvoiceDate'] = null;
-                            $data['custTransCurrencyID'] = $masterData->customerCurrencyID;
-                            $data['custTransER'] = $masterData->customerCurrencyER;
-                            $data['custInvoiceAmount'] = ABS($detail->transAmount + $detail->transTax) * -1;
-                            $data['custDefaultCurrencyID'] = 0;
-                            $data['custDefaultCurrencyER'] = 0;
-                            $data['custDefaultAmount'] = 0;
-                            $data['localCurrencyID'] = $masterData->localCurrencyID;
-                            $data['localER'] = $masterData->localCurrencyER;
-                            $data['localAmount'] = \Helper::roundValue(ABS($detail->localAmount + $detail->localTax) * -1);
-                            $data['comRptCurrencyID'] = $masterData->companyReportingCurrencyID;
-                            $data['comRptER'] = $masterData->companyReportingER;
-                            $data['comRptAmount'] = \Helper::roundValue(ABS($detail->rptAmount + $detail->rptTax) * -1);
-                            $data['isInvoiceLockedYN'] = 0;
-                            $data['documentType'] = $masterData->documentType;
-                            $data['selectedToPaymentInv'] = 0;
-                            $data['fullyInvoiced'] = 0;
-                            $data['createdDateTime'] = \Helper::currentDateTime();
-                            $data['createdUserID'] = $empID->empID;
-                            $data['createdUserSystemID'] = $empID->employeeSystemID;
-                            $data['createdPcID'] = gethostname();
-                            $data['timeStamp'] = \Helper::currentDateTime();
-                            array_push($finalData, $data);
+                                $data['customerID'] = $masterData->customerID;
+                                $data['InvoiceNo'] = null;
+                                $data['InvoiceDate'] = null;
+                                $data['custTransCurrencyID'] = $masterData->customerCurrencyID;
+                                $data['custTransER'] = $masterData->customerCurrencyER;
+                                $data['custInvoiceAmount'] = ABS($detail->transAmount + $detail->transTax) * -1;
+                                $data['custDefaultCurrencyID'] = 0;
+                                $data['custDefaultCurrencyER'] = 0;
+                                $data['custDefaultAmount'] = 0;
+                                $data['localCurrencyID'] = $masterData->localCurrencyID;
+                                $data['localER'] = $masterData->localCurrencyER;
+                                $data['localAmount'] = \Helper::roundValue(ABS($detail->localAmount + $detail->localTax) * -1);
+                                $data['comRptCurrencyID'] = $masterData->companyReportingCurrencyID;
+                                $data['comRptER'] = $masterData->companyReportingER;
+                                $data['comRptAmount'] = \Helper::roundValue(ABS($detail->rptAmount + $detail->rptTax) * -1);
+                                $data['isInvoiceLockedYN'] = 0;
+                                $data['documentType'] = $masterData->documentType;
+                                $data['selectedToPaymentInv'] = 0;
+                                $data['fullyInvoiced'] = 0;
+                                $data['createdDateTime'] = \Helper::currentDateTime();
+                                $data['createdUserID'] = $empID->empID;
+                                $data['createdUserSystemID'] = $empID->employeeSystemID;
+                                $data['createdPcID'] = gethostname();
+                                $data['timeStamp'] = \Helper::currentDateTime();
+                                array_push($finalData, $data);
                             }
                         }
                         break;
@@ -166,6 +166,8 @@ class AccountReceivableLedgerInsert implements ShouldQueue
                             $data['custDefaultAmount'] = 0;
                             $data['localCurrencyID'] = $masterData->localCurrencyID;
                             $data['localER'] = $masterData->localCurrencyER;
+                            $data['serviceLineSystemID'] = $masterData->serviceLineSystemID;
+                            $data['serviceLineCode'] = $masterData->serviceLineCode;
 
                             $data['comRptCurrencyID'] = $masterData->companyReportingCurrencyID;
                             $data['comRptER'] = $masterData->companyReportingER;
@@ -229,6 +231,11 @@ class AccountReceivableLedgerInsert implements ShouldQueue
 
                         $directReceiptsBySegments = DirectReceiptDetail::selectRaw("SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount,SUM(DRAmount) as transAmount,chartOfAccountSystemID as financeGLcodePLSystemID,glCode as financeGLcodePL,localCurrency as localCurrencyID,comRptCurrency as reportingCurrencyID,DRAmountCurrency as transCurrencyID,comRptCurrencyER as reportingCurrencyER,localCurrencyER,DDRAmountCurrencyER as transCurrencyER,serviceLineSystemID,serviceLineCode")
                             ->WHERE('directReceiptAutoID', $masterModel["autoID"])
+                            ->groupBy('serviceLineSystemID')
+                            ->get();
+
+                        $advReceiptsBySegments = AdvanceReceiptDetails::selectRaw("SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount,SUM(paymentAmount) as transAmount,serviceLineSystemID,serviceLineCode")
+                            ->WHERE('custReceivePaymentAutoID', $masterModel["autoID"])
                             ->groupBy('serviceLineSystemID')
                             ->get();
 
@@ -313,8 +320,20 @@ class AccountReceivableLedgerInsert implements ShouldQueue
                                         array_push($finalData, $data);
                                     }
 
-                                } elseif ($masterData->documentType == 15) {
+                                } else if ($masterData->documentType == 15) {
+
                                     foreach ($directReceiptsBySegments as $detail) {
+
+                                        $data['serviceLineSystemID'] = $detail->serviceLineSystemID;
+                                        $data['serviceLineCode'] = $detail->serviceLineCode;
+                                        $data['custInvoiceAmount'] = $detail->transAmount;
+                                        $data['localAmount'] = $detail->localAmount;
+                                        $data['comRptAmount'] = $detail->rptAmount;
+                                        array_push($finalData, $data);
+                                    }
+
+                                    foreach ($advReceiptsBySegments as $detail) {
+
                                         $data['serviceLineSystemID'] = $detail->serviceLineSystemID;
                                         $data['serviceLineCode'] = $detail->serviceLineCode;
                                         $data['custInvoiceAmount'] = $detail->transAmount;
@@ -354,6 +373,8 @@ class AccountReceivableLedgerInsert implements ShouldQueue
                             $data['documentCode'] = $masterData->salesReturnCode;
                             $data['documentDate'] = $masterDocumentDate;
                             $data['customerID'] = $masterData->customerID;
+                            $data['serviceLineCode'] = $masterData->serviceLineCode;
+                            $data['serviceLineSystemID'] = $masterData->serviceLineSystemID;
                             $data['InvoiceNo'] = null;
                             $data['InvoiceDate'] = null;
                             $data['custTransCurrencyID'] = $masterData->transactionCurrencyID;
