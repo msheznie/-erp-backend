@@ -179,6 +179,12 @@
         max-height: 60px !important;
     }
 
+    .underline {
+    flex-grow: 1;
+    border-bottom: 1px solid black;
+    margin-left: 5px;
+    }
+
 
 </style>
 
@@ -186,7 +192,7 @@
     <div class="row">
         <table style="width:100%">
             <tr>
-                <td width="30%">
+                <td width="50%">
                     @if($request->logo)
                            @if($type == 1)
                             <img src="{{$request->companyLogo}}"
@@ -200,25 +206,6 @@
 
 
                 <td width="50%" style="text-align: center;white-space: nowrap">
-                    <div class="text-center">
-
-                        <h3 class="font-weight-bold">
-                            Tax Invoice
-                        </h3>
-                    </div>
-
-                </td>
-                <td style="width: 30%"></td>
-            </tr>
-        </table>
-    </div>
-    <div class="row">
-        <br>
-    </div>
-    <div class="row">
-        <table style="width: 100%">
-            <tr>
-                <td style="width: 50%; text-align: left;vertical-align: top;">
                     <table style="width: 100%">
                         <tr>
                             <th>{{$request->CompanyName}}</th>
@@ -239,27 +226,61 @@
                             <td style="width: 50%">: {{$request->CompanyFax}}</td>
                             <td style="width: 30%"></td>
                         </tr>
-                        <tr>
-                            <td style="width: 20%"><b>VAT No </b></td>
-                            <td style="width: 50%">: {{$request->vatRegistratonNumber}}</td>
-                            <td style="width: 30%"></td>
-                        </tr>
+
                     </table>
                 </td>
+            </tr>
+        </table>
+    </div>
+    <div class="row underline">
+        <br>
+    </div>
+    <br>
+    <div class="row">
+        <table style="width: 100%">
+            <tr>
+                <td width="100%" style="text-align: center;white-space: nowrap">
+                    <div class="text-center">
 
+                        <span class="font-weight-bold" style="font-size: 17px">
+                            Tax Invoice
+                        </span>
+                    </div>
+
+                </td>
+            </tr>
+        </table>
+        
+        <table style="width: 100%">
+            <tr>
                 <td style="width: 50%; text-align: left;vertical-align: top;">
-                    <table style="width: 100%">
+                    <table  style="width: 100%">
                         <tr>
-                            <td><b>Invoice No </b></td>
-                            <td>: {{$request->bookingInvCode}}</td>
-                        </tr>
-                        <tr>
-                            <td><b>Invoice Date </b></td>
-                            <td>: @if(!empty($request->bookingDate))
-                                    {{\App\helper\Helper::dateFormat($request->bookingDate) }}
+                            <td><b>Customer Name </b></td>
+                            <td>:@if($request->line_customerShortCode)
+                                    {{$request->customer->CutomerCode}} -
                                 @endif
-                            </td>
+                                {{$request->customer->ReportTitle}}</td>
                         </tr>
+                        <tr>
+                            <td><b>Customer Address </b></td>
+                            <td>:
+                                {{$request->customer->customerAddress1}}</td>
+                        </tr>
+                        <tr>
+                            <td><b>Contact Person </b></td>
+                            <td>: {{isset($request->CustomerContactDetails->contactPersonName)?$request->CustomerContactDetails->contactPersonName:' '}}</td>
+                        </tr>
+                        <tr>
+                            <td><b>Customer VATIN</b></td>
+                            <td>:
+                                {{$request->vatNumber}}</td>
+                        </tr>
+                        <tr>
+                            <td><b>Contact Person Tel</b></td>
+                            <td>: {{isset($request->CustomerContactDetails->contactPersonTelephone)?$request->CustomerContactDetails->contactPersonTelephone:' '}}</td>
+                        </tr>
+
                         <tr>
                             <td><b>Invoice Due Date </b></td>
                             <td>: @if(!empty($request->invoiceDueDate))
@@ -281,10 +302,48 @@
                                 @endif
                             </td>
                         </tr>
+                    </table>
+                </td>
+
+                <td style="width: 50%; text-align: left;vertical-align: top;">
+                    <table style="width: 100%">
+                        <tr>
+                            <td><b>Invoice number </b></td>
+                            <td>: {{$request->bookingInvCode}}</td>
+                        </tr>
+                        <tr>
+                            <td><b>Document Date </b></td>
+                            <td>: @if(!empty($request->bookingDate))
+                                    {{\App\helper\Helper::dateFormat($request->bookingDate) }}
+                                @endif
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><b>Reference Number </b></td>
+                            <td>: @if(!empty($request->customerInvoiceNo))
+                                {{$request->customerInvoiceNo}}
+                                @endif
+                            </td>
+                        </tr>
+
                         <tr>
                             <td><b>Currency </b></td>
                             <td>: @if(!empty($request->currency->CurrencyName))
                                     {{$request->currency->CurrencyName}} ({{$request->currency->CurrencyCode}})
+                                @endif
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><b>VATIN </b></td>
+                            <td>: @if(!empty($request->vatRegistratonNumber))
+                                {{$request->vatRegistratonNumber}}
+                                @endif
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><b>Invoice Date </b></td>
+                            <td>: @if(!empty($request->customerInvoiceDate))
+                                    {{\App\helper\Helper::dateFormat($request->customerInvoiceDate) }}
                                 @endif
                             </td>
                         </tr>
@@ -294,33 +353,6 @@
                                     {{\App\helper\Helper::dateFormat($request->date_of_supply) }}
                                 @endif
                             </td>
-                        </tr>
-                        <tr>
-                            <td><b>Name Of Customer </b></td>
-                            <td>:@if($request->line_customerShortCode)
-                                    {{$request->customer->CutomerCode}} -
-                                @endif
-                                {{$request->customer->ReportTitle}}</td>
-                        </tr>
-
-
-                        <tr>
-                            <td><b>Customer Address </b></td>
-                            <td>:
-                                {{$request->customer->customerAddress1}}</td>
-                        </tr>
-                        <tr>
-                            <td><b>Customer Telephone </b></td>
-                            <td>: {{isset($request->CustomerContactDetails->contactPersonTelephone)?$request->CustomerContactDetails->contactPersonTelephone:' '}}</td>
-                        </tr>
-                        <tr>
-                            <td><b>Customer Fax </b></td>
-                            <td>: {{isset($request->CustomerContactDetails->contactPersonFax)?$request->CustomerContactDetails->contactPersonFax:' '}}</td>
-                        </tr>
-                        <tr>
-                            <td><b>Customer VATIN</b></td>
-                            <td>:
-                                {{$request->vatNumber}}</td>
                         </tr>
 
                     </table>
@@ -459,10 +491,10 @@
                     <th style="width:10%;text-align: center">UOM</th>
                     <th style="width:10%;text-align: center">QTY</th>
                     <th style="width:10%;text-align: center">Unit Rate</th>
-                    <th style="width:10%;text-align: center">Amount Excluding VAT</th>
+                    <th style="width:10%;text-align: center">Taxable Amount</th>
                     <th style="width:7%;text-align: center">VAT</th>
                     <th style="width:10%;text-align: center">VAT Amount</th>
-                    <th style="width:10%;text-align: center">Amount Including VAT</th>
+                    <th style="width:10%;text-align: center">Net Amount</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -502,10 +534,10 @@
                     <th style="width:5%;text-align: center">UOM</th>
                     <th style="width:5%;text-align: center">QTY</th>
                     <th style="width:10%;text-align: center">Unit Rate</th>
-                    <th style="width:10%;text-align: center">Amount Excluding VAT</th>
+                    <th style="width:10%;text-align: center">Taxable Amount</th>
                     <th style="width:7%;text-align: center">VAT</th>
                     <th style="width:10%;text-align: center">VAT Amount</th>
-                    <th style="width:10%;text-align: center">Amount Including VAT</th>
+                    <th style="width:10%;text-align: center">Net Amount</th>
                 </tr>
                 </thead>
                 <tbody>
