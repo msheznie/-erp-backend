@@ -494,7 +494,7 @@
                     <th style="width:10%;text-align: center">Taxable Amount</th>
                     <th style="width:7%;text-align: center">VAT</th>
                     <th style="width:10%;text-align: center">VAT Amount</th>
-                    <th style="width:18%;text-align: center">Net Amount @if(!empty($request->currency->CurrencyName))
+                    <th style="width:18%;text-align: center">Net Amount @if(!empty($request->currency->CurrencyCode))
                                                                             ({{$request->currency->CurrencyCode}})
                                                                         @endif
                     </th>
@@ -540,7 +540,7 @@
                     <th style="width:10%;text-align: center">Taxable Amount</th>
                     <th style="width:7%;text-align: center">VAT</th>
                     <th style="width:10%;text-align: center">VAT Amount</th>
-                    <th style="width:10%;text-align: center">Net Amount @if(!empty($request->currency->CurrencyName))
+                    <th style="width:10%;text-align: center">Net Amount @if(!empty($request->currency->CurrencyCode))
                                                                             ({{$request->currency->CurrencyCode}})
                                                                         @endif</th>
                 </tr>
