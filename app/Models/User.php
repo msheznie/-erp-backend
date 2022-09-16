@@ -47,6 +47,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'uuid',
         'remember_token',
         'login_token'
     ];
@@ -62,6 +63,7 @@ class User extends Authenticatable
         'empID' => 'string',
         'name' => 'string',
         'email' => 'string',
+        'uuid' => 'string',
         'password' => 'string',
         'remember_token' => 'string',
         'login_token'=> 'string'

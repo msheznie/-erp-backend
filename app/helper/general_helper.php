@@ -3315,7 +3315,9 @@ class Helper
     public static function getEmployeeInfo()
     {
         $user = Models\User::find(Auth::id());
-        $employee = Models\Employee::with(['profilepic'])->find($user->employee_id);
+        $employee = Models\Employee::with(['profilepic', 'user_data' => function($query) {
+            $query->select('uuid', 'employee_id');
+        }])->find($user->employee_id);
         return $employee;
     }
 
@@ -3419,6 +3421,15 @@ class Helper
         $user = Models\User::find(Auth::id());
         if (!empty($user)) {
             return $user->employee_id;
+        }
+        return 0;
+    }
+
+    public static function getEmployeeUUID()
+    {
+        $user = Models\User::find(Auth::id());
+        if (!empty($user)) {
+            return $user->uuid;
         }
         return 0;
     }

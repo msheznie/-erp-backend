@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\helper\Helper;
+use App\Models\User;
+use App\Models\Employee;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -12,18 +14,37 @@ use GuzzleHttp\Client;
 
 class WebPushNotificationService
 {
+    /*
+        $data = [
+            'title' => '',
+            'body' => '',
+            'clickable' => '',
+            'type' => ,
+            'time' => ,
+            'url' => ['erp' => '', 'portal' => '', 'hrms' => ''],
 
+        ],
+        user_id = '',
+        apps = '',
+        read = '',
+
+    **/
     public static function sendNotification($data, $type , $userIds = [], $dataBase = "")
     {
+        $apps = [];
         switch ($type) {
             case 1: // confirm doc
                 $data['clickable'] = true;
                 $data['type'] = 1;
+                $data['url'] = ['erp' => $data['url'], 'portal' => $data['url']];
+                $apps = ['erp', 'portal'];
                 break;
 
             case 2: // approve doc
                 $data['clickable'] = true;
                 $data['type'] = 2;
+                $data['url'] = ['erp' => $data['url']];
+                $apps = ['erp'];
                 break;
             
             default:
@@ -34,7 +55,10 @@ class WebPushNotificationService
         $data['time'] = Carbon::now()->format('Y-m-d H:i:s');
         
         foreach ($userIds as $key => $value) {
-            WebPushNotification::dispatch($dataBase, $data, $value);
+            $employee = Employee::with(['user_data'])->find($value);
+            if ($employee && $employee->user_data) {
+                WebPushNotification::dispatch($dataBase, $data, $employee->user_data->uuid, $apps);
+            }
         }
 
         return ['status' => true];
@@ -42,12 +66,14 @@ class WebPushNotificationService
 
     public static function getUserNotifications()
     {
-        $currentUserID = Helper::getEmployeeSystemID();
+        $currentUserID = Helper::getEmployeeUUID();
 
         $client = new Client();
-        $url = env("WEB_PUSH_URL")."/notifications-by-user/".$currentUserID;
+        $url = env("WEB_PUSH_URL")."/notifications-by-user";
 
-        $response = $client->request('GET', $url);
+        $params['apps'] = ['erp'];
+        $params['uuid'] = $currentUserID;
+        $response = $client->request('POST', $url, ['json' => $params]);
 
 
         if ($response) {
@@ -69,18 +95,18 @@ class WebPushNotificationService
 
     public static function getAllNotifications()
     {
-        $currentUserID = Helper::getEmployeeSystemID();
+        $currentUserID = Helper::getEmployeeUUID();
 
         $client = new Client();
-        $url = env("WEB_PUSH_URL")."/notifications-by-user/".$currentUserID;
+        $url = env("WEB_PUSH_URL")."/notifications-by-user";
 
-        $response = $client->request('GET', $url);
+        $params['apps'] = ['erp'];
+        $params['uuid'] = $currentUserID;
+        $response = $client->request('POST', $url, ['json' => $params]);
 
 
         if ($response) {
-            $notificationData = json_decode($response->getBody(), true);
-
-            return $notificationData;
+            return $notificationData = json_decode($response->getBody(), true);
         } else {
             return [];
         }
@@ -88,8 +114,6 @@ class WebPushNotificationService
 
     public static function updateNotifications($updateData)
     {
-        $currentUserID = Helper::getEmployeeSystemID();
-
         $client = new Client();
         $url = env("WEB_PUSH_URL")."/notifications/".$updateData['_id'];
        

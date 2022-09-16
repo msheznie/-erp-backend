@@ -18,13 +18,14 @@ class WebPushNotification implements ShouldQueue
     public $dispatch_db;
     public $userId;
     public $pushData;
+    public $apps;
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($dispatch_db, $pushData, $userId)
+    public function __construct($dispatch_db, $pushData, $userId, $apps)
     {
         if(env('IS_MULTI_TENANCY',false)){
             self::onConnection('database_main');
@@ -34,6 +35,7 @@ class WebPushNotification implements ShouldQueue
         $this->dispatch_db = $dispatch_db;
         $this->userId = $userId;
         $this->pushData = $pushData;
+        $this->apps = $apps;
     }
 
     /**
@@ -47,6 +49,7 @@ class WebPushNotification implements ShouldQueue
         $db = $this->dispatch_db;
         $data = $this->pushData;
         $userID = $this->userId;
+        $appsList = $this->apps;
         CommonJobService::db_switch($db);
 
         try {
@@ -56,6 +59,7 @@ class WebPushNotification implements ShouldQueue
            
             $params['userId'] = $userID;
             $params['data'] = $data;
+            $params['apps'] = $appsList;
             $params['appName'] = env("WEB_PUSH_APP_NAME");
 
             $response = $client->request('POST', $url, ['json' => $params]);
