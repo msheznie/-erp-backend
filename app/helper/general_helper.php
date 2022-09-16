@@ -92,6 +92,7 @@ use Illuminate\Support\Facades\Schema;
 use Response;
 use App\Models\CompanyFinanceYear;
 use App\Jobs\CreateAccumulatedDepreciation;
+use App\Services\WebPushNotificationService;
 
 class Helper
 {
@@ -1077,6 +1078,15 @@ class Helper
 
 
                                         $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, 1);
+
+                                        $webPushData = [
+                                            'title' => $pushNotificationMessage,
+                                            'body' => '',
+                                            'url' => $redirectUrl,
+                                        ];
+
+                                        WebPushNotificationService::sendNotification($webPushData, 1, $pushNotificationUserIds);
+
                                     }
                                 }
 
@@ -2622,6 +2632,15 @@ class Helper
                         }
 
                         $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, 1);
+
+                        $webPushData = [
+                            'title' => $pushNotificationMessage,
+                            'body' => '',
+                            'url' => $redirectUrl,
+                        ];
+
+                        WebPushNotificationService::sendNotification($webPushData, 2, $pushNotificationUserIds);
+
                     } else {
                         return ['success' => false, 'message' => 'Approval level not found'];
                     }
