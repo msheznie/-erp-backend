@@ -2876,7 +2876,7 @@ class SRMService
     {
         $tenderId = $request->input('extra.tenderId');
         $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid')); 
-        $bidSubmitted = BidSubmissionMaster::where('tender_id', $tenderId)
+        $bidSubmitted = BidSubmissionMaster::with('SupplierRegistrationLink')->where('tender_id', $tenderId)
             ->where('supplier_registration_id', $supplierRegId)
             ->orderBy('id', 'ASC')
             ->get();
