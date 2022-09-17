@@ -6,6 +6,7 @@ use App\Models\ProcumentOrder;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 class CreateExcel
 {
 
@@ -81,6 +82,21 @@ class CreateExcel
             } else {
                 $excel->sheet($fileName, function ($sheet) use ($data,$fileName,$array) {
 
+                    $i = 7;
+                    if(!isset($array['title']) && empty($array['title']))
+                    {
+                        $i = $i - 1;
+                    }
+
+                    if(!isset($array['company_name']) && empty($array['company_name']))
+                    {
+                        $i = $i - 1;
+                    }
+
+                    if(!isset($array['type']) && empty($array['type']))
+                    {
+                        $i = $i - 4;
+                    }
 
                     $sheet->cell('D1', function($cell) use($array)
                     {
@@ -120,23 +136,40 @@ class CreateExcel
                         }
                     });
 
-
+           
                     if(isset($array['type']))
                     {
                         if(($array['type']) == 1)
                         {
+                            
+                            if(!isset($array['from_date']) && empty($array['from_date']))
+                            {
+                                $i = $i - 1;
+                            }
+
+                            if(!isset($array['to_date']) && empty($array['to_date']))
+                            {
+                                $i = $i - 1;
+                            }
+
+                            if(isset($array['from_date']) && !empty($array['from_date']))
+                            {
+                                $i = $i - 1;
+                            }
+                            
+                           
                             self::fromDate($array,$sheet,'From Date ');
                             self::toDate($array,$sheet);
                         }
                         else if(($array['type']) == 2)
                         {
-
+                            $i = $i - 2;
                             self::fromDate($array,$sheet,'As of Date');
 
                         }
                         else if(($array['type']) == 3)
                         {
-
+                            $i = $i - 2;
                             self::currency($array,$sheet,'A3');
                         }
                         else if(($array['type']) == 4)
@@ -148,6 +181,7 @@ class CreateExcel
                         }
                         else if(($array['type']) == 5)
                         {
+                            $i = $i - 1;
                             self::fromDate($array,$sheet,'As of Date');
                             self::currency($array,$sheet,'A4');
 
@@ -191,12 +225,11 @@ class CreateExcel
 
                         }
                     }
-
-                    $sheet->fromArray($data, null, 'A7', true);
+                    $sheet->fromArray($data, null, 'A'.$i, true);
                     $sheet->setAutoSize(true);
                     //$sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
 
-                    $sheet->row(7, function($row) {
+                    $sheet->row($i, function($row) {
 
 
 
