@@ -206,11 +206,17 @@
 
                 <div>
                     <span style="font-size: 18px">
-                        @if($masterdata->documentType == 13)
-                            Customer Invoice Receipt
+                        @if($masterdata->invoiceType == 2)
+                            Supplier Payment
                         @endif
-                        @if($masterdata->documentType == 14)
-                            Direct Receipt
+                        @if($masterdata->invoiceType == 3)
+                            Direct Payment
+                        @endif
+                        @if($masterdata->invoiceType == 5)
+                            Supplier Advance Payment
+                        @endif
+                        @if($masterdata->invoiceType == 6)
+                            Employee Payment
                         @endif
                     </span>
                 </div>
