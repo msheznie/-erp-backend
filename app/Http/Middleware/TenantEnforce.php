@@ -36,7 +36,7 @@ class TenantEnforce
 
 
 
-        $dbRoutes = ['api/v1/purchase-request-add-all-items','api/v1/poItemsUpload','api/v1/createPrMaterialRequest','api/v1/uploadItemsDeliveryOrder','api/v1/uploadItems','api/v1/posMappingRequest'];
+        $dbRoutes = ['api/v1/purchase-request-add-all-items','api/v1/poItemsUpload','api/v1/createPrMaterialRequest','api/v1/uploadItemsDeliveryOrder','api/v1/uploadItems','api/v1/posMappingRequest', 'api/v1/generateGeneralLedgerReportPDF'];
 
         if (env('IS_MULTI_TENANCY', false)) {
 

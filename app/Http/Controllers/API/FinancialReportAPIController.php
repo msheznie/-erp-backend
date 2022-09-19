@@ -18,6 +18,7 @@
 namespace App\Http\Controllers\API;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use App\helper\Helper;
+use App\Jobs\Report\GeneralLedgerPdfJob;
 use App\Http\Controllers\AppBaseController;
 use App\Models\AccountsType;
 use App\Models\BookInvSuppDet;
@@ -48,6 +49,7 @@ use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\helper\CreateExcel;
+use Illuminate\Support\Facades\Storage;
 ini_set('max_execution_time', 500);
 
 class FinancialReportAPIController extends AppBaseController
@@ -5183,83 +5185,13 @@ AND MASTER .canceledYN = 0';
         $reportID = $request->reportID;
         switch ($reportID) {
             case 'FGL':
-                $reportTypeID = $request->reportTypeID;
-                $reportSD = $request->reportSD;
-                $type = $request->type;
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
-                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
-                $checkIsGroup = Company::find($request->companySystemID);
-                $data = array();
-                $output = $this->getGeneralLedgerQryForPDF($request);
-                $decimalPlace = array();
-                $currencyIdLocal = 1;
-                $currencyIdRpt = 2;
+                $db = isset($request->db) ? $request->db : ""; 
 
-                $decimalPlaceCollectLocal = collect($output)->pluck('documentLocalCurrencyID')->toArray();
-                $decimalPlaceUniqueLocal = array_unique($decimalPlaceCollectLocal);
+                $employeeID = \Helper::getEmployeeSystemID();
+                GeneralLedgerPdfJob::dispatch($db, $request, [$employeeID]);
 
-                $decimalPlaceCollectRpt = collect($output)->pluck('documentRptCurrencyID')->toArray();
-                $decimalPlaceUniqueRpt = array_unique($decimalPlaceCollectRpt);
-
-
-                if (!empty($decimalPlaceUniqueLocal)) {
-                    $currencyIdLocal = $decimalPlaceUniqueLocal[0];
-                }
-
-                if (!empty($decimalPlaceUniqueRpt)) {
-                    $currencyIdRpt = $decimalPlaceUniqueRpt[0];
-                }
-
-                $extraColumns = [];
-                if (isset($request->extraColoumns) && count($request->extraColoumns) > 0) {
-                    $extraColumns = collect($request->extraColoumns)->pluck('id')->toArray();
-                }
-
-                $requestCurrencyLocal = CurrencyMaster::where('currencyID', $currencyIdLocal)->first();
-                $requestCurrencyRpt = CurrencyMaster::where('currencyID', $currencyIdRpt)->first();
-
-                $decimalPlaceLocal = !empty($requestCurrencyLocal) ? $requestCurrencyLocal->DecimalPlaces : 3;
-                $decimalPlaceRpt = !empty($requestCurrencyRpt) ? $requestCurrencyRpt->DecimalPlaces : 2;
-
-                $currencyLocal = $requestCurrencyLocal->CurrencyCode;
-                $currencyRpt = $requestCurrencyRpt->CurrencyCode;
-
-                $totaldocumentLocalAmountDebit = array_sum(collect($output)->pluck('localDebit')->toArray());
-                $totaldocumentLocalAmountCredit = array_sum(collect($output)->pluck('localCredit')->toArray());
-                $totaldocumentRptAmountDebit = array_sum(collect($output)->pluck('rptDebit')->toArray());
-                $totaldocumentRptAmountCredit = array_sum(collect($output)->pluck('rptCredit')->toArray());
-
-                $finalData = array();
-                foreach ($output as $val) {
-                    $finalData[$val->glCode . ' - ' . $val->AccountDescription][] = $val;
-                }
-
-                $dataArr = array(
-                    'reportData' => $finalData,
-                    'extraColumns' => $extraColumns,
-                    'companyName' => $checkIsGroup->CompanyName,
-                    'isGroup' => $checkIsGroup->isGroup,
-                    'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2,
-                    'currencyLocal' => $currencyLocal,
-                    'decimalPlaceLocal' => $decimalPlaceLocal,
-                    'decimalPlaceRpt' => $decimalPlaceRpt,
-                    'currencyRpt' => $currencyRpt,
-                    'reportDate' => date('d/m/Y H:i:s A'),
-                    'fromDate' => \Helper::dateFormat($request->fromDate),
-                    'toDate' => \Helper::dateFormat($request->toDate),
-                    'totaldocumentLocalAmountDebit' =>  round((isset($totaldocumentLocalAmountDebit) ? $totaldocumentLocalAmountDebit : 0), 3),
-                    'totaldocumentLocalAmountCredit' => round((isset($totaldocumentLocalAmountCredit) ? $totaldocumentLocalAmountCredit : 0), 3),
-                    'totaldocumentRptAmountDebit' => round((isset($totaldocumentRptAmountDebit) ? $totaldocumentRptAmountDebit : 0), 3),
-                    'totaldocumentRptAmountCredit' => round((isset($totaldocumentRptAmountCredit) ? $totaldocumentRptAmountCredit : 0), 3),
-                );
-
-                $html = view('print.report_general_ledger', $dataArr);
-
-                $pdf = \App::make('dompdf.wrapper');
-                $pdf->loadHTML($html);
-
-                return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream();
-
+                return $this->sendResponse([], "General Ledger PDF report has been sent queue");
                 break;
             default:
                 return $this->sendError('No report ID found');

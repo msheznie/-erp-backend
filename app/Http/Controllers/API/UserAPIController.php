@@ -268,7 +268,9 @@ class UserAPIController extends AppBaseController
 
         $notificationData = WebPushNotificationService::updateNotifications($input);
 
-        return $this->sendResponse([], "Notifications updated successfully");
+        $processNotification = WebPushNotificationService::processnotificationData($input);
+
+        return $this->sendResponse($processNotification, "Notifications updated successfully");
     }
 
     public function getAllNotifications(Request $request)

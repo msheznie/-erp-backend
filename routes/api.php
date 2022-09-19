@@ -2767,6 +2767,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('getAllInvoicesRPos', 'POS\PosAPIController@getAllInvoicesRPos');
         Route::post('getRPOSInvoiceData', 'POS\PosAPIController@getRPOSInvoiceData');
 
+        Route::post('generateGeneralLedgerReportPDF', 'FinancialReportAPIController@pdfExportReport');
+
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
@@ -2806,7 +2808,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     Route::get('getSalesQuotationPrintPDF', 'QuotationMasterAPIController@getSalesQuotationPrintPDF');
     Route::post('updateSentCustomerDetail', 'QuotationMasterAPIController@updateSentCustomerDetail');
     Route::get('getBatchSubmissionDetailsPrintPDF', 'CustomerInvoiceTrackingAPIController@getBatchSubmissionDetailsPrintPDF');
-    Route::post('generateGeneralLedgerReportPDF', 'FinancialReportAPIController@pdfExportReport');
+    
     Route::get('pvSupplierPrint', 'BankLedgerAPIController@pvSupplierPrint');
     Route::get('loginwithToken', 'UserAPIController@loginwithToken');
     Route::get('downloadFileFrom', 'DocumentAttachmentsAPIController@downloadFileFrom');

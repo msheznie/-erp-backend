@@ -46,6 +46,11 @@ class WebPushNotificationService
                 $data['url'] = ['erp' => $data['url']];
                 $apps = ['erp'];
                 break;
+            case 3: // report
+                $data['clickable'] = true;
+                $data['type'] = 3;
+                $apps = ['erp'];
+                break;
             
             default:
                 // code...
@@ -122,5 +127,21 @@ class WebPushNotificationService
         $response = $client->request('PUT', $url, ['json' => $params]);
 
         return ['status' => true];
+    }
+
+    public static function processnotificationData($notification)
+    {
+        switch ($notification['data']['type']) {
+            case 1:
+            case 2:
+                return ['url' => $notification['data']['url']['erp'], 'type' => 'self'];
+                break;
+            case 3:
+                return ['url' => \Helper::getFileUrlFromS3($notification['data']['path']), 'type' => 'external'];
+                break;
+            default:
+                return ['url' => "", 'type' => ''];
+                break;
+        }
     }
 }
