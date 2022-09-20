@@ -883,7 +883,6 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             foreach ($input['detailTable'] as $item) {
  
                 if ($item['isChecked']) {
-                    // dd($item);
                     if ($isAdvancePaymentPaidChk) { // check advance payment already paid for the PO
                         if ($item['addedDocumentSystemID'] == 11) {
               

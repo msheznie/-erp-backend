@@ -13,6 +13,7 @@ use App\Models\BookInvSuppMaster;
 use App\Models\CreditNote;
 use App\Models\CreditNoteDetails;
 use App\Models\CurrencyConversion;
+use App\Models\POSGLEntries;
 use App\Models\StockCount;
 use App\Models\StockCountDetail;
 use App\Models\CustomerInvoiceItemDetails;
@@ -84,9 +85,10 @@ class GrvGlService
         $taxLedgerData = [];
         $finalData = [];
         $empID = Employee::find($masterModel['employeeSystemID']);
-		$masterData = GRVMaster::with(['details' => function ($query) {
-                    $query->selectRaw("SUM(GRVcostPerUnitLocalCur*noQty) as localAmount, SUM(GRVcostPerUnitComRptCur*noQty) as rptAmount,SUM(GRVcostPerUnitSupTransCur*noQty) as transAmount,SUM(VATAmount*noQty) as transVATAmount,SUM(VATAmountLocal*noQty) as localVATAmount ,SUM(VATAmountRpt*noQty) as rptVATAmount ,grvAutoID,supplierItemCurrencyID as supplierTransactionCurrencyID,foreignToLocalER as supplierTransactionER,erp_grvdetails.companyReportingCurrencyID,erp_grvdetails.companyReportingER,erp_grvdetails.localCurrencyID,erp_grvdetails.localCurrencyER");
-                }])->find($masterModel["autoID"]);
+		
+        $masterData = GRVMaster::with(['details' => function ($query) {
+            $query->selectRaw("SUM(GRVcostPerUnitLocalCur*noQty) as localAmount, SUM(GRVcostPerUnitComRptCur*noQty) as rptAmount,SUM(GRVcostPerUnitSupTransCur*noQty) as transAmount,SUM(VATAmount*noQty) as transVATAmount,SUM(VATAmountLocal*noQty) as localVATAmount ,SUM(VATAmountRpt*noQty) as rptVATAmount ,grvAutoID,supplierItemCurrencyID as supplierTransactionCurrencyID,foreignToLocalER as supplierTransactionER,erp_grvdetails.companyReportingCurrencyID,erp_grvdetails.companyReportingER,erp_grvdetails.localCurrencyID,erp_grvdetails.localCurrencyER");
+        }])->find($masterModel["autoID"]);
         //get balansheet account
         $bs = GRVDetails::selectRaw("SUM(landingCost_LocalCur*noQty) as localAmount, SUM(landingCost_RptCur*noQty) as rptAmount,SUM(landingCost_TransCur*noQty) as transAmount,financeGLcodebBSSystemID,financeGLcodebBS,supplierItemCurrencyID as supplierTransactionCurrencyID,foreignToLocalER as supplierTransactionER,erp_grvdetails.companyReportingCurrencyID,erp_grvdetails.companyReportingER,erp_grvdetails.localCurrencyID,erp_grvdetails.localCurrencyER")->WHERE('grvAutoID', $masterModel["autoID"])->whereNotNull('financeGLcodebBSSystemID')->where('financeGLcodebBSSystemID', '>', 0)->groupBy('financeGLcodebBSSystemID')->get();
 
@@ -127,6 +129,9 @@ class GrvGlService
 
         $unbilledGRVVATAddVatOnPO = TaxService::poLogisticVATDistributionForGRV($masterModel["autoID"]);
         $vatDetails = TaxService::processGrvVAT($masterModel["autoID"]);
+
+        Log::info('Total Logistic VAT');
+        Log::info($unbilledGRVVATAddVatOnPO);
 
         if ($masterData) {
 
@@ -190,6 +195,7 @@ class GrvGlService
             array_push($finalData, $data);
 
              if ((($valEligible || TaxService::isGRVRCMActivation($masterModel["autoID"])) && ($vatDetails['masterVATTrans'] || $exemptVATTrans)) || ($unbilledTransVATAmount > 0)) {
+                Log::info('Inside the Vat Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
                 $taxData = TaxService::getInputVATTransferGLAccount($masterData->companySystemID);
 
                 if ($vatDetails['masterVATTrans'] > 0 || $unbilledTransVATAmount > 0) {
@@ -212,11 +218,15 @@ class GrvGlService
                             array_push($finalData, $data);
 
                             $taxLedgerData['inputVatTransferAccountID'] = $chartOfAccountData->chartOfAccountSystemID;
+
+                            Log::info('Inside the Vat Entry InputVATTransferGLAccount Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
                         } else {
-                            return ['status' => false, 'error' => ['message' => "Input Vat Transfer GL Account not assigned to company"]];
+                            Log::info('GRV VAT GL Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
+                            Log::info('Input Vat Transfer GL Account not assigned to company' . date('H:i:s'));
                         }
                     } else {
-                        return ['status' => false, 'error' => ['message' => "Input Vat Transfer GL Account not configured"]];
+                        Log::info('GRV VAT GL Entry IssuesId :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
+                        Log::info('Input Vat Transfer GL Account not configured' . date('H:i:s'));
                     }
                 }
 
@@ -243,11 +253,14 @@ class GrvGlService
                             array_push($finalData, $data);
 
                             $taxLedgerData['outputVatTransferGLAccountID'] = $chartOfAccountData->chartOfAccountSystemID;
+                            Log::info('Inside the Vat Entry OutVATTransferGLAccount Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
                         } else {
-                            return ['status' => false, 'error' => ['message' => "Output Vat Transfer GL Account not assigned to company"]];
+                            Log::info('GRV VAT GL Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
+                            Log::info('Output Vat Transfer GL Account not assigned to company' . date('H:i:s'));
                         }
                     } else {
-                        return ['status' => false, 'error' => ['message' => "Output Vat Transfer GL Account not configured"]];
+                        Log::info('GRV VAT GL Entry IssuesId :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
+                        Log::info('Output Vat Transfer GL Account not configured' . date('H:i:s'));
                     }
                 }
 
@@ -321,7 +334,14 @@ class GrvGlService
 
             if ($unbilledGRV) {
                 foreach ($unbilledGRV as $val) {
+
+                    //$vatData = TaxService::poLogisticForLineWise($val);
                     $vatData = TaxService::poLogisticVATDistributionForGRV($masterModel["autoID"],0,$val->supplierID);
+
+                    Log::info('$unbilledGRV item');
+                    Log::info($val);
+                    Log::info('$unbilledGRV, VAtT');
+                    Log::info($vatData);
 
                     $data['documentTransCurrencyID'] = $val->currencyID;
                     $data['documentTransCurrencyID'] = 1;
@@ -332,14 +352,17 @@ class GrvGlService
                     $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                     $data['documentTransCurrencyID'] = $val->supplierTransactionCurrencyID;
                     $data['documentTransCurrencyER'] = $val->supplierTransactionER;
+                    //$data['documentTransAmount'] = \Helper::roundValue(ABS($val->transAmount) * -1);
                     $data['documentTransAmount'] = \Helper::roundValue(ABS($val->transAmount + $vatData['vatOnPOTotalAmountTrans']) * -1);
 
                     $data['documentLocalCurrencyID'] = $val->localCurrencyID;
                     $data['documentLocalCurrencyER'] = $val->localCurrencyER;
+                    //$data['documentLocalAmount'] = \Helper::roundValue(ABS($val->localAmount) * -1);
                     $data['documentLocalAmount'] = \Helper::roundValue(ABS($val->localAmount + $vatData['vatOnPOTotalAmountLocal']) * -1);
 
                     $data['documentRptCurrencyID'] = $val->companyReportingCurrencyID;
                     $data['documentRptCurrencyER'] = $val->companyReportingER;
+                    ///$data['documentRptAmount'] = \Helper::roundValue(ABS($val->rptAmount) * -1);
                     $data['documentRptAmount'] = \Helper::roundValue(ABS($val->rptAmount + $vatData['vatOnPOTotalAmountRpt']) * -1);
                     $data['timestamp'] = \Helper::currentDateTime();
                     array_push($finalData, $data);

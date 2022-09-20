@@ -27,7 +27,11 @@ class TenantEnforce
             'api/v1/srm/fetch',
             'api/v1/suppliers/registration/approvals/status',
             'api/v1/sendSupplierInvitation',
-            'api/v1/reSendInvitaitonLink'
+            'api/v1/reSendInvitaitonLink',
+            'api/v1/getMaterielIssueFormData',
+            'api/v1/item_issue_masters/{item_issue_master}',
+            'api/v1/item_return_details/{item_return_detail}',
+            'api/v1/checkManWareHouse',
         ];
 
         $dbRoutes = [
@@ -43,6 +47,7 @@ class TenantEnforce
             'api/v1/posMappingRequest',
             'api/v1/uploadItems'
         ];
+
 
         if (env('IS_MULTI_TENANCY', false)) {
 

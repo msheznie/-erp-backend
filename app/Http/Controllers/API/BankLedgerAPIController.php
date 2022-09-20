@@ -390,7 +390,8 @@ class BankLedgerAPIController extends AppBaseController
                         $bankGLCode = $bankLedger->bank_account->chartOfAccountSystemID;
                     }
 
-                    $checkGLAmount = GeneralLedger::where('companySystemID', $bankLedger->companySystemID)
+                    $checkGLAmount = GeneralLedger::selectRaw('SUM(documentLocalAmount) as documentLocalAmount, SUM(documentRptAmount) as documentRptAmount, SUM(documentTransAmount) as documentTransAmount, documentLocalCurrencyID, documentRptCurrencyID, documentTransCurrencyID')
+                        ->where('companySystemID', $bankLedger->companySystemID)
                         ->where('documentSystemID', $bankLedger->documentSystemID)
                         ->where('documentSystemCode', $bankLedger->documentSystemCode)
                         ->where('chartOfAccountSystemID', $bankGLCode)

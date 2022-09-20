@@ -2,6 +2,9 @@
 
 namespace App\Services\TaxLedger;
 
+use App\Models\DirectPaymentDetails;
+use App\Models\PaySupplierInvoiceMaster;
+use App\Models\POSTaxGLEntries;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
@@ -64,7 +67,6 @@ class CreditNoteTaxLedgerService
 
         $ledgerDetailsData = $ledgerData;
         $ledgerDetailsData['createdUserSystemID'] = $empID->employeeSystemID;
-
 
         $masterData = CreditNote::with(['finance_period_by', 'customer','details' => function ($query) {
             $query->selectRaw('SUM(netAmountLocal) as localAmount, SUM(netAmountRpt) as rptAmount,SUM(netAmount) as transAmount,creditNoteAutoID');

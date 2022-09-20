@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\DirectPaymentDetails;
 use App\Models\PaySupplierInvoiceMaster;
+use App\Models\POSTaxGLEntries;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;

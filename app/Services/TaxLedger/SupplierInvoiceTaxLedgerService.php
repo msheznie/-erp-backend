@@ -2,6 +2,9 @@
 
 namespace App\Services\TaxLedger;
 
+use App\Models\DirectPaymentDetails;
+use App\Models\PaySupplierInvoiceMaster;
+use App\Models\POSTaxGLEntries;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
@@ -64,7 +67,7 @@ class SupplierInvoiceTaxLedgerService
 
         $ledgerDetailsData = $ledgerData;
         $ledgerDetailsData['createdUserSystemID'] = $empID->employeeSystemID;
-
+        
         $masterData = BookInvSuppMaster::with(['financeperiod_by', 'supplier','directdetail' => function ($query) {
             $query->selectRaw('SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount,SUM(DIAmount) as transAmount,directInvoiceAutoID');
         }])->find($masterModel["autoID"]);

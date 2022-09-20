@@ -1415,33 +1415,42 @@ class AssetManagementReportAPIController extends AppBaseController
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                 $decimalPlaces = 2;
                 $output = $this->getAssetExpenseQRY($request);
+                $fromDate = $request->fromDate;
+                $toDate = $request->toDate;
                 $data = [];
                 $companyCurrency = Company::with(['localcurrency', 'reportingcurrency'])->find($request->companySystemID);
                 if (count($output) > 0) {
                     $x = 0;
                     foreach ($output as $val) {
-                        $data[$x]['Account Code'] = isset($val->chart_of_account->AccountCode) ? $val->chart_of_account->AccountCode : "";
-                        $data[$x]['Account Description'] = isset($val->chart_of_account->AccountDescription) ? $val->chart_of_account->AccountDescription : "";
-                        $data[$x]['Asset Code'] = isset($val->asset->faCode) ? $val->asset->faCode : "";
-                        $data[$x]['Asset Description'] = isset($val->asset->assetDescription) ? $val->asset->assetDescription : "";
+                        $data[$x]['AccountCode'] = isset($val->chart_of_account->AccountCode) ? $val->chart_of_account->AccountCode : "";
+                        $data[$x]['AccountDescription'] = isset($val->chart_of_account->AccountDescription) ? $val->chart_of_account->AccountDescription : "";
+                        $data[$x]['AssetCode'] = isset($val->asset->faCode) ? $val->asset->faCode : "";
+                        $data[$x]['AssetDescription'] = isset($val->asset->assetDescription) ? $val->asset->assetDescription : "";
+                        $data[$x]['ChartOfAccountSystemID'] = isset($val->chartOfAccountSystemID) ? $val->chartOfAccountSystemID : 0;
+                        $data[$x]['AssetID'] = isset($val->assetID) ? $val->assetID : 0;
 
                         if ($val->documentSystemID == 11) {
-                            $data[$x]['Document Code'] = isset($val->supplier_invoice->bookingInvCode) ? $val->supplier_invoice->bookingInvCode : "";
-                            $data[$x]['Document Date'] = isset($val->supplier_invoice->bookingDate) ? Carbon::parse($val->supplier_invoice->bookingDate)->format('Y-m-d') : "";
+                            $data[$x]['DocumentCode'] = isset($val->supplier_invoice->bookingInvCode) ? $val->supplier_invoice->bookingInvCode : "";
+                            $data[$x]['DocumentDate'] = isset($val->supplier_invoice->bookingDate) ? Carbon::parse($val->supplier_invoice->bookingDate)->format('Y-m-d') : "";
                         } else if ($val->documentSystemID == 4){
-                            $data[$x]['Document Code'] = isset($val->payment_voucher->BPVcode) ? $val->payment_voucher->BPVcode : "";
-                            $data[$x]['Document Date'] = isset($val->payment_voucher->BPVdate) ? Carbon::parse($val->payment_voucher->BPVdate)->format('Y-m-d') : "";                         
+                            $data[$x]['DocumentCode'] = isset($val->payment_voucher->BPVcode) ? $val->payment_voucher->BPVcode : "";
+                            $data[$x]['DocumentDate'] = isset($val->payment_voucher->BPVdate) ? Carbon::parse($val->payment_voucher->BPVdate)->format('Y-m-d') : "";
                         }
                         else if ($val->documentSystemID == 3){
-                            $data[$x]['Document Code'] = isset($val->grv->grvPrimaryCode) ? $val->grv->grvPrimaryCode : "";
-                            $data[$x]['Document Date'] = isset($val->grv->grvDate) ? Carbon::parse($val->grv->grvDate)->format('Y-m-d') : "";                         
+                            $data[$x]['DocumentCode'] = isset($val->grv->grvPrimaryCode) ? $val->grv->grvPrimaryCode : "";
+                            $data[$x]['DocumentDate'] = isset($val->grv->grvDate) ? Carbon::parse($val->grv->grvDate)->format('Y-m-d') : "";
                         }
                         else if ($val->documentSystemID == 17){
-                            $data[$x]['Document Code'] = isset($val->journal_voucher->JVcode) ? $val->journal_voucher->JVcode : "";
-                            $data[$x]['Document Date'] = isset($val->journal_voucher->JVdate) ? Carbon::parse($val->journal_voucher->JVdate)->format('Y-m-d') : "";                         
-                        } else {
-                            $data[$x]['Document Code'] = isset($val->meterial_issue->itemIssueCode) ? $val->meterial_issue->itemIssueCode : "";
-                            $data[$x]['Document Date'] = isset($val->meterial_issue->master->issueDate) ? Carbon::parse($val->meterial_issue->master->issueDate)->format('Y-m-d') : "";                         
+                            $data[$x]['DocumentCode'] = isset($val->journal_voucher->JVcode) ? $val->journal_voucher->JVcode : "";
+                            $data[$x]['DocumentDate'] = isset($val->journal_voucher->JVdate) ? Carbon::parse($val->journal_voucher->JVdate)->format('Y-m-d') : "";
+                        }
+                        else if ($val->documentSystemID == 161){
+                            $data[$x]['DocumentCode'] = isset($val->ioue->bookingCode) ? $val->ioue->bookingCode : "";
+                            $data[$x]['DocumentDate'] = isset($val->ioue->bookingDate) ? Carbon::parse($val->ioue->bookingDate)->format('Y-m-d') : "";
+                        }
+                        else {
+                            $data[$x]['DocumentCode'] = isset($val->meterial_issue->itemIssueCode) ? $val->meterial_issue->itemIssueCode : "";
+                            $data[$x]['DocumentDate'] = isset($val->meterial_issue->master->issueDate) ? Carbon::parse($val->meterial_issue->master->issueDate)->format('Y-m-d') : "";
                         }
 
                         if ($request->currencyID == 2) {
@@ -1455,21 +1464,54 @@ class AssetManagementReportAPIController extends AppBaseController
                         $x++;
                     }
                 }
+                if(isset($request->groupByAsset)) {
+                    if ($request->groupByAsset == false) {
+                        $headers = array();
+                        foreach ($data as $element) {
+                            $headers[$element['AccountCode']][] = $element;
+                        }
+                        $headers = array_values($headers);
 
-                $fileName = 'asset_expenses';
-                $path = 'asset/report/asset_expenses/excel/';
-                $basePath = CreateExcel::process($data,$type,$fileName,$path);
+                        usort($headers, function ($a, $b) {return $a[0]['ChartOfAccountSystemID'] > $b[0]['ChartOfAccountSystemID'];});
 
-                if($basePath == '')
-                {
-                     return $this->sendError('Unable to export excel');
+
+
+                        $reportData = array('reportData' => $data, 'headers' => $headers, 'fromDate' => $fromDate, 'toDate' => $toDate, 'currency' => $companyCurrency, 'currencyID' => $request->currencyID);
+                        $templateName = "export_report.asset_expenses";
+
+                    }
+                    if ($request->groupByAsset == true) {
+                        $headers = array();
+                        foreach ($data as $element) {
+                            $headers[$element['AssetCode']][] = $element;
+                        }
+                        $headers = array_values($headers);
+
+                        usort($headers, function ($a, $b) {return $a[0]['AssetID'] > $b[0]['AssetID'];});
+
+                        $reportData = array('reportData' => $data, 'headers' => $headers, 'fromDate' => $fromDate, 'toDate' => $toDate, 'currency' => $companyCurrency, 'currencyID' => $request->currencyID);
+                        $templateName = "export_report.asset_wise_expenses";
+
+                    }
                 }
-                else
-                {
-                     return $this->sendResponse($basePath, trans('custom.success_export'));
+                else{
+                    $headers = array();
+                    foreach ($data as $element) {
+                        $headers[$element['AccountCode']][] = $element;
+                    }
+                    $headers = array_values($headers);
+
+                    usort($headers, function ($a, $b) {return $a[0]['ChartOfAccountSystemID'] > $b[0]['ChartOfAccountSystemID'];});
+
+                    $reportData = array('reportData' => $data, 'headers' => $headers, 'fromDate' => $fromDate, 'toDate' => $toDate, 'currency' => $companyCurrency, 'currencyID' => $request->currencyID);
+                    $templateName = "export_report.asset_expenses";
                 }
 
-
+                return \Excel::create('finance', function ($excel) use ($reportData, $templateName) {
+                    $excel->sheet('New sheet', function ($sheet) use ($reportData, $templateName) {
+                        $sheet->loadView($templateName, $reportData);
+                    });
+                })->download('xlsx');
                 break;
             default:
                 return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.report_id')]));
@@ -1595,6 +1637,10 @@ FROM
                                                            ->whereDate('issueDate', '>=', $fromDate)
                                                            ->whereDate('issueDate', '<=', $toDate);
                                                        }]);
+                                                  },'ioue'  => function($query) use ($companyID, $fromDate, $toDate) {
+                                                    $query->whereIn('companyID', $companyID)
+                                                    ->whereDate('bookingDate', '>=', $fromDate)
+                                                    ->whereDate('bookingDate', '<=', $toDate);
                                                   }])
                                                   ->where(function($query) use ($companyID, $fromDate, $toDate) {
                                                       $query->where(function($query) use ($companyID, $fromDate, $toDate) {
@@ -1603,7 +1649,7 @@ FROM
                                                                               ->whereDate('bookingDate', '>=', $fromDate)
                                                                               ->whereDate('bookingDate', '<=', $toDate);
                                                                     })
-                                                                    ->where('documentSystemID', 11);
+                                                                    ->where('documentSystemID', 11)->where('module_id', 1);
                                                           })
                                                          ->orWhere(function($query) use ($companyID, $fromDate, $toDate) {
                                                                 $query->whereHas('payment_voucher', function($query) use ($companyID, $fromDate, $toDate) {
@@ -1611,7 +1657,7 @@ FROM
                                                                               ->whereDate('BPVdate', '>=', $fromDate)
                                                                               ->whereDate('BPVdate', '<=', $toDate);
                                                                     })
-                                                                    ->where('documentSystemID', 4);
+                                                                    ->where('documentSystemID', 4)->where('module_id', 1);
                                                           })
                                                           ->orWhere(function($query) use ($companyID, $fromDate, $toDate) {
                                                             $query->whereHas('journal_voucher', function($query) use ($companyID, $fromDate, $toDate) {
@@ -1619,7 +1665,7 @@ FROM
                                                                           ->whereDate('JVdate', '>=', $fromDate)
                                                                           ->whereDate('JVdate', '<=', $toDate);
                                                                 })
-                                                                ->where('documentSystemID',17);
+                                                                ->where('documentSystemID',17)->where('module_id', 1);
                                                           })
                                                           ->orWhere(function($query) use ($companyID, $fromDate, $toDate) {
                                                             $query->whereHas('grv', function($query) use ($companyID, $fromDate, $toDate) {
@@ -1627,7 +1673,7 @@ FROM
                                                                           ->whereDate('grvDate', '>=', $fromDate)
                                                                           ->whereDate('grvDate', '<=', $toDate);
                                                                 })
-                                                                ->where('documentSystemID',3);
+                                                                ->where('documentSystemID',3)->where('module_id', 1);
                                                           })
                                                           ->orWhere(function($query) use ($companyID, $fromDate, $toDate) {
                                                             $query->whereHas('meterial_issue', function($query) use ($companyID, $fromDate, $toDate) {
@@ -1637,6 +1683,13 @@ FROM
                                                                             ->whereDate('issueDate', '<=', $toDate);
                                                                 });
                                                                 });
+                                                      })->orWhere(function($query) use ($companyID, $fromDate, $toDate) {
+                                                        $query->whereHas('ioue', function($query) use ($companyID, $fromDate, $toDate) {
+                                                                $query->whereIn('companyID', $companyID)
+                                                                ->whereDate('bookingDate', '>=', $fromDate)
+                                                                ->whereDate('bookingDate', '<=', $toDate);
+                                                            })
+                                                            ->where('documentSystemID',161)->where('module_id', 2);
                                                       });
                                                   })
                                                   ->get();

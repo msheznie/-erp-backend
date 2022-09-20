@@ -536,15 +536,7 @@ class CreditNoteAPIController extends AppBaseController
             /*serviceline and contract validation*/
             $groupby = CreditNoteDetails::select('serviceLineSystemID')->where('creditNoteAutoID', $id)->groupBy('serviceLineSystemID')->get();
             $groupbycontract = CreditNoteDetails::select('contractUID')->where('creditNoteAutoID', $id)->groupBy('contractUID')->get();
-            if (count($groupby) != 0) {
-                if (count($groupby) > 1 || count($groupbycontract) > 1) {
-                    if ($isOperationIntergrated) {
-                        return $this->sendError('You cannot continue. Multiple segment or contract exist in details.', 500);
-                    } else {
-                        return $this->sendError('You cannot continue. Multiple segment exist in details.', 500);
-                    }
-                }
-            } else {
+            if(count($groupby) == 0) {
                 return $this->sendError('Credit note details not found.', 500);
             }
 
@@ -1104,7 +1096,18 @@ class CreditNoteAPIController extends AppBaseController
                 $customerID = $input['customerID'];
                 $output['currencies'] = DB::table('customercurrency')->join('currencymaster', 'customercurrency.currencyID', '=', 'currencymaster.currencyID')->where('customerCodeSystem', $customerID)->where('isAssigned', -1)->select('currencymaster.currencyID', 'currencymaster.CurrencyCode', 'isDefault')->get();
                 break;
+            case 'getCreateData':
+                $customerID = $input['customerID'];
+                $isVATEligible = TaxService::checkCompanyVATEligible($companySystemID);
+                $output['percentage'] = 0;
 
+                if ($isVATEligible) {
+                    $defaultVAT = TaxService::getDefaultVAT($companySystemID, $customerID, 0);
+                    $vatPercentage = $defaultVAT['percentage'];
+                    $output['percentage'] = $vatPercentage;
+                }
+                $output['currencies'] = DB::table('customercurrency')->join('currencymaster', 'customercurrency.currencyID', '=', 'currencymaster.currencyID')->where('customerCodeSystem', $customerID)->where('isAssigned', -1)->select('currencymaster.currencyID', 'currencymaster.CurrencyCode', 'isDefault')->get();
+                break;
             case 'edit' :
                 $id = $input['id'];
                 $master = CreditNote::where('creditNoteAutoID', $id)->first();

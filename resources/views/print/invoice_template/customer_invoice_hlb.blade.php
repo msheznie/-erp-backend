@@ -167,19 +167,32 @@
         font-size: 11.5px;
         color: black;
     }
+    .container
+          {
+            display: block;
+            max-width:230px;
+            max-height:95px;
+            width: auto;
+            height: auto;
+            }
+
+    .table_height
+    {
+        max-height: 60px !important;
+    }
 
 
 </style>
 
 <div class="content">
     <div class="row">
-        <table style="width:100%">
+        <table style="width:100%" class="table_height">
             <tr>
                 <td width="30%">
                     @if($request->logoExists)
                           @if($type == 1)
                             <img src="{{$request->companyLogo}}"
-                                width="180px" height="60px">
+                            class="container">
                           @else
                             image not found
                           @endif
@@ -189,6 +202,9 @@
 
                 <td width="50%" style="text-align: center;white-space: nowrap">
                     <div class="text-center">
+                    <h3>
+                            <b style="text-decoration: underline;">TAX INVOICE</b>
+                        </h3>
                     </div>
                 </td>
                 <td style="width: 30%; text-align: right;">
@@ -201,29 +217,7 @@
     <div class="row">
         <br>
     </div>
-    <div class="row">
-        <table style="width:100%">
-            <tr>
-                <td width="30%">
-                </td>
 
-
-                <td width="50%" style="text-align: center;white-space: nowrap">
-                    <div class="text-center">
-
-                        <h3>
-                            <b style="text-decoration: underline;">TAX INVOICE</b>
-                        </h3>
-                    </div>
-
-                </td>
-                <td style="width: 30%; text-align: right;">
-                    <div style="display: flex;">
-                    </div>
-                </td>
-            </tr>
-        </table>
-    </div>
     <div class="row">
         <br>
     </div>

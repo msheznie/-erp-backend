@@ -949,7 +949,8 @@ class GeneralLedgerAPIController extends AppBaseController
         $input = $request->all();
 
         $toDate = (new   Carbon($request->toDate))->format('Y-m-d');
-        $fromDate = ((new Carbon($request->fromDate))->addDays(1)->format('Y-m-d'));
+
+        $fromDate = ((new Carbon($request->fromDate))->format('Y-m-d'));
         $type = $request->currency;
         $company = $request->company;
         $details = $this->generateGLReport($fromDate,$toDate,$type,$company);
@@ -965,7 +966,7 @@ class GeneralLedgerAPIController extends AppBaseController
         $input = $request->all();
 
         $toDate = (new   Carbon($request->toDate))->format('Y-m-d');
-        $fromDate = ((new Carbon($request->fromDate))->addDays(1)->format('Y-m-d'));
+        $fromDate = ((new Carbon($request->fromDate))->format('Y-m-d'));
         $type = $request->currency;
         $file_type = $request->type;
         $company = $request->company;
@@ -1058,6 +1059,8 @@ class GeneralLedgerAPIController extends AppBaseController
 
 
                 $data[$i]['glAccountId'] = $entry->AccountCode.' | '.$entry->AccountDescription;
+                $data[$i]['AccountCode'] = $entry->AccountCode;
+                $data[$i]['AccountDescription'] = $entry->AccountDescription;
                 $j = 0;
                 $tot_credit = 0;
                 $tot_debit = 0;

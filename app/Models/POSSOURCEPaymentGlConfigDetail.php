@@ -124,7 +124,7 @@ class POSSOURCEPaymentGlConfigDetail extends Model
     public $table = 'pos_source_paymentglconfigdetail';
     
     const CREATED_AT = 'created_at';
-    const UPDATED_AT = 'updated_at';
+    const UPDATED_AT = 'modifiedDateTime';
 
 
 
@@ -147,7 +147,8 @@ class POSSOURCEPaymentGlConfigDetail extends Model
         'paymentConfigMasterID',
         'timestamp',
         'transaction_log_id',
-        'warehouseID'
+        'warehouseID',
+        'erp_bank_acc_id'
     ];
 
     /**
@@ -174,7 +175,8 @@ class POSSOURCEPaymentGlConfigDetail extends Model
         'paymentConfigMasterID' => 'integer',
         'timestamp' => 'datetime',
         'transaction_log_id' => 'integer',
-        'warehouseID' => 'integer'
+        'warehouseID' => 'integer',
+        'erp_bank_acc_id' => 'integer'
     ];
 
     /**

@@ -2,6 +2,9 @@
 
 namespace App\Services\TaxLedger;
 
+use App\Models\DirectPaymentDetails;
+use App\Models\PaySupplierInvoiceMaster;
+use App\Models\POSTaxGLEntries;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
@@ -64,8 +67,7 @@ class DOTaxLedgerService
 
         $ledgerDetailsData = $ledgerData;
         $ledgerDetailsData['createdUserSystemID'] = $empID->employeeSystemID;
-
-
+        
         $masterData = DeliveryOrder::with(['finance_period_by', 'customer'])->find($masterModel["autoID"]);
 
         $masterDocumentDate = date('Y-m-d H:i:s');

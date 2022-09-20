@@ -23,6 +23,8 @@ use App\Services\GeneralLedger\FixedAssetDisposalGlService;
 use App\Services\GeneralLedger\DeliveryOrderGlService;
 use App\Services\GeneralLedger\SalesReturnGlService;
 use App\Services\GeneralLedger\StockCountGlService;
+use App\Services\GeneralLedger\GPOSSalesGlService;
+use App\Services\GeneralLedger\RPOSSalesGlService;
 use App\Services\GeneralLedger\GeneralLedgerPostingService;
 use App\Models\GeneralLedger;
 
@@ -93,6 +95,12 @@ class GeneralLedgerService
                 break;
             case 97: // SA - Stock Count
                 $result = StockCountGlService::processEntry($masterModel);
+                break;
+            case 110: // GPOS Sales
+                $result = GPOSSalesGlService::processEntry($masterModel);
+                break;
+            case 111: // RPOS Sales
+                $result = RPOSSalesGlService::processEntry($masterModel);
                 break;
             default:
                 $result = ['status' => false, 'message' => "Document ID not found"];

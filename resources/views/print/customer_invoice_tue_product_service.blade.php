@@ -156,19 +156,31 @@
         font-size: 11.5px;
         color: black;
     }
+    .container
+          {
+            display: block;
+            max-width:230px;
+            max-height:95px;
+            width: auto;
+            height: auto;
+            }
 
+    .table_height
+    {
+        max-height: 60px !important;
+    }
 
 </style>
 
 <div class="content">
     <div class="row">
-        <table style="width:100%">
+        <table style="width:100%" class="table_height">
             <tr>
                 <td width="30%">
                     @if($request->logoExists)
                           @if($type == 1)
                             <img src="{{$request->companyLogo}}"
-                                width="180px" height="60px">
+                            class="container">
                           @else
                             image not found
                           @endif
@@ -322,7 +334,7 @@
                                 <td style="word-wrap:break-word;">{{$item->OurRef}}</td>
                                 <td style="word-wrap:break-word;">{{$item->ClientRef}}</td>
                                 <td style="word-wrap:break-word;">{{$item->assetDescription}}</td>
-                                <td style="text-align: center;">{{isset($item->uom_issuing->UnitShortCode)?$item->uom_issuing->UnitShortCode:''}}</td>
+                                <td style="text-align: left;">{{isset($item->uom_issuing->UnitShortCode)?$item->uom_issuing->UnitShortCode:''}}</td>
                                 <td style="text-align: right;">{{$item->qty}}</td>
                                 <td style="text-align: right;">{{number_format($item->rate,$numberFormatting)}}</td>
                                 <td style="text-align: right;">{{number_format($item->amount,$numberFormatting)}}</td>

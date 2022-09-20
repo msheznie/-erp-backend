@@ -3,12 +3,45 @@
 namespace App\Services\TaxLedger;
 
 
-use App\Models\ChartOfAccount;
 use App\Models\DirectPaymentDetails;
-use App\Models\Employee;
 use App\Models\PaySupplierInvoiceMaster;
+use App\Models\POSTaxGLEntries;
+use Illuminate\Bus\Queueable;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
+use App\Models\Taxdetail;
+use App\Models\Company;
+use App\Models\PoAdvancePayment;
+use App\Models\GRVMaster;
+use App\Models\GRVDetails;
+use App\Models\CreditNote;
+use App\Models\PurchaseReturn;
+use App\Models\PurchaseReturnLogistic;
+use App\Models\PurchaseReturnDetails;
+use App\Models\SupplierInvoiceItemDetail;
+use App\Models\CustomerInvoiceDirect;
+use App\Models\CustomerInvoiceItemDetails;
+use App\Models\CustomerInvoiceDirectDetail;
+use App\Models\DeliveryOrder;
+use App\Models\CreditNoteDetails;
+use App\Models\DeliveryOrderDetail;
+use App\Models\TaxLedger;
+use App\Models\DebitNote;
+use App\Models\TaxLedgerDetail;
+use App\Models\DebitNoteDetails;
 use App\Models\TaxVatCategories;
 use App\helper\TaxService;
+use App\Models\Employee;
+use App\Models\SalesReturn;
+use App\Models\ChartOfAccount;
+use App\Models\SalesReturnDetail;
+use App\Models\BookInvSuppMaster;
+use App\Models\DirectInvoiceDetails;
 
 class PaymentVoucherTaxLedgerService
 {
@@ -59,10 +92,10 @@ class PaymentVoucherTaxLedgerService
         $ledgerData['documentReportingAmount'] = \Helper::roundValue($currencyConversionAmount['reportingAmount']);
 
         $details = DirectPaymentDetails::selectRaw('SUM(VATAmount) as transVATAmount,SUM(VATAmountLocal) as localVATAmount ,SUM(VATAmountRpt) as rptVATAmount, vatMasterCategoryID, vatSubCategoryID, localCurrency as localCurrencyID,comRptCurrency as reportingCurrencyID,DPAmountCurrency as transCurrencyID,comRptCurrencyER as reportingCurrencyER,localCurrencyER as localCurrencyER,DPAmountCurrencyER as transCurrencyER')
-            ->where('directPaymentAutoID', $masterModel["autoID"])
-            ->whereNotNull('vatSubCategoryID')
-            ->groupBy('vatSubCategoryID')
-            ->get();
+                ->where('directPaymentAutoID', $masterModel["autoID"])
+                ->whereNotNull('vatSubCategoryID')
+                ->groupBy('vatSubCategoryID')
+                ->get();
 
         foreach ($details as $key => $value) {
             $subCategoryData = TaxVatCategories::with(['tax'])->find($value->vatSubCategoryID);

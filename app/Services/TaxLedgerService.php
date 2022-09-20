@@ -13,6 +13,8 @@ use App\Services\TaxLedger\SalesInvoiceTaxLedgerService;
 use App\Services\TaxLedger\SRTaxLedgerService;
 use App\Services\TaxLedger\SupplierInvoiceTaxLedgerService;
 use App\Services\TaxLedger\PaymentVoucherTaxLedgerService;
+use App\Services\TaxLedger\GPOSSalesTaxLedgerService;
+use App\Services\TaxLedger\RPOSSalesTaxLedgerService;
 
 class TaxLedgerService
 {
@@ -45,6 +47,12 @@ class TaxLedgerService
                 break;
             case 4://Payment Voucher
                 $result = PaymentVoucherTaxLedgerService::processEntry($taxLedgerData, $masterModel);
+                break;
+            case 110://GPOS Sales
+                $result = GPOSSalesTaxLedgerService::processEntry($taxLedgerData, $masterModel);
+                break;
+            case 111://RPOS Sales
+                $result = RPOSSalesTaxLedgerService::processEntry($taxLedgerData, $masterModel);
                 break;
             default:
                 # code...

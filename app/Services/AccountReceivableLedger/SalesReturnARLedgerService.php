@@ -3,12 +3,17 @@
 namespace App\Services\AccountReceivableLedger;
 
 use App\Models\AccountsReceivableLedger;
+use App\Models\AdvanceReceiptDetails;
 use App\Models\CreditNote;
+use App\Models\CreditNoteDetails;
+use App\Models\DirectReceiptDetail;
 use App\Models\SalesReturn;
 use App\Models\CustomerInvoiceDirect;
 use App\Models\CustomerReceivePayment;
+use App\Models\CustomerReceivePaymentDetail;
 use App\Models\Employee;
 use App\Models\Taxdetail;
+use App\Models\CustomerInvoiceDirectDetail;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
@@ -25,7 +30,7 @@ class SalesReturnARLedgerService
        	$data = [];
         $finalData = [];
         $empID = Employee::find($masterModel['employeeSystemID']);
-
+        
         $masterData = SalesReturn::with(['detail' => function ($query) {
             $query->selectRaw('SUM(companyLocalAmount) as localAmount, SUM(companyReportingAmount) as rptAmount,SUM(transactionAmount) as transAmount,salesReturnID');
         }, 'finance_period_by'])->find($masterModel["autoID"]);
@@ -44,6 +49,8 @@ class SalesReturnARLedgerService
             $data['documentCode'] = $masterData->salesReturnCode;
             $data['documentDate'] = $masterDocumentDate;
             $data['customerID'] = $masterData->customerID;
+            $data['serviceLineCode'] = $masterData->serviceLineCode;
+            $data['serviceLineSystemID'] = $masterData->serviceLineSystemID;
             $data['InvoiceNo'] = null;
             $data['InvoiceDate'] = null;
             $data['custTransCurrencyID'] = $masterData->transactionCurrencyID;

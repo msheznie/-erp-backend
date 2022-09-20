@@ -2,6 +2,9 @@
 
 namespace App\Services\TaxLedger;
 
+use App\Models\DirectPaymentDetails;
+use App\Models\PaySupplierInvoiceMaster;
+use App\Models\POSTaxGLEntries;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
@@ -64,7 +67,6 @@ class GRVTaxLedgerService
 
         $ledgerDetailsData = $ledgerData;
         $ledgerDetailsData['createdUserSystemID'] = $empID->employeeSystemID;
-
 
         $details = GRVDetails::selectRaw('SUM(VATAmount*noQty) as transVATAmount,SUM(VATAmountLocal*noQty) as localVATAmount ,SUM(VATAmountRpt*noQty) as rptVATAmount, vatMasterCategoryID, vatSubCategoryID,supplierItemCurrencyID as supplierTransactionCurrencyID,foreignToLocalER as supplierTransactionER,companyReportingCurrencyID,companyReportingER,localCurrencyID,localCurrencyER')
                                 ->where('grvAutoID', $masterModel["autoID"])
@@ -237,6 +239,7 @@ class GRVTaxLedgerService
 
             array_push($finalDetailData, $ledgerDetailsData);
         }
+
 
         return ['status' => true, 'message' => 'success', 'data' => ['finalData' => $finalData, 'finalDetailData' => $finalDetailData]];
 	}

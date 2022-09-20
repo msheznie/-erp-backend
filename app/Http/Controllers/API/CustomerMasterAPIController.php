@@ -2905,7 +2905,7 @@ class CustomerMasterAPIController extends AppBaseController
             $amendable['unbilledAmendable'] = false;
         } else {
             $successMessages[] = "Use of Unbilled Account checking is done in delivery order";
-            $amendable['unbilledAmendable'] = (!$amendable['unbilledAmendable']) ? true : false;
+            $amendable['unbilledAmendable'] = true;
         }
         
    
@@ -2913,7 +2913,7 @@ class CustomerMasterAPIController extends AppBaseController
         $cusInvoicee = CustomerInvoice::where('customerID', $input['customerID'])->where('approved','!=',-1)->first();//check unapproved customer invoice which include the current customer
         if($cusInvoicee)
         {
-            $errorMessages[] = "Unable to ammend isActive,customer used in Unapproved customer invoice";
+            $errorMessages[] = "Unable to amend isActive, customer used in Unapproved customer invoice";
             $amendable['isActive'] = false;
         }
         else
@@ -2926,7 +2926,7 @@ class CustomerMasterAPIController extends AppBaseController
         $credit = CreditNote::where('customerID', $input['customerID'])->where('approved','!=',-1)->first();//check unapproved customer invoice which include the current customer
         if($credit)
         {
-            $errorMessages[] = "Unable to ammend isActive,customer used in Unapproved credit Note";
+            $errorMessages[] = "Unable to amend isActive, customer used in Unapproved credit Note";
             $amendable['isActive'] = false;
         }
         else
@@ -2938,7 +2938,7 @@ class CustomerMasterAPIController extends AppBaseController
         $recived = CustomerReceivePayment::where('customerID', $input['customerID'])->where('approved','!=',-1)->first();//check unapproved customer invoice which include the current customer
         if($recived)
         {
-            $errorMessages[] = "Unable to ammend isActive,customer used in Unapproved Customer Receipt Voucher";
+            $errorMessages[] = "Unable to amend isActive, customer used in Unapproved Customer Receipt Voucher";
             $amendable['isActive'] = false;
         }
         else
@@ -2949,7 +2949,7 @@ class CustomerMasterAPIController extends AppBaseController
         $QuotationMaster = QuotationMaster::where('customerSystemCode', $input['customerID'])->where('approvedYN','!=',-1)->first();//check unapproved QuotationMaster which include the current customer
         if($QuotationMaster)
         {
-            $errorMessages[] = "Unable to ammend isActive,customer used in Unapproved Quotation/Sales Order";
+            $errorMessages[] = "Unable to amend isActive, customer used in Unapproved Quotation/Sales Order";
             $amendable['isActive'] = false;
         }
         else
@@ -2961,7 +2961,7 @@ class CustomerMasterAPIController extends AppBaseController
         $deliveryOrderr = DeliveryOrder::where('customerID', $input['customerID'])->where('approvedYN','!=',-1)->first();//check unapproved deliverymaster which include the current customer 
         if($deliveryOrderr)
         {
-            $errorMessages[] = "Unable to ammend isActive,customer used in Unapproved delivery order Order";
+            $errorMessages[] = "Unable to amend isActive, customer used in Unapproved delivery order Order";
             $amendable['isActive'] = false;
         }
         else

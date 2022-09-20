@@ -278,7 +278,7 @@ class POSSOURCECustomerMaster extends Model
     public $table = 'pos_source_customermaster';
     
     const CREATED_AT = 'created_at';
-    const UPDATED_AT = 'updated_at';
+    const UPDATED_AT = 'modifiedDateTime';
 
 
 
