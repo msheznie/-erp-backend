@@ -30,6 +30,7 @@ use App\Models\AccountsReceivableLedger;
 use App\Models\AdvanceReceiptDetails;
 use App\Models\BankLedger;
 use App\Models\ChequeRegisterDetail;
+use App\Models\Employee;
 use App\Models\SystemGlCodeScenarioDetail;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\CompanyDocumentAttachment;
@@ -172,7 +173,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $input = $this->convertArrayToSelectedValue($input, array('companyFinancePeriodID', 'documentType', 'companyFinanceYearID', 'custTransactionCurrencyID', 'customerID'));
+        $input = $this->convertArrayToSelectedValue($input, array('companyFinancePeriodID', 'documentType', 'companyFinanceYearID', 'custTransactionCurrencyID', 'customerID', 'employeeID'));
 
         $input['documentType'] = isset($input['documentType']) ? $input['documentType'] : 0;
         $input['companySystemID'] = isset($input['companySystemID']) ? $input['companySystemID'] : 0;
@@ -304,10 +305,18 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         }
 
         if ($input['documentType'] == 14) {
-            $input = array_except($input, 'customerID');
+            if($input['payeeTypeID'] != 1){
+                $input = array_except($input, 'customerID');
+            }
             /* Direct Invoice*/
         }
-        
+        if(isset($input['employeeID'])){
+            $input['PayeeEmpID'] = $input['employeeID'];
+        }
+        if(isset($input['other'])){
+            $input['PayeeName'] = $input['other'];
+        }
+
         if (($input['custPaymentReceiveDate'] >= $companyfinanceperiod->dateFrom) && ($input['custPaymentReceiveDate'] <= $companyfinanceperiod->dateTo)) {
             $customerReceivePayments = $this->customerReceivePaymentRepository->create($input);
             return $this->sendResponse($customerReceivePayments->toArray(), 'Receipt voucher created successfully');
@@ -364,7 +373,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
         }, 'finance_period_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
-        },'customer','bank'])->findWithoutFail($id);
+        },'customer', 'employee', 'bank'])->findWithoutFail($id);
 
         if (empty($customerReceivePayment)) {
             return $this->sendError('Customer Receive Payment not found');
@@ -423,9 +432,9 @@ class CustomerReceivePaymentAPIController extends AppBaseController
     {
         $input = $request->all();
       
-        $input = $this->convertArrayToSelectedValue($input, array('companyFinanceYearID', 'customerID', 'companyFinancePeriodID', 'custTransactionCurrencyID', 'bankID', 'bankAccount', 'bankCurrency', 'confirmedYN', 'expenseClaimOrPettyCash', 'projectID'));
+        $input = $this->convertArrayToSelectedValue($input, array('companyFinanceYearID', 'customerID', 'employeeID','companyFinancePeriodID', 'custTransactionCurrencyID', 'bankID', 'bankAccount', 'bankCurrency', 'confirmedYN', 'expenseClaimOrPettyCash', 'projectID'));
 
-        $input = array_except($input, ['currency', 'finance_year_by', 'finance_period_by', 'localCurrency', 'rptCurrency','customer','bank']);
+        $input = array_except($input, ['currency', 'finance_year_by', 'finance_period_by', 'localCurrency', 'rptCurrency','customer','bank', 'employee']);
 
         $customerReceivePayment = $this->customerReceivePaymentRepository->findWithoutFail($id);
 
@@ -1316,6 +1325,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
             }
         }
+        $input['PayeeEmpID'] = $input['employeeID'];
         $customerReceivePayment = $this->customerReceivePaymentRepository->update($input, $id);
 
         return $this->sendResponse($input, 'Receipt Voucher updated successfully');
@@ -2367,8 +2377,15 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 if(Helper::checkPolicy($companySystemID,49)){
                     array_push($output['invoiceType'], $advaceReceipt);
                 }
+
                 $output['paymentType'] = PaymentType::all();
                 $output['projects'] = ErpProjectMaster::where('companySystemID', $companySystemID)
+                    ->get();
+                $output['payee'] = Employee::select(DB::raw("employeeSystemID,CONCAT(empID, ' | ' ,empName) as employeeName"))->where('empCompanySystemID', $companySystemID)->where('discharegedYN', '<>', 2)->get();
+                $output['customer'] = CustomerAssigned::select(DB::raw("customerCodeSystem,CONCAT(CutomerCode, ' | ' ,CustomerName) as CustomerName,vatEligible,vatPercentage"))
+                    ->where('companySystemID', $companySystemID)
+                    ->where('isActive', 1)
+                    ->where('isAssigned', -1)
                     ->get();
 
                 break;
@@ -2393,6 +2410,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 if(Helper::checkPolicy($companySystemID,49)){
                     array_push($output['invoiceType'], $advaceReceipt);
                 }
+                $output['payee'] = Employee::select(DB::raw("employeeSystemID,CONCAT(empID, ' | ' ,empName) as employeeName"))->where('empCompanySystemID', $companySystemID)->where('discharegedYN', '<>', 2)->get();
 
                 $output['isProjectBase'] = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
                 ->where('companySystemID', $companySystemID)
@@ -2413,6 +2431,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 $master = CustomerReceivePayment::where('custReceivePaymentAutoID', $id)->first();
                 $output['company'] = Company::select('CompanyName', 'CompanyID','vatRegisteredYN')->where('companySystemID', $companySystemID)->first();
                 $output['expenseClaimType'] = ExpenseClaimType::all();
+                $output['payee'] = Employee::select(DB::raw("employeeSystemID,CONCAT(empID, ' | ' ,empName) as employeeName"))->where('empCompanySystemID', $companySystemID)->where('discharegedYN', '<>', 2)->get();
 
                 if ($master->customerID != '') {
                     $output['currencies'] = DB::table('customercurrency')->join('currencymaster', 'customercurrency.currencyID', '=', 'currencymaster.currencyID')->where('customerCodeSystem', $master->customerID)->where('isAssigned', -1)->select('currencymaster.currencyID', 'currencymaster.CurrencyCode', 'isDefault')->get();
@@ -2434,6 +2453,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 $output['segment'] = SegmentMaster::where('isActive', 1)->where('companySystemID', $companySystemID)->get();
                 $output['currencymaster'] = CurrencyMaster::select('currencyID', 'CurrencyCode')->get();
                 $output['docType'] = $master->documentType;
+                $output['payeeTypeID'] = $master->payeeTypeID;
                 $output['bankDropdown'] = BankAssign::where('isActive', 1)
                     ->where('isAssigned', -1)
                     ->where('companySystemID', $companySystemID)
@@ -2540,7 +2560,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
     public function recieptVoucherDataTable(Request $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'month', 'approved', 'year', 'documentType', 'trsClearedYN', 'paymentType', 'projectID'));
+        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'month', 'approved', 'year', 'documentType', 'trsClearedYN', 'paymentType', 'projectID', 'payeeTypeID'));
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
@@ -2551,12 +2571,21 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         $projectID = (array)$projectID;
         $projectID = collect($projectID)->pluck('id');
 
+        $customerID = $request['customerID'];
+        $customerID = (array)$customerID;
+        $customerID = collect($customerID)->pluck('id');
+
+        $employeeID = $request['employeeID'];
+        $employeeID = (array)$employeeID;
+        $employeeID = collect($employeeID)->pluck('id');
+
         $search = $request->input('search.value');
 
         $master = CustomerReceivePayment::where('erp_customerreceivepayment.companySystemID', $input['companyId'])
             ->leftjoin('currencymaster as transCurr', 'custTransactionCurrencyID', '=', 'transCurr.currencyID')
             ->leftjoin('currencymaster as bankCurr', 'bankCurrency', '=', 'bankCurr.currencyID')
             ->leftjoin('employees', 'erp_customerreceivepayment.createdUserSystemID', '=', 'employees.employeeSystemID')
+            ->leftjoin('employees AS payee', 'erp_customerreceivepayment.PayeeEmpID', '=', 'payee.employeeSystemID')
             ->leftjoin('erp_projectmaster', 'erp_customerreceivepayment.projectID', '=', 'erp_projectmaster.id')
             ->leftjoin('customermaster', 'customermaster.customerCodeSystem', '=', 'erp_customerreceivepayment.customerID')
             ->leftjoin('payment_type', 'payment_type.id', '=', 'erp_customerreceivepayment.payment_type_id')
@@ -2600,6 +2629,22 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 $master->where('documentType', '=', $input['documentType']);
             }
         }
+        if (array_key_exists('payeeTypeID', $input) && array_key_exists('documentType', $input)) {
+            if ($input['payeeTypeID'] && !is_null($input['payeeTypeID']) && $input['documentType'] && !is_null($input['documentType'])) {
+                if($input['documentType'] == 14){
+                    if($input['payeeTypeID'] == 1){
+                        $master->where('erp_customerreceivepayment.customerID', '!=',null)->where('erp_customerreceivepayment.customerID', '!=',0);
+                    }
+                    if($input['payeeTypeID'] == 2){
+                        $master->where('erp_customerreceivepayment.PayeeEmpID', '!=',null);
+                    }
+                    if($input['payeeTypeID'] == 3){
+                        $master->where('erp_customerreceivepayment.PayeeName', '!=',null);
+                    }
+                }
+
+            }
+        }
         if (array_key_exists('trsClearedYN', $input)) {
             if ($input['trsClearedYN'] && !is_null($input['trsClearedYN'])) {
                 $master->where('erp_bankledger.trsClearedYN', '=', $input['trsClearedYN']);
@@ -2616,6 +2661,18 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             }
         }
 
+        if (array_key_exists('customerID', $input)) {
+            if ($input['customerID'] && !is_null($input['customerID'])) {
+                $master->whereIn('customerID', $customerID);
+            }
+        }
+
+        if (array_key_exists('employeeID', $input)) {
+            if ($input['employeeID'] && !is_null($input['employeeID'])) {
+                $master->whereIn('PayeeEmpID', $employeeID);
+            }
+        }
+
         $master = $master->select([
             'custPaymentReceiveCode','erp_customerreceivepayment.postedDate',
             'transCurr.CurrencyCode as transCurrencyCode',
@@ -2626,7 +2683,9 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             'erp_customerreceivepayment.createdDateTime',
             'custPaymentReceiveDate',
             'erp_customerreceivepayment.narration',
-            'empName',
+            'erp_customerreceivepayment.PayeeEmpID',
+            'erp_customerreceivepayment.customerID',
+            'employees.empName',
             'transCurr.DecimalPlaces as transDecimal',
             'bankCurr.DecimalPlaces as bankDecimal',
             'erp_customerreceivepayment.refferedBackYN',
@@ -2641,7 +2700,9 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             'erp_bankledger.trsClearedYN as trsClearedYN',
             'payment_type.description as paymentType',
             'projectID',
-            'erp_projectmaster.description as project_description'
+            'erp_projectmaster.description as project_description',
+            'payee.empID',
+            'payee.empName'
         ]);
 
         if ($search) {
@@ -2652,6 +2713,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     ->orwhere('employees.empName', 'LIKE', "%{$search}%")
                     ->orwhere('customermaster.CutomerCode', 'LIKE', "%{$search}%")
                     ->orwhere('customermaster.CustomerName', 'LIKE', "%{$search}%")
+                    ->orwhere('erp_customerreceivepayment.PayeeName', 'LIKE', "%{$search}%")
                     ->orWhere('erp_customerreceivepayment.narration', 'LIKE', "%{$search}%")
                     ->orWhere('payment_type.description', 'LIKE', "%{$search}%")
                     ->orWhere('erp_projectmaster.description', 'LIKE', "%{$search}%")
