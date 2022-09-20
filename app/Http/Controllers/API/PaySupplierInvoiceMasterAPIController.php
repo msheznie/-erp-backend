@@ -2657,6 +2657,10 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         $supplierID = (array)$supplierID;
         $supplierID = collect($supplierID)->pluck('id');
 
+        $employeeID = $request['employeeID'];
+        $employeeID = (array)$employeeID;
+        $employeeID = collect($employeeID)->pluck('id');
+
         $projectID = $request['projectID'];
         $projectID = (array)$projectID;
         $projectID = collect($projectID)->pluck('id');
@@ -2677,11 +2681,18 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         if(empty($input['invoiceType'])){
             unset($input['invoiceType']);
         }
+
+        if(empty($input['payeeTypeID'])){
+            unset($input['payeeTypeID']);
+        }
         if(empty($input['month'])){
             unset($input['month']);
         }
         if(empty($input['supplierID'])){
             unset($input['supplierID']);
+        }
+        if(empty($input['employeeID'])){
+            unset($input['employeeID']);
         }
         if(empty($input['year'])){
             unset($input['year']);
@@ -2689,8 +2700,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         if(empty($input['payment_mode'])){
             unset($input['payment_mode']);
         }
-        
-        $paymentVoucher = $this->paySupplierInvoiceMasterRepository->paySupplierInvoiceListQuery($request, $input, $search, $supplierID, $projectID);
+        $paymentVoucher = $this->paySupplierInvoiceMasterRepository->paySupplierInvoiceListQuery($request, $input, $search, $supplierID, $projectID, $employeeID);
 
         return \DataTables::eloquent($paymentVoucher)
             ->addColumn('Actions', 'Actions', "Actions")
