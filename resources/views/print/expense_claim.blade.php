@@ -158,6 +158,20 @@
             background-color: #ffffff !important;
             border-left:  1px solid #ffffffff !important;
         }
+        
+        .container
+            {
+                display: block;
+                max-width:230px;
+                max-height:95px;
+                width: auto;
+                height: auto;
+            }
+
+        .table_height
+            {
+                max-height: 60px !important;
+            }
     </style>
 </head>
 <body>
@@ -167,49 +181,19 @@
 </div>
 <div id="watermark"></div>
 <div class="card-body content" id="print-section">
-
-    <table style="width: 100%">
-        {{--  <tr style="width: 100%">
-              <td colspan="3" style="bottom: 0;position: absolute;text-align: right">
-              <span class="font-weight-bold">
-                  <h3 class="text-muted">
-                      @if($entity->confirmedYN == 0 && $entity->approved == 0)
-                          Not Confirmed
-                      @elseif($entity->confirmedYN == 1 && $entity->approved == 0)
-                          Pending Approval
-                      @elseif($entity->confirmedYN == 1 && ($entity->approved == 1 ||  $entity->approved == -1))
-                          Fully Approved
-                      @endif
-                      </h3>
-  `             </span>
-              </td>
-          </tr>--}}
+    
+    <table style="width: 100%" class="table_height">
         <tr style="width: 100%">
-            <td colspan="3" class="text-center">
+            <td valign="top" style="width: 20%">
                 @if($entity->company)
-                    <h3> {{$entity->company->CompanyName}}</h3>
+                    <img src="{{$entity->company->logo_url}}" width="180px" height="60px" class="container">
                 @endif
             </td>
-        </tr>
-        {{-- <tr style="width: 100%">
-             <td colspan="3">
-                 @if($entity->company)
-                     <h6>{{$entity->company->CompanyAddress}}</h6>
-                 @endif
-             </td>
-         </tr>--}}
-        <tr style="width: 100%">
-            <td colspan="3" class="text-center">
-                <h3>
-                    Expense Claim
-                </h3>
-            </td>
-        </tr>
-    </table>
-
-    <table style="width: 100%">
-        <tr style="width:100%">
-            <td style="width: 30%">
+            <td valign="top" style="width: 80%">
+                @if($entity->company)
+                    <span style="font-size: 24px;font-weight: 400"> {{$entity->company->CompanyName}}</span>
+                @endif
+                <br>
                 <table>
                     <tr>
                         <td width="100px">
@@ -219,25 +203,27 @@
                             <span class="font-weight-bold">:</span>
                         </td>
                         <td>
-                            {{$entity->expenseClaimCode}}
+                            <span>{{$entity->expenseClaimCode}}</span>
                         </td>
                     </tr>
                     <tr>
-                        <td width="50px">
-                            <span class="font-weight-bold">Document Date</span>
+                        <td width="70px">
+                            <span class="font-weight-bold">Document Date </span>
                         </td>
                         <td width="10px">
                             <span class="font-weight-bold">:</span>
                         </td>
                         <td>
-                            {{ \App\helper\Helper::dateFormat($entity->expenseClaimDate)}}
+                            <span>
+                                {{ \App\helper\Helper::dateFormat($entity->expenseClaimDate)}}
+                            </span>
                         </td>
                     </tr>
                     <tr>
-                        <td width="70px" valign="top">
-                            <span class="font-weight-bold">Comments </span>
+                        <td width="100px">
+                            <span class="font-weight-bold">Comments</span>
                         </td>
-                        <td width="10px" valign="top">
+                        <td width="10px">
                             <span class="font-weight-bold">:</span>
                         </td>
                         <td>
@@ -246,13 +232,17 @@
                     </tr>
                 </table>
             </td>
-            <td style="width: 40%;text-align: center">
-            </td>
-            <td style="width: 30%">
-            </td>
         </tr>
     </table>
-    {{--<hr>--}}
+
+    <hr style="color: #d3d9df">
+    <div>
+        <span style="font-size: 18px">
+            Expense Claim
+        </span>
+    </div>
+    <br>
+    <br>
     <div style="margin-top: 30px">
         <table class="table table-bordered" style="width: 100%;">
             <thead>

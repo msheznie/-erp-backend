@@ -34,9 +34,20 @@ class TenantEnforce
             'api/v1/checkManWareHouse',
         ];
 
+        $dbRoutes = [
+            'api/v1/purchase-request-add-all-items',
+            'api/v1/poItemsUpload',
+            'api/v1/createPrMaterialRequest',
+            'api/v1/uploadItemsDeliveryOrder',
+            'api/v1/approveCalanderDelAppointment',
+            'api/v1/approveJournalVoucher',
+            'api/v1/updateGLEntries',
+            'api/v1suppliers/registration/approvals/status',
+            'api/v1/approveDocument',
+            'api/v1/posMappingRequest',
+            'api/v1/uploadItems'
+        ];
 
-
-        $dbRoutes = ['api/v1/purchase-request-add-all-items','api/v1/poItemsUpload','api/v1/createPrMaterialRequest','api/v1/uploadItemsDeliveryOrder','api/v1/uploadItems','api/v1/posMappingRequest'];
 
         if (env('IS_MULTI_TENANCY', false)) {
 

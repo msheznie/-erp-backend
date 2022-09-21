@@ -36,15 +36,17 @@ class CreateStockReceive implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
     protected $stMaster;
+    protected $dataBase;
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($stMaster)
+    public function __construct($stMaster, $dataBase)
     {
         $this->stMaster = $stMaster;
+        $this->dataBase = $dataBase;
     }
 
     /**
@@ -727,8 +729,8 @@ class CreateStockReceive implements ShouldQueue
                                 'companySystemID' => $stockReceive->companySystemID,
                                 'employeeSystemID' => $approval->employeeSystemID];
 
-                            $jobIL = ItemLedgerInsert::dispatch($masterData);
-                            $jobGL = GeneralLedgerInsert::dispatch($masterData);
+                            $jobIL = ItemLedgerInsert::dispatch($masterData, $dataBase);
+                            $jobGL = GeneralLedgerInsert::dispatch($masterData, $this->dataBase);
                             //$jobSI = CreateSupplierInvoice::dispatch($stockReceive);
                         }
 

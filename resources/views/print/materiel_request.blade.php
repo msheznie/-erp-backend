@@ -190,7 +190,7 @@
         <tr style="width: 100%">
             <td colspan="3" class="text-center">
                 <h3>
-                    Materiel Request Voucher
+                    Material Request Voucher
                 </h3>
             </td>
         </tr>

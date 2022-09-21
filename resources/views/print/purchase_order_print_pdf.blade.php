@@ -160,6 +160,19 @@
     .quill-html img {
         max-width: 700px;
     }
+    .container
+            {
+                display: block;
+                max-width:230px;
+                max-height:95px;
+                width: auto;
+                height: auto;
+            }
+
+        .table_height
+            {
+                max-height: 60px !important;
+            }
 
 </style>
 <link href="{{ public_path('assets/css/app.css') }}" rel="stylesheet" type="text/css" />
@@ -240,27 +253,20 @@
 </div>
 <div class="content">
     <div class="row">
-        <table style="width:100%">
+        <table style="width:100%" class="table_height">
             <tr>
-                <td width="60%">
+                <td width="20%">
                     <table>
                         <tr>
                             @if($isMergedCompany)
-                                <td><img src="{{$secondaryCompany['logo_url']}}" width="180px" height="60px"></td>
+                                <td><img src="{{$secondaryCompany['logo_url']}}" width="180px" height="60px" class="container"></td>
                             @else
-                                <td><img src="{{$podata->company->logo_url}}" width="180px" height="60px"></td>
+                                <td><img src="{{$podata->company->logo_url}}" width="180px" height="60px" class="container"></td>
                             @endif
-                        </tr>
-                        <tr>
-                            <td>
-                                <h3 class="font-weight-bold">
-                                    {{$title}}
-                                </h3>
-                            </td>
                         </tr>
                     </table>
                 </td>
-                <td width="40%">
+                <td width="80%">
                     <table>
                         <tr>
                             <td>
@@ -325,6 +331,20 @@
         </table>
     </div>
     <hr style="background-color: black">
+    
+    <table style="width: 100%" class="table_height">
+        <tr style="width: 100%">
+ 
+            <div>
+                <span style="font-size: 18px">
+                    {{$title}}
+                </span>
+            </div>
+        </tr>
+    </table>
+    <br>
+    <br>
+
     <div class="row">
         <table style="width:100%">
             <tr>
