@@ -435,7 +435,16 @@ class TaxLedgerDetail extends Model
 
     public function customer_invoice(){
         return $this->belongsTo('App\Models\CustomerInvoiceDirect',['documentMasterAutoID','documentSystemID','companySystemID'], ['custInvoiceDirectAutoID','documentSystemiD','companySystemID']);
-    } 
+    }
+
+    public function grv(){
+        return $this->belongsTo('App\Models\GRVMaster', ['documentMasterAutoID','documentSystemID','companySystemID'], ['grvAutoID','documentSystemID','companySystemID']);
+    }
+
+    public function purchase_return(){
+        return $this->belongsTo('App\Models\PurchaseReturn',['documentMasterAutoID','documentSystemID','companySystemID'], ['purhaseReturnAutoID','documentSystemID','companySystemID']);
+    }
+
 
     public function customer_invoice_details(){
         return $this->belongsTo('App\Models\CustomerInvoiceItemDetails','documentDetailID', 'customerItemDetailID');

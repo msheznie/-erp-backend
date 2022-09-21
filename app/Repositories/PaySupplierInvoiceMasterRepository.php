@@ -195,7 +195,7 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
 
     }
 
-    public function paySupplierInvoiceListQuery($request, $input, $search = '', $supplierID, $projectID) {
+    public function paySupplierInvoiceListQuery($request, $input, $search = '', $supplierID, $projectID, $employeeID) {
 
         $selectedCompanyId = $request['companyID'];
         $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
@@ -217,6 +217,19 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
         if (array_key_exists('confirmedYN', $input)) {
             if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
                 $paymentVoucher->where('confirmedYN', $input['confirmedYN']);
+            }
+        }
+
+        if (array_key_exists('payeeTypeID', $input)) {
+            $payeeTypeID = isset($input['payeeTypeID'][0]) ? $input['payeeTypeID'][0] : $input['payeeTypeID'];
+            if (($payeeTypeID == 1) && !is_null($payeeTypeID)) {
+                $paymentVoucher->where('BPVsupplierID', "!=", NULL);
+            }
+            if (($payeeTypeID == 2) && !is_null($payeeTypeID)) {
+                $paymentVoucher->where('directPaymentPayeeEmpID', "!=", NULL);
+            }
+            if (($payeeTypeID == 3) && !is_null($payeeTypeID)) {
+                $paymentVoucher->where('directPaymentPayeeEmpID', NULL)->where('BPVsupplierID', NULL);
             }
         }
 
@@ -247,6 +260,12 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
         if (array_key_exists('supplierID', $input)) {
             if ($input['supplierID'] && !is_null($input['supplierID'])) {
                 $paymentVoucher->whereIn('BPVsupplierID', $supplierID);
+            }
+        }
+
+        if (array_key_exists('employeeID', $input)) {
+            if ($input['employeeID'] && !is_null($input['employeeID'])) {
+                $paymentVoucher->whereIn('directPaymentPayeeEmpID', $employeeID);
             }
         }
 
@@ -293,7 +312,7 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
             $search_without_comma = str_replace(",", "", $search);
             $paymentVoucher = $paymentVoucher->where(function ($query) use ($search, $search_without_comma) {
                 $query->where('BPVcode', 'LIKE', "%{$search}%")
-                    ->orWhere('BPVNarration', 'LIKE', "%{$search}%")->orWhere('suppAmountDocTotal', 'LIKE', "%{$search_without_comma}%")->orWhere('payAmountBank', 'LIKE', "%{$search_without_comma}%")->orWhere('BPVchequeNo', 'LIKE', "%{$search_without_comma}%");
+                    ->orWhere('BPVNarration', 'LIKE', "%{$search}%")->orWhere('suppAmountDocTotal', 'LIKE', "%{$search_without_comma}%")->orWhere('payAmountBank', 'LIKE', "%{$search_without_comma}%")->orWhere('BPVchequeNo', 'LIKE', "%{$search_without_comma}%")->orWhere('directPaymentPayee', 'LIKE', "%{$search_without_comma}%");
             });
         }
 
@@ -309,8 +328,23 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
             foreach ($dataSet as $val) {
                 $data[$x]['Payment Code'] = $val->BPVcode;
                 $data[$x]['PostedDate'] = $val->PostedDate;
-                $data[$x]['Type'] = StatusService::getInvoiceType($val->invoiceType);
-                $data[$x]['Supplier'] = $val->supplier? $val->supplier->supplierName : '';
+                $data[$x]['Payment Type'] = StatusService::getInvoiceType($val->invoiceType);
+                if($val->supplier){
+                    $data[$x]['Payee Type'] = "Supplier";
+                    $data[$x]['Supplier / Employee / Other'] = $val->supplier? $val->supplier->supplierName : '';
+                }
+                else if($val->directPaymentPayeeEmpID > 0){
+                    $data[$x]['Payee Type'] = "Employee";
+                    $data[$x]['Supplier / Employee / Other'] = $val->directPaymentPayee? $val->directPaymentPayee : '';
+                }
+                else if($val->directPaymentPayeeEmpID == null && $val->supplier == null && $val->directPaymentPayee != null){
+                    $data[$x]['Payee Type'] = "Other";
+                    $data[$x]['Supplier / Employee / Other'] = $val->directPaymentPayee? $val->directPaymentPayee : '';
+                }
+                else{
+                    $data[$x]['Payee Type'] = "";
+                    $data[$x]['Supplier / Employee / Other'] = "";
+                }
                 $data[$x]['Invoice Date'] = \Helper::dateFormat($val->BPVdate);
                 $data[$x]['Cheque No'] = $val->BPVchequeNo;
                 $data[$x]['Comment'] = $val->BPVNarration;
