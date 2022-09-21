@@ -83,5 +83,8 @@ class User extends Authenticatable
         return $this->hasOne('App\Models\Employee','employeeSystemID','employee_id');
     }
 
-
+    public function getUuidAttribute($value)
+    {
+        return env("WEB_PUSH_APP_NAME")."_".$value;
+    }
 }

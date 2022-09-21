@@ -1085,7 +1085,7 @@ class Helper
                                             'url' => $redirectUrl,
                                         ];
 
-                                        WebPushNotificationService::sendNotification($webPushData, 1, $pushNotificationUserIds);
+                                        // WebPushNotificationService::sendNotification($webPushData, 1, $pushNotificationUserIds);
 
                                     }
                                 }
@@ -2638,10 +2638,10 @@ class Helper
                         $webPushData = [
                             'title' => $pushNotificationMessage,
                             'body' => '',
-                            'url' => $redirectUrl,
+                            'url' => isset($redirectUrl) ? $redirectUrl : "",
                         ];
 
-                        WebPushNotificationService::sendNotification($webPushData, 2, $pushNotificationUserIds);
+                        WebPushNotificationService::sendNotification($webPushData, 2, $pushNotificationUserIds, $dataBase);
 
                     } else {
                         return ['success' => false, 'message' => 'Approval level not found'];
