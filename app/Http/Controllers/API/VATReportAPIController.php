@@ -367,6 +367,30 @@ class VATReportAPIController extends AppBaseController
 
                 $data[$x]['Document Type'] = $val->document_master->documentID;
                 $data[$x]['Document Code'] = $val->documentCode;
+                if($val->documentSystemID == 11){
+                    if($val->supplier_invoice) {
+                        $data[$x]['Reference No'] = $val->supplier_invoice->supplierInvoiceNo;
+                    }else{
+                        $data[$x]['Reference No'] = "";
+                    }
+                }
+                else if($val->documentSystemID == 3){
+                    if($val->grv) {
+                        $data[$x]['Reference No'] = $val->grv->grvDoRefNo;
+                    }else{
+                        $data[$x]['Reference No'] = "";
+                    }
+                }
+                else if($val->documentSystemID == 24){
+                    if($val->purchase_return) {
+                        $data[$x]['Reference No'] = $val->purchase_return->purchaseReturnRefNo;
+                    }else{
+                        $data[$x]['Reference No'] = "";
+                    }
+                }
+                else{
+                    $data[$x]['Reference No'] = "";
+                }
                 $data[$x]['Document Date'] = Helper::dateFormat($val->documentDate);
                 if(in_array($val->documentSystemID, [3, 24, 11, 15,4])){
                     $data[$x]['Party Name'] =isset($val->supplier->supplierName) ? $val->supplier->supplierName: '';
@@ -468,7 +492,31 @@ class VATReportAPIController extends AppBaseController
                 $data[$x]['Company VAT Registration Number'] = isset($val->company->CompanyID) ? $val->company->CompanyID : "";
                 $data[$x]['Company Name'] = isset($val->company->CompanyID) ? $val->company->CompanyID : "";
                 $data[$x]['Tax Period '] = $input['fromDate']." - ". $input['toDate'];
-                $data[$x]['Accounting Document Number'] = $val->documentNumber ;
+                $data[$x]['Accounting Document Number'] = $val->documentNumber;
+                if($val->documentSystemID == 11){
+                    if($val->supplier_invoice) {
+                        $data[$x]['Reference No'] = $val->supplier_invoice->supplierInvoiceNo;
+                    }else{
+                        $data[$x]['Reference No'] = "";
+                    }
+                }
+                else if($val->documentSystemID == 3){
+                    if($val->grv) {
+                        $data[$x]['Reference No'] = $val->grv->grvDoRefNo;
+                    }else{
+                        $data[$x]['Reference No'] = "";
+                    }
+                }
+                else if($val->documentSystemID == 24){
+                    if($val->purchase_return) {
+                        $data[$x]['Reference No'] = $val->purchase_return->purchaseReturnRefNo;
+                    }else{
+                        $data[$x]['Reference No'] = "";
+                    }
+                }
+                else{
+                    $data[$x]['Reference No'] = "";
+                }
                 $data[$x]['Accounting Document Date'] = Helper::dateFormat($val->documentDate);
                 $data[$x]['Year'] = Carbon::parse($val->documentDate)->format('Y');
                 if ($input['reportTypeID'] == 3) {
@@ -658,7 +706,7 @@ class VATReportAPIController extends AppBaseController
                                 function($query){
                                     $query->with(['country']);
                                 }
-                                ,'rptcurrency','localcurrency','final_approved_by','document_master','main_category', 'sub_category'])
+                                ,'rptcurrency','localcurrency','final_approved_by','document_master','main_category', 'sub_category', 'supplier_invoice', 'grv', 'purchase_return'])
                             ->orderBy('taxLedgerID', 'desc');
 
         if($isForDataTable==0){
@@ -786,7 +834,7 @@ class VATReportAPIController extends AppBaseController
                             })
                             ->with(['supplier','customer','rptcurrency','localcurrency','document_master','main_category', 'sub_category', 'transcurrency', 'country', 'company' => function($query) {
                                 $query->with(['country']);
-                            }, 'input_vat', 'input_vat_transfer', 'output_vat', 'output_vat_transfer', 'supplier_invoice']);
+                            }, 'input_vat', 'input_vat_transfer', 'output_vat', 'output_vat_transfer', 'supplier_invoice', 'grv', 'purchase_return']);
         return $output;
 
     }
