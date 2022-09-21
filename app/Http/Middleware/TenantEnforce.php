@@ -45,6 +45,7 @@ class TenantEnforce
             'api/v1suppliers/registration/approvals/status',
             'api/v1/approveDocument',
             'api/v1/posMappingRequest',
+            'api/v1/generateGeneralLedgerReportPDF',
             'api/v1/uploadItems'
         ];
 
