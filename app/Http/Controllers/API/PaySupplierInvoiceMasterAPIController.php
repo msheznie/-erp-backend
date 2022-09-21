@@ -1813,21 +1813,13 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                             ->where('apAutoID', $val->apAutoID)
                             ->first();
 
-                        $a = $payDetailMoreBooked->supplierPaymentAmount;
-                        $b = $val->supplierInvoiceAmount;
+                        $a = ($val->addedDocumentSystemID == 11) ? $payDetailMoreBooked->supplierPaymentAmount : abs($payDetailMoreBooked->supplierPaymentAmount);
+                        $b = ($val->addedDocumentSystemID == 11) ? $val->supplierInvoiceAmount : abs($val->supplierInvoiceAmount);
                         $epsilon = 0.0001;
-                        if ($val->addedDocumentSystemID == 11) {
-                            //supplier invoice
-                            if (($a-$b) > $epsilon) {
-                                array_push($finalError['more_booked'], $val->addedDocumentID . ' | ' . $val->bookingInvDocCode);
-                                $error_count++;
-                            }
-                        } else if ($val->addedDocumentSystemID == 15) {
-                            //debit note
-                            if (($a-$b) < $epsilon) {
-                                array_push($finalError['more_booked'], $val->addedDocumentID . ' | ' . $val->bookingInvDocCode);
-                                $error_count++;
-                            }
+                        //supplier invoice
+                        if (($a-$b) > $epsilon) {
+                            array_push($finalError['more_booked'], $val->addedDocumentID . ' | ' . $val->bookingInvDocCode);
+                            $error_count++;
                         }
 
                         
