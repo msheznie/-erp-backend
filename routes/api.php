@@ -911,6 +911,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('getAllDocumentApproval', 'DocumentApprovedAPIController@getAllDocumentApproval');
         Route::post('getAllDocumentApprovalTest', 'DocumentApprovedAPIController@getAllDocumentApproval');
         Route::post('approvalPreCheckAllDoc', 'DocumentApprovedAPIController@approvalPreCheckAllDoc');
+        Route::post('approveDocument', 'DocumentApprovedAPIController@approveDocument');
 
         //Route::get('getTotalCountOfApproval', 'DocumentApprovedAPIController@getTotalCountOfApproval');
 
@@ -2709,6 +2710,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('addEvaluationCriteriaConfig', 'EvaluationCriteriaScoreConfigAPIController@addEvaluationCriteriaConfig');
         Route::post('updateCriteriaScore', 'EvaluationCriteriaScoreConfigAPIController@updateCriteriaScore');
 
+        Route::resource('job_error_logs', 'JobErrorLogAPIController');
         Route::post('getSupplierList', 'TenderMasterAPIController@getSupplierList');
         Route::post('saveSupplierAssigned', 'TenderMasterAPIController@saveSupplierAssigned');
         Route::post('getSupplierAssignedList', 'TenderMasterAPIController@getSupplierAssignedList');
@@ -3020,9 +3022,6 @@ Route::resource('tender_criteria_answer_types', 'TenderCriteriaAnswerTypeAPICont
 
 Route::resource('evaluation_criteria_score_configs', 'EvaluationCriteriaScoreConfigAPIController');
 
-
-
-
 Route::resource('tender_supplier_assignees', 'TenderSupplierAssigneeAPIController');
 Route::resource('tender_document_types', 'TenderDocumentTypesAPIController');
 
@@ -3041,23 +3040,14 @@ Route::resource('third_party_systems', 'ThirdPartySystemsAPIController');
 
 Route::resource('third_party_integration_keys', 'ThirdPartyIntegrationKeysAPIController');
 
-
-
-
-
-
-
-
 Route::resource('bid_schedules', 'BidScheduleAPIController');
 
 Route::resource('bid_main_works', 'BidMainWorkAPIController');
 
 Route::resource('bid_boqs', 'BidBoqAPIController');
 
-
-
-
 Route::resource('cash_flow_report_details', 'CashFlowReportDetailAPIController');
+
 Route::resource('tender_circulars', 'TenderCircularsAPIController');
 
 Route::resource('po_cutoff_jobs', 'PoCutoffJobAPIController');
