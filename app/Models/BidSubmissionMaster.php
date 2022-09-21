@@ -117,5 +117,7 @@ class BidSubmissionMaster extends Model
         
     ];
 
-    
+    public function SupplierRegistrationLink(){
+        return $this->belongsTo(SupplierRegistrationLink::class, 'supplier_registration_id','id');
+    }
 }
