@@ -41,6 +41,7 @@
     <tr>
         <th>Document Code</th>
         <th>Posted Date</th>
+        <th>Account</th>
         <th>Invoice Number</th>
         <th>Invoice date</th>
         <th>Document Narration</th>
@@ -60,6 +61,7 @@
             @else
                 <td>-</td>
             @endif
+        <td>{{ $data->glCode }} - {{ $data->AccountDescription }}</td>
         <td>{{ $data->invoiceNumber }}</td>
             @if($data->invoiceDate != null)
         <td>&nbsp;{{ date('d/m/Y', strtotime($data->invoiceDate)) }}</td>
