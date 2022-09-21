@@ -845,6 +845,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
 
         Route::get('getCurrentUserInfo', 'UserAPIController@getCurrentUserInfo');
+        Route::get('getNotifications', 'UserAPIController@getNotifications');
+        Route::post('updateNotification', 'UserAPIController@updateNotification');
+        Route::post('getAllNotifications', 'UserAPIController@getAllNotifications');
         Route::get('getImageByPath', 'DocumentAttachmentsAPIController@getImageByPath');
 
         Route::resource('poMaster_reffered_histories', 'PurchaseOrderMasterRefferedHistoryAPIController');

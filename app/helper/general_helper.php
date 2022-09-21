@@ -92,6 +92,7 @@ use Illuminate\Support\Facades\Schema;
 use Response;
 use App\Models\CompanyFinanceYear;
 use App\Jobs\CreateAccumulatedDepreciation;
+use App\Services\WebPushNotificationService;
 
 class Helper
 {
@@ -1077,6 +1078,15 @@ class Helper
 
 
                                         $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, 1);
+
+                                        $webPushData = [
+                                            'title' => $pushNotificationMessage,
+                                            'body' => '',
+                                            'url' => $redirectUrl,
+                                        ];
+
+                                        // WebPushNotificationService::sendNotification($webPushData, 1, $pushNotificationUserIds);
+
                                     }
                                 }
 
@@ -2624,6 +2634,15 @@ class Helper
                         }
 
                         $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, 1);
+
+                        $webPushData = [
+                            'title' => $pushNotificationMessage,
+                            'body' => '',
+                            'url' => isset($redirectUrl) ? $redirectUrl : "",
+                        ];
+
+                        WebPushNotificationService::sendNotification($webPushData, 2, $pushNotificationUserIds, $dataBase);
+
                     } else {
                         return ['success' => false, 'message' => 'Approval level not found'];
                     }
@@ -3298,7 +3317,9 @@ class Helper
     public static function getEmployeeInfo()
     {
         $user = Models\User::find(Auth::id());
-        $employee = Models\Employee::with(['profilepic'])->find($user->employee_id);
+        $employee = Models\Employee::with(['profilepic', 'user_data' => function($query) {
+            $query->select('uuid', 'employee_id');
+        }])->find($user->employee_id);
         return $employee;
     }
 
@@ -3402,6 +3423,15 @@ class Helper
         $user = Models\User::find(Auth::id());
         if (!empty($user)) {
             return $user->employee_id;
+        }
+        return 0;
+    }
+
+    public static function getEmployeeUUID()
+    {
+        $user = Models\User::find(Auth::id());
+        if (!empty($user)) {
+            return $user->uuid;
         }
         return 0;
     }
