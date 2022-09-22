@@ -360,9 +360,15 @@ class TenderCircularsAPIController extends AppBaseController
     public function addCircular(Request $request)
     {
         $input = $request->all();
-        $attachmentList = $input['attachment_id'];
-        $supplierList = $input['supplier_id' ];
-        Log::info($supplierList);
+
+        if(isset($input['attachment_id' ])){
+            $attachmentList = $input['attachment_id'];
+        }
+
+        if(isset($input['supplier_id' ])){
+            $supplierList = $input['supplier_id' ];
+        }
+
         $input = $this->convertArrayToSelectedValue($request->all(), array('attachment_id'));
 
         if(!isset($input['description']) && !isset($input['attachment_id'])){
@@ -409,11 +415,11 @@ class TenderCircularsAPIController extends AppBaseController
             }else{
                 $data['description']=null;
             }
-            if(isset($input['attachment_id'])){
-                //$data['attachment_id']=$input['attachment_id'];
+            /*if(isset($input['attachment_id'])){
+                $data['attachment_id']=$input['attachment_id'];
             }else{
                 $data['attachment_id']=null;
-            }
+            }*/
             $data['company_id']=$input['companySystemID'];
 
             if(isset($input['id'])){
@@ -429,24 +435,29 @@ class TenderCircularsAPIController extends AppBaseController
                 $data['created_at'] = Carbon::now();
                 $result = TenderCirculars::create($data);
                 if($result){
-                    foreach ($attachmentList as $attachment){
-                        $dataAttachment['tender_id'] = $input['tenderMasterId'];
-                        $dataAttachment['circular_id'] = $result->id;
-                        $dataAttachment['amendment_id'] = $attachment['id'];
-                        $dataAttachment['status'] = null;
-                        $dataAttachment['created_by'] = $employee->employeeSystemID;
-                        $dataAttachment['created_at'] = Carbon::now();
-                        CircularAmendments::create($dataAttachment);
+                    if(isset($attachmentList)){
+                        foreach ($attachmentList as $attachment){
+                            $dataAttachment['tender_id'] = $input['tenderMasterId'];
+                            $dataAttachment['circular_id'] = $result->id;
+                            $dataAttachment['amendment_id'] = $attachment['id'];
+                            $dataAttachment['status'] = null;
+                            $dataAttachment['created_by'] = $employee->employeeSystemID;
+                            $dataAttachment['created_at'] = Carbon::now();
+                            CircularAmendments::create($dataAttachment);
+                        }
                     }
 
-                    foreach ($supplierList as $supplier){
-                        $dataSupplier['circular_id'] = $result->id;
-                        $dataSupplier['supplier_id'] = $supplier['id'];
-                        $dataSupplier['status'] = null;
-                        $dataSupplier['created_by'] = $employee->employeeSystemID;
-                        $dataSupplier['created_at'] = Carbon::now();
-                        CircularSuppliers::create($dataSupplier);
+                    if(isset($supplierList)){
+                        foreach ($supplierList as $supplier){
+                            $dataSupplier['circular_id'] = $result->id;
+                            $dataSupplier['supplier_id'] = $supplier['id'];
+                            $dataSupplier['status'] = null;
+                            $dataSupplier['created_by'] = $employee->employeeSystemID;
+                            $dataSupplier['created_at'] = Carbon::now();
+                            CircularSuppliers::create($dataSupplier);
+                        }
                     }
+
 
                     DB::commit();
                     return ['success' => true, 'message' => 'Successfully saved', 'data' => $result];
