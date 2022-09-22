@@ -258,14 +258,17 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
         }
 
         if (array_key_exists('supplierID', $input)) {
-            if ($input['supplierID'] && !is_null($input['supplierID'])) {
+            if ($input['supplierID'] && count($supplierID) > 0) {
                 $paymentVoucher->whereIn('BPVsupplierID', $supplierID);
             }
         }
 
         if (array_key_exists('employeeID', $input)) {
-            if ($input['employeeID'] && !is_null($input['employeeID'])) {
+            if ($input['employeeID'] && count($employeeID) > 0 && count($supplierID) == 0) {
                 $paymentVoucher->whereIn('directPaymentPayeeEmpID', $employeeID);
+            }
+            if ($input['employeeID'] && count($employeeID) > 0) {
+                $paymentVoucher->orWhereIn('directPaymentPayeeEmpID', $employeeID);
             }
         }
 
