@@ -2,16 +2,23 @@
 
 namespace App\Http\Controllers\API;
 
+use App\CircularAmendments;
+use App\CircularSuppliers;
 use App\Http\Requests\API\CreateTenderCircularsAPIRequest;
 use App\Http\Requests\API\UpdateTenderCircularsAPIRequest;
+use App\Mail\EmailForQueuing;
+use App\Models\Company;
 use App\Models\DocumentAttachments;
+use App\Models\SupplierRegistrationLink;
 use App\Models\TenderCirculars;
+use App\Models\TenderMasterSupplier;
 use App\Repositories\TenderCircularsRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -353,6 +360,9 @@ class TenderCircularsAPIController extends AppBaseController
     public function addCircular(Request $request)
     {
         $input = $request->all();
+        $attachmentList = $input['attachment_id'];
+        $supplierList = $input['supplier_id' ];
+        Log::info($supplierList);
         $input = $this->convertArrayToSelectedValue($request->all(), array('attachment_id'));
 
         if(!isset($input['description']) && !isset($input['attachment_id'])){
@@ -400,7 +410,7 @@ class TenderCircularsAPIController extends AppBaseController
                 $data['description']=null;
             }
             if(isset($input['attachment_id'])){
-                $data['attachment_id']=$input['attachment_id'];
+                //$data['attachment_id']=$input['attachment_id'];
             }else{
                 $data['attachment_id']=null;
             }
@@ -419,13 +429,32 @@ class TenderCircularsAPIController extends AppBaseController
                 $data['created_at'] = Carbon::now();
                 $result = TenderCirculars::create($data);
                 if($result){
+                    foreach ($attachmentList as $attachment){
+                        $dataAttachment['circular_id'] = $result->id;
+                        $dataAttachment['amendment_id'] = $attachment['id'];
+                        $dataAttachment['status'] = null;
+                        $dataAttachment['created_by'] = $employee->employeeSystemID;
+                        $dataAttachment['created_at'] = Carbon::now();
+                        CircularAmendments::create($dataAttachment);
+                    }
+
+                    foreach ($supplierList as $supplier){
+                        $dataSupplier['circular_id'] = $result->id;
+                        $dataSupplier['supplier_id'] = $supplier['id'];
+                        $dataSupplier['status'] = null;
+                        $dataSupplier['created_by'] = $employee->employeeSystemID;
+                        $dataSupplier['created_at'] = Carbon::now();
+                        CircularSuppliers::create($dataSupplier);
+                    }
+
                     DB::commit();
                     return ['success' => true, 'message' => 'Successfully saved', 'data' => $result];
                 }
             }
         } catch (\Exception $e) {
             DB::rollback();
-            Log::error($this->failed($e));
+            //Log::error($this->failed($e));
+            Log::error($e);
             return ['success' => false, 'message' => $e];
         }
     }
@@ -458,20 +487,40 @@ class TenderCircularsAPIController extends AppBaseController
     {
         $input = $request->all();
         $employee = \Helper::getEmployeeInfo();
+        $companyName = "";
+        $company = Company::find($request->input('company_id'));
+        if(isset($company->CompanyName)){
+            $companyName =  $company->CompanyName;
+        }
         DB::beginTransaction();
         try {
             $att['updated_by'] = $employee->employeeSystemID;
             $att['status'] = 1;
             $result = TenderCirculars::where('id', $input['id'])->update($att);
-
+            Mail::to('jayan@gmail.com')->send(new EmailForQueuing("Registration Link", "Dear Supplier,"."<br /><br />"." Please find the below tender circular ". $companyName ." "."<br /><br />"."Click Here: "."</b><br /><br />"." Thank You"."<br /><br /><b>"));
             if ($result) {
                 DB::commit();
+                ///Mail::to('jayan@gmail.com')->send(new EmailForQueuing("Registration Link", "Dear Supplier,"."<br /><br />"." Please find the below tender circular ". $companyName ." "."<br /><br />"."Click Here: "."</b><br /><br />"." Thank You"."<br /><br /><b>"));
+
                 return ['success' => true, 'message' => 'Successfully Published'];
+            } else {
+                return ['fail' => true, 'message' => 'Published failed'];
             }
         } catch (\Exception $e) {
             DB::rollback();
             Log::error($this->failed($e));
             return ['success' => false, 'message' => $e];
         }
+    }
+
+    public function getTenderPurchasedSupplierList(Request $request)
+    {
+        $input = $request->all();
+        $data = SupplierRegistrationLink::selectRaw('*')
+            ->join('srm_tender_master_supplier', 'srm_tender_master_supplier.purchased_by', '=', 'srm_supplier_registration_link.id')
+            ->where('srm_tender_master_supplier.tender_master_id', $input['tenderMasterId'])
+            ->get();
+
+        return $data;
     }
 }
