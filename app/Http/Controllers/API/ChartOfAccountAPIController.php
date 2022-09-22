@@ -247,9 +247,7 @@ class ChartOfAccountAPIController extends AppBaseController
                     if ($policy) {
                         $checkChartOfAccountUsed = GeneralLedger::where('chartOfAccountSystemID', $input['chartOfAccountSystemID'])->first();
 
-                        if ($checkChartOfAccountUsed && ($chartOfAccount->AccountDescription != $input['AccountDescription'])) {
-                            return $this->sendError('Cannot amend the description. Chart of account is already used and available in general ledger.', 500);
-                        }
+                      
 
                         $updateData = [
                             'AccountDescription' => $input['AccountDescription'],
@@ -420,6 +418,22 @@ class ChartOfAccountAPIController extends AppBaseController
             return $this->sendError($exception->getMessage() . " Line" . $exception->getLine(), 500);
         }
 
+
+    }
+
+    public function changeActive(Request $request){
+
+        $chartOfAccountID = $request->chartOfAccountSystemID;
+        $selectedCompanyId = $request->selectedCompanyId;
+
+        $generalLedger = GeneralLedger::where('chartOfAccountSystemID', $chartOfAccountID)->where('companySystemID',$selectedCompanyId)->first();
+
+        if($generalLedger){
+            return $this->sendError('The chart of account has a balance amount in general ledger', 500);
+        }
+
+
+        return $this->sendResponse($generalLedger, 'General Ledger Have No Balance');
 
     }
 
