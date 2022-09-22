@@ -247,7 +247,7 @@ class ChartOfAccountAPIController extends AppBaseController
                     if ($policy) {
                         $checkChartOfAccountUsed = GeneralLedger::where('chartOfAccountSystemID', $input['chartOfAccountSystemID'])->first();
 
-                      
+
 
                         $updateData = [
                             'AccountDescription' => $input['AccountDescription'],
@@ -429,7 +429,7 @@ class ChartOfAccountAPIController extends AppBaseController
         $generalLedger = GeneralLedger::where('chartOfAccountSystemID', $chartOfAccountID)->where('companySystemID',$selectedCompanyId)->first();
 
         if($generalLedger){
-            return $this->sendError('The chart of account has a balance amount in general ledger', 500);
+            return $this->sendError(trans('custom.chart_of_account_has_a_balance_in_gl'),500);
         }
 
 
