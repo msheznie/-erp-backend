@@ -332,10 +332,10 @@ class TenderCircularsAPIController extends AppBaseController
     public function getAttachmentDropCircular(Request $request)
     {
         $input = $request->all();
-        $attachment = TenderCirculars::where('tender_id',$input['tenderMasterId'])->get();
+        $attachment = CircularAmendments::where('tender_id',$input['tenderMasterId'])->get();
         $attchArray = array();
         if(count($attachment) > 0){
-            $attchArray = $attachment->pluck('attachment_id');
+            $attchArray = $attachment->pluck('amendment_id');
             $attchArray = $attchArray->filter();
         }
 
@@ -430,6 +430,7 @@ class TenderCircularsAPIController extends AppBaseController
                 $result = TenderCirculars::create($data);
                 if($result){
                     foreach ($attachmentList as $attachment){
+                        $dataAttachment['tender_id'] = $input['tenderMasterId'];
                         $dataAttachment['circular_id'] = $result->id;
                         $dataAttachment['amendment_id'] = $attachment['id'];
                         $dataAttachment['status'] = null;
@@ -453,8 +454,7 @@ class TenderCircularsAPIController extends AppBaseController
             }
         } catch (\Exception $e) {
             DB::rollback();
-            //Log::error($this->failed($e));
-            Log::error($e);
+            Log::error($this->failed($e));
             return ['success' => false, 'message' => $e];
         }
     }

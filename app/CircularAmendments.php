@@ -14,6 +14,7 @@ class CircularAmendments extends Model
     public $timestamps = false;
 
     public $fillable = [
+        'tender_id',
         'circular_id',
         'amendment_id',
         'status',
@@ -30,6 +31,7 @@ class CircularAmendments extends Model
      */
     protected $casts = [
         'id' => 'integer',
+        'tender_id' => 'integer',
         'circular_id' => 'integer',
         'amendment_id' => 'integer',
         'status' => 'integer',
