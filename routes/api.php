@@ -316,6 +316,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getNotAssignedCompaniesByChartOfAccount', 'ChartOfAccountAPIController@getNotAssignedCompaniesByChartOfAccount');
         Route::resource('chart_of_accounts_assigned', 'ChartOfAccountsAssignedAPIController');
         Route::get('getAssignedChartOfAccounts', 'ChartOfAccountsAssignedAPIController@getAssignedChartOfAccounts');
+        Route::get('changeActive', 'ChartOfAccountAPIController@changeActive');
 
 
         Route::resource('erp_locations', 'ErpLocationAPIController');

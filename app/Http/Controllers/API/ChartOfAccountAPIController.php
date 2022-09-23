@@ -423,6 +423,22 @@ class ChartOfAccountAPIController extends AppBaseController
 
     }
 
+    public function changeActive(Request $request){
+
+        $chartOfAccountID = $request->chartOfAccountSystemID;
+        $selectedCompanyId = $request->selectedCompanyId;
+
+        $generalLedger = GeneralLedger::where('chartOfAccountSystemID', $chartOfAccountID)->where('companySystemID',$selectedCompanyId)->first();
+
+        if($generalLedger){
+            return $this->sendError(trans('custom.chart_of_account_has_a_balance_in_gl'),500);
+        }
+
+
+        return $this->sendResponse($generalLedger, 'General Ledger Have No Balance');
+
+    }
+
     public function isBank($id){
 
         $isBank = BankAccount::where('chartOfAccountSystemID', $id)->get();
