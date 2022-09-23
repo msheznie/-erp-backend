@@ -537,11 +537,8 @@ class TenderCircularsAPIController extends AppBaseController
                 ->join('srm_circular_suppliers', 'srm_circular_suppliers.supplier_id', '=', 'srm_supplier_registration_link.id')
                 ->where('srm_circular_suppliers.circular_id', $input['circularId'])
                 ->get();
-
+            $data['dataAssigned'] = $dataAssigned;
         }
-
-        $data['dataAssigned'] = $dataAssigned;
-
         return $data;
     }
 
