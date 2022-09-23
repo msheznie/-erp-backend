@@ -247,7 +247,9 @@ class ChartOfAccountAPIController extends AppBaseController
                     if ($policy) {
                         $checkChartOfAccountUsed = GeneralLedger::where('chartOfAccountSystemID', $input['chartOfAccountSystemID'])->first();
 
-
+                        if ($checkChartOfAccountUsed && ($chartOfAccount->AccountDescription != $input['AccountDescription'])) {
+                            return $this->sendError('Cannot amend the description. Chart of account is already used and available in general ledger.', 500);
+                        }
 
                         $updateData = [
                             'AccountDescription' => $input['AccountDescription'],
