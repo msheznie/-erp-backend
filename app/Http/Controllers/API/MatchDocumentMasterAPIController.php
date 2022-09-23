@@ -208,7 +208,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
             }
 
             if ($input['matchType'] == 1) {
-
+                $user_type = ($input['user_type']);
                 $paySupplierInvoiceMaster = PaySupplierInvoiceMaster::find($input['paymentAutoID']);
 
                 if (empty($paySupplierInvoiceMaster)) {
@@ -258,9 +258,21 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 $input['directPaymentPayeeSelectEmp'] = $paySupplierInvoiceMaster->directPaymentPayeeSelectEmp;
                 $input['directPaymentPayee'] = $paySupplierInvoiceMaster->directPaymentPayee;
                 $input['directPayeeCurrency'] = $paySupplierInvoiceMaster->directPayeeCurrency;
-                $input['BPVsupplierID'] = $paySupplierInvoiceMaster->BPVsupplierID;
-                $input['supplierGLCodeSystemID'] = $paySupplierInvoiceMaster->supplierGLCodeSystemID;
-                $input['supplierGLCode'] = $paySupplierInvoiceMaster->supplierGLCode;
+                
+                
+                if($user_type == 1)
+                {
+                    $input['BPVsupplierID'] = $paySupplierInvoiceMaster->BPVsupplierID;
+                    $input['supplierGLCodeSystemID'] = $paySupplierInvoiceMaster->supplierGLCodeSystemID;
+                    $input['supplierGLCode'] = $paySupplierInvoiceMaster->supplierGLCode;
+                }
+                else if($user_type == 2)
+                {
+                    $input['employee_id'] = $paySupplierInvoiceMaster->directPaymentPayeeEmpID;
+                    $input['employeeGLCodeSystemID'] = $paySupplierInvoiceMaster->AdvanceAccount;
+                    $input['employeeGLCode'] = $paySupplierInvoiceMaster->advanceAccountSystemID;
+                }
+
                 $input['supplierTransCurrencyID'] = $paySupplierInvoiceMaster->supplierTransCurrencyID;
                 $input['supplierTransCurrencyER'] = $paySupplierInvoiceMaster->supplierTransCurrencyER;
                 $input['supplierDefCurrencyID'] = $paySupplierInvoiceMaster->supplierDefCurrencyID;
@@ -1550,7 +1562,10 @@ class MatchDocumentMasterAPIController extends AppBaseController
             {
 
                 $is_advance_payment =  PaySupplierInvoiceDetail::where('matchingDocID', $id)->where('documentSystemID',4)
-                ->where('PayMasterAutoId', $input["PayMasterAutoId"]);
+                                                               ->where('PayMasterAutoId', $input["PayMasterAutoId"])
+                                                               ->whereHas('matching_master', function($query) {
+                                                                    $query->where('user_type', '!=', 2);
+                                                               });
                 if($is_advance_payment->count() > 0)
                 {
                    
@@ -2234,6 +2249,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 AND DATE_FORMAT(employee_ledger.documentDate,"%Y-%m-%d") <= "' . $matchingDocdate . '" 
                 AND employee_ledger.selectedToPaymentInv = 0 
                 AND employee_ledger.fullyInvoice <> 2 
+                AND employee_ledger.documentSystemID = 11
                 AND employee_ledger.companySystemID = ' . $matchDocumentMasterData->companySystemID . ' 
                 AND employee_ledger.employeeSystemID = ' . $matchDocumentMasterData->employee_id . ' 
                 AND employee_ledger.supplierTransCurrencyID = ' . $matchDocumentMasterData->supplierTransCurrencyID . ' HAVING ROUND(paymentBalancedAmount, '.$decimalPlaces.') != 0 ORDER BY employee_ledger.id DESC';
@@ -2274,50 +2290,50 @@ class MatchDocumentMasterAPIController extends AppBaseController
             FROM
                 employee_ledger
                 LEFT JOIN (
-            SELECT
-                erp_paysupplierinvoicedetail.apAutoID,
-                IFNULL(Sum( erp_paysupplierinvoicedetail.supplierPaymentAmount ),0) AS SumOfsupplierPaymentAmount,
-                IFNULL(Sum( erp_paysupplierinvoicedetail.paymentBalancedAmount ),0) AS SumOfpaymentBalancedAmount 
-            FROM
-                erp_paysupplierinvoicedetail
-                JOIN erp_debitnote ON erp_paysupplierinvoicedetail.PayMasterAutoId = erp_debitnote.debitNoteAutoID 
-            WHERE 
-                    erp_debitnote.type = 2 AND erp_paysupplierinvoicedetail.documentSystemID = 15
-            GROUP BY
-                erp_paysupplierinvoicedetail.apAutoID 
+                        SELECT
+                            erp_paysupplierinvoicedetail.apAutoID,
+                            IFNULL(Sum( erp_paysupplierinvoicedetail.supplierPaymentAmount ),0) AS SumOfsupplierPaymentAmount,
+                            IFNULL(Sum( erp_paysupplierinvoicedetail.paymentBalancedAmount ),0) AS SumOfpaymentBalancedAmount 
+                        FROM
+                            erp_paysupplierinvoicedetail
+                            JOIN erp_debitnote ON erp_paysupplierinvoicedetail.PayMasterAutoId = erp_debitnote.debitNoteAutoID 
+                        WHERE 
+                                erp_debitnote.type = 2 AND erp_paysupplierinvoicedetail.documentSystemID = 15
+                        GROUP BY
+                            erp_paysupplierinvoicedetail.apAutoID 
                 ) sid ON sid.apAutoID = employee_ledger.id
                 LEFT JOIN (
-            SELECT
-                erp_matchdocumentmaster.PayMasterAutoId,
-                erp_matchdocumentmaster.companyID,
-                erp_matchdocumentmaster.companySystemID,
-                erp_matchdocumentmaster.documentSystemID,
-                erp_matchdocumentmaster.BPVcode,
-                erp_matchdocumentmaster.BPVsupplierID,
-                erp_matchdocumentmaster.supplierTransCurrencyID,
-                SUM(erp_matchdocumentmaster.matchedAmount) as matchedAmount,
-                SUM(erp_matchdocumentmaster.matchLocalAmount) as matchLocalAmount,
-                SUM(erp_matchdocumentmaster.matchRptAmount) as matchRptAmount
-            FROM
-                erp_matchdocumentmaster 
-            WHERE
-                erp_matchdocumentmaster.companySystemID = ' . $matchDocumentMasterData->companySystemID . ' 
-                AND erp_matchdocumentmaster.documentSystemID = 15
-                GROUP BY companySystemID,PayMasterAutoId,documentSystemID,BPVsupplierID,supplierTransCurrencyID
-                ) md ON md.documentSystemID = employee_ledger.documentSystemID 
-                AND md.PayMasterAutoId = employee_ledger.documentSystemCode 
-                AND md.BPVsupplierID = employee_ledger.employeeSystemID 
-                AND md.supplierTransCurrencyID = employee_ledger.supplierTransCurrencyID 
-                AND md.companySystemID = employee_ledger.companySystemID 
-                LEFT JOIN currencymaster ON employee_ledger.supplierTransCurrencyID = currencymaster.currencyID 
-            WHERE
-                employee_ledger.invoiceType IN ( 0, 1, 4, 7 ) 
-                AND DATE_FORMAT(employee_ledger.documentDate,"%Y-%m-%d") <= "' . $matchingDocdate . '" 
-                AND employee_ledger.selectedToPaymentInv = 0 
-                AND employee_ledger.fullyInvoice <> 2 
-                AND employee_ledger.companySystemID = ' . $matchDocumentMasterData->companySystemID . ' 
-                AND employee_ledger.employeeSystemID = ' . $matchDocumentMasterData->employee_id . ' 
-                AND employee_ledger.supplierTransCurrencyID = ' . $matchDocumentMasterData->supplierTransCurrencyID . ' HAVING ROUND(paymentBalancedAmount, '.$decimalPlaces.') != 0 ORDER BY employee_ledger.id DESC';
+                    SELECT
+                        erp_matchdocumentmaster.PayMasterAutoId,
+                        erp_matchdocumentmaster.companyID,
+                        erp_matchdocumentmaster.companySystemID,
+                        erp_matchdocumentmaster.documentSystemID,
+                        erp_matchdocumentmaster.BPVcode,
+                        erp_matchdocumentmaster.BPVsupplierID,
+                        erp_matchdocumentmaster.supplierTransCurrencyID,
+                        SUM(erp_matchdocumentmaster.matchedAmount) as matchedAmount,
+                        SUM(erp_matchdocumentmaster.matchLocalAmount) as matchLocalAmount,
+                        SUM(erp_matchdocumentmaster.matchRptAmount) as matchRptAmount
+                    FROM
+                        erp_matchdocumentmaster 
+                    WHERE
+                        erp_matchdocumentmaster.companySystemID = ' . $matchDocumentMasterData->companySystemID . ' 
+                        AND erp_matchdocumentmaster.documentSystemID = 15
+                        GROUP BY companySystemID,PayMasterAutoId,documentSystemID,BPVsupplierID,supplierTransCurrencyID
+                        ) md ON md.documentSystemID = employee_ledger.documentSystemID 
+                        AND md.PayMasterAutoId = employee_ledger.documentSystemCode 
+                        AND md.BPVsupplierID = employee_ledger.employeeSystemID 
+                        AND md.supplierTransCurrencyID = employee_ledger.supplierTransCurrencyID 
+                        AND md.companySystemID = employee_ledger.companySystemID 
+                        LEFT JOIN currencymaster ON employee_ledger.supplierTransCurrencyID = currencymaster.currencyID 
+                WHERE
+                    employee_ledger.invoiceType IN ( 0, 1, 4, 7 ) 
+                    AND DATE_FORMAT(employee_ledger.documentDate,"%Y-%m-%d") <= "' . $matchingDocdate . '" 
+                    AND employee_ledger.selectedToPaymentInv = 0 
+                    AND employee_ledger.fullyInvoice <> 2 
+                    AND employee_ledger.companySystemID = ' . $matchDocumentMasterData->companySystemID . ' 
+                    AND employee_ledger.employeeSystemID = ' . $matchDocumentMasterData->employee_id . ' 
+                    AND employee_ledger.supplierTransCurrencyID = ' . $matchDocumentMasterData->supplierTransCurrencyID . ' HAVING ROUND(paymentBalancedAmount, '.$decimalPlaces.') != 0 ORDER BY employee_ledger.id DESC';
 
 
               

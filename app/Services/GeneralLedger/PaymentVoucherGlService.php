@@ -436,7 +436,7 @@ class PaymentVoucherGlService
                 }
             }
 
-            if ($masterData->invoiceType == 5) { //Advance Payment
+            if ($masterData->invoiceType == 5 || $masterData->invoiceType == 7) { //Advance Payment
                 if ($ap) {
                     $data['serviceLineSystemID'] = 24;
                     $data['serviceLineCode'] = 'X';
