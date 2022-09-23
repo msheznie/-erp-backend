@@ -544,4 +544,24 @@ class TenderCircularsAPIController extends AppBaseController
 
         return $data;
     }
+
+    public function deleteCircularSupplier(Request $request)
+    {
+        $input = $request->all();
+        DB::beginTransaction();
+        try {
+            $result = CircularSuppliers::where('id',$input['id'])->delete();
+            if($result){
+                DB::commit();
+                return ['success' => true, 'message' => 'Successfully deleted', 'data' => $result];
+            }
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($this->failed($e));
+            return ['success' => false, 'message' => $e];
+        }
+
+    }
+
+
 }
