@@ -586,10 +586,35 @@ class TenderCircularsAPIController extends AppBaseController
         DB::beginTransaction();
         try {
             $dataSupplier['circular_id'] = $input['circularId'];
-            $dataSupplier['supplier_id'] = $input['selectedsupplier_id'];
+            $dataSupplier['supplier_id'] = $input['selectedSupplierId'];
             $dataSupplier['created_by'] = $employee->employeeSystemID;
             $dataSupplier['created_at'] = Carbon::now();
             $result = CircularSuppliers::create($dataSupplier);
+            if($result){
+                DB::commit();
+                return ['success' => true, 'message' => 'Successfully created', 'data' => $result];
+            }
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($e);
+            return ['success' => false, 'message' => $e];
+        }
+
+    }
+
+    public function addCircularAmendment(Request $request)
+    {
+        $input = $request->all();
+        $employee = \Helper::getEmployeeInfo();
+        DB::beginTransaction();
+        try {
+            $dataAttachment['tender_id'] = $input['tenderMasterId'];
+            $dataAttachment['circular_id'] = $input['circularId'];
+            $dataAttachment['amendment_id'] = $input['amendmentId'];
+            $dataAttachment['status'] = null;
+            $dataAttachment['created_by'] = $employee->employeeSystemID;
+            $dataAttachment['created_at'] = Carbon::now();
+            $result = CircularAmendments::create($dataAttachment);
             if($result){
                 DB::commit();
                 return ['success' => true, 'message' => 'Successfully created', 'data' => $result];
