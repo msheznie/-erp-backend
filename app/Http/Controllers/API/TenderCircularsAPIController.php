@@ -560,6 +560,26 @@ class TenderCircularsAPIController extends AppBaseController
             Log::error($this->failed($e));
             return ['success' => false, 'message' => $e];
         }
+    }
+
+    public function deleteCircularAmendment(Request $request)
+    {
+        $input = $request->all();
+        DB::beginTransaction();
+        try {
+            $result = CircularAmendments::where('amendment_id',$input['attachmentID'])
+                ->where('tender_id', $input['tenderMasterId'])
+                ->where('circular_id', $input['circularId'])
+                ->delete();
+            if($result){
+                DB::commit();
+                return ['success' => true, 'message' => 'Successfully deleted', 'data' => $result];
+            }
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($this->failed($e));
+            return ['success' => false, 'message' => $e];
+        }
 
     }
 
