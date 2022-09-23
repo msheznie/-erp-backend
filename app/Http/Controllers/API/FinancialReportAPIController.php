@@ -1626,10 +1626,15 @@ WHERE
                                 if ($checkIsGroup->isGroup == 0) {
                                     $data[$x]['debit_total_local'] = round($subTotalDebitLocal, $decimalPlaceLocal);
                                     $data[$x]['credit_total_local'] = round($subTotalCreditRptLocal, $decimalPlaceLocal);
+                                    $balanceLocal = $subTotalDebitLocal - $subTotalCreditRptLocal;
+                                    $data[$x]['balanceLocal'] = round($balanceLocal, $decimalPlaceLocal);
+
                                 }
 
                                 $data[$x]['debit_total_repot'] = round($subTotalDebitRpt, $decimalPlaceRpt);
                                 $data[$x]['credit_total_repot'] = round($subTotalCreditRpt, $decimalPlaceRpt);
+                                $balanceReport = $subTotalDebitRpt - $subTotalCreditRpt;
+                                $data[$x]['balanceReport'] = round($balanceReport, $decimalPlaceRpt);
 
                                 $x++;
                                 // $data[$x][''] = '';
