@@ -2662,14 +2662,17 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         }
 
         if (array_key_exists('customerID', $input)) {
-            if ($input['customerID'] && !is_null($input['customerID'])) {
+            if ($input['customerID']  && count($customerID) > 0) {
                 $master->whereIn('customerID', $customerID);
             }
         }
 
         if (array_key_exists('employeeID', $input)) {
-            if ($input['employeeID'] && !is_null($input['employeeID'])) {
+            if ($input['employeeID'] && count($employeeID) > 0 && count($customerID) == 0) {
                 $master->whereIn('PayeeEmpID', $employeeID);
+            }
+            if ($employeeID && count($employeeID) > 0 && count($customerID) > 0) {
+                $master->orWhereIn('PayeeEmpID', $employeeID);
             }
         }
 
