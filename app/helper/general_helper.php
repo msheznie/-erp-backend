@@ -3395,6 +3395,17 @@ class Helper
         }
     }
 
+    public static function convertDateWithTime($date)
+    {
+        if ($date) {
+
+            return self::dateOnlyFormat($date) ." ". date("g:i A", strtotime($date));
+
+        } else {
+            return null;
+        }
+    }
+
     public static function dateOnlyFormat($date)
     {
         if ($date) {
