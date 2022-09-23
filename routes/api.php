@@ -2755,6 +2755,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('getTenderCircularList', 'TenderCircularsAPIController@getTenderCircularList');
         Route::post('getAttachmentDropCircular', 'TenderCircularsAPIController@getAttachmentDropCircular');
         Route::post('addCircular', 'TenderCircularsAPIController@addCircular');
+        Route::post('addCircularSupplier', 'TenderCircularsAPIController@addCircularSupplier');
         Route::post('getCircularMaster', 'TenderCircularsAPIController@getCircularMaster');
         Route::post('deleteTenderCircular', 'TenderCircularsAPIController@deleteTenderCircular');
         Route::post('deleteCircularSupplier', 'TenderCircularsAPIController@deleteCircularSupplier');

@@ -450,7 +450,6 @@ class TenderCircularsAPIController extends AppBaseController
                         foreach ($supplierList as $supplier){
                             $dataSupplier['circular_id'] = $result->id;
                             $dataSupplier['supplier_id'] = $supplier['id'];
-                            $dataSupplier['status'] = null;
                             $dataSupplier['created_by'] = $employee->employeeSystemID;
                             $dataSupplier['created_at'] = Carbon::now();
                             CircularSuppliers::create($dataSupplier);
@@ -575,6 +574,29 @@ class TenderCircularsAPIController extends AppBaseController
         } catch (\Exception $e) {
             DB::rollback();
             Log::error($this->failed($e));
+            return ['success' => false, 'message' => $e];
+        }
+
+    }
+
+    public function addCircularSupplier(Request $request)
+    {
+        $input = $request->all();
+        $employee = \Helper::getEmployeeInfo();
+        DB::beginTransaction();
+        try {
+            $dataSupplier['circular_id'] = $input['circularId'];
+            $dataSupplier['supplier_id'] = $input['selectedsupplier_id'];
+            $dataSupplier['created_by'] = $employee->employeeSystemID;
+            $dataSupplier['created_at'] = Carbon::now();
+            $result = CircularSuppliers::create($dataSupplier);
+            if($result){
+                DB::commit();
+                return ['success' => true, 'message' => 'Successfully created', 'data' => $result];
+            }
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($e);
             return ['success' => false, 'message' => $e];
         }
 
