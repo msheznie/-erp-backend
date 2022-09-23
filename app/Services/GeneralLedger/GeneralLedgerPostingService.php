@@ -220,7 +220,7 @@ class GeneralLedgerPostingService
                         }
                     } else if ($masterModel["documentSystemID"] == 4) {
                         $suppInvData = PaySupplierInvoiceMaster::find($masterModel["autoID"]);
-                        if ($suppInvData->invoiceType == 6) {
+                        if ($suppInvData->invoiceType == 6 || $suppInvData->invoiceType == 7) {
                             $apLedgerInsert = \App\Jobs\EmployeeLedgerInsert::dispatch($masterModel, $dataBase);
                         } else {
                             if ($suppInvData->invoiceType != 3) {
