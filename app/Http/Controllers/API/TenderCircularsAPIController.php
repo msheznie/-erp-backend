@@ -505,10 +505,14 @@ class TenderCircularsAPIController extends AppBaseController
             $att['updated_by'] = $employee->employeeSystemID;
             $att['status'] = 1;
             $result = TenderCirculars::where('id', $input['id'])->update($att);
+            $supplierList = CircularSuppliers::with('supplier_registration_link')->where('circular_id', $input['id'])->get();
 
             if ($result) {
                 DB::commit();
-                Mail::to('jayan@gmail.com')->send(new EmailForQueuing("Registration Link", "Dear Supplier,"."<br /><br />"." Please find the below tender circular ". $companyName ." "."<br /><br />"."Click Here: "."</b><br /><br />"." Thank You"."<br /><br /><b>"));
+                foreach ($supplierList as $supplier){
+                    Mail::to($supplier->supplier_registration_link->email)->send(new EmailForQueuing("Tender Circular", "Dear Supplier,"."<br /><br />"." Please find the below tender circular ". $companyName ." "."<br /><br />"."Click Here: "."</b><br /><br />"." Thank You"."<br /><br /><b>"));
+                }
+
                 return ['success' => true, 'message' => 'Successfully Published'];
             } else {
                 return ['fail' => true, 'message' => 'Published failed'];

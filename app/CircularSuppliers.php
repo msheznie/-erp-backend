@@ -45,4 +45,10 @@ class CircularSuppliers extends Model
     public static $rules = [
 
     ];
+
+
+    public function supplier_registration_link()
+    {
+        return $this->belongsTo('App\Models\SupplierRegistrationLink', 'supplier_id', 'id');
+    }
 }
