@@ -218,9 +218,9 @@ class CustomerReceivePaymentRepository extends BaseRepository
                 $data[$x]['BRV Date'] = \Helper::dateFormat($val->custPaymentReceiveDate);
                 $data[$x]['Narration'] = $val->narration;
                 $data[$x]['Created By'] = $val->empName;
-                $data[$x]['Created At'] = \Helper::dateFormat($val->createdDateTime);
-                $data[$x]['Confirmed on'] = \Helper::dateFormat($val->confirmedDate);
-                $data[$x]['Approved on'] = \Helper::dateFormat($val->approvedDate);
+                $data[$x]['Created At'] = \Helper::convertDateWithTime($val->createdDateTime);
+                $data[$x]['Confirmed on'] = \Helper::convertDateWithTime($val->confirmedDate);
+                $data[$x]['Approved on'] = \Helper::convertDateWithTime($val->approvedDate);
                 $data[$x]['Currency'] = $val->transCurrencyCode;
                 $data[$x]['Transaction Amount'] = $val->receivedAmount? number_format(abs($val->receivedAmount), $val->transDecimal? $val->transDecimal : '', ".", "") : '';
                 $data[$x]['Bank Currency'] = $val->bankCurrencyCode;
