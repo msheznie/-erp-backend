@@ -480,7 +480,9 @@ class TenderCircularsAPIController extends AppBaseController
         DB::beginTransaction();
         try {
             $result = TenderCirculars::where('id',$input['id'])->delete();
+
             if($result){
+                CircularAmendments::where('circular_id', $input['id'])->delete();
                 DB::commit();
                 return ['success' => true, 'message' => 'Successfully deleted', 'data' => $result];
             }
