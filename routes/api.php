@@ -1852,7 +1852,19 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('remove_document_attachment_type', 'DocumentAttachmentTypeController@removeDocumentAttachmentType');
         Route::post('get_all_calendar_dates', 'TenderCalendarDatesController@getAllCalendarDates');
         Route::resource('calendar_date', 'TenderCalendarDatesController');
+        Route::post('getAllNotDishachargeEmployeesDropdown', 'EmployeeAPIController@getAllNotDishachargeEmployeesDropdown');
 
+        Route::post('get-tender-committee', 'TenderCommitteeController@getAll');
+        Route::post('add-employees-to-tender-committee', 'TenderCommitteeController@assignEmployeesToTenderCommitee');
+        Route::post('delete-tender-committee', 'TenderCommitteeController@delete');
+
+        Route::resource('tender-committee', 'TenderCommitteeController');
+        Route::post('tender-committee/{id}','TenderCommitteeController@update');
+        Route::post('getActiveEmployeesForBid','TenderCommitteeController@getActiveEmployeesForBid');
+
+        Route::resource('tender-bid-employee-details','TenderBidEmployeeDetailsController');
+        Route::post('tender-bid-employee-get-all','TenderBidEmployeeDetailsController@getEmployees');
+        Route::post('tender-bid-employee-delete','TenderBidEmployeeDetailsController@deleteEmp');
         /* For Profile -> Profile */
         Route::get('getProfileDetails', 'EmployeeAPIController@getProfileDetails');
 
