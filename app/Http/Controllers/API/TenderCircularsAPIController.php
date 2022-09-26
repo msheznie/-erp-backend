@@ -2,8 +2,9 @@
 
 namespace App\Http\Controllers\API;
 
-use App\CircularAmendments;
-use App\CircularSuppliers;
+use App\helper\Helper;
+use App\Models\CircularAmendments;
+use App\Models\CircularSuppliers;
 use App\Http\Requests\API\CreateTenderCircularsAPIRequest;
 use App\Http\Requests\API\UpdateTenderCircularsAPIRequest;
 use App\Mail\EmailForQueuing;
@@ -11,7 +12,6 @@ use App\Models\Company;
 use App\Models\DocumentAttachments;
 use App\Models\SupplierRegistrationLink;
 use App\Models\TenderCirculars;
-use App\Models\TenderMasterSupplier;
 use App\Repositories\TenderCircularsRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -19,6 +19,7 @@ use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -505,12 +506,13 @@ class TenderCircularsAPIController extends AppBaseController
             $att['updated_by'] = $employee->employeeSystemID;
             $att['status'] = 1;
             $result = TenderCirculars::where('id', $input['id'])->update($att);
-            $supplierList = CircularSuppliers::with('supplier_registration_link')->where('circular_id', $input['id'])->get();
+            $supplierList = CircularSuppliers::with([ 'supplier_registration_link', 'srm_circular_amendments.document_attachments'])->where('circular_id', $input['id'])->get();
 
             if ($result) {
                 DB::commit();
                 foreach ($supplierList as $supplier){
-                    Mail::to($supplier->supplier_registration_link->email)->send(new EmailForQueuing("Tender Circular", "Dear Supplier,"."<br /><br />"." Please find the below tender circular ". $companyName ." "."<br /><br />"."Click Here: "."</b><br /><br />"." Thank You"."<br /><br /><b>"));
+                    $file = Storage::disk('s3')->url($supplier->srm_circular_amendments->document_attachments->myFileName);
+                    Mail::to($supplier->supplier_registration_link->email)->send(new EmailForQueuing("Tender Circular", "Dear Supplier,"."<br /><br />"." Please find the below tender circular ". $companyName ." "."<br /><br />"."Click Here: "."</b><br /><br />"." Thank You"."<br /><br /><b>", $file));
                 }
 
                 return ['success' => true, 'message' => 'Successfully Published'];
@@ -519,7 +521,7 @@ class TenderCircularsAPIController extends AppBaseController
             }
         } catch (\Exception $e) {
             DB::rollback();
-            Log::error($this->failed($e));
+            Log::error($e);
             return ['success' => false, 'message' => $e];
         }
     }
@@ -530,9 +532,8 @@ class TenderCircularsAPIController extends AppBaseController
         $purchased = SupplierRegistrationLink::selectRaw('*')
             ->join('srm_tender_master_supplier', 'srm_tender_master_supplier.purchased_by', '=', 'srm_supplier_registration_link.id')
             ->where('srm_tender_master_supplier.tender_master_id', $input['tenderMasterId'])
-            ->distinct()
             ->get();
-        
+
         $data['purchased'] = $purchased;
 
         if(isset($input['circularId']) && $input['circularId'] > 0){
@@ -542,6 +543,7 @@ class TenderCircularsAPIController extends AppBaseController
                 ->get();
             $data['dataAssigned'] = $dataAssigned;
         }
+
         return $data;
     }
 
@@ -630,6 +632,4 @@ class TenderCircularsAPIController extends AppBaseController
         }
 
     }
-
-
 }

@@ -1,12 +1,12 @@
 <?php
 
-namespace App;
+namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class CircularSuppliers extends Model
+class CircularAmendments extends Model
 {
-    public $table = 'srm_circular_suppliers';
+    public $table = 'srm_circular_amendments';
 
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
@@ -14,8 +14,9 @@ class CircularSuppliers extends Model
     public $timestamps = false;
 
     public $fillable = [
+        'tender_id',
         'circular_id',
-        'supplier_id',
+        'amendment_id',
         'status',
         'created_at',
         'created_by',
@@ -30,8 +31,9 @@ class CircularSuppliers extends Model
      */
     protected $casts = [
         'id' => 'integer',
+        'tender_id' => 'integer',
         'circular_id' => 'integer',
-        'supplier_id' => 'integer',
+        'amendment_id' => 'integer',
         'status' => 'integer',
         'created_by' => 'integer',
         'updated_by' => 'integer'
@@ -46,9 +48,9 @@ class CircularSuppliers extends Model
 
     ];
 
-
-    public function supplier_registration_link()
+    public function document_attachments()
     {
-        return $this->belongsTo('App\Models\SupplierRegistrationLink', 'supplier_id', 'id');
+        return $this->hasOne('App\Models\DocumentAttachments', 'attachmentID', 'amendment_id');
     }
+
 }
