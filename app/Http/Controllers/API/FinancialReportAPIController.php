@@ -583,9 +583,36 @@ WHERE
     erp_paysupplierinvoicemaster.approved = -1 AND
     2 IN (' . join(',', json_decode($typeID)) . ') AND
     erp_paysupplierinvoicemaster.companySystemID = "'.$companyID.'"
-    UNION ALL 
+    
+    UNION ALL
     SELECT
-     srp_erp_iouvouchers.voucherDate AS documentDate,
+    erp_paysupplierinvoicemaster.BPVdate AS documentDate,
+	erp_paysupplierinvoicemaster.BPVcode AS documentCode,
+	erp_paysupplierinvoicemaster.BPVNarration AS description,
+	erp_paysupplierinvoicemaster.directPaymentPayeeEmpID AS employeeID,
+    (erp_paysupplierinvoicemaster.payAmountCompLocal + erp_paysupplierinvoicemaster.VATAmountLocal) AS amountLocal,
+    (erp_paysupplierinvoicemaster.payAmountCompRpt + erp_paysupplierinvoicemaster.VATAmountRpt) AS amountRpt,
+    srp_erp_pay_monthlydeductionmaster.monthlyDeductionCode AS referenceDoc,
+    srp_erp_pay_monthlydeductionmaster.dateMD AS referenceDocDate,
+    srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID,
+    currencymaster.DecimalPlaces AS localCurrencyDecimals,
+    currencymasterRpt.DecimalPlaces As rptCurrencyDecimals,
+    5 AS type
+FROM
+	erp_paysupplierinvoicemaster
+    LEFT JOIN srp_erp_pay_monthlydeductionmaster ON erp_paysupplierinvoicemaster.PayMasterAutoId = srp_erp_pay_monthlydeductionmaster.pv_id
+    LEFT JOIN currencymaster ON erp_paysupplierinvoicemaster.localCurrencyID = currencymaster.currencyID
+    LEFT JOIN currencymaster AS currencymasterRpt ON erp_paysupplierinvoicemaster.companyRptCurrencyID = currencymasterRpt.currencyID
+WHERE
+    erp_paysupplierinvoicemaster.invoiceType = 6 AND 
+    DATE(erp_paysupplierinvoicemaster.BPVdate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
+    erp_paysupplierinvoicemaster.approved = -1 AND
+    5 IN (' . join(',', json_decode($typeID)) . ') AND
+    erp_paysupplierinvoicemaster.companySystemID = "'.$companyID.'"
+    
+    UNION ALL  
+    SELECT
+    srp_erp_iouvouchers.voucherDate AS documentDate,
 	srp_erp_iouvouchers.iouCode AS documentCode,
 	srp_erp_iouvouchers.narration AS description,
 	srp_erp_iouvouchers.empID AS employeeID,
@@ -790,6 +817,20 @@ WHERE
     erp_paysupplierinvoicemaster.approved = -1 AND
     erp_paysupplierinvoicemaster.directPaymentPayeeEmpID IN (' . join(',', json_decode($employeeDatas)) . ') AND
     2 IN (' . join(',', json_decode($typeID)) . ')  
+    UNION ALL
+    SELECT
+	erp_paysupplierinvoicemaster.directPaymentPayeeEmpID AS employeeID,
+    employees.empName AS employeeName,
+    employees.empID AS empID
+FROM
+	erp_paysupplierinvoicemaster
+LEFT JOIN employees ON erp_paysupplierinvoicemaster.directPaymentPayeeEmpID = employees.employeeSystemID
+WHERE
+    erp_paysupplierinvoicemaster.invoiceType = 6 AND 
+    DATE(erp_paysupplierinvoicemaster.BPVdate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
+    erp_paysupplierinvoicemaster.approved = -1 AND
+    erp_paysupplierinvoicemaster.directPaymentPayeeEmpID IN (' . join(',', json_decode($employeeDatas)) . ') AND
+    5 IN (' . join(',', json_decode($typeID)) . ')  
     UNION ALL 
     SELECT
 	srp_erp_iouvouchers.empID AS employeeID,
@@ -2417,6 +2458,31 @@ WHERE
     erp_bookinvsuppmaster.companySystemID = "'.$companyID.'"
     UNION ALL
     SELECT
+    erp_paysupplierinvoicemaster.BPVdate AS documentDate,
+	erp_paysupplierinvoicemaster.BPVcode AS documentCode,
+	erp_paysupplierinvoicemaster.BPVNarration AS description,
+	erp_paysupplierinvoicemaster.directPaymentPayeeEmpID AS employeeID,
+    (erp_paysupplierinvoicemaster.payAmountCompLocal + erp_paysupplierinvoicemaster.VATAmountLocal) AS amountLocal,
+    (erp_paysupplierinvoicemaster.payAmountCompRpt + erp_paysupplierinvoicemaster.VATAmountRpt) AS amountRpt,
+    srp_erp_pay_monthlydeductionmaster.monthlyDeductionCode AS referenceDoc,
+    srp_erp_pay_monthlydeductionmaster.dateMD AS referenceDocDate,
+    srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID,
+    currencymaster.DecimalPlaces AS localCurrencyDecimals,
+    currencymasterRpt.DecimalPlaces As rptCurrencyDecimals,
+    5 AS type
+FROM
+	erp_paysupplierinvoicemaster
+    LEFT JOIN srp_erp_pay_monthlydeductionmaster ON erp_paysupplierinvoicemaster.PayMasterAutoId = srp_erp_pay_monthlydeductionmaster.pv_id
+    LEFT JOIN currencymaster ON erp_paysupplierinvoicemaster.localCurrencyID = currencymaster.currencyID
+    LEFT JOIN currencymaster AS currencymasterRpt ON erp_paysupplierinvoicemaster.companyRptCurrencyID = currencymasterRpt.currencyID
+WHERE
+    erp_paysupplierinvoicemaster.invoiceType = 6 AND 
+    DATE(erp_paysupplierinvoicemaster.BPVdate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
+    erp_paysupplierinvoicemaster.approved = -1 AND
+    5 IN (' . join(',', json_decode($typeID)) . ') AND
+    erp_paysupplierinvoicemaster.companySystemID = "'.$companyID.'"
+    UNION ALL
+    SELECT
 	erp_bookinvsuppmaster.bookingDate AS documentDate,
 	erp_bookinvsuppmaster.bookingInvCode AS documentCode,
 	erp_bookinvsuppmaster.comments AS description,
@@ -2673,6 +2739,20 @@ WHERE
     erp_paysupplierinvoicemaster.approved = -1 AND
     erp_paysupplierinvoicemaster.directPaymentPayeeEmpID IN (' . join(',', json_decode($employeeDatas)) . ') AND
     2 IN (' . join(',', json_decode($typeID)) . ')  
+      UNION ALL
+    SELECT
+	erp_paysupplierinvoicemaster.directPaymentPayeeEmpID AS employeeID,
+    employees.empName AS employeeName,
+    employees.empID AS empID
+FROM
+	erp_paysupplierinvoicemaster
+LEFT JOIN employees ON erp_paysupplierinvoicemaster.directPaymentPayeeEmpID = employees.employeeSystemID
+WHERE
+    erp_paysupplierinvoicemaster.invoiceType = 6 AND 
+    DATE(erp_paysupplierinvoicemaster.BPVdate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
+    erp_paysupplierinvoicemaster.approved = -1 AND
+    erp_paysupplierinvoicemaster.directPaymentPayeeEmpID IN (' . join(',', json_decode($employeeDatas)) . ') AND
+    5 IN (' . join(',', json_decode($typeID)) . ')  
     UNION ALL 
     SELECT
 	srp_erp_iouvouchers.empID AS employeeID,
