@@ -543,7 +543,29 @@ class TenderCircularsAPIController extends AppBaseController
                 ->join('srm_circular_suppliers', 'srm_circular_suppliers.supplier_id', '=', 'srm_supplier_registration_link.id')
                 ->where('srm_circular_suppliers.circular_id', $input['circularId'])
                 ->get();
+
             $data['dataAssigned'] = $dataAssigned;
+
+            $dataAssignedArr = SupplierRegistrationLink::selectRaw('supplier_id')
+                ->join('srm_circular_suppliers', 'srm_circular_suppliers.supplier_id', '=', 'srm_supplier_registration_link.id')
+                ->where('srm_circular_suppliers.circular_id', $input['circularId'])
+                ->get()->toArray();
+
+            if(sizeof($dataAssignedArr) > 0){
+                $i = 0;
+                foreach ($dataAssignedArr as $assigned){
+                    $supplier[$i] = $assigned['supplier_id'];
+                    $i++;
+                }
+
+                $purchased = SupplierRegistrationLink::selectRaw('*')
+                    ->join('srm_tender_master_supplier', 'srm_tender_master_supplier.purchased_by', '=', 'srm_supplier_registration_link.id')
+                    ->where('srm_tender_master_supplier.tender_master_id', $input['tenderMasterId'])
+                    ->whereNotIn('srm_tender_master_supplier.purchased_by', $supplier)
+                    ->get();
+
+                $data['purchased'] = $purchased;
+            }
         }
 
         return $data;
