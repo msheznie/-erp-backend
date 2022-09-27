@@ -2636,7 +2636,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                         $master->where('erp_customerreceivepayment.customerID', '!=',null)->where('erp_customerreceivepayment.customerID', '!=',0);
                     }
                     if($input['payeeTypeID'] == 2){
-                        $master->where('erp_customerreceivepayment.PayeeEmpID', '!=',null);
+                        $master->where('erp_customerreceivepayment.PayeeEmpID', '>', 0);
                     }
                     if($input['payeeTypeID'] == 3){
                         $master->where('erp_customerreceivepayment.PayeeName', '!=',null);
