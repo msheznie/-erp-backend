@@ -519,7 +519,8 @@ class TenderCircularsAPIController extends AppBaseController
                 DB::commit();
                 foreach ($supplierList as $supplier){
                     $file = Storage::disk('s3')->url($supplier->srm_circular_amendments->document_attachments->myFileName);
-                    Mail::to($supplier->supplier_registration_link->email)->send(new EmailForQueuing("Tender Circular", "Dear Supplier,"."<br /><br />"." Please find the below tender circular ". $companyName ." "."<br /><br />"."Click Here: "."</b><br /><br />"." Thank You"."<br /><br /><b>", $file));
+                    $xx = storage_path('MicrosoftTeams-image.png.png');
+                    Mail::to($supplier->supplier_registration_link->email)->send(new EmailForQueuing("Tender Circular", "Dear Supplier,"."<br /><br />"." Please find the below tender circular ". $companyName ." "."<br /><br />"."Click Here: "."</b><br /><br />"." Thank You"."<br /><br /><b>", $xx));
                 }
 
                 return ['success' => true, 'message' => 'Successfully Published'];
