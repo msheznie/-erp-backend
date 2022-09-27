@@ -49,6 +49,7 @@ use App\Models\TenderDocumentTypeAssign;
 use App\Models\TenderDocumentTypes;
 use App\Models\TenderSupplierAssignee;
 use App\Repositories\SupplierRegistrationLinkRepository;
+use App\Models\PricingScheduleDetail;
 
 /**
  * Class TenderMasterController
@@ -394,7 +395,7 @@ class TenderMasterAPIController extends AppBaseController
         $data['currentDate'] = now();
         $data['defaultCurrency'] = $company;
         $data['procurementCategory'] = TenderProcurementCategory::where('level', 0)->where('is_active', 1)->get();
-        $data['documentTypes'] = TenderDocumentTypes::where('company_id', $employee->empCompanySystemID)->whereNotIn('id', [1, 2, 3])->get();
+        $data['documentTypes'] = TenderDocumentTypes::where('company_id', $employee->empCompanySystemID)->whereNotIn('id', [1, 2])->orWhere('id', 3)->get();
 
         if (isset($input['tenderMasterId'])) {
             if ($tenderMaster['confirmed_yn'] == 1 && $category['is_active'] == 0) {
@@ -809,7 +810,9 @@ WHERE
                         }
                         $scheduleAll = PricingScheduleMaster::where('tender_id', $input['id'])->get();
                         foreach ($scheduleAll as $val) {
-                            $mainwork = TenderMainWorks::where('tender_id', $input['id'])->where('schedule_id', $val['id'])->first();
+                           // $mainwork = TenderMainWorks::where('tender_id', $input['id'])->where('schedule_id', $val['id'])->first();
+                            $mainwork = PricingScheduleDetail::where('tender_id', $input['id'])->where('boq_applicable', true)->where('pricing_schedule_master_id', $val['id'])->first();
+
                             $scheduleDetail = ScheduleBidFormatDetails::where('schedule_id', $val['id'])->first();
                             if (empty($scheduleDetail)) {
                                 return ['success' => false, 'message' => 'All work schedules should be completed'];
@@ -819,9 +822,13 @@ WHERE
                             }
                         }
 
-                        $mainWorkBoqApp = TenderMainWorks::with(['tender_bid_format_detail'])->where('tender_id', $input['id'])->get();
+                        //$mainWorkBoqApp = TenderMainWorks::with(['tender_bid_format_detail'])->where('tender_id', $input['id'])->get();
+                        $mainWorkBoqApp = PricingScheduleDetail::where('boq_applicable', true)->where('tender_id', $input['id'])->get();
+
+                     
+
                         foreach ($mainWorkBoqApp as $vals) {
-                            if ($vals['tender_bid_format_detail']['boq_applicable'] == 1) {
+                            if ($vals['boq_applicable'] == 1) {
                                 $boqItems = TenderBoqItems::where('main_work_id', $vals['id'])->first();
                                 if (empty($boqItems)) {
                                     return ['success' => false, 'message' => 'BOQ enabled main works should have at least one BOQ item'];

@@ -81,8 +81,10 @@ class POSService
                 $dataUpdate2 = collect($dataUpdate)->map(function ($group2) use ($request, $LogTransactionCreate) {
                     $group2['transaction_log_id']  = $LogTransactionCreate['data'];
                     return $group2;
-                });
-                $namespacedModel::insert($dataUpdate2->toArray());
+                });  
+                foreach(array_chunk($dataUpdate2->toArray(),1000) as $t){ 
+                    $namespacedModel::insert($t);
+                } 
             }); 
             $LogTransactionCreate  = self::LogTransactionCreate($mapping_id, 2, 'u', $LogTransactionCreate['data']);
             self::insertSourceTransactionJOB($LogTransactionCreate['data'],$db); 
@@ -141,7 +143,9 @@ class POSService
                 $namespacedModel = 'App\Models\\' . $group["model_name"];
                 $namespacedModelSource = 'App\Models\\' . $group["source_model_name"];
                 $data = $namespacedModel::where('transaction_log_id', $logId)->get()->toArray(); 
-                $namespacedModelSource::insert($data);
+                foreach(array_chunk($data,1000) as $t){ 
+                    $namespacedModelSource::insert($t);
+                } 
                 //$namespacedModel::truncate();
             });
             

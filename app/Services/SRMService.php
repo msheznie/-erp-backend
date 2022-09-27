@@ -1252,7 +1252,9 @@ class SRMService
                 $q->where('purchased_by', '=', $supplierRegId);
             })->whereIn('id', $tenderMasterId)->where('published_yn', 1);
         } else if ($request->input('extra.tender_status') == 2) {
-            $query = TenderMaster::with(['currency', 'srmTenderMasterSupplier' => function ($q) use ($supplierRegId) {
+            $query = TenderMaster::with(['currency', 'srm_bid_submission_master' => function ($query) use ($supplierRegId) {
+                $query->where('supplier_registration_id', '=', $supplierRegId);
+            }, 'srmTenderMasterSupplier' => function ($q) use ($supplierRegId) {
                 $q->where('purchased_by', '=', $supplierRegId);
             }])->whereHas('srmTenderMasterSupplier', function ($q) use ($supplierRegId) {
                 $q->where('purchased_by', '=', $supplierRegId);
@@ -2458,8 +2460,8 @@ class SRMService
         $bidMasterId = $request->input('extra.bidMasterId');
         $data['commercialBid'] = PricingScheduleMaster::with(['tender_bid_format_master', 'bid_schedule' => function ($q) use ($bidMasterId) {
             $q->where('bid_master_id', $bidMasterId);
-        }, 'tender_main_works' => function ($q) use ($bidMasterId) {
-            $q->with(['tender_bid_format_detail', 'bid_main_work' => function ($q) use ($bidMasterId) {
+        }, 'pricing_shedule_details' => function ($q) use ($bidMasterId) {
+            $q->with(['bid_main_work' => function ($q) use ($bidMasterId) {
                 $q->where('bid_master_id', $bidMasterId);
             }]);
         }])->where('tender_id', $tenderId)->get();
@@ -2726,11 +2728,16 @@ class SRMService
     {
         $bidMasterId = $request->input('extra.bidMasterId');
         $tenderId = $request->input('extra.tenderId');
+        $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
 
         DB::beginTransaction();
         try {
             $updateData['status'] = 1;
             $updateData['updated_at'] = Carbon::now();
+            $updateData['updated_by'] = $supplierRegId;
+            $updateData['bidSubmittedYN'] = 1;
+            $updateData['bidSubmitedBySupID'] = $supplierRegId;
+            $updateData['bidSubmittedDatetime'] = Carbon::now();
             $result = BidSubmissionMaster::where('id', $bidMasterId)
                 ->where('tender_id', $tenderId)
                 ->update($updateData);
@@ -2869,7 +2876,7 @@ class SRMService
     {
         $tenderId = $request->input('extra.tenderId');
         $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid')); 
-        $bidSubmitted = BidSubmissionMaster::where('tender_id', $tenderId)
+        $bidSubmitted = BidSubmissionMaster::with('SupplierRegistrationLink')->where('tender_id', $tenderId)
             ->where('supplier_registration_id', $supplierRegId)
             ->orderBy('id', 'ASC')
             ->get();

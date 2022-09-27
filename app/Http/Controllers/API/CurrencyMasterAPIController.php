@@ -162,6 +162,18 @@ class CurrencyMasterAPIController extends AppBaseController
         $empId = $user->employee['empID'];
         $empName = $user->employee['empName'];
 
+        $input = $this->convertArrayToValue($request);
+
+        if($input['currencyId'] == null){
+            return $this->sendError('Currency not selected',500);
+        }
+        $supplierCurrencyCheck = SupplierCurrency::where('supplierCodeSystem',$request['supplierId'])
+                                            ->where('currencyID',$request['currencyId'])
+                                            ->first();
+        if($supplierCurrencyCheck){
+            return $this->sendError('Selected currency is assigned already',500);
+        }
+
         $supplierCurrency = new SupplierCurrency();
         $supplierCurrency->supplierCodeSystem = $request['supplierId'];
         $supplierCurrency->currencyID = $request['currencyId'];

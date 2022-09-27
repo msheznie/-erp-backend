@@ -1410,7 +1410,7 @@ class MaterielRequestAPIController extends AppBaseController
 
         if ($checkMr->count() > 0) {
 
-            return $this->sendError('Cannot return back to amend.The Materiel Request linked with following Materiel Issues', 500, ['data' => $checkMr->pluck('itemIssueCode')]);
+            return $this->sendError('Cannot return back to amend.The Material Request linked with following Material Issues', 500, ['data' => $checkMr->pluck('itemIssueCode')]);
         }
 
         return $this->sendResponse($materialRequest, 'Purchase Request successfully return back to amend');

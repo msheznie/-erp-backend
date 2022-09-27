@@ -1104,8 +1104,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
                         if (count($groupby) != 0) {
 
-                            if (count($groupby) > 1 || count($groupbycontract) > 1) {
-                                return $this->sendError('You cannot continue . multiple Segment or contract exist in details.', 500);
+                            if (count($groupbycontract) > 1) {
+                                return $this->sendError('You cannot continue . multiple contract exist in details.', 500);
                             } else {
 
                                 // VAT configuration validation
@@ -3400,6 +3400,24 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 return \Excel::create($fileName_csv, function ($excel) use ($array) {
                     $excel->sheet('New sheet', function ($sheet) use ($array) {
                         $sheet->loadView('export_report.customer_invoice_tax', $array)->with('no_asset', true);
+                    });
+                })->download('csv');
+            }
+
+        } else if ($printTemplate['printTemplateID'] == 12) {
+            if($type == 1)
+            {
+                $html = view('print.rihal_customer_invoice', $array);
+                $pdf = \App::make('dompdf.wrapper');
+                $pdf->loadHTML($html);
+    
+                return $pdf->setPaper('a4')->setWarnings(false)->stream($fileName);
+            }
+            else if($type == 2)
+            {
+                return \Excel::create($fileName_csv, function ($excel) use ($array) {
+                    $excel->sheet('New sheet', function ($sheet) use ($array) {
+                        $sheet->loadView('export_report.rihal_customer_invoice', $array)->with('no_asset', true);
                     });
                 })->download('csv');
             }

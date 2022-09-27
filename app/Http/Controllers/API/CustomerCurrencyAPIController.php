@@ -153,6 +153,17 @@ class CustomerCurrencyAPIController extends AppBaseController
             $customerCurrencies = $this->customerCurrencyRepository->update($input,$input['custCurrencyAutoID']);
 
         } else {
+            
+            if($input['currencyID'] == null){
+                return $this->sendError('Currency not selected',500);
+            }
+            $customerCurrency = CustomerCurrency::where('customerCodeSystem',$request['customerCodeSystem'])
+                                                ->where('currencyID',$request['currencyID'])
+                                                ->first();
+            if($customerCurrency){
+                return $this->sendError('Selected currency is assigned already',500);
+            }
+
             $customer = CustomerMaster::where('customerCodeSystem', $input['customerCodeSystem'])->first();
             if ($customer) {
                 $input['customerCode'] = $customer->CutomerCode;

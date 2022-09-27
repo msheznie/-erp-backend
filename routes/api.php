@@ -123,6 +123,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
         Route::get('supplierFormData', 'CompanyAPIController@getSupplierFormData');
 
+        Route::get('getAdvanceAccount', 'CompanyAPIController@getAdvanceAccount');
+
         Route::resource('country_masters', 'CountryMasterAPIController');
         Route::resource('supplier_category_masters', 'SupplierCategoryMasterAPIController');
         Route::resource('supplier_category_subs', 'SupplierCategorySubAPIController');
@@ -932,6 +934,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('generatePdcForPv', 'PaySupplierInvoiceMasterAPIController@generatePdcForPv');
         Route::post('updateBankBalance', 'PaySupplierInvoiceMasterAPIController@updateBankBalance');
         Route::put('paymentVoucherUpdateCurrency/{id}', 'PaySupplierInvoiceMasterAPIController@updateCurrency');
+        Route::put('paymentVoucherProjectUpdate/{id}', 'PaySupplierInvoiceMasterAPIController@paymentVoucherProjectUpdate');
         Route::get('getRetentionValues', 'PaySupplierInvoiceMasterAPIController@getRetentionValues');
 
 
@@ -2722,6 +2725,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('removeCalenderDate', 'TenderMasterAPIController@removeCalenderDate');
         Route::post('updateCalenderDate', 'TenderMasterAPIController@updateCalenderDate');
         Route::post('getTenderAttachmentType', 'TenderDocumentTypesAPIController@getTenderAttachmentType');
+        Route::post('assignDocumentTypes', 'TenderDocumentTypesAPIController@assignDocumentTypes');
         Route::post('getNotSentEmail', 'TenderSupplierAssigneeAPIController@getNotSentEmail');
 
         Route::resource('cash_flow_templates', 'CashFlowTemplateAPIController');
@@ -3062,3 +3066,9 @@ Route::resource('po_cutoff_job_datas', 'PoCutoffJobDataAPIController');
 
 Route::resource('p_o_s_s_o_u_r_c_e_shift_details', 'POSSOURCEShiftDetailsAPIController');
 Route::resource('i_o_u_booking_masters', 'IOUBookingMasterAPIController');
+Route::post('documentUpload', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@documentUpload');
+Route::get('viewDocument', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@viewDocument');
+Route::get('viewDocumentEmployeeImg', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@viewDocumentEmployeeImg');
+Route::get('viewDocumentEmployeeImgBulk', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@viewDocumentEmployeeImgBulk');
+Route::post('documentUploadDelete', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@documentUploadDelete');
+Route::get('viewHrDocuments', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@viewHrDocuments');

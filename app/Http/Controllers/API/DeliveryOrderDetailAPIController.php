@@ -156,8 +156,6 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                 }
             }
 
-
-
         if(DeliveryOrderDetail::where('deliveryOrderID',$input['deliveryOrderID'])->where('itemFinanceCategoryID','!=',$item->financeCategoryMaster)->exists()){
             return $this->sendError('Different finance category found. You can not add different finance category items for same order',500);
         }
@@ -912,12 +910,15 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                     ->where('itemCodeSystem', $itemExist['itemAutoID'])
                     ->get();
 
-                    $item = ItemAssigned::with(['item_master'])
-                    ->where('itemCodeSystem', $itemExist['itemAutoID'])
-                    ->where('companySystemID', $itemExist['companySystemID'])
-                    ->first();
-                     
-                    $QuoDetailExistDetails = DeliveryOrderDetail::where('deliveryOrderID', $deliveryOrderID)
+
+                $item = ItemAssigned::with(['item_master'])
+                ->where('itemCodeSystem', $itemExist['itemAutoID'])
+                ->where('companySystemID', $itemExist['companySystemID'])
+                ->first();
+
+                
+                $QuoDetailExistDetails = DeliveryOrderDetail::where('deliveryOrderID', $deliveryOrderID)
+
                     ->where('itemCodeSystem', $itemExist['itemAutoID'])
                     ->first();
                 if (!empty($QuoDetailExistDetails)) {
@@ -927,8 +928,7 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                             $QuoDetailExistDetails->qtyIssued += (int)$inputDetails[0]['noQty'];
                             $QuoDetailExistDetails->save();
                     }
-            
-                 }
+                }
                 }else {
                     if (!empty($QuoDetailExist)) 
                     {
@@ -939,10 +939,9 @@ class DeliveryOrderDetailAPIController extends AppBaseController
                                 $itemExistArray[] = [$itemDrt];
                             }
                         }
-               
+
                     }
-                }
-                
+                }        
             }
         }
 

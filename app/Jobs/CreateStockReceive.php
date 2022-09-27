@@ -527,8 +527,8 @@ class CreateStockReceive implements ShouldQueue
                                 $item['unitOfMeasure'] = $new['unitOfMeasure'];
                                 $item['itemFinanceCategoryID'] = $new['itemFinanceCategoryID'];
                                 $item['itemFinanceCategorySubID'] = $new['itemFinanceCategorySubID'];
-                                $item['financeGLcodebBS'] = WarehouseMaster::checkManuefactoringWareHouse($stockReceive->locationTo) ? WarehouseMaster::getWIPGLCode($stockReceive->locationTo) : $new['financeGLcodebBS'];
-                                $item['financeGLcodebBSSystemID'] = WarehouseMaster::checkManuefactoringWareHouse($stockReceive->locationTo) ?  WarehouseMaster::getWIPGLSystemID($stockReceive->locationTo) : $new['financeGLcodebBSSystemID'];
+                                $item['financeGLcodebBS'] = $new['financeGLcodebBS'];
+                                $item['financeGLcodebBSSystemID'] =  $new['financeGLcodebBSSystemID'];
                                 $item['localCurrencyID'] = $toCompany->localCurrencyID;
                                 // $temUnitCostLocal        = $new['unitCostLocal'] * 1.03;
                                 $temUnitCostRpt = $new['unitCostRpt'] * ((100+$revenuePercentageForInterCompanyInventoryTransfer)/100);
@@ -681,8 +681,8 @@ class CreateStockReceive implements ShouldQueue
                             $item['unitOfMeasure'] = $new['unitOfMeasure'];
                             $item['itemFinanceCategoryID'] = $new['itemFinanceCategoryID'];
                             $item['itemFinanceCategorySubID'] = $new['itemFinanceCategorySubID'];
-                            $item['financeGLcodebBS'] = WarehouseMaster::checkManuefactoringWareHouse($stockReceive->locationTo) ? WarehouseMaster::getWIPGLCode($stockReceive->locationTo) : $new['financeGLcodebBS'];
-                            $item['financeGLcodebBSSystemID'] = WarehouseMaster::checkManuefactoringWareHouse($stockReceive->locationTo) ?  WarehouseMaster::getWIPGLSystemID($stockReceive->locationTo) : $new['financeGLcodebBSSystemID'];
+                            $item['financeGLcodebBS'] = $new['financeGLcodebBS'];
+                            $item['financeGLcodebBSSystemID'] = $new['financeGLcodebBSSystemID'];
                             $item['localCurrencyID'] = $toCompany->localCurrencyID;
                             $item['unitCostLocal'] = $new['unitCostLocal'];
                             $item['reportingCurrencyID'] = $toCompany->reportingCurrency;
