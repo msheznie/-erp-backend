@@ -13,16 +13,28 @@ class TenderCommitteeController extends AppBaseController
 {
 
     public function getAll(Request $request) {
-        $company_id = $request['empCompanySystemID'];
+        $input = $request->all();
+        $company_id = $request['companyId'];
         $emp_id = Auth::user()->employee_id;
-
-        $srm_employees = SrmEmployees::where('company_id',$company_id)->with('employee')->get();
-
-        if($srm_employees) {
-            return $this->sendResponse($srm_employees,'Employee reterived successfully');
-        }else {
-            return $this->sendError('Employee not found');
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
         }
+        $srm_employees = SrmEmployees::where('company_id',$company_id)->with('employee');
+
+        return \DataTables::of($srm_employees)
+        ->order(function ($query) use ($input) {
+            if (request()->has('order')) {
+                if ($input['order'][0]['column'] == 0) {
+                    $query->orderBy('id', $input['order'][0]['dir']);
+                }
+            }
+        })
+        ->addIndexColumn()
+        ->with('orderCondition', $sort)
+        ->make(true);
+
     }
     
 
