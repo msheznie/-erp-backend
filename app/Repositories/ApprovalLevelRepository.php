@@ -70,7 +70,9 @@ class ApprovalLevelRepository extends BaseRepository
             }, 'category' => function ($query) use ($search) {
                 $query->select('itemCategoryID', 'categoryDescription');
             }])->select('erp_approvallevel.*')->orderBy('approvalLevelID', 'desc');
-
+        
+        $approvalLevel->where('is_deleted',0);
+        
         if (array_key_exists('selectedCompanyID', $input)) {
             if ($input['selectedCompanyID'] > 0) {
                 $approvalLevel->where('erp_approvallevel.companySystemID', $input['selectedCompanyID']);

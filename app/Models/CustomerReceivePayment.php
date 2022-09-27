@@ -425,6 +425,7 @@ class CustomerReceivePayment extends Model
         'PayeeSelectEmp',
         'PayeeEmpID',
         'PayeeName',
+        'payeeTypeID',
         'PayeeCurrency',
         'custChequeNo',
         'custChequeDate',
@@ -696,6 +697,11 @@ class CustomerReceivePayment extends Model
     public function customer()
     {
         return $this->belongsTo('App\Models\CustomerMaster', 'customerID', 'customerCodeSystem');
+    }
+
+    public function employee()
+    {
+        return $this->belongsTo('App\Models\Employee', 'PayeeEmpID', 'employeeSystemID');
     }
 
     public function bankledger_by()

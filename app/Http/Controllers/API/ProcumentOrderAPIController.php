@@ -512,15 +512,17 @@ class ProcumentOrderAPIController extends AppBaseController
         $advancedPayment = PoPaymentTerms::where('poID',$id)->sum('comAmount');
         $supplierCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($procumentOrder->supplierTransactionCurrencyID);
         $newlyUpdatedPoTotalAmountWithoutRound = $poMasterSum['masterTotalSum'] + $poAddonMasterSum['addonTotalSum']+ ($procumentOrder->rcmActivated ? 0 : $poMasterVATSum['masterTotalVATSum']);
+        $newlyUpdatedPoTotalAmountWithoutRoundForComp = $poMasterSum['masterTotalSum'] + $poAddonMasterSum['addonTotalSum']+ ($procumentOrder->rcmActivated ? 0 : $poMasterVATSum['masterTotalVATSum']) - $input['poDiscountAmount'];
         // $newlyUpdatedPoTotalAmount = round($newlyUpdatedPoTotalAmountWithoutRound, $supplierCurrencyDecimalPlace);
        // $newlyUpdatedPoTotalAmount = bcdiv($newlyUpdatedPoTotalAmountWithoutRound,1,$supplierCurrencyDecimalPlace);
         $newlyUpdatedPoTotalAmount = floatval(sprintf("%.".$supplierCurrencyDecimalPlace."f", $newlyUpdatedPoTotalAmountWithoutRound));
+        $newlyUpdatedPoTotalAmountCheck = floatval(sprintf("%.".$supplierCurrencyDecimalPlace."f", $newlyUpdatedPoTotalAmountWithoutRoundForComp));
         $advancedPaymentCheckAmount = floatval(sprintf("%.".$supplierCurrencyDecimalPlace."f", $advancedPayment));
     
         if(isset($input['isConfirm']) && $input['isConfirm']) {
             $epsilon = 0.00001;
      
-            if(abs($advancedPaymentCheckAmount - $newlyUpdatedPoTotalAmount) > $epsilon) {
+            if(abs($advancedPaymentCheckAmount - $newlyUpdatedPoTotalAmountCheck) > $epsilon) {
                 return $this->sendError('Total of Payment terms amount is not equal to PO amount');
             }
         }
@@ -1096,7 +1098,6 @@ class ProcumentOrderAPIController extends AppBaseController
             // return abs($poMasterSumDeducted - $paymentTotalSum['paymentTotalSum']);
 
             $paymentTotalSumComp = round($paymentTotalSum['paymentTotalSum'], $supplierCurrencyDecimalPlace);
-       
             if (abs(($poMasterSumDeducted - $paymentTotalSumComp) / $paymentTotalSumComp) < 0.00001) {
             } else {
                 return $this->sendError('Payment terms total is not matching with the PO total');

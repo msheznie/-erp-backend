@@ -251,6 +251,11 @@ class Employee extends Model
         return $this->belongsTo('App\Models\User');
     }
 
+    public function user_data()
+    {
+        return $this->hasOne('App\Models\User','employee_id','employeeSystemID');
+    }
+
     public function companies(){
         return $this->belongsToMany('App\Models\Company', 'employeesdepartments','CompanyID','employeeID');
     }

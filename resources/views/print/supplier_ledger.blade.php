@@ -165,6 +165,7 @@
                 <tr style="width:100%">
                     <th>Document Code</th>
                     <th>Posted Date</th>
+                    <th>Account</th>
                     <th>Invoice Number</th>
                     <th>Invoice Date</th>
                     <th>Document Narration</th>
@@ -181,6 +182,7 @@
                                 {{ \App\helper\Helper::dateFormat($det2->documentDate)}}
                             @endif
                         </td>
+                        <td>{{ $det2->glCode }} - {{ $det2->AccountDescription }}</td>
                         <td class="white-space-pre-line">{{ $det2->invoiceNumber }}</td>
                         <td> {{ \App\helper\Helper::dateFormat($det2->invoiceDate)}}</td>
                         <td>{{ $det2->documentNarration }}</td>

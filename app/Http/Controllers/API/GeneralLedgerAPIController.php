@@ -863,6 +863,7 @@ class GeneralLedgerAPIController extends AppBaseController
     public function updateGLEntries(Request $request){
 
         $input = $request->all();
+        $dataBase = (isset($input['db'])) ? $input['db'] : "";
         $messages = [
             'documentSystemID.required' => 'Document system ID is required',
             'documentSystemCode.required' => 'Document system code is required.',
@@ -910,7 +911,7 @@ class GeneralLedgerAPIController extends AppBaseController
                                'autoID' => $input['documentSystemCode'],
                                'companySystemID' => $input['companySystemID'],
                                'employeeSystemID' => $empInfo->employeeSystemID];
-                $generalLedger = GeneralLedgerInsert::dispatch($masterData);
+                $generalLedger = GeneralLedgerInsert::dispatch($masterData, $dataBase);
             }
 
 
@@ -922,7 +923,7 @@ class GeneralLedgerAPIController extends AppBaseController
                                'supplierID' => ($grvData) ? $grvData->supplierID : 0,
                                'companySystemID' => $input['companySystemID'],
                                'employeeSystemID' => $empInfo->employeeSystemID];
-                $unbilledGRVInsert = UnbilledGRVInsert::dispatch($masterData);
+                $unbilledGRVInsert = UnbilledGRVInsert::dispatch($masterData, $dataBase);
 
                 DB::commit();
                 if ($count == 0) {
