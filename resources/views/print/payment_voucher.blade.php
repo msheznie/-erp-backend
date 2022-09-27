@@ -279,6 +279,9 @@
             @if($masterdata->invoiceType == 6)
                 Employee Payment
             @endif
+            @if($masterdata->invoiceType == 7)
+                Employee Advance Payment
+            @endif
         </span>
     </div>
     <br>
