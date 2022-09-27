@@ -509,6 +509,11 @@ class TenderCircularsAPIController extends AppBaseController
             $att['status'] = 1;
             $result = TenderCirculars::where('id', $input['id'])->update($att);
             $supplierList = CircularSuppliers::with([ 'supplier_registration_link', 'srm_circular_amendments.document_attachments'])->where('circular_id', $input['id'])->get();
+            $amendmentsList = CircularAmendments::with('document_attachments')->where('circular_id', $input['id'])->get();
+            $file = array();
+            foreach ($amendmentsList as $amendments){
+                $file[] = $amendments->document_attachments->myFileName;
+            }
 
             if ($result) {
                 DB::commit();
