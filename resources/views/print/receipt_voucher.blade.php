@@ -451,7 +451,7 @@
                                             {{$masterdata->employee->empName}}
                                         @endif
                                             @if($masterdata->payeeTypeID == 3)
-                                            {{$masterdata->payeeName}}
+                                            {{$masterdata->PayeeName}}
                                         @endif
                                     </td>
                                 </tr>
