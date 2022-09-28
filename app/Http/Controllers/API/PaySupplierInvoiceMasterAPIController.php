@@ -1813,21 +1813,13 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                             ->where('apAutoID', $val->apAutoID)
                             ->first();
 
-                        $a = $payDetailMoreBooked->supplierPaymentAmount;
-                        $b = $val->supplierInvoiceAmount;
+                        $a = ($val->addedDocumentSystemID == 11) ? $payDetailMoreBooked->supplierPaymentAmount : abs($payDetailMoreBooked->supplierPaymentAmount);
+                        $b = ($val->addedDocumentSystemID == 11) ? $val->supplierInvoiceAmount : abs($val->supplierInvoiceAmount);
                         $epsilon = 0.0001;
-                        if ($val->addedDocumentSystemID == 11) {
-                            //supplier invoice
-                            if (($a-$b) > $epsilon) {
-                                array_push($finalError['more_booked'], $val->addedDocumentID . ' | ' . $val->bookingInvDocCode);
-                                $error_count++;
-                            }
-                        } else if ($val->addedDocumentSystemID == 15) {
-                            //debit note
-                            if (($a-$b) < $epsilon) {
-                                array_push($finalError['more_booked'], $val->addedDocumentID . ' | ' . $val->bookingInvDocCode);
-                                $error_count++;
-                            }
+                        //supplier invoice
+                        if (($a-$b) > $epsilon) {
+                            array_push($finalError['more_booked'], $val->addedDocumentID . ' | ' . $val->bookingInvDocCode);
+                            $error_count++;
                         }
 
                         
@@ -2657,6 +2649,10 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         $supplierID = (array)$supplierID;
         $supplierID = collect($supplierID)->pluck('id');
 
+        $employeeID = $request['employeeID'];
+        $employeeID = (array)$employeeID;
+        $employeeID = collect($employeeID)->pluck('id');
+
         $projectID = $request['projectID'];
         $projectID = (array)$projectID;
         $projectID = collect($projectID)->pluck('id');
@@ -2677,11 +2673,18 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         if(empty($input['invoiceType'])){
             unset($input['invoiceType']);
         }
+
+        if(empty($input['payeeTypeID'])){
+            unset($input['payeeTypeID']);
+        }
         if(empty($input['month'])){
             unset($input['month']);
         }
         if(empty($input['supplierID'])){
             unset($input['supplierID']);
+        }
+        if(empty($input['employeeID'])){
+            unset($input['employeeID']);
         }
         if(empty($input['year'])){
             unset($input['year']);
@@ -2689,8 +2692,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         if(empty($input['payment_mode'])){
             unset($input['payment_mode']);
         }
-        
-        $paymentVoucher = $this->paySupplierInvoiceMasterRepository->paySupplierInvoiceListQuery($request, $input, $search, $supplierID, $projectID);
+        $paymentVoucher = $this->paySupplierInvoiceMasterRepository->paySupplierInvoiceListQuery($request, $input, $search, $supplierID, $projectID, $employeeID);
 
         return \DataTables::eloquent($paymentVoucher)
             ->addColumn('Actions', 'Actions', "Actions")

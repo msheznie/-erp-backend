@@ -168,6 +168,20 @@
             background-color: #ffffff !important;
             border-right: 1px solid #ffffffff !important;
         }
+
+        .container
+            {
+                display: block;
+                max-width:230px;
+                max-height:95px;
+                width: auto;
+                height: auto;
+            }
+
+        .table_height
+            {
+                max-height: 60px !important;
+            }
     </style>
 </head>
 <body>
@@ -196,26 +210,32 @@
 </div>
 <div id="watermark"></div>
 <div class="card-body content" id="print-section">
-    <table style="width: 100%">
+    <table style="width: 100%" class="table_height">
         <tr style="width: 100%">
-            <td valign="top" style="width: 50%">
+            <td valign="top" style="width: 20%">
                 @if($masterdata->company)
-                    <img src="{{$masterdata->company->logo_url}}" width="180px" height="60px">
+                    <img src="{{$masterdata->company->logo_url}}" width="180px" height="60px" class="container">
                 @endif
                 <br>
 
                 <div>
                     <span style="font-size: 18px">
-                        @if($masterdata->documentType == 13)
-                            Customer Invoice Receipt
+                        @if($masterdata->invoiceType == 2)
+                            Supplier Payment
                         @endif
-                        @if($masterdata->documentType == 14)
-                            Direct Receipt
+                        @if($masterdata->invoiceType == 3)
+                            Direct Payment
+                        @endif
+                        @if($masterdata->invoiceType == 5)
+                            Supplier Advance Payment
+                        @endif
+                        @if($masterdata->invoiceType == 6)
+                            Employee Payment
                         @endif
                     </span>
                 </div>
             </td>
-            <td valign="top" style="width: 50%">
+            <td valign="top" style="width: 80%">
                 @if($masterdata->company)
                     <span style="font-size: 24px;font-weight: 400"> {{$masterdata->company->CompanyName}}</span>
                 @endif
