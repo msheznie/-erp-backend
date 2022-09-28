@@ -23,6 +23,16 @@ class TenderCommitteeController extends AppBaseController
         }
         $srm_employees = SrmEmployees::where('company_id',$company_id)->with('employee');
 
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $srm_employees = $srm_employees->whereHas('employee', function ($query) use ($search){
+                $query->where('empFullName', 'like', '%'.$search.'%')
+                ->orWhere('empID', 'like', '%'.$search.'%');
+            });
+        }
+
         return \DataTables::of($srm_employees)
         ->order(function ($query) use ($input) {
             if (request()->has('order')) {

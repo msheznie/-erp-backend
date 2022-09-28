@@ -504,7 +504,7 @@ class GeneralLedgerAPIController extends AppBaseController
               $value['localcurrency'] = CurrencyMaster::find($value['documentLocalCurrencyID']);
               $value['transcurrency'] = CurrencyMaster::find($value['documentTransCurrencyID']);
               $value['rptcurrency'] = CurrencyMaster::find($value['documentRptCurrencyID']);
-              $value['documentDate'] = $value['documentDate']->format('Y-m-d');
+              $value['documentDate'] = Carbon::parse($value['documentDate'])->format('Y-m-d');
 
               $glData[] = $value;
         } 
