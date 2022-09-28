@@ -142,5 +142,10 @@ class TenderCirculars extends Model
         return $this->hasOne('App\Models\DocumentAttachments', 'attachmentID', 'attachment_id');
     }
 
+    public function document_amendments()
+    {
+        return $this->hasMany('App\Models\CircularAmendments', 'circular_id', 'id');
+    }
+
     
 }
