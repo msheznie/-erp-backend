@@ -268,7 +268,8 @@ class TenderMaster extends Model
         'technical_weightage',
         'is_active_go_no_go',
         'commercial_passing_weightage',
-        'technical_passing_weightage'
+        'technical_passing_weightage',
+        'min_approval_bid_opening'
     ];
 
     /**
@@ -331,6 +332,7 @@ class TenderMaster extends Model
         'is_active_go_no_go' => 'integer',
         'commercial_passing_weightage'=> 'integer',
         'technical_passing_weightage'=> 'integer',
+        'min_approval_bid_opening' => 'integer'
     ];
 
     /**

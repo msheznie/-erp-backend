@@ -29,6 +29,7 @@ use App\Models\TenderMaster;
 use App\Models\TenderProcurementCategory;
 use App\Models\TenderSiteVisitDates;
 use App\Models\TenderType;
+use App\Models\SrmTenderBidEmployeeDetails;
 use App\Models\YesNoSelection;
 use App\Repositories\TenderMasterRepository;
 use App\Traits\AuditTrial;
@@ -1539,6 +1540,14 @@ WHERE
             return ['status' => false, 'message' => 'Technical Passing Weightage is required'];
         }
 
+        $tenderMaster = TenderMaster::find($input['id']);
+        $tenderbidEmployee = SrmTenderBidEmployeeDetails::where('tender_id',$input['id'])->count();
+        
+        if($tenderbidEmployee < $tenderMaster->min_approval_bid_opening) {
+            return ['status' => false, 'message' => "Atleast ".$tenderMaster->min_approval_bid_opening." employee should selected"];
+        }
+
+
 
 
         DB::beginTransaction();
@@ -1553,6 +1562,7 @@ WHERE
             $data['is_active_go_no_go'] = isset($input['is_active_go_no_go']) ? $input['is_active_go_no_go'] : 0;
             $data['technical_passing_weightage'] = $input['technical_passing_weightage'];
             $data['commercial_passing_weightage'] = $input['commercial_passing_weightage'];
+            $data['min_approval_bid_opening'] = $input['min_approval_bid_opening'];
             $result = TenderMaster::where('id', $input['id'])->update($data);
             if ($result) {
                 if (isset($input['document_types'])) {

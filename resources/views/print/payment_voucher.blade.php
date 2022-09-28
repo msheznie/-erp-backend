@@ -216,24 +216,6 @@
                 @if($masterdata->company)
                     <img src="{{$masterdata->company->logo_url}}" width="180px" height="60px" class="container">
                 @endif
-                <br>
-
-                <div>
-                    <span style="font-size: 18px">
-                        @if($masterdata->invoiceType == 2)
-                            Supplier Payment
-                        @endif
-                        @if($masterdata->invoiceType == 3)
-                            Direct Payment
-                        @endif
-                        @if($masterdata->invoiceType == 5)
-                            Supplier Advance Payment
-                        @endif
-                        @if($masterdata->invoiceType == 6)
-                            Employee Payment
-                        @endif
-                    </span>
-                </div>
             </td>
             <td valign="top" style="width: 80%">
                 @if($masterdata->company)
@@ -283,6 +265,27 @@
         </tr>
     </table>
     <hr style="color: #d3d9df">
+    <div>
+        <span style="font-size: 18px">
+            @if($masterdata->invoiceType == 2)
+                Supplier Payment
+            @endif
+            @if($masterdata->invoiceType == 3)
+                Direct Payment
+            @endif
+            @if($masterdata->invoiceType == 5)
+                Supplier Advance Payment
+            @endif
+            @if($masterdata->invoiceType == 6)
+                Employee Payment
+            @endif
+            @if($masterdata->invoiceType == 7)
+                Employee Advance Payment
+            @endif
+        </span>
+    </div>
+    <br>
+    <br>
     <table style="width: 100%">
         <tr style="width:100%">
             <td style="width: 60%">

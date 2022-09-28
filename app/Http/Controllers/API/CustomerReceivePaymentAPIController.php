@@ -827,6 +827,8 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 }
             }
 
+
+
             if ($input['documentType'] == 13) {
 
                 $detailAllRecords = CustomerReceivePaymentDetail::where('custReceivePaymentAutoID', $id)
@@ -1325,7 +1327,26 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
             }
         }
+
         $input['PayeeEmpID'] = $input['employeeID'];
+
+
+            if ($input['payeeTypeID'] == 1) {
+                $input['PayeeName'] = null;
+                $input['PayeeEmpID'] = null;
+            } else if ($input['payeeTypeID'] == 2) {
+                $input['PayeeName'] = null;
+                $input['customerID'] = null;
+
+            } else if ($input['payeeTypeID'] == 3) {
+                $input['PayeeEmpID'] = null;
+                $input['customerID'] = null;
+
+            }
+
+
+
+
         $customerReceivePayment = $this->customerReceivePaymentRepository->update($input, $id);
 
         return $this->sendResponse($input, 'Receipt Voucher updated successfully');
@@ -2083,8 +2104,6 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     $taxDetail['payeeName'] = '';
                 }
 
-
-
                 $taxDetail['amount'] = $input['VATAmount'];
                 $taxDetail['localCurrencyER']  = $input['localCurrencyER'];
                 $taxDetail['rptCurrencyER'] = $input['companyRptCurrencyER'];
@@ -2433,6 +2452,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 $output['expenseClaimType'] = ExpenseClaimType::all();
                 $output['payee'] = Employee::select(DB::raw("employeeSystemID,CONCAT(empID, ' | ' ,empName) as employeeName"))->where('empCompanySystemID', $companySystemID)->where('discharegedYN', '<>', 2)->get();
 
+
                 if ($master->customerID != '') {
                     $output['currencies'] = DB::table('customercurrency')->join('currencymaster', 'customercurrency.currencyID', '=', 'currencymaster.currencyID')->where('customerCodeSystem', $master->customerID)->where('isAssigned', -1)->select('currencymaster.currencyID', 'currencymaster.CurrencyCode', 'isDefault')->get();
                 } else {
@@ -2458,6 +2478,9 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     ->where('isAssigned', -1)
                     ->where('companySystemID', $companySystemID)
                     ->get();
+                $output['invoiceType'] = array(array('value' => 13, 'label' => 'Customer Invoice Receipt'),
+                    array('value' => 14, 'label' => 'Direct Receipt'),array('value' => 15, 'label' => 'Advance Receipt'));
+
 
                 $output['bankAccount'] = [];
                 $output['bankCurrencies'] = [];
@@ -2636,7 +2659,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                         $master->where('erp_customerreceivepayment.customerID', '!=',null)->where('erp_customerreceivepayment.customerID', '!=',0);
                     }
                     if($input['payeeTypeID'] == 2){
-                        $master->where('erp_customerreceivepayment.PayeeEmpID', '!=',null);
+                        $master->where('erp_customerreceivepayment.PayeeEmpID', '>', 0);
                     }
                     if($input['payeeTypeID'] == 3){
                         $master->where('erp_customerreceivepayment.PayeeName', '!=',null);
@@ -2662,14 +2685,17 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         }
 
         if (array_key_exists('customerID', $input)) {
-            if ($input['customerID'] && !is_null($input['customerID'])) {
+            if ($input['customerID']  && count($customerID) > 0) {
                 $master->whereIn('customerID', $customerID);
             }
         }
 
         if (array_key_exists('employeeID', $input)) {
-            if ($input['employeeID'] && !is_null($input['employeeID'])) {
+            if ($input['employeeID'] && count($employeeID) > 0 && count($customerID) == 0) {
                 $master->whereIn('PayeeEmpID', $employeeID);
+            }
+            if ($employeeID && count($employeeID) > 0 && count($customerID) > 0) {
+                $master->orWhereIn('PayeeEmpID', $employeeID);
             }
         }
 
@@ -2702,7 +2728,8 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             'projectID',
             'erp_projectmaster.description as project_description',
             'payee.empID',
-            'payee.empName'
+            'payee.empName',
+            'erp_customerreceivepayment.PayeeName'
         ]);
 
         if ($search) {
@@ -2739,7 +2766,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $output = CustomerReceivePayment::where('custReceivePaymentAutoID', $input['custReceivePaymentAutoID'])->with(['payment_type','confirmed_by', 'created_by', 'modified_by', 'cancelled_by', 'company', 'bank', 'currency', 'localCurrency', 'rptCurrency', 'customer', 'approved_by' => function ($query) {
+        $output = CustomerReceivePayment::where('custReceivePaymentAutoID', $input['custReceivePaymentAutoID'])->with(['payment_type','confirmed_by', 'created_by', 'modified_by', 'cancelled_by', 'company', 'bank', 'currency', 'localCurrency', 'rptCurrency', 'customer', 'employee', 'approved_by' => function ($query) {
             $query->with('employee');
             $query->where('documentSystemID', 21);
         }, 'directdetails' => function ($query) {
@@ -2867,7 +2894,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             return $this->sendError('Customer Receive Payment not found');
         }
 
-        $customerReceivePaymentRecord = CustomerReceivePayment::where('custReceivePaymentAutoID', $id)->with(['payment_type','confirmed_by', 'created_by', 'modified_by', 'company', 'bank', 'currency', 'localCurrency', 'rptCurrency', 'customer', 'approved_by' => function ($query) {
+        $customerReceivePaymentRecord = CustomerReceivePayment::where('custReceivePaymentAutoID', $id)->with(['payment_type','confirmed_by', 'created_by', 'modified_by', 'company', 'bank', 'currency', 'localCurrency', 'rptCurrency', 'customer', 'employee', 'approved_by' => function ($query) {
             $query->with('employee');
             $query->where('documentSystemID', 21);
         }, 'directdetails' => function ($query) {

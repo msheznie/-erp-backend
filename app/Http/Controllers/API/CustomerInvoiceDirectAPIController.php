@@ -4123,7 +4123,6 @@ WHERE
         } else {
             return $this->sendResponse(array(), $approve["message"]);
         }
-
     }
 
 

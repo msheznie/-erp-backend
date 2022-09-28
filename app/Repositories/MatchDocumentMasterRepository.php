@@ -243,9 +243,9 @@ class MatchDocumentMasterRepository extends BaseRepository
                 $data[$x]['Comments'] = $val->BPVNarration;
                 $data[$x]['Created By'] = $val->created_by? $val->created_by->empName : '';
                 $data[$x]['Cancelled By'] = $val->cancelled_by? $val->cancelled_by->empName : '';
-                $data[$x]['Created At'] = \Helper::dateFormat($val->createdDateTime);
-                $data[$x]['Cancelled At'] = \Helper::dateFormat($val->cancelledDate);
-                $data[$x]['Confirmed on'] = \Helper::dateFormat($val->confirmedDate);
+                $data[$x]['Created At'] = \Helper::convertDateWithTime($val->createdDateTime);
+                $data[$x]['Cancelled At'] = \Helper::convertDateWithTime($val->cancelledDate);
+                $data[$x]['Confirmed on'] = \Helper::convertDateWithTime($val->confirmedDate);
                 $data[$x]['Currency'] = $val->transactioncurrency?  $val->transactioncurrency->CurrencyCode : '';
                 $data[$x]['Receipt Amount'] = number_format($val->payAmountSuppTrans, $val->transactioncurrency? $val->transactioncurrency->DecimalPlaces : '', ".", "");
                 $data[$x]['Matched Amount'] = number_format($val->matchedAmount, $val->transactioncurrency? $val->transactioncurrency->DecimalPlaces : '', ".", "");
