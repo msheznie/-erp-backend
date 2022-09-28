@@ -2579,12 +2579,33 @@ class SRMService
         ->first(); */
 
         $bidSubmissionData = self::BidSubmissionStatusData($bidMasterId, $tenderId);
+        
+        $evaluvationCriteriaDetailsCount = EvaluationCriteriaDetails::where('tender_id',$tenderId)->where('critera_type_id',1)->count();
+        $bidSubmissionDataCount = BidSubmissionDetail::where('tender_id',$tenderId)->count();
+
+        $documentTypeAssingedCount = TenderDocumentTypeAssign::where('tender_id',$tenderId)->count();
+        $documentAttachedCount =  DocumentAttachments::where('documentSystemID',108)
+        ->whereNotNull('parent_id')
+        ->where('documentSystemCode',$tenderId)
+        ->count();
 
         // $data['technicalBidSubmissionYn'] = ($documentAttachment > 0 || $technicalEvaluationCriteria > 0) ? 1 : 0;
         $data['technicalBidSubmissionYn'] = $bidSubmissionData['technicalEvaluationCriteria'];
         $data['commercialBidSubmission'] = $bidSubmissionData['filtered'];
         $data['isBidSubmissionStatus'] = $bidSubmissionData['bidsubmission'];
 
+        if($evaluvationCriteriaDetailsCount == $bidSubmissionDataCount || $evaluvationCriteriaDetailsCount == 0)  {
+            $data['goNoGoStatus'] = "Completed";
+        }else {
+            $data['goNoGoStatus'] = "Not Completed";
+        }
+
+        if($documentTypeAssingedCount == $documentAttachedCount || $documentTypeAssingedCount == 0) {
+            $data['commercialStatus'] = "Completed";
+        }else {
+            $data['commercialStatus'] = "Not Completed";
+        }
+        
         return [
             'success' => true,
             'message' => 'Main Envelop data retrieved successfully',
