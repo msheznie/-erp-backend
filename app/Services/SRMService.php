@@ -2584,7 +2584,7 @@ class SRMService
         $bidSubmissionDataCount = BidSubmissionDetail::where('tender_id',$tenderId)->count();
 
         $documentTypeAssingedCount = TenderDocumentTypeAssign::where('tender_id',$tenderId)->count();
-        $documentAttachedCount =  DocumentAttachments::where('documentSystemID',108)
+        $documentAttachedCount =  DocumentAttachments::where('documentSystemID',108)->where('attachmentType',2)->where('envelopType',3)
         ->whereNotNull('parent_id')
         ->where('documentSystemCode',$tenderId)
         ->count();
@@ -2600,10 +2600,10 @@ class SRMService
             $data['goNoGoStatus'] = "Not Completed";
         }
 
-        if($documentTypeAssingedCount == $documentAttachedCount || $documentTypeAssingedCount == 0) {
-            $data['commercialStatus'] = "Completed";
+        if($documentAttachedCount > 0) {
+            $data['commonStatus'] = "Completed";
         }else {
-            $data['commercialStatus'] = "Not Completed";
+            $data['commonStatus'] = "Not Completed";
         }
         
         return [
