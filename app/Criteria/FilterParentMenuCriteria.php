@@ -34,20 +34,44 @@ class FilterParentMenuCriteria implements CriteriaInterface
 
         $companyId = $this->request['companyId'];
         $userGroupId = $this->request['userGroupId'];
-        return $model->where('masterID',NULL)
-                     ->whereIn('isPortalYN',array(0))
-                     ->where('userGroupID',$userGroupId)
-                     ->where('companyID',$companyId)
-                     ->with(['child' => function ($query) use($companyId,$userGroupId) {
-                        $query->where('userGroupID',$userGroupId)
-                              ->where('companyID',$companyId)
-                              ->with(['language','child' => function ($query) use($companyId,$userGroupId) {
-                                    $query->where('userGroupID',$userGroupId)
-                                          ->where('companyID',$companyId)
-                                          ->orderBy("sortOrder","asc");
-                                }])
-                            ->orderBy("sortOrder","asc");
-                       }])
-                      ->orderBy("sortOrder","asc");
+
+        if (isset($this->request['langCode'])){
+            $langCode = $this->request['langCode'];
+            return $model->where('masterID',NULL)
+                ->whereIn('isPortalYN',array(0))
+                ->where('userGroupID',$userGroupId)
+                ->where('companyID',$companyId)
+                ->with(['language'=> function($query) use ($langCode) {
+                    $query->where('languageCode', $langCode);
+                },'child' => function ($query) use($companyId,$userGroupId) {
+                    $query->where('userGroupID',$userGroupId)
+                        ->where('companyID',$companyId)
+                        ->with(['language','child' => function ($query) use($companyId,$userGroupId) {
+                            $query->where('userGroupID',$userGroupId)
+                                ->where('companyID',$companyId)
+                                ->orderBy("sortOrder","asc");
+                        }])
+                        ->orderBy("sortOrder","asc");
+                }])
+                ->orderBy("sortOrder","asc");
+        }
+        else{
+            return $model->where('masterID',NULL)
+                ->whereIn('isPortalYN',array(0))
+                ->where('userGroupID',$userGroupId)
+                ->where('companyID',$companyId)
+                ->with(['child' => function ($query) use($companyId,$userGroupId) {
+                    $query->where('userGroupID',$userGroupId)
+                        ->where('companyID',$companyId)
+                        ->with(['child' => function ($query) use($companyId,$userGroupId) {
+                            $query->where('userGroupID',$userGroupId)
+                                ->where('companyID',$companyId)
+                                ->orderBy("sortOrder","asc");
+                        }])
+                        ->orderBy("sortOrder","asc");
+                }])
+                ->orderBy("sortOrder","asc");
+        }
+
     }
 }

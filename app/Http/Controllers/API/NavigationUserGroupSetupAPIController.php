@@ -88,8 +88,7 @@ class NavigationUserGroupSetupAPIController extends AppBaseController
             //$this->navigationUserGroupSetupRepository->pushCriteria(new RequestCriteria($request));
             $this->navigationUserGroupSetupRepository->pushCriteria(new LimitOffsetCriteria($request));
             $this->navigationUserGroupSetupRepository->pushCriteria(new FilterParentMenuCriteria($request));
-            return $navigationUserGroupSetups = $this->navigationUserGroupSetupRepository->
-                with(['language'])->paginate(50);
+            return $navigationUserGroupSetups = $this->navigationUserGroupSetupRepository->paginate(50);
         }else{
 
             $userGroupExist = UserGroup::where('companyID',$request['companyId'])
@@ -101,8 +100,7 @@ class NavigationUserGroupSetupAPIController extends AppBaseController
             //$this->navigationUserGroupSetupRepository->pushCriteria(new RequestCriteria($request));
             $this->navigationUserGroupSetupRepository->pushCriteria(new LimitOffsetCriteria($request));
             $this->navigationUserGroupSetupRepository->pushCriteria(new FilterParentMenuCriteria($request));
-            return $navigationUserGroupSetups = $this->navigationUserGroupSetupRepository->
-            with(['language'])->paginate(50);
+            return $navigationUserGroupSetups = $this->navigationUserGroupSetupRepository->paginate(50);
             }  
              else
              {
