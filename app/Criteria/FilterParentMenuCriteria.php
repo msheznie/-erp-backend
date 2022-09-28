@@ -41,7 +41,7 @@ class FilterParentMenuCriteria implements CriteriaInterface
                      ->with(['child' => function ($query) use($companyId,$userGroupId) {
                         $query->where('userGroupID',$userGroupId)
                               ->where('companyID',$companyId)
-                              ->with(['child' => function ($query) use($companyId,$userGroupId) {
+                              ->with(['language','child' => function ($query) use($companyId,$userGroupId) {
                                     $query->where('userGroupID',$userGroupId)
                                           ->where('companyID',$companyId)
                                           ->orderBy("sortOrder","asc");
