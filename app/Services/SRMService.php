@@ -39,6 +39,7 @@ use App\Models\SupplierMaster;
 use App\Models\SupplierRegistrationLink;
 use App\Models\TenderBidClarifications;
 use App\Models\TenderBoqItems;
+use App\Models\TenderCirculars;
 use App\Models\TenderDocumentTypes;
 use App\Models\TenderFaq;
 use App\Models\TenderMainWorks;
@@ -1864,8 +1865,8 @@ class SRMService
     public function getConsolidatedData($request)
     {
         $tenderMasterId = $request->input('extra.tenderId');
-        $assignDocumentTypesDeclared = [1,2,3];
-        $assignDocumentTypes = TenderDocumentTypeAssign::where('tender_id',$tenderMasterId)->pluck('document_type_id')->toArray();
+        $assignDocumentTypesDeclared = [1];
+        $assignDocumentTypes = TenderDocumentTypeAssign::where('tender_id',$tenderMasterId)->whereNotIn('document_type_id',[2, 3])->pluck('document_type_id')->toArray();
         $tenderDates = [];
         $doucments = (array_merge($assignDocumentTypesDeclared,$assignDocumentTypes));
         $tenderMaster = TenderMaster::select(
@@ -1953,6 +1954,7 @@ class SRMService
         ->get();
 
         $data['attachments'] = $attachments;
+        $data['tenderCirculars'] = TenderCirculars::with(['document_amendments.document_attachments'])->where('tender_id', $tenderMasterId)->get();
         return [
             'success' => true,
             'message' => 'Consolidated view data Successfully get',

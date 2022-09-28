@@ -2,9 +2,15 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\Helper;
+use App\Models\CircularAmendments;
+use App\Models\CircularSuppliers;
 use App\Http\Requests\API\CreateTenderCircularsAPIRequest;
 use App\Http\Requests\API\UpdateTenderCircularsAPIRequest;
+use App\Mail\EmailForQueuing;
+use App\Models\Company;
 use App\Models\DocumentAttachments;
+use App\Models\SupplierRegistrationLink;
 use App\Models\TenderCirculars;
 use App\Repositories\TenderCircularsRepository;
 use Carbon\Carbon;
@@ -12,6 +18,8 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -313,7 +321,7 @@ class TenderCircularsAPIController extends AppBaseController
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
-                        $query->orderBy('id', $input['order'][0]['dir']);
+                        $query->orderBy('id', 'asc');
                     }
                 }
             })
@@ -325,10 +333,10 @@ class TenderCircularsAPIController extends AppBaseController
     public function getAttachmentDropCircular(Request $request)
     {
         $input = $request->all();
-        $attachment = TenderCirculars::where('tender_id',$input['tenderMasterId'])->get();
+        $attachment = CircularAmendments::where('tender_id',$input['tenderMasterId'])->get();
         $attchArray = array();
         if(count($attachment) > 0){
-            $attchArray = $attachment->pluck('attachment_id');
+            $attchArray = $attachment->pluck('amendment_id');
             $attchArray = $attchArray->filter();
         }
 
@@ -339,12 +347,11 @@ class TenderCircularsAPIController extends AppBaseController
             ->where('documentSystemCode',$input['tenderMasterId'])->get();
 
         if(isset($input['circularId']) && $input['circularId'] > 0){
-           $circular = TenderCirculars::where('id',$input['circularId'])->first();
-           if($circular['attachment_id']>0){
-               $attachment = DocumentAttachments::where('attachmentID',$circular['attachment_id'])->first();
-               $data['attachmentDrop'][] = $attachment;
+           $circular = CircularAmendments::select('amendment_id')->where('circular_id',$input['circularId'])->get()->toArray();
+           if(sizeof($circular) > 0){
+               $attachment = DocumentAttachments::whereIn('attachmentID',$circular)->get();
+               $data['amended'] = $attachment;
            }
-
         }
 
         return $data;
@@ -353,6 +360,15 @@ class TenderCircularsAPIController extends AppBaseController
     public function addCircular(Request $request)
     {
         $input = $request->all();
+
+        if(isset($input['attachment_id' ])){
+            $attachmentList = $input['attachment_id'];
+        }
+
+        if(isset($input['supplier_id' ])){
+            $supplierList = $input['supplier_id' ];
+        }
+
         $input = $this->convertArrayToSelectedValue($request->all(), array('attachment_id'));
 
         if(!isset($input['description']) && !isset($input['attachment_id'])){
@@ -399,11 +415,11 @@ class TenderCircularsAPIController extends AppBaseController
             }else{
                 $data['description']=null;
             }
-            if(isset($input['attachment_id'])){
+            /*if(isset($input['attachment_id'])){
                 $data['attachment_id']=$input['attachment_id'];
             }else{
                 $data['attachment_id']=null;
-            }
+            }*/
             $data['company_id']=$input['companySystemID'];
 
             if(isset($input['id'])){
@@ -419,6 +435,28 @@ class TenderCircularsAPIController extends AppBaseController
                 $data['created_at'] = Carbon::now();
                 $result = TenderCirculars::create($data);
                 if($result){
+                    if(isset($attachmentList)){
+                        foreach ($attachmentList as $attachment){
+                            $dataAttachment['tender_id'] = $input['tenderMasterId'];
+                            $dataAttachment['circular_id'] = $result->id;
+                            $dataAttachment['amendment_id'] = $attachment['id'];
+                            $dataAttachment['status'] = null;
+                            $dataAttachment['created_by'] = $employee->employeeSystemID;
+                            $dataAttachment['created_at'] = Carbon::now();
+                            CircularAmendments::create($dataAttachment);
+                        }
+                    }
+
+                    if(isset($supplierList)){
+                        foreach ($supplierList as $supplier){
+                            $dataSupplier['circular_id'] = $result->id;
+                            $dataSupplier['supplier_id'] = $supplier['id'];
+                            $dataSupplier['created_by'] = $employee->employeeSystemID;
+                            $dataSupplier['created_at'] = Carbon::now();
+                            CircularSuppliers::create($dataSupplier);
+                        }
+                    }
+
                     DB::commit();
                     return ['success' => true, 'message' => 'Successfully saved', 'data' => $result];
                 }
@@ -442,7 +480,9 @@ class TenderCircularsAPIController extends AppBaseController
         DB::beginTransaction();
         try {
             $result = TenderCirculars::where('id',$input['id'])->delete();
+
             if($result){
+                CircularAmendments::where('circular_id', $input['id'])->delete();
                 DB::commit();
                 return ['success' => true, 'message' => 'Successfully deleted', 'data' => $result];
             }
@@ -458,20 +498,168 @@ class TenderCircularsAPIController extends AppBaseController
     {
         $input = $request->all();
         $employee = \Helper::getEmployeeInfo();
+        $companyName = "";
+        $company = Company::find($request->input('company_id'));
+        if(isset($company->CompanyName)){
+            $companyName =  $company->CompanyName;
+        }
         DB::beginTransaction();
         try {
             $att['updated_by'] = $employee->employeeSystemID;
             $att['status'] = 1;
             $result = TenderCirculars::where('id', $input['id'])->update($att);
+            $supplierList = CircularSuppliers::with([ 'supplier_registration_link', 'srm_circular_amendments.document_attachments'])->where('circular_id', $input['id'])->get();
+            $amendmentsList = CircularAmendments::with('document_attachments')->where('circular_id', $input['id'])->get();
+            $file = array();
+            foreach ($amendmentsList as $amendments){
+                $file[] = $amendments->document_attachments->myFileName;
+            }
 
             if ($result) {
                 DB::commit();
+                foreach ($supplierList as $supplier){
+                    $file = Storage::disk('s3')->url($supplier->srm_circular_amendments->document_attachments->myFileName);
+                    $xx = storage_path('MicrosoftTeams-image.png.png');
+                    Mail::to($supplier->supplier_registration_link->email)->send(new EmailForQueuing("Tender Circular", "Dear Supplier,"."<br /><br />"." Please find the below tender circular ". $companyName ." "."<br /><br />"."Click Here: "."</b><br /><br />"." Thank You"."<br /><br /><b>", $xx));
+                }
+
                 return ['success' => true, 'message' => 'Successfully Published'];
+            } else {
+                return ['fail' => true, 'message' => 'Published failed'];
+            }
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($e);
+            return ['success' => false, 'message' => $e];
+        }
+    }
+
+    public function getTenderPurchasedSupplierList(Request $request)
+    {
+        $input = $request->all();
+        $purchased = SupplierRegistrationLink::selectRaw('*')
+            ->join('srm_tender_master_supplier', 'srm_tender_master_supplier.purchased_by', '=', 'srm_supplier_registration_link.id')
+            ->where('srm_tender_master_supplier.tender_master_id', $input['tenderMasterId'])
+            ->get();
+
+        $data['purchased'] = $purchased;
+
+        if(isset($input['circularId']) && $input['circularId'] > 0){
+            $dataAssigned = SupplierRegistrationLink::selectRaw('*')
+                ->join('srm_circular_suppliers', 'srm_circular_suppliers.supplier_id', '=', 'srm_supplier_registration_link.id')
+                ->where('srm_circular_suppliers.circular_id', $input['circularId'])
+                ->get();
+
+            $data['dataAssigned'] = $dataAssigned;
+
+            $dataAssignedArr = SupplierRegistrationLink::selectRaw('supplier_id')
+                ->join('srm_circular_suppliers', 'srm_circular_suppliers.supplier_id', '=', 'srm_supplier_registration_link.id')
+                ->where('srm_circular_suppliers.circular_id', $input['circularId'])
+                ->get()->toArray();
+
+            if(sizeof($dataAssignedArr) > 0){
+                $i = 0;
+                foreach ($dataAssignedArr as $assigned){
+                    $supplier[$i] = $assigned['supplier_id'];
+                    $i++;
+                }
+
+                $purchased = SupplierRegistrationLink::selectRaw('*')
+                    ->join('srm_tender_master_supplier', 'srm_tender_master_supplier.purchased_by', '=', 'srm_supplier_registration_link.id')
+                    ->where('srm_tender_master_supplier.tender_master_id', $input['tenderMasterId'])
+                    ->whereNotIn('srm_tender_master_supplier.purchased_by', $supplier)
+                    ->get();
+
+                $data['purchased'] = $purchased;
+            }
+        }
+
+        return $data;
+    }
+
+    public function deleteCircularSupplier(Request $request)
+    {
+        $input = $request->all();
+        DB::beginTransaction();
+        try {
+            $result = CircularSuppliers::where('id',$input['id'])->delete();
+            if($result){
+                DB::commit();
+                return ['success' => true, 'message' => 'Successfully deleted', 'data' => $result];
             }
         } catch (\Exception $e) {
             DB::rollback();
             Log::error($this->failed($e));
             return ['success' => false, 'message' => $e];
         }
+    }
+
+    public function deleteCircularAmendment(Request $request)
+    {
+        $input = $request->all();
+        DB::beginTransaction();
+        try {
+            $result = CircularAmendments::where('amendment_id',$input['attachmentID'])
+                ->where('tender_id', $input['tenderMasterId'])
+                ->where('circular_id', $input['circularId'])
+                ->delete();
+            if($result){
+                DB::commit();
+                return ['success' => true, 'message' => 'Successfully deleted', 'data' => $result];
+            }
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($this->failed($e));
+            return ['success' => false, 'message' => $e];
+        }
+
+    }
+
+    public function addCircularSupplier(Request $request)
+    {
+        $input = $request->all();
+        $employee = \Helper::getEmployeeInfo();
+        DB::beginTransaction();
+        try {
+            $dataSupplier['circular_id'] = $input['circularId'];
+            $dataSupplier['supplier_id'] = $input['selectedSupplierId'];
+            $dataSupplier['created_by'] = $employee->employeeSystemID;
+            $dataSupplier['created_at'] = Carbon::now();
+            $result = CircularSuppliers::create($dataSupplier);
+            if($result){
+                DB::commit();
+                return ['success' => true, 'message' => 'Successfully created', 'data' => $result];
+            }
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($e);
+            return ['success' => false, 'message' => $e];
+        }
+
+    }
+
+    public function addCircularAmendment(Request $request)
+    {
+        $input = $request->all();
+        $employee = \Helper::getEmployeeInfo();
+        DB::beginTransaction();
+        try {
+            $dataAttachment['tender_id'] = $input['tenderMasterId'];
+            $dataAttachment['circular_id'] = $input['circularId'];
+            $dataAttachment['amendment_id'] = $input['amendmentId'];
+            $dataAttachment['status'] = null;
+            $dataAttachment['created_by'] = $employee->employeeSystemID;
+            $dataAttachment['created_at'] = Carbon::now();
+            $result = CircularAmendments::create($dataAttachment);
+            if($result){
+                DB::commit();
+                return ['success' => true, 'message' => 'Successfully created', 'data' => $result];
+            }
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($e);
+            return ['success' => false, 'message' => $e];
+        }
+
     }
 }
