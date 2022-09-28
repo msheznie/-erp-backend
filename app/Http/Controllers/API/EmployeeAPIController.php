@@ -257,7 +257,13 @@ class EmployeeAPIController extends AppBaseController
 
         $srm_employees = SrmEmployees::where('company_id',$companyId)->pluck('emp_id')->toArray();
 
-        $employees = Employee::whereIn('empCompanySystemID', $childCompanies)->where('discharegedYN',0)->where('empActive',1)->whereNotIn('employeeSystemID',$srm_employees)->get();
+        // $employees = Employee::whereIn('empCompanySystemID', $childCompanies)->where('discharegedYN',0)->where('empActive',1)->whereNotIn('employeeSystemID',$srm_employees)->get();
+
+        $employeeData = Employee::whereNotIn('employeeSystemID',$srm_employees)->where('discharegedYN','!=',-1)->whereHas('hr_emp', function($q){
+            $q->where('isDischarged', 0)->where('empConfirmedYN', 1);
+        });
+        
+        $employees = $employeeData->get();
 
         $data = [];
 

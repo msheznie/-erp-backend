@@ -2773,9 +2773,14 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('getTenderCircularList', 'TenderCircularsAPIController@getTenderCircularList');
         Route::post('getAttachmentDropCircular', 'TenderCircularsAPIController@getAttachmentDropCircular');
         Route::post('addCircular', 'TenderCircularsAPIController@addCircular');
+        Route::post('addCircularSupplier', 'TenderCircularsAPIController@addCircularSupplier');
+        Route::post('addCircularAmendment', 'TenderCircularsAPIController@addCircularAmendment');
         Route::post('getCircularMaster', 'TenderCircularsAPIController@getCircularMaster');
         Route::post('deleteTenderCircular', 'TenderCircularsAPIController@deleteTenderCircular');
+        Route::post('deleteCircularSupplier', 'TenderCircularsAPIController@deleteCircularSupplier');
+        Route::post('deleteCircularAmendment', 'TenderCircularsAPIController@deleteCircularAmendment');
         Route::post('tenderCircularPublish', 'TenderCircularsAPIController@tenderCircularPublish');
+        Route::post('getTenderPurchasedSupplierList', 'TenderCircularsAPIController@getTenderPurchasedSupplierList');
         Route::post('getAllInvoicesPos', 'POS\PosAPIController@getAllInvoicesPos');
         Route::post('getPosInvoiceData', 'POS\PosAPIController@getPosInvoiceData');
         Route::post('getAllInvoicesPosReturn', 'POS\PosAPIController@getAllInvoicesPosReturn');
