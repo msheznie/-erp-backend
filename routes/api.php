@@ -3087,4 +3087,3 @@ Route::post('documentUploadDelete', 'ThirdPartySystemsDocumentUploadAndDownloadA
 Route::get('viewHrDocuments', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@viewHrDocuments');
 
 
-Route::resource('navigation_menus_languages', 'NavigationMenusLanguagesAPIController');
