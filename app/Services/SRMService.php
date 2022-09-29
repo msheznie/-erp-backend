@@ -67,7 +67,8 @@ use function Clue\StreamFilter\fun;
 use App\Models\TenderDocumentTypeAssign;
 use InfyOm\Generator\Utils\ResponseUtil;
 use Response;
-
+use App\Models\PricingScheduleDetail;
+use App\Models\ScheduleBidFormatDetails;
 class SRMService
 {
     private $POService = null;
@@ -2465,7 +2466,7 @@ class SRMService
         }, 'pricing_shedule_details' => function ($q) use ($bidMasterId) {
             $q->with(['bid_main_work' => function ($q) use ($bidMasterId) {
                 $q->where('bid_master_id', $bidMasterId);
-            }]);
+            },'bid_format_detail']);
         }])->where('tender_id', $tenderId)->get();
 
         $data['bidSubmitted'] = $this->getBidMasterData($bidMasterId);
@@ -2579,12 +2580,33 @@ class SRMService
         ->first(); */
 
         $bidSubmissionData = self::BidSubmissionStatusData($bidMasterId, $tenderId);
+        
+        $evaluvationCriteriaDetailsCount = EvaluationCriteriaDetails::where('tender_id',$tenderId)->where('critera_type_id',1)->count();
+        $bidSubmissionDataCount = BidSubmissionDetail::join('srm_evaluation_criteria_details','srm_bid_submission_detail.evaluation_detail_id','=','srm_evaluation_criteria_details.id')->where('srm_bid_submission_detail.tender_id',$tenderId)->where('srm_evaluation_criteria_details.critera_type_id',1)->count();
+
+        $documentTypeAssingedCount = TenderDocumentTypeAssign::where('tender_id',$tenderId)->count();
+        $documentAttachedCount =  DocumentAttachments::where('documentSystemID',108)->where('attachmentType',2)->where('envelopType',3)
+        ->whereNotNull('parent_id')
+        ->where('documentSystemCode',$tenderId)
+        ->count();
 
         // $data['technicalBidSubmissionYn'] = ($documentAttachment > 0 || $technicalEvaluationCriteria > 0) ? 1 : 0;
         $data['technicalBidSubmissionYn'] = $bidSubmissionData['technicalEvaluationCriteria'];
         $data['commercialBidSubmission'] = $bidSubmissionData['filtered'];
         $data['isBidSubmissionStatus'] = $bidSubmissionData['bidsubmission'];
 
+        if($evaluvationCriteriaDetailsCount == $bidSubmissionDataCount || $evaluvationCriteriaDetailsCount == 0)  {
+            $data['goNoGoStatus'] = "Completed";
+        }else {
+            $data['goNoGoStatus'] = "Not Completed";
+        }
+
+        if($documentAttachedCount > 0) {
+            $data['commonStatus'] = "Completed";
+        }else {
+            $data['commonStatus'] = "Not Completed";
+        }
+        
         return [
             'success' => true,
             'message' => 'Main Envelop data retrieved successfully',
@@ -2663,6 +2685,7 @@ class SRMService
         $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
 
 
+
         DB::beginTransaction();
         try {
             $att['boq_id'] = $detail['id'];
@@ -2672,7 +2695,7 @@ class SRMService
             $att['unit_amount'] = $detail['bid_boq']['unit_amount'];
             $att['total_amount'] = $detail['bid_boq']['total_amount'];
             $att['supplier_registration_id'] = $supplierRegId;
-
+            
             if (isset($detail['bid_boq']['id'])) {
                 if (empty($detail['bid_boq']['unit_amount']) && empty($detail['bid_boq']['qty'])) {
                     $result = BidBoq::where('id', $detail['bid_boq']['id'])->delete();
@@ -2710,6 +2733,152 @@ class SRMService
                     $mainWork['created_by'] = $supplierRegId;
                     BidMainWork::create($mainWork);
                 }
+
+
+                
+        $pricing_shedule = PricingScheduleDetail::where('id',$mainWorkId)->first();
+
+        $outcome = DB::table('srm_pricing_schedule_detail')->where('bid_format_id',$pricing_shedule->bid_format_id)->where('pricing_schedule_master_id',$pricing_shedule->pricing_schedule_master_id) 
+         ->leftJoin('srm_schedule_bid_format_details', 'srm_pricing_schedule_detail.id', '=', 'srm_schedule_bid_format_details.bid_format_detail_id')
+         ->join('tender_field_type', 'srm_pricing_schedule_detail.field_type', '=', 'tender_field_type.id')
+         ->leftJoin('srm_bid_main_work', 'srm_pricing_schedule_detail.id', '=', 'srm_bid_main_work.main_works_id')  
+        ->select('srm_pricing_schedule_detail.id as id','srm_pricing_schedule_detail.is_disabled','srm_pricing_schedule_detail.field_type as typeId','srm_pricing_schedule_detail.formula_string','srm_pricing_schedule_detail.bid_format_detail_id',
+                DB::raw('(CASE WHEN srm_pricing_schedule_detail.field_type = 4 THEN srm_schedule_bid_format_details.value 
+                               WHEN (srm_pricing_schedule_detail.field_type != 4 && srm_pricing_schedule_detail.is_disabled = 1) THEN srm_schedule_bid_format_details.value    
+                               WHEN (srm_pricing_schedule_detail.field_type != 4 && srm_pricing_schedule_detail.boq_applicable = 1) THEN srm_bid_main_work.total_amount    
+                               END) AS value'))  
+        ->get();
+
+        $details = array_map(function($item) {
+            return (array)$item; 
+        }, $outcome->toArray());
+
+    
+        $details1 = [];
+        foreach($details as $key=>$val)
+        {   
+         
+            if($val['typeId'] == 4)
+            {   $p = '';
+                $cont = '';
+                $data = [];
+                $formula_arr = null;  
+                
+          
+                if (!is_null($val['formula_string'])) {
+                       
+                        if ($val['formula_string']) {
+                        
+                            $formula_arr = explode('~', $val['formula_string']);
+                 
+                            foreach ($formula_arr as $formula_row) {
+                                if (trim($formula_row) != '') 
+                                {
+                                    $val1 = '';
+
+                                    $elementType = $formula_row[0];
+                                    if ($elementType == '$') {
+                                        $elementArr = explode('$', $formula_row);
+                                        $value = intval($elementArr[1]);
+                                        foreach($details as $result)
+                                        {
+                                            if($result['bid_format_detail_id'] == $value)
+                                            {
+                                        
+                                                    if($result['typeId'] == 2)
+                                                    {
+                                                        if($result['value'] != null)
+                                                        {
+                                                            $val1 = $result['value'];
+                                                        }
+                                                        else
+                                                        {
+                                                            $val1 = 0;
+                                                        }
+                                                        
+                                                    }
+                                                    else if($result['typeId'] == 3)
+                                                    {
+                                                       
+
+                                                        if($result['value'] != null)
+                                                        {
+                                                            $val1 = $result['value']/100;
+                                                        }
+                                                        else
+                                                        {
+                                                            $val1 = 1;
+                                                        }
+                                                        
+                                                    }
+                                                $cont = $cont.$val1;
+                                                break;
+                                            }
+                                            
+                                        }
+                                   
+                                      
+                                    }
+                                    else if($elementType == '|')
+                                    {
+                                        
+                                        $elementArr1 = explode('|', $formula_row);
+                                        $value = ($elementArr1[1]);
+                                        $cont = $cont.$value;
+                                       
+                                           
+                                    }
+                                    else if($elementType == '_')
+                                    {
+                                        $elementArr2 = explode('_', $formula_row);
+                                        if(empty($elementArr2[1]) || is_null($elementArr2))
+                                        {
+                                            $value2 = 0;
+                                        }
+                                        else
+                                        {
+                                            $value2 = ($elementArr2[1]);
+                                        }
+
+                                        
+                                        $cont = $cont.$value2;
+                                        
+
+                                    }
+                                }
+                               
+                            }
+                            
+                       
+                            $p = eval('return '.$cont.';');
+
+                        } 
+                    
+                        }
+                
+                        $data[$val['id']] = $p;
+
+                
+                        array_push($details1,$data);
+                    }
+                
+
+                }
+
+                    foreach($details1 as $val)
+                    {
+                        foreach($val as $key=>$val1)
+                        {
+                            
+                            $updated_val['value'] = $val1; 
+                        ScheduleBidFormatDetails::where('bid_format_detail_id', $key)->update($updated_val);
+                    
+                        }
+                    
+                
+                    }
+
+
             } else {
                 BidMainWork::where('main_works_id', $detail['main_work_id'])->where('bid_master_id', $bidMasterId)->delete();
             }
@@ -2885,6 +3054,28 @@ class SRMService
 
         $bidSubmitted = collect($bidSubmitted)->map(function ($group) {
             $bidSubmissionData = self::BidSubmissionStatusData($group['id'], $group['tender_id']);
+
+            $evaluvationCriteriaDetailsCount = EvaluationCriteriaDetails::where('tender_id',$group['tender_id'])->where('critera_type_id',1)->count();
+            $bidSubmissionDataCount = BidSubmissionDetail::where('tender_id',$group['tender_id'])->count();
+
+            $documentTypeAssingedCount = TenderDocumentTypeAssign::where('tender_id',$group['tender_id'])->count();
+            $documentAttachedCount =  DocumentAttachments::where('documentSystemID',108)->where('attachmentType',2)->where('envelopType',3)
+                ->whereNotNull('parent_id')
+                ->where('documentSystemCode',$group['tender_id'])
+                ->count();
+
+            if($evaluvationCriteriaDetailsCount == $bidSubmissionDataCount || $evaluvationCriteriaDetailsCount == 0)  {
+                $group['goNoGoStatus'] = 0;
+            }else {
+                $group['goNoGoStatus'] = 1;
+            }
+
+            if($documentAttachedCount > 0) {
+                $group['commonStatus'] = 0;
+            }else {
+                $group['commonStatus'] = 1;
+            }
+
             $group['commercial_bid_submission_status'] = $bidSubmissionData['filtered'];
             $group['technical_bid_submission_status'] = $bidSubmissionData['technicalEvaluationCriteria'];
             $group['bid_submission_status'] = $bidSubmissionData['bidsubmission'];

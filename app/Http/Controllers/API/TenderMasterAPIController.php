@@ -396,7 +396,16 @@ class TenderMasterAPIController extends AppBaseController
         $data['currentDate'] = now();
         $data['defaultCurrency'] = $company;
         $data['procurementCategory'] = TenderProcurementCategory::where('level', 0)->where('is_active', 1)->get();
-        $data['documentTypes'] = TenderDocumentTypes::where('company_id', $employee->empCompanySystemID)->whereNotIn('id', [1, 2])->orWhere('id', 3)->get();
+        $assignedDocsArray = TenderDocumentTypeAssign::select('document_type_id')->where('tender_id', $input['tenderMasterId'])->get()->toArray();
+        $notInArray = [1, 2];
+        $amendments = 3;
+        foreach ($assignedDocsArray as $assignedDocs){
+            $notInArray[] = $assignedDocs['document_type_id'];
+            if($assignedDocs['document_type_id'] == 3){
+                $amendments = '';
+            }
+        }
+        $data['documentTypes'] = TenderDocumentTypes::where('company_id', $employee->empCompanySystemID)->whereNotIn('id', $notInArray)->orWhere('id', $amendments)->get();
 
         if (isset($input['tenderMasterId'])) {
             if ($tenderMaster['confirmed_yn'] == 1 && $category['is_active'] == 0) {
@@ -824,9 +833,9 @@ WHERE
                         }
 
                         //$mainWorkBoqApp = TenderMainWorks::with(['tender_bid_format_detail'])->where('tender_id', $input['id'])->get();
-                        $mainWorkBoqApp = PricingScheduleDetail::where('boq_applicable', true)->where('tender_id', $input['id'])->get();
+                        $mainWorkBoqApp = PricingScheduleDetail::where('boq_applicable', true)->where('deleted_at',null)->where('tender_id', $input['id'])->get();
 
-                     
+                        
 
                         foreach ($mainWorkBoqApp as $vals) {
                             if ($vals['boq_applicable'] == 1) {

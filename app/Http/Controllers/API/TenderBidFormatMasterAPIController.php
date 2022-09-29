@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Log;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
-
+use App\Models\PricingScheduleDetail;
 /**
  * Class TenderBidFormatMasterController
  * @package App\Http\Controllers\API
@@ -565,6 +565,242 @@ class TenderBidFormatMasterAPIController extends AppBaseController
 
     function priceBidExistInTender($id){
        return PricingScheduleMaster::with(['tender_master'])->whereHas('tender_master')->where('price_bid_format_id',$id)->first();
+    }
+
+    public function getBitFormatItems(Request $request)
+    {   
+        $input = $request->all();
+        $id = $input['id'];
+        $bit_format_id = $input['tender_id'];
+
+        $result = TenderBidFormatDetail::where('tender_id',$bit_format_id)->whereIn('field_type', [2, 3])->get();
+
+
+        $formula = TenderBidFormatDetail::where('tender_id',$bit_format_id)->where('id',$id)->where('field_type',4)->Select('formula_string')->first();
+        $data['result'] = $result;
+        $data['formula'] = $formula->formula_string;
+
+        return $this->sendResponse($data, 'TenderBidFormatMaster updated successfully');
+
+
+    }
+
+    public function addFormula(Request $request)
+    {
+        $input = $request->all();
+        
+        $id = $input['detail_id'];
+        $bit_format_id = $input['bit_format_id'];
+        $formula = isset($input['formula']) ? $input['formula'] : null;
+        $new_formula = null;
+        
+        $p = '';
+        $cont = '';
+        $data = [];
+        $formula_arr = null;  
+  
+        try {
+            
+            foreach ($formula as $formula_row) {
+                if (trim($formula_row) != '') 
+                {
+                    $val1 = '';
+    
+                    $elementType = $formula_row[0];
+    
+                 
+                    if ($elementType == '$') {
+                        $elementArr = explode('$', $formula_row);
+                        $val1 = 1;
+                        $cont = $cont.$val1;
+             
+                    }
+                    else if($elementType == '|')
+                    {
+                        
+                        $elementArr1 = explode('|', $formula_row);
+                        $value = ($elementArr1[1]);
+                        $cont = $cont.$value;
+                       
+                           
+                    }
+                    else if($elementType == '_')
+                    {
+                        $elementArr2 = explode('_', $formula_row);
+                        if(empty($elementArr2[1]) || is_null($elementArr2))
+                        {
+                            $value2 = 0;
+                        }
+                        else
+                        {
+                            $value2 = 1;
+                        }
+    
+                        
+                        $cont = $cont.$value2;
+                        
+    
+                    }
+                }
+               
+            }
+           
+
+            
+            $p = eval(' '.$cont.';');
+
+
+
+            } catch (\Exception $e) {
+               
+                Log::error($this->failed($e));
+                return ['success' => false, 'message' => $e];
+            }
+
+     
+
+        if (!is_null($formula)) {
+            if (is_array(($formula))) {
+                if ($formula) {
+                    $new_formula = implode('~', $formula);
+                }
+            }
+        }
+
+
+
+
+        DB::beginTransaction();
+        try {
+            $data['formula_string']= $new_formula;
+            $result = TenderBidFormatDetail::where('id',$id)->where('tender_id',$bit_format_id)->first();
+            $result->formula_string = $new_formula;
+            $result->save();
+          
+
+
+            if($result){
+                DB::commit();
+                return ['success' => true, 'message' => 'Successfully updated'];
+            }
+
+        } catch (\Exception $e) {
+             DB::rollback();
+            Log::error($this->failed($e));
+            return ['success' => false, 'message' => $e];
+        }
+
+
+    }
+
+    public function formulaGenerate(Request $request)
+    {
+
+        $results = $request->all();
+       
+       
+        $details = [];
+        foreach($results as $key=>$val)
+        {
+            if($val['typeId'] == 4)
+            {   $p = '';
+                $cont = '';
+                $data = [];
+                $formula_arr = null;         
+                if (!is_null($val['formula_string'])) {
+                       
+                        if ($val['formula_string']) {
+                            $formula_arr = explode('~', $val['formula_string']);
+
+
+                            foreach ($formula_arr as $formula_row) {
+                                if (trim($formula_row) != '') 
+                                {
+                                    $val1 = '';
+
+                                    $elementType = $formula_row[0];
+                                    if ($elementType == '$') {
+                                        $elementArr = explode('$', $formula_row);
+                                        $value = intval($elementArr[1]);
+                                        foreach($results as $result)
+                                        {
+                                            if($result['bid_format_detail_id'] == $value)
+                                            {
+                                                    if($result['typeId'] == 2)
+                                                    {
+                                                        if($result['value'] != null)
+                                                        {
+                                                            $val1 = $result['value'];
+                                                        }
+                                                        else
+                                                        {
+                                                            $val1 = 0;
+                                                        }
+                                                        
+                                                    }
+                                                    else if($result['typeId'] == 3)
+                                                    {
+                                                       
+
+                                                        if($result['value'] != null)
+                                                        {
+                                                            $val1 = $result['value']/100;
+                                                        }
+                                                        else
+                                                        {
+                                                            $val1 = 1;
+                                                        }
+                                                        
+                                                    }
+                                                $cont = $cont.$val1;
+                                                break;
+                                            }
+                                            
+                                        }
+                                    }
+                                    else if($elementType == '|')
+                                    {
+                                        
+                                        $elementArr1 = explode('|', $formula_row);
+                                        $value = ($elementArr1[1]);
+                                        $cont = $cont.$value;
+                                       
+                                           
+                                    }
+                                    else if($elementType == '_')
+                                    {
+                                        $elementArr2 = explode('_', $formula_row);
+                                        if(empty($elementArr2[1]) || is_null($elementArr2))
+                                        {
+                                            $value2 = 0;
+                                        }
+                                        else
+                                        {
+                                            $value2 = ($elementArr2[1]);
+                                        }
+
+                                        
+                                        $cont = $cont.$value2;
+                                        
+
+                                    }
+                                }
+                               
+                            }
+
+                            $p = eval('return '.$cont.';');
+                        } 
+                    
+                }
+                $data[$key] = $p;
+                array_push($details,$data);
+            }
+           
+
+        }
+
+        return $this->sendResponse($details, 'TenderBidFormatMaster updated successfully');
+
     }
 
 }

@@ -432,6 +432,7 @@ class PricingScheduleMasterAPIController extends AppBaseController
                         $dataBidShed['boq_applicable']=$bid['boq_applicable'];
                         $dataBidShed['pricing_schedule_master_id']=$result['id'];
                         $dataBidShed['company_id']=$input['companySystemID'];
+                        $dataBidShed['formula_string']=$bid['formula_string'];
                         $dataBidShed['created_by']=$employee->employeeSystemID;
                         PricingScheduleDetail::create($dataBidShed);
 
@@ -463,8 +464,9 @@ class PricingScheduleMasterAPIController extends AppBaseController
         try {
             $result = PricingScheduleMaster::where('id',$input['id'])->delete();
             if($result){
-                TenderMainWorks::where('schedule_id',$input['id'])->delete();
+                //TenderMainWorks::where('schedule_id',$input['id'])->delete();
                 ScheduleBidFormatDetails::where('schedule_id',$input['id'])->delete();
+                PricingScheduleDetail::where('pricing_schedule_master_id',$input['id'])->delete();
                 DB::commit();
                 return ['success' => true, 'message' => 'Successfully deleted', 'data' => $result];
             }
@@ -482,42 +484,20 @@ class PricingScheduleMasterAPIController extends AppBaseController
 
         $price_bid_format_id=$input['price_bid_format_id'];
         $schedule_id=$input['schedule_id'];
-//         return DB::select("SELECT
-// 	tender_bid_format_detail.id,
-// 	tender_id,
-// 	tender_bid_format_detail.label,
-// 	is_disabled,
-// 	tender_field_type.type,
-// 	tender_field_type.id as typeId,
-// 	srm_schedule_bid_format_details.`value` 
-// FROM
-// 	tender_bid_format_detail
-// 	INNER JOIN tender_field_type ON tender_field_type.id = tender_bid_format_detail.field_type
-// 	LEFT JOIN srm_schedule_bid_format_details ON srm_schedule_bid_format_details.bid_format_detail_id = tender_bid_format_detail.id 
-// 	AND srm_schedule_bid_format_details.schedule_id = $schedule_id 
-// WHERE
-// 	tender_id = $price_bid_format_id 
-// ORDER BY
-// 	id ASC");
+
+        return DB::table('srm_pricing_schedule_detail')->where('bid_format_id',$price_bid_format_id)->where('pricing_schedule_master_id',$schedule_id) 
+        ->leftJoin('srm_schedule_bid_format_details', 'srm_pricing_schedule_detail.id', '=', 'srm_schedule_bid_format_details.bid_format_detail_id')
+        ->join('tender_field_type', 'srm_pricing_schedule_detail.field_type', '=', 'tender_field_type.id')
+        ->leftJoin('srm_bid_main_work', 'srm_pricing_schedule_detail.id', '=', 'srm_bid_main_work.main_works_id')  
+       ->select('srm_pricing_schedule_detail.id as id','srm_pricing_schedule_detail.tender_id','srm_pricing_schedule_detail.label','srm_pricing_schedule_detail.is_disabled','tender_field_type.type','srm_pricing_schedule_detail.field_type as typeId','srm_pricing_schedule_detail.formula_string','srm_pricing_schedule_detail.bid_format_detail_id'
+                ,'srm_pricing_schedule_detail.bid_format_id','srm_pricing_schedule_detail.pricing_schedule_master_id',
+               DB::raw('(CASE WHEN srm_pricing_schedule_detail.field_type = 4 THEN srm_schedule_bid_format_details.value 
+                              WHEN (srm_pricing_schedule_detail.field_type != 4 && srm_pricing_schedule_detail.is_disabled = 1) THEN srm_schedule_bid_format_details.value    
+                              WHEN (srm_pricing_schedule_detail.field_type != 4 && srm_pricing_schedule_detail.boq_applicable = 1) THEN srm_bid_main_work.total_amount    
+                              END) AS value'))  
+       ->get();
 
 
-            return DB::select("SELECT
-            srm_pricing_schedule_detail.id,
-            tender_id,
-            srm_pricing_schedule_detail.label,
-            is_disabled,
-            tender_field_type.type,
-            tender_field_type.id as typeId,
-            srm_schedule_bid_format_details.`value` 
-            FROM
-            srm_pricing_schedule_detail
-            INNER JOIN tender_field_type ON tender_field_type.id = srm_pricing_schedule_detail.field_type
-            LEFT JOIN srm_schedule_bid_format_details ON srm_schedule_bid_format_details.bid_format_detail_id = srm_pricing_schedule_detail.id 
-            AND srm_schedule_bid_format_details.schedule_id = $schedule_id 
-            WHERE
-            bid_format_id = $price_bid_format_id AND pricing_schedule_master_id = $schedule_id
-            ORDER BY
-            id ASC");
 
     }
 
