@@ -106,6 +106,12 @@ class NavigationUserGroupSetup extends Model
         return $this->hasMany(NavigationUserGroupSetup::class,'masterID','navigationMenuID');
     }
 
+    public function language()
+    {
+        return $this->belongsTo(NavigationMenusLanguages::class,'navigationMenuID','navigationMenuID');
+
+    }
+
 
 
 }
