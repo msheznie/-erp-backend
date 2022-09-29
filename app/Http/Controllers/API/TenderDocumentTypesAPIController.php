@@ -301,7 +301,7 @@ class TenderDocumentTypesAPIController extends AppBaseController
         try {
             if (isset($input['document_types'])) {
                 if (count($input['document_types']) > 0) {
-                    TenderDocumentTypeAssign::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
+                    //TenderDocumentTypeAssign::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
                     foreach ($input['document_types'] as $vl) {
                         $docTypeAssign['tender_id'] = $input['id'];
                         $docTypeAssign['document_type_id'] = $vl['id'];
@@ -310,7 +310,7 @@ class TenderDocumentTypesAPIController extends AppBaseController
                         TenderDocumentTypeAssign::create($docTypeAssign);
                     }
                 } else {
-                    TenderDocumentTypeAssign::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
+                    //TenderDocumentTypeAssign::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
                 }
             }
             return ['success' => true, 'message' => 'Successfully updated'];
