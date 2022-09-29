@@ -122,6 +122,14 @@ class AssetManagementReportAPIController extends AppBaseController
                         'currencyID' => 'required',
                         'typeID' => 'required'
                     ]);
+                } else if ($request->reportTypeID == 'ARD3') { // Asset Register Detail 3
+                    $validator = \Validator::make($request->all(), [
+                        'reportTypeID' => 'required',
+                        'fromDate' => 'required',
+                        'assetCategory' => 'required',
+                        'currencyID' => 'required',
+                        'typeID' => 'required'
+                    ]);
                 }else if ($request->reportTypeID == 'ARGD') { // Asset Register Grouped Detail
                 $validator = \Validator::make($request->all(), [
                     'reportTypeID' => 'required',
@@ -250,6 +258,51 @@ class AssetManagementReportAPIController extends AppBaseController
                     ->make(true);
 
                    // return array('reportData' => $outputArr, 'localnbv' => $localnbv, 'rptnbv' => $rptnbv, 'COSTUNIT' => $COSTUNIT, 'costUnitRpt' => $costUnitRpt, 'depAmountLocal' => $depAmountLocal, 'depAmountRpt' => $depAmountRpt);
+                }
+
+                if ($request->reportTypeID == 'ARD3') { // Asset Register Detail 3
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('typeID'));
+                    $typeID = $request->typeID;
+                    $asOfDate = (new Carbon($request->fromDate))->format('Y-m-d');
+                    $assetCategory = collect($request->assetCategory)->pluck('faFinanceCatID')->toArray();
+                    $assetCategory = join(',', $assetCategory);
+
+                    $output = $this->getAssetRegisterDetail3($request);
+                    $outputArr = [];
+
+                    $COSTUNIT = 0;
+                    $costUnitRpt = 0;
+                    $depAmountLocal = 0;
+                    $depAmountRpt = 0;
+                    $localnbv = 0;
+                    $rptnbv = 0;
+                    if ($output) {
+                        foreach ($output as $val) {
+                            $localnbv += $val->localnbv;
+                            $COSTUNIT += $val->COSTUNIT;
+                            $costUnitRpt += $val->costUnitRpt;
+                            $depAmountRpt += $val->depAmountRpt;
+                            $depAmountLocal += $val->depAmountLocal;
+                            $rptnbv += $val->rptnbv;
+                            $outputArr[$val->financeCatDescription][] = $val;
+                        }
+                    }
+
+                    $companyData = \Helper::companyCurrency($request->companySystemID);
+    
+                    $sort = 'asc';         
+                    return \DataTables::of($output)
+                                    ->addIndexColumn()
+                                    ->with('localnbv', $localnbv)
+                                    ->with('rptnbv', $rptnbv)
+                                    ->with('localcurrency', $companyData->localcurrency)
+                                    ->with('reportingcurrency', $companyData->reportingcurrency)
+                                    ->with('COSTUNIT', $COSTUNIT)
+                                    ->with('costUnitRpt', $costUnitRpt)
+                                    ->with('depAmountLocal', $depAmountLocal)
+                                    ->with('depAmountRpt', $depAmountRpt)
+                                    ->addIndexColumn()
+                                    ->make(true);
                 }
 
                 if ($request->reportTypeID == 'ARS') { // Asset Register Summary
@@ -771,6 +824,88 @@ class AssetManagementReportAPIController extends AppBaseController
                     
                    
                     
+                }
+
+                if ($request->reportTypeID == 'ARD3') { // Asset Register Detail 3
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('typeID', 'currencyID'));
+                    $output = $this->getAssetRegisterDetail3($request);
+                    $outputArr = [];
+                    $x = 1;
+                    $data = [];
+
+                    $companyData = \Helper::companyCurrency($request->companySystemID);
+
+                    $decimalPlaces = ($request->currencyID == 3) ? $companyData->reportingcurrency->DecimalPlaces : $companyData->localcurrency->DecimalPlaces;
+
+                    if (!empty($output)) {
+                        $data[0]['Fixed Asset Code'] = "Fixed Asset Code";
+                        $data[0]['Asset Description'] = "Asset Description";
+                        $data[0]['Account Code'] = "Account Code";
+                        $data[0]['Asset Class'] = "Asset Class";
+                        $data[0]['Serial Number'] = "Serial Number";
+                        $data[0]['Location'] = "Location";
+                        $data[0]['Sub-Location'] = "Sub-Location";
+                        $data[0]['Acquisition Date'] = "Acquisition Date";
+                        $data[0]['Supplier Name'] = "Supplier Name";
+                        $data[0]['Acquisition Cost'] = "Acquisition Cost";
+                        $data[0]['Place in Service Date'] = "Place in Service Date";
+                        $data[0]['Useful Life'] = "Useful Life";
+                        $data[0]['Remaining Life'] = "Remaining Life";
+                        $data[0]['Depr. Type'] = "Depr. Type";
+                        $data[0]['Depreciation %'] = "Depreciation %";
+                        $data[0]['Depreciation for the period'] = "Depreciation for the period";
+                        $data[0]['Accumulated Depreciation '] = "Accumulated Depreciation ";
+                        $data[0]['NBV'] = "NBV";
+                        $data[0]['Additions'] = "Additions";
+                        $data[0]['Revaluations'] = "Revaluations";
+                        $data[0]['Disposals'] = "Disposals";
+                        $data[0]['Profit / (Loss) on Disposal'] = "Profit / (Loss) on Disposal";
+                        $data[0]['Impairment'] = "Impairment";
+                        $data[0]['Write-Offs'] = "Write-Offs";
+
+                        foreach ($output as $key => $value) {
+                            $data[$x]["Fixed Asset Code"] = $value->faCode;
+                            $data[$x]["Asset Description"] = $value->assetDescription;
+                            $data[$x]["Account Code"] = $value->COSTGLCODE;
+                            $data[$x]["Asset Class"] = $value->financeCatDescription;
+                            $data[$x]["Serial Number"] = $value->faUnitSerialNo;
+                            $data[$x]["Location"] = $value->locationName;
+                            $data[$x]["Sub-Location"] = $value->ServiceLineDes;
+                            $data[$x]["Acquisition Date"] = Carbon::parse($value->dateAQ)->format('d/m/Y');
+                            $data[$x]["Supplier Name"] = $value->supplierName;
+                            $data[$x]["Acquisition Cost"] = round(($request->currencyID == 3) ? $value->costUnitRpt : $value->COSTUNIT, $decimalPlaces);
+                            $data[$x]["Place in Service Date"] = Carbon::parse($value->dateDEP)->format('d/m/Y');
+                            $data[$x]["Useful Life"] = $value->depMonth;
+                            $data[$x]["Remaining Life"] = $value->depMonth - $value->depreciatedMonths;
+                            $data[$x]["Depr. Type"] = "SL";
+                            $data[$x]["Depreciation %"] = $value->DEPpercentage;
+                            $data[$x]["Depreciation for the period"] = round(($request->currencyID == 3) ? $value->depAmountRpt : $value->depAmountLocal, $decimalPlaces);
+                            $data[$x]["Accumulated Depreciation "] = round(($request->currencyID == 3) ? $value->acDepAmountRpt : $value->adDepAmountLocal, $decimalPlaces);
+                            $data[$x]["NBV"] = round(($request->currencyID == 3) ? floatval($value->costUnitRpt) - floatval($value->depAmountRpt) : floatval($value->COSTUNIT) - floatval($value->depAmountLocal), $decimalPlaces);
+                            $data[$x]["Additions"] = 0;
+                            $data[$x]["Revaluations"] = 0;
+                            $data[$x]["Disposals"] = round(($request->currencyID == 3 && $value->DIPOSED == -1) ? $value->costUnitRpt : $value->COSTUNIT, $decimalPlaces);
+                            $data[$x]["Profit / (Loss) on Disposal"] = round((($request->currencyID == 3 && $value->DIPOSED == -1 && $request->typeID == 1) ? floatval($value->sellingPriceRpt) - floatval($value->costUnitRpt) - floatval($value->acDepAmountRpt) : floatval($value->sellingPriceLocal) - floatval($value->COSTUNIT) - floatval($value->adDepAmountLocal)), $decimalPlaces);
+                            $data[$x]["Impairment"] = 0;
+                            $data[$x]["Write-Offs"] = 0;
+                             $x++;
+                        }
+                    }
+
+     
+              
+                    $fileName = 'asset_register_detail_3';
+                    $path = 'asset_register/report/excel/';
+                    $basePath = CreateExcel::process($data,$type,$fileName,$path);
+
+                    if($basePath == '')
+                    {
+                         return $this->sendError('Unable to export excel');
+                    }
+                    else
+                    {
+                         return $this->sendResponse($basePath, trans('custom.success_export'));
+                    }
                 }
 
                 if ($request->reportTypeID == 'ARD2') { // Asset Register Detail 2
@@ -3507,6 +3642,113 @@ WHERE
 
         $output = \DB::select($query);
         return ['data' => $output, 'period' => $periodArr];
+    }
+
+
+    function getAssetRegisterDetail3($request)
+    {
+        $typeID = $request->typeID;
+        $asOfDate = (new Carbon($request->fromDate))->format('Y-m-d');
+        $assetCategory = collect($request->assetCategory)->pluck('faFinanceCatID')->toArray();
+        $assetCategory = join(',', $assetCategory);
+
+        $where = "";
+        if (isset($request->searchText)) {
+            $searchText = $request->searchText;
+            if ($searchText != '') {
+                $searchText = str_replace("\\", "\\\\", $searchText);
+                $where = " AND ( assetGroup.faCode LIKE '%$searchText%' OR erp_fa_asset_master.assetDescription LIKE '%$searchText%' OR  
+            erp_fa_asset_master.faCode LIKE '%$searchText%' )  ";
+            }
+        }
+
+        $qry = "
+                SELECT * 
+                FROM ( 
+                    SELECT
+                        IF(groupTO IS NOT  NULL ,groupTO , erp_fa_asset_master.faID ) as sortfaID,
+                        groupTO,
+                        assetGroup.faCode as groupbydesc,
+                        erp_fa_asset_master.faUnitSerialNo,
+                        erp_fa_asset_master.faID,
+                        erp_fa_asset_master.DIPOSED,
+                        erp_fa_assettype.typeDes,
+                        erp_fa_financecategory.financeCatDescription,
+                        erp_fa_asset_master.COSTGLCODE,
+                        erp_fa_asset_master.ACCDEPGLCODE,
+                        assetType,
+                        serviceline.ServiceLineDes,
+                        erp_fa_asset_master.serviceLineCode,
+                        docOrigin,
+                        AUDITCATOGARY,
+                        postedDate,
+                        erp_fa_asset_master.faCode,
+                        erp_fa_asset_master.assetDescription,
+                        DEPpercentage,
+                        dateAQ,
+                        dateDEP,
+                        depMonth * 12 as depMonth,
+                        locationName,
+                        supplierName,
+                        depreciatedMonths,
+                        erp_fa_asset_master.COSTUNIT,
+                        IFNULL( t.depAmountLocal, 0 ) AS depAmountLocal,
+                        IFNULL( adDepAmountLocal, 0 ) AS adDepAmountLocal,
+                        IFNULL( acDepAmountRpt, 0 ) AS acDepAmountRpt,
+                        IFNULL(erp_fa_asset_master.COSTUNIT,0) - IFNULL( t.depAmountLocal, 0 ) AS localnbv,
+                        erp_fa_asset_master.costUnitRpt,
+                        sellingPriceLocal,
+                        sellingPriceRpt,
+                        IFNULL( t.depAmountRpt, 0 ) AS depAmountRpt,
+                        IFNULL(erp_fa_asset_master.costUnitRpt,0) - IFNULL( t.depAmountRpt, 0 ) AS rptnbv 
+                    FROM
+                        erp_fa_asset_master
+                        LEFT JOIN (
+                            SELECT
+                                count(faID) as depreciatedMonths,
+                                faID,
+                                erp_fa_assetdepreciationperiods.depMasterAutoID,
+                                sum( erp_fa_assetdepreciationperiods.depAmountLocal ) AS depAmountLocal,
+                                sum( erp_fa_assetdepreciationperiods.depAmountRpt ) AS depAmountRpt 
+                            FROM
+                                erp_fa_assetdepreciationperiods
+                                INNER JOIN erp_fa_depmaster ON erp_fa_depmaster.depMasterAutoID = erp_fa_assetdepreciationperiods.depMasterAutoID 
+                            WHERE
+                                erp_fa_depmaster.approved =- 1  AND DATE(erp_fa_depmaster.depDate) <= '$asOfDate'
+                            GROUP BY
+                                faID 
+                        ) t ON erp_fa_asset_master.faID = t.faID
+
+                        LEFT JOIN (
+                            SELECT
+                                faID,
+                                sum( erp_fa_assetdepreciationperiods.depAmountLocal ) AS adDepAmountLocal,
+                                sum( erp_fa_assetdepreciationperiods.depAmountRpt ) AS acDepAmountRpt 
+                            FROM
+                                erp_fa_assetdepreciationperiods
+                                INNER JOIN erp_fa_depmaster ON erp_fa_depmaster.depMasterAutoID = erp_fa_assetdepreciationperiods.depMasterAutoID 
+                            WHERE
+                                erp_fa_depmaster.approved =- 1
+                            GROUP BY
+                                faID 
+                        ) ad ON erp_fa_asset_master.faID = ad.faID
+                        INNER JOIN erp_fa_assettype ON erp_fa_assettype.typeID = erp_fa_asset_master.assetType
+                        LEFT JOIN erp_location ON erp_location.locationID = erp_fa_asset_master.LOCATION
+                        LEFT JOIN erp_grvmaster ON erp_grvmaster.grvAutoID = erp_fa_asset_master.docOriginSystemCode
+                        LEFT JOIN erp_fa_asset_disposaldetail ON erp_fa_asset_disposaldetail.faID = erp_fa_asset_master.faID
+                        INNER JOIN erp_fa_financecategory ON AUDITCATOGARY = erp_fa_financecategory.faFinanceCatID
+                        INNER JOIN serviceline ON serviceline.ServiceLineCode = erp_fa_asset_master.serviceLineCode
+                    LEFT JOIN (SELECT assetDescription , faID ,faUnitSerialNo,faCode FROM erp_fa_asset_master WHERE erp_fa_asset_master.companySystemID = $request->companySystemID   )  assetGroup ON erp_fa_asset_master.groupTO= assetGroup.faID
+                    WHERE
+                        erp_fa_asset_master.companySystemID = $request->companySystemID  AND AUDITCATOGARY IN($assetCategory) AND erp_fa_asset_master.approved =-1
+                        AND DATE(erp_fa_asset_master.postedDate) <= '$asOfDate' AND assetType = $typeID
+                        $where
+                        ) t  ORDER BY sortfaID desc  ";
+
+
+        $output = \DB::select($qry);
+
+        return $output;
     }
 
     private function getAssetRegisterGroupedDetailFinalArray($output){
