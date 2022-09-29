@@ -347,5 +347,7 @@ return [
     'already_finance_year_has_been_created_for_this_date_range' => 'Already Finance Year has been created for this date range',
     'bank_account_in_transactions' => 'Cannot edit bank account number as there are transactions done against the account already',
     'chart_of_account_has_a_balance_in_gl' => 'The chart of account has a balance amount in general ledger',
-    'account_description_cannot_be_empty' => 'Account Description cannot be empty'
+    'account_description_cannot_be_empty' => 'Account Description cannot be empty',
+    'employee_advance_payment' => 'Employee Advance Payment',
+    'employee_payment' => 'Employee Payment'
 ];
