@@ -43,11 +43,15 @@ class FilterParentMenuCriteria implements CriteriaInterface
                 ->where('companyID',$companyId)
                 ->with(['language'=> function($query) use ($langCode) {
                     $query->where('languageCode', $langCode);
-                },'child' => function ($query) use($companyId,$userGroupId) {
+                },'child' => function ($query) use($companyId,$userGroupId, $langCode) {
                     $query->where('userGroupID',$userGroupId)
                         ->where('companyID',$companyId)
-                        ->with(['language','child' => function ($query) use($companyId,$userGroupId) {
-                            $query->where('userGroupID',$userGroupId)
+                        ->with(['language'=> function($query) use ($langCode) {
+                            $query->where('languageCode', $langCode);
+                        },'child' => function ($query) use($companyId,$userGroupId, $langCode) {
+                            $query->with(['language' => function($query) use ($langCode){
+                                $query->where('languageCode', $langCode);
+                            }])->where('userGroupID',$userGroupId)
                                 ->where('companyID',$companyId)
                                 ->orderBy("sortOrder","asc");
                         }])
