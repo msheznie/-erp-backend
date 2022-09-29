@@ -563,14 +563,62 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
     public function validateWeightage(Request $request)
     {
         $input = $request->all();
-        return EvaluationCriteriaDetails::where('tender_id',$input['tenderMasterId'])->where('level',1)->sum('weightage');
+        $weightage = $input['weightage'];
+        $tenderMasterId = $input['tenderMasterId'];
+        $level = $input['level'];
+        $parentId = $input['parentId'];
+        if($level == 1){
+            $result = EvaluationCriteriaDetails::where('tender_id',$input['tenderMasterId'])->where('level',1)->sum('weightage');
+            $total = $result + $weightage;
+            if($total>100){
+                 return ['success' => false, 'message' => 'Total weightage cannot exceed 100 percent'];
+            } else {
+                return ['success' => true, 'message' => 'Success'];
+            }
+        } else {
+            $result = EvaluationCriteriaDetails::where('tender_id',$input['tenderMasterId'])
+                ->where('parent_id',$parentId)->where('level',$level)->sum('weightage');
+            $parent = EvaluationCriteriaDetails::where('id',$parentId)->first();
+
+            $total = $result + $weightage;
+
+            if($total>$parent['weightage']){
+                return ['success' => false, 'message' => 'Total Child Weightage cannot exceed '.$parent['weightage']];
+            }else{
+                return ['success' => true, 'message' => 'Success'];
+            }
+        }
+
 
     }
 
     public function validateWeightageEdit(Request $request)
     {
         $input = $request->all();
-        return EvaluationCriteriaDetails::where('tender_id',$input['tender_id'])->where('level',1)->where('id','!=',$input['id'])->sum('weightage');
+        if($input['level'] == 1){
+            $result = EvaluationCriteriaDetails::where('tender_id',$input['tender_id'])->where('level',1)->where('id','!=',$input['id'])->sum('weightage');
+            $total = $result + $input['weightage'];
+            if($total>100){
+                return ['success' => false, 'message' => 'Total weightage cannot exceed 100 percent'];
+            } else {
+                return ['success' => true, 'message' => 'Success'];
+            }
+        } else {
+            $result = EvaluationCriteriaDetails::where('tender_id',$input['tender_id'])
+                ->where('parent_id',$input['parent_id'])->where('level',$input['level'])
+                ->where('id','!=',$input['id'])
+                ->sum('weightage');
+
+            $parent = EvaluationCriteriaDetails::where('id',$input['parent_id'])->first();
+
+            $total = $result + $input['weightage'];
+
+            if($total>$parent['weightage']){
+                return ['success' => false, 'message' => 'Total Child Weightage cannot exceed '.$parent['weightage']];
+            }else{
+                return ['success' => true, 'message' => 'Success'];
+            }
+        }
 
     }
 }
