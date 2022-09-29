@@ -823,9 +823,9 @@ WHERE
                         }
 
                         //$mainWorkBoqApp = TenderMainWorks::with(['tender_bid_format_detail'])->where('tender_id', $input['id'])->get();
-                        $mainWorkBoqApp = PricingScheduleDetail::where('boq_applicable', true)->where('tender_id', $input['id'])->get();
+                        $mainWorkBoqApp = PricingScheduleDetail::where('boq_applicable', true)->where('deleted_at',null)->where('tender_id', $input['id'])->get();
 
-                     
+                        
 
                         foreach ($mainWorkBoqApp as $vals) {
                             if ($vals['boq_applicable'] == 1) {

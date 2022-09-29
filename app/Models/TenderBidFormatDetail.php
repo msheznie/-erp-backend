@@ -82,7 +82,8 @@ class TenderBidFormatDetail extends Model
         'boq_applicable',
         'created_by',
         'updated_by',
-        'deleted_by'
+        'deleted_by',
+        'formula_string'
     ];
 
     /**
@@ -98,7 +99,8 @@ class TenderBidFormatDetail extends Model
         'is_disabled' => 'integer',
         'boq_applicable' => 'integer',
         'created_by' => 'integer',
-        'updated_by' => 'integer'
+        'updated_by' => 'integer',
+        'formula_string' => 'string'
     ];
 
     /**

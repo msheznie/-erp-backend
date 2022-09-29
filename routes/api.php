@@ -2634,6 +2634,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('deletePriceBideDetail', 'TenderBidFormatMasterAPIController@deletePriceBideDetail');
         Route::post('deletePriceBidMaster', 'TenderBidFormatMasterAPIController@deletePriceBidMaster');
 
+        Route::post('getBitFormatItems', 'TenderBidFormatMasterAPIController@getBitFormatItems');
+
+
         Route::post('getTenderMasterList', 'TenderMasterAPIController@getTenderMasterList');
         Route::post('getTenderDropDowns', 'TenderMasterAPIController@getTenderDropDowns');
         Route::post('createTender', 'TenderMasterAPIController@createTender');
@@ -2652,9 +2655,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('getPriceBidFormatDetails', 'PricingScheduleMasterAPIController@getPriceBidFormatDetails');
         Route::post('addPriceBidDetails', 'PricingScheduleMasterAPIController@addPriceBidDetails');
         Route::post('getNotPulledPriceBidDetails', 'PricingScheduleMasterAPIController@getNotPulledPriceBidDetails');
-
-
-
+        Route::post('addFormula', 'TenderBidFormatMasterAPIController@addFormula');
+        Route::post('formulaGenerate', 'TenderBidFormatMasterAPIController@formulaGenerate');
+        
         Route::resource('employee_ledgers', 'EmployeeLedgerAPIController');
         Route::resource('srp_erp_pay_shift_employees', 'SrpErpPayShiftEmployeesAPIController');
 
