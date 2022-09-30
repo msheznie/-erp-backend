@@ -2694,8 +2694,10 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             if ($input['employeeID'] && count($employeeID) > 0 && count($customerID) == 0) {
                 $master->whereIn('PayeeEmpID', $employeeID);
             }
-            if ($employeeID && count($employeeID) > 0 && count($customerID) > 0) {
-                $master->orWhereIn('PayeeEmpID', $employeeID);
+            if(isset($employeeID[0])) {
+                if ($employeeID && count($employeeID) > 0 && count($customerID) > 0 && $employeeID[0] != 0) {
+                    $master->orWhereIn('PayeeEmpID', $employeeID);
+                }
             }
         }
 
