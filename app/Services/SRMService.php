@@ -3086,16 +3086,23 @@ class SRMService
             ->get();
 
         $bidSubmitted = collect($bidSubmitted)->map(function ($group) {
+            $bidMasterId = $group['id'];
             $bidSubmissionData = self::BidSubmissionStatusData($group['id'], $group['tender_id']);
 
             $evaluvationCriteriaDetailsCount = EvaluationCriteriaDetails::where('tender_id',$group['tender_id'])->where('critera_type_id',1)->count();
-            $bidSubmissionDataCount = BidSubmissionDetail::where('tender_id',$group['tender_id'])->count();
+            $bidSubmissionDataCount = BidSubmissionDetail::join('srm_evaluation_criteria_details','srm_bid_submission_detail.evaluation_detail_id','=','srm_evaluation_criteria_details.id')->where('srm_bid_submission_detail.tender_id',$group['tender_id'])->where('srm_evaluation_criteria_details.critera_type_id',1)->count();
 
             $documentTypeAssingedCount = TenderDocumentTypeAssign::where('tender_id',$group['tender_id'])->count();
-            $documentAttachedCount =  DocumentAttachments::where('documentSystemID',108)->where('attachmentType',2)->where('envelopType',3)
-                ->whereNotNull('parent_id')
-                ->where('documentSystemCode',$group['tender_id'])
-                ->count();
+
+            $doucments = [];
+            $documentAttachedCountIds = DocumentAttachments::with(['tender_document_types' => function ($q) use ($doucments){
+                $q->where('srm_action', 1);
+            }, 'document_attachments' => function ($q) use ($bidMasterId) {
+                $q->where('documentSystemCode', $bidMasterId);
+            }])->whereHas('tender_document_types', function ($q) use ($doucments){
+            })->where('documentSystemCode', $group['tender_id'])->where('parent_id', null)->where('documentSystemID', 108)->where('envelopType', 3)->where('attachmentType',2)->pluck('attachmentID')->toArray();
+
+            $documentAttachedCountAnswer = DocumentAttachments::whereIn('parent_id', $documentAttachedCountIds)->where('documentSystemID', 108)->count();
 
             if($evaluvationCriteriaDetailsCount == $bidSubmissionDataCount || $evaluvationCriteriaDetailsCount == 0)  {
                 $group['goNoGoStatus'] = 0;
@@ -3103,9 +3110,9 @@ class SRMService
                 $group['goNoGoStatus'] = 1;
             }
 
-            if($documentAttachedCount > 0) {
+            if(count($documentAttachedCountIds) == $documentAttachedCountAnswer || count($documentAttachedCountIds) == 0) {
                 $group['commonStatus'] = 0;
-            }else {
+            } else {
                 $group['commonStatus'] = 1;
             }
 
