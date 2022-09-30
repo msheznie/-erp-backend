@@ -512,15 +512,13 @@ class TenderCircularsAPIController extends AppBaseController
             $amendmentsList = CircularAmendments::with('document_attachments')->where('circular_id', $input['id'])->get();
             $file = array();
             foreach ($amendmentsList as $amendments){
-                $file[] = $amendments->document_attachments->myFileName;
+                $file[] = Helper::getFileUrlFromS3($amendments->document_attachments->path);
             }
 
             if ($result) {
                 DB::commit();
                 foreach ($supplierList as $supplier){
-                    $file = Storage::disk('s3')->url($supplier->srm_circular_amendments->document_attachments->myFileName);
-                    $xx = storage_path('MicrosoftTeams-image.png.png');
-                    Mail::to($supplier->supplier_registration_link->email)->send(new EmailForQueuing("Tender Circular", "Dear Supplier,"."<br /><br />"." Please find the below tender circular ". $companyName ." "."<br /><br />"."Click Here: "."</b><br /><br />"." Thank You"."<br /><br /><b>", $xx));
+                    Mail::to($supplier->supplier_registration_link->email)->send(new EmailForQueuing("Tender Circular", "Dear Supplier,"."<br /><br />"." Please find the below Tender circular  for". $companyName ." "."<br /><br />"."Click Here: "."</b><br /><br />"." Thank You"."<br /><br /><b>", null, $file));
                 }
 
                 return ['success' => true, 'message' => 'Successfully Published'];

@@ -18,16 +18,18 @@ class EmailForQueuing extends Mailable implements ShouldQueue
     public $subject;
     public $to;
     public $mailAttachment;
+    public $mailAttachmentList;
     /**
      * Create a new message instance.
      *
      * @return void
      */
-    public function __construct($subject, $content, $attachment = '')
+    public function __construct($subject, $content, $attachment = '', $attachmentList = [])
     {
         $this->subject = $subject;
         $this->content = $content;
         $this->mailAttachment = $attachment;
+        $this->mailAttachmentList = $attachmentList;
         if(env('IS_MULTI_TENANCY',false)){
             self::onConnection('database_main');
         }else{
@@ -55,7 +57,12 @@ class EmailForQueuing extends Mailable implements ShouldQueue
                     ]);
         Log::info('mailAttachment path');
         Log::info($this->mailAttachment);
-       if($this->mailAttachment){
+        if($this->mailAttachmentList && is_array($this->mailAttachmentList)) {
+            foreach ($this->mailAttachmentList as $attachment) {
+                $mail->attach($attachment);
+            }
+        }
+        if($this->mailAttachment){
            $mail->attach($this->mailAttachment);
        }
 
