@@ -1047,7 +1047,8 @@ class GeneralLedgerAPIController extends AppBaseController
         $collection =  DB::table('erp_generalledger')
         ->whereIn('serviceLineSystemID',$seg_info)
         ->whereIn('chartOfAccountSystemID',$char_ac)
-        ->whereBetween('documentDate', [$fromDate, $toDate])
+        ->whereDate('documentDate','>=', $fromDate)
+        ->whereDate('documentDate','<=', $toDate)
         ->groupBy(['serviceLineSystemID','chartOfAccountSystemID'])
          ->get();
 
@@ -1081,7 +1082,8 @@ class GeneralLedgerAPIController extends AppBaseController
                             ->join('currencymaster', $cur, '=', 'currencyID')
                             ->where('serviceLineSystemID',$segment_id)
                             ->where('chartOfAccountSystemID',$entry->chartOfAccountSystemID)
-                            ->whereBetween('documentDate', [$fromDate, $toDate])
+                                ->whereDate('documentDate','>=', $fromDate)
+                                ->whereDate('documentDate','<=', $toDate)
                             ->selectRaw("sum(case when $amount<0 then $amount else 0 end) as credit,
                             sum(case when $amount>0 then $amount else 0 end) as debit, DecimalPlaces")
                              ->first();
