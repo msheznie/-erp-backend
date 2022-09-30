@@ -325,12 +325,13 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
     public function setExportExcelData($dataSet) {
 
         $dataSet = $dataSet->get();
+        $dataSet = $dataSet->reverse();
         if (count($dataSet) > 0) {
             $x = 0;
 
             foreach ($dataSet as $val) {
                 $data[$x]['Payment Code'] = $val->BPVcode;
-                $data[$x]['PostedDate'] = $val->PostedDate;
+                $data[$x]['PostedDate'] = $val->postedDate;
                 $data[$x]['Payment Type'] = StatusService::getInvoiceType($val->invoiceType);
                 if($val->supplier){
                     $data[$x]['Payee Type'] = "Supplier";
