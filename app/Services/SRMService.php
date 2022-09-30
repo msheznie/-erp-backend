@@ -3056,7 +3056,7 @@ class SRMService
             $bidSubmissionData = self::BidSubmissionStatusData($group['id'], $group['tender_id']);
 
             $evaluvationCriteriaDetailsCount = EvaluationCriteriaDetails::where('tender_id',$group['tender_id'])->where('critera_type_id',1)->count();
-            $bidSubmissionDataCount = BidSubmissionDetail::where('tender_id',$group['tender_id'])->count();
+            $bidSubmissionDataCount = BidSubmissionDetail::join('srm_evaluation_criteria_details','srm_bid_submission_detail.evaluation_detail_id','=','srm_evaluation_criteria_details.id')->where('srm_bid_submission_detail.tender_id',$group['tender_id'])->where('srm_evaluation_criteria_details.critera_type_id',1)->count();
 
             $documentTypeAssingedCount = TenderDocumentTypeAssign::where('tender_id',$group['tender_id'])->count();
             $documentAttachedCount =  DocumentAttachments::where('documentSystemID',108)->where('attachmentType',2)->where('envelopType',3)
