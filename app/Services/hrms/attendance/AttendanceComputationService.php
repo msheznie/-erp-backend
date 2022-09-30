@@ -176,21 +176,23 @@ class AttendanceComputationService{
             $realtime = $this->data['workingHour'] / $this->totalWorkingHours;
             $this->realTime = round($realtime, 1);
 
-            $this->openShiftComputeOT();
-            
+            $this->openShiftCommonComputations();
         }
     }
 
-    public function openShiftComputeOT(){
-        if($this->totalWorkingHours < $this->data['workingHour']){
-            return;                    
+    public function openShiftCommonComputations(){
+        if($this->dayType != 1) {
+            return; //if holiday or weekend no need to compute the OT or shortage (early-out) hours
         }
 
-        if($this->dayType != 1) {
-            return; //if holiday or weekend no need to compute the OT hours
-        }        
- 
-        $this->overTimeHours = $this->totalWorkingHours - $this->data['workingHour'];
+        if($this->totalWorkingHours < $this->data['workingHour']){
+            //compute shortage
+            $this->earlyHours = $this->data['workingHour'] - $this->totalWorkingHours;
+        }
+        else{
+            //compute OT
+            $this->overTimeHours = $this->totalWorkingHours - $this->data['workingHour'];
+        }
     }
 
     public function FlxCalculateActualWorkingHours(){        
