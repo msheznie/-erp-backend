@@ -451,7 +451,7 @@
                                             {{$masterdata->employee->empName}}
                                         @endif
                                             @if($masterdata->payeeTypeID == 3)
-                                            {{$masterdata->payeeName}}
+                                            {{$masterdata->PayeeName}}
                                         @endif
                                     </td>
                                 </tr>
@@ -756,6 +756,20 @@
                     <td class="text-right border-bottom-remov"></td>
                     <td class="text-right border-bottom-remov"></td>
                 </tr>
+
+                @if ($masterdata->details)
+                    <tr>
+                        <td class="text-right border-bottom-remov border-top-remov"></td>
+                    </tr>
+                    <tr>
+                        <td colspan="5" class="text-right border-bottom-remov border-top-remov">&nbsp;</td>
+                        <td class="text-right border-bottom-remov border-top-remov" style="font-size: 13px;" >Net Total</td>
+                        <td class="text-right border-bottom-remov border-top-remov" style="font-size: 13px;" >{{number_format(($directTotTra + $ciDetailTotTra), $transDecimal)}}</td>
+                        <td class="text-right border-bottom-remov border-top-remov"></td>
+                        <td class="text-right border-bottom-remov border-top-remov"></td>
+                    </tr>
+                @endif
+                
                 </tbody>
             </table>
         </div>

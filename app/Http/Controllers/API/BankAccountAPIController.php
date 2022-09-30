@@ -235,9 +235,9 @@ class BankAccountAPIController extends AppBaseController
             return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.bank_accounts')]));
         }
 
-        $supplierInvoice = PaySupplierInvoiceMaster::where('BPVAccount', $id)->where('BPVbank', $bankAccount->bankmasterAutoID)->first();
-        $custReceivePay = CustomerReceivePayment::where('bankAccount', $id)->where('bankID', $bankAccount->bankmasterAutoID)->first();
-        $custInvoice = CustomerInvoice::where('bankAccountID', $id)->where('bankID', $bankAccount->bankmasterAutoID)->first();
+        $supplierInvoice = PaySupplierInvoiceMaster::where('BPVAccount', $id)->where('cancelYN', 0)->where('BPVbank', $bankAccount->bankmasterAutoID)->first();
+        $custReceivePay = CustomerReceivePayment::where('bankAccount', $id)->where('cancelYN', 0)->where('bankID', $bankAccount->bankmasterAutoID)->first();
+        $custInvoice = CustomerInvoice::where('bankAccountID', $id)->where('canceledYN', 0)->where('bankID', $bankAccount->bankmasterAutoID)->first();
 
         if($supplierInvoice || $custReceivePay|| $custInvoice){
             return $this->sendError(trans('custom.bank_account_in_transactions'),500);

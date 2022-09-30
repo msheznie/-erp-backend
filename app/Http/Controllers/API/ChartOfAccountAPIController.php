@@ -101,6 +101,10 @@ class ChartOfAccountAPIController extends AppBaseController
             return $this->sendError("Report template category cannot be empty", 500);
         }
 
+        if($input['AccountDescription'] == null){
+            return $this->sendError(trans('custom.account_description_cannot_be_empty'),500);
+        }
+
         $messages = array(
             'AccountCode.unique' => 'Account code ' . $accountCode . ' already exists'
         );

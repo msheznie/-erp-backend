@@ -36,7 +36,11 @@ class StatusService
 			$type = trans('custom.direct_payment');
 		} else if ($id == 5) {
 			$type = trans('custom.supplier_advance_payment');
-		}
+		} else if ($id == 6) {
+            $type = trans('custom.employee_payment');
+        }else if ($id == 7) {
+            $type = trans('custom.employee_advance_payment');
+        }
 
 		return $type;
 	}
