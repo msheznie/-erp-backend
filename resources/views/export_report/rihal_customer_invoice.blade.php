@@ -382,7 +382,7 @@
                                     @if($request->createduser)
                                         {{$request->createduser->empName}}
                                     @endif <br>
-                                    {{ \App\helper\Helper::dateFormat($request->createdDateAndTime)}}
+                                    {{ \App\helper\Helper::convertDateWithTime($request->createdDateAndTime)}}
                                 </td>
                                 <td colspan="3" width="50%" style="vertical-align: top;">
                                     <span class="font-weight-bold">Approved By :</span><br>
@@ -391,7 +391,7 @@
                                             {{$det->employee->empFullName }}
                                             <br>
                                             @if($det->employee)
-                                                {{ \App\helper\Helper::dateFormat($det->approvedDate)}}
+                                                {{ \App\helper\Helper::convertDateWithTime($det->approvedDate)}}
                                             @endif
                                         @endif
                                         <br>
