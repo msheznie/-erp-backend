@@ -2747,6 +2747,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('updateCalenderDate', 'TenderMasterAPIController@updateCalenderDate');
         Route::post('getTenderAttachmentType', 'TenderDocumentTypesAPIController@getTenderAttachmentType');
         Route::post('assignDocumentTypes', 'TenderDocumentTypesAPIController@assignDocumentTypes');
+        Route::post('deleteAssignDocumentTypes', 'TenderDocumentTypesAPIController@deleteAssignDocumentTypes');
         Route::post('getNotSentEmail', 'TenderSupplierAssigneeAPIController@getNotSentEmail');
 
         Route::resource('cash_flow_templates', 'CashFlowTemplateAPIController');
