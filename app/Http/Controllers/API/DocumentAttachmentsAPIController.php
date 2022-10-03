@@ -185,13 +185,10 @@ class DocumentAttachmentsAPIController extends AppBaseController
                     $input['docExpirtyDate'] = new Carbon($input['docExpirtyDate']);
                 }
             }
-
             $input = $this->convertArrayToValue($input);
-
             if (isset($input['documentSystemID'])) {
 
                 $documentMaster = DocumentMaster::where('documentSystemID', $input['documentSystemID'])->first();
-
                 if ($documentMaster) {
                     $input['documentID'] = $documentMaster->documentID;
                 }
@@ -207,6 +204,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
                     $companyID = $companyMaster->CompanyID;
                 }
             }
+
 
             $documentAttachments = $this->documentAttachmentsRepository->create($input);
 
