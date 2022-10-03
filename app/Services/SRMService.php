@@ -2003,6 +2003,86 @@ class SRMService
             }]);
         }])->where('tender_id', $tenderId)->where('level', 1)->where('critera_type_id', $critera_type_id)->get();
 
+        foreach ($data['criteriaDetail'] as $key1 => $val1){
+            if($val1['is_final_level']==1){
+                if(!empty($val1['bid_submission_detail'])){
+                    $val1['finalTotal'] = $val1['bid_submission_detail']['result'];
+                }else{
+                    $val1['finalTotal'] = 0;
+                }
+            }else{
+                if(count($val1['child'])>0){
+                    foreach ($val1['child'] as $key2 => $val2){
+                        if($val2['is_final_level']==1) {
+                            if(!empty($val2['bid_submission_detail'])){
+                                $val1['finalTotal'] += $val2['bid_submission_detail']['result'];
+                                $val2['finalTotal'] += $val2['bid_submission_detail']['result'];
+                            }else{
+                                $val1['finalTotal'] += 0;
+                                $val2['finalTotal'] += 0;
+                            }
+                        }else{
+                            if(count($val2['child'])>0){
+                                foreach ($val2['child'] as $key2 => $val3){
+                                    if($val3['is_final_level']==1) {
+                                        if(!empty($val3['bid_submission_detail'])){
+                                            $val1['finalTotal'] += $val3['bid_submission_detail']['result'];
+                                            $val2['finalTotal'] += $val3['bid_submission_detail']['result'];
+                                            $val3['finalTotal'] += $val3['bid_submission_detail']['result'];
+                                        }else{
+                                            $val1['finalTotal'] += 0;
+                                            $val2['finalTotal'] += 0;
+                                            $val3['finalTotal'] += 0;
+                                        }
+                                    }else{
+                                        if(count($val3['child'])>0){
+                                            foreach ($val3['child'] as $key3 => $val4){
+                                                if($val4['is_final_level']==1) {
+                                                    if(!empty($val4['bid_submission_detail'])){
+                                                        $val1['finalTotal'] += $val4['bid_submission_detail']['result'];
+                                                        $val2['finalTotal'] += $val4['bid_submission_detail']['result'];
+                                                        $val3['finalTotal'] += $val4['bid_submission_detail']['result'];
+                                                    }else{
+                                                        $val1['finalTotal'] += 0;
+                                                        $val2['finalTotal'] += 0;
+                                                        $val3['finalTotal'] += 0;
+                                                    }
+                                                }
+                                            }
+                                        }else{
+                                            if(!empty($val3['bid_submission_detail'])){
+                                                $val1['finalTotal'] = $val3['bid_submission_detail']['result'];
+                                                $val2['finalTotal'] = $val3['bid_submission_detail']['result'];
+                                                $val3['finalTotal'] = $val3['bid_submission_detail']['result'];
+                                            }else{
+                                                $val1['finalTotal'] = 0;
+                                                $val2['finalTotal'] = 0;
+                                                $val3['finalTotal'] = 0;
+                                            }
+                                        }
+                                    }
+                                }
+                            }else{
+                                if(!empty($val2['bid_submission_detail'])){
+                                    $val1['finalTotal'] = $val2['bid_submission_detail']['result'];
+                                    $val2['finalTotal'] = $val2['bid_submission_detail']['result'];
+                                }else{
+                                    $val1['finalTotal'] = 0;
+                                    $val2['finalTotal'] = 0;
+                                }
+                            }
+                        }
+                    }
+                }else{
+                    if(!empty($val1['bid_submission_detail'])){
+                        $val1['finalTotal'] = $val1['bid_submission_detail']['result'];
+                    }else{
+                        $val1['finalTotal'] = 0;
+                    }
+                }
+            }
+        }
+
         $data['bidSubmitted'] = $this->getBidMasterData($bidMasterId);
 
         return [
@@ -2254,11 +2334,13 @@ class SRMService
                     ];
                 }
             }
+            $result = ($push['score']/$criteriaDetail['max_value'])*$criteriaDetail['weightage'];
 
             $att['bid_master_id'] = $push['bid_master_id'];
             $att['evaluation_detail_id'] = $push['evaluation_detail_id'];
             $att['score'] = $push['score'];
             $att['score_id'] = $push['score_id'];
+            $att['result'] = $result;
             $att['tender_id'] = $push['tender_id'];
             if ($push['id'] == 0) {
                 $att['created_at'] = Carbon::now();
