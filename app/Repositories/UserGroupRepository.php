@@ -45,9 +45,11 @@ class UserGroupRepository extends BaseRepository
             }
         }else{
             $companiesByGroup = "";
-            if(!\Helper::checkIsCompanyGroup($input['globalCompanyId'])){
-                $companiesByGroup = $input['globalCompanyId'];
-                $userGroup->where('srp_erp_usergroups.companyID',$companiesByGroup);
+            if(isset($input['globalCompanyId'])) {
+                if (!\Helper::checkIsCompanyGroup($input['globalCompanyId'])) {
+                    $companiesByGroup = $input['globalCompanyId'];
+                    $userGroup->where('srp_erp_usergroups.companyID', $companiesByGroup);
+                }
             }
 
             $userGroup->orderBy('userGroupID', 'desc');
