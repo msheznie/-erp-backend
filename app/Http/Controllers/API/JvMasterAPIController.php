@@ -404,6 +404,9 @@ class JvMasterAPIController extends AppBaseController
             return $this->sendError('Jv Master not found');
         }
 
+        $jvConfirmedYN = $input['confirmedYN'];
+
+
         if (isset($input['JVdate'])) {
             if ($input['JVdate']) {
                 $input['JVdate'] = Carbon::parse($input['JVdate']);
@@ -453,6 +456,7 @@ class JvMasterAPIController extends AppBaseController
         }
 
         if ($jvMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
+
 
             $validator = \Validator::make($input, [
                 'companyFinancePeriodID' => 'required|numeric|min:1',
@@ -560,6 +564,7 @@ class JvMasterAPIController extends AppBaseController
 
             $input['RollLevForApp_curr'] = 1;
 
+
             unset($input['confirmedYN']);
             unset($input['confirmedByEmpSystemID']);
             unset($input['confirmedByEmpID']);
@@ -590,7 +595,11 @@ class JvMasterAPIController extends AppBaseController
 
         $jvMaster = $this->jvMasterRepository->update($input, $id);
 
-        return $this->sendResponse($jvMaster->toArray(), 'JvMaster updated successfully');
+        if ($jvConfirmedYN == 1) {
+            return $this->sendResponse($jvMaster->toArray(), 'Journal Voucher confirmed successfully');
+        }
+
+        return $this->sendResponse($jvMaster->toArray(), 'Journal Voucher updated successfully');
     }
 
     /**
