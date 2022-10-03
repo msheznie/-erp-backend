@@ -405,6 +405,7 @@ class JvMasterAPIController extends AppBaseController
         }
 
         $jvConfirmedYN = $input['confirmedYN'];
+        $prevJvConfirmedYN = $jvMaster->confirmedYN;
 
 
         if (isset($input['JVdate'])) {
@@ -595,7 +596,7 @@ class JvMasterAPIController extends AppBaseController
 
         $jvMaster = $this->jvMasterRepository->update($input, $id);
 
-        if ($jvConfirmedYN == 1) {
+        if ($jvConfirmedYN == 1 && $prevJvConfirmedYN == 0) {
             return $this->sendResponse($jvMaster->toArray(), 'Journal Voucher confirmed successfully');
         }
 
