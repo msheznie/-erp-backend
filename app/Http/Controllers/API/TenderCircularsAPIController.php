@@ -340,11 +340,19 @@ class TenderCircularsAPIController extends AppBaseController
             $attchArray = $attchArray->filter();
         }
 
-        $data['attachmentDrop'] = DocumentAttachments::whereNotIn('attachmentID',$attchArray)
+        $attachmentDrop = DocumentAttachments::whereNotIn('attachmentID',$attchArray)
             ->where('documentSystemID',108)
             ->where('attachmentType',3)
             ->where('parent_id', null)
-            ->where('documentSystemCode',$input['tenderMasterId'])->get();
+            ->where('documentSystemCode',$input['tenderMasterId'])->orderBy('attachmentID', 'asc')->get()->toArray();
+
+        $i = 0;
+        foreach  ($attachmentDrop as $row){
+            $attachmentDrop[$i]['menu'] =   $row['attachmentDescription'] . ' - ' . $row['order_number'];
+            $i++;
+        }
+
+        $data['attachmentDrop'] = $attachmentDrop;
 
         if(isset($input['circularId']) && $input['circularId'] > 0){
            $circular = CircularAmendments::select('amendment_id')->where('circular_id',$input['circularId'])->get()->toArray();
