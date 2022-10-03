@@ -290,7 +290,7 @@
         <tr style="width:100%">
             <td style="width: 60%">
                 <table>
-                    @if($masterdata->invoiceType != 6)
+                    @if($masterdata->invoiceType != 6 && $masterdata->invoiceType != 7)
                         <tr>
                             <td width="150px">
                                 <span class="font-weight-bold">Payee Code</span>
@@ -307,10 +307,10 @@
                     @endif
                     <tr>
                         <td width="50px">
-                            @if($masterdata->invoiceType == 6)
+                            @if($masterdata->invoiceType == 6 || $masterdata->invoiceType == 7)
                                 <span class="font-weight-bold">Employee Name</span>
                             @endif
-                            @if($masterdata->invoiceType != 6)
+                            @if($masterdata->invoiceType != 6 && $masterdata->invoiceType != 7)
                                 <span class="font-weight-bold">Payee Name</span>
                             @endif
                         </td>
@@ -531,13 +531,15 @@
             </table>
         </div>
     @endif
-    @if($masterdata->invoiceType == 5)
+    @if($masterdata->invoiceType == 5 || $masterdata->invoiceType == 7)
         <div style="margin-top: 30px">
             <table class="table table-bordered" style="width: 100%;">
                 <thead>
                 <tr class="theme-tr-head">
                     <th>#</th>
-                    <th class="text-center">Purchase Order No</th>
+                    @if($masterdata->invoiceType == 5)
+                        <th class="text-center">Purchase Order No</th>
+                    @endif
                     <th class="text-center">Comment</th>
                     <th class="text-center">Payment Amount</th>
                     <th class="text-center">Local Amt (
@@ -558,7 +560,9 @@
                 @foreach ($masterdata->advancedetail as $item)
                     <tr style="border-top: 1px solid #ffffff !important;border-bottom: 1px solid #ffffff !important;">
                         <td>{{$loop->iteration}}</td>
-                        <td>{{$item->purchaseOrderCode}}</td>
+                        @if($masterdata->invoiceType == 5)
+                            <td>{{$item->purchaseOrderCode}}</td>
+                        @endif
                         <td>{{$item->comments}}</td>
                         <td class="text-right">{{number_format($item->paymentAmount, $transDecimal)}}</td>
                         <td class="text-right">{{number_format($item->localAmount, $transDecimal)}}</td>
@@ -566,7 +570,11 @@
                     </tr>
                 @endforeach
                 <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
-                    <td colspan="2" class="text-right border-bottom-remov">&nbsp;</td>
+                    @if($masterdata->invoiceType == 5)
+                        <td colspan="2" class="text-right border-bottom-remov">&nbsp;</td>
+                    @else
+                        <td class="text-right border-bottom-remov">&nbsp;</td>
+                    @endif
                     <td class="text-right" style="background-color: rgb(215,215,215)">Total Payment</td>
                     <td class="text-right"
                         style="background-color: rgb(215,215,215)">{{number_format($advancePayDetailTotTra, $transDecimal)}}</td>
