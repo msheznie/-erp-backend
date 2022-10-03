@@ -165,9 +165,11 @@ class EmployeeNavigationAPIController extends AppBaseController
             }
         } else {
             $companiesByGroup = "";
-            if (!\Helper::checkIsCompanyGroup($input['globalCompanyId'])) {
-                $companiesByGroup = $input['globalCompanyId'];
-                $userGroup->where('companyID', $companiesByGroup);
+            if(isset($input['globalCompanyId'])) {
+                if (!\Helper::checkIsCompanyGroup($input['globalCompanyId'])) {
+                    $companiesByGroup = $input['globalCompanyId'];
+                    $userGroup->where('companyID', $companiesByGroup);
+                }
             }
         }
 
