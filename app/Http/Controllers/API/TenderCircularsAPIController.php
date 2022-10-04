@@ -518,6 +518,8 @@ class TenderCircularsAPIController extends AppBaseController
             $result = TenderCirculars::where('id', $input['id'])->update($att);
             $supplierList = CircularSuppliers::with([ 'supplier_registration_link', 'srm_circular_amendments.document_attachments'])->where('circular_id', $input['id'])->get();
             $amendmentsList = CircularAmendments::with('document_attachments')->where('circular_id', $input['id'])->get();
+            $circular = TenderCirculars::where('id', $input['id'])->get()->toArray();
+
             $file = array();
             foreach ($amendmentsList as $amendments){
                 $file[] = Helper::getFileUrlFromS3($amendments->document_attachments->path);
@@ -526,7 +528,7 @@ class TenderCircularsAPIController extends AppBaseController
             if ($result) {
                 DB::commit();
                 foreach ($supplierList as $supplier){
-                    Mail::to($supplier->supplier_registration_link->email)->send(new EmailForQueuing("Tender Circular", "Dear Supplier,"."<br /><br />"." Please find the below Tender circular  for". $companyName ." "."<br /><br />"."Click Here: "."</b><br /><br />"." Thank You"."<br /><br /><b>", null, $file));
+                    Mail::to($supplier->supplier_registration_link->email)->send(new EmailForQueuing("Tender Circular", "Dear Supplier,"."<br /><br />"." Please find details of published tender circular bellow."."<br /><br />". "Circular Name : ". $circular[0]['circular_name'] ." "."<br /><br />"."Circular Description : ". $circular[0]['description']."</b><br /><br />".$companyName."</b><br /><br />"."Thank You"."<br /><br /><b>", null, $file));
                 }
 
                 return ['success' => true, 'message' => 'Successfully Published'];
