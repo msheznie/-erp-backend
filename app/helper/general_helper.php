@@ -2641,7 +2641,7 @@ class Helper
                             'url' => isset($redirectUrl) ? $redirectUrl : "",
                         ];
 
-                        WebPushNotificationService::sendNotification($webPushData, 2, $pushNotificationUserIds, $dataBase);
+                        // WebPushNotificationService::sendNotification($webPushData, 2, $pushNotificationUserIds, $dataBase);
 
                     } else {
                         return ['success' => false, 'message' => 'Approval level not found'];
