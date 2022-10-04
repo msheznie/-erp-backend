@@ -285,6 +285,7 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
         $input['issueCostRptTotal'] = Helper::roundValue($input['issueCostRptTotal']);
         $input['sellingCost'] = Helper::roundValue($input['sellingCost']);
         $input['sellingCostAfterMargin'] = Helper::roundValue($input['sellingCostAfterMargin']);
+        $input['salesPrice'] = Helper::roundValue($input['sellingCostAfterMargin']);
         $input['sellingTotal'] = Helper::roundValue($input['sellingTotal']);
         $input['sellingCostAfterMarginLocal'] = Helper::roundValue($input['sellingCostAfterMarginLocal']);
         $input['sellingCostAfterMarginRpt'] = Helper::roundValue($input['sellingCostAfterMarginRpt']);
@@ -587,7 +588,7 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
     public function update($id, UpdateCustomerInvoiceItemDetailsAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($request->all(), ['uom_default', 'uom_issuing','item_by','issueUnits','delivery_order','sales_quotation']);
+        $input = array_except($request->all(), ['uom_default', 'uom_issuing','item_by','issueUnits','delivery_order','sales_quotation', 'issueCostTransTotal', 'issueCostTrans']);
         $input = $this->convertArrayToValue($input);
         $qtyError = array('type' => 'qty');
         $message = "Item updated successfully";
@@ -637,28 +638,48 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
         }
 
         /*margin calculation*/
-        if(isset($input['by']) && $input['by']== 'cost' ){
+        if(isset($input['by']) && $input['by']== 'salesPrice' ){
             if($input['sellingCost'] > 0){
-                $input['marginPercentage'] = ($input['sellingCostAfterMargin'] - $input['sellingCost'])/$input['sellingCost']*100;
+                $input['marginPercentage'] = ($input['salesPrice'] - $input['sellingCost'])/$input['sellingCost']*100;
             }else{
                 $input['marginPercentage']=0;
                 if($customerInvoiceItemDetails->itemFinanceCategoryID != 1){
-                    $input['sellingCost'] = $input['sellingCostAfterMargin'];
+                    $input['sellingCost'] = $input['salesPrice'];
                 }
             }
         }elseif (isset($input['by']) && $input['by']== 'margin'){
-            $input['sellingCostAfterMargin'] = ($input['sellingCost']) + ($input['sellingCost']*$input['marginPercentage']/100);
+            $input['salesPrice'] = ($input['sellingCost']) + ($input['sellingCost']*$input['marginPercentage']/100);
         }else{
             if (isset($input['marginPercentage']) && $input['marginPercentage'] != 0){
-                $input['sellingCostAfterMargin'] = ($input['sellingCost']) + ($input['sellingCost']*$input['marginPercentage']/100);
+                $input['salesPrice'] = ($input['sellingCost']) + ($input['sellingCost']*$input['marginPercentage']/100);
             }else{
                 if($customerInvoiceItemDetails->itemFinanceCategoryID == 1){
-                    $input['sellingCostAfterMargin'] = $input['sellingCost'];
+                    $input['salesPrice'] = $input['sellingCost'];
                 }else{
-                    $input['sellingCost'] = $input['sellingCostAfterMargin'];
+                    $input['sellingCost'] = $input['salesPrice'];
                 }
             }
         }
+
+        $input['sellingCostAfterMargin'] = $input['salesPrice'];
+
+        if(isset($input['by']) && ($input['by'] == 'discountPercentage' || $input['by'] == 'discountAmount')){
+            if ($input['by'] === 'discountPercentage') {
+              $input["discountAmount"] = $input['salesPrice'] * $input["discountPercentage"] / 100;
+            } else if ($input['by'] === 'discountAmount') {
+              $input["discountPercentage"] = ($input["discountAmount"] / $input['salesPrice']) * 100;
+            }
+        } else {
+            if ($input['discountPercentage'] != 0) {
+              $input["discountAmount"] = $input['salesPrice'] * $input["discountPercentage"] / 100;
+            } else {
+              $input["discountPercentage"] = ($input["discountAmount"] / $input['salesPrice']) * 100;
+            }
+        }
+
+        $input['sellingCostAfterMargin'] = $input['sellingCostAfterMargin'] - $input["discountAmount"];
+
+
         $costs = $this->updateCostBySellingCost($input,$customerDirectInvoice);
         $input['sellingCostAfterMarginLocal'] = $costs['sellingCostAfterMarginLocal'];
         $input['sellingCostAfterMarginRpt'] = $costs['sellingCostAfterMarginRpt'];

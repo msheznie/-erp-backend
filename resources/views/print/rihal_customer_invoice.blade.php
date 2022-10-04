@@ -487,10 +487,13 @@
                 <tr class="theme-tr-head">
                     <th style="width:3%"></th>
                     <th style="width:10%;text-align: center">GL Code</th>
-                    <th style="width:35%;text-align: center">Description</th>
+                    <th style="width:25%;text-align: center">Description</th>
                     <th style="width:7%;text-align: center">UOM</th>
                     <th style="width:10%;text-align: center">QTY</th>
-                    <th style="width:10%;text-align: center">Unit Rate</th>
+                    <th style="width:10%;text-align: center">Sales Price</th>
+                    <th style="width:10%;text-align: center">Dis %</th>
+                    <th style="width:10%;text-align: center">Discount Amount</th>
+                    <th style="width:10%;text-align: center">Unit Price</th>
                     <th style="width:10%;text-align: center">Taxable Amount</th>
                     <th style="width:7%;text-align: center">VAT</th>
                     <th style="width:10%;text-align: center">VAT Amount</th>
@@ -514,6 +517,9 @@
                         <td>{{$item->comments}}</td>
                         <td style="text-align: left">{{isset($item->unit->UnitShortCode)?$item->unit->UnitShortCode:''}}</td>
                         <td class="text-center" style="text-align: right">{{number_format($item->invoiceQty,2)}}</td>
+                        <td class="text-right">{{number_format($item->salesPrice,$numberFormatting)}}</td>
+                        <td class="text-right">{{number_format($item->discountPercentage,2)}}</td>
+                        <td class="text-right">{{number_format($item->discountAmountLine,$numberFormatting)}}</td>
                         <td class="text-right">{{number_format($item->unitCost,$numberFormatting)}}</td>
                         <td class="text-right">{{number_format($item->invoiceAmount,$numberFormatting)}}</td>
                         <td class="text-right">{{$item->VATPercentage}}%</td>
@@ -536,7 +542,10 @@
                     <th style="width:10%;text-align: center">Part No / Ref.Number</th>
                     <th style="width:5%;text-align: center">UOM</th>
                     <th style="width:5%;text-align: center">QTY</th>
-                    <th style="width:10%;text-align: center">Unit Rate</th>
+                    <th style="width:10%;text-align: center">Sales Price</th>
+                    <th style="width:10%;text-align: center">Dis %</th>
+                    <th style="width:10%;text-align: center">Discount Amount</th>
+                    <th style="width:10%;text-align: center">Unit Price</th>
                     <th style="width:10%;text-align: center">Taxable Amount</th>
                     <th style="width:7%;text-align: center">VAT</th>
                     <th style="width:10%;text-align: center">VAT Amount</th>
@@ -556,10 +565,15 @@
                             {{$directTraSubTotal +=$item->sellingTotal}}
                             <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;">
                                 <td>{{$x}}</td>
-                                <td>{{$item->itemPrimaryCode.' - '.$item->itemDescription}}</td>
+                                <td>{{$item->itemPrimaryCode.' - '.$item->itemDescription}}<br>
+                                    {{$item->comments}}
+                                </td>
                                 <td class="text-center" style="text-align: center">{{$item->part_no}}</td>
                                 <td style="text-align: left">{{isset($item->uom_issuing->UnitShortCode)?$item->uom_issuing->UnitShortCode:''}}</td>
                                 <td class="text-right" style="text-align: right">{{$item->qtyIssued}}</td>
+                                <td class="text-right">{{number_format($item->salesPrice,$numberFormatting)}}</td>
+                                <td class="text-right">{{number_format($item->discountPercentage,2)}}</td>
+                                <td class="text-right">{{number_format($item->discountAmount,$numberFormatting)}}</td>
                                 <td class="text-right">{{number_format($item->sellingCostAfterMargin,$numberFormatting)}}</td>
                                 <td class="text-right">{{number_format($item->sellingTotal,$numberFormatting)}}</td>
                                 <td class="text-right">{{$item->VATPercentage}}%</td>
@@ -722,7 +736,7 @@
                                             {{$det->employee->empFullName }}
                                             <br>
                                             @if($det->employee)
-                                                {{ \App\helper\Helper::dateFormat($det->approvedDate)}}
+                                                {{ \App\helper\Helper::convertDateWithTime($det->approvedDate)}}
                                             @endif
                                         @endif
                                         <br>

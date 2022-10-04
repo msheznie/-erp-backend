@@ -161,13 +161,15 @@ class EmployeeNavigationAPIController extends AppBaseController
                                                                         }]);
         if (array_key_exists('selectedCompanyID', $input)) {
             if ($input['selectedCompanyID'] > 0) {
-                $userGroup->where('companyID', $input['selectedCompanyID']);
+                $userGroup->where('srp_erp_employeenavigation.companyID', $input['selectedCompanyID']);
             }
         } else {
             $companiesByGroup = "";
-            if (!\Helper::checkIsCompanyGroup($input['globalCompanyId'])) {
-                $companiesByGroup = $input['globalCompanyId'];
-                $userGroup->where('companyID', $companiesByGroup);
+            if(isset($input['globalCompanyId'])) {
+                if (!\Helper::checkIsCompanyGroup($input['globalCompanyId'])) {
+                    $companiesByGroup = $input['globalCompanyId'];
+                    $userGroup->where('srp_erp_employeenavigation.companyID', $companiesByGroup);
+                }
             }
         }
 

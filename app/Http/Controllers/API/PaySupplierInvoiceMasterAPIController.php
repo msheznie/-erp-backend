@@ -3094,6 +3094,8 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                         	IFNULL(Sum( erp_paysupplierinvoicedetail.paymentBalancedAmount ),0) AS SumOfpaymentBalancedAmount 
                         FROM
                         	erp_paysupplierinvoicedetail 
+                        INNER JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicemaster.PayMasterAutoId = erp_paysupplierinvoicedetail.PayMasterAutoId
+                        WHERE erp_paysupplierinvoicemaster.invoiceType != 6 AND erp_paysupplierinvoicemaster.invoiceType != 7
                         GROUP BY
                         	erp_paysupplierinvoicedetail.apAutoID 
                         	) sid ON sid.apAutoID = erp_accountspayableledger.apAutoID
@@ -3180,7 +3182,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 erp_paysupplierinvoicedetail
                 JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicedetail.PayMasterAutoId = erp_paysupplierinvoicemaster.PayMasterAutoId 
             WHERE 
-                erp_paysupplierinvoicemaster.invoiceType = 6
+                erp_paysupplierinvoicemaster.invoiceType = 6 OR erp_paysupplierinvoicemaster.invoiceType = 7
             GROUP BY
                 erp_paysupplierinvoicedetail.apAutoID 
                 ) sid ON sid.apAutoID = employee_ledger.id
@@ -3209,7 +3211,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 AND md.companySystemID = employee_ledger.companySystemID 
                 LEFT JOIN currencymaster ON employee_ledger.supplierTransCurrencyID = currencymaster.currencyID 
             WHERE
-                employee_ledger.invoiceType IN ( 0, 1, 4, 7 ) 
+                employee_ledger.invoiceType IN ( 0, 1, 4) 
                 AND DATE_FORMAT(employee_ledger.documentDate,"%Y-%m-%d") <= "' . $BPVdate . '" 
                 AND employee_ledger.selectedToPaymentInv = 0 
                 AND employee_ledger.fullyInvoice <> 2 
@@ -3288,7 +3290,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 AND md.companySystemID = employee_ledger.companySystemID 
                 LEFT JOIN currencymaster ON employee_ledger.supplierTransCurrencyID = currencymaster.currencyID 
             WHERE
-                employee_ledger.invoiceType IN ( 0, 1, 4, 7 ) 
+                employee_ledger.invoiceType IN ( 0, 1, 4) 
                 AND DATE_FORMAT(employee_ledger.documentDate,"%Y-%m-%d") <= "' . $BPVdate . '" 
                 AND employee_ledger.selectedToPaymentInv = 0 
                 AND employee_ledger.fullyInvoice <> 2 

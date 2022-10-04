@@ -830,62 +830,42 @@ class AssetManagementReportAPIController extends AppBaseController
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('typeID', 'currencyID'));
                     $output = $this->getAssetRegisterDetail3($request);
                     $outputArr = [];
-                    $x = 1;
+                    $x = 2;
                     $data = [];
 
                     $companyData = \Helper::companyCurrency($request->companySystemID);
 
                     $decimalPlaces = ($request->currencyID == 3) ? $companyData->reportingcurrency->DecimalPlaces : $companyData->localcurrency->DecimalPlaces;
+                    $currencyCode = ($request->currencyID == 3) ? $companyData->reportingcurrency->CurrencyCode : $companyData->localcurrency->CurrencyCode;
 
                     if (!empty($output)) {
-                        $data[0]['Fixed Asset Code'] = "Fixed Asset Code";
-                        $data[0]['Asset Description'] = "Asset Description";
-                        $data[0]['Account Code'] = "Account Code";
-                        $data[0]['Asset Class'] = "Asset Class";
-                        $data[0]['Serial Number'] = "Serial Number";
-                        $data[0]['Location'] = "Location";
-                        $data[0]['Sub-Location'] = "Sub-Location";
-                        $data[0]['Acquisition Date'] = "Acquisition Date";
-                        $data[0]['Supplier Name'] = "Supplier Name";
-                        $data[0]['Acquisition Cost'] = "Acquisition Cost";
-                        $data[0]['Place in Service Date'] = "Place in Service Date";
-                        $data[0]['Useful Life'] = "Useful Life";
-                        $data[0]['Remaining Life'] = "Remaining Life";
-                        $data[0]['Depr. Type'] = "Depr. Type";
-                        $data[0]['Depreciation %'] = "Depreciation %";
-                        $data[0]['Depreciation for the period'] = "Depreciation for the period";
-                        $data[0]['Accumulated Depreciation '] = "Accumulated Depreciation ";
-                        $data[0]['NBV'] = "NBV";
-                        $data[0]['Additions'] = "Additions";
-                        $data[0]['Revaluations'] = "Revaluations";
-                        $data[0]['Disposals'] = "Disposals";
-                        $data[0]['Profit / (Loss) on Disposal'] = "Profit / (Loss) on Disposal";
-                        $data[0]['Impairment'] = "Impairment";
-                        $data[0]['Write-Offs'] = "Write-Offs";
 
                         foreach ($output as $key => $value) {
                             $data[$x]["Fixed Asset Code"] = $value->faCode;
                             $data[$x]["Asset Description"] = $value->assetDescription;
                             $data[$x]["Account Code"] = $value->COSTGLCODE;
-                            $data[$x]["Asset Class"] = $value->financeCatDescription;
+                            $data[$x]["Asset Class"] = is_string($value->financeCatDescription) ? htmlspecialchars_decode($value->financeCatDescription) : $value->financeCatDescription;
                             $data[$x]["Serial Number"] = $value->faUnitSerialNo;
                             $data[$x]["Location"] = $value->locationName;
                             $data[$x]["Sub-Location"] = $value->ServiceLineDes;
                             $data[$x]["Acquisition Date"] = Carbon::parse($value->dateAQ)->format('d/m/Y');
                             $data[$x]["Supplier Name"] = $value->supplierName;
-                            $data[$x]["Acquisition Cost"] = round(($request->currencyID == 3) ? $value->costUnitRpt : $value->COSTUNIT, $decimalPlaces);
+                            $data[$x]["Acquisition Cost (".$currencyCode.")"] = round(($request->currencyID == 3) ? $value->costUnitRpt : $value->COSTUNIT, $decimalPlaces);
                             $data[$x]["Place in Service Date"] = Carbon::parse($value->dateDEP)->format('d/m/Y');
                             $data[$x]["Useful Life"] = $value->depMonth;
                             $data[$x]["Remaining Life"] = $value->depMonth - $value->depreciatedMonths;
                             $data[$x]["Depr. Type"] = "SL";
                             $data[$x]["Depreciation %"] = $value->DEPpercentage;
-                            $data[$x]["Depreciation for the period"] = round(($request->currencyID == 3) ? $value->depAmountRpt : $value->depAmountLocal, $decimalPlaces);
-                            $data[$x]["Accumulated Depreciation "] = round(($request->currencyID == 3) ? $value->acDepAmountRpt : $value->adDepAmountLocal, $decimalPlaces);
-                            $data[$x]["NBV"] = round(($request->currencyID == 3) ? floatval($value->costUnitRpt) - floatval($value->depAmountRpt) : floatval($value->COSTUNIT) - floatval($value->depAmountLocal), $decimalPlaces);
+                            $data[$x]["Depreciation for the period (".$currencyCode.")"] = round(($request->currencyID == 3) ? $value->depAmountRpt : $value->depAmountLocal, $decimalPlaces);
+                            $data[$x]["Accumulated Depreciation  (".$currencyCode.")"] = round(($request->currencyID == 3) ? $value->acDepAmountRpt : $value->adDepAmountLocal, $decimalPlaces);
+                            $data[$x]["NBV (".$currencyCode.")"] = round(($request->currencyID == 3) ? floatval($value->costUnitRpt) - floatval($value->depAmountRpt) : floatval($value->COSTUNIT) - floatval($value->depAmountLocal), $decimalPlaces);
                             $data[$x]["Additions"] = 0;
                             $data[$x]["Revaluations"] = 0;
-                            $data[$x]["Disposals"] = round(($request->currencyID == 3 && $value->DIPOSED == -1) ? $value->costUnitRpt : $value->COSTUNIT, $decimalPlaces);
-                            $data[$x]["Profit / (Loss) on Disposal"] = round((($request->currencyID == 3 && $value->DIPOSED == -1 && $request->typeID == 1) ? floatval($value->sellingPriceRpt) - floatval($value->costUnitRpt) - floatval($value->acDepAmountRpt) : floatval($value->sellingPriceLocal) - floatval($value->COSTUNIT) - floatval($value->adDepAmountLocal)), $decimalPlaces);
+
+                            $disposalValue = $request->currencyID == 3 ? $value->costUnitRpt : $value->COSTUNIT;
+                            $data[$x]["Disposals (".$currencyCode.")"] = round((($value->DIPOSED == -1) ? $disposalValue : 0), $decimalPlaces);
+                            $disposalProfit = $request->currencyID == 3 ? (floatval($value->sellingPriceRpt) - floatval($value->costUnitRpt) - floatval($value->acDepAmountRpt)) : (floatval($value->sellingPriceLocal) - floatval($value->COSTUNIT) - floatval($value->adDepAmountLocal));
+                            $data[$x]["Profit / (Loss) on Disposal (".$currencyCode.")"] = round(($value->DIPOSED == -1 && $request->typeID == 1) ? $disposalProfit : 0, $decimalPlaces);
                             $data[$x]["Impairment"] = 0;
                             $data[$x]["Write-Offs"] = 0;
                              $x++;
