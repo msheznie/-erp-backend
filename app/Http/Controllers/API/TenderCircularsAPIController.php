@@ -340,11 +340,19 @@ class TenderCircularsAPIController extends AppBaseController
             $attchArray = $attchArray->filter();
         }
 
-        $data['attachmentDrop'] = DocumentAttachments::whereNotIn('attachmentID',$attchArray)
+        $attachmentDrop = DocumentAttachments::whereNotIn('attachmentID',$attchArray)
             ->where('documentSystemID',108)
             ->where('attachmentType',3)
             ->where('parent_id', null)
-            ->where('documentSystemCode',$input['tenderMasterId'])->get();
+            ->where('documentSystemCode',$input['tenderMasterId'])->orderBy('attachmentID', 'asc')->get()->toArray();
+
+        $i = 0;
+        foreach  ($attachmentDrop as $row){
+            $attachmentDrop[$i]['menu'] =   $row['attachmentDescription'] . '_' . $row['order_number'];
+            $i++;
+        }
+
+        $data['attachmentDrop'] = $attachmentDrop;
 
         if(isset($input['circularId']) && $input['circularId'] > 0){
            $circular = CircularAmendments::select('amendment_id')->where('circular_id',$input['circularId'])->get()->toArray();
@@ -653,6 +661,24 @@ class TenderCircularsAPIController extends AppBaseController
                 DB::commit();
                 return ['success' => true, 'message' => 'Successfully created', 'data' => $result];
             }
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($e);
+            return ['success' => false, 'message' => $e];
+        }
+    }
+
+    public function checkAmendmentIsUsedInCircular(Request $request)
+    {
+        $input = $request->all();
+        try{
+            $count = CircularAmendments::where('amendment_id',  $input['amendmentId'])->where('tender_id', $input['tenderMasterId'])->get()->count();
+            if($count === 1){
+                return ['success' => true, 'message' => 'This amendment is assigned to circular, You cannot delete.', 'data' => $count];
+            } else {
+                return ['success' => true, 'message' => '', 'data' => $count];
+            }
+
         } catch (\Exception $e) {
             DB::rollback();
             Log::error($e);
