@@ -399,14 +399,14 @@ class TenderMasterAPIController extends AppBaseController
         if(isset($input['tenderMasterId'])){
             $assignedDocsArray = TenderDocumentTypeAssign::select('document_type_id')->where('tender_id', $input['tenderMasterId'])->get()->toArray();
             $notInArray = [1, 2];
-            $amendments = 3;
             foreach ($assignedDocsArray as $assignedDocs){
                 $notInArray[] = $assignedDocs['document_type_id'];
-                if($assignedDocs['document_type_id'] == 3){
-                    $amendments = '';
-                }
             }
-            $data['documentTypes'] = TenderDocumentTypes::where('company_id', $employee->empCompanySystemID)->whereNotIn('id', $notInArray)->orWhere('id', $amendments)->get();
+            if($tenderMaster['published_yn'] === 1){
+                $data['documentTypes'] = TenderDocumentTypes::where('id', 3)->get();
+            } else {
+                $data['documentTypes'] = TenderDocumentTypes::where('company_id', $employee->empCompanySystemID)->whereNotIn('id', $notInArray)->get();
+            }
         }
 
         if (isset($input['tenderMasterId'])) {
