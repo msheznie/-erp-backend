@@ -631,6 +631,14 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
             unset($input['subCategoryArray']);
         }
 
+        if (isset($input['subCatgeoryType'])) {
+            unset($input['subCatgeoryType']);
+        }
+
+        if (isset($input['exempt_vat_portion'])) {
+            unset($input['exempt_vat_portion']);
+        }
+
         DB::beginTransaction();
 
         try {
