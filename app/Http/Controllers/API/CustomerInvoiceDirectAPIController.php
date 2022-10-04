@@ -917,10 +917,12 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
                             /*margin calculation*/
                             if ($updateItem->marginPercentage != 0 && $updateItem->marginPercentage != null) {
-                                $updateItem->sellingCostAfterMargin = $updateItem->sellingCost + ($updateItem->sellingCost * $updateItem->marginPercentage / 100);
+                                $updateItem->salesPrice = $updateItem->sellingCost + ($updateItem->sellingCost * $updateItem->marginPercentage / 100);
                             } else {
-                                $updateItem->sellingCostAfterMargin = $updateItem->sellingCost;
+                                $updateItem->salesPrice = $updateItem->sellingCost;
                             }
+
+                            $updateItem->sellingCostAfterMargin = $updateItem->salesPrice - $updateItem->discountAmount;
 
                             if ($updateItem->sellingCurrencyID != $updateItem->localCurrencyID) {
                                 $currencyConversion = Helper::currencyConversion($customerInvoiceDirect->companySystemID, $updateItem->sellingCurrencyID, $updateItem->localCurrencyID, $updateItem->sellingCostAfterMargin);

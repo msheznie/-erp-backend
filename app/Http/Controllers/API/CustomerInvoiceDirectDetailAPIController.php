@@ -514,8 +514,24 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
         }
 
         $input['invoiceQty']= ($input['invoiceQty'] != ''?$input['invoiceQty']:0);
-        $input['unitCost']= ($input['unitCost'] != ''?$input['unitCost']:0);
+        $input['salesPrice']= ($input['salesPrice'] != '' ? $input['salesPrice'] : 0);
 
+
+        if(isset($input['by']) && ($input['by'] == 'discountPercentage' || $input['by'] == 'discountAmountLine')){
+            if ($input['by'] === 'discountPercentage') {
+              $input["discountAmountLine"] = $input['salesPrice'] * $input["discountPercentage"] / 100;
+            } else if ($input['by'] === 'discountAmountLine') {
+              $input["discountPercentage"] = ($input["discountAmountLine"] / $input['salesPrice']) * 100;
+            }
+        } else {
+            if ($input['discountPercentage'] != 0) {
+              $input["discountAmountLine"] = $input['salesPrice'] * $input["discountPercentage"] / 100;
+            } else if ($input['discountAmountLine'] != 0){
+              $input["discountPercentage"] = ($input["discountAmountLine"] / $input['salesPrice']) * 100;
+            }
+        }
+
+        $input['unitCost'] = $input['salesPrice'] - $input["discountAmountLine"];
         if ($input['invoiceQty'] != $detail->invoiceQty || $input['unitCost'] != $detail->unitCost) {
             $myCurr = $master->custTransactionCurrencyID;               /*currencyID*/
             //$companyCurrency = \Helper::companyCurrency($myCurr);
