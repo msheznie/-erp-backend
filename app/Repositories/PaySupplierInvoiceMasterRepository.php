@@ -267,7 +267,7 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
             if ($input['employeeID'] && count($employeeID) > 0 && count($supplierID) == 0) {
                 $paymentVoucher->whereIn('directPaymentPayeeEmpID', $employeeID);
             }
-            if ($input['employeeID'] && count($employeeID) > 0) {
+            if ($input['employeeID'] && count($supplierID) > 0 && count($employeeID) > 0) {
                 $paymentVoucher->orWhereIn('directPaymentPayeeEmpID', $employeeID);
             }
         }
