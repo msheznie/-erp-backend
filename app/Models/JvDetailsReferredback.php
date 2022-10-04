@@ -213,7 +213,8 @@ class JvDetailsReferredback extends Model
         'createdUserSystemID',
         'createdUserID',
         'createdPcID',
-        'timeStamp'
+        'timeStamp',
+        'detail_project_id'
     ];
 
     /**
@@ -251,7 +252,8 @@ class JvDetailsReferredback extends Model
         'selectedForConsole' => 'integer',
         'createdUserSystemID' => 'integer',
         'createdUserID' => 'string',
-        'createdPcID' => 'string'
+        'createdPcID' => 'string',
+        'detail_project_id' => 'integer'
     ];
 
     /**

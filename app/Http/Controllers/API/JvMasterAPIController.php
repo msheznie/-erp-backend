@@ -64,6 +64,8 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\helper\Helper;
+use App\Models\ErpProjectMaster;
+
 /**
  * Class JvMasterController
  * @package App\Http\Controllers\API
@@ -402,6 +404,10 @@ class JvMasterAPIController extends AppBaseController
             return $this->sendError('Jv Master not found');
         }
 
+        $jvConfirmedYN = $input['confirmedYN'];
+        $prevJvConfirmedYN = $jvMaster->confirmedYN;
+
+
         if (isset($input['JVdate'])) {
             if ($input['JVdate']) {
                 $input['JVdate'] = Carbon::parse($input['JVdate']);
@@ -451,6 +457,7 @@ class JvMasterAPIController extends AppBaseController
         }
 
         if ($jvMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
+
 
             $validator = \Validator::make($input, [
                 'companyFinancePeriodID' => 'required|numeric|min:1',
@@ -558,6 +565,7 @@ class JvMasterAPIController extends AppBaseController
 
             $input['RollLevForApp_curr'] = 1;
 
+
             unset($input['confirmedYN']);
             unset($input['confirmedByEmpSystemID']);
             unset($input['confirmedByEmpID']);
@@ -588,7 +596,11 @@ class JvMasterAPIController extends AppBaseController
 
         $jvMaster = $this->jvMasterRepository->update($input, $id);
 
-        return $this->sendResponse($jvMaster->toArray(), 'JvMaster updated successfully');
+        if ($jvConfirmedYN == 1 && $prevJvConfirmedYN == 0) {
+            return $this->sendResponse($jvMaster->toArray(), 'Journal Voucher confirmed successfully');
+        }
+
+        return $this->sendResponse($jvMaster->toArray(), 'Journal Voucher updated successfully');
     }
 
     /**
@@ -690,6 +702,15 @@ class JvMasterAPIController extends AppBaseController
         ->where('companySystemID', $companyId)
         ->where('isYesNO', 1)
         ->first();
+        
+        $isProject_base = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
+        ->where('companySystemID', $companyId)
+        ->where('isYesNO', 1)
+        ->exists();
+
+        $projects = [];
+        $projects = ErpProjectMaster::where('companySystemID', $companyId)
+                                        ->get();
 
         $output = array('yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
@@ -701,7 +722,9 @@ class JvMasterAPIController extends AppBaseController
             'allSubCompanies' => $allSubCompanies,
             'assetAllocatePolicy' => $assetAllocatePolicy ? true : false,
             'companyFinanceYear' => $companyFinanceYear,
-            'segments' => $segments
+            'segments' => $segments,
+            'isProjectBase' => $isProject_base,
+            'projects' => $projects
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');

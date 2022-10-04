@@ -198,9 +198,9 @@ class ItemIssueMasterRepository extends BaseRepository
                 $data[$x]['Location'] = $val->warehouse_by? $val->warehouse_by->wareHouseDescription : '';
                 $data[$x]['Comment'] = $val->comment;
                 $data[$x]['Created By'] = $val->created_by? $val->created_by->empName : '';
-                $data[$x]['Created At'] = \Helper::dateFormat($val->createdDateTime);
-                $data[$x]['Confirmed at'] = \Helper::dateFormat($val->confirmedDate);
-                $data[$x]['Approved at'] = \Helper::dateFormat($val->approvedDate);
+                $data[$x]['Created At'] = \Helper::convertDateWithTime($val->createdDateTime);
+                $data[$x]['Confirmed at'] = \Helper::convertDateWithTime($val->confirmedDate);
+                $data[$x]['Approved at'] = \Helper::convertDateWithTime($val->approvedDate);
                 $data[$x]['Status'] = StatusService::getStatus($val->CancelledYN, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
 
                 $x++;

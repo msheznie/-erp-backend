@@ -26,10 +26,13 @@ use App\Models\ChartOfAccountsAssigned;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CurrencyMaster;
+use App\Models\CustomerInvoice;
+use App\Models\CustomerReceivePayment;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
 use App\Models\DocumentReferedHistory;
 use App\Models\EmployeesDepartment;
+use App\Models\PaySupplierInvoiceMaster;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\BankAccountRepository;
@@ -230,6 +233,14 @@ class BankAccountAPIController extends AppBaseController
 
         if (empty($bankAccount)) {
             return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.bank_accounts')]));
+        }
+
+        $supplierInvoice = PaySupplierInvoiceMaster::where('BPVAccount', $id)->where('cancelYN', 0)->where('BPVbank', $bankAccount->bankmasterAutoID)->first();
+        $custReceivePay = CustomerReceivePayment::where('bankAccount', $id)->where('cancelYN', 0)->where('bankID', $bankAccount->bankmasterAutoID)->first();
+        $custInvoice = CustomerInvoice::where('bankAccountID', $id)->where('canceledYN', 0)->where('bankID', $bankAccount->bankmasterAutoID)->first();
+
+        if($supplierInvoice || $custReceivePay|| $custInvoice){
+            return $this->sendError(trans('custom.bank_account_in_transactions'),500);
         }
 
         $checkDuplicateAccountNo = BankAccount::where('bankAccountAutoID', '!=', $id)

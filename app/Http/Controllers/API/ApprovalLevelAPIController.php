@@ -22,6 +22,7 @@ use App\Models\DocumentMaster;
 use App\Models\FinanceItemCategoryMaster;
 use App\Models\SegmentMaster;
 use App\Models\YesNoSelectionForMinus;
+use App\Models\DocumentApproved;
 use App\Repositories\ApprovalLevelRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -183,9 +184,18 @@ class ApprovalLevelAPIController extends AppBaseController
             return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.approval_levels')]));
         }
 
+        $documentApproved = DocumentApproved::where('approvalLevelID',$id )
+                                            ->where('approvedYN',0)
+                                            ->where('rejectedYN',0)
+                                            ->get();
+        
+        if(count($documentApproved) > 0){
+            return $this->sendError('Cannot delete approval level. following documents are pending for approval',500 ,$documentApproved->Toarray());
+        }
+
         $approvalLevel->approvalRole()->delete();
 
-        $approvalLevel->delete();
+        $approvalLevel->update(['is_deleted' => 1 ,'isActive' => 0]);
 
         return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.approval_levels')]));
     }

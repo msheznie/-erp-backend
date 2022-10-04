@@ -139,6 +139,11 @@ class AttendanceComputationService{
 
         $this->isClockInOutSet = true;
 
+        if($this->data['shiftType'] == 1){ //if open shift
+            $this->openShiftCalculateWorkedHours();
+            return;
+        }
+
         $t1 = ( $this->isShiftHoursSet && ($this->offDutyTime <= $this->clockOut) ) 
             ? new DateTime($this->offDutyTime)
             : new DateTime($this->clockOut);
@@ -155,6 +160,38 @@ class AttendanceComputationService{
         if ($this->totalWorkingHours && $this->shiftHours) {
             $realtime = $this->shiftHours / $this->totalWorkingHours;
             $this->realTime = round($realtime, 1);
+        }
+    }
+
+    public function openShiftCalculateWorkedHours(){
+        $t1 = new DateTime($this->clockOut);
+        $t2 = new DateTime($this->clockIn);
+        
+        $totWorkingHours_obj = $t1->diff($t2);
+        $hours = $totWorkingHours_obj->format('%h');
+        $minutes = $totWorkingHours_obj->format('%i');
+        $this->totalWorkingHours = ($hours * 60) + $minutes;
+
+        if ($this->totalWorkingHours && $this->data['workingHour']) {
+            $realtime = $this->data['workingHour'] / $this->totalWorkingHours;
+            $this->realTime = round($realtime, 1);
+
+            $this->openShiftCommonComputations();
+        }
+    }
+
+    public function openShiftCommonComputations(){
+        if($this->dayType != 1) {
+            return; //if holiday or weekend no need to compute the OT or shortage (early-out) hours
+        }
+
+        if($this->totalWorkingHours < $this->data['workingHour']){
+            //compute shortage
+            $this->earlyHours = $this->data['workingHour'] - $this->totalWorkingHours;
+        }
+        else{
+            //compute OT
+            $this->overTimeHours = $this->totalWorkingHours - $this->data['workingHour'];
         }
     }
 
@@ -292,7 +329,7 @@ class AttendanceComputationService{
     // early hour computation  [ same function for flexible hour and general ]
     public function earlyHourComputation($clockIn_dt, $clockOut_dt){           
         if($this->dayType != 1) {
-            return; //if holiday or normal day no need to compute the earl out hours
+            return; //if holiday or weekend no need to compute the earl out hours
         }
 
         if(!$this->isShiftHoursSet){
@@ -312,7 +349,7 @@ class AttendanceComputationService{
     // OT computation  [ same function for flexible hour and general ]
     public function overTimeComputation($clockIn_dt_ot, $clockOut_dt_ot){         
         if($this->dayType != 1) {
-            return; //if holiday or normal day no need to compute the earl out hours
+            return; //if holiday or weekend no need to compute the OT hours
         }
 
         if(!$this->isShiftHoursSet) {

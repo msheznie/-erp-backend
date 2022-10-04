@@ -227,7 +227,7 @@ class AttendanceDataPullingService{
         t.upload_type, t.device_id_in, t.machine_id_in, t.machine_id_out, lm.leaveMasterID, lm.leaveHalfDay, 
         shd.onDutyTime, shd.offDutyTime, shd.weekDayNo, IF (IFNULL(shd.isHalfDay, 0), 1, 0) AS isHalfDay, 
         IF(IFNULL(calenders.holiday_flag, 0), 1, 0) AS isHoliday, shd.isWeekend, shd.gracePeriod, shd.isFlexyHour, 
-        shd.flexyHrFrom, shd.flexyHrTo, e.isCheckInMust
+        shd.flexyHrFrom, shd.flexyHrTo, e.isCheckInMust, shd.shiftID, shd.shiftType, shd.workingHour
         FROM attendance_temporary_tbl AS t
         JOIN (
             SELECT EIdNo, ECode, Ename2, isCheckin AS isCheckInMust
@@ -240,7 +240,7 @@ class AttendanceDataPullingService{
         ) AS she ON she.empID = e.EIdNo
         LEFT JOIN (
             SELECT sm.shiftID, sd.onDutyTime, sd.offDutyTime, sd.isHalfDay, sd.weekDayNo, sd.isWeekend, 
-            sd.gracePeriod, sm.isFlexyHour, sd.flexyHrFrom, sd.flexyHrTo 
+            sd.gracePeriod, sm.isFlexyHour, sd.flexyHrFrom, sd.flexyHrTo, sm.shiftType, sd.workingHour 
             FROM srp_erp_pay_shiftdetails AS sd 
             JOIN srp_erp_pay_shiftmaster AS sm ON  sm.shiftID = sd.shiftID 
             WHERE sm.companyID = {$this->companyId}
@@ -279,17 +279,22 @@ class AttendanceDataPullingService{
             $obj = new AttendanceComputationService($row, $this->companyId);
             $obj->execute();
 
+            $shiftHours = ($row['shiftType'] == 1)? $row['workingHour']: $obj->shiftHours;
+            $shiftHours = (empty($shiftHours))? 0: $shiftHours;
+            $shiftId = (empty($row['shiftID']))? 0: $row['shiftID'];
+
  
             $this->data[] = [ 
                 'empID'=> $empId, 'deviceID'=> $row['device_id_in'], 'machineID'=> $row['machine_id_in'],
-                'attendanceDate'=> $attDate, 'floorID'=> $row['location_in'], 'clockoutFloorID'=> $row['location_out'], 
-                'gracePeriod'=> $obj->gracePeriod, 'onDuty'=> $row['onDutyTime'], 'offDuty'=> $row['offDutyTime'],                
+                'attendanceDate'=> $attDate, 'shift_id'=> $shiftId, 'floorID'=> $row['location_in'], 
+                'clockoutFloorID'=> $row['location_out'], 'gracePeriod'=> $obj->gracePeriod, 
+                'onDuty'=> $row['onDutyTime'], 'offDuty'=> $row['offDutyTime'],                
 
                 'checkIn'=> $row['clock_in'], 'checkOut'=> $row['clock_out'], 'presentTypeID'=> $obj->presentAbsentType,
 
                 'normalTime'=> ($row['isHalfDay'] == 1)? 0.5: 1,
                 'lateHours'=> $obj->lateHours, 'lateFee'=> $obj->lateFee, 'earlyHours'=> $obj->earlyHours,   
-                'OTHours'=> $obj->overTimeHours, 'realTime'=> $obj->realTime, 
+                'OTHours'=> $obj->overTimeHours, 'realTime'=> $obj->realTime, 'shift_hours'=> $shiftHours,
                 
                 
                 'isNormalDay'=> $obj->normalDayData['true_false'], 'NDaysOT'=> $obj->normalDayData['hours'], 

@@ -64,6 +64,7 @@ define('SAVE_TECHNICAL_BID_SUBMISSION', 'SAVE_TECHNICAL_BID_SUBMISSION');
 define('SAVE_TECHNICAL_BID_LINE', 'SAVE_TECHNICAL_BID_LINE');
 define('SAVE_GO_NO_GO_BID_LINE', 'SAVE_GO_NO_GO_BID_LINE');
 define('GET_TENDER_ATTACHMENT', 'GET_TENDER_ATTACHMENT');
+define('GET_COMMON_ATTACHMENT', 'GET_COMMON_ATTACHMENT');
 define('RE_UPLOAD_TENDER_ATTACHMENT', 'RE_UPLOAD_TENDER_ATTACHMENT');
 define('DELETE_TENDER_ATTACHMENT', 'DELETE_TENDER_ATTACHMENT');
 define('GET_COMMERCIAL_BID_SUBMISSION', 'GET_COMMERCIAL_BID_SUBMISSION');
@@ -194,6 +195,8 @@ class APIController extends Controller
                 return $this->SRMService->saveGoNoGoBidSubmissionLine($request);
             case GET_TENDER_ATTACHMENT :
                 return $this->SRMService->getTenderAttachment($request);
+            case GET_COMMON_ATTACHMENT :
+                return $this->SRMService->getCommonAttachment($request);
             case RE_UPLOAD_TENDER_ATTACHMENT :
                 return $this->SRMService->reUploadTenderAttachment($request);
             case DELETE_TENDER_ATTACHMENT :
