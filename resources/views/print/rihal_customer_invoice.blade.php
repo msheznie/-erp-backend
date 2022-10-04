@@ -493,7 +493,7 @@
                     <th style="width:10%;text-align: center">Sales Price</th>
                     <th style="width:10%;text-align: center">Dis %</th>
                     <th style="width:10%;text-align: center">Discount Amount</th>
-                    <th style="width:10%;text-align: center">Unit Price</th>
+                    <th style="width:10%;text-align: center">Selling Unit Price</th>
                     <th style="width:10%;text-align: center">Taxable Amount</th>
                     <th style="width:7%;text-align: center">VAT</th>
                     <th style="width:10%;text-align: center">VAT Amount</th>
@@ -545,7 +545,7 @@
                     <th style="width:10%;text-align: center">Sales Price</th>
                     <th style="width:10%;text-align: center">Dis %</th>
                     <th style="width:10%;text-align: center">Discount Amount</th>
-                    <th style="width:10%;text-align: center">Unit Price</th>
+                    <th style="width:10%;text-align: center">Selling Unit Price</th>
                     <th style="width:10%;text-align: center">Taxable Amount</th>
                     <th style="width:7%;text-align: center">VAT</th>
                     <th style="width:10%;text-align: center">VAT Amount</th>
