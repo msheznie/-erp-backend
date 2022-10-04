@@ -403,7 +403,7 @@ class TenderMasterAPIController extends AppBaseController
                 $notInArray[] = $assignedDocs['document_type_id'];
             }
             if($tenderMaster['published_yn'] === 1){
-                $data['documentTypes'] = TenderDocumentTypes::where('id', 3)->get();
+                $data['documentTypes'] = TenderDocumentTypes::where('id', 3)->whereNotIn('id', $notInArray)->get();
             } else {
                 $data['documentTypes'] = TenderDocumentTypes::where('company_id', $employee->empCompanySystemID)->whereNotIn('id', $notInArray)->get();
             }
