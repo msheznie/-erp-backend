@@ -348,7 +348,7 @@ class TenderCircularsAPIController extends AppBaseController
 
         $i = 0;
         foreach  ($attachmentDrop as $row){
-            $attachmentDrop[$i]['menu'] =   $row['attachmentDescription'] . ' - ' . $row['order_number'];
+            $attachmentDrop[$i]['menu'] =   $row['attachmentDescription'] . '_' . $row['order_number'];
             $i++;
         }
 
@@ -661,6 +661,24 @@ class TenderCircularsAPIController extends AppBaseController
                 DB::commit();
                 return ['success' => true, 'message' => 'Successfully created', 'data' => $result];
             }
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($e);
+            return ['success' => false, 'message' => $e];
+        }
+    }
+
+    public function checkAmendmentIsUsedInCircular(Request $request)
+    {
+        $input = $request->all();
+        try{
+            $count = CircularAmendments::where('amendment_id',  $input['amendmentId'])->where('tender_id', $input['tenderMasterId'])->get()->count();
+            if($count === 1){
+                return ['success' => true, 'message' => 'This amendment is assigned to circular, You cannot delete.', 'data' => $count];
+            } else {
+                return ['success' => true, 'message' => '', 'data' => $count];
+            }
+
         } catch (\Exception $e) {
             DB::rollback();
             Log::error($e);
