@@ -168,8 +168,14 @@ class DocumentApprovedAPIController extends AppBaseController
         }
 
         $documentType = isset($input['documentType']) ? $input['documentType'] : array();
-        $companies    = isset($input['companies']) ? $input['companies'] : array();
+        if(!is_array($documentType)){
+            $documentType = array();
+        }
 
+        $companies = isset($input['companies']) ? $input['companies'] : array();
+        if(!is_array($companies)){
+            $companies = array();
+        }
 
         $filter = 'AND erp_documentapproved.documentSystemID IN (0) ';
 
