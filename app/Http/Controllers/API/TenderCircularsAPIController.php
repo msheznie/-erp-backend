@@ -522,13 +522,14 @@ class TenderCircularsAPIController extends AppBaseController
 
             $file = array();
             foreach ($amendmentsList as $amendments){
-                $file[] = Helper::getFileUrlFromS3($amendments->document_attachments->path);
+                $file[$amendments->document_attachments->originalFileName] = Helper::getFileUrlFromS3($amendments->document_attachments->path);
             }
 
+            Log::info($file);
             if ($result) {
                 DB::commit();
                 foreach ($supplierList as $supplier){
-                    Mail::to($supplier->supplier_registration_link->email)->send(new EmailForQueuing("Tender Circular", "Dear Supplier,"."<br /><br />"." Please find details of published tender circular bellow."."<br /><br />". "Circular Name : ". $circular[0]['circular_name'] ." "."<br /><br />"."Circular Description : ". $circular[0]['description']."</b><br /><br />".$companyName."</b><br /><br />"."Thank You"."<br /><br /><b>", null, $file));
+                    Mail::to($supplier->supplier_registration_link->email)->send(new EmailForQueuing("Tender Circular", "Dear Supplier,"."<br /><br />"." Please find details of published tender circular bellow."."<br /><br /><b>". "Circular Name : ". "</b>".$circular[0]['circular_name'] ." "."<br /><br /><b>"."Circular Description : "."</b>". $circular[0]['description']."</b><br /><br />".$companyName."</b><br /><br />"."Thank You"."<br /><br /><b>", null, $file));
                 }
 
                 return ['success' => true, 'message' => 'Successfully Published'];
