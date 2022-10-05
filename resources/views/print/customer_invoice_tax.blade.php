@@ -427,7 +427,7 @@
                     <th style="width:10%;text-align: center">Sales Price</th>
                     <th style="width:10%;text-align: center">Dis %</th>
                     <th style="width:10%;text-align: center">Discount Amount</th>
-                    <th style="width:10%;text-align: center">Unit Price</th>
+                    <th style="width:10%;text-align: center">Selling Unit Price</th>
                     <th style="width:10%;text-align: center">VAT Per Unit</th>    
                     <th style="width:10%;text-align: center">Total Amount ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
                 </tr>
@@ -471,7 +471,7 @@
                     <th style="width:9%;text-align: center">Sales Price</th>
                     <th style="width:5%;text-align: center">Dis %</th>
                     <th style="width:8%;text-align: center">Discount Amount</th>
-                    <th style="width:9%;text-align: center">Unit Price</th>
+                    <th style="width:9%;text-align: center">Selling Unit Price</th>
                     <th style="width:9%;text-align: center">Taxable Amount ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
                     <th style="width:5%;text-align: center">Taxable Rate</th>
                     <th style="width:10%;text-align: center">Tax ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
