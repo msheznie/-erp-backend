@@ -21,16 +21,18 @@ class CreateGRVSupplierInvoice implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
     protected $grvMasterAutoID;
+    protected $dataBase;
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($grvMasterAutoID)
+    public function __construct($grvMasterAutoID, $dataBase)
     {
         //
         $this->grvMasterAutoID = $grvMasterAutoID;
+        $this->dataBase = $dataBase;
     }
 
     /**
@@ -176,7 +178,7 @@ class CreateGRVSupplierInvoice implements ShouldQueue
                     }
 
                     $masterModel = ['documentSystemID' => 11, 'autoID' => $bookInvSuppMaster->bookingSuppMasInvAutoID, 'companySystemID' => $bookInvSuppMaster->companySystemID, 'employeeSystemID' => $bookInvSuppMaster->confirmedByEmpSystemID];
-                    $generalLedgerInsert = GeneralLedgerInsert::dispatch($masterModel);
+                    $generalLedgerInsert = GeneralLedgerInsert::dispatch($masterModel, $this->dataBase);
                 }
             }
             DB::commit();

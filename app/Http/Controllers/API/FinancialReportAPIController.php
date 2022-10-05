@@ -18,6 +18,7 @@
 namespace App\Http\Controllers\API;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use App\helper\Helper;
+use App\Jobs\Report\GeneralLedgerPdfJob;
 use App\Http\Controllers\AppBaseController;
 use App\Models\AccountsType;
 use App\Models\BookInvSuppDet;
@@ -48,6 +49,7 @@ use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\helper\CreateExcel;
+use Illuminate\Support\Facades\Storage;
 ini_set('max_execution_time', 500);
 
 class FinancialReportAPIController extends AppBaseController
@@ -581,9 +583,36 @@ WHERE
     erp_paysupplierinvoicemaster.approved = -1 AND
     2 IN (' . join(',', json_decode($typeID)) . ') AND
     erp_paysupplierinvoicemaster.companySystemID = "'.$companyID.'"
-    UNION ALL 
+    
+    UNION ALL
     SELECT
-     srp_erp_iouvouchers.voucherDate AS documentDate,
+    erp_paysupplierinvoicemaster.BPVdate AS documentDate,
+	erp_paysupplierinvoicemaster.BPVcode AS documentCode,
+	erp_paysupplierinvoicemaster.BPVNarration AS description,
+	erp_paysupplierinvoicemaster.directPaymentPayeeEmpID AS employeeID,
+    (erp_paysupplierinvoicemaster.payAmountCompLocal + erp_paysupplierinvoicemaster.VATAmountLocal) AS amountLocal,
+    (erp_paysupplierinvoicemaster.payAmountCompRpt + erp_paysupplierinvoicemaster.VATAmountRpt) AS amountRpt,
+    srp_erp_pay_monthlydeductionmaster.monthlyDeductionCode AS referenceDoc,
+    srp_erp_pay_monthlydeductionmaster.dateMD AS referenceDocDate,
+    srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID,
+    currencymaster.DecimalPlaces AS localCurrencyDecimals,
+    currencymasterRpt.DecimalPlaces As rptCurrencyDecimals,
+    5 AS type
+FROM
+	erp_paysupplierinvoicemaster
+    LEFT JOIN srp_erp_pay_monthlydeductionmaster ON erp_paysupplierinvoicemaster.PayMasterAutoId = srp_erp_pay_monthlydeductionmaster.pv_id
+    LEFT JOIN currencymaster ON erp_paysupplierinvoicemaster.localCurrencyID = currencymaster.currencyID
+    LEFT JOIN currencymaster AS currencymasterRpt ON erp_paysupplierinvoicemaster.companyRptCurrencyID = currencymasterRpt.currencyID
+WHERE
+    erp_paysupplierinvoicemaster.invoiceType = 6 AND 
+    DATE(erp_paysupplierinvoicemaster.BPVdate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
+    erp_paysupplierinvoicemaster.approved = -1 AND
+    5 IN (' . join(',', json_decode($typeID)) . ') AND
+    erp_paysupplierinvoicemaster.companySystemID = "'.$companyID.'"
+    
+    UNION ALL  
+    SELECT
+    srp_erp_iouvouchers.voucherDate AS documentDate,
 	srp_erp_iouvouchers.iouCode AS documentCode,
 	srp_erp_iouvouchers.narration AS description,
 	srp_erp_iouvouchers.empID AS employeeID,
@@ -788,6 +817,20 @@ WHERE
     erp_paysupplierinvoicemaster.approved = -1 AND
     erp_paysupplierinvoicemaster.directPaymentPayeeEmpID IN (' . join(',', json_decode($employeeDatas)) . ') AND
     2 IN (' . join(',', json_decode($typeID)) . ')  
+    UNION ALL
+    SELECT
+	erp_paysupplierinvoicemaster.directPaymentPayeeEmpID AS employeeID,
+    employees.empName AS employeeName,
+    employees.empID AS empID
+FROM
+	erp_paysupplierinvoicemaster
+LEFT JOIN employees ON erp_paysupplierinvoicemaster.directPaymentPayeeEmpID = employees.employeeSystemID
+WHERE
+    erp_paysupplierinvoicemaster.invoiceType = 6 AND 
+    DATE(erp_paysupplierinvoicemaster.BPVdate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
+    erp_paysupplierinvoicemaster.approved = -1 AND
+    erp_paysupplierinvoicemaster.directPaymentPayeeEmpID IN (' . join(',', json_decode($employeeDatas)) . ') AND
+    5 IN (' . join(',', json_decode($typeID)) . ')  
     UNION ALL 
     SELECT
 	srp_erp_iouvouchers.empID AS employeeID,
@@ -1624,10 +1667,15 @@ WHERE
                                 if ($checkIsGroup->isGroup == 0) {
                                     $data[$x]['debit_total_local'] = round($subTotalDebitLocal, $decimalPlaceLocal);
                                     $data[$x]['credit_total_local'] = round($subTotalCreditRptLocal, $decimalPlaceLocal);
+                                    $balanceLocal = $subTotalDebitLocal - $subTotalCreditRptLocal;
+                                    $data[$x]['balanceLocal'] = round($balanceLocal, $decimalPlaceLocal);
+
                                 }
 
                                 $data[$x]['debit_total_repot'] = round($subTotalDebitRpt, $decimalPlaceRpt);
                                 $data[$x]['credit_total_repot'] = round($subTotalCreditRpt, $decimalPlaceRpt);
+                                $balanceReport = $subTotalDebitRpt - $subTotalCreditRpt;
+                                $data[$x]['balanceReport'] = round($balanceReport, $decimalPlaceRpt);
 
                                 $x++;
                                 // $data[$x][''] = '';
@@ -2410,6 +2458,31 @@ WHERE
     erp_bookinvsuppmaster.companySystemID = "'.$companyID.'"
     UNION ALL
     SELECT
+    erp_paysupplierinvoicemaster.BPVdate AS documentDate,
+	erp_paysupplierinvoicemaster.BPVcode AS documentCode,
+	erp_paysupplierinvoicemaster.BPVNarration AS description,
+	erp_paysupplierinvoicemaster.directPaymentPayeeEmpID AS employeeID,
+    (erp_paysupplierinvoicemaster.payAmountCompLocal + erp_paysupplierinvoicemaster.VATAmountLocal) AS amountLocal,
+    (erp_paysupplierinvoicemaster.payAmountCompRpt + erp_paysupplierinvoicemaster.VATAmountRpt) AS amountRpt,
+    srp_erp_pay_monthlydeductionmaster.monthlyDeductionCode AS referenceDoc,
+    srp_erp_pay_monthlydeductionmaster.dateMD AS referenceDocDate,
+    srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID,
+    currencymaster.DecimalPlaces AS localCurrencyDecimals,
+    currencymasterRpt.DecimalPlaces As rptCurrencyDecimals,
+    5 AS type
+FROM
+	erp_paysupplierinvoicemaster
+    LEFT JOIN srp_erp_pay_monthlydeductionmaster ON erp_paysupplierinvoicemaster.PayMasterAutoId = srp_erp_pay_monthlydeductionmaster.pv_id
+    LEFT JOIN currencymaster ON erp_paysupplierinvoicemaster.localCurrencyID = currencymaster.currencyID
+    LEFT JOIN currencymaster AS currencymasterRpt ON erp_paysupplierinvoicemaster.companyRptCurrencyID = currencymasterRpt.currencyID
+WHERE
+    erp_paysupplierinvoicemaster.invoiceType = 6 AND 
+    DATE(erp_paysupplierinvoicemaster.BPVdate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
+    erp_paysupplierinvoicemaster.approved = -1 AND
+    5 IN (' . join(',', json_decode($typeID)) . ') AND
+    erp_paysupplierinvoicemaster.companySystemID = "'.$companyID.'"
+    UNION ALL
+    SELECT
 	erp_bookinvsuppmaster.bookingDate AS documentDate,
 	erp_bookinvsuppmaster.bookingInvCode AS documentCode,
 	erp_bookinvsuppmaster.comments AS description,
@@ -2666,6 +2739,20 @@ WHERE
     erp_paysupplierinvoicemaster.approved = -1 AND
     erp_paysupplierinvoicemaster.directPaymentPayeeEmpID IN (' . join(',', json_decode($employeeDatas)) . ') AND
     2 IN (' . join(',', json_decode($typeID)) . ')  
+      UNION ALL
+    SELECT
+	erp_paysupplierinvoicemaster.directPaymentPayeeEmpID AS employeeID,
+    employees.empName AS employeeName,
+    employees.empID AS empID
+FROM
+	erp_paysupplierinvoicemaster
+LEFT JOIN employees ON erp_paysupplierinvoicemaster.directPaymentPayeeEmpID = employees.employeeSystemID
+WHERE
+    erp_paysupplierinvoicemaster.invoiceType = 6 AND 
+    DATE(erp_paysupplierinvoicemaster.BPVdate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
+    erp_paysupplierinvoicemaster.approved = -1 AND
+    erp_paysupplierinvoicemaster.directPaymentPayeeEmpID IN (' . join(',', json_decode($employeeDatas)) . ') AND
+    5 IN (' . join(',', json_decode($typeID)) . ')  
     UNION ALL 
     SELECT
 	srp_erp_iouvouchers.empID AS employeeID,
@@ -3278,6 +3365,42 @@ WHERE
 
                                 $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = round($subTotalDebitRpt, $decimalPlaceRpt);
                                 $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($subTotalCreditRpt, $decimalPlaceRpt);
+
+                                $x++;
+                                $data[$x]['Company ID'] = '';
+                                $data[$x]['Company Name'] = '';
+                                $data[$x]['GL  Type'] = '';
+                                $data[$x]['Template Description'] = '';
+                                $data[$x]['Document Type'] = '';
+                                $data[$x]['Document Number'] = '';
+                                $data[$x]['Date'] = '';
+                                $data[$x]['Document Narration'] = '';
+                                $data[$x]['Service Line'] = '';
+                                $data[$x]['Contract'] = '';
+
+                                if (in_array('confi_name', $extraColumns)) {
+                                    $data[$x]['Confirmed By'] = '';
+                                }
+
+                                if (in_array('confi_date', $extraColumns)) {
+                                    $data[$x]['Confirmed Date'] = '';
+                                }
+
+                                if (in_array('app_name', $extraColumns)) {
+                                    $data[$x]['Approved By'] = '';
+                                }
+
+                                if (in_array('app_date', $extraColumns)) {
+                                    $data[$x]['Approved Date'] = '';
+                                }
+                                $data[$x]['Supplier/Customer'] = 'Balance';
+                                if ($checkIsGroup->isGroup == 0) {
+                                    $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] =  '';
+                                    $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = round($subTotalDebitLocal-$subTotalCreditRptLocal, $decimalPlaceLocal);
+                                }
+
+                                $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] =  '';
+                                $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($subTotalDebitRpt-$subTotalCreditRpt, $decimalPlaceRpt);
 
                                 $x++;
                                 $data[$x][''] = '';
@@ -5183,83 +5306,13 @@ AND MASTER .canceledYN = 0';
         $reportID = $request->reportID;
         switch ($reportID) {
             case 'FGL':
-                $reportTypeID = $request->reportTypeID;
-                $reportSD = $request->reportSD;
-                $type = $request->type;
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
-                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
-                $checkIsGroup = Company::find($request->companySystemID);
-                $data = array();
-                $output = $this->getGeneralLedgerQryForPDF($request);
-                $decimalPlace = array();
-                $currencyIdLocal = 1;
-                $currencyIdRpt = 2;
+                $db = isset($request->db) ? $request->db : ""; 
 
-                $decimalPlaceCollectLocal = collect($output)->pluck('documentLocalCurrencyID')->toArray();
-                $decimalPlaceUniqueLocal = array_unique($decimalPlaceCollectLocal);
+                $employeeID = \Helper::getEmployeeSystemID();
+                GeneralLedgerPdfJob::dispatch($db, $request, [$employeeID]);
 
-                $decimalPlaceCollectRpt = collect($output)->pluck('documentRptCurrencyID')->toArray();
-                $decimalPlaceUniqueRpt = array_unique($decimalPlaceCollectRpt);
-
-
-                if (!empty($decimalPlaceUniqueLocal)) {
-                    $currencyIdLocal = $decimalPlaceUniqueLocal[0];
-                }
-
-                if (!empty($decimalPlaceUniqueRpt)) {
-                    $currencyIdRpt = $decimalPlaceUniqueRpt[0];
-                }
-
-                $extraColumns = [];
-                if (isset($request->extraColoumns) && count($request->extraColoumns) > 0) {
-                    $extraColumns = collect($request->extraColoumns)->pluck('id')->toArray();
-                }
-
-                $requestCurrencyLocal = CurrencyMaster::where('currencyID', $currencyIdLocal)->first();
-                $requestCurrencyRpt = CurrencyMaster::where('currencyID', $currencyIdRpt)->first();
-
-                $decimalPlaceLocal = !empty($requestCurrencyLocal) ? $requestCurrencyLocal->DecimalPlaces : 3;
-                $decimalPlaceRpt = !empty($requestCurrencyRpt) ? $requestCurrencyRpt->DecimalPlaces : 2;
-
-                $currencyLocal = $requestCurrencyLocal->CurrencyCode;
-                $currencyRpt = $requestCurrencyRpt->CurrencyCode;
-
-                $totaldocumentLocalAmountDebit = array_sum(collect($output)->pluck('localDebit')->toArray());
-                $totaldocumentLocalAmountCredit = array_sum(collect($output)->pluck('localCredit')->toArray());
-                $totaldocumentRptAmountDebit = array_sum(collect($output)->pluck('rptDebit')->toArray());
-                $totaldocumentRptAmountCredit = array_sum(collect($output)->pluck('rptCredit')->toArray());
-
-                $finalData = array();
-                foreach ($output as $val) {
-                    $finalData[$val->glCode . ' - ' . $val->AccountDescription][] = $val;
-                }
-
-                $dataArr = array(
-                    'reportData' => $finalData,
-                    'extraColumns' => $extraColumns,
-                    'companyName' => $checkIsGroup->CompanyName,
-                    'isGroup' => $checkIsGroup->isGroup,
-                    'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2,
-                    'currencyLocal' => $currencyLocal,
-                    'decimalPlaceLocal' => $decimalPlaceLocal,
-                    'decimalPlaceRpt' => $decimalPlaceRpt,
-                    'currencyRpt' => $currencyRpt,
-                    'reportDate' => date('d/m/Y H:i:s A'),
-                    'fromDate' => \Helper::dateFormat($request->fromDate),
-                    'toDate' => \Helper::dateFormat($request->toDate),
-                    'totaldocumentLocalAmountDebit' =>  round((isset($totaldocumentLocalAmountDebit) ? $totaldocumentLocalAmountDebit : 0), 3),
-                    'totaldocumentLocalAmountCredit' => round((isset($totaldocumentLocalAmountCredit) ? $totaldocumentLocalAmountCredit : 0), 3),
-                    'totaldocumentRptAmountDebit' => round((isset($totaldocumentRptAmountDebit) ? $totaldocumentRptAmountDebit : 0), 3),
-                    'totaldocumentRptAmountCredit' => round((isset($totaldocumentRptAmountCredit) ? $totaldocumentRptAmountCredit : 0), 3),
-                );
-
-                $html = view('print.report_general_ledger', $dataArr);
-
-                $pdf = \App::make('dompdf.wrapper');
-                $pdf->loadHTML($html);
-
-                return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream();
-
+                return $this->sendResponse([], "General Ledger PDF report has been sent queue");
                 break;
             default:
                 return $this->sendError('No report ID found');

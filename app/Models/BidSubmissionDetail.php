@@ -86,6 +86,7 @@ class BidSubmissionDetail extends Model
         'evaluation_detail_id',
         'score_id',
         'score',
+        'result',
         'created_at',
         'created_by',
         'updated_at',
@@ -103,6 +104,7 @@ class BidSubmissionDetail extends Model
         'tender_id' => 'integer',
         'evaluation_detail_id' => 'integer',
         'score_id' => 'integer',
+        'result' => 'float',
         'score' => 'integer',
         'created_by' => 'integer',
         'updated_by' => 'integer'

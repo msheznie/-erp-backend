@@ -298,7 +298,7 @@ class AccountsPayableReportAPIController extends AppBaseController
         $reportID = $request->reportID;
         switch ($reportID) {
             case 'APSL': //Supplier Ledger Report
-                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'controlAccountsSystemID'));
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                 $checkIsGroup = Company::find($request->companySystemID);
                 $output = $this->getSupplierLedgerQRY($request);
 
@@ -1085,7 +1085,7 @@ class AccountsPayableReportAPIController extends AppBaseController
 
             case 'APSL':
                 $type = $request->type;
-                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'controlAccountsSystemID'));
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                 $checkIsGroup = Company::find($request->companySystemID);
                 $output = $this->getSupplierLedgerQRY($request);
                 $fromDate = $request->fromDate;
@@ -1622,7 +1622,8 @@ class AccountsPayableReportAPIController extends AppBaseController
         $suppliers = (array)$request->suppliers;
         $supplierSystemID = collect($suppliers)->pluck('supplierCodeSytem')->toArray();
 
-        $controlAccountsSystemID = $request->controlAccountsSystemID;
+        $controlAccountsSystemIDs = (array)$request->controlAccountsSystemID;
+        $controlAccountsSystemID = collect($controlAccountsSystemIDs)->pluck('id')->toArray();
 
         $currency = $request->currencyID;
         $currencyQry = '';
@@ -1660,7 +1661,9 @@ class AccountsPayableReportAPIController extends AppBaseController
                     CURDATE() as runDate,
                     ' . $invoiceAmountQry . ',
                     ' . $currencyQry . ',
-                    ' . $decimalPlaceQry . '
+                    ' . $decimalPlaceQry . ',
+                    finalAgingDetail.glCode,
+                    finalAgingDetail.AccountDescription
                 FROM
                 (
                 SELECT
@@ -1686,7 +1689,10 @@ class AccountsPayableReportAPIController extends AppBaseController
                     MAINQUERY.docLocalAmount AS documentAmountLocal,
                     rptCurrencyDet.CurrencyCode as rptCurrencyCode,
                     rptCurrencyDet.DecimalPlaces as documentRptDecimalPlaces,
-                    MAINQUERY.docRptAmount AS documentAmountRpt
+                    MAINQUERY.docRptAmount AS documentAmountRpt,
+                    MAINQUERY.chartOfAccountSystemID AS chartOfAccountSystemID,
+                    MAINQUERY.glCode AS glCode,
+                    chartofaccounts.AccountDescription
                 FROM
                     (
                 SELECT
@@ -1718,10 +1724,11 @@ class AccountsPayableReportAPIController extends AppBaseController
                 WHERE
                     DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"
                     AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
-                    AND erp_generalledger.chartOfAccountSystemID = "' . $controlAccountsSystemID . '"
+                    AND erp_generalledger.chartOfAccountSystemID IN (' . join(',', $controlAccountsSystemID) . ')
                     AND erp_generalledger.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
                     ) AS MAINQUERY
                 LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = MAINQUERY.supplierCodeSystem
+                LEFT JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = MAINQUERY.chartOfAccountSystemID
                 LEFT JOIN currencymaster as transCurrencyDet ON transCurrencyDet.currencyID=MAINQUERY.documentTransCurrencyID
                 LEFT JOIN currencymaster as localCurrencyDet ON localCurrencyDet.currencyID=MAINQUERY.documentLocalCurrencyID
                 LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUERY.documentRptCurrencyID
@@ -1750,7 +1757,10 @@ class AccountsPayableReportAPIController extends AppBaseController
                     SUM(IFNULL(MAINQUERY.docLocalAmount,0)) AS documentAmountLocal,
                     rptCurrencyDet.CurrencyCode as rptCurrencyCode,
                     rptCurrencyDet.DecimalPlaces as documentRptDecimalPlaces,
-                    SUM(IFNULL(MAINQUERY.docRptAmount,0)) AS documentAmountRpt
+                    SUM(IFNULL(MAINQUERY.docRptAmount,0)) AS documentAmountRpt,
+                    MAINQUERY.chartOfAccountSystemID,
+                    MAINQUERY.glCode,
+                    chartofaccounts.AccountDescription
                 FROM
                     (
                 SELECT
@@ -1782,15 +1792,16 @@ class AccountsPayableReportAPIController extends AppBaseController
                 WHERE
                     DATE(erp_generalledger.documentDate) < "' . $fromDate . '"
                     AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
-                    AND erp_generalledger.chartOfAccountSystemID = "' . $controlAccountsSystemID . '"
+                    AND erp_generalledger.chartOfAccountSystemID IN (' . join(',', $controlAccountsSystemID) . ')
                     AND erp_generalledger.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
                      ) AS MAINQUERY
                 LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = MAINQUERY.supplierCodeSystem
+                LEFT JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = MAINQUERY.chartOfAccountSystemID
                 LEFT JOIN currencymaster as transCurrencyDet ON transCurrencyDet.currencyID=MAINQUERY.documentTransCurrencyID
                 LEFT JOIN currencymaster as localCurrencyDet ON localCurrencyDet.currencyID=MAINQUERY.documentLocalCurrencyID
                 LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUERY.documentRptCurrencyID
                  LEFT JOIN companymaster ON companymaster.companySystemID = MAINQUERY.companySystemID
-                 GROUP BY MAINQUERY.supplierCodeSystem ) as finalAgingDetail ORDER BY documentDate,suppliername';
+                 GROUP BY MAINQUERY.supplierCodeSystem, MAINQUERY.chartOfAccountSystemID ) as finalAgingDetail ORDER BY documentDate,suppliername';
         return \DB::select($query);
     }
 
@@ -5479,7 +5490,7 @@ ORDER BY
 
     public function supplierLedgerPdf($request, $sentEmail = false)
     {
-        $request = (object)$this->convertArrayToSelectedValue($request, array('currencyID', 'controlAccountsSystemID'));
+        $request = (object)$this->convertArrayToSelectedValue($request, array('currencyID'));
         $checkIsGroup = Company::find($request->companySystemID);
 
         $companyLogo = $checkIsGroup->logo_url;

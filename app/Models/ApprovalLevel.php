@@ -71,6 +71,7 @@ class ApprovalLevel extends Model
         'isCategoryWiseApproval',
         'categoryID',
         'isActive',
+        'is_deleted',
         'timeStamp'
     ];
 
@@ -97,7 +98,8 @@ class ApprovalLevel extends Model
         'valueTo' => 'float',
         'isCategoryWiseApproval' => 'integer',
         'categoryID' => 'integer',
-        'isActive' => 'integer'
+        'isActive' => 'integer',
+        'is_deleted' => 'integer'
     ];
 
     /**

@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Models;
-
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Eloquent as Model;
 
 /**
@@ -65,9 +65,9 @@ use Eloquent as Model;
  */
 class TenderBidFormatDetail extends Model
 {
-
+    use SoftDeletes;
     public $table = 'tender_bid_format_detail';
-    
+
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
@@ -81,7 +81,9 @@ class TenderBidFormatDetail extends Model
         'is_disabled',
         'boq_applicable',
         'created_by',
-        'updated_by'
+        'updated_by',
+        'deleted_by',
+        'formula_string'
     ];
 
     /**
@@ -97,7 +99,8 @@ class TenderBidFormatDetail extends Model
         'is_disabled' => 'integer',
         'boq_applicable' => 'integer',
         'created_by' => 'integer',
-        'updated_by' => 'integer'
+        'updated_by' => 'integer',
+        'formula_string' => 'string'
     ];
 
     /**

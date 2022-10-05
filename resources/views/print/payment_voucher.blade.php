@@ -168,6 +168,20 @@
             background-color: #ffffff !important;
             border-right: 1px solid #ffffffff !important;
         }
+
+        .container
+            {
+                display: block;
+                max-width:230px;
+                max-height:95px;
+                width: auto;
+                height: auto;
+            }
+
+        .table_height
+            {
+                max-height: 60px !important;
+            }
     </style>
 </head>
 <body>
@@ -196,26 +210,14 @@
 </div>
 <div id="watermark"></div>
 <div class="card-body content" id="print-section">
-    <table style="width: 100%">
+    <table style="width: 100%" class="table_height">
         <tr style="width: 100%">
-            <td valign="top" style="width: 50%">
+            <td valign="top" style="width: 20%">
                 @if($masterdata->company)
-                    <img src="{{$masterdata->company->logo_url}}" width="180px" height="60px">
+                    <img src="{{$masterdata->company->logo_url}}" width="180px" height="60px" class="container">
                 @endif
-                <br>
-
-                <div>
-                    <span style="font-size: 18px">
-                        @if($masterdata->documentType == 13)
-                            Customer Invoice Receipt
-                        @endif
-                        @if($masterdata->documentType == 14)
-                            Direct Receipt
-                        @endif
-                    </span>
-                </div>
             </td>
-            <td valign="top" style="width: 50%">
+            <td valign="top" style="width: 80%">
                 @if($masterdata->company)
                     <span style="font-size: 24px;font-weight: 400"> {{$masterdata->company->CompanyName}}</span>
                 @endif
@@ -263,11 +265,32 @@
         </tr>
     </table>
     <hr style="color: #d3d9df">
+    <div>
+        <span style="font-size: 18px">
+            @if($masterdata->invoiceType == 2)
+                Supplier Payment
+            @endif
+            @if($masterdata->invoiceType == 3)
+                Direct Payment
+            @endif
+            @if($masterdata->invoiceType == 5)
+                Supplier Advance Payment
+            @endif
+            @if($masterdata->invoiceType == 6)
+                Employee Payment
+            @endif
+            @if($masterdata->invoiceType == 7)
+                Employee Advance Payment
+            @endif
+        </span>
+    </div>
+    <br>
+    <br>
     <table style="width: 100%">
         <tr style="width:100%">
             <td style="width: 60%">
                 <table>
-                    @if($masterdata->invoiceType != 6)
+                    @if($masterdata->invoiceType != 6 && $masterdata->invoiceType != 7)
                         <tr>
                             <td width="150px">
                                 <span class="font-weight-bold">Payee Code</span>
@@ -284,10 +307,10 @@
                     @endif
                     <tr>
                         <td width="50px">
-                            @if($masterdata->invoiceType == 6)
+                            @if($masterdata->invoiceType == 6 || $masterdata->invoiceType == 7)
                                 <span class="font-weight-bold">Employee Name</span>
                             @endif
-                            @if($masterdata->invoiceType != 6)
+                            @if($masterdata->invoiceType != 6 && $masterdata->invoiceType != 7)
                                 <span class="font-weight-bold">Payee Name</span>
                             @endif
                         </td>
@@ -508,13 +531,15 @@
             </table>
         </div>
     @endif
-    @if($masterdata->invoiceType == 5)
+    @if($masterdata->invoiceType == 5 || $masterdata->invoiceType == 7)
         <div style="margin-top: 30px">
             <table class="table table-bordered" style="width: 100%;">
                 <thead>
                 <tr class="theme-tr-head">
                     <th>#</th>
-                    <th class="text-center">Purchase Order No</th>
+                    @if($masterdata->invoiceType == 5)
+                        <th class="text-center">Purchase Order No</th>
+                    @endif
                     <th class="text-center">Comment</th>
                     <th class="text-center">Payment Amount</th>
                     <th class="text-center">Local Amt (
@@ -535,7 +560,9 @@
                 @foreach ($masterdata->advancedetail as $item)
                     <tr style="border-top: 1px solid #ffffff !important;border-bottom: 1px solid #ffffff !important;">
                         <td>{{$loop->iteration}}</td>
-                        <td>{{$item->purchaseOrderCode}}</td>
+                        @if($masterdata->invoiceType == 5)
+                            <td>{{$item->purchaseOrderCode}}</td>
+                        @endif
                         <td>{{$item->comments}}</td>
                         <td class="text-right">{{number_format($item->paymentAmount, $transDecimal)}}</td>
                         <td class="text-right">{{number_format($item->localAmount, $transDecimal)}}</td>
@@ -543,7 +570,11 @@
                     </tr>
                 @endforeach
                 <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
-                    <td colspan="2" class="text-right border-bottom-remov">&nbsp;</td>
+                    @if($masterdata->invoiceType == 5)
+                        <td colspan="2" class="text-right border-bottom-remov">&nbsp;</td>
+                    @else
+                        <td class="text-right border-bottom-remov">&nbsp;</td>
+                    @endif
                     <td class="text-right" style="background-color: rgb(215,215,215)">Total Payment</td>
                     <td class="text-right"
                         style="background-color: rgb(215,215,215)">{{number_format($advancePayDetailTotTra, $transDecimal)}}</td>
