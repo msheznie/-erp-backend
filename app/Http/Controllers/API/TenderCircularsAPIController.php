@@ -357,8 +357,14 @@ class TenderCircularsAPIController extends AppBaseController
         if(isset($input['circularId']) && $input['circularId'] > 0){
            $circular = CircularAmendments::select('amendment_id')->where('circular_id',$input['circularId'])->get()->toArray();
            if(sizeof($circular) > 0){
-               $attachment = DocumentAttachments::whereIn('attachmentID',$circular)->get();
-               $data['amended'] = $attachment;
+               $attachmentAmended = DocumentAttachments::whereIn('attachmentID',$circular)->get();
+
+               $i = 0;
+               foreach  ($attachmentAmended as $r){
+                   $attachmentAmended[$i]['menu'] =   $r['attachmentDescription'] . '_' . $r['order_number'];
+                   $i++;
+               }
+               $data['amended'] = $attachmentAmended;
            }
         }
 
