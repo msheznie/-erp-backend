@@ -80,7 +80,8 @@ class ScheduleBidFormatDetails extends Model
         'value',
         'created_by',
         'updated_by',
-        'company_id'
+        'company_id',
+        'bid_master_id'
     ];
 
     /**
