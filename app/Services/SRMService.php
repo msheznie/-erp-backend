@@ -2490,7 +2490,10 @@ class SRMService
         }, 'pricing_shedule_details' => function ($q) use ($bidMasterId) {
             $q->with(['bid_main_work' => function ($q) use ($bidMasterId) {
                 $q->where('bid_master_id', $bidMasterId);
-            },'bid_format_detail']);
+            },'bid_format_detail' =>function ($q) use ($bidMasterId) {
+                $q->where('bid_master_id', $bidMasterId);
+                $q->orWhere('bid_master_id', null);
+            }]);
         }])->where('tender_id', $tenderId)->get();
 
         $data['bidSubmitted'] = $this->getBidMasterData($bidMasterId);
@@ -2653,7 +2656,7 @@ class SRMService
         $bidMasterId = $request->input('extra.bidMasterId');
         $detail = $request->input('extra.detail');
         $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
-
+        
         DB::beginTransaction();
         try {
             $att['main_works_id'] = $detail['id'];
@@ -2679,6 +2682,175 @@ class SRMService
                 $att['created_by'] = $supplierRegId;
                 $result = BidMainWork::create($att);
             }
+
+                            
+          $pricing_shedule = PricingScheduleDetail::where('id',$detail['id'])->first();
+
+
+        $outcome = DB::table('srm_pricing_schedule_detail')->where('bid_format_id',$detail['bid_format_id'])->where('pricing_schedule_master_id',$detail['pricing_schedule_master_id']) 
+        //->leftJoin('srm_schedule_bid_format_details', 'srm_pricing_schedule_detail.id', '=', 'srm_schedule_bid_format_details.bid_format_detail_id')
+        ->join('tender_field_type', 'srm_pricing_schedule_detail.field_type', '=', 'tender_field_type.id')
+        ->leftJoin('srm_bid_main_work', function($join) use($bidMasterId){
+            $join->on('srm_pricing_schedule_detail.id', '=', 'srm_bid_main_work.main_works_id');
+            $join->where('srm_bid_main_work.bid_master_id',$bidMasterId) ;
+        })
+        ->leftJoin('srm_schedule_bid_format_details', function($join) use($bidMasterId){
+            $join->on('srm_pricing_schedule_detail.id', '=', 'srm_schedule_bid_format_details.bid_format_detail_id');
+         //   $join->where('srm_schedule_bid_format_details.bid_master_id',$bidMasterId) ;
+           // $join->orWhere('srm_schedule_bid_format_details.bid_master_id', null);
+        })
+        ->select('srm_pricing_schedule_detail.id as id','srm_pricing_schedule_detail.is_disabled','srm_pricing_schedule_detail.field_type as typeId','srm_pricing_schedule_detail.formula_string','srm_pricing_schedule_detail.bid_format_detail_id','srm_schedule_bid_format_details.bid_master_id',
+                DB::raw('(CASE WHEN srm_pricing_schedule_detail.field_type = 4 THEN srm_schedule_bid_format_details.value 
+                            WHEN (srm_pricing_schedule_detail.field_type != 4 && srm_pricing_schedule_detail.is_disabled = 1) THEN srm_schedule_bid_format_details.value    
+                            WHEN (srm_pricing_schedule_detail.field_type != 4 && srm_pricing_schedule_detail.boq_applicable = 1) THEN srm_bid_main_work.total_amount    
+                            WHEN (srm_pricing_schedule_detail.is_disabled = 0 && srm_pricing_schedule_detail.boq_applicable = 0) THEN srm_bid_main_work.total_amount  
+                            END) AS value'))  
+        ->get();
+
+        $details = array_map(function($item) {
+            return (array)$item; 
+        }, $outcome->toArray());
+
+
+        $details1 = [];
+
+
+
+     
+  
+    
+            foreach($details as $key=>$val)
+            {   
+             
+                if($val['typeId'] == 4)
+                {   $p = '';
+                    $cont = '';
+                    $data = [];
+                    $formula_arr = null;  
+
+
+                    if (!is_null($val['formula_string'])) {
+                           
+                            if ($val['formula_string']) {
+                            
+                                $formula_arr = explode('~', $val['formula_string']);
+                     
+                                foreach ($formula_arr as $formula_row) {
+                                    if (trim($formula_row) != '') 
+                                    {
+                                        $val1 = '';
+    
+                                        $elementType = $formula_row[0];
+                                        if ($elementType == '$') {
+                                            $elementArr = explode('$', $formula_row);
+                                            $value = intval($elementArr[1]);
+                                            foreach($details as $result)
+                                            {
+                                                if($result['bid_format_detail_id'] == $value)
+                                                {
+                                            
+                                                        if($result['typeId'] == 2)
+                                                        {
+                                                            if($result['value'] != null)
+                                                            {
+                                                                $val1 = $result['value'];
+                                                            }
+                                                            else
+                                                            {
+                                                                $val1 = 0;
+                                                            }
+                                                            
+                                                        }
+                                                        else if($result['typeId'] == 3)
+                                                        {
+                                                           
+    
+                                                            if($result['value'] != null)
+                                                            {
+                                                                $val1 = $result['value']/100;
+                                                            }
+                                                            else
+                                                            {
+                                                                $val1 = 0;
+                                                            }
+                                                            
+                                                        }
+                                                    $cont = $cont.$val1;
+                                                    break;
+                                                }
+                                                
+                                            }
+                                       
+                                          
+                                        }
+                                        else if($elementType == '|')
+                                        {
+                                            
+                                            $elementArr1 = explode('|', $formula_row);
+                                            $value = ($elementArr1[1]);
+                                            $cont = $cont.$value;
+                                           
+                                               
+                                        }
+                                        else if($elementType == '_')
+                                        {
+                                            $elementArr2 = explode('_', $formula_row);
+                                            if(empty($elementArr2[1]) || is_null($elementArr2))
+                                            {
+                                                $value2 = 0;
+                                            }
+                                            else
+                                            {
+                                                $value2 = ($elementArr2[1]);
+                                            }
+    
+                                            
+                                            $cont = $cont.$value2;
+                                            
+    
+                                        }
+                                    }
+                                   
+                                }
+                                
+                             
+                                $p = eval('return '.$cont.';');
+    
+                            } 
+                        
+                            }
+                    
+                            $data[$val['id']] = $p;
+    
+                            
+                            array_push($details1,$data);
+                        }
+                    
+    
+            }
+             
+            // return [
+            //     'success' => true,
+            //     'message' => 'Successfully Saved',
+            //     'data' =>  $details1
+            // ];
+    
+            foreach($details1 as $val)
+            {
+                foreach($val as $key=>$val1)
+                {
+                    
+                    $flight = ScheduleBidFormatDetails::updateOrCreate(
+                        ['bid_format_detail_id' => $key, 'schedule_id' => $pricing_shedule->pricing_schedule_master_id,'bid_master_id'=>$bidMasterId],
+                        ['value' => $val1,'bid_master_id',$bidMasterId]
+                    );
+
+                }
+            
+        
+            }
+
+
 
             DB::commit();
             return [
@@ -2717,7 +2889,7 @@ class SRMService
         $detail = $request->input('extra.detail');
         $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
 
-
+   
 
         DB::beginTransaction();
         try {
@@ -2772,13 +2944,21 @@ class SRMService
         $pricing_shedule = PricingScheduleDetail::where('id',$mainWorkId)->first();
 
         $outcome = DB::table('srm_pricing_schedule_detail')->where('bid_format_id',$pricing_shedule->bid_format_id)->where('pricing_schedule_master_id',$pricing_shedule->pricing_schedule_master_id) 
-         ->leftJoin('srm_schedule_bid_format_details', 'srm_pricing_schedule_detail.id', '=', 'srm_schedule_bid_format_details.bid_format_detail_id')
+         //->leftJoin('srm_schedule_bid_format_details', 'srm_pricing_schedule_detail.id', '=', 'srm_schedule_bid_format_details.bid_format_detail_id')
          ->join('tender_field_type', 'srm_pricing_schedule_detail.field_type', '=', 'tender_field_type.id')
-         ->leftJoin('srm_bid_main_work', 'srm_pricing_schedule_detail.id', '=', 'srm_bid_main_work.main_works_id')  
+         ->leftJoin('srm_bid_main_work', function($join) use($bidMasterId){
+            $join->on('srm_pricing_schedule_detail.id', '=', 'srm_bid_main_work.main_works_id');
+            $join->where('srm_bid_main_work.bid_master_id',$bidMasterId) ;
+         })
+         ->leftJoin('srm_schedule_bid_format_details', function($join) use($bidMasterId){
+            $join->on('srm_pricing_schedule_detail.id', '=', 'srm_schedule_bid_format_details.bid_format_detail_id');
+            //$join->where('srm_schedule_bid_format_details.bid_master_id',$bidMasterId) ;
+        })
         ->select('srm_pricing_schedule_detail.id as id','srm_pricing_schedule_detail.is_disabled','srm_pricing_schedule_detail.field_type as typeId','srm_pricing_schedule_detail.formula_string','srm_pricing_schedule_detail.bid_format_detail_id',
                 DB::raw('(CASE WHEN srm_pricing_schedule_detail.field_type = 4 THEN srm_schedule_bid_format_details.value 
                                WHEN (srm_pricing_schedule_detail.field_type != 4 && srm_pricing_schedule_detail.is_disabled = 1) THEN srm_schedule_bid_format_details.value    
                                WHEN (srm_pricing_schedule_detail.field_type != 4 && srm_pricing_schedule_detail.boq_applicable = 1) THEN srm_bid_main_work.total_amount    
+                               WHEN (srm_pricing_schedule_detail.is_disabled = 0 && srm_pricing_schedule_detail.boq_applicable = 0) THEN srm_bid_main_work.total_amount 
                                END) AS value'))  
         ->get();
 
@@ -2788,6 +2968,8 @@ class SRMService
 
     
         $details1 = [];
+
+        
         foreach($details as $key=>$val)
         {   
          
@@ -2840,7 +3022,7 @@ class SRMService
                                                         }
                                                         else
                                                         {
-                                                            $val1 = 1;
+                                                            $val1 = 0;
                                                         }
                                                         
                                                     }
@@ -2896,16 +3078,19 @@ class SRMService
                     }
                 
 
-                }
+         }
+         
 
                     foreach($details1 as $val)
                     {
                         foreach($val as $key=>$val1)
                         {
-                            
-                            $updated_val['value'] = $val1; 
-                        ScheduleBidFormatDetails::where('bid_format_detail_id', $key)->update($updated_val);
-                    
+                          
+                            $flight = ScheduleBidFormatDetails::updateOrCreate(
+                                ['bid_format_detail_id' => $key, 'schedule_id' => $pricing_shedule->pricing_schedule_master_id,'bid_master_id'=>$bidMasterId],
+                                ['value' => $val1,'bid_master_id',$bidMasterId]
+                            );
+
                         }
                     
                 
