@@ -676,7 +676,11 @@ class TenderCircularsAPIController extends AppBaseController
         try{
             $count = CircularAmendments::where('amendment_id',  $input['amendmentId'])->where('tender_id', $input['tenderMasterId'])->get()->count();
             if($count === 1){
-                return ['success' => true, 'message' => 'This amendment is assigned to a circular, you cannot delete.', 'data' => $count];
+                if($input['action'] == 'U'){
+                    return ['success' => true, 'message' => 'This amendment is assigned to a circular, you cannot update.', 'data' => $count];
+                } elseif ($input['action'] == 'D'){
+                    return ['success' => true, 'message' => 'This amendment is assigned to a circular, you cannot delete.', 'data' => $count];
+                }
             } else {
                 return ['success' => true, 'message' => '', 'data' => $count];
             }
