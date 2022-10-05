@@ -39,6 +39,7 @@ return [
             'table' => 'jobs',
             'queue' => 'default',
             'retry_after' => 60,
+            'timeout' => 180,
         ],
 
         'database_main' => [
@@ -47,6 +48,7 @@ return [
             'table' => 'jobs',
             'queue' => 'default',
             'retry_after' => 60,
+            'timeout' => 180,
         ],
 
         'beanstalkd' => [
