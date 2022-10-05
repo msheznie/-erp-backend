@@ -522,9 +522,10 @@ class TenderCircularsAPIController extends AppBaseController
 
             $file = array();
             foreach ($amendmentsList as $amendments){
-                $file[] = Helper::getFileUrlFromS3($amendments->document_attachments->path);
+                $file[$amendments->document_attachments->originalFileName] = Helper::getFileUrlFromS3($amendments->document_attachments->path);
             }
 
+            Log::info($file);
             if ($result) {
                 DB::commit();
                 foreach ($supplierList as $supplier){
