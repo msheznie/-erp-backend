@@ -2730,7 +2730,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             unset($input['confirmedYN']);
         }
 
-        return$paymentVoucher = $this->paySupplierInvoiceMasterRepository->paySupplierInvoiceListQuery($request, $input, $search, $supplierID, $projectID, $employeeID);
+        $paymentVoucher = $this->paySupplierInvoiceMasterRepository->paySupplierInvoiceListQuery($request, $input, $search, $supplierID, $projectID, $employeeID);
 
         return \DataTables::eloquent($paymentVoucher)
             ->addColumn('Actions', 'Actions', "Actions")

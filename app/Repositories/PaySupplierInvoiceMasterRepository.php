@@ -197,24 +197,6 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
 
     public function paySupplierInvoiceListQuery($request, $input, $search = '', $supplierID, $projectID, $employeeID) {
 
-        if(isset($supplierID[0])){
-            if(empty($supplierID[0])){
-            unset($supplierID[0]);
-            }
-        }
-
-        if(isset($employeeID[0])){
-            if(empty($employeeID[0])){
-            unset($employeeID[0]);
-            }
-        }
-
-        if(isset($projectID[0])){
-            if(empty($projectID[0])){
-            unset($projectID[0]);
-            }
-        }
-
         $selectedCompanyId = $request['companyID'];
         $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
 
