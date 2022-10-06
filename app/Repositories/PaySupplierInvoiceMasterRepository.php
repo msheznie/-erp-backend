@@ -197,21 +197,21 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
 
     public function paySupplierInvoiceListQuery($request, $input, $search = '', $supplierID, $projectID, $employeeID) {
 
-        foreach($supplierID as $key => $value){
-            if(empty($value)){
-                unset($supplierID[$key]);
+        if(isset($supplierID[0])){
+            if(empty($supplierID[0])){
+            unset($supplierID[0]);
             }
         }
 
-        foreach($employeeID as $key => $value){
-            if(empty($value)){
-                unset($employeeID[$key]);
+        if(isset($employeeID[0])){
+            if(empty($employeeID[0])){
+            unset($employeeID[0]);
             }
         }
 
-        foreach($projectID as $key => $value){
-            if(empty($value)){
-                unset($projectID[$key]);
+        if(isset($projectID[0])){
+            if(empty($projectID[0])){
+            unset($projectID[0]);
             }
         }
 
