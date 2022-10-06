@@ -45,6 +45,8 @@ class GeneralLedgerPdfJob implements ShouldQueue
      */
     public function handle()
     {
+        ini_set('max_execution_time', config('app.report_max_execution_limit'));
+        ini_set('memory_limit', config('app.report_max_memory_limit'));
         Log::useFiles(storage_path() . '/logs/geenral-ledger-pdf.log'); 
         $request = $this->requestData;
         $db = $this->dispatch_db;
