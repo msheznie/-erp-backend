@@ -38,8 +38,8 @@ return [
             'driver' => 'database',
             'table' => 'jobs',
             'queue' => 'default',
-            'retry_after' => 60,
-            'timeout' => 180,
+            'retry_after' => 1800,
+            'timeout' => 1800,
         ],
 
         'database_main' => [
@@ -47,8 +47,8 @@ return [
             'connection' => 'main_db',
             'table' => 'jobs',
             'queue' => 'default',
-            'retry_after' => 60,
-            'timeout' => 180,
+            'retry_after' => 1800,
+            'timeout' => 1800,
         ],
 
         'beanstalkd' => [
