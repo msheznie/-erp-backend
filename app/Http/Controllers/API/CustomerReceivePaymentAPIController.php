@@ -2756,7 +2756,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             'projectID',
             'erp_projectmaster.description as project_description',
             'payee.empID',
-            'payee.empName',
+            'payee.empName as employeeName',
             'erp_customerreceivepayment.PayeeName'
         ]);
 
