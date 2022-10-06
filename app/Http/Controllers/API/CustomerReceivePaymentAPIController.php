@@ -528,7 +528,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                     }
                 }
                 if($input['payeeTypeID'] == 2){
-                    if(!$input['PayeeEmpID'] > 0){
+                    if(!$input['employeeID'] > 0){
                         return $this->sendError('Employee field is required', 500);
                     }
                 }
