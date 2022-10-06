@@ -381,12 +381,14 @@ class TenderCircularsAPIController extends AppBaseController
 
         if(isset($input['supplier_id' ])){
             $supplierList = $input['supplier_id' ];
+        } else {
+            return ['success' => false, 'message' => 'Supplier is required'];
         }
 
         $input = $this->convertArrayToSelectedValue($request->all(), array('attachment_id'));
 
         if(!isset($input['description']) && !isset($input['attachment_id'])){
-            return ['success' => false, 'message' => 'Description or Attachment is required'];
+            return ['success' => false, 'message' => 'Description or Amendment is required'];
         }
 
         if(isset($input['id'])) {
