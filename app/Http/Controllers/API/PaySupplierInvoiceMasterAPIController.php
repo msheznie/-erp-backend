@@ -2662,7 +2662,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
     public function getAllPaymentVoucherByCompany(Request $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('month', 'year', 'cancelYN', 'confirmedYN', 'approved', 'invoiceType', 'supplierID', 'chequePaymentYN', 'BPVbank', 'BPVAccount', 'chequeSentToTreasury', 'payment_mode', 'projectID'));
+        $input = $this->convertArrayToSelectedValue($input, array('month', 'year', 'cancelYN', 'confirmedYN', 'approved', 'invoiceType', 'supplierID', 'chequePaymentYN', 'BPVbank', 'BPVAccount', 'chequeSentToTreasury', 'payment_mode', 'projectID','payeeTypeID'));
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -2717,6 +2717,19 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         if(empty($input['payment_mode'])){
             unset($input['payment_mode']);
         }
+        if(empty($input['approved'])){
+            unset($input['approved']);
+        }
+        if(empty($input['cancelYN'])){
+            unset($input['cancelYN']);
+        }
+        if(empty($input['chequePaymentYN'])){
+            unset($input['chequePaymentYN']);
+        }
+        if(empty($input['confirmedYN'])){
+            unset($input['confirmedYN']);
+        }
+
         $paymentVoucher = $this->paySupplierInvoiceMasterRepository->paySupplierInvoiceListQuery($request, $input, $search, $supplierID, $projectID, $employeeID);
 
         return \DataTables::eloquent($paymentVoucher)
