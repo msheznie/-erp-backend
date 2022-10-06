@@ -2979,6 +2979,7 @@ class SRMService
             $att['bid_master_id'] = $bidMasterId;
             $att['main_works_id'] = $detail['main_work_id'];
             $att['qty'] = $detail['bid_boq']['qty'];
+            $att['remarks'] = $detail['bid_boq']['remarks'];
             $att['unit_amount'] = $detail['bid_boq']['unit_amount'];
             $att['total_amount'] = $detail['bid_boq']['total_amount'];
             $att['supplier_registration_id'] = $supplierRegId;
@@ -3382,6 +3383,8 @@ class SRMService
             } else {
                 $group['commonStatus'] = 1;
             }
+
+            
 
             $group['commercial_bid_submission_status'] = $bidSubmissionData['filtered'];
             $group['technical_bid_submission_status'] = $bidSubmissionData['technicalEvaluationCriteria'];
