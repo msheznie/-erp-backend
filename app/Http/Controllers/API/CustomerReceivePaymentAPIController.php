@@ -484,6 +484,9 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             return $this->sendError('Document date is not within the financial period!', 500);
         }
 
+
+
+
         $validator = \Validator::make($input, [
             'companyFinancePeriodID' => 'required|numeric|min:1',
             'companyFinanceYearID' => 'required|numeric|min:1',
@@ -495,6 +498,8 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
         }
+
+
 
         $company = Company::where('companySystemID', $input['companySystemID'])->first();
 
@@ -514,6 +519,27 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             }
         }
 
+
+        if($input['documentType'] == 14){
+            if(isset($input['payeeTypeID'])){
+                if($input['payeeTypeID'] == 1){
+                    if(!$input['customerID'] > 0){
+                        return $this->sendError('Customer field is required', 500);
+                    }
+                }
+                if($input['payeeTypeID'] == 2){
+                    if(!$input['PayeeEmpID'] > 0){
+                        return $this->sendError('Employee field is required', 500);
+                    }
+                }
+                if($input['payeeTypeID'] == 3){
+                    if($input['PayeeName'] == null){
+                        return $this->sendError('Other field is required', 500);
+                    }
+                }
+
+            }
+        }
 
         if ($input['documentType'] == 13 || $input['documentType'] == 15) {
             /*customer reciept*/
