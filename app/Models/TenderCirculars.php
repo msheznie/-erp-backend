@@ -147,5 +147,10 @@ class TenderCirculars extends Model
         return $this->hasMany('App\Models\CircularAmendments', 'circular_id', 'id');
     }
 
+    public function srm_circular_suppliers()
+    {
+        return $this->hasMany('App\Models\CircularSuppliers', 'circular_id', 'id');
+    }
+
     
 }
