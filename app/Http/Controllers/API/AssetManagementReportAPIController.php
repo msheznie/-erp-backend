@@ -900,7 +900,7 @@ class AssetManagementReportAPIController extends AppBaseController
                             if($value->DIPOSED == -1){
                                 $totDisVal += $request->currencyID == 3 ? $value->costUnitRpt : $value->COSTUNIT;
                             }
-                            if($value->DIPOSED == -1){
+                            if($value->DIPOSED == -1 && $request->typeID == 1){
                                 $totDisPro += $request->currencyID == 3 ? (floatval($value->sellingPriceRpt) - floatval($value->costUnitRpt) - floatval($value->acDepAmountRpt)) : (floatval($value->sellingPriceLocal) - floatval($value->COSTUNIT) - floatval($value->adDepAmountLocal));
                             }
 
