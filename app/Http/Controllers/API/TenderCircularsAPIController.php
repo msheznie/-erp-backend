@@ -379,7 +379,10 @@ class TenderCircularsAPIController extends AppBaseController
             $attachmentList = $input['attachment_id'];
         }
 
-        if(isset($input['supplier_id' ])){
+        if(isset($input['supplier_id'])){
+            if(sizeof($input['supplier_id' ]) == 0){
+                return ['success' => false, 'message' => 'Supplier is required'];
+            }
             $supplierList = $input['supplier_id' ];
         } else {
             return ['success' => false, 'message' => 'Supplier is required'];
