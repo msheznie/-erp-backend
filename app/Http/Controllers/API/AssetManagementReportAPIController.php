@@ -294,8 +294,8 @@ class AssetManagementReportAPIController extends AppBaseController
                             $depAmountLocal += $val->depAmountLocal;
                             $costUnitRptDisposed += (($val->DIPOSED == -1) ? $val->costUnitRpt : 0);
                             $costUnitDisposed += (($val->DIPOSED == -1) ? $val->COSTUNIT : 0);
-                            $profitDisposalRpt += (($val->DIPOSED == -1 && $request->typeID == 1) ? ($val->sellingPriceRpt - $val->costUnitRpt - $val->acDepAmountRpt) : 0);
-                            $profitDisposalLocal += (($val->DIPOSED == -1 && $request->typeID == 1) ? ($val->sellingPriceLocal - $val->COSTUNIT - $val->adDepAmountLocal) : 0);
+                            $profitDisposalRpt += (($val->DIPOSED == -1 && $request->typeID == 1 && $val->disposalType == 6) ? ($val->sellingPriceRpt - ($val->costUnitRpt - $val->acDepAmountRpt)) : 0);
+                            $profitDisposalLocal += (($val->DIPOSED == -1 && $request->typeID == 1 && $val->disposalType == 6) ? ($val->sellingPriceLocal - ($val->COSTUNIT - $val->adDepAmountLocal)) : 0);
                             $outputArr[$val->financeCatDescription][] = $val;
                         }
                     }
@@ -887,8 +887,8 @@ class AssetManagementReportAPIController extends AppBaseController
 
                             $disposalValue = $request->currencyID == 3 ? $value->costUnitRpt : $value->COSTUNIT;
                             $data[$x]["Disposals (".$currencyCode.")"] = round((($value->DIPOSED == -1) ? $disposalValue : 0), $decimalPlaces);
-                            $disposalProfit = $request->currencyID == 3 ? (floatval($value->sellingPriceRpt) - floatval($value->costUnitRpt) - floatval($value->acDepAmountRpt)) : (floatval($value->sellingPriceLocal) - floatval($value->COSTUNIT) - floatval($value->adDepAmountLocal));
-                            $data[$x]["Profit / (Loss) on Disposal (".$currencyCode.")"] = round(($value->DIPOSED == -1 && $request->typeID == 1) ? $disposalProfit : 0, $decimalPlaces);
+                            $disposalProfit = $request->currencyID == 3 ? (floatval($value->sellingPriceRpt) - (floatval($value->costUnitRpt) - floatval($value->acDepAmountRpt))) : (floatval($value->sellingPriceLocal) - (floatval($value->COSTUNIT) - floatval($value->adDepAmountLocal)));
+                            $data[$x]["Profit / (Loss) on Disposal (".$currencyCode.")"] = round(($value->DIPOSED == -1 && $request->typeID == 1 && $value->disposalType == 6) ? $disposalProfit : 0, $decimalPlaces);
                             $data[$x]["Impairment"] = 0;
                             $data[$x]["Write-Offs"] = 0;
 
@@ -900,8 +900,8 @@ class AssetManagementReportAPIController extends AppBaseController
                             if($value->DIPOSED == -1){
                                 $totDisVal += $request->currencyID == 3 ? $value->costUnitRpt : $value->COSTUNIT;
                             }
-                            if($value->DIPOSED == -1 && $request->typeID == 1){
-                                $totDisPro += $request->currencyID == 3 ? (floatval($value->sellingPriceRpt) - floatval($value->costUnitRpt) - floatval($value->acDepAmountRpt)) : (floatval($value->sellingPriceLocal) - floatval($value->COSTUNIT) - floatval($value->adDepAmountLocal));
+                            if($value->DIPOSED == -1 && $request->typeID == 1 && $value->disposalType == 6){
+                                $totDisPro += $request->currencyID == 3 ? (floatval($value->sellingPriceRpt) - (floatval($value->costUnitRpt) - floatval($value->acDepAmountRpt))) : (floatval($value->sellingPriceLocal) - (floatval($value->COSTUNIT) - floatval($value->adDepAmountLocal)));
                             }
 
                              $x++;
@@ -3717,6 +3717,7 @@ WHERE
                         erp_fa_financecategory.financeCatDescription,
                         erp_fa_asset_master.COSTGLCODE,
                         erp_fa_asset_master.ACCDEPGLCODE,
+                        erp_fa_asset_disposalmaster.disposalType,   
                         assetType,
                         serviceline.ServiceLineDes,
                         erp_fa_asset_master.serviceLineCode,
@@ -3777,6 +3778,7 @@ WHERE
                         LEFT JOIN erp_location ON erp_location.locationID = erp_fa_asset_master.LOCATION
                         LEFT JOIN erp_grvmaster ON erp_grvmaster.grvAutoID = erp_fa_asset_master.docOriginSystemCode
                         LEFT JOIN erp_fa_asset_disposaldetail ON erp_fa_asset_disposaldetail.faID = erp_fa_asset_master.faID
+                        LEFT JOIN erp_fa_asset_disposalmaster ON erp_fa_asset_disposaldetail.assetdisposalMasterAutoID = erp_fa_asset_disposalmaster.assetdisposalMasterAutoID 
                         INNER JOIN erp_fa_financecategory ON AUDITCATOGARY = erp_fa_financecategory.faFinanceCatID
                         INNER JOIN serviceline ON serviceline.ServiceLineCode = erp_fa_asset_master.serviceLineCode
                     LEFT JOIN (SELECT assetDescription , faID ,faUnitSerialNo,faCode FROM erp_fa_asset_master WHERE erp_fa_asset_master.companySystemID = $request->companySystemID   )  assetGroup ON erp_fa_asset_master.groupTO= assetGroup.faID
