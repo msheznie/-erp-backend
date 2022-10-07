@@ -14,6 +14,7 @@ use App\Models\BidMainWork;
 use App\Models\BidSchedule;
 use App\Models\BidSubmissionDetail;
 use App\Models\BidSubmissionMaster;
+use App\Models\CircularSuppliers;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CountryMaster;
@@ -1866,6 +1867,7 @@ class SRMService
     public function getConsolidatedData($request)
     {
         $tenderMasterId = $request->input('extra.tenderId');
+        $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
         $assignDocumentTypesDeclared = [1];
         $assignDocumentTypes = TenderDocumentTypeAssign::where('tender_id',$tenderMasterId)->whereNotIn('document_type_id',[2, 3])->pluck('document_type_id')->toArray();
         $tenderDates = [];
@@ -1955,7 +1957,15 @@ class SRMService
         ->get();
 
         $data['attachments'] = $attachments;
-        $data['tenderCirculars'] = TenderCirculars::with(['document_amendments.document_attachments'])->where('tender_id', $tenderMasterId)->get();
+        $data['tenderCirculars'] = TenderCirculars::with(['document_amendments.document_attachments'])
+            ->whereHas('srm_circular_suppliers', function($q) use($supplierRegId) {
+                    $q->where('supplier_id', $supplierRegId);
+            })
+            ->where('tender_id', $tenderMasterId)
+            ->where('status', 1)
+
+            ->get();
+
         return [
             'success' => true,
             'message' => 'Consolidated view data Successfully get',
@@ -2979,6 +2989,7 @@ class SRMService
             $att['bid_master_id'] = $bidMasterId;
             $att['main_works_id'] = $detail['main_work_id'];
             $att['qty'] = $detail['bid_boq']['qty'];
+            $att['remarks'] = $detail['bid_boq']['remarks'];
             $att['unit_amount'] = $detail['bid_boq']['unit_amount'];
             $att['total_amount'] = $detail['bid_boq']['total_amount'];
             $att['supplier_registration_id'] = $supplierRegId;
@@ -3382,6 +3393,8 @@ class SRMService
             } else {
                 $group['commonStatus'] = 1;
             }
+
+            
 
             $group['commercial_bid_submission_status'] = $bidSubmissionData['filtered'];
             $group['technical_bid_submission_status'] = $bidSubmissionData['technicalEvaluationCriteria'];
