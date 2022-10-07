@@ -2709,17 +2709,63 @@ class SRMService
         
         $documentAttachedCountAnswer = DocumentAttachments::whereIn('parent_id', $documentAttachedCountIds)->where('documentSystemID', 108)->count();
 
+
+        $documentAttachedCountIdsTechnical = DocumentAttachments::with(['tender_document_types' => function ($q) use ($doucments){
+            $q->where('srm_action', 1);
+        }, 'document_attachments' => function ($q) use ($bidMasterId) {
+            $q->where('documentSystemCode', $bidMasterId);
+        }])->whereHas('tender_document_types', function ($q) use ($doucments){
+        })->where('documentSystemCode', $tenderId)->where('parent_id', null)->where('documentSystemID', 108)->where('envelopType', 2)->where('attachmentType',2)->pluck('attachmentID')->toArray();
         
-        if($evaluvationCriteriaDetailsCount == $bidSubmissionDataCount || $evaluvationCriteriaDetailsCount == 0)  {
+        $documentAttachedCountAnswerTechnical = DocumentAttachments::whereIn('parent_id', $documentAttachedCountIdsTechnical)->where('documentSystemID', 108)->count();
+
+        $technicalEvaluationCriteria = EvaluationCriteriaDetails::where('is_final_level', 0)
+            ->where('critera_type_id', 2)
+            ->where('tender_id', $tenderId)
+            ->count();
+
+        $technicalEvaluationCriteriaAnswer = EvaluationCriteriaDetails::where('critera_type_id', 2)
+            ->where('tender_id', $tenderId)
+            ->where('is_final_level', 3)
+            ->count();
+
+            // || ($technicalEvaluationCriteria == $technicalEvaluationCriteriaAnswer)
+        if((count($documentAttachedCountIdsTechnical) == $documentAttachedCountAnswerTechnical) ) {
+            $data['technicalStatus'] = "Completed";
+            if($technicalEvaluationCriteriaAnswer == 0 && $documentAttachedCountAnswerTechnical == 0) {
+                $data['technicalStatus'] = "Completed";
+            }else {
+                if(($technicalEvaluationCriteria == $technicalEvaluationCriteriaAnswer)) {
+                    $data['technicalStatus'] = "Completed";
+                }else {
+                    $data['technicalStatus'] = "Not Completed";
+                }
+            }
+        }else {
+            $data['technicalStatus'] = "Not Completed";
+        }
+
+
+
+
+        if($evaluvationCriteriaDetailsCount == $bidSubmissionDataCount)  {
             $data['goNoGoStatus'] = "Completed";
         }else {
             $data['goNoGoStatus'] = "Not Completed";
         }
 
-        if(count($documentAttachedCountIds) == $documentAttachedCountAnswer || count($documentAttachedCountIds) == 0) {
+        if($evaluvationCriteriaDetailsCount == 0) {
+            $data['goNoGoStatus'] = "Disabled";
+        }
+
+        if(count($documentAttachedCountIds) == $documentAttachedCountAnswer) {
             $data['commonStatus'] = "Completed";
         }else {
             $data['commonStatus'] = "Not Completed";
+        }
+
+        if(count($documentAttachedCountIds) == 0) {
+            $data['commonStatus'] = "Disabled";
         }
         
         return [
