@@ -357,8 +357,14 @@ class TenderCircularsAPIController extends AppBaseController
         if(isset($input['circularId']) && $input['circularId'] > 0){
            $circular = CircularAmendments::select('amendment_id')->where('circular_id',$input['circularId'])->get()->toArray();
            if(sizeof($circular) > 0){
-               $attachment = DocumentAttachments::whereIn('attachmentID',$circular)->get();
-               $data['amended'] = $attachment;
+               $attachmentAmended = DocumentAttachments::whereIn('attachmentID',$circular)->get();
+
+               $i = 0;
+               foreach  ($attachmentAmended as $r){
+                   $attachmentAmended[$i]['menu'] =   $r['attachmentDescription'] . '_' . $r['order_number'];
+                   $i++;
+               }
+               $data['amended'] = $attachmentAmended;
            }
         }
 
@@ -375,12 +381,14 @@ class TenderCircularsAPIController extends AppBaseController
 
         if(isset($input['supplier_id' ])){
             $supplierList = $input['supplier_id' ];
+        } else {
+            return ['success' => false, 'message' => 'Supplier is required'];
         }
 
         $input = $this->convertArrayToSelectedValue($request->all(), array('attachment_id'));
 
         if(!isset($input['description']) && !isset($input['attachment_id'])){
-            return ['success' => false, 'message' => 'Description or Attachment is required'];
+            return ['success' => false, 'message' => 'Description or Amendment is required'];
         }
 
         if(isset($input['id'])) {
@@ -529,7 +537,12 @@ class TenderCircularsAPIController extends AppBaseController
             if ($result) {
                 DB::commit();
                 foreach ($supplierList as $supplier){
-                    Mail::to($supplier->supplier_registration_link->email)->send(new EmailForQueuing("Tender Circular", "Dear Supplier,"."<br /><br />"." Please find details of published tender circular bellow."."<br /><br /><b>". "Circular Name : ". "</b>".$circular[0]['circular_name'] ." "."<br /><br /><b>"."Circular Description : "."</b>". $circular[0]['description']."</b><br /><br />".$companyName."</b><br /><br />"."Thank You"."<br /><br /><b>", null, $file));
+                    $description = "";
+                    if(isset($circular[0]['description'])){
+                        $description = "<b>Circular Description : </b>" . $circular[0]['description']. "<br /><br />";
+                    }
+
+                    Mail::to($supplier->supplier_registration_link->email)->send(new EmailForQueuing("Tender Circular", "Dear Supplier,"."<br /><br />"." Please find published tender circular details below."."<br /><br /><b>". "Circular Name : ". "</b>".$circular[0]['circular_name'] ." "."<br /><br />". $description .$companyName."</b><br /><br />"."Thank You"."<br /><br /><b>", null, $file));
                 }
 
                 return ['success' => true, 'message' => 'Successfully Published'];

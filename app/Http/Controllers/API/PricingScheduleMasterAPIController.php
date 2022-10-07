@@ -530,7 +530,7 @@ class PricingScheduleMasterAPIController extends AppBaseController
        LEFT JOIN srm_schedule_bid_format_details ON srm_schedule_bid_format_details.bid_format_detail_id = srm_pricing_schedule_detail.id 
        AND srm_schedule_bid_format_details.schedule_id = $schedule_id 
         WHERE
-            bid_format_id = $price_bid_format_id AND pricing_schedule_master_id = $schedule_id 
+            bid_format_id = $price_bid_format_id AND pricing_schedule_master_id = $schedule_id AND deleted_at IS NULL
         ORDER BY
             id ASC");
 
@@ -619,7 +619,12 @@ class PricingScheduleMasterAPIController extends AppBaseController
     {
         $input = $request->all();
         $priceSchedule = PricingScheduleMaster::where('id',$input['schedule_id'])->first();
-        return $mainWorks = PricingScheduleDetail::where('pricing_schedule_master_id',$input['schedule_id'])->where('boq_applicable',true)->where('tender_id',$input['tender_id'])->get();
+        return $mainWorks = PricingScheduleDetail::where('pricing_schedule_master_id',$input['schedule_id'])->where('tender_id',$input['tender_id'])
+        ->where(function($query){
+            $query->where('boq_applicable',true);
+            $query->orWhere('is_disabled',false);
+        })->where('field_type','!=',4)
+        ->get();
         
         // $bidDetailId = $mainWorks->pluck('bid_format_detail_id');
 

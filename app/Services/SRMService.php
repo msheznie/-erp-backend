@@ -14,6 +14,7 @@ use App\Models\BidMainWork;
 use App\Models\BidSchedule;
 use App\Models\BidSubmissionDetail;
 use App\Models\BidSubmissionMaster;
+use App\Models\CircularSuppliers;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\CountryMaster;
@@ -1866,6 +1867,7 @@ class SRMService
     public function getConsolidatedData($request)
     {
         $tenderMasterId = $request->input('extra.tenderId');
+        $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
         $assignDocumentTypesDeclared = [1];
         $assignDocumentTypes = TenderDocumentTypeAssign::where('tender_id',$tenderMasterId)->whereNotIn('document_type_id',[2, 3])->pluck('document_type_id')->toArray();
         $tenderDates = [];
@@ -1955,7 +1957,15 @@ class SRMService
         ->get();
 
         $data['attachments'] = $attachments;
-        $data['tenderCirculars'] = TenderCirculars::with(['document_amendments.document_attachments'])->where('tender_id', $tenderMasterId)->get();
+        $data['tenderCirculars'] = TenderCirculars::with(['document_amendments.document_attachments'])
+            ->whereHas('srm_circular_suppliers', function($q) use($supplierRegId) {
+                    $q->where('supplier_id', $supplierRegId);
+            })
+            ->where('tender_id', $tenderMasterId)
+            ->where('status', 1)
+
+            ->get();
+
         return [
             'success' => true,
             'message' => 'Consolidated view data Successfully get',
@@ -2712,17 +2722,63 @@ class SRMService
         
         $documentAttachedCountAnswer = DocumentAttachments::whereIn('parent_id', $documentAttachedCountIds)->where('documentSystemID', 108)->count();
 
+
+        $documentAttachedCountIdsTechnical = DocumentAttachments::with(['tender_document_types' => function ($q) use ($doucments){
+            $q->where('srm_action', 1);
+        }, 'document_attachments' => function ($q) use ($bidMasterId) {
+            $q->where('documentSystemCode', $bidMasterId);
+        }])->whereHas('tender_document_types', function ($q) use ($doucments){
+        })->where('documentSystemCode', $tenderId)->where('parent_id', null)->where('documentSystemID', 108)->where('envelopType', 2)->where('attachmentType',2)->pluck('attachmentID')->toArray();
         
-        if($evaluvationCriteriaDetailsCount == $bidSubmissionDataCount || $evaluvationCriteriaDetailsCount == 0)  {
+        $documentAttachedCountAnswerTechnical = DocumentAttachments::whereIn('parent_id', $documentAttachedCountIdsTechnical)->where('documentSystemID', 108)->count();
+
+        $technicalEvaluationCriteria = EvaluationCriteriaDetails::where('is_final_level', 0)
+            ->where('critera_type_id', 2)
+            ->where('tender_id', $tenderId)
+            ->count();
+
+        $technicalEvaluationCriteriaAnswer = EvaluationCriteriaDetails::where('critera_type_id', 2)
+            ->where('tender_id', $tenderId)
+            ->where('is_final_level', 3)
+            ->count();
+
+            // || ($technicalEvaluationCriteria == $technicalEvaluationCriteriaAnswer)
+        if((count($documentAttachedCountIdsTechnical) == $documentAttachedCountAnswerTechnical) ) {
+            $data['technicalStatus'] = "Completed";
+            if($technicalEvaluationCriteriaAnswer == 0 && $documentAttachedCountAnswerTechnical == 0) {
+                $data['technicalStatus'] = "Completed";
+            }else {
+                if(($technicalEvaluationCriteria == $technicalEvaluationCriteriaAnswer)) {
+                    $data['technicalStatus'] = "Completed";
+                }else {
+                    $data['technicalStatus'] = "Not Completed";
+                }
+            }
+        }else {
+            $data['technicalStatus'] = "Not Completed";
+        }
+
+
+
+
+        if($evaluvationCriteriaDetailsCount == $bidSubmissionDataCount)  {
             $data['goNoGoStatus'] = "Completed";
         }else {
             $data['goNoGoStatus'] = "Not Completed";
         }
 
-        if(count($documentAttachedCountIds) == $documentAttachedCountAnswer || count($documentAttachedCountIds) == 0) {
+        if($evaluvationCriteriaDetailsCount == 0) {
+            $data['goNoGoStatus'] = "Disabled";
+        }
+
+        if(count($documentAttachedCountIds) == $documentAttachedCountAnswer) {
             $data['commonStatus'] = "Completed";
         }else {
             $data['commonStatus'] = "Not Completed";
+        }
+
+        if(count($documentAttachedCountIds) == 0) {
+            $data['commonStatus'] = "Disabled";
         }
         
         return [
@@ -2979,6 +3035,7 @@ class SRMService
             $att['bid_master_id'] = $bidMasterId;
             $att['main_works_id'] = $detail['main_work_id'];
             $att['qty'] = $detail['bid_boq']['qty'];
+            $att['remarks'] = $detail['bid_boq']['remarks'];
             $att['unit_amount'] = $detail['bid_boq']['unit_amount'];
             $att['total_amount'] = $detail['bid_boq']['total_amount'];
             $att['supplier_registration_id'] = $supplierRegId;
@@ -3382,6 +3439,8 @@ class SRMService
             } else {
                 $group['commonStatus'] = 1;
             }
+
+            
 
             $group['commercial_bid_submission_status'] = $bidSubmissionData['filtered'];
             $group['technical_bid_submission_status'] = $bidSubmissionData['technicalEvaluationCriteria'];

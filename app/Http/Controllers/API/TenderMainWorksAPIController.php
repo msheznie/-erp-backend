@@ -302,7 +302,10 @@ class TenderMainWorksAPIController extends AppBaseController
 
         //$mainWorks = TenderMainWorks::with(['tender_boq_items','tender_bid_format_detail'])->where('tender_id', $tender_id)->where('schedule_id', $schedule_id)->where('company_id', $companyId);
 
-        $mainWorks = PricingScheduleDetail::with(['tender_boq_items'])->where('tender_id', $tender_id)->where('pricing_schedule_master_id', $schedule_id)->where('company_id', $companyId)->where('boq_applicable',true);
+        $mainWorks = PricingScheduleDetail::with(['tender_boq_items'])->where('tender_id', $tender_id)->where('pricing_schedule_master_id', $schedule_id)->where('company_id', $companyId)->where(function($query){
+            $query->where('boq_applicable',true);
+            $query->orWhere('is_disabled',false);
+        })->where('field_type','!=',4);
 
         $search = $request->input('search.value');
         if ($search) {
