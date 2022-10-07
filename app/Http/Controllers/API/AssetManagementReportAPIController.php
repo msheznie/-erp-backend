@@ -276,14 +276,26 @@ class AssetManagementReportAPIController extends AppBaseController
                     $depAmountRpt = 0;
                     $localnbv = 0;
                     $rptnbv = 0;
+                    $acDepAmountRpt = 0;
+                    $adDepAmountLocal = 0;
+                    $costUnitRptDisposed = 0;
+                    $costUnitDisposed = 0;
+                    $profitDisposalRpt = 0;
+                    $profitDisposalLocal = 0;
                     if ($output) {
                         foreach ($output as $val) {
-                            $localnbv += $val->localnbv;
+                            $localnbv += ($val->COSTUNIT - $val->depAmountLocal);
+                            $rptnbv += ($val->costUnitRpt - $val->depAmountRpt);
                             $COSTUNIT += $val->COSTUNIT;
                             $costUnitRpt += $val->costUnitRpt;
                             $depAmountRpt += $val->depAmountRpt;
+                            $acDepAmountRpt += $val->acDepAmountRpt;
+                            $adDepAmountLocal += $val->adDepAmountLocal;
                             $depAmountLocal += $val->depAmountLocal;
-                            $rptnbv += $val->rptnbv;
+                            $costUnitRptDisposed += (($val->DIPOSED == -1) ? $val->costUnitRpt : 0);
+                            $costUnitDisposed += (($val->DIPOSED == -1) ? $val->COSTUNIT : 0);
+                            $profitDisposalRpt += (($val->DIPOSED == -1 && $request->typeID == 1) ? ($val->sellingPriceRpt - $val->costUnitRpt - $val->acDepAmountRpt) : 0);
+                            $profitDisposalLocal += (($val->DIPOSED == -1 && $request->typeID == 1) ? ($val->sellingPriceLocal - $val->COSTUNIT - $val->adDepAmountLocal) : 0);
                             $outputArr[$val->financeCatDescription][] = $val;
                         }
                     }
@@ -301,6 +313,12 @@ class AssetManagementReportAPIController extends AppBaseController
                                     ->with('costUnitRpt', $costUnitRpt)
                                     ->with('depAmountLocal', $depAmountLocal)
                                     ->with('depAmountRpt', $depAmountRpt)
+                                    ->with('costUnitRptDisposed', $costUnitRptDisposed)
+                                    ->with('costUnitDisposed', $costUnitDisposed)
+                                    ->with('profitDisposalRpt', $profitDisposalRpt)
+                                    ->with('profitDisposalLocal', $profitDisposalLocal)
+                                    ->with('acDepAmountRpt', $acDepAmountRpt)
+                                    ->with('adDepAmountLocal', $adDepAmountLocal)
                                     ->addIndexColumn()
                                     ->make(true);
                 }
