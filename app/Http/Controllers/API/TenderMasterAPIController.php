@@ -29,6 +29,7 @@ use App\Models\TenderMaster;
 use App\Models\TenderProcurementCategory;
 use App\Models\TenderSiteVisitDates;
 use App\Models\TenderType;
+use App\Models\SrmTenderBidEmployeeDetails;
 use App\Models\YesNoSelection;
 use App\Repositories\TenderMasterRepository;
 use App\Traits\AuditTrial;
@@ -49,6 +50,7 @@ use App\Models\TenderDocumentTypeAssign;
 use App\Models\TenderDocumentTypes;
 use App\Models\TenderSupplierAssignee;
 use App\Repositories\SupplierRegistrationLinkRepository;
+use App\Models\PricingScheduleDetail;
 
 /**
  * Class TenderMasterController
@@ -394,7 +396,18 @@ class TenderMasterAPIController extends AppBaseController
         $data['currentDate'] = now();
         $data['defaultCurrency'] = $company;
         $data['procurementCategory'] = TenderProcurementCategory::where('level', 0)->where('is_active', 1)->get();
-        $data['documentTypes'] = TenderDocumentTypes::where('company_id', $employee->empCompanySystemID)->whereNotIn('id', [1, 2])->orWhere('id', 3)->get();
+        if(isset($input['tenderMasterId'])){
+            $assignedDocsArray = TenderDocumentTypeAssign::select('document_type_id')->where('tender_id', $input['tenderMasterId'])->get()->toArray();
+            $notInArray = [1, 2];
+            foreach ($assignedDocsArray as $assignedDocs){
+                $notInArray[] = $assignedDocs['document_type_id'];
+            }
+            if($tenderMaster['published_yn'] === 1){
+                $data['documentTypes'] = TenderDocumentTypes::where('id', 3)->whereNotIn('id', $notInArray)->get();
+            } else {
+                $data['documentTypes'] = TenderDocumentTypes::where('company_id', $employee->empCompanySystemID)->whereNotIn('id', $notInArray)->get();
+            }
+        }
 
         if (isset($input['tenderMasterId'])) {
             if ($tenderMaster['confirmed_yn'] == 1 && $category['is_active'] == 0) {
@@ -575,6 +588,13 @@ WHERE
             'bank_account_id', 'bank_id', 'currency_id', 'currency_id', 'procument_cat_id',
             'procument_sub_cat_id', 'tender_type_id', 'envelop_type_id', 'evaluation_type_id'
         ));
+
+        $tenderMaster = TenderMaster::find($input['id']);
+        $tenderbidEmployee = SrmTenderBidEmployeeDetails::where('tender_id',$input['id'])->count();
+        
+        if($tenderbidEmployee < $tenderMaster->min_approval_bid_opening) {
+            return ['status' => false, 'message' => "Atleast ".$tenderMaster->min_approval_bid_opening." employee should selected"];
+        }
 
         if($input['addCalendarDates'] === 0){
             $resValidate = $this->validateTenderHeader($input);
@@ -809,7 +829,9 @@ WHERE
                         }
                         $scheduleAll = PricingScheduleMaster::where('tender_id', $input['id'])->get();
                         foreach ($scheduleAll as $val) {
-                            $mainwork = TenderMainWorks::where('tender_id', $input['id'])->where('schedule_id', $val['id'])->first();
+                           // $mainwork = TenderMainWorks::where('tender_id', $input['id'])->where('schedule_id', $val['id'])->first();
+                            $mainwork = PricingScheduleDetail::where('tender_id', $input['id'])->where('boq_applicable', true)->where('pricing_schedule_master_id', $val['id'])->first();
+
                             $scheduleDetail = ScheduleBidFormatDetails::where('schedule_id', $val['id'])->first();
                             if (empty($scheduleDetail)) {
                                 return ['success' => false, 'message' => 'All work schedules should be completed'];
@@ -819,9 +841,13 @@ WHERE
                             }
                         }
 
-                        $mainWorkBoqApp = TenderMainWorks::with(['tender_bid_format_detail'])->where('tender_id', $input['id'])->get();
+                        //$mainWorkBoqApp = TenderMainWorks::with(['tender_bid_format_detail'])->where('tender_id', $input['id'])->get();
+                        $mainWorkBoqApp = PricingScheduleDetail::where('boq_applicable', true)->where('deleted_at',null)->where('tender_id', $input['id'])->get();
+
+                        
+
                         foreach ($mainWorkBoqApp as $vals) {
-                            if ($vals['tender_bid_format_detail']['boq_applicable'] == 1) {
+                            if ($vals['boq_applicable'] == 1) {
                                 $boqItems = TenderBoqItems::where('main_work_id', $vals['id'])->first();
                                 if (empty($boqItems)) {
                                     return ['success' => false, 'message' => 'BOQ enabled main works should have at least one BOQ item'];
@@ -1532,6 +1558,14 @@ WHERE
             return ['status' => false, 'message' => 'Technical Passing Weightage is required'];
         }
 
+        $tenderMaster = TenderMaster::find($input['id']);
+        $tenderbidEmployee = SrmTenderBidEmployeeDetails::where('tender_id',$input['id'])->count();
+        
+        if($tenderbidEmployee < $tenderMaster->min_approval_bid_opening) {
+            return ['status' => false, 'message' => "Atleast ".$tenderMaster->min_approval_bid_opening." employee should selected"];
+        }
+
+
 
 
         DB::beginTransaction();
@@ -1546,6 +1580,7 @@ WHERE
             $data['is_active_go_no_go'] = isset($input['is_active_go_no_go']) ? $input['is_active_go_no_go'] : 0;
             $data['technical_passing_weightage'] = $input['technical_passing_weightage'];
             $data['commercial_passing_weightage'] = $input['commercial_passing_weightage'];
+            $data['min_approval_bid_opening'] = $input['min_approval_bid_opening'];
             $result = TenderMaster::where('id', $input['id'])->update($data);
             if ($result) {
                 if (isset($input['document_types'])) {

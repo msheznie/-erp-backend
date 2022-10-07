@@ -198,8 +198,12 @@ class TransactionsExportExcel extends AppBaseController
                 break;
 
             case '4':
-                $input = $this->convertArrayToSelectedValue($input, array('month', 'year', 'cancelYN', 'confirmedYN', 'approved', 'invoiceType', 'supplierID', 'chequePaymentYN', 'BPVbank', 'BPVAccount', 'chequeSentToTreasury', 'projectID'));
+                $input = $this->convertArrayToSelectedValue($input, array('month', 'year', 'cancelYN', 'confirmedYN', 'approved', 'invoiceType', 'supplierID', 'chequePaymentYN', 'BPVbank', 'BPVAccount', '','chequeSentToTreasury', 'projectID', 'employeeID'));
                 
+                $employeeID = $request['employeeID'];
+                $employeeID = (array)$employeeID;
+                $employeeID = collect($employeeID)->pluck('id');
+
                 $supplierID = $request['supplierID'];
                 $supplierID = (array)$supplierID;
                 $supplierID = collect($supplierID)->pluck('id');
@@ -208,7 +212,7 @@ class TransactionsExportExcel extends AppBaseController
                 $projectID = (array)$projectID;
                 $projectID = collect($projectID)->pluck('id');
 
-                $dataQry = $this->paySupplierInvoiceMasterRepository->paySupplierInvoiceListQuery($request, $input, $search, $supplierID, $projectID);
+                $dataQry = $this->paySupplierInvoiceMasterRepository->paySupplierInvoiceListQuery($request, $input, $search, $supplierID, $projectID, $employeeID);
                 $data = $this->paySupplierInvoiceMasterRepository->setExportExcelData($dataQry);
                 break;
 

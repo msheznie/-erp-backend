@@ -28,7 +28,6 @@ use App\Repositories\DocumentAttachmentsRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
@@ -185,13 +184,10 @@ class DocumentAttachmentsAPIController extends AppBaseController
                     $input['docExpirtyDate'] = new Carbon($input['docExpirtyDate']);
                 }
             }
-
             $input = $this->convertArrayToValue($input);
-
             if (isset($input['documentSystemID'])) {
 
                 $documentMaster = DocumentMaster::where('documentSystemID', $input['documentSystemID'])->first();
-
                 if ($documentMaster) {
                     $input['documentID'] = $documentMaster->documentID;
                 }
@@ -207,6 +203,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
                     $companyID = $companyMaster->CompanyID;
                 }
             }
+
 
             $documentAttachments = $this->documentAttachmentsRepository->create($input);
 
@@ -357,6 +354,20 @@ class DocumentAttachmentsAPIController extends AppBaseController
             $documentAttachments->delete();
         }
 
+        if($documentAttachments['attachmentType'] === 3){
+            $exitingAmendmentRecords =  DocumentAttachments::where('companySystemID',$documentAttachments['companySystemID'])
+                ->where('documentSystemID', $documentAttachments['documentSystemID'])
+                ->where('attachmentType', $documentAttachments['attachmentType'])
+                ->where('documentSystemCode', $documentAttachments['documentSystemCode'])
+                ->orderBy('attachmentID', 'asc')
+                ->get();
+            $i = 1;
+            foreach ($exitingAmendmentRecords as $exitingAmendmentRecord){
+                $request['order_number'] = $i;
+                DocumentAttachments::where('attachmentID', $exitingAmendmentRecord['attachmentID'])->update(['order_number' => $i]);
+                $i++;
+            }
+        }
         return $this->sendResponse($id, 'Document Attachments deleted successfully');
     }
 
@@ -999,7 +1010,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
             return $this->sendError('Attachment is not attached', 404);
         }
     }
-    public function storeTenderDocuments(CreateDocumentAttachmentsAPIRequest $request){ 
+    public function storeTenderDocuments(CreateDocumentAttachmentsAPIRequest $request){
         $input = $request->all();
         $attachmentType = $input['attachmentType'];
         $attachmentDescription = $input['attachmentDescription'];
@@ -1015,8 +1026,26 @@ class DocumentAttachmentsAPIController extends AppBaseController
         ->count(); 
         if($isExist >= 1){ 
            return ['status' => false, 'message' => 'Description already exists'];  
-        }else { 
-            return self::store($request);
+        }else {
+            $i = 1;
+            if($input['attachmentType'] == 3){
+               $exitingAmendmentRecords =  DocumentAttachments::where('companySystemID',$companySystemID)
+                    ->where('documentSystemID',$documentSystemID)
+                    ->where('attachmentType',$attachmentType)
+                    ->where('documentSystemCode',$documentSystemCode)
+                    ->orderBy('attachmentID', 'asc')
+                    ->get();
+
+               foreach ($exitingAmendmentRecords as $exitingAmendmentRecord){
+                   $request['order_number'] = $i;
+                   DocumentAttachments::where('attachmentID', $exitingAmendmentRecord['attachmentID'])->update(['order_number' => $i]);
+                   $i++;
+               }
+                $request['order_number'] = $i;
+                return self::store($request);
+            } else {
+                return self::store($request);
+            }
         } 
       
     }

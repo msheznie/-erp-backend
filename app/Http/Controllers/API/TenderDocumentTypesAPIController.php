@@ -9,6 +9,7 @@ use App\Repositories\TenderDocumentTypesRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use App\Models\TenderDocumentTypeAssign;
+use Illuminate\Support\Facades\Log;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -286,11 +287,19 @@ class TenderDocumentTypesAPIController extends AppBaseController
         $assignDocumentTypes = TenderDocumentTypeAssign::where('tender_id',$input['tenderMasterId'])->where('company_id',$input['companySystemID'])->pluck('document_type_id')->toArray();
         if (in_array(3, $assignDocumentTypes))
         {
-            return TenderDocumentTypes::where('company_id',$input['companySystemID'])->whereIn('id',$assignDocumentTypes)->orWhereIn('id', [1, 2, 3])->get();
+            return TenderDocumentTypes::with(['attachments' => function($query) use($input){
+                $query->where('documentSystemCode', $input['tenderMasterId']);
+                $query->where('companySystemID', $input['companySystemID']);
+                $query->where('documentSystemID', '108');
+            }])->where('company_id',$input['companySystemID'])->whereIn('id',$assignDocumentTypes)->orWhereIn('id', [1, 2, 3])->get();
         }
         else
         {
-            return TenderDocumentTypes::where('company_id',$input['companySystemID'])->whereIn('id',$assignDocumentTypes)->orWhereIn('id', [1, 2])->get();
+            return TenderDocumentTypes::with(['attachments' => function($query) use($input){
+                $query->where('documentSystemCode', $input['tenderMasterId']);
+                $query->where('companySystemID', $input['companySystemID']);
+                $query->where('documentSystemID', '108');
+        }])->where('company_id',$input['companySystemID'])->whereIn('id',$assignDocumentTypes)->orWhereIn('id', [1, 2])->get();
         }
     }
 
@@ -301,7 +310,7 @@ class TenderDocumentTypesAPIController extends AppBaseController
         try {
             if (isset($input['document_types'])) {
                 if (count($input['document_types']) > 0) {
-                    TenderDocumentTypeAssign::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
+                    //TenderDocumentTypeAssign::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
                     foreach ($input['document_types'] as $vl) {
                         $docTypeAssign['tender_id'] = $input['id'];
                         $docTypeAssign['document_type_id'] = $vl['id'];
@@ -310,10 +319,27 @@ class TenderDocumentTypesAPIController extends AppBaseController
                         TenderDocumentTypeAssign::create($docTypeAssign);
                     }
                 } else {
-                    TenderDocumentTypeAssign::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
+                    //TenderDocumentTypeAssign::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
                 }
             }
             return ['success' => true, 'message' => 'Successfully updated'];
+        } catch (\Exception $e) {
+            return ['success' => false, 'message' => $e];
+        }
+    }
+
+    public function deleteAssignDocumentTypes(Request $request)
+    {
+        $input = $request->all();
+        try {
+            if (isset($input['doc_type_id'])) {
+                $result = TenderDocumentTypeAssign::where('tender_id', $input['tender_id'])->where('document_type_id', $input['doc_type_id'])->where('company_id', $input['company_id'])->delete();
+                if($result){
+                    return ['success' => true, 'message' => 'Successfully deleted'];
+                } else {
+                    return ['success' => false, 'message' => 'Tender document type not found'];
+                }
+            }
         } catch (\Exception $e) {
             return ['success' => false, 'message' => $e];
         }

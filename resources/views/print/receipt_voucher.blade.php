@@ -219,7 +219,8 @@
                         </div>
                         <div><span>
                 @if(!empty($det->approvedDate))
-                                    {{ \App\helper\Helper::dateFormat($det->approvedDate)}}
+                                    {{ \App\helper\Helper::convertDateWithTime($det->approvedDate)}}
+
                                 @endif
               </span></div>
                         <div style="width: 3px"></div>
@@ -416,6 +417,45 @@
             <tr style="width:100%">
                 <td style="width: 60%">
                     <table>
+                        @if($masterdata->payeeTypeID && $masterdata->payeeTypeID != 3)
+                        <tr>
+                            <td width="150px">
+                                <span class="font-weight-bold">Payee Code</span>
+                            </td>
+                            <td width="10px">
+                                <span class="font-weight-bold">:</span>
+                            </td>
+                            <td>
+                                @if($masterdata->payeeTypeID == 1)
+                                    {{$masterdata->customer->CutomerCode}}
+                                @endif
+                                @if($masterdata->payeeTypeID == 2)
+                                     {{$masterdata->employee->empID}}
+                                @endif
+                            </td>
+                        </tr>
+                        @endif
+                            @if($masterdata->payeeTypeID)
+                                <tr>
+                                    <td width="150px">
+                                        <span class="font-weight-bold">Payee Name</span>
+                                    </td>
+                                    <td width="10px">
+                                        <span class="font-weight-bold">:</span>
+                                    </td>
+                                    <td>
+                                        @if($masterdata->payeeTypeID == 1)
+                                            {{$masterdata->customer->CustomerName}}
+                                        @endif
+                                        @if($masterdata->payeeTypeID == 2)
+                                            {{$masterdata->employee->empName}}
+                                        @endif
+                                            @if($masterdata->payeeTypeID == 3)
+                                            {{$masterdata->PayeeName}}
+                                        @endif
+                                    </td>
+                                </tr>
+                            @endif
                         <tr>
                             <td width="150px">
                                 <span class="font-weight-bold">Bank</span>
@@ -716,6 +756,20 @@
                     <td class="text-right border-bottom-remov"></td>
                     <td class="text-right border-bottom-remov"></td>
                 </tr>
+
+                @if ($masterdata->details)
+                    <tr>
+                        <td class="text-right border-bottom-remov border-top-remov"></td>
+                    </tr>
+                    <tr>
+                        <td colspan="5" class="text-right border-bottom-remov border-top-remov">&nbsp;</td>
+                        <td class="text-right border-bottom-remov border-top-remov" style="font-size: 13px;" >Net Total</td>
+                        <td class="text-right border-bottom-remov border-top-remov" style="font-size: 13px;" >{{number_format(($directTotTra + $ciDetailTotTra), $transDecimal)}}</td>
+                        <td class="text-right border-bottom-remov border-top-remov"></td>
+                        <td class="text-right border-bottom-remov border-top-remov"></td>
+                    </tr>
+                @endif
+                
                 </tbody>
             </table>
         </div>
