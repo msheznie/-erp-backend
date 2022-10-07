@@ -849,6 +849,11 @@ class AssetManagementReportAPIController extends AppBaseController
                     $output = $this->getAssetRegisterDetail3($request);
                     $outputArr = [];
                     $x = 2;
+                    $totAcq = 0;
+                    $totDepPed = 0;
+                    $totDisVal = 0;
+                    $totNBV = 0;
+                    $totDisPro = 0;
                     $data = [];
 
                     $companyData = \Helper::companyCurrency($request->companySystemID);
@@ -886,8 +891,46 @@ class AssetManagementReportAPIController extends AppBaseController
                             $data[$x]["Profit / (Loss) on Disposal (".$currencyCode.")"] = round(($value->DIPOSED == -1 && $request->typeID == 1) ? $disposalProfit : 0, $decimalPlaces);
                             $data[$x]["Impairment"] = 0;
                             $data[$x]["Write-Offs"] = 0;
+
+                            $totAcq += ($request->currencyID == 3) ? $value->costUnitRpt : $value->COSTUNIT;
+                           $totDepPed += ($request->currencyID == 3) ? $value->depAmountRpt : $value->depAmountLocal;
+                           $totNBV += ($request->currencyID == 3) ? floatval($value->costUnitRpt) - floatval($value->depAmountRpt) : floatval($value->COSTUNIT) - floatval($value->depAmountLocal);
+
+
+                            if($value->DIPOSED == -1){
+                                $totDisVal += $request->currencyID == 3 ? $value->costUnitRpt : $value->COSTUNIT;
+                            }
+                            if($value->DIPOSED == -1){
+                                $totDisPro += $request->currencyID == 3 ? (floatval($value->sellingPriceRpt) - floatval($value->costUnitRpt) - floatval($value->acDepAmountRpt)) : (floatval($value->sellingPriceLocal) - floatval($value->COSTUNIT) - floatval($value->adDepAmountLocal));
+                            }
+
                              $x++;
                         }
+
+                        $data[$x][0] = "";
+                        $data[$x][1] = "";
+                        $data[$x][2] = "";
+                        $data[$x][3] = "";
+                        $data[$x][4] = "";
+                        $data[$x][5] = "";
+                        $data[$x][6] = "";
+                        $data[$x][7] = "";
+                        $data[$x][8] = "Total";
+                        $data[$x][9] = round($totAcq, $decimalPlaces);;
+                        $data[$x][10] = "";
+                        $data[$x][11] = "";
+                        $data[$x][12] = "";
+                        $data[$x][13] = "";
+                        $data[$x][14] = "";
+                        $data[$x][15] = round($totDepPed, $decimalPlaces);
+                        $data[$x][16] = round($totDepPed, $decimalPlaces);
+                        $data[$x][17] = round($totNBV, $decimalPlaces);
+                        $data[$x][18] = 0;
+                        $data[$x][19] = 0;
+                        $data[$x][20] = round($totDisVal, $decimalPlaces);
+                        $data[$x][21] = round($totDisPro, $decimalPlaces);
+                        $data[$x][22] = 0;
+                        $data[$x][23] = 0;
                     }
 
      
