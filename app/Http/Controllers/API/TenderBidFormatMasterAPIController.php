@@ -429,6 +429,7 @@ class TenderBidFormatMasterAPIController extends AppBaseController
 
     public function updatePriceBidDetail(Request $request)
     {
+    
         $input = $this->convertArrayToSelectedValue($request->all(), array('field_type'));
         $employee = \Helper::getEmployeeInfo();
         $is_disabled = 0;
@@ -455,6 +456,16 @@ class TenderBidFormatMasterAPIController extends AppBaseController
         if(!empty($exist)){
             return ['success' => false, 'message' => 'Label already exist'];
         }
+        $tender_id = $input['tender_id'];
+        $id = $input['id'];
+        $result = $this->checkPirceBidItem($tender_id,$id);
+
+        if($result['is_exit'])
+        {
+            return ['success' => false, 'message' => 'Unable to update the line item,The item is used in the following formula '.$result['formulas']];
+        }
+
+
 
         DB::beginTransaction();
         try {
@@ -463,7 +474,7 @@ class TenderBidFormatMasterAPIController extends AppBaseController
             $data['label']=$input['label'];
             $data['field_type']=$input['field_type'];
             $data['updated_by'] = $employee->employeeSystemID;
-
+            $data['formula_string']= null;
             $result = TenderBidFormatDetail::where('id',$input['id'])->update($data);
 
             if($result){
@@ -519,11 +530,24 @@ class TenderBidFormatMasterAPIController extends AppBaseController
         }
     }
 
+
     public function deletePriceBideDetail(Request $request)
     {
         $input = $request->all();
+
+        $tender_id = $input['tender_id'];
+        $id = $input['id'];
         DB::beginTransaction();
         try {
+
+            $result = $this->checkPirceBidItem($tender_id,$id);
+
+            if($result['is_exit'])
+            {
+                return ['success' => false, 'message' => 'Unable to delete the line item,The item is used in the following formula '.$result['formulas']];
+            }
+
+          
             $result = TenderBidFormatDetail::where('id',$input['id'])->delete();
             if($result){
                 DB::commit();
@@ -802,5 +826,49 @@ class TenderBidFormatMasterAPIController extends AppBaseController
         return $this->sendResponse($details, 'TenderBidFormatMaster updated successfully');
 
     }
+
+    private function checkPirceBidItem($tender_id,$id)
+    {
+
+        $tender_details = TenderBidFormatDetail::where('tender_id',$tender_id)->where('field_type',4)->get();
+        $is_value_exit = false;
+        $formulas = '';
+        if(isset($tender_details))
+        {
+            foreach($tender_details as $val)
+            {
+                if (!is_null($val['formula_string'])) {
+                   
+                    if ($val['formula_string']) {
+                        $formula_arr = explode('~', $val['formula_string']);
+
+                        foreach ($formula_arr as $formula_row) {
+                            if (trim($formula_row) != '') 
+                            {
+                                $elementType = $formula_row[0];
+
+                                if ($elementType == '$') {
+                                    $elementArr = explode('$', $formula_row);
+                                    $value = intval($elementArr[1]);
+                                    if($value == $id)
+                                    {
+                                        $is_value_exit = true;
+                                        $formulas = $formulas.','.$val['label'];
+                                        break;
+                                    }
+                               
+                                }
+                            }
+                        }
+                    }
+                }
+
+            }
+        }
+        $data['is_exit'] = $is_value_exit;
+        $data['formulas'] = $formulas;
+        return $data;
+    }
+  
 
 }
