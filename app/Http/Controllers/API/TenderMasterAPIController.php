@@ -1561,12 +1561,12 @@ WHERE
         $tenderMaster = TenderMaster::find($input['id']);
         $tenderbidEmployee = SrmTenderBidEmployeeDetails::where('tender_id',$input['id'])->count();
         
-        if($tenderbidEmployee < $tenderMaster->min_approval_bid_opening) {
-            return ['status' => false, 'message' => "Atleast ".$tenderMaster->min_approval_bid_opening." employee should selected"];
+        if($input['min_approval_bid_opening'] == $tenderMaster->min_approval_bid_opening) {
+            if($tenderbidEmployee < $tenderMaster->min_approval_bid_opening) {
+                return ['status' => false, 'message' => "Atleast ".$tenderMaster->min_approval_bid_opening." employee should selected"];
+            }
         }
-
-
-
+  
 
         DB::beginTransaction();
         try {
