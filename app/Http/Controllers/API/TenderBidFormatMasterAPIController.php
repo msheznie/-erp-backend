@@ -429,8 +429,14 @@ class TenderBidFormatMasterAPIController extends AppBaseController
 
     public function updatePriceBidDetail(Request $request)
     {
-    
-        $input = $this->convertArrayToSelectedValue($request->all(), array('field_type'));
+        
+        
+        $details = $request->get('details');
+        $type = $request->get('val');
+
+        $input = $this->convertArrayToSelectedValue($details, array('field_type'));
+        
+       
         $employee = \Helper::getEmployeeInfo();
         $is_disabled = 0;
         $boq_applicable = 0;
@@ -458,23 +464,52 @@ class TenderBidFormatMasterAPIController extends AppBaseController
         }
         $tender_id = $input['tender_id'];
         $id = $input['id'];
-        $result = $this->checkPirceBidItem($tender_id,$id);
 
-        if($result['is_exit'])
+
+        
+
+        if(is_null($type))
         {
-            return ['success' => false, 'message' => 'Unable to update the line item,The item is used in the following formula '.$result['formulas']];
+          
+            $result = $this->checkPirceBidItem($tender_id,$id);
+
+            if($result['is_exit'])
+            {
+                return ['success' => false, 'message' => 'Unable to update the line item,The item is used in the following formula '.$result['formulas']];
+            }
         }
+  
 
 
 
         DB::beginTransaction();
         try {
-            $data['is_disabled']=$is_disabled;
-            $data['boq_applicable']=$boq_applicable;
+            
+            $data['is_disabled']= $input['is_disabled'];
+            if($input['field_type'] != 2)
+            {
+                $data['boq_applicable']=false;
+            }
+            else
+            {
+                $data['boq_applicable']=$input['boq_applicable'];
+            }
+   
+            if($input['field_type'] == 4)
+            {
+                $data['boq_applicable']= false;
+                $data['is_disabled']= false;
+            }
+            else
+            {
+                $data['formula_string']= null;
+            }
+            
+           
             $data['label']=$input['label'];
             $data['field_type']=$input['field_type'];
             $data['updated_by'] = $employee->employeeSystemID;
-            $data['formula_string']= null;
+           
             $result = TenderBidFormatDetail::where('id',$input['id'])->update($data);
 
             if($result){
