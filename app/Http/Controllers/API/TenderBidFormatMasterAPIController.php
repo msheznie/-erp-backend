@@ -572,6 +572,7 @@ class TenderBidFormatMasterAPIController extends AppBaseController
 
         $tender_id = $input['tender_id'];
         $id = $input['id'];
+        $employee = \Helper::getEmployeeInfo();
         DB::beginTransaction();
         try {
 
@@ -581,8 +582,8 @@ class TenderBidFormatMasterAPIController extends AppBaseController
             {
                 return ['success' => false, 'message' => 'Unable to delete the line item,The item is used in the following formula '.$result['formulas']];
             }
-
-          
+            $data['deleted_by'] = $employee->employeeSystemID;
+            TenderBidFormatDetail::where('id',$input['id'])->update($data);
             $result = TenderBidFormatDetail::where('id',$input['id'])->delete();
             if($result){
                 DB::commit();
