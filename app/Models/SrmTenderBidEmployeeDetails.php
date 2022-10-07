@@ -1,0 +1,46 @@
+<?php
+
+namespace App\Models;
+
+use Eloquent as Model;
+
+class SrmTenderBidEmployeeDetails extends Model
+{
+    public $table = 'srm_tender_bid_employee_details';
+
+    const CREATED_AT = 'created_at';
+
+
+
+
+    public $fillable = [
+        'tender_id',
+        'emp_id',
+        'created_at',
+
+    ];
+
+    /**
+     * The attributes that should be casted to native types.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'emp_id' => 'integer',
+        'tender_id' => 'integer',
+        'created_at' => 'date',
+    
+    ];
+
+    /**
+     * Validation rules
+     *
+     * @var array
+     */
+    public static $rules = [];
+
+    public function employee()
+    {
+        return $this->hasOne('App\Models\Employee', 'employeeSystemID', 'emp_id');
+    }
+}

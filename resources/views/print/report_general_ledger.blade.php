@@ -158,7 +158,7 @@
     </table>
 </div>
 <div class="content">
-    <table style="border:1px solid #9fcdff" class="table">
+    <table style="border:1px solid #9fcdff;width: 100%" class="table">
         @foreach ($reportData as $key => $det)
             <tr>
                 <th colspan="{{6 + count($extraColumns)}}">{{ $key  }}</th>

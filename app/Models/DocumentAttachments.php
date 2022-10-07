@@ -63,7 +63,8 @@ class DocumentAttachments extends Model
         'path',
         'pullFromAnotherDocument',
         'parent_id',
-        'envelopType'
+        'envelopType',
+        'order_number'
     ];
 
     /**

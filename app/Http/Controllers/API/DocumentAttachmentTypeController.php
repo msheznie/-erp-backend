@@ -188,7 +188,7 @@ class DocumentAttachmentTypeController extends AppBaseController
         $attachmentTypes = TenderDocumentTypes::with(['attachments' => function ($q) use($input){
             $q->where('documentSystemID', 108);
             $q->where('companySystemID', $input['companyId']);
-        }])->orderBy('id', 'asc');
+        }, 'TenderDocumentTypeAssign'])->orderBy('id', 'asc');
         $search = $request->input('search.value');
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
