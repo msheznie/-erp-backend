@@ -621,7 +621,8 @@ class CompanyAPIController extends AppBaseController
 
     public function getCompanySettingFormData(Request $request){
         $input = $request->all();
-        $selectedCompanyId = $input['companySystemID'];
+
+        $selectedCompanyId  = isset($input['companySystemID']) ? $input['companySystemID'] : null;
 
         $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
         if ($isGroup) {
