@@ -3415,32 +3415,43 @@ class SRMService
 
             $evaluvationCriteriaDetailsCount = EvaluationCriteriaDetails::where('tender_id',$group['tender_id'])->where('critera_type_id',1)->count();
             $bidSubmissionDataCount = BidSubmissionDetail::join('srm_evaluation_criteria_details','srm_bid_submission_detail.evaluation_detail_id','=','srm_evaluation_criteria_details.id')->where('srm_bid_submission_detail.tender_id',$group['tender_id'])->where('srm_evaluation_criteria_details.critera_type_id',1)->count();
+            $goNoGoActiveStatus = TenderMaster::select('is_active_go_no_go')->where('id', $group['tender_id'])->first();
 
-            $documentTypeAssingedCount = TenderDocumentTypeAssign::where('tender_id',$group['tender_id'])->count();
+            $documentTypeAssignedCount = TenderDocumentTypeAssign::where('tender_id',$group['tender_id'])->count();
 
-            $doucments = [];
-            $documentAttachedCountIds = DocumentAttachments::with(['tender_document_types' => function ($q) use ($doucments){
+            $documents = [];
+            $documentAttachedCountIds = DocumentAttachments::with(['tender_document_types' => function ($q) use ($documents){
                 $q->where('srm_action', 1);
             }, 'document_attachments' => function ($q) use ($bidMasterId) {
                 $q->where('documentSystemCode', $bidMasterId);
-            }])->whereHas('tender_document_types', function ($q) use ($doucments){
+            }])->whereHas('tender_document_types', function ($q) use ($documents){
             })->where('documentSystemCode', $group['tender_id'])->where('parent_id', null)->where('documentSystemID', 108)->where('envelopType', 3)->where('attachmentType',2)->pluck('attachmentID')->toArray();
 
             $documentAttachedCountAnswer = DocumentAttachments::whereIn('parent_id', $documentAttachedCountIds)->where('documentSystemID', 108)->count();
 
-            if($evaluvationCriteriaDetailsCount == $bidSubmissionDataCount || $evaluvationCriteriaDetailsCount == 0)  {
-                $group['goNoGoStatus'] = 0;
-            }else {
-                $group['goNoGoStatus'] = 1;
+            if($goNoGoActiveStatus['is_active_go_no_go'] == 1){
+                if($evaluvationCriteriaDetailsCount == $bidSubmissionDataCount || $evaluvationCriteriaDetailsCount == 0)  {
+                    $group['goNoGoStatus'] = 0;
+                } else {
+                    $group['goNoGoStatus'] = 1;
+                }
+                $group['is_active_go_no_go'] = 1;
+            } else if($goNoGoActiveStatus['is_active_go_no_go'] == 0) {
+                $group['is_active_go_no_go'] = -1;
             }
 
-            if(count($documentAttachedCountIds) == $documentAttachedCountAnswer || count($documentAttachedCountIds) == 0) {
-                $group['commonStatus'] = 0;
-            } else {
-                $group['commonStatus'] = 1;
+            $commonDocsCount = DocumentAttachments::where('documentSystemCode', $bidMasterId)->where('documentSystemID', 108)->where('attachmentType',2)->where('envelopType', 3)->count();
+            if($commonDocsCount > 0){
+                if(count($documentAttachedCountIds) == $documentAttachedCountAnswer || count($documentAttachedCountIds) == 0) {
+                    $group['commonStatus'] = 0;
+                } else {
+                    $group['commonStatus'] = 1;
+                }
+                $group['is_active_common_docs'] = 1;
+            } else if($commonDocsCount <= 0) {
+                $group['is_active_common_docs'] = -1;
             }
 
-            
 
             $group['commercial_bid_submission_status'] = $bidSubmissionData['filtered'];
             $group['technical_bid_submission_status'] = $bidSubmissionData['technicalEvaluationCriteria'];
