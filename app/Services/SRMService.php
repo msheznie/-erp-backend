@@ -2976,11 +2976,13 @@ class SRMService
             foreach($details1 as $val)
             {
                 foreach($val as $key=>$val1)
-                {
+                {   
+
+                   $formatted_val =  round($val1, 3);   
                     
                     $flight = ScheduleBidFormatDetails::updateOrCreate(
                         ['bid_format_detail_id' => $key, 'schedule_id' => $pricing_shedule->pricing_schedule_master_id,'bid_master_id'=>$bidMasterId],
-                        ['value' => $val1,'bid_master_id',$bidMasterId]
+                        ['value' => $formatted_val,'bid_master_id',$bidMasterId]
                     );
 
                 }
@@ -3037,7 +3039,7 @@ class SRMService
             $att['qty'] = $detail['bid_boq']['qty'];
             $att['remarks'] = $detail['bid_boq']['remarks'];
             $att['unit_amount'] = $detail['bid_boq']['unit_amount'];
-            $att['total_amount'] = $detail['bid_boq']['total_amount'];
+            $att['total_amount'] = round($detail['bid_boq']['total_amount'],3);
             $att['supplier_registration_id'] = $supplierRegId;
             
             if (isset($detail['bid_boq']['id'])) {

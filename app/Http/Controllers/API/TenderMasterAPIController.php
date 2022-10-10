@@ -655,6 +655,7 @@ WHERE
             return ['success' => false, 'message' => 'Tender title cannot be duplicated'];
         }
 
+
         $employee = \Helper::getEmployeeInfo();
         $exist = TenderMaster::where('id', $input['id'])->first();
         DB::beginTransaction();
@@ -840,6 +841,7 @@ WHERE
                                 return ['success' => false, 'message' => 'Main works should be added in all work schedules'];
                             }
                         }
+
 
                         //$mainWorkBoqApp = TenderMainWorks::with(['tender_bid_format_detail'])->where('tender_id', $input['id'])->get();
                         $mainWorkBoqApp = PricingScheduleDetail::where('boq_applicable', true)->where('deleted_at',null)->where('tender_id', $input['id'])->get();
