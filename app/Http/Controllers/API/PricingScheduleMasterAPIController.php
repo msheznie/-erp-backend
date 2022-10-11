@@ -367,6 +367,20 @@ class PricingScheduleMasterAPIController extends AppBaseController
                 return ['success' => false, 'message' => 'Scheduler name can not be duplicated'];
             }
         }
+
+
+        
+        //check if formula is empty or not
+
+        $pricing_shedule_details = TenderBidFormatDetail::where('tender_id', $input['price_bid_format_id'])->where('field_type',4)->where('formula_string',"");
+
+        if($pricing_shedule_details->count() > 0)
+        {
+            
+            return ['success' => false, 'message' => 'Pricing Bid format should have a defined formula'];
+        }
+
+
         if(isset($input['id'])) {
             $schedule = PricingScheduleMaster::where('id', $input['id'])->first();
         }

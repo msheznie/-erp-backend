@@ -655,6 +655,7 @@ WHERE
             return ['success' => false, 'message' => 'Tender title cannot be duplicated'];
         }
 
+
         $employee = \Helper::getEmployeeInfo();
         $exist = TenderMaster::where('id', $input['id'])->first();
         DB::beginTransaction();
@@ -828,32 +829,69 @@ WHERE
                             return ['success' => false, 'message' => 'At least one work schedule should be added'];
                         }
                         $scheduleAll = PricingScheduleMaster::where('tender_id', $input['id'])->get();
+                
                         foreach ($scheduleAll as $val) {
                            // $mainwork = TenderMainWorks::where('tender_id', $input['id'])->where('schedule_id', $val['id'])->first();
-                            $mainwork = PricingScheduleDetail::where('tender_id', $input['id'])->where('boq_applicable', true)->where('pricing_schedule_master_id', $val['id'])->first();
 
-                            $scheduleDetail = ScheduleBidFormatDetails::where('schedule_id', $val['id'])->first();
-                            if (empty($scheduleDetail)) {
-                                return ['success' => false, 'message' => 'All work schedules should be completed'];
+                            //
+                            
+                            $scheduleDetail = PricingScheduleDetail::where('tender_id', $input['id'])->where('pricing_schedule_master_id', $val['id'])->where('is_disabled', true);
+
+                            if($scheduleDetail->count() > 0)
+                            {
+                                $scheduleDetails = $scheduleDetail->get();
+                                foreach($scheduleDetails as $shed)
+                                {
+                                    $scheduleDetailInfo = ScheduleBidFormatDetails::where('schedule_id', $val['id'])->where('bid_format_detail_id', $shed['id'])->first();
+                                    if (empty($scheduleDetailInfo)) {
+                                        return ['success' => false, 'message' => 'All work schedules should be completed'];
+                                    }
+                                }
+                               
                             }
-                            if (empty($mainwork)) {
-                                return ['success' => false, 'message' => 'Main works should be added in all work schedules'];
+
+                            $mainwork = PricingScheduleDetail::with(['tender_boq_items'])->where('tender_id', $input['id'])->where('deleted_at',null)->where('boq_applicable', true)->where('pricing_schedule_master_id', $val['id']);
+                           
+                           
+                            if($mainwork->count() > 0)
+                            {
+                                $mainworks = $mainwork->get();
+
+                               
+                                foreach($mainworks as $main)
+                                {
+                                    if(count($main->tender_boq_items) == 0)
+                                    {
+                                        return ['success' => false, 'message' => 'BOQ enabled main works should have at least one BOQ item'];
+                                    }
+                                   
+                                }
+
                             }
+
+                           // return $this->sendResponse($scheduleDetail, 'Tender Masters retrieved successfully');
+
+
+                        
+                            // if (empty($mainwork)) {
+                            //     return ['success' => false, 'message' => 'Main works should be added in all work schedules'];
+                            // }
                         }
 
+
                         //$mainWorkBoqApp = TenderMainWorks::with(['tender_bid_format_detail'])->where('tender_id', $input['id'])->get();
-                        $mainWorkBoqApp = PricingScheduleDetail::where('boq_applicable', true)->where('deleted_at',null)->where('tender_id', $input['id'])->get();
+                        // $mainWorkBoqApp = PricingScheduleDetail::where('boq_applicable', true)->where('deleted_at',null)->where('tender_id', $input['id'])->get();
 
                         
 
-                        foreach ($mainWorkBoqApp as $vals) {
-                            if ($vals['boq_applicable'] == 1) {
-                                $boqItems = TenderBoqItems::where('main_work_id', $vals['id'])->first();
-                                if (empty($boqItems)) {
-                                    return ['success' => false, 'message' => 'BOQ enabled main works should have at least one BOQ item'];
-                                }
-                            }
-                        }
+                        // foreach ($mainWorkBoqApp as $vals) {
+                        //     if ($vals['boq_applicable'] == 1) {
+                        //         $boqItems = TenderBoqItems::where('main_work_id', $vals['id'])->first();
+                        //         if (empty($boqItems)) {
+                        //             return ['success' => false, 'message' => 'BOQ enabled main works should have at least one BOQ item'];
+                        //         }
+                        //     }
+                        // }
 
                         $params = array('autoID' => $input['id'], 'company' => $input["company_id"], 'document' => $input["document_system_id"]);
                         $confirm = \Helper::confirmDocument($params);
