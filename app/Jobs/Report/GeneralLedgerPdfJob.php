@@ -178,14 +178,11 @@ class GeneralLedgerPdfJob implements ShouldQueue
         $contractsId = array_filter(collect($contracts)->pluck('contractUID')->toArray());
 
         array_push($contractsId, 159);
-        //contracts
-
-        //DB::enableQueryLog();
-        $query = 'SELECT *
+        $query = 'SELECT * 
                     FROM
                         (
                     SELECT
-                        *
+                        * 
                     FROM
                         (
                     SELECT
@@ -207,6 +204,13 @@ class GeneralLedgerPdfJob implements ShouldQueue
                         erp_generalledger.documentLocalCurrencyID,
                         chartofaccounts.AccountDescription,
                         companymaster.CompanyName,
+                        erp_templatesglcode.templatesDetailsAutoID as templatesDetailsAutoID,
+                        approveEmp.empName as approvedBy,
+                        confirmEmp.empName as confirmedBy,
+                        erp_generalledger.documentConfirmedDate,
+                        erp_generalledger.documentFinalApprovedDate,
+                        erp_templatesglcode.templateMasterID,
+                        erp_templatesdetails.templateDetailDescription,
                     IF
                         ( documentLocalAmount > 0, documentLocalAmount, 0 ) AS localDebit,
                     IF
@@ -217,28 +221,28 @@ class GeneralLedgerPdfJob implements ShouldQueue
                     IF
                         ( documentRptAmount < 0, ( documentRptAmount *- 1 ), 0 ) AS rptCredit,
                     IF
-                        ( erp_generalledger.documentSystemID = 20 OR erp_generalledger.documentSystemID = 21 OR erp_generalledger.documentSystemID = 19, customermaster.CustomerName, suppliermaster.supplierName ) AS isCustomer,
-                        approveEmp.empName as approvedBy,
-                        confirmEmp.empName as confirmedBy,
-                        erp_generalledger.documentConfirmedDate,
-                        erp_generalledger.documentFinalApprovedDate
+                        ( erp_generalledger.documentSystemID = 71 OR erp_generalledger.documentSystemID = 20 OR erp_generalledger.documentSystemID = 21 OR erp_generalledger.documentSystemID = 19, customermaster.CustomerName, suppliermaster.supplierName ) AS isCustomer 
                     FROM
                         erp_generalledger
                         LEFT JOIN employees as approveEmp ON erp_generalledger.documentFinalApprovedByEmpSystemID = approveEmp.employeeSystemID
                         LEFT JOIN employees as confirmEmp ON erp_generalledger.documentConfirmedByEmpSystemID = confirmEmp.employeeSystemID
                         LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = erp_generalledger.supplierCodeSystem
-                        LEFT JOIN customermaster ON customermaster.customerCodeSystem = erp_generalledger.supplierCodeSystem
-                        LEFT JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID
-                        LEFT JOIN companymaster ON companymaster.companySystemID = erp_generalledger.companySystemID
+                        LEFT JOIN customermaster ON customermaster.customerCodeSystem = erp_generalledger.supplierCodeSystem 
+                        LEFT JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID 
+                        LEFT JOIN companymaster ON companymaster.companySystemID = erp_generalledger.companySystemID 
+                        LEFT JOIN erp_templatesglcode ON erp_templatesglcode.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID AND erp_templatesglcode.templateMasterID IN (
+                            SELECT erp_templatesmaster.templatesMasterAutoID FROM erp_templatesmaster
+                                  WHERE erp_templatesmaster.isActive = -1 AND  erp_templatesmaster.isBudgetUpload = -1
+                        )
+                        LEFT JOIN erp_templatesdetails ON erp_templatesdetails.templatesDetailsAutoID = erp_templatesglcode.templatesDetailsAutoID 
                     WHERE
                         erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
                         AND DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"
                         AND  erp_generalledger.chartOfAccountSystemID IN (' . join(',', $chartOfAccountId) . ')
                         AND  erp_generalledger.serviceLineSystemID IN (' . join(',', $serviceLineId) . ')
-                        AND  erp_generalledger.contractUID IN (' . join(',', $contractsId) . ')
                         ) AS erp_qry_GL UNION ALL
                     SELECT
-                        *
+                        * 
                     FROM
                         (
                     SELECT
@@ -260,40 +264,46 @@ class GeneralLedgerPdfJob implements ShouldQueue
                         erp_generalledger.documentLocalCurrencyID,
                         chartofaccounts.AccountDescription,
                         companymaster.CompanyName,
+                        erp_templatesglcode.templatesDetailsAutoID,
+                        approveEmp.empName as approvedBy,
+                        confirmEmp.empName as confirmedBy,
+                        erp_generalledger.documentConfirmedDate,
+                        erp_generalledger.documentFinalApprovedDate,
+                        erp_templatesglcode.templateMasterID,
+                        erp_templatesdetails.templateDetailDescription,
                         sum( IF ( documentLocalAmount > 0, documentLocalAmount, 0 ) ) AS localDebit,
                         sum( IF ( documentLocalAmount < 0, ( documentLocalAmount *- 1 ), 0 ) ) AS localCredit,
                         erp_generalledger.documentRptCurrencyID,
                         sum( IF ( documentRptAmount > 0, documentRptAmount, 0 ) ) AS rptDebit,
                         sum( IF ( documentRptAmount < 0, ( documentRptAmount *- 1 ), 0 ) ) AS rptCredit,
-                        "" AS isCustomer,
-                        approveEmp.empName as approvedBy,
-                        confirmEmp.empName as confirmedBy,
-                        erp_generalledger.documentConfirmedDate,
-                        erp_generalledger.documentFinalApprovedDate
+                        "" AS isCustomer
                     FROM
                         erp_generalledger
                         LEFT JOIN employees as approveEmp ON erp_generalledger.documentFinalApprovedByEmpSystemID = approveEmp.employeeSystemID
                         LEFT JOIN employees as confirmEmp ON erp_generalledger.documentConfirmedByEmpSystemID = confirmEmp.employeeSystemID
                         LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = erp_generalledger.supplierCodeSystem
-                        LEFT JOIN customermaster ON customermaster.customerCodeSystem = erp_generalledger.supplierCodeSystem
-                        LEFT JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID
-                        LEFT JOIN companymaster ON companymaster.companySystemID = erp_generalledger.companySystemID
-                    WHERE
+                        LEFT JOIN customermaster ON customermaster.customerCodeSystem = erp_generalledger.supplierCodeSystem 
+                        LEFT JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID 
+                        LEFT JOIN companymaster ON companymaster.companySystemID = erp_generalledger.companySystemID 
+                        LEFT JOIN erp_templatesglcode ON erp_templatesglcode.chartOfAccountSystemID = erp_generalledger.chartOfAccountSystemID AND erp_templatesglcode.templateMasterID IN (
+                            SELECT erp_templatesmaster.templatesMasterAutoID FROM erp_templatesmaster
+                                  WHERE erp_templatesmaster.isActive = -1 AND  erp_templatesmaster.isBudgetUpload = -1
+                        )
+                        LEFT JOIN erp_templatesdetails ON erp_templatesdetails.templatesDetailsAutoID = erp_templatesglcode.templatesDetailsAutoID
+                        WHERE
                         erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
-                        AND erp_generalledger.glAccountType = "BS"
+                        AND erp_generalledger.glAccountTypeID = 1
                         AND  erp_generalledger.chartOfAccountSystemID IN (' . join(',', $chartOfAccountId) . ')
                         AND  erp_generalledger.serviceLineSystemID IN (' . join(',', $serviceLineId) . ')
-                        AND  erp_generalledger.contractUID IN (' . join(',', $contractsId) . ')
-                        AND DATE(erp_generalledger.documentDate) < "' . $fromDate . '"
+                        AND DATE(erp_generalledger.documentDate) <= "' . $fromDate . '"
                     GROUP BY
-                        erp_generalledger.glCode,
                         erp_generalledger.companySystemID,
                         erp_generalledger.serviceLineSystemID,
                         erp_generalledger.chartOfAccountSystemID
-                        ) AS erp_qry_gl_bf
-                        ) AS GL_final
+                        ) AS erp_qry_gl_bf 
+                        ) AS GL_final 
                     ORDER BY
-                        documentDate,glCode ASC';
+                        documentDate ASC';
         $output = \DB::select($query);
         //dd(DB::getQueryLog());
         return $output;
