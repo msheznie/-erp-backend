@@ -1603,6 +1603,8 @@ WHERE
                                 $subTotalCreditRptLocal = 0;
                                 foreach ($values as $val) {
                                     $x++;
+                                    $data[$x]['decimalPlaceLocal']= $decimalPlaceLocal;
+                                    $data[$x]['decimalPlaceRpt']= $decimalPlaceRpt;
                                     $data[$x]['com_id'] = $val->companyID;
                                     $data[$x]['com_name'] = $val->CompanyName;
                                     $data[$x]['gl_type'] = $val->glAccountType;
@@ -1665,6 +1667,9 @@ WHERE
                                 // }
                                 // $data[$x]['Supplier/Customer'] = 'Total';
                                 if ($checkIsGroup->isGroup == 0) {
+                                    $data[$x]['show_total']= true;
+                                    $data[$x]['decimalPlaceLocal']= $decimalPlaceLocal;
+                                    $data[$x]['decimalPlaceRpt']= $decimalPlaceRpt;
                                     $data[$x]['debit_total_local'] = round($subTotalDebitLocal, $decimalPlaceLocal);
                                     $data[$x]['credit_total_local'] = round($subTotalCreditRptLocal, $decimalPlaceLocal);
                                     $balanceLocal = $subTotalDebitLocal - $subTotalCreditRptLocal;
@@ -3534,57 +3539,54 @@ WHERE
                             $x++;
                         }
                     }
+                    $data[$x]['Company ID'] = "";
+                    $data[$x]['Company Name'] = "";
+                    $data[$x]['GL Code'] = "";
+                    $data[$x]['Account Description'] = "";
+                    $data[$x]['GL  Type'] = "";
+                    $data[$x]['Template Description'] = "";
+                    $data[$x]['Document Type'] = "";
+                    $data[$x]['Document Number'] = "";
+                    $data[$x]['Date'] = "";
+                    $data[$x]['Document Narration'] = "";
+                    $data[$x]['Service Line'] = "";
+                    $data[$x]['Contract'] = "";
+
+                    $data[$x]['Supplier/Customer'] = "Grand Total";
+                    if (($checkIsGroup->isGroup == 0 && ($request->currencyID == 1)) || !isset($request->month)) {
+                        $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = round($subTotalDebitLocal, $decimalPlaceLocal);
+                        $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = round($subTotalCreditRptLocal, $decimalPlaceLocal);
+                    }
+
+                    if($request->currencyID == 2 || !isset($request->month)) {
+                        $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = round($subTotalDebitRpt, $decimalPlaceRpt);
+                        $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($subTotalCreditRpt, $decimalPlaceRpt);
+                    }
+                    $x++;
+                    $data[$x]['Company ID'] = "";
+                    $data[$x]['Company Name'] = "";
+                    $data[$x]['GL Code'] = "";
+                    $data[$x]['Account Description'] = "";
+                    $data[$x]['GL  Type'] = "";
+                    $data[$x]['Template Description'] = "";
+                    $data[$x]['Document Type'] = "";
+                    $data[$x]['Document Number'] = "";
+                    $data[$x]['Date'] = "";
+                    $data[$x]['Document Narration'] = "";
+                    $data[$x]['Service Line'] = "";
+                    $data[$x]['Contract'] = "";
+
+                    $data[$x]['Supplier/Customer'] = "";
+                    if (($checkIsGroup->isGroup == 0 && ($request->currencyID == 1)) || !isset($request->month)) {
+                        $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = "";
+                        $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = round($subTotalDebitLocal - $subTotalCreditRptLocal, $decimalPlaceLocal);
+                    }
+
+                    if($request->currencyID == 2 || !isset($request->month)) {
+                        $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = "";
+                        $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($subTotalDebitRpt - $subTotalCreditRpt, $decimalPlaceRpt);
+                    }
                 }
-
-                
-                $data[$x]['Company ID'] = "";
-                $data[$x]['Company Name'] = "";
-                $data[$x]['GL Code'] = "";
-                $data[$x]['Account Description'] = "";
-                $data[$x]['GL  Type'] = "";
-                $data[$x]['Template Description'] = "";
-                $data[$x]['Document Type'] = "";
-                $data[$x]['Document Number'] = "";
-                $data[$x]['Date'] = "";
-                $data[$x]['Document Narration'] = "";
-                $data[$x]['Service Line'] = "";
-                $data[$x]['Contract'] = "";
-
-                $data[$x]['Supplier/Customer'] = "Grand Total";
-                if (($checkIsGroup->isGroup == 0 && ($request->currencyID == 1)) || !isset($request->month)) {
-                    $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = round($subTotalDebitLocal, $decimalPlaceLocal);
-                    $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = round($subTotalCreditRptLocal, $decimalPlaceLocal);
-                }
-
-                if($request->currencyID == 2 || !isset($request->month)) {
-                    $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = round($subTotalDebitRpt, $decimalPlaceRpt);
-                    $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($subTotalCreditRpt, $decimalPlaceRpt);
-                }
-                $x++;
-                $data[$x]['Company ID'] = "";
-                $data[$x]['Company Name'] = "";
-                $data[$x]['GL Code'] = "";
-                $data[$x]['Account Description'] = "";
-                $data[$x]['GL  Type'] = "";
-                $data[$x]['Template Description'] = "";
-                $data[$x]['Document Type'] = "";
-                $data[$x]['Document Number'] = "";
-                $data[$x]['Date'] = "";
-                $data[$x]['Document Narration'] = "";
-                $data[$x]['Service Line'] = "";
-                $data[$x]['Contract'] = "";
-
-                $data[$x]['Supplier/Customer'] = "";
-                if (($checkIsGroup->isGroup == 0 && ($request->currencyID == 1)) || !isset($request->month)) {
-                    $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = "";
-                    $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = round($subTotalDebitLocal - $subTotalCreditRptLocal, $decimalPlaceLocal);
-                }
-
-                if($request->currencyID == 2 || !isset($request->month)) {
-                    $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = "";
-                    $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($subTotalDebitRpt - $subTotalCreditRpt, $decimalPlaceRpt);
-                }
-
 
                 $company_name = $companyCurrency->CompanyName;
                 $to_date = \Helper::dateFormat($request->toDate);
@@ -7966,7 +7968,7 @@ GROUP BY
         $reportData = $this->generateFRReport($request);
 
         $input = $this->convertArrayToSelectedValue($request->all(), array('currency'));
-        if ($reportData['template']['showDecimalPlaceYN']) {
+        if (isset($reportData['template']) && $reportData['template']['showDecimalPlaceYN']) {
             if ($input['currency'] === 1) {
                 $reportData['decimalPlaces'] = $reportData['companyCurrency']['localcurrency']['DecimalPlaces'];
             } else {
