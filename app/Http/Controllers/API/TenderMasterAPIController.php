@@ -707,53 +707,6 @@ WHERE
                     ProcumentActivity::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
                 }
 
-               /*if (isset($input['calendarDates'])) {
-                    if (count($input['calendarDates']) > 0) {
-                        CalendarDatesDetail::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
-                        foreach ($input['calendarDates'] as $calDate) {
-                            if (!empty($calDate['from_date'])) {
-                                $frm_date = new Carbon($calDate['from_date']);
-                                $frm_date = $frm_date->format('Y-m-d');
-                            } else {
-                                $frm_date = null;
-                            }
-                            if (!empty($calDate['to_date'])) {
-                                $to_date = new Carbon($calDate['to_date']);
-                                $to_date = $to_date->format('Y-m-d');
-                            } else {
-                                $to_date = null;
-                            }
-                            if (!empty($to_date) && empty($frm_date)) {
-                                return ['success' => false, 'message' => 'From date cannot be empty'];
-                            }
-                            if (!empty($frm_date) && empty($to_date)) {
-                                return ['success' => false, 'message' => 'To date cannot be empty'];
-                            }
-
-                            if (!empty($frm_date) && !empty($to_date)) {
-                                if ($frm_date > $to_date) {
-                                    return ['success' => false, 'message' => 'From date cannot be greater than the To date'];
-                                }
-                            }
-                            if (!empty($to_date) || !empty($frm_date)) {
-                                $calDt['tender_id'] = $input['id'];
-                                $calDt['calendar_date_id'] = $calDate['id'];
-                                $calDt['from_date'] = $frm_date;
-                                $calDt['to_date'] = $to_date;
-                                $calDt['company_id'] = $input['company_id'];
-                                $calDt['created_by'] = $employee->employeeSystemID;
-                                $calDt['created_at'] = Carbon::now();
-
-                                CalendarDatesDetail::create($calDt);
-                            }
-                        }
-                    } else {
-                        CalendarDatesDetail::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
-                    }
-                } else {
-                    CalendarDatesDetail::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
-                }*/
-
 
                 if ($exist['site_visit_date'] != $site_visit_date) {
                     $site['tender_id'] = $input['id'];
@@ -831,12 +784,7 @@ WHERE
                         $scheduleAll = PricingScheduleMaster::where('tender_id', $input['id'])->get();
                 
                         foreach ($scheduleAll as $val) {
-                           // $mainwork = TenderMainWorks::where('tender_id', $input['id'])->where('schedule_id', $val['id'])->first();
-
-                            //
-                            
                             $scheduleDetail = PricingScheduleDetail::where('tender_id', $input['id'])->where('pricing_schedule_master_id', $val['id'])->where('is_disabled', true);
-
                             if($scheduleDetail->count() > 0)
                             {
                                 $scheduleDetails = $scheduleDetail->get();
@@ -847,51 +795,20 @@ WHERE
                                         return ['success' => false, 'message' => 'All work schedules should be completed'];
                                     }
                                 }
-                               
                             }
-
                             $mainwork = PricingScheduleDetail::with(['tender_boq_items'])->where('tender_id', $input['id'])->where('deleted_at',null)->where('boq_applicable', true)->where('pricing_schedule_master_id', $val['id']);
-                           
-                           
                             if($mainwork->count() > 0)
                             {
                                 $mainworks = $mainwork->get();
-
-                               
                                 foreach($mainworks as $main)
                                 {
                                     if(count($main->tender_boq_items) == 0)
                                     {
                                         return ['success' => false, 'message' => 'BOQ enabled main works should have at least one BOQ item'];
                                     }
-                                   
                                 }
-
                             }
-
-                           // return $this->sendResponse($scheduleDetail, 'Tender Masters retrieved successfully');
-
-
-                        
-                            // if (empty($mainwork)) {
-                            //     return ['success' => false, 'message' => 'Main works should be added in all work schedules'];
-                            // }
                         }
-
-
-                        //$mainWorkBoqApp = TenderMainWorks::with(['tender_bid_format_detail'])->where('tender_id', $input['id'])->get();
-                        // $mainWorkBoqApp = PricingScheduleDetail::where('boq_applicable', true)->where('deleted_at',null)->where('tender_id', $input['id'])->get();
-
-                        
-
-                        // foreach ($mainWorkBoqApp as $vals) {
-                        //     if ($vals['boq_applicable'] == 1) {
-                        //         $boqItems = TenderBoqItems::where('main_work_id', $vals['id'])->first();
-                        //         if (empty($boqItems)) {
-                        //             return ['success' => false, 'message' => 'BOQ enabled main works should have at least one BOQ item'];
-                        //         }
-                        //     }
-                        // }
 
                         $params = array('autoID' => $input['id'], 'company' => $input["company_id"], 'document' => $input["document_system_id"]);
                         $confirm = \Helper::confirmDocument($params);
@@ -903,6 +820,46 @@ WHERE
                             $dataC['confirmed_by_emp_system_id'] = $employee->employeeSystemID;
 
                             TenderMaster::where('id', $input['id'])->update($dataC);
+                        }
+
+                        $techCriteria = EvaluationCriteriaDetails::with(['child'=> function($q){
+                            $q->with(['child' => function($q){
+                                $q->with(['child' => function($q){
+                                    $q->with(['evaluation_criteria_type','tender_criteria_answer_type']);
+                                }]);
+                            }]);
+                        }])->where('tender_id',$input['id'])->where('level',1)->where('critera_type_id',2)->get();
+
+                        if(!empty($techCriteria)){
+                            foreach ($techCriteria as $level1){
+                                if(count($level1['child'])>0){
+                                    $weightage2 = 0;
+                                    foreach ($level1['child'] as $level2){
+                                        $weightage2 += $level2['weightage'];
+                                        if(count($level2['child'])>0){
+                                            $weightage3 = 0;
+                                            foreach ($level2['child'] as $level3){
+                                                $weightage3 += $level3['weightage'];
+                                                if(count($level3['child'])>0){
+                                                    $weightage4 = 0;
+                                                    foreach ($level3['child'] as $level4){
+                                                        $weightage4 += $level4['weightage'];
+                                                    }
+                                                    if($level3['weightage'] != $weightage4){
+                                                        return ['success' => false, 'message' => 'Sum Weightage of Child Criteria '.$level3['description'] .' does not equal the main criteria'];
+                                                    }
+                                                }
+                                            }
+                                            if($level2['weightage'] != $weightage3){
+                                                return ['success' => false, 'message' => 'Sum Weightage of Child Criteria '.$level2['description'] .' does not equal the main criteria'];
+                                            }
+                                        }
+                                    }
+                                    if($level1['weightage'] != $weightage2){
+                                        return ['success' => false, 'message' => 'Sum Weightage of Child Criteria '.$level1['description'] .' does not equal the main criteria'];
+                                    }
+                                }
+                            }
                         }
                     }
                 }
