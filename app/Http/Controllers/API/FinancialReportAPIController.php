@@ -1687,6 +1687,36 @@ WHERE
                         }
                         $data[$x]['debit_report'] = round($total['documentRptAmountDebit'], $decimalPlaceRpt);
                         $data[$x]['credit_report'] = round($total['documentRptAmountCredit'], $decimalPlaceRpt);
+
+                        $x++;
+
+                        $data[$x]['decimalPlaceLocal']= $decimalPlaceLocal;
+                        $data[$x]['decimalPlaceRpt']= $decimalPlaceRpt;
+                        $data[$x]['com_id'] = "";
+                        $data[$x]['show_grand_total_balance'] = true;
+                        $data[$x]['com_name'] = "";
+                        $data[$x]['gl_type'] = "";
+                        $data[$x]['tem_desc'] = "";
+                        $data[$x]['doc_type'] = "";
+                        $data[$x]['doc_no'] = "";
+                        $data[$x]['data'] = "";
+                        $data[$x]['doc_narration'] = "";
+                        $data[$x]['documentSystemCode'] = "";
+                        $data[$x]['documentSystemID'] = "";
+                        $data[$x]['documentCode'] = "";
+                        $data[$x]['severice_line'] = "";
+                        $data[$x]['contract'] = "";
+                        $data[$x]['confirmed_by'] = "";
+                        $data[$x]['confirmed_date'] = "";
+                        $data[$x]['approved_by'] = "";
+                        $data[$x]['approved_date'] = "";
+                        $data[$x]['Supplier/Customer'] = "Grand Total";
+                        if ($checkIsGroup->isGroup == 0) {
+                            $data[$x]['debit_local'] = "";
+                            $data[$x]['grand_local_balance'] = round($total['documentLocalAmountDebit'] - $total['documentLocalAmountCredit'], $decimalPlaceLocal);
+                        }
+                        $data[$x]['debit_report'] = "";
+                        $data[$x]['grand_report_balance'] = round($total['documentRptAmountDebit'] - $total['documentRptAmountCredit'], $decimalPlaceRpt);
                     }
                 } else {
                     if ($output) {
