@@ -1603,6 +1603,8 @@ WHERE
                                 $subTotalCreditRptLocal = 0;
                                 foreach ($values as $val) {
                                     $x++;
+                                    $data[$x]['decimalPlaceLocal']= $decimalPlaceLocal;
+                                    $data[$x]['decimalPlaceRpt']= $decimalPlaceRpt;
                                     $data[$x]['com_id'] = $val->companyID;
                                     $data[$x]['com_name'] = $val->CompanyName;
                                     $data[$x]['gl_type'] = $val->glAccountType;
@@ -1665,6 +1667,9 @@ WHERE
                                 // }
                                 // $data[$x]['Supplier/Customer'] = 'Total';
                                 if ($checkIsGroup->isGroup == 0) {
+                                    $data[$x]['show_total']= true;
+                                    $data[$x]['decimalPlaceLocal']= $decimalPlaceLocal;
+                                    $data[$x]['decimalPlaceRpt']= $decimalPlaceRpt;
                                     $data[$x]['debit_total_local'] = round($subTotalDebitLocal, $decimalPlaceLocal);
                                     $data[$x]['credit_total_local'] = round($subTotalCreditRptLocal, $decimalPlaceLocal);
                                     $balanceLocal = $subTotalDebitLocal - $subTotalCreditRptLocal;
