@@ -3442,6 +3442,41 @@ WHERE
                         }
                         $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = round($total['documentRptAmountDebit'], $decimalPlaceRpt);
                         $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($total['documentRptAmountCredit'], $decimalPlaceRpt);
+
+                        $x++;
+                        $data[$x]['Company ID'] = '';
+                        $data[$x]['Company Name'] = '';
+                        $data[$x]['GL  Type'] = '';
+                        $data[$x]['Template Description'] = '';
+                        $data[$x]['Document Type'] = '';
+                        $data[$x]['Document Number'] = '';
+                        $data[$x]['Date'] = '';
+                        $data[$x]['Document Narration'] = '';
+                        $data[$x]['Service Line'] = '';
+                        $data[$x]['Contract'] = '';
+
+                        if (in_array('confi_name', $extraColumns)) {
+                            $data[$x]['Confirmed By'] = '';
+                        }
+
+                        if (in_array('confi_date', $extraColumns)) {
+                            $data[$x]['Confirmed Date'] = '';
+                        }
+
+                        if (in_array('app_name', $extraColumns)) {
+                            $data[$x]['Approved By'] = '';
+                        }
+
+                        if (in_array('app_date', $extraColumns)) {
+                            $data[$x]['Approved Date'] = '';
+                        }
+                        $data[$x]['Supplier/Customer'] = 'Total Balance';
+                        if ($checkIsGroup->isGroup == 0) {
+                            $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = "";
+                            $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = round($total['documentLocalAmountDebit'] - $total['documentLocalAmountCredit'], $decimalPlaceLocal);
+                        }
+                        $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = "";
+                        $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($total['documentRptAmountDebit'] - $total['documentRptAmountCredit'], $decimalPlaceRpt);
                     }
                 } else {
 
