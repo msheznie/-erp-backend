@@ -194,7 +194,7 @@
                         </div>
                         <div><span>
                 @if(!empty($det->approvedDate))
-                                    {{ \App\helper\Helper::dateFormat($det->approvedDate)}}
+                                    {{ \App\helper\Helper::convertDateWithTime($det->approvedDate)}}
                                 @endif
               </span></div>
                         <div style="width: 3px"></div>
