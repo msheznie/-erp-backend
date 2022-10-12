@@ -228,8 +228,8 @@
                     <tr style="border: 1px solid !important;">
                         <td colspan="1"></td>
                         <td colspan="3" style="text-align: center;">{{$item->itemPrimaryCode}}</td>
-                        <td colspan="4" style="text-align: center;">{{$item->itemDescription}}</td>
-                        <td colspan="3" style="text-align: center;">{{$item->comments}}</td>
+                        <td colspan="4" style="text-align: left;">{{$item->itemDescription}}</td>
+                        <td colspan="3" style="text-align: left;">{{$item->comments}}</td>
                         <td colspan="2" style="text-align: center;">{{isset($item->uom_issuing->UnitShortCode)?$item->uom_issuing->UnitShortCode:''}}</td>
                         <td colspan="2" style="text-align: center;">{{$item->qtyIssued}}</td>
                         <td colspan="2" style="text-align: right;">{{number_format($item->sellingCostAfterMargin,$numberFormatting)}}</td>
@@ -249,8 +249,8 @@
                     <tr style="border: 1px solid !important;">
                         <td colspan="1"></td>
                         <td colspan="3" style="text-align: center;">{{$item->glCode}}</td>
-                        <td colspan="4" style="text-align: center;">{{$item->glCodeDes}}</td>
-                        <td colspan="3" style="text-align: center;">{{$item->comments}}</td>
+                        <td colspan="4" style="text-align: left;">{{$item->glCodeDes}}</td>
+                        <td colspan="3" style="text-align: left;">{{$item->comments}}</td>
                         <td colspan="2" style="text-align: center;">{{isset($item->unit->UnitShortCode)?$item->unit->UnitShortCode:''}}</td>
                         <td colspan="2" style="text-align: center;">{{$item->invoiceQty}}</td>
                         <td colspan="2" style="text-align: right;">{{number_format($item->unitCost,$numberFormatting)}}</td>

@@ -565,7 +565,9 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
         $input = $request->all();
         $weightage = $input['weightage'];
         $tenderMasterId = $input['tenderMasterId'];
-        $level = $input['level'];
+
+        $level  = isset($input['level']) ? $input['level'] : null;
+
         $parentId = $input['parentId'];
         if($level == 1){
             $result = EvaluationCriteriaDetails::where('tender_id',$input['tenderMasterId'])->where('level',1)->sum('weightage');
