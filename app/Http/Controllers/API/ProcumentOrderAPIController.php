@@ -8025,7 +8025,6 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 ->groupBy('deliveryOrderID')
                 ->first();
 
-            $deliveryOrderDetails = new \stdClass();
             $deliveryOrderDetails->invoices = $this->customerInvoiceChainData($deliveryOrderID, null, $custInvoiceDirectAutoID, $custReceivePaymentAutoID, $salesReturnID, $matchDocumentMasterAutoID, $creditNoteAutoID);
 
             $deliveryOrderDetails = $deliveryOrderDetails->toArray();
