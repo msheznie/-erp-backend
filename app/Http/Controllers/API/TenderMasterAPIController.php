@@ -846,17 +846,17 @@ WHERE
                                                         $weightage4 += $level4['weightage'];
                                                     }
                                                     if($level3['weightage'] != $weightage4){
-                                                        return ['success' => false, 'message' => 'Sum Weightage of Child Criteria '.$level3['description'] .' does not equal the main criteria'];
+                                                        return ['success' => false, 'message' => 'Total child criteria weightage of '.$level3['description'] .' is not equal to the parent criteria weightage'];
                                                     }
                                                 }
                                             }
                                             if($level2['weightage'] != $weightage3){
-                                                return ['success' => false, 'message' => 'Sum Weightage of Child Criteria '.$level2['description'] .' does not equal the main criteria'];
+                                                return ['success' => false, 'message' => 'Total child criteria weightage of '.$level2['description'] .' is not equal to the parent criteria weightage'];
                                             }
                                         }
                                     }
                                     if($level1['weightage'] != $weightage2){
-                                        return ['success' => false, 'message' => 'Sum Weightage of Child Criteria '.$level1['description'] .' does not equal the main criteria'];
+                                        return ['success' => false, 'message' => 'Total child criteria weightage of '.$level1['description'] .' is not equal to the parent criteria weightage'];
                                     }
                                 }
                             }
