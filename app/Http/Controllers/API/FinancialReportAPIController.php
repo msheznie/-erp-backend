@@ -5332,7 +5332,7 @@ AND MASTER .canceledYN = 0';
                 $employeeID = \Helper::getEmployeeSystemID();
                 GeneralLedgerPdfJob::dispatch($db, $request, [$employeeID]);
 
-                return $this->sendResponse([], "General Ledger PDF report has been sent queue");
+                return $this->sendResponse([], "General Ledger PDF report has been sent to queue");
                 break;
             default:
                 return $this->sendError('No report ID found');
