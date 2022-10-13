@@ -22,7 +22,6 @@ use App\helper\Helper;
  * @property string empID
  * @property integer serial
  * @property string empLeadingText
- * @property string empPassword
  * @property string empUserName
  * @property string empTitle
  * @property string empInitial
@@ -176,7 +175,6 @@ class Employee extends Model
         'empID' => 'string',
         'serial' => 'integer',
         'empLeadingText' => 'string',
-        'empPassword' => 'string',
         'empUserName' => 'string',
         'empTitle' => 'string',
         'empInitial' => 'string',
