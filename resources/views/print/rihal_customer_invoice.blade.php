@@ -699,8 +699,8 @@
                         @endif
                     </td>
                     <td style="width: 10%" class="text-right">@if ($request->invoicedetails)
-                            @if(!empty($request->localCurrencyER))
-                            {{number_format($directTraSubTotal / $request->localCurrencyER, $numberFormatting)}}
+                            @if(!empty($request->localCurrencyER) && !empty($company->localcurrency->DecimalPlaces))
+                            {{number_format($directTraSubTotal / $request->localCurrencyER, $company->localcurrency->DecimalPlaces)}}
                             @endif
                         @endif
                     </td>
@@ -708,13 +708,13 @@
                     {{$directTraSubTotalLocal = $directTraSubTotal}}
                     {{$directTraSubTotalLocal+= $totalVATAmountLocal}}
                     <td style="width: 10%" class="text-right">
-                        @if(!empty($request->localCurrencyER))
-                        {{ number_format($totalVATAmountLocal / $request->localCurrencyER, $numberFormatting) }}
+                        @if(!empty($request->localCurrencyER) && !empty($company->localcurrency->DecimalPlaces))
+                        {{ number_format($totalVATAmountLocal / $request->localCurrencyER, $company->localcurrency->DecimalPlaces) }}
                         @endif
                     </td>
                     <td style="width: 10%" class="text-right">
-                        @if(!empty($request->localCurrencyER))
-                        {{ number_format($directTraSubTotalLocal / $request->localCurrencyER, $numberFormatting) }}
+                        @if(!empty($request->localCurrencyER) && !empty($company->localcurrency->DecimalPlaces))
+                        {{ number_format($directTraSubTotalLocal / $request->localCurrencyER, $company->localcurrency->DecimalPlaces) }}
                         @endif
                     </td>
                 </tr>
@@ -744,8 +744,8 @@
 
                 <td class="text-left" style="font-size: 11.5px; border:none !important">
                     <span class="font-weight-bold">: @if ($request->invoicedetails)
-                            @if(!empty($request->localCurrencyER))
-                            {{number_format($directTraSubTotal / $request->localCurrencyER, $numberFormatting)}}
+                            @if(!empty($request->localCurrencyER) && !empty($company->localcurrency->DecimalPlaces))
+                            {{number_format($directTraSubTotal / $request->localCurrencyER, $company->localcurrency->DecimalPlaces)}}
                             @endif
                         @endif
                     </span>
@@ -776,8 +776,8 @@
                 </td>
                 <td class="text-left"
                     style="font-size: 11.5px; border:none !important"><span class="font-weight-bold">:
-                        @if(!empty($request->localCurrencyER))
-                        {{number_format($totalVATAmount / $request->localCurrencyER, $numberFormatting)}}
+                        @if(!empty($request->localCurrencyER) && !empty($company->localcurrency->DecimalPlaces))
+                        {{number_format($totalVATAmount / $request->localCurrencyER, $company->localcurrency->DecimalPlaces)}}
                         @endif
                     </span>
                 </td>
@@ -806,8 +806,8 @@
                 <td class="text-left"
                     style="font-size: 11.5px; border:none !important"><span
                             class="font-weight-bold">:
-                          @if(!empty($request->localCurrencyER))
-                        {{number_format($directTraSubTotal / $request->localCurrencyER, $numberFormatting)}}
+                          @if(!empty($request->localCurrencyER) && !empty($company->localcurrency->DecimalPlaces))
+                        {{number_format($directTraSubTotal / $request->localCurrencyER, $company->localcurrency->DecimalPlaces)}}
                            @endif
                     </span>
                 </td>
