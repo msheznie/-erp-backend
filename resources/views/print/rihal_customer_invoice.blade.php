@@ -674,7 +674,7 @@
                             ({{ $company->localcurrency->CurrencyCode }}) :
                         @endif
                         @if(!empty($request->localCurrencyER))
-                            {{$request->localCurrencyER}}
+                            {{ round(1 / $request->localCurrencyER,3)}}
                         @endif  </td>
                     <td style="width: 5%" class="text-right">
                         @if(!empty($request->currency->CurrencyCode))
@@ -700,7 +700,7 @@
                     </td>
                     <td style="width: 10%" class="text-right">@if ($request->invoicedetails)
                             @if(!empty($request->localCurrencyER))
-                            {{number_format($directTraSubTotal * $request->localCurrencyER, $numberFormatting)}}
+                            {{number_format($directTraSubTotal / $request->localCurrencyER, $numberFormatting)}}
                             @endif
                         @endif
                     </td>
@@ -709,12 +709,12 @@
                     {{$directTraSubTotalLocal+= $totalVATAmountLocal}}
                     <td style="width: 10%" class="text-right">
                         @if(!empty($request->localCurrencyER))
-                        {{ number_format($totalVATAmountLocal * $request->localCurrencyER, $numberFormatting) }}
+                        {{ number_format($totalVATAmountLocal / $request->localCurrencyER, $numberFormatting) }}
                         @endif
                     </td>
                     <td style="width: 10%" class="text-right">
                         @if(!empty($request->localCurrencyER))
-                        {{ number_format($directTraSubTotalLocal * $request->localCurrencyER, $numberFormatting) }}
+                        {{ number_format($directTraSubTotalLocal / $request->localCurrencyER, $numberFormatting) }}
                         @endif
                     </td>
                 </tr>
@@ -745,7 +745,7 @@
                 <td class="text-left" style="font-size: 11.5px; border:none !important">
                     <span class="font-weight-bold">: @if ($request->invoicedetails)
                             @if(!empty($request->localCurrencyER))
-                            {{number_format($directTraSubTotal * $request->localCurrencyER, $numberFormatting)}}
+                            {{number_format($directTraSubTotal / $request->localCurrencyER, $numberFormatting)}}
                             @endif
                         @endif
                     </span>
@@ -777,7 +777,7 @@
                 <td class="text-left"
                     style="font-size: 11.5px; border:none !important"><span class="font-weight-bold">:
                         @if(!empty($request->localCurrencyER))
-                        {{number_format($totalVATAmount * $request->localCurrencyER, $numberFormatting)}}
+                        {{number_format($totalVATAmount / $request->localCurrencyER, $numberFormatting)}}
                         @endif
                     </span>
                 </td>
@@ -807,7 +807,7 @@
                     style="font-size: 11.5px; border:none !important"><span
                             class="font-weight-bold">:
                           @if(!empty($request->localCurrencyER))
-                        {{number_format($directTraSubTotal * $request->localCurrencyER, $numberFormatting)}}
+                        {{number_format($directTraSubTotal / $request->localCurrencyER, $numberFormatting)}}
                            @endif
                     </span>
                 </td>
