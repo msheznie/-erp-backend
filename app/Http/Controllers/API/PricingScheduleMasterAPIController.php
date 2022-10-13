@@ -367,6 +367,20 @@ class PricingScheduleMasterAPIController extends AppBaseController
                 return ['success' => false, 'message' => 'Scheduler name can not be duplicated'];
             }
         }
+
+
+        
+        //check if formula is empty or not
+
+        $pricing_shedule_details = TenderBidFormatDetail::where('tender_id', $input['price_bid_format_id'])->where('field_type',4)->where('formula_string',"");
+
+        if($pricing_shedule_details->count() > 0)
+        {
+            
+            return ['success' => false, 'message' => 'Pricing Bid format should have a defined formula'];
+        }
+
+
         if(isset($input['id'])) {
             $schedule = PricingScheduleMaster::where('id', $input['id'])->first();
         }
@@ -515,7 +529,7 @@ class PricingScheduleMasterAPIController extends AppBaseController
 
 
 
-       return DB::select("SELECT
+       $val1 =  DB::select("SELECT
        srm_pricing_schedule_detail.id,
        tender_id,
        srm_pricing_schedule_detail.label,
@@ -530,9 +544,30 @@ class PricingScheduleMasterAPIController extends AppBaseController
        LEFT JOIN srm_schedule_bid_format_details ON srm_schedule_bid_format_details.bid_format_detail_id = srm_pricing_schedule_detail.id 
        AND srm_schedule_bid_format_details.schedule_id = $schedule_id 
         WHERE
-            bid_format_id = $price_bid_format_id AND pricing_schedule_master_id = $schedule_id 
+            bid_format_id = $price_bid_format_id AND pricing_schedule_master_id = $schedule_id AND deleted_at IS NULL AND field_type != 4
         ORDER BY
             id ASC");
+
+
+        $val2 =  DB::select("SELECT
+        srm_pricing_schedule_detail.id,
+        tender_id,
+        srm_pricing_schedule_detail.label,
+        srm_pricing_schedule_detail.boq_applicable,
+        is_disabled,
+        tender_field_type.type,
+        tender_field_type.id as typeId 
+        FROM
+        srm_pricing_schedule_detail
+        INNER JOIN tender_field_type ON tender_field_type.id = srm_pricing_schedule_detail.field_type
+        WHERE
+            bid_format_id = $price_bid_format_id AND pricing_schedule_master_id = $schedule_id AND deleted_at IS NULL AND field_type = 4
+        ORDER BY
+            id ASC");
+
+
+    return array_merge($val1,$val2); 
+
 
 
     }
@@ -619,7 +654,12 @@ class PricingScheduleMasterAPIController extends AppBaseController
     {
         $input = $request->all();
         $priceSchedule = PricingScheduleMaster::where('id',$input['schedule_id'])->first();
-        return $mainWorks = PricingScheduleDetail::where('pricing_schedule_master_id',$input['schedule_id'])->where('boq_applicable',true)->where('tender_id',$input['tender_id'])->get();
+        return $mainWorks = PricingScheduleDetail::where('pricing_schedule_master_id',$input['schedule_id'])->where('tender_id',$input['tender_id'])
+        ->where(function($query){
+            $query->where('boq_applicable',true);
+            $query->orWhere('is_disabled',false);
+        })->where('field_type','!=',4)
+        ->get();
         
         // $bidDetailId = $mainWorks->pluck('bid_format_detail_id');
 

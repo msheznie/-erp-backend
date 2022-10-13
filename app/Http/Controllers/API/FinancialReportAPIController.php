@@ -7986,7 +7986,7 @@ GROUP BY
         $reportData = $this->generateFRReport($request);
 
         $input = $this->convertArrayToSelectedValue($request->all(), array('currency'));
-        if ($reportData['template']['showDecimalPlaceYN']) {
+        if (isset($reportData['template']) && $reportData['template']['showDecimalPlaceYN']) {
             if ($input['currency'] === 1) {
                 $reportData['decimalPlaces'] = $reportData['companyCurrency']['localcurrency']['DecimalPlaces'];
             } else {

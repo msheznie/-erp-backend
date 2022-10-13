@@ -79,7 +79,7 @@
     </tbody>
     <tfoot>
     <tr>
-        <td colspan="5"></td>
+        <td colspan="6"></td>
         <td><B>Total</B></td>
         @if(isset($reportData[$name][$currencyKey][0]) != null)
             <td style="text-align: right"><B>{{ number_format($total,$reportData[$name][$currencyKey][0]->balanceDecimalPlaces) }}</B></td>
@@ -91,7 +91,7 @@
 @endforeach
 <table>
     <tr>
-        <td colspan="5"></td>
+        <td colspan="6"></td>
         <td><B>Grand Total</B></td>
         <td style="text-align: right"><B>{{ number_format($invoiceAmount,$currencyDecimalPlace) }}</B></td>
     </tr>
