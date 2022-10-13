@@ -243,7 +243,7 @@
                         </td>
                         <td>
                             <span>
-                                {{ \App\helper\Helper::dateFormat($masterdata->BPVdate)}}
+                                {{ \App\helper\Helper::convertDateWithTime($masterdata->BPVdate)}}
                             </span>
                         </td>
                     </tr>
@@ -369,7 +369,7 @@
                             <span class="font-weight-bold">:</span>
                         </td>
                         <td>
-                            {{ \App\helper\Helper::dateFormat($masterdata->BPVchequeDate)}}
+                            {{ \App\helper\Helper::convertDateWithTime($masterdata->BPVchequeDate)}}
                         </td>
                     </tr>
                     @endif
@@ -446,7 +446,7 @@
                             <td>{{$ddet->pomaster->purchaseOrderCode}}</td>
                         @endif
                         <td>{{$ddet->supplierInvoiceNo}}</td>
-                        <td>{{ \App\helper\Helper::dateFormat($ddet->supplierInvoiceDate)}}</td>
+                        <td>{{ \App\helper\Helper::convertDateWithTime($ddet->supplierInvoiceDate)}}</td>
                         <td class="text-right">{{number_format($ddet->supplierInvoiceAmount, $transDecimal)}}</td>
                         <td class="text-right">{{number_format($ddet->supplierPaymentAmount, $transDecimal)}}</td>
                         <td class="text-right">{{number_format($ddet->paymentBalancedAmount, $transDecimal)}}</td>
@@ -605,7 +605,7 @@
                             </div>
                             <div><span>
                 @if(!empty($det->approvedDate))
-                                        {{ \App\helper\Helper::dateFormat($det->approvedDate)}}
+                                        {{ \App\helper\Helper::convertDateWithTime($det->approvedDate)}}
                                     @endif
               </span></div>
                         </div>
