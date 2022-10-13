@@ -466,7 +466,7 @@ class EmployeeAPIController extends AppBaseController
         return $this->sendResponse($employeeMasterData->toArray(), 'Employee password reset successfully');
     }
 
-    public static function quickRandom($length = 6)
+    public static function quickRandom($length = 9)
     {
         $pool = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
