@@ -507,6 +507,7 @@
                 {{$decimal = 2}}
                 {{$x=1}}
                 {{$directTraSubTotal=0}}
+                {{$netAmount=0}}
                 {{$numberFormatting=empty($request->currency) ? 2 : $request->currency->DecimalPlaces}}
                 @foreach ($request->invoicedetails as $item)
                     {{$directTraSubTotal +=$item->invoiceAmount}}
@@ -523,11 +524,31 @@
                         <td class="text-right">{{number_format($item->unitCost,$numberFormatting)}}</td>
                         <td class="text-right">{{number_format($item->invoiceAmount,$numberFormatting)}}</td>
                         <td class="text-right">{{$item->VATPercentage}}%</td>
-                        <td class="text-right">{{number_format($item->VATAmountLocal,$numberFormatting)}}</td>
-                        <td class="text-right">{{number_format(($item->invoiceAmount+$item->VATAmountLocal),$numberFormatting)}}</td>
+                        <td class="text-right">{{number_format(($item->VATAmount * $item->invoiceQty),$numberFormatting)}}</td>
+                        <td class="text-right">{{number_format(($item->invoiceAmount + ($item->VATAmount * $item->invoiceQty)),$numberFormatting)}}</td>
                     </tr>
                     {{ $x++ }}
                 @endforeach
+                <?php
+                $totalVATAmount = (($request->tax && $request->tax->amount) ? $request->tax->amount : 0);
+
+                $company = \App\Models\Company::with(['localcurrency'])->find($request->companySystemID);
+                ?>
+
+                @if(!empty($company->localcurrency->currencyID) && !empty($request->currency->currencyID) && $company->localcurrency->currencyID != $request->currency->currencyID && $totalVATAmount > 0)
+                <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;">
+                    <td class="text-center" colspan="6" style="text-align: center"></td>
+                    <td class="text-center" colspan="3" style="text-align: center">Grand Total @if(!empty($request->currency->CurrencyCode))({{$request->currency->CurrencyCode}}) @endif</td>
+                    <td class="text-center" style="text-align: right">@if ($request->invoicedetails){{number_format($directTraSubTotal, $numberFormatting)}}@endif</td>
+                    {{$totalVATAmount = (($request->tax && $request->tax->amount) ? $request->tax->amount : 0)}}
+                    {{$netAmount = $totalVATAmount + $directTraSubTotal}}
+
+                    <td class="text-center" style="text-align: center"></td>
+
+                    <td class="text-center" style="text-align: right">{{number_format($totalVATAmount, $numberFormatting)}}</td>
+                    <td class="text-center" style="text-align: right">{{number_format($netAmount, $numberFormatting)}}</td>
+                </tr>
+                @endif
                 </tbody>
 
             </table>
@@ -558,6 +579,7 @@
                 {{$decimal = 2}}
                 {{$x=1}}
                 {{$directTraSubTotal=0}}
+                {{$netAmount=0}}
                 {{$numberFormatting=empty($request->currency) ? 2 : $request->currency->DecimalPlaces}}
                 @if(!empty($request->issue_item_details))
                     @foreach ($request->issue_item_details as $item)
@@ -583,87 +605,306 @@
                             {{ $x++ }}
                         @endif
                     @endforeach
+                    <?php
+                    $totalVATAmount = (($request->tax && $request->tax->amount) ? $request->tax->amount : 0);
+
+                    $company = \App\Models\Company::with(['localcurrency'])->find($request->companySystemID);
+                    ?>
+
+                    @if(!empty($company->localcurrency->currencyID) && !empty($request->currency->currencyID) && $company->localcurrency->currencyID != $request->currency->currencyID && $totalVATAmount > 0)
+                        <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;">
+                            <td class="text-center" colspan="6" style="text-align: center"></td>
+                            <td class="text-center" colspan="3" style="text-align: center">Grand Total @if(!empty($request->currency->CurrencyCode))({{$request->currency->CurrencyCode}}) @endif</td>
+                            <td class="text-center" style="text-align: right">@if ($request->invoicedetails){{number_format($directTraSubTotal, $numberFormatting)}}@endif</td>
+                            {{$totalVATAmount = (($request->tax && $request->tax->amount) ? $request->tax->amount : 0)}}
+                            {{$netAmount = $totalVATAmount + $directTraSubTotal}}
+
+                            <td class="text-right" style="text-align: right"></td>
+
+                            <td class="text-right" style="text-align: right">{{number_format($totalVATAmount, $numberFormatting)}}</td>
+                            <td class="text-right" style="text-align: right">{{number_format($netAmount, $numberFormatting)}}</td>
+                        </tr>
+                    @endif
                 @endif
                 </tbody>
 
             </table>
         @endif
     </div>
+
+
     <div class="row">
+        <br/>
+        <br/>
+        <?php
+        $totalVATAmount = (($request->tax && $request->tax->amount) ? $request->tax->amount : 0);
+
+        $company = \App\Models\Company::with(['localcurrency'])->find($request->companySystemID);
+        ?>
+
+    @if(!empty($company->localcurrency->currencyID) && !empty($request->currency->currencyID) && $company->localcurrency->currencyID != $request->currency->currencyID && $totalVATAmount > 0)
+        <p><B>(Grand Total in @if(!empty($request->currency->CurrencyCode)){{$request->currency->CurrencyCode}} @endif :   {{$request->amount_word}}
+                @if ($request->floatAmt > 0)
+                    and
+                    {{$request->floatAmt}} /@if($request->currency->DecimalPlaces == 3)1000 @else 100 @endif
+                @endif
+                only)</B></p>
+        @endif
+
+
+        @php $totalVATAmount = (($request->tax && $request->tax->amount) ? $request->tax->amount : 0) @endphp
+
+        @if(!empty($company->localcurrency->currencyID) && !empty($request->currency->currencyID) && $company->localcurrency->currencyID != $request->currency->currencyID && $totalVATAmount > 0)
+        <table class="table table-bordered table-striped table-sm" style="width: 100%;">
+            <thead>
+            <tr class="">
+                <th style="text-align: center">Conversion Rate</th>
+                <th style="text-align: center">Currency</th>
+                <th style="text-align: center">Taxable Amount</th>
+                <th style="text-align: center">VAT Amount</th>
+                <th style="text-align: center">Grand Total</th>
+            </tr>
+            </thead>
+            <tbody>
+                <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;background-color: white">
+
+
+                    <td style="width: 15%" class="text-left">Conversion Rate
+                        @if(!empty($company->localcurrency->CurrencyCode))
+                            ({{ $company->localcurrency->CurrencyCode }}) :
+                        @endif
+                        @if(!empty($request->currency->ExchangeRate))
+                            {{$request->currency->ExchangeRate}}
+                        @endif  </td>
+                    <td style="width: 5%" class="text-right">
+                        @if(!empty($request->currency->CurrencyCode))
+                            {{$request->currency->CurrencyCode}}
+                        @endif
+                    </td>
+                    <td style="width: 10%" class="text-right">@if ($request->invoicedetails){{number_format($directTraSubTotal, $numberFormatting)}}@endif</td>
+
+                    {{$totalVATAmountCurrency = (($request->tax && $request->tax->amount) ? $request->tax->amount : 0)}}
+                    {{$directTraSubTotalCurrency = $directTraSubTotal}}
+                    {{$directTraSubTotalCurrency += $totalVATAmountCurrency}}
+                    <td style="width: 10%" class="text-right">{{ number_format($totalVATAmountCurrency, $numberFormatting) }}</td>
+                    <td style="width: 10%" class="text-right">{{ number_format($directTraSubTotalCurrency, $numberFormatting) }}</td>
+                </tr>
+                <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;background-color: white">
+
+
+                    <td style="width: 15%" class="text-left"> </td>
+                    <td style="width: 5%" class="text-right">
+                        @if(!empty($company->localcurrency->CurrencyCode))
+                            {{ $company->localcurrency->CurrencyCode }}
+                        @endif
+                    </td>
+                    <td style="width: 10%" class="text-right">@if ($request->invoicedetails)
+                            @if(!empty($request->currency->ExchangeRate))
+                            {{number_format($directTraSubTotal * $request->currency->ExchangeRate, $numberFormatting)}}
+                            @endif
+                        @endif
+                    </td>
+                    {{$totalVATAmountLocal = (($request->tax && $request->tax->amount) ? $request->tax->amount : 0)}}
+                    {{$directTraSubTotalLocal = $directTraSubTotal}}
+                    {{$directTraSubTotalLocal+= $totalVATAmountLocal}}
+                    <td style="width: 10%" class="text-right">
+                        @if(!empty($request->currency->ExchangeRate))
+                        {{ number_format($totalVATAmountLocal * $request->currency->ExchangeRate, $numberFormatting) }}
+                        @endif
+                    </td>
+                    <td style="width: 10%" class="text-right">
+                        @if(!empty($request->currency->ExchangeRate))
+                        {{ number_format($directTraSubTotalLocal * $request->currency->ExchangeRate, $numberFormatting) }}
+                        @endif
+                    </td>
+                </tr>
+            </tbody>
+
+        </table>
+        @endif
+    </div>
+
+
+
+                @php $totalVATAmount = (($request->tax && $request->tax->amount) ? $request->tax->amount : 0) @endphp
+
+    @if(!empty($company->localcurrency->currencyID) && !empty($request->currency->currencyID) && $company->localcurrency->currencyID != $request->currency->currencyID && $totalVATAmount > 0)
+    <div class="row">
+        <br/>
         <table style="width:100%;" class="table table-bordered">
             <tbody>
             <tr>
-                <td style="border:none !important; width: 40%">
-                    &nbsp;&nbsp;&nbsp;
-                </td>
-                <td class="text-left" style="border:none !important;width: 30%">
+                <td class="text-left" style="border:none !important; width: 20%">
                         <span class="font-weight-bold" style="font-size: 11.5px">
-                            Subtotal (Excluding VAT)
+                            Subtotal @if(!empty($company->localcurrency->CurrencyCode))
+                                ({{ $company->localcurrency->CurrencyCode }})
+                            @endif
                         </span>
                 </td>
 
-                <td class="text-right"
-                    style="font-size: 11.5px;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;width: 30%"><span
-                            class="font-weight-bold">@if ($request->invoicedetails){{number_format($directTraSubTotal, $numberFormatting)}}@endif</span>
+                <td class="text-left" style="font-size: 11.5px; border:none !important">
+                    <span class="font-weight-bold">: @if ($request->invoicedetails)
+                            @if(!empty($request->currency->ExchangeRate))
+                            {{number_format($directTraSubTotal * $request->currency->ExchangeRate, $numberFormatting)}}
+                            @endif
+                        @endif
+                    </span>
+                </td>
+                <td style="border:none !important; width: 20%">
+                    &nbsp;
+                </td>
+                <td class="text-left" style="border:none !important">
+                        <span class="font-weight-bold" style="font-size: 11.5px">
+                            Subtotal ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})
+                        </span>
+                </td>
+
+                <td class="text-left" style="font-size: 11.5px; border:none !important">
+                    <span class="font-weight-bold">: @if ($request->invoicedetails){{number_format($directTraSubTotal, $numberFormatting)}}@endif</span>
                 </td>
             </tr>
 
             {{$totalVATAmount = (($request->tax && $request->tax->amount) ? $request->tax->amount : 0)}}
             {{$directTraSubTotal+= $totalVATAmount}}
             <tr>
-                <td style="border:none !important;width: 40%">
-                    &nbsp;
-                </td>
-                <td class="text-left" style="border:none !important;width: 30%">
+                <td class="text-left" style="border:none !important;width: 10%">
                         <span class="font-weight-bold" style="font-size: 11.5px">
-                            Total VAT ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}}) ({{round( ( ($request->tax && $request->tax->taxPercent ) ? $request->tax->taxPercent : 0 ), 2)}} %)
+                            VAT  @if(!empty($company->localcurrency->CurrencyCode))
+                                ({{ $company->localcurrency->CurrencyCode }})
+                            @endif
                         </span>
                 </td>
-                <td class="text-right"
-                    style="font-size: 11.5px;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;width: 30%"><span class="font-weight-bold">{{number_format($totalVATAmount, $numberFormatting)}}</span>
+                <td class="text-left"
+                    style="font-size: 11.5px; border:none !important"><span class="font-weight-bold">:
+                        @if(!empty($request->currency->ExchangeRate))
+                        {{number_format($totalVATAmount * $request->currency->ExchangeRate, $numberFormatting)}}
+                        @endif
+                    </span>
+                </td>
+                <td style="border:none !important;width: 20%">
+                    &nbsp;
+                </td>
+                <td class="text-left" style="border:none !important;width: 10%">
+                        <span class="font-weight-bold" style="font-size: 11.5px">
+                            VAT ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})
+                        </span>
+                </td>
+                <td class="text-left"
+                    style="font-size: 11.5px; border:none !important"><span class="font-weight-bold">:
+                        {{number_format($totalVATAmount, $numberFormatting)}}</span>
                 </td>
             </tr>
 
             <tr>
-                <td  style="border:none !important;width: 40%">
-                    &nbsp;
-                </td>
                 <td class="text-left" style="border:none !important;width: 30%">
                         <span class="font-weight-bold" style="font-size: 11.5px">
-                            Total Amount Payable
-                        </span>
-                </td>
-                <td class="text-right"
-                    style="font-size: 11.5px;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;width: 30%"><span
-                            class="font-weight-bold">{{number_format($directTraSubTotal, $numberFormatting)}}</span>
-                </td>
-            </tr>
-            <tr>
-                <td  style="border:none !important;width: 40%">
-                    &nbsp;
-                </td>
-                <td class="text-left" style="border:none !important;width: 30%">
-                        <span class="font-weight-bold" style="font-size: 11.5px">
-                            Total Amount Payable in word
-                        </span>
-                </td>
-                <td class="text-right"
-                    style="font-size: 11.5px;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;width: 30%">
-                    <span
-                            class="font-weight-bold">                                
-                            {{$request->amount_word}}
-                            @if ($request->floatAmt > 0)
-                            and
-                            {{$request->floatAmt}}/@if($request->currency->DecimalPlaces == 3)1000 @else 100 @endif
+                            Total  @if(!empty($company->localcurrency->CurrencyCode))
+                                ({{ $company->localcurrency->CurrencyCode }})
                             @endif
-                            
-                            only
+                        </span>
+                </td>
+                <td class="text-left"
+                    style="font-size: 11.5px; border:none !important"><span
+                            class="font-weight-bold">:
+                          @if(!empty($request->currency->ExchangeRate))
+                        {{number_format($directTraSubTotal * $request->currency->ExchangeRate, $numberFormatting)}}
+                           @endif
                     </span>
+                </td>
+                <td  style="border:none !important;width: 20%">
+                    &nbsp;
+                </td>
+                <td class="text-left" style="border:none !important;width: 30%">
+                        <span class="font-weight-bold" style="font-size: 11.5px">
+                            Total ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})
+                        </span>
+                </td>
+                <td class="text-left"
+                    style="font-size: 11.5px; border:none !important"><span
+                            class="font-weight-bold">: {{number_format($directTraSubTotal, $numberFormatting)}}</span>
                 </td>
             </tr>
             </tbody>
         </table>
     </div>
+    @else
+            <div class="row">
+                <br/>
+                <table style="width:100%;" class="table table-bordered">
+                    <tbody>
+                    <tr>
+                        <td style="border:none !important; width: 40%">
+                            &nbsp;&nbsp;&nbsp;
+                        </td>
+                        <td class="text-left" style="border:none !important;width: 30%">
+                                <span class="font-weight-bold" style="font-size: 11.5px">
+                                    Subtotal (Excluding VAT)
+                                </span>
+                        </td>
+
+                        <td class="text-right"
+                            style="font-size: 11.5px;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;width: 30%"><span
+                                    class="font-weight-bold">@if ($request->invoicedetails){{number_format($directTraSubTotal, $numberFormatting)}}@endif</span>
+                        </td>
+                    </tr>
+
+                    {{$totalVATAmount = (($request->tax && $request->tax->amount) ? $request->tax->amount : 0)}}
+                    {{$directTraSubTotal+= $totalVATAmount}}
+                    <tr>
+                        <td style="border:none !important;width: 40%">
+                            &nbsp;
+                        </td>
+                        <td class="text-left" style="border:none !important;width: 30%">
+                                <span class="font-weight-bold" style="font-size: 11.5px">
+                                    Total VAT ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}}) ({{round( ( ($request->tax && $request->tax->taxPercent ) ? $request->tax->taxPercent : 0 ), 2)}} %)
+                                </span>
+                        </td>
+                        <td class="text-right"
+                            style="font-size: 11.5px;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;width: 30%"><span class="font-weight-bold">{{number_format($totalVATAmount, $numberFormatting)}}</span>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td  style="border:none !important;width: 40%">
+                            &nbsp;
+                        </td>
+                        <td class="text-left" style="border:none !important;width: 30%">
+                                <span class="font-weight-bold" style="font-size: 11.5px">
+                                    Total Amount Payable
+                                </span>
+                        </td>
+                        <td class="text-right"
+                            style="font-size: 11.5px;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;width: 30%"><span
+                                    class="font-weight-bold">{{number_format($directTraSubTotal, $numberFormatting)}}</span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td  style="border:none !important;width: 40%">
+                            &nbsp;
+                        </td>
+                        <td class="text-left" style="border:none !important;width: 30%">
+                                <span class="font-weight-bold" style="font-size: 11.5px">
+                                    Total Amount Payable in word
+                                </span>
+                        </td>
+                        <td class="text-right"
+                            style="font-size: 11.5px;border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;width: 30%">
+                            <span
+                                    class="font-weight-bold">
+                                    {{$request->amount_word}}
+                                @if ($request->floatAmt > 0)
+                                    and
+                                    {{$request->floatAmt}}/@if($request->currency->DecimalPlaces == 3)1000 @else 100 @endif
+                                @endif
+
+                                    only
+                            </span>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+    @endif
 </div>
 
 <div id="footer">
