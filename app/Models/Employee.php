@@ -95,7 +95,6 @@ class Employee extends Model
      *
      * @var array
      */
-    protected $hidden = ['empPassword'];
 
     protected $dates = ['deleted_at'];
     protected $primaryKey = 'employeeSystemID';
@@ -107,7 +106,6 @@ class Employee extends Model
         'empID',
         'serial',
         'empLeadingText',
-        'empPassword',
         'empUserName',
         'empTitle',
         'empInitial',
