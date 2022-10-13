@@ -560,10 +560,14 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             if($user_type == 1)
             {
                 $supplierPaidAmountSum = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, 
-                Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')->when(($payMaster->invoiceType == 6 || $payMaster->invoiceType == 7), function($query) {
-                $query->whereHas('payment_master', function($query) {
-                    $query->whereIn('invoiceType',[6,7]);
-                });
+                Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')->when(($payMaster->invoiceType != 6 && $payMaster->invoiceType != 7), function($query) {
+                        $query->whereHas('payment_master', function($query) {
+                            $query->where(function($query) {
+                                $query->where('invoiceType', '!=', 6)
+                                      ->where('invoiceType', '!=', 7);
+                            });
+                        });
+
                   })->where('apAutoID', $paySupplierInvoiceDetail->apAutoID)
                   ->whereHas('matching_master',function($query){
                     $query->where('user_type',1);
@@ -591,13 +595,24 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             {
                 
                 $supplierPaidAmountSum = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, 
-                       Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')->when(($payMaster->invoiceType == 6 || $payMaster->invoiceType == 7), function($query) {
-                $query->whereHas('payment_master', function($query) {
-                    $query->whereIn('invoiceType',[6,7]);
-                });
-                })->where('apAutoID', $paySupplierInvoiceDetail->apAutoID)
-                    ->groupBy('erp_paysupplierinvoicedetail.apAutoID')
-                    ->first();
+                       Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')
+                ->when(($payMaster->invoiceType == 6 || $payMaster->invoiceType == 7), function($query) {
+                    $query->whereHas('payment_master', function($query) {
+                        $query->whereIn('invoiceType',[6,7]);
+                    });
+                })
+                ->when(($payMaster->invoiceType != 6 && $payMaster->invoiceType != 7), function($query) {
+                    $query->whereHas('payment_master', function($query) {
+                        $query->where(function($query) {
+                            $query->where('invoiceType', '!=', 6)
+                                  ->where('invoiceType', '!=', 7);
+                        });
+                    });
+                })
+                ->where('apAutoID', $paySupplierInvoiceDetail->apAutoID)
+                ->groupBy('erp_paysupplierinvoicedetail.apAutoID')
+                ->first();
+
             }
 
            
@@ -762,11 +777,22 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                 $paySupplierInvoiceDetail = $this->paySupplierInvoiceDetailRepository->find($val->payDetailAutoID);
                 $paySupplierInvoiceDetail->delete();
 
-                $supplierPaidAmountSum = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')->where('apAutoID', $val->apAutoID)->when(($payMaster->invoiceType == 6 || $payMaster->invoiceType == 7), function($query) {
+                $supplierPaidAmountSum = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')
+                                                ->where('apAutoID', $val->apAutoID)
+                                                ->when(($payMaster->invoiceType == 6 || $payMaster->invoiceType == 7), function($query) {
                                                     $query->whereHas('payment_master', function($query) {
                                                         $query->whereIn('invoiceType',[6,7]);
                                                     });
-                                                })->groupBy('erp_paysupplierinvoicedetail.apAutoID')->first();
+                                                })
+                                                ->when(($payMaster->invoiceType != 6 && $payMaster->invoiceType != 7), function($query) {
+                                                    $query->whereHas('payment_master', function($query) {
+                                                        $query->where(function($query) {
+                                                            $query->where('invoiceType', '!=', 6)
+                                                                  ->where('invoiceType', '!=', 7);
+                                                        });
+                                                    });
+                                                })
+                                                ->groupBy('erp_paysupplierinvoicedetail.apAutoID')->first();
 
                 $matchedAmount = MatchDocumentMaster::selectRaw('erp_matchdocumentmaster.PayMasterAutoId, erp_matchdocumentmaster.documentID, Sum(erp_matchdocumentmaster.matchedAmount) AS SumOfmatchedAmount')->where('PayMasterAutoId', $val->bookingInvSystemCode)->where('documentSystemID', $val->addedDocumentSystemID)->groupBy('erp_matchdocumentmaster.PayMasterAutoId', 'erp_matchdocumentmaster.documentSystemID')->first();
 
@@ -925,6 +951,19 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                     }
 
                     $payDetailExistSameItem = PaySupplierInvoiceDetail::where('PayMasterAutoId', $input["PayMasterAutoId"])
+                        ->when(($payMaster->invoiceType == 6 || $payMaster->invoiceType == 7), function($query) {
+                            $query->whereHas('payment_master', function($query) {
+                                $query->whereIn('invoiceType',[6,7]);
+                            });
+                        })
+                        ->when(($payMaster->invoiceType != 6 && $payMaster->invoiceType != 7), function($query) {
+                            $query->whereHas('payment_master', function($query) {
+                                $query->where(function($query) {
+                                    $query->where('invoiceType', '!=', 6)
+                                          ->where('invoiceType', '!=', 7);
+                                });
+                            });
+                        })
                         ->where('apAutoID', $item['apAutoID'])
                         ->first();
 
@@ -934,6 +973,19 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                     }
 
                     $payDetailMoreBooked = PaySupplierInvoiceDetail::selectRaw('IFNULL(SUM(IFNULL(supplierPaymentAmount,0)),0) as supplierPaymentAmount')
+                        ->when(($payMaster->invoiceType == 6 || $payMaster->invoiceType == 7), function($query) {
+                            $query->whereHas('payment_master', function($query) {
+                                $query->whereIn('invoiceType',[6,7]);
+                            });
+                        })
+                        ->when(($payMaster->invoiceType != 6 && $payMaster->invoiceType != 7), function($query) {
+                            $query->whereHas('payment_master', function($query) {
+                                $query->where(function($query) {
+                                    $query->where('invoiceType', '!=', 6)
+                                          ->where('invoiceType', '!=', 7);
+                                });
+                            });
+                        })
                         ->where('apAutoID', $item['apAutoID'])
                         ->first();
 
@@ -1032,8 +1084,18 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
 
 
                     $payDetailExistSameItem = PaySupplierInvoiceDetail::where('PayMasterAutoId', $input["PayMasterAutoId"])
-                        ->whereHas('payment_master', function ($query) {
-                            $query->where('invoiceType', 6);
+                        ->when(($payMaster->invoiceType == 6 || $payMaster->invoiceType == 7), function($query) {
+                            $query->whereHas('payment_master', function($query) {
+                                $query->whereIn('invoiceType',[6,7]);
+                            });
+                        })
+                        ->when(($payMaster->invoiceType != 6 && $payMaster->invoiceType != 7), function($query) {
+                            $query->whereHas('payment_master', function($query) {
+                                $query->where(function($query) {
+                                    $query->where('invoiceType', '!=', 6)
+                                          ->where('invoiceType', '!=', 7);
+                                });
+                            });
                         })
                         ->where('apAutoID', $item['id'])
                         ->first();
@@ -1045,8 +1107,18 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
 
                     $payDetailMoreBooked = PaySupplierInvoiceDetail::selectRaw('IFNULL(SUM(IFNULL(supplierPaymentAmount,0)),0) as supplierPaymentAmount')
                         ->where('apAutoID', $item['id'])
-                        ->whereHas('payment_master', function ($query) {
-                            $query->where('invoiceType', 6);
+                        ->when(($payMaster->invoiceType == 6 || $payMaster->invoiceType == 7), function($query) {
+                            $query->whereHas('payment_master', function($query) {
+                                $query->whereIn('invoiceType',[6,7]);
+                            });
+                        })
+                        ->when(($payMaster->invoiceType != 6 && $payMaster->invoiceType != 7), function($query) {
+                            $query->whereHas('payment_master', function($query) {
+                                $query->where(function($query) {
+                                    $query->where('invoiceType', '!=', 6)
+                                          ->where('invoiceType', '!=', 7);
+                                });
+                            });
                         })
                         ->first();
 
