@@ -507,6 +507,7 @@
                 {{$decimal = 2}}
                 {{$x=1}}
                 {{$directTraSubTotal=0}}
+                {{$netAmount=0}}
                 {{$numberFormatting=empty($request->currency) ? 2 : $request->currency->DecimalPlaces}}
                 @foreach ($request->invoicedetails as $item)
                     {{$directTraSubTotal +=$item->invoiceAmount}}
@@ -523,23 +524,31 @@
                         <td class="text-right">{{number_format($item->unitCost,$numberFormatting)}}</td>
                         <td class="text-right">{{number_format($item->invoiceAmount,$numberFormatting)}}</td>
                         <td class="text-right">{{$item->VATPercentage}}%</td>
-                        <td class="text-right">{{number_format($item->VATAmountLocal,$numberFormatting)}}</td>
-                        <td class="text-right">{{number_format(($item->invoiceAmount+$item->VATAmountLocal),$numberFormatting)}}</td>
+                        <td class="text-right">{{number_format(($item->VATAmount * $item->invoiceQty),$numberFormatting)}}</td>
+                        <td class="text-right">{{number_format(($item->invoiceAmount + ($item->VATAmount * $item->invoiceQty)),$numberFormatting)}}</td>
                     </tr>
                     {{ $x++ }}
                 @endforeach
+                <?php
+                $totalVATAmount = (($request->tax && $request->tax->amount) ? $request->tax->amount : 0);
+
+                $company = \App\Models\Company::with(['localcurrency'])->find($request->companySystemID);
+                ?>
+
+                @if(!empty($company->localcurrency->currencyID) && !empty($request->currency->currencyID) && $company->localcurrency->currencyID != $request->currency->currencyID && $totalVATAmount > 0)
                 <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;">
                     <td class="text-center" colspan="6" style="text-align: center"></td>
-                    <td class="text-center" colspan="3" style="text-align: center">Grand Total</td>
-                    <td class="text-center" style="text-align: center">@if ($request->invoicedetails){{number_format($directTraSubTotal, $numberFormatting)}}@endif</td>
+                    <td class="text-center" colspan="3" style="text-align: center">Grand Total @if(!empty($request->currency->CurrencyCode))({{$request->currency->CurrencyCode}}) @endif</td>
+                    <td class="text-center" style="text-align: right">@if ($request->invoicedetails){{number_format($directTraSubTotal, $numberFormatting)}}@endif</td>
                     {{$totalVATAmount = (($request->tax && $request->tax->amount) ? $request->tax->amount : 0)}}
-                    {{$directTraSubTotal+= $totalVATAmount}}
+                    {{$netAmount = $totalVATAmount + $directTraSubTotal}}
 
                     <td class="text-center" style="text-align: center"></td>
 
-                    <td class="text-center" style="text-align: center">{{number_format($totalVATAmount, $numberFormatting)}}</td>
-                    <td class="text-center" style="text-align: center">{{$directTraSubTotal}}</td>
+                    <td class="text-center" style="text-align: right">{{number_format($totalVATAmount, $numberFormatting)}}</td>
+                    <td class="text-center" style="text-align: right">{{number_format($netAmount, $numberFormatting)}}</td>
                 </tr>
+                @endif
                 </tbody>
 
             </table>
@@ -570,6 +579,7 @@
                 {{$decimal = 2}}
                 {{$x=1}}
                 {{$directTraSubTotal=0}}
+                {{$netAmount=0}}
                 {{$numberFormatting=empty($request->currency) ? 2 : $request->currency->DecimalPlaces}}
                 @if(!empty($request->issue_item_details))
                     @foreach ($request->issue_item_details as $item)
@@ -595,28 +605,56 @@
                             {{ $x++ }}
                         @endif
                     @endforeach
+                    <?php
+                    $totalVATAmount = (($request->tax && $request->tax->amount) ? $request->tax->amount : 0);
+
+                    $company = \App\Models\Company::with(['localcurrency'])->find($request->companySystemID);
+                    ?>
+
+                    @if(!empty($company->localcurrency->currencyID) && !empty($request->currency->currencyID) && $company->localcurrency->currencyID != $request->currency->currencyID && $totalVATAmount > 0)
+                        <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;">
+                            <td class="text-center" colspan="6" style="text-align: center"></td>
+                            <td class="text-center" colspan="3" style="text-align: center">Grand Total @if(!empty($request->currency->CurrencyCode))({{$request->currency->CurrencyCode}}) @endif</td>
+                            <td class="text-center" style="text-align: right">@if ($request->invoicedetails){{number_format($directTraSubTotal, $numberFormatting)}}@endif</td>
+                            {{$totalVATAmount = (($request->tax && $request->tax->amount) ? $request->tax->amount : 0)}}
+                            {{$netAmount = $totalVATAmount + $directTraSubTotal}}
+
+                            <td class="text-right" style="text-align: right"></td>
+
+                            <td class="text-right" style="text-align: right">{{number_format($totalVATAmount, $numberFormatting)}}</td>
+                            <td class="text-right" style="text-align: right">{{number_format($netAmount, $numberFormatting)}}</td>
+                        </tr>
+                    @endif
                 @endif
                 </tbody>
 
             </table>
         @endif
     </div>
+
+
     <div class="row">
         <br/>
         <br/>
+        <?php
+        $totalVATAmount = (($request->tax && $request->tax->amount) ? $request->tax->amount : 0);
+
+        $company = \App\Models\Company::with(['localcurrency'])->find($request->companySystemID);
+        ?>
+
+    @if(!empty($company->localcurrency->currencyID) && !empty($request->currency->currencyID) && $company->localcurrency->currencyID != $request->currency->currencyID && $totalVATAmount > 0)
         <p><B>(Grand Total in @if(!empty($request->currency->CurrencyCode)){{$request->currency->CurrencyCode}} @endif :   {{$request->amount_word}}
                 @if ($request->floatAmt > 0)
                     and
                     {{$request->floatAmt}} /@if($request->currency->DecimalPlaces == 3)1000 @else 100 @endif
                 @endif
                 only)</B></p>
-        <?php
-        $company = \App\Models\Company::with(['localcurrency'])->find($request->companySystemID);
-        ?>
+        @endif
+
 
         @php $totalVATAmount = (($request->tax && $request->tax->amount) ? $request->tax->amount : 0) @endphp
 
-        @if($company->localcurrency->currencyID != $request->currency->currencyID && $totalVATAmount > 0)
+        @if(!empty($company->localcurrency->currencyID) && !empty($request->currency->currencyID) && $company->localcurrency->currencyID != $request->currency->currencyID && $totalVATAmount > 0)
         <table class="table table-bordered table-striped table-sm" style="width: 100%;">
             <thead>
             <tr class="">
@@ -690,7 +728,7 @@
 
                 @php $totalVATAmount = (($request->tax && $request->tax->amount) ? $request->tax->amount : 0) @endphp
 
-    @if($company->localcurrency->currencyID != $request->currency->currencyID && $totalVATAmount > 0)
+    @if(!empty($company->localcurrency->currencyID) && !empty($request->currency->currencyID) && $company->localcurrency->currencyID != $request->currency->currencyID && $totalVATAmount > 0)
     <div class="row">
         <br/>
         <table style="width:100%;" class="table table-bordered">
