@@ -2836,6 +2836,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         
         $master = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $id)->first();
         $companySystemID = $master->companySystemID;
+        $localCurrencyER = $master->localCurrencyER;
 
         if ($master->isPerforma == 2 || $master->isPerforma == 3 || $master->isPerforma == 4 || $master->isPerforma == 5) {
             $detail = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $id)->first();
@@ -3129,6 +3130,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $customerInvoice->logo = $logo;
         $customerInvoice->footerDate = $footerDate;
         $customerInvoice->temp = $temp;
+        $customerInvoice->localCurrencyER = $localCurrencyER;
 
         $customerInvoice->is_pdo_vendor = false;
         $customerInvoice->vatNumber = '';
