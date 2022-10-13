@@ -673,8 +673,8 @@
                         @if(!empty($company->localcurrency->CurrencyCode))
                             ({{ $company->localcurrency->CurrencyCode }}) :
                         @endif
-                        @if(!empty($request->currency->ExchangeRate))
-                            {{$request->currency->ExchangeRate}}
+                        @if(!empty($request->localCurrencyER))
+                            {{$request->localCurrencyER}}
                         @endif  </td>
                     <td style="width: 5%" class="text-right">
                         @if(!empty($request->currency->CurrencyCode))
@@ -699,8 +699,8 @@
                         @endif
                     </td>
                     <td style="width: 10%" class="text-right">@if ($request->invoicedetails)
-                            @if(!empty($request->currency->ExchangeRate))
-                            {{number_format($directTraSubTotal * $request->currency->ExchangeRate, $numberFormatting)}}
+                            @if(!empty($request->localCurrencyER))
+                            {{number_format($directTraSubTotal * $request->localCurrencyER, $numberFormatting)}}
                             @endif
                         @endif
                     </td>
@@ -708,13 +708,13 @@
                     {{$directTraSubTotalLocal = $directTraSubTotal}}
                     {{$directTraSubTotalLocal+= $totalVATAmountLocal}}
                     <td style="width: 10%" class="text-right">
-                        @if(!empty($request->currency->ExchangeRate))
-                        {{ number_format($totalVATAmountLocal * $request->currency->ExchangeRate, $numberFormatting) }}
+                        @if(!empty($request->localCurrencyER))
+                        {{ number_format($totalVATAmountLocal * $request->localCurrencyER, $numberFormatting) }}
                         @endif
                     </td>
                     <td style="width: 10%" class="text-right">
-                        @if(!empty($request->currency->ExchangeRate))
-                        {{ number_format($directTraSubTotalLocal * $request->currency->ExchangeRate, $numberFormatting) }}
+                        @if(!empty($request->localCurrencyER))
+                        {{ number_format($directTraSubTotalLocal * $request->localCurrencyER, $numberFormatting) }}
                         @endif
                     </td>
                 </tr>
@@ -744,8 +744,8 @@
 
                 <td class="text-left" style="font-size: 11.5px; border:none !important">
                     <span class="font-weight-bold">: @if ($request->invoicedetails)
-                            @if(!empty($request->currency->ExchangeRate))
-                            {{number_format($directTraSubTotal * $request->currency->ExchangeRate, $numberFormatting)}}
+                            @if(!empty($request->localCurrencyER))
+                            {{number_format($directTraSubTotal * $request->localCurrencyER, $numberFormatting)}}
                             @endif
                         @endif
                     </span>
@@ -776,8 +776,8 @@
                 </td>
                 <td class="text-left"
                     style="font-size: 11.5px; border:none !important"><span class="font-weight-bold">:
-                        @if(!empty($request->currency->ExchangeRate))
-                        {{number_format($totalVATAmount * $request->currency->ExchangeRate, $numberFormatting)}}
+                        @if(!empty($request->localCurrencyER))
+                        {{number_format($totalVATAmount * $request->localCurrencyER, $numberFormatting)}}
                         @endif
                     </span>
                 </td>
@@ -806,8 +806,8 @@
                 <td class="text-left"
                     style="font-size: 11.5px; border:none !important"><span
                             class="font-weight-bold">:
-                          @if(!empty($request->currency->ExchangeRate))
-                        {{number_format($directTraSubTotal * $request->currency->ExchangeRate, $numberFormatting)}}
+                          @if(!empty($request->localCurrencyER))
+                        {{number_format($directTraSubTotal * $request->localCurrencyER, $numberFormatting)}}
                            @endif
                     </span>
                 </td>
