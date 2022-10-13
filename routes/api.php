@@ -2795,6 +2795,68 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
         Route::post('generateGeneralLedgerReportPDF', 'FinancialReportAPIController@pdfExportReport');
 
+
+
+        Route::resource('tender_bid_format_masters', 'TenderBidFormatMasterAPIController');
+        Route::resource('tender_bid_format_details', 'TenderBidFormatDetailAPIController');
+        Route::resource('tender_field_types', 'TenderFieldTypeAPIController');
+        Route::resource('tender_masters', 'TenderMasterAPIController');
+        Route::resource('tender_types', 'TenderTypeAPIController');
+        Route::resource('envelop_types', 'EnvelopTypeAPIController');
+        Route::resource('evaluation_types', 'EvaluationTypeAPIController');
+        Route::resource('procument_activities', 'ProcumentActivityAPIController');
+        Route::resource('tender_site_visit_dates', 'TenderSiteVisitDatesAPIController');
+        Route::resource('pricing_schedule_masters', 'PricingScheduleMasterAPIController');
+        Route::resource('schedule_bid_format_details', 'ScheduleBidFormatDetailsAPIController');
+        Route::resource('tender_master_suppliers', 'TenderMasterSupplierAPIController');
+        Route::resource('tender_main_works', 'TenderMainWorksAPIController');  
+        Route::resource('tender_main_works', 'TenderMainWorksAPIController');
+        Route::resource('tender_boq_items', 'TenderBoqItemsAPIController');
+        Route::resource('evaluation_criteria_details', 'EvaluationCriteriaDetailsAPIController');
+        Route::resource('evaluation_criteria_types', 'EvaluationCriteriaTypeAPIController');
+        Route::resource('tender_criteria_answer_types', 'TenderCriteriaAnswerTypeAPIController');
+        Route::resource('evaluation_criteria_score_configs', 'EvaluationCriteriaScoreConfigAPIController');
+        Route::resource('tender_supplier_assignees', 'TenderSupplierAssigneeAPIController');
+        Route::resource('tender_document_types', 'TenderDocumentTypesAPIController');
+        Route::resource('calendar_dates', 'CalendarDatesAPIController');
+        Route::resource('calendar_dates_details', 'CalendarDatesDetailAPIController');
+        Route::resource('bid_submission_masters', 'BidSubmissionMasterAPIController');
+        Route::resource('bid_submission_details', 'BidSubmissionDetailAPIController');
+        Route::resource('third_party_systems', 'ThirdPartySystemsAPIController');
+        Route::resource('third_party_integration_keys', 'ThirdPartyIntegrationKeysAPIController');
+        Route::resource('bid_schedules', 'BidScheduleAPIController');
+        Route::resource('bid_main_works', 'BidMainWorkAPIController');
+        Route::resource('bid_boqs', 'BidBoqAPIController');
+        Route::resource('cash_flow_report_details', 'CashFlowReportDetailAPIController');
+        Route::resource('tender_circulars', 'TenderCircularsAPIController');
+        Route::resource('po_cutoff_jobs', 'PoCutoffJobAPIController');
+        Route::resource('po_cutoff_job_datas', 'PoCutoffJobDataAPIController');
+        Route::resource('p_o_s_s_o_u_r_c_e_shift_details', 'POSSOURCEShiftDetailsAPIController');
+        Route::resource('i_o_u_booking_masters', 'IOUBookingMasterAPIController');
+
+
+        Route::resource('srp_employee_details', 'SrpEmployeeDetailsAPIController');
+        Route::resource('asset_request_details', 'AssetRequestDetailAPIController');
+        Route::resource('tax_ledgers', 'TaxLedgerAPIController');
+        Route::resource('employee_designations', 'EmployeeDesignationAPIController');
+        Route::resource('hrms_designations', 'HrmsDesignationAPIController');
+        Route::resource('hrms_employee_managers', 'HrmsEmployeeManagerAPIController');
+        Route::resource('tax_ledger_details', 'TaxLedgerDetailAPIController');
+        Route::resource('srp_employee_details', 'SrpEmployeeDetailsAPIController');
+        Route::resource('monthly_declarations_types', 'MonthlyDeclarationsTypesAPIController');
+        Route::resource('hr_monthly_deduction_masters', 'HrMonthlyDeductionMasterAPIController');
+        Route::resource('hr_payroll_masters', 'HrPayrollMasterAPIController');
+        Route::resource('hr_payroll_header_details', 'HrPayrollHeaderDetailsAPIController');
+        Route::resource('hr_payroll_details', 'HrPayrollDetailsAPIController');
+        Route::resource('hr_monthly_deduction_details', 'HrMonthlyDeductionDetailAPIController');
+        Route::resource('hr_monthly_deduction_details', 'HrMonthlyDeductionDetailAPIController');
+        Route::resource('h_r_document_description_forms', 'HRDocumentDescriptionFormsAPIController');
+        Route::resource('h_r_document_description_masters', 'HRDocumentDescriptionMasterAPIController');
+        Route::resource('h_r_emp_contract_histories', 'HREmpContractHistoryAPIController');
+        Route::resource('srp_erp_template_masters', 'SrpErpTemplateMasterAPIController');
+        Route::resource('srp_erp_form_categories', 'SrpErpFormCategoryAPIController');
+        Route::resource('srp_erp_templates', 'SrpErpTemplatesAPIController');
+
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
@@ -2858,7 +2920,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
     Route::resource('finance_category_serials', 'FinanceCategorySerialAPIController');
 
-    Route::get('logs', '\Rap2hpoutre\LaravelLogViewer\LogViewerController@index');
+    if (env("APP_ENV") != "production") {
+        Route::get('logs', '\Rap2hpoutre\LaravelLogViewer\LogViewerController@index');
+    }
 
     Route::get('notification-service', 'NotificationCompanyScenarioAPIController@notification_service');
     Route::get('leave/accrual/service_test', 'LeaveAccrualMasterAPIController@accrual_service_test');
@@ -2880,78 +2944,24 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 });
 
 
-Route::resource('tenants', 'TenantAPIController');
 
 Route::post('sendEmail', 'Email\SendEmailAPIController@sendEmail');
 
-//Route::resource('sales_return_reffered_backs', 'SalesReturnRefferedBackAPIController');
-
-//Route::resource('sales_return_detail_reffered_backs', 'SalesReturnDetailRefferedBackAPIController');
-
-
-
-Route::resource('srp_employee_details', 'SrpEmployeeDetailsAPIController');
-Route::resource('asset_request_details', 'AssetRequestDetailAPIController');
-Route::resource('tax_ledgers', 'TaxLedgerAPIController');
-Route::resource('employee_designations', 'EmployeeDesignationAPIController');
-Route::resource('hrms_designations', 'HrmsDesignationAPIController');
-Route::resource('hrms_employee_managers', 'HrmsEmployeeManagerAPIController');
-Route::resource('tax_ledger_details', 'TaxLedgerDetailAPIController');
-
-
-
-
-
-
-Route::resource('srp_employee_details', 'SrpEmployeeDetailsAPIController');
-
-
-
-Route::resource('monthly_declarations_types', 'MonthlyDeclarationsTypesAPIController');
-
-
-Route::resource('hr_monthly_deduction_masters', 'HrMonthlyDeductionMasterAPIController');
-
-
-Route::resource('hr_payroll_masters', 'HrPayrollMasterAPIController');
-
-Route::resource('hr_payroll_header_details', 'HrPayrollHeaderDetailsAPIController');
-
-Route::resource('hr_payroll_details', 'HrPayrollDetailsAPIController');
-
-
-Route::resource('hr_monthly_deduction_details', 'HrMonthlyDeductionDetailAPIController');
-
-Route::resource('hr_monthly_deduction_details', 'HrMonthlyDeductionDetailAPIController');
-
-
-
-Route::resource('h_r_document_description_forms', 'HRDocumentDescriptionFormsAPIController');
-
-Route::resource('h_r_document_description_masters', 'HRDocumentDescriptionMasterAPIController');
-
-Route::resource('h_r_emp_contract_histories', 'HREmpContractHistoryAPIController');
-
-Route::resource('srp_erp_template_masters', 'SrpErpTemplateMasterAPIController');
-
-Route::resource('srp_erp_form_categories', 'SrpErpFormCategoryAPIController');
-
-Route::resource('srp_erp_templates', 'SrpErpTemplatesAPIController');
 
 /*
  * Start SRM related routes
  */
 
-Route::group(['prefix' => 'srm'], function (){
-    Route::group(['middleware' => ['tenantById']], function (){
-        Route::post('requests', 'SRM\APIController@handleRequest');
-        Route::get('getProcumentOrderPrintPDFSRM', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
-    });
+        Route::group(['prefix' => 'srm'], function (){
+            Route::group(['middleware' => ['tenantById']], function (){
+                Route::post('requests', 'SRM\APIController@handleRequest');
+                Route::get('getProcumentOrderPrintPDFSRM', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
+            });
 
-    Route::group(['middleware' => ['tenant']], function (){
-        Route::post('fetch', 'SRM\APIController@fetch');
-    });
-});
+            Route::group(['middleware' => ['tenant']], function (){
+                Route::post('fetch', 'SRM\APIController@fetch');
+            });
+        });
 
 /*
  * End SRM related routes
@@ -2960,135 +2970,32 @@ Route::group(['prefix' => 'srm'], function (){
 /*
  * Start external related routes
  */
+        Route::group(['prefix' => 'external'], function (){
+            Route::group(['middleware' => ['tenantById','access_token']], function (){
+                Route::post('createMaterielRequestsApi', 'MaterielRequestAPIController@createMaterialAPI');
+                Route::post('createPurchaseRequestsApi', 'PurchaseRequestAPIController@createPurchaseAPI');
+                Route::post('checkLedgerQty', 'ItemMasterAPIController@checkLedgerQty');
+            });
+        });
 
-Route::group(['prefix' => 'external'], function (){
-    Route::group(['middleware' => ['tenantById','access_token']], function (){
-        Route::post('createMaterielRequestsApi', 'MaterielRequestAPIController@createMaterialAPI');
-        Route::post('createPurchaseRequestsApi', 'PurchaseRequestAPIController@createPurchaseAPI');
-        Route::post('checkLedgerQty', 'ItemMasterAPIController@checkLedgerQty');
-    });
-});
+        /* Below two request must be always separated from tenant, auth middlewares */
+        Route::get('attendance-clock-out', 'HRJobInvokeAPIController@clockOutDebug');
+        Route::get('attendance-clock-in', 'HRJobInvokeAPIController@attendanceClockIn');
+        Route::get('attendance-notification-debug', 'HRJobInvokeAPIController@attendance_notification_debug');
+        /* end of separated from tenant, auth middlewares */
+
+
+        Route::post('documentUpload', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@documentUpload');
+        Route::get('viewDocument', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@viewDocument');
+        Route::get('viewDocumentEmployeeImg', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@viewDocumentEmployeeImg');
+        Route::get('viewDocumentEmployeeImgBulk', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@viewDocumentEmployeeImgBulk');
+        Route::post('documentUploadDelete', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@documentUploadDelete');
+        Route::get('viewHrDocuments', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@viewHrDocuments');
 
 /*
  * End external related routes
  */
 
 
-
-Route::get('cache-clear', function () {
-    Artisan::call('cache:clear');
-    Artisan::call('config:clear');
-
-    return 'Cache (cache/config) cleared successfully';
-});
-
-Route::get('job-check', function(){
-    \App\helper\CommonJobService::job_check();
-    return '';
-}); 
-
-Route::get('runCronJob/{cron}', function ($cron) {
-    Artisan::call($cron);
-    return 'CRON Job run successfully';
-});
-
-
-
-
-
-
-
-
-Route::resource('tender_bid_format_masters', 'TenderBidFormatMasterAPIController');
-
-Route::resource('tender_bid_format_details', 'TenderBidFormatDetailAPIController');
-
-
-Route::resource('tender_field_types', 'TenderFieldTypeAPIController');
-
-
-Route::resource('tender_masters', 'TenderMasterAPIController');
-
-
-Route::resource('tender_types', 'TenderTypeAPIController');
-
-Route::resource('envelop_types', 'EnvelopTypeAPIController');
-
-
-Route::resource('evaluation_types', 'EvaluationTypeAPIController');
-
-
-Route::resource('procument_activities', 'ProcumentActivityAPIController');
-
-Route::resource('tender_site_visit_dates', 'TenderSiteVisitDatesAPIController');
-
-Route::resource('pricing_schedule_masters', 'PricingScheduleMasterAPIController');
-
-
-Route::resource('schedule_bid_format_details', 'ScheduleBidFormatDetailsAPIController');
-
-
-Route::resource('tender_master_suppliers', 'TenderMasterSupplierAPIController');
-
-Route::resource('tender_main_works', 'TenderMainWorksAPIController');  
-Route::resource('tender_main_works', 'TenderMainWorksAPIController');
-Route::resource('tender_boq_items', 'TenderBoqItemsAPIController');
-
-/* Below two request must be always separated from tenant, auth middlewares */
-Route::get('attendance-clock-out', 'HRJobInvokeAPIController@clockOutDebug');
-Route::get('attendance-clock-in', 'HRJobInvokeAPIController@attendanceClockIn');
-Route::get('attendance-notification-debug', 'HRJobInvokeAPIController@attendance_notification_debug');
-/* end of separated from tenant, auth middlewares */
-
-Route::resource('evaluation_criteria_details', 'EvaluationCriteriaDetailsAPIController');
-
-Route::resource('evaluation_criteria_types', 'EvaluationCriteriaTypeAPIController');
-
-
-Route::resource('tender_criteria_answer_types', 'TenderCriteriaAnswerTypeAPIController');
-
-
-Route::resource('evaluation_criteria_score_configs', 'EvaluationCriteriaScoreConfigAPIController');
-
-Route::resource('tender_supplier_assignees', 'TenderSupplierAssigneeAPIController');
-Route::resource('tender_document_types', 'TenderDocumentTypesAPIController');
-
-
-Route::resource('calendar_dates', 'CalendarDatesAPIController');
-
-Route::resource('calendar_dates_details', 'CalendarDatesDetailAPIController');
-
-
-
-Route::resource('bid_submission_masters', 'BidSubmissionMasterAPIController');
-
-Route::resource('bid_submission_details', 'BidSubmissionDetailAPIController');
-
-Route::resource('third_party_systems', 'ThirdPartySystemsAPIController');
-
-Route::resource('third_party_integration_keys', 'ThirdPartyIntegrationKeysAPIController');
-
-Route::resource('bid_schedules', 'BidScheduleAPIController');
-
-Route::resource('bid_main_works', 'BidMainWorkAPIController');
-
-Route::resource('bid_boqs', 'BidBoqAPIController');
-
-Route::resource('cash_flow_report_details', 'CashFlowReportDetailAPIController');
-
-Route::resource('tender_circulars', 'TenderCircularsAPIController');
-
-Route::resource('po_cutoff_jobs', 'PoCutoffJobAPIController');
-
-Route::resource('po_cutoff_job_datas', 'PoCutoffJobDataAPIController');
-
-Route::resource('p_o_s_s_o_u_r_c_e_shift_details', 'POSSOURCEShiftDetailsAPIController');
-Route::resource('i_o_u_booking_masters', 'IOUBookingMasterAPIController');
-Route::post('documentUpload', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@documentUpload');
-Route::get('viewDocument', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@viewDocument');
-Route::get('viewDocumentEmployeeImg', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@viewDocumentEmployeeImg');
-Route::get('viewDocumentEmployeeImgBulk', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@viewDocumentEmployeeImgBulk');
-Route::post('documentUploadDelete', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@documentUploadDelete');
-Route::get('viewHrDocuments', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@viewHrDocuments');
 
 
