@@ -361,7 +361,7 @@ class AppointmentAPIController extends AppBaseController
                     ->where('employeesdepartments.isActive', 1)
                     ->where('employeesdepartments.employeeSystemID', $empID);
             }]);
-        }, 'created_by', 'detail', 'slot_detail.slot_master.ware_house', 'supplier'])
+        }, 'created_by', 'detail', 'slot_detail.slot_master.ware_house', 'supplier', 'attachment'])
             ->whereHas('documentApproved', function ($q) use ($companyId, $documentSystemID, $empID) {
                 $q->where('erp_documentapproved.rejectedYN', 0)->where('erp_documentapproved.approvedYN', 0)
                     ->where('erp_documentapproved.documentSystemID', $documentSystemID)
