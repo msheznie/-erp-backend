@@ -54,6 +54,7 @@ class UserGroupRepository extends BaseRepository
 
             $userGroup->orderBy('userGroupID', 'desc');
         }
+        $userGroup = $userGroup->where('isDeleted', 0);
         $search = $input['search']['value'];
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
