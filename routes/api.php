@@ -676,6 +676,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('exportReportOpenRequest', 'PurchaseRequestAPIController@exportReportOpenRequest');
         Route::resource('g_r_v_types', 'GRVTypesAPIController');
         Route::resource('budget_consumed_datas', 'BudgetConsumedDataAPIController');
+        Route::post('getBudgetConsumptionForReview', 'BudgetConsumedDataAPIController@getBudgetConsumptionForReview');
+        Route::post('getBudgetConsumptionByDoc', 'BudgetConsumedDataAPIController@getBudgetConsumptionByDoc');
+        Route::post('changeBudgetConsumption', 'BudgetConsumedDataAPIController@changeBudgetConsumption');
         Route::resource('customer_invoices', 'CustomerInvoiceAPIController');
         Route::resource('company_finance_years', 'CompanyFinanceYearAPIController');
         Route::resource('company_finance_periods', 'CompanyFinancePeriodAPIController');
