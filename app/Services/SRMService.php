@@ -1346,7 +1346,7 @@ class SRMService
                 return $supplierResult;
             }
         }
-        return 0;
+        return array();
     }
 
 
