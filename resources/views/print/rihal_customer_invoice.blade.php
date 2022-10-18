@@ -674,7 +674,7 @@
                             ({{ $company->localcurrency->CurrencyCode }}) :
                         @endif
                         @if(!empty($request->localCurrencyER))
-                            {{ round(1 / $request->localCurrencyER,3)}}
+                            {{ round(1 / $request->localCurrencyER,4)}}
                         @endif  </td>
                     <td style="width: 5%" class="text-right">
                         @if(!empty($request->currency->CurrencyCode))
