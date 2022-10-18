@@ -269,7 +269,13 @@ class TenderMaster extends Model
         'is_active_go_no_go',
         'commercial_passing_weightage',
         'technical_passing_weightage',
-        'min_approval_bid_opening'
+        'min_approval_bid_opening',
+        'bid_opening_date',
+        'bid_opening_end_date',
+        'technical_bid_opening_date',
+        'technical_bid_closing_date',
+        'commerical_bid_opening_date',
+        'commerical_bid_closing_date'
     ];
 
     /**
@@ -332,7 +338,13 @@ class TenderMaster extends Model
         'is_active_go_no_go' => 'integer',
         'commercial_passing_weightage'=> 'integer',
         'technical_passing_weightage'=> 'integer',
-        'min_approval_bid_opening' => 'integer'
+        'min_approval_bid_opening' => 'integer',
+        'bid_opening_date'  => 'datetime',
+        'bid_opening_end_date'  => 'datetime',
+        'technical_bid_opening_date'  => 'datetime',
+        'technical_bid_closing_date'  => 'datetime',
+        'commerical_bid_opening_date'  => 'datetime',
+        'commerical_bid_closing_date'  => 'datetime'
     ];
 
     /**
