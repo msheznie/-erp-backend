@@ -103,7 +103,6 @@ class SalesMarketingReportAPIController extends AppBaseController
                     'currencyID' => 'required',
                     'customers' => 'required',
                     'wareHouse' => 'required',
-                    'customer_category' => 'required',
                 ],
                     ['wareHouse.required' => 'The warehouse field is required']
                 );

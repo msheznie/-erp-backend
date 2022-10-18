@@ -191,6 +191,10 @@
                 <th style="text-align: center">Debit</th>
                 <th style="text-align: center">Credit</th>
             </tr>
+            {{$acLocalDebitTotal = 0}}
+            {{$acLocalCreditTotal = 0}}
+            {{$acRptDebitTotal = 0}}
+            {{$acRptCreditTotal = 0}}
             @foreach ($det as $key2 => $val)
                 <tr>
                     <td>{{ $val->documentCode  }}</td>
@@ -218,11 +222,50 @@
                     <td class="text-right">{{number_format($val->rptDebit, $decimalPlaceRpt)}}</td>
                     <td class="text-right">{{number_format($val->rptCredit, $decimalPlaceRpt)}}</td>
                 </tr>
+                {{$acLocalDebitTotal += $val->localDebit}}
+                {{$acLocalCreditTotal += $val->localCredit}}
+                {{$acRptDebitTotal += $val->rptDebit}}
+                {{$acRptCreditTotal += $val->rptCredit}}
             @endforeach
+            <tr style="background-color: #E7E7E7">
+                <td colspan="{{6 + count($extraColumns)}}" class="text-right"
+                    style=""><b>Total Amount:</b>
+                </td>
+                @if($isGroup == 0)
+                    <td class="text-right">
+                        <b>{{number_format($acLocalDebitTotal, $decimalPlaceLocal)}}</b>
+                    </td>
+                @endif
+                @if($isGroup == 0)
+                    <td class="text-right">
+                        <b>{{number_format($acLocalCreditTotal, $decimalPlaceLocal)}}</b>
+                    </td>
+                @endif
+                <td class="text-right">
+                    <b>{{number_format($acRptDebitTotal, $decimalPlaceRpt)}}</b>
+                </td>
+                <td class="text-right">
+                    <b>{{number_format($acRptCreditTotal, $decimalPlaceRpt)}}</b>
+                </td>
+            </tr>
+            <tr style="background-color: #E7E7E7">
+                <td colspan="{{6 + count($extraColumns)}}" class="text-right"
+                    style="">
+                    <b>Balance</b>
+                </td>
+                @if($isGroup == 0)
+                    <td colspan="2" class="text-right">
+                        <b>{{number_format(($acLocalDebitTotal - $acLocalCreditTotal ), $decimalPlaceLocal)}}</b>
+                    </td>
+                @endif
+                <td colspan="2" class="text-right">
+                    <b>{{number_format(($acRptDebitTotal - $acRptCreditTotal), $decimalPlaceRpt)}}</b>
+                </td>
+            </tr>
         @endforeach
         <tr style="background-color: #E7E7E7">
             <td colspan="{{6 + count($extraColumns)}}" class="text-right"
-                style=""><b>Total Amount:</b>
+                style=""><b>Grand Total:</b>
             </td>
             @if($isGroup == 0)
                 <td class="text-right">
