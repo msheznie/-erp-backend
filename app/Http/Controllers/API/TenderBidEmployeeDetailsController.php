@@ -30,4 +30,13 @@ class TenderBidEmployeeDetailsController extends AppBaseController
         $data = SrmTenderBidEmployeeDetails::where('tender_id',$request['tender_id'])->where('emp_id',$request['emp_id'])->delete();
         return $this->sendResponse($data, 'Employee deleted successfully');
     }
+
+    public function getEmployeesApproval(Request $request) {
+        
+        $data = SrmTenderBidEmployeeDetails::where('tender_id', $request['tender_id'])->where('status', true)->count();
+        return $this->sendResponse($data, 'Employee reterived successfully');
+
+
+    }
+
 }

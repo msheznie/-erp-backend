@@ -51,7 +51,7 @@ use App\Models\TenderDocumentTypes;
 use App\Models\TenderSupplierAssignee;
 use App\Repositories\SupplierRegistrationLinkRepository;
 use App\Models\PricingScheduleDetail;
-
+use App\Models\TenderMasterSupplier;
 /**
  * Class TenderMasterController
  * @package App\Http\Controllers\API
@@ -1718,4 +1718,144 @@ WHERE
             return ['success' => false, 'message' => $e];
         }
     }
+
+
+    public function getPurchasedTenderList(Request $request)
+    {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $request['companyId'];
+
+
+
+        // $tenderMaster = TenderMasterSupplier::with(['tender_master'=>function($q){
+        //     $q->with(['tender_type', 'envelop_type', 'currency']);
+        // }])->get();
+
+        $query = TenderMaster::with(['currency', 'srm_bid_submission_master','tender_type','envelop_type','srmTenderMasterSupplier'])->whereHas('srmTenderMasterSupplier')->where('published_yn', 1);
+
+       // return $this->sendResponse($query, 'Tender Masters retrieved successfully');
+
+        $search = $request->input('search.value');
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $query = $query->where(function ($query) use ($search) {
+                $query->where('description', 'LIKE', "%{$search}%");
+                $query->orWhere('description_sec_lang', 'LIKE', "%{$search}%");
+                $query->orWhere('title', 'LIKE', "%{$search}%");
+                $query->orWhere('title_sec_lang', 'LIKE', "%{$search}%");
+            });
+        }
+
+
+        return \DataTables::eloquent($query)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('id', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+
+    public function getPurchaseTenderMasterData(Request $request)
+    {
+        $input = $request->all();
+        $tenderMasterId = $input['tenderMasterId'];
+        $companySystemID = $input['companySystemID'];
+        $data['master'] = TenderMaster::with(['procument_activity', 'confirmed_by','tender_type','envelop_type','evaluation_type'])->where('id', $input['tenderMasterId'])->first();
+        $activity = ProcumentActivity::with(['tender_procurement_category'])->where('tender_id', $input['tenderMasterId'])->where('company_id', $input['companySystemID'])->get();
+        $act = array();
+        if (!empty($activity)) {
+            foreach ($activity as $vl) {
+                $dt['id'] = $vl['tender_procurement_category']['id'];
+                $dt['itemName'] = $vl['tender_procurement_category']['code'] . ' | ' . $vl['tender_procurement_category']['description'];
+                array_push($act, $dt);
+            }
+        }
+        $data['activity'] = $act;
+
+                $qry = "SELECT
+            srm_calendar_dates.id as id,
+            srm_calendar_dates.calendar_date as calendar_date,
+            srm_calendar_dates.company_id as company_id,
+            srm_calendar_dates_detail.from_date as from_date,
+            srm_calendar_dates_detail.to_date as to_date
+        FROM
+            srm_calendar_dates 
+            INNER JOIN srm_calendar_dates_detail ON srm_calendar_dates_detail.calendar_date_id = srm_calendar_dates.id AND srm_calendar_dates_detail.tender_id = $tenderMasterId
+        WHERE
+            srm_calendar_dates.company_id = $companySystemID";
+
+                $qryAll = "SELECT
+            srm_calendar_dates.id as id,
+            srm_calendar_dates.calendar_date as calendar_date,
+            srm_calendar_dates.company_id as company_id,
+            srm_calendar_dates_detail.from_date as from_date,
+            srm_calendar_dates_detail.to_date as to_date
+        FROM
+            srm_calendar_dates 
+            LEFT JOIN srm_calendar_dates_detail ON srm_calendar_dates_detail.calendar_date_id = srm_calendar_dates.id AND srm_calendar_dates_detail.tender_id = $tenderMasterId
+        WHERE
+            srm_calendar_dates.company_id = $companySystemID
+            and ISNULL(srm_calendar_dates_detail.from_date)
+            and ISNULL(srm_calendar_dates_detail.to_date)";
+
+
+        $data['calendarDates'] = DB::select($qry);
+        $data['calendarDatesAll'] = DB::select($qryAll);
+
+        $documentTypes = TenderDocumentTypeAssign::with(['document_type'])->where('tender_id', $tenderMasterId)->get();
+        $docTypeArr = array();
+        if (!empty($documentTypes)) {
+            foreach ($documentTypes as $vl) {
+                $dt['id'] = $vl['document_type']['id'];
+                $dt['itemName'] = $vl['document_type']['document_type'];
+                array_push($docTypeArr, $dt);
+            }
+        }
+        $data['documentTypes'] = $docTypeArr;
+        return $data;
+    }
+
+
+    public function tenderCommiteApproveal(Request $request)
+    {
+       
+        $input = $request->all();
+        $tender_id = $input['tender_id'];
+        $emp_id = $input['emp_id'];
+        $comments = $input['comments'];
+        $val = $input['data']['value'];
+        $id = $input['id'];
+        
+
+
+        DB::beginTransaction();
+        try {
+            $data['status'] = $val;
+            $data['remarks'] = $comments;
+            $results = SrmTenderBidEmployeeDetails::where('emp_id',$emp_id)->where('tender_id',$tender_id)->where('emp_id',$emp_id)->update($data,$id);
+    
+            DB::commit();
+            return ['success' => true, 'message' => 'Successfully updated', 'data' => $results];
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($this->failed($e));
+            return ['success' => false, 'message' => $e];
+        }
+    
+
+    }
+
 }

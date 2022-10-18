@@ -390,4 +390,9 @@ class TenderMaster extends Model
     {
         return $this->hasMany('App\Models\BidSubmissionMaster', 'tender_id', 'id');
     }
+
+    public function evaluation_type()
+    {
+        return $this->hasOne('App\Models\EvaluationType', 'id', 'evaluation_type_id');
+    }
 }
