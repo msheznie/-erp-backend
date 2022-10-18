@@ -16,6 +16,8 @@ class SrmTenderBidEmployeeDetails extends Model
     public $fillable = [
         'tender_id',
         'emp_id',
+        'status',
+        'remarks',
         'created_at',
 
     ];
@@ -28,6 +30,7 @@ class SrmTenderBidEmployeeDetails extends Model
     protected $casts = [
         'emp_id' => 'integer',
         'tender_id' => 'integer',
+        'status' => 'integer',
         'created_at' => 'date',
     
     ];
