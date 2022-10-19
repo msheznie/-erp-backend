@@ -349,13 +349,13 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
                     $data[$x]['Payee Type'] = "";
                     $data[$x]['Supplier / Employee / Other'] = "";
                 }
-                $data[$x]['Invoice Date'] = \Helper::dateFormat($val->BPVdate);
+                $data[$x]['Invoice Date'] = \Helper::convertDateWithTime($val->BPVdate);
                 $data[$x]['Cheque No'] = $val->BPVchequeNo;
                 $data[$x]['Comment'] = $val->BPVNarration;
                 $data[$x]['Created By'] = $val->created_by? $val->created_by->empName : '';
-                $data[$x]['Created At'] = \Helper::dateFormat($val->createdDateTime);
-                $data[$x]['Confirmed at'] = \Helper::dateFormat($val->confirmedDate);
-                $data[$x]['Approved at'] = \Helper::dateFormat($val->approvedDate);
+                $data[$x]['Created At'] = \Helper::convertDateWithTime($val->createdDateTime);
+                $data[$x]['Confirmed at'] = \Helper::convertDateWithTime($val->confirmedDate);
+                $data[$x]['Approved at'] = \Helper::convertDateWithTime($val->approvedDate);
                 $data[$x]['Supplier Currency'] = $val->suppliercurrency? $val->suppliercurrency->CurrencyCode : '';
                 $data[$x]['Supplier Amount'] = number_format($val->suppAmountDocTotal, $val->suppliercurrency? $val->suppliercurrency->DecimalPlaces : 2, ".", "");
                 $data[$x]['Bank Currency'] = $val->bankcurrency? $val->bankcurrency->CurrencyCode : '';

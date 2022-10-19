@@ -203,12 +203,12 @@ class BookInvSuppMasterRepository extends BaseRepository
                 $data[$x]['Type'] = $val->documentType === 0? 'Supplier PO Invoice' : 'Supplier Direct Invoice';
                 $data[$x]['Supplier'] = $val->supplier? $val->supplier->supplierName : '';
                 $data[$x]['Invoice No'] = $val->supplierInvoiceNo;
-                $data[$x]['Booking Invoice Date'] = \Helper::dateFormat($val->bookingDate);
+                $data[$x]['Booking Invoice Date'] = \Helper::convertDateWithTime($val->bookingDate);
                 $data[$x]['Comments'] = $val->comments;
                 $data[$x]['Created By'] = $val->created_by? $val->created_by->empName : '';
-                $data[$x]['Created At'] = \Helper::dateFormat($val->createdDateAndTime);
-                $data[$x]['Confirmed on'] = \Helper::dateFormat($val->confirmedDate);
-                $data[$x]['Approved on'] = \Helper::dateFormat($val->approvedDate);
+                $data[$x]['Created At'] = \Helper::convertDateWithTime($val->createdDateAndTime);
+                $data[$x]['Confirmed on'] = \Helper::convertDateWithTime($val->confirmedDate);
+                $data[$x]['Approved on'] = \Helper::convertDateWithTime($val->approvedDate);
                 $data[$x]['Currency'] = $val->transactioncurrency? $val->transactioncurrency->CurrencyCode : '';
                 $data[$x]['Amount'] = $val->transactioncurrency? number_format($val->bookingAmountTrans,  $val->transactioncurrency->DecimalPlaces, ".", "") : '';
                 $data[$x]['Status'] = StatusService::getStatus($val->cancelYN, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);

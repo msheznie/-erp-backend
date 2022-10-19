@@ -231,7 +231,7 @@
                             </td>
                             <td>
                             <span>
-                                {{ \App\helper\Helper::convertDateWithTime($entity->debitNoteDate)}}
+                                {{ \App\helper\Helper::dateFormat($entity->debitNoteDate)}}
                             </span>
                             </td>
                         </tr>

@@ -272,7 +272,7 @@
                         </td>
                         <td>
                             <span>
-                                {{ \App\helper\Helper::convertDateWithTime($masterdata->bookingDate)}}
+                                {{ \App\helper\Helper::dateFormat($masterdata->bookingDate)}}
                             </span>
                         </td>
                     </tr>
@@ -298,7 +298,7 @@
                         </td>
                         <td>
                             <span>
-                                {{ \App\helper\Helper::convertDateWithTime($masterdata->supplierInvoiceDate)}}
+                                {{ \App\helper\Helper::dateFormat($masterdata->supplierInvoiceDate)}}
                             </span>
                         </td>
                     </tr>
