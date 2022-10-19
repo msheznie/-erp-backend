@@ -2851,7 +2851,7 @@ class SRMService
         }
 
 
-        $commercial_pricing_shedule_count = PricingScheduleMaster::where("tender_id",$tender_id)->count();
+        // $commercial_pricing_shedule_count = PricingScheduleMaster::where("tender_id",$tender_id)->count();
 
 
 
