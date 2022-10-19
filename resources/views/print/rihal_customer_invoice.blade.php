@@ -256,47 +256,47 @@
                 <td style="width: 50%; text-align: left;vertical-align: top;">
                     <table  style="width: 100%">
                         <tr>
-                            <td><b>Customer Name </b></td>
+                            <td style="width: 40% !important;"><b>Customer Name </b></td>
                             <td>:@if($request->line_customerShortCode)
                                     {{$request->customer->CutomerCode}} -
                                 @endif
                                 {{$request->customer->ReportTitle}}</td>
                         </tr>
                         <tr>
-                            <td><b>Customer Address </b></td>
+                            <td style="width: 40% !important;"><b>Customer Address </b></td>
                             <td>:
                                 {{$request->customer->customerAddress1}}</td>
                         </tr>
                         <tr>
-                            <td><b>Contact Person </b></td>
+                            <td style="width: 40% !important;"><b>Contact Person </b></td>
                             <td>: {{isset($request->CustomerContactDetails->contactPersonName)?$request->CustomerContactDetails->contactPersonName:' '}}</td>
                         </tr>
                         <tr>
-                            <td><b>Customer VATIN</b></td>
+                            <td style="width: 40% !important;"><b>Customer VATIN</b></td>
                             <td>:
                                 {{$request->vatNumber}}</td>
                         </tr>
                         <tr>
-                            <td><b>Contact Person Tel</b></td>
+                            <td style="width: 40% !important;"><b>Contact Person Tel</b></td>
                             <td>: {{isset($request->CustomerContactDetails->contactPersonTelephone)?$request->CustomerContactDetails->contactPersonTelephone:' '}}</td>
                         </tr>
 
                         <tr>
-                            <td><b>Invoice Due Date </b></td>
+                            <td style="width: 40% !important;"><b>Invoice Due Date </b></td>
                             <td>: @if(!empty($request->invoiceDueDate))
                                     {{\App\helper\Helper::dateFormat($request->invoiceDueDate) }}
                                 @endif
                             </td>
                         </tr>
                         <tr>
-                            <td><b>Segment </b></td>
+                            <td style="width: 40% !important;"><b>Segment </b></td>
                             <td>: @if(!empty($request->segment->ServiceLineDes))
                                     {{$request->segment->ServiceLineDes}}
                                 @endif
                             </td>
                         </tr>
                         <tr>
-                            <td><b>Narration </b></td>
+                            <td style="width: 40% !important;"><b>Narration </b></td>
                             <td>: @if(!empty($request->comments))
                                     {{$request->comments}}
                                 @endif
@@ -308,18 +308,18 @@
                 <td style="width: 50%; text-align: left;vertical-align: top;">
                     <table style="width: 100%">
                         <tr>
-                            <td><b>Invoice number </b></td>
+                            <td style="width: 40% !important;"><b>Invoice number </b></td>
                             <td>: {{$request->bookingInvCode}}</td>
                         </tr>
                         <tr>
-                            <td><b>Document Date </b></td>
+                            <td style="width: 40% !important;"><b>Document Date </b></td>
                             <td>: @if(!empty($request->bookingDate))
                                     {{\App\helper\Helper::dateFormat($request->bookingDate) }}
                                 @endif
                             </td>
                         </tr>
                         <tr>
-                            <td><b>Reference Number </b></td>
+                            <td style="width: 40% !important;"><b>Reference Number </b></td>
                             <td>: @if(!empty($request->customerInvoiceNo))
                                 {{$request->customerInvoiceNo}}
                                 @endif
@@ -327,28 +327,28 @@
                         </tr>
 
                         <tr>
-                            <td><b>Currency </b></td>
+                            <td style="width: 40% !important;"><b>Currency </b></td>
                             <td>: @if(!empty($request->currency->CurrencyName))
                                     {{$request->currency->CurrencyName}} ({{$request->currency->CurrencyCode}})
                                 @endif
                             </td>
                         </tr>
                         <tr>
-                            <td><b>VATIN </b></td>
+                            <td style="width: 40% !important;"><b>VATIN </b></td>
                             <td>: @if(!empty($request->vatRegistratonNumber))
                                 {{$request->vatRegistratonNumber}}
                                 @endif
                             </td>
                         </tr>
                         <tr>
-                            <td><b>Invoice Date </b></td>
+                            <td style="width: 40% !important;"><b>Invoice Date </b></td>
                             <td>: @if(!empty($request->customerInvoiceDate))
                                     {{\App\helper\Helper::dateFormat($request->customerInvoiceDate) }}
                                 @endif
                             </td>
                         </tr>
                         <tr>
-                            <td><b>Date Of Supply </b></td>
+                            <td style="width: 40% !important;"><b>Date Of Supply </b></td>
                             <td>: @if(!empty($request->date_of_supply))
                                     {{\App\helper\Helper::dateFormat($request->date_of_supply) }}
                                 @endif
@@ -487,11 +487,11 @@
                 <tr class="theme-tr-head">
                     <th style="width:3%"></th>
                     <th style="width:10%;text-align: center">GL Code</th>
-                    <th style="width:25%;text-align: center">Description</th>
+                    <th style="width:14%;text-align: center">Description</th>
                     <th style="width:7%;text-align: center">UOM</th>
-                    <th style="width:10%;text-align: center">QTY</th>
+                    <th style="width:7%;text-align: center">QTY</th>
                     <th style="width:10%;text-align: center">Sales Price</th>
-                    <th style="width:10%;text-align: center">Dis %</th>
+                    <th style="width:7%;text-align: center">Dis <br/>%</th>
                     <th style="width:10%;text-align: center">Discount Amount</th>
                     <th style="width:10%;text-align: center">Selling Unit Price</th>
                     <th style="width:10%;text-align: center">Taxable Amount</th>
@@ -750,7 +750,7 @@
                         @endif
                     </span>
                 </td>
-                <td style="border:none !important; width: 20%">
+                <td style="border:none !important; width: 40%">
                     &nbsp;
                 </td>
                 <td class="text-left" style="border:none !important">
@@ -781,7 +781,7 @@
                         @endif
                     </span>
                 </td>
-                <td style="border:none !important;width: 20%">
+                <td style="border:none !important;width: 40%">
                     &nbsp;
                 </td>
                 <td class="text-left" style="border:none !important;width: 15%">
@@ -811,7 +811,7 @@
                            @endif
                     </span>
                 </td>
-                <td  style="border:none !important;width: 20%">
+                <td  style="border:none !important;width: 40%">
                     &nbsp;
                 </td>
                 <td class="text-left" style="border:none !important;width: 15%">
