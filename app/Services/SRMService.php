@@ -2814,6 +2814,17 @@ class SRMService
         
         $documentAttachedCountAnswerTechnical = DocumentAttachments::whereIn('parent_id', $documentAttachedCountIdsTechnical)->where('documentSystemID', 108)->count();
 
+        $documentAttachedCountIdsCommercial = DocumentAttachments::with(['tender_document_types' => function ($q) use ($doucments){
+            $q->where('srm_action', 1);
+        }, 'document_attachments' => function ($q) use ($bidMasterId) {
+            $q->where('documentSystemCode', $bidMasterId);
+        }])->whereHas('tender_document_types', function ($q) use ($doucments){
+        })->where('documentSystemCode', $tenderId)->where('parent_id', null)->where('documentSystemID', 108)->where('envelopType', 1)->where('attachmentType',2)->pluck('attachmentID')->toArray();
+        
+        $documentAttachedCountAnswerCommercial = DocumentAttachments::whereIn('parent_id', $documentAttachedCountIdsCommercial)->where('documentSystemID', 108)->count();
+
+
+
         $technicalEvaluationCriteria = EvaluationCriteriaDetails::where('is_final_level', 0)
             ->where('critera_type_id', 2)
             ->where('tender_id', $tenderId)
@@ -2824,11 +2835,10 @@ class SRMService
             ->where('is_final_level', 3)
             ->count();
 
-            // || ($technicalEvaluationCriteria == $technicalEvaluationCriteriaAnswer)
         if((count($documentAttachedCountIdsTechnical) == $documentAttachedCountAnswerTechnical) ) {
             $data['technicalStatus'] = "Completed";
             if($technicalEvaluationCriteriaAnswer == 0 && $documentAttachedCountAnswerTechnical == 0) {
-                $data['technicalStatus'] = "Completed";
+                $data['technicalStatus'] = "Disabled";
             }else {
                 if(($technicalEvaluationCriteria == $technicalEvaluationCriteriaAnswer)) {
                     $data['technicalStatus'] = "Completed";
@@ -2840,6 +2850,8 @@ class SRMService
             $data['technicalStatus'] = "Not Completed";
         }
 
+
+        $commercial_pricing_shedule_count = PricingScheduleMaster::where("tender_id",$tender_id)->count();
 
 
 
@@ -3190,6 +3202,7 @@ class SRMService
             return $group['isExist'];
         });
 
+
         $filtered = $tenderArrFilter->filter(function ($value, $key) {
             return $value > 0;
         });
@@ -3197,6 +3210,7 @@ class SRMService
 
         $bidsubmission =  self::getBidMasterData($bidMasterId);
 
+        $data['tenderArrFilter'] = $tenderArrFilter;
         $data['filtered'] = $filtered->count();
         $data['technicalEvaluationCriteria'] = $technicalEvaluationCriteria > 0 ? 1 : 0;
         $data['bidsubmission'] = $bidsubmission;
