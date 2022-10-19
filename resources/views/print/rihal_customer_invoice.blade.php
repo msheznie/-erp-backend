@@ -734,7 +734,7 @@
         <table style="width:100%;" class="table table-bordered">
             <tbody>
             <tr>
-                <td class="text-left" style="border:none !important; width: 20%">
+                <td class="text-left" style="border:none !important; width: 15%">
                         <span class="font-weight-bold" style="font-size: 11.5px">
                             Subtotal @if(!empty($company->localcurrency->CurrencyCode))
                                 ({{ $company->localcurrency->CurrencyCode }})
@@ -767,7 +767,7 @@
             {{$totalVATAmount = (($request->tax && $request->tax->amount) ? $request->tax->amount : 0)}}
             {{$directTraSubTotal+= $totalVATAmount}}
             <tr>
-                <td class="text-left" style="border:none !important;width: 10%">
+                <td class="text-left" style="border:none !important;width: 15%">
                         <span class="font-weight-bold" style="font-size: 11.5px">
                             VAT  @if(!empty($company->localcurrency->CurrencyCode))
                                 ({{ $company->localcurrency->CurrencyCode }})
@@ -784,7 +784,7 @@
                 <td style="border:none !important;width: 20%">
                     &nbsp;
                 </td>
-                <td class="text-left" style="border:none !important;width: 10%">
+                <td class="text-left" style="border:none !important;width: 15%">
                         <span class="font-weight-bold" style="font-size: 11.5px">
                             VAT ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})
                         </span>
@@ -796,7 +796,7 @@
             </tr>
 
             <tr>
-                <td class="text-left" style="border:none !important;width: 30%">
+                <td class="text-left" style="border:none !important;width: 15%">
                         <span class="font-weight-bold" style="font-size: 11.5px">
                             Total  @if(!empty($company->localcurrency->CurrencyCode))
                                 ({{ $company->localcurrency->CurrencyCode }})
@@ -814,7 +814,7 @@
                 <td  style="border:none !important;width: 20%">
                     &nbsp;
                 </td>
-                <td class="text-left" style="border:none !important;width: 30%">
+                <td class="text-left" style="border:none !important;width: 15%">
                         <span class="font-weight-bold" style="font-size: 11.5px">
                             Total ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})
                         </span>
