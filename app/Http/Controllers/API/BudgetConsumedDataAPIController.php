@@ -344,7 +344,7 @@ class BudgetConsumedDataAPIController extends AppBaseController
         $input = $request->all();
 
         $consumedData = BudgetConsumedData::selectRaw('companySystemID,companyID,serviceLineSystemID,companyFinanceYearID,serviceLineCode,documentSystemID,documentID,documentSystemCode,documentCode,chartOfAccountID,GLCode,year,month,consumedLocalCurrencyID,SUM(consumedLocalAmount) as consumedLocalAmount ,consumedRptCurrencyID,SUM(consumedRptAmount) as consumedRptAmount,consumeYN,projectID,timestamp')
-                                          ->with(['segment_by','reporting_currency','financeyear_by', 'purchase_order', 'chart_of_account', 'budget_master' => function($query) {
+                                          ->with(['segment_by','reporting_currency','month_by','financeyear_by', 'purchase_order', 'chart_of_account', 'budget_master' => function($query) {
                                                 $query->with(['finance_year_by']);
                                             }])
                                           ->whereHas('financeyear_by')

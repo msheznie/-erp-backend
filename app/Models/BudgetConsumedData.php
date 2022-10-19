@@ -211,6 +211,11 @@ class BudgetConsumedData extends Model
         return $this->belongsTo('App\Models\SegmentMaster', 'serviceLineSystemID', 'serviceLineSystemID');
     }
 
+    public function month_by()
+    {
+        return $this->belongsTo('App\Models\Months', 'month', 'monthID');
+    }
+
      public function reporting_currency()
     {
         return $this->belongsTo('App\Models\CurrencyMaster', 'consumedRptCurrencyID', 'currencyID');
