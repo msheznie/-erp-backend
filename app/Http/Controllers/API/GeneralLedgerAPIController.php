@@ -341,6 +341,20 @@ class GeneralLedgerAPIController extends AppBaseController
         return $this->sendResponse($id, 'General Ledger deleted successfully');
     }
 
+    public function getApprovedNotInGL(){
+
+        $data = DB::select("SELECT da.companyID, da.documentSystemID, da.documentID, da.documentSystemCode, da.documentCode, da.TIMESTAMP, da.documentApprovedID FROM erp_documentapproved da WHERE da.approvedYN != 0 AND da.documentSystemID NOT IN ( 1, 2, 56, 66, 59, 58, 50, 57, 101, 51, 107, 96, 62, 67, 68, 9, 65, 64, 100, 102, 103, 46, 99 ) AND da.documentCode NOT IN ( SELECT documentCode FROM erp_generalledger GROUP BY documentCode)");
+
+        foreach ($data as $dt){
+            $approve = \Helper::approveDocument(['documentSystemID' => $dt->documentSystemID, 'documentApprovedID' => $dt->documentApprovedID, 'documentSystemCode' => $dt->documentSystemCode, 'approvalLevelID' => 25]);
+        }
+
+
+
+        return $this->sendResponse($data, 'General Ledger deleted successfully');
+
+    }
+
 
     public function getGeneralLedgerReview(Request $request)
     {

@@ -34,6 +34,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
     Route::group(['middleware' => 'auth:api'], function () {
 
+        Route::get('getApprovedNotGL', 'GeneralLedgerAPIController@getApprovedNotInGL');
+
         Route::get('getTypeheadEmployees', 'EmployeeAPIController@getTypeheadEmployees');
 
         Route::post('getAllEmployees', 'EmployeeAPIController@getAllEmployees');
