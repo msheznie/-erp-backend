@@ -34,8 +34,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
     Route::group(['middleware' => 'auth:api'], function () {
 
-        Route::get('getApprovedNotGL', 'GeneralLedgerAPIController@getApprovedNotInGL');
-
         Route::get('getTypeheadEmployees', 'EmployeeAPIController@getTypeheadEmployees');
 
         Route::post('getAllEmployees', 'EmployeeAPIController@getAllEmployees');
@@ -2943,6 +2941,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     Route::get('updateExemptVATPos', 'ProcumentOrderAPIController@updateExemptVATPos');
     Route::get('downloadFileTender', 'DocumentAttachmentsAPIController@downloadFileTender');
     Route::post('genearetBarcode', 'BarcodeConfigurationAPIController@genearetBarcode');
+
+    Route::get('updateNotPostedGLEntries', 'GeneralLedgerAPIController@updateNotPostedGLEntries');
 });
 
 

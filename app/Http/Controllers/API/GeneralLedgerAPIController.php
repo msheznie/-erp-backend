@@ -21,6 +21,7 @@ use App\Models\DocumentMaster;
 use App\Models\ErpItemLedger;
 use App\Models\FixedAssetDepreciationMaster;
 use App\Models\FixedAssetMaster;
+use App\helper\CommonJobService;
 use App\Models\GeneralLedger;
 use App\Models\GRVMaster;
 use App\Models\InventoryReclassification;
@@ -341,18 +342,35 @@ class GeneralLedgerAPIController extends AppBaseController
         return $this->sendResponse($id, 'General Ledger deleted successfully');
     }
 
-    public function getApprovedNotInGL(){
+    public function updateNotPostedGLEntries(Request $request)
+    {
+        $input = $request->all();
 
-        $data = DB::select("SELECT da.companyID, da.documentSystemID, da.documentID, da.documentSystemCode, da.documentCode, da.TIMESTAMP, da.documentApprovedID FROM erp_documentapproved da WHERE da.approvedYN != 0 AND da.documentSystemID NOT IN ( 1, 2, 56, 66, 59, 58, 50, 57, 101, 51, 107, 96, 62, 67, 68, 9, 65, 64, 100, 102, 103, 46, 99 ) AND da.documentCode NOT IN ( SELECT documentCode FROM erp_generalledger GROUP BY documentCode)");
 
-        foreach ($data as $dt){
-            $approve = \Helper::approveDocument(['documentSystemID' => $dt->documentSystemID, 'documentApprovedID' => $dt->documentApprovedID, 'documentSystemCode' => $dt->documentSystemCode, 'approvalLevelID' => 25]);
+        $tenants = CommonJobService::tenant_list();
+        if(count($tenants) == 0){
+            return;
         }
 
 
+        foreach ($tenants as $tenant){
+            $tenantDb = $tenant->database;
 
-        return $this->sendResponse($data, 'General Ledger deleted successfully');
+            CommonJobService::db_switch($tenantDb);
 
+            $data = DB::select("SELECT da.companyID, da.companySystemID, da.documentSystemID,da.employeeSystemID, da.documentID, da.documentSystemCode, da.documentCode, da.TIMESTAMP, da.documentApprovedID FROM erp_documentapproved da WHERE da.approvedYN != 0 AND da.documentSystemID NOT IN ( 1, 2, 56, 66, 59, 58, 50, 57, 101, 51, 107, 96, 62, 67, 68, 9, 65, 64, 100, 102, 103, 46, 99 ) AND da.documentCode NOT IN ( SELECT documentCode FROM erp_generalledger GROUP BY documentCode) AND da.`timeStamp` > '2022-09-01'");
+
+            foreach ($data as $dt){
+                $masterData = ['documentSystemID' => $dt->documentSystemID,
+                               'autoID' => $dt->documentSystemCode,
+                               'companySystemID' => $dt->companySystemID,
+                               'documentDateOveride' => $dt->TIMESTAMP,
+                               'employeeSystemID' => $dt->employeeSystemID];
+                $jobGL = GeneralLedgerInsert::dispatch($masterData, $tenantDb);
+            }
+        }
+
+        return $this->sendResponse([], 'General Ledger updated successfully');
     }
 
 
