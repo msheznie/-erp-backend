@@ -1465,7 +1465,13 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
     public function getRetentionValues(Request $request){
         $input = $request->all();
         $input = $this->convertArrayToValue($input);
-        $BPVdate = new Carbon($input['BPVdate']);
+        try{
+            $BPVdate = new Carbon($input['BPVdate']);
+        }
+        catch (\Exception $e){
+            return $this->sendError('Invalid date format');
+        }
+
         $details = PaySupplierInvoiceDetail::where('PayMasterAutoId', $input['PayMasterAutoId'])->where('isRetention', 1)->where('supplierPaymentAmount', '!=', 0)->get();
         if($details) {
             $bookinvDetailsArray = [];
