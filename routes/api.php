@@ -1868,6 +1868,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('tender-bid-employee-details','TenderBidEmployeeDetailsController');
         Route::post('tender-bid-employee-get-all','TenderBidEmployeeDetailsController@getEmployees');
         Route::post('tender-bid-employee-delete','TenderBidEmployeeDetailsController@deleteEmp');
+        Route::post('tender-bid-employee-approval-count','TenderBidEmployeeDetailsController@getEmployeesApproval');
         /* For Profile -> Profile */
         Route::get('getProfileDetails', 'EmployeeAPIController@getProfileDetails');
 
@@ -2666,6 +2667,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('loadTenderSubActivity', 'TenderMasterAPIController@loadTenderSubActivity');
         Route::post('loadTenderBankAccount', 'TenderMasterAPIController@loadTenderBankAccount');
         Route::post('updateTender', 'TenderMasterAPIController@updateTender');
+        Route::post('getPurchasedTenderList', 'TenderMasterAPIController@getPurchasedTenderList');
+        Route::post('getPurchaseTenderMasterData', 'TenderMasterAPIController@getPurchaseTenderMasterData');
+        Route::post('tenderCommiteApproveal', 'TenderMasterAPIController@tenderCommiteApproveal');
 
         Route::post('getPricingScheduleList', 'PricingScheduleMasterAPIController@getPricingScheduleList');
         Route::post('getPricingScheduleDropDowns', 'PricingScheduleMasterAPIController@getPricingScheduleDropDowns');
