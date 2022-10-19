@@ -256,7 +256,7 @@ class PosAPIController extends AppBaseController
 
 
             $items = ItemMaster::selectRaw('itemmaster.itemCodeSystem as id, primaryCode as system_code, itemmaster.documentID as document_id, 
-            itemmaster.secondaryItemCode as secondary_code, "" as image,(case when itemShortDescription = "" or isnull(itemShortDescription) then itemmaster.itemDescription else itemShortDescription end) as name,itemmaster.itemDescription as description,
+            (case when itemmaster.secondaryItemCode = "" or isnull(itemmaster.secondaryItemCode) then primaryCode else itemmaster.secondaryItemCode end) as secondary_code, "" as image,(case when itemShortDescription = "" or isnull(itemShortDescription) then itemmaster.itemDescription else itemShortDescription end) as name,itemmaster.itemDescription as description,
             itemmaster.financeCategoryMaster as category_id, financeitemcategorymaster.categoryDescription as category_description, itemmaster.financeCategorySub as sub_category_id, "" as sub_sub_category_id, itemmaster.barcode as barcode, financeitemcategorymaster.categoryDescription as finance_category, itemmaster.secondaryItemCode as part_number, unit as unit_id, units.UnitShortCode as unit_description, "" as reorder_point, "" as maximum_qty,
             rev.chartOfAccountSystemID as revenue_gl,rev.AccountDescription as revenue_description,
             cost.chartOfAccountSystemID as cost_gl,cost.AccountDescription as cost_description,"" as asset_gl,"" as asset_description,"" as sales_tax_id, "" as purchase_tax_id,
@@ -273,7 +273,6 @@ class PosAPIController extends AppBaseController
                 ->where('itemassigned.companySystemID', '=', $company_id)
                 ->where('primaryCode', '!=', '')
                 ->where('itemmaster.documentID', '!=', '')
-                ->where('itemmaster.secondaryItemCode', '!=', '')
                 ->where('itemmaster.financeCategoryMaster', '!=', '')
                 ->where('itemmaster.financeCategorySub', '!=', '')
                 ->where('itemmaster.itemDescription', '!=', '')
