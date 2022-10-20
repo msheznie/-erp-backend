@@ -507,7 +507,9 @@ class TenderMasterAPIController extends AppBaseController
 	srm_calendar_dates.calendar_date as calendar_date,
 	srm_calendar_dates.company_id as company_id,
 	srm_calendar_dates_detail.from_date as from_date,
-	srm_calendar_dates_detail.to_date as to_date
+	srm_calendar_dates_detail.to_date as to_date,
+    srm_calendar_dates_detail.from_time as from_time,
+    srm_calendar_dates_detail.to_time as to_time
 FROM
 	srm_calendar_dates 
 	INNER JOIN srm_calendar_dates_detail ON srm_calendar_dates_detail.calendar_date_id = srm_calendar_dates.id AND srm_calendar_dates_detail.tender_id = $tenderMasterId
@@ -519,7 +521,9 @@ WHERE
 	srm_calendar_dates.calendar_date as calendar_date,
 	srm_calendar_dates.company_id as company_id,
 	srm_calendar_dates_detail.from_date as from_date,
-	srm_calendar_dates_detail.to_date as to_date
+	srm_calendar_dates_detail.to_date as to_date,
+    srm_calendar_dates_detail.from_time as from_time,
+    srm_calendar_dates_detail.to_time as to_time
 FROM
 	srm_calendar_dates 
 	LEFT JOIN srm_calendar_dates_detail ON srm_calendar_dates_detail.calendar_date_id = srm_calendar_dates.id AND srm_calendar_dates_detail.tender_id = $tenderMasterId
@@ -998,16 +1002,14 @@ WHERE
                 CalendarDatesDetail::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
                 foreach ($input['calendarDates'] as $calDate) {
                     if (!empty($calDate['from_date'])) {
-                        $frm_time = new Carbon($calDate['dateFromTime']);
                         $frm_date = new Carbon($calDate['from_date']);
-                        $frm_date = $frm_date->format('Y-m-d').' '.$frm_time->format('H:i:s');
+                        $frm_date = $frm_date->format('Y-m-d');
                     } else {
                         $frm_date = null;
                     }
                     if (!empty($calDate['to_date'])) {
-                        $to_time = new Carbon($calDate['dateToTime']);
                         $to_date = new Carbon($calDate['to_date']);
-                        $to_date = $to_date->format('Y-m-d').' '.$to_time->format('H:i:s');
+                        $to_date = $to_date->format('Y-m-d');
                     } else {
                         $to_date = null;
                     }
@@ -1030,6 +1032,8 @@ WHERE
                         $calDt['to_date'] = $to_date;
                         $calDt['company_id'] = $input['company_id'];
                         $calDt['created_by'] = $employee->employeeSystemID;
+                        $calDt['from_time'] = new Carbon($calDate['from_time']);
+                        $calDt['to_time'] = new Carbon($calDate['to_time']);
                         $calDt['created_at'] = Carbon::now();
 
                         CalendarDatesDetail::create($calDt);
