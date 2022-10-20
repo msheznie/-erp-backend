@@ -601,7 +601,7 @@ class GeneralLedgerAPIController extends AppBaseController
                 break;
             case 41: // FADS - Fixed Asset Disposal
                 $fadsMaster = AssetDisposalMaster::find($autoID);
-                if($fadsMaster && $fadsMaster->approved != -1){
+                if($fadsMaster && $fadsMaster->approvedYN != -1){
                     $result = FixedAssetDisposalGlService::processEntry($masterModel);
                 } else {
                     $result = [];
