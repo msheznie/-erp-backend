@@ -358,7 +358,7 @@ class GeneralLedgerAPIController extends AppBaseController
 
             CommonJobService::db_switch($tenantDb);
 
-            $data = DB::select("SELECT da.companyID, da.companySystemID, da.documentSystemID,da.employeeSystemID, da.documentID, da.documentSystemCode, da.documentCode, da.TIMESTAMP, da.documentApprovedID FROM erp_documentapproved da WHERE da.approvedYN != 0 AND da.documentSystemID NOT IN ( 1, 2, 56, 66, 59, 58, 50, 57, 101, 51, 107, 96, 62, 67, 68, 9, 65, 64, 100, 102, 103, 46, 99 ) AND da.documentCode NOT IN ( SELECT documentCode FROM erp_generalledger GROUP BY documentCode) AND da.`timeStamp` > '2022-09-01'");
+            $data = DB::select("SELECT da.companyID, da.companySystemID, da.documentSystemID,da.employeeSystemID, da.documentID, da.documentSystemCode, da.documentCode, da.TIMESTAMP, da.documentApprovedID FROM erp_documentapproved da WHERE da.approvedYN != 0 AND da.documentSystemID NOT IN ( 1, 2, 56, 66, 59, 58, 50, 57, 101, 51, 107, 96, 62, 67, 68, 9, 65, 64, 100, 102, 103, 46, 99 ) AND da.documentCode NOT IN ( SELECT documentCode FROM erp_generalledger GROUP BY documentCode) AND da.rollLevelOrder = (SELECT max(da_new.rollLevelOrder) FROM erp_documentapproved as da_new WHERE da_new.documentSystemID = da.documentSystemID AND da_new.documentSystemCode = da.documentSystemCode) AND da.`timeStamp` > '2022-09-01'");
 
             foreach ($data as $dt){
                 $masterData = ['documentSystemID' => $dt->documentSystemID,
