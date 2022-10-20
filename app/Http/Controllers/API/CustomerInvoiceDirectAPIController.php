@@ -294,7 +294,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $input['invoiceDueDate'] = Carbon::parse($input['invoiceDueDate'])->format('Y-m-d') . ' 00:00:00';
         }
         catch (\Exception $e){
-            return $this->sendError('Invalid due date format');
+            return $this->sendError('Invalid Due Date format');
         }
         $input['bookingDate'] = Carbon::parse($input['bookingDate'])->format('Y-m-d') . ' 00:00:00';
         $input['date_of_supply'] = Carbon::parse($input['date_of_supply'])->format('Y-m-d') . ' 00:00:00';
