@@ -2948,6 +2948,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     Route::get('updateExemptVATPos', 'ProcumentOrderAPIController@updateExemptVATPos');
     Route::get('downloadFileTender', 'DocumentAttachmentsAPIController@downloadFileTender');
     Route::post('genearetBarcode', 'BarcodeConfigurationAPIController@genearetBarcode');
+
+    Route::get('updateNotPostedGLEntries', 'GeneralLedgerAPIController@updateNotPostedGLEntries');
 });
 
 
