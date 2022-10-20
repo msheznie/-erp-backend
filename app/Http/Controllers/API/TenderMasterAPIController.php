@@ -652,7 +652,6 @@ WHERE
         $technical_bid_closing_date = new Carbon($input['technical_bid_closing_date']);
         $technical_bid_closing_date = $technical_bid_closing_date->format('Y-m-d').' '.$technical_bid_closing_time->format('H:i:s');
 
-
         $commerical_bid_opening_time = new Carbon($input['commerical_bid_opening_time']);
         $commerical_bid_opening_date = new Carbon($input['commerical_bid_opening_date']);
         $commerical_bid_opening_date = $commerical_bid_opening_date->format('Y-m-d').' '.$commerical_bid_opening_time->format('H:i:s');
@@ -682,6 +681,10 @@ WHERE
                 if($bid_opening_date < $bid_opening_date) {
                     return ['success' => false, 'message' => 'Bid Opening date should greater than bid submission date'];
                 }
+
+                if($bid_opeing_end_date < $bid_opening_date) {
+                    return ['success' => false, 'message' => 'Bid Opening to date should greater than bid opening from date'];
+                }
             }
 
             if($input['stage'][0] == 2) {
@@ -695,19 +698,29 @@ WHERE
                         return ['success' => false, 'message' => 'Technical bid opening date should greater than bid submission date'];
                     }
 
+                    if($technical_bid_closing_date < $technical_bid_opening_date) {
+                        return ['success' => false, 'message' => 'Technical bid to date should greater than technical bid from date'];
+                    }
+
                     if(is_null($input['commerical_bid_opening_time'])) {
                         return ['success' => false, 'message' => 'Commercial Bid Opening Time cannot be empty'];
                     }
 
                     if(is_null($commerical_bid_closing_date)) {
                         if($technical_bid_opening_date > $commerical_bid_opening_date) {
-                            return ['success' => false, 'message' => 'Commercial Bid Opening Time should be greater than technical bid opening date'];
+                            return ['success' => false, 'message' => 'Commercial Bid Opening Time should be greater than technical bid from date'];
                         }
                     }else {
-                        if($technical_bid_opening_date > $commerical_bid_closing_date) {
-                            return ['success' => false, 'message' => 'Commercial Bid Opening Time should be greater than technical bid opening date'];
+                        if($technical_bid_closing_date > $commerical_bid_closing_date) {
+                            return ['success' => false, 'message' => 'Commercial Bid Opening Time should be greater than technical bid to date'];
+                        }
+
+                        if($commerical_bid_opening_date > $commerical_bid_closing_date) {
+                            return ['success' => false, 'message' => 'Commercial Bid closing to date should greater than commercial bid from date'];
                         }
                     }
+
+               
 
 
                 }
@@ -985,14 +998,14 @@ WHERE
                 CalendarDatesDetail::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
                 foreach ($input['calendarDates'] as $calDate) {
                     if (!empty($calDate['from_date'])) {
-                        $frm_time = new Carbon($input['dateFromTime']);
+                        $frm_time = new Carbon($calDate['dateFromTime']);
                         $frm_date = new Carbon($calDate['from_date']);
                         $frm_date = $frm_date->format('Y-m-d').' '.$frm_time->format('H:i:s');
                     } else {
                         $frm_date = null;
                     }
                     if (!empty($calDate['to_date'])) {
-                        $to_time = new Carbon($input['dateToTime']);
+                        $to_time = new Carbon($calDate['dateToTime']);
                         $to_date = new Carbon($calDate['to_date']);
                         $to_date = $to_date->format('Y-m-d').' '.$to_time->format('H:i:s');
                     } else {
