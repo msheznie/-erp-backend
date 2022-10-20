@@ -715,7 +715,7 @@ WHERE
                             return ['success' => false, 'message' => 'Commercial Bid Opening Time should be greater than technical bid from date'];
                         }
                     }else {
-                        if($technical_bid_closing_date > $commerical_bid_closing_date) {
+                        if($technical_bid_closing_date > $commerical_bid_opening_date) {
                             return ['success' => false, 'message' => 'Commercial Bid Opening Time should be greater than technical bid to date'];
                         }
 
