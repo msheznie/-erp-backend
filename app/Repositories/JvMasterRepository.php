@@ -133,12 +133,12 @@ class JvMasterRepository extends BaseRepository
             foreach ($dataSet as $val) {
                 $data[$x]['JV Code'] = $val->JVcode;
                 $data[$x]['Type'] = StatusService::getjvType($val->jvType);
-                $data[$x]['JV Date'] = \Helper::dateFormat($val->JVdate);
+                $data[$x]['JV Date'] = \Helper::convertDateWithTime($val->JVdate);
                 $data[$x]['Narration'] = $val->JVNarration;
                 $data[$x]['Created By'] = $val->created_by? $val->created_by->empName : '';
-                $data[$x]['Created At'] = \Helper::dateFormat($val->createdDateTime);
-                $data[$x]['Confirmed on'] = \Helper::dateFormat($val->confirmedDate);
-                $data[$x]['Approved on'] = \Helper::dateFormat($val->approvedDate);
+                $data[$x]['Created At'] = \Helper::convertDateWithTime($val->createdDateTime);
+                $data[$x]['Confirmed on'] = \Helper::convertDateWithTime($val->confirmedDate);
+                $data[$x]['Approved on'] = \Helper::convertDateWithTime($val->approvedDate);
                 $data[$x]['Currency'] = $val->transactioncurrency? $val->transactioncurrency->CurrencyCode : '';
                 $data[$x]['Debit Amount'] = $val->detail->count() > 0? number_format($val->detail[0]->debitSum, $val->transactioncurrency? $val->transactioncurrency->DecimalPlaces : '', ".", "") : 0;
                 $data[$x]['Credit Amount'] = $val->detail->count() > 0? number_format($val->detail[0]->creditSum, $val->transactioncurrency? $val->transactioncurrency->DecimalPlaces : '', ".", "") : 0;

@@ -243,7 +243,7 @@
                         </td>
                         <td>
                             <span>
-                                {{ \App\helper\Helper::convertDateWithTime($masterdata->BPVdate)}}
+                                {{ \App\helper\Helper::dateFormat($masterdata->BPVdate)}}
                             </span>
                         </td>
                     </tr>

@@ -243,7 +243,7 @@
                         </td>
                         <td>
                             <span>
-                                {{ \App\helper\Helper::convertDateWithTime($masterdata->matchingDocdate)}}
+                                {{ \App\helper\Helper::dateFormat($masterdata->matchingDocdate)}}
                             </span>
                         </td>
                     </tr>
