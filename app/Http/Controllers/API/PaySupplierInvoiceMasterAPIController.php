@@ -1469,7 +1469,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             $BPVdate = new Carbon($input['BPVdate']);
         }
         catch (\Exception $e){
-            return $this->sendError('Invalid date format');
+            return $this->sendError('Invalid Pay Invoice Date format');
         }
 
         $details = PaySupplierInvoiceDetail::where('PayMasterAutoId', $input['PayMasterAutoId'])->where('isRetention', 1)->where('supplierPaymentAmount', '!=', 0)->get();
