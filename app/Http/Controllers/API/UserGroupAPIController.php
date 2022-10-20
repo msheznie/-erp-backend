@@ -191,14 +191,14 @@ class UserGroupAPIController extends AppBaseController
         if (empty($userGroup)) {
             return $this->sendError('User Group not found');
         }
-        $userGroup->navigationusergroup()->delete();
-        $userGroup->usergroupemployee()->delete();
+
         $countUsers = EmployeeNavigation::where('userGroupID', $id)->get();
         if ($countUsers && count($countUsers) > 0){
             return $this->sendError('There are ' .count($countUsers). ' users already assigned to this group. Remove users and try again');
         }
 
-
+        $userGroup->navigationusergroup()->delete();
+        $userGroup->usergroupemployee()->delete();
         $userGroup->update(['isActive' => 0, 'isDeleted' => 1]);
 
         return $this->sendResponse($id, 'User Group deleted successfully');
