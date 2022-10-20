@@ -89,7 +89,9 @@ class CalendarDatesDetail extends Model
         'updated_by',
         'company_id',
         'created_at',
-        'updated_at'
+        'updated_at',
+        'from_time',
+        'to_time'
     ];
 
     /**
@@ -105,7 +107,9 @@ class CalendarDatesDetail extends Model
         'to_date' => 'datetime',
         'created_by' => 'integer',
         'updated_by' => 'integer',
-        'company_id' => 'integer'
+        'company_id' => 'integer',
+        'from_time'=> 'datetime',
+        'to_time' => 'datetime'
     ];
 
     /**

@@ -26,7 +26,9 @@ class CalendarDatesDetailRepository extends BaseRepository
         'to_date',
         'created_by',
         'updated_by',
-        'company_id'
+        'company_id',
+        'from_time',
+        'to_time'
     ];
 
     /**
