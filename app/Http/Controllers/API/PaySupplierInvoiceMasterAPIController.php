@@ -1471,7 +1471,6 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         catch (\Exception $e){
             return $this->sendError('Invalid Pay Invoice Date format');
         }
-
         $details = PaySupplierInvoiceDetail::where('PayMasterAutoId', $input['PayMasterAutoId'])->where('isRetention', 1)->where('supplierPaymentAmount', '!=', 0)->get();
         if($details) {
             $bookinvDetailsArray = [];
@@ -2769,6 +2768,18 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         }
         if(empty($input['payment_mode'])){
             unset($input['payment_mode']);
+        }
+        if(empty($input['approved'])){
+            unset($input['approved']);
+        }
+        if(empty($input['cancelYN'])){
+            unset($input['cancelYN']);
+        }
+        if(empty($input['chequePaymentYN'])){
+            unset($input['chequePaymentYN']);
+        }
+        if(empty($input['confirmedYN'])){
+            unset($input['confirmedYN']);
         }
 
         $paymentVoucher = $this->paySupplierInvoiceMasterRepository->paySupplierInvoiceListQuery($request, $input, $search, $supplierID, $projectID, $employeeID);

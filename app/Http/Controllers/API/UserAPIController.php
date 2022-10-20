@@ -236,7 +236,7 @@ class UserAPIController extends AppBaseController
       $users=  User::with(['employee'])->where('login_token',$request->id)->first();
       if($users){
           $data['uname'] = $users->email;
-          $data['pw'] = $users->employee->empPassword;
+          $data['pw'] = null;
           $this->userRepository->update(['login_token'=>NULL],$users->id);
           return $this->sendResponse($data, 'User retrieved successfully');
       }else{

@@ -13,6 +13,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateUserGroupAPIRequest;
 use App\Http\Requests\API\UpdateUserGroupAPIRequest;
+use App\Models\EmployeeNavigation;
 use App\Models\UserGroup;
 use App\Repositories\UserGroupRepository;
 use Illuminate\Http\Request;
@@ -192,7 +193,13 @@ class UserGroupAPIController extends AppBaseController
         }
         $userGroup->navigationusergroup()->delete();
         $userGroup->usergroupemployee()->delete();
-        $userGroup->delete();
+        $countUsers = EmployeeNavigation::where('userGroupID', $id)->get();
+        if ($countUsers && count($countUsers) > 0){
+            return $this->sendError('There are ' .count($countUsers). ' users already assigned to this group. Remove users and try again');
+        }
+
+
+        $userGroup->update(['isActive' => 0, 'isDeleted' => 1]);
 
         return $this->sendResponse($id, 'User Group deleted successfully');
     }

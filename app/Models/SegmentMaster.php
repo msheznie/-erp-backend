@@ -191,4 +191,11 @@ class SegmentMaster extends Model
     {
         return $this->hasMany('App\Models\SegmentMaster', 'masterID', 'serviceLineSystemID')->with('sub_level_deleted')->withoutGlobalScope('final_level')->withoutGlobalScope('deleted_status');
     }
+
+    public static function getSegmentCode($serviceLineSystemID)
+    {
+        $segment = SegmentMaster::find($serviceLineSystemID);
+
+        return ($segment) ? $segment->ServiceLineCode : null;
+    }
 }

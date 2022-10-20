@@ -1346,7 +1346,7 @@ class SRMService
                 return $supplierResult;
             }
         }
-        return 0;
+        return array();
     }
 
 
@@ -3365,15 +3365,14 @@ class SRMService
                 $group['is_active_go_no_go'] = -1;
             }
 
-            $commonDocsCount = DocumentAttachments::where('documentSystemCode', $bidMasterId)->where('documentSystemID', 108)->where('attachmentType',2)->where('envelopType', 3)->count();
-            if($commonDocsCount > 0){
+            if(count($documentAttachedCountIds) != 0){
                 if(count($documentAttachedCountIds) == $documentAttachedCountAnswer || count($documentAttachedCountIds) == 0) {
                     $group['commonStatus'] = 0;
                 } else {
                     $group['commonStatus'] = 1;
                 }
                 $group['is_active_common_docs'] = 1;
-            } else if($commonDocsCount <= 0) {
+            } else {
                 $group['is_active_common_docs'] = -1;
             }
 
