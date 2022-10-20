@@ -80,7 +80,7 @@ class UserGroupRepository extends BaseRepository
 
     public function getUserGroup($input)
     {
-        $userGroup = $this->model->where('companyID',$input["companyID"])->get();
+        $userGroup = $this->model->where('companyID',$input["companyID"])->where('isDeleted', 0)->get();
         return $userGroup;
     }
 }
