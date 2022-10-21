@@ -686,7 +686,7 @@ WHERE
                     return ['success' => false, 'message' => 'Bid Opening date should greater than bid submission date'];
                 }
 
-                if($bid_opeing_end_date < $bid_opening_date) {
+                if($bid_opening_date < $bid_opeing_end_date) {
                     return ['success' => false, 'message' => 'Bid Opening to date should greater than bid opening from date'];
                 }
             }
