@@ -15,3 +15,5 @@ Route::resource('thirdPartyIntegrationKeys', 'ThirdPartyIntegrationKeysControlle
 Route::resource('iOUBookingMasters', 'IOUBookingMasterController');
 
 Route::resource('pricingScheduleDetails', 'PricingScheduleDetailController');
+
+Route::resource('bidDocumentVerifications', 'BidDocumentVerificationController');

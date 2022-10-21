@@ -71,6 +71,8 @@ use Response;
 use App\Models\PricingScheduleDetail;
 use App\Models\ScheduleBidFormatDetails;
 use App\helper\PirceBidFormula;
+use App\Models\BidDocumentVerification;
+
 class SRMService
 {
     private $POService = null;
@@ -2626,7 +2628,13 @@ class SRMService
             $att['myFileName'] = $company->CompanyID . '_' . time() . '_BidSubmission.' . $extension;
             $att['sizeInKbs'] = $attachment['sizeInKbs'];
             $att['isUploaded'] = 1;
-            DocumentAttachments::create($att);
+            $result = DocumentAttachments::create($att);
+
+
+            $bid_date['attachment_id'] = $result['attachmentID'];
+            $bid_date['bis_submission_master_id'] = $bidMasterId;
+            BidDocumentVerification::create($bid_date);
+
 
             DB::commit();
             return [
@@ -2884,7 +2892,7 @@ class SRMService
             $att['tender_id'] = $tenderId;
             $att['bid_format_detail_id'] = $detail['bid_format_detail_id'];
             $att['qty'] = $detail['bid_main_work']['qty'];
-            $att['amount'] = round($detail['bid_main_work']['amount'],3);
+            $att['amount'] = $detail['bid_main_work']['amount'];
             $att['total_amount'] = round($detail['bid_main_work']['total_amount'],3);
             $att['remarks'] = $detail['bid_main_work']['remarks'];
             $att['supplier_registration_id'] = $supplierRegId;
@@ -2991,7 +2999,7 @@ class SRMService
         $detail = $request->input('extra.detail');
         $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
 
-   
+  
 
         DB::beginTransaction();
         try {
@@ -3000,7 +3008,7 @@ class SRMService
             $att['main_works_id'] = $detail['main_work_id'];
             $att['qty'] = $detail['bid_boq']['qty'];
             $att['remarks'] = $detail['bid_boq']['remarks'];
-            $att['unit_amount'] = round($detail['bid_boq']['unit_amount'],3);
+            $att['unit_amount'] = $detail['bid_boq']['unit_amount'];
             $att['total_amount'] = round($detail['bid_boq']['total_amount'],3);
             $att['supplier_registration_id'] = $supplierRegId;
             
@@ -3018,7 +3026,7 @@ class SRMService
                 $result = BidBoq::create($att);
             }
             $boqTot = BidBoq::selectRaw('SUM(qty) as qty , SUM(total_amount) as total_amount')->where('bid_master_id', $bidMasterId)->where('main_works_id', $detail['main_work_id'])->first();
-
+            
             if (!empty($boqTot['qty'])) {
                 $bidMainWork = BidMainWork::where('main_works_id', $detail['main_work_id'])->where('bid_master_id', $bidMasterId)->first();
                 if (!empty($bidMainWork)) {
@@ -3028,7 +3036,7 @@ class SRMService
                     $mainWork['updated_by'] = $supplierRegId;
                     BidMainWork::where('id', $bidMainWork['id'])->update($mainWork);
                 } else {
-                    $tenderMainWork = TenderMainWorks::where('id', $detail['main_work_id'])->first();
+                    $tenderMainWork = PricingScheduleDetail::where('id', $detail['main_work_id'])->first();
                     $mainWork['main_works_id'] = $detail['main_work_id'];
                     $mainWork['bid_master_id'] = $bidMasterId;
                     $mainWork['tender_id'] = $tenderMainWork['tender_id'];
