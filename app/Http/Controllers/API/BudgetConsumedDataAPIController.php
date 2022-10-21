@@ -289,13 +289,23 @@ class BudgetConsumedDataAPIController extends AppBaseController
     public function getBudgetConsumptionForReview(Request $request)
     {
         $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'grvRecieved', 'month', 'year', 'invoicedBooked', 'supplierID', 'sentToSupplier', 'logisticsAvailable', 'financeCategory', 'poTypeID'));
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
             $sort = 'desc';
         }
 
+        $supplierID = $request['supplierID'];
+        $supplierID = (array)$supplierID;
+        $supplierID = collect($supplierID)->pluck('id');
+
+        $serviceLineSystemID = $request['serviceLineSystemID'];
+        $serviceLineSystemID = (array)$serviceLineSystemID;
+        $serviceLineSystemID = collect($serviceLineSystemID)->pluck('id');
+
         $consumedData = BudgetConsumedData::where('documentSystemID', 2)
+                                          ->where('companySystemID', $input['companyId'])
                                           ->with(['purchase_order' => function($query) {
                                             $query->with(['created_by' => function ($query) {
                                             }, 'category' => function ($query) {
@@ -304,9 +314,75 @@ class BudgetConsumedDataAPIController extends AppBaseController
                                             }, 'currency' => function ($query) {
                                             }, 'fcategory' => function ($query) {
                                             }, 'segment' => function ($query) {
-                                            }]);
+                                            },'reportingcurrency']);
                                           },'budget_master'])
-                                          ->whereHas('purchase_order')
+                                          ->whereHas('purchase_order', function($procumentOrders) use ($input, $supplierID, $serviceLineSystemID) {
+                                                if (array_key_exists('companyId', $input)) {
+                                                    if ($input['companyId'] && !is_null($input['companyId'])) {
+                                                        $procumentOrders->where('companySystemID', $input['companyId']);
+                                                    }
+                                                }
+
+                                                if (array_key_exists('serviceLineSystemID', $input)) {
+                                                    if ($input['serviceLineSystemID'] && !is_null($input['serviceLineSystemID'])) {
+                                                        $procumentOrders->whereIn('serviceLineSystemID', $serviceLineSystemID);
+                                                    }
+                                                }
+
+                                                if (array_key_exists('grvRecieved', $input)) {
+                                                    if (($input['grvRecieved'] == 0 || $input['grvRecieved'] == 1 || $input['grvRecieved'] == 2) && !is_null($input['grvRecieved'])) {
+                                                        $procumentOrders->where('grvRecieved', $input['grvRecieved']);
+                                                    }
+                                                }
+
+                                                if (array_key_exists('invoicedBooked', $input)) {
+                                                    if (($input['invoicedBooked'] == 0 || $input['invoicedBooked'] == 1 || $input['invoicedBooked'] == 2) && !is_null($input['invoicedBooked'])) {
+                                                        $procumentOrders->where('invoicedBooked', $input['invoicedBooked']);
+                                                    }
+                                                }
+
+                                                if (array_key_exists('month', $input)) {
+                                                    if ($input['month'] && !is_null($input['month'])) {
+                                                        $procumentOrders->whereMonth('createdDateTime', '=', $input['month']);
+                                                    }
+                                                }
+
+                                                if (array_key_exists('year', $input)) {
+                                                    if ($input['year'] && !is_null($input['year'])) {
+                                                        $procumentOrders->whereYear('createdDateTime', '=', $input['year']);
+                                                    }
+                                                }
+
+                                                if (array_key_exists('supplierID', $input)) {
+                                                    if ($input['supplierID'] && !is_null($input['supplierID'])) {
+                                                        $procumentOrders->whereIn('supplierID', $supplierID);
+                                                    }
+                                                }
+
+                                                if (array_key_exists('financeCategory', $input)) {
+                                                    if ($input['financeCategory'] && !is_null($input['financeCategory'])) {
+                                                        $procumentOrders->where('financeCategory', $input['financeCategory']);
+                                                    }
+                                                }
+
+                                                if (array_key_exists('poTypeID', $input)) {
+                                                    if ($input['poTypeID'] && !is_null($input['poTypeID'])) {
+                                                        $procumentOrders->where('poTypeID', $input['poTypeID']);
+                                                    }
+                                                }
+
+                                                if (array_key_exists('sentToSupplier', $input)) {
+                                                    if (($input['sentToSupplier'] == 0 || $input['sentToSupplier'] == -1) && !is_null($input['sentToSupplier'])) {
+                                                        $procumentOrders->where('sentToSupplier', $input['sentToSupplier']);
+                                                    }
+                                                }
+
+                                                if (array_key_exists('logisticsAvailable', $input)) {
+                                                    if (($input['logisticsAvailable'] == 0 || $input['logisticsAvailable'] == -1) && !is_null($input['logisticsAvailable'])) {
+                                                        $procumentOrders->where('logisticsAvailable', $input['logisticsAvailable']);
+                                                    }
+                                                }
+                                          })
                                           ->whereHas('budget_master')
                                           ->whereHas('financeyear_by')
                                           ->groupBy('documentSystemCode');
