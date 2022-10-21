@@ -609,7 +609,7 @@ class GeneralLedgerAPIController extends AppBaseController
                 break;
             case 71:
                 $deoMaster = DeliveryOrder::find($autoID);
-                if($deoMaster && $deoMaster->approved != -1){
+                if($deoMaster && $deoMaster->approvedYN != -1){
                     $result = DeliveryOrderGlService::processEntry($masterModel);
                 } else {
                     $result = [];
@@ -617,7 +617,7 @@ class GeneralLedgerAPIController extends AppBaseController
                 break;
             case 87: // sales return
                 $srMaster = SalesReturn::find($autoID);
-                if($srMaster && $srMaster->approved != -1){
+                if($srMaster && $srMaster->approvedYN != -1){
                     $result = SalesReturnGlService::processEntry($masterModel);
                 } else {
                     $result = [];
