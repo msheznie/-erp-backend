@@ -349,7 +349,7 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
                     $data[$x]['Payee Type'] = "";
                     $data[$x]['Supplier / Employee / Other'] = "";
                 }
-                $data[$x]['Invoice Date'] = \Helper::convertDateWithTime($val->BPVdate);
+                $data[$x]['Invoice Date'] = \Helper::dateFormat($val->BPVdate);
                 $data[$x]['Cheque No'] = $val->BPVchequeNo;
                 $data[$x]['Comment'] = $val->BPVNarration;
                 $data[$x]['Created By'] = $val->created_by? $val->created_by->empName : '';
