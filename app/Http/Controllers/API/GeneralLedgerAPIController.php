@@ -352,7 +352,7 @@ class GeneralLedgerAPIController extends AppBaseController
 
         $tenants = CommonJobService::tenant_list();
         if(count($tenants) == 0){
-            return;
+            return  "tenant list is empty";
         }
 
 
