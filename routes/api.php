@@ -467,6 +467,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('document_attachment_types', 'DocumentAttachmentTypeAPIController');
         Route::get('downloadFile', 'DocumentAttachmentsAPIController@downloadFile');
         Route::post('store_tender_documents', 'DocumentAttachmentsAPIController@storeTenderDocuments');      
+        Route::post('tenderBIdDocApproveal', 'DocumentAttachmentsAPIController@tenderBIdDocApproveal');   
+        Route::post('tenderBIdDocTypeApproveal', 'DocumentAttachmentsAPIController@tenderBIdDocTypeApproveal');   
 
         Route::resource('sme-attachment', 'AttachmentSMEAPIController');
         Route::get('sme-attachment/{id}/{docID}/{companyID}', 'AttachmentSMEAPIController@show');
@@ -2589,7 +2591,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('get-supplier-groups', 'SupplierGroupConfigurationController@getSupplierGroups');
         Route::post('delete-group', 'SupplierGroupConfigurationController@deleteGroup');
 
-        
+        Route::post('getTenderBits', 'BidSubmissionMasterAPIController@getTenderBits');     
        
         
         /**
@@ -2850,6 +2852,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     Route::resource('work_order_generation_logs', 'WorkOrderGenerationLogAPIController');
     Route::resource('external_link_hashes', 'ExternalLinkHashAPIController');
     Route::resource('registered_suppliers', 'RegisteredSupplierAPIController');
+    Route::post('getTenderBitsDoc', 'DocumentAttachmentsAPIController@getTenderBitsDoc');
+    Route::post('getConsolidatedDataAttachment', 'DocumentAttachmentsAPIController@getConsolidatedDataAttachment');
 
     Route::resource('tax_ledgers', 'TaxLedgerAPIController');
 
@@ -3096,3 +3100,6 @@ Route::post('documentUploadDelete', 'ThirdPartySystemsDocumentUploadAndDownloadA
 Route::get('viewHrDocuments', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@viewHrDocuments');
 
 
+
+
+Route::resource('bid_document_verifications', 'BidDocumentVerificationAPIController');
