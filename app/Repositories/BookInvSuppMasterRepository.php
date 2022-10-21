@@ -203,7 +203,7 @@ class BookInvSuppMasterRepository extends BaseRepository
                 $data[$x]['Type'] = $val->documentType === 0? 'Supplier PO Invoice' : 'Supplier Direct Invoice';
                 $data[$x]['Supplier'] = $val->supplier? $val->supplier->supplierName : '';
                 $data[$x]['Invoice No'] = $val->supplierInvoiceNo;
-                $data[$x]['Booking Invoice Date'] = \Helper::convertDateWithTime($val->bookingDate);
+                $data[$x]['Booking Invoice Date'] = \Helper::dateFormat($val->bookingDate);
                 $data[$x]['Comments'] = $val->comments;
                 $data[$x]['Created By'] = $val->created_by? $val->created_by->empName : '';
                 $data[$x]['Created At'] = \Helper::convertDateWithTime($val->createdDateAndTime);

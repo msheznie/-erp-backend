@@ -133,7 +133,7 @@ class JvMasterRepository extends BaseRepository
             foreach ($dataSet as $val) {
                 $data[$x]['JV Code'] = $val->JVcode;
                 $data[$x]['Type'] = StatusService::getjvType($val->jvType);
-                $data[$x]['JV Date'] = \Helper::convertDateWithTime($val->JVdate);
+                $data[$x]['JV Date'] = \Helper::dateFormat($val->JVdate);
                 $data[$x]['Narration'] = $val->JVNarration;
                 $data[$x]['Created By'] = $val->created_by? $val->created_by->empName : '';
                 $data[$x]['Created At'] = \Helper::convertDateWithTime($val->createdDateTime);
