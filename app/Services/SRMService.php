@@ -71,6 +71,8 @@ use Response;
 use App\Models\PricingScheduleDetail;
 use App\Models\ScheduleBidFormatDetails;
 use App\helper\PirceBidFormula;
+use App\Models\BidDocumentVerification;
+
 class SRMService
 {
     private $POService = null;
@@ -2626,7 +2628,13 @@ class SRMService
             $att['myFileName'] = $company->CompanyID . '_' . time() . '_BidSubmission.' . $extension;
             $att['sizeInKbs'] = $attachment['sizeInKbs'];
             $att['isUploaded'] = 1;
-            DocumentAttachments::create($att);
+            $result = DocumentAttachments::create($att);
+
+
+            $bid_date['attachment_id'] = $result['attachmentID'];
+            $bid_date['bis_submission_master_id'] = $bidMasterId;
+            BidDocumentVerification::create($bid_date);
+
 
             DB::commit();
             return [
@@ -2814,6 +2822,17 @@ class SRMService
         
         $documentAttachedCountAnswerTechnical = DocumentAttachments::whereIn('parent_id', $documentAttachedCountIdsTechnical)->where('documentSystemID', 108)->count();
 
+        $documentAttachedCountIdsCommercial = DocumentAttachments::with(['tender_document_types' => function ($q) use ($doucments){
+            $q->where('srm_action', 1);
+        }, 'document_attachments' => function ($q) use ($bidMasterId) {
+            $q->where('documentSystemCode', $bidMasterId);
+        }])->whereHas('tender_document_types', function ($q) use ($doucments){
+        })->where('documentSystemCode', $tenderId)->where('parent_id', null)->where('documentSystemID', 108)->where('envelopType', 1)->where('attachmentType',2)->pluck('attachmentID')->toArray();
+        
+        $documentAttachedCountAnswerCommercial = DocumentAttachments::whereIn('parent_id', $documentAttachedCountIdsCommercial)->where('documentSystemID', 108)->count();
+
+
+
         $technicalEvaluationCriteria = EvaluationCriteriaDetails::where('is_final_level', 0)
             ->where('critera_type_id', 2)
             ->where('tender_id', $tenderId)
@@ -2824,11 +2843,10 @@ class SRMService
             ->where('is_final_level', 3)
             ->count();
 
-            // || ($technicalEvaluationCriteria == $technicalEvaluationCriteriaAnswer)
         if((count($documentAttachedCountIdsTechnical) == $documentAttachedCountAnswerTechnical) ) {
             $data['technicalStatus'] = "Completed";
             if($technicalEvaluationCriteriaAnswer == 0 && $documentAttachedCountAnswerTechnical == 0) {
-                $data['technicalStatus'] = "Completed";
+                $data['technicalStatus'] = "Disabled";
             }else {
                 if(($technicalEvaluationCriteria == $technicalEvaluationCriteriaAnswer)) {
                     $data['technicalStatus'] = "Completed";
@@ -2840,6 +2858,8 @@ class SRMService
             $data['technicalStatus'] = "Not Completed";
         }
 
+
+        // $commercial_pricing_shedule_count = PricingScheduleMaster::where("tender_id",$tender_id)->count();
 
 
 
@@ -2884,7 +2904,7 @@ class SRMService
             $att['tender_id'] = $tenderId;
             $att['bid_format_detail_id'] = $detail['bid_format_detail_id'];
             $att['qty'] = $detail['bid_main_work']['qty'];
-            $att['amount'] = round($detail['bid_main_work']['amount'],3);
+            $att['amount'] = $detail['bid_main_work']['amount'];
             $att['total_amount'] = round($detail['bid_main_work']['total_amount'],3);
             $att['remarks'] = $detail['bid_main_work']['remarks'];
             $att['supplier_registration_id'] = $supplierRegId;
@@ -2991,7 +3011,7 @@ class SRMService
         $detail = $request->input('extra.detail');
         $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
 
-   
+  
 
         DB::beginTransaction();
         try {
@@ -3000,7 +3020,7 @@ class SRMService
             $att['main_works_id'] = $detail['main_work_id'];
             $att['qty'] = $detail['bid_boq']['qty'];
             $att['remarks'] = $detail['bid_boq']['remarks'];
-            $att['unit_amount'] = round($detail['bid_boq']['unit_amount'],3);
+            $att['unit_amount'] = $detail['bid_boq']['unit_amount'];
             $att['total_amount'] = round($detail['bid_boq']['total_amount'],3);
             $att['supplier_registration_id'] = $supplierRegId;
             
@@ -3018,7 +3038,7 @@ class SRMService
                 $result = BidBoq::create($att);
             }
             $boqTot = BidBoq::selectRaw('SUM(qty) as qty , SUM(total_amount) as total_amount')->where('bid_master_id', $bidMasterId)->where('main_works_id', $detail['main_work_id'])->first();
-
+            
             if (!empty($boqTot['qty'])) {
                 $bidMainWork = BidMainWork::where('main_works_id', $detail['main_work_id'])->where('bid_master_id', $bidMasterId)->first();
                 if (!empty($bidMainWork)) {
@@ -3028,7 +3048,7 @@ class SRMService
                     $mainWork['updated_by'] = $supplierRegId;
                     BidMainWork::where('id', $bidMainWork['id'])->update($mainWork);
                 } else {
-                    $tenderMainWork = TenderMainWorks::where('id', $detail['main_work_id'])->first();
+                    $tenderMainWork = PricingScheduleDetail::where('id', $detail['main_work_id'])->first();
                     $mainWork['main_works_id'] = $detail['main_work_id'];
                     $mainWork['bid_master_id'] = $bidMasterId;
                     $mainWork['tender_id'] = $tenderMainWork['tender_id'];
@@ -3190,6 +3210,7 @@ class SRMService
             return $group['isExist'];
         });
 
+
         $filtered = $tenderArrFilter->filter(function ($value, $key) {
             return $value > 0;
         });
@@ -3197,6 +3218,7 @@ class SRMService
 
         $bidsubmission =  self::getBidMasterData($bidMasterId);
 
+        $data['tenderArrFilter'] = $tenderArrFilter;
         $data['filtered'] = $filtered->count();
         $data['technicalEvaluationCriteria'] = $technicalEvaluationCriteria > 0 ? 1 : 0;
         $data['bidsubmission'] = $bidsubmission;

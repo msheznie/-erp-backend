@@ -507,7 +507,9 @@ class TenderMasterAPIController extends AppBaseController
 	srm_calendar_dates.calendar_date as calendar_date,
 	srm_calendar_dates.company_id as company_id,
 	srm_calendar_dates_detail.from_date as from_date,
-	srm_calendar_dates_detail.to_date as to_date
+	srm_calendar_dates_detail.to_date as to_date,
+    srm_calendar_dates_detail.from_time as from_time,
+    srm_calendar_dates_detail.to_time as to_time
 FROM
 	srm_calendar_dates 
 	INNER JOIN srm_calendar_dates_detail ON srm_calendar_dates_detail.calendar_date_id = srm_calendar_dates.id AND srm_calendar_dates_detail.tender_id = $tenderMasterId
@@ -519,7 +521,9 @@ WHERE
 	srm_calendar_dates.calendar_date as calendar_date,
 	srm_calendar_dates.company_id as company_id,
 	srm_calendar_dates_detail.from_date as from_date,
-	srm_calendar_dates_detail.to_date as to_date
+	srm_calendar_dates_detail.to_date as to_date,
+    srm_calendar_dates_detail.from_time as from_time,
+    srm_calendar_dates_detail.to_time as to_time
 FROM
 	srm_calendar_dates 
 	LEFT JOIN srm_calendar_dates_detail ON srm_calendar_dates_detail.calendar_date_id = srm_calendar_dates.id AND srm_calendar_dates_detail.tender_id = $tenderMasterId
@@ -530,6 +534,11 @@ WHERE
 
 
         $data['calendarDates'] = DB::select($qry);
+        
+        // foreach($data['calendarDates'] as $cal) {
+
+        // }
+
         $data['calendarDatesAll'] = DB::select($qryAll);
 
         $documentTypes = TenderDocumentTypeAssign::with(['document_type'])->where('tender_id', $tenderMasterId)->get();
@@ -647,7 +656,6 @@ WHERE
         $technical_bid_closing_date = new Carbon($input['technical_bid_closing_date']);
         $technical_bid_closing_date = $technical_bid_closing_date->format('Y-m-d').' '.$technical_bid_closing_time->format('H:i:s');
 
-
         $commerical_bid_opening_time = new Carbon($input['commerical_bid_opening_time']);
         $commerical_bid_opening_date = new Carbon($input['commerical_bid_opening_date']);
         $commerical_bid_opening_date = $commerical_bid_opening_date->format('Y-m-d').' '.$commerical_bid_opening_time->format('H:i:s');
@@ -657,7 +665,12 @@ WHERE
         $commerical_bid_closing_date = $commerical_bid_closing_date->format('Y-m-d').' '.$commerical_bid_closing_time->format('H:i:s');
 
         $site_visit_date = null;
+        if(is_null($bid_submission_closing_date)) {
+            $bid_opening_date = $bid_submission_opening_date;
 
+        }else {
+            $bid_opening_date = $bid_submission_closing_date;
+        }
         if(!is_null($input['stage']) || $input['stage'] != 0) {
           
             if($input['stage'][0] == 1) {
@@ -668,31 +681,66 @@ WHERE
                 if(is_null($input['bid_opening_time'])) {
                     return ['success' => false, 'message' => 'Bid Opening Time cannot be empty'];
                 }
+
+                if($bid_opening_date < $bid_opening_date) {
+                    return ['success' => false, 'message' => 'Bid Opening date should greater than bid submission date'];
+                }
+
+                if($bid_opeing_end_date < $bid_opening_date) {
+                    return ['success' => false, 'message' => 'Bid Opening to date should greater than bid opening from date'];
+                }
             }
 
             if($input['stage'][0] == 2) {
+
                 if(is_null($input['technical_bid_opening_time'])) {
                     return ['success' => false, 'message' => 'Technical Bid Opening Time cannot be empty'];
+                
                 }else {
+ 
+                    if($technical_bid_opening_date < $bid_opening_date) {
+                        return ['success' => false, 'message' => 'Technical bid opening date should greater than bid submission date'];
+                    }
+
+                    if($technical_bid_closing_date < $technical_bid_opening_date) {
+                        return ['success' => false, 'message' => 'Technical bid to date should greater than technical bid from date'];
+                    }
+
                     if(is_null($input['commerical_bid_opening_time'])) {
                         return ['success' => false, 'message' => 'Commercial Bid Opening Time cannot be empty'];
                     }
 
-                    if($technical_bid_opening_date > $commerical_bid_opening_date) {
-                        return ['success' => false, 'message' => 'Commercial Bid Opening Time should be greater than technical bid opening date'];
+                    if(is_null($commerical_bid_closing_date)) {
+                        if($technical_bid_opening_date > $commerical_bid_opening_date) {
+                            return ['success' => false, 'message' => 'Commercial Bid Opening Time should be greater than technical bid from date'];
+                        }
+                    }else {
+                        if($technical_bid_closing_date > $commerical_bid_opening_date) {
+                            return ['success' => false, 'message' => 'Commercial Bid Opening Time should be greater than technical bid to date'];
+                        }
+
+                        if($commerical_bid_opening_date > $commerical_bid_closing_date) {
+                            return ['success' => false, 'message' => 'Commercial Bid closing to date should greater than commercial bid from date'];
+                        }
                     }
+
+               
+
+
                 }
             }
         }
 
         if ($input['site_visit_date']) {
+            $site_visit_time = new Carbon($input['site_visit_time']);
             $site_visit_date = new Carbon($input['site_visit_date']);
-            $site_visit_date = $site_visit_date->format('Y-m-d');
+            $site_visit_date = $site_visit_date->format('Y-m-d').' '.$site_visit_time->format('H:i:s');
         }
 
         if ($input['site_visit_end_date']) {
+            $site_visit_end_time = new Carbon($input['site_visit_end_time']);
             $site_visit_end_date = new Carbon($input['site_visit_end_date']);
-            $site_visit_end_date = $site_visit_end_date->format('Y-m-d');
+            $site_visit_end_date = $site_visit_end_date->format('Y-m-d').' '.$site_visit_end_time->format('H:i:s');
         }
 
 
@@ -984,6 +1032,8 @@ WHERE
                         $calDt['to_date'] = $to_date;
                         $calDt['company_id'] = $input['company_id'];
                         $calDt['created_by'] = $employee->employeeSystemID;
+                        $calDt['from_time'] = new Carbon($calDate['from_time']);
+                        $calDt['to_time'] = new Carbon($calDate['to_time']);
                         $calDt['created_at'] = Carbon::now();
 
                         CalendarDatesDetail::create($calDt);
