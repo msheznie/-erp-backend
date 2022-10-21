@@ -645,7 +645,7 @@ WHERE
 
         $bid_opeing_end_time = (isset($input['bid_opening_end_date_time'])) ? new Carbon($input['bid_opening_end_date_time']) : null;
         $bid_opeing_end_date = (isset($input['bid_opeing_end_date'])) ? new Carbon($input['bid_opeing_end_date']) : null;
-        $bid_opeing_end_date = $bid_opeing_end_date->format('Y-m-d').' '.$bid_opeing_end_time->format('H:i:s');
+        $bid_opeing_end_date = (isset($input['bid_opeing_end_date'])) ? $bid_opeing_end_date->format('Y-m-d').' '.$bid_opeing_end_time->format('H:i:s') : null;
 
 
         $technical_bid_opening_time = new Carbon($input['technical_bid_opening_date_time']);
