@@ -119,5 +119,12 @@ class BidSubmissionDetail extends Model
         
     ];
 
+    public function srm_evaluation_criteria_details(){
+        return $this->belongsTo('App\Models\EvaluationCriteriaDetails','evaluation_detail_id','id');
+    }
+
+    public function srm_tender_master(){
+        return $this->belongsTo('App\Models\TenderMaster','tender_id','id');
+    }
     
 }

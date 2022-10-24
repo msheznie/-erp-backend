@@ -2592,7 +2592,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('delete-group', 'SupplierGroupConfigurationController@deleteGroup');
 
         Route::post('getTenderBits', 'BidSubmissionMasterAPIController@getTenderBits');     
-       
+        Route::post('getTenderBidGoNoGoResponse', 'BidSubmissionMasterAPIController@getTenderBidGoNoGoResponse');
+
         
         /**
          * Supplier registration approval routes

@@ -4,10 +4,12 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateBidSubmissionMasterAPIRequest;
 use App\Http\Requests\API\UpdateBidSubmissionMasterAPIRequest;
+use App\Models\BidSubmissionDetail;
 use App\Models\BidSubmissionMaster;
 use App\Repositories\BidSubmissionMasterRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\Log;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -308,6 +310,48 @@ class BidSubmissionMasterAPIController extends AppBaseController
             });
         }
 
+
+        return \DataTables::eloquent($query)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('id', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+    public function getTenderBidGoNoGoResponse(Request $request){
+        $input = $request->all();
+
+        if(request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $request['companyId'];
+        $tenderId = $request['tenderId'];
+
+        $query = BidSubmissionDetail::with(['srm_evaluation_criteria_details',
+            'srm_evaluation_criteria_details.evaluation_criteria_type',
+            'srm_evaluation_criteria_details.tender_criteria_answer_type', 'srm_tender_master'])
+            ->whereHas('srm_evaluation_criteria_details.evaluation_criteria_type', function ($query) {
+                $query->where('id', 1);
+            })->whereHas('srm_tender_master', function ($query) use($companyId) {
+                $query->where('company_id', 1);
+            })->where('bid_master_id', $tenderId);
+
+        $search = $request->input('search.value');
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $query = $query->where(function ($query) use ($search) {
+                    // $query->where('name', 'like', "%{$search}%");
+            });
+        }
 
         return \DataTables::eloquent($query)
             ->order(function ($query) use ($input) {
