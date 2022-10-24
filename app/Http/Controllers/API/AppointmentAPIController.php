@@ -473,15 +473,8 @@ class AppointmentAPIController extends AppBaseController
         $input = $request->all();
         $companyId = $input['companyId'];
         $documentSystemCode = $input['documentSystemCode'];
-
         $documentSystemID = 106;
-        $empID = \Helper::getEmployeeSystemID();
-
-        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
-            $sort = 'asc';
-        } else {
-            $sort = 'desc';
-        }
+        $sort = 'asc';
 
         $appointmentDetail = DocumentAttachments::where('documentSystemID', $documentSystemID)
             ->where('companySystemID', $companyId)
@@ -501,7 +494,7 @@ class AppointmentAPIController extends AppBaseController
             ->order(function ($query) use ($input) {
                if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
-                        $query->orderBy('attachmentID', $input['order'][0]['dir']);
+                        $query->orderBy('attachmentID', 'asc');
                     }
                 }
             })
