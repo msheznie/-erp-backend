@@ -323,11 +323,11 @@ class AccountsPayableReportAPIController extends AppBaseController
                 return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'invoiceAmount' => $invoiceAmount, 'paidAmount' => $paidAmount, 'balanceAmount' => $balanceAmount);
                 break;
             case 'APSS': //Supplier Statement Report
-                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'controlAccountsSystemID'));
                 $checkIsGroup = Company::find($request->companySystemID);
                 $reportTypeID = $request->reportTypeID;
 
                 if ($reportTypeID == 'SS') {
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                     $request->fromPath = 'view';
                     $output = $this->getSupplierStatementQRY($request);
 
@@ -346,6 +346,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                     }
                     return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'balanceAmount' => $balanceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2);
                 } else if ($reportTypeID == 'SBSR') {
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'controlAccountsSystemID'));
                     $output = $this->getSupplierBalanceStatementReconcileQRY($request);
                     $outputArr = array();
 
@@ -995,7 +996,7 @@ class AccountsPayableReportAPIController extends AppBaseController
 
 
                 if ($reportTypeID == 'SS') {
-                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID', 'controlAccountsSystemID'));
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                     $request->fromPath = 'view';
                     $output = $this->getSupplierStatementQRY($request);
             
@@ -1010,6 +1011,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                             $data[$x]['Document ID'] = $val->documentID;
                             $data[$x]['Document Code'] = $val->documentCode;
                             $data[$x]['Document Date'] = \Helper::dateFormat($val->documentDate);
+                            $data[$x]['Account'] = $val->glCode." - ".$val->AccountDescription;
                             $data[$x]['Narration'] = $val->documentNarration;
                             $data[$x]['Invoice Number'] = $val->invoiceNumber;
                             $data[$x]['Invoice Date'] = \Helper::dateFormat($val->invoiceDate);
@@ -1821,7 +1823,8 @@ class AccountsPayableReportAPIController extends AppBaseController
         $suppliers = (array)$request->suppliers;
         $supplierSystemID = collect($suppliers)->pluck('supplierCodeSytem')->toArray();
 
-        $controlAccountsSystemID = $request->controlAccountsSystemID;
+        $controlAccountsSystemIDs = (array)$request->controlAccountsSystemID;
+        $controlAccountsSystemID = collect($controlAccountsSystemIDs)->pluck('id')->toArray();
 
         $currency = $request->currencyID;
 
@@ -1878,7 +1881,9 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 ' . $currencyQry . ',
                                 ' . $decimalPlaceQry . ',
                                 CONCAT(finalAgingDetail.SupplierCode," - ",finalAgingDetail.suppliername) as concatSupplierName,
-                                CONCAT(finalAgingDetail.companyID," - ",finalAgingDetail.CompanyName) as concatCompany
+                                CONCAT(finalAgingDetail.companyID," - ",finalAgingDetail.CompanyName) as concatCompany,
+                                finalAgingDetail.glCode,
+                                finalAgingDetail.AccountDescription
                             FROM
                             (
                             SELECT
@@ -1916,7 +1921,9 @@ class AccountsPayableReportAPIController extends AppBaseController
 
                                 MAINQUERY.docLocalAmount+MAINQUERY.debitNoteMatchedAmountLocal + MAINQUERY.PaidPaymentVoucherLocalAmount - MAINQUERY.InvoiceMatchedINMatchingAmountLocal - MAINQUERY.InvoiceMatchedForpaymentAmountLocal  as balanceAmountLocal,
 
-                                MAINQUERY.docRptAmount + MAINQUERY.debitNoteMatchedAmountRpt + MAINQUERY.PaidPaymentVoucherRptAmount - MAINQUERY.InvoiceMatchedINMatchingAmountRpt - MAINQUERY.InvoiceMatchedForpaymentAmountRpt AS balanceAmountRpt
+                                MAINQUERY.docRptAmount + MAINQUERY.debitNoteMatchedAmountRpt + MAINQUERY.PaidPaymentVoucherRptAmount - MAINQUERY.InvoiceMatchedINMatchingAmountRpt - MAINQUERY.InvoiceMatchedForpaymentAmountRpt AS balanceAmountRpt,
+                                MAINQUERY.glCode,
+                                chartofaccounts.AccountDescription
                             FROM
                                 (
                             SELECT
@@ -2084,13 +2091,14 @@ class AccountsPayableReportAPIController extends AppBaseController
                             WHERE
                                 DATE(erp_generalledger.documentDate) <= "' . $asOfDate . '"
                                 AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
-                                AND erp_generalledger.chartOfAccountSystemID = "' . $controlAccountsSystemID . '"
+                                AND erp_generalledger.chartOfAccountSystemID IN (' . join(',', $controlAccountsSystemID) . ')
                                 AND erp_generalledger.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
                                 AND erp_generalledger.contraYN = 0
                                 GROUP BY erp_generalledger.companySystemID, erp_generalledger.supplierCodeSystem,erp_generalledger.chartOfAccountSystemID,erp_generalledger.documentSystemID,erp_generalledger.documentSystemCode
                                 ) AS MAINQUERY
                             LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = MAINQUERY.supplierCodeSystem
                             LEFT JOIN companymaster ON MAINQUERY.companySystemID = companymaster.companySystemID
+                            LEFT JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = MAINQUERY.chartOfAccountSystemID
                             LEFT JOIN currencymaster as transCurrencyDet ON transCurrencyDet.currencyID=MAINQUERY.documentTransCurrencyID
                             LEFT JOIN currencymaster as localCurrencyDet ON localCurrencyDet.currencyID=MAINQUERY.documentLocalCurrencyID
                             LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUERY.documentRptCurrencyID) as finalAgingDetail WHERE ' . $whereQry . ' <> 0 ORDER BY ' . $filterOrderBy . ' ASC;');
@@ -5244,7 +5252,7 @@ ORDER BY
 
     public function supplierStatementPdf($request, $sentEmail = false)
     {
-        $request = (object)$this->convertArrayToSelectedValue($request, array('currencyID', 'controlAccountsSystemID'));
+        $request = (object)$this->convertArrayToSelectedValue($request, array('currencyID'));
 
         $checkIsGroup = Company::find($request->companySystemID);
 
