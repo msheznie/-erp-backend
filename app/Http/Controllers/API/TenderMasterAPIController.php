@@ -638,7 +638,7 @@ WHERE
 
         $document_sales_end_time =  ($input['document_sales_end_time']) ?  new Carbon($input['document_sales_end_time']) : null;
         $document_sales_end_date = new Carbon($input['document_sales_end_date']);
-        $document_sales_end_date = ($input['document_sales_end_time']) ? $document_sales_end_date->format('Y-m-d').' '.$document_sales_end_date->format('H:i:s') : $document_sales_end_date->format('Y-m-d') ;
+        $document_sales_end_date = ($input['document_sales_end_time']) ? $document_sales_end_date->format('Y-m-d').' '.$document_sales_end_time->format('H:i:s') : $document_sales_end_date->format('Y-m-d') ;
 
         $bid_submission_opening_time =  ($input['bid_submission_opening_time']) ? new Carbon($input['bid_submission_opening_time']) : null;
         $bid_submission_opening_date = new Carbon($input['bid_submission_opening_date']);
@@ -670,12 +670,13 @@ WHERE
 
         $currenctDate = Carbon::now();
         if(isset($document_sales_start_date) && $document_sales_start_date < $currenctDate || isset($bid_submission_opening_date) && $bid_submission_opening_date < $currenctDate ||isset($pre_bid_clarification_start_date) && $pre_bid_clarification_start_date < $currenctDate ||isset($site_visit_date) && $site_visit_date < $currenctDate) {
-            return ['success' => false, 'message' => 'All the date/time should greater than current date/time'];
+            return ['success' => false, 'message' => 'All the date and time should greater than current date and time'];
         }
 
         if ($document_sales_start_date > $document_sales_end_date) {
             return ['success' => false, 'message' => 'From date cannot be greater than the To date for Document Sales'];
         }
+
 
         if ($pre_bid_clarification_start_date > $pre_bid_clarification_end_date) {
             return ['success' => false, 'message' => 'From date cannot be greater than the To date for Pre-bid Clarification'];
@@ -726,7 +727,7 @@ WHERE
                 }
 
                 if($bid_opening_date < $bid_submission_opening_date) {
-                    return ['success' => false, 'message' => 'Bid Opening date/time should greater than bid submission date/time'];
+                    return ['success' => false, 'message' => 'Bid Opening date and time should greater than bid submission date and time'];
                 }
 
             }
@@ -770,7 +771,7 @@ WHERE
                 }else {
  
                     if($technical_bid_opening_date < $bid_submission_opening_date) {
-                        return ['success' => false, 'message' => 'Technical bid opening date/time should greater than bid submission date/time'];
+                        return ['success' => false, 'message' => 'Technical bid opening date and time should greater than bid submission date and time'];
                     }
 
 
@@ -780,11 +781,11 @@ WHERE
 
                     if(is_null($technical_bid_closing_date)) {
                         if($technical_bid_opening_date > $commerical_bid_opening_date) {
-                            return ['success' => false, 'message' => 'Commercial Bid Opening date/time should be greater than technical bid from date/time'];
+                            return ['success' => false, 'message' => 'Commercial Bid Opening date and time should be greater than technical bid from date and time'];
                         }
                     }else {
                         if($technical_bid_closing_date > $commerical_bid_opening_date) {
-                            return ['success' => false, 'message' => 'Commercial Bid Opening date/time should be greater than technical bid to date/time'];
+                            return ['success' => false, 'message' => 'Commercial Bid Opening date and time should be greater than technical bid to date and time'];
                         }
 
                     }
