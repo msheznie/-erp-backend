@@ -357,7 +357,7 @@ class QuotationDetailsAPIController extends AppBaseController
     public function update($id, UpdateQuotationDetailsAPIRequest $request)
     {
         $input = $request->all();
-
+        $input = $this->convertArrayToSelectedValue($input, ['vatMasterCategoryID', 'vatSubCategoryID']);
         $employee = \Helper::getEmployeeInfo();
 
         /** @var QuotationDetails $quotationDetails */
