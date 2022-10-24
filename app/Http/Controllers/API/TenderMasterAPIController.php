@@ -735,10 +735,11 @@ WHERE
 
             if($input['stage'][0] == 2) {
 
-                
-            $technical_bid_opening_time = new Carbon($input['technical_bid_opening_date_time']);
+            $technical_bid_opening_time = ($input['technical_bid_opening_date_time']) ? new Carbon($input['technical_bid_opening_date_time']) : null;
             $technical_bid_opening_date = new Carbon($input['technical_bid_opening_date']);
-            $technical_bid_opening_date = $technical_bid_opening_date->format('Y-m-d').' '.$technical_bid_opening_time->format('H:i:s');
+            $technical_bid_opening_date = ($input['technical_bid_opening_date_time']) ? $technical_bid_opening_date->format('Y-m-d').' '.$technical_bid_opening_time->format('H:i:s') : $technical_bid_opening_date->format('Y-m-d');
+
+
 
             if(isset($input['technical_bid_closing_date'])) {
                 $technical_bid_closing_time = (isset($input['technical_bid_closing_date_time'])) ? new Carbon($input['technical_bid_closing_date_time']) : null;
@@ -749,10 +750,9 @@ WHERE
                 $technical_bid_closing_time = null;
             }
         
-
-            $commerical_bid_opening_time = new Carbon($input['commerical_bid_opening_date_time']);
+            $commerical_bid_opening_time = ($input['commerical_bid_opening_date_time']) ? new Carbon($input['commerical_bid_opening_date_time']) : null;
             $commerical_bid_opening_date = new Carbon($input['commerical_bid_opening_date']);
-            $commerical_bid_opening_date = $commerical_bid_opening_date->format('Y-m-d').' '.$commerical_bid_opening_time->format('H:i:s');
+            $commerical_bid_opening_date = ($input['commerical_bid_opening_date_time']) ? $commerical_bid_opening_date->format('Y-m-d').' '.$commerical_bid_opening_time->format('H:i:s') : $commerical_bid_opening_date->format('Y-m-d');
 
 
             if(isset($input['commerical_bid_closing_date'])) {
