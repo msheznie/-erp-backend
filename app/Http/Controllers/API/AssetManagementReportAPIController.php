@@ -243,10 +243,13 @@ class AssetManagementReportAPIController extends AppBaseController
                             $outputArr[$val->financeCatDescription][] = $val;
                         }
                     }
-    
+                    $companyData = \Helper::companyCurrency($request->companySystemID);
+
                     $sort = 'asc';         
                     return \DataTables::of($output)
                     ->addIndexColumn()
+                    ->with('localcurrency', $companyData->localcurrency)
+                    ->with('reportingcurrency', $companyData->reportingcurrency)
                     ->with('localnbv', $localnbv)
                     ->with('rptnbv', $rptnbv)
                     ->with('COSTUNIT', $COSTUNIT)
@@ -302,7 +305,8 @@ class AssetManagementReportAPIController extends AppBaseController
 
                     $companyData = \Helper::companyCurrency($request->companySystemID);
     
-                    $sort = 'asc';         
+                    $sort = 'asc';
+
                     return \DataTables::of($output)
                                     ->addIndexColumn()
                                     ->with('localnbv', $localnbv)
