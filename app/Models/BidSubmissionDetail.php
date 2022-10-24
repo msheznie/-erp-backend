@@ -126,5 +126,9 @@ class BidSubmissionDetail extends Model
     public function srm_tender_master(){
         return $this->belongsTo('App\Models\TenderMaster','tender_id','id');
     }
-    
+
+    public function supplier_registration_link()
+    {
+        return $this->belongsTo('App\Models\SupplierRegistrationLink', 'created_by', 'id');
+    }
 }

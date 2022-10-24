@@ -2593,6 +2593,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
         Route::post('getTenderBits', 'BidSubmissionMasterAPIController@getTenderBits');     
         Route::post('getTenderBidGoNoGoResponse', 'BidSubmissionMasterAPIController@getTenderBidGoNoGoResponse');
+        Route::post('updateTenderBidGoNoGoResponse', 'BidSubmissionMasterAPIController@updateTenderBidGoNoGoResponse');
 
         
         /**

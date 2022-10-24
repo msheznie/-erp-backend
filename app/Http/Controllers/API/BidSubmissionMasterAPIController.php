@@ -6,9 +6,12 @@ use App\Http\Requests\API\CreateBidSubmissionMasterAPIRequest;
 use App\Http\Requests\API\UpdateBidSubmissionMasterAPIRequest;
 use App\Models\BidSubmissionDetail;
 use App\Models\BidSubmissionMaster;
+use App\Models\EvaluationCriteriaScoreConfig;
 use App\Repositories\BidSubmissionMasterRepository;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
@@ -338,11 +341,11 @@ class BidSubmissionMasterAPIController extends AppBaseController
 
         $query = BidSubmissionDetail::with(['srm_evaluation_criteria_details',
             'srm_evaluation_criteria_details.evaluation_criteria_type',
-            'srm_evaluation_criteria_details.tender_criteria_answer_type', 'srm_tender_master'])
+            'srm_evaluation_criteria_details.tender_criteria_answer_type', 'srm_tender_master', 'supplier_registration_link'])
             ->whereHas('srm_evaluation_criteria_details.evaluation_criteria_type', function ($query) {
                 $query->where('id', 1);
             })->whereHas('srm_tender_master', function ($query) use($companyId) {
-                $query->where('company_id', 1);
+                $query->where('company_id', $companyId);
             })->where('bid_master_id', $tenderId);
 
         $search = $request->input('search.value');
@@ -364,5 +367,28 @@ class BidSubmissionMasterAPIController extends AppBaseController
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->make(true);
+    }
+
+    public function updateTenderBidGoNoGoResponse(Request $request){
+        $input = $request->all();
+
+        DB::beginTransaction();
+        try {
+            $att['go_no_go_criteria_result'] = $input['value'];
+            $att['updated_at'] = Carbon::now();
+            $att['updated_by'] = \Helper::getEmployeeSystemID();
+            $result = BidSubmissionDetail::where('id', $input['id'])->update($att);
+
+            DB::commit();
+            return [
+                'success' => true,
+                'message' => 'Successfully Saved',
+                'data' => $result
+            ];
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($e);
+            return ['success' => false, 'data' => '', 'message' => $e];
+        }
     }
 }
