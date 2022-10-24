@@ -440,7 +440,18 @@ class BudgetConsumedDataAPIController extends AppBaseController
 
         $data = [];
         foreach ($consumedData as $key => $value) {
-            $balanceToReciveRpt = $value->purchase_order->poTotalComRptCurrency - floatval($grvRecivedAmount->rptTotal);
+            $changedAmount = BudgetConsumedData::selectRaw('SUM(consumedRptAmount) as consumedRptAmount')
+                                               ->where('documentSystemID', $input['documentSystemID'])
+                                               ->where('documentSystemCode', $input['documentSystemCode'])
+                                               ->where('companyFinanceYearID', $value->companyFinanceYearID)
+                                               ->where('consumedRptAmount', '<', 0)
+                                               ->first();
+
+            $balanceToReciveRpt = $value->purchase_order->poTotalComRptCurrency - floatval($grvRecivedAmount->rptTotal) - abs(floatval($changedAmount->consumedRptAmount));
+
+            if ($balanceToReciveRpt < 0) {
+                $balanceToReciveRpt = 0;
+            }
 
             $cutOffDate = isset($value->budget_master->finance_year_by->endingDate) ? Carbon::parse($value->budget_master->finance_year_by->endingDate)->addMonthsNoOverflow($value->budget_master->cutOffPeriod)->format('Y-m-d') : null;
 
