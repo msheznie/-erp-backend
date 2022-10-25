@@ -45,7 +45,6 @@ trait MakeEmployeeTrait
             'empID' => $fake->word,
             'serial' => $fake->randomDigitNotNull,
             'empLeadingText' => $fake->word,
-            'empPassword' => $fake->word,
             'empUserName' => $fake->word,
             'empTitle' => $fake->word,
             'empInitial' => $fake->word,

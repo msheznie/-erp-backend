@@ -103,7 +103,7 @@ class StockCountGlService
             $data['documentID'] = $masterData->documentID;
             $data['documentSystemCode'] = $masterModel["autoID"];
             $data['documentCode'] = $masterData->stockCountCode;
-            $data['documentDate'] = date('Y-m-d H:i:s');
+            $data['documentDate'] = isset($masterModel['documentDateOveride']) ? $masterModel['documentDateOveride'] : date('Y-m-d H:i:s');
             $data['documentYear'] = \Helper::dateYear($masterData->stockCountDate);
             $data['documentMonth'] = \Helper::dateMonth($masterData->stockCountDate);
             $data['documentConfirmedDate'] = $masterData->confirmedDate;

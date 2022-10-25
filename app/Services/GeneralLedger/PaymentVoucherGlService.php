@@ -103,7 +103,7 @@ class PaymentVoucherGlService
 
         $isBankCheck = DirectPaymentDetails::WHERE('directPaymentAutoID', $masterModel["autoID"])->WHERE('glCodeIsBank', 1)->first();
 
-        $masterDocumentDate = date('Y-m-d H:i:s');
+        $masterDocumentDate = isset($masterModel['documentDateOveride']) ? $masterModel['documentDateOveride'] : date('Y-m-d H:i:s');
         if ($masterData->financeperiod_by->isActive == -1) {
             $masterDocumentDate = $masterData->BPVdate;
         }

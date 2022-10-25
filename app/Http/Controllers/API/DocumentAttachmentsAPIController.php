@@ -35,7 +35,9 @@ use Response;
 use Symfony\Component\Finder\SplFileInfo;
 use App\helper\Helper;
 use Illuminate\Support\Facades\DB;
-
+use Illuminate\Support\Facades\Log;
+use App\Models\BidDocumentVerification;
+use App\Models\BidSubmissionMaster;
 /**
  * Class DocumentAttachmentsController
  * @package App\Http\Controllers\API
@@ -1049,4 +1051,210 @@ class DocumentAttachmentsAPIController extends AppBaseController
         } 
       
     }
+
+
+
+    public function getTenderBitsDoc(Request $request)
+    {
+       
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $id = $request['id'];
+        $tenderId = $request['tenderId'];
+
+
+
+        
+        $query = DocumentAttachments::with('bid_verify')->where('documentSystemCode', $id)->where('documentSystemID', 108)->where('attachmentType',0);
+
+       // return $this->sendResponse($query, 'Tender Masters retrieved successfully');
+
+        $search = $request->input('search.value');
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $query = $query->where(function ($query) use ($search) {
+                    $query->where('originalFileName', 'like', "%{$search}%");
+            });
+        }
+
+
+        return \DataTables::eloquent($query)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('attachmentID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+
+    public function getConsolidatedDataAttachment(Request $request)
+    {
+        $input = $request->all();
+
+        $details = $input['extraParams'];
+
+        $attachmentId = $details['attachmentId'];
+
+       // return $this->sendResponse($details['tenderId'], 'Consolidated view data Successfully get');
+
+
+        $attachment = DocumentAttachments::where('attachmentID', $attachmentId)
+            ->where('documentSystemID', 108)
+            ->first();
+
+        $data['attachmentPath'] = Helper::getFileUrlFromS3($attachment['path']);
+        $data['extension'] = strtolower(pathinfo($attachment['path'], PATHINFO_EXTENSION));
+
+        return $this->sendResponse($data, 'Consolidated view data Successfully get');
+ 
+    }
+
+
+
+        public function tenderBIdDocApproveal(Request $request)
+        {
+            
+            
+            $input = $request->all();
+            $id = $input['id'];
+            $comments = $input['comments'];
+            $val = $input['data']['value'];
+            $verify_id = $input['verify_id'];
+            $bid_sub_id = $input['bid_sub_id'];
+    
+            DB::beginTransaction();
+            try {
+                $data['status'] = $val;
+                $data['remarks'] = $comments;
+                $data['verified_by'] = \Helper::getEmployeeSystemID();
+                $data['verified_date'] =  date('Y-m-d H:i:s');
+                
+                $results = BidDocumentVerification::where('id',$verify_id)->update($data,$verify_id);
+
+
+                $bid_verify = BidDocumentVerification::where('bis_submission_master_id',$bid_sub_id)->where('status',0)->count();
+                if($bid_verify == 0)
+                {   
+
+                    $bid_sub_data['doc_verifiy_yn'] = 1;
+                    $bid_sub_data['doc_verifiy_by_emp'] = \Helper::getEmployeeSystemID();
+                    $bid_sub_data['doc_verifiy_date'] =  date('Y-m-d H:i:s');
+
+                    $results = BidSubmissionMaster::where('id',$bid_sub_id)->update($bid_sub_data,$bid_sub_id);
+                }
+
+      
+
+        
+                DB::commit();
+                return ['success' => true, 'message' => 'Successfully updated', 'data' => $results];
+            } catch (\Exception $e) {
+                DB::rollback();
+                Log::error($this->failed($e));
+                return ['success' => false, 'message' => $e];
+            }
+        }
+
+
+        public function tenderBIdDocTypeApproveal(Request $request)
+        {
+          
+           
+            $input = $request->all();
+            $id = $input['id'];
+            $comments = $input['comments'];
+            $val = $input['data']['value'];
+            $verify_id = $input['verify_id'];
+            
+            DB::beginTransaction();
+            try {
+                $data['document_submit_type'] = $val;
+                $data['submit_remarks'] = $comments;
+                
+                $results = BidDocumentVerification::where('id',$verify_id)->update($data,$verify_id);
+        
+                DB::commit();
+                return ['success' => true, 'message' => 'Successfully updated', 'data' => $results];
+            } catch (\Exception $e) {
+                DB::rollback();
+                Log::error($this->failed($e));
+                return ['success' => false, 'message' => $e];
+            }
+        }
+
+
+        
+        public function tenderBIdDocSubmission(Request $request)
+        {
+          
+            $input = $request->all();
+            $id = $input['bid_id'];
+            $comments = $input['comments'];
+            $val = $input['type'];
+            
+            DB::beginTransaction();
+            try {
+                
+                $bid_sub_data['doc_verifiy_by_emp'] = \Helper::getEmployeeSystemID();
+                $bid_sub_data['doc_verifiy_date'] =  date('Y-m-d H:i:s');
+                $bid_sub_data['doc_verifiy_status'] = $val;
+                $bid_sub_data['doc_verifiy_comment'] = $comments;
+
+                $results = BidSubmissionMaster::where('id',$id)->update($bid_sub_data,$id);
+        
+                DB::commit();
+                return ['success' => true, 'message' => 'Successfully updated', 'data' => $results];
+            } catch (\Exception $e) {
+                DB::rollback();
+                Log::error($this->failed($e));
+                return ['success' => false, 'message' => $e];
+            }
+        }
+
+
+        public function checkTenderBidDocExist(Request $request)
+        {
+            $input = $request->all();
+            $details = $input['extraParams'];
+            $tender_id = $details['tenderId'];
+            $id = $details['id'];
+      
+            DB::beginTransaction();
+            try {
+                
+     
+
+                $results = DocumentAttachments::where('documentSystemCode',$id)->count();
+
+
+                if($results == 0)
+                {
+                    $bid_sub_data['doc_verifiy_yn'] = 1;
+                    $bid_sub_data['doc_verifiy_by_emp'] = \Helper::getEmployeeSystemID();
+                    $bid_sub_data['doc_verifiy_date'] =  date('Y-m-d H:i:s');
+                    $results = BidSubmissionMaster::where('id',$id)->update($bid_sub_data,$id);
+                }
+        
+                DB::commit();
+                return ['success' => true, 'message' => 'Successfully updated', 'data' => $results];
+            } catch (\Exception $e) {
+                DB::rollback();
+                Log::error($this->failed($e));
+                return ['success' => false, 'message' => $e];
+            }
+        }
+
+
+
 }

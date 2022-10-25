@@ -63,7 +63,7 @@ class AppServiceProvider extends ServiceProvider
         Passport::routes();
         passport::$revokeOtherTokens;
         passport::$pruneRevokedTokens;
-        Passport::tokensExpireIn(Carbon::now()->addDays(1));
-        Passport::refreshTokensExpireIn(Carbon::now()->addDays(2));
+        Passport::tokensExpireIn(Carbon::now()->addHours(1));
+        Passport::refreshTokensExpireIn(Carbon::now()->addHours(1));
     }
 }

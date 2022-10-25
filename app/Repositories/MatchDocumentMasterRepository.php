@@ -147,16 +147,16 @@ class MatchDocumentMasterRepository extends BaseRepository
 
             foreach ($dataSet as $val) {
                 $data[$x]['Matching Code'] = $val->matchingDocCode;
-                $data[$x]['Matching Date'] = \Helper::dateFormat($val->matchingDocdate);
+                $data[$x]['Matching Date'] = \Helper::convertDateWithTime($val->matchingDocdate);
                 $data[$x]['Document Code'] = $val->BPVcode;
                 $data[$x]['Supplier Code'] = $val->primarySupplierCode;
                 $data[$x]['Supplier Name'] = $val->supplier? $val->supplier->supplierName : '';
                 $data[$x]['Comments'] = $val->BPVNarration;
                 $data[$x]['Created By'] = $val->created_by? $val->created_by->empName : '';
                 $data[$x]['Cancelled By'] = $val->cancelled_by? $val->cancelled_by->empName : '';
-                $data[$x]['Created At'] = \Helper::dateFormat($val->createdDateTime);
-                $data[$x]['Cancelled At'] = \Helper::dateFormat($val->cancelledDate);
-                $data[$x]['Confirmed on'] = \Helper::dateFormat($val->confirmedDate);
+                $data[$x]['Created At'] = \Helper::convertDateWithTime($val->createdDateTime);
+                $data[$x]['Cancelled At'] = \Helper::convertDateWithTime($val->cancelledDate);
+                $data[$x]['Confirmed on'] = \Helper::convertDateWithTime($val->confirmedDate);
                 
                 if($val->matchingConfirmedYN == 0 && $val->cancelledYN == 0){
                     $data[$x]['Status'] = "Not Confirmed";

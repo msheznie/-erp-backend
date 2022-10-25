@@ -303,7 +303,11 @@ class PricingScheduleMasterAPIController extends AppBaseController
 
         $tenderMaster = PricingScheduleMaster::with(['tender_master' => function($q){
             $q->with(['envelop_type']);
-        },'tender_bid_format_master'])->where('tender_id', $tender_id)->where('company_id', $companyId);
+        },'tender_bid_format_master','pricing_shedule_details'=>function($q){
+            $q->where('boq_applicable',true);
+        },'pricing_shedule_details1'=>function($q){
+            $q->where('is_disabled',true);
+        }])->where('tender_id', $tender_id)->where('company_id', $companyId);
 
         $search = $request->input('search.value');
         if ($search) {
@@ -575,6 +579,7 @@ class PricingScheduleMasterAPIController extends AppBaseController
     public function addPriceBidDetails(Request $request)
     {
         $input = $request->all();
+        
         $masterData = $input['masterData'];
         $employee = \Helper::getEmployeeInfo();
         DB::beginTransaction();
@@ -583,6 +588,7 @@ class PricingScheduleMasterAPIController extends AppBaseController
             
 
             ScheduleBidFormatDetails::where('schedule_id',$masterData['schedule_id'])->delete();
+            
             if(isset($input['priceBidFormat'])){
                 if(count($input['priceBidFormat'])>0){
                     $result = false;
@@ -597,25 +603,28 @@ class PricingScheduleMasterAPIController extends AppBaseController
                             }
                         }
                      
-
-
-                        if(!empty($val['value']) || $val['value'] == "0"){
-                            if($val['typeId'] != 4)
+                        
+                        if($val['typeId'] != 4)
                             {
+                                if(!empty($val['value']) || $val['value'] == "0")
+                                
+                                {
                                 $data['bid_format_detail_id'] = $val['id'];
                                 $data['schedule_id'] = $masterData['schedule_id'];
                                 $data['value'] = $val['value'];
                                 $data['created_by'] = $employee->employeeSystemID;
                                 $data['company_id'] = $masterData['companySystemID'];
                                 $result = ScheduleBidFormatDetails::create($data);
-                            }
-
-                        }
+                                
+                               }
+                            
+                           }
+                        
                     }
-
+                    
                     $exist = ScheduleBidFormatDetails::where('schedule_id',$masterData['schedule_id'])->first();
 
-                    
+                        
                     if($result){
                         if($is_complete){
                             $master['status']=1;

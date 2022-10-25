@@ -296,6 +296,18 @@
     </div>
 
     <br>
+    <div class="row">
+        <table style="width: 100%">
+            <tr>
+                <td style="width: 10%; text-align: left;vertical-align: top;"><b>Comments :</b></td>
+                <td style="width: 90%; text-align: left;">@if(!empty($request->comments))
+                        {{$request->comments}}
+                    @endif
+                </td>
+            <tr>
+        </table>
+    </div>
+    <br>
 
     <div class="row">
         @if($request->linePdoinvoiceDetails)

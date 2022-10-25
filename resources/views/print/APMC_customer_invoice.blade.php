@@ -201,19 +201,6 @@
         <br>
     </div>
 
-    <div class="row">
-        <table style="width: 100%">
-            <tr>
-                <td style="width: 50%; text-align: left;">
-                    {{$request->CompanyAddress}}<br>
-                    <!-- {{$request->CompanyCountry}}<br> -->
-                    Tel: {{$request->CompanyTelephone}}<br>
-                    Fax: {{$request->CompanyFax}}<br>
-                    <b>VAT NO: {{$request->vatRegistratonNumber}}</b>
-                </td>
-            </tr>
-        </table>
-    </div>
 
     <div class="row">
         <br>
@@ -263,21 +250,6 @@
                             <td><b>CUSTOMER ADDRESS </b></td>
                             <td>:
                                 {{$request->customer->customerAddress1}}</td>
-                        </tr>
-                        <tr>
-                            <td><b>CUSTOMER TELEPHONE </b></td>
-                            <td>:
-                                {{isset($request->CustomerContactDetails->contactPersonTelephone)?$request->CustomerContactDetails->contactPersonTelephone:''}}</td>
-                        </tr>
-                        <tr>
-                            <td><b>CUSTOMER FAX </b></td>
-                            <td>:
-                                {{isset($request->CustomerContactDetails->contactPersonFax)?$request->CustomerContactDetails->contactPersonFax:''}}</td>
-                        </tr>
-                        <tr>
-                            <td><b>CUSTOMER VATIN </b></td>
-                            <td>:
-                                {{$request->vatNumber}}</td>
                         </tr>
                     </table>
                 </td>
@@ -543,7 +515,7 @@
                         <th style="width:40%;">Item</th>
                         <th style="width:10%;text-align: center">UOM</th>
                         <th style="width:15%;text-align: center">QTY</th>
-                        <th style="width:15%;text-align: center">unit Cost</th>
+                        <th style="width:15%;text-align: center">Unit Cost</th>
                         <th style="width:15%;text-align: center">Total Amount</th>
                     </tr>
                     </thead>
@@ -618,7 +590,7 @@
                     </tbody>
                     <tbody>
                     <tr>
-                        <td colspan="6">PLEASE ISSUE ALL PAYMENT ON BELOW BANK ACCOUNT DETAILS : </td>
+                        <td colspan="6">PLEASE ISSUE ALL PAYMENT ON ABOVE BANK ACCOUNT DETAILS : </td>
                     </tr>
                     </tbody>
                 </table>
