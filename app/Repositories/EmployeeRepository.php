@@ -23,7 +23,6 @@ class EmployeeRepository extends BaseRepository
         'empID',
         'serial',
         'empLeadingText',
-        'empPassword',
         'empUserName',
         'empTitle',
         'empInitial',

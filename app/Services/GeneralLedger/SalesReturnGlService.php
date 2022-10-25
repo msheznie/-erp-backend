@@ -106,7 +106,7 @@ class SalesReturnGlService
             ->groupBy('financeGLcodeRevenueSystemID')
             ->get();
 
-        $masterDocumentDate = date('Y-m-d H:i:s');
+        $masterDocumentDate = isset($masterModel['documentDateOveride']) ? $masterModel['documentDateOveride'] : date('Y-m-d H:i:s');
         if ($masterData->finance_period_by->isActive == -1) {
             $masterDocumentDate = $masterData->salesReturnDate;
         }

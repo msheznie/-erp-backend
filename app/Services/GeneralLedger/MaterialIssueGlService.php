@@ -99,7 +99,7 @@ class MaterialIssueGlService
             $data['documentID'] = $masterData->documentID;
             $data['documentSystemCode'] = $masterModel["autoID"];
             $data['documentCode'] = $masterData->itemIssueCode;
-            $data['documentDate'] = date('Y-m-d H:i:s');
+            $data['documentDate'] = isset($masterModel['documentDateOveride']) ? $masterModel['documentDateOveride'] : date('Y-m-d H:i:s');
             $data['documentYear'] = \Helper::dateYear($masterData->issueDate);
             $data['documentMonth'] = \Helper::dateMonth($masterData->issueDate);
             $data['documentConfirmedDate'] = $masterData->confirmedDate;

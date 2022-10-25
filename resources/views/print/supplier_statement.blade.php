@@ -179,6 +179,7 @@
                     <th>Doc ID</th>
                     <th>Document Code</th>
                     <th>Doc Date</th>
+                    <th>Account</th>
                     @if(!$sentEmail)
                         <th>Narration</th>
                     @endif
@@ -196,6 +197,7 @@
                         <td>{{ $det2->documentID }}</td>
                         <td>{{ $det2->documentCode }}</td>
                         <td>{{ \App\helper\Helper::dateFormat($det2->documentDate)}}</td>
+                        <td>{{ $det2->glCode }} - {{ $det2->AccountDescription }}</td>
                          @if(!$sentEmail)
                             <td class="white-space-pre-line">{{ $det2->documentNarration }}</td>
                          @endif
@@ -210,11 +212,11 @@
                 @endforeach
                 <tr width="100%">
                     @if(!$sentEmail)
-                        <td colspan="9" style="border-bottom-color:white !important;border-left-color:white !important"
+                        <td colspan="10" style="border-bottom-color:white !important;border-left-color:white !important"
                             class="text-right"><b>Total:</b></td>
                     @endif
                     @if($sentEmail)
-                        <td colspan="8" style="border-bottom-color:white !important;border-left-color:white !important"
+                        <td colspan="9" style="border-bottom-color:white !important;border-left-color:white !important"
                             class="text-right"><b>Total:</b></td>
                     @endif
                     <td style="text-align: right"><b>{{ number_format($lineTotal, $currencyDecimalPlace) }}</b></td>
@@ -225,11 +227,11 @@
         <tfoot>
         <tr width="100%">
             @if(!$sentEmail)
-                <td colspan="9" style="border-bottom-color:white !important;border-left-color:white !important"
+                <td colspan="10" style="border-bottom-color:white !important;border-left-color:white !important"
                     class="text-right"><b>Grand Total:</b></td>
             @endif
             @if($sentEmail)
-                <td colspan="8" style="border-bottom-color:white !important;border-left-color:white !important"
+                <td colspan="9" style="border-bottom-color:white !important;border-left-color:white !important"
                     class="text-right"><b>Grand Total:</b></td>
             @endif
             <td style="text-align: right"><b>{{ number_format($grandTotal, $currencyDecimalPlace) }}</b></td>

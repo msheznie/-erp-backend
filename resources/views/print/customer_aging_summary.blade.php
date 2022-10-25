@@ -207,6 +207,16 @@
                 <tr>
                     <td colspan="3" style="border-bottom-color:white !important;border-left-color:white !important"
                         class="text-right"><b>Sub Total:</b></td>
+
+                     
+                    <td style="text-align: left">
+                        @foreach ($det as $det2)
+                            @if ($det2 === reset($det))
+                                <b>{{ $det2->documentCurrency}}</b>
+                            @endif
+                        @endforeach
+                    </td>
+
                     <td style="text-align: right">
                         <b>{{ number_format($ageSubTotal) }}</b></td>
                     @foreach ($agingRange as $age)
@@ -223,6 +233,9 @@
         <tr>
             <td colspan="3" style="border-bottom-color:white !important;border-left-color:white !important"
                 class="text-right"><b>Grand Total:</b></td>
+            <td style="text-align: left">
+                <b>N/A</b>
+            </td>
             <td style="text-align: right"><b>{{ number_format($grandTotal) }}</b></td>
             @foreach ($agingRange as $age)
                 <td style="text-align: right">

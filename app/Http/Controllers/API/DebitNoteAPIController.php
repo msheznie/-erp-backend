@@ -2304,7 +2304,7 @@ UNION ALL
                 $data[$x]['Debit Note Code'] = $value->debitNoteCode;
 
                 if ($value->postedDate) {
-                    $data[$x]['Posted Date'] = \Helper::dateFormat($value->postedDate);
+                    $data[$x]['Posted Date'] = \Helper::convertDateWithTime($value->postedDate);
                 } else {
                     $data[$x]['Posted Date'] = '';
                 }
@@ -2348,7 +2348,7 @@ UNION ALL
                 }
 
                 if ($value->approvedDate) {
-                    $data[$x]['Approved Date'] = \Helper::dateFormat($value->approvedDate);
+                    $data[$x]['Approved Date'] = \Helper::convertDateWithTime($value->approvedDate);
                 } else {
                     $data[$x]['Approved Date'] = '';
                 }

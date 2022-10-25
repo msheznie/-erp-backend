@@ -22,7 +22,6 @@ use App\helper\Helper;
  * @property string empID
  * @property integer serial
  * @property string empLeadingText
- * @property string empPassword
  * @property string empUserName
  * @property string empTitle
  * @property string empInitial
@@ -95,7 +94,6 @@ class Employee extends Model
      *
      * @var array
      */
-    protected $hidden = ['empPassword'];
 
     protected $dates = ['deleted_at'];
     protected $primaryKey = 'employeeSystemID';
@@ -107,7 +105,6 @@ class Employee extends Model
         'empID',
         'serial',
         'empLeadingText',
-        'empPassword',
         'empUserName',
         'empTitle',
         'empInitial',
@@ -178,7 +175,6 @@ class Employee extends Model
         'empID' => 'string',
         'serial' => 'integer',
         'empLeadingText' => 'string',
-        'empPassword' => 'string',
         'empUserName' => 'string',
         'empTitle' => 'string',
         'empInitial' => 'string',

@@ -17,3 +17,5 @@ Route::resource('iOUBookingMasters', 'IOUBookingMasterController');
 Route::resource('pricingScheduleDetails', 'PricingScheduleDetailController');
 
 Route::resource('bidDocumentVerifications', 'BidDocumentVerificationController');
+
+Route::resource('srmBidDocumentattachments', 'SrmBidDocumentattachmentsController');

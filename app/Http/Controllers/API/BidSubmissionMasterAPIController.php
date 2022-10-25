@@ -393,7 +393,8 @@ class BidSubmissionMasterAPIController extends AppBaseController
         }
     }
 
-    public function bidGoNoGoCommentAndStatus(Request $request){
+    public function bidGoNoGoCommentAndStatus(Request $request)
+    {
         $input = $request->all();
 
         DB::beginTransaction();
@@ -415,5 +416,24 @@ class BidSubmissionMasterAPIController extends AppBaseController
             Log::error($e);
             return ['success' => false, 'data' => '', 'message' => $e];
         }
+    }
+
+    public function getBidVerificationStatus(Request $request)
+    {
+        $input = $request->all();
+        $tenderId = $request['tenderMasterId'];
+        $is_verified = true;
+
+        $query = BidSubmissionMaster::where('tender_id', $tenderId)->where('doc_verifiy_status', 0)->count();
+
+        return $this->sendResponse($query, 'Data retrived successfully');
+
+
+        if($query > 0)
+        {
+            $is_verified = false;
+        }
+
+        return $this->sendResponse($is_verified, 'Data retrived successfully');
     }
 }

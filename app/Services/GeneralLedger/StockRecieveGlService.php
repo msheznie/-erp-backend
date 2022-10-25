@@ -99,7 +99,7 @@ class StockRecieveGlService
             $data['documentID'] = $masterData->documentID;
             $data['documentSystemCode'] = $masterModel["autoID"];
             $data['documentCode'] = $masterData->stockReceiveCode;
-            $data['documentDate'] = date('Y-m-d H:i:s');
+            $data['documentDate'] = isset($masterModel['documentDateOveride']) ? $masterModel['documentDateOveride'] : date('Y-m-d H:i:s');
             $data['documentYear'] = \Helper::dateYear($masterData->receivedDate);
             $data['documentMonth'] = \Helper::dateMonth($masterData->receivedDate);
             $data['documentConfirmedDate'] = $masterData->confirmedDate;
