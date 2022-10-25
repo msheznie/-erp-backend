@@ -223,23 +223,7 @@
                                     {{\App\helper\Helper::dateFormat($request->bookingDate) }}
                                 @endif</td>
                         </tr>
-                        <tr>
-                            <td><b>Date Of Supply </b></td>
-                            <td>:
-                                @if(!empty($request->date_of_supply))
-                                    {{\App\helper\Helper::dateFormat($request->date_of_supply) }}
-                                @endif</td>
-                        </tr>
-                        <tr>
-                            <td><b>Contract / PO No </b></td>
-                            <td>:
-                                @if(!empty($request->invoicedetails) )
-                                    {{isset($request->invoicedetails[0]->clientContractID)?$request->invoicedetails[0]->clientContractID:''}}
-                                @endif
-                                @if($request->line_poNumber && isset($request->item_invoice) && $request->item_invoice)
-                                    {{$request->PONumber}}
-                                @endif</td>
-                        </tr>
+
                         <tr><td></td></tr>
                         <tr>
                             <td><b>CUSTOMER NAME </b></td>
@@ -272,19 +256,6 @@
                             </td>
                         </tr>
                         <tr>
-                            <td width="100px"><span class="font-weight-bold"><b>ACCOUNT NAME</b></span></td>
-                            <td><b> :
-                                @if($request->secondaryLogoCompanySystemID)
-                                    @if($secondaryBankAccount->contract && $secondaryBankAccount->contract->secondary_bank_account)
-                                        {{$secondaryBankAccount->contract->secondary_bank_account->AccountName}}
-                                    @endif
-                                @else
-                                    {{($request->bankaccount) ? $request->bankaccount->AccountName : ''}}
-                                @endif
-                                </b>
-                            </td>
-                        </tr>
-                        <tr>
                             <td width="100px"><span class="font-weight-bold"><b>ACCOUNT NO</b></span></td>
                             <td><b> :
                                 @if($request->secondaryLogoCompanySystemID)
@@ -295,32 +266,6 @@
                                     {{($request->bankaccount) ? $request->bankaccount->AccountNo : ''}}
                                 @endif
 
-                                </b>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td width="100px"><span class="font-weight-bold"><b>IBAN NO</b></span></td>
-                            <td><b> :
-                                @if($request->secondaryLogoCompanySystemID)
-                                    @if($secondaryBankAccount->contract && $secondaryBankAccount->contract->secondary_bank_account)
-                                        {{$request->accountIBANSecondary}}
-                                    @endif
-                                @else
-                                    {{($request->bankaccount) ? $request->accountIBAN : ''}}
-                                @endif
-                                </b>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td width="100px"><span class="font-weight-bold"><b>SWIFT Code</b> </span></td>
-                            <td><b> :
-                                @if($request->secondaryLogoCompanySystemID)
-                                    @if($secondaryBankAccount->contract && $secondaryBankAccount->contract->secondary_bank_account)
-                                        {{$secondaryBankAccount->contract->secondary_bank_account->accountSwiftCode}}
-                                    @endif
-                                @else
-                                    {{($request->bankaccount) ? $request->bankaccount->accountSwiftCode : ''}}
-                                @endif
                                 </b>
                             </td>
                         </tr>
@@ -339,7 +284,7 @@
     <br>
     <div class="row">
         @if ($request->template==1 && !$request->line_invoiceDetails && !$request->linePdoinvoiceDetails)
-            <table class="table">
+            <table class="table" style="width: 100%;">
                 <thead>
                 <tr>
                     <th style="width:6%;">Item</th>
@@ -417,7 +362,7 @@
                 </tbody>
                 <tbody>
                     <tr>
-                        <td colspan="8">PLEASE ISSUE ALL PAYMENT ON BELOW BANK ACCOUNT DETAILS : </td>
+                        <td colspan="8">PLEASE ISSUE ALL PAYMENT ON BELOW BANK ACCOUNT DETAILS</td>
                     </tr>
                 </tbody>
                 
@@ -499,7 +444,7 @@
                 </tbody>
                 <tbody>
                     <tr>
-                        <td colspan="7">PLEASE ISSUE ALL PAYMENT ON BELOW BANK ACCOUNT DETAILS : </td>
+                        <td colspan="7">PLEASE ISSUE ALL PAYMENT ON BELOW BANK ACCOUNT DETAILS</td>
                     </tr>
                 </tbody>
                 
@@ -508,7 +453,7 @@
 
         @if ($request->template == 2 && isset($request->item_invoice) && $request->item_invoice)
 
-                <table class="table">
+                <table class="table" style="width: 100%;">
                     <thead>
                     <tr>
                         <th style="width:5%;"></th>
@@ -590,7 +535,7 @@
                     </tbody>
                     <tbody>
                     <tr>
-                        <td colspan="6">PLEASE ISSUE ALL PAYMENT ON ABOVE BANK ACCOUNT DETAILS : </td>
+                        <td colspan="6">PLEASE ISSUE ALL PAYMENT ON ABOVE BANK ACCOUNT DETAILS</td>
                     </tr>
                     </tbody>
                 </table>
