@@ -2589,6 +2589,7 @@ class SRMService
             'data' =>  $request->input('extra')
         ];*/
         $tenderMaster = TenderMaster::find($tenderId);
+        $parent = DocumentAttachments::find($parentId);
         $companySystemID = $tenderMaster['company_id'];
         $company = Company::where('companySystemID', $companySystemID)->first();
         $documentCode = DocumentMaster::where('documentSystemID', 108)->first();
@@ -2628,6 +2629,7 @@ class SRMService
             $att['myFileName'] = $company->CompanyID . '_' . time() . '_BidSubmission.' . $extension;
             $att['sizeInKbs'] = $attachment['sizeInKbs'];
             $att['isUploaded'] = 1;
+            $att['envelopType'] = $parent->envelopType;
             $result = DocumentAttachments::create($att);
 
 
