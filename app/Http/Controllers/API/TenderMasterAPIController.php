@@ -630,6 +630,8 @@ WHERE
         $site_visit_time = null;
         $site_visit_end_date = null;
         $site_visit_end_time = null;
+        $bid_opening_time = null;
+        $bid_opeing_end_time = null;
 
         $document_sales_start_time = ($input['document_sales_start_time']) ? new Carbon($input['document_sales_start_time']) : null;
         $document_sales_start_date = new Carbon($input['document_sales_start_date']);
@@ -808,6 +810,7 @@ WHERE
 
         $employee = \Helper::getEmployeeInfo();
         $exist = TenderMaster::where('id', $input['id'])->first();
+        
         
         DB::beginTransaction();
 
