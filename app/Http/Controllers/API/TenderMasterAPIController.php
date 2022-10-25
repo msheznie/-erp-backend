@@ -677,20 +677,20 @@ WHERE
         }
 
         if ($document_sales_start_date > $document_sales_end_date) {
-            return ['success' => false, 'message' => 'From date cannot be greater than the To date for Document Sales'];
+            return ['success' => false, 'message' => 'From date and time cannot be greater than the To date and time  for Document Sales'];
         }
 
 
         if ($pre_bid_clarification_start_date > $pre_bid_clarification_end_date) {
-            return ['success' => false, 'message' => 'From date cannot be greater than the To date for Pre-bid Clarification'];
+            return ['success' => false, 'message' => 'From date and time cannot be greater than the To date and time  for Pre-bid Clarification'];
         }
 
         if ($bid_submission_opening_date > $bid_submission_closing_date) {
-            return ['success' => false, 'message' => 'From date cannot be greater than the To date for Bid Submission'];
+            return ['success' => false, 'message' => 'From date and time cannot be greater than the To date and time  for Bid Submission'];
         }
 
         if ($site_visit_date > $site_visit_end_date) {
-            return ['success' => false, 'message' => 'From date cannot be greater than the To date for Site Visit'];
+            return ['success' => false, 'message' => 'From date and time cannot be greater than the To date and time  for Site Visit'];
         }
 
 
