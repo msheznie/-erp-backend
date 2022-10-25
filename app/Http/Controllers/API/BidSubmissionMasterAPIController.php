@@ -339,7 +339,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
         $companyId = $request['companyId'];
         $tenderId = $request['tenderId'];
 
-        $query = BidSubmissionDetail::with(['srm_evaluation_criteria_details',
+        $query = BidSubmissionDetail::with(['srm_evaluation_criteria_details','srm_bid_submission_master',
             'srm_evaluation_criteria_details.evaluation_criteria_type',
             'srm_evaluation_criteria_details.tender_criteria_answer_type', 'srm_tender_master', 'supplier_registration_link'])
             ->whereHas('srm_evaluation_criteria_details.evaluation_criteria_type', function ($query) {
@@ -352,7 +352,8 @@ class BidSubmissionMasterAPIController extends AppBaseController
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
             $query = $query->where(function ($query) use ($search) {
-                    // $query->where('name', 'like', "%{$search}%");
+                    $query->where('description', 'like', "%{$search}%")
+                          ->orWhere('name', 'LIKE', "%{$search}%");
             });
         }
 

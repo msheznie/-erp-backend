@@ -131,4 +131,8 @@ class BidSubmissionDetail extends Model
     {
         return $this->belongsTo('App\Models\SupplierRegistrationLink', 'created_by', 'id');
     }
+
+    public function srm_bid_submission_master(){
+        return $this->belongsTo('App\Models\BidSubmissionMaster','bid_master_id','id');
+    }
 }
