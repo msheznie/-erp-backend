@@ -4205,12 +4205,12 @@ WHERE
 
         $customerInvoiceDetailArray = $fetchCustomerInvoiceDetails->toArray();
 
-
-
         if($customerInvoiceDirectData->isPerforma == 0 || $customerInvoiceDirectData->isPerforma == 1){
             CustomerInvoiceDirectDetRefferedback::insert($customerInvoiceDetailArray);
         }else{
-            CustomerInvoiceItemDetailsRefferedback::insert($customerInvoiceDetailArray);
+            foreach ($customerInvoiceDetailArray as $key => $valueItem) {
+                $res = CustomerInvoiceItemDetailsRefferedback::create($valueItem);
+            }
         }
 
         $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $custInvoiceDirectAutoID)
