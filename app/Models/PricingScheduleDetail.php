@@ -145,7 +145,8 @@ class PricingScheduleDetail extends Model
         'updated_by',
         'description',
         'deleted_by',
-        'company_id'
+        'company_id',
+        'remarks'
     ];
 
     /**

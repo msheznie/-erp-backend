@@ -279,7 +279,21 @@ class TenderMaster extends Model
         'doc_verifiy_by_emp',
         'doc_verifiy_date',
         'doc_verifiy_status',
-        'doc_verifiy_comment'
+        'doc_verifiy_comment',
+        'bid_opening_date_time',
+        'bid_opening_end_date_time',
+        'technical_bid_opening_date_time',
+        'technical_bid_closing_date_time',
+        'commerical_bid_opening_date_time',
+        'commerical_bid_closing_date_time',
+        'document_sales_start_time',
+        'document_sales_end_time',
+        'pre_bid_clarification_start_time',
+        'pre_bid_clarification_end_time',
+        'site_visit_start_time',
+        'site_visit_end_time',
+        'bid_submission_opening_time',
+        'bid_submission_closing_time'
     ];
 
     /**
@@ -350,6 +364,20 @@ class TenderMaster extends Model
         'commerical_bid_opening_date'  => 'datetime',
         'commerical_bid_closing_date'  => 'datetime',
         'doc_verifiy_status' => 'integer',
+        'bid_opening_date_time'  => 'datetime',
+        'bid_opening_end_date_time'  => 'datetime',
+        'technical_bid_opening_date_time'  => 'datetime',
+        'technical_bid_closing_date_time'  => 'datetime',
+        'commerical_bid_opening_date_time'  => 'datetime',
+        'commerical_bid_closing_date_time'  => 'datetime',
+        'document_sales_start_time'=> 'datetime',
+        'document_sales_end_time' => 'datetime',
+        'pre_bid_clarification_start_time' => 'datetime',
+        'pre_bid_clarification_end_time' => 'datetime',
+        'site_visit_start_time' => 'datetime',
+        'site_visit_end_time' => 'datetime',
+        'bid_submission_opening_time' => 'datetime',
+        'bid_submission_closing_time' => 'datetime',
     ];
 
     /**

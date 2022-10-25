@@ -5,10 +5,12 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateAppointmentAPIRequest;
 use App\Http\Requests\API\UpdateAppointmentAPIRequest;
 use App\Models\Appointment;
+use App\Models\DocumentAttachments;
 use App\Repositories\AppointmentRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -464,5 +466,41 @@ class AppointmentAPIController extends AppBaseController
             ->where('id', $appointmentId)->first();
 
         return $data;
+    }
+
+    public function getAppointmentAttachmentList(Request $request)
+    {
+        $input = $request->all();
+        $companyId = $input['companyId'];
+        $documentSystemCode = $input['documentSystemCode'];
+        $documentSystemID = 106;
+        $sort = 'asc';
+
+        $appointmentDetail = DocumentAttachments::where('documentSystemID', $documentSystemID)
+            ->where('companySystemID', $companyId)
+            ->where('documentSystemCode', $documentSystemCode);
+
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $appointmentDetail = $appointmentDetail->where(function ($query) use ($search) {
+                $query->where('attachmentDescription', 'LIKE', "%{$search}%");
+                $query->orWhere('originalFileName', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return \DataTables::of($appointmentDetail)
+            ->order(function ($query) use ($input) {
+               if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('attachmentID', 'asc');
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->make(true);
     }
 }
