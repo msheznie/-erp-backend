@@ -353,6 +353,14 @@ class CompanyFinanceYearAPIController extends AppBaseController
         $input['modifiedUser'] = $employee->empID;
         $input['modifiedUserSystemID'] = $employee->employeeSystemID;
 
+        if($input['created_employee']){
+            unset($input['created_employee']);
+        }
+
+        if($input['modified_employee']) {
+            unset($input['modified_employee']);
+        }
+
         $companyFinanceYear = $this->companyFinanceYearRepository->update($input, $id);
 
         return $this->sendResponse($companyFinanceYear->toArray(), trans('custom.update', ['attribute' => trans('custom.company_finance_years')]));
