@@ -2049,4 +2049,9 @@ WHERE
 
     }
 
+    public function failed($exception)
+    {
+        return $exception->getMessage();
+    }
+
 }
