@@ -391,4 +391,28 @@ class BidSubmissionMasterAPIController extends AppBaseController
             return ['success' => false, 'data' => '', 'message' => $e];
         }
     }
+
+    public function bidGoNoGoCommentAndStatus(Request $request){
+        $input = $request->all();
+
+        DB::beginTransaction();
+        try {
+            $att['go_no_go_criteria_status'] = 1;
+            $att['go_no_go_criteria_comment'] = $input['value'];
+            $att['updated_at'] = Carbon::now();
+            $att['updated_by'] = \Helper::getEmployeeSystemID();
+            $result = BidSubmissionMaster::where('id', $input['id'])->update($att);
+
+            DB::commit();
+            return [
+                'success' => true,
+                'message' => 'Successfully Saved',
+                'data' => $result
+            ];
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($e);
+            return ['success' => false, 'data' => '', 'message' => $e];
+        }
+    }
 }
