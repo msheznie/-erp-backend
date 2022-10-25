@@ -321,4 +321,22 @@ class BidSubmissionMasterAPIController extends AppBaseController
             ->with('orderCondition', $sort)
             ->make(true);
     }
+
+    public function getBidVerificationStatus(Request $request)
+    {
+        $input = $request->all();
+        $tenderId = $request['tenderMasterId'];
+        $is_verified = true;
+
+        $query = BidSubmissionMaster::where('tender_id', $tenderId)->where('doc_verifiy_status', 0)->count();
+
+
+        if($query > 0)
+        {
+            $is_verified = false;
+        }
+
+        return $this->sendResponse($is_verified, 'Data retrived successfully');
+
+    }
 }

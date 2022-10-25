@@ -468,7 +468,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('downloadFile', 'DocumentAttachmentsAPIController@downloadFile');
         Route::post('store_tender_documents', 'DocumentAttachmentsAPIController@storeTenderDocuments');      
         Route::post('tenderBIdDocApproveal', 'DocumentAttachmentsAPIController@tenderBIdDocApproveal');   
-        Route::post('tenderBIdDocTypeApproveal', 'DocumentAttachmentsAPIController@tenderBIdDocTypeApproveal');   
+        Route::post('tenderBIdDocTypeApproveal', 'DocumentAttachmentsAPIController@tenderBIdDocTypeApproveal');  
+        Route::post('tenderBIdDocSubmission', 'DocumentAttachmentsAPIController@tenderBIdDocSubmission');   
+        Route::post('checkTenderBidDocExist', 'DocumentAttachmentsAPIController@checkTenderBidDocExist');    
 
         Route::resource('sme-attachment', 'AttachmentSMEAPIController');
         Route::get('sme-attachment/{id}/{docID}/{companyID}', 'AttachmentSMEAPIController@show');
@@ -2595,7 +2597,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('delete-group', 'SupplierGroupConfigurationController@deleteGroup');
 
         Route::post('getTenderBits', 'BidSubmissionMasterAPIController@getTenderBits');     
-       
+        Route::post('getBidVerificationStatus', 'BidSubmissionMasterAPIController@getBidVerificationStatus');    
         
         /**
          * Supplier registration approval routes
@@ -2683,6 +2685,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('getNotPulledPriceBidDetails', 'PricingScheduleMasterAPIController@getNotPulledPriceBidDetails');
         Route::post('addFormula', 'TenderBidFormatMasterAPIController@addFormula');
         Route::post('formulaGenerate', 'TenderBidFormatMasterAPIController@formulaGenerate');
+        Route::post('tenderBidDocVerification', 'TenderMasterAPIController@tenderBidDocVerification');
+
+
         
         Route::resource('employee_ledgers', 'EmployeeLedgerAPIController');
         Route::resource('srp_erp_pay_shift_employees', 'SrpErpPayShiftEmployeesAPIController');
@@ -2865,6 +2870,11 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('srp_erp_template_masters', 'SrpErpTemplateMasterAPIController');
         Route::resource('srp_erp_form_categories', 'SrpErpFormCategoryAPIController');
         Route::resource('srp_erp_templates', 'SrpErpTemplatesAPIController');
+        Route::resource('bid_document_verifications', 'BidDocumentVerificationAPIController');
+
+        Route::resource('srm_bid_documentattachments', 'SrmBidDocumentattachmentsAPIController');
+        Route::post('store_tender_bid_documents', 'SrmBidDocumentattachmentsAPIController@storeTenderBidDocuments');    
+        Route::get('download_tender_files', 'SrmBidDocumentattachmentsAPIController@downloadFile');    
 
     });
 
@@ -3015,4 +3025,3 @@ Route::post('sendEmail', 'Email\SendEmailAPIController@sendEmail');
 
 
 
-Route::resource('bid_document_verifications', 'BidDocumentVerificationAPIController');
