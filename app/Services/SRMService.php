@@ -2632,10 +2632,13 @@ class SRMService
             $att['envelopType'] = $parent->envelopType;
             $result = DocumentAttachments::create($att);
 
-
-            $bid_date['attachment_id'] = $result['attachmentID'];
-            $bid_date['bis_submission_master_id'] = $bidMasterId;
-            BidDocumentVerification::create($bid_date);
+            if($parent->envelopType == 3)
+            {
+                $bid_date['attachment_id'] = $result['attachmentID'];
+                $bid_date['bis_submission_master_id'] = $bidMasterId;
+                BidDocumentVerification::create($bid_date);
+            }
+   
 
 
             DB::commit();
