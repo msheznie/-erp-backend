@@ -142,7 +142,7 @@ class SupplierInvoiceGlService
             $poInvoiceDirectTransExtCharge = (isset($masterData->directdetail[0]->transAmount)) ? $masterData->directdetail[0]->transAmount : 0;
         }
 
-        $masterDocumentDate = date('Y-m-d H:i:s');
+        $masterDocumentDate = isset($masterModel['documentDateOveride']) ? $masterModel['documentDateOveride'] : date('Y-m-d H:i:s');
         if ($masterData->financeperiod_by->isActive == -1) {
             $masterDocumentDate = $masterData->bookingDate;
         }

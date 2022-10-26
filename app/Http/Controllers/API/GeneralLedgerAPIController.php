@@ -21,6 +21,7 @@ use App\Models\DocumentMaster;
 use App\Models\ErpItemLedger;
 use App\Models\FixedAssetDepreciationMaster;
 use App\Models\FixedAssetMaster;
+use App\helper\CommonJobService;
 use App\Models\GeneralLedger;
 use App\Models\GRVMaster;
 use App\Models\InventoryReclassification;
@@ -339,6 +340,37 @@ class GeneralLedgerAPIController extends AppBaseController
         $generalLedger->delete();
 
         return $this->sendResponse($id, 'General Ledger deleted successfully');
+    }
+
+    public function updateNotPostedGLEntries(Request $request)
+    {
+        $input = $request->all();
+
+
+        $tenants = CommonJobService::tenant_list();
+        if(count($tenants) == 0){
+            return;
+        }
+
+
+        foreach ($tenants as $tenant){
+            $tenantDb = $tenant->database;
+
+            CommonJobService::db_switch($tenantDb);
+
+            $data = DB::select("SELECT da.companyID, da.companySystemID, da.documentSystemID,da.employeeSystemID, da.documentID, da.documentSystemCode, da.documentCode, da.TIMESTAMP, da.documentApprovedID FROM erp_documentapproved da WHERE da.approvedYN != 0 AND da.documentSystemID NOT IN ( 1, 2, 56, 66, 59, 58, 50, 57, 101, 51, 107, 96, 62, 67, 68, 9, 65, 64, 100, 102, 103, 46, 99 ) AND da.documentCode NOT IN ( SELECT documentCode FROM erp_generalledger GROUP BY documentCode) AND da.rollLevelOrder = (SELECT max(da_new.rollLevelOrder) FROM erp_documentapproved as da_new WHERE da_new.documentSystemID = da.documentSystemID AND da_new.documentSystemCode = da.documentSystemCode) AND da.`timeStamp` > '2022-09-01'");
+
+            foreach ($data as $dt){
+                $masterData = ['documentSystemID' => $dt->documentSystemID,
+                               'autoID' => $dt->documentSystemCode,
+                               'companySystemID' => $dt->companySystemID,
+                               'documentDateOveride' => $dt->TIMESTAMP,
+                               'employeeSystemID' => $dt->employeeSystemID];
+                $jobGL = GeneralLedgerInsert::dispatch($masterData, $tenantDb);
+            }
+        }
+
+        return $this->sendResponse([], 'General Ledger updated successfully');
     }
 
 
