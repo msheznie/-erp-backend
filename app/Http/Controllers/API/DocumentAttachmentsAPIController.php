@@ -1071,7 +1071,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
 
 
         
-        $query = DocumentAttachments::with('bid_verify')->where('documentSystemCode', $id)->where('documentSystemID', 108)->where('attachmentType',0);
+        $query = DocumentAttachments::with('bid_verify')->where('documentSystemCode', $id)->where('documentSystemID', 108)->where('attachmentType',0)->where('envelopType',3);
 
        // return $this->sendResponse($query, 'Tender Masters retrieved successfully');
 
@@ -1173,14 +1173,14 @@ class DocumentAttachmentsAPIController extends AppBaseController
            
             $input = $request->all();
             $id = $input['id'];
-            $comments = $input['comments'];
+           // $comments = $input['comments'];
             $val = $input['data']['value'];
             $verify_id = $input['verify_id'];
             
             DB::beginTransaction();
             try {
                 $data['document_submit_type'] = $val;
-                $data['submit_remarks'] = $comments;
+              //  $data['submit_remarks'] = $comments;
                 
                 $results = BidDocumentVerification::where('id',$verify_id)->update($data,$verify_id);
         
@@ -1235,7 +1235,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
                 
      
 
-                $results = DocumentAttachments::where('documentSystemCode',$id)->count();
+                $results = DocumentAttachments::where('documentSystemCode',$id)->where('envelopType',3)->count();
 
 
                 if($results == 0)
