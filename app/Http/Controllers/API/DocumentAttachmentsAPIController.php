@@ -1235,7 +1235,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
                 
      
 
-                $results = DocumentAttachments::where('documentSystemCode',$id)->where('envelopType',3)->count();
+                $results = DocumentAttachments::where('documentSystemCode',$id)->where('documentSystemID', 108)->where('envelopType',3)->count();
 
 
                 if($results == 0)
