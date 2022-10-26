@@ -508,8 +508,10 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
             ->where('serviceLineSystemID', $serviceLineSystemID)
             ->groupBy('PayMasterAutoId', 'documentSystemID', 'BPVsupplierID', 'supplierTransCurrencyID')->first();
 
-        if($input['tempType'] == 1){
-            $input["receiveAmountTrans"] = $input['custbalanceAmount'];
+        if(isset($input['tempType'])) {
+            if ($input['tempType'] == 1) {
+                $input["receiveAmountTrans"] = $input['custbalanceAmount'];
+            }
         }
 
         if(!$matchedAmountPreCheck){
