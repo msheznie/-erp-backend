@@ -330,8 +330,6 @@ class BidSubmissionMasterAPIController extends AppBaseController
 
         $query = BidSubmissionMaster::where('tender_id', $tenderId)->where('doc_verifiy_status', 0)->count();
 
-        return $this->sendResponse($query, 'Data retrived successfully');
-
 
         if($query > 0)
         {
