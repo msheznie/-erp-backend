@@ -118,7 +118,9 @@ class JournalVoucherGlService
 
                 // from customer invoice master table
                 $data['chartOfAccountSystemID'] = $item->chartOfAccountSystemID;
-                $data['glCode'] = $chartOfAccount->AccountCode;
+                if($chartOfAccount) {
+                    $data['glCode'] = $chartOfAccount->AccountCode;
+                }
                 $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                 $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                 $data['documentConfirmedDate'] = $masterData->confirmedDate;
