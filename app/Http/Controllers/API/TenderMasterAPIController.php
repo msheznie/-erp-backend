@@ -828,6 +828,12 @@ WHERE
             $commerical_bid_opening_date = ($input['commerical_bid_opening_date_time']) ? $commerical_bid_opening_date->format('Y-m-d').' '.$commerical_bid_opening_time->format('H:i:s') : $commerical_bid_opening_date->format('Y-m-d');
 
             if(isset($input['commerical_bid_closing_date'])) {
+
+                if(!(isset($input['commerical_bid_closing_date_time']))) {
+                    return ['success' => false, 'message' => 'Commercial Bid Opening to time cannot be empty'];
+                }
+                
+
                 $commerical_bid_closing_time = (isset($input['commerical_bid_closing_date_time'])) ? new Carbon($input['commerical_bid_closing_date_time']) : null;
                 $commerical_bid_closing_date = (isset($input['commerical_bid_closing_date'])) ? new Carbon($input['commerical_bid_closing_date']) : null;
                 $commerical_bid_closing_date = (isset($input['commerical_bid_closing_date_time'])) ? $commerical_bid_closing_date->format('Y-m-d').' '.$commerical_bid_closing_time->format('H:i:s') : $commerical_bid_closing_date->format('Y-m-d');
@@ -836,6 +842,10 @@ WHERE
                 $commerical_bid_closing_time = null;
             }
 
+
+                if($commerical_bid_opening_date > $commerical_bid_closing_date) {
+                    return ['success' => false, 'message' => 'Commercial Bid Opening to date and time should greater than commercial bid opening from date and time'];
+                }
 
                 if(is_null($input['technical_bid_opening_date_time'])) {
                     return ['success' => false, 'message' => 'Technical Bid Opening Time cannot be empty'];
@@ -869,6 +879,8 @@ WHERE
                         }
 
                     }
+
+
 
                 }
 
