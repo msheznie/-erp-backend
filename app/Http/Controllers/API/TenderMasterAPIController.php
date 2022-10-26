@@ -842,9 +842,10 @@ WHERE
                 $commerical_bid_closing_time = null;
             }
 
-
-                if($commerical_bid_opening_date > $commerical_bid_closing_date) {
-                    return ['success' => false, 'message' => 'Commercial Bid Opening to date and time should greater than commercial bid opening from date and time'];
+                if(!is_null($commerical_bid_closing_date)) {
+                    if($commerical_bid_opening_date > $commerical_bid_closing_date) {
+                        return ['success' => false, 'message' => 'Commercial Bid Opening to date and time should greater than commercial bid opening from date and time'];
+                    } 
                 }
 
                 if(is_null($input['technical_bid_opening_date_time'])) {
@@ -1963,15 +1964,20 @@ WHERE
     {
         $employee = \Helper::getEmployeeInfo();
 
+        $fromTime =($request['from_time']) ? new Carbon($request['from_time']) : null;
+        $toTime = ($request['to_time']) ? new Carbon($request['to_time']) : null;
+        
         if (isset($request['from_date'])) {
             $frm_date = new Carbon($request['from_date']);
-            $frm_date = $frm_date->format('Y-m-d');
+            $frm_date = ($fromTime) ? $frm_date->format('Y-m-d').' '.$fromTime->format('H:i:s') : $frm_date->format('Y-m-d');
             $data['from_date'] = $frm_date;
         }
 
+        
+
         if (isset($request['to_date'])) {
             $to_date = new Carbon($request['to_date']);
-            $to_date = $to_date->format('Y-m-d');
+            $to_date = ($toTime) ? $to_date->format('Y-m-d').' '.$toTime->format('H:i:s') : $to_date->format('Y-m-d');
             $data['to_date'] = $to_date;
         }
 
@@ -1988,9 +1994,17 @@ WHERE
             }
         }
 
+        if($fromTime) {
+            $data['from_time'] = $fromTime;
+        }
+
+        if($toTime) {
+            $data['to_time'] = $toTime;
+        }
+
         $data['updated_at'] = Carbon::now();
         $data['updated_by'] = $employee->employeeSystemID;
-
+       
         DB::beginTransaction();
         try {
             $calendarDatesDetail = CalendarDatesDetail::where('calendar_date_id', $request['calenderDateTypeId'])
@@ -2001,9 +2015,21 @@ WHERE
                 return $this->sendError('Calendar Date Type not found');
             }
 
+            // if(isset($request['time_changed']) && $request['time_changed']) {
+            //     if($calendarDatesDetail->from_time != $fromTime || $calendarDatesDetail->to_time != $toTime) {
+            //         $calendarDatesDetail = CalendarDatesDetail::where('calendar_date_id', $request['calenderDateTypeId'])
+            //         ->where('tender_id', $request['tenderMasterId'])
+            //         ->update($data);
+            //     }
+            //     return ['success' => true, 'message' => 'updated', 'data' => $calendarDatesDetail];
+            // }else {
+            //     $calendarDatesDetail = CalendarDatesDetail::where('calendar_date_id', $request['calenderDateTypeId'])
+            //     ->where('tender_id', $request['tenderMasterId'])
+            //     ->update($data);
+            // }
             $calendarDatesDetail = CalendarDatesDetail::where('calendar_date_id', $request['calenderDateTypeId'])
-                ->where('tender_id', $request['tenderMasterId'])
-                ->update($data);
+            ->where('tender_id', $request['tenderMasterId'])
+            ->update($data);
             DB::commit();
             return ['success' => true, 'message' => 'Successfully updated', 'data' => $calendarDatesDetail];
         } catch (\Exception $e) {
