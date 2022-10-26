@@ -2942,13 +2942,12 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     Route::get('downloadFileTender', 'DocumentAttachmentsAPIController@downloadFileTender');
     Route::post('genearetBarcode', 'BarcodeConfigurationAPIController@genearetBarcode');
 
-    Route::get('updateNotPostedGLEntries', 'GeneralLedgerAPIController@updateNotPostedGLEntries');
 });
 
 
 
 Route::post('sendEmail', 'Email\SendEmailAPIController@sendEmail');
-
+Route::get('updateNotPostedGLEntries', 'GeneralLedgerAPIController@updateNotPostedGLEntries');
 
 /*
  * Start SRM related routes
