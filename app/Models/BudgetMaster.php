@@ -237,5 +237,10 @@ class BudgetMaster extends Model
         ->addSelect($as.".ServiceLineDes as ".$columnAs);
     }
 
+    public function budget_details()
+    {
+        return $this->hasMany('App\Models\Budjetdetails', 'budgetmasterID','budgetmasterID');
+    }
+
 
 }

@@ -415,7 +415,12 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
             $vatDetails = TaxService::getDefaultVAT($master->companySystemID, $master->customerID, 0);
             $addToCusInvDetails['vatMasterCategoryID'] = $vatDetails['vatMasterCategoryID'];
             $addToCusInvDetails['vatSubCategoryID'] = $vatDetails['vatSubCategoryID'];
-            $addToCusInvDetails['VATPercentage'] = $vatDetails['percentage'];
+            
+            $isCustomerVat = isset($vatDetails['isCustomerVat']) ? $vatDetails['isCustomerVat']: 0;
+
+            if($isCustomerVat != 1){
+                $addToCusInvDetails['VATPercentage'] = $vatDetails['percentage'];
+            }
         }
 
         /**/

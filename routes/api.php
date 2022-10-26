@@ -467,6 +467,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('document_attachment_types', 'DocumentAttachmentTypeAPIController');
         Route::get('downloadFile', 'DocumentAttachmentsAPIController@downloadFile');
         Route::post('store_tender_documents', 'DocumentAttachmentsAPIController@storeTenderDocuments');      
+        Route::post('tenderBIdDocApproveal', 'DocumentAttachmentsAPIController@tenderBIdDocApproveal');   
+        Route::post('tenderBIdDocTypeApproveal', 'DocumentAttachmentsAPIController@tenderBIdDocTypeApproveal');  
+        Route::post('tenderBIdDocSubmission', 'DocumentAttachmentsAPIController@tenderBIdDocSubmission');   
+        Route::post('checkTenderBidDocExist', 'DocumentAttachmentsAPIController@checkTenderBidDocExist');    
 
         Route::resource('sme-attachment', 'AttachmentSMEAPIController');
         Route::get('sme-attachment/{id}/{docID}/{companyID}', 'AttachmentSMEAPIController@show');
@@ -676,6 +680,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('exportReportOpenRequest', 'PurchaseRequestAPIController@exportReportOpenRequest');
         Route::resource('g_r_v_types', 'GRVTypesAPIController');
         Route::resource('budget_consumed_datas', 'BudgetConsumedDataAPIController');
+        Route::post('getBudgetConsumptionForReview', 'BudgetConsumedDataAPIController@getBudgetConsumptionForReview');
+        Route::post('getBudgetConsumptionByDoc', 'BudgetConsumedDataAPIController@getBudgetConsumptionByDoc');
+        Route::post('changeBudgetConsumption', 'BudgetConsumedDataAPIController@changeBudgetConsumption');
         Route::resource('customer_invoices', 'CustomerInvoiceAPIController');
         Route::resource('company_finance_years', 'CompanyFinanceYearAPIController');
         Route::resource('company_finance_periods', 'CompanyFinancePeriodAPIController');
@@ -1865,6 +1872,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('tender-bid-employee-details','TenderBidEmployeeDetailsController');
         Route::post('tender-bid-employee-get-all','TenderBidEmployeeDetailsController@getEmployees');
         Route::post('tender-bid-employee-delete','TenderBidEmployeeDetailsController@deleteEmp');
+        Route::post('tender-bid-employee-approval-count','TenderBidEmployeeDetailsController@getEmployeesApproval');
         /* For Profile -> Profile */
         Route::get('getProfileDetails', 'EmployeeAPIController@getProfileDetails');
 
@@ -2588,8 +2596,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('get-supplier-groups', 'SupplierGroupConfigurationController@getSupplierGroups');
         Route::post('delete-group', 'SupplierGroupConfigurationController@deleteGroup');
 
-        
-       
+        Route::post('getTenderBits', 'BidSubmissionMasterAPIController@getTenderBits');     
+        Route::post('getBidVerificationStatus', 'BidSubmissionMasterAPIController@getBidVerificationStatus');    
         
         /**
          * Supplier registration approval routes
@@ -2663,6 +2671,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('loadTenderSubActivity', 'TenderMasterAPIController@loadTenderSubActivity');
         Route::post('loadTenderBankAccount', 'TenderMasterAPIController@loadTenderBankAccount');
         Route::post('updateTender', 'TenderMasterAPIController@updateTender');
+        Route::post('getPurchasedTenderList', 'TenderMasterAPIController@getPurchasedTenderList');
+        Route::post('getPurchaseTenderMasterData', 'TenderMasterAPIController@getPurchaseTenderMasterData');
+        Route::post('tenderCommiteApproveal', 'TenderMasterAPIController@tenderCommiteApproveal');
 
         Route::post('getPricingScheduleList', 'PricingScheduleMasterAPIController@getPricingScheduleList');
         Route::post('getPricingScheduleDropDowns', 'PricingScheduleMasterAPIController@getPricingScheduleDropDowns');
@@ -2674,6 +2685,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('getNotPulledPriceBidDetails', 'PricingScheduleMasterAPIController@getNotPulledPriceBidDetails');
         Route::post('addFormula', 'TenderBidFormatMasterAPIController@addFormula');
         Route::post('formulaGenerate', 'TenderBidFormatMasterAPIController@formulaGenerate');
+        Route::post('tenderBidDocVerification', 'TenderMasterAPIController@tenderBidDocVerification');
+
+
         
         Route::resource('employee_ledgers', 'EmployeeLedgerAPIController');
         Route::resource('srp_erp_pay_shift_employees', 'SrpErpPayShiftEmployeesAPIController');
@@ -2856,6 +2870,11 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('srp_erp_template_masters', 'SrpErpTemplateMasterAPIController');
         Route::resource('srp_erp_form_categories', 'SrpErpFormCategoryAPIController');
         Route::resource('srp_erp_templates', 'SrpErpTemplatesAPIController');
+        Route::resource('bid_document_verifications', 'BidDocumentVerificationAPIController');
+
+        Route::resource('srm_bid_documentattachments', 'SrmBidDocumentattachmentsAPIController');
+        Route::post('store_tender_bid_documents', 'SrmBidDocumentattachmentsAPIController@storeTenderBidDocuments');    
+        Route::get('download_tender_files', 'SrmBidDocumentattachmentsAPIController@downloadFile');    
 
     });
 
@@ -2908,6 +2927,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     Route::resource('work_order_generation_logs', 'WorkOrderGenerationLogAPIController');
     Route::resource('external_link_hashes', 'ExternalLinkHashAPIController');
     Route::resource('registered_suppliers', 'RegisteredSupplierAPIController');
+    Route::post('getTenderBitsDoc', 'DocumentAttachmentsAPIController@getTenderBitsDoc');
+    Route::post('getConsolidatedDataAttachment', 'DocumentAttachmentsAPIController@getConsolidatedDataAttachment');
 
     Route::resource('tax_ledgers', 'TaxLedgerAPIController');
 
@@ -2935,6 +2956,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     Route::post('getAppointments', 'AppointmentAPIController@getAppointments');
     Route::post('getAppointmentList', 'AppointmentAPIController@getAppointmentList');
     Route::post('getAppointmentListSummaryView', 'AppointmentAPIController@getAppointmentListSummaryView');
+    Route::post('getAppointmentAttachmentList', 'AppointmentAPIController@getAppointmentAttachmentList');
     Route::get('test', 'TenantAPIController@test');
     Route::get('downloadFileSRM', 'DocumentAttachmentsAPIController@downloadFileSRM');
     Route::get('getSearchSupplierByCompanySRM', 'SupplierMasterAPIController@getSearchSupplierByCompanySRM'); 
@@ -2945,6 +2967,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 });
 
 
+Route::get('updateNotPostedGLEntries', 'GeneralLedgerAPIController@updateNotPostedGLEntries');
 
 Route::post('sendEmail', 'Email\SendEmailAPIController@sendEmail');
 Route::get('updateNotPostedGLEntries', 'GeneralLedgerAPIController@updateNotPostedGLEntries');
@@ -2996,6 +3019,8 @@ Route::get('updateNotPostedGLEntries', 'GeneralLedgerAPIController@updateNotPost
 /*
  * End external related routes
  */
+
+
 
 
 

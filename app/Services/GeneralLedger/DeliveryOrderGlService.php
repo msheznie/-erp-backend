@@ -143,7 +143,7 @@ class DeliveryOrderGlService
         $data['createdUserID'] = $empID->empID;
         $data['createdUserPC'] = getenv('COMPUTERNAME');
         $data['timestamp'] = $time;
-        array_push($finalData, $data);
+        // array_push($finalData, $data);
 
         $bs = DeliveryOrderDetail::selectRaw("0 as transAmount, SUM(qtyIssuedDefaultMeasure * wacValueLocal) as localAmount, SUM(qtyIssuedDefaultMeasure * wacValueReporting) as rptAmount,financeGLcodebBSSystemID,financeGLcodebBS,companyLocalCurrencyID,companyLocalCurrencyER,companyReportingCurrencyER,companyReportingCurrencyID")->WHERE('deliveryOrderID', $masterModel["autoID"])->whereNotNull('financeGLcodebBSSystemID')->where('financeGLcodebBSSystemID', '>', 0)->groupBy('financeGLcodebBSSystemID')->first();
         //get pnl account
@@ -217,7 +217,7 @@ class DeliveryOrderGlService
                 $data['documentRptCurrencyER'] = $item->companyReportingCurrencyER;
                 $data['documentRptAmount'] = ABS($item->rptAmount) * -1;
 
-                array_push($finalData, $data);
+                // array_push($finalData, $data);
             }
 
         }
@@ -256,7 +256,7 @@ class DeliveryOrderGlService
                         $data['documentRptCurrencyID'] = $tax->rptCurrencyID;
                         $data['documentRptCurrencyER'] = $tax->rptCurrencyER;
                         $data['documentRptAmount'] = $tax->rptAmount * -1;
-                        array_push($finalData, $data);
+                        // array_push($finalData, $data);
 
                         $taxLedgerData['outputVatTransferGLAccountID'] = $taxGL['chartOfAccountSystemID'];
                     }

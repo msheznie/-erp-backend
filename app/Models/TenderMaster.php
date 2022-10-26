@@ -269,7 +269,31 @@ class TenderMaster extends Model
         'is_active_go_no_go',
         'commercial_passing_weightage',
         'technical_passing_weightage',
-        'min_approval_bid_opening'
+        'min_approval_bid_opening',
+        'bid_opening_date',
+        'bid_opening_end_date',
+        'technical_bid_opening_date',
+        'technical_bid_closing_date',
+        'commerical_bid_opening_date',
+        'commerical_bid_closing_date',
+        'doc_verifiy_by_emp',
+        'doc_verifiy_date',
+        'doc_verifiy_status',
+        'doc_verifiy_comment',
+        'bid_opening_date_time',
+        'bid_opening_end_date_time',
+        'technical_bid_opening_date_time',
+        'technical_bid_closing_date_time',
+        'commerical_bid_opening_date_time',
+        'commerical_bid_closing_date_time',
+        'document_sales_start_time',
+        'document_sales_end_time',
+        'pre_bid_clarification_start_time',
+        'pre_bid_clarification_end_time',
+        'site_visit_start_time',
+        'site_visit_end_time',
+        'bid_submission_opening_time',
+        'bid_submission_closing_time'
     ];
 
     /**
@@ -332,7 +356,28 @@ class TenderMaster extends Model
         'is_active_go_no_go' => 'integer',
         'commercial_passing_weightage'=> 'integer',
         'technical_passing_weightage'=> 'integer',
-        'min_approval_bid_opening' => 'integer'
+        'min_approval_bid_opening' => 'integer',
+        'bid_opening_date'  => 'datetime',
+        'bid_opening_end_date'  => 'datetime',
+        'technical_bid_opening_date'  => 'datetime',
+        'technical_bid_closing_date'  => 'datetime',
+        'commerical_bid_opening_date'  => 'datetime',
+        'commerical_bid_closing_date'  => 'datetime',
+        'doc_verifiy_status' => 'integer',
+        'bid_opening_date_time'  => 'datetime',
+        'bid_opening_end_date_time'  => 'datetime',
+        'technical_bid_opening_date_time'  => 'datetime',
+        'technical_bid_closing_date_time'  => 'datetime',
+        'commerical_bid_opening_date_time'  => 'datetime',
+        'commerical_bid_closing_date_time'  => 'datetime',
+        'document_sales_start_time'=> 'datetime',
+        'document_sales_end_time' => 'datetime',
+        'pre_bid_clarification_start_time' => 'datetime',
+        'pre_bid_clarification_end_time' => 'datetime',
+        'site_visit_start_time' => 'datetime',
+        'site_visit_end_time' => 'datetime',
+        'bid_submission_opening_time' => 'datetime',
+        'bid_submission_closing_time' => 'datetime',
     ];
 
     /**
@@ -389,5 +434,10 @@ class TenderMaster extends Model
     public function srm_bid_submission_master()
     {
         return $this->hasMany('App\Models\BidSubmissionMaster', 'tender_id', 'id');
+    }
+
+    public function evaluation_type()
+    {
+        return $this->hasOne('App\Models\EvaluationType', 'id', 'evaluation_type_id');
     }
 }
