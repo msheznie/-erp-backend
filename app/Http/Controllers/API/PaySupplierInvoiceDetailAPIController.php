@@ -364,7 +364,10 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             }
         }
 
-        $input["paymentBalancedAmount"] = $paymentBalancedAmount - $input["supplierPaymentAmount"];
+
+        $supplierPaymentAmount = isset($input["supplierPaymentAmount"]) ? $input["supplierPaymentAmount"] : 0;
+
+        $input["paymentBalancedAmount"] = $paymentBalancedAmount - $supplierPaymentAmount;
 
        
 
