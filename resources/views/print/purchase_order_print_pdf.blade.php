@@ -756,8 +756,8 @@
                     style="font-size: 11px;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;">
                 <span class="font-weight-bold">
                 @if ($podata->detail)
-                        {{number_format($podata->poTotalSupplierTransactionCurrency, $numberFormatting)}}
-                    @endif
+                    @if($podata->rcmActivated){{number_format(($podata->poTotalSupplierTransactionCurrency - $podata->VATAmount), $numberFormatting)}} @else {{number_format($podata->poTotalSupplierTransactionCurrency, $numberFormatting)}}@endif
+                @endif
                 </span>
                 </td>
             </tr>
