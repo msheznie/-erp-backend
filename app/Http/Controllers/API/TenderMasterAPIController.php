@@ -782,10 +782,13 @@ WHERE
                 }
 
 
-                if($bid_opening_date > $bid_opeing_end_date) {
-                    return ['success' => false, 'message' => 'Bid Opening to date and time should greater than bid opening from date and time'];
-
+                if(isset($bid_opeing_end_date)) {
+                    if($bid_opening_date > $bid_opeing_end_date) {
+                        return ['success' => false, 'message' => 'Bid Opening to date and time should greater than bid opening from date and time'];
+    
+                    }
                 }
+ 
 
             }
 
