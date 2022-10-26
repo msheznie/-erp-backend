@@ -4024,7 +4024,7 @@ WHERE
 
         $inovicePolicy =  \Helper::checkPolicy($input['companyId'],44);
 
-        if ($isEmployeeDischarched == 'true' || !$inovicePolicy) {
+        if ($isEmployeeDischarched == 'true') {
             $grvMasters = [];
         }
 
