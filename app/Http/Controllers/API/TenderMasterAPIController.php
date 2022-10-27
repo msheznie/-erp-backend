@@ -2189,6 +2189,32 @@ WHERE
 
     }
 
+    public function tenderBidDocVerification(Request $request)
+    {
+      
+        $input = $request->all();
+        $id = $input['tender_id'];
+        $comments = $input['comments'];
+       // $val = $input['type'];
+        
+        DB::beginTransaction();
+        try {
+            
+            $bid_sub_data['doc_verifiy_by_emp'] = \Helper::getEmployeeSystemID();
+            $bid_sub_data['doc_verifiy_date'] =  date('Y-m-d H:i:s');
+            $bid_sub_data['doc_verifiy_status'] = 1;
+            $bid_sub_data['doc_verifiy_comment'] = $comments;
+
+            $results = TenderMaster::where('id',$id)->update($bid_sub_data,$id);
+    
+            DB::commit();
+            return ['success' => true, 'message' => 'Successfully updated', 'data' => $results];
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($this->failed($e));
+            return ['success' => false, 'message' => $e];
+        }
+    }
     public function failed($exception)
     {
         return $exception->getMessage();

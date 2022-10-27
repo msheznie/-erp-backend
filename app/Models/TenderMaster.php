@@ -291,7 +291,10 @@ class TenderMaster extends Model
         'technical_bid_closing_date',
         'commerical_bid_opening_date',
         'commerical_bid_closing_date',
-
+        'doc_verifiy_by_emp',
+        'doc_verifiy_date',
+        'doc_verifiy_status',
+        'doc_verifiy_comment'
     ];
 
     /**
@@ -361,7 +364,7 @@ class TenderMaster extends Model
         'technical_bid_closing_date'  => 'datetime',
         'commerical_bid_opening_date'  => 'datetime',
         'commerical_bid_closing_date'  => 'datetime',
-
+        'doc_verifiy_status' => 'integer',
     ];
 
     /**

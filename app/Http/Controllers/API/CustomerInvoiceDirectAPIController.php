@@ -290,7 +290,12 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $input['FYEnd'] = $CompanyFinanceYear->endingDate;
         $input['FYPeriodDateFrom'] = $FYPeriodDateFrom;
         $input['FYPeriodDateTo'] = $FYPeriodDateTo;
-        $input['invoiceDueDate'] = Carbon::parse($input['invoiceDueDate'])->format('Y-m-d') . ' 00:00:00';
+        try{
+            $input['invoiceDueDate'] = Carbon::parse($input['invoiceDueDate'])->format('Y-m-d') . ' 00:00:00';
+        }
+        catch (\Exception $e){
+            return $this->sendError('Invalid Due Date format');
+        }
         $input['bookingDate'] = Carbon::parse($input['bookingDate'])->format('Y-m-d') . ' 00:00:00';
         $input['date_of_supply'] = Carbon::parse($input['date_of_supply'])->format('Y-m-d') . ' 00:00:00';
         $input['customerInvoiceDate'] = $input['bookingDate'];
@@ -2836,6 +2841,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         
         $master = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $id)->first();
         $companySystemID = $master->companySystemID;
+        $localCurrencyER = $master->localCurrencyER;
 
         if ($master->isPerforma == 2 || $master->isPerforma == 3 || $master->isPerforma == 4 || $master->isPerforma == 5) {
             $detail = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $id)->first();
@@ -3129,6 +3135,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $customerInvoice->logo = $logo;
         $customerInvoice->footerDate = $footerDate;
         $customerInvoice->temp = $temp;
+        $customerInvoice->localCurrencyER = $localCurrencyER;
 
         $customerInvoice->is_pdo_vendor = false;
         $customerInvoice->vatNumber = '';
@@ -4198,12 +4205,12 @@ WHERE
 
         $customerInvoiceDetailArray = $fetchCustomerInvoiceDetails->toArray();
 
-
-
         if($customerInvoiceDirectData->isPerforma == 0 || $customerInvoiceDirectData->isPerforma == 1){
             CustomerInvoiceDirectDetRefferedback::insert($customerInvoiceDetailArray);
         }else{
-            CustomerInvoiceItemDetailsRefferedback::insert($customerInvoiceDetailArray);
+            foreach ($customerInvoiceDetailArray as $key => $valueItem) {
+                $res = CustomerInvoiceItemDetailsRefferedback::create($valueItem);
+            }
         }
 
         $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $custInvoiceDirectAutoID)
@@ -4319,7 +4326,13 @@ WHERE
         }
 
         if($masterData->isPerforma == 2){
-            return $this->sendError('Selected customer invoice cannot be returned back to amend as the invoice is Item Sales Invoice');
+            $checkForInventoryItems = CustomerInvoiceItemDetails::where('itemFinanceCategoryID', 1)
+                                                                ->where('custInvoiceDirectAutoID', $id)
+                                                                ->first();
+
+            if ($checkForInventoryItems) {
+                return $this->sendError('Selected customer invoice cannot be returned back to amend as the invoice is Item Sales Invoice, it contains inventory items');
+            }
         }elseif ($masterData->isPerforma == 4){
             return $this->sendError('Selected customer invoice cannot be returned back to amend as the invoice is From Sales Order');
         }elseif ($masterData->isPerforma == 5){

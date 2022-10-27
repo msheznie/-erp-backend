@@ -156,7 +156,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
     public function show($id)
     {
         /** @var BidSubmissionMaster $bidSubmissionMaster */
-        $bidSubmissionMaster = $this->bidSubmissionMasterRepository->findWithoutFail($id);
+        $bidSubmissionMaster = $this->bidSubmissionMasterRepository->with(['SupplierRegistrationLink','tender'])->findWithoutFail($id);
 
         if (empty($bidSubmissionMaster)) {
             return $this->sendError('Bid Submission Master not found');
@@ -320,5 +320,23 @@ class BidSubmissionMasterAPIController extends AppBaseController
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->make(true);
+    }
+
+    public function getBidVerificationStatus(Request $request)
+    {
+        $input = $request->all();
+        $tenderId = $request['tenderMasterId'];
+        $is_verified = true;
+
+        $query = BidSubmissionMaster::where('tender_id', $tenderId)->where('doc_verifiy_status', 0)->count();
+
+
+        if($query > 0)
+        {
+            $is_verified = false;
+        }
+
+        return $this->sendResponse($is_verified, 'Data retrived successfully');
+
     }
 }

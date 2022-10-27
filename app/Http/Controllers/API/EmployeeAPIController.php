@@ -418,7 +418,7 @@ class EmployeeAPIController extends AppBaseController
         $input = $request->all();
 
         $employeeSystemID = $input['employeeSystemID'];
-        $password = 'Gears123@';
+        $password = $this->quickRandom();
 
         $employeeMasterData = Employee::find($employeeSystemID);
         if (empty($employeeMasterData)) {
@@ -427,7 +427,6 @@ class EmployeeAPIController extends AppBaseController
 
         // updating fields
         $employeeMasterData->isLock = 0;
-        $employeeMasterData->empPassword = $password;
         $employeeMasterData->save();
 
         //updating users table
@@ -446,7 +445,7 @@ class EmployeeAPIController extends AppBaseController
             "<br>This is an auto generated email. Please do not reply to this email because we are not " .
             "monitoring this inbox.</font>";
 
-        $body = "Dear " . $employeeMasterData->empName . ',<p> Your GEARS password has been reset to Gears123@' . $footer;
+        $body = "Dear " . $employeeMasterData->empName . ',<p> Your GEARS password has been reset to '.$password . $footer;
 
         $dataEmail['empSystemID'] = $employeeMasterData->employeeSystemID;
         $dataEmail['empID'] = $employeeMasterData->empID;
@@ -465,6 +464,13 @@ class EmployeeAPIController extends AppBaseController
         }
 
         return $this->sendResponse($employeeMasterData->toArray(), 'Employee password reset successfully');
+    }
+
+    public static function quickRandom($length = 9)
+    {
+        $pool = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+        return substr(str_shuffle(str_repeat($pool, 2)), 0, $length);
     }
 
     public function getEmployeeMasterData(Request $request)

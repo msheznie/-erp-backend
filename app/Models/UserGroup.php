@@ -41,6 +41,7 @@ class UserGroup extends Model
         'companyID',
         'description',
         'isActive',
+        'isDeleted',
         'timestamp',
         'defaultYN'
     ];
@@ -55,6 +56,7 @@ class UserGroup extends Model
         'companyID' => 'integer',
         'description' => 'string',
         'isActive' => 'integer',
+        'isDeleted' => 'integer',
         'defaultYN' => 'boolean'
     ];
 

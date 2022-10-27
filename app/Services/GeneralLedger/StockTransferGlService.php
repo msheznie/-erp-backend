@@ -99,7 +99,7 @@ class StockTransferGlService
             $data['documentID'] = $masterData->documentID;
             $data['documentSystemCode'] = $masterModel["autoID"];
             $data['documentCode'] = $masterData->stockTransferCode;
-            $data['documentDate'] = date('Y-m-d H:i:s');
+            $data['documentDate'] = isset($masterModel['documentDateOveride']) ? $masterModel['documentDateOveride'] : date('Y-m-d H:i:s');
             $data['documentYear'] = \Helper::dateYear($masterData->tranferDate);
             $data['documentMonth'] = \Helper::dateMonth($masterData->tranferDate);
             $data['documentConfirmedDate'] = $masterData->confirmedDate;
