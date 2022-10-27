@@ -636,7 +636,6 @@ WHERE
 
         $document_sales_start_time = ($input['document_sales_start_time']) ? new Carbon($input['document_sales_start_time']) : null;
         $document_sales_start_date = new Carbon($input['document_sales_start_date']);
-
         $document_sales_start_date = ($input['document_sales_start_time']) ? $document_sales_start_date->format('Y-m-d').' '.$document_sales_start_time->format('H:i:s') : $document_sales_start_date->format('Y-m-d');
 
         $document_sales_end_time =  ($input['document_sales_end_time']) ?  new Carbon($input['document_sales_end_time']) : null;
@@ -671,15 +670,53 @@ WHERE
             $site_visit_end_date = ($input['site_visit_end_time']) ? $site_visit_end_date->format('Y-m-d').' '.$site_visit_end_time->format('H:i:s') : $site_visit_end_date->format('Y-m-d');
         }
 
+        
+
         $currenctDate = Carbon::now();
-        if(isset($document_sales_start_date) && $document_sales_start_date < $currenctDate || isset($bid_submission_opening_date) && $bid_submission_opening_date < $currenctDate ||isset($pre_bid_clarification_start_date) && $pre_bid_clarification_start_date < $currenctDate ||isset($site_visit_date) && $site_visit_date < $currenctDate) {
-            return ['success' => false, 'message' => 'All the date and time should greater than current date and time'];
+
+        // vaidation lists
+
+        if(!isset(($input['document_sales_start_time']))) {
+            return ['success' => false, 'message' => 'Document sales from time is required'];
+        }
+
+        if(!isset(($input['document_sales_end_time']))) {
+            return ['success' => false, 'message' => 'Document sales to time is required'];
+        }
+
+        if(!isset(($input['pre_bid_clarification_start_time']))) {
+            return ['success' => false, 'message' => 'Pre bid clarification from time is required'];
+
+        }
+        if(!isset(($input['pre_bid_clarification_end_time']))) {
+            return ['success' => false, 'message' => 'Pre bid clarification to time is required'];
+
+        }
+
+        if(!isset(($input['bid_submission_opening_time']))) {
+            return ['success' => false, 'message' => 'Bid submission from time is required'];
+
+        }
+
+        if(!isset(($input['bid_submission_closing_time']))) {
+            return ['success' => false, 'message' => 'Bid submission to time is required'];
+
+        }
+
+
+        if(!isset(($input['site_visit_start_time']))) {
+            return ['success' => false, 'message' => 'Site visit from time is required'];
+
+        }
+
+        if(!isset(($input['site_visit_end_time']))) {
+            return ['success' => false, 'message' => 'Site visit to time is required'];
+
         }
 
         if ($document_sales_start_date > $document_sales_end_date) {
             return ['success' => false, 'message' => 'From date and time cannot be greater than the To date and time  for Document Sales'];
         }
-
 
         if ($pre_bid_clarification_start_date > $pre_bid_clarification_end_date) {
             return ['success' => false, 'message' => 'From date and time cannot be greater than the To date and time  for Pre-bid Clarification'];
@@ -691,6 +728,11 @@ WHERE
 
         if ($site_visit_date > $site_visit_end_date) {
             return ['success' => false, 'message' => 'From date and time cannot be greater than the To date and time  for Site Visit'];
+        }
+
+
+        if(isset($document_sales_start_date) && $document_sales_start_date < $currenctDate || isset($bid_submission_opening_date) && $bid_submission_opening_date < $currenctDate ||isset($pre_bid_clarification_start_date) && $pre_bid_clarification_start_date < $currenctDate ||isset($site_visit_date) && $site_visit_date < $currenctDate) {
+            return ['success' => false, 'message' => 'All the date and time should greater than current date and time'];
         }
 
 
@@ -713,6 +755,8 @@ WHERE
         
                 
                 if((isset($input['bid_opening_end_date']))) {
+            
+
                     $bid_opeing_end_time = (isset($input['bid_opening_end_date_time'])) ? new Carbon($input['bid_opening_end_date_time']) : null;
                     $bid_opeing_end_date = (isset($input['bid_opening_end_date'])) ? new Carbon($input['bid_opening_end_date']) : null;
                     $bid_opeing_end_date = (isset($input['bid_opening_end_date_time'])) ? $bid_opeing_end_date->format('Y-m-d').' '.$bid_opeing_end_time->format('H:i:s') : $bid_opeing_end_date->format('Y-m-d');
@@ -732,23 +776,31 @@ WHERE
                 }
 
 
-                if(is_null($input['bid_opening_end_date'])) {
-                    return ['success' => false, 'message' => 'Bid Opening To date cannot be empty'];
-                }
-                
-                if(is_null($input['bid_opening_end_date_time'])) {
-                    return ['success' => false, 'message' => 'Bid Opening To Time cannot be empty'];
-                }
+                if(is_null($bid_submission_closing_date)) {
+                    if($bid_sub_date > $bid_opening_date) {
+                        return ['success' => false, 'message' => 'Bid Opening from date and time should greater than bid submission from date and time'];
+                    }
+                }else {
 
-
-                if($bid_sub_date > $bid_opening_date) {
-                    return ['success' => false, 'message' => 'Bid Opening date and time should greater than bid submission date and time'];
+                    if($bid_sub_date > $bid_opening_date) {
+                        return ['success' => false, 'message' => 'Bid Opening from date and time should greater than bid submission to date and time'];
+                    }
                 }
 
-                if($bid_opening_date > $bid_opeing_end_date) {
-                    return ['success' => false, 'message' => 'Bid Opening to date and time should greater than bid opening from date and time'];
 
+                if(isset($bid_opeing_end_date)) {
+
+                    if(is_null($input['bid_opening_end_date_time'])) {
+                        return ['success' => false, 'message' => 'Bid Opening Time cannot be empty'];
+                    }
+
+
+                    if($bid_opening_date > $bid_opeing_end_date) {
+                        return ['success' => false, 'message' => 'Bid Opening to date and time should greater than bid opening from date and time'];
+    
+                    }
                 }
+ 
 
             }
 
@@ -764,14 +816,6 @@ WHERE
                 }
 
 
-                if(is_null($input['technical_bid_closing_date'])) {
-                    return ['success' => false, 'message' => 'Technical Bid Opening to date cannot be empty'];
-                }
-
-                if(is_null($input['technical_bid_closing_date_time'])) {
-                    return ['success' => false, 'message' => 'Technical Bid Opening to time cannot be empty'];
-                }
-
             $technical_bid_opening_time = ($input['technical_bid_opening_date_time']) ? new Carbon($input['technical_bid_opening_date_time']) : null;
             $technical_bid_opening_date = new Carbon($input['technical_bid_opening_date']);
             $technical_bid_opening_date = ($input['technical_bid_opening_date_time']) ? $technical_bid_opening_date->format('Y-m-d').' '.$technical_bid_opening_time->format('H:i:s') : $technical_bid_opening_date->format('Y-m-d');
@@ -779,6 +823,10 @@ WHERE
 
 
             if(isset($input['technical_bid_closing_date'])) {
+                if(is_null($input['technical_bid_closing_date_time'])) {
+                    return ['success' => false, 'message' => 'Technical bid opening to time cannot be empty'];
+                }
+                
                 $technical_bid_closing_time = (isset($input['technical_bid_closing_date_time'])) ? new Carbon($input['technical_bid_closing_date_time']) : null;
                 $technical_bid_closing_date = (isset($input['technical_bid_closing_date'])) ? new Carbon($input['technical_bid_closing_date']) : null;
                 $technical_bid_closing_date = (isset($input['technical_bid_closing_date_time'])) ? $technical_bid_closing_date->format('Y-m-d').' '.$technical_bid_closing_time->format('H:i:s') : $technical_bid_closing_date->format('Y-m-d');
@@ -791,27 +839,43 @@ WHERE
             $commerical_bid_opening_date = new Carbon($input['commerical_bid_opening_date']);
             $commerical_bid_opening_date = ($input['commerical_bid_opening_date_time']) ? $commerical_bid_opening_date->format('Y-m-d').' '.$commerical_bid_opening_time->format('H:i:s') : $commerical_bid_opening_date->format('Y-m-d');
 
-
             if(isset($input['commerical_bid_closing_date'])) {
+
+                if(!(isset($input['commerical_bid_closing_date_time']))) {
+                    return ['success' => false, 'message' => 'Commercial Bid Opening to time cannot be empty'];
+                }
+                
+
                 $commerical_bid_closing_time = (isset($input['commerical_bid_closing_date_time'])) ? new Carbon($input['commerical_bid_closing_date_time']) : null;
                 $commerical_bid_closing_date = (isset($input['commerical_bid_closing_date'])) ? new Carbon($input['commerical_bid_closing_date']) : null;
-                $commerical_bid_closing_date = (isset($input['commerical_bid_closing_date'])) ? $commerical_bid_closing_date->format('Y-m-d').' '.$commerical_bid_closing_time->format('H:i:s') : $commerical_bid_closing_date->format('Y-m-d');
+                $commerical_bid_closing_date = (isset($input['commerical_bid_closing_date_time'])) ? $commerical_bid_closing_date->format('Y-m-d').' '.$commerical_bid_closing_time->format('H:i:s') : $commerical_bid_closing_date->format('Y-m-d');
             }else {
                 $commerical_bid_closing_date = null;
                 $commerical_bid_closing_time = null;
             }
 
+                if(!is_null($commerical_bid_closing_date)) {
+                    if($commerical_bid_opening_date > $commerical_bid_closing_date) {
+                        return ['success' => false, 'message' => 'Commercial Bid Opening to date and time should greater than commercial bid opening from date and time'];
+                    } 
+                }
 
                 if(is_null($input['technical_bid_opening_date_time'])) {
                     return ['success' => false, 'message' => 'Technical Bid Opening Time cannot be empty'];
                 
                 }else {
 
- 
-                    if($technical_bid_opening_date < $bid_sub_date) {
-                        return ['success' => false, 'message' => 'Technical bid opening date and time should greater than bid submission date and time'];
+                    
+                    if(is_null($bid_submission_closing_date)) {
+                        if($bid_sub_date > $technical_bid_opening_date) {
+                            return ['success' => false, 'message' => 'Technical Bid Opening from date and time should greater than bid submission from date and time'];
+                        }
+                    }else {
+    
+                        if($bid_sub_date > $technical_bid_opening_date) {
+                            return ['success' => false, 'message' => 'Technical Bid Opening from date and time should greater than bid submission to date and time'];
+                        }
                     }
-
 
 
                     if(is_null($input['commerical_bid_opening_date_time'])) {
@@ -820,15 +884,22 @@ WHERE
 
                     if(is_null($technical_bid_closing_date)) {
                         if($technical_bid_opening_date > $commerical_bid_opening_date) {
-                            return ['success' => false, 'message' => 'Commercial Bid Opening date and time should be greater than technical bid from date and time'];
+                            return ['success' => false, 'message' => 'Commercial Bid Opening from date and time should be greater than technical bid from date and time'];
                         }
                     }else {
                         if($technical_bid_closing_date > $commerical_bid_opening_date) {
-                            return ['success' => false, 'message' => 'Commercial Bid Opening date and time should be greater than technical bid to date and time'];
+                            return ['success' => false, 'message' => 'Commercial Bid Opening from date and time should be greater than technical bid to date and time'];
                         }
 
                     }
 
+                }
+
+
+                if(!empty($technical_bid_opening_date) && !empty($technical_bid_closing_date)) {
+                    if($technical_bid_opening_date > $technical_bid_closing_date) {
+                        return ['success' => false, 'message' => 'Technical Bid Opening to date and time should greater than Technical Bid Opening from date and time'];
+                    }
                 }
             }
         }
@@ -845,7 +916,7 @@ WHERE
         $employee = \Helper::getEmployeeInfo();
         $exist = TenderMaster::where('id', $input['id'])->first();
         
-               DB::beginTransaction();
+        DB::beginTransaction();
 
         try {
             $data['title'] = $input['title'];
@@ -878,20 +949,7 @@ WHERE
             $data['technical_bid_closing_date'] = ($technical_bid_closing_date) ? $technical_bid_closing_date : null;
             $data['commerical_bid_opening_date'] = ($commerical_bid_opening_date) ? $commerical_bid_opening_date: null;
             $data['commerical_bid_closing_date'] = ($commerical_bid_closing_date) ? $commerical_bid_closing_date: null;
-            $data['bid_opening_date_time'] = ($bid_opening_time) ? $bid_opening_time : null;
-            $data['bid_opening_end_date_time'] =($bid_opeing_end_time) ?  $bid_opeing_end_time: null;
-            $data['technical_bid_opening_date_time'] = ($technical_bid_opening_time) ?  $technical_bid_opening_time: null;
-            $data['technical_bid_closing_date_time'] = ($technical_bid_closing_time) ?  $technical_bid_closing_time: null;
-            $data['commerical_bid_opening_date_time'] = ($commerical_bid_opening_time) ?  $commerical_bid_opening_time: null;
-            $data['commerical_bid_closing_date_time'] = ($commerical_bid_closing_time) ?  $commerical_bid_closing_time: null;
-            $data['document_sales_start_time'] = ($document_sales_start_time) ?  $document_sales_start_time: null;
-            $data['document_sales_end_time'] = ($document_sales_end_time) ?  $document_sales_end_time: null;
-            $data['pre_bid_clarification_start_time'] = ($pre_bid_clarification_start_time) ?  $pre_bid_clarification_start_time: null;
-            $data['pre_bid_clarification_end_time'] = ($pre_bid_clarification_end_time) ?  $pre_bid_clarification_end_time: null;
-            $data['site_visit_start_time'] = ($site_visit_time) ?  $site_visit_time: null;
-            $data['site_visit_end_time'] = ($site_visit_end_time) ?  $site_visit_end_time: null;
-            $data['bid_submission_opening_time'] = ($bid_submission_opening_time) ?  $bid_submission_opening_time: null;
-            $data['bid_submission_closing_time'] = ($bid_submission_closing_time) ?  $bid_submission_closing_time: null;
+
             $data['updated_by'] = $employee->employeeSystemID;
     
             $result = TenderMaster::where('id', $input['id'])->update($data);
@@ -1086,13 +1144,21 @@ WHERE
     public function updateCalenderDates($input)
     {
         $employee = \Helper::getEmployeeInfo();
-        $currenctDate = Carbon::now()->format('Y-m-d');
+        $currenctDate = Carbon::now();
         if (isset($input['calendarDates'])) {
             if (count($input['calendarDates']) > 0) {
                 CalendarDatesDetail::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
                 foreach ($input['calendarDates'] as $calDate) {
                     $fromTime =($calDate['from_time']) ? new Carbon($calDate['from_time']) : null;
                     $toTime = ($calDate['to_time']) ? new Carbon($calDate['to_time']) : null;
+
+                    if (empty($fromTime)) {
+                        return ['success' => false, 'message' => 'From time cannot be empty'];
+                    }
+
+                    if (empty($toTime)) {
+                        return ['success' => false, 'message' => 'To time cannot be empty'];
+                    }
 
                     if (!empty($calDate['from_date'])) {
                         $frm_date = new Carbon($calDate['from_date']);
@@ -1108,18 +1174,10 @@ WHERE
                     }
                     if (!empty($to_date) && empty($frm_date)) {
                         return ['success' => false, 'message' => 'From date cannot be empty'];
-                    }else {
-                        if($frm_date < $currenctDate) {
-                            return ['success' => false, 'message' => 'From date and time should greater than current date and time'];
-                        }
                     }
 
                     if (!empty($frm_date) && empty($to_date)) {
                         return ['success' => false, 'message' => 'To date cannot be empty'];
-                    }else {
-                        if($to_date < $currenctDate) {
-                            return ['success' => false, 'message' => 'To date and time should greater than current date and time'];
-                        }
                     }
 
                     if (!empty($frm_date) && !empty($to_date)) {
@@ -1128,9 +1186,25 @@ WHERE
                         }
                     }
 
+                    if(!empty($frm_date)) {
+                        if($frm_date < $currenctDate) {
+                            return ['success' => false, 'message' => 'From date and time should greater than current date and time'];
+                        }
+                    }
+
+                    if(!empty($to_date)) {
+                        if($to_date < $currenctDate) {
+                            return ['success' => false, 'message' => 'To date and time should greater than current date and time'];
+                        }
+                    }
 
 
                     if (!empty($to_date) || !empty($frm_date)) {
+
+                        if($frm_date > $to_date) {
+                            return ['success' => false, 'message' => 'From date and time should greater than to date and time'];
+                        }
+
                         $calDt['tender_id'] = $input['id'];
                         $calDt['calendar_date_id'] = $calDate['id'];
                         $calDt['from_date'] = $frm_date;
@@ -1895,15 +1969,20 @@ WHERE
     {
         $employee = \Helper::getEmployeeInfo();
 
+        $fromTime =($request['from_time']) ? new Carbon($request['from_time']) : null;
+        $toTime = ($request['to_time']) ? new Carbon($request['to_time']) : null;
+        
         if (isset($request['from_date'])) {
             $frm_date = new Carbon($request['from_date']);
-            $frm_date = $frm_date->format('Y-m-d');
+            $frm_date = ($fromTime) ? $frm_date->format('Y-m-d').' '.$fromTime->format('H:i:s') : $frm_date->format('Y-m-d');
             $data['from_date'] = $frm_date;
         }
 
+        
+
         if (isset($request['to_date'])) {
             $to_date = new Carbon($request['to_date']);
-            $to_date = $to_date->format('Y-m-d');
+            $to_date = ($toTime) ? $to_date->format('Y-m-d').' '.$toTime->format('H:i:s') : $to_date->format('Y-m-d');
             $data['to_date'] = $to_date;
         }
 
@@ -1920,24 +1999,50 @@ WHERE
             }
         }
 
+
+
         $data['updated_at'] = Carbon::now();
         $data['updated_by'] = $employee->employeeSystemID;
-
+       
         DB::beginTransaction();
         try {
             $calendarDatesDetail = CalendarDatesDetail::where('calendar_date_id', $request['calenderDateTypeId'])
                 ->where('tender_id', $request['tenderMasterId'])
-                ->get();
+                ->first();
 
             if (empty($calendarDatesDetail)) {
                 return $this->sendError('Calendar Date Type not found');
             }
 
-            $calendarDatesDetail = CalendarDatesDetail::where('calendar_date_id', $request['calenderDateTypeId'])
+            if(isset($request['time_changed']) && $request['time_changed']) {
+                if($calendarDatesDetail->from_time != $fromTime || $calendarDatesDetail->to_time != $toTime) {
+                    if($fromTime) {
+                        $data['from_time'] = $fromTime;
+                    }
+            
+                    if($toTime) {
+                        $data['to_time'] = $toTime;
+                    }
+
+                    $calendarDatesDetail = CalendarDatesDetail::where('calendar_date_id', $request['calenderDateTypeId'])
+                    ->where('tender_id', $request['tenderMasterId'])
+                    ->update($data);
+                    DB::commit();
+                    return ['success' => true, 'message' => 'updated', 'data' => $calendarDatesDetail];
+         
+                }
+
+            }else {
+                $calendarDatesDetail = CalendarDatesDetail::where('calendar_date_id', $request['calenderDateTypeId'])
                 ->where('tender_id', $request['tenderMasterId'])
                 ->update($data);
-            DB::commit();
-            return ['success' => true, 'message' => 'Successfully updated', 'data' => $calendarDatesDetail];
+                DB::commit();
+                return ['success' => true, 'message' => 'Successfully updated', 'data' => $calendarDatesDetail];
+     
+            }
+
+
+
         } catch (\Exception $e) {
             DB::rollback();
             Log::error($this->failed($e));

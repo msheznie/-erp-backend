@@ -168,6 +168,19 @@
         max-height: 60px !important;
     }
 
+    .head_font {
+        font-size: 13px;
+        font-family:Arial, Helvetica, sans-serif;
+    }
+    .normal_font {
+        font-size: 10px;
+        font-family: Arial, Helvetica, sans-serif;
+    }
+    
+    .text_align {
+        text-align: left;vertical-align: top;
+    } 
+
 
 </style>
 
@@ -210,15 +223,17 @@
         <table style="width:100%">
             <tr>
                 <td style="width: 50%; text-align: left;vertical-align: top;">
-                    <table  style="width: 100%">
+                    <table class="head_font"  style="width: 100%">
                         <tr>
-                            <td><b>INVOICE NO </b></td>
-                            <td>:
+                            <td class="text_align" style="width:30%;"><b>INVOICE NO </b></td>
+                            <td class="text_align" style="width:2%;">:</td>
+                            <td class="text_align" style="width:68%;">
                                 {{$request->bookingInvCode}}</td>
                         </tr>
                         <tr>
-                            <td><b>INVOICE DATE </b></td>
-                            <td>:
+                            <td class="text_align" style="width:30%;"><b>INVOICE DATE </b></td>
+                            <td class="text_align" style="width:2%;">:</td>
+                            <td class="text_align" style="width:68%;">
                                 @if(!empty($request->bookingDate))
                                     {{\App\helper\Helper::dateFormat($request->bookingDate) }}
                                 @endif</td>
@@ -226,19 +241,21 @@
 
                         <tr><td></td></tr>
                         <tr>
-                            <td><b>CUSTOMER NAME </b></td>
-                            <td>:
+                            <td class="text_align" style="width:30%;"><b>CUSTOMER NAME </b></td>
+                            <td class="text_align" style="width:2%;">:</td>
+                            <td class="text_align" style="width:68%;">
                                 {{$request->customer->ReportTitle}}</td>
                         </tr>
                         <tr>
-                            <td><b>CUSTOMER ADDRESS </b></td>
-                            <td>:
+                            <td class="text_align" style="width:30%;"><b>CUSTOMER ADDRESS </b></td>
+                            <td class="text_align" style="width:2%;">:</td>
+                            <td class="text_align" style="width:68%;">
                                 {{$request->customer->customerAddress1}}</td>
                         </tr>
                     </table>
                 </td>
                 <td style="width: 50%; text-align: left;vertical-align: top;">
-                    <table>
+                    <table class="head_font">
                         <tr>
                             <td width="100px" colspan="2"  style="text-decoration: underline;"><b> Remittance Details  </b></td>
                         </tr>
@@ -362,7 +379,7 @@
                 </tbody>
                 <tbody>
                     <tr>
-                        <td colspan="8">PLEASE ISSUE ALL PAYMENT ON BELOW BANK ACCOUNT DETAILS</td>
+                        <td colspan="8">PLEASE ISSUE ALL PAYMENT ON ABOVE BANK ACCOUNT DETAILS</td>
                     </tr>
                 </tbody>
                 
@@ -444,7 +461,7 @@
                 </tbody>
                 <tbody>
                     <tr>
-                        <td colspan="7">PLEASE ISSUE ALL PAYMENT ON BELOW BANK ACCOUNT DETAILS</td>
+                        <td colspan="7">PLEASE ISSUE ALL PAYMENT ON ABOVE BANK ACCOUNT DETAILS</td>
                     </tr>
                 </tbody>
                 

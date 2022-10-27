@@ -73,27 +73,32 @@ class WebPushNotificationService
     {
         $currentUserID = Helper::getEmployeeUUID();
 
-        $client = new Client();
-        $url = env("WEB_PUSH_URL")."/notifications-by-user";
+        try {
 
-        $params['apps'] = ['erp'];
-        $params['uuid'] = $currentUserID;
-        $response = $client->request('POST', $url, ['json' => $params]);
+            $client = new Client();
+            $url = env("WEB_PUSH_URL")."/notifications-by-user";
+
+            $params['apps'] = ['erp'];
+            $params['uuid'] = $currentUserID;
+            $response = $client->request('POST', $url, ['json' => $params]);
 
 
-        if ($response) {
-            $notificationData = collect(json_decode($response->getBody(), true))->take(7);
+            if ($response) {
+                $notificationData = collect(json_decode($response->getBody(), true))->take(7);
 
-            $notificationDataRes = [];
-            foreach ($notificationData as $key => $value) {
-                $value['data']['time'] = Carbon::parse($value['data']['time'])->diffForHumans();
+                $notificationDataRes = [];
+                foreach ($notificationData as $key => $value) {
+                    $value['data']['time'] = Carbon::parse($value['data']['time'])->diffForHumans();
 
-                $notificationDataRes[] = $value;
+                    $notificationDataRes[] = $value;
+                }
+
+
+                return ['notifications' => $notificationDataRes, 'newNotificationCount' => collect(json_decode($response->getBody(), true))->where('read', 0)->count()];
+            } else {
+                return ['notifications' => [], 'newNotificationCount' => 0];
             }
-
-
-            return ['notifications' => $notificationDataRes, 'newNotificationCount' => collect(json_decode($response->getBody(), true))->where('read', 0)->count()];
-        } else {
+        } catch (\Exception $exception) {
             return ['notifications' => [], 'newNotificationCount' => 0];
         }
     }
@@ -101,32 +106,40 @@ class WebPushNotificationService
     public static function getAllNotifications()
     {
         $currentUserID = Helper::getEmployeeUUID();
+        try {
+            $client = new Client();
+            $url = env("WEB_PUSH_URL")."/notifications-by-user";
 
-        $client = new Client();
-        $url = env("WEB_PUSH_URL")."/notifications-by-user";
-
-        $params['apps'] = ['erp'];
-        $params['uuid'] = $currentUserID;
-        $response = $client->request('POST', $url, ['json' => $params]);
+            $params['apps'] = ['erp'];
+            $params['uuid'] = $currentUserID;
+            $response = $client->request('POST', $url, ['json' => $params]);
 
 
-        if ($response) {
-            return $notificationData = json_decode($response->getBody(), true);
-        } else {
+            if ($response) {
+                return $notificationData = json_decode($response->getBody(), true);
+            } else {
+                return [];
+            }
+        } catch (\Exception $exception) {
             return [];
         }
     }
 
     public static function updateNotifications($updateData)
     {
-        $client = new Client();
-        $url = env("WEB_PUSH_URL")."/notifications/".$updateData['_id'];
-       
-        $params['read'] = 1;
 
-        $response = $client->request('PUT', $url, ['json' => $params]);
+        try {
+            $client = new Client();
+            $url = env("WEB_PUSH_URL")."/notifications/".$updateData['_id'];
+           
+            $params['read'] = 1;
 
-        return ['status' => true];
+            $response = $client->request('PUT', $url, ['json' => $params]);
+
+            return ['status' => true];
+        } catch (\Exception $exception) {
+            return ['status' => false];
+        }
     }
 
     public static function processnotificationData($notification)

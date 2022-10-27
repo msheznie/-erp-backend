@@ -449,10 +449,6 @@ class BudgetConsumedDataAPIController extends AppBaseController
 
             $balanceToReciveRpt = $value->purchase_order->poTotalComRptCurrency - floatval($grvRecivedAmount->rptTotal) - abs(floatval($changedAmount->consumedRptAmount));
 
-            if ($balanceToReciveRpt < 0) {
-                $balanceToReciveRpt = 0;
-            }
-
             $cutOffDate = isset($value->budget_master->finance_year_by->endingDate) ? Carbon::parse($value->budget_master->finance_year_by->endingDate)->addMonthsNoOverflow($value->budget_master->cutOffPeriod)->format('Y-m-d') : null;
 
 
@@ -464,6 +460,10 @@ class BudgetConsumedDataAPIController extends AppBaseController
                                                   ->first();
 
             $availableToChange = $balanceToReciveRpt + floatval($recivedAmountAfterCutOff->rptTotal);
+
+            if ($availableToChange < 0) {
+                $availableToChange = 0;
+            }
 
             // $consumedAmountCurrency = \Helper::currencyConversion($value->purchase_order->companySystemID, $value->consumedRptCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $value->consumedRptAmount);
 
