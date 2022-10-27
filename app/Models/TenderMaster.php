@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Eloquent as Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-
+use Carbon\Carbon;
 /**
  * @SWG\Definition(
  *      definition="TenderMaster",
@@ -213,6 +213,21 @@ class TenderMaster extends Model
     const UPDATED_AT = 'updated_at';
 
 
+    protected $appends = array(
+                            'document_sales_start_time'
+                            ,'document_sales_end_time'
+                            ,'pre_bid_clarification_start_time'
+                            ,'pre_bid_clarification_end_time'
+                            ,'site_visit_start_time'
+                            ,'site_visit_end_time'
+                            ,'bid_submission_opening_time'
+                            ,'bid_submission_closing_time'
+                            ,'bid_opening_date_time'
+                            ,'bid_opening_end_date_time'
+                            ,'technical_bid_opening_date_time'
+                            ,'technical_bid_closing_date_time'
+                            ,'commerical_bid_opening_date_time'
+                            ,'commerical_bid_closing_date_time');
 
 
     public $fillable = [
@@ -279,21 +294,7 @@ class TenderMaster extends Model
         'doc_verifiy_by_emp',
         'doc_verifiy_date',
         'doc_verifiy_status',
-        'doc_verifiy_comment',
-        'bid_opening_date_time',
-        'bid_opening_end_date_time',
-        'technical_bid_opening_date_time',
-        'technical_bid_closing_date_time',
-        'commerical_bid_opening_date_time',
-        'commerical_bid_closing_date_time',
-        'document_sales_start_time',
-        'document_sales_end_time',
-        'pre_bid_clarification_start_time',
-        'pre_bid_clarification_end_time',
-        'site_visit_start_time',
-        'site_visit_end_time',
-        'bid_submission_opening_time',
-        'bid_submission_closing_time'
+        'doc_verifiy_comment'
     ];
 
     /**
@@ -364,20 +365,6 @@ class TenderMaster extends Model
         'commerical_bid_opening_date'  => 'datetime',
         'commerical_bid_closing_date'  => 'datetime',
         'doc_verifiy_status' => 'integer',
-        'bid_opening_date_time'  => 'datetime',
-        'bid_opening_end_date_time'  => 'datetime',
-        'technical_bid_opening_date_time'  => 'datetime',
-        'technical_bid_closing_date_time'  => 'datetime',
-        'commerical_bid_opening_date_time'  => 'datetime',
-        'commerical_bid_closing_date_time'  => 'datetime',
-        'document_sales_start_time'=> 'datetime',
-        'document_sales_end_time' => 'datetime',
-        'pre_bid_clarification_start_time' => 'datetime',
-        'pre_bid_clarification_end_time' => 'datetime',
-        'site_visit_start_time' => 'datetime',
-        'site_visit_end_time' => 'datetime',
-        'bid_submission_opening_time' => 'datetime',
-        'bid_submission_closing_time' => 'datetime',
     ];
 
     /**
@@ -440,4 +427,80 @@ class TenderMaster extends Model
     {
         return $this->hasOne('App\Models\EvaluationType', 'id', 'evaluation_type_id');
     }
+    
+    public function getDocumentSalesStartTimeAttribute() {
+        $time = new Carbon($this->document_sales_start_date);
+        return $time->format('Y-m-d H:i:s');
+    }
+
+    public function getDocumentSalesEndTimeAttribute() {
+        $time = new Carbon($this->document_sales_end_date);
+        return $time->format('Y-m-d H:i:s');
+    }
+
+
+    public function getPreBidClarificationStartTimeAttribute() {
+        $time = new Carbon($this->pre_bid_clarification_start_date);
+        return $time->format('Y-m-d H:i:s'); 
+    }
+
+    
+    public function getPreBidClarificationEndTimeAttribute() {
+        $time = new Carbon($this->pre_bid_clarification_end_date);
+        return $time->format('Y-m-d H:i:s'); 
+    }
+
+
+    public function getSiteVisitStartTimeAttribute() {
+        $time = new Carbon($this->site_visit_date);
+        return $time->format('Y-m-d H:i:s'); 
+    }
+
+    public function getSiteVisitEndTimeAttribute() {
+        $time = new Carbon($this->site_visit_end_date);
+        return $time->format('Y-m-d H:i:s');   
+    }
+
+    public function getBidSubmissionOpeningTimeAttribute() {
+        $time = new Carbon($this->bid_submission_opening_date);
+        return $time->format('Y-m-d H:i:s');   
+    }
+
+    public function getBidSubmissionClosingTimeAttribute() {
+        $time = new Carbon($this->bid_submission_closing_date);
+        return $time->format('Y-m-d H:i:s');   
+    }
+
+
+    public function getBidOpeningDateTimeAttribute() {
+        $time = new Carbon($this->bid_opening_date);
+        return $time->format('Y-m-d H:i:s');   
+    }
+
+    public function getBidOpeningEndDateTimeAttribute() {
+        $time = new Carbon($this->bid_opening_end_date);
+        return $time->format('Y-m-d H:i:s');   
+    }
+
+    public function getTechnicalBidOpeningDateTimeAttribute() {
+        $time = new Carbon($this->technical_bid_opening_date);
+        return $time->format('Y-m-d H:i:s');   
+    }
+
+    public function getTechnicalBidClosingDateTimeAttribute() {
+        $time = new Carbon($this->technical_bid_closing_date);
+        return $time->format('Y-m-d H:i:s');   
+    }
+
+
+    public function getCommericalBidOpeningDateTimeAttribute() {
+        $time = new Carbon($this->commerical_bid_opening_date);
+        return $time->format('Y-m-d H:i:s');   
+    }
+
+    public function getCommericalBidClosingDateTimeAttribute() {
+        $time = new Carbon($this->commerical_bid_closing_date);
+        return $time->format('Y-m-d H:i:s');   
+    }
+
 }
