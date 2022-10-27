@@ -295,7 +295,7 @@ class TaxService
     public static function getDefaultVAT($companySystemID = 0, $partyID = 0, $isSupplier = 1)
     {
 
-        $data = array('percentage' => 0, 'vatSubCategoryID' => null, 'vatMasterCategoryID' => null, 'isCustomerVat' => 0);
+        $data = array('percentage' => 0, 'vatSubCategoryID' => null, 'vatMasterCategoryID' => null);
         $taxDetails = TaxVatCategories::whereHas('tax', function ($q) use ($companySystemID) {
             $q->where('companySystemID', $companySystemID)
                 ->where('isActive', 1)
@@ -328,7 +328,6 @@ class TaxService
 
                 if (!empty($customer)) {
                     $data['percentage'] = $customer->vatPercentage;
-                    $data['isCustomerVat'] = 1;
                 }
             }
         }
