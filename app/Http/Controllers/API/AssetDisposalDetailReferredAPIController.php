@@ -293,7 +293,7 @@ class AssetDisposalDetailReferredAPIController extends AppBaseController
     {
         $assetDisposalDetail = AssetDisposalDetailReferred::OfMaster($request->assetdisposalMasterAutoID)->where('timesReferred', $request->timesReferred)->with('segment_by', 'item_by')->get();
         if (empty($assetDisposalDetail)) {
-            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.asset_disposal_details')]);
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.asset_disposal_details')]));
         }
         return $this->sendResponse($assetDisposalDetail->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.asset_disposal_details')]));
     }

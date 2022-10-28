@@ -191,7 +191,7 @@ class CompanyNavigationMenusAPIController extends AppBaseController
             ->orderBy('srp_erp_navigationmenus.sortOrder')
             ->get();
         //dd(DB::getQueryLog());
-        $tree = buildTree($navigationMenu);
+        $tree = buildTrees($navigationMenu);
         //$navigationMenu = DB::table("srp_erp_companynavigationmenus")->where("companyID",$companyID)->get();
         return $this->sendResponse($tree, trans('custom.retrieve', ['attribute' => trans('custom.record')]));
     }
@@ -200,12 +200,12 @@ class CompanyNavigationMenusAPIController extends AppBaseController
 }
 
 
-function buildTree($elements, $parentId = null)
+function buildTrees($elements, $parentId = null)
 {
     $branch = array();
     foreach ($elements as $element) {
         if ($element->masterID == $parentId) {
-            $children = buildTree($elements, $element->navigationMenuID);
+            $children = buildTrees($elements, $element->navigationMenuID);
             if ($children) {
                 $element->children = $children;
             }

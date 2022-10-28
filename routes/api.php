@@ -34,6 +34,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
     Route::group(['middleware' => 'auth:api'], function () {
 
+        require __DIR__.'/../routes/systemAdmin/systemAdminRoutes.php';
+        require __DIR__.'/../routes/general/generalRoutes.php';
+
         Route::get('getTypeheadEmployees', 'EmployeeAPIController@getTypeheadEmployees');
 
         Route::post('getAllEmployees', 'EmployeeAPIController@getAllEmployees');
@@ -49,13 +52,11 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('user/companies', 'UserAPIController@userCompanies');
         Route::get('checkUser', 'UserAPIController@checkUser');
 
-        Route::post('supplierMasterByCompany', 'SupplierMasterAPIController@getSupplierMasterByCompany');
-        Route::post('exportSupplierMaster', 'SupplierMasterAPIController@exportSupplierMaster');
         Route::get('getPOSuppliers', 'SupplierMasterAPIController@getPOSuppliers');
         Route::get('getRetentionPercentage', 'SupplierMasterAPIController@getRetentionPercentage');
         Route::get('getSuppliersByCompany', 'SupplierMasterAPIController@getSuppliersByCompany');
         Route::get('getSearchSupplierByCompany', 'SupplierMasterAPIController@getSearchSupplierByCompany');
-        Route::get('generateSupplierExternalLink', 'SupplierMasterAPIController@generateSupplierExternalLink');
+        
         Route::get('getRegisteredSupplierData', 'SupplierMasterAPIController@getRegisteredSupplierData');
         Route::get('bankMemosByRegisteredSupplierCurrency', 'SupplierMasterAPIController@bankMemosByRegisteredSupplierCurrency');
         Route::post('notApprovedRegisteredSuppliers', 'SupplierMasterAPIController@notApprovedRegisteredSuppliers');
@@ -66,8 +67,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('updateRegisteredSupplierMaster', 'SupplierMasterAPIController@updateRegisteredSupplierMaster');
         Route::post('getAllRegisteredSupplierApproval', 'SupplierMasterAPIController@getAllRegisteredSupplierApproval');
         Route::get('downloadSupplierAttachmentFile', 'SupplierMasterAPIController@downloadSupplierAttachmentFile');
-        Route::post('srmRegistrationLink', 'SupplierMasterAPIController@srmRegistrationLink');
-        Route::post('srmRegistrationLinkHistoryView', 'SupplierMasterAPIController@srmRegistrationLinkHistoryView');
+        
 
         Route::resource('registered_supplier_currencies', 'RegisteredSupplierCurrencyAPIController');
         Route::resource('registered_bank_memo_suppliers', 'RegisteredBankMemoSupplierAPIController');
@@ -85,45 +85,30 @@ Route::group(['middleware' => ['tenant','locale']], function () {
                 Route::post('exportAssetMaster', 'FixedAssetMasterAPIController@exportAssetMaster');
             });
         });
+        
+        
 
+        
 
-        Route::get('subCategoriesByMasterCategory', 'SupplierCategorySubAPIController@getSubCategoriesByMasterCategory');
-        Route::resource('supplier/masters', 'SupplierMasterAPIController');
-        Route::post('supplierReferBack', 'SupplierMasterAPIController@supplierReferBack');
-
-        Route::post('supplier/masters/update', 'SupplierMasterAPIController@updateSupplierMaster');
-
-        Route::get('supplier/assignedCompanies', 'SupplierMasterAPIController@getAssignedCompaniesBySupplier');
-
-        Route::get('allCurrencies', 'CurrencyMasterAPIController@getAllCurrencies');
         Route::get('getAllConversionByCurrency', 'CurrencyMasterAPIController@getAllConversionByCurrency');
-        Route::get('supplier/currencies', 'CurrencyMasterAPIController@getCurrenciesBySupplier');
+        
 
-        Route::post('supplier/add/currency', 'CurrencyMasterAPIController@addCurrencyToSupplier');
-        Route::post('supplier/update/currency', 'CurrencyMasterAPIController@updateCurrencyToSupplier');
-        Route::post('supplier/remove/currency', 'CurrencyMasterAPIController@removeCurrencyToSupplier');
+       
         Route::get('getCompanyLocalCurrency', 'CurrencyMasterAPIController@getCompanyLocalCurrency');
         Route::get('getCompanyReportingCurrency', 'CurrencyMasterAPIController@getCompanyReportingCurrency');
         Route::get('getCompanyReportingCurrencyCode', 'CurrencyMasterAPIController@getCompanyReportingCurrencyCode');
         Route::post('getCompanies', 'CompanyAPIController@getCompanies');
         Route::get('getCompanySettingFormData', 'CompanyAPIController@getCompanySettingFormData');
         
-        Route::resource('supplier/assigned', 'SupplierAssignedAPIController');
         Route::get('checkSelectedSupplierIsActive', 'SupplierAssignedAPIController@checkSelectedSupplierIsActive');
 
-        Route::get('contactDetailsBySupplier', 'SupplierContactDetailsAPIController@getContactDetailsBySupplier');
-
-        Route::resource('supplier/contactDetails', 'SupplierContactDetailsAPIController');
+        
 
         Route::resource('users', 'UserAPIController');
 
         Route::resource('companies', 'CompanyAPIController');
 
         Route::resource('supplier_category_masters', 'SupplierCategoryMasterAPIController');
-
-        Route::get('supplierFormData', 'CompanyAPIController@getSupplierFormData');
-
-        Route::get('getAdvanceAccount', 'CompanyAPIController@getAdvanceAccount');
 
         Route::resource('country_masters', 'CountryMasterAPIController');
         Route::resource('supplier_category_masters', 'SupplierCategoryMasterAPIController');
@@ -137,11 +122,11 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
         Route::resource('supplier_types', 'SupplierTypeAPIController');
 
-        Route::post('addSubCategoryToSupplier', 'SupplierCategorySubAPIController@addSubCategoryToSupplier');
+        
 
-        Route::get('subcategoriesBySupplier', 'SupplierMasterAPIController@getSubcategoriesBySupplier');
+        
 
-        Route::post('removeSubCategoryToSupplier', 'SupplierCategorySubAPIController@removeSubCategoryToSupplier');
+        
 
         Route::resource('supplier_currencies', 'SupplierCurrencyAPIController');
 
@@ -155,16 +140,13 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
         Route::resource('supplier_contact_types', 'SupplierContactTypeAPIController');
 
-        Route::resource('bank_memo_suppliers', 'BankMemoSupplierAPIController');
-
-        Route::get('getBankMemoBySupplierCurrency', 'BankMemoSupplierAPIController@getBankMemoBySupplierCurrency');
         Route::get('getBankMemoBySupplierCurrencyId', 'BankMemoSupplierAPIController@getBankMemoBySupplierCurrencyId');
-        Route::post('addBulkMemos', 'BankMemoSupplierAPIController@addBulkMemos');
-        Route::post('exportSupplierCurrencyMemos', 'BankMemoSupplierAPIController@exportSupplierCurrencyMemos');
+        
+        
 
         Route::resource('bank_memo_supplier_masters', 'BankMemoSupplierMasterAPIController');
-        Route::post('deleteBankMemo', 'BankMemoSupplierAPIController@deleteBankMemo');
-        Route::post('supplierBankMemoDeleteAll', 'BankMemoSupplierAPIController@supplierBankMemoDeleteAll');
+        
+        
         Route::post('getCurrencyDetails', 'SupplierCurrencyAPIController@getCurrencyDetails');
 
         Route::resource('item/masters', 'ItemMasterAPIController');
@@ -208,7 +190,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
 
         Route::resource('example_table_templates', 'ExampleTableTemplateAPIController');
-        Route::get('getExampleTableData', 'ExampleTableTemplateAPIController@getExampleTableData');
+       
 
         Route::resource('item/assigneds', 'ItemAssignedAPIController');
         Route::post('getAllAssignedItemsByCompany', 'ItemAssignedAPIController@getAllAssignedItemsByCompany');
@@ -346,10 +328,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         /** Customer master Created by Fayas  */
         Route::resource('customer_masters', 'CustomerMasterAPIController');
         Route::post('getAllCustomers', 'CustomerMasterAPIController@getAllCustomers');
-        Route::post('getInterCompaniesForCustomerSupplier', 'CustomerMasterAPIController@getInterCompaniesForCustomerSupplier');
+        
         Route::post('getAllCustomersByCompany', 'CustomerAssignedAPIController@getAllCustomersByCompany');
         Route::get('getCustomerFormData', 'CustomerMasterAPIController@getCustomerFormData');
-        Route::get('getApprovedCustomers', 'CustomerMasterAPIController@getApprovedCustomers');
+       
         Route::get('getLinkedSupplier', 'CustomerMasterAPIController@getLinkedSupplier');
         Route::get('getChartOfAccountsByCompanyForCustomer', 'CustomerMasterAPIController@getChartOfAccountsByCompanyForCustomer');
         Route::get('getCustomerCatgeoryByCompany', 'CustomerMasterAPIController@getCustomerCatgeoryByCompany');
@@ -463,8 +445,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('srp_erp_document_attachments', 'SrpErpDocumentAttachmentsAPIController');
         Route::get('get_srp_erp_document_attachments', 'SrpErpDocumentAttachmentsAPIController@geDocumentAttachments');
 
-        Route::resource('document_attachments', 'DocumentAttachmentsAPIController');   
-        Route::resource('document_attachment_types', 'DocumentAttachmentTypeAPIController');
+        
         Route::get('downloadFile', 'DocumentAttachmentsAPIController@downloadFile');
         Route::post('store_tender_documents', 'DocumentAttachmentsAPIController@storeTenderDocuments');      
         Route::post('tenderBIdDocApproveal', 'DocumentAttachmentsAPIController@tenderBIdDocApproveal');   
@@ -735,8 +716,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('returnMaterialRequestPreCheck', 'MaterielRequestAPIController@returnMaterialRequestPreCheck');
         Route::post('returnMaterialRequest', 'MaterielRequestAPIController@returnMaterialRequest');
 
-       
-
         Route::get('material-issue/update-qnty-by-location', 'ItemIssueMasterAPIController@updateQntyByLocation');
         Route::get('material-issue/check/product/{id}/{companySystemID}', 'ItemIssueMasterAPIController@checkProductExistInIssues');
         Route::get('purchase_requests/check/product/{itemCode}/{companySystemID}', 'PurchaseRequestAPIController@checkProductExistInIssues');
@@ -827,7 +806,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('getMaterielReturnApprovalByUser', 'ItemReturnMasterAPIController@getMaterielReturnApprovalByUser');
 
 
-        Route::get('getSupplierMasterAudit', 'SupplierMasterAPIController@getSupplierMasterAudit');
+        
         Route::get('getItemMasterAudit', 'ItemMasterAPIController@getItemMasterAudit');
 
         Route::resource('po_addons', 'PoAddonsAPIController');
@@ -1357,7 +1336,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getSIDetailGRVAmendHistory', 'BookInvSuppDetRefferedBackAPIController@getSIDetailGRVAmendHistory');
         Route::get('getSIDetailDirectAmendHistory', 'DirectInvoiceDetailsRefferedBackAPIController@getSIDetailDirectAmendHistory');
 
-        Route::resource('bank_memo_types', 'BankMemoTypesAPIController');
+        
         Route::resource('payment_bank_transfers', 'PaymentBankTransferAPIController');
         Route::get('getCheckBeforeCreateBankTransfers', 'PaymentBankTransferAPIController@getCheckBeforeCreate');
         Route::post('getAllBankTransferByBankAccount', 'PaymentBankTransferAPIController@getAllBankTransferByBankAccount');
@@ -1558,7 +1537,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
         Route::resource('bank_memo_payees', 'BankMemoPayeeAPIController');
         Route::get('payeeBankMemosByDocument', 'BankMemoPayeeAPIController@payeeBankMemosByDocument');
-        Route::post('addBulkPayeeMemos', 'BankMemoPayeeAPIController@addBulkPayeeMemos');
+        
         Route::post('payeeBankMemoDeleteAll', 'BankMemoPayeeAPIController@payeeBankMemoDeleteAll');
 
         Route::post('getReferBackHistoryByStockTransfer', 'StockTransferRefferedBackAPIController@getReferBackHistoryByStockTransfer');
@@ -1593,7 +1572,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
         Route::resource('supplier_category_icv_subs', 'SupplierCategoryICVSubAPIController');
         Route::resource('supplier_category_icv_masters', 'SupplierCategoryICVMasterAPIController');
-        Route::get('subICVCategoriesByMasterCategory', 'SupplierCategoryICVMasterAPIController@subICVCategoriesByMasterCategory');
+        
 
         Route::resource('debitNoteDetailsRefferedbacks', 'DebitNoteDetailsRefferedbackAPIController');
         Route::resource('debitNoteMasterRefferedbacksCRUD', 'DebitNoteMasterRefferedbackAPIController');
@@ -1664,15 +1643,13 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('getGRVDetailsReversalHistory', 'GrvDetailsRefferedbackAPIController@getGRVDetailsReversalHistory');
         Route::resource('document_restriction_assigns', 'DocumentRestrictionAssignAPIController');
         Route::resource('document_restriction_policies', 'DocumentRestrictionPolicyAPIController');
-        Route::get('checkRestrictionByPolicy', 'DocumentRestrictionAssignAPIController@checkRestrictionByPolicy');
+        
 
         Route::resource('itemMasterRefferedBack', 'ItemMasterRefferedBackAPIController');
         Route::post('referBackHistoryByItemsMaster', 'ItemMasterRefferedBackAPIController@referBackHistoryByItemsMaster');
 
         Route::resource('customerInvoiceCollectionDetails', 'CustomerInvoiceCollectionDetailAPIController');
         Route::get('getCustomerCollectionItems', 'CustomerInvoiceCollectionDetailAPIController@getCustomerCollectionItems');
-        Route::resource('supplier_refer_back', 'SupplierMasterRefferedBackAPIController');
-        Route::post('referBackHistoryBySupplierMaster', 'SupplierMasterRefferedBackAPIController@referBackHistoryBySupplierMaster');
 
         Route::resource('customer_invoice_logistics', 'CustomerInvoiceLogisticAPIController');
         Route::post('addNote', 'CustomerInvoiceLogisticAPIController@addNote');
@@ -2058,12 +2035,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('getAllWarehouseSubLevels', 'WarehouseSubLevelsAPIController@getAllWarehouseSubLevels');
         Route::get('getSubLevelsByWarehouse', 'WarehouseSubLevelsAPIController@getSubLevelsByWarehouse');
 
-        Route::resource('supplier_catalog_masters', 'SupplierCatalogMasterAPIController');
-
-        Route::resource('supplier_catalog_details', 'SupplierCatalogDetailAPIController');
-
-        Route::post('getAllCatalogsByCompany', 'SupplierCatalogMasterAPIController@getAllCatalogsByCompany');
-        Route::get('getItemsOptionsSupplierCatalog', 'SupplierCatalogMasterAPIController@getItemsOptionsSupplierCatalog');
         Route::post('getSupplierCatalogDetailBySupplierItem', 'SupplierCatalogMasterAPIController@getSupplierCatalogDetailBySupplierItem');
 
         Route::resource('customer_catalog_masters', 'CustomerCatalogMasterAPIController');
@@ -2518,9 +2489,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::resource('system_gl_code_scenarios', 'SystemGlCodeScenarioAPIController');
         Route::resource('system_gl_code_scenario_details', 'SystemGlCodeScenarioDetailAPIController');
 
-          /* Master Datas Bulk Upload */
-        Route::get('downloadTemplate', 'CustomerMasterAPIController@downloadTemplate');
-        Route::post('masterBulkUpload', 'CustomerMasterAPIController@masterBulkUpload');
+        
         Route::resource('gl-config-scenario-details', 'SystemGlCodeScenarioDetailAPIController');
         Route::post('coa-config-scenario-assign', 'SystemGlCodeScenarioAPIController@scenario_assign');
         Route::get('coa-config-companies', 'SystemGlCodeScenarioAPIController@coa_config_companies');
@@ -2881,8 +2850,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
     Route::get('getSupplierRegisterFormData', 'SupplierMasterAPIController@getSupplierRegisterFormData');
     Route::post('registerSupplier', 'SupplierMasterAPIController@registerSupplier');
-    Route::post('supplierReOpen', 'SupplierMasterAPIController@supplierReOpen');
-    Route::post('validateSupplierAmend', 'SupplierMasterAPIController@validateSupplierAmend');
 
     Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF');
     Route::get('goodReceiptVoucherPrintPDF', 'GRVMasterAPIController@goodReceiptVoucherPrintPDF');
@@ -2970,7 +2937,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 Route::get('updateNotPostedGLEntries', 'GeneralLedgerAPIController@updateNotPostedGLEntries');
 
 Route::post('sendEmail', 'Email\SendEmailAPIController@sendEmail');
-Route::get('updateNotPostedGLEntries', 'GeneralLedgerAPIController@updateNotPostedGLEntries');
+Route::get('updateRoutes', 'GeneralLedgerAPIController@updateRoutes');
 
 /*
  * Start SRM related routes
@@ -3019,9 +2986,3 @@ Route::get('updateNotPostedGLEntries', 'GeneralLedgerAPIController@updateNotPost
 /*
  * End external related routes
  */
-
-
-
-
-
-

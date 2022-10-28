@@ -12,6 +12,7 @@ use App\Models\AccountsReceivableLedger;
 use App\Models\AssetDisposalMaster;
 use App\Models\BankLedger;
 use App\Models\BookInvSuppMaster;
+use App\Models\Route;
 use App\Models\Company;
 use App\Models\CreditNote;
 use App\Models\CustomerInvoiceDirect;
@@ -1421,5 +1422,55 @@ class GeneralLedgerAPIController extends AppBaseController
         return $sum;
     }
 
+    public function updateRoutes(Request $request)
+    {
+        $app = app();
+        
+        $routes = $app->routes->getRoutes();
 
+
+        if (env("APP_ENV") != 'local') {
+            $tenants = CommonJobService::tenant_list();
+            if(count($tenants) == 0){
+                return  "tenant list is empty";
+            }
+
+
+            foreach ($tenants as $tenant){
+                $tenantDb = $tenant->database;
+
+                CommonJobService::db_switch($tenantDb);
+
+                Route::truncate();
+
+                foreach ($routes as $key => $value) {
+                    $temp = [];
+                    if (!is_null($value->getName()) && $value->getName() != "api.") {
+                        $temp['name'] = $value->getName();
+                        $temp['method'] = $value->methods()[0];
+                        $temp['uri'] = $value->uri();
+                        $temp['action'] = $value->getActionName();
+                        
+                        Route::create($temp);
+                    }
+                }
+            }
+        } else {
+            Route::truncate();
+
+            foreach ($routes as $key => $value) {
+                $temp = [];
+                if (!is_null($value->getName()) && $value->getName() != "api.") {
+                    $temp['name'] = $value->getName();
+                    $temp['method'] = $value->methods()[0];
+                    $temp['uri'] = $value->uri();
+                    $temp['action'] = $value->getActionName();
+                    
+                    Route::create($temp);
+                }
+            }
+        }
+
+        return 'route table updated successfully';
+    }
 }
