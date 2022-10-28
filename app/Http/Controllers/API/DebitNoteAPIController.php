@@ -2293,11 +2293,16 @@ UNION ALL
         $supplierID = $request['supplierID'];
         $supplierID = (array)$supplierID;
         $supplierID = collect($supplierID)->pluck('id');
+
+
+        $projectID = $request['projectID'];
+        $projectID = (array)$projectID;
+        $projectID = collect($projectID)->pluck('id');
         
         $search = $request->input('search.value');
-        $output = $this->debitNotesByCompany($input, $search, $supplierID)->orderBy('debitNoteAutoID', $sort)->get();
+        $output = $this->debitNotesByCompany($input, $search, $supplierID, $projectID)->orderBy('debitNoteAutoID', $sort)->get();
         $data = array();
-        $type = $request->type;
+        $type = $request->docType;
         if (!empty($output)) {
             $x = 0;
             foreach ($output as $value) {
@@ -2360,7 +2365,7 @@ UNION ALL
 
         $fileName = 'debit_note_by_company';
         $path = 'accounts-payable/debit_note_by_company/excel/';
-        $basePath = CreateExcel::process($data,$request->type,$fileName,$path);
+        $basePath = CreateExcel::process($data,$request->docType,$fileName,$path);
 
         if($basePath == '')
         {
@@ -2408,7 +2413,7 @@ UNION ALL
         }
 
         if (array_key_exists('type', $input)) {
-            if ($input['type'] && !is_null($input['type'])) {
+            if ($input['type'] && !is_null($input['type']) && $input['type'] > 0) {
                 $debitNotes = $debitNotes->where('type', $input['type']);
             }
         }
