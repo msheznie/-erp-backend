@@ -994,13 +994,8 @@
                             </td>
                         </tr>
                         <tr>
-                            <td width="100px"><span class="font-weight-bold">Amount in words : </span>
-                                {{$request->amount_word}}
-                                @if ($request->floatAmt > 0)
-                                    and
-                                    {{$request->floatAmt}}/@if($request->currency->DecimalPlaces == 3)1000 @else 100 @endif
-                                @endif
-                                    only
+                            <td width="300px"><span class="font-weight-bold">Amount in words : </span>
+                                {{$request->amount_word}}@if ($request->floatAmt > 0) and {{$request->floatAmt}}/@if($request->currency->DecimalPlaces == 3)1000 @else 100 @endif @endif only
                             </td>
                         </tr>
                     </table>
