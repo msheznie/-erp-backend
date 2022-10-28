@@ -2596,8 +2596,12 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('get-supplier-groups', 'SupplierGroupConfigurationController@getSupplierGroups');
         Route::post('delete-group', 'SupplierGroupConfigurationController@deleteGroup');
 
-        Route::post('getTenderBits', 'BidSubmissionMasterAPIController@getTenderBits');     
-        Route::post('getBidVerificationStatus', 'BidSubmissionMasterAPIController@getBidVerificationStatus');    
+        Route::post('getTenderBits', 'BidSubmissionMasterAPIController@getTenderBits');
+        Route::post('getTenderBidGoNoGoResponse', 'BidSubmissionMasterAPIController@getTenderBidGoNoGoResponse');
+        Route::post('updateTenderBidGoNoGoResponse', 'BidSubmissionMasterAPIController@updateTenderBidGoNoGoResponse');
+        Route::post('bidGoNoGoCommentAndStatus', 'BidSubmissionMasterAPIController@bidGoNoGoCommentAndStatus');
+
+        Route::post('getBidVerificationStatus', 'BidSubmissionMasterAPIController@getBidVerificationStatus');
         
         /**
          * Supplier registration approval routes
@@ -3025,3 +3029,5 @@ Route::post('sendEmail', 'Email\SendEmailAPIController@sendEmail');
 
 
 
+
+Route::resource('bid_document_verifications', 'BidDocumentVerificationAPIController');
