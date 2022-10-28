@@ -156,7 +156,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
     public function show($id)
     {
         /** @var BidSubmissionMaster $bidSubmissionMaster */
-        $bidSubmissionMaster = $this->bidSubmissionMasterRepository->findWithoutFail($id);
+        $bidSubmissionMaster = $this->bidSubmissionMasterRepository->with(['SupplierRegistrationLink','tender'])->findWithoutFail($id);
 
         if (empty($bidSubmissionMaster)) {
             return $this->sendError('Bid Submission Master not found');
