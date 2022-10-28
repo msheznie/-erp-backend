@@ -212,9 +212,9 @@
                     @endif
                 </td>
 
-                <td width="50%">
+                <td width="40%">
                 </td>
-                <td width="30%" style="text-align: right;white-space: nowrap">
+                <td width="40%" style="text-align: right;white-space: nowrap">
                     <table style="width: 100%">
                         <tr>
                             <th>{{$request->CompanyName}}</th>
@@ -764,7 +764,7 @@
             <tr>
                 <td class="text-left" style="border:none !important; width: 15%">
                         <span class="font-weight-bold">
-                            Subtotal @if(!empty($company->localcurrency->CurrencyCode))
+                            Sub Total @if(!empty($company->localcurrency->CurrencyCode))
                                 ({{ $company->localcurrency->CurrencyCode }})
                             @endif
                         </span>
@@ -783,7 +783,7 @@
                 </td>
                 <td class="text-left" style="border:none !important">
                         <span class="font-weight-bold">
-                            Subtotal ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})
+                            Sub Total ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})
                         </span>
                 </td>
 
@@ -866,7 +866,7 @@
                         </td>
                         <td class="text-left" style="border:none !important;width: 30%">
                                 <span class="font-weight-bold">
-                                    Subtotal (Excluding VAT)
+                                    Sub Total (Excluding VAT)
                                 </span>
                         </td>
 
@@ -1005,12 +1005,13 @@
                                     <span class="font-weight-bold">Electronically Approved By</span>
                                 </td>
                                 <td width="50%" style="vertical-align: top;">
-                                    <span class="font-weight-bold">: 
-                                        @foreach ($request->approved_by as $det)
-                                            @if($det->employee)
-                                                {{$det->employee->empFullName }}
-                                            @endif
-                                        @endforeach
+                                    <span class="font-weight-bold">:
+                                        @php
+                                            $employee = \App\Models\Employee::find($request->approvedByUserSystemID);
+                                        @endphp
+                                        @if($employee)
+                                        {{ $employee->empName }}
+                                        @endif
                                     </span>
                                 </td>
                             </tr>
@@ -1019,14 +1020,11 @@
                                     <span class="font-weight-bold">Electronically Approved Date</span>
                                 </td>
                                 <td width="50%" style="vertical-align: top;">
-                                    <span class="font-weight-bold">: 
-                                        @foreach ($request->approved_by as $det)
-                                            @if($det->employee)
-                                                @if($det->employee)
-                                                    {{ \App\helper\Helper::convertDateWithTime($det->approvedDate)}}
-                                                @endif
-                                            @endif
-                                        @endforeach
+                                    <span class="font-weight-bold">:
+
+
+                                    {{ \App\helper\Helper::convertDateWithTime($request->approvedDate)}}
+
                                     </span>
                                 </td>
                             </tr>
