@@ -299,7 +299,11 @@ class BidSubmissionMasterAPIController extends AppBaseController
 
 
 
-        $query = BidSubmissionMaster::with(['SupplierRegistrationLink'])->where('status', 1)->where('bidSubmittedYN', 1)->where('tender_id', $tenderId);
+        $query = BidSubmissionMaster::with(['SupplierRegistrationLink','bidSubmissionDetail' => function($query){
+            $query->whereHas('srm_evaluation_criteria_details.evaluation_criteria_type', function ($query) {
+                $query->where('id', 1);
+            });
+        }])->where('status', 1)->where('bidSubmittedYN', 1)->where('tender_id', $tenderId);
 
        // return $this->sendResponse($query, 'Tender Masters retrieved successfully');
 
@@ -399,8 +403,14 @@ class BidSubmissionMasterAPIController extends AppBaseController
 
         DB::beginTransaction();
         try {
-            $att['go_no_go_criteria_status'] = 1;
-            $att['go_no_go_criteria_comment'] = $input['value'];
+            if (isset($input['status'])){
+                $att['go_no_go_criteria_status'] = $input['status'];
+            }
+
+            if (isset($input['value'])){
+                $att['go_no_go_criteria_comment'] = $input['value'];
+            }
+
             $att['updated_at'] = Carbon::now();
             $att['updated_by'] = \Helper::getEmployeeSystemID();
             $result = BidSubmissionMaster::where('id', $input['id'])->update($att);
