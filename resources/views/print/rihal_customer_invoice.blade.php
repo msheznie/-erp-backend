@@ -235,23 +235,19 @@
         </table>
     </div>
     <div class="row underline">
-        <br>
+
     </div>
-    <br>
     <div class="row">
-        <table style="width: 100%">
+        <table  style="width: 100%; margin-top: -15px; margin-bottom: -15px!important;">
             <tr>
                 <td width="100%" style="text-align: center;white-space: nowrap">
-                    <div class="text-center">
-                        <h4>
+                        <h4 class="text-center">
                             Tax Invoice
                         </h4>
-                    </div>
-
                 </td>
             </tr>
         </table>
-        
+
         <table class="head_font" style="width: 100%">
             <tr>
                 <td style="width: 65%; text-align: left;vertical-align: top;">
@@ -647,7 +643,7 @@
                         <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;">
                             <td class="text-center" colspan="6" style="text-align: center"></td>
                             <td class="text-center" colspan="3" style="text-align: center"><B>Grand Total @if(!empty($request->currency->CurrencyCode))({{$request->currency->CurrencyCode}}) @endif</B></td>
-                            <td class="text-center" style="text-align: right">@if ($request->invoicedetails){{number_format($directTraSubTotal, $numberFormatting)}}@endif</td>
+                            <td class="text-center" style="text-align: right"><B>@if ($request->invoicedetails){{number_format($directTraSubTotal, $numberFormatting)}}@endif</B></td>
                             {{$totalVATAmount = (($request->tax && $request->tax->amount) ? $request->tax->amount : 0)}}
                             {{$netAmount = $totalVATAmount + $directTraSubTotal}}
 
