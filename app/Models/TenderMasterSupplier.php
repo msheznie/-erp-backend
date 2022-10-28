@@ -112,5 +112,10 @@ class TenderMasterSupplier extends Model
         'updated_by' => 'required'
     ];
 
+
+    public function tender_master()
+    {
+        return $this->belongsTo('App\Models\TenderMaster', 'tender_master_id', 'id');
+    }
     
 }

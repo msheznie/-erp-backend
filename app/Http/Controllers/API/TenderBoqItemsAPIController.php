@@ -18,7 +18,8 @@ use Illuminate\Support\Facades\Storage;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
-
+use App\Models\PricingScheduleDetail;
+use App\Models\PricingScheduleMaster;
 /**
  * Class TenderBoqItemsController
  * @package App\Http\Controllers\API
@@ -332,6 +333,11 @@ class TenderBoqItemsAPIController extends AppBaseController
             return ['success' => false, 'message' => 'Item already exist'];
         }
 
+
+
+
+    
+
         DB::beginTransaction();
         try {
             $data['main_work_id']=$input['main_work_id'];
@@ -346,6 +352,32 @@ class TenderBoqItemsAPIController extends AppBaseController
             $result = TenderBoqItems::create($data);
 
             if($result){
+
+                $mainwork = PricingScheduleDetail::where('id', $input['main_work_id'])->first();
+
+                $mainwork_items = PricingScheduleDetail::with(['tender_boq_items'])->where('tender_id', $mainwork->tender_id)->where('deleted_at',null)->where('boq_applicable', true)->where('pricing_schedule_master_id', $mainwork->pricing_schedule_master_id);
+                $is_main_works_complete = true;
+                if($mainwork_items->count() > 0)
+                {
+                    $details = $mainwork_items->get();
+                    foreach($details as $main)
+                    {
+                        if(count($main->tender_boq_items) == 0)
+                        {   
+                            $is_main_works_complete = false;
+                            break;
+                        }
+                       
+                    }
+                   
+                }
+        
+                if($is_main_works_complete)
+                {
+                    $master['status']= 1;
+                    PricingScheduleMaster::where('id',$mainwork->pricing_schedule_master_id)->update($master);
+                }
+
                 DB::commit();
                 return ['success' => true, 'message' => 'Successfully saved'];
             }

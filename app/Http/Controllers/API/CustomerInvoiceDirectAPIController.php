@@ -290,7 +290,12 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $input['FYEnd'] = $CompanyFinanceYear->endingDate;
         $input['FYPeriodDateFrom'] = $FYPeriodDateFrom;
         $input['FYPeriodDateTo'] = $FYPeriodDateTo;
-        $input['invoiceDueDate'] = Carbon::parse($input['invoiceDueDate'])->format('Y-m-d') . ' 00:00:00';
+        try{
+            $input['invoiceDueDate'] = Carbon::parse($input['invoiceDueDate'])->format('Y-m-d') . ' 00:00:00';
+        }
+        catch (\Exception $e){
+            return $this->sendError('Invalid Due Date format');
+        }
         $input['bookingDate'] = Carbon::parse($input['bookingDate'])->format('Y-m-d') . ' 00:00:00';
         $input['date_of_supply'] = Carbon::parse($input['date_of_supply'])->format('Y-m-d') . ' 00:00:00';
         $input['customerInvoiceDate'] = $input['bookingDate'];
@@ -4321,7 +4326,13 @@ WHERE
         }
 
         if($masterData->isPerforma == 2){
-            return $this->sendError('Selected customer invoice cannot be returned back to amend as the invoice is Item Sales Invoice');
+            $checkForInventoryItems = CustomerInvoiceItemDetails::where('itemFinanceCategoryID', 1)
+                                                                ->where('custInvoiceDirectAutoID', $id)
+                                                                ->first();
+
+            if ($checkForInventoryItems) {
+                return $this->sendError('Selected customer invoice cannot be returned back to amend as the invoice is Item Sales Invoice, it contains inventory items');
+            }
         }elseif ($masterData->isPerforma == 4){
             return $this->sendError('Selected customer invoice cannot be returned back to amend as the invoice is From Sales Order');
         }elseif ($masterData->isPerforma == 5){
