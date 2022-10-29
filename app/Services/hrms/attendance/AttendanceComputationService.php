@@ -567,16 +567,8 @@ class AttendanceComputationService
     public function previouseLastRecord($previousDate, $attTime)
     {
        $previouseLastRecordTotal = 0; 
-       $previouseLastRecord = DB::table('srp_erp_pay_empattendancetemptable')
-            ->select('autoID', 'emp_id', 'attDate', 'in_out', 'attTime')
-            ->where('companyID', $this->data['company_id'])
-            ->where('emp_id', $this->data['emp_id'])
-            ->where('attDate', $previousDate)
-            ->where('in_out', 1)
-            ->orderBy("autoID", "DESC")
-            ->first();
-
-        if (!empty($previouseLastRecord)) {
+       $previouseLastRecord = $this->getAttendancetempRecord($previousDate);
+        if (!empty($previouseLastRecord) && $previouseLastRecord['in_out']==1) {
             $t1 = new DateTime($this->cutOfWorkHrsPrvious);
             $t2 = new DateTime($attTime);
             $difference = $t1->diff($t2);
@@ -591,16 +583,8 @@ class AttendanceComputationService
     { 
         $nextDayFirstRecordTotal = 0; 
 
-        $nextDayFirstRecord = DB::table('srp_erp_pay_empattendancetemptable')
-            ->select('autoID', 'emp_id', 'attDate', 'in_out', 'attTime')
-            ->where('companyID', $this->data['company_id'])
-            ->where('emp_id', $this->data['emp_id'])
-            ->where('attDate', $nextDate)
-            ->where('in_out', 2)
-            ->orderBy("autoID", "DESC")
-            ->first(); 
-
-        if (!empty($nextDayFirstRecord)) {
+        $nextDayFirstRecord =  $this->getAttendancetempRecord($nextDate);
+        if (!empty($nextDayFirstRecord) && $nextDayFirstRecord['in_out']==2) {
             $t1 = new DateTime($attTime);
             $t2 = new DateTime($this->cutOfWorkHrsNext);
             $difference = $t1->diff($t2);
@@ -611,4 +595,16 @@ class AttendanceComputationService
 
         return $nextDayFirstRecordTotal;
     }
+
+    public function getAttendancetempRecord($date){ 
+        $data = DB::table('srp_erp_pay_empattendancetemptable')
+        ->select('autoID', 'emp_id', 'attDate', 'in_out', 'attTime')
+        ->where('companyID', $this->data['company_id'])
+        ->where('emp_id', $this->data['emp_id'])
+        ->where('attDate', $date) 
+        ->orderBy("autoID", "DESC")
+        ->first();
+
+        return $data;
+    } 
 }
