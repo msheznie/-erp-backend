@@ -2848,24 +2848,48 @@ class SRMService
             ->where('is_final_level', 3)
             ->count();
 
-        if((count($documentAttachedCountIdsTechnical) == $documentAttachedCountAnswerTechnical) ) {
+        // if((count($documentAttachedCountIdsTechnical) == $documentAttachedCountAnswerTechnical) ) {
+        //     $data['technicalStatus'] = "Completed";
+        //     if($technicalEvaluationCriteriaAnswer == 0 && $documentAttachedCountAnswerTechnical == 0) {
+        //         $data['technicalStatus'] = "Disabled";
+        //     }else {
+        //         if(($technicalEvaluationCriteria == $technicalEvaluationCriteriaAnswer)) {
+        //             $data['technicalStatus'] = "Completed";
+        //         }else {
+        //             $data['technicalStatus'] = "Not Completed";
+        //         }
+        //     }
+        // }else {
+        //     $data['technicalStatus'] = "Not Completed";
+        // }
+
+        if((count($documentAttachedCountIdsTechnical) == $documentAttachedCountAnswerTechnical) &&  ($technicalEvaluationCriteria == $technicalEvaluationCriteriaAnswer)) {
             $data['technicalStatus'] = "Completed";
-            if($technicalEvaluationCriteriaAnswer == 0 && $documentAttachedCountAnswerTechnical == 0) {
-                $data['technicalStatus'] = "Disabled";
-            }else {
-                if(($technicalEvaluationCriteria == $technicalEvaluationCriteriaAnswer)) {
-                    $data['technicalStatus'] = "Completed";
-                }else {
-                    $data['technicalStatus'] = "Not Completed";
-                }
-            }
         }else {
             $data['technicalStatus'] = "Not Completed";
+        }
+
+        if($technicalEvaluationCriteriaAnswer == 0 && $documentAttachedCountAnswerTechnical == 0) {
+            $data['technicalStatus'] = "Disabled"; 
         }
 
 
         // $commercial_pricing_shedule_count = PricingScheduleMaster::where("tender_id",$tender_id)->count();
 
+        $bid_boq = BidBoq::where('bid_master_id',$bidMasterId)->count();
+
+        $bid_boq_answer = BidBoq::where('bid_master_id',$bidMasterId)->where('total_amount','>',0)->count();
+
+        if(($bid_boq == $bid_boq_answer) && (count($documentAttachedCountIdsCommercial) == $documentAttachedCountAnswerCommercial)) {
+            $data['commercial_bid_submission_status'] = "Completed";
+        }else {
+            $data['commercial_bid_submission_status'] = "Not Completed";
+
+        }
+
+        if($bid_boq == 0 && count($documentAttachedCountIdsCommercial) == 0) {
+            $data['commercial_bid_submission_status'] = "Disabled";
+        }
 
 
         if($evaluvationCriteriaDetailsCount == $bidSubmissionDataCount)  {
@@ -3404,7 +3428,7 @@ class SRMService
             }
 
 
-            $group['commercial_bid_submission_status'] = $bidSubmissionData['filtered'];
+            // $group['commercial_bid_submission_status'] = $bidSubmissionData['filtered'];
             $group['technical_bid_submission_status'] = $bidSubmissionData['technicalEvaluationCriteria'];
             $group['bid_submission_status'] = $bidSubmissionData['bidsubmission'];
             return $group;

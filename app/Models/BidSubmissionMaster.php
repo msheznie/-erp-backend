@@ -132,4 +132,8 @@ class BidSubmissionMaster extends Model
     public function tender(){
         return $this->belongsTo(TenderMaster::class, 'tender_id','id');
     }
+
+    public function bidSubmissionDetail(){
+        return $this->hasMany(BidSubmissionDetail::class, 'bid_master_id','id');
+    }
 }
