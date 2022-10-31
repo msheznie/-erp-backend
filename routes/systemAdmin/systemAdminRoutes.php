@@ -7,7 +7,7 @@ Route::get('getAdvanceAccount', 'CompanyAPIController@getAdvanceAccount')->name(
 Route::get('getApprovedCustomers', 'CustomerMasterAPIController@getApprovedCustomers')->name("Approved customer list");
 Route::post('getInterCompaniesForCustomerSupplier', 'CustomerMasterAPIController@getInterCompaniesForCustomerSupplier')->name("Inter companies for customer/supplier");
 
-Route::resource('supplier/masters', 'SupplierMasterAPIController');
+Route::resource('supplier/masters', 'SupplierMasterAPIController', ['names' => 'Supplier master']);
 Route::post('supplier/masters/update', 'SupplierMasterAPIController@updateSupplierMaster')->name("Update supplier master");
 Route::get('supplier/currencies', 'CurrencyMasterAPIController@getCurrenciesBySupplier')->name('Currencies by supplier');
 

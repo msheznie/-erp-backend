@@ -554,7 +554,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
 
         Route::get('reportPrToGrvFilterOptions', 'PurchaseRequestAPIController@reportPrToGrvFilterOptions');
-        Route::get('getApprovedDetails', 'PurchaseRequestAPIController@getApprovedDetails');
+        
         Route::post('getPurchaseRequestReopen', 'PurchaseRequestAPIController@getPurchaseRequestReopen');
         Route::post('getPurchaseRequestReferBack', 'PurchaseRequestAPIController@getPurchaseRequestReferBack');
 
@@ -2849,6 +2849,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('store_tender_bid_documents', 'SrmBidDocumentattachmentsAPIController@storeTenderBidDocuments');    
         Route::get('download_tender_files', 'SrmBidDocumentattachmentsAPIController@downloadFile');    
 
+        Route::resource('bid_document_verifications', 'BidDocumentVerificationAPIController');
+
     });
 
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
@@ -2990,11 +2992,3 @@ Route::get('updateRoutes', 'GeneralLedgerAPIController@updateRoutes');
 /*
  * End external related routes
  */
-
-
-
-
-
-
-
-Route::resource('bid_document_verifications', 'BidDocumentVerificationAPIController');
