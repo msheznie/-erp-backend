@@ -554,7 +554,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
 
         Route::get('reportPrToGrvFilterOptions', 'PurchaseRequestAPIController@reportPrToGrvFilterOptions');
-        Route::get('getApprovedDetails', 'PurchaseRequestAPIController@getApprovedDetails');
+        
         Route::post('getPurchaseRequestReopen', 'PurchaseRequestAPIController@getPurchaseRequestReopen');
         Route::post('getPurchaseRequestReferBack', 'PurchaseRequestAPIController@getPurchaseRequestReferBack');
 
@@ -2986,3 +2986,5 @@ Route::get('updateRoutes', 'GeneralLedgerAPIController@updateRoutes');
 /*
  * End external related routes
  */
+
+Route::resource('navigation_routes', 'NavigationRouteAPIController');
