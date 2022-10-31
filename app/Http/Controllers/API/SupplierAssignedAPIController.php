@@ -84,7 +84,6 @@ class SupplierAssignedAPIController extends AppBaseController
         $input = array_except($input, ['final_approved_by','company']);
 
         $input = $this->convertArrayToValue($input);
-
         foreach($companies as $companie)
         {
                 if( array_key_exists ('supplierAssignedID' , $input )){
@@ -148,7 +147,10 @@ class SupplierAssignedAPIController extends AppBaseController
                    }
 
           }
+        if(empty($companies)){
+            return $this->sendError('Unable to assign no companies found');
 
+        }
  
         
 
