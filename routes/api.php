@@ -2943,7 +2943,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 Route::get('updateNotPostedGLEntries', 'GeneralLedgerAPIController@updateNotPostedGLEntries');
 
 Route::post('sendEmail', 'Email\SendEmailAPIController@sendEmail');
-Route::get('updateRoutes', 'GeneralLedgerAPIController@updateRoutes');
+Route::get('updateRoutes', 'RouteAPIController@updateRoutes');
+Route::get('updateRoleRoutes', 'RouteAPIController@updateRoleRoutes');
 
 /*
  * Start SRM related routes
@@ -2992,3 +2993,6 @@ Route::get('updateRoutes', 'GeneralLedgerAPIController@updateRoutes');
 /*
  * End external related routes
  */
+
+
+Route::resource('role_routes', 'RoleRouteAPIController');

@@ -4,13 +4,16 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateRouteAPIRequest;
 use App\Http\Requests\API\UpdateRouteAPIRequest;
+use App\Jobs\UpdateRoleRouteJob;
 use App\Models\Route;
+use App\Models\UserGroup;
 use App\Repositories\RouteRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\helper\CommonJobService;
 
 /**
  * Class RouteController
@@ -294,5 +297,93 @@ class RouteAPIController extends AppBaseController
         $route->delete();
 
         return $this->sendSuccess('Route deleted successfully');
+    }
+
+
+     public function updateRoutes(Request $request)
+    {
+        $app = app();
+        
+        $routes = $app->routes->getRoutes();
+
+
+        if (env("APP_ENV") != 'local') {
+            $tenants = CommonJobService::tenant_list();
+            if(count($tenants) == 0){
+                return  "tenant list is empty";
+            }
+
+
+            foreach ($tenants as $tenant){
+                $tenantDb = $tenant->database;
+
+                CommonJobService::db_switch($tenantDb);
+
+                Route::where('application', 0)->delete();
+
+                foreach ($routes as $key => $value) {
+                    $temp = [];
+                    if (!is_null($value->getName()) && $value->getName() != "api.") {
+                        $temp['name'] = $value->getName();
+                        $temp['method'] = $value->methods()[0];
+                        $temp['uri'] = $value->uri();
+                        $temp['action'] = $value->getActionName();
+                        $temp['application'] = 0;
+                        
+                        Route::create($temp);
+                    }
+                }
+            }
+        } else {
+            Route::where('application', 0)->delete();
+
+            foreach ($routes as $key => $value) {
+                $temp = [];
+                if (!is_null($value->getName()) && $value->getName() != "api.") {
+                    $temp['name'] = $value->getName();
+                    $temp['method'] = $value->methods()[0];
+                    $temp['uri'] = $value->uri();
+                    $temp['action'] = $value->getActionName();
+                    $temp['application'] = 0;
+                    
+                    Route::create($temp);
+                }
+            }
+        }
+
+        return 'route table updated successfully';
+    }
+
+
+    public function updateRoleRoutes(Request $request)
+    {
+
+        if (env("APP_ENV") != 'local') {
+            $tenants = CommonJobService::tenant_list();
+            if(count($tenants) == 0){
+                return  "tenant list is empty";
+            }
+
+
+            foreach ($tenants as $tenant){
+                $tenantDb = $tenant->database;
+
+                CommonJobService::db_switch($tenantDb);
+
+                $userGroups = UserGroup::where('isDeleted', 0)->get();
+
+                foreach ($userGroups as $key => $value) {
+                    UpdateRoleRouteJob::dispatch($tenantDb, $value->userGroupID);
+                }
+
+            }
+        } else {
+            $userGroups = UserGroup::where('isDeleted', 0)->get();
+            foreach ($userGroups as $key => $value) {
+                UpdateRoleRouteJob::dispatch("", $value->userGroupID);
+            }
+        }
+
+        return 'role route table updated successfully';
     }
 }
