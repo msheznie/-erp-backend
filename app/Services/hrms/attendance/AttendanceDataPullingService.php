@@ -291,8 +291,7 @@ class AttendanceDataPullingService{
             $shiftHours = (empty($shiftHours))? 0: $shiftHours;
             $shiftId = (empty($row['shiftID']))? 0: $row['shiftID'];
             $officialWorkTime = ($shiftHours > $obj->totalWorkingHours) ? $obj->totalWorkingHours : $shiftHours;
- 
-            $this->data[] = [ 
+             $this->data[] = [ 
                 'empID'=> $empId, 'deviceID'=> $row['device_id_in'], 'machineID'=> $row['machine_id_in'],
                 'attendanceDate'=> $attDate, 'shift_id'=> $shiftId, 'floorID'=> $row['location_in'], 
                 'clockoutFloorID'=> $row['location_out'], 'gracePeriod'=> $obj->gracePeriod, 
