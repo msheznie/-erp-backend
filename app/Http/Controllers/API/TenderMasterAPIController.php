@@ -702,6 +702,11 @@ WHERE
             return ['success' => false, 'message' => 'Document sales to time is required'];
         }
 
+        if ($document_sales_start_date > $document_sales_end_date) {
+            return ['success' => false, 'message' => 'From date and time cannot be greater than the To date and time  for Document Sales'];
+        }
+
+
         if(!isset(($input['pre_bid_clarification_start_time']))) {
             return ['success' => false, 'message' => 'Pre bid clarification from time is required'];
 
@@ -709,6 +714,11 @@ WHERE
         if(!isset(($input['pre_bid_clarification_end_time']))) {
             return ['success' => false, 'message' => 'Pre bid clarification to time is required'];
 
+        }
+
+
+        if ($pre_bid_clarification_start_date > $pre_bid_clarification_end_date) {
+            return ['success' => false, 'message' => 'From date and time cannot be greater than the To date and time  for Pre-bid Clarification'];
         }
 
         if(!isset(($input['bid_submission_opening_time']))) {
@@ -721,6 +731,9 @@ WHERE
 
         }
 
+        if ($bid_submission_opening_date > $bid_submission_closing_date) {
+            return ['success' => false, 'message' => 'From date and time cannot be greater than the To date and time  for Bid Submission'];
+        }
 
         if(!isset(($input['site_visit_start_time']))) {
             return ['success' => false, 'message' => 'Site visit from time is required'];
@@ -731,6 +744,17 @@ WHERE
             return ['success' => false, 'message' => 'Site visit to time is required'];
 
         }
+
+
+        if ($site_visit_date > $site_visit_end_date) {
+            return ['success' => false, 'message' => 'From date and time cannot be greater than the To date and time  for Site Visit'];
+        }
+
+
+        if(isset($document_sales_start_date) && $document_sales_start_date < $currenctDate || isset($bid_submission_opening_date) && $bid_submission_opening_date < $currenctDate ||isset($pre_bid_clarification_start_date) && $pre_bid_clarification_start_date < $currenctDate ||isset($site_visit_date) && $site_visit_date < $currenctDate) {
+            return ['success' => false, 'message' => 'All the date and time should greater than current date and time'];
+        }
+
 
         if(is_null($bid_submission_closing_date)) {
             $bid_sub_date = $bid_submission_opening_date;
@@ -783,6 +807,12 @@ WHERE
 
 
                 if(isset($bid_opeing_end_date)) {
+
+                    if(is_null($input['bid_opening_end_date_time'])) {
+                        return ['success' => false, 'message' => 'Bid Opening to time cannot be empty'];
+                    }
+
+
                     if($bid_opening_date > $bid_opeing_end_date) {
                         return ['success' => false, 'message' => 'Bid Opening to date and time should greater than bid opening from date and time'];
     

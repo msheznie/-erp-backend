@@ -435,4 +435,149 @@ class TenderMaster extends Model
     {
         return $this->hasOne('App\Models\EvaluationType', 'id', 'evaluation_type_id');
     }
+    
+    public function getDocumentSalesStartTimeAttribute() {
+        if($this->document_sales_start_date) {
+            $time = new Carbon($this->document_sales_start_date);
+            return $time->format('Y-m-d H:i:s');
+        }else {
+            return null;
+        }
+
+    }
+
+    public function getDocumentSalesEndTimeAttribute() {
+        if($this->document_sales_end_date) {
+            $time = new Carbon($this->document_sales_end_date);
+            return $time->format('Y-m-d H:i:s');
+        }else {
+            return null;
+        }
+
+    }
+
+    public function getPreBidClarificationStartTimeAttribute() {
+        if($this->pre_bid_clarification_start_date) {
+            $time = new Carbon($this->pre_bid_clarification_start_date);
+            return $time->format('Y-m-d H:i:s'); 
+        }else {
+             return null;
+        }
+
+    }
+
+    
+    public function getPreBidClarificationEndTimeAttribute() {
+        if($this->pre_bid_clarification_end_date) {
+            $time = new Carbon($this->pre_bid_clarification_end_date);
+            return $time->format('Y-m-d H:i:s'); 
+        }else {
+            return null;
+        }
+
+    }
+
+
+    public function getSiteVisitStartTimeAttribute() {
+        if($this->site_visit_date) {
+            $time = new Carbon($this->site_visit_date);
+            return $time->format('Y-m-d H:i:s'); 
+        }else {
+            return null;
+        }
+
+    }
+
+    public function getSiteVisitEndTimeAttribute() {
+        if($this->site_visit_end_date) {
+            $time = new Carbon($this->site_visit_end_date);
+            return $time->format('Y-m-d H:i:s');   
+        }else {
+            return null;
+        }
+
+    }
+
+    public function getBidSubmissionOpeningTimeAttribute() {
+        if($this->bid_submission_opening_date) {
+            $time = new Carbon($this->bid_submission_opening_date);
+            return $time->format('Y-m-d H:i:s');   
+        }else {
+            return null;
+        }
+
+    }
+
+    public function getBidSubmissionClosingTimeAttribute() {
+        if($this->bid_submission_closing_date) {
+            $time = new Carbon($this->bid_submission_closing_date);
+            return $time->format('Y-m-d H:i:s');   
+        }else {
+            return null;
+        }
+
+    }
+
+
+    public function getBidOpeningDateTimeAttribute() {
+        if($this->bid_opening_date) {
+            $time = new Carbon($this->bid_opening_date);
+            return $time->format('Y-m-d H:i:s'); 
+        }else {
+            return null;
+        }
+  
+    }
+
+    public function getBidOpeningEndDateTimeAttribute() {
+        if($this->bid_opening_end_date) {
+            $time = new Carbon($this->bid_opening_end_date);
+            return $time->format('Y-m-d H:i:s');   
+        }else {
+            return null;
+        }
+
+    }
+
+    public function getTechnicalBidOpeningDateTimeAttribute() {
+        if($this->technical_bid_opening_date) {
+            $time = new Carbon($this->technical_bid_opening_date);
+            return $time->format('Y-m-d H:i:s'); 
+        }else {
+            return null;
+        }
+  
+    }
+
+    public function getTechnicalBidClosingDateTimeAttribute() {
+        if($this->technical_bid_closing_date) {
+            $time = new Carbon($this->technical_bid_closing_date);
+            return $time->format('Y-m-d H:i:s');  
+        }else {
+            return null;
+        }
+ 
+    }
+
+
+    public function getCommericalBidOpeningDateTimeAttribute() {
+        if($this->commerical_bid_opening_date) {
+            $time = new Carbon($this->commerical_bid_opening_date);
+            return $time->format('Y-m-d H:i:s');  
+        }else {
+            return null;
+        }
+ 
+    }
+
+    public function getCommericalBidClosingDateTimeAttribute() {
+        if($this->commerical_bid_closing_date) {
+            $time = new Carbon($this->commerical_bid_closing_date);
+            return $time->format('Y-m-d H:i:s');  
+        }else {
+            return null;
+        }
+ 
+    }
+
 }
