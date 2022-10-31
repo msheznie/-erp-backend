@@ -297,15 +297,11 @@ class BidSubmissionMasterAPIController extends AppBaseController
         $companyId = $request['companyId'];
         $tenderId = $request['tenderId'];
 
-
-
         $query = BidSubmissionMaster::with(['SupplierRegistrationLink','bidSubmissionDetail' => function($query){
             $query->whereHas('srm_evaluation_criteria_details.evaluation_criteria_type', function ($query) {
                 $query->where('id', 1);
             });
         }])->where('status', 1)->where('bidSubmittedYN', 1)->where('tender_id', $tenderId);
-
-       // return $this->sendResponse($query, 'Tender Masters retrieved successfully');
 
         $search = $request->input('search.value');
         if ($search) {
@@ -316,7 +312,6 @@ class BidSubmissionMasterAPIController extends AppBaseController
                 });
             });
         }
-
 
         return \DataTables::eloquent($query)
             ->order(function ($query) use ($input) {
