@@ -99,7 +99,7 @@ class MaterialReturnGlService
             $data['documentID'] = $masterData->documentID;
             $data['documentSystemCode'] = $masterModel["autoID"];
             $data['documentCode'] = $masterData->itemReturnCode;
-            $data['documentDate'] = date('Y-m-d H:i:s');
+            $data['documentDate'] = isset($masterModel['documentDateOveride']) ? $masterModel['documentDateOveride'] : date('Y-m-d H:i:s');
             $data['documentYear'] = \Helper::dateYear($masterData->ReturnDate);
             $data['documentMonth'] = \Helper::dateMonth($masterData->ReturnDate);
             $data['documentConfirmedDate'] = $masterData->confirmedDate;

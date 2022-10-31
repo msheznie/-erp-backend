@@ -9,6 +9,7 @@ use App\Jobs\GeneralLedgerInsert;
 use App\Jobs\UnbilledGRVInsert;
 use App\Models\AccountsPayableLedger;
 use App\Models\AccountsReceivableLedger;
+use App\Models\AssetDisposalMaster;
 use App\Models\BankLedger;
 use App\Models\BookInvSuppMaster;
 use App\Models\Company;
@@ -21,6 +22,7 @@ use App\Models\DocumentMaster;
 use App\Models\ErpItemLedger;
 use App\Models\FixedAssetDepreciationMaster;
 use App\Models\FixedAssetMaster;
+use App\helper\CommonJobService;
 use App\Models\GeneralLedger;
 use App\Models\GRVMaster;
 use App\Models\InventoryReclassification;
@@ -29,11 +31,13 @@ use App\Models\ItemReturnMaster;
 use App\Models\JvMaster;
 use App\Models\EmployeeLedger;
 use App\Models\PaySupplierInvoiceMaster;
+use App\Models\POSGLEntries;
 use App\Models\PurchaseReturn;
 use App\Models\CurrencyMaster;
 use App\Models\SalesReturn;
 use App\Models\CustomerMaster;
 use App\Models\StockAdjustment;
+use App\Models\StockCount;
 use App\Models\StockReceive;
 use App\Models\StockTransfer;
 use App\Models\SupplierMaster;
@@ -341,6 +345,37 @@ class GeneralLedgerAPIController extends AppBaseController
         return $this->sendResponse($id, 'General Ledger deleted successfully');
     }
 
+    public function updateNotPostedGLEntries(Request $request)
+    {
+        $input = $request->all();
+
+
+        $tenants = CommonJobService::tenant_list();
+        if(count($tenants) == 0){
+            return  "tenant list is empty";
+        }
+
+
+        foreach ($tenants as $tenant){
+            $tenantDb = $tenant->database;
+
+            CommonJobService::db_switch($tenantDb);
+
+            $data = DB::select("SELECT da.companyID, da.companySystemID, da.documentSystemID,da.employeeSystemID, da.documentID, da.documentSystemCode, da.documentCode, da.TIMESTAMP, da.documentApprovedID FROM erp_documentapproved da WHERE da.approvedYN != 0 AND da.documentSystemID NOT IN ( 1, 2, 56, 66, 59, 58, 50, 57, 101, 51, 107, 96, 62, 67, 68, 9, 65, 64, 100, 102, 103, 46, 99 ) AND da.documentCode NOT IN ( SELECT documentCode FROM erp_generalledger GROUP BY documentCode) AND da.rollLevelOrder = (SELECT max(da_new.rollLevelOrder) FROM erp_documentapproved as da_new WHERE da_new.documentSystemID = da.documentSystemID AND da_new.documentSystemCode = da.documentSystemCode) AND da.`timeStamp` > '2022-09-01'");
+
+            foreach ($data as $dt){
+                $masterData = ['documentSystemID' => $dt->documentSystemID,
+                               'autoID' => $dt->documentSystemCode,
+                               'companySystemID' => $dt->companySystemID,
+                               'documentDateOveride' => $dt->TIMESTAMP,
+                               'employeeSystemID' => $dt->employeeSystemID];
+                $jobGL = GeneralLedgerInsert::dispatch($masterData, $tenantDb);
+            }
+        }
+
+        return $this->sendResponse([], 'General Ledger updated successfully');
+    }
+
 
     public function getGeneralLedgerReview(Request $request)
     {
@@ -422,67 +457,179 @@ class GeneralLedgerAPIController extends AppBaseController
         $result = [];
         switch ($documentSystemID) {
             case 3: // GRV
-                $result = GrvGlService::processEntry($masterModel);
+                $grvMaster = GRVMaster::find($autoID);
+                if($grvMaster && $grvMaster->approved != -1){
+                    $result = GrvGlService::processEntry($masterModel);
+                }
+                else{
+                    $result = [];
+                }
                 break;
             case 8: // MI - Material issue
-                $result = MaterialIssueGlService::processEntry($masterModel);
+                $materialIssueMaster = ItemIssueMaster::find($autoID);
+                if($materialIssueMaster && $materialIssueMaster->approved != -1){
+                    $result = MaterialIssueGlService::processEntry($masterModel);
+                }
+                else{
+                    $result = [];
+                }
                 break;
             case 12: // SR - Material Return
-                $result = MaterialReturnGlService::processEntry($masterModel);
+                $materialReturnMaster = ItemReturnMaster::find($autoID);
+                if($materialReturnMaster && $materialReturnMaster->approved != -1){
+                    $result = MaterialReturnGlService::processEntry($masterModel);
+                }
+                else{
+                    $result = [];
+                }
                 break;
             case 13: // ST - Stock Transfer
-                $result = StockTransferGlService::processEntry($masterModel);
+                $stockTransferMaster = StockTransfer::find($autoID);
+                if($stockTransferMaster && $stockTransferMaster->approved != -1){
+                    $result = StockTransferGlService::processEntry($masterModel);
+                }
+                else{
+                   $result = [];
+                }
                 break;
             case 10: // RS - Stock Receive
-                $result = StockRecieveGlService::processEntry($masterModel);
+                $stockRecieveMaster = StockReceive::find($autoID);
+                if($stockRecieveMaster && $stockRecieveMaster->approved != -1) {
+                    $result = StockRecieveGlService::processEntry($masterModel);
+                }
+                else{
+                    $result = [];
+                }
                 break;
             case 61: // INRC - Inventory Reclassififcation
-                $result = InventoryReclassificationGlService::processEntry($masterModel);
+                $inventoryRecMaster = InventoryReclassification::find($autoID);
+                if($inventoryRecMaster && $inventoryRecMaster->approved != -1) {
+                    $result = InventoryReclassificationGlService::processEntry($masterModel);
+                }
+                else{
+                    $result = [];
+                }
                 break;
             case 24: // PRN - Purchase Return
-                $result = PurchaseReturnGlService::processEntry($masterModel);
+                $purchaseReturnMaster = PurchaseReturn::find($autoID);
+                if($purchaseReturnMaster && $purchaseReturnMaster->approved != -1){
+                    $result = PurchaseReturnGlService::processEntry($masterModel);
+                }
+                else{
+                    $result = [];
+                }
                 break;
             case 20:
-                $result = CustomerInvoiceGlService::processEntry($masterModel);
+                $custInvMaster = CustomerInvoiceDirect::find($autoID);
+                if($custInvMaster && $custInvMaster->approved != -1) {
+                    $result = CustomerInvoiceGlService::processEntry($masterModel);
+                }else{
+                    $result = [];
+                }
                 break;
             case 7: // SA - Stock Adjustment
-                $result = StockAdjustmentGlService::processEntry($masterModel);
+                $stockAdjusmentMaster = StockAdjustment::find($autoID);
+                if($stockAdjusmentMaster && $stockAdjusmentMaster->approved != -1){
+                    $result = StockAdjustmentGlService::processEntry($masterModel);
+                }else{
+                    $result = [];
+                }
                 break;
             case 11: // SI - Supplier Invoice
-                $result = SupplierInvoiceGlService::processEntry($masterModel);
+                $supplierInvMaster = BookInvSuppMaster::find($autoID);
+                if($supplierInvMaster && $supplierInvMaster->approved != -1){
+                    $result = SupplierInvoiceGlService::processEntry($masterModel);
+                }else{
+                    $result = [];
+                }
                 break;
             case 15: // DN - Debit Note
-                $result = DebitNoteGlService::processEntry($masterModel);
+                $debitNoteMaster = DebitNote::find($autoID);
+                if($debitNoteMaster && $debitNoteMaster->approved != -1) {
+                    $result = DebitNoteGlService::processEntry($masterModel);
+                }else{
+                    $result = [];
+                }
                 break;
             case 19: // CN - Credit Note
-                $result = CreditNoteGlService::processEntry($masterModel);
+                $creditNoteMaster = CreditNote::find($autoID);
+                if($creditNoteMaster && $creditNoteMaster->approved != -1) {
+                    $result = CreditNoteGlService::processEntry($masterModel);
+                }else{
+                    $result = [];
+                }
                 break;
             case 4: // PV - Payment Voucher
-                $result = PaymentVoucherGlService::processEntry($masterModel);
+                $pvMaster = PaySupplierInvoiceMaster::find($autoID);
+                if($pvMaster && $pvMaster->approved != -1) {
+                    $result = PaymentVoucherGlService::processEntry($masterModel);
+                } else {
+                    $result = [];
+                }
                 break;
             case 21: // BRV - Customer Receive Payment
-                $result = CustomerReceivePaymentGlService::processEntry($masterModel);
+                $custRecPayMaster = CustomerReceivePayment::find($autoID);
+                if($custRecPayMaster && $custRecPayMaster->approved != -1){
+                    $result = CustomerReceivePaymentGlService::processEntry($masterModel);
+                } else {
+                    $result = [];
+                }
                 break;
             case 17: // JV - Journal Voucher
-                $result = JournalVoucherGlService::processEntry($masterModel);
+                $jvMaster = JvMaster::find($autoID);
+                if($jvMaster && $jvMaster->approved != -1){
+                    $result = JournalVoucherGlService::processEntry($masterModel);
+                } else {
+                    $result = [];
+                }
                 break;
             case 22: // FA - Fixed Asset Master
-                $result = FixedAssetMasterGlService::processEntry($masterModel);
+                $faMaster = FixedAssetMaster::find($autoID);
+                if($faMaster && $faMaster->approved != -1){
+                    $result = FixedAssetMasterGlService::processEntry($masterModel);
+                } else{
+                    $result = [];
+                }
                 break;
             case 23: // FAD - Fixed Asset Depreciation
-                $result = FixedAssetDipreciationGlService::processEntry($masterModel);
+                $fadMaster = FixedAssetDepreciationMaster::find($autoID);
+                if($fadMaster && $fadMaster->approved != -1){
+                    $result = FixedAssetDipreciationGlService::processEntry($masterModel);
+                } else {
+                    $result = [];
+                }
                 break;
             case 41: // FADS - Fixed Asset Disposal
-                $result = FixedAssetDisposalGlService::processEntry($masterModel);
+                $fadsMaster = AssetDisposalMaster::find($autoID);
+                if($fadsMaster && $fadsMaster->approvedYN != -1){
+                    $result = FixedAssetDisposalGlService::processEntry($masterModel);
+                } else {
+                    $result = [];
+                }
                 break;
             case 71:
-                $result = DeliveryOrderGlService::processEntry($masterModel);
+                $deoMaster = DeliveryOrder::find($autoID);
+                if($deoMaster && $deoMaster->approvedYN != -1){
+                    $result = DeliveryOrderGlService::processEntry($masterModel);
+                } else {
+                    $result = [];
+                }
                 break;
             case 87: // sales return
-                $result = SalesReturnGlService::processEntry($masterModel);
+                $srMaster = SalesReturn::find($autoID);
+                if($srMaster && $srMaster->approvedYN != -1){
+                    $result = SalesReturnGlService::processEntry($masterModel);
+                } else {
+                    $result = [];
+                }
                 break;
             case 97: // SA - Stock Count
-                $result = StockCountGlService::processEntry($masterModel);
+                $saMaster = StockCount::find($autoID);
+                if($saMaster && $saMaster->approved != -1){
+                    $result = StockCountGlService::processEntry($masterModel);
+                } else {
+                    $result = [];
+                }
                 break;
             case 110: // GPOS Sales
                 $result = GPOSSalesGlService::processEntry($masterModel);

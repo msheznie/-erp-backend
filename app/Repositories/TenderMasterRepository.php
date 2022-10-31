@@ -54,20 +54,7 @@ class TenderMasterRepository extends BaseRepository
         'technical_bid_closing_date',
         'commerical_bid_opening_date',
         'commerical_bid_closing_date',
-        'bid_opening_date_time',
-        'bid_opening_end_date_time',
-        'technical_bid_opening_date_time',
-        'technical_bid_closing_date_time',
-        'commerical_bid_opening_date_time',
-        'commerical_bid_closing_date_time',
-        'document_sales_start_time',
-        'document_sales_end_time',
-        'pre_bid_clarification_start_time',
-        'pre_bid_clarification_end_time',
-        'site_visit_start_time',
-        'site_visit_end_time',
-        'bid_submission_opening_time',
-        'bid_submission_closing_time'
+
     ];
 
     /**

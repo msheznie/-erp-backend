@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Eloquent as Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-
+use Carbon\Carbon;
 /**
  * @SWG\Definition(
  *      definition="TenderMaster",
@@ -213,6 +213,21 @@ class TenderMaster extends Model
     const UPDATED_AT = 'updated_at';
 
 
+    protected $appends = array(
+                            'document_sales_start_time'
+                            ,'document_sales_end_time'
+                            ,'pre_bid_clarification_start_time'
+                            ,'pre_bid_clarification_end_time'
+                            ,'site_visit_start_time'
+                            ,'site_visit_end_time'
+                            ,'bid_submission_opening_time'
+                            ,'bid_submission_closing_time'
+                            ,'bid_opening_date_time'
+                            ,'bid_opening_end_date_time'
+                            ,'technical_bid_opening_date_time'
+                            ,'technical_bid_closing_date_time'
+                            ,'commerical_bid_opening_date_time'
+                            ,'commerical_bid_closing_date_time');
 
 
     public $fillable = [
@@ -276,20 +291,10 @@ class TenderMaster extends Model
         'technical_bid_closing_date',
         'commerical_bid_opening_date',
         'commerical_bid_closing_date',
-        'bid_opening_date_time',
-        'bid_opening_end_date_time',
-        'technical_bid_opening_date_time',
-        'technical_bid_closing_date_time',
-        'commerical_bid_opening_date_time',
-        'commerical_bid_closing_date_time',
-        'document_sales_start_time',
-        'document_sales_end_time',
-        'pre_bid_clarification_start_time',
-        'pre_bid_clarification_end_time',
-        'site_visit_start_time',
-        'site_visit_end_time',
-        'bid_submission_opening_time',
-        'bid_submission_closing_time'
+        'doc_verifiy_by_emp',
+        'doc_verifiy_date',
+        'doc_verifiy_status',
+        'doc_verifiy_comment'
     ];
 
     /**
@@ -359,20 +364,7 @@ class TenderMaster extends Model
         'technical_bid_closing_date'  => 'datetime',
         'commerical_bid_opening_date'  => 'datetime',
         'commerical_bid_closing_date'  => 'datetime',
-        'bid_opening_date_time'  => 'datetime',
-        'bid_opening_end_date_time'  => 'datetime',
-        'technical_bid_opening_date_time'  => 'datetime',
-        'technical_bid_closing_date_time'  => 'datetime',
-        'commerical_bid_opening_date_time'  => 'datetime',
-        'commerical_bid_closing_date_time'  => 'datetime',
-        'document_sales_start_time'=> 'datetime',
-        'document_sales_end_time' => 'datetime',
-        'pre_bid_clarification_start_time' => 'datetime',
-        'pre_bid_clarification_end_time' => 'datetime',
-        'site_visit_start_time' => 'datetime',
-        'site_visit_end_time' => 'datetime',
-        'bid_submission_opening_time' => 'datetime',
-        'bid_submission_closing_time' => 'datetime',
+        'doc_verifiy_status' => 'integer',
     ];
 
     /**
