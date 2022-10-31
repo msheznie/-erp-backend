@@ -606,7 +606,7 @@ class AttendanceComputationService
         ->where('companyID', $this->data['company_id'])
         ->where('emp_id', $this->data['emp_id'])
         ->where('attDate', $date) 
-        ->orderBy("autoID", "DESC")
+        ->orderBy("autoID", "ASC")
         ->first();
 
         return $data;
