@@ -2104,6 +2104,7 @@ WHERE
         $input = $request->all();
         $tenderMasterId = $input['tenderMasterId'];
         $companySystemID = $input['companySystemID'];
+        $is_date_disable = true;
         $data['master'] = TenderMaster::with(['procument_activity', 'confirmed_by','tender_type','envelop_type','evaluation_type'])->where('id', $input['tenderMasterId'])->first();
         $activity = ProcumentActivity::with(['tender_procurement_category'])->where('tender_id', $input['tenderMasterId'])->where('company_id', $input['companySystemID'])->get();
         $act = array();
@@ -2145,6 +2146,26 @@ WHERE
 
         $data['calendarDates'] = DB::select($qry);
         $data['calendarDatesAll'] = DB::select($qryAll);
+
+        $stage = $data['master']['stage'];
+        if($stage == 1)
+        {
+            $opening_date_comp = $data['master']['bid_opening_date'];
+        }
+        else if($stage == 2)
+        {
+            $opening_date_comp = $data['master']['technical_bid_opening_date'];
+        }
+
+        $current_date = date('Y-m-d H:i:s');
+
+        if($current_date > $opening_date_comp)
+        {
+          $is_date_disable = false;
+        }
+
+     
+        $data['master']['disable_date'] = $is_date_disable;
 
         $documentTypes = TenderDocumentTypeAssign::with(['document_type'])->where('tender_id', $tenderMasterId)->get();
         $docTypeArr = array();
