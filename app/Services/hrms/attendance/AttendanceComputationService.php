@@ -587,7 +587,7 @@ class AttendanceComputationService
     { 
         $nextDayFirstRecordTotal = 0; 
 
-        $nextDayFirstRecord =  $this->getAttendancetempRecord($nextDate,,'ASC');
+        $nextDayFirstRecord =  $this->getAttendancetempRecord($nextDate,'ASC');
         if (!empty($nextDayFirstRecord) && $nextDayFirstRecord->in_out==2) {
             $t1 = new DateTime($attTime);
             $t2 = new DateTime($this->cutOfWorkHrsNext);
