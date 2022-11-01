@@ -429,7 +429,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
         $tenderId = $request['tenderMasterId'];
         $is_verified = true;
 
-        $query = BidSubmissionMaster::where('tender_id', $tenderId)->where('doc_verifiy_status', 0)->count();
+        $query = BidSubmissionMaster::where('tender_id', $tenderId)->where('doc_verifiy_status', 0)->where('bidSubmittedYN',1)->where('status',1)->count();
 
 
         if($query > 0)

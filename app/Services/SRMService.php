@@ -2660,6 +2660,11 @@ class SRMService
 
         $data = DocumentAttachments::where('attachmentID', $attachment['attachmentID'])
             ->delete();
+        $attachment_varify =   BidDocumentVerification::where('attachment_id',$attachment['attachmentID']);
+        if($attachment_varify->count() > 0)
+        {
+        $attachment_varify->delete();
+        }
 
         return [
             'success' => true,
