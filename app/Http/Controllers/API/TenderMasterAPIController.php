@@ -1150,11 +1150,7 @@ WHERE
         $currenctDate = Carbon::now();
         if (isset($input['calendarDates'])) {
             if (count($input['calendarDates']) > 0) {
-                if(isset($input['time_changed'])){
-                    CalendarDatesDetail::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
-                }
-                
-                foreach ($input['calendarDates'] as $calDate) {
+                foreach ($input['calendarDates'] as $calDate) { 
                     $fromTime =($calDate['from_time']) ? new Carbon($calDate['from_time']) : null;
                     $toTime = ($calDate['to_time']) ? new Carbon($calDate['to_time']) : null;
 
@@ -1210,7 +1206,20 @@ WHERE
                         if($frm_date > $to_date) {
                             return ['success' => false, 'message' => 'From date and time should greater than to date and time'];
                         }
+                    }
+                }
+                    
+                    CalendarDatesDetail::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
+                    foreach ($input['calendarDates'] as $calDate) {
+                        $fromTime =new Carbon($calDate['from_time']);
+                        $frm_date = new Carbon($calDate['from_date']);
+                        $frm_date = ($calDate['from_time']) ? $frm_date->format('Y-m-d').' '.$fromTime->format('H:i:s') : $frm_date->format('Y-m-d');
 
+                        $toTime = new Carbon($calDate['to_time']);
+                        $to_date = new Carbon($calDate['to_date']);
+                        $to_date = ($calDate['to_time']) ? $to_date->format('Y-m-d').' '.$toTime->format('H:i:s') : $to_date->format('Y-m-d') ;
+
+                        
                         $calDt['tender_id'] = $input['id'];
                         $calDt['calendar_date_id'] = $calDate['id'];
                         $calDt['from_date'] = $frm_date;
@@ -1220,11 +1229,9 @@ WHERE
                         $calDt['from_time'] = ($fromTime) ? $fromTime : null;
                         $calDt['to_time'] = ($toTime) ? $toTime : null;
                         $calDt['created_at'] = Carbon::now();
-
                         CalendarDatesDetail::create($calDt);
                     }
-                }
-                return ['success' => true, 'message' => 'Successfully updated'];
+                    return ['success' => true, 'message' => 'Successfully updated'];
             } else {
                 CalendarDatesDetail::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
             }
