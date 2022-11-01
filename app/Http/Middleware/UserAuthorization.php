@@ -18,42 +18,33 @@ class UserAuthorization
      */
     public function handle($request, Closure $next)
     {
+        if (env('ENABLE_AUTHORIZATION', false) != true) {
+            return $next($request);
+        }
+
+        $routeName = $request->route()->getName();
+        $checkRouteName = NavigationRoute::where('routeName', $routeName)->first();
+
+        if (!$checkRouteName) {
+            return $next($request);
+        }
+
         $employeeSystemID = \Helper::getEmployeeSystemID();
 
         $userGroups = EmployeeNavigation::where('employeeSystemID', $employeeSystemID)
                                         ->get();
 
-        $routeName = $request->route()->getName();
+        $userGroupIDs = (count($userGroups) > 0) ? collect($userGroups)->pluck('userGroupID')->toArray() : [];
 
-        $checkRouteName = NavigationRoute::where('routeName', $routeName)->first();
+        $checkRoleRoute = RoleRoute::whereIn('userGroupID', $userGroupIDs)
+                                    ->where('routeName', $routeName)
+                                    ->first();
 
-        $routeCheck = false;
-        foreach ($userGroups as $key => $value) {
-            $checkRoleRoute = RoleRoute::where('userGroupID', $value->userGroupID)
-                                        ->where('routeName', $routeName)
-                                        ->first();
-
-
-            if ($checkRoleRoute) {
-                $routeCheck = true;
-            }
-        }
-
-        if (env('ENABLE_AUTHORIZATION', false) == true) {
-            if ($routeCheck) {
-                return $next($request);
-            } else {
-                if (!$checkRouteName) {
-                    return $next($request);
-                } else {
-                    return errorMsgs("Unauthorized Access");
-                }
-            }
-        } else {
+        if ($checkRoleRoute) {
             return $next($request);
+        } else {
+            return errorMsgs("Unauthorized Access");
         }
-
-
     }
 }
 

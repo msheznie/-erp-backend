@@ -307,7 +307,7 @@ class RouteAPIController extends AppBaseController
         $routes = $app->routes->getRoutes();
 
 
-        if (env("APP_ENV") != 'local') {
+        if (env('IS_MULTI_TENANCY', false)) {
             $tenants = CommonJobService::tenant_list();
             if(count($tenants) == 0){
                 return  "tenant list is empty";
@@ -358,7 +358,7 @@ class RouteAPIController extends AppBaseController
     public function updateRoleRoutes(Request $request)
     {
 
-        if (env("APP_ENV") != 'local') {
+        if (env('IS_MULTI_TENANCY', false)) {
             $tenants = CommonJobService::tenant_list();
             if(count($tenants) == 0){
                 return  "tenant list is empty";
