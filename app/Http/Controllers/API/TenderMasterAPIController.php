@@ -975,7 +975,6 @@ WHERE
                     ProcumentActivity::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
                 }
 
-
                 if ($exist['site_visit_date'] != $site_visit_date) {
                     $site['tender_id'] = $input['id'];
                     $site['date'] = $site_visit_date;
