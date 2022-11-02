@@ -3432,8 +3432,31 @@ class SRMService
                 $group['is_active_common_docs'] = -1;
             }
 
+            $documentAttachedCountIdsCommercial = DocumentAttachments::with(['tender_document_types' => function ($q) {
+                $q->where('srm_action', 1);
+            }, 'document_attachments' => function ($q) use ($bidMasterId) {
+                $q->where('documentSystemCode', $bidMasterId);
+            }])->whereHas('tender_document_types', function ($q) {
+            })->where('documentSystemCode', $group['tender_id'])->where('parent_id', null)->where('documentSystemID', 108)->where('envelopType', 1)->where('attachmentType',2)->pluck('attachmentID')->toArray();
 
-            // $group['commercial_bid_submission_status'] = $bidSubmissionData['filtered'];
+            $documentAttachedCountAnswerCommercial = DocumentAttachments::whereIn('parent_id', $documentAttachedCountIdsCommercial)->where('documentSystemID', 108)->count();
+
+
+            $bid_boq = BidBoq::where('bid_master_id',$bidMasterId)->count();
+
+            $bid_boq_answer = BidBoq::where('bid_master_id',$bidMasterId)->where('total_amount','>',0)->count();
+
+            if(($bid_boq == $bid_boq_answer) && (count($documentAttachedCountIdsCommercial) == $documentAttachedCountAnswerCommercial)) {
+                $group['commercial_bid_submission_status'] = "Completed";
+            }else {
+                $group['commercial_bid_submission_status'] = "Not Completed";
+
+            }
+            if($bid_boq == 0 && count($documentAttachedCountIdsCommercial) == 0) {
+                $group['commercial_bid_submission_status'] = "Disabled";
+            }
+
+            //$group['commercial_bid_submission_status'] = $bidSubmissionData['filtered'];
             $group['technical_bid_submission_status'] = $bidSubmissionData['technicalEvaluationCriteria'];
             $group['bid_submission_status'] = $bidSubmissionData['bidsubmission'];
             return $group;
