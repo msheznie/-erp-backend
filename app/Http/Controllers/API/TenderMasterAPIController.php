@@ -507,9 +507,7 @@ class TenderMasterAPIController extends AppBaseController
 	srm_calendar_dates.calendar_date as calendar_date,
 	srm_calendar_dates.company_id as company_id,
 	srm_calendar_dates_detail.from_date as from_date,
-	srm_calendar_dates_detail.to_date as to_date,
-    srm_calendar_dates_detail.from_time as from_time,
-    srm_calendar_dates_detail.to_time as to_time
+	srm_calendar_dates_detail.to_date as to_date
 FROM
 	srm_calendar_dates 
 	INNER JOIN srm_calendar_dates_detail ON srm_calendar_dates_detail.calendar_date_id = srm_calendar_dates.id AND srm_calendar_dates_detail.tender_id = $tenderMasterId
@@ -521,9 +519,7 @@ WHERE
 	srm_calendar_dates.calendar_date as calendar_date,
 	srm_calendar_dates.company_id as company_id,
 	srm_calendar_dates_detail.from_date as from_date,
-	srm_calendar_dates_detail.to_date as to_date,
-    srm_calendar_dates_detail.from_time as from_time,
-    srm_calendar_dates_detail.to_time as to_time
+	srm_calendar_dates_detail.to_date as to_date
 FROM
 	srm_calendar_dates 
 	LEFT JOIN srm_calendar_dates_detail ON srm_calendar_dates_detail.calendar_date_id = srm_calendar_dates.id AND srm_calendar_dates_detail.tender_id = $tenderMasterId
@@ -533,13 +529,49 @@ WHERE
 	and ISNULL(srm_calendar_dates_detail.to_date)";
 
 
-        $data['calendarDates'] = DB::select($qry);
+        // $calenderData =  CalendarDates::
+        //             join('srm_calendar_dates_detail','srm_calendar_dates_detail.calendar_date_id','=','srm_calendar_dates.id')
+        //             ->where('srm_calendar_dates_detail.tender_id',$tenderMasterId)
+        //             ->where('srm_calendar_dates.company_id',$companySystemID)
+        //             ->select('srm_calendar_dates_detail.calendar_date_id as id','srm_calendar_dates.calendar_date as calendar_date','srm_calendar_dates.company_id as company_id','srm_calendar_dates_detail.*')
+        //             ->get();
+       
         
-        // foreach($data['calendarDates'] as $cal) {
+        $calenderDataDetails = CalendarDatesDetail::where('company_id',$companySystemID)->where('tender_id',$tenderMasterId)->get();
 
-        // }
+        $dataArray = array();
+        $i = 0;
 
-        $data['calendarDatesAll'] = DB::select($qryAll);
+        foreach($calenderDataDetails as $calenderDataDetail) {
+
+            $fromDate = $calenderDataDetail->from_date;
+            $toDate = $calenderDataDetail->to_date;
+            $calenderDate = CalendarDates::find($calenderDataDetail->calendar_date_id);
+            $dataArray[$i]['id'] = $calenderDate->id;
+            $dataArray[$i]['calendar_date'] = $calenderDate->calendar_date;
+            $dataArray[$i]['company_id'] = $calenderDataDetail->company_id;
+            $dataArray[$i]['from_date'] = $fromDate->format('Y-m-d H:i:s');
+            $dataArray[$i]['to_date'] = $toDate->format('Y-m-d H:i:s');
+            $dataArray[$i]['from_time'] = $calenderDataDetail->from_time;
+            $dataArray[$i]['to_time'] = $calenderDataDetail->to_time;
+
+
+            $i++;
+        }
+
+        $data['calendarDates'] =collect($dataArray);
+
+        $calenderDataAll =  CalendarDates::
+        select('srm_calendar_dates_detail.calendar_date_id as id','srm_calendar_dates.calendar_date as calendar_date','srm_calendar_dates.company_id as company_id','srm_calendar_dates_detail.*')
+        ->join('srm_calendar_dates_detail','srm_calendar_dates_detail.calendar_date_id','=','srm_calendar_dates.id')
+        ->where('srm_calendar_dates_detail.tender_id',$tenderMasterId)
+        ->where('srm_calendar_dates.company_id',$companySystemID)
+        ->whereNull('srm_calendar_dates_detail.from_date')
+        ->whereNull('srm_calendar_dates_detail.to_date')
+        ->get();
+
+        $data['calendarDatesAll'] =  DB::select($qryAll);
+
 
         $documentTypes = TenderDocumentTypeAssign::with(['document_type'])->where('tender_id', $tenderMasterId)->get();
         $docTypeArr = array();
@@ -1226,8 +1258,6 @@ WHERE
                         $calDt['to_date'] = $to_date;
                         $calDt['company_id'] = $input['company_id'];
                         $calDt['created_by'] = $employee->employeeSystemID;
-                        $calDt['from_time'] = ($fromTime) ? $fromTime : null;
-                        $calDt['to_time'] = ($toTime) ? $toTime : null;
                         $calDt['created_at'] = Carbon::now();
                         CalendarDatesDetail::create($calDt);
                     }
@@ -2027,13 +2057,13 @@ WHERE
 
             if(isset($request['time_changed']) && $request['time_changed']) {
                 if($calendarDatesDetail->from_time != $fromTime || $calendarDatesDetail->to_time != $toTime) {
-                    if($fromTime) {
-                        $data['from_time'] = $fromTime;
-                    }
+                    // if($fromTime) {
+                    //     $data['from_time'] = $fromTime;
+                    // }
             
-                    if($toTime) {
-                        $data['to_time'] = $toTime;
-                    }
+                    // if($toTime) {
+                    //     $data['to_time'] = $toTime;
+                    // }
 
                     $calendarDatesDetail = CalendarDatesDetail::where('calendar_date_id', $request['calenderDateTypeId'])
                     ->where('tender_id', $request['tenderMasterId'])

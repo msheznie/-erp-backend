@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Models;
+use Carbon\Carbon;
 
 use Eloquent as Model;
 
@@ -80,6 +81,10 @@ class CalendarDatesDetail extends Model
 
     public $timestamps = false;
 
+    protected $appends = array(
+        'from_time',
+        'to_time'
+    );
     public $fillable = [
         'tender_id',
         'calendar_date_id',
@@ -89,9 +94,7 @@ class CalendarDatesDetail extends Model
         'updated_by',
         'company_id',
         'created_at',
-        'updated_at',
-        'from_time',
-        'to_time'
+        'updated_at'
     ];
 
     /**
@@ -108,8 +111,7 @@ class CalendarDatesDetail extends Model
         'created_by' => 'integer',
         'updated_by' => 'integer',
         'company_id' => 'integer',
-        'from_time'=> 'datetime',
-        'to_time' => 'datetime'
+
     ];
 
     /**
@@ -123,6 +125,27 @@ class CalendarDatesDetail extends Model
 
     public function calendarDates(){ 
         return $this->hasOne('App\Models\CalendarDates', 'id', 'calendar_date_id');
+    }
+
+    
+    public function getFromTimeAttribute() {
+        if($this->from_date) {
+            $time = new Carbon($this->from_date);
+            return $time->format('Y-m-d H:i:s');
+        }else {
+            return null;
+        }
+
+    }
+
+    public function getToTimeAttribute() {
+        if($this->to_date) {
+            $time = new Carbon($this->to_date);
+            return $time->format('Y-m-d H:i:s'); 
+        }else {
+             return null;
+        }
+
     }
     
 }
