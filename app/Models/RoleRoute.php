@@ -6,7 +6,7 @@ use Eloquent as Model;
 
 /**
  * @OA\Schema(
- *      schema="Route",
+ *      schema="RoleRoute",
  *      required={""},
  *      @OA\Property(
  *          property="id",
@@ -17,32 +17,27 @@ use Eloquent as Model;
  *          format="int32"
  *      ),
  *      @OA\Property(
- *          property="name",
- *          description="name",
+ *          property="routeName",
+ *          description="routeName",
  *          readOnly=$FIELD_READ_ONLY$,
  *          nullable=$FIELD_NULLABLE$,
  *          type="string"
  *      ),
  *      @OA\Property(
- *          property="method",
- *          description="method",
+ *          property="userGroupID",
+ *          description="userGroupID",
  *          readOnly=$FIELD_READ_ONLY$,
  *          nullable=$FIELD_NULLABLE$,
- *          type="string"
+ *          type="integer",
+ *          format="int32"
  *      ),
  *      @OA\Property(
- *          property="action",
- *          description="action",
+ *          property="companySystemID",
+ *          description="companySystemID",
  *          readOnly=$FIELD_READ_ONLY$,
  *          nullable=$FIELD_NULLABLE$,
- *          type="string"
- *      ),
- *      @OA\Property(
- *          property="uri",
- *          description="uri",
- *          readOnly=$FIELD_READ_ONLY$,
- *          nullable=$FIELD_NULLABLE$,
- *          type="string"
+ *          type="integer",
+ *          format="int32"
  *      ),
  *      @OA\Property(
  *          property="created_at",
@@ -62,10 +57,10 @@ use Eloquent as Model;
  *      )
  * )
  */
-class Route extends Model
+class RoleRoute extends Model
 {
 
-    public $table = 'routes';
+    public $table = 'role_routes';
     
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
@@ -74,11 +69,9 @@ class Route extends Model
 
 
     public $fillable = [
-        'name',
-        'method',
-        'action',
-        'application',
-        'uri'
+        'routeName',
+        'userGroupID',
+        'companySystemID'
     ];
 
     /**
@@ -88,11 +81,9 @@ class Route extends Model
      */
     protected $casts = [
         'id' => 'integer',
-        'application' => 'integer',
-        'name' => 'string',
-        'method' => 'string',
-        'action' => 'string',
-        'uri' => 'string'
+        'routeName' => 'string',
+        'userGroupID' => 'integer',
+        'companySystemID' => 'integer'
     ];
 
     /**

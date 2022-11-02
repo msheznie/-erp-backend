@@ -10,3 +10,5 @@ Route::get('getExampleTableData', 'ExampleTableTemplateAPIController@getExampleT
 Route::post('masterBulkUpload', 'CustomerMasterAPIController@masterBulkUpload')->name("Master data bulk upload");
 
 Route::get('checkRestrictionByPolicy', 'DocumentRestrictionAssignAPIController@checkRestrictionByPolicy')->name("Check document restriction policy");
+
+Route::get('getApprovedDetails', 'PurchaseRequestAPIController@getApprovedDetails')->name("Get approved details");

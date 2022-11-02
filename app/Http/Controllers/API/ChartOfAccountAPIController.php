@@ -721,6 +721,10 @@ class ChartOfAccountAPIController extends AppBaseController
         if ($isEmployeeDischarched == 'true') {
             $chartOfAccount = [];
         }
+        $data['order'] = [];
+        $data['search']['value'] = '';
+        $request->merge($data);
+
 
         return \DataTables::of($chartOfAccount)
             ->order(function ($query) use ($input) {
