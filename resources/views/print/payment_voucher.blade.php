@@ -446,7 +446,7 @@
                             <td>{{$ddet->pomaster->purchaseOrderCode}}</td>
                         @endif
                         <td>{{$ddet->supplierInvoiceNo}}</td>
-                        <td>{{ \App\helper\Helper::convertDateWithTime($ddet->supplierInvoiceDate)}}</td>
+                        <td>{{ \App\helper\Helper::dateFormat($ddet->supplierInvoiceDate)}}</td>
                         <td class="text-right">{{number_format($ddet->supplierInvoiceAmount, $transDecimal)}}</td>
                         <td class="text-right">{{number_format($ddet->supplierPaymentAmount, $transDecimal)}}</td>
                         <td class="text-right">{{number_format($ddet->paymentBalancedAmount, $transDecimal)}}</td>
