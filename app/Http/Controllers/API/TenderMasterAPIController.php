@@ -1167,7 +1167,7 @@ WHERE
 
 
                 DB::commit();
-                return ['success' => true, 'message' => 'Successfully updated'];
+                return ['success' => true, 'message' => 'Successfully updated','data' => $input['addCalendarDates']];
             }
         } catch (\Exception $e) {
             DB::rollback();
@@ -1261,7 +1261,7 @@ WHERE
                         $calDt['created_at'] = Carbon::now();
                         CalendarDatesDetail::create($calDt);
                     }
-                    return ['success' => true, 'message' => 'Successfully updated'];
+                    return ['success' => true, 'message' => 'Successfully updated', 'data' => $input['addCalendarDates']];
             } else {
                 CalendarDatesDetail::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
             }
@@ -2014,7 +2014,21 @@ WHERE
 
         $fromTime =($request['from_time']) ? new Carbon($request['from_time']) : null;
         $toTime = ($request['to_time']) ? new Carbon($request['to_time']) : null;
-        
+
+
+        $calendarDatesDetail = CalendarDatesDetail::where('calendar_date_id', $request['calenderDateTypeId'])
+            ->where('tender_id', $request['tenderMasterId'])
+            ->first();
+
+            if(!isset($request['from_time'])) {
+                $fromTime = new Carbon($calendarDatesDetail->from_time);
+            }
+
+            if(!isset($request['to_time'])) {
+                $toTime = new Carbon($calendarDatesDetail->to_time);
+            }
+
+
         if (isset($request['from_date'])) {
             $frm_date = new Carbon($request['from_date']);
             $frm_date = ($fromTime) ? $frm_date->format('Y-m-d').' '.$fromTime->format('H:i:s') : $frm_date->format('Y-m-d');
@@ -2057,13 +2071,6 @@ WHERE
 
             if(isset($request['time_changed']) && $request['time_changed']) {
                 if($calendarDatesDetail->from_time != $fromTime || $calendarDatesDetail->to_time != $toTime) {
-                    // if($fromTime) {
-                    //     $data['from_time'] = $fromTime;
-                    // }
-            
-                    // if($toTime) {
-                    //     $data['to_time'] = $toTime;
-                    // }
 
                     $calendarDatesDetail = CalendarDatesDetail::where('calendar_date_id', $request['calenderDateTypeId'])
                     ->where('tender_id', $request['tenderMasterId'])
