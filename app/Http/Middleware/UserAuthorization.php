@@ -18,11 +18,12 @@ class UserAuthorization
      */
     public function handle($request, Closure $next)
     {
-        if (env('ENABLE_AUTHORIZATION', false) != true) {
+        if (!env('ENABLE_AUTHORIZATION', false)) {
             return $next($request);
         }
 
         $routeName = $request->route()->getName();
+
         $checkRouteName = NavigationRoute::where('routeName', $routeName)->first();
 
         if (!$checkRouteName) {
