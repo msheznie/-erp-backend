@@ -75,6 +75,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Jobs\UnbilledGRVInsert;
 use App\Jobs\TaxLedgerInsert;
+use App\Services\GeneralLedger\GlPostedDateService;
 
 class SalesReturnGlService
 {
@@ -84,6 +85,15 @@ class SalesReturnGlService
         $taxLedgerData = [];
         $finalData = [];
         $empID = Employee::find($masterModel['employeeSystemID']);
+
+        $validatePostedDate = GlPostedDateService::validatePostedDate($masterModel["autoID"], $masterModel["documentSystemID"]);
+
+        if (!$validatePostedDate['status']) {
+            return ['success' => false, 'message' => $validatePostedDate['message']];
+        }
+
+        $masterDocumentDate = isset($masterModel['documentDateOveride']) ? $masterModel['documentDateOveride'] : $validatePostedDate['postedDate'];
+        
         $masterData = SalesReturn::with(['detail' => function ($query) {
             $query->selectRaw('SUM(companyLocalAmount) as localAmount, SUM(companyReportingAmount) as rptAmount,SUM(transactionAmount) as transAmount,salesReturnID');
         }], 'finance_period_by')->find($masterModel["autoID"]);
@@ -105,11 +115,6 @@ class SalesReturnGlService
             ->WHERE('salesReturnID', $masterModel["autoID"])
             ->groupBy('financeGLcodeRevenueSystemID')
             ->get();
-
-        $masterDocumentDate = isset($masterModel['documentDateOveride']) ? $masterModel['documentDateOveride'] : date('Y-m-d H:i:s');
-        if ($masterData->finance_period_by->isActive == -1) {
-            $masterDocumentDate = $masterData->salesReturnDate;
-        }
 
         if ($masterData) {
             $data['companySystemID'] = $masterData->companySystemID;

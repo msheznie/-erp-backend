@@ -76,6 +76,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Jobs\UnbilledGRVInsert;
 use App\Jobs\TaxLedgerInsert;
+use App\Services\GeneralLedger\GlPostedDateService;
 
 class GrvGlService
 {
@@ -94,6 +95,14 @@ class GrvGlService
 
         //get pnl account
         $pl = GRVDetails::selectRaw("SUM(landingCost_LocalCur*noQty) as localAmount, SUM(landingCost_RptCur*noQty) as rptAmount,SUM(landingCost_TransCur*noQty) as transAmount,financeGLcodePLSystemID,financeGLcodePL,supplierItemCurrencyID as supplierTransactionCurrencyID,foreignToLocalER as supplierTransactionER,erp_grvdetails.companyReportingCurrencyID,erp_grvdetails.companyReportingER,erp_grvdetails.localCurrencyID,erp_grvdetails.localCurrencyER")->WHERE('grvAutoID', $masterModel["autoID"])->whereNotNull('financeGLcodePLSystemID')->where('financeGLcodePLSystemID', '>', 0)->WHERE('includePLForGRVYN', -1)->groupBy('financeGLcodePLSystemID')->get();
+
+        $validatePostedDate = GlPostedDateService::validatePostedDate($masterModel["autoID"], $masterModel["documentSystemID"]);
+
+        if (!$validatePostedDate['status']) {
+            return ['success' => false, 'message' => $validatePostedDate['message']];
+        }
+
+        $postedDateGl = isset($masterModel['documentDateOveride']) ? $masterModel['documentDateOveride'] : $validatePostedDate['postedDate'];
 
         //unbilledGRV for logistic
         $unbilledGRV = PoAdvancePayment::selectRaw("erp_grvmaster.companySystemID,erp_grvmaster.companyID,
@@ -158,9 +167,9 @@ class GrvGlService
             $data['documentID'] = $masterData->documentID;
             $data['documentSystemCode'] = $masterModel["autoID"];
             $data['documentCode'] = $masterData->grvPrimaryCode;
-            $data['documentDate'] = isset($masterModel['documentDateOveride']) ? $masterModel['documentDateOveride'] : date('Y-m-d H:i:s');
-            $data['documentYear'] = \Helper::dateYear($masterData->grvDate);
-            $data['documentMonth'] = \Helper::dateMonth($masterData->grvDate);
+            $data['documentDate'] = $postedDateGl
+            $data['documentYear'] = \Helper::dateYear($postedDateGl);
+            $data['documentMonth'] = \Helper::dateMonth($postedDateGl);
             $data['chartOfAccountSystemID'] = $masterData->UnbilledGRVAccountSystemID;
             $data['glCode'] = $masterData->UnbilledGRVAccount;
             $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);

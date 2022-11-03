@@ -76,6 +76,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Jobs\UnbilledGRVInsert;
 use App\Jobs\TaxLedgerInsert;
+use App\Services\GeneralLedger\GlPostedDateService;
 
 class CustomerReceivePaymentGlService
 {
@@ -140,11 +141,13 @@ class CustomerReceivePaymentGlService
             ->groupBy('serviceLineSystemID')
             ->get();
 
+        $validatePostedDate = GlPostedDateService::validatePostedDate($masterModel["autoID"], $masterModel["documentSystemID"]);
 
-        $masterDocumentDate = isset($masterModel['documentDateOveride']) ? $masterModel['documentDateOveride'] : date('Y-m-d H:i:s');
-        if ($masterData->finance_period_by->isActive == -1) {
-            $masterDocumentDate = $masterData->custPaymentReceiveDate;
+        if (!$validatePostedDate['status']) {
+            return ['success' => false, 'message' => $validatePostedDate['message']];
         }
+
+        $masterDocumentDate = isset($masterModel['documentDateOveride']) ? $masterModel['documentDateOveride'] : $validatePostedDate['postedDate'];
 
         if ($masterData) {
             $data['companySystemID'] = $masterData->companySystemID;
