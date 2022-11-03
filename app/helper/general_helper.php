@@ -93,6 +93,7 @@ use Response;
 use App\Models\CompanyFinanceYear;
 use App\Jobs\CreateAccumulatedDepreciation;
 use App\Services\WebPushNotificationService;
+use App\Services\GeneralLedger\GlPostedDateService;
 
 class Helper
 {
@@ -1310,6 +1311,9 @@ class Helper
                 return ['success' => true, 'message' => '', 'type' => 5];
         }
 
+        //break this function for the requirment of GCP-515
+        return ['success' => true, 'message' => '', 'type' => 5];
+        
         $approvalLevel = Models\ApprovalLevel::find($input["approvalLevelID"]);
 
         if ($approvalLevel) {
@@ -2034,6 +2038,13 @@ class Helper
                         }
 
                         if ($approvalLevel->noOfLevels == $input["rollLevelOrder"]) { // update the document after the final approval
+
+                            $validatePostedDate = GlPostedDateService::validatePostedDate($input["documentSystemCode"], $input["documentSystemID"]);
+
+                            if (!$validatePostedDate['status']) {
+                                DB::rollback();
+                                return ['success' => false, 'message' => $validatePostedDate['message']];
+                            }
 
                             if($input["documentSystemID"] == 2){
                                 $purchaseOrderMaster  = ProcumentOrder::find($input["documentSystemCode"]);

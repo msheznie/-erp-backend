@@ -282,4 +282,9 @@ class FixedAssetDepreciationMaster extends Model
         return $q->leftJoin('companymaster as '.$as,$as.'.companySystemID','erp_fa_depmaster.'.$column)
         ->addSelect($as.".CompanyName as ".$columnAs);
     }
+
+    public function financeperiod_by()
+    {
+        return $this->belongsTo('App\Models\CompanyFinancePeriod', 'companyFinancePeriodID', 'companyFinancePeriodID');
+    }
 }
