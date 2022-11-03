@@ -2868,13 +2868,13 @@ class SRMService
         //     $data['technicalStatus'] = "Not Completed";
         // }
 
-        if((count($documentAttachedCountIdsTechnical) == $documentAttachedCountAnswerTechnical) &&  ($technicalEvaluationCriteria == $technicalEvaluationCriteriaAnswer)) {
+        if((count($documentAttachedCountIdsTechnical) == $documentAttachedCountAnswerTechnical) && $bidSubmissionData['technicalEvaluationCriteria'] > 0) {
             $data['technicalStatus'] = "Completed";
         }else {
             $data['technicalStatus'] = "Not Completed";
         }
 
-        if($technicalEvaluationCriteria == 0 && count($documentAttachedCountIdsTechnical) == 0) {
+        if($bidSubmissionData['technicalEvaluationCriteria'] == 0 && count($documentAttachedCountIdsTechnical) == 0) {
             $data['technicalStatus'] = "Disabled"; 
         }
 
@@ -2907,6 +2907,7 @@ class SRMService
             $data['goNoGoStatus'] = "Disabled";
         }
 
+        
         if(count($documentAttachedCountIds) == $documentAttachedCountAnswer) {
             $data['commonStatus'] = "Completed";
         }else {
