@@ -151,15 +151,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             
             Route::post('getCurrencyDetails', 'SupplierCurrencyAPIController@getCurrencyDetails');
 
-            Route::resource('item/masters', 'ItemMasterAPIController');
-            Route::post('getAllItemsMaster', 'ItemMasterAPIController@getAllItemsMaster');
-            Route::post('getAssignedItemsForCompany', 'ItemMasterAPIController@getAssignedItemsForCompany');
-            Route::post('getAllAssignedItemsForCompany', 'ItemMasterAPIController@getAllAssignedItemsForCompany');
-            Route::post('validateItemAmend', 'ItemMasterAPIController@validateItemAmend');
 
 
-            Route::get('getAllFixedAssetItems', 'ItemMasterAPIController@getAllFixedAssetItems');
-            Route::post('exportItemMaster', 'ItemMasterAPIController@exportItemMaster');
             Route::resource('units', 'UnitAPIController');
 
             Route::resource('finance_item_category_subs', 'FinanceItemCategorySubAPIController');
@@ -171,10 +164,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::resource('finance_item_category_masters', 'FinanceItemCategoryMasterAPIController');
 
-            Route::resource('item/masters', 'ItemMasterAPIController');
-            Route::post('itemMasterBulkCreate', 'ItemMasterAPIController@itemMasterBulkCreate');
-            Route::post('itemReferBack', 'ItemMasterAPIController@itemReferBack');
-            Route::post('itemReOpen', 'ItemMasterAPIController@itemReOpen');
 
             Route::resource('reasonCodeMasters', 'ReasonCodeMasterAPIController');
             Route::post('getAllReasonCodeMaster', 'ReasonCodeMasterAPIController@getAllReasonCodeMaster');
@@ -183,19 +172,12 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('reasonCodeMasterRecordSalesReturn/{id}', 'ReasonCodeMasterAPIController@reasonCodeMasterRecordSalesReturn');
 
 
-            Route::get('getItemMasterFormData', 'ItemMasterAPIController@getItemMasterFormData');
-            Route::get('getInventorySubCat', 'ItemMasterAPIController@getInventorySubCat');
-            Route::get('getItemSubCategory', 'ItemMasterAPIController@getItemSubCategory');
-            
-            Route::post('updateItemMaster', 'ItemMasterAPIController@updateItemMaster');
-            Route::get('assignedCompaniesByItem', 'ItemMasterAPIController@getAssignedCompaniesByItem');
+
 
 
             Route::resource('example_table_templates', 'ExampleTableTemplateAPIController');
            
 
-            Route::resource('item/assigneds', 'ItemAssignedAPIController');
-            Route::post('getAllAssignedItemsByCompany', 'ItemAssignedAPIController@getAllAssignedItemsByCompany');
             Route::post('getAllAssignedItemsByWarehouse', 'WarehouseItemsAPIController@getAllAssignedItemsByWarehouse');
             Route::post('exportItemAssignedByWarehouse', 'WarehouseItemsAPIController@exportItemAssignedByWarehouse');
             Route::post('exportItemAssignedByCompanyReport', 'ItemAssignedAPIController@exportItemAssignedByCompanyReport');
@@ -207,8 +189,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('getItemMasterPurchaseRequestHistory', 'PurchaseRequestDetailsAPIController@getItemMasterPurchaseRequestHistory');
             Route::get('exportPurchaseRequestHistory', 'PurchaseRequestDetailsAPIController@exportPurchaseRequestHistory');
 
-            Route::get('getSubcategoriesBymainCategory', 'FinanceItemCategorySubAPIController@getSubcategoriesBymainCategory');
-            Route::get('getSubcategoryExpiryStatus', 'FinanceItemCategorySubAPIController@getSubcategoryExpiryStatus');
+
             Route::post('getSubcategoriesBymainCategories', 'FinanceItemCategorySubAPIController@getSubcategoriesBymainCategories');
             Route::get('exportPurchaseHistory', 'PurchaseOrderDetailsAPIController@exportPurchaseHistory');
             Route::post('validateItemAlllocationInPO', 'PurchaseOrderDetailsAPIController@validateItemAlllocationInPO');
@@ -621,7 +602,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('procumentOrderChangeSupplier', 'ProcumentOrderAPIController@procumentOrderChangeSupplier');
             Route::post('exportPoEmployeePerformance', 'ProcumentOrderAPIController@exportPoEmployeePerformance');
 
-            Route::get('getErpLedger', 'ErpItemLedgerAPIController@getErpLedger');
             Route::post('getErpLedgerItems', 'ErpItemLedgerAPIController@getErpLedgerItems');
 
             Route::resource('purchase_order_categories', 'PurchaseOrderCategoryAPIController');

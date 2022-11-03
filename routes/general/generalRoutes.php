@@ -12,3 +12,7 @@ Route::post('masterBulkUpload', 'CustomerMasterAPIController@masterBulkUpload')-
 Route::get('checkRestrictionByPolicy', 'DocumentRestrictionAssignAPIController@checkRestrictionByPolicy')->name("Check document restriction policy");
 
 Route::get('getApprovedDetails', 'PurchaseRequestAPIController@getApprovedDetails')->name("Get approved details");
+Route::get('getSubcategoriesBymainCategory', 'FinanceItemCategorySubAPIController@getSubcategoriesBymainCategory')->name('Get sub categories by main category');
+Route::get('getSubcategoryExpiryStatus', 'FinanceItemCategorySubAPIController@getSubcategoryExpiryStatus')->name('get sub category expiry status');
+Route::get('getErpLedger', 'ErpItemLedgerAPIController@getErpLedger')->name('get erp ledger');
+
