@@ -199,7 +199,7 @@ class UserGroupAPIController extends AppBaseController
 
         $userGroup->navigationusergroup()->delete();
         $userGroup->usergroupemployee()->delete();
-        $userGroup->update(['isActive' => 0, 'isDeleted' => 1]);
+        $userGroup->update(['isActive' => 0, 'isDeleted' => 1, 'defaultYN' => 0]);
 
         return $this->sendResponse($id, 'User Group deleted successfully');
     }
