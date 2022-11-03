@@ -2868,7 +2868,7 @@ class SRMService
         //     $data['technicalStatus'] = "Not Completed";
         // }
 
-        if((count($documentAttachedCountIdsTechnical) == $documentAttachedCountAnswerTechnical) && $bidSubmissionData['technicalEvaluationCriteria'] > 0) {
+        if((count($documentAttachedCountIdsTechnical) == $documentAttachedCountAnswerTechnical) && $bidSubmissionData['technicalEvaluationCriteria'] == 0) {
             $data['technicalStatus'] = "Completed";
         }else {
             $data['technicalStatus'] = "Not Completed";
