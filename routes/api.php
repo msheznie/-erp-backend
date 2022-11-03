@@ -152,6 +152,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('getCurrencyDetails', 'SupplierCurrencyAPIController@getCurrencyDetails');
 
 
+            Route::post('getAllAssignedItemsForCompany', 'ItemMasterAPIController@getAllAssignedItemsForCompany')->name('Get all assigned items for company');
 
             Route::resource('units', 'UnitAPIController');
 
