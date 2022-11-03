@@ -2874,7 +2874,7 @@ class SRMService
             $data['technicalStatus'] = "Not Completed";
         }
 
-        if($technicalEvaluationCriteriaAnswer == 0 && $documentAttachedCountAnswerTechnical == 0) {
+        if($technicalEvaluationCriteria == 0 && count($documentAttachedCountIdsTechnical) == 0) {
             $data['technicalStatus'] = "Disabled"; 
         }
 
