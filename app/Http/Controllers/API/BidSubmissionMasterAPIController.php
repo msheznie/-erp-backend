@@ -445,17 +445,15 @@ class BidSubmissionMasterAPIController extends AppBaseController
     {
         $id = 1; //$request->get('id');
 
-        $currencyDecimal = TenderMaster::with(['srm_bid_submission_master', 'srm_bid_submission_master.SupplierRegistrationLink', 'DocumentAttachments' => function($query){
+        $bidData = TenderMaster::with(['srm_bid_submission_master', 'srm_bid_submission_master.SupplierRegistrationLink', 'DocumentAttachments' => function($query){
             $query->with('bid_verify')->where('documentSystemCode', 1190)->where('documentSystemID', 108)
                 ->where('attachmentType', 2)->where('envelopType',3);
         }])->where('id', 1190)
             ->get();
 
-        Log::info($currencyDecimal);
 
         $order = array(
-            'podata' => $currencyDecimal,
-            'docRef' => $currencyDecimal,
+            'bidData' => $bidData,
         );
 
         $html = view('print.bid_summary_print', $order);

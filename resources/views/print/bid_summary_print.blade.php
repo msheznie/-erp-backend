@@ -21,22 +21,22 @@
     <tr>
         <td><strong>Tender Id:</strong></td>
         <td colspan="2">
-            @if ($podata[0]['id'])
-                {{$podata[0]['id']}}
+            @if ($bidData[0]['id'])
+                {{$bidData[0]['id']}}
             @endif
         </td>
         <td colspan="2"><strong>Tender Title:</strong></td>
         <td colspan="4">
-            @if ($podata[0]['title'])
-                {{$podata[0]['title']}}
+            @if ($bidData[0]['title'])
+                {{$bidData[0]['title']}}
             @endif
         </td>
     </tr>
     <tr>
         <td><strong>Tender Description:</strong></td>
         <td colspan="2">
-            @if ($podata[0]['description'])
-                {{$podata[0]['description']}}
+            @if ($bidData[0]['description'])
+                {{$bidData[0]['description']}}
             @endif
         </td>
         <td colspan="2"><strong>Tender Publish Date:</strong></td>
@@ -45,8 +45,8 @@
     <tr>
         <td colspan="5"><strong>Bid Opening Date / Technical / Commercial Bid Opening Date:</strong></td>
         <td colspan="4">
-            @if ($podata[0]['bid_submission_opening_date'])
-                {{$podata[0]['bid_submission_opening_date']->format('d/m/Y')}}
+            @if ($bidData[0]['bid_submission_opening_date'])
+                {{$bidData[0]['bid_submission_opening_date']->format('d/m/Y')}}
             @endif</td>
     </tr>
     <tr>
@@ -62,13 +62,13 @@
             <td><strong>Bid Submission Date</strong></td>
             <td></td>
             <td></td>
-            @foreach ($podata[0]['DocumentAttachments'] as $doc)
+            @foreach ($bidData[0]['DocumentAttachments'] as $doc)
                 <td><strong>{{$doc->attachmentDescription}}</strong></td>
             @endforeach
             <td><strong>Status</strong></td>
             <td><strong>Summary</strong></td>
         </tr>
-       @foreach ($podata[0]['srm_bid_submission_master'] as $item)
+       @foreach ($bidData[0]['srm_bid_submission_master'] as $item)
             <tr>
                 <td>{{ $loop->index+1}}</td>
                 <td>{{$item->SupplierRegistrationLink->id}}</td>
@@ -76,7 +76,7 @@
                 <td>{{$item->created_at}}</td>
                 <td></td>
                 <td></td>
-                @foreach ($podata[0]['DocumentAttachments'] as $doc2)
+                @foreach ($bidData[0]['DocumentAttachments'] as $doc2)
                     <td>{{$doc2->attachmentDescription}}</td>
                 @endforeach
                 <td>
