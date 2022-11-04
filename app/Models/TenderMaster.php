@@ -294,7 +294,8 @@ class TenderMaster extends Model
         'doc_verifiy_by_emp',
         'doc_verifiy_date',
         'doc_verifiy_status',
-        'doc_verifiy_comment'
+        'doc_verifiy_comment',
+        'published_at'
     ];
 
     /**
@@ -365,6 +366,7 @@ class TenderMaster extends Model
         'commerical_bid_opening_date'  => 'datetime',
         'commerical_bid_closing_date'  => 'datetime',
         'doc_verifiy_status' => 'integer',
+        'published_yn' => 'datetime',
     ];
 
     /**
