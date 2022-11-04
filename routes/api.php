@@ -188,7 +188,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('getItemMasterPurchaseHistory', 'PurchaseOrderDetailsAPIController@getItemMasterPurchaseHistory');
 
             Route::get('getItemMasterPurchaseRequestHistory', 'PurchaseRequestDetailsAPIController@getItemMasterPurchaseRequestHistory');
-            Route::get('exportPurchaseRequestHistory', 'PurchaseRequestDetailsAPIController@exportPurchaseRequestHistory');
 
 
             Route::post('getSubcategoriesBymainCategories', 'FinanceItemCategorySubAPIController@getSubcategoriesBymainCategories');
@@ -409,8 +408,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('get_srp_erp_document_attachments', 'SrpErpDocumentAttachmentsAPIController@geDocumentAttachments');
 
             
-            Route::get('downloadFile', 'DocumentAttachmentsAPIController@downloadFile');
-            Route::post('store_tender_documents', 'DocumentAttachmentsAPIController@storeTenderDocuments');      
+            Route::post('store_tender_documents', 'DocumentAttachmentsAPIController@storeTenderDocuments');
             Route::post('tenderBIdDocApproveal', 'DocumentAttachmentsAPIController@tenderBIdDocApproveal');   
             Route::post('tenderBIdDocTypeApproveal', 'DocumentAttachmentsAPIController@tenderBIdDocTypeApproveal');  
             Route::post('tenderBIdDocSubmission', 'DocumentAttachmentsAPIController@tenderBIdDocSubmission');   
@@ -618,7 +616,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('erp_item_ledgers', 'ErpItemLedgerAPIController');
             Route::post('validateStockLedgerReport', 'ErpItemLedgerAPIController@validateStockLedgerReport');
             Route::post('generateStockLedgerReport', 'ErpItemLedgerAPIController@generateStockLedgerReport');
-            Route::post('generateStockLedger', 'ErpItemLedgerAPIController@generateStockLedger');        
             Route::post('getReportOpenRequest', 'PurchaseRequestAPIController@getReportOpenRequest');
             Route::post('exportReportOpenRequest', 'PurchaseRequestAPIController@exportReportOpenRequest');
             Route::resource('g_r_v_types', 'GRVTypesAPIController');
@@ -710,8 +707,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('exportStockTaking', 'ErpItemLedgerAPIController@exportStockTaking');
 
             Route::get('material-issue-by-refno', 'ItemIssueMasterAPIController@getMaterialIssueByRefNo');
-            Route::post('getItemStockDetails', 'ErpItemLedgerAPIController@getItemStockDetails');
-            
+
 
             Route::resource('accounts_payable_ledgers', 'AccountsPayableLedgerAPIController');
             Route::get('getAPFilterData', 'AccountsPayableReportAPIController@getAPFilterData');

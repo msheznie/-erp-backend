@@ -13,6 +13,10 @@ Route::get('checkRestrictionByPolicy', 'DocumentRestrictionAssignAPIController@c
 
 Route::get('getApprovedDetails', 'PurchaseRequestAPIController@getApprovedDetails')->name("Get approved details");
 Route::get('getSubcategoriesBymainCategory', 'FinanceItemCategorySubAPIController@getSubcategoriesBymainCategory')->name('Get sub categories by main category');
-Route::get('getSubcategoryExpiryStatus', 'FinanceItemCategorySubAPIController@getSubcategoryExpiryStatus')->name('get sub category expiry status');
-Route::get('getErpLedger', 'ErpItemLedgerAPIController@getErpLedger')->name('get erp ledger');
+Route::get('getSubcategoryExpiryStatus', 'FinanceItemCategorySubAPIController@getSubcategoryExpiryStatus')->name('Get sub category expiry status');
+Route::get('getErpLedger', 'ErpItemLedgerAPIController@getErpLedger')->name('Get erp ledger');
+Route::get('exportPurchaseRequestHistory', 'PurchaseRequestDetailsAPIController@exportPurchaseRequestHistory')->name('Export purchase request history');
+Route::post('generateStockLedger', 'ErpItemLedgerAPIController@generateStockLedger')->name('Generate stock ledger');
+Route::post('getItemStockDetails', 'ErpItemLedgerAPIController@getItemStockDetails')->name('Get item stock details');
+Route::get('downloadFile', 'DocumentAttachmentsAPIController@downloadFile')->name('Download file');
 
