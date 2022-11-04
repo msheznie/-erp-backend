@@ -2857,7 +2857,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     Route::get('getSalesQuotationPrintPDF', 'QuotationMasterAPIController@getSalesQuotationPrintPDF');
     Route::post('updateSentCustomerDetail', 'QuotationMasterAPIController@updateSentCustomerDetail');
     Route::get('getBatchSubmissionDetailsPrintPDF', 'CustomerInvoiceTrackingAPIController@getBatchSubmissionDetailsPrintPDF');
-    Route::post('pdfBidSummaryExportReport', 'BidSubmissionMasterAPIController@pdfExportReport');
+    Route::post('pdfBidSummaryExportReport', 'BidSubmissionMasterAPIController@pdfBidSummaryExportReport');
     
     Route::get('pvSupplierPrint', 'BankLedgerAPIController@pvSupplierPrint');
     Route::get('loginwithToken', 'UserAPIController@loginwithToken');

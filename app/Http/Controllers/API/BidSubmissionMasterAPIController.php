@@ -441,27 +441,24 @@ class BidSubmissionMasterAPIController extends AppBaseController
         return $this->sendResponse($is_verified, 'Data retrived successfully');
     }
 
-    public function pdfExportReport(Request $request)
+    public function pdfBidSummaryExportReport(Request $request)
     {
-        $id = 1; //$request->get('id');
+        $tenderId = $request['tenderMasterId'];
 
-        $bidData = TenderMaster::with(['srm_bid_submission_master', 'srm_bid_submission_master.SupplierRegistrationLink', 'DocumentAttachments' => function($query){
-            $query->with('bid_verify')->where('documentSystemCode', 1190)->where('documentSystemID', 108)
+        $bidData = TenderMaster::with(['srm_bid_submission_master', 'srm_bid_submission_master.SupplierRegistrationLink', 'DocumentAttachments' => function($query) use($tenderId){
+            $query->with('bid_verify')->where('documentSystemCode', $tenderId)->where('documentSystemID', 108)
                 ->where('attachmentType', 2)->where('envelopType',3);
-        }])->where('id', 1190)
+        }])->where('id', $tenderId)
             ->get();
 
-
-        $order = array(
-            'bidData' => $bidData,
-        );
-
+        Log::info('<><><><><><>');
+        Log::info($bidData[0]['bid_submission_opening_date']);
+        $order = array('bidData' => $bidData);
         $html = view('print.bid_summary_print', $order);
-
         $pdf = \App::make('dompdf.wrapper');
         $pdf->loadHTML($html);
 
-        return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream();
+       return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream();
 
     }
 }

@@ -40,13 +40,15 @@
             @endif
         </td>
         <td colspan="2"><strong>Tender Publish Date:</strong></td>
-        <td colspan="4">22/10/2022</td>
+        <td colspan="4">
+            {{\Carbon\Carbon::parse($bidData[0]['published_at'])->format('d/m/Y')}}
+        </td>
     </tr>
     <tr>
         <td colspan="5"><strong>Bid Opening Date / Technical / Commercial Bid Opening Date:</strong></td>
         <td colspan="4">
             @if ($bidData[0]['bid_submission_opening_date'])
-                {{$bidData[0]['bid_submission_opening_date']->format('d/m/Y')}}
+                {{\Carbon\Carbon::parse($bidData[0]['bid_submission_opening_date'])->format('d/m/Y')}}
             @endif</td>
     </tr>
     <tr>
@@ -55,27 +57,27 @@
     <tr>
         <td style="text-align: center;" colspan="9"><strong>Comparative Statement - Technical Document Submitted by Bidder</strong></td>
     </tr>
+    </tbody>
+</table>
+<table style="width:100%" class="bit-tender-summary-report">
         <tr>
-            <td><strong><strong>Sr. No</strong></td>
+            <td><strong>Sr. No</strong></td>
             <td><strong>Supplier Registration No</strong></td>
             <td><strong>Name of Bidder</strong></td>
             <td><strong>Bid Submission Date</strong></td>
-            <td></td>
-            <td></td>
             @foreach ($bidData[0]['DocumentAttachments'] as $doc)
                 <td><strong>{{$doc->attachmentDescription}}</strong></td>
             @endforeach
             <td><strong>Status</strong></td>
-            <td><strong>Summary</strong></td>
+            <td colspan="3"><strong>Summary</strong></td>
         </tr>
+    <tbody>
        @foreach ($bidData[0]['srm_bid_submission_master'] as $item)
             <tr>
                 <td>{{ $loop->index+1}}</td>
                 <td>{{$item->SupplierRegistrationLink->id}}</td>
                 <td>{{$item->SupplierRegistrationLink->name}}</td>
-                <td>{{$item->created_at}}</td>
-                <td></td>
-                <td></td>
+                <td>{{\Carbon\Carbon::parse($item->created_at)->format('d/m/Y')}}</td>
                 @foreach ($bidData[0]['DocumentAttachments'] as $doc2)
                     <td>{{$doc2->attachmentDescription}}</td>
                 @endforeach
@@ -87,7 +89,7 @@
                         Rejected
                     @endif
                 </td>
-                <td>{{$item->doc_verifiy_comment}}</td>
+                <td colspan="3">{{$item->doc_verifiy_comment}}</td>
             </tr>
         @endforeach
     </tbody>
