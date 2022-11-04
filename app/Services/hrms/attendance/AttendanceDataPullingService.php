@@ -290,10 +290,7 @@ class AttendanceDataPullingService{
             $shiftHours = ($row['shiftType'] == 1)? $row['workingHour']: $obj->shiftHours;
             $shiftHours = (empty($shiftHours))? 0: $shiftHours;
             $shiftId = (empty($row['shiftID']))? 0: $row['shiftID'];
-            $officialWorkTime = ($shiftHours > $obj->totalWorkingHours) ? $obj->totalWorkingHours : $shiftHours;
-            if($obj->holidayData['true_false'] == 1 || $obj->presentAbsentType == 5){ 
-                $officialWorkTime = 0;
-            }
+           
              $this->data[] = [ 
                 'empID'=> $empId, 'deviceID'=> $row['device_id_in'], 'machineID'=> $row['machine_id_in'],
                 'attendanceDate'=> $attDate, 'shift_id'=> $shiftId, 'floorID'=> $row['location_in'], 
@@ -321,7 +318,7 @@ class AttendanceDataPullingService{
                 'flexyHrFrom'=> $obj->flexibleHourFrom, 'flexyHrTo'=> $obj->flexibleHourTo,
                 'companyID'=> $this->companyId, 'companyCode'=> $companyCode, 'uploadType'=> $row['upload_type'],
                 'pulled_by'=> 0, 'pulled_at'=> $this->dateTime, 'pulled_via'=> $this->pulledVia,'actual_time' => $obj->totalWorkingHours, 
-                'official_work_time' =>  $officialWorkTime
+                'official_work_time' =>   $obj->officialWorkTime
             ];  
             
             $obj = null;
