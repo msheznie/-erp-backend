@@ -6,7 +6,8 @@ use App\Http\Requests\API\CreateBidSubmissionMasterAPIRequest;
 use App\Http\Requests\API\UpdateBidSubmissionMasterAPIRequest;
 use App\Models\BidSubmissionDetail;
 use App\Models\BidSubmissionMaster;
-use App\Models\EvaluationCriteriaScoreConfig;
+use App\Models\DocumentAttachments;
+use App\Models\TenderMaster;
 use App\Repositories\BidSubmissionMasterRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -438,5 +439,31 @@ class BidSubmissionMasterAPIController extends AppBaseController
         }
 
         return $this->sendResponse($is_verified, 'Data retrived successfully');
+    }
+
+    public function pdfExportReport(Request $request)
+    {
+        $id = 1; //$request->get('id');
+
+        $currencyDecimal = TenderMaster::with(['srm_bid_submission_master', 'srm_bid_submission_master.SupplierRegistrationLink', 'DocumentAttachments' => function($query){
+            $query->with('bid_verify')->where('documentSystemCode', 1190)->where('documentSystemID', 108)
+                ->where('attachmentType', 2)->where('envelopType',3);
+        }])->where('id', 1190)
+            ->get();
+
+        Log::info($currencyDecimal);
+
+        $order = array(
+            'podata' => $currencyDecimal,
+            'docRef' => $currencyDecimal,
+        );
+
+        $html = view('print.bid_summary_print', $order);
+
+        $pdf = \App::make('dompdf.wrapper');
+        $pdf->loadHTML($html);
+
+        return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream();
+
     }
 }
