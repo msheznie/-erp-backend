@@ -291,6 +291,9 @@ class AttendanceDataPullingService{
             $shiftHours = (empty($shiftHours))? 0: $shiftHours;
             $shiftId = (empty($row['shiftID']))? 0: $row['shiftID'];
             $officialWorkTime = ($shiftHours > $obj->totalWorkingHours) ? $obj->totalWorkingHours : $shiftHours;
+            if($obj->holidayData['true_false'] == 1 || $obj->presentAbsentType == 5){ 
+                $officialWorkTime = 0;
+            }
              $this->data[] = [ 
                 'empID'=> $empId, 'deviceID'=> $row['device_id_in'], 'machineID'=> $row['machine_id_in'],
                 'attendanceDate'=> $attDate, 'shift_id'=> $shiftId, 'floorID'=> $row['location_in'], 
