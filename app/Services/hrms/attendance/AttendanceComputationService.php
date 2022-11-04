@@ -32,6 +32,7 @@ class AttendanceComputationService
     public $presentAbsentType = '';
     public $cutOfWorkHrsPrvious = '00:00:00';
     public $cutOfWorkHrsNext = '24:00:00';
+    public $officialWorkTime = 0;
 
     public $normalDayData = ['true_false' => 0, 'hours' => 0, 'realTime' => 0];
     public $weekendData = ['true_false' => 0, 'hours' => 0, 'realTime' => 0];
@@ -167,11 +168,13 @@ class AttendanceComputationService
         if ($this->totalWorkingHours && $this->shiftHours) {
             $realtime = $this->shiftHours / $this->totalWorkingHours;
             $this->realTime = round($realtime, 1);
+            $this->officialWorkTime = ($this->totalWorkingHours > $this->shiftHours) ? $this->shiftHours : $this->totalWorkingHours;
         }
     }
 
     public function openShiftCalculateWorkedHours()
     {
+        $this->otherComputation();  
         $t1 = new DateTime($this->clockOut);
         $t2 = new DateTime($this->clockIn);
 
@@ -180,6 +183,14 @@ class AttendanceComputationService
         $minutes = $totWorkingHours_obj->format('%i');
         //$this->totalWorkingHours = ($hours * 60) + $minutes;
         $this->totalWorkingHours = $this->calculateOpenShiftActualWorkingHrs();
+        
+        $shiftHours = ($this->data['shiftType'] == 1)? $this->data['workingHour']: $this->shiftHours;
+        $shiftHours = (empty($shiftHours))? 0: $shiftHours;  
+        $this->officialWorkTime = ($shiftHours > $this->totalWorkingHours) ? $this->totalWorkingHours : $shiftHours;
+
+        if($this->holidayData['true_false'] == 1 || $this->presentAbsentType == 5){ 
+            $this->officialWorkTime = 0;
+        }  
 
         if ($this->totalWorkingHours && $this->data['workingHour']) {
             $realtime = $this->data['workingHour'] / $this->totalWorkingHours;
@@ -230,6 +241,7 @@ class AttendanceComputationService
         if ($this->totalWorkingHours && $this->shiftHours) {
             $realtime = $this->shiftHours / $this->totalWorkingHours;
             $this->realTime = round($realtime, 1);
+            $this->officialWorkTime = ($this->totalWorkingHours > $this->shiftHours) ? $this->shiftHours : $this->totalWorkingHours;
         }
     }
 
