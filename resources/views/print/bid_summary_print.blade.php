@@ -89,7 +89,7 @@
                         Rejected
                     @endif
                 </td>
-                <td colspan="3">{{$item->doc_verifiy_comment}}</td>
+                <td>{{$item->doc_verifiy_comment}}</td>
             </tr>
         @endforeach
     </tbody>
