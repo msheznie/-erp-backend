@@ -75,6 +75,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Jobs\UnbilledGRVInsert;
 use App\Jobs\TaxLedgerInsert;
+use App\Services\GeneralLedger\GlPostedDateService;
 
 class StockCountGlService
 {
@@ -84,6 +85,15 @@ class StockCountGlService
         $taxLedgerData = [];
         $finalData = [];
         $empID = Employee::find($masterModel['employeeSystemID']);
+
+        $validatePostedDate = GlPostedDateService::validatePostedDate($masterModel["autoID"], $masterModel["documentSystemID"]);
+
+        if (!$validatePostedDate['status']) {
+            return ['success' => false, 'message' => $validatePostedDate['message']];
+        }
+
+        $postedDateGl = isset($masterModel['documentDateOveride']) ? $masterModel['documentDateOveride'] : $validatePostedDate['postedDate'];
+        
         $masterData = StockCount::find($masterModel["autoID"]);
         //get balansheet account
         if ($masterData->stockCountType == 2) {
@@ -103,9 +113,9 @@ class StockCountGlService
             $data['documentID'] = $masterData->documentID;
             $data['documentSystemCode'] = $masterModel["autoID"];
             $data['documentCode'] = $masterData->stockCountCode;
-            $data['documentDate'] = isset($masterModel['documentDateOveride']) ? $masterModel['documentDateOveride'] : date('Y-m-d H:i:s');
-            $data['documentYear'] = \Helper::dateYear($masterData->stockCountDate);
-            $data['documentMonth'] = \Helper::dateMonth($masterData->stockCountDate);
+            $data['documentDate'] = $postedDateGl;
+            $data['documentYear'] = \Helper::dateYear($postedDateGl);
+            $data['documentMonth'] = \Helper::dateMonth($postedDateGl);
             $data['documentConfirmedDate'] = $masterData->confirmedDate;
             $data['documentConfirmedBy'] = $masterData->confirmedByEmpID;
             $data['documentConfirmedByEmpSystemID'] = $masterData->confirmedByEmpSystemID;
