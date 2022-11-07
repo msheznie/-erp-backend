@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Log;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use function Clue\StreamFilter\fun;
 
 /**
  * Class BidSubmissionMasterController
@@ -351,8 +352,9 @@ class BidSubmissionMasterAPIController extends AppBaseController
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
             $query = $query->where(function ($query) use ($search) {
-                    $query->where('description', 'like', "%{$search}%")
-                          ->orWhere('name', 'LIKE', "%{$search}%");
+                $query->whereHas('srm_evaluation_criteria_details', function ($q) use ($search) {
+                        return $q->where('description', 'LIKE', "%{$search}%");
+                    });
             });
         }
 
