@@ -19,6 +19,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Models\BidEvaluationSelection;
 use function Clue\StreamFilter\fun;
+use App\Models\EvaluationCriteriaScoreConfig;
 
 /**
  * Class BidSubmissionMasterController
