@@ -2874,9 +2874,10 @@ class SRMService
             $data['technicalStatus'] =1;
         }
 
-        if($bidSubmissionData['technicalEvaluationCriteria'] == 0 && count($documentAttachedCountIdsTechnical) == 0) {
-            $data['technicalStatus'] = -1; 
-        }
+        // if($bidSubmissionData['technicalEvaluationCriteria'] == 0 && count($documentAttachedCountIdsTechnical) == 0) {
+        //     $data['technicalStatus'] = -1; 
+        // }
+
 
 
         // $commercial_pricing_shedule_count = PricingScheduleMaster::where("tender_id",$tender_id)->count();
@@ -2892,9 +2893,9 @@ class SRMService
 
         }
 
-        if($bid_boq == 0 && count($documentAttachedCountIdsCommercial) == 0) {
-            $data['commercial_bid_submission_status'] = -1;
-        }
+        // if($bid_boq == 0 && count($documentAttachedCountIdsCommercial) == 0) {
+        //     $data['commercial_bid_submission_status'] = -1;
+        // }
 
 
         if($evaluvationCriteriaDetailsCount == $bidSubmissionDataCount)  {
