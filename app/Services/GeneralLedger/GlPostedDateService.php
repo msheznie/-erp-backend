@@ -162,7 +162,7 @@ class GlPostedDateService
                 $docInforArr["financePeriod"] = "finance_period_by";
                 break;
             default:
-                $result = ['status' => true, 'message' => "Document ID not found"];
+                return  ['status' => true, 'message' => "Document ID not found"];
         }
 
         $postedDate = null;
