@@ -247,7 +247,7 @@ class GlPostedDateService
                                                      ->first();
 
                 if (!$financePeriod) {
-                    return ['status' => false, 'message' => "Financial period is not active for posting GL Entry"];
+                    return ['status' => false, 'message' => "Financial posting error: Financial period is not active."];
                 } 
             }            
         }
