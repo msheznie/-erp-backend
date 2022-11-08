@@ -11,6 +11,8 @@ use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\Models\BidSubmissionDetail;
+
 
 /**
  * Class BidEvaluationSelectionController
@@ -238,6 +240,27 @@ class BidEvaluationSelectionAPIController extends AppBaseController
     public function update($id, UpdateBidEvaluationSelectionAPIRequest $request)
     {
         $input = $request->all();
+
+        $type = $input['type'];
+        $tender_id = $input['tender_id'];
+        $bucket_id = $input['id'];
+        unset($input['type']);
+        unset($input['tender_id']);
+        unset($input['id']);
+
+       
+        if($type == 2)
+        {
+            $bid_master_ids = json_decode(BidEvaluationSelection::where('id',$id)->pluck('bids')[0],true);
+
+            $evaluation = BidSubmissionDetail::where('tender_id',$tender_id)->whereIn('bid_master_id',$bid_master_ids)->where('eval_result',null)->count();
+            if($evaluation > 0)
+            {
+                return $this->sendError('Please enter the remaining user values for the techniqal evaluation',500);
+            }
+     
+        }
+
 
         /** @var BidEvaluationSelection $bidEvaluationSelection */
         $bidEvaluationSelection = $this->bidEvaluationSelectionRepository->findWithoutFail($id);
