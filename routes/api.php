@@ -2571,6 +2571,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('bidGoNoGoCommentAndStatus', 'BidSubmissionMasterAPIController@bidGoNoGoCommentAndStatus');
 
         Route::post('getBidVerificationStatus', 'BidSubmissionMasterAPIController@getBidVerificationStatus');
+        Route::post('getVerifieddBids', 'BidSubmissionMasterAPIController@getVerifieddBids');
+        Route::post('saveTechnicalEvalBidSubmissionLine', 'BidSubmissionMasterAPIController@saveTechnicalEvalBidSubmissionLine');
+
         
         /**
          * Supplier registration approval routes
@@ -2647,6 +2650,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('getPurchasedTenderList', 'TenderMasterAPIController@getPurchasedTenderList');
         Route::post('getPurchaseTenderMasterData', 'TenderMasterAPIController@getPurchaseTenderMasterData');
         Route::post('tenderCommiteApproveal', 'TenderMasterAPIController@tenderCommiteApproveal');
+        Route::post('getTenderTechniqalEvaluation', 'TenderMasterAPIController@getTenderTechniqalEvaluation');
 
         Route::post('getPricingScheduleList', 'PricingScheduleMasterAPIController@getPricingScheduleList');
         Route::post('getPricingScheduleDropDowns', 'PricingScheduleMasterAPIController@getPricingScheduleDropDowns');
@@ -2850,6 +2854,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('download_tender_files', 'SrmBidDocumentattachmentsAPIController@downloadFile');    
 
         Route::resource('bid_document_verifications', 'BidDocumentVerificationAPIController');
+        Route::resource('bid_evaluation_selections', 'BidEvaluationSelectionAPIController');
+        Route::post('getBidSelection', 'BidEvaluationSelectionAPIController@getBidSelection'); 
+        
 
     });
 
@@ -2992,3 +2999,5 @@ Route::get('updateRoutes', 'GeneralLedgerAPIController@updateRoutes');
 /*
  * End external related routes
  */
+
+

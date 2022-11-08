@@ -19,3 +19,5 @@ Route::resource('pricingScheduleDetails', 'PricingScheduleDetailController');
 Route::resource('bidDocumentVerifications', 'BidDocumentVerificationController');
 
 Route::resource('srmBidDocumentattachments', 'SrmBidDocumentattachmentsController');
+
+Route::resource('bidEvaluationSelections', 'BidEvaluationSelectionController');
