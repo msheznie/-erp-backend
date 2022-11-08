@@ -167,7 +167,7 @@ class GrvGlService
             $data['documentID'] = $masterData->documentID;
             $data['documentSystemCode'] = $masterModel["autoID"];
             $data['documentCode'] = $masterData->grvPrimaryCode;
-            $data['documentDate'] = $postedDateGl
+            $data['documentDate'] = $postedDateGl;
             $data['documentYear'] = \Helper::dateYear($postedDateGl);
             $data['documentMonth'] = \Helper::dateMonth($postedDateGl);
             $data['chartOfAccountSystemID'] = $masterData->UnbilledGRVAccountSystemID;
