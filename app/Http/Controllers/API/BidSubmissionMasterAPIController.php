@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Log;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\Models\BidEvaluationSelection;
 use function Clue\StreamFilter\fun;
 
 /**
@@ -443,6 +444,104 @@ class BidSubmissionMasterAPIController extends AppBaseController
         return $this->sendResponse($is_verified, 'Data retrived successfully');
     }
 
+    public function getVerifieddBids(Request $request)
+    {
+        $input = $request->all();
+        $details = $input['extraParams'];
+        $tenderId = $details['tenderId'];
+
+       
+        $bid_master_ids = json_decode(BidEvaluationSelection::where('tender_id',$tenderId)->pluck('bids'),true);
+
+
+
+        if(count($bid_master_ids) > 0)
+        {
+            $bid_master_ids = json_decode($bid_master_ids[0],true);
+        }
+
+     
+        $query = $this->bidSubmissionMasterRepository
+        ->join('srm_supplier_registration_link', 'srm_bid_submission_master.supplier_registration_id', '=', 'srm_supplier_registration_link.id')
+        ->select('srm_bid_submission_master.id as id','srm_bid_submission_master.bidSubmittedDatetime as submitted_date','srm_supplier_registration_link.name as supplier_name')
+        ->where('bidSubmittedYN', 1)->where('tender_id', $tenderId)->where('doc_verifiy_status',1)->orderBy('id')->get()->toArray();
+
+        foreach($query as $key=>$val)
+        {
+            $id = $val['id'];
+            if(in_array($id,$bid_master_ids))
+            {
+                unset($query[$key]);
+            }
+    
+
+        }
+        $result =  array_values($query);
+        return $this->sendResponse($result, 'Data retrived successfully');
+    }
+
+
+    public function saveTechnicalEvalBidSubmissionLine(Request $request)
+    {
+        $tenderId = $request->input('extraParams.tenderMasterId');
+        $bidMasterId = $request->input('extraParams.bid_id');
+        $val = $request->input('extraParams.val');
+        $id = $request->input('extraParams.id');
+        $row_id = $request->input('extraParams.row_id');
+        $criteriaDetail = $request->input('extraParams.criteriaDetail');
+     
+        DB::beginTransaction();
+        try {
+            if ($criteriaDetail['answer_type_id'] == 4 || $criteriaDetail['answer_type_id'] == 2) {
+                if ($val['value'] > 0 && $val['value'] != null) {
+                    $score = EvaluationCriteriaScoreConfig::where('id', $val['value'])->first();
+;
+                    $score_id = $val['value'];
+                    $val = $score['score'];
+                    $result = ($val/$criteriaDetail['max_value'])*$criteriaDetail['weightage'];
+
+                } else {
+                    $result = null;
+                    $val = null;
+                    $score_id = null;
+                }
+            }
+
+            if ($criteriaDetail['answer_type_id'] == 1 || $criteriaDetail['answer_type_id'] == 3) {
+                if (!is_null($val)) {
+
+                    $result = ($val/$criteriaDetail['max_value'])*$criteriaDetail['weightage'];
+              
+                } else {
+                    $result = null;
+                    $val = null;
+                    
+                }
+                $score_id = null;
+            }
+           
+
+            $att['eval_score'] = $val;
+            $att['eval_result'] = $result;
+            $att['evaluate_by'] = \Helper::getEmployeeSystemID();
+            $att['evaluate_at'] =Carbon::now();
+            $att['bid_selection_id'] = $id;
+            $att['eval_score_id'] = $score_id;
+            $result = BidSubmissionDetail::where('id', $row_id)->update($att);
+
+            DB::commit();
+            return [
+                'success' => true,
+                'message' => 'Successfully Saved',
+                'data' => $result
+            ];
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($e);
+            return ['success' => false, 'data' => '', 'message' => $e];
+        }
+
+    }
     public function pdfBidSummaryExportReport(Request $request)
     {
         $tenderId = $request['tenderMasterId'];
