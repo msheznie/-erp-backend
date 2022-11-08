@@ -99,3 +99,24 @@ Route::group([], function(){
 	Route::resource('customer_currencies', 'CustomerCurrencyAPIController');
 });
 
+
+//item-master
+Route::group([], function() {
+    Route::resource('item/masters', 'ItemMasterAPIController',['names' => 'Item master']);
+    Route::post('getAllItemsMaster', 'ItemMasterAPIController@getAllItemsMaster')->name('Get all items from master');
+    Route::post('getAssignedItemsForCompany', 'ItemMasterAPIController@getAssignedItemsForCompany')->name('Get assigned items for company');
+    Route::post('validateItemAmend', 'ItemMasterAPIController@validateItemAmend')->name('Validate item amend');
+    Route::get('getAllFixedAssetItems', 'ItemMasterAPIController@getAllFixedAssetItems')->name('Get all fixed asset items');
+    Route::post('exportItemMaster', 'ItemMasterAPIController@exportItemMaster')->name('Export item master');
+    Route::post('itemMasterBulkCreate', 'ItemMasterAPIController@itemMasterBulkCreate')->name('Item master bulk create');
+    Route::post('itemReferBack', 'ItemMasterAPIController@itemReferBack')->name('Item refer back');
+    Route::post('itemReOpen', 'ItemMasterAPIController@itemReOpen')->name('Item reopen');
+    Route::get('getItemMasterFormData', 'ItemMasterAPIController@getItemMasterFormData')->name('Get item master form');
+    Route::get('getInventorySubCat', 'ItemMasterAPIController@getInventorySubCat')->name('Get inventory subcategory');
+    Route::get('getItemSubCategory', 'ItemMasterAPIController@getItemSubCategory')->name('Get item subcategory');
+    Route::post('updateItemMaster', 'ItemMasterAPIController@updateItemMaster')->name('Update item master');
+    Route::get('assignedCompaniesByItem', 'ItemMasterAPIController@getAssignedCompaniesByItem')->name('Get assigned companies by item');
+    Route::resource('item/assigneds', 'ItemAssignedAPIController', ['names' => 'Item assigned']);
+    Route::post('getAllAssignedItemsByCompany', 'ItemAssignedAPIController@getAllAssignedItemsByCompany')->name('All assigned item by company');
+});
+
