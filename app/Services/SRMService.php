@@ -2869,14 +2869,14 @@ class SRMService
         // }
 
         if((count($documentAttachedCountIdsTechnical) == $documentAttachedCountAnswerTechnical) && $bidSubmissionData['technicalEvaluationCriteria'] == 0) {
-            $data['technicalStatus'] = "Completed";
+            $data['technicalStatus'] = 0;
         }else {
-            $data['technicalStatus'] = "Not Completed";
+            $data['technicalStatus'] =1;
         }
 
-        if($bidSubmissionData['technicalEvaluationCriteria'] == 0 && count($documentAttachedCountIdsTechnical) == 0) {
-            $data['technicalStatus'] = "Disabled"; 
-        }
+        // if($bidSubmissionData['technicalEvaluationCriteria'] == 0 && count($documentAttachedCountIdsTechnical) == 0) {
+        //     $data['technicalStatus'] = -1; 
+        // }
 
 
         // $commercial_pricing_shedule_count = PricingScheduleMaster::where("tender_id",$tender_id)->count();
@@ -2886,36 +2886,36 @@ class SRMService
         $bid_boq_answer = BidBoq::where('bid_master_id',$bidMasterId)->where('total_amount','>',0)->count();
 
         if(($bid_boq == $bid_boq_answer) && (count($documentAttachedCountIdsCommercial) == $documentAttachedCountAnswerCommercial)) {
-            $data['commercial_bid_submission_status'] = "Completed";
+            $data['commercial_bid_submission_status'] =0;
         }else {
-            $data['commercial_bid_submission_status'] = "Not Completed";
+            $data['commercial_bid_submission_status'] =1;
 
         }
 
-        if($bid_boq == 0 && count($documentAttachedCountIdsCommercial) == 0) {
-            $data['commercial_bid_submission_status'] = "Disabled";
-        }
+        // if($bid_boq == 0 && count($documentAttachedCountIdsCommercial) == 0) {
+        //     $data['commercial_bid_submission_status'] = -1;
+        // }
 
 
         if($evaluvationCriteriaDetailsCount == $bidSubmissionDataCount)  {
-            $data['goNoGoStatus'] = "Completed";
+            $data['goNoGoStatus'] = 0;
         }else {
-            $data['goNoGoStatus'] = "Not Completed";
+            $data['goNoGoStatus'] = 1;
         }
 
         if($evaluvationCriteriaDetailsCount == 0) {
-            $data['goNoGoStatus'] = "Disabled";
+            $data['goNoGoStatus'] = -1;
         }
 
         
         if(count($documentAttachedCountIds) == $documentAttachedCountAnswer) {
-            $data['commonStatus'] = "Completed";
+            $data['commonStatus'] = 0;
         }else {
-            $data['commonStatus'] = "Not Completed";
+            $data['commonStatus'] = 1;
         }
 
         if(count($documentAttachedCountIds) == 0) {
-            $data['commonStatus'] = "Disabled";
+            $data['commonStatus'] = -1;
         }
         
         return [

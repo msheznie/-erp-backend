@@ -52,6 +52,9 @@ use App\Models\TenderSupplierAssignee;
 use App\Repositories\SupplierRegistrationLinkRepository;
 use App\Models\PricingScheduleDetail;
 use App\Models\TenderMasterSupplier;
+use App\Models\BidEvaluationSelection;
+use App\Models\BidSubmissionMaster;
+use App\Models\BidSubmissionDetail;
 /**
  * Class TenderMasterController
  * @package App\Http\Controllers\API
@@ -2288,6 +2291,67 @@ WHERE
     public function failed($exception)
     {
         return $exception->getMessage();
+    }
+
+    public function getTenderTechniqalEvaluation(Request $request)
+    {
+        $input = $request->all();
+        $id = $input['id'];
+        $tenderId = $input['tenderMasterId'];
+
+        $master_data = BidEvaluationSelection::where('id',$id)->first();
+
+        $bid_master_ids = json_decode(BidEvaluationSelection::where('id',$id)->pluck('bids')[0],true);
+
+        $data['bid_submissions'] = BidSubmissionMaster::with('SupplierRegistrationLink')->whereIn('id',$bid_master_ids)->get();
+
+        $techniqal_wightage = TenderMaster::where('id',$tenderId)->select('id','technical_weightage')->first();
+
+       
+        $data['criteriaDetail'] = EvaluationCriteriaDetails::with(['evaluation_criteria_score_config','tender_criteria_answer_type', 'bid_submission_detail1' => function ($q) use ($bid_master_ids) {
+            $q->whereIn('bid_master_id', $bid_master_ids)->orderBy('bid_master_id');
+        }, 'child' => function ($q) use ($bid_master_ids) {
+            $q->with(['evaluation_criteria_score_config','tender_criteria_answer_type', 'bid_submission_detail1' => function ($q) use ($bid_master_ids) {
+                $q->whereIn('bid_master_id', $bid_master_ids)->orderBy('bid_master_id');
+            }, 'child' => function ($q) use ($bid_master_ids) {
+                $q->with(['evaluation_criteria_score_config','tender_criteria_answer_type', 'bid_submission_detail1' => function ($q) use ($bid_master_ids) {
+                    $q->whereIn('bid_master_id', $bid_master_ids)->orderBy('bid_master_id');
+                }, 'child' => function ($q) use ($bid_master_ids) {
+                    $q->with(['evaluation_criteria_score_config','tender_criteria_answer_type', 'bid_submission_detail1' => function ($q) use ($bid_master_ids) {
+                        $q->whereIn('bid_master_id', $bid_master_ids)->orderBy('bid_master_id');
+                    }]);
+                }]);
+            }]);
+        }])->where('tender_id', $tenderId)->where('level', 1)->where('critera_type_id', 2)->get();
+   
+       $wight = [];
+       $percentage = [];
+
+
+        foreach($bid_master_ids as $ids)
+        {
+            $srm_score = BidSubmissionDetail::where('bid_master_id',$ids)->sum('result');
+            $erp_score_score = BidSubmissionDetail::where('bid_master_id',$ids)->sum('eval_result');
+
+
+            $temp['result'] = round(($srm_score/100)*$techniqal_wightage->technical_weightage,3);
+            $temp['eval_result'] = round(($erp_score_score/100)*$techniqal_wightage->technical_weightage,3);
+
+
+
+            $temp1['result_percentage'] = round( ((($srm_score/100)*$techniqal_wightage->technical_weightage)/$techniqal_wightage->technical_weightage)*100,3);
+            $temp1['eval_result_percentage'] = round( ((($erp_score_score/100)*$techniqal_wightage->technical_weightage)/$techniqal_wightage->technical_weightage)*100,3);
+
+            array_push($wight,$temp);
+            array_push($percentage,$temp1);
+        }
+
+
+        $data['weightage'] = $wight;
+        $data['percentage'] = $percentage;
+        $data['master_data'] = $master_data;
+        return $this->sendResponse($data, 'Tender Masters retrieved successfully');
+
     }
 
 }

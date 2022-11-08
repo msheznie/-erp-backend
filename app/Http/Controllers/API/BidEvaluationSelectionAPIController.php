@@ -1,0 +1,366 @@
+<?php
+
+namespace App\Http\Controllers\API;
+
+use App\Http\Requests\API\CreateBidEvaluationSelectionAPIRequest;
+use App\Http\Requests\API\UpdateBidEvaluationSelectionAPIRequest;
+use App\Models\BidEvaluationSelection;
+use App\Repositories\BidEvaluationSelectionRepository;
+use Illuminate\Http\Request;
+use App\Http\Controllers\AppBaseController;
+use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use Prettus\Repository\Criteria\RequestCriteria;
+use Response;
+use App\Models\BidSubmissionDetail;
+
+
+/**
+ * Class BidEvaluationSelectionController
+ * @package App\Http\Controllers\API
+ */
+
+class BidEvaluationSelectionAPIController extends AppBaseController
+{
+    /** @var  BidEvaluationSelectionRepository */
+    private $bidEvaluationSelectionRepository;
+
+    public function __construct(BidEvaluationSelectionRepository $bidEvaluationSelectionRepo)
+    {
+        $this->bidEvaluationSelectionRepository = $bidEvaluationSelectionRepo;
+    }
+
+    /**
+     * @param Request $request
+     * @return Response
+     *
+     * @OA\Get(
+     *      path="/bidEvaluationSelections",
+     *      summary="getBidEvaluationSelectionList",
+     *      tags={"BidEvaluationSelection"},
+     *      description="Get all BidEvaluationSelections",
+     *      @OA\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @OA\Schema(
+     *              type="object",
+     *              @OA\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @OA\Property(
+     *                  property="data",
+     *                  type="array",
+     *                  @OA\Items(ref="#/definitions/BidEvaluationSelection")
+     *              ),
+     *              @OA\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function index(Request $request)
+    {
+        $this->bidEvaluationSelectionRepository->pushCriteria(new RequestCriteria($request));
+        $this->bidEvaluationSelectionRepository->pushCriteria(new LimitOffsetCriteria($request));
+        $bidEvaluationSelections = $this->bidEvaluationSelectionRepository->all();
+
+        return $this->sendResponse($bidEvaluationSelections->toArray(), 'Bid Evaluation Selections retrieved successfully');
+    }
+
+    /**
+     * @param Request $request
+     * @return Response
+     *
+     * @OA\Post(
+     *      path="/bidEvaluationSelections",
+     *      summary="createBidEvaluationSelection",
+     *      tags={"BidEvaluationSelection"},
+     *      description="Create BidEvaluationSelection",
+     *      @OA\RequestBody(
+     *        required=true,
+     *        @OA\MediaType(
+     *            mediaType="application/x-www-form-urlencoded",
+     *            @OA\Schema(
+     *                type="object",
+     *                required={""},
+     *                @OA\Property(
+     *                    property="name",
+     *                    description="desc",
+     *                    type="string"
+     *                )
+     *            )
+     *        )
+     *      ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @OA\Schema(
+     *              type="object",
+     *              @OA\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @OA\Property(
+     *                  property="data",
+     *                  ref="#/definitions/BidEvaluationSelection"
+     *              ),
+     *              @OA\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function store(CreateBidEvaluationSelectionAPIRequest $request)
+    {
+        $input = $request->all();
+
+        $bids_details = $input['bids'];
+        $bids = collect($bids_details)->pluck('id')->toArray();
+
+        $details['tender_id'] = $input['tender_id'];
+        $details['description'] = $input['description'];
+        $details['bids'] = json_encode($bids);
+        $details['created_by'] = \Helper::getEmployeeSystemID();
+
+        $bidEvaluationSelection = $this->bidEvaluationSelectionRepository->create($details);
+
+        return $this->sendResponse($bids, 'Bid Evaluation Selection saved successfully');
+    }
+
+    /**
+     * @param int $id
+     * @return Response
+     *
+     * @OA\Get(
+     *      path="/bidEvaluationSelections/{id}",
+     *      summary="getBidEvaluationSelectionItem",
+     *      tags={"BidEvaluationSelection"},
+     *      description="Get BidEvaluationSelection",
+     *      @OA\Parameter(
+     *          name="id",
+     *          description="id of BidEvaluationSelection",
+     *           @OA\Schema(
+     *             type="integer"
+     *          ),
+     *          required=true,
+     *          in="path"
+     *      ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @OA\Schema(
+     *              type="object",
+     *              @OA\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @OA\Property(
+     *                  property="data",
+     *                  ref="#/definitions/BidEvaluationSelection"
+     *              ),
+     *              @OA\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function show($id)
+    {
+        /** @var BidEvaluationSelection $bidEvaluationSelection */
+        $bidEvaluationSelection = $this->bidEvaluationSelectionRepository->findWithoutFail($id);
+
+        if (empty($bidEvaluationSelection)) {
+            return $this->sendError('Bid Evaluation Selection not found');
+        }
+
+        return $this->sendResponse($bidEvaluationSelection->toArray(), 'Bid Evaluation Selection retrieved successfully');
+    }
+
+    /**
+     * @param int $id
+     * @param Request $request
+     * @return Response
+     *
+     * @OA\Put(
+     *      path="/bidEvaluationSelections/{id}",
+     *      summary="updateBidEvaluationSelection",
+     *      tags={"BidEvaluationSelection"},
+     *      description="Update BidEvaluationSelection",
+     *      @OA\Parameter(
+     *          name="id",
+     *          description="id of BidEvaluationSelection",
+     *           @OA\Schema(
+     *             type="integer"
+     *          ),
+     *          required=true,
+     *          in="path"
+     *      ),
+     *      @OA\RequestBody(
+     *        required=true,
+     *        @OA\MediaType(
+     *            mediaType="application/x-www-form-urlencoded",
+     *            @OA\Schema(
+     *                type="object",
+     *                required={""},
+     *                @OA\Property(
+     *                    property="name",
+     *                    description="desc",
+     *                    type="string"
+     *                )
+     *            )
+     *        )
+     *      ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @OA\Schema(
+     *              type="object",
+     *              @OA\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @OA\Property(
+     *                  property="data",
+     *                  ref="#/definitions/BidEvaluationSelection"
+     *              ),
+     *              @OA\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function update($id, UpdateBidEvaluationSelectionAPIRequest $request)
+    {
+        $input = $request->all();
+
+        $type = $input['type'];
+        $tender_id = $input['tender_id'];
+        $bucket_id = $input['id'];
+        unset($input['type']);
+        unset($input['tender_id']);
+        unset($input['id']);
+
+       
+        if($type == 2)
+        {
+            $bid_master_ids = json_decode(BidEvaluationSelection::where('id',$id)->pluck('bids')[0],true);
+
+            $evaluation = BidSubmissionDetail::where('tender_id',$tender_id)->whereIn('bid_master_id',$bid_master_ids)->where('eval_result',null)->count();
+            if($evaluation > 0)
+            {
+                return $this->sendError('Please enter the remaining user values for the techniqal evaluation',500);
+            }
+     
+        }
+
+
+        /** @var BidEvaluationSelection $bidEvaluationSelection */
+        $bidEvaluationSelection = $this->bidEvaluationSelectionRepository->findWithoutFail($id);
+
+        if (empty($bidEvaluationSelection)) {
+            return $this->sendError('Bid Evaluation Selection not found');
+        }
+        $input['updated_by'] = \Helper::getEmployeeSystemID();
+        $bidEvaluationSelection = $this->bidEvaluationSelectionRepository->update($input, $id);
+
+        return $this->sendResponse($bidEvaluationSelection->toArray(), 'BidEvaluationSelection updated successfully');
+    }
+
+    /**
+     * @param int $id
+     * @return Response
+     *
+     * @OA\Delete(
+     *      path="/bidEvaluationSelections/{id}",
+     *      summary="deleteBidEvaluationSelection",
+     *      tags={"BidEvaluationSelection"},
+     *      description="Delete BidEvaluationSelection",
+     *      @OA\Parameter(
+     *          name="id",
+     *          description="id of BidEvaluationSelection",
+     *           @OA\Schema(
+     *             type="integer"
+     *          ),
+     *          required=true,
+     *          in="path"
+     *      ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @OA\Schema(
+     *              type="object",
+     *              @OA\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @OA\Property(
+     *                  property="data",
+     *                  type="string"
+     *              ),
+     *              @OA\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function destroy($id)
+    {
+        /** @var BidEvaluationSelection $bidEvaluationSelection */
+        $bidEvaluationSelection = $this->bidEvaluationSelectionRepository->findWithoutFail($id);
+
+        if (empty($bidEvaluationSelection)) {
+            return $this->sendError('Bid Evaluation Selection not found');
+        }
+
+        $bidEvaluationSelection->delete();
+
+        return $this->sendSuccess('Bid Evaluation Selection deleted successfully');
+    }
+
+    public function getBidSelection(Request $request)
+    {
+        $input = $request->all();
+        $tenderId = $input['tenderId'];
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+
+        $query = BidEvaluationSelection::with('created_by')->where('tender_id', $tenderId);
+
+        $search = $request->input('search.value');
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $query = $query->where(function ($query) use ($search) {
+                $query->where('description', 'like', "%{$search}%");
+                 });
+        }
+
+        return \DataTables::eloquent($query)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('id', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+
+}

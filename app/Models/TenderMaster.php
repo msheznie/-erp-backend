@@ -366,7 +366,7 @@ class TenderMaster extends Model
         'commerical_bid_opening_date'  => 'datetime',
         'commerical_bid_closing_date'  => 'datetime',
         'doc_verifiy_status' => 'integer',
-        'published_yn' => 'datetime',
+        'published_at' => 'datetime',
     ];
 
     /**
