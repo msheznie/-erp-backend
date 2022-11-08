@@ -593,7 +593,7 @@
                         </td>
                         <td>
                             @if($item->grvmaster)
-                                {{ \App\helper\Helper::convertDateWithTime($item->grvmaster->grvDate)}}
+                                {{ \App\helper\Helper::dateFormat($item->grvmaster->grvDate)}}
                             @endif
                         </td>
                         <td>

@@ -75,6 +75,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Jobs\UnbilledGRVInsert;
 use App\Jobs\TaxLedgerInsert;
+use App\Services\GeneralLedger\GlPostedDateService;
 
 class StockAdjustmentGlService
 {
@@ -84,16 +85,25 @@ class StockAdjustmentGlService
         $taxLedgerData = [];
         $finalData = [];
         $empID = Employee::find($masterModel['employeeSystemID']);
+
+        $validatePostedDate = GlPostedDateService::validatePostedDate($masterModel["autoID"], $masterModel["documentSystemID"]);
+
+        if (!$validatePostedDate['status']) {
+            return ['success' => false, 'message' => $validatePostedDate['message']];
+        }
+
+        $postedDateGl = isset($masterModel['documentDateOveride']) ? $masterModel['documentDateOveride'] : $validatePostedDate['postedDate'];
+
         $masterData = StockAdjustment::find($masterModel["autoID"]);
         //get balansheet account
         if ($masterData->stockAdjustmentType == 2) {
 
-            $bs = StockAdjustmentDetails::selectRaw("SUM(currenctStockQty * (wacAdjLocal - currentWaclocal)) as localAmount, SUM(currenctStockQty * (wacAdjRpt - currentWacRpt)) as rptAmount,financeGLcodebBSSystemID,financeGLcodebBS,currentWacLocalCurrencyID as localCurrencyID,currentWacRptCurrencyID as reportingCurrencyID,wacAdjRptER as reportingCurrencyER,wacAdjLocalER as localCurrencyER")->WHERE('stockAdjustmentAutoID', $masterModel["autoID"])->whereNotNull('financeGLcodebBSSystemID')->where('financeGLcodebBSSystemID', '>', 0)->groupBy('financeGLcodebBSSystemID')->first();
+            $bs = StockAdjustmentDetails::selectRaw("SUM(currenctStockQty * (wacAdjLocal - currentWaclocal)) as localAmount, SUM(currenctStockQty * (wacAdjRpt - currentWacRpt)) as rptAmount,financeGLcodebBSSystemID,financeGLcodebBS,currentWacLocalCurrencyID as localCurrencyID,currentWacRptCurrencyID as reportingCurrencyID,wacAdjRptER as reportingCurrencyER,wacAdjLocalER as localCurrencyER")->WHERE('stockAdjustmentAutoID', $masterModel["autoID"])->whereNotNull('financeGLcodebBSSystemID')->where('financeGLcodebBSSystemID', '>', 0)->groupBy('financeGLcodebBSSystemID')->get();
             //get pnl account
             $pl = StockAdjustmentDetails::selectRaw("SUM(currenctStockQty * (wacAdjLocal - currentWaclocal)) as localAmount, SUM(currenctStockQty * (wacAdjRpt - currentWacRpt)) as rptAmount,financeGLcodePLSystemID,financeGLcodePL,currentWacLocalCurrencyID as localCurrencyID,currentWacRptCurrencyID as reportingCurrencyID,wacAdjRptER as reportingCurrencyER,wacAdjLocalER as localCurrencyER")->WHERE('stockAdjustmentAutoID', $masterModel["autoID"])->whereNotNull('financeGLcodePLSystemID')->where('financeGLcodePLSystemID', '>', 0)->groupBy('financeGLcodePLSystemID')->get();
 
         } else {
-            $bs = StockAdjustmentDetails::selectRaw("SUM(noQty * wacAdjLocal) as localAmount, SUM(noQty * wacAdjRpt) as rptAmount,financeGLcodebBSSystemID,financeGLcodebBS,currentWacLocalCurrencyID as localCurrencyID,currentWacRptCurrencyID as reportingCurrencyID,wacAdjRptER as reportingCurrencyER,wacAdjLocalER as localCurrencyER")->WHERE('stockAdjustmentAutoID', $masterModel["autoID"])->whereNotNull('financeGLcodebBSSystemID')->where('financeGLcodebBSSystemID', '>', 0)->groupBy('financeGLcodebBSSystemID')->first();
+            $bs = StockAdjustmentDetails::selectRaw("SUM(noQty * wacAdjLocal) as localAmount, SUM(noQty * wacAdjRpt) as rptAmount,financeGLcodebBSSystemID,financeGLcodebBS,currentWacLocalCurrencyID as localCurrencyID,currentWacRptCurrencyID as reportingCurrencyID,wacAdjRptER as reportingCurrencyER,wacAdjLocalER as localCurrencyER")->WHERE('stockAdjustmentAutoID', $masterModel["autoID"])->whereNotNull('financeGLcodebBSSystemID')->where('financeGLcodebBSSystemID', '>', 0)->groupBy('financeGLcodebBSSystemID')->get();
             //get pnl account
             $pl = StockAdjustmentDetails::selectRaw("SUM(noQty * wacAdjLocal) as localAmount, SUM(noQty * wacAdjRpt) as rptAmount,financeGLcodePLSystemID,financeGLcodePL,currentWacLocalCurrencyID as localCurrencyID,currentWacRptCurrencyID as reportingCurrencyID,wacAdjRptER as reportingCurrencyER,wacAdjLocalER as localCurrencyER")->WHERE('stockAdjustmentAutoID', $masterModel["autoID"])->whereNotNull('financeGLcodePLSystemID')->where('financeGLcodePLSystemID', '>', 0)->groupBy('financeGLcodePLSystemID')->get();
         }
@@ -108,9 +118,9 @@ class StockAdjustmentGlService
             $data['documentID'] = $masterData->documentID;
             $data['documentSystemCode'] = $masterModel["autoID"];
             $data['documentCode'] = $masterData->stockAdjustmentCode;
-            $data['documentDate'] = isset($masterModel['documentDateOveride']) ? $masterModel['documentDateOveride'] : date('Y-m-d H:i:s');
-            $data['documentYear'] = \Helper::dateYear($masterData->stockAdjustmentDate);
-            $data['documentMonth'] = \Helper::dateMonth($masterData->stockAdjustmentDate);
+            $data['documentDate'] = $postedDateGl;
+            $data['documentYear'] = \Helper::dateYear($postedDateGl);
+            $data['documentMonth'] = \Helper::dateMonth($postedDateGl);
             $data['documentConfirmedDate'] = $masterData->confirmedDate;
             $data['documentConfirmedBy'] = $masterData->confirmedByEmpID;
             $data['documentConfirmedByEmpSystemID'] = $masterData->confirmedByEmpSystemID;
@@ -134,18 +144,20 @@ class StockAdjustmentGlService
             $data['timestamp'] = \Helper::currentDateTime();
 
             if ($bs) {
-                $data['chartOfAccountSystemID'] = $bs->financeGLcodebBSSystemID;
-                $data['glCode'] = $bs->financeGLcodebBS;
-                $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
-                $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-                $data['documentLocalCurrencyID'] = $bs->localCurrencyID;
-                $data['documentLocalCurrencyER'] = $bs->localCurrencyER;
-                $data['documentLocalAmount'] = $bs->localAmount;
-                $data['documentRptCurrencyID'] = $bs->reportingCurrencyID;
-                $data['documentRptCurrencyER'] = $bs->reportingCurrencyER;
-                $data['documentRptAmount'] = $bs->rptAmount;
-                $data['timestamp'] = \Helper::currentDateTime();
-                array_push($finalData, $data);
+                foreach ($bs as $val) {
+                    $data['chartOfAccountSystemID'] = $val->financeGLcodebBSSystemID;
+                    $data['glCode'] = $val->financeGLcodebBS;
+                    $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                    $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                    $data['documentLocalCurrencyID'] = $val->localCurrencyID;
+                    $data['documentLocalCurrencyER'] = $val->localCurrencyER;
+                    $data['documentLocalAmount'] = $val->localAmount;
+                    $data['documentRptCurrencyID'] = $val->reportingCurrencyID;
+                    $data['documentRptCurrencyER'] = $val->reportingCurrencyER;
+                    $data['documentRptAmount'] = $val->rptAmount;
+                    $data['timestamp'] = \Helper::currentDateTime();
+                    array_push($finalData, $data);
+                }
             }
 
             if ($pl) {

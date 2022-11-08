@@ -75,6 +75,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Jobs\UnbilledGRVInsert;
 use App\Jobs\TaxLedgerInsert;
+use App\Services\GeneralLedger\GlPostedDateService;
 
 class DeliveryOrderGlService
 {
@@ -88,7 +89,14 @@ class DeliveryOrderGlService
         $company = Company::select('masterComapanyID')->where('companySystemID', $masterData->companySystemID)->first();
 
         $chartOfAccount = ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'catogaryBLorPLID', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $masterData->custUnbilledAccountSystemID)->first();
-        $masterDocumentDate = Carbon::now();
+
+        $validatePostedDate = GlPostedDateService::validatePostedDate($masterModel["autoID"], $masterModel["documentSystemID"]);
+
+        if (!$validatePostedDate['status']) {
+            return ['success' => false, 'message' => $validatePostedDate['message']];
+        }
+
+        $masterDocumentDate = isset($masterModel['documentDateOveride']) ? $masterModel['documentDateOveride'] : $validatePostedDate['postedDate'];
         $time = Carbon::now();
 
         $data['companySystemID'] = $masterData->companySystemID;

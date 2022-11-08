@@ -6,7 +6,8 @@ use App\Http\Requests\API\CreateBidSubmissionMasterAPIRequest;
 use App\Http\Requests\API\UpdateBidSubmissionMasterAPIRequest;
 use App\Models\BidSubmissionDetail;
 use App\Models\BidSubmissionMaster;
-use App\Models\EvaluationCriteriaScoreConfig;
+use App\Models\DocumentAttachments;
+use App\Models\TenderMaster;
 use App\Repositories\BidSubmissionMasterRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -17,6 +18,8 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Models\BidEvaluationSelection;
+use function Clue\StreamFilter\fun;
+
 /**
  * Class BidSubmissionMasterController
  * @package App\Http\Controllers\API
@@ -351,8 +354,9 @@ class BidSubmissionMasterAPIController extends AppBaseController
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
             $query = $query->where(function ($query) use ($search) {
-                    $query->where('description', 'like', "%{$search}%")
-                          ->orWhere('name', 'LIKE', "%{$search}%");
+                $query->whereHas('srm_evaluation_criteria_details', function ($q) use ($search) {
+                        return $q->where('description', 'LIKE', "%{$search}%");
+                    });
             });
         }
 
@@ -360,7 +364,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
-                        $query->orderBy('id', $input['order'][0]['dir']);
+                        $query->orderBy('id', 'asc');
                     }
                 }
             })
@@ -429,7 +433,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
         $tenderId = $request['tenderMasterId'];
         $is_verified = true;
 
-        $query = BidSubmissionMaster::where('tender_id', $tenderId)->where('doc_verifiy_status', 0)->count();
+        $query = BidSubmissionMaster::where('tender_id', $tenderId)->where('doc_verifiy_status', 0)->where('bidSubmittedYN',1)->where('status',1)->count();
 
 
         if($query > 0)
@@ -536,5 +540,26 @@ class BidSubmissionMasterAPIController extends AppBaseController
             Log::error($e);
             return ['success' => false, 'data' => '', 'message' => $e];
         }
+
+    }
+    public function pdfBidSummaryExportReport(Request $request)
+    {
+        $tenderId = $request['tenderMasterId'];
+
+        $bidData = TenderMaster::with(['srm_bid_submission_master', 'srm_bid_submission_master.SupplierRegistrationLink', 'DocumentAttachments' => function($query) use($tenderId){
+            $query->with('bid_verify')->where('documentSystemCode', $tenderId)->where('documentSystemID', 108)
+                ->where('attachmentType', 2)->where('envelopType',3);
+        }])->where('id', $tenderId)
+            ->get();
+
+        Log::info('<><><><><><>');
+        Log::info($bidData[0]['bid_submission_opening_date']);
+        $order = array('bidData' => $bidData);
+        $html = view('print.bid_summary_print', $order);
+        $pdf = \App::make('dompdf.wrapper');
+        $pdf->loadHTML($html);
+
+       return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream();
+
     }
 }

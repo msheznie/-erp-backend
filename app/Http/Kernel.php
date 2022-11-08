@@ -63,6 +63,7 @@ class Kernel extends HttpKernel
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         //'cors' => \App\Http\Middleware\Cors::class
         'tenant' => \App\Http\Middleware\TenantEnforce::class,
+        'authorization' => \App\Http\Middleware\UserAuthorization::class,
         'tenantById' => \App\Http\Middleware\TenantByKey::class,
         'locale' => \App\Http\Middleware\DetectLocale::class,
         'max_memory_limit' => \App\Http\Middleware\MaxMemoryLimit::class,

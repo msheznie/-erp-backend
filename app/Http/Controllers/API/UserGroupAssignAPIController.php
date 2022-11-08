@@ -15,6 +15,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateUserGroupAssignAPIRequest;
 use App\Http\Requests\API\UpdateUserGroupAssignAPIRequest;
 use App\Models\Company;
+use App\Jobs\UpdateRoleRouteJob;
 use App\Models\DocumentRestrictionAssign;
 use App\Models\DocumentRestrictionPolicy;
 use App\Models\Employee;
@@ -128,6 +129,11 @@ class UserGroupAssignAPIController extends AppBaseController
 
             DocumentRestrictionAssign::insert($documentRestriction);
         }
+
+        $dataBase = isset($input['db']) ? $input['db'] : "";
+
+        UpdateRoleRouteJob::dispatch($dataBase, $input["userGroupID"]);
+
         return $this->sendResponse(array(), 'User Group Assign saved successfully');
     }
 
