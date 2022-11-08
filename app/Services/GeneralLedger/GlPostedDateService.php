@@ -229,27 +229,27 @@ class GlPostedDateService
                     } 
                 }
             }
+        }
 
-            if (is_null($postedDate)) {
-                $postedDate = date('Y-m-d H:i:s');
+        if (is_null($postedDate)) {
+            $postedDate = date('Y-m-d H:i:s');
 
-                $documentMaster = DocumentMaster::find($documentSystemID);
+            $documentMaster = DocumentMaster::find($documentSystemID);
 
-                $companySystemID = isset($masterRec->companySystemID) ? $masterRec->companySystemID : 0;
+            $companySystemID = isset($masterRec->companySystemID) ? $masterRec->companySystemID : 0;
 
-                if ($documentMaster) {
-                    $financePeriod = CompanyFinancePeriod::where('departmentSystemID', $documentMaster->departmentSystemID)
-                                                         ->where('isActive', -1)
-                                                         ->where('companySystemID', $companySystemID)
-                                                         ->whereDate('dateFrom', '<=', $postedDate)
-                                                         ->whereDate('dateTo', '>=', $postedDate)
-                                                         ->first();
+            if ($documentMaster) {
+                $financePeriod = CompanyFinancePeriod::where('departmentSystemID', $documentMaster->departmentSystemID)
+                                                     ->where('isActive', -1)
+                                                     ->where('companySystemID', $companySystemID)
+                                                     ->whereDate('dateFrom', '<=', $postedDate)
+                                                     ->whereDate('dateTo', '>=', $postedDate)
+                                                     ->first();
 
-                    if (!$financePeriod) {
-                        return ['status' => false, 'message' => "Financial period is not active for posting GL Entry"];
-                    } 
-                }            
-            }
+                if (!$financePeriod) {
+                    return ['status' => false, 'message' => "Financial period is not active for posting GL Entry"];
+                } 
+            }            
         }
 
         return ['status' => true, 'postedDate' => $postedDate];
