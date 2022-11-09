@@ -451,14 +451,17 @@ class BidSubmissionMasterAPIController extends AppBaseController
         $details = $input['extraParams'];
         $tenderId = $details['tenderId'];
 
-       
-        $bid_master_ids = json_decode(BidEvaluationSelection::where('tender_id',$tenderId)->pluck('bids'),true);
 
+        $bid_master_ids = BidEvaluationSelection::where('tender_id',$tenderId)->pluck('bids');
+        $temp = [];
 
-
-        if(count($bid_master_ids) > 0)
+        foreach($bid_master_ids as $bid)
         {
-            $bid_master_ids = json_decode($bid_master_ids[0],true);
+            foreach(json_decode($bid,true) as $val)
+            {
+                array_push($temp,$val);
+            }
+
         }
 
      
@@ -470,7 +473,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
         foreach($query as $key=>$val)
         {
             $id = $val['id'];
-            if(in_array($id,$bid_master_ids))
+            if(in_array($id,$temp))
             {
                 unset($query[$key]);
             }

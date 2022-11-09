@@ -2333,14 +2333,16 @@ WHERE
             $srm_score = BidSubmissionDetail::where('bid_master_id',$ids)->sum('result');
             $erp_score_score = BidSubmissionDetail::where('bid_master_id',$ids)->sum('eval_result');
 
+            $result =  round(($srm_score/100)*$techniqal_wightage->technical_weightage,3);
+            $eval_result = round(($erp_score_score/100)*$techniqal_wightage->technical_weightage,3);
 
-            $temp['result'] = round(($srm_score/100)*$techniqal_wightage->technical_weightage,3);
-            $temp['eval_result'] = round(($erp_score_score/100)*$techniqal_wightage->technical_weightage,3);
+            $temp['result'] = $result;
+            $temp['eval_result'] = $eval_result;
 
 
 
-            $temp1['result_percentage'] = round( ((($srm_score/100)*$techniqal_wightage->technical_weightage)/$techniqal_wightage->technical_weightage)*100,3);
-            $temp1['eval_result_percentage'] = round( ((($erp_score_score/100)*$techniqal_wightage->technical_weightage)/$techniqal_wightage->technical_weightage)*100,3);
+            $temp1['result_percentage'] = round((($result)/$techniqal_wightage->technical_weightage)*100,3);
+            $temp1['eval_result_percentage'] = round( (($eval_result)/$techniqal_wightage->technical_weightage)*100,3);
 
             array_push($wight,$temp);
             array_push($percentage,$temp1);
