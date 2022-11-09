@@ -20,7 +20,7 @@ use Response;
 use App\Models\BidEvaluationSelection;
 use function Clue\StreamFilter\fun;
 use App\Models\EvaluationCriteriaScoreConfig;
-
+use App\Repositories\TenderMasterRepository;
 /**
  * Class BidSubmissionMasterController
  * @package App\Http\Controllers\API
@@ -31,9 +31,10 @@ class BidSubmissionMasterAPIController extends AppBaseController
     /** @var  BidSubmissionMasterRepository */
     private $bidSubmissionMasterRepository;
 
-    public function __construct(BidSubmissionMasterRepository $bidSubmissionMasterRepo)
+    public function __construct(TenderMasterRepository $tenderMasterRepo,BidSubmissionMasterRepository $bidSubmissionMasterRepo)
     {
         $this->bidSubmissionMasterRepository = $bidSubmissionMasterRepo;
+        $this->tenderMasterRepository = $tenderMasterRepo;
     }
 
     /**
@@ -415,6 +416,18 @@ class BidSubmissionMasterAPIController extends AppBaseController
             $att['updated_by'] = \Helper::getEmployeeSystemID();
             $result = BidSubmissionMaster::where('id', $input['id'])->update($att);
 
+            $details = BidSubmissionMaster::where('id', $input['id'])->first();
+            $tenderId = $details->tender_id;
+
+            $query = BidSubmissionMaster::where('tender_id', $tenderId)->where('go_no_go_criteria_status','!=', 1)->where('bidSubmittedYN',1)->where('status',1)->count();
+            if($query == 0)
+            {
+                    $tenderMaster = $this->tenderMasterRepository->findWithoutFail($tenderId);
+                    $tenderMaster->go_no_go_status = 1;
+                    $tenderMaster->save();
+            }
+
+
             DB::commit();
             return [
                 'success' => true,
@@ -434,6 +447,13 @@ class BidSubmissionMasterAPIController extends AppBaseController
         $tenderId = $request['tenderMasterId'];
         $is_verified = true;
 
+        $tenderMaster = $this->tenderMasterRepository->findWithoutFail($tenderId);
+        if($tenderMaster->is_active_go_no_go == 0)
+        {
+            $tenderMaster->go_no_go_status = 1;
+            $tenderMaster->save();
+        }
+       
         $query = BidSubmissionMaster::where('tender_id', $tenderId)->where('doc_verifiy_status', 0)->where('bidSubmittedYN',1)->where('status',1)->count();
 
 
@@ -452,13 +472,21 @@ class BidSubmissionMasterAPIController extends AppBaseController
         $tenderId = $details['tenderId'];
 
        
-        $bid_master_ids = json_decode(BidEvaluationSelection::where('tender_id',$tenderId)->pluck('bids'),true);
+        //$bid_master_ids = json_decode(BidEvaluationSelection::where('tender_id',$tenderId)->pluck('bids'),true);
 
 
 
-        if(count($bid_master_ids) > 0)
+           
+        $bid_master_ids = BidEvaluationSelection::where('tender_id',$tenderId)->pluck('bids');
+        $temp = [];
+
+        foreach($bid_master_ids as $bid)
         {
-            $bid_master_ids = json_decode($bid_master_ids[0],true);
+            foreach(json_decode($bid,true) as $val)
+            {
+                array_push($temp,$val);
+            }
+
         }
 
      
@@ -470,7 +498,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
         foreach($query as $key=>$val)
         {
             $id = $val['id'];
-            if(in_array($id,$bid_master_ids))
+            if(in_array($id,$temp))
             {
                 unset($query[$key]);
             }

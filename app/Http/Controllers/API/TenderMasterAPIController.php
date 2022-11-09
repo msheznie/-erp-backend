@@ -2354,4 +2354,52 @@ WHERE
 
     }
 
+
+    public function getCommercialBidTenderList(Request $request)
+    {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $request['companyId'];
+
+
+
+        // $tenderMaster = TenderMasterSupplier::with(['tender_master'=>function($q){
+        //     $q->with(['tender_type', 'envelop_type', 'currency']);
+        // }])->get();
+
+        $query = TenderMaster::with(['currency', 'srm_bid_submission_master','tender_type','envelop_type','srmTenderMasterSupplier'])->whereHas('srmTenderMasterSupplier')->where('published_yn', 1)->where('technical_eval_status', 1)->where('go_no_go_status', 1);
+
+       // return $this->sendResponse($query, 'Tender Masters retrieved successfully');
+
+        $search = $request->input('search.value');
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $query = $query->where(function ($query) use ($search) {
+                $query->where('description', 'LIKE', "%{$search}%");
+                $query->orWhere('description_sec_lang', 'LIKE', "%{$search}%");
+                $query->orWhere('title', 'LIKE', "%{$search}%");
+                $query->orWhere('title_sec_lang', 'LIKE', "%{$search}%");
+            });
+        }
+
+
+        return \DataTables::eloquent($query)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('id', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
 }

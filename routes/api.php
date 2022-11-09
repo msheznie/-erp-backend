@@ -2599,6 +2599,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('getPurchaseTenderMasterData', 'TenderMasterAPIController@getPurchaseTenderMasterData');
         Route::post('tenderCommiteApproveal', 'TenderMasterAPIController@tenderCommiteApproveal');
         Route::post('getTenderTechniqalEvaluation', 'TenderMasterAPIController@getTenderTechniqalEvaluation');
+        Route::post('getCommercialBidTenderList', 'TenderMasterAPIController@getCommercialBidTenderList');
 
         Route::post('getPricingScheduleList', 'PricingScheduleMasterAPIController@getPricingScheduleList');
         Route::post('getPricingScheduleDropDowns', 'PricingScheduleMasterAPIController@getPricingScheduleDropDowns');

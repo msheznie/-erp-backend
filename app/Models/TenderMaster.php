@@ -295,7 +295,9 @@ class TenderMaster extends Model
         'doc_verifiy_date',
         'doc_verifiy_status',
         'doc_verifiy_comment',
-        'published_at'
+        'published_at',
+        'technical_eval_status',
+        'go_no_go_status'
     ];
 
     /**

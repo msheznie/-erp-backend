@@ -12,8 +12,9 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Models\BidSubmissionDetail;
-
-
+use App\Repositories\BidSubmissionMasterRepository;
+use App\Models\TenderMaster;
+use App\Repositories\TenderMasterRepository;
 /**
  * Class BidEvaluationSelectionController
  * @package App\Http\Controllers\API
@@ -23,10 +24,14 @@ class BidEvaluationSelectionAPIController extends AppBaseController
 {
     /** @var  BidEvaluationSelectionRepository */
     private $bidEvaluationSelectionRepository;
+    private $bidSubmissionMasterRepository;
+    private $tenderMasterRepository;
 
-    public function __construct(BidEvaluationSelectionRepository $bidEvaluationSelectionRepo)
+    public function __construct(TenderMasterRepository $tenderMasterRepo,BidEvaluationSelectionRepository $bidEvaluationSelectionRepo,BidSubmissionMasterRepository $bidSubmissionMasterRepo)
     {
         $this->bidEvaluationSelectionRepository = $bidEvaluationSelectionRepo;
+        $this->bidSubmissionMasterRepository = $bidSubmissionMasterRepo;
+        $this->tenderMasterRepository = $tenderMasterRepo;
     }
 
     /**
@@ -248,19 +253,24 @@ class BidEvaluationSelectionAPIController extends AppBaseController
         unset($input['tender_id']);
         unset($input['id']);
 
-       
+        
         if($type == 2)
         {
+            
             $bid_master_ids = json_decode(BidEvaluationSelection::where('id',$id)->pluck('bids')[0],true);
 
+         
+
+
             $evaluation = BidSubmissionDetail::where('tender_id',$tender_id)->whereIn('bid_master_id',$bid_master_ids)->where('eval_result',null)->count();
+
+            
             if($evaluation > 0)
             {
                 return $this->sendError('Please enter the remaining user values for the techniqal evaluation',500);
             }
-     
-        }
 
+        }
 
         /** @var BidEvaluationSelection $bidEvaluationSelection */
         $bidEvaluationSelection = $this->bidEvaluationSelectionRepository->findWithoutFail($id);
@@ -270,6 +280,31 @@ class BidEvaluationSelectionAPIController extends AppBaseController
         }
         $input['updated_by'] = \Helper::getEmployeeSystemID();
         $bidEvaluationSelection = $this->bidEvaluationSelectionRepository->update($input, $id);
+
+
+        if($type == 2)
+        {
+            $bids_bucket = $this->bidSubmissionMasterRepository
+            ->where('bidSubmittedYN', 1)->where('tender_id', $tender_id)->where('doc_verifiy_status',1)->orderBy('id')->count();
+
+            $bids =  (BidEvaluationSelection::where('tender_id',$tender_id)->pluck('bids'));
+            $count = 0;
+            foreach($bids as $bid)
+            {
+                $count += count(json_decode($bid,true));
+            }
+
+            $status =  BidEvaluationSelection::where('tender_id',$tender_id)->where('status',0)->count();
+
+            
+
+            if(($bids_bucket == $count) && $status == 0)
+            {
+                $update_status['technical_eval_status'] = 1;
+                $this->tenderMasterRepository->update($update_status, $tender_id);
+
+            }
+        }
 
         return $this->sendResponse($bidEvaluationSelection->toArray(), 'BidEvaluationSelection updated successfully');
     }
