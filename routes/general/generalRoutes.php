@@ -20,4 +20,5 @@ Route::get('exportPurchaseRequestHistory', 'PurchaseRequestDetailsAPIController@
 Route::post('generateStockLedger', 'ErpItemLedgerAPIController@generateStockLedger')->name('Generate stock ledger');
 Route::post('getItemStockDetails', 'ErpItemLedgerAPIController@getItemStockDetails')->name('Get item stock details');
 Route::get('downloadFile', 'DocumentAttachmentsAPIController@downloadFile')->name('Download file');
-
+Route::get('getuserGroupAssignedCompanies', 'EmployeeNavigationAPIController@getuserGroupAssignedCompanies')->name('Get user group assigned companies');
+Route::get('getAllWHForSelectedCompany', 'WarehouseMasterAPIController@getAllWarehouseForSelectedCompany')->name('Get all warehouse for selected company');

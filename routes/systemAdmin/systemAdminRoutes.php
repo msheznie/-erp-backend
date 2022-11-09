@@ -136,6 +136,25 @@ Route::group([], function(){
 	Route::resource('customer_currencies', 'CustomerCurrencyAPIController');
 });
 
+//warehouse
+Route::group([], function() {
+    Route::get('getWarehouseMasterFormData', 'WarehouseMasterAPIController@getWarehouseMasterFormData')->name('Get warehouse master form data');
+    Route::post('getAllWarehouseMaster', 'WarehouseMasterAPIController@getAllWarehouseMaster')->name('Get all warehouse master');
+    Route::post('getAllLocation', 'ErpLocationAPIController@getAllLocation')->name('Get all location');
+    Route::post('getWarehouseRightEmployees', 'WarehouseRightsAPIController@getWarehouseRightEmployees')->name('Get warehouse right employees');
+    Route::post('createLocation', 'ErpLocationAPIController@createLocation')->name('Create location');
+    Route::post('deleteLocation', 'ErpLocationAPIController@deleteLocation')->name('Delete location');
+    Route::post('getAllAssignedItemsByWarehouse', 'WarehouseItemsAPIController@getAllAssignedItemsByWarehouse')->name('Get all assigned items by warehouse');
+    Route::post('exportItemAssignedByWarehouse', 'WarehouseItemsAPIController@exportItemAssignedByWarehouse')->name('Export item assigned by warehouse');
+    Route::resource('warehouse/masters', 'WarehouseMasterAPIController', ['names' => 'Warehouse master']);
+    Route::post('getAllWarehouseSubLevels', 'WarehouseSubLevelsAPIController@getAllWarehouseSubLevels')->name('Get all warehouse sub levels');
+    Route::resource('warehouse_sub_levels', 'WarehouseSubLevelsAPIController');
+    Route::post('getWarehouseRightEmployees', 'WarehouseRightsAPIController@getWarehouseRightEmployees')->name('Get warehouse right employees');
+    Route::resource('warehouse_rights', 'WarehouseRightsAPIController');
+    Route::get('getSubLevelsByWarehouse', 'WarehouseSubLevelsAPIController@getSubLevelsByWarehouse')->name('Get sub levels by warehouse');
+    Route::post('getAllBinLocationsByWarehouse', 'WarehouseBinLocationAPIController@getAllBinLocationsByWarehouse')->name('Get all bin locations by warehouse');
+    Route::resource('warehouse_bin_locations', 'WarehouseBinLocationAPIController');
+});
 
 //item-master
 Route::group([], function() {

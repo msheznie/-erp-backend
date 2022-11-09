@@ -45,7 +45,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::resource('employeeMasterCRUD', 'EmployeeAPIController');
             Route::resource('employee_navigations', 'EmployeeNavigationAPIController');
-            Route::get('getuserGroupAssignedCompanies', 'EmployeeNavigationAPIController@getuserGroupAssignedCompanies');
 
             Route::resource('navigation_menuses', 'NavigationMenusAPIController');
 
@@ -179,8 +178,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('example_table_templates', 'ExampleTableTemplateAPIController');
            
 
-            Route::post('getAllAssignedItemsByWarehouse', 'WarehouseItemsAPIController@getAllAssignedItemsByWarehouse');
-            Route::post('exportItemAssignedByWarehouse', 'WarehouseItemsAPIController@exportItemAssignedByWarehouse');
             Route::post('exportItemAssignedByCompanyReport', 'ItemAssignedAPIController@exportItemAssignedByCompanyReport');
 
             Route::post('reOrderTest', 'ItemAssignedAPIController@reOrderTest');//nee to delete
@@ -285,9 +282,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
 
             Route::resource('erp_locations', 'ErpLocationAPIController');
-            Route::post('getAllLocation', 'ErpLocationAPIController@getAllLocation');
-            Route::post('createLocation', 'ErpLocationAPIController@createLocation');
-            Route::post('deleteLocation', 'ErpLocationAPIController@deleteLocation');
             Route::resource('accounts_types', 'AccountsTypeAPIController');
 
 
@@ -302,11 +296,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
 
             /** Warehouse master Created by Pasan  */
-            Route::resource('warehouse/masters', 'WarehouseMasterAPIController');
-            Route::get('getWarehouseMasterFormData', 'WarehouseMasterAPIController@getWarehouseMasterFormData');
-            Route::post('getAllWarehouseMaster', 'WarehouseMasterAPIController@getAllWarehouseMaster');
-            Route::get('getAllWHForSelectedCompany', 'WarehouseMasterAPIController@getAllWarehouseForSelectedCompany');
-            Route::post('updateWarehouseMaster', 'WarehouseMasterAPIController@updateWarehouseMaster');            
+            Route::post('updateWarehouseMaster', 'WarehouseMasterAPIController@updateWarehouseMaster');
             
             Route::post('getAllCustomersByCompany', 'CustomerAssignedAPIController@getAllCustomersByCompany');
                    
@@ -1079,8 +1069,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('storePOBaseDetail', 'BookInvSuppDetAPIController@storePOBaseDetail');
             Route::post('editPOBaseDetail', 'BookInvSuppDetAPIController@editPOBaseDetail');
             Route::get('getSupplierInvoiceGRVItems', 'BookInvSuppDetAPIController@getSupplierInvoiceGRVItems');
-            Route::resource('warehouse_bin_locations', 'WarehouseBinLocationAPIController');
-            Route::post('getAllBinLocationsByWarehouse', 'WarehouseBinLocationAPIController@getAllBinLocationsByWarehouse');
 
             Route::resource('expense_claims', 'ExpenseClaimAPIController');
             Route::resource('expense_claim_details', 'ExpenseClaimDetailsAPIController');
@@ -1977,16 +1965,11 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('getSegmentRightEmployees', 'SegmentRightsAPIController@getSegmentRightEmployees');
             Route::resource('service_lines', 'ServiceLineAPIController');
             Route::get('getServiceLineByCompany', 'ServiceLineAPIController@getServiceLineByCompany');
-            Route::resource('warehouse_rights', 'WarehouseRightsAPIController');
-            Route::post('getWarehouseRightEmployees', 'WarehouseRightsAPIController@getWarehouseRightEmployees');
             Route::resource('customer_invoice_item_details', 'CustomerInvoiceItemDetailsAPIController');
             Route::resource('chartOfAccount/allocation/histories', 'ChartOfAccountAllocationDetailHistoryAPIController');
             Route::resource('hrms_department_masters', 'HrmsDepartmentMasterAPIController');
             Route::resource('secondary_companies', 'SecondaryCompanyAPIController');
 
-            Route::resource('warehouse_sub_levels', 'WarehouseSubLevelsAPIController');
-            Route::post('getAllWarehouseSubLevels', 'WarehouseSubLevelsAPIController@getAllWarehouseSubLevels');
-            Route::get('getSubLevelsByWarehouse', 'WarehouseSubLevelsAPIController@getSubLevelsByWarehouse');
 
             Route::post('getSupplierCatalogDetailBySupplierItem', 'SupplierCatalogMasterAPIController@getSupplierCatalogDetailBySupplierItem');
 
@@ -2062,8 +2045,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('service_lines', 'ServiceLineAPIController');
             Route::get('getServiceLineByCompany', 'ServiceLineAPIController@getServiceLineByCompany');
 
-            Route::resource('warehouse_rights', 'WarehouseRightsAPIController');
-            Route::post('getWarehouseRightEmployees', 'WarehouseRightsAPIController@getWarehouseRightEmployees');
 
             Route::resource('customer_invoice_item_details', 'CustomerInvoiceItemDetailsAPIController');
 
