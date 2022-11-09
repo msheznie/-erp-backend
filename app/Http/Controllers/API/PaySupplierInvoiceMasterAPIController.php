@@ -2312,7 +2312,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             }
 
             if ($paySupplierInvoiceMaster->invoiceType == 2 || $paySupplierInvoiceMaster->invoiceType == 6) {
-                $totalAmount = PaySupplierInvoiceDetail::selectRaw("SUM(supplierInvoiceAmount) as supplierInvoiceAmount,SUM(supplierDefaultAmount) as supplierDefaultAmount, SUM(localAmount) as localAmount, SUM(comRptAmount) as comRptAmount, SUM(supplierPaymentAmount) as supplierPaymentAmount, SUM(paymentBalancedAmount) as paymentBalancedAmount, SUM(paymentSupplierDefaultAmount) as paymentSupplierDefaultAmount, SUM(paymentLocalAmount) as paymentLocalAmount, SUM(paymentComRptAmount) as paymentComRptAmount")
+                $totalAmount = PaySupplierInvoiceDetail::selectRaw("SUM(supplierInvoiceAmount) as supplierInvoiceAmount,SUM(supplierDefaultAmount) as supplierDefaultAmount, SUM(retentionVatAmount) as retentionVatAmount, SUM(localAmount) as localAmount, SUM(comRptAmount) as comRptAmount, SUM(supplierPaymentAmount) as supplierPaymentAmount, SUM(paymentBalancedAmount) as paymentBalancedAmount, SUM(paymentSupplierDefaultAmount) as paymentSupplierDefaultAmount, SUM(paymentLocalAmount) as paymentLocalAmount, SUM(paymentComRptAmount) as paymentComRptAmount")
                     ->where('PayMasterAutoId', $id)
                     ->where('matchingDocID', 0)
                     ->first();
@@ -2325,6 +2325,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                         $input['payAmountCompLocal'] = \Helper::roundValue($totalAmount->paymentLocalAmount);
                         $input['payAmountCompRpt'] = \Helper::roundValue($totalAmount->paymentComRptAmount);
                         $input['suppAmountDocTotal'] = \Helper::roundValue($totalAmount->supplierPaymentAmount);
+                        $input['retentionVatAmount'] = \Helper::roundValue($totalAmount->retentionVatAmount);
                     } else {
                         $bankAmount = \Helper::convertAmountToLocalRpt(203, $id, $totalAmount->supplierPaymentAmount);
                         $input['payAmountBank'] = \Helper::roundValue($bankAmount["defaultAmount"]);
@@ -2333,6 +2334,8 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                         $input['payAmountCompLocal'] = \Helper::roundValue($bankAmount["localAmount"]);
                         $input['payAmountCompRpt'] = \Helper::roundValue($bankAmount["reportingAmount"]);
                         $input['suppAmountDocTotal'] = \Helper::roundValue($totalAmount->supplierPaymentAmount);
+                        $input['retentionVatAmount'] = \Helper::roundValue($totalAmount->retentionVatAmount);
+
                     }
                 } else {
                     $input['payAmountBank'] = 0;
