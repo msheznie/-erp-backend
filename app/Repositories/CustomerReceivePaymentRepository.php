@@ -112,7 +112,7 @@ class CustomerReceivePaymentRepository extends BaseRepository
 
     public function customerReceiveListQuery($request, $input, $search = '') {
 
-        $master = CustomerReceivePayment::where('erp_customerreceivepayment.companySystemID', $input['companyId'])
+        $master = CustomerReceivePayment::with('bank','project')->where('erp_customerreceivepayment.companySystemID', $input['companyId'])
         ->leftjoin('currencymaster as transCurr', 'custTransactionCurrencyID', '=', 'transCurr.currencyID')
         ->leftjoin('currencymaster as bankCurr', 'bankCurrency', '=', 'bankCurr.currencyID')
         ->leftjoin('employees', 'erp_customerreceivepayment.createdUserSystemID', '=', 'employees.employeeSystemID')
@@ -185,7 +185,13 @@ class CustomerReceivePaymentRepository extends BaseRepository
         'customermaster.CustomerName',
         'receivedAmount as receivedAmount',
         'bankAmount as bankAmount',
-        'erp_bankledger.trsClearedYN as trsClearedYN'
+        'erp_bankledger.trsClearedYN as trsClearedYN',
+        'erp_customerreceivepayment.bankAccount',
+        'erp_customerreceivepayment.payeeTypeID',
+        'erp_customerreceivepayment.PayeeName',
+        'employees.empName',
+        'employees.empID',
+        'erp_customerreceivepayment.projectID'
     ]);
 
     if ($search) {
@@ -212,9 +218,36 @@ class CustomerReceivePaymentRepository extends BaseRepository
             $x = 0;
 
             foreach ($dataSet as $val) {
+                if($val->documentType == 13){
+                    $receiptType = 'Customer Invoice Receipt';
+                }
+                if($val->documentType == 14){
+                    $receiptType = 'Direct Receipt';
+                }
+                if($val->documentType == 15){
+                    $receiptType = 'Advance Receipt';
+                }
+
+                $payeeType = '';
+                if($val->payeeTypeID ==1){
+                    $payeeType = 'Customer';
+                }
+                if($val->payeeTypeID == 2){
+                    $payeeType = 'Employee';
+                }
+                if($val->payeeTypeID == 3){
+                    $payeeType = 'Other';
+                }
+
                 $data[$x]['BRV Code'] = $val->custPaymentReceiveCode;
-                $data[$x]['Type'] = $val->segment_by? $val->segment_by->ServiceLineDes : '';
+                $data[$x]['Receipt Type'] = $receiptType;
                 $data[$x]['Customer'] = $val->CutomerCode;
+                $data[$x]['Customer Name'] = $val->CustomerName;
+                $data[$x]['Bank'] = $val->bank? $val->bank->bankName : '';
+                $data[$x]['Account'] = $val->bank? $val->bank->AccountNo : '';
+                $data[$x]['Payee Type'] = $payeeType? $payeeType : '';
+                $data[$x]['Other'] = $val->PayeeName? $val->PayeeName : '';
+                $data[$x]['project'] = $val->project? $val->project->description : '';
                 $data[$x]['BRV Date'] = \Helper::dateFormat($val->custPaymentReceiveDate);
                 $data[$x]['Narration'] = $val->narration;
                 $data[$x]['Created By'] = $val->empName;
