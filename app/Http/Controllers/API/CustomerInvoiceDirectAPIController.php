@@ -4114,12 +4114,6 @@ WHERE
             });
         }
 
-        $inovicePolicy =  \Helper::checkPolicy($input['companyId'],44);
-
-        if(!$inovicePolicy) {
-            $grvMasters = [];
-        }
-
 
         return \DataTables::of($grvMasters)
             ->order(function ($query) use ($input) {
