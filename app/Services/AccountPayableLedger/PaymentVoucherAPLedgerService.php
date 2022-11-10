@@ -19,6 +19,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Services\GeneralLedger\GlPostedDateService;
 
 class PaymentVoucherAPLedgerService
 {
@@ -34,10 +35,13 @@ class PaymentVoucherAPLedgerService
         },'financeperiod_by'])->find($masterModel["autoID"]);
 
         if($masterData->invoiceType != 3) {
-            $masterDocumentDate = date('Y-m-d H:i:s');
-            if ($masterData->financeperiod_by->isActive == -1) {
-                $masterDocumentDate = $masterData->BPVdate;
+             $validatePostedDate = GlPostedDateService::validatePostedDate($masterModel["autoID"], $masterModel["documentSystemID"]);
+
+            if (!$validatePostedDate['status']) {
+                return ['success' => false, 'message' => $validatePostedDate['message']];
             }
+
+            $masterDocumentDate = $validatePostedDate['postedDate'];
             if ($masterData) {
                 $data['companySystemID'] = $masterData->companySystemID;
                 $data['companyID'] = $masterData->companyID;
