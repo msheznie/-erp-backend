@@ -6043,4 +6043,61 @@ class Helper
 
         
     }
+
+
+    public static function rowTotalOfReportTemplate($companyHeaderData, $columns, $data)
+    {   
+        $total = 0;
+
+        foreach ($companyHeaderData as $key1 => $company) {
+            foreach ($columns as $key2 => $column) {
+                if (isset($data['columnData'][$company['companyCode']])) {
+                    $total += $data['columnData'][$company['companyCode']][$column];
+                }
+            }
+        }
+
+        return $total;
+    }
+
+    public static function rowTotalOfReportTemplateBalance($companyHeaderData, $columns, $data)
+    {   
+        $total = 0;
+
+        foreach ($companyHeaderData as $key1 => $company) {
+            foreach ($columns as $key2 => $column) {
+                if (isset($data[$company['companyCode']])) {
+                    $total += $data[$company['companyCode']][$key2];
+                }
+            }
+        }
+
+        return $total;
+    }
+
+    public static function rowTotalOfReportTemplateGrandTotal($companyHeaderData, $columns, $data)
+    {   
+        $total = 0;
+
+        foreach ($companyHeaderData as $key1 => $company) {
+            $code = $company['companyCode'];
+            foreach ($columns as $key2 => $column) {
+                if (isset($data[$code])) {
+                    $total += $data[$code]->$column;
+                }
+            }
+        }
+
+        return $total;
+    }
+
+    public static function grandTotalValueOfReportTemplate($code, $column, $data)
+    {   
+        $value = 0;
+        if (isset($data[$code])) {
+            $value = $data[$code]->$column;
+        }
+
+        return $value;
+    }
 }
