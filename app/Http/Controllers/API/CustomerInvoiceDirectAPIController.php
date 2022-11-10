@@ -3357,15 +3357,11 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         } else if ($printTemplate['printTemplateID'] == 13) {
             if($type == 1)
             {
-                $html = view('print.APMC_customer_invoice', $array);
-                $htmlFooter = view('print.APMC_customer_invoice_tue_footer', $array);
-                $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
-                $mpdf->AddPage('P');
-                $mpdf->setAutoBottomMargin = 'stretch';
-                $mpdf->SetHTMLFooter($htmlFooter);
-
-                $mpdf->WriteHTML($html);
-                return $mpdf->Output($fileName, 'I');
+                $html = view('print.APMC_customer_invoice1', $array);
+                $pdf = \App::make('dompdf.wrapper');
+                $pdf->loadHTML($html);
+    
+                return $pdf->setPaper('a4')->setWarnings(false)->stream($fileName);
             }
             else if($type == 2)
             {
