@@ -3058,7 +3058,7 @@ class SRMService
             $att['bid_master_id'] = $bidMasterId;
             $att['main_works_id'] = $detail['main_work_id'];
             $att['qty'] = $detail['bid_boq']['qty'];
-            $att['remarks'] = $detail['bid_boq']['remarks'];
+            $att['remarks'] = isset($detail['bid_boq']['remarks']) ? $detail['bid_boq']['remarks'] : null;
             $att['unit_amount'] = $detail['bid_boq']['unit_amount'];
             $att['total_amount'] = round($detail['bid_boq']['total_amount'],3);
             $att['supplier_registration_id'] = $supplierRegId;
