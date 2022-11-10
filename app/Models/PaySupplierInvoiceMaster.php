@@ -641,6 +641,7 @@ class PaySupplierInvoiceMaster extends Model
         'createdDateTime',
         'timestamp',
         'rcmActivated',
+        'retentionVatAmount',
         'VATAmount',
         'VATAmountLocal',
         'VATAmountRpt',
