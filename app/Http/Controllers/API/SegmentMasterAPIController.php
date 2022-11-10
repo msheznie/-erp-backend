@@ -189,7 +189,7 @@ class SegmentMasterAPIController extends AppBaseController
         }
 
         if ($segmentMaster->isPublic){
-            return $this->sendError('Cannot delete this segment. This segment is is a public segment.');
+            return $this->sendError('Cannot delete this segment. This segment is a public segment.');
         }
 
         //delete validation 
