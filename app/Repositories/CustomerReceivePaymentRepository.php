@@ -247,7 +247,7 @@ class CustomerReceivePaymentRepository extends BaseRepository
                 $data[$x]['Account'] = $val->bank? $val->bank->AccountNo : '';
                 $data[$x]['Payee Type'] = $payeeType? $payeeType : '';
                 $data[$x]['Other'] = $val->PayeeName? $val->PayeeName : '';
-                $data[$x]['project'] = $val->project? $val->project->description : '';
+                $data[$x]['Project'] = $val->project? $val->project->description : '';
                 $data[$x]['BRV Date'] = \Helper::dateFormat($val->custPaymentReceiveDate);
                 $data[$x]['Narration'] = $val->narration;
                 $data[$x]['Created By'] = $val->empName;
