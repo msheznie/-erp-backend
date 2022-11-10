@@ -129,6 +129,14 @@ class AttendanceComputationService
                 ? 4 //absent
                 : 5; //on leave
 
+            if($this->dayType == 2){ 
+                $this->presentAbsentType = 8;// holiday
+            } 
+
+            if($this->dayType == 3){ 
+                $this->presentAbsentType = 9;//weekend
+            }
+            
             return false;
         }
 

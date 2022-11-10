@@ -180,7 +180,10 @@ class SalesReturnGlService
             $data['createdUserSystemID'] = $empID->employeeSystemID;
             $data['createdUserPC'] = gethostname();
             $data['timestamp'] = \Helper::currentDateTime();
-            array_push($finalData, $data);
+
+            if (!($masterData->returnType != 2 && !$checkFromInvoice)) {
+                array_push($finalData, $data);
+            } 
 
             if ($allAc) {
                 foreach ($allAc as $val) {
@@ -250,7 +253,9 @@ class SalesReturnGlService
                     $data['documentRptCurrencyER'] = $val->reportingCurrencyER;
                     $data['documentRptAmount'] = \Helper::roundValue(ABS($val->rptAmount));
                     $data['timestamp'] = \Helper::currentDateTime();
-                    array_push($finalData, $data);
+                    if (!($masterData->returnType != 2 && !$checkFromInvoice)) {
+                        array_push($finalData, $data);
+                    } 
                 }
             }
 
@@ -308,7 +313,9 @@ class SalesReturnGlService
                             $data['documentRptCurrencyID'] = $tax->rptCurrencyID;
                             $data['documentRptCurrencyER'] = $tax->rptCurrencyER;
                             $data['documentRptAmount'] = $tax->rptAmount;
-                            array_push($finalData, $data);
+                            if (!($masterData->returnType != 2 && !$checkFromInvoice)) {
+                                array_push($finalData, $data);
+                            } 
                         }
                     } else {
                         Log::info('Customer Invoice VAT GL Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));

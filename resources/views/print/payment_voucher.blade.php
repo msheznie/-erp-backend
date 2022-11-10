@@ -369,7 +369,7 @@
                             <span class="font-weight-bold">:</span>
                         </td>
                         <td>
-                            {{ \App\helper\Helper::dateFormat($masterdata->BPVchequeDate)}}
+                            {{ \App\helper\Helper::convertDateWithTime($masterdata->BPVchequeDate)}}
                         </td>
                     </tr>
                     @endif
@@ -605,7 +605,7 @@
                             </div>
                             <div><span>
                 @if(!empty($det->approvedDate))
-                                        {{ \App\helper\Helper::dateFormat($det->approvedDate)}}
+                                        {{ \App\helper\Helper::convertDateWithTime($det->approvedDate)}}
                                     @endif
               </span></div>
                         </div>

@@ -285,6 +285,8 @@ class CustomerInvoiceGlService
                 $masterDocumentDate = $masterData->bookingDate;
             }
 
+            $revenue = CustomerInvoiceItemDetails::selectRaw("SUM(qtyIssuedDefaultMeasure * sellingCostAfterMargin) as transAmount,SUM(qtyIssuedDefaultMeasure * sellingCostAfterMarginLocal) as localAmount, SUM(qtyIssuedDefaultMeasure * sellingCostAfterMarginRpt) as rptAmount,financeGLcodeRevenueSystemID,financeGLcodeRevenue,localCurrencyID,localCurrencyER,reportingCurrencyER,reportingCurrencyID")->WHERE('custInvoiceDirectAutoID', $masterModel["autoID"])->whereNotNull('financeGLcodeRevenueSystemID')->where('financeGLcodeRevenueSystemID', '>', 0)->groupBy('financeGLcodeRevenueSystemID')->get();
+
             if ($chartOfAccount) {
                 $data['companySystemID'] = $masterData->companySystemID;
                 $data['companyID'] = $masterData->companyID;
@@ -395,7 +397,33 @@ class CustomerInvoiceGlService
                 $data['createdUserID'] = $empID->employeeSystemID;
                 $data['createdUserPC'] = getenv('COMPUTERNAME');
                 $data['timestamp'] = $time;
-                array_push($finalData, $data);
+                // array_push($finalData, $data);
+            }
+
+            if ($revenue) {
+
+                foreach ($revenue as $item) {
+
+                    $data['chartOfAccountSystemID'] = $item->financeGLcodeRevenueSystemID;
+                    $data['glCode'] = $item->financeGLcodeRevenue;
+                    $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                    $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+
+                    $data['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
+                    $data['documentTransCurrencyER'] = $masterData->custTransactionCurrencyER;
+                    $data['documentTransAmount'] = ABS($item->transAmount) * -1;
+
+                    $data['documentLocalCurrencyID'] = $item->localCurrencyID;
+                    $data['documentLocalCurrencyER'] = $item->localCurrencyER;
+                    $data['documentLocalAmount'] = ABS($item->localAmount) * -1;
+
+                    $data['documentRptCurrencyID'] = $item->reportingCurrencyID;
+                    $data['documentRptCurrencyER'] = $item->reportingCurrencyER;
+                    $data['documentRptAmount'] = ABS($item->rptAmount) * -1;
+
+                    array_push($finalData, $data);
+                }
+
             }
 
 
@@ -482,7 +510,7 @@ class CustomerInvoiceGlService
                             $data['documentRptCurrencyID'] = $tax->rptCurrencyID;
                             $data['documentRptCurrencyER'] = $tax->rptCurrencyER;
                             $data['documentRptAmount'] = ABS($tax->rptAmount);
-                            array_push($finalData, $data);
+                            // array_push($finalData, $data);
 
                             $taxLedgerData['outputVatTransferGLAccountID'] = $taxGL['chartOfAccountSystemID'];
                         }

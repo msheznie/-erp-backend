@@ -89,7 +89,12 @@ class BidSubmissionMaster extends Model
         'created_at',
         'created_by',
         'updated_at',
-        'updated_by'
+        'updated_by',
+        'doc_verifiy_yn',
+        'doc_verifiy_by_emp',
+        'doc_verifiy_date',
+        'doc_verifiy_status',
+        'doc_verifiy_comment'
     ];
 
     /**
@@ -105,7 +110,9 @@ class BidSubmissionMaster extends Model
         'bid_sequence' => 'integer',
         'status' => 'integer',
         'created_by' => 'integer',
-        'updated_by' => 'integer'
+        'updated_by' => 'integer',
+        'doc_verifiy_yn' => 'string',
+        'doc_verifiy_status' => 'string',
     ];
 
     /**
@@ -119,5 +126,10 @@ class BidSubmissionMaster extends Model
 
     public function SupplierRegistrationLink(){
         return $this->belongsTo(SupplierRegistrationLink::class, 'supplier_registration_id','id');
+    }
+
+
+    public function tender(){
+        return $this->belongsTo(TenderMaster::class, 'tender_id','id');
     }
 }

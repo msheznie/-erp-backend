@@ -168,6 +168,19 @@
         max-height: 60px !important;
     }
 
+    .head_font {
+        font-size: 13px;
+        font-family:Arial, Helvetica, sans-serif;
+    }
+    .normal_font {
+        font-size: 10px;
+        font-family: Arial, Helvetica, sans-serif;
+    }
+    
+    .text_align {
+        text-align: left;vertical-align: top;
+    } 
+
 
 </style>
 
@@ -201,19 +214,6 @@
         <br>
     </div>
 
-    <div class="row">
-        <table style="width: 100%">
-            <tr>
-                <td style="width: 50%; text-align: left;">
-                    {{$request->CompanyAddress}}<br>
-                    <!-- {{$request->CompanyCountry}}<br> -->
-                    Tel: {{$request->CompanyTelephone}}<br>
-                    Fax: {{$request->CompanyFax}}<br>
-                    <b>VAT NO: {{$request->vatRegistratonNumber}}</b>
-                </td>
-            </tr>
-        </table>
-    </div>
 
     <div class="row">
         <br>
@@ -223,66 +223,39 @@
         <table style="width:100%">
             <tr>
                 <td style="width: 50%; text-align: left;vertical-align: top;">
-                    <table  style="width: 100%">
+                    <table class="head_font"  style="width: 100%">
                         <tr>
-                            <td><b>INVOICE NO </b></td>
-                            <td>:
+                            <td class="text_align" style="width:30%;"><b>INVOICE NO </b></td>
+                            <td class="text_align" style="width:2%;">:</td>
+                            <td class="text_align" style="width:68%;">
                                 {{$request->bookingInvCode}}</td>
                         </tr>
                         <tr>
-                            <td><b>INVOICE DATE </b></td>
-                            <td>:
+                            <td class="text_align" style="width:30%;"><b>INVOICE DATE </b></td>
+                            <td class="text_align" style="width:2%;">:</td>
+                            <td class="text_align" style="width:68%;">
                                 @if(!empty($request->bookingDate))
                                     {{\App\helper\Helper::dateFormat($request->bookingDate) }}
                                 @endif</td>
                         </tr>
-                        <tr>
-                            <td><b>Date Of Supply </b></td>
-                            <td>:
-                                @if(!empty($request->date_of_supply))
-                                    {{\App\helper\Helper::dateFormat($request->date_of_supply) }}
-                                @endif</td>
-                        </tr>
-                        <tr>
-                            <td><b>Contract / PO No </b></td>
-                            <td>:
-                                @if(!empty($request->invoicedetails) )
-                                    {{isset($request->invoicedetails[0]->clientContractID)?$request->invoicedetails[0]->clientContractID:''}}
-                                @endif
-                                @if($request->line_poNumber && isset($request->item_invoice) && $request->item_invoice)
-                                    {{$request->PONumber}}
-                                @endif</td>
-                        </tr>
+
                         <tr><td></td></tr>
                         <tr>
-                            <td><b>CUSTOMER NAME </b></td>
-                            <td>:
+                            <td class="text_align" style="width:30%;"><b>CUSTOMER NAME </b></td>
+                            <td class="text_align" style="width:2%;">:</td>
+                            <td class="text_align" style="width:68%;">
                                 {{$request->customer->ReportTitle}}</td>
                         </tr>
                         <tr>
-                            <td><b>CUSTOMER ADDRESS </b></td>
-                            <td>:
+                            <td class="text_align" style="width:30%;"><b>CUSTOMER ADDRESS </b></td>
+                            <td class="text_align" style="width:2%;">:</td>
+                            <td class="text_align" style="width:68%;">
                                 {{$request->customer->customerAddress1}}</td>
-                        </tr>
-                        <tr>
-                            <td><b>CUSTOMER TELEPHONE </b></td>
-                            <td>:
-                                {{isset($request->CustomerContactDetails->contactPersonTelephone)?$request->CustomerContactDetails->contactPersonTelephone:''}}</td>
-                        </tr>
-                        <tr>
-                            <td><b>CUSTOMER FAX </b></td>
-                            <td>:
-                                {{isset($request->CustomerContactDetails->contactPersonFax)?$request->CustomerContactDetails->contactPersonFax:''}}</td>
-                        </tr>
-                        <tr>
-                            <td><b>CUSTOMER VATIN </b></td>
-                            <td>:
-                                {{$request->vatNumber}}</td>
                         </tr>
                     </table>
                 </td>
                 <td style="width: 50%; text-align: left;vertical-align: top;">
-                    <table>
+                    <table class="head_font">
                         <tr>
                             <td width="100px" colspan="2"  style="text-decoration: underline;"><b> Remittance Details  </b></td>
                         </tr>
@@ -295,19 +268,6 @@
                                         @endif
                                     @else
                                     {{($request->bankaccount) ? $request->bankaccount->bankName : ''}}
-                                @endif
-                                </b>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td width="100px"><span class="font-weight-bold"><b>ACCOUNT NAME</b></span></td>
-                            <td><b> :
-                                @if($request->secondaryLogoCompanySystemID)
-                                    @if($secondaryBankAccount->contract && $secondaryBankAccount->contract->secondary_bank_account)
-                                        {{$secondaryBankAccount->contract->secondary_bank_account->AccountName}}
-                                    @endif
-                                @else
-                                    {{($request->bankaccount) ? $request->bankaccount->AccountName : ''}}
                                 @endif
                                 </b>
                             </td>
@@ -326,32 +286,6 @@
                                 </b>
                             </td>
                         </tr>
-                        <tr>
-                            <td width="100px"><span class="font-weight-bold"><b>IBAN NO</b></span></td>
-                            <td><b> :
-                                @if($request->secondaryLogoCompanySystemID)
-                                    @if($secondaryBankAccount->contract && $secondaryBankAccount->contract->secondary_bank_account)
-                                        {{$request->accountIBANSecondary}}
-                                    @endif
-                                @else
-                                    {{($request->bankaccount) ? $request->accountIBAN : ''}}
-                                @endif
-                                </b>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td width="100px"><span class="font-weight-bold"><b>SWIFT Code</b> </span></td>
-                            <td><b> :
-                                @if($request->secondaryLogoCompanySystemID)
-                                    @if($secondaryBankAccount->contract && $secondaryBankAccount->contract->secondary_bank_account)
-                                        {{$secondaryBankAccount->contract->secondary_bank_account->accountSwiftCode}}
-                                    @endif
-                                @else
-                                    {{($request->bankaccount) ? $request->bankaccount->accountSwiftCode : ''}}
-                                @endif
-                                </b>
-                            </td>
-                        </tr>
                     </table>
                 </td>
             </tr>
@@ -367,7 +301,7 @@
     <br>
     <div class="row">
         @if ($request->template==1 && !$request->line_invoiceDetails && !$request->linePdoinvoiceDetails)
-            <table class="table">
+            <table class="table" style="width: 100%;">
                 <thead>
                 <tr>
                     <th style="width:6%;">Item</th>
@@ -445,7 +379,7 @@
                 </tbody>
                 <tbody>
                     <tr>
-                        <td colspan="8">PLEASE ISSUE ALL PAYMENT ON BELOW BANK ACCOUNT DETAILS : </td>
+                        <td colspan="8">PLEASE ISSUE ALL PAYMENT ON ABOVE BANK ACCOUNT DETAILS</td>
                     </tr>
                 </tbody>
                 
@@ -527,7 +461,7 @@
                 </tbody>
                 <tbody>
                     <tr>
-                        <td colspan="7">PLEASE ISSUE ALL PAYMENT ON BELOW BANK ACCOUNT DETAILS : </td>
+                        <td colspan="7">PLEASE ISSUE ALL PAYMENT ON ABOVE BANK ACCOUNT DETAILS</td>
                     </tr>
                 </tbody>
                 
@@ -536,14 +470,14 @@
 
         @if ($request->template == 2 && isset($request->item_invoice) && $request->item_invoice)
 
-                <table class="table">
+                <table class="table" style="width: 100%;">
                     <thead>
                     <tr>
                         <th style="width:5%;"></th>
                         <th style="width:40%;">Item</th>
                         <th style="width:10%;text-align: center">UOM</th>
                         <th style="width:15%;text-align: center">QTY</th>
-                        <th style="width:15%;text-align: center">unit Cost</th>
+                        <th style="width:15%;text-align: center">Unit Cost</th>
                         <th style="width:15%;text-align: center">Total Amount</th>
                     </tr>
                     </thead>
@@ -618,7 +552,7 @@
                     </tbody>
                     <tbody>
                     <tr>
-                        <td colspan="6">PLEASE ISSUE ALL PAYMENT ON BELOW BANK ACCOUNT DETAILS : </td>
+                        <td colspan="6">PLEASE ISSUE ALL PAYMENT ON ABOVE BANK ACCOUNT DETAILS</td>
                     </tr>
                     </tbody>
                 </table>

@@ -96,7 +96,7 @@ class AttendanceDataPullingService{
             $this->insertToLogTb('nothing to pull');
 
             Log::error('No records found for pulling'.$this->log_suffix(__LINE__));
-            return false;
+            return (!$this->isClockOutPulling) ? false : true;
         }  
         return true;
     }

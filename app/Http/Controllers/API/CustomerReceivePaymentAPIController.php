@@ -2795,7 +2795,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $output = CustomerReceivePayment::where('custReceivePaymentAutoID', $input['custReceivePaymentAutoID'])->with(['payment_type','confirmed_by', 'created_by', 'modified_by', 'cancelled_by', 'company', 'bank', 'currency', 'localCurrency', 'rptCurrency', 'customer', 'employee', 'approved_by' => function ($query) {
+        $output = CustomerReceivePayment::where('custReceivePaymentAutoID', $input['custReceivePaymentAutoID'])->with(['payment_type','confirmed_by', 'created_by', 'modified_by', 'cancelled_by', 'company', 'bank', 'currency','bank_currency', 'localCurrency', 'rptCurrency', 'customer', 'employee', 'approved_by' => function ($query) {
             $query->with('employee');
             $query->where('documentSystemID', 21);
         }, 'directdetails' => function ($query) {

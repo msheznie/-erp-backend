@@ -659,6 +659,11 @@ class CustomerReceivePayment extends Model
         return $this->belongsTo('App\Models\CurrencyMaster', 'custTransactionCurrencyID', 'currencyID');
     }
 
+    public function bank_currency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'bankCurrency', 'currencyID');
+    }
+
     public function localCurrency()
     {
         return $this->belongsTo('App\Models\CurrencyMaster', 'localCurrencyID', 'currencyID');
