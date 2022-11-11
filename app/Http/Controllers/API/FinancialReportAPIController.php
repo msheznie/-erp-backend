@@ -1177,14 +1177,15 @@ WHERE
                 $companyID = collect($request->companySystemID)->pluck('companySystemID')->toArray();
                 $removedFromArray = [];
                 $companyHeaderColumns = [];
-                if ($columnTemplateID == 1) {
+                $serviceLineDescriptions = [];
+                if ($columnTemplateID == 1 || $columnTemplateID == 2) {
                     if ($request->accountType == 1 || $request->accountType == 2) {
-                        $companyWiseGrandTotal = $grandTotal->groupBy('compID');
+                        $companyWiseGrandTotal = ($columnTemplateID == 1) ? $grandTotal->groupBy('compID') : $grandTotal->groupBy('serviceLineID');
                     } else {
                         $companyWiseGrandTotal = [];
                         $uncategorizeData = [];
                     }
-                    $res = $this->processColumnTemplateData($headers, $outputCollect, $outputDetail, $columnKeys, $uncategorizeData, $companyWiseGrandTotal, $outputOpeningBalance, $request);
+                    $res = $this->processColumnTemplateData($headers, $outputCollect, $outputDetail, $columnKeys, $uncategorizeData, $companyWiseGrandTotal, $outputOpeningBalance, $request, $columnTemplateID);
                     $headers = $res['headers'];
                     $companyHeaderColumns = $res['companyHeaderColumns'];
                     $uncategorizeDetailArr = $res['uncategorizeDetailArr'];
@@ -1192,6 +1193,7 @@ WHERE
                     $companyWiseGrandTotalArray = $res['companyWiseGrandTotalArray'];
                     $outputOpeningBalanceArr = $res['outputOpeningBalanceArr'];
                     $outputClosingBalanceArr = $res['outputClosingBalanceArr'];
+                    $serviceLineDescriptions = $res['serviceLineDescriptions'];
                     $firstLevel = $res['firstLevel'];
                     $secondLevel = $res['secondLevel'];
                     $thirdLevel = $res['thirdLevel'];
@@ -1260,7 +1262,17 @@ WHERE
                 }
 
 
-                $grandTotal = ($columnTemplateID == 1) ? collect($companyWiseGrandTotalArray)->toArray() : $grandTotal[0];
+                $grandTotal = ($columnTemplateID == 1 || $columnTemplateID == 2) ? collect($companyWiseGrandTotalArray)->toArray() : $grandTotal[0];
+
+                $servicelineIDs = collect($companyHeaderColumns)->pluck('companyCode')->toArray();
+
+
+                $segemntsDta = SegmentMaster::with(['parent'])->whereIn('ServiceLineCode', $servicelineIDs)->get();
+
+                $segmentParentData = [];
+                foreach ($segemntsDta as $key => $value) {
+                    $segmentParentData[$value->ServiceLineCode] = (is_null($value->parent)) ? "-" : $value->parent->ServiceLineDes;
+                }
 
                 return array(
                     'reportData' => $headers,
@@ -1272,6 +1284,8 @@ WHERE
                     'columnHeaderMapping' => $columnHeaderMapping,
                     'openingBalance' => $outputOpeningBalanceArr,
                     'closingBalance' => $outputClosingBalanceArr,
+                    'serviceLineDescriptions' => $serviceLineDescriptions,
+                    'segmentParentData' => $segmentParentData,
                     'uncategorize' => $uncategorizeArr,
                     'uncategorizeDrillDown' => $uncategorizeDetailArr,
                     'grandTotalUncatArr' => $grandTotal,
@@ -2030,24 +2044,36 @@ WHERE
         return $output;
     }
 
-    public function processColumnTemplateData($headers, $outputCollect, $outputDetail, $columnKeys, $uncategorizeData, $companyWiseGrandTotal, $outputOpeningBalance, $request)
+    public function processColumnTemplateData($headers, $outputCollect, $outputDetail, $columnKeys, $uncategorizeData, $companyWiseGrandTotal, $outputOpeningBalance, $request, $columnTemplateID)
     {
-
-        $companyData = Company::all();
         $companyCodes = [];
+        $serviceLineDescriptions = [];
         $uncategorizeDetailArr = [];
         $uncategorizeArr = [];
 
-        foreach ($companyData as $key => $value) {
-            $companyCodes[$value->companySystemID] = $value->CompanyID;
+        if ($columnTemplateID == 1) {
+            $companyData = Company::all();
+            foreach ($companyData as $key => $value) {
+                $companyCodes[$value->companySystemID] = $value->CompanyID;
+            }
+
+            $groupByColumnName = 'compID';
+        } else {
+            $segmentData = SegmentMaster::all();
+            foreach ($segmentData as $key => $value) {
+                $companyCodes[$value->serviceLineSystemID] = $value->ServiceLineCode;
+                $serviceLineDescriptions[$value->ServiceLineCode] = $value->ServiceLineDes;
+            }
+            $groupByColumnName = 'serviceLineID';
         }
+
 
         $uncategorizeArr['columnData'] = [];
         if (isset($uncategorizeData['output'])) {
             foreach ($uncategorizeData['output'] as $key1 => $value1) {
-                if (!is_null($value1->compID)) {
+                if (!is_null($value1->$groupByColumnName)) {
                     foreach ($columnKeys as $key => $val) {
-                        $companyID = (isset($companyCodes[$value1->compID])) ? $companyCodes[$value1->compID] : $value1->compID;
+                        $companyID = (isset($companyCodes[$value1->$groupByColumnName])) ? $companyCodes[$value1->$groupByColumnName] : $value1->$groupByColumnName;
                         $uncategorizeArr['columnData'][$companyID][$val] = $value1->$val;
                     }
                 }
@@ -2066,10 +2092,10 @@ WHERE
                     $temp[$value1->chartOfAccountSystemID]['glAutoID'] = $value1->glAutoID;
 
                     foreach ($columnKeys as $key2 => $value) {
-                        $companyID = (isset($companyCodes[$value1->compID])) ? $companyCodes[$value1->compID] : $value1->compID;
+                        $companyID = (isset($companyCodes[$value1->$groupByColumnName])) ? $companyCodes[$value1->$groupByColumnName] : $value1->$groupByColumnName;
                         $temp[$value1->chartOfAccountSystemID]['columnData'][$companyID][$value] = $value1->$value;
-                        if (isset($companyCodes[$value1->compID])) {
-                            $companyHeaderData[$value1->compID]['companyCode'] = $companyCodes[$value1->compID];
+                        if (isset($companyCodes[$value1->$groupByColumnName])) {
+                            $companyHeaderData[$value1->$groupByColumnName]['companyCode'] = $companyCodes[$value1->$groupByColumnName];
                         }
                     }
                 }
@@ -2091,6 +2117,7 @@ WHERE
         $companyHeaderData = [];
         $newHeaders = [];
         $removedFromArray = [];
+
         foreach ($headers as $key => $value) {
             $newHeaders[$value->detID]['detDescription'] = $value->detDescription;
             $newHeaders[$value->detID]['detID'] = $value->detID;
@@ -2104,10 +2131,11 @@ WHERE
             $newHeaders[$value->detID]['expanded'] = $value->expanded;
 
             foreach ($columnKeys as $key1 => $value1) {
-                $companyID = (isset($companyCodes[$value->CompanyID])) ? $companyCodes[$value->CompanyID] : $value->CompanyID;
+                $groupByColumn = $columnTemplateID == 1 ? 'CompanyID' : 'ServiceLineSystemID';
+                $companyID = (isset($companyCodes[$value->$groupByColumn])) ? $companyCodes[$value->$groupByColumn] : $value->$groupByColumn;
                 $newHeaders[$value->detID]['columnData'][$companyID][$value1] = $value->$value1;
-                if (isset($companyCodes[$value->CompanyID])) {
-                    $companyHeaderData[$value->CompanyID]['companyCode'] = $companyCodes[$value->CompanyID];
+                if (isset($companyCodes[$value->$groupByColumn])) {
+                    $companyHeaderData[$value->$groupByColumn]['companyCode'] = $companyCodes[$value->$groupByColumn];
                 }
             }
         }
@@ -2128,10 +2156,11 @@ WHERE
             $newOutputCollect[$value->detID]['expanded'] = $value->expanded;
 
             foreach ($columnKeys as $key1 => $value1) {
-                $companyID = (isset($companyCodes[$value->CompanyID])) ? $companyCodes[$value->CompanyID] : $value->CompanyID;
+                $groupByColumn = $columnTemplateID == 1 ? 'CompanyID' : 'ServiceLineSystemID';
+                $companyID = (isset($companyCodes[$value->$groupByColumn])) ? $companyCodes[$value->$groupByColumn] : $value->$groupByColumn;
                 $newOutputCollect[$value->detID]['columnData'][$companyID][$value1] = $value->$value1;
-                if (isset($companyCodes[$value->CompanyID])) {
-                    $companyHeaderData[$value->CompanyID]['companyCode'] = $companyCodes[$value->CompanyID];
+                if (isset($companyCodes[$value->$groupByColumn])) {
+                    $companyHeaderData[$value->$groupByColumn]['companyCode'] = $companyCodes[$value->$groupByColumn];
                 }
             }
         }
@@ -2147,10 +2176,10 @@ WHERE
             $newOutputDetail[$value->glAutoID]['templateCatType'] = $value->templateCatType;
 
             foreach ($columnKeys as $key1 => $value1) {
-                $companyID = (isset($companyCodes[$value->compID])) ? $companyCodes[$value->compID] : $value->compID;
+                $companyID = (isset($companyCodes[$value->$groupByColumnName])) ? $companyCodes[$value->$groupByColumnName] : $value->$groupByColumnName;
                 $newOutputDetail[$value->glAutoID]['columnData'][$companyID][$value1] = $value->$value1;
-                if (isset($companyCodes[$value->compID])) {
-                    $companyHeaderData[$value->compID]['companyCode'] = $companyCodes[$value->compID];
+                if (isset($companyCodes[$value->$groupByColumnName])) {
+                    $companyHeaderData[$value->$groupByColumnName]['companyCode'] = $companyCodes[$value->$groupByColumnName];
                 }
             }
         }
@@ -2237,7 +2266,12 @@ WHERE
 
             $lastColumn = collect($headers)->last();
             foreach ($outputOpeningBalance as $ke => $value) {
-                $companyID = (isset($companyCodes[$value->companySystemID])) ? $companyCodes[$value->companySystemID] : $value->companySystemID;
+                if ($columnTemplateID == 1) {
+                    $companyID = (isset($companyCodes[$value->companySystemID])) ? $companyCodes[$value->companySystemID] : $value->companySystemID;
+                } else {
+                    $companyID = (isset($companyCodes[$value->serviceLineSystemID])) ? $companyCodes[$value->serviceLineSystemID] : $value->serviceLineSystemID;
+                }
+
                 foreach ($columnKeys as $key => $val) {
                     if ($key == 0) {
                         $outputOpeningBalanceArr[$companyID][] = $value->openingBalance;
@@ -2250,7 +2284,7 @@ WHERE
             }
         }
 
-        return ['headers' => $headers, 'companyHeaderColumns' => $companyHeaderColumns, 'uncategorizeArr' => $uncategorizeArr, 'uncategorizeDetailArr' => $uncategorizeDetailArr, 'companyWiseGrandTotalArray' => $companyWiseGrandTotalArray, 'outputOpeningBalanceArr' => $outputOpeningBalanceArr, 'outputClosingBalanceArr' => $outputClosingBalanceArr, 'firstLevel' => $firstLevel, 'secondLevel' => $secondLevel, 'thirdLevel' => $thirdLevel, 'fourthLevel' => $fourthLevel];
+        return ['headers' => $headers, 'companyHeaderColumns' => $companyHeaderColumns, 'uncategorizeArr' => $uncategorizeArr, 'uncategorizeDetailArr' => $uncategorizeDetailArr, 'companyWiseGrandTotalArray' => $companyWiseGrandTotalArray, 'outputOpeningBalanceArr' => $outputOpeningBalanceArr, 'outputClosingBalanceArr' => $outputClosingBalanceArr, 'firstLevel' => $firstLevel, 'secondLevel' => $secondLevel, 'thirdLevel' => $thirdLevel, 'fourthLevel' => $fourthLevel, 'serviceLineDescriptions' => $serviceLineDescriptions];
     }
 
     public function downloadProjectUtilizationReport(Request $request)
@@ -4999,7 +5033,7 @@ WHERE
                         AND erp_generalledger.glAccountTypeID = 1
                         AND  erp_generalledger.chartOfAccountSystemID IN (' . join(',', $chartOfAccountId) . ')
                         AND  erp_generalledger.serviceLineSystemID IN (' . join(',', $serviceLineId) . ')
-                        AND DATE(erp_generalledger.documentDate) <= "' . $fromDate . '"
+                        AND DATE(erp_generalledger.documentDate) < "' . $fromDate . '"
                     GROUP BY
                         erp_generalledger.companySystemID,
                         erp_generalledger.serviceLineSystemID,
@@ -5445,6 +5479,14 @@ AND MASTER .canceledYN = 0';
             $budgetJoin = ' AND g.compID = budget.companySystemID';
             $generalLedgerGroup = ' ,erp_generalledger.companySystemID';
             $templateGroup = ', compID';
+        } else if ($columnTemplateID == 2) {
+            $secondLinkedcolumnQry .= ' ((IFNULL(IFNULL(c.serviceLineID, e.serviceLineID),0))) AS ServiceLineSystemID,';
+            $fourthLinkedcolumnQry .= ' serviceLineID,';
+            $fifthLinkedcolumnQry .= ' serviceLineID,';
+            $firstLinkedcolumnQry .= ' erp_generalledger.serviceLineSystemID AS serviceLineID,';
+            $budgetJoin = ' AND g.serviceLineID = budget.serviceLineSystemID';
+            $generalLedgerGroup = ' ,erp_generalledger.companySystemID';
+            $templateGroup = ', serviceLineID';
         }
 
         // if (!$showZeroGL) {
@@ -5709,6 +5751,11 @@ GROUP BY
             $firstLinkedcolumnQry .= ' erp_generalledger.companySystemID AS compID,';
             $budgetJoin = ' AND gl.compID = budget.companySystemID';
             $generalLedgerGroup = ' ,erp_generalledger.companySystemID';
+        } else if ($columnTemplateID == 2) {
+            $secondLinkedcolumnQry .= ' gl.serviceLineID,';
+            $firstLinkedcolumnQry .= ' erp_generalledger.serviceLineSystemID AS serviceLineID,';
+            $budgetJoin = ' AND gl.serviceLineID = budget.serviceLineSystemID';
+            $generalLedgerGroup = ' ,erp_generalledger.serviceLineSystemID';
         }
 
         $sql = 'SELECT * FROM (SELECT
@@ -5767,6 +5814,8 @@ ORDER BY
 
         if ($columnTemplateID == 1) {
             $output = GeneralLedger::selectRaw('SUM(' . $currency . ') as openingBalance, companySystemID')->whereIN('companySystemID', $companyID)->whereIN('documentSystemID', $documents)->whereIN('chartOfAccountSystemID', $glCodes)->whereRaw('(DATE(erp_generalledger.documentDate) < "' . $fromDate . '")')->groupBy('companySystemID')->get();
+        } else if ($columnTemplateID == 2) {
+            $output = GeneralLedger::selectRaw('SUM(' . $currency . ') as openingBalance, companySystemID, serviceLineSystemID')->whereIN('companySystemID', $companyID)->whereIN('documentSystemID', $documents)->whereIN('chartOfAccountSystemID', $glCodes)->whereRaw('(DATE(erp_generalledger.documentDate) < "' . $fromDate . '")')->groupBy('serviceLineSystemID')->get();
         } else {
             $output = GeneralLedger::selectRaw('SUM(' . $currency . ') as openingBalance')->whereIN('companySystemID', $companyID)->whereIN('documentSystemID', $documents)->whereIN('chartOfAccountSystemID', $glCodes)->whereRaw('(DATE(erp_generalledger.documentDate) < "' . $fromDate . '")')->first();
         }
@@ -6021,6 +6070,13 @@ GROUP BY
             $budgetJoin = ' AND erp_generalledger.companySystemID = budget.companySystemID';
             $generalLedgerGroup = ' ,erp_generalledger.companySystemID';
             $groupByCompID = ' GROUP BY compID';
+        } else if ($columnTemplateID == 2) {
+            $firstLinkedcolumnQry .= ' erp_generalledger.serviceLineSystemID AS serviceLineID,';
+            $thirdLinkedcolumnQry .= ' serviceLineID,';
+            $secondLinkedcolumnQry .= ' serviceLineID,';
+            $budgetJoin = ' AND erp_generalledger.serviceLineSystemID = budget.serviceLineSystemID';
+            $generalLedgerGroup = ' ,erp_generalledger.serviceLineSystemID';
+            $groupByCompID = ' GROUP BY serviceLineID';
         }
 
 
@@ -6184,6 +6240,15 @@ GROUP BY
             $budgetJoin2 = ' AND g.compID = budget.companySystemID';
             $generalLedgerGroup = ' ,erp_generalledger.companySystemID';
             $unionGroupBy = ' GROUP BY compID';
+        } else if ($columnTemplateID == 2) {
+            $firstLinkedcolumnQry .= ' erp_generalledger.serviceLineSystemID AS serviceLineID,';
+            $secondLinkedcolumnQry .= ' ,serviceLineID';
+            $templateGroupBY .= ' ,serviceLineID';
+            $thirdLinkedcolumnQry .= ' serviceLineID,';
+            $budgetJoin1 = ' AND erp_generalledger.serviceLineSystemID = budget.serviceLineSystemID';
+            $budgetJoin2 = ' AND g.serviceLineID = budget.serviceLineSystemID';
+            $generalLedgerGroup = ' ,erp_generalledger.serviceLineSystemID';
+            $unionGroupBy = ' GROUP BY serviceLineID';
         }
 
         $unionQry = '';
@@ -6763,6 +6828,7 @@ GROUP BY
 
         $budgetQuery = "chartOfAccountID,
                         erp_budjetdetails.companySystemID,
+                        erp_budjetdetails.serviceLineSystemID,
                         IFNULL(
                             SUM(
                                 IF(
@@ -6788,6 +6854,8 @@ GROUP BY
 
         if ($columnTemplateID == 1) {
             $budgetWhereQuery .= ', erp_budjetdetails.companySystemID';
+        } else if ($columnTemplateID == 2) {
+            $budgetWhereQuery .= ', erp_budjetdetails.serviceLineSystemID';
         }
 
         //get linked row sum amount to the formula
@@ -8009,7 +8077,7 @@ GROUP BY
             $reportData['isUncategorize'] = true;
         }
 
-        if ($reportData['columnTemplateID'] == 1) {
+        if ($reportData['columnTemplateID'] == 1 || $reportData['columnTemplateID'] == 2) {
             $templateName = "export_report.finance_coloumn_template_one";
         } else {
             $templateName = "export_report.finance";

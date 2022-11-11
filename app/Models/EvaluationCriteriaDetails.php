@@ -188,5 +188,10 @@ class EvaluationCriteriaDetails extends Model
         return $this->hasOne('App\Models\BidSubmissionDetail', 'evaluation_detail_id', 'id');
     }
 
+    public function bid_submission_detail1()
+    {
+        return $this->hasMany('App\Models\BidSubmissionDetail', 'evaluation_detail_id', 'id');
+    }
+
     
 }

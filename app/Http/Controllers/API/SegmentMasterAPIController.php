@@ -84,6 +84,18 @@ class SegmentMasterAPIController extends AppBaseController
             $input['companyID'] = $this->getCompanyById($input['companySystemID']);
         }
 
+        if (isset($input['isPublic']) && $input['isPublic']){
+            $companyPublicCheck = SegmentMaster::where('companySystemID', $input['companySystemID'])
+                                                ->where('isPublic', 1)
+                                                ->where('isDeleted',0)
+                                                ->first();
+
+            if ($companyPublicCheck) {
+                return $this->sendError(['ServiceLineCode' => ["Public segment is configured already! (" . $companyPublicCheck->ServiceLineCode. " - " . $companyPublicCheck->ServiceLineDes. ") "]], 422);
+            }
+
+        }
+        
         $segmentCodeCheck = SegmentMaster::withoutGlobalScope('final_level')
                                          ->where('ServiceLineCode', $input['ServiceLineCode'])
                                          ->where('isDeleted',0)
@@ -174,6 +186,10 @@ class SegmentMasterAPIController extends AppBaseController
 
         if (empty($segmentMaster)) {
             return $this->sendError('Segment Master not found');
+        }
+
+        if ($segmentMaster->isPublic){
+            return $this->sendError('Cannot delete this segment. This segment is a public segment.');
         }
 
         //delete validation 
@@ -426,6 +442,20 @@ class SegmentMasterAPIController extends AppBaseController
             if ($segmentUsed) {
                 return $this->sendError("This segment is used in some documents. Therefore, Final level status cannot be changed", 500);
             }
+        }
+
+        if (isset($input['isPublic']) && $input['isPublic']){
+            $companyPublicCheck = SegmentMaster::where('companySystemID', $input['companySystemID'])
+                                                ->where('isPublic', 1)
+                                                ->where('isDeleted',0)
+                                                ->first();
+
+            if ($companyPublicCheck) {
+                if($companyPublicCheck->serviceLineSystemID != $input['serviceLineSystemID']){
+                    return $this->sendError("Public segment is configured already! (" . $companyPublicCheck->ServiceLineCode. " - " . $companyPublicCheck->ServiceLineDes. ") ", 500);
+                }
+            }
+
         }
 
         $userId = Auth::id();

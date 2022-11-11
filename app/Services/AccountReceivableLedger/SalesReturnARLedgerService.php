@@ -21,7 +21,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-
+use App\Services\GeneralLedger\GlPostedDateService;
 
 class SalesReturnARLedgerService
 {
@@ -35,10 +35,13 @@ class SalesReturnARLedgerService
             $query->selectRaw('SUM(companyLocalAmount) as localAmount, SUM(companyReportingAmount) as rptAmount,SUM(transactionAmount) as transAmount,salesReturnID');
         }, 'finance_period_by'])->find($masterModel["autoID"]);
 
-        $masterDocumentDate = date('Y-m-d H:i:s');
-        if ($masterData->finance_period_by->isActive == -1) {
-            $masterDocumentDate = $masterData->salesReturnDate;
+        $validatePostedDate = GlPostedDateService::validatePostedDate($masterModel["autoID"], $masterModel["documentSystemID"]);
+
+        if (!$validatePostedDate['status']) {
+            return ['success' => false, 'message' => $validatePostedDate['message']];
         }
+
+        $masterDocumentDate = $validatePostedDate['postedDate'];
 
         if ($masterData) {
             $data['companySystemID'] = $masterData->companySystemID;

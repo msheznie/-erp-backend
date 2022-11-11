@@ -90,7 +90,13 @@ class BidSubmissionDetail extends Model
         'created_at',
         'created_by',
         'updated_at',
-        'updated_by'
+        'updated_by',
+        'eval_score',
+        'eval_result',
+        'evaluate_by',
+        'evaluate_at',
+        'bid_selection_id',
+        'eval_score_id'
     ];
 
     /**
@@ -119,5 +125,20 @@ class BidSubmissionDetail extends Model
         
     ];
 
-    
+    public function srm_evaluation_criteria_details(){
+        return $this->belongsTo('App\Models\EvaluationCriteriaDetails','evaluation_detail_id','id');
+    }
+
+    public function srm_tender_master(){
+        return $this->belongsTo('App\Models\TenderMaster','tender_id','id');
+    }
+
+    public function supplier_registration_link()
+    {
+        return $this->belongsTo('App\Models\SupplierRegistrationLink', 'created_by', 'id');
+    }
+
+    public function srm_bid_submission_master(){
+        return $this->belongsTo('App\Models\BidSubmissionMaster','bid_master_id','id');
+    }
 }

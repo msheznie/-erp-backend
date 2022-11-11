@@ -94,7 +94,8 @@ class BidSubmissionMaster extends Model
         'doc_verifiy_by_emp',
         'doc_verifiy_date',
         'doc_verifiy_status',
-        'doc_verifiy_comment'
+        'doc_verifiy_comment',
+        'bidSubmittedYN'
     ];
 
     /**
@@ -131,5 +132,9 @@ class BidSubmissionMaster extends Model
 
     public function tender(){
         return $this->belongsTo(TenderMaster::class, 'tender_id','id');
+    }
+
+    public function bidSubmissionDetail(){
+        return $this->hasMany(BidSubmissionDetail::class, 'bid_master_id','id');
     }
 }
