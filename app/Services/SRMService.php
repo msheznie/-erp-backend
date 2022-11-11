@@ -3400,7 +3400,11 @@ class SRMService
             $bidSubmissionData = self::BidSubmissionStatusData($group['id'], $group['tender_id']);
 
             $evaluvationCriteriaDetailsCount = EvaluationCriteriaDetails::where('tender_id',$group['tender_id'])->where('critera_type_id',1)->count();
-            $bidSubmissionDataCount = BidSubmissionDetail::join('srm_evaluation_criteria_details','srm_bid_submission_detail.evaluation_detail_id','=','srm_evaluation_criteria_details.id')->where('srm_bid_submission_detail.tender_id',$group['tender_id'])->where('srm_evaluation_criteria_details.critera_type_id',1)->count();
+            $bidSubmissionDataCount = BidSubmissionDetail::join('srm_evaluation_criteria_details','srm_bid_submission_detail.evaluation_detail_id','=','srm_evaluation_criteria_details.id')
+                ->where('srm_bid_submission_detail.tender_id',$group['tender_id'])
+                ->where('srm_bid_submission_detail.bid_master_id',$bidMasterId)
+                ->where('srm_evaluation_criteria_details.critera_type_id',1)
+                ->count();
             $goNoGoActiveStatus = TenderMaster::select('is_active_go_no_go')->where('id', $group['tender_id'])->first();
 
             $documentTypeAssignedCount = TenderDocumentTypeAssign::where('tender_id',$group['tender_id'])->count();
@@ -3413,10 +3417,13 @@ class SRMService
             }])->whereHas('tender_document_types', function ($q) use ($documents){
             })->where('documentSystemCode', $group['tender_id'])->where('parent_id', null)->where('documentSystemID', 108)->where('envelopType', 3)->where('attachmentType',2)->pluck('attachmentID')->toArray();
 
-            $documentAttachedCountAnswer = DocumentAttachments::whereIn('parent_id', $documentAttachedCountIds)->where('documentSystemID', 108)->count();
+            $documentAttachedCountAnswer = DocumentAttachments::whereIn('parent_id', $documentAttachedCountIds)
+                ->where('documentSystemID', 108)
+                ->where('documentSystemCode', $bidMasterId)
+                ->count();
 
             if($goNoGoActiveStatus['is_active_go_no_go'] == 1){
-                if($evaluvationCriteriaDetailsCount == $bidSubmissionDataCount || $evaluvationCriteriaDetailsCount == 0)  {
+                if($evaluvationCriteriaDetailsCount == $bidSubmissionDataCount)  {
                     $group['goNoGoStatus'] = 0;
                 } else {
                     $group['goNoGoStatus'] = 1;
@@ -3453,12 +3460,13 @@ class SRMService
 
             if(($bid_boq == $bid_boq_answer) && (count($documentAttachedCountIdsCommercial) == $documentAttachedCountAnswerCommercial)) {
                 $group['commercial_bid_submission_status'] = "Completed";
-            }else {
+            } else {
                 $group['commercial_bid_submission_status'] = "Not Completed";
 
             }
             if($bid_boq == 0 && count($documentAttachedCountIdsCommercial) == 0) {
-                $group['commercial_bid_submission_status'] = "Disabled";
+                // $group['commercial_bid_submission_status'] = "Disabled";
+                $group['commercial_bid_submission_status'] = "Not Completed";
             }
 
             //$group['commercial_bid_submission_status'] = $bidSubmissionData['filtered'];
