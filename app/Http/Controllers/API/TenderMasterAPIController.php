@@ -2157,6 +2157,7 @@ WHERE
         $tenderMasterId = $input['tenderMasterId'];
         $companySystemID = $input['companySystemID'];
         $is_date_disable = true;
+        $is_comm_date_disable = false;
         $data['master'] = TenderMaster::with(['procument_activity', 'confirmed_by','tender_type','envelop_type','evaluation_type'])->where('id', $input['tenderMasterId'])->first();
         $activity = ProcumentActivity::with(['tender_procurement_category'])->where('tender_id', $input['tenderMasterId'])->where('company_id', $input['companySystemID'])->get();
         $act = array();
@@ -2198,8 +2199,11 @@ WHERE
 
         $data['calendarDates'] = DB::select($qry);
         $data['calendarDatesAll'] = DB::select($qryAll);
+        $current_date = date('Y-m-d H:i:s');
 
         $stage = $data['master']['stage'];
+        $current_date2 = Carbon::createFromFormat('Y-m-d H:i:s', $current_date);
+        
         if($stage == 1)
         {
             $opening_date_comp = $data['master']['bid_opening_date'];
@@ -2207,17 +2211,32 @@ WHERE
         else if($stage == 2)
         {
             $opening_date_comp = $data['master']['technical_bid_opening_date'];
+
+            $opening_commer_date_comp = $data['master']['commerical_bid_opening_date'];
+            $closing_commer_date_comp = $data['master']['commerical_bid_closing_date'];
+
+            $result1 = $current_date2->gt($opening_commer_date_comp);
+            $result2 = $closing_commer_date_comp->gt($current_date2);
+            
+            
+
+            if($result1 && $result2)
+            {
+                $is_comm_date_disable = true;
+            }
+
         }
 
-        $current_date = date('Y-m-d H:i:s');
+       
 
         if($current_date > $opening_date_comp)
         {
           $is_date_disable = false;
         }
 
-     
+
         $data['master']['disable_date'] = $is_date_disable;
+        $data['master']['is_comm_date_disable'] = $is_comm_date_disable;
 
         $documentTypes = TenderDocumentTypeAssign::with(['document_type'])->where('tender_id', $tenderMasterId)->get();
         $docTypeArr = array();
@@ -2242,13 +2261,23 @@ WHERE
         $comments = $input['comments'];
         $val = $input['data']['value'];
         $id = $input['id'];
+        $type = $input['type'];
         
 
 
         DB::beginTransaction();
         try {
-            $data['status'] = $val;
-            $data['remarks'] = $comments;
+            if($type == 2)
+            {
+                $data['status'] = $val;
+                $data['remarks'] = $comments;
+            }
+            else
+            {
+                $data['commercial_eval_status'] = $val;
+                $data['commercial_eval_remarks'] = $comments;
+            }
+          
             $results = SrmTenderBidEmployeeDetails::where('emp_id',$emp_id)->where('tender_id',$tender_id)->where('emp_id',$emp_id)->update($data,$id);
     
             DB::commit();
@@ -2333,14 +2362,16 @@ WHERE
             $srm_score = BidSubmissionDetail::where('bid_master_id',$ids)->sum('result');
             $erp_score_score = BidSubmissionDetail::where('bid_master_id',$ids)->sum('eval_result');
 
+            $result =  round(($srm_score/100)*$techniqal_wightage->technical_weightage,3);
+            $eval_result = round(($erp_score_score/100)*$techniqal_wightage->technical_weightage,3);
 
-            $temp['result'] = round(($srm_score/100)*$techniqal_wightage->technical_weightage,3);
-            $temp['eval_result'] = round(($erp_score_score/100)*$techniqal_wightage->technical_weightage,3);
+            $temp['result'] = $result;
+            $temp['eval_result'] = $eval_result;
 
 
 
-            $temp1['result_percentage'] = round( ((($srm_score/100)*$techniqal_wightage->technical_weightage)/$techniqal_wightage->technical_weightage)*100,3);
-            $temp1['eval_result_percentage'] = round( ((($erp_score_score/100)*$techniqal_wightage->technical_weightage)/$techniqal_wightage->technical_weightage)*100,3);
+            $temp1['result_percentage'] = round((($result)/$techniqal_wightage->technical_weightage)*100,3);
+            $temp1['eval_result_percentage'] = round( (($eval_result)/$techniqal_wightage->technical_weightage)*100,3);
 
             array_push($wight,$temp);
             array_push($percentage,$temp1);
@@ -2401,5 +2432,54 @@ WHERE
             ->with('orderCondition', $sort)
             ->make(true);
     }
+
+    public function getCommercialEval(Request $request)
+    {
+        $input = $request->all();
+
+        $tenderId = $request->input('extraParams.tenderId');
+        $bidMasterId = $request->input('extraParams.id');
+
+
+     
+        $data = PricingScheduleMaster::with(['tender_bid_format_master', 'bid_schedule' => function ($q) use ($bidMasterId) {
+            $q->where('bid_master_id', $bidMasterId);
+        }, 'pricing_shedule_details' => function ($q) use ($bidMasterId) {
+            $q->with(['bid_main_work' => function ($q) use ($bidMasterId) {
+                $q->where('bid_master_id', $bidMasterId);
+            },'bid_format_detail' =>function ($q) use ($bidMasterId) {
+                $q->where('bid_master_id', $bidMasterId);
+                $q->orWhere('bid_master_id', null);
+            }]);
+        }])->where('tender_id', $tenderId)->get();
+
+     
+
+        return [
+            'success' => true,
+            'message' => 'Successfully Received',
+            'data' =>  $data
+        ];
+    }
+
+
+    
+    public function getCommercialEvalBoq(Request $request)
+    {
+        $mainWorkId = $request->input('extraParams.mainWorkId');
+        $bidMasterId = $request->input('extraParams.bidMasterId');
+        $data = TenderBoqItems::with(['unit', 'bid_boq' => function ($q) use ($bidMasterId) {
+            $q->where('bid_master_id', $bidMasterId);
+        }])->where('main_work_id', $mainWorkId)->get();
+
+     
+
+        return [
+            'success' => true,
+            'message' => 'Successfully Received',
+            'data' =>  $data
+        ];
+    }
+
 
 }

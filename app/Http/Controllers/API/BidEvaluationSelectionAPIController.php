@@ -15,6 +15,7 @@ use App\Models\BidSubmissionDetail;
 use App\Repositories\BidSubmissionMasterRepository;
 use App\Models\TenderMaster;
 use App\Repositories\TenderMasterRepository;
+use Illuminate\Support\Facades\DB;
 /**
  * Class BidEvaluationSelectionController
  * @package App\Http\Controllers\API
@@ -27,7 +28,7 @@ class BidEvaluationSelectionAPIController extends AppBaseController
     private $bidSubmissionMasterRepository;
     private $tenderMasterRepository;
 
-    public function __construct(TenderMasterRepository $tenderMasterRepo,BidEvaluationSelectionRepository $bidEvaluationSelectionRepo,BidSubmissionMasterRepository $bidSubmissionMasterRepo)
+    public function __construct(TenderMasterRepository $tenderMasterRepo,BidSubmissionMasterRepository $bidSubmissionMasterRepo,BidEvaluationSelectionRepository $bidEvaluationSelectionRepo)
     {
         $this->bidEvaluationSelectionRepository = $bidEvaluationSelectionRepo;
         $this->bidSubmissionMasterRepository = $bidSubmissionMasterRepo;
@@ -246,31 +247,33 @@ class BidEvaluationSelectionAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $type = $input['type'];
-        $tender_id = $input['tender_id'];
-        $bucket_id = $input['id'];
-        unset($input['type']);
-        unset($input['tender_id']);
-        unset($input['id']);
+      
 
-        
-        if($type == 2)
-        {
-            
-            $bid_master_ids = json_decode(BidEvaluationSelection::where('id',$id)->pluck('bids')[0],true);
-
-         
-
-
-            $evaluation = BidSubmissionDetail::where('tender_id',$tender_id)->whereIn('bid_master_id',$bid_master_ids)->where('eval_result',null)->count();
-
-            
-            if($evaluation > 0)
+            $type = $input['type'];
+            $tender_id = $input['tender_id'];
+            $bucket_id = $input['id'];
+            unset($input['type']);
+            unset($input['tender_id']);
+            unset($input['id']);
+    
+           
+            if($type == 2)
             {
-                return $this->sendError('Please enter the remaining user values for the techniqal evaluation',500);
+                $bid_master_ids = json_decode(BidEvaluationSelection::where('id',$id)->pluck('bids')[0],true);
+    
+                $evaluation = BidSubmissionDetail::where('tender_id',$tender_id)->whereIn('bid_master_id',$bid_master_ids)->where('eval_result',null)->whereHas('srm_evaluation_criteria_details',function($q){
+                    $q->where('critera_type_id',2);
+                })->count();
+    
+             
+                if($evaluation > 0)
+                {
+                    return $this->sendError('Please enter the remaining user values for the techniqal evaluation',500);
+                }
+         
             }
 
-        }
+        
 
         /** @var BidEvaluationSelection $bidEvaluationSelection */
         $bidEvaluationSelection = $this->bidEvaluationSelectionRepository->findWithoutFail($id);

@@ -1803,6 +1803,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('tender-bid-employee-get-all','TenderBidEmployeeDetailsController@getEmployees');
             Route::post('tender-bid-employee-delete','TenderBidEmployeeDetailsController@deleteEmp');
             Route::post('tender-bid-employee-approval-count','TenderBidEmployeeDetailsController@getEmployeesApproval');
+            Route::post('getEmployeesCommercialApproval','TenderBidEmployeeDetailsController@getEmployeesCommercialApproval');
             /* For Profile -> Profile */
             Route::get('getProfileDetails', 'EmployeeAPIController@getProfileDetails');
 
@@ -2521,7 +2522,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('getBidVerificationStatus', 'BidSubmissionMasterAPIController@getBidVerificationStatus');
         Route::post('getVerifieddBids', 'BidSubmissionMasterAPIController@getVerifieddBids');
         Route::post('saveTechnicalEvalBidSubmissionLine', 'BidSubmissionMasterAPIController@saveTechnicalEvalBidSubmissionLine');
-
+        Route::post('getTenderCommercialBids', 'BidSubmissionMasterAPIController@getTenderCommercialBids');
         
         /**
          * Supplier registration approval routes
@@ -2612,7 +2613,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('addFormula', 'TenderBidFormatMasterAPIController@addFormula');
         Route::post('formulaGenerate', 'TenderBidFormatMasterAPIController@formulaGenerate');
         Route::post('tenderBidDocVerification', 'TenderMasterAPIController@tenderBidDocVerification');
-
+        Route::post('getCommercialEval', 'TenderMasterAPIController@getCommercialEval');
+        Route::post('getCommercialEvalBoq', 'TenderMasterAPIController@getCommercialEvalBoq');
 
         
         Route::resource('employee_ledgers', 'EmployeeLedgerAPIController');
