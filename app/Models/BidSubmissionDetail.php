@@ -113,7 +113,8 @@ class BidSubmissionDetail extends Model
         'result' => 'float',
         'score' => 'integer',
         'created_by' => 'integer',
-        'updated_by' => 'integer'
+        'updated_by' => 'integer',
+        'eval_result' => 'float',
     ];
 
     /**
