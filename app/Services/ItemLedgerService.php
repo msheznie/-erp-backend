@@ -14,11 +14,20 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Services\GeneralLedger\GlPostedDateService;
 
 class ItemLedgerService
 {
 	public static function postLedgerEntry($masterModel)
 	{
+        $validatePostedDate = GlPostedDateService::validatePostedDate($masterModel["autoID"], $masterModel["documentSystemID"]);
+
+        if (!$validatePostedDate['status']) {
+            return ['status' => false, 'message' => $validatePostedDate['message']];
+        }
+
+        $postedDateGl = $validatePostedDate['postedDate'];
+
         $docInforArr = array(
             'confirmColumnName' => '',
             'approvedColumnName' => '',
@@ -513,7 +522,7 @@ class ItemLedgerService
                             $data[$i]['createdUserSystemID'] = $empID->employeeSystemID;
                             $data[$i]['createdUserID'] = $empID->empID;
                             $data[$i]['fromDamagedTransactionYN'] = 0;
-                            $data[$i]['transactionDate'] = date('Y-m-d H:i:s');
+                            $data[$i]['transactionDate'] = $postedDateGl;
                             $data[$i]['timestamp'] = date('Y-m-d H:i:s');
                             $i++;
 
@@ -602,7 +611,7 @@ class ItemLedgerService
                         $data[$i]['createdUserSystemID'] = $empID->employeeSystemID;
                         $data[$i]['createdUserID'] = $empID->empID;
                         $data[$i]['fromDamagedTransactionYN'] = 0;
-                        $data[$i]['transactionDate'] = date('Y-m-d H:i:s');
+                        $data[$i]['transactionDate'] = $postedDateGl;
                         $data[$i]['timestamp'] = date('Y-m-d H:i:s');
                         $i++;
 
@@ -635,7 +644,7 @@ class ItemLedgerService
                             $data[$i]['createdUserSystemID'] = $empID->employeeSystemID;
                             $data[$i]['createdUserID'] = $empID->empID;
                             $data[$i]['fromDamagedTransactionYN'] = 0;
-                            $data[$i]['transactionDate'] = date('Y-m-d H:i:s');
+                            $data[$i]['transactionDate'] = $postedDateGl;
                             $data[$i]['timestamp'] = date('Y-m-d H:i:s');
                             $i++;
                         }

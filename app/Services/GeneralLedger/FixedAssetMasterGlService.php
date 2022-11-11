@@ -91,7 +91,7 @@ class FixedAssetMasterGlService
         $validatePostedDate = GlPostedDateService::validatePostedDate($masterModel["autoID"], $masterModel["documentSystemID"]);
 
         if (!$validatePostedDate['status']) {
-            return ['success' => false, 'message' => $validatePostedDate['message']];
+            return ['status' => false, 'message' => $validatePostedDate['message']];
         }
 
         if ($masterData) {
