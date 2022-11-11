@@ -3460,12 +3460,13 @@ class SRMService
 
             if(($bid_boq == $bid_boq_answer) && (count($documentAttachedCountIdsCommercial) == $documentAttachedCountAnswerCommercial)) {
                 $group['commercial_bid_submission_status'] = "Completed";
-            }else {
+            } else {
                 $group['commercial_bid_submission_status'] = "Not Completed";
 
             }
             if($bid_boq == 0 && count($documentAttachedCountIdsCommercial) == 0) {
-                $group['commercial_bid_submission_status'] = "Disabled";
+                // $group['commercial_bid_submission_status'] = "Disabled";
+                $group['commercial_bid_submission_status'] = "Not Completed";
             }
 
             //$group['commercial_bid_submission_status'] = $bidSubmissionData['filtered'];
