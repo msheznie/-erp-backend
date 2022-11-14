@@ -62,6 +62,43 @@ Route::group([], function(){
 
 Route::resource('bank_memo_types', 'BankMemoTypesAPIController');
 
+
+//Chart Of Account
+Route::group([], function(){
+    Route::get('getChartOfAccountFormData', 'ChartOfAccountAPIController@getChartOfAccountFormData')->name("Chart of account form data");
+	Route::get('getCompanyWiseSubLedgerAccounts', 'ChartOfAccountsAssignedAPIController@getCompanyWiseSubLedgerAccounts')->name("Chart of account company wise sub ledger");
+	Route::get('gl-code-search', 'ChartOfAccountsAssignedAPIController@gl_code_search')->name("Chart of account gl code search");
+	Route::get('coa-config-companies', 'SystemGlCodeScenarioAPIController@coa_config_companies')->name("Chart of account config companies");
+	Route::get('changeActive', 'ChartOfAccountAPIController@changeActive')->name("Chart of account change active");
+	Route::get('assignedCompaniesByChartOfAccount', 'ChartOfAccountAPIController@assignedCompaniesByChartOfAccount')->name("Chart of account assigned companies");
+	Route::get('getNotAssignedCompaniesByChartOfAccount', 'ChartOfAccountAPIController@getNotAssignedCompaniesByChartOfAccount')->name("Chart of account not assigned companies");
+	Route::get('getReportTemplatesCategoryByTemplate', 'ReportTemplateDetailsAPIController@getReportTemplatesCategoryByTemplate')->name("Chart of account report templates category by template");
+	Route::get('getReportTemplatesByCategory', 'ReportTemplateAPIController@getReportTemplatesByCategory')->name("Chart of account report templates by category");
+	Route::get('getAssignedReportTemplatesByGl', 'ReportTemplateAPIController@getAssignedReportTemplatesByGl')->name("Chart of account assigned report templates by gl");
+	Route::get('isBank/{id}', 'ChartOfAccountAPIController@isBank')->name("Chart of account is bank");
+
+	Route::post('chartOfAccount', 'ChartOfAccountAPIController@getChartOfAccount')->name("Chart of account");
+    Route::post('exportChartOfAccounts', 'ChartOfAccountAPIController@exportChartOfAccounts')->name("Chart of account Export");
+	Route::post('coa-config-scenario-assign', 'SystemGlCodeScenarioAPIController@scenario_assign')->name("Chart of account scenario assign");
+	Route::post('coa-config-scenarios', 'SystemGlCodeScenarioDetailAPIController@list_config_scenarios')->name("Chart of account list config scenarios");
+	Route::post('asset_disposal_type_config', 'AssetDisposalTypeAPIController@config_list')->name("Chart of account asset disposal type config");
+	Route::post('getMasterChartOfAccountData', 'ChartOfAccountAPIController@getMasterChartOfAccountData')->name("Chart of account master data");
+	Route::post('getInterCompanies', 'ChartOfAccountAPIController@getInterCompanies')->name("Chart of account inter companies");
+	Route::post('getDefaultTemplateCategories', 'ReportTemplateDetailsAPIController@getDefaultTemplateCategories')->name("Chart of account default template categories");
+	Route::post('getChartOfAccountCode', 'ReportTemplateDetailsAPIController@getChartOfAccountCode')->name("Chart of account code");
+	Route::post('assignReportTemplateToGl', 'ReportTemplateLinksAPIController@assignReportTemplateToGl')->name("Chart of account assign report template to gl");
+	Route::post('chartOfAccountReferBack', 'ChartOfAccountAPIController@chartOfAccountReferBack')->name("Chart of account refer back");
+	Route::post('chartOfAccountReopen', 'ChartOfAccountAPIController@chartOfAccountReopen')->name("Chart of account reopen");
+	Route::post('referBackHistoryByChartOfAccount', 'ChartOfAccountsRefferedBackAPIController@referBackHistoryByChartOfAccount')->name("Chart of account refer back history");
+
+	Route::resource('gl-config-scenario-details', 'SystemGlCodeScenarioDetailAPIController');
+	Route::resource('asset_disposal_types', 'AssetDisposalTypeAPIController');
+	Route::resource('chart_of_accounts_assigned', 'ChartOfAccountsAssignedAPIController');
+	Route::resource('chart_of_account', 'ChartOfAccountAPIController');
+	Route::resource('chartOfAccountsReferBack', 'ChartOfAccountsRefferedBackAPIController');
+	Route::resource('report_template_links', 'ReportTemplateLinksAPIController');
+});
+
 //customer 
 Route::group([], function(){
 	Route::post('getAllCustomers', 'CustomerMasterAPIController@getAllCustomers')->name("Get all customers");
@@ -99,6 +136,25 @@ Route::group([], function(){
 	Route::resource('customer_currencies', 'CustomerCurrencyAPIController');
 });
 
+//warehouse
+Route::group([], function() {
+    Route::get('getWarehouseMasterFormData', 'WarehouseMasterAPIController@getWarehouseMasterFormData')->name('Get warehouse master form data');
+    Route::post('getAllWarehouseMaster', 'WarehouseMasterAPIController@getAllWarehouseMaster')->name('Get all warehouse master');
+    Route::post('getAllLocation', 'ErpLocationAPIController@getAllLocation')->name('Get all location');
+    Route::post('getWarehouseRightEmployees', 'WarehouseRightsAPIController@getWarehouseRightEmployees')->name('Get warehouse right employees');
+    Route::post('createLocation', 'ErpLocationAPIController@createLocation')->name('Create location');
+    Route::post('deleteLocation', 'ErpLocationAPIController@deleteLocation')->name('Delete location');
+    Route::post('getAllAssignedItemsByWarehouse', 'WarehouseItemsAPIController@getAllAssignedItemsByWarehouse')->name('Get all assigned items by warehouse');
+    Route::post('exportItemAssignedByWarehouse', 'WarehouseItemsAPIController@exportItemAssignedByWarehouse')->name('Export item assigned by warehouse');
+    Route::resource('warehouse/masters', 'WarehouseMasterAPIController', ['names' => 'Warehouse master']);
+    Route::post('getAllWarehouseSubLevels', 'WarehouseSubLevelsAPIController@getAllWarehouseSubLevels')->name('Get all warehouse sub levels');
+    Route::resource('warehouse_sub_levels', 'WarehouseSubLevelsAPIController');
+    Route::post('getWarehouseRightEmployees', 'WarehouseRightsAPIController@getWarehouseRightEmployees')->name('Get warehouse right employees');
+    Route::resource('warehouse_rights', 'WarehouseRightsAPIController');
+    Route::get('getSubLevelsByWarehouse', 'WarehouseSubLevelsAPIController@getSubLevelsByWarehouse')->name('Get sub levels by warehouse');
+    Route::post('getAllBinLocationsByWarehouse', 'WarehouseBinLocationAPIController@getAllBinLocationsByWarehouse')->name('Get all bin locations by warehouse');
+    Route::resource('warehouse_bin_locations', 'WarehouseBinLocationAPIController');
+});
 
 //item-master
 Route::group([], function() {

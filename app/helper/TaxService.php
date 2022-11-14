@@ -145,6 +145,7 @@ class TaxService
                 ->first();
 
             if ($defaultVAT) {
+                $data['applicableOn'] = $defaultVAT->applicableOn;
                 $data['vatSubCategoryID'] = $defaultVAT->taxVatSubCategoriesAutoID;
                 $data['vatMasterCategoryID'] = $defaultVAT->mainCategory;
                 $data['percentage'] = $defaultVAT->percentage;

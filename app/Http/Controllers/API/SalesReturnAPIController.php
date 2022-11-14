@@ -585,9 +585,7 @@ class SalesReturnAPIController extends AppBaseController
 
                     $updateItem->save();
 
-                    if ($updateItem->unitTransactionAmount == 0) {
-                        return $this->sendError('Item must not have zero cost', 500);
-                    }
+
                     if ($updateItem->unitTransactionAmount < 0) {
                         return $this->sendError('Item must not have negative cost', 500);
                     }

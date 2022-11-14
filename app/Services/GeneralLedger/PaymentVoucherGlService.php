@@ -107,7 +107,7 @@ class PaymentVoucherGlService
         $validatePostedDate = GlPostedDateService::validatePostedDate($masterModel["autoID"], $masterModel["documentSystemID"]);
 
         if (!$validatePostedDate['status']) {
-            return ['success' => false, 'message' => $validatePostedDate['message']];
+            return ['status' => false, 'message' => $validatePostedDate['message']];
         }
 
         $masterDocumentDate = isset($masterModel['documentDateOveride']) ? $masterModel['documentDateOveride'] : $validatePostedDate['postedDate'];

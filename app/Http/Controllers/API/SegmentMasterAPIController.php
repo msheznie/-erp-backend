@@ -188,6 +188,10 @@ class SegmentMasterAPIController extends AppBaseController
             return $this->sendError('Segment Master not found');
         }
 
+        if ($segmentMaster->isPublic){
+            return $this->sendError('Cannot delete this segment. This segment is a public segment.');
+        }
+
         //delete validation 
         $segmentUsed = false;
         $procumentOrderCheck = ProcumentOrder::where('serviceLineSystemID', $id)

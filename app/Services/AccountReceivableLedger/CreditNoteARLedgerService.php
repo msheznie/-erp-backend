@@ -21,7 +21,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-
+use App\Services\GeneralLedger\GlPostedDateService;
 
 class CreditNoteARLedgerService
 {
@@ -54,10 +54,13 @@ class CreditNoteARLedgerService
             $taxTrans = $tax->transAmount;
         }
 
-        $masterDocumentDate = date('Y-m-d H:i:s');
-        if ($masterData->finance_period_by->isActive == -1) {
-            $masterDocumentDate = $masterData->creditNoteDate;
+        $validatePostedDate = GlPostedDateService::validatePostedDate($masterModel["autoID"], $masterModel["documentSystemID"]);
+
+        if (!$validatePostedDate['status']) {
+            return ['status' => false, 'message' => $validatePostedDate['message']];
         }
+
+        $masterDocumentDate = $validatePostedDate['postedDate'];
 
         if ($masterData) {
             foreach ($detailsCreditNote as $detail) {

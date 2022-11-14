@@ -92,7 +92,7 @@ class FixedAssetDisposalGlService
         $validatePostedDate = GlPostedDateService::validatePostedDate($masterModel["autoID"], $masterModel["documentSystemID"]);
 
         if (!$validatePostedDate['status']) {
-            return ['success' => false, 'message' => $validatePostedDate['message']];
+            return ['status' => false, 'message' => $validatePostedDate['message']];
         }
 
         $disposal = AssetDisposalDetail::with('disposal_account')->selectRaw('SUM(netBookValueLocal) as netBookValueLocal, SUM(netBookValueRpt) as netBookValueRpt,DISPOGLCODESystemID,DISPOGLCODE,serviceLineSystemID,serviceLineCode')->OfMaster($masterModel["autoID"])->groupBy('DISPOGLCODESystemID', 'serviceLineSystemID')->get();

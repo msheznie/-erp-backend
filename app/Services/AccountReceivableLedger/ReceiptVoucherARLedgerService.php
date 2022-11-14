@@ -21,7 +21,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-
+use App\Services\GeneralLedger\GlPostedDateService;
 
 class ReceiptVoucherARLedgerService
 {
@@ -54,13 +54,15 @@ class ReceiptVoucherARLedgerService
             ->groupBy('serviceLineSystemID')
             ->get();
 
-        $masterDocumentDate = date('Y-m-d H:i:s');
-
         if ($masterData) {
             if ($masterData->documentType == 13 || $masterData->documentType == 15) {
-                if ($masterData->finance_period_by->isActive == -1) {
-                    $masterDocumentDate = $masterData->custPaymentReceiveDate;
+                $validatePostedDate = GlPostedDateService::validatePostedDate($masterModel["autoID"], $masterModel["documentSystemID"]);
+
+                if (!$validatePostedDate['status']) {
+                    return ['status' => false, 'message' => $validatePostedDate['message']];
                 }
+
+                $masterDocumentDate = $validatePostedDate['postedDate'];
 
                 $transAmount = 0;
                 $transAmountLocal = 0;

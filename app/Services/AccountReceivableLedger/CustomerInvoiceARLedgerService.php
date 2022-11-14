@@ -21,7 +21,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-
+use App\Services\GeneralLedger\GlPostedDateService;
 
 class CustomerInvoiceARLedgerService
 {
@@ -48,14 +48,13 @@ class CustomerInvoiceARLedgerService
         }
 
         if ($masterData) {
-            $masterDocumentDate = date('Y-m-d H:i:s');
-            if ($masterData->isPerforma == 1 || $masterData->isPerforma == 2 || $masterData->isPerforma == 4 || $masterData->isPerforma == 5) {
-                $masterDocumentDate = date('Y-m-d H:i:s');
-            } else {
-                if ($masterData->finance_period_by->isActive == -1) {
-                    $masterDocumentDate = $masterData->bookingDate;
-                }
+            $validatePostedDate = GlPostedDateService::validatePostedDate($masterModel["autoID"], $masterModel["documentSystemID"]);
+
+            if (!$validatePostedDate['status']) {
+                return ['status' => false, 'message' => $validatePostedDate['message']];
             }
+
+            $masterDocumentDate = $validatePostedDate['postedDate'];
 
             $data['companySystemID'] = $masterData->companySystemID;
             $data['companyID'] = $masterData->companyID;

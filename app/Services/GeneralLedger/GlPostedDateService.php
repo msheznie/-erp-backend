@@ -162,27 +162,29 @@ class GlPostedDateService
                 $docInforArr["financePeriod"] = "finance_period_by";
                 break;
             default:
-                $result = ['status' => true, 'message' => "Document ID not found"];
+                return  ['status' => true, 'message' => "Document ID not found"];
         }
 
         $postedDate = null;
         $masterModel = 'App\Models\\' . $docInforArr["masterModelName"]; // Model name
         $detailModel = 'App\Models\\' . $docInforArr["detailModelName"]; // Model name
 
-        $masterRec = $masterModel::with([$docInforArr["financePeriod"]])->find($documentSystemCode);
 
         $financePeriodRelation = $docInforArr["financePeriod"];
         $documentDate = $docInforArr["documentDate"];
 
         if (in_array($documentSystemID, [15, 19, 21, 17, 22, 23, 41, 4])) {
             if (in_array($documentSystemID, [22])) {
+                $masterRec = $masterModel::find($documentSystemCode);
                 $postedDate = $masterRec->$documentDate;
             } else {
+                $masterRec = $masterModel::with([$docInforArr["financePeriod"]])->find($documentSystemCode);
                 if ($masterRec->$financePeriodRelation && $masterRec->$financePeriodRelation->isActive == -1) {
                     $postedDate = $masterRec->$documentDate;
                 } 
             }
         } else {
+            $masterRec = $masterModel::with([$docInforArr["financePeriod"]])->find($documentSystemCode);
 
             if ($masterRec) {
                 if ($documentSystemID == 20) {
@@ -229,27 +231,27 @@ class GlPostedDateService
                     } 
                 }
             }
+        }
 
-            if (is_null($postedDate)) {
-                $postedDate = date('Y-m-d H:i:s');
+        if (is_null($postedDate)) {
+            $postedDate = date('Y-m-d H:i:s');
 
-                $documentMaster = DocumentMaster::find($documentSystemID);
+            $documentMaster = DocumentMaster::find($documentSystemID);
 
-                $companySystemID = isset($masterRec->companySystemID) ? $masterRec->companySystemID : 0;
+            $companySystemID = isset($masterRec->companySystemID) ? $masterRec->companySystemID : 0;
 
-                if ($documentMaster) {
-                    $financePeriod = CompanyFinancePeriod::where('departmentSystemID', $documentMaster->departmentSystemID)
-                                                         ->where('isActive', -1)
-                                                         ->where('companySystemID', $companySystemID)
-                                                         ->whereDate('dateFrom', '<=', $postedDate)
-                                                         ->whereDate('dateTo', '>=', $postedDate)
-                                                         ->first();
+            if ($documentMaster) {
+                $financePeriod = CompanyFinancePeriod::where('departmentSystemID', $documentMaster->departmentSystemID)
+                                                     ->where('isActive', -1)
+                                                     ->where('companySystemID', $companySystemID)
+                                                     ->whereDate('dateFrom', '<=', $postedDate)
+                                                     ->whereDate('dateTo', '>=', $postedDate)
+                                                     ->first();
 
-                    if (!$financePeriod) {
-                        return ['status' => false, 'message' => "Financial period is not active for posting GL Entry"];
-                    } 
-                }            
-            }
+                if (!$financePeriod) {
+                    return ['status' => false, 'message' => "Financial posting error: Financial period is not active."];
+                } 
+            }            
         }
 
         return ['status' => true, 'postedDate' => $postedDate];
