@@ -5033,7 +5033,7 @@ WHERE
                         AND erp_generalledger.glAccountTypeID = 1
                         AND  erp_generalledger.chartOfAccountSystemID IN (' . join(',', $chartOfAccountId) . ')
                         AND  erp_generalledger.serviceLineSystemID IN (' . join(',', $serviceLineId) . ')
-                        AND DATE(erp_generalledger.documentDate) <= "' . $fromDate . '"
+                        AND DATE(erp_generalledger.documentDate) < "' . $fromDate . '"
                     GROUP BY
                         erp_generalledger.companySystemID,
                         erp_generalledger.serviceLineSystemID,

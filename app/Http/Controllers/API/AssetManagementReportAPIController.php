@@ -2877,6 +2877,14 @@ WHERE
             }
         }
 
+        $companyID = "";
+        $checkIsGroup = Company::find($request->companySystemID);
+        if ($checkIsGroup->isGroup) {
+            $companyID = \Helper::getGroupCompany($request->companySystemID);
+        } else {
+            $companyID = [(int)$request->companySystemID];
+        }
+
         $qry = "
 SELECT * FROM ( SELECT
 IF(groupTO IS NOT  NULL ,groupTO , erp_fa_asset_master.faID ) as sortfaID,
@@ -2925,9 +2933,9 @@ FROM
 	INNER JOIN erp_fa_assettype ON erp_fa_assettype.typeID = erp_fa_asset_master.assetType
 	INNER JOIN erp_fa_financecategory ON AUDITCATOGARY = erp_fa_financecategory.faFinanceCatID
 	INNER JOIN serviceline ON serviceline.ServiceLineCode = erp_fa_asset_master.serviceLineCode
-LEFT JOIN (SELECT assetDescription , faID ,faUnitSerialNo,faCode FROM erp_fa_asset_master WHERE erp_fa_asset_master.companySystemID = $request->companySystemID   )	 assetGroup ON erp_fa_asset_master.groupTO= assetGroup.faID
+LEFT JOIN (SELECT assetDescription , faID ,faUnitSerialNo,faCode FROM erp_fa_asset_master WHERE erp_fa_asset_master.companySystemID IN (" . join(',', $companyID) . ")) assetGroup ON erp_fa_asset_master.groupTO= assetGroup.faID
 WHERE
-	erp_fa_asset_master.companySystemID = $request->companySystemID  AND AUDITCATOGARY IN($assetCategory) AND approved =-1
+	erp_fa_asset_master.companySystemID IN (" . join(',', $companyID) . ")  AND AUDITCATOGARY IN($assetCategory) AND approved =-1
 	AND DATE(erp_fa_asset_master.postedDate) <= '$asOfDate' AND assetType = $typeID
 	$where
 	) t  ORDER BY sortfaID desc  ";
@@ -3697,6 +3705,14 @@ WHERE
         $assetCategory = collect($request->assetCategory)->pluck('faFinanceCatID')->toArray();
         $assetCategory = join(',', $assetCategory);
 
+        $companyID = "";
+        $checkIsGroup = Company::find($request->companySystemID);
+        if ($checkIsGroup->isGroup) {
+            $companyID = \Helper::getGroupCompany($request->companySystemID);
+        } else {
+            $companyID = [(int)$request->companySystemID];
+        }
+
         $where = "";
         if (isset($request->searchText)) {
             $searchText = $request->searchText;
@@ -3785,9 +3801,9 @@ WHERE
                         LEFT JOIN erp_fa_asset_disposalmaster ON erp_fa_asset_disposaldetail.assetdisposalMasterAutoID = erp_fa_asset_disposalmaster.assetdisposalMasterAutoID 
                         INNER JOIN erp_fa_financecategory ON AUDITCATOGARY = erp_fa_financecategory.faFinanceCatID
                         INNER JOIN serviceline ON serviceline.ServiceLineCode = erp_fa_asset_master.serviceLineCode
-                    LEFT JOIN (SELECT assetDescription , faID ,faUnitSerialNo,faCode FROM erp_fa_asset_master WHERE erp_fa_asset_master.companySystemID = $request->companySystemID   )  assetGroup ON erp_fa_asset_master.groupTO= assetGroup.faID
+                    LEFT JOIN (SELECT assetDescription , faID ,faUnitSerialNo,faCode FROM erp_fa_asset_master WHERE erp_fa_asset_master.companySystemID IN (" . join(',', $companyID) . ")   )  assetGroup ON erp_fa_asset_master.groupTO= assetGroup.faID
                     WHERE
-                        erp_fa_asset_master.companySystemID = $request->companySystemID  AND AUDITCATOGARY IN($assetCategory) AND erp_fa_asset_master.approved =-1
+                        erp_fa_asset_master.companySystemID IN (" . join(',', $companyID) . ")  AND AUDITCATOGARY IN($assetCategory) AND erp_fa_asset_master.approved =-1
                         AND DATE(erp_fa_asset_master.postedDate) <= '$asOfDate' AND assetType = $typeID
                         $where
                         ) t  ORDER BY sortfaID desc  ";
