@@ -20,7 +20,7 @@ use Response;
 use App\Models\BidEvaluationSelection;
 use function Clue\StreamFilter\fun;
 use App\Models\EvaluationCriteriaScoreConfig;
-
+use App\Repositories\TenderMasterRepository;
 /**
  * Class BidSubmissionMasterController
  * @package App\Http\Controllers\API
@@ -31,9 +31,10 @@ class BidSubmissionMasterAPIController extends AppBaseController
     /** @var  BidSubmissionMasterRepository */
     private $bidSubmissionMasterRepository;
 
-    public function __construct(BidSubmissionMasterRepository $bidSubmissionMasterRepo)
+    public function __construct(TenderMasterRepository $tenderMasterRepo,BidSubmissionMasterRepository $bidSubmissionMasterRepo)
     {
         $this->bidSubmissionMasterRepository = $bidSubmissionMasterRepo;
+        $this->tenderMasterRepository = $tenderMasterRepo;
     }
 
     /**
@@ -223,6 +224,8 @@ class BidSubmissionMasterAPIController extends AppBaseController
     public function update($id, UpdateBidSubmissionMasterAPIRequest $request)
     {
         $input = $request->all();
+        $tender_id = $input['tender_id'];
+         
 
         /** @var BidSubmissionMaster $bidSubmissionMaster */
         $bidSubmissionMaster = $this->bidSubmissionMasterRepository->findWithoutFail($id);
@@ -231,7 +234,22 @@ class BidSubmissionMasterAPIController extends AppBaseController
             return $this->sendError('Bid Submission Master not found');
         }
 
+        $input['commercial_verify_by'] = \Helper::getEmployeeSystemID();
+        $input['commercial_verify_at'] = Carbon::now();
+
         $bidSubmissionMaster = $this->bidSubmissionMasterRepository->update($input, $id);
+
+
+        $query = BidSubmissionMaster::where('tender_id', $tender_id)->where('commercial_verify_status','!=', 1)->where('bidSubmittedYN',1)->where('status',1)->count();
+        if($query == 0)
+        {
+                $tenderMaster = $this->tenderMasterRepository->findWithoutFail($tender_id);
+                $tenderMaster->commercial_verify_status = 1;
+                $tenderMaster->commercial_verify_by = \Helper::getEmployeeSystemID();
+                $tenderMaster->commercial_verify_at = Carbon::now();
+                $tenderMaster->save();
+        }
+
 
         return $this->sendResponse($bidSubmissionMaster->toArray(), 'BidSubmissionMaster updated successfully');
     }
@@ -415,6 +433,18 @@ class BidSubmissionMasterAPIController extends AppBaseController
             $att['updated_by'] = \Helper::getEmployeeSystemID();
             $result = BidSubmissionMaster::where('id', $input['id'])->update($att);
 
+            $details = BidSubmissionMaster::where('id', $input['id'])->first();
+            $tenderId = $details->tender_id;
+
+            $query = BidSubmissionMaster::where('tender_id', $tenderId)->where('go_no_go_criteria_status','!=', 1)->where('bidSubmittedYN',1)->where('status',1)->count();
+            if($query == 0)
+            {
+                    $tenderMaster = $this->tenderMasterRepository->findWithoutFail($tenderId);
+                    $tenderMaster->go_no_go_status = 1;
+                    $tenderMaster->save();
+            }
+
+
             DB::commit();
             return [
                 'success' => true,
@@ -434,6 +464,14 @@ class BidSubmissionMasterAPIController extends AppBaseController
         $tenderId = $request['tenderMasterId'];
         $is_verified = true;
 
+        $tenderMaster = $this->tenderMasterRepository->findWithoutFail($tenderId);
+        
+        if($tenderMaster->is_active_go_no_go == 0)
+        {
+            $tenderMaster->go_no_go_status = 1;
+            $tenderMaster->save();
+        }
+       
         $query = BidSubmissionMaster::where('tender_id', $tenderId)->where('doc_verifiy_status', 0)->where('bidSubmittedYN',1)->where('status',1)->count();
 
 
@@ -452,6 +490,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
         $tenderId = $details['tenderId'];
 
 
+           
         $bid_master_ids = BidEvaluationSelection::where('tender_id',$tenderId)->pluck('bids');
         $temp = [];
 
@@ -493,7 +532,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
         $id = $request->input('extraParams.id');
         $row_id = $request->input('extraParams.row_id');
         $criteriaDetail = $request->input('extraParams.criteriaDetail');
-     
+        
         DB::beginTransaction();
         try {
             if ($criteriaDetail['answer_type_id'] == 4 || $criteriaDetail['answer_type_id'] == 2) {
@@ -502,7 +541,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
 ;
                     $score_id = $val['value'];
                     $val = $score['score'];
-                    $result = ($val/$criteriaDetail['max_value'])*$criteriaDetail['weightage'];
+                    $result = round(($val/$criteriaDetail['max_value'])*$criteriaDetail['weightage'],3);
 
                 } else {
                     $result = null;
@@ -514,7 +553,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
             if ($criteriaDetail['answer_type_id'] == 1 || $criteriaDetail['answer_type_id'] == 3) {
                 if (!is_null($val)) {
 
-                    $result = ($val/$criteriaDetail['max_value'])*$criteriaDetail['weightage'];
+                    $result = round(($val/$criteriaDetail['max_value'])*$criteriaDetail['weightage'],3);
               
                 } else {
                     $result = null;
@@ -523,7 +562,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
                 }
                 $score_id = null;
             }
-           
+            
 
             $att['eval_score'] = $val;
             $att['eval_result'] = $result;
@@ -552,19 +591,85 @@ class BidSubmissionMasterAPIController extends AppBaseController
 
         $bidData = TenderMaster::with(['srm_bid_submission_master' => function($query) use($tenderId){
             $query->where('status', 1);
-        }, 'srm_bid_submission_master.SupplierRegistrationLink',
+        }, 'srm_bid_submission_master.SupplierRegistrationLink', 'srm_bid_submission_master.BidDocumentVerification',
             'DocumentAttachments' => function($query) use($tenderId){
-            $query->with('bid_verify')->where('documentSystemCode', $tenderId)->where('documentSystemID', 108)
+            $query->with(['bid_verify'])->where('documentSystemCode', $tenderId)->where('documentSystemID', 108)
                 ->where('attachmentType', 2)->where('envelopType',3);
         }])->where('id', $tenderId)
             ->get();
 
-        $order = array('bidData' => $bidData);
+        $resultTable = BidSubmissionMaster::select('id')->where('tender_id', $tenderId)
+            ->where('status', 1)
+            ->where('doc_verifiy_comment', '!=', null)
+            ->get()
+            ->toArray();
+
+        $i = 0;
+        foreach ($resultTable as $a){
+            $arr[$i] = DocumentAttachments::with(['bid_verify'])
+                ->whereIn('documentSystemCode', [$a['id']])
+                ->where('documentSystemID', 108)
+                ->where('attachmentType',0)
+                ->where('envelopType',3)
+                ->get();
+            $i++;
+        }
+
+        Log::info($bidData);
+        $order = array('bidData' => $bidData, 'attachments' => $arr);
         $html = view('print.bid_summary_print', $order);
         $pdf = \App::make('dompdf.wrapper');
         $pdf->loadHTML($html);
 
-       return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream();
+       return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream();
 
+    }
+
+
+    public function getTenderCommercialBids(Request $request)
+    {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $request['companyId'];
+        $tenderId = $request['tenderId'];
+
+
+
+        $query = BidSubmissionMaster::selectRaw("SUM((srm_bid_submission_detail.eval_result/100)*srm_tender_master.technical_weightage) as weightage,srm_bid_submission_master.id,srm_bid_submission_master.bidSubmittedDatetime,srm_bid_submission_master.tender_id,srm_supplier_registration_link.name,srm_tender_master.technical_passing_weightage as passing_weightage,srm_bid_submission_detail.id as bid_id,srm_bid_submission_master.commercial_verify_status")
+        ->join('srm_supplier_registration_link', 'srm_supplier_registration_link.id', '=', 'srm_bid_submission_master.supplier_registration_id')
+        ->join('srm_tender_master', 'srm_tender_master.id', '=', 'srm_bid_submission_master.tender_id')
+        ->join('srm_bid_submission_detail', 'srm_bid_submission_detail.bid_master_id', '=', 'srm_bid_submission_master.id')
+        ->join('srm_evaluation_criteria_details', 'srm_evaluation_criteria_details.id', '=', 'srm_bid_submission_detail.evaluation_detail_id')
+        ->havingRaw('weightage > passing_weightage')
+        ->groupBy('srm_bid_submission_master.id')
+        ->where('srm_evaluation_criteria_details.critera_type_id', 2)->where('srm_bid_submission_master.status', 1)->where('srm_bid_submission_master.bidSubmittedYN', 1)->where('srm_bid_submission_master.tender_id', $tenderId)
+        ;
+    
+
+        $search = $request->input('search.value');
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $query = $query->where(function ($query) use ($search) {
+                $query->where('name', 'like', "%{$search}%");
+            });
+        }
+
+        return \DataTables::eloquent($query)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('id', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
     }
 }

@@ -1658,6 +1658,7 @@ WHERE
         try {
             $att['updated_by'] = $employee->employeeSystemID;
             $att['published_yn'] = 1;
+            $att['published_at'] = Carbon::now();
             $result = TenderMaster::where('id', $input['id'])->update($att);
 
             if ($result) {
@@ -2157,6 +2158,7 @@ WHERE
         $tenderMasterId = $input['tenderMasterId'];
         $companySystemID = $input['companySystemID'];
         $is_date_disable = true;
+        $is_comm_date_disable = false;
         $data['master'] = TenderMaster::with(['procument_activity', 'confirmed_by','tender_type','envelop_type','evaluation_type'])->where('id', $input['tenderMasterId'])->first();
         $activity = ProcumentActivity::with(['tender_procurement_category'])->where('tender_id', $input['tenderMasterId'])->where('company_id', $input['companySystemID'])->get();
         $act = array();
@@ -2198,8 +2200,11 @@ WHERE
 
         $data['calendarDates'] = DB::select($qry);
         $data['calendarDatesAll'] = DB::select($qryAll);
+        $current_date = date('Y-m-d H:i:s');
 
         $stage = $data['master']['stage'];
+        $current_date2 = Carbon::createFromFormat('Y-m-d H:i:s', $current_date);
+        
         if($stage == 1)
         {
             $opening_date_comp = $data['master']['bid_opening_date'];
@@ -2207,17 +2212,32 @@ WHERE
         else if($stage == 2)
         {
             $opening_date_comp = $data['master']['technical_bid_opening_date'];
+
+            $opening_commer_date_comp = $data['master']['commerical_bid_opening_date'];
+            $closing_commer_date_comp = $data['master']['commerical_bid_closing_date'];
+
+            $result1 = $current_date2->gt($opening_commer_date_comp);
+            $result2 = $closing_commer_date_comp->gt($current_date2);
+            
+            
+
+            if($result1 && $result2)
+            {
+                $is_comm_date_disable = true;
+            }
+
         }
 
-        $current_date = date('Y-m-d H:i:s');
+       
 
         if($current_date > $opening_date_comp)
         {
           $is_date_disable = false;
         }
 
-     
+
         $data['master']['disable_date'] = $is_date_disable;
+        $data['master']['is_comm_date_disable'] = $is_comm_date_disable;
 
         $documentTypes = TenderDocumentTypeAssign::with(['document_type'])->where('tender_id', $tenderMasterId)->get();
         $docTypeArr = array();
@@ -2242,13 +2262,23 @@ WHERE
         $comments = $input['comments'];
         $val = $input['data']['value'];
         $id = $input['id'];
+        $type = $input['type'];
         
 
 
         DB::beginTransaction();
         try {
-            $data['status'] = $val;
-            $data['remarks'] = $comments;
+            if($type == 2)
+            {
+                $data['status'] = $val;
+                $data['remarks'] = $comments;
+            }
+            else
+            {
+                $data['commercial_eval_status'] = $val;
+                $data['commercial_eval_remarks'] = $comments;
+            }
+          
             $results = SrmTenderBidEmployeeDetails::where('emp_id',$emp_id)->where('tender_id',$tender_id)->where('emp_id',$emp_id)->update($data,$id);
     
             DB::commit();
@@ -2355,5 +2385,102 @@ WHERE
         return $this->sendResponse($data, 'Tender Masters retrieved successfully');
 
     }
+
+
+    public function getCommercialBidTenderList(Request $request)
+    {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $request['companyId'];
+
+
+
+        // $tenderMaster = TenderMasterSupplier::with(['tender_master'=>function($q){
+        //     $q->with(['tender_type', 'envelop_type', 'currency']);
+        // }])->get();
+
+        $query = TenderMaster::with(['currency', 'srm_bid_submission_master','tender_type','envelop_type','srmTenderMasterSupplier'])->whereHas('srmTenderMasterSupplier')->where('published_yn', 1)->where('technical_eval_status', 1)->where('go_no_go_status', 1);
+
+       // return $this->sendResponse($query, 'Tender Masters retrieved successfully');
+
+        $search = $request->input('search.value');
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $query = $query->where(function ($query) use ($search) {
+                $query->where('description', 'LIKE', "%{$search}%");
+                $query->orWhere('description_sec_lang', 'LIKE', "%{$search}%");
+                $query->orWhere('title', 'LIKE', "%{$search}%");
+                $query->orWhere('title_sec_lang', 'LIKE', "%{$search}%");
+            });
+        }
+
+
+        return \DataTables::eloquent($query)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('id', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+    public function getCommercialEval(Request $request)
+    {
+        $input = $request->all();
+
+        $tenderId = $request->input('extraParams.tenderId');
+        $bidMasterId = $request->input('extraParams.id');
+
+
+     
+        $data = PricingScheduleMaster::with(['tender_bid_format_master', 'bid_schedule' => function ($q) use ($bidMasterId) {
+            $q->where('bid_master_id', $bidMasterId);
+        }, 'pricing_shedule_details' => function ($q) use ($bidMasterId) {
+            $q->with(['bid_main_work' => function ($q) use ($bidMasterId) {
+                $q->where('bid_master_id', $bidMasterId);
+            },'bid_format_detail' =>function ($q) use ($bidMasterId) {
+                $q->where('bid_master_id', $bidMasterId);
+                $q->orWhere('bid_master_id', null);
+            }]);
+        }])->where('tender_id', $tenderId)->get();
+
+     
+
+        return [
+            'success' => true,
+            'message' => 'Successfully Received',
+            'data' =>  $data
+        ];
+    }
+
+
+    
+    public function getCommercialEvalBoq(Request $request)
+    {
+        $mainWorkId = $request->input('extraParams.mainWorkId');
+        $bidMasterId = $request->input('extraParams.bidMasterId');
+        $data = TenderBoqItems::with(['unit', 'bid_boq' => function ($q) use ($bidMasterId) {
+            $q->where('bid_master_id', $bidMasterId);
+        }])->where('main_work_id', $mainWorkId)->get();
+
+     
+
+        return [
+            'success' => true,
+            'message' => 'Successfully Received',
+            'data' =>  $data
+        ];
+    }
+
 
 }

@@ -13,6 +13,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Models\BidSubmissionDetail;
 use App\Repositories\BidSubmissionMasterRepository;
+use App\Models\TenderMaster;
 use App\Repositories\TenderMasterRepository;
 use Illuminate\Support\Facades\DB;
 /**
@@ -271,28 +272,44 @@ class BidEvaluationSelectionAPIController extends AppBaseController
                 }
          
             }
-    
-    
-            /** @var BidEvaluationSelection $bidEvaluationSelection */
-            $bidEvaluationSelection = $this->bidEvaluationSelectionRepository->findWithoutFail($id);
-    
-            if (empty($bidEvaluationSelection)) {
-                return $this->sendError('Bid Evaluation Selection not found');
+
+        
+
+        /** @var BidEvaluationSelection $bidEvaluationSelection */
+        $bidEvaluationSelection = $this->bidEvaluationSelectionRepository->findWithoutFail($id);
+
+        if (empty($bidEvaluationSelection)) {
+            return $this->sendError('Bid Evaluation Selection not found');
+        }
+        $input['updated_by'] = \Helper::getEmployeeSystemID();
+        $bidEvaluationSelection = $this->bidEvaluationSelectionRepository->update($input, $id);
+
+
+        if($type == 2)
+        {
+            $bids_bucket = $this->bidSubmissionMasterRepository
+            ->where('bidSubmittedYN', 1)->where('tender_id', $tender_id)->where('doc_verifiy_status',1)->orderBy('id')->count();
+
+            $bids =  (BidEvaluationSelection::where('tender_id',$tender_id)->pluck('bids'));
+            $count = 0;
+            foreach($bids as $bid)
+            {
+                $count += count(json_decode($bid,true));
             }
-            $input['updated_by'] = \Helper::getEmployeeSystemID();
-            $bidEvaluationSelection = $this->bidEvaluationSelectionRepository->update($input, $id);
-    
-    
-            DB::commit();
-            return [
-                'success' => true,
-                'message' => 'Successfully Saved',
-                'data' => $bidEvaluationSelection->toArray()
-            ];
 
-    
+            $status =  BidEvaluationSelection::where('tender_id',$tender_id)->where('status',0)->count();
 
-    
+            
+
+            if(($bids_bucket == $count) && $status == 0)
+            {
+                $update_status['technical_eval_status'] = 1;
+                $this->tenderMasterRepository->update($update_status, $tender_id);
+
+            }
+        }
+
+        return $this->sendResponse($bidEvaluationSelection->toArray(), 'BidEvaluationSelection updated successfully');
     }
 
     /**

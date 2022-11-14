@@ -95,7 +95,10 @@ class BidSubmissionMaster extends Model
         'doc_verifiy_date',
         'doc_verifiy_status',
         'doc_verifiy_comment',
-        'bidSubmittedYN'
+        'bidSubmittedYN',
+        'commercial_verify_status',
+        'commercial_verify_at',
+        'commercial_verify_by'
     ];
 
     /**
@@ -136,5 +139,9 @@ class BidSubmissionMaster extends Model
 
     public function bidSubmissionDetail(){
         return $this->hasMany(BidSubmissionDetail::class, 'bid_master_id','id');
+    }
+
+    public function BidDocumentVerification(){
+        return $this->hasMany('App\Models\BidDocumentVerification', 'bis_submission_master_id', 'id');
     }
 }
