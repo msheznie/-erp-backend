@@ -1658,6 +1658,7 @@ WHERE
         try {
             $att['updated_by'] = $employee->employeeSystemID;
             $att['published_yn'] = 1;
+            $att['published_at'] = Carbon::now();
             $result = TenderMaster::where('id', $input['id'])->update($att);
 
             if ($result) {
