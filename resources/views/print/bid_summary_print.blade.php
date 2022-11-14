@@ -80,15 +80,15 @@
 </table>
 <table style="width:100%" class="bit-tender-summary-report">
         <tr>
-            <td><strong>Sr. No</strong></td>
-            <td><strong>Supplier Registration No</strong></td>
-            <td><strong>Name of Bidder</strong></td>
-            <td><strong>Bid Submission Date</strong></td>
+            <td style="text-align: center;"><strong>Sr. No</strong></td>
+            <td style="text-align: center;"><strong>Supplier Registration No</strong></td>
+            <td style="text-align: center;"><strong>Name of Bidder</strong></td>
+            <td style="text-align: center;"><strong>Bid Submission Date</strong></td>
             @foreach ($bidData[0]['DocumentAttachments'] as $doc)
-                <td><strong>{{$doc->attachmentDescription}}</strong></td>
+                <td style="text-align: center;"><strong>{{$doc->attachmentDescription}}</strong></td>
             @endforeach
-            <td><strong>Status</strong></td>
-            <td colspan="1"><strong>Summary</strong></td>
+            <td style="text-align: center;"><strong>Status</strong></td>
+            <td colspan="1" style="text-align: center;"><strong>Summary</strong></td>
         </tr>
     <tbody>
        @foreach ($bidData[0]['srm_bid_submission_master'] as $item)
@@ -108,7 +108,6 @@
                         @if($doc2->bid_verify->status == 3)
                             Rejected
                         @endif
-                        {{--{{$doc2->bid_verify->bis_submission_master_id}}--}}
                     </td>
                 @endforeach
                 <td>
