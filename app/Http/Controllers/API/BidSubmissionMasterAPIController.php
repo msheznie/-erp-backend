@@ -591,19 +591,37 @@ class BidSubmissionMasterAPIController extends AppBaseController
 
         $bidData = TenderMaster::with(['srm_bid_submission_master' => function($query) use($tenderId){
             $query->where('status', 1);
-        }, 'srm_bid_submission_master.SupplierRegistrationLink',
+        }, 'srm_bid_submission_master.SupplierRegistrationLink', 'srm_bid_submission_master.BidDocumentVerification',
             'DocumentAttachments' => function($query) use($tenderId){
-            $query->with('bid_verify')->where('documentSystemCode', $tenderId)->where('documentSystemID', 108)
+            $query->with(['bid_verify'])->where('documentSystemCode', $tenderId)->where('documentSystemID', 108)
                 ->where('attachmentType', 2)->where('envelopType',3);
         }])->where('id', $tenderId)
             ->get();
 
-        $order = array('bidData' => $bidData);
+        $resultTable = BidSubmissionMaster::select('id')->where('tender_id', $tenderId)
+            ->where('status', 1)
+            ->where('doc_verifiy_comment', '!=', null)
+            ->get()
+            ->toArray();
+
+        $i = 0;
+        foreach ($resultTable as $a){
+            $arr[$i] = DocumentAttachments::with(['bid_verify'])
+                ->whereIn('documentSystemCode', [$a['id']])
+                ->where('documentSystemID', 108)
+                ->where('attachmentType',0)
+                ->where('envelopType',3)
+                ->get();
+            $i++;
+        }
+
+        Log::info($bidData);
+        $order = array('bidData' => $bidData, 'attachments' => $arr);
         $html = view('print.bid_summary_print', $order);
         $pdf = \App::make('dompdf.wrapper');
         $pdf->loadHTML($html);
 
-       return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream();
+       return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream();
 
     }
 

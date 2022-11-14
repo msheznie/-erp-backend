@@ -19,10 +19,10 @@
         <td colspan="9">&nbsp;</td>
     </tr>
     <tr>
-        <td><strong>Tender Id:</strong></td>
+        <td><strong>Tender Code:</strong></td>
         <td colspan="2">
-            @if ($bidData[0]['id'])
-                {{$bidData[0]['id']}}
+            @if ($bidData[0]['tender_code'])
+                {{$bidData[0]['tender_code']}}
             @endif
         </td>
         <td colspan="2"><strong>Tender Title:</strong></td>
@@ -45,11 +45,30 @@
         </td>
     </tr>
     <tr>
-        <td colspan="5"><strong>Bid Opening Date / Technical / Commercial Bid Opening Date:</strong></td>
-        <td colspan="4">
-            @if ($bidData[0]['bid_submission_opening_date'])
-                {{\Carbon\Carbon::parse($bidData[0]['bid_submission_opening_date'])->format('d/m/Y')}}
-            @endif</td>
+        @if ($bidData[0]['stage'] == 1)
+            <td>
+                @if ($bidData[0]['stage'] == 1)
+                    <strong>Bid Opening Date:</strong>
+                @endif
+            </td>
+            <td colspan="8">
+                @if ($bidData[0]['stage'] == 1)
+                    {{\Carbon\Carbon::parse($bidData[0]['bid_submission_opening_date'])->format('d/m/Y')}}
+                @endif
+            </td>
+        @endif
+        @if ($bidData[0]['stage'] == 2)
+                <td><strong>Technical Bid Opening Date:</strong></td>
+                <td colspan="2">
+                    @if ($bidData[0]['technical_bid_opening_date'])
+                        {{\Carbon\Carbon::parse($bidData[0]['technical_bid_opening_date'])->format('d/m/Y')}}
+                    @endif
+                </td>
+                <td colspan="2"><strong>Commercial Bid Opening Date:</strong></td>
+                <td colspan="4">
+                    {{\Carbon\Carbon::parse($bidData[0]['commerical_bid_opening_date'])->format('d/m/Y')}}
+                </td>
+        @endif
     </tr>
     <tr>
         <td colspan="9">&nbsp;</td>
@@ -69,27 +88,38 @@
                 <td><strong>{{$doc->attachmentDescription}}</strong></td>
             @endforeach
             <td><strong>Status</strong></td>
-            <td colspan="3"><strong>Summary</strong></td>
+            <td colspan="1"><strong>Summary</strong></td>
         </tr>
     <tbody>
        @foreach ($bidData[0]['srm_bid_submission_master'] as $item)
             <tr>
-                <td>{{ $loop->index+1}}</td>
+                <td>{{$loop->index+1}}</td>
                 <td>{{$item->SupplierRegistrationLink->id}}</td>
                 <td>{{$item->SupplierRegistrationLink->name}}</td>
                 <td>{{\Carbon\Carbon::parse($item->created_at)->format('d/m/Y')}}</td>
-                @foreach ($bidData[0]['DocumentAttachments'] as $doc2)
-                    <td>{{$doc2->attachmentDescription}}</td>
+                @foreach ($attachments[$loop->index] as $doc2)
+                    <td>
+                        @if($doc2->bid_verify->status == 1)
+                            Admitted
+                        @endif
+                        @if($doc2->bid_verify->status == 2)
+                            Admit with condition
+                        @endif
+                        @if($doc2->bid_verify->status == 3)
+                            Rejected
+                        @endif
+                        {{--{{$doc2->bid_verify->bis_submission_master_id}}--}}
+                    </td>
                 @endforeach
                 <td>
                     @if ($item->doc_verifiy_status == 1)
                         Approved
                     @endif
-                    @if ($item->doc_verifiy_status == 0)
+                    @if ($item->doc_verifiy_status == 2)
                         Rejected
                     @endif
                 </td>
-                <td>{{$item->doc_verifiy_comment}}</td>
+                <td colspan="1">{{$item->doc_verifiy_comment}}</td>
             </tr>
         @endforeach
     </tbody>

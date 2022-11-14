@@ -140,4 +140,8 @@ class BidSubmissionMaster extends Model
     public function bidSubmissionDetail(){
         return $this->hasMany(BidSubmissionDetail::class, 'bid_master_id','id');
     }
+
+    public function BidDocumentVerification(){
+        return $this->hasMany('App\Models\BidDocumentVerification', 'bis_submission_master_id', 'id');
+    }
 }
