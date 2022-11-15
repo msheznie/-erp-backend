@@ -391,9 +391,11 @@ class AssetManagementReportAPIController extends AppBaseController
 
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('typeID'));
 
+                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+
                     $output = $this->getAssetRegisterDetail($request);
 
-                    return $this->getAssetRegisterGroupedDetailFinalArray($output);
+                    return $this->getAssetRegisterGroupedDetailFinalArray($output, $companyCurrency);
 
                 }
 
@@ -719,6 +721,10 @@ class AssetManagementReportAPIController extends AppBaseController
                     // }
                     $x = 2;
                     $data = [];
+                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                    $localDecimalPlace = isset($companyCurrency->localcurrency->DecimalPlaces) ? $companyCurrency->localcurrency->DecimalPlaces: 3;
+                    $rptDecimalPlace = isset($companyCurrency->reportingcurrency->DecimalPlaces) ? $companyCurrency->reportingcurrency->DecimalPlaces: 2;
+
                     if (!empty($output)) {
 
 
@@ -794,12 +800,12 @@ class AssetManagementReportAPIController extends AppBaseController
                                 $data[$x]['Date Aquired'] = \Helper::dateFormat($value->postedDate);
                                 $data[$x]['Dep Start Date'] = \Helper::dateFormat($value->dateDEP);
 
-                                $data[$x]['Local Amount unitcost'] = round($value->COSTUNIT, 2);
-                                $data[$x]['Local Amount accDep'] = round($value->depAmountLocal, 2);
-                                $data[$x]['Local Amount net Value'] = round($value->localnbv, 2);
-                                $data[$x]['Rpt Amount unit cost'] = round($value->costUnitRpt, 2);
-                                $data[$x]['Rpt Amount acc dep'] = round($value->depAmountRpt, 2);
-                                $data[$x]['Rpt Amount acc net value'] = round($value->rptnbv, 2);
+                                $data[$x]['Local Amount unitcost'] = round($value->COSTUNIT, $localDecimalPlace);
+                                $data[$x]['Local Amount accDep'] = round($value->depAmountLocal, $localDecimalPlace);
+                                $data[$x]['Local Amount net Value'] = round($value->localnbv, $localDecimalPlace);
+                                $data[$x]['Rpt Amount unit cost'] = round($value->costUnitRpt, $rptDecimalPlace);
+                                $data[$x]['Rpt Amount acc dep'] = round($value->depAmountRpt, $rptDecimalPlace);
+                                $data[$x]['Rpt Amount acc net value'] = round($value->rptnbv, $rptDecimalPlace);
                      
                                  $x++;
                       
@@ -1129,7 +1135,9 @@ class AssetManagementReportAPIController extends AppBaseController
                 if ($request->reportTypeID == 'ARGD') { // Asset Register Detail
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('typeID'));
                     $output = $this->getAssetRegisterDetail($request);
-                    $final = $this->getAssetRegisterGroupedDetailFinalArray($output);
+                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+
+                    $final = $this->getAssetRegisterGroupedDetailFinalArray($output, $companyCurrency);
                     $outputArr = $final['reportData'];
 
                     $x = 0;
@@ -1209,6 +1217,10 @@ class AssetManagementReportAPIController extends AppBaseController
                             $depAmountRpt = 0;
                             $rptnbv = 0;
 
+                            $localDecimalPlace = isset($companyCurrency->localcurrency->DecimalPlaces) ? $companyCurrency->localcurrency->DecimalPlaces: 3;
+                            $rptDecimalPlace = isset($companyCurrency->reportingcurrency->DecimalPlaces) ? $companyCurrency->reportingcurrency->DecimalPlaces: 2;
+
+
                             foreach ($masterVal as $mainAsset => $assetArray) {
 
                                 foreach ($assetArray as $value){
@@ -1228,12 +1240,12 @@ class AssetManagementReportAPIController extends AppBaseController
                                     $data[$x]['Date Aquired'] = \Helper::dateFormat($value->postedDate);
                                     $data[$x]['Dep Start Date'] = \Helper::dateFormat($value->dateDEP);
 
-                                    $data[$x]['Local Amount unitcost'] = round($value->COSTUNIT, 2);
-                                    $data[$x]['Local Amount accDep'] = round($value->depAmountLocal, 2);
-                                    $data[$x]['Local Amount net Value'] = round($value->localnbv, 2);
-                                    $data[$x]['Rpt Amount unit cost'] = round($value->costUnitRpt, 2);
-                                    $data[$x]['Rpt Amount acc dep'] = round($value->depAmountRpt, 2);
-                                    $data[$x]['Rpt Amount acc net value'] = round($value->rptnbv, 2);
+                                    $data[$x]['Local Amount unitcost'] = round($value->COSTUNIT, $localDecimalPlace);
+                                    $data[$x]['Local Amount accDep'] = round($value->depAmountLocal, $localDecimalPlace);
+                                    $data[$x]['Local Amount net Value'] = round($value->localnbv, $localDecimalPlace);
+                                    $data[$x]['Rpt Amount unit cost'] = round($value->costUnitRpt, $rptDecimalPlace);
+                                    $data[$x]['Rpt Amount acc dep'] = round($value->depAmountRpt, $rptDecimalPlace);
+                                    $data[$x]['Rpt Amount acc net value'] = round($value->rptnbv, $rptDecimalPlace);
 
                                     if(!$value->isHeader ){
                                         $COSTUNIT += $value->COSTUNIT;
@@ -3814,7 +3826,7 @@ WHERE
         return $output;
     }
 
-    private function getAssetRegisterGroupedDetailFinalArray($output){
+    private function getAssetRegisterGroupedDetailFinalArray($output, $companyCurrency){
         $finalArr = [];
         $totalArray = [];
 
@@ -3933,11 +3945,15 @@ WHERE
             }
 
         }
+        $localDecimalPlace = isset($companyCurrency->localcurrency->DecimalPlaces) ? $companyCurrency->localcurrency->DecimalPlaces: 3;
+        $rptDecimalPlace = isset($companyCurrency->reportingcurrency->DecimalPlaces) ? $companyCurrency->reportingcurrency->DecimalPlaces: 2;
 
         return array(
             'reportData' => $finalArr,
             'localnbv' => $totlocalnbv,
             'rptnbv' => $totrptnbv,
+            'localDecimal' => $localDecimalPlace,
+            'rptDecimal' => $rptDecimalPlace,
             'COSTUNIT' => $totCOSTUNIT,
             'costUnitRpt' => $totcostUnitRpt,
             'depAmountLocal' => $totdepAmountLocal,
