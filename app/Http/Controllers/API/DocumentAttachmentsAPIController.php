@@ -1064,7 +1064,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
         } else {
             $sort = 'desc';
         }
-
+        $sort = 'asc';
         $id = $request['id'];
         $tenderId = $request['tenderId'];
 
