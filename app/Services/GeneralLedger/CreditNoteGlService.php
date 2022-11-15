@@ -15,6 +15,7 @@ use App\Models\SystemGlCodeScenarioDetail;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Services\GeneralLedger\GlPostedDateService;
 
 class CreditNoteGlService
 {
@@ -24,6 +25,12 @@ class CreditNoteGlService
         $taxLedgerData = [];
         $finalData = [];
         $empID = Employee::find($masterModel['employeeSystemID']);
+
+        $validatePostedDate = GlPostedDateService::validatePostedDate($masterModel["autoID"], $masterModel["documentSystemID"]);
+
+        if (!$validatePostedDate['status']) {
+            return ['status' => false, 'message' => $validatePostedDate['message']];
+        }
         
         $masterData = CreditNote::with(['details' => function ($query) {
             $query->selectRaw('SUM(netAmountLocal) as localAmount, SUM(netAmountRpt) as rptAmount,SUM(netAmount) as transAmount,creditNoteAutoID,serviceLineSystemID,serviceLineCode,clientContractID,contractUID');
@@ -61,10 +68,7 @@ class CreditNoteGlService
             $taxTrans = $tax->transAmount;
         }
 
-        $masterDocumentDate = isset($masterModel['documentDateOveride']) ? $masterModel['documentDateOveride'] : date('Y-m-d H:i:s');
-        if ($masterData->finance_period_by->isActive == -1) {
-            $masterDocumentDate = $masterData->creditNoteDate;
-        }
+        $masterDocumentDate = isset($masterModel['documentDateOveride']) ? $masterModel['documentDateOveride'] : $validatePostedDate['postedDate'];
 
         if ($masterData) {
             foreach ($detailsCreditNote as $detail) {

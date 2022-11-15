@@ -75,6 +75,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Jobs\UnbilledGRVInsert;
 use App\Jobs\TaxLedgerInsert;
+use App\Services\GeneralLedger\GlPostedDateService;
 
 class DeliveryOrderGlService
 {
@@ -88,7 +89,14 @@ class DeliveryOrderGlService
         $company = Company::select('masterComapanyID')->where('companySystemID', $masterData->companySystemID)->first();
 
         $chartOfAccount = ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'catogaryBLorPLID', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $masterData->custUnbilledAccountSystemID)->first();
-        $masterDocumentDate = Carbon::now();
+
+        $validatePostedDate = GlPostedDateService::validatePostedDate($masterModel["autoID"], $masterModel["documentSystemID"]);
+
+        if (!$validatePostedDate['status']) {
+            return ['status' => false, 'message' => $validatePostedDate['message']];
+        }
+
+        $masterDocumentDate = isset($masterModel['documentDateOveride']) ? $masterModel['documentDateOveride'] : $validatePostedDate['postedDate'];
         $time = Carbon::now();
 
         $data['companySystemID'] = $masterData->companySystemID;
@@ -145,32 +153,33 @@ class DeliveryOrderGlService
         $data['timestamp'] = $time;
         // array_push($finalData, $data);
 
-        $bs = DeliveryOrderDetail::selectRaw("0 as transAmount, SUM(qtyIssuedDefaultMeasure * wacValueLocal) as localAmount, SUM(qtyIssuedDefaultMeasure * wacValueReporting) as rptAmount,financeGLcodebBSSystemID,financeGLcodebBS,companyLocalCurrencyID,companyLocalCurrencyER,companyReportingCurrencyER,companyReportingCurrencyID")->WHERE('deliveryOrderID', $masterModel["autoID"])->whereNotNull('financeGLcodebBSSystemID')->where('financeGLcodebBSSystemID', '>', 0)->groupBy('financeGLcodebBSSystemID')->first();
+        $bs = DeliveryOrderDetail::selectRaw("0 as transAmount, SUM(qtyIssuedDefaultMeasure * wacValueLocal) as localAmount, SUM(qtyIssuedDefaultMeasure * wacValueReporting) as rptAmount,financeGLcodebBSSystemID,financeGLcodebBS,companyLocalCurrencyID,companyLocalCurrencyER,companyReportingCurrencyER,companyReportingCurrencyID")->WHERE('deliveryOrderID', $masterModel["autoID"])->whereNotNull('financeGLcodebBSSystemID')->where('financeGLcodebBSSystemID', '>', 0)->groupBy('financeGLcodebBSSystemID')->get();
         //get pnl account
         $pl = DeliveryOrderDetail::selectRaw("0 as transAmount,SUM(qtyIssuedDefaultMeasure * wacValueLocal) as localAmount, SUM(qtyIssuedDefaultMeasure * wacValueReporting) as rptAmount,financeGLcodePLSystemID,financeGLcodePL,companyLocalCurrencyID,companyLocalCurrencyER,companyReportingCurrencyER,companyReportingCurrencyID")->WHERE('deliveryOrderID', $masterModel["autoID"])->whereNotNull('financeGLcodePLSystemID')->where('financeGLcodePLSystemID', '>', 0)->groupBy('financeGLcodePLSystemID')->get();
 
         $revenue = DeliveryOrderDetail::selectRaw("0 as transAmount,SUM(qtyIssuedDefaultMeasure * (companyLocalAmount - (companyLocalAmount*discountPercentage/100))) as localAmount, SUM(qtyIssuedDefaultMeasure * (companyReportingAmount - (companyReportingAmount*discountPercentage/100))) as rptAmount,financeGLcodeRevenueSystemID,financeGLcodeRevenue,companyLocalCurrencyID,companyLocalCurrencyER,companyReportingCurrencyER,companyReportingCurrencyID")->WHERE('deliveryOrderID', $masterModel["autoID"])->whereNotNull('financeGLcodeRevenueSystemID')->where('financeGLcodeRevenueSystemID', '>', 0)->groupBy('financeGLcodeRevenueSystemID')->get();
 
         if ($bs) {
+            foreach ($bs as $key => $value) {
+                $data['chartOfAccountSystemID'] = $value->financeGLcodebBSSystemID;
+                $data['glCode'] = $value->financeGLcodebBS;
+                $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
 
-            $data['chartOfAccountSystemID'] = $bs->financeGLcodebBSSystemID;
-            $data['glCode'] = $bs->financeGLcodebBS;
-            $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
-            $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                $data['documentTransCurrencyID'] = $masterData->transactionCurrencyID;
+                $data['documentTransCurrencyER'] = $masterData->transactionCurrencyER;
+                $data['documentTransAmount'] = ABS($value->transAmount) * -1;
 
-            $data['documentTransCurrencyID'] = $masterData->transactionCurrencyID;
-            $data['documentTransCurrencyER'] = $masterData->transactionCurrencyER;
-            $data['documentTransAmount'] = ABS($bs->transAmount) * -1;
+                $data['documentLocalCurrencyID'] = $value->companyLocalCurrencyID;
+                $data['documentLocalCurrencyER'] = $value->companyLocalCurrencyER;
+                $data['documentLocalAmount'] = ABS($value->localAmount) * -1;
 
-            $data['documentLocalCurrencyID'] = $bs->companyLocalCurrencyID;
-            $data['documentLocalCurrencyER'] = $bs->companyLocalCurrencyER;
-            $data['documentLocalAmount'] = ABS($bs->localAmount) * -1;
+                $data['documentRptCurrencyID'] = $value->companyReportingCurrencyID;
+                $data['documentRptCurrencyER'] = $value->companyReportingCurrencyER;
+                $data['documentRptAmount'] = ABS($value->rptAmount) * -1;
 
-            $data['documentRptCurrencyID'] = $bs->companyReportingCurrencyID;
-            $data['documentRptCurrencyER'] = $bs->companyReportingCurrencyER;
-            $data['documentRptAmount'] = ABS($bs->rptAmount) * -1;
-
-            array_push($finalData, $data);
+                array_push($finalData, $data);
+            }
         }
 
         if ($pl) {

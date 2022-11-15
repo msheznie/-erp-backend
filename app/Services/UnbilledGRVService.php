@@ -17,6 +17,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Services\GeneralLedger\GlPostedDateService;
 
 class UnbilledGRVService
 {
@@ -26,6 +27,15 @@ class UnbilledGRVService
         $supplierAssignedDetail = SupplierAssigned::where('supplierCodeSytem', $masterModel['supplierID'])
                                                     ->where('companySystemID', $masterModel['companySystemID'])
                                                     ->first();
+
+        $validatePostedDate = GlPostedDateService::validatePostedDate($masterModel["autoID"], $masterModel["documentSystemID"]);
+
+        if (!$validatePostedDate['status']) {
+            return ['status' => false, 'message' => $validatePostedDate['message']];
+        }
+
+        $postedDateGl = $validatePostedDate['postedDate'];
+
         $valEligible = false;
         if ($company->vatRegisteredYN == 1 || $supplierAssignedDetail->vatEligible == 1) {
             $valEligible = true;
@@ -52,6 +62,7 @@ class UnbilledGRVService
                         $value->totalVATAmount = $res['totalTransVATAmount'];
                         $value->totalVATAmountLocal = $res['totalLocalVATAmount'];
                         $value->totalVATAmountRpt = $res['totalRptVATAmount'];
+                        $value->grvDate = $postedDateGl;
                 }
             } else {
                 $output = GRVDetails::selectRaw("erp_grvmaster.companySystemID,erp_grvmaster.companyID,erp_grvmaster.supplierID,purchaseOrderMastertID as purchaseOrderID,erp_grvdetails.grvAutoID,NOW() as grvDate,supplierItemCurrencyID as supplierTransactionCurrencyID,foreignToLocalER as supplierTransactionCurrencyER,erp_grvdetails.companyReportingCurrencyID,erp_grvdetails.companyReportingER,erp_grvdetails.localCurrencyID,erp_grvdetails.localCurrencyER,ROUND(SUM(GRVcostPerUnitSupTransCur*noQty),7) as totTransactionAmount,ROUND(SUM(GRVcostPerUnitLocalCur*noQty),7) as totLocalAmount, ROUND(SUM(GRVcostPerUnitComRptCur*noQty),7) as totRptAmount,ROUND(SUM(VATAmount*noQty),7) as totalVATAmount,ROUND(SUM(VATAmountLocal*noQty),7) as totalVATAmountLocal,ROUND(SUM(VATAmountRpt*noQty),7) as totalVATAmountRpt,'POG' as grvType,NOW() as timeStamp")
@@ -63,6 +74,7 @@ class UnbilledGRVService
                 foreach ($output as $key => $value) {
                         $res = TaxService::processGRVVATForUnbilled($value);
 
+                        $value->grvDate = $postedDateGl;
                         $value->totTransactionAmount = $value->totTransactionAmount - $res['exemptVATTrans'];
                         $value->totRptAmount = $value->totRptAmount - $res['exemptVATRpt'];
                         $value->totLocalAmount = $value->totLocalAmount - $res['exemptVATLocal'];
@@ -84,6 +96,10 @@ class UnbilledGRVService
                                             ->groupBy('erp_purchaseorderadvpayment.UnbilledGRVAccountSystemID','erp_purchaseorderadvpayment.supplierID')
                                             ->get();
                 if($output){
+                    foreach ($output as $key => $value) {
+                        $value->grvDate = $postedDateGl;
+                    }
+
                     $unbillRes1 = UnbilledGrvGroupBy::insert($output->toArray());
                 }
 
@@ -111,6 +127,7 @@ class UnbilledGRVService
                             $value->totRptAmount = $res['totalRptAmount'];
                             $value->totLocalAmount = $res['totalLocalAmount'];
 
+                            $value->grvDate = $postedDateGl;
                             $value->totalVATAmount = $res['totalTransVATAmount'];
                             $value->totalVATAmountLocal = $res['totalLocalVATAmount'];
                             $value->totalVATAmountRpt = $res['totalRptVATAmount'];
@@ -137,6 +154,7 @@ class UnbilledGRVService
                         $value->totalVATAmount = $res['totalTransVATAmount'];
                         $value->totalVATAmountLocal = $res['totalLocalVATAmount'];
                         $value->totalVATAmountRpt = $res['totalRptVATAmount'];
+                        $value->grvDate = $postedDateGl;
                 }
             }
 
@@ -172,6 +190,10 @@ class UnbilledGRVService
                                             ->get();
 
                 if($outputLogistic){
+                    foreach ($outputLogistic as $key => $value) {
+                        $value->grvDate = $postedDateGl;
+                    }
+                    
                     $unbillRes1 = UnbilledGrvGroupBy::insert($outputLogistic->toArray());
                 }
 

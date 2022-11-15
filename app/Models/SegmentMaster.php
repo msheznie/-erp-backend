@@ -181,6 +181,11 @@ class SegmentMaster extends Model
         return $this->hasMany('App\Models\HrmsDepartmentMaster','serviceLineSystemID','serviceLineSystemID');
     }
 
+    public function parent()
+    {
+        return $this->belongsTo('App\Models\SegmentMaster', 'masterID', 'serviceLineSystemID')->withoutGlobalScope('final_level');
+    }
+
 
     public function sub_levels()
     {
