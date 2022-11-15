@@ -11,6 +11,8 @@
 |
 */
 
+Route::get('getConfigurationInfo', 'ConfigurationAPIController@getConfigurationInfo');
+
 
 Route::group(['middleware' => ['tenant','locale']], function () {
 
@@ -771,6 +773,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('srPullFromTransferPreCheck', 'StockReceiveAPIController@srPullFromTransferPreCheck');
             Route::get('getStockTransferForReceive', 'StockTransferAPIController@getStockTransferForReceive');
             Route::get('getStockTransferDetailsByMaster', 'StockTransferAPIController@getStockTransferDetailsByMaster');
+
 
 
             Route::get('getCurrentUserInfo', 'UserAPIController@getCurrentUserInfo');
