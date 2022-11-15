@@ -585,9 +585,9 @@ class BidSubmissionMasterAPIController extends AppBaseController
         }
 
     }
-    public function pdfBidSummaryExportReport(Request $request)
+    public function BidSummaryExportReport(Request $request)
     {
-        $tenderId = $request['tenderMasterId'];
+        $tenderId = $request->get('id');
 
         $bidData = TenderMaster::with(['srm_bid_submission_master' => function($query) use($tenderId){
             $query->where('status', 1);
@@ -615,13 +615,13 @@ class BidSubmissionMasterAPIController extends AppBaseController
             $i++;
         }
 
-        Log::info($bidData);
+        $time = strtotime("now");
+        $fileName = 'Bid_Opening_Summary' . $time . '.pdf';
         $order = array('bidData' => $bidData, 'attachments' => $arr);
         $html = view('print.bid_summary_print', $order);
         $pdf = \App::make('dompdf.wrapper');
         $pdf->loadHTML($html);
-
-       return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream();
+        return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
 
     }
 

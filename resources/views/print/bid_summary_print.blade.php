@@ -53,7 +53,7 @@
             </td>
             <td colspan="8">
                 @if ($bidData[0]['stage'] == 1)
-                    {{\Carbon\Carbon::parse($bidData[0]['bid_submission_opening_date'])->format('d/m/Y')}}
+                    {{\Carbon\Carbon::parse($bidData[0]['bid_opening_date'])->format('d/m/Y')}}
                 @endif
             </td>
         @endif
