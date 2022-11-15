@@ -827,12 +827,12 @@ class AssetManagementReportAPIController extends AppBaseController
                         $data[$x]['DEP %'] = '';
                         $data[$x]['Date Aquired'] = '';
                         $data[$x]['Dep Start Date'] = 'Total';
-                        $data[$x]['Local Amount unitcost'] = $TotalCOSTUNIT;
-                        $data[$x]['Local Amount accDep'] = $TotaldepAmountLocal;
-                        $data[$x]['Local Amount net Value'] = $Totallocalnbv;
-                        $data[$x]['Rpt Amount unit cost'] = $TotalcostUnitRpt;
-                        $data[$x]['Rpt Amount acc dep'] = $TotaldepAmountRpt;
-                        $data[$x]['Rpt Amount acc net value'] = $Totalrptnbv;
+                        $data[$x]['Local Amount unitcost'] = round($TotalCOSTUNIT, $localDecimalPlace);
+                        $data[$x]['Local Amount accDep'] = round($TotaldepAmountLocal, $localDecimalPlace);
+                        $data[$x]['Local Amount net Value'] = round($Totallocalnbv, $localDecimalPlace);
+                        $data[$x]['Rpt Amount unit cost'] = round($TotalcostUnitRpt,$rptDecimalPlace);
+                        $data[$x]['Rpt Amount acc dep'] = round($TotaldepAmountRpt,$rptDecimalPlace);
+                        $data[$x]['Rpt Amount acc net value'] = round($Totalrptnbv, $rptDecimalPlace);
                     }
 
      
