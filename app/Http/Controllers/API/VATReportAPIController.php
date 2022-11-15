@@ -161,9 +161,34 @@ class VATReportAPIController extends AppBaseController
             });
         };*/
 
+        $rptAmountTotal = 0;
+        $documentReportingAmountTotal = 0;
+        $localAmountTotal = 0;
+        $documentLocalAmountTotal = 0;
+        $rptDecimalPlace = '';
+        $localDecimalPlace = '';
+        if ($output) {
+            foreach ($output as $val) {
+                $rptAmountTotal += $val->rptAmount;
+                $documentReportingAmountTotal += $val->documentReportingAmount;
+                $localAmountTotal += $val->localAmount;
+                $documentLocalAmountTotal += $val->documentLocalAmount;
+
+                $rptDecimalPlace = $val->rptcurrency->DecimalPlaces;
+                $localDecimalPlace = $val->localcurrency->DecimalPlaces;
+            }
+        }
+        
+
 
         return \DataTables::of($output)
             ->addIndexColumn()
+            ->with('rptAmountTotal', $rptAmountTotal)
+            ->with('documentReportingAmountTotal', $documentReportingAmountTotal)
+            ->with('localAmountTotal', $localAmountTotal)
+            ->with('documentLocalAmountTotal', $documentLocalAmountTotal)
+            ->with('rptDecimalPlace', $rptDecimalPlace)
+            ->with('localDecimalPlace', $localDecimalPlace)
             ->with('orderCondition', 'desc')
             ->make(true);
 
@@ -199,6 +224,26 @@ class VATReportAPIController extends AppBaseController
             });
         }
 
+        $taxableAmountTotal = 0;
+        $VATAmountTotal = 0;
+        $taxableAmountLocalTotal = 0;
+        $VATAmountLocalTotal = 0;
+        $recoverabilityAmountTotal = 0;
+        $transdecimalPlace = '';
+
+        if ($output) {
+            foreach ($output->get() as $val) {
+                $taxableAmountTotal += $val->taxableAmount;
+                $VATAmountTotal += $val->VATAmount;
+                $taxableAmountLocalTotal += $val->taxableAmountLocal;
+                $VATAmountLocalTotal += $val->VATAmountLocal;
+                $recoverabilityAmountTotal += $val->recoverabilityAmount;
+
+                $transdecimalPlace = $val->transcurrency->DecimalPlaces;
+            }
+        }
+        
+
 
         return  \DataTables::eloquent($output)
                         ->order(function ($query) use ($input) {
@@ -211,6 +256,12 @@ class VATReportAPIController extends AppBaseController
                         ->addIndexColumn()
                         ->with('orderCondition', $sort)
                         ->with('companyData', $companyData)
+                        ->with('taxableAmountTotal', $taxableAmountTotal)
+                        ->with('VATAmountTotal', $VATAmountTotal)
+                        ->with('taxableAmountLocalTotal', $taxableAmountLocalTotal)
+                        ->with('VATAmountLocalTotal', $VATAmountLocalTotal)
+                        ->with('recoverabilityAmountTotal', $recoverabilityAmountTotal)
+                        ->with('transdecimalPlace', $transdecimalPlace)
                         ->make(true);
 
     }
@@ -362,6 +413,10 @@ class VATReportAPIController extends AppBaseController
         if (count((array)$output)>0) {
             $x = 0;
             $data = [];
+            $rptAmountTotal = 0;
+            $documentReportingAmountTotal = 0;
+            $localAmountTotal = 0;
+            $documentLocalAmountTotal = 0;
             foreach ($output as $val) {
                 $x++;
 
@@ -431,7 +486,30 @@ class VATReportAPIController extends AppBaseController
                 $data[$x]['VAT Main Category'] = isset($val->main_category->mainCategoryDescription) ? $val->main_category->mainCategoryDescription : '-';
                 $data[$x]['VAT Type'] = isset($val->sub_category->subCategoryDescription) ? $val->sub_category->subCategoryDescription : '-';
                 $data[$x]['Is Claimed'] = ($val->isClaimed == 1) ? 'Claimed' : "Not Claimed";
+
+                $rptAmountTotal += $val->rptAmount;
+                $documentReportingAmountTotal += $val->documentReportingAmount;
+                $localAmountTotal += $val->localAmount;
+                $documentLocalAmountTotal += $val->documentLocalAmount;
             }
+
+            $data[$x]['Document Type'] = '';
+            $data[$x]['Document Code'] = '';
+            $data[$x]['Reference No'] = '';
+            $data[$x]['Document Date'] = '';
+            $data[$x]['Party Name'] = '';
+            $data[$x]['Country'] = '';
+            $data[$x]['VATIN'] = '';
+            $data[$x]['Approved By'] = 'Total';
+            $data[$x]['Document Total Amount'] = round($documentLocalAmountTotal,$localDecimalPlaces);
+            $data[$x]['Document VAT Amount'] = round($localAmountTotal,$localDecimalPlaces);
+            if(isset($input['currencyID'])&&$input['currencyID']==2){
+                $data[$x]['Document Total Amount'] = round($documentReportingAmountTotal,$rptDecimalPlaces);
+                $data[$x]['Document VAT Amount'] = round($rptAmountTotal,$rptDecimalPlaces);
+            }
+            $data[$x]['VAT Main Category'] = '';
+            $data[$x]['VAT Type'] = '';
+            $data[$x]['Is Claimed'] = '';
 
             $company_name = $company->CompanyName;
             $to_date = \Helper::dateFormat($request->toDate);
@@ -485,6 +563,13 @@ class VATReportAPIController extends AppBaseController
         if (count((array)$output)>0) {
             $x = 0;
             $data = [];
+            $taxableAmountTotal = 0;
+            $VATAmountTotal = 0;
+            $taxableAmountLocalTotal = 0;
+            $VATAmountLocalTotal = 0;
+            $recoverabilityAmountTotal = 0;
+            $transdecimalPlace = 2;
+
             foreach ($output as $val) {
                 $x++;
 
@@ -581,7 +666,80 @@ class VATReportAPIController extends AppBaseController
                     $data[$x]['Input Tax Recoverability (Amount)'] = round($val->recoverabilityAmount, $val->transcurrency->DecimalPlaces);
                 }
 
+                
+                $taxableAmountTotal += $val->taxableAmount;
+                $VATAmountTotal += $val->VATAmount;
+                $taxableAmountLocalTotal += $val->taxableAmountLocal;
+                $VATAmountLocalTotal += $val->VATAmountLocal;
+                $recoverabilityAmountTotal += $val->recoverabilityAmount;
+                $transdecimalPlace = $val->transcurrency->DecimalPlaces;
             }
+
+            $data[$x]['Company Code in ERP'] = "";
+            $data[$x]['Company VAT Registration Number'] =  "";
+            $data[$x]['Company Name'] =  "";
+            $data[$x]['Tax Period '] =  "";
+            $data[$x]['Accounting Document Number'] =  "";
+            $data[$x]['Reference No'] = "";
+            $data[$x]['Accounting Document Date'] = "";
+            $data[$x]['Year'] =  "";
+            
+            if ($input['reportTypeID'] == 3 || $input['reportTypeID'] == 4) {
+                $data[$x]['Revenue GL Code'] =  "";
+                $data[$x]['Revenue GL Code Description'] =  "";
+            }
+            
+            $data[$x]['Document Currency'] =  "";
+            $data[$x]['Document Type'] =  "";
+            $data[$x]['Original Document No'] =  "";
+            $data[$x]['Original Document Date'] =  "";
+            if ($input['reportTypeID'] == 4) {
+                $data[$x]['Payment Due Date'] = "";
+            }
+            $data[$x]['Date Of Supply'] =  "";
+            $data[$x]['Reference Invoice No'] = "" ;
+            $data[$x]['Reference Invoice Date'] = "";
+            
+            if ($input['reportTypeID'] == 3) {
+                
+                    $data[$x]['Bill To CustomerName'] = "";
+                
+            } else if ($input['reportTypeID'] == 4 || $input['reportTypeID'] == 5) {
+                
+                    $data[$x]['Supplier Name'] = "";
+                
+            }
+            
+            if ($input['reportTypeID'] == 3) {
+                $data[$x]['Customer Type'] = "";
+                $data[$x]['Bill To Country'] = "";
+            } else if ($input['reportTypeID'] == 4 || $input['reportTypeID'] == 5) {
+                $data[$x]['Supplier Type'] = "";
+                $data[$x]['Supplier Country'] = "";
+            }
+            $data[$x]['VATIN'] = "";
+            $data[$x]['Invoice Line Item No'] = "";
+            $data[$x]['Line Item Description'] = "";
+            
+            $data[$x]['Place Of Supply'] = "";
+
+            $data[$x]['Tax Code Type'] = "";
+            $data[$x]['Tax Code Description'] = "";
+            $data[$x]['VAT Rate'] = "Total";
+            $data[$x]['Value Excluding VAT In Document Currency'] = round($taxableAmountTotal, $transdecimalPlace);
+            $data[$x]['Vat In Document Currency'] = round($VATAmountTotal, $transdecimalPlace);
+            $data[$x]['Document Currency To Local Currency Rate'] = "";
+            $data[$x]['Value Excluding VAT In Local Currency'] = round($taxableAmountLocalTotal, $transdecimalPlace);
+            $data[$x]['VAT In Local Currency'] = round($VATAmountLocalTotal, $transdecimalPlace);
+            $data[$x]['VAT GL Code'] = "";
+            $data[$x]['VAT GL Description'] = "";
+             if ($input['reportTypeID'] == 4) {
+                $data[$x]['Input Tax Recoverability'] = "";
+                $data[$x]['Input Tax Recoverability %'] = "";
+                $data[$x]['Input Tax Recoverability (Amount)'] = round($recoverabilityAmountTotal, $transdecimalPlace);
+            }
+
+
             $company = Company::find($request->companySystemID);
             if(!empty($company)){
                 $company_name = $company->CompanyName;
