@@ -2894,13 +2894,22 @@ class SRMService
         $has_work_ids = Array();
         $i = 0;
         foreach($main_works_ids as $main_works_id) {
-            $dataBidBoq = BidBoq::where('main_works_id',$main_works_id)->where('total_amount','>',0)->get();
+            $dataBidBoq = BidBoq::where('main_works_id',$main_works_id)->get();
+
             if(count($dataBidBoq) > 0) {
-                $has_work_ids[$i] = "true";
+                foreach($dataBidBoq as $bidBoq){
+                    if($bidBoq->total_amount > 0) {
+                        $has_work_ids[$i] = "true";
+                    }else {
+                        $has_work_ids[$i]  = "false";
+                    }
+                    $i++;
+                }
             }else {
                 $has_work_ids[$i]  = "false";
+                $i++;
             }
-            $i++;
+         
         }
 
 
