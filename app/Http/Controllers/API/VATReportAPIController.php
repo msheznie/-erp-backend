@@ -493,6 +493,7 @@ class VATReportAPIController extends AppBaseController
                 $documentLocalAmountTotal += $val->documentLocalAmount;
             }
 
+            $x++;
             $data[$x]['Document Type'] = '';
             $data[$x]['Document Code'] = '';
             $data[$x]['Reference No'] = '';
@@ -675,6 +676,7 @@ class VATReportAPIController extends AppBaseController
                 $transdecimalPlace = $val->transcurrency->DecimalPlaces;
             }
 
+            $x++;
             $data[$x]['Company Code in ERP'] = "";
             $data[$x]['Company VAT Registration Number'] =  "";
             $data[$x]['Company Name'] =  "";
