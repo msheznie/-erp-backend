@@ -2881,20 +2881,43 @@ class SRMService
 
         // $commercial_pricing_shedule_count = PricingScheduleMaster::where("tender_id",$tender_id)->count();
 
-        $bid_boq = BidBoq::where('bid_master_id',$bidMasterId)->count();
+        // $bid_boq = BidBoq::where('bid_master_id',$bidMasterId)->count();
 
-        $bid_boq_answer = BidBoq::where('bid_master_id',$bidMasterId)->where('total_amount','>',0)->count();
+        // $bid_boq_answer = BidBoq::where('bid_master_id',$bidMasterId)->where('total_amount','>',0)->count();
 
-        $bidMainWork = BidMainWork::where('bid_master_id',$bidMasterId)->where('tender_id',$tenderId)->whereNull('total_amount')
-        ->get();
+        // $bidMainWork = BidMainWork::where('bid_master_id',$bidMasterId)->where('tender_id',$tenderId)->whereNull('total_amount')
+        // ->get();
+
+        // $srm_pricing_shedule_details_ids = PricingScheduleDetail::where('tender_id',$tenderId)->pluck('id')->toArray();
+        $pring_schedul_master_ids = PricingScheduleMaster::where('tender_id',$tenderId)->where('status',1)->pluck('id')->toArray();
+        $main_works_ids = PricingScheduleDetail::whereIn('pricing_schedule_master_id',$pring_schedul_master_ids)->where('is_disabled',0)->select('id','boq_applicable')->get();
+        $has_work_ids = Array();
+        $i = 0;
+        foreach($main_works_ids as $main_works_id) {
+            $dataBidBoq = BidMainWork::where('tender_id',$tenderId)->where('main_works_id',$main_works_id->id)->get();
+            if(count($dataBidBoq) > 0) {
+                foreach($dataBidBoq as $bidBoq){
+                    if($bidBoq->total_amount > 0) {
+                        $has_work_ids[$i] = "true";
+                    }else {
+                        $has_work_ids[$i]  = "false";
+                    }
+                    $i++;
+                }
+            }else {
+                $has_work_ids[$i]  = "false";
+                $i++;
+            }
+        }
+
+
 
         if((count($documentAttachedCountIdsCommercial) == $documentAttachedCountAnswerCommercial)) {
-            if(isset($bidMainWork)) {
+            if((count(array_flip($has_work_ids)) === 1 && end($has_work_ids) === 'true')) {
                 $data['commercial_bid_submission_status'] = 0;
             }else {
                 $data['commercial_bid_submission_status'] = 1;
             }
-            // $data['commercial_bid_submission_status'] =0;
         }else {
             $data['commercial_bid_submission_status'] =1;
         }
