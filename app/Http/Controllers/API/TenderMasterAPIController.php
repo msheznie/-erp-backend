@@ -2219,7 +2219,15 @@ WHERE
             $closing_commer_date_comp = $data['master']['commerical_bid_closing_date'];
 
             $result1 = $current_date2->gt($opening_commer_date_comp);
-            $result2 = $closing_commer_date_comp->gt($current_date2);
+            if($closing_commer_date_comp == null)
+            {   
+                $result2 = true;
+            }
+            else
+            {
+                $result2 = $closing_commer_date_comp->gt($current_date2);
+            }
+            
             
             
 
@@ -2232,7 +2240,15 @@ WHERE
 
 
         $result3 = $current_date2->gt($opening_date_comp);
-        $result4 = $opening_date_comp_end->gt($current_date2);
+        if($opening_date_comp_end == null)
+        {
+            $result4 = true;
+        }
+        else
+        {
+            $result4 = $opening_date_comp_end->gt($current_date2);
+        }
+
         
    
 
