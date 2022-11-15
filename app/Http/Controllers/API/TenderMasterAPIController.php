@@ -2157,7 +2157,7 @@ WHERE
         $input = $request->all();
         $tenderMasterId = $input['tenderMasterId'];
         $companySystemID = $input['companySystemID'];
-        $is_date_disable = true;
+        $is_date_disable = false;
         $is_comm_date_disable = false;
         $data['master'] = TenderMaster::with(['procument_activity', 'confirmed_by','tender_type','envelop_type','evaluation_type'])->where('id', $input['tenderMasterId'])->first();
         $activity = ProcumentActivity::with(['tender_procurement_category'])->where('tender_id', $input['tenderMasterId'])->where('company_id', $input['companySystemID'])->get();
@@ -2204,14 +2204,16 @@ WHERE
 
         $stage = $data['master']['stage'];
         $current_date2 = Carbon::createFromFormat('Y-m-d H:i:s', $current_date);
-        
+
         if($stage == 1)
         {
             $opening_date_comp = $data['master']['bid_opening_date'];
+            $opening_date_comp_end = $data['master']['bid_opening_end_date'];
         }
         else if($stage == 2)
         {
             $opening_date_comp = $data['master']['technical_bid_opening_date'];
+            $opening_date_comp_end = $data['master']['technical_bid_closing_date'];
 
             $opening_commer_date_comp = $data['master']['commerical_bid_opening_date'];
             $closing_commer_date_comp = $data['master']['commerical_bid_closing_date'];
@@ -2228,12 +2230,17 @@ WHERE
 
         }
 
-       
 
-        if($current_date > $opening_date_comp)
+        $result3 = $current_date2->gt($opening_date_comp);
+        $result4 = $opening_date_comp_end->gt($current_date2);
+        
+   
+
+        if($result3 && $result4)
         {
-          $is_date_disable = false;
+            $is_date_disable = true;
         }
+
 
 
         $data['master']['disable_date'] = $is_date_disable;
