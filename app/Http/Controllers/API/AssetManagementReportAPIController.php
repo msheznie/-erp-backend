@@ -721,6 +721,10 @@ class AssetManagementReportAPIController extends AppBaseController
                     // }
                     $x = 2;
                     $data = [];
+                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                    $localDecimalPlace = isset($companyCurrency->localcurrency->DecimalPlaces) ? $companyCurrency->localcurrency->DecimalPlaces: 3;
+                    $rptDecimalPlace = isset($companyCurrency->reportingcurrency->DecimalPlaces) ? $companyCurrency->reportingcurrency->DecimalPlaces: 2;
+
                     if (!empty($output)) {
 
 
@@ -796,12 +800,12 @@ class AssetManagementReportAPIController extends AppBaseController
                                 $data[$x]['Date Aquired'] = \Helper::dateFormat($value->postedDate);
                                 $data[$x]['Dep Start Date'] = \Helper::dateFormat($value->dateDEP);
 
-                                $data[$x]['Local Amount unitcost'] = round($value->COSTUNIT, 2);
-                                $data[$x]['Local Amount accDep'] = round($value->depAmountLocal, 2);
-                                $data[$x]['Local Amount net Value'] = round($value->localnbv, 2);
-                                $data[$x]['Rpt Amount unit cost'] = round($value->costUnitRpt, 2);
-                                $data[$x]['Rpt Amount acc dep'] = round($value->depAmountRpt, 2);
-                                $data[$x]['Rpt Amount acc net value'] = round($value->rptnbv, 2);
+                                $data[$x]['Local Amount unitcost'] = round($value->COSTUNIT, $localDecimalPlace);
+                                $data[$x]['Local Amount accDep'] = round($value->depAmountLocal, $localDecimalPlace);
+                                $data[$x]['Local Amount net Value'] = round($value->localnbv, $localDecimalPlace);
+                                $data[$x]['Rpt Amount unit cost'] = round($value->costUnitRpt, $rptDecimalPlace);
+                                $data[$x]['Rpt Amount acc dep'] = round($value->depAmountRpt, $rptDecimalPlace);
+                                $data[$x]['Rpt Amount acc net value'] = round($value->rptnbv, $rptDecimalPlace);
                      
                                  $x++;
                       
