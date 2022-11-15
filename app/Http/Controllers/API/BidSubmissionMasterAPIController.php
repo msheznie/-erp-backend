@@ -436,7 +436,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
             $details = BidSubmissionMaster::where('id', $input['id'])->first();
             $tenderId = $details->tender_id;
 
-            $query = BidSubmissionMaster::where('tender_id', $tenderId)->where('go_no_go_criteria_status','!=', 1)->where('bidSubmittedYN',1)->where('status',1)->count();
+            $query = BidSubmissionMaster::where('tender_id', $tenderId)->where('go_no_go_criteria_status','=', null)->where('bidSubmittedYN',1)->where('status',1)->count();
             if($query == 0)
             {
                     $tenderMaster = $this->tenderMasterRepository->findWithoutFail($tenderId);
