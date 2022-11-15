@@ -3941,13 +3941,15 @@ WHERE
             }
 
         }
+        $localDecimalPlace = isset($companyCurrency->localcurrency->DecimalPlaces) ? $companyCurrency->localcurrency->DecimalPlaces: 3;
+        $rptDecimalPlace = isset($companyCurrency->reportingcurrency->DecimalPlaces) ? $companyCurrency->reportingcurrency->DecimalPlaces: 2;
 
         return array(
             'reportData' => $finalArr,
             'localnbv' => $totlocalnbv,
             'rptnbv' => $totrptnbv,
-            'localCurrency' => $companyCurrency->localCurrency,
-            'rptCurrency' => $companyCurrency->reportingcurrency,
+            'localDecimal' => $localDecimalPlace,
+            'rptDecimal' => $rptDecimalPlace,
             'COSTUNIT' => $totCOSTUNIT,
             'costUnitRpt' => $totcostUnitRpt,
             'depAmountLocal' => $totdepAmountLocal,
