@@ -98,15 +98,15 @@
                 <td>{{$item->SupplierRegistrationLink->name}}</td>
                 <td>{{\Carbon\Carbon::parse($item->created_at)->format('d/m/Y')}}</td>
                 @foreach ($attachments[$loop->index] as $doc2)
-                    <td>
+                    <td style="text-align: center;">
                         @if($doc2->bid_verify->status == 1)
-                            Admitted
+                            Yes
                         @endif
                         @if($doc2->bid_verify->status == 2)
-                            Admit with condition
+                            Yes
                         @endif
                         @if($doc2->bid_verify->status == 3)
-                            Rejected
+                            No
                         @endif
                     </td>
                 @endforeach
