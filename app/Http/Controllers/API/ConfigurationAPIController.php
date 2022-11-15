@@ -38,14 +38,25 @@ class ConfigurationAPIController extends AppBaseController
                 }
                 $tenant = Tenant::where('sub_domain', 'like', $subDomain)->first();
 
-            $isLang = TenantConfiguration::orderBy('id', 'desc')->where('tenant_id', $tenant->id)->where('configuration_id', 3)->first();
+            $isLang = TenantConfiguration::orderBy('id', 'desc')->where('tenant_id', $tenant->id)->where('application_id', 1)->where('configuration_id', 3)->first();
+            if($isLang){
+                $isLang = $isLang->value;
+            }
 
             }
         }
 
-        $environment = TenantConfiguration::orderBy('id', 'desc')->where('configuration_id', 1)->first();
+        $environment = TenantConfiguration::orderBy('id', 'desc')->where('configuration_id', 1)->where('application_id', 1)->first();
+        if($environment){
+            $environment = $environment->value;
+        }
 
-        $configuration = array('environment' => $environment->value, 'isLang' => $isLang->value);
+        $version = TenantConfiguration::orderBy('id', 'desc')->where('application_id', 1)->where('configuration_id', 2)->first();
+        if($version){
+            $version = $version->value;
+        }
+
+        $configuration = array('environment' => $environment, 'isLang' => $isLang, 'version' => $version);
 
         return $this->sendResponse($configuration, 'Configurations retrieved successfully');
 
