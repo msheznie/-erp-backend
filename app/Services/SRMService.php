@@ -2890,24 +2890,35 @@ class SRMService
 
         // $srm_pricing_shedule_details_ids = PricingScheduleDetail::where('tender_id',$tenderId)->pluck('id')->toArray();
         $pring_schedul_master_ids = PricingScheduleMaster::where('tender_id',$tenderId)->where('status',1)->pluck('id')->toArray();
-        $main_works_ids = PricingScheduleDetail::whereIn('pricing_schedule_master_id',$pring_schedul_master_ids)->where('is_disabled',0)->select('id','boq_applicable')->get();
+        $main_works_ids = PricingScheduleDetail::whereIn('pricing_schedule_master_id',$pring_schedul_master_ids)->where('is_disabled',0)->select('id','boq_applicable','field_type','bid_format_detail_id')->get();
         $has_work_ids = Array();
         $i = 0;
         foreach($main_works_ids as $main_works_id) {
-            $dataBidBoq = BidMainWork::where('tender_id',$tenderId)->where('main_works_id',$main_works_id->id)->get();
-            if(count($dataBidBoq) > 0) {
-                foreach($dataBidBoq as $bidBoq){
-                    if($bidBoq->total_amount > 0) {
-                        $has_work_ids[$i] = "true";
-                    }else {
-                        $has_work_ids[$i]  = "false";
+            if($main_works_id->field_type == 4) {
+                $bid_format_details = DB::table('srm_schedule_bid_format_details')->where('schedule_id',$main_works_id->id)->where('bid_format_detail_id',$main_works_id->bid_format_detail_id)->get();
+                if(count($bid_format_details) > 0) {
+                    $has_work_ids[$i] = "true";
+                }else {
+                    $has_work_ids[$i]  = "false";
+                }
+                $i++;
+            }else {
+                $dataBidBoq = BidMainWork::where('tender_id',$tenderId)->where('main_works_id',$main_works_id->id)->get();
+                if(count($dataBidBoq) > 0) {
+                    foreach($dataBidBoq as $bidBoq){
+                        if($bidBoq->total_amount > 0) {
+                            $has_work_ids[$i] = "true";
+                        }else {
+                            $has_work_ids[$i]  = "false";
+                        }
+                        $i++;
                     }
+                }else {
+                    $has_work_ids[$i]  = "false";
                     $i++;
                 }
-            }else {
-                $has_work_ids[$i]  = "false";
-                $i++;
             }
+            
         }
 
 
