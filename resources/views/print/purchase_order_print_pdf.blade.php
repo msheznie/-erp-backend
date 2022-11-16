@@ -174,6 +174,15 @@
                 max-height: 60px !important;
             }
 
+    .rotate {
+        writing-mode: vertical-lr;
+        -webkit-transform: rotate(-50deg);
+        -moz-transform: rotate(-50deg);
+        font-size: 160px;
+        color: #ff5454 !important;
+    }
+
+
 </style>
 <link href="{{ public_path('assets/css/app.css') }}" rel="stylesheet" type="text/css" />
 <div class="footer">
@@ -248,7 +257,13 @@
                @if($podata->poConfirmedYN == 1 && $podata->approved == 0)
                    Confirmed & Not Approved <br> Draft Copy
                @endif
+
            </h3>
+                @if($podata->poCancelledYN == 0)
+                    <h1 class="rotate">
+                 CANCELLED
+                    </h1>
+             @endif
          </span>
 </div>
 <div class="content">
