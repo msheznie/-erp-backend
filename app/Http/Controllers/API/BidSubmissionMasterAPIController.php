@@ -315,7 +315,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
         } else {
             $sort = 'desc';
         }
-
+        $sort = 'asc';
         $companyId = $request['companyId'];
         $tenderId = $request['tenderId'];
 
@@ -336,10 +336,10 @@ class BidSubmissionMasterAPIController extends AppBaseController
         }
 
         return \DataTables::eloquent($query)
-            ->order(function ($query) use ($input) {
+            ->order(function ($query) use ($input,$sort) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
-                        $query->orderBy('id', $input['order'][0]['dir']);
+                        $query->orderBy('id', $sort);
                     }
                 }
             })
