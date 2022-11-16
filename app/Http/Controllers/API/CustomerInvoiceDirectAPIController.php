@@ -3357,7 +3357,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         } else if ($printTemplate['printTemplateID'] == 13) {
             if($type == 1)
             {
-                $html = view('print.APMC_customer_invoice1', $array);
+                $html = view('print.APMC_customer_invoice', $array);
                 $pdf = \App::make('dompdf.wrapper');
                 $pdf->loadHTML($html);
     
