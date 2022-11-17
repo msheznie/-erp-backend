@@ -38,12 +38,15 @@ class ConfigurationAPIController extends AppBaseController
                 if (!$subDomain) {
                     return $subDomain . "Not found";
                 }
-                $tenant = Tenant::where('sub_domain', 'like', $subDomain)->first();
 
-            $isLang = TenantConfiguration::orderBy('id', 'desc')->where('tenant_id', $tenant->id)->where('application_id', 0)->where('configuration_id', 3)->first();
-            if($isLang){
-                $isLang = $isLang->value;
-            }
+                $tenant = Tenant::where('sub_domain', 'like', $subDomain)->first();
+                if($tenant){
+                    $isLang = TenantConfiguration::orderBy('id', 'desc')->where('tenant_id', $tenant->id)->where('application_id', 0)->where('configuration_id', 3)->first();
+                    if($isLang){
+                        $isLang = $isLang->value;
+                    }
+                }
+
                 $environment = TenantConfiguration::orderBy('id', 'desc')->where('configuration_id', 1)->where('application_id', 0)->first();
                 if($environment){
                     $environment = $environment->value;

@@ -6539,7 +6539,7 @@ GROUP BY
 						erp_generalledger.documentNarration,
 						erp_generalledger.clientContractID,
 						IF
-                        ( erp_generalledger.documentSystemID = 20 OR erp_generalledger.documentSystemID = 21 OR erp_generalledger.documentSystemID = 19, customermaster.CustomerName, suppliermaster.supplierName ) AS partyName,
+                        ( erp_generalledger.documentSystemID = 20 OR erp_generalledger.documentSystemID = 21 OR erp_generalledger.documentSystemID = 19 OR erp_generalledger.documentSystemID = 71, customermaster.CustomerName, suppliermaster.supplierName ) AS partyName,
                          erp_generalledger.documentSystemCode,
                          erp_generalledger.documentSystemID
 					FROM

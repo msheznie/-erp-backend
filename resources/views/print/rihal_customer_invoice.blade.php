@@ -333,6 +333,13 @@
                                 @endif
                             </td>
                         </tr>
+                        <tr>
+                            <td style="width: 38% !important;"><b>PO Number </b></td>
+                            <td>: @if(!empty($request->PONumber))
+                                    {{$request->PONumber}}
+                                @endif
+                            </td>
+                        </tr>
 
                         <tr>
                             <td style="width: 38% !important;"><b>Currency </b></td>
