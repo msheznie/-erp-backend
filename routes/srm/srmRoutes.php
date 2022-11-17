@@ -156,9 +156,11 @@ Route::get('download_tender_files', 'SrmBidDocumentattachmentsAPIController@down
 
 Route::post('getEmployeesCommercialApproval','TenderBidEmployeeDetailsController@getEmployeesCommercialApproval');
 Route::post('getTenderCommercialBids', 'BidSubmissionMasterAPIController@getTenderCommercialBids');
+Route::post('getSupplierItemList', 'BidSubmissionMasterAPIController@getSupplierItemList');
 Route::post('getCommercialBidTenderList', 'TenderMasterAPIController@getCommercialBidTenderList');
 Route::post('getCommercialEval', 'TenderMasterAPIController@getCommercialEval');
 Route::post('getCommercialEvalBoq', 'TenderMasterAPIController@getCommercialEvalBoq');
+
 
 
 Route::resource('bid_document_verifications', 'BidDocumentVerificationAPIController');
