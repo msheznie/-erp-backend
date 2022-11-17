@@ -1504,7 +1504,7 @@ WHERE
                     ->where('itemCodeSystem', $itemExist['itemAutoID'])
                     ->get();
 
-                    if($item->financeCategoryMaster != 2 && $item->financeCategoryMaster != 4 )
+                    if(isset($item->financeCategoryMaster) && $item->financeCategoryMaster != 2 && $item->financeCategoryMaster != 4 )
                     {
                         if (!empty($doDetailExist)) {
                             foreach ($doDetailExist as $row) {
