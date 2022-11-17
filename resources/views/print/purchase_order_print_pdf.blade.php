@@ -259,7 +259,7 @@
                @endif
 
            </h3>
-                @if($podata->poCancelledYN == 0)
+                @if($podata->poCancelledYN == -1)
                     <h1 class="rotate">
                  CANCELLED
                     </h1>
