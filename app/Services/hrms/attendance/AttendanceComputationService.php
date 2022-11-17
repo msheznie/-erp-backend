@@ -537,11 +537,7 @@ class AttendanceComputationService
         if (!empty($attTempRec)) { 
             $occurrences = count($attTempRec);
             $lastIndex = $occurrences - 1;
-
-            /* if ($occurrences == 1) { 
-                return $actualWorkingHrs;
-            } */
-
+ 
             foreach ($attTempRec as $key => $val) {
                  
                 if ($key == 0 && $val->in_out == 2) { 
