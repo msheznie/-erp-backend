@@ -6052,7 +6052,12 @@ class Helper
         foreach ($companyHeaderData as $key1 => $company) {
             foreach ($columns as $key2 => $column) {
                 if (isset($data['columnData'][$company['companyCode']])) {
-                    $total += $data['columnData'][$company['companyCode']][$column];
+                    $strings = explode('-',$column);
+                    if($strings[0]) {
+                        if ($strings[0] == 'CYYTD') {
+                            $total += $data['columnData'][$company['companyCode']][$column];
+                        }
+                    }
                 }
             }
         }
@@ -6067,7 +6072,12 @@ class Helper
         foreach ($companyHeaderData as $key1 => $company) {
             foreach ($columns as $key2 => $column) {
                 if (isset($data[$company['companyCode']])) {
-                    $total += $data[$company['companyCode']][$key2];
+                    $strings = explode('-',$column);
+                    if($strings[0]) {
+                        if ($strings[0] == 'CYYTD') {
+                            $total += $data[$company['companyCode']][$key2];
+                        }
+                    }
                 }
             }
         }
@@ -6083,7 +6093,12 @@ class Helper
             $code = $company['companyCode'];
             foreach ($columns as $key2 => $column) {
                 if (isset($data[$code])) {
-                    $total += $data[$code]->$column;
+                    $strings = explode('-',$column);
+                    if($strings[0]){
+                        if($strings[0] == 'CYYTD') {
+                            $total += $data[$code]->$column;
+                        }
+                    }
                 }
             }
         }
