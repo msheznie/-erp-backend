@@ -147,18 +147,17 @@ class AttendanceComputationService
             return;
         }
 
+        if ($this->data['shiftType'] == 1) { //if open shift
+            $this->openShiftCalculateWorkedHours();
+            return;
+        }
 
         if (!empty($this->clockIn) && empty($this->clockOut)) {
             $this->lateHoursComputation();
             return false;
         }
 
-        $this->isClockInOutSet = true;
-
-        if ($this->data['shiftType'] == 1) { //if open shift
-            $this->openShiftCalculateWorkedHours();
-            return;
-        }
+        $this->isClockInOutSet = true; 
 
         $t1 = ($this->isShiftHoursSet && ($this->offDutyTime <= $this->clockOut))
             ? new DateTime($this->offDutyTime)
@@ -539,10 +538,9 @@ class AttendanceComputationService
             $occurrences = count($attTempRec);
             $lastIndex = $occurrences - 1;
 
-            if ($occurrences == 1) {
-            
+            /* if ($occurrences == 1) { 
                 return $actualWorkingHrs;
-            }
+            } */
 
             foreach ($attTempRec as $key => $val) {
                  
