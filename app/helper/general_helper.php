@@ -93,6 +93,7 @@ use Response;
 use App\Models\CompanyFinanceYear;
 use App\Jobs\CreateAccumulatedDepreciation;
 use App\Services\WebPushNotificationService;
+use App\Services\GeneralLedger\GlPostedDateService;
 
 class Helper
 {
@@ -1310,6 +1311,9 @@ class Helper
                 return ['success' => true, 'message' => '', 'type' => 5];
         }
 
+        //break this function for the requirment of GCP-515
+        return ['success' => true, 'message' => '', 'type' => 5];
+        
         $approvalLevel = Models\ApprovalLevel::find($input["approvalLevelID"]);
 
         if ($approvalLevel) {
@@ -2034,6 +2038,13 @@ class Helper
                         }
 
                         if ($approvalLevel->noOfLevels == $input["rollLevelOrder"]) { // update the document after the final approval
+
+                            $validatePostedDate = GlPostedDateService::validatePostedDate($input["documentSystemCode"], $input["documentSystemID"]);
+
+                            if (!$validatePostedDate['status']) {
+                                DB::rollback();
+                                return ['success' => false, 'message' => $validatePostedDate['message']];
+                            }
 
                             if($input["documentSystemID"] == 2){
                                 $purchaseOrderMaster  = ProcumentOrder::find($input["documentSystemCode"]);
@@ -6031,5 +6042,77 @@ class Helper
         }
 
         
+    }
+
+
+    public static function rowTotalOfReportTemplate($companyHeaderData, $columns, $data)
+    {   
+        $total = 0;
+
+        foreach ($companyHeaderData as $key1 => $company) {
+            foreach ($columns as $key2 => $column) {
+                if (isset($data['columnData'][$company['companyCode']])) {
+                    $strings = explode('-',$column);
+                    if($strings[0]) {
+                        if ($strings[0] == 'CYYTD') {
+                            $total += $data['columnData'][$company['companyCode']][$column];
+                        }
+                    }
+                }
+            }
+        }
+
+        return $total;
+    }
+
+    public static function rowTotalOfReportTemplateBalance($companyHeaderData, $columns, $data)
+    {   
+        $total = 0;
+
+        foreach ($companyHeaderData as $key1 => $company) {
+            foreach ($columns as $key2 => $column) {
+                if (isset($data[$company['companyCode']])) {
+                    $strings = explode('-',$column);
+                    if($strings[0]) {
+                        if ($strings[0] == 'CYYTD') {
+                            $total += $data[$company['companyCode']][$key2];
+                        }
+                    }
+                }
+            }
+        }
+
+        return $total;
+    }
+
+    public static function rowTotalOfReportTemplateGrandTotal($companyHeaderData, $columns, $data)
+    {   
+        $total = 0;
+
+        foreach ($companyHeaderData as $key1 => $company) {
+            $code = $company['companyCode'];
+            foreach ($columns as $key2 => $column) {
+                if (isset($data[$code])) {
+                    $strings = explode('-',$column);
+                    if($strings[0]){
+                        if($strings[0] == 'CYYTD') {
+                            $total += $data[$code]->$column;
+                        }
+                    }
+                }
+            }
+        }
+
+        return $total;
+    }
+
+    public static function grandTotalValueOfReportTemplate($code, $column, $data)
+    {   
+        $value = 0;
+        if (isset($data[$code])) {
+            $value = $data[$code]->$column;
+        }
+
+        return $value;
     }
 }

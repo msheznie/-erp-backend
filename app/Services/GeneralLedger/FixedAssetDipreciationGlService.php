@@ -75,6 +75,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Jobs\UnbilledGRVInsert;
 use App\Jobs\TaxLedgerInsert;
+use App\Services\GeneralLedger\GlPostedDateService;
 
 class FixedAssetDipreciationGlService
 {
@@ -85,6 +86,12 @@ class FixedAssetDipreciationGlService
         $finalData = [];
         $empID = Employee::find($masterModel['employeeSystemID']);
         $masterData = FixedAssetDepreciationMaster::find($masterModel["autoID"]);
+
+        $validatePostedDate = GlPostedDateService::validatePostedDate($masterModel["autoID"], $masterModel["documentSystemID"]);
+
+        if (!$validatePostedDate['status']) {
+            return ['status' => false, 'message' => $validatePostedDate['message']];
+        }
 
         $debit = DB::table('erp_fa_assetdepreciationperiods')
             ->selectRaw('erp_fa_assetdepreciationperiods.*,erp_fa_asset_master.depglCodeSystemID,erp_fa_asset_master.DEPGLCODE,
@@ -117,9 +124,9 @@ class FixedAssetDipreciationGlService
                     $data['documentID'] = $masterData->documentID;
                     $data['documentSystemCode'] = $masterModel["autoID"];
                     $data['documentCode'] = $masterData->depCode;
-                    $data['documentDate'] = $masterData->depDate;
-                    $data['documentYear'] = \Helper::dateYear($masterData->depDate);
-                    $data['documentMonth'] = \Helper::dateMonth($masterData->depDate);
+                    $data['documentDate'] = $validatePostedDate['postedDate'];
+                    $data['documentYear'] = \Helper::dateYear($validatePostedDate['postedDate']);
+                    $data['documentMonth'] = \Helper::dateMonth($validatePostedDate['postedDate']);
                     $data['documentConfirmedDate'] = $masterData->confirmedDate;
                     $data['documentConfirmedBy'] = $masterData->confirmedByEmpID;
                     $data['documentConfirmedByEmpSystemID'] = $masterData->confirmedByEmpSystemID;
@@ -165,9 +172,9 @@ class FixedAssetDipreciationGlService
                         $data['documentID'] = $masterData->documentID;
                         $data['documentSystemCode'] = $masterModel["autoID"];
                         $data['documentCode'] = $masterData->depCode;
-                        $data['documentDate'] = $masterData->depDate;
-                        $data['documentYear'] = \Helper::dateYear($masterData->depDate);
-                        $data['documentMonth'] = \Helper::dateMonth($masterData->depDate);
+                        $data['documentDate'] = $validatePostedDate['postedDate'];
+                        $data['documentYear'] = \Helper::dateYear($validatePostedDate['postedDate']);
+                        $data['documentMonth'] = \Helper::dateMonth($validatePostedDate['postedDate']);
                         $data['documentConfirmedDate'] = $masterData->confirmedDate;
                         $data['documentConfirmedBy'] = $masterData->confirmedByEmpID;
                         $data['documentConfirmedByEmpSystemID'] = $masterData->confirmedByEmpSystemID;

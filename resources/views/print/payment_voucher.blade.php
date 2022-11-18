@@ -565,8 +565,8 @@
                         @endif
                         <td>{{$item->comments}}</td>
                         <td class="text-right">{{number_format($item->paymentAmount, $transDecimal)}}</td>
-                        <td class="text-right">{{number_format($item->localAmount, $transDecimal)}}</td>
-                        <td class="text-right">{{number_format($item->comRptAmount, $transDecimal)}}</td>
+                        <td class="text-right">{{number_format($item->localAmount, $localDecimal)}}</td>
+                        <td class="text-right">{{number_format($item->comRptAmount, $rptDecimal)}}</td>
                     </tr>
                 @endforeach
                 <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">

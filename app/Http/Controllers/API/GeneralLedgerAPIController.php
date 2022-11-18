@@ -12,6 +12,7 @@ use App\Models\AccountsReceivableLedger;
 use App\Models\AssetDisposalMaster;
 use App\Models\BankLedger;
 use App\Models\BookInvSuppMaster;
+use App\Models\Route;
 use App\Models\Company;
 use App\Models\CreditNote;
 use App\Models\CustomerInvoiceDirect;
@@ -1420,6 +1421,4 @@ class GeneralLedgerAPIController extends AppBaseController
         }
         return $sum;
     }
-
-
 }

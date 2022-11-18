@@ -75,6 +75,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Jobs\UnbilledGRVInsert;
 use App\Jobs\TaxLedgerInsert;
+use App\Services\GeneralLedger\GlPostedDateService;
 
 class FixedAssetDisposalGlService
 {
@@ -87,6 +88,12 @@ class FixedAssetDisposalGlService
         $masterData = AssetDisposalMaster::with(['disposal_type' => function ($query) {
             $query->with('chartofaccount');
         }])->find($masterModel["autoID"]);
+
+        $validatePostedDate = GlPostedDateService::validatePostedDate($masterModel["autoID"], $masterModel["documentSystemID"]);
+
+        if (!$validatePostedDate['status']) {
+            return ['status' => false, 'message' => $validatePostedDate['message']];
+        }
 
         $disposal = AssetDisposalDetail::with('disposal_account')->selectRaw('SUM(netBookValueLocal) as netBookValueLocal, SUM(netBookValueRpt) as netBookValueRpt,DISPOGLCODESystemID,DISPOGLCODE,serviceLineSystemID,serviceLineCode')->OfMaster($masterModel["autoID"])->groupBy('DISPOGLCODESystemID', 'serviceLineSystemID')->get();
 
@@ -103,9 +110,9 @@ class FixedAssetDisposalGlService
             $data['documentID'] = $masterData->documentID;
             $data['documentSystemCode'] = $masterModel["autoID"];
             $data['documentCode'] = $masterData->disposalDocumentCode;
-            $data['documentDate'] = $masterData->disposalDocumentDate;
-            $data['documentYear'] = \Helper::dateYear($masterData->disposalDocumentDate);
-            $data['documentMonth'] = \Helper::dateMonth($masterData->disposalDocumentDate);
+            $data['documentDate'] = $validatePostedDate['postedDate'];
+            $data['documentYear'] = \Helper::dateYear($validatePostedDate['postedDate']);
+            $data['documentMonth'] = \Helper::dateMonth($validatePostedDate['postedDate']);
             $data['documentConfirmedDate'] = $masterData->confirmedDate;
             $data['documentConfirmedBy'] = $masterData->confimedByEmpID;
             $data['documentConfirmedByEmpSystemID'] = $masterData->confimedByEmpSystemID;

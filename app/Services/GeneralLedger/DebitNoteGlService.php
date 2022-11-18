@@ -75,6 +75,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Jobs\UnbilledGRVInsert;
 use App\Jobs\TaxLedgerInsert;
+use App\Services\GeneralLedger\GlPostedDateService;
 
 class DebitNoteGlService
 {
@@ -97,10 +98,13 @@ class DebitNoteGlService
             ->groupBy('serviceLineSystemID', 'chartOfAccountSystemID', 'comments')
             ->get();
 
-        $masterDocumentDate = isset($masterModel['documentDateOveride']) ? $masterModel['documentDateOveride'] : date('Y-m-d H:i:s');
-        if ($masterData->finance_period_by->isActive == -1) {
-            $masterDocumentDate = $masterData->debitNoteDate;
+        $validatePostedDate = GlPostedDateService::validatePostedDate($masterModel["autoID"], $masterModel["documentSystemID"]);
+
+        if (!$validatePostedDate['status']) {
+            return ['status' => false, 'message' => $validatePostedDate['message']];
         }
+
+        $masterDocumentDate = isset($masterModel['documentDateOveride']) ? $masterModel['documentDateOveride'] : $validatePostedDate['postedDate'];
 
         if ($masterData) {
             $data['companySystemID'] = $masterData->companySystemID;

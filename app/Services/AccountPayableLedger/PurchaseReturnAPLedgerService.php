@@ -19,6 +19,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Services\GeneralLedger\GlPostedDateService;
 
 class PurchaseReturnAPLedgerService
 {
@@ -32,7 +33,13 @@ class PurchaseReturnAPLedgerService
             $query->groupBy("purhaseReturnAutoID");
         }])->find($masterModel["autoID"]);
 
-        $masterDocumentDate = date('Y-m-d H:i:s');
+        $validatePostedDate = GlPostedDateService::validatePostedDate($masterModel["autoID"], $masterModel["documentSystemID"]);
+
+        if (!$validatePostedDate['status']) {
+            return ['status' => false, 'message' => $validatePostedDate['message']];
+        }
+
+        $masterDocumentDate = $validatePostedDate['postedDate'];
 
         $valEligible = TaxService::checkGRVVATEligible($masterData->companySystemID, $masterData->supplierID);
 

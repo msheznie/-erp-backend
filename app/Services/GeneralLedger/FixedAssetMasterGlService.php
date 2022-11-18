@@ -75,6 +75,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Jobs\UnbilledGRVInsert;
 use App\Jobs\TaxLedgerInsert;
+use App\Services\GeneralLedger\GlPostedDateService;
 
 class FixedAssetMasterGlService
 {
@@ -87,6 +88,12 @@ class FixedAssetMasterGlService
         $masterData = FixedAssetMaster::with(['grvdetail_by', 'posttogl_by'])->find($masterModel["autoID"]);
         $companyCurrency = Company::find($masterModel["companySystemID"]);
 
+        $validatePostedDate = GlPostedDateService::validatePostedDate($masterModel["autoID"], $masterModel["documentSystemID"]);
+
+        if (!$validatePostedDate['status']) {
+            return ['status' => false, 'message' => $validatePostedDate['message']];
+        }
+
         if ($masterData) {
             if ($masterData->assetType == 1) {
                 $data['companySystemID'] = $masterData->companySystemID;
@@ -98,9 +105,9 @@ class FixedAssetMasterGlService
                 $data['documentID'] = $masterData->documentID;
                 $data['documentSystemCode'] = $masterModel["autoID"];
                 $data['documentCode'] = $masterData->faCode;
-                $data['documentDate'] = ($masterData->documentDate) ? $masterData->documentDate : date('Y-m-d H:i:s');
-                $data['documentYear'] = \Helper::dateYear(date('Y-m-d H:i:s'));
-                $data['documentMonth'] = \Helper::dateMonth(date('Y-m-d H:i:s'));
+                $data['documentDate'] = $validatePostedDate['postedDate'];
+                $data['documentYear'] = \Helper::dateYear($validatePostedDate['postedDate']);
+                $data['documentMonth'] = \Helper::dateMonth($validatePostedDate['postedDate']);
                 $data['documentConfirmedDate'] = $masterData->confirmedDate;
                 $data['documentConfirmedBy'] = $masterData->confirmedByEmpID;
                 $data['documentConfirmedByEmpSystemID'] = $masterData->confirmedByEmpSystemID;

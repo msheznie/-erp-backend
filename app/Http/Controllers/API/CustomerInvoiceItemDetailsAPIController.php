@@ -639,7 +639,7 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
 
         /*margin calculation*/
         if(isset($input['by']) && $input['by']== 'salesPrice' ){
-            if($input['sellingCost'] > 0){
+            if($input['sellingCost'] > 0 && $input['issueCostRpt'] > 0){
                 $input['marginPercentage'] = ($input['salesPrice'] - $input['sellingCost'])/$input['sellingCost']*100;
             }else{
                 $input['marginPercentage']=0;
@@ -1504,7 +1504,7 @@ WHERE
                     ->where('itemCodeSystem', $itemExist['itemAutoID'])
                     ->get();
 
-                    if($item->financeCategoryMaster != 2 && $item->financeCategoryMaster != 4 )
+                    if(isset($item->financeCategoryMaster) && $item->financeCategoryMaster != 2 && $item->financeCategoryMaster != 4 )
                     {
                         if (!empty($doDetailExist)) {
                             foreach ($doDetailExist as $row) {

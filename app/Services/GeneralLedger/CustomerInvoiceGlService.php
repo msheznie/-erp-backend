@@ -76,6 +76,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Jobs\UnbilledGRVInsert;
 use App\Jobs\TaxLedgerInsert;
+use App\Services\GeneralLedger\GlPostedDateService;
 
 class CustomerInvoiceGlService
 {
@@ -87,9 +88,17 @@ class CustomerInvoiceGlService
         $empID = Employee::find($masterModel['employeeSystemID']);
         $masterData = CustomerInvoiceDirect::with(['finance_period_by'])->find($masterModel["autoID"]);
         $company = Company::select('masterComapanyID')->where('companySystemID', $masterData->companySystemID)->first();
+
+        $validatePostedDate = GlPostedDateService::validatePostedDate($masterModel["autoID"], $masterModel["documentSystemID"]);
+
+        if (!$validatePostedDate['status']) {
+            return ['status' => false, 'message' => $validatePostedDate['message']];
+        }
+
+        $masterDocumentDate = isset($masterModel['documentDateOveride']) ? $masterModel['documentDateOveride'] : $validatePostedDate['postedDate'];
+        
         if ($masterData->isPerforma == 2 || $masterData->isPerforma == 4 || $masterData->isPerforma == 5) {   // item sales invoice || from sales order || from sales quotation
             $chartOfAccount = ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'catogaryBLorPLID', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $masterData->customerGLSystemID)->first();
-            $masterDocumentDate = Carbon::now();
 
             $time = Carbon::now();
 
@@ -279,12 +288,8 @@ class CustomerInvoiceGlService
             $chartOfAccount = ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'catogaryBLorPLID', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $masterData->customerGLSystemID)->first();
             $unbilledhartOfAccount = ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'catogaryBLorPLID', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $customer->custUnbilledAccountSystemID)->first();
 
-            $masterDocumentDate = Carbon::now();
             $time = Carbon::now();
-            if ($masterData->finance_period_by->isActive == -1) {
-                $masterDocumentDate = $masterData->bookingDate;
-            }
-
+            
             $revenue = CustomerInvoiceItemDetails::selectRaw("SUM(qtyIssuedDefaultMeasure * sellingCostAfterMargin) as transAmount,SUM(qtyIssuedDefaultMeasure * sellingCostAfterMarginLocal) as localAmount, SUM(qtyIssuedDefaultMeasure * sellingCostAfterMarginRpt) as rptAmount,financeGLcodeRevenueSystemID,financeGLcodeRevenue,localCurrencyID,localCurrencyER,reportingCurrencyER,reportingCurrencyID")->WHERE('custInvoiceDirectAutoID', $masterModel["autoID"])->whereNotNull('financeGLcodeRevenueSystemID')->where('financeGLcodeRevenueSystemID', '>', 0)->groupBy('financeGLcodeRevenueSystemID')->get();
 
             if ($chartOfAccount) {
@@ -536,14 +541,7 @@ class CustomerInvoiceGlService
 
             $segmentWiseDetail = CustomerInvoiceDirectDetail::selectRaw("sum(comRptAmount) as comRptAmount, comRptCurrency, sum(localAmount) as localAmount , localCurrencyER, localCurrency, sum(invoiceAmount) as invoiceAmount, invoiceAmountCurrencyER, invoiceAmountCurrency,comRptCurrencyER, customerID, clientContractID, comments, glSystemID,   serviceLineSystemID,serviceLineCode, sum(VATAmount) as VATAmount, sum(VATAmountLocal) as VATAmountLocal, sum(VATAmountRpt) as VATAmountRpt, sum(VATAmount*invoiceQty) as VATAmountTotal, sum(VATAmountLocal*invoiceQty) as VATAmountLocalTotal, sum(VATAmountRpt*invoiceQty) as VATAmountRptTotal")->with(['contract'])->WHERE('custInvoiceDirectID', $masterModel["autoID"])->groupBy('serviceLineSystemID', 'clientContractID')->get();
 
-            $masterDocumentDate = $time;
-            if ($masterData->isPerforma == 1) {
-                $masterDocumentDate = $time;
-            } else {
-                if ($masterData->finance_period_by->isActive == -1) {
-                    $masterDocumentDate = $masterData->bookingDate;
-                }
-            }
+            
             $data['companySystemID'] = $masterData->companySystemID;
             $data['companyID'] = $masterData->companyID;
             $data['masterCompanyID'] = $company->masterComapanyID;

@@ -19,6 +19,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Services\GeneralLedger\GlPostedDateService;
 
 class SupplierInvoiceAPLedgerService
 {
@@ -72,10 +73,13 @@ class SupplierInvoiceAPLedgerService
             $poInvoiceDirectTransExtCharge = $masterData->directdetail[0]->transAmount;
         }
 
-        $masterDocumentDate = date('Y-m-d H:i:s');
-        if($masterData->financeperiod_by->isActive == -1){
-            $masterDocumentDate = $masterData->bookingDate;
+         $validatePostedDate = GlPostedDateService::validatePostedDate($masterModel["autoID"], $masterModel["documentSystemID"]);
+
+        if (!$validatePostedDate['status']) {
+            return ['status' => false, 'message' => $validatePostedDate['message']];
         }
+
+        $masterDocumentDate = $validatePostedDate['postedDate'];
 
         if ($masterData) {
             $data['companySystemID'] = $masterData->companySystemID;
