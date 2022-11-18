@@ -5485,7 +5485,7 @@ AND MASTER .canceledYN = 0';
             $fifthLinkedcolumnQry .= ' serviceLineID,';
             $firstLinkedcolumnQry .= ' erp_generalledger.serviceLineSystemID AS serviceLineID,';
             $budgetJoin = ' AND g.serviceLineID = budget.serviceLineSystemID';
-            $generalLedgerGroup = ' ,erp_generalledger.companySystemID';
+            $generalLedgerGroup = ' ,erp_generalledger.serviceLineSystemID';
             $templateGroup = ', serviceLineID';
         }
 
@@ -6491,6 +6491,12 @@ GROUP BY
 
         $companyID = collect($request->companySystemID)->pluck('companySystemID')->toArray();
         $serviceline = collect($request->serviceLineSystemID)->pluck('serviceLineSystemID')->toArray();
+
+        if ($request->columnTemplateID == 2) {
+            $selectedSegmentData = SegmentMaster::where('ServiceLineCode', $request->selectedCompany)->first();
+
+            $serviceline = collect($selectedSegmentData->serviceLineSystemID)->toArray();
+        }
 
         $documents = ReportTemplateDocument::pluck('documentSystemID')->toArray();
 
