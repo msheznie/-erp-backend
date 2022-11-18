@@ -2730,73 +2730,7 @@ class SRMService
         $tenderId = $request->input('extra.tenderId');
         $bidMasterId = $request->input('extra.bidMasterId');
 
-        /*$documentAttachment = DocumentAttachments::with(['tender_document_types' => function ($q) {
-            $q->where('srm_action', 1);
-        }])
-            ->whereDoesntHave('document_attachments', function ($q) use ($bidMasterId) {
-                $q->where('documentSystemCode', $bidMasterId);
-                $q->where('documentSystemID', 108);
-            })
-            ->where('documentSystemCode', $tenderId)
-            ->where('documentSystemID', 108)
-            ->where('parent_id', null)
-            ->whereHas('tender_document_types', function ($q) {
-                $q->where('srm_action', 1);
-            })
-            ->count();*/
-
-        /*    $technicalEvaluationCriteria = EvaluationCriteriaDetails::whereDoesntHave('bid_submission_detail', function ($q2) use ($tenderId, $bidMasterId) {
-            $q2->where('bid_master_id', $bidMasterId);
-            $q2->where('tender_id', $tenderId);
-        })
-            ->where('is_final_level', 1)
-            ->where('critera_type_id', 2)
-            ->where('tender_id', $tenderId)
-            ->count();
-
-        $pricingScheduleMaster =  PricingScheduleMaster::with(['tender_main_works' => function ($q1) use ($tenderId , $bidMasterId) {
-            $q1->where('tender_id', $tenderId);
-            $q1->with(['bid_main_work' => function ($q2) use ($tenderId , $bidMasterId) {
-                $q2->where('tender_id', $tenderId);
-                $q2->where('bid_master_id', $bidMasterId);
-                $q2->with(['tender_boq_items' => function ($q3)  use ($bidMasterId) {
-                    $q3->whereDoesntHave('bid_boq',function ($query) use ($bidMasterId) {
-                        $query->where('bid_master_id', '=', $bidMasterId);
-                    });
-                }]);
-            }]);
-        }])
-            ->where('tender_id', $tenderId)
-            ->get();
-
-
-        $tenderArr = collect($pricingScheduleMaster)->map(function ($group) {
-            return $group['tender_main_works'];
-        });
-
-        $singleArr = Arr::flatten($tenderArr);
-
-        $tenderArrFilter = collect($singleArr)->map(function ($group) {
-            if ($group['bid_main_work'] == null) {
-                $group['isExist'] = 1;
-            } else if (count($group['bid_main_work']['tender_boq_items']) == 0 && ($group['bid_main_work']['total_amount'] == 0 && $group['bid_main_work']['qty'] == 0)) {
-                $group['isExist'] = 1;
-            } else if (count($group['bid_main_work']['tender_boq_items']) > 0) {
-                $group['isExist'] = 1;
-            } else {
-                $group['isExist'] = 0;
-            }
-            return $group['isExist'];
-        }); 
-
-        $filtered = $tenderArrFilter->filter(function ($value, $key) {
-            return $value > 0;
-        });
-        $filtered->all();
-
-        $bidsubmission =  BidSubmissionMaster::where('id', $bidMasterId)
-        ->where('tender_id',$tenderId)
-        ->first(); */
+       
 
         $bidSubmissionData = self::BidSubmissionStatusData($bidMasterId, $tenderId);
         
@@ -2853,20 +2787,7 @@ class SRMService
             ->where('is_final_level', 3)
             ->count();
 
-        // if((count($documentAttachedCountIdsTechnical) == $documentAttachedCountAnswerTechnical) ) {
-        //     $data['technicalStatus'] = "Completed";
-        //     if($technicalEvaluationCriteriaAnswer == 0 && $documentAttachedCountAnswerTechnical == 0) {
-        //         $data['technicalStatus'] = "Disabled";
-        //     }else {
-        //         if(($technicalEvaluationCriteria == $technicalEvaluationCriteriaAnswer)) {
-        //             $data['technicalStatus'] = "Completed";
-        //         }else {
-        //             $data['technicalStatus'] = "Not Completed";
-        //         }
-        //     }
-        // }else {
-        //     $data['technicalStatus'] = "Not Completed";
-        // }
+
 
         if((count($documentAttachedCountIdsTechnical) == $documentAttachedCountAnswerTechnical) && $bidSubmissionData['technicalEvaluationCriteria'] == 0) {
             $data['technicalStatus'] = 0;
@@ -2874,57 +2795,72 @@ class SRMService
             $data['technicalStatus'] =1;
         }
 
-        // if($bidSubmissionData['technicalEvaluationCriteria'] == 0 && count($documentAttachedCountIdsTechnical) == 0) {
-        //     $data['technicalStatus'] = -1; 
-        // }
 
-
-        // $commercial_pricing_shedule_count = PricingScheduleMaster::where("tender_id",$tender_id)->count();
-
-        // $bid_boq = BidBoq::where('bid_master_id',$bidMasterId)->count();
-
-        // $bid_boq_answer = BidBoq::where('bid_master_id',$bidMasterId)->where('total_amount','>',0)->count();
-
-        // $bidMainWork = BidMainWork::where('bid_master_id',$bidMasterId)->where('tender_id',$tenderId)->whereNull('total_amount')
-        // ->get();
-
-        // $srm_pricing_shedule_details_ids = PricingScheduleDetail::where('tender_id',$tenderId)->pluck('id')->toArray();
         $pring_schedul_master_ids = PricingScheduleMaster::where('tender_id',$tenderId)->where('status',1)->pluck('id')->toArray();
         $main_works_ids = PricingScheduleDetail::whereIn('pricing_schedule_master_id',$pring_schedul_master_ids)->where('is_disabled',0)->select('id','boq_applicable','field_type','bid_format_detail_id','is_disabled')->get();
         $has_work_ids = Array();
         $i = 0;
 
+                
+
+
         foreach($main_works_ids as $main_works_id) {
-            if($main_works_id->field_type == 4) {
-                $bid_format_details = DB::table('srm_schedule_bid_format_details')->where('bid_format_detail_id',$main_works_id->id)->get();
-                     
+            if($main_works_id->boq_applicable) {
+                $boqItems = TenderBoqItems::where('main_work_id',$main_works_id->id)->get();
+                        
  
-                if(count($bid_format_details) > 0) {
-                    $has_work_ids[$i] = "true";
-                }else {
-                    $has_work_ids[$i]  = "false";
-                }
-                $i++;
-            }else {
-                $dataBidBoq = BidMainWork::where('tender_id',$tenderId)->where('main_works_id',$main_works_id->id)->get();
-                if(count($dataBidBoq) > 0) {
-                    foreach($dataBidBoq as $bidBoq){
-                        if($bidBoq->total_amount > 0) {
-                            $has_work_ids[$i] = "true";
-                        }else {
-                            $has_work_ids[$i]  = "false";
+                foreach($boqItems as $boqItem) {
+                    $dataBidBoq = BidBoq::where('boq_id',$boqItem->id)->where('bid_master_id',$bidMasterId)->where('main_works_id',$main_works_id->id)->get();
+
+                    if(count($dataBidBoq) > 0) {
+                        foreach($dataBidBoq as $bidBoq){
+                            if($bidBoq->total_amount > 0) {
+                                $has_work_ids[$i] = "true";
+                            }else {
+                                $has_work_ids[$i]  = "false";
+                            }
+                            $i++;
                         }
+                    }else {
+                        $has_work_ids[$i]  = "false";
                         $i++;
                     }
-                }else {
-                    $has_work_ids[$i]  = "false";
+                }
+     
+               
+            }else {
+                if($main_works_id->field_type == 4) {
+                    $bid_format_details = DB::table('srm_schedule_bid_format_details')->where('bid_format_detail_id',$main_works_id->id)->get();
+                         
+     
+                    if(count($bid_format_details) > 0) {
+                        $has_work_ids[$i] = "true";
+                    }else {
+                        $has_work_ids[$i]  = "false";
+                    }
                     $i++;
+                }else {
+                    $dataBidBoq = BidMainWork::where('tender_id',$tenderId)->where('main_works_id',$main_works_id->id)->where('bid_master_id',$bidMasterId)->get();
+                    if(count($dataBidBoq) > 0) {
+                        foreach($dataBidBoq as $bidBoq){
+                            if($bidBoq->total_amount > 0) {
+                                $has_work_ids[$i] = "true";
+                            }else {
+                                $has_work_ids[$i]  = "false";
+                            }
+                            $i++;
+                        }
+                    }else {
+                        $has_work_ids[$i]  = "false";
+                        $i++;
+                    }
                 }
             }
             
+            
         }
 
-
+ 
 
         if((count($documentAttachedCountIdsCommercial) == $documentAttachedCountAnswerCommercial)) {
             if((count(array_flip($has_work_ids)) === 1 && end($has_work_ids) === 'true')) {
