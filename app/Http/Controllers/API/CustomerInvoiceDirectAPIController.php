@@ -3286,8 +3286,11 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         if (!is_null($printTemplate)) {
             $printTemplate = $printTemplate->toArray();
         }
-      
-        
+
+
+        if ($printTemplate['printTemplateID'] == 15) {
+            $customerInvoice->amount_word = ucwords($customerInvoice->amount_word);
+        }
     
         if ($printTemplate['printTemplateID'] == 2 && $master->isPerforma == 1) {
             $proformaBreifData = $this->getProformaInvoiceDetailDataForPrintInvoice($id);
@@ -3368,6 +3371,25 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 return \Excel::create($fileName_xls, function ($excel) use ($array) {
                     $excel->sheet('New sheet', function ($sheet) use ($array) {
                         $sheet->loadView('export_report.APMC_customer_invoice', $array)->with('no_asset', true);
+                    });
+                    
+                })->download('xls');
+            }
+        
+        } else if ($printTemplate['printTemplateID'] == 15) {
+            if($type == 1)
+            {
+                $html = view('print.BNI_customer_invoice', $array);
+                $pdf = \App::make('dompdf.wrapper');
+                $pdf->loadHTML($html);
+    
+                return $pdf->setPaper('a4')->setWarnings(false)->stream($fileName);
+            }
+            else if($type == 2)
+            {
+                return \Excel::create($fileName_xls, function ($excel) use ($array) {
+                    $excel->sheet('New sheet', function ($sheet) use ($array) {
+                        $sheet->loadView('export_report.BNI_customer_invoice', $array)->with('no_asset', true);
                     });
                     
                 })->download('xls');
