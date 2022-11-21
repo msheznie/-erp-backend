@@ -2796,7 +2796,18 @@ class SRMService
         }
 
 
-        $pring_schedul_master_ids = PricingScheduleMaster::where('tender_id',$tenderId)->where('status',1)->pluck('id')->toArray();
+        // $pring_schedul_master_ids = PricingScheduleMaster::where('tender_id',$tenderId)->where('status',1)->pluck('id')->toArray();
+        $pring_schedul_master_ids =  PricingScheduleMaster::with(['tender_main_works' => function ($q1) use ($tenderId, $bidMasterId) {
+            $q1->where('tender_id', $tenderId);
+            $q1->with(['bid_main_work' => function ($q2) use ($tenderId, $bidMasterId) {
+                $q2->where('tender_id', $tenderId);
+                $q2->where('bid_master_id', $bidMasterId);
+            }]);
+        }])
+            ->where('tender_id', $tenderId)
+            ->where('status',1)->pluck('id')->toArray();
+
+
         $main_works_ids = PricingScheduleDetail::whereIn('pricing_schedule_master_id',$pring_schedul_master_ids)->where('is_disabled',0)->select('id','boq_applicable','field_type','bid_format_detail_id','is_disabled')->get();
         $has_work_ids = Array();
         $i = 0;
