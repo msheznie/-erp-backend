@@ -118,5 +118,12 @@ class BidSchedule extends Model
 
     public function tenderMainWorks(){ 
         return $this->hasMany('App\Models\TenderMainWorks', 'schedule_id', 'schedule_id'); 
-    } 
+    }
+
+    public function SupplierRegistrationLink(){
+        return $this->belongsTo(SupplierRegistrationLink::class, 'supplier_registration_id','id');
+    }
+
+
+
 }
