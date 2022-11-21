@@ -679,7 +679,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
     public function SupplierItemWiseExportReport(Request $request)
     {
         $tenderId = $request['tenderMasterId'];
-        $tcompanySystemID = $request['companySystemID'];
+        $companySystemID = $request['companySystemID'];
         $bidSubmission = $request['bidSubmission'];
         $itemList = $request['itemList'];
 
@@ -688,17 +688,8 @@ class BidSubmissionMasterAPIController extends AppBaseController
             $bidMasterId[] = $bid['id'];
         }
 
-        /*$bidData = TenderMaster::with(['srm_bid_submission_master' => function($query) use($tenderId){
-            $query->where('status', 1);
-        }, 'srm_bid_submission_master.SupplierRegistrationLink', 'srm_bid_submission_master.BidDocumentVerification',
-            'DocumentAttachments' => function($query) use($tenderId){
-                $query->with(['bid_verify'])->where('documentSystemCode', $tenderId)->where('documentSystemID', 108)
-                    ->where('attachmentType', 2)->where('envelopType',3);
-            }])->where('id', $tenderId)
-            ->get();*/
         $bidData = PricingScheduleMaster::with(['tender_master.srm_bid_submission_master.SupplierRegistrationLink',
             'bid_schedules.SupplierRegistrationLink', 'pricing_shedule_details' => function ($q) use ($bidMasterId) {
-                //$q->where('is_disabled', 0);
                 $q->with('tender_boq_items')->where('boq_applicable', 1)->orWhere('is_disabled', 0);
                 $q->with(['bid_main_work' => function ($q) use ($bidMasterId) {
                     $q->with('tender_boq_items')->whereIn('bid_master_id', $bidMasterId);
@@ -709,7 +700,9 @@ class BidSubmissionMasterAPIController extends AppBaseController
                     $q->whereIn('bid_master_id', $bidMasterId);
                 }]);
             }])->where('tender_id', $tenderId)->get();
+
         Log::info($bidData[0]['tender_master']['srm_bid_submission_master']);
+
         $time = strtotime("now");
         $fileName = 'supplier_item_summary' . $time . '.pdf';
         $order = array('bidData' => $bidData,
@@ -738,12 +731,16 @@ class BidSubmissionMasterAPIController extends AppBaseController
 
         $itemListIsEnableFalse = PricingScheduleDetail::select(['id', 'label'])
             ->where('tender_id', $tenderId)
+            ->where('boq_applicable', 0)
+            ->where('is_disabled', 0)
             ->get()
             ->toArray();
 
         $itemListBoq = PricingScheduleDetail::select(['srm_tender_boq_items.id', 'srm_tender_boq_items.item_name as label'])
             ->join('srm_tender_boq_items', 'srm_tender_boq_items.main_work_id', '=', 'srm_pricing_schedule_detail.id')
             ->where('tender_id', $tenderId)
+            ->where('boq_applicable', 1)
+            ->orderBy('srm_pricing_schedule_detail.id', 'asc')
             ->get()
             ->toArray();
 
@@ -764,7 +761,6 @@ class BidSubmissionMasterAPIController extends AppBaseController
 
         $queryResult = PricingScheduleMaster::with(['tender_master.srm_bid_submission_master.SupplierRegistrationLink',
             'bid_schedules.SupplierRegistrationLink', 'pricing_shedule_details' => function ($q) use ($bidMasterId) {
-            //$q->where('is_disabled', 0);
             $q->with('tender_boq_items')->where('boq_applicable', 1)->orWhere('is_disabled', 0);
             $q->with(['bid_main_work' => function ($q) use ($bidMasterId) {
                 $q->with('tender_boq_items')->whereIn('bid_master_id', $bidMasterId);
