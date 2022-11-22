@@ -798,7 +798,6 @@ class BidSubmissionMasterAPIController extends AppBaseController
         $queryResult = PricingScheduleMaster::with(['tender_master.srm_bid_submission_master' => function ($q) use ($bidMasterId, $boqItems, $notBoqitems) {
             $q->with('SupplierRegistrationLink')->whereIn('id', $bidMasterId);
         }, 'bid_schedules.SupplierRegistrationLink', 'pricing_shedule_details' => function ($q) use ($bidMasterId, $notBoqitems, $boqItems) {
-            $q->where('id', 155);
             $q->with('tender_boq_items')->where('boq_applicable', 1)
                 ->orWhere('is_disabled', 0);
                 if(sizeof($boqItems) > 0 ||sizeof($notBoqitems) > 0){
