@@ -226,8 +226,8 @@ class BidSubmissionMasterAPIController extends AppBaseController
     public function update($id, UpdateBidSubmissionMasterAPIRequest $request)
     {
         $input = $request->all();
-        $tender_id = $input['tender_id'];
-        $meth = $input['meth'];
+        
+       
             
         /** @var BidSubmissionMaster $bidSubmissionMaster */
         $bidSubmissionMaster = $this->bidSubmissionMasterRepository->findWithoutFail($id);
@@ -236,41 +236,53 @@ class BidSubmissionMasterAPIController extends AppBaseController
             return $this->sendError('Bid Submission Master not found');
         }
 
-        if($meth == 1)
+        if(isset($input['meth']))
         {
+            $meth = $input['meth'];
+            $tender_id = $input['tender_id'];
 
-            $input['technical_verify_by'] = \Helper::getEmployeeSystemID();
-            $input['technical_verify_at'] = Carbon::now();
-            $input['technical_eval_remarks'] = $input['technical_eval_remarks'];
-    
-            $bidSubmissionMaster = $this->bidSubmissionMasterRepository->update($input, $id);
-
-            $query = BidSubmissionMaster::where('tender_id', $tender_id)->where('technical_verify_status','!=', 1)->where('bidSubmittedYN',1)->where('status',1)->count();
-            if($query == 0)
+            if($meth == 1)
             {
-                    $tenderMaster = $this->tenderMasterRepository->findWithoutFail($tender_id);
-                    $tenderMaster->technical_eval_status = 1;;
-                    $tenderMaster->save();
+    
+                $input['technical_verify_by'] = \Helper::getEmployeeSystemID();
+                $input['technical_verify_at'] = Carbon::now();
+                $input['technical_eval_remarks'] = $input['technical_eval_remarks'];
+        
+                $bidSubmissionMaster = $this->bidSubmissionMasterRepository->update($input, $id);
+    
+                $query = BidSubmissionMaster::where('tender_id', $tender_id)->where('technical_verify_status','!=', 1)->where('bidSubmittedYN',1)->where('status',1)->count();
+                if($query == 0)
+                {
+                        $tenderMaster = $this->tenderMasterRepository->findWithoutFail($tender_id);
+                        $tenderMaster->technical_eval_status = 1;;
+                        $tenderMaster->save();
+                }
+            }
+            else if($meth == 2)
+            {
+                $input['commercial_verify_by'] = \Helper::getEmployeeSystemID();
+                $input['commercial_verify_at'] = Carbon::now();
+        
+                $bidSubmissionMaster = $this->bidSubmissionMasterRepository->update($input, $id);
+        
+        
+                $query = BidSubmissionMaster::where('tender_id', $tender_id)->where('commercial_verify_status','!=', 1)->where('bidSubmittedYN',1)->where('status',1)->count();
+                if($query == 0)
+                {
+                        $tenderMaster = $this->tenderMasterRepository->findWithoutFail($tender_id);
+                        $tenderMaster->commercial_verify_status = 1;
+                        $tenderMaster->commercial_verify_by = \Helper::getEmployeeSystemID();
+                        $tenderMaster->commercial_verify_at = Carbon::now();
+                        $tenderMaster->save();
+                }
             }
         }
-        if($meth == 2)
+        else
         {
-            $input['commercial_verify_by'] = \Helper::getEmployeeSystemID();
-            $input['commercial_verify_at'] = Carbon::now();
-    
             $bidSubmissionMaster = $this->bidSubmissionMasterRepository->update($input, $id);
-    
-    
-            $query = BidSubmissionMaster::where('tender_id', $tender_id)->where('commercial_verify_status','!=', 1)->where('bidSubmittedYN',1)->where('status',1)->count();
-            if($query == 0)
-            {
-                    $tenderMaster = $this->tenderMasterRepository->findWithoutFail($tender_id);
-                    $tenderMaster->commercial_verify_status = 1;
-                    $tenderMaster->commercial_verify_by = \Helper::getEmployeeSystemID();
-                    $tenderMaster->commercial_verify_at = Carbon::now();
-                    $tenderMaster->save();
-            }
         }
+
+
 
 
 
