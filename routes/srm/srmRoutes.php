@@ -190,3 +190,5 @@ Route::post('bidGoNoGoCommentAndStatus', 'BidSubmissionMasterAPIController@bidGo
 Route::post('getBidVerificationStatus', 'BidSubmissionMasterAPIController@getBidVerificationStatus');
 Route::post('getVerifieddBids', 'BidSubmissionMasterAPIController@getVerifieddBids');
 Route::post('saveTechnicalEvalBidSubmissionLine', 'BidSubmissionMasterAPIController@saveTechnicalEvalBidSubmissionLine');
+Route::post('removeBid', 'BidEvaluationSelectionAPIController@removeBid');
+Route::post('addBid', 'BidEvaluationSelectionAPIController@addBid');
