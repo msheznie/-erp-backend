@@ -6526,12 +6526,12 @@ GROUP BY
             }
         }
 
-        if ($request->accountType == 2) {
+        if ($request->accountType == 2 || $request->columnTemplateID == 2) {
             if (count($serviceline) > 0) {
                 $servicelineQry = 'AND erp_generalledger.serviceLineSystemID IN (' . join(',', $serviceline) . ')';
                 $servicelineQryForBudget = 'AND erp_budjetdetails.serviceLineSystemID IN (' . join(',', $serviceline) . ')';
             }
-        }
+        } 
 
         if ($request->columnTemplateID == 1) {
             $selectedCompanyData = Company::where('CompanyID', $request->selectedCompany)->first();
