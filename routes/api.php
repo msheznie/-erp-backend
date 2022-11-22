@@ -41,6 +41,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             require __DIR__.'/../routes/systemAdmin/systemAdminRoutes.php';
             require __DIR__.'/../routes/general/generalRoutes.php';
             require __DIR__.'/../routes/srm/srmRoutes.php';
+            require __DIR__.'/../routes/configuration/configurationRoutes.php';
 
             Route::get('getTypeheadEmployees', 'EmployeeAPIController@getTypeheadEmployees');
 
@@ -269,16 +270,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('getApprovalRollByLevel', 'ApprovalRoleAPIController@getApprovalRollByLevel');
 
             /** Chart of Account Created by Shafri */
-
-            Route::resource('control_accounts', 'ControlAccountAPIController');
-
-
-
-
-
-
-            Route::get('getChartOfAccounts', 'ChartOfAccountAPIController@getChartOfAccounts');
-
 
             Route::get('getAssignedChartOfAccounts', 'ChartOfAccountsAssignedAPIController@getAssignedChartOfAccounts');
 
@@ -1601,32 +1592,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('confirmEmployeePasswordReset', 'EmployeeAPIController@confirmEmployeePasswordReset');
             Route::get('getEmployeeMasterData', 'EmployeeAPIController@getEmployeeMasterData');
 
-
-
             Route::get('getReferBackApprovedDetails', 'DocumentReferedHistoryAPIController@getReferBackApprovedDetails');
-
-            Route::resource('report_templates', 'ReportTemplateAPIController');
-            Route::post('getAllReportTemplate', 'ReportTemplateAPIController@getAllReportTemplate');
-
-
-
-
-            Route::post('getAllReportTemplateForCopy', 'ReportTemplateAPIController@getAllReportTemplateForCopy');
-            Route::get('getReportTemplateFormData', 'ReportTemplateAPIController@getReportTemplateFormData');
-            Route::resource('report_template_details', 'ReportTemplateDetailsAPIController');
-            Route::get('getReportTemplateDetail/{id}', 'ReportTemplateDetailsAPIController@getReportTemplateDetail');
-            Route::get('getReportTemplateSubCat', 'ReportTemplateDetailsAPIController@getReportTemplateSubCat');
-            Route::post('addTemplateSubCategory', 'ReportTemplateDetailsAPIController@addSubCategory');
-
-            Route::post('mirrorReportTemplateRowConfiguration', 'ReportTemplateDetailsAPIController@mirrorReportTemplateRowConfiguration');
-            Route::post('linkPandLGLCodeValidation', 'ReportTemplateDetailsAPIController@linkPandLGLCodeValidation');
-            Route::post('linkPandLGLCode', 'ReportTemplateDetailsAPIController@linkPandLGLCode');
-            Route::get('getEmployees', 'ReportTemplateAPIController@getEmployees');
-            Route::get('getReportHeaderData', 'ReportTemplateAPIController@getReportHeaderData');
-
-            Route::post('reportTemplateDetailSubCatLink', 'ReportTemplateLinksAPIController@reportTemplateDetailSubCatLink');
-
-            Route::post('deleteAllLinkedGLCodes', 'ReportTemplateLinksAPIController@deleteAllLinkedGLCodes');
 
             Route::post('getBankMasterByCompany', 'BankAssignAPIController@getBankMasterByCompany');
             Route::post('getAccountsByBank', 'BankAccountAPIController@getAccountsByBank');
@@ -1639,11 +1605,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('bankAccountReopen', 'BankAccountAPIController@bankAccountReopen');
             Route::post('bankAccountReferBack', 'BankAccountAPIController@bankAccountReferBack');
             Route::resource('bank_account_reffered_backs', 'BankAccountRefferedBackAPIController');
-            Route::resource('report_template_columns', 'ReportTemplateColumnsAPIController');
-            Route::resource('report_template_column_links', 'ReportTemplateColumnLinkAPIController');
-            Route::get('getTemplateColumnLinks', 'ReportTemplateColumnLinkAPIController@getTemplateColumnLinks');
-            Route::get('reportTemplateFormulaColumn', 'ReportTemplateColumnLinkAPIController@reportTemplateFormulaColumn');
-            Route::post('loadColumnTemplate', 'ReportTemplateColumnLinkAPIController@loadColumnTemplate');
+            
             Route::resource('bankAccountReferedBack', 'BankAccountRefferedBackAPIController');
             Route::post('getAccountsReferBackHistory', 'BankAccountRefferedBackAPIController@getAccountsReferBackHistory');
 
@@ -1695,9 +1657,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('checkSalesPersonLastTarget', 'SalesPersonTargetAPIController@checkSalesPersonLastTarget');
             Route::get('getSalesPersonTargetDetails', 'SalesPersonTargetAPIController@getSalesPersonTargetDetails');
 
-            Route::resource('report_template_field_types', 'ReportTemplateFieldTypeAPIController');
-            Route::resource('report_template_cash_banks', 'ReportTemplateCashBankAPIController');
-            Route::resource('report_template_documents', 'ReportTemplateDocumentAPIController');
+           
 
             Route::resource('quotationMasters', 'QuotationMasterAPIController');
             Route::resource('quotationDetails', 'QuotationDetailsAPIController');
@@ -1736,8 +1696,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('getSalesQuotationAmendHistory', 'QuotationMasterRefferedbackAPIController@getSalesQuotationAmendHistory');
             Route::get('getSQHDetailsHistory', 'QuotationDetailsRefferedbackAPIController@getSQHDetailsHistory');
 
-            Route::resource('report_template_cash_banks', 'ReportTemplateCashBankAPIController');
-            Route::resource('report_template_numbers', 'ReportTemplateNumbersAPIController');
+           
             Route::get('printInvoice', 'GposInvoiceAPIController@printInvoice');
 
             Route::resource('stockAdjustmentRefferedBack', 'StockAdjustmentRefferedBackAPIController');
@@ -1745,10 +1704,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('getReferBackHistoryByStockAdjustments', 'StockAdjustmentRefferedBackAPIController@getReferBackHistoryByStockAdjustments');
             Route::get('getSADetailsReferBack', 'StockAdjustmentDetailsRefferedBackAPIController@getSADetailsReferBack');
 
-            Route::resource('report_template_cash_banks', 'ReportTemplateCashBankAPIController');
-            Route::resource('report_template_employees', 'ReportTemplateEmployeesAPIController');
-            Route::post('getReportTemplateAssignedEmployee', 'ReportTemplateEmployeesAPIController@getReportTemplateAssignedEmployee');
-
+           
             // console jv
             Route::resource('console_j_v_masters', 'ConsoleJVMasterAPIController');
             Route::resource('console_j_v_details', 'ConsoleJVDetailAPIController');
@@ -1934,9 +1890,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('cancelGRV', 'GRVMasterAPIController@cancelGRV');
             Route::post('reverseGRV', 'GRVMasterAPIController@reverseGRV');
 
-            Route::post('getUnassignedGLForReportTemplate', 'ReportTemplateDetailsAPIController@getUnassignedGLForReportTemplate');
-
-
             Route::resource('pre_defined_report_templates', 'PreDefinedReportTemplateAPIController');
             Route::resource('erp_print_template_masters', 'ErpPrintTemplateMasterAPIController');
             Route::resource('erp_document_templates', 'ErpDocumentTemplateAPIController');
@@ -1960,7 +1913,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('getCustomerCatalogDetailByCustomerItem', 'CustomerCatalogMasterAPIController@getCustomerCatalogDetailByCustomerItem');
 
 
-            Route::resource('report_column_templates', 'ReportColumnTemplateAPIController');
+            
             Route::post('getSupplierCatalogDetailBySupplierAllItem', 'SupplierCatalogMasterAPIController@getSupplierCatalogDetailBySupplierAllItem');
             Route::post('getSupplierCatalogDetailBySupplierItemForPo', 'SupplierCatalogMasterAPIController@getSupplierCatalogDetailBySupplierItemForPo');
             Route::resource('dashboard_widget_masters', 'DashboardWidgetMasterAPIController');
@@ -2038,8 +1991,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
 
             Route::resource('secondary_companies', 'SecondaryCompanyAPIController');
-
-            Route::resource('report_column_template_details', 'ReportColumnTemplateDetailAPIController');
 
             Route::get('deliveryOrderForCustomerInvoice','CustomerInvoiceItemDetailsAPIController@deliveryOrderForCustomerInvoice');
             Route::get('getDeliveryOrderDetailForInvoice','CustomerInvoiceItemDetailsAPIController@getDeliveryOrderDetailForInvoice');

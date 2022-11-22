@@ -96,7 +96,6 @@ Route::group([], function(){
 	Route::resource('chart_of_accounts_assigned', 'ChartOfAccountsAssignedAPIController');
 	Route::resource('chart_of_account', 'ChartOfAccountAPIController');
 	Route::resource('chartOfAccountsReferBack', 'ChartOfAccountsRefferedBackAPIController');
-	Route::resource('report_template_links', 'ReportTemplateLinksAPIController');
 });
 
 //customer 
