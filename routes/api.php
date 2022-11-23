@@ -306,13 +306,13 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('getCustomerByCompany', 'CustomerMasterAPIController@getCustomerByCompany');
 
             /** Bank master Created by Pasan  */
-            Route::resource('bank/masters', 'BankMasterAPIController');
-            Route::post('getAllBankMaster', 'BankMasterAPIController@getAllBankMaster');
-            Route::post('updateBankMaster', 'BankMasterAPIController@updateBankMaster');
-            Route::post('assignedCompaniesByBank', 'BankMasterAPIController@assignedCompaniesByBank');
-            Route::get('getBankMasterFormData', 'BankMasterAPIController@getBankMasterFormData');
-            Route::resource('bank/assign', 'BankAssignAPIController');
-            Route::post('bank/update/assign', 'BankAssignAPIController@updateBankAssingCompany');
+            
+            
+            
+            
+            
+            
+            
 
             /** Unit master Created by Pasan  */
             Route::resource('unit/masters', 'UnitAPIController');
@@ -1630,8 +1630,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::post('getBankMasterByCompany', 'BankAssignAPIController@getBankMasterByCompany');
             Route::post('getAccountsByBank', 'BankAccountAPIController@getAccountsByBank');
-            Route::post('getAllBankAccounts', 'BankAccountAPIController@getAllBankAccounts');
-            Route::post('exportBankAccountMaster', 'BankAccountAPIController@exportBankAccountMaster');
+            
+            
             Route::get('getBankAccountFormData', 'BankAccountAPIController@getBankAccountFormData');
             Route::post('getBankAccountApprovalByUser', 'BankAccountAPIController@getBankAccountApprovalByUser');
             Route::post('getBankAccountApprovedByUser', 'BankAccountAPIController@getBankAccountApprovedByUser');
@@ -2423,12 +2423,12 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('reverseGeneratedChequeNo', 'PdcLogAPIController@reverseGeneratedChequeNo');
             Route::post('issueNewCheque', 'PdcLogAPIController@issueNewCheque');
             Route::get('getNextChequeNo', 'PdcLogAPIController@getNextChequeNo');
-            Route::resource('cheque_template_masters', 'ChequeTemplateMasterAPIController');
-            Route::resource('cheque_template_banks', 'ChequeTemplateBankAPIController');
+            
+            
 
-            Route::post('assignedTemplatesByBank', 'ChequeTemplateBankAPIController@assignedTemplatesByBank');
+            
 
-            Route::post('bank/update/template', 'ChequeTemplateBankAPIController@updateBankAssingTemplate');
+            
 
             Route::get('getBankTemplates/{id}', 'ChequeTemplateBankAPIController@getBankTemplates');
 
