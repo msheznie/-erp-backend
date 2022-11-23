@@ -158,6 +158,7 @@
         </tr>
         @if($data->isFinalLevel == 1)
         @foreach ($data->glCodes as $data2)
+        @if($data->expanded)
         <tr>
             <td></td>
             <td>
@@ -182,6 +183,7 @@
             </td>
             @endforeach
         </tr>
+        @endif
         @endforeach
         @endif
         @if(isset($data->detail))
