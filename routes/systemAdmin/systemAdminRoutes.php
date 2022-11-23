@@ -175,3 +175,23 @@ Route::group([], function() {
     Route::post('getAllAssignedItemsByCompany', 'ItemAssignedAPIController@getAllAssignedItemsByCompany')->name('All assigned item by company');
 });
 
+
+	//Bank Master
+Route::group([], function() {
+	Route::get('getBankMasterFormData', 'BankMasterAPIController@getBankMasterFormData')->name("Get bank master form data");
+
+	Route::post('getAllBankAccounts', 'BankAccountAPIController@getAllBankAccounts')->name("Get all bank accounts");
+	Route::post('exportBankAccountMaster', 'BankAccountAPIController@exportBankAccountMaster')->name("Export bank account master");
+	Route::post('assignedTemplatesByBank', 'ChequeTemplateBankAPIController@assignedTemplatesByBank')->name("Assigned templates by bank");
+	Route::post('bank/update/template', 'ChequeTemplateBankAPIController@updateBankAssingTemplate')->name("Update bank assigned template");
+	Route::post('getAllBankMaster', 'BankMasterAPIController@getAllBankMaster')->name("Get all bank master");
+	Route::post('updateBankMaster', 'BankMasterAPIController@updateBankMaster')->name("Update bank master");
+	Route::post('assignedCompaniesByBank', 'BankMasterAPIController@assignedCompaniesByBank')->name("Assigned companies by bank");
+	Route::post('bank/update/assign', 'BankAssignAPIController@updateBankAssingCompany')->name("Update bank assigned company");
+
+	Route::resource('cheque_template_masters', 'ChequeTemplateMasterAPIController');
+	Route::resource('cheque_template_banks', 'ChequeTemplateBankAPIController');
+	Route::resource('bank/masters', 'BankMasterAPIController', ['names' => 'Bank masters']);
+	Route::resource('bank/assign', 'BankAssignAPIController', ['names' => 'Bank assign']);
+});
+
