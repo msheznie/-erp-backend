@@ -2351,10 +2351,22 @@ WHERE
         $input = $request->all();
         $id = $input['id'];
         $tenderId = $input['tenderMasterId'];
+        $bid_id = $input['bid_id'];
+        if($id == null)
+        {
+            $master_data = null;
+            $bid_master_ids = (array)$bid_id;
+            $submission_master_data = BidSubmissionMaster::where('id',$bid_id)->first();
+        }
+        else
+        {
+            $master_data = BidEvaluationSelection::where('id',$id)->first();
 
-        $master_data = BidEvaluationSelection::where('id',$id)->first();
+            $bid_master_ids = json_decode(BidEvaluationSelection::where('id',$id)->pluck('bids')[0],true);
+            $submission_master_data = null;
+        }
 
-        $bid_master_ids = json_decode(BidEvaluationSelection::where('id',$id)->pluck('bids')[0],true);
+    
 
         $data['bid_submissions'] = BidSubmissionMaster::with('SupplierRegistrationLink')->whereIn('id',$bid_master_ids)->get();
 
@@ -2362,16 +2374,24 @@ WHERE
 
        
         $data['criteriaDetail'] = EvaluationCriteriaDetails::with(['evaluation_criteria_score_config','tender_criteria_answer_type', 'bid_submission_detail1' => function ($q) use ($bid_master_ids) {
-            $q->whereIn('bid_master_id', $bid_master_ids)->orderBy('bid_master_id');
+            $q->whereIn('bid_master_id', $bid_master_ids)->orderBy('bid_master_id')->with(['srm_bid_submission_master'=>function($q){
+                $q->select('id','technical_verify_status');
+            }]);
         }, 'child' => function ($q) use ($bid_master_ids) {
             $q->with(['evaluation_criteria_score_config','tender_criteria_answer_type', 'bid_submission_detail1' => function ($q) use ($bid_master_ids) {
-                $q->whereIn('bid_master_id', $bid_master_ids)->orderBy('bid_master_id');
+                $q->whereIn('bid_master_id', $bid_master_ids)->orderBy('bid_master_id')->with(['srm_bid_submission_master'=>function($q){
+                    $q->select('id','technical_verify_status');
+                }]);
             }, 'child' => function ($q) use ($bid_master_ids) {
                 $q->with(['evaluation_criteria_score_config','tender_criteria_answer_type', 'bid_submission_detail1' => function ($q) use ($bid_master_ids) {
-                    $q->whereIn('bid_master_id', $bid_master_ids)->orderBy('bid_master_id');
+                    $q->whereIn('bid_master_id', $bid_master_ids)->orderBy('bid_master_id')->with(['srm_bid_submission_master'=>function($q){
+                        $q->select('id','technical_verify_status');
+                    }]);
                 }, 'child' => function ($q) use ($bid_master_ids) {
                     $q->with(['evaluation_criteria_score_config','tender_criteria_answer_type', 'bid_submission_detail1' => function ($q) use ($bid_master_ids) {
-                        $q->whereIn('bid_master_id', $bid_master_ids)->orderBy('bid_master_id');
+                        $q->whereIn('bid_master_id', $bid_master_ids)->orderBy('bid_master_id')->with(['srm_bid_submission_master'=>function($q){
+                            $q->select('id','technical_verify_status');
+                        }]);
                     }]);
                 }]);
             }]);
@@ -2405,6 +2425,7 @@ WHERE
         $data['weightage'] = $wight;
         $data['percentage'] = $percentage;
         $data['master_data'] = $master_data;
+        $data['submission_master_data'] = $submission_master_data;
         return $this->sendResponse($data, 'Tender Masters retrieved successfully');
 
     }

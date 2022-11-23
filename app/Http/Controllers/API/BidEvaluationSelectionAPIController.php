@@ -16,6 +16,8 @@ use App\Repositories\BidSubmissionMasterRepository;
 use App\Models\TenderMaster;
 use App\Repositories\TenderMasterRepository;
 use Illuminate\Support\Facades\DB;
+use App\Models\BidSubmissionMaster;
+use Carbon\Carbon;
 /**
  * Class BidEvaluationSelectionController
  * @package App\Http\Controllers\API
@@ -287,25 +289,42 @@ class BidEvaluationSelectionAPIController extends AppBaseController
 
         if($type == 2)
         {
-            $bids_bucket = $this->bidSubmissionMasterRepository
-            ->where('bidSubmittedYN', 1)->where('tender_id', $tender_id)->where('doc_verifiy_status',1)->orderBy('id')->count();
+            // $bids_bucket = $this->bidSubmissionMasterRepository
+            // ->where('bidSubmittedYN', 1)->where('tender_id', $tender_id)->where('doc_verifiy_status',1)->orderBy('id')->count();
 
-            $bids =  (BidEvaluationSelection::where('tender_id',$tender_id)->pluck('bids'));
-            $count = 0;
-            foreach($bids as $bid)
-            {
-                $count += count(json_decode($bid,true));
-            }
+            // $bids =  (BidEvaluationSelection::where('tender_id',$tender_id)->pluck('bids'));
+            // $count = 0;
+            // foreach($bids as $bid)
+            // {
+            //     $count += count(json_decode($bid,true));
+            // }
 
-            $status =  BidEvaluationSelection::where('tender_id',$tender_id)->where('status',0)->count();
+            // $status =  BidEvaluationSelection::where('tender_id',$tender_id)->where('status',0)->count();
 
             
 
-            if(($bids_bucket == $count) && $status == 0)
-            {
-                $update_status['technical_eval_status'] = 1;
-                $this->tenderMasterRepository->update($update_status, $tender_id);
+            // if(($bids_bucket == $count) && $status == 0)
+            // {
+            //     $update_status['technical_eval_status'] = 1;
+            //     $this->tenderMasterRepository->update($update_status, $tender_id);
 
+            // }
+
+            BidSubmissionMaster::where('tender_id', $tender_id)->whereIn('id', $bid_master_ids)->update(
+                ['technical_verify_status'=>1,
+                'technical_verify_by'=>\Helper::getEmployeeSystemID(),
+                'technical_verify_at'=>Carbon::now(),
+                'technical_eval_remarks'=>$input['remarks']]
+            );
+
+           
+
+            $query = BidSubmissionMaster::where('tender_id', $tender_id)->where('technical_verify_status','!=', 1)->where('bidSubmittedYN',1)->where('status',1)->count();
+            if($query == 0)
+            {
+                    $tenderMaster = $this->tenderMasterRepository->findWithoutFail($tender_id);
+                    $tenderMaster->technical_eval_status = 1;;
+                    $tenderMaster->save();
             }
         }
 
@@ -398,6 +417,68 @@ class BidEvaluationSelectionAPIController extends AppBaseController
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->make(true);
+    }
+
+    public function removeBid(Request $request)
+    {
+  
+
+        DB::beginTransaction();
+        try {
+            $input = $request->all();
+            $id = $input['id'];
+            $selection_id = $input['selection_id'];
+            $bid_master_ids = json_decode(BidEvaluationSelection::where('id',$selection_id)->pluck('bids')[0],true);
+    
+            $newArray = array_diff($bid_master_ids, (array)$id);
+    
+            $result = (array_values($newArray));
+    
+            $temp['bids'] =  json_encode($result);
+            $output = BidEvaluationSelection::where('id',$selection_id)->update($temp);
+
+            if ($output) {
+                DB::commit();
+                return ['success' => true, 'message' => 'Successfully deleted', 'data' => $output];
+            }
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($this->failed($e));
+            return ['success' => false, 'message' => $e];
+        }
+
+    }
+
+    public function addBid(Request $request)
+    {
+  
+        
+        DB::beginTransaction();
+        try {
+            $input = $request->all();
+            $bids_details = $input['bids'];
+            $bids = collect($bids_details)->pluck('id')->toArray();
+
+            $selection_id = $input['group_id'];
+            $bid_master_ids = json_decode(BidEvaluationSelection::where('id',$selection_id)->pluck('bids')[0],true);
+            
+
+            $final_array = array_merge($bid_master_ids,$bids);
+
+    
+            $temp['bids'] =  json_encode($final_array);
+            $output = BidEvaluationSelection::where('id',$selection_id)->update($temp);
+
+            if ($output) {
+                DB::commit();
+                return ['success' => true, 'message' => 'Successfully deleted', 'data' => $output];
+            }
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($this->failed($e));
+            return ['success' => false, 'message' => $e];
+        }
+
     }
 
 
