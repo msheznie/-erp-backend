@@ -616,6 +616,14 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
             $input['vatSubCategoryID'] = $validateVATCategories['vatSubCategoryID'];        
         }
 
+        if (isset($input["discountPercentage"]) && $input["discountPercentage"] > 100) {
+            return $this->sendError('Discount Percentage cannot be greater than 100 percentage');
+        }
+
+        if (isset($input["discountAmount"]) && isset($input['salesPrice']) && $input['discountAmount'] > $input['salesPrice']) {
+            return $this->sendError('Discount amount cannot be greater than sales price');
+        }
+
         if ($input['itemUnitOfMeasure'] != $input['unitOfMeasureIssued']) {
             $unitConvention = UnitConversion::where('masterUnitID', $input['itemUnitOfMeasure'])
                 ->where('subUnitID', $input['unitOfMeasureIssued'])
