@@ -499,6 +499,14 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
             }
         }
 
+        if (isset($input["discountPercentage"]) && $input["discountPercentage"] > 100) {
+            return $this->sendError('Discount Percentage cannot be greater than 100 percentage');
+        }
+
+        if (isset($input["discountAmountLine"]) && isset($input['salesPrice']) && $input['discountAmountLine'] > $input['salesPrice']) {
+            return $this->sendError('Discount amount cannot be greater than sales price');
+        }
+
         if ($input['serviceLineSystemID'] != $detail->serviceLineSystemID) {
 
             $serviceLine = SegmentMaster::select('serviceLineSystemID', 'ServiceLineCode')->where('serviceLineSystemID', $input['serviceLineSystemID'])->first();
