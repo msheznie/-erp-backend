@@ -45,7 +45,7 @@
         @foreach ($reportData as $header)
         @if($header->hideHeader == 0)
         <tr>
-            @if($header->itemType == 1 || $header->itemType == 4)
+            @if($header->itemType == 1 || $header->itemType == 4 || $header->itemType == 6)
             <td>
                 <strong>{{$header->detDescription}}</strong>
             </td>
@@ -65,7 +65,7 @@
             <td></td>
             @endforeach
             @endif
-            @if($header->itemType == 3)
+            @if($header->itemType == 3 || $header->itemType == 5)
             <td>
                 <strong>{{$header->detDescription}}</strong>
             </td>
@@ -85,6 +85,15 @@
             @foreach ($columns as $column)
             @if($header->itemType == 3)
             <td style="font-weight: bold;">
+                @if(isset($header->$column))
+                {{round($header->$column, $decimalPlaces)}}
+                @else
+                0
+                @endif
+            </td>
+            @endif
+            @if($header->itemType == 5)
+            <td>
                 @if(isset($header->$column))
                 {{round($header->$column, $decimalPlaces)}}
                 @else
@@ -152,7 +161,17 @@
             <td></td>
             @endif
             @foreach ($columns as $column)
+            @if($data->itemType == 8 || $data->itemType == 7)
+            <td>
+                @if(isset($data->$column))
+                {{round($data->$column, $decimalPlaces)}}
+                @else
+                0
+                @endif
+            </td>
+            @else
             <td></td>
+            @endif
             @endforeach
             @endif
         </tr>
