@@ -712,7 +712,6 @@ class BidSubmissionMasterAPIController extends AppBaseController
     public function SupplierItemWiseExportReport(Request $request)
     {
         $tenderId = $request['tenderMasterId'];
-        $companySystemID = $request['companySystemID'];
         $bidSubmission = $request['bidSubmission'];
         $itemList = $request['itemList'];
 
@@ -784,6 +783,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
 
         $itemListIsEnableFalse = PricingScheduleDetail::select('id', 'label')
             ->where('tender_id', $tenderId)
+            ->whereNotIn('field_type', [3,4])
             ->where('is_disabled', 0)
             ->get()
             ->toArray();
@@ -813,8 +813,8 @@ class BidSubmissionMasterAPIController extends AppBaseController
 
         $queryResult = PricingScheduleMaster::with(['tender_master.srm_bid_submission_master' => function ($q) use ($bidMasterId, $notBoqitems) {
             $q->with('SupplierRegistrationLink')->whereIn('id', $bidMasterId);
-        }, 'bid_schedules.SupplierRegistrationLink', 'pricing_shedule_details' => function ($q) use ($bidMasterId, $notBoqitems, $boqItems) {
-            $q->with('tender_boq_items')->where('is_disabled', 0);
+        }, 'bid_schedules.SupplierRegistrationLink', 'pricing_shedule_details' => function ($q) use ($bidMasterId, $notBoqitems) {
+            $q->with('tender_boq_items')->where('is_disabled', 0)->whereNotIn('field_type', [3,4]);
                 if(sizeof($notBoqitems) > 0 ){
                     $q->whereIn('id', $notBoqitems);
                 }
