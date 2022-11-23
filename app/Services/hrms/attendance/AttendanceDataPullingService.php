@@ -287,9 +287,12 @@ class AttendanceDataPullingService{
             $obj->execute();
             
 
+            $flexibleHourFrom = (empty($obj->flexibleHourFrom))? NULL: $obj->flexibleHourFrom;
+            $flexibleHourTo = (empty($obj->flexibleHourTo))? NULL: $obj->flexibleHourTo;
             $shiftHours = ($row['shiftType'] == 1)? $row['workingHour']: $obj->shiftHours;
             $shiftHours = (empty($shiftHours))? 0: $shiftHours;
             $shiftId = (empty($row['shiftID']))? 0: $row['shiftID'];
+
            
              $this->data[] = [ 
                 'empID'=> $empId, 'deviceID'=> $row['device_id_in'], 'machineID'=> $row['machine_id_in'],
@@ -315,7 +318,7 @@ class AttendanceDataPullingService{
                 
                 'mustCheck'=> $row['isCheckInMust'],                
                 'isMultipleOcc'=> $this->moreThan2RecordsExists($empId),
-                'flexyHrFrom'=> $obj->flexibleHourFrom, 'flexyHrTo'=> $obj->flexibleHourTo,
+                'flexyHrFrom'=> $flexibleHourFrom, 'flexyHrTo'=> $flexibleHourTo,
                 'companyID'=> $this->companyId, 'companyCode'=> $companyCode, 'uploadType'=> $row['upload_type'],
                 'pulled_by'=> 0, 'pulled_at'=> $this->dateTime, 'pulled_via'=> $this->pulledVia,'actual_time' => $obj->totalWorkingHours, 
                 'official_work_time' =>   $obj->officialWorkTime
