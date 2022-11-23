@@ -2924,8 +2924,11 @@ srp_erp_ioubookingmaster.approvedYN = 1
                 $documentCode = $val['documentCode'];
                 $referenceDoc = $val['referenceDoc'];
                 $referenceDocDate = \Carbon\Carbon::parse($val['referenceDocDate'])->format("d/m/Y");
-                $refLocalAmount = DB::table('srp_erp_ioubookingmaster')->where('approvedYN',1)->where('bookingCode',$referenceDoc)->first()->companyLocalAmount;
-                $refRptAmount = DB::table('srp_erp_ioubookingmaster')->where('approvedYN',1)->where('bookingCode',$referenceDoc)->first()->companyReportingAmount;
+                $refLocalAmount = DB::table('srp_erp_ioubookingmaster')->where('approvedYN',1)->where('bookingCode',$referenceDoc)->first();
+                $refLocalAmount = isset($refLocalAmount->companyLocalAmount) ? $refLocalAmount->companyLocalAmount : 0;
+
+                $refRptAmount = DB::table('srp_erp_ioubookingmaster')->where('approvedYN',1)->where('bookingCode',$referenceDoc)->first();
+                $refRptAmount = isset($refRptAmount->companyReportingAmount) ? $refRptAmount->companyReportingAmount : 0;
 
                 foreach ($data as $da) {
                     if ($da->documentCode == $documentCode) {
