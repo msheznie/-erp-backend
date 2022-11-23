@@ -227,7 +227,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
     {
         $input = $request->all();
         
-       
+        
             
         /** @var BidSubmissionMaster $bidSubmissionMaster */
         $bidSubmissionMaster = $this->bidSubmissionMasterRepository->findWithoutFail($id);
@@ -265,9 +265,20 @@ class BidSubmissionMasterAPIController extends AppBaseController
         
                 $bidSubmissionMaster = $this->bidSubmissionMasterRepository->update($input, $id);
         
-        
-                $query = BidSubmissionMaster::where('tender_id', $tender_id)->where('commercial_verify_status','!=', 1)->where('bidSubmittedYN',1)->where('status',1)->count();
-                if($query == 0)
+                //$query = BidSubmissionMaster::where('tender_id', $tender_id)->where('commercial_verify_status','!=', 1)->where('bidSubmittedYN',1)->where('status',1)->count();
+
+                $query = BidSubmissionMaster::selectRaw("SUM((srm_bid_submission_detail.eval_result/100)*srm_tender_master.technical_weightage) as weightage,srm_bid_submission_master.id,srm_bid_submission_master.bidSubmittedDatetime,srm_bid_submission_master.tender_id,srm_supplier_registration_link.name,srm_tender_master.technical_passing_weightage as passing_weightage,srm_bid_submission_detail.id as bid_id,srm_bid_submission_master.commercial_verify_status")
+                ->join('srm_supplier_registration_link', 'srm_supplier_registration_link.id', '=', 'srm_bid_submission_master.supplier_registration_id')
+                ->join('srm_tender_master', 'srm_tender_master.id', '=', 'srm_bid_submission_master.tender_id')
+                ->join('srm_bid_submission_detail', 'srm_bid_submission_detail.bid_master_id', '=', 'srm_bid_submission_master.id')
+                ->join('srm_evaluation_criteria_details', 'srm_evaluation_criteria_details.id', '=', 'srm_bid_submission_detail.evaluation_detail_id')
+                ->havingRaw('weightage >= passing_weightage')
+                ->groupBy('srm_bid_submission_master.id')
+                ->where('srm_evaluation_criteria_details.critera_type_id', 2)->where('srm_bid_submission_master.commercial_verify_status','!=', 1)->where('srm_bid_submission_master.status', 1)->where('srm_bid_submission_master.bidSubmittedYN', 1)->where('srm_bid_submission_master.tender_id', $tender_id)
+                ->get();
+                $count = count($query);
+
+                if($count == 0)
                 {
                         $tenderMaster = $this->tenderMasterRepository->findWithoutFail($tender_id);
                         $tenderMaster->commercial_verify_status = 1;
