@@ -782,24 +782,13 @@ class BidSubmissionMasterAPIController extends AppBaseController
             ->orderBy('srm_bid_submission_master.id', 'desc')
             ->get();
 
-        $itemListIsEnableFalse = PricingScheduleDetail::select([DB::raw("CONCAT('NOT_BOQ_', id) AS ID"), 'label'])
+        $itemListIsEnableFalse = PricingScheduleDetail::select('id', 'label')
             ->where('tender_id', $tenderId)
-            ->where('boq_applicable', 0)
             ->where('is_disabled', 0)
             ->get()
             ->toArray();
 
-        $itemListBoq = PricingScheduleDetail::select(['srm_tender_boq_items.id as ID', 'srm_tender_boq_items.item_name as label'])
-            ->join('srm_tender_boq_items', 'srm_tender_boq_items.main_work_id', '=', 'srm_pricing_schedule_detail.id')
-            ->where('tender_id', $tenderId)
-            ->where('boq_applicable', 1)
-            ->orderBy('srm_pricing_schedule_detail.id', 'asc')
-            ->get()
-            ->toArray();
-
-        $itemListArrayResult = array_merge($itemListIsEnableFalse, $itemListBoq);
-
-        return $this->sendResponse(['supplierList'=> $queryResult, 'itemList' => $itemListArrayResult], 'Data retrieved successfully');
+        return $this->sendResponse(['supplierList'=> $queryResult, 'itemList' => $itemListIsEnableFalse], 'Data retrieved successfully');
     }
 
     public function generateSupplierItemReportTableView(Request $request)
@@ -816,35 +805,25 @@ class BidSubmissionMasterAPIController extends AppBaseController
         }
 
         $notBoqitems = [];
-        $boqItems = [];
         if(isset($itemList)){
             foreach ($itemList as $item){
-                $id = explode("_", $item['id']);
-                if(sizeof($id) === 3){
-                    $notBoqitems[] = $id[2];
-                } elseif (sizeof($id) === 1){
-                    $boqItems[] = $id[0];
-                }
+                $notBoqitems[] = $item['id'];
             }
         }
 
-        $queryResult = PricingScheduleMaster::with(['tender_master.srm_bid_submission_master' => function ($q) use ($bidMasterId, $boqItems, $notBoqitems) {
+        $queryResult = PricingScheduleMaster::with(['tender_master.srm_bid_submission_master' => function ($q) use ($bidMasterId, $notBoqitems) {
             $q->with('SupplierRegistrationLink')->whereIn('id', $bidMasterId);
         }, 'bid_schedules.SupplierRegistrationLink', 'pricing_shedule_details' => function ($q) use ($bidMasterId, $notBoqitems, $boqItems) {
-            $q->with('tender_boq_items')->where('boq_applicable', 1)
-                ->orWhere('is_disabled', 0);
-                if(sizeof($boqItems) > 0 ||sizeof($notBoqitems) > 0){
+            $q->with('tender_boq_items')->where('is_disabled', 0);
+                if(sizeof($notBoqitems) > 0 ){
                     $q->whereIn('id', $notBoqitems);
                 }
-            $q->with(['bid_main_work' => function ($q) use ($bidMasterId, $boqItems, $notBoqitems) {
+            $q->with(['bid_main_work' => function ($q) use ($bidMasterId, $notBoqitems) {
                 $q->with('tender_boq_items')->whereIn('bid_master_id', $bidMasterId);
-            },'tender_boq_items' => function ($q) use ($bidMasterId, $boqItems, $notBoqitems) {
+            },'tender_boq_items' => function ($q) use ($bidMasterId, $notBoqitems) {
                 $q->with(['bid_boq' => function ($q) use ($bidMasterId) {
                     $q->whereIn('bid_master_id', $bidMasterId);
                 }]);
-                if(sizeof($boqItems) > 0 || sizeof($notBoqitems) > 0){
-                    $q->whereIn('id', $boqItems);
-                }
             }]);
         }])->where('tender_id', $tenderId)->get();
 
