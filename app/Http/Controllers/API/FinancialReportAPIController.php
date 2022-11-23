@@ -6111,7 +6111,7 @@ ORDER BY
         return $output;
     }
 
-    function getCustomizeFinancialDetailTOTQry($request, $linkedcolumnQry, $financeYear, $period, $columnKeys, $budgetQuery, $budgetWhereQuery, $changeSelect, , $eliminationWhereQuery, $eliminationQuery, $cominedColumnKey)
+    function getCustomizeFinancialDetailTOTQry($request, $linkedcolumnQry, $financeYear, $period, $columnKeys, $budgetQuery, $budgetWhereQuery, $changeSelect, $eliminationWhereQuery, $eliminationQuery, $cominedColumnKey)
     {
         if ($request->dateType == 1) {
             $toDate = new Carbon($request->toDate);
