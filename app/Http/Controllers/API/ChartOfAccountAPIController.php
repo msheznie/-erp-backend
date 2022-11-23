@@ -101,6 +101,10 @@ class ChartOfAccountAPIController extends AppBaseController
             return $this->sendError("Report template category cannot be empty", 500);
         }
 
+        if($input['AccountDescription'] == null){
+            return $this->sendError(trans('custom.account_description_cannot_be_empty'),500);
+        }
+
         $messages = array(
             'AccountCode.unique' => 'Account code ' . $accountCode . ' already exists'
         );
@@ -407,6 +411,7 @@ class ChartOfAccountAPIController extends AppBaseController
                 $input['createdPcID'] = gethostname();
                 $input['createdUserID'] = $empId;
 
+    
                 $chartOfAccount = $this->chartOfAccountRepository->create($input);
 
                 DocumentCodeGenerate::updateChartOfAccountSerailNumber($input['reportTemplateCategory']);
@@ -419,6 +424,22 @@ class ChartOfAccountAPIController extends AppBaseController
             return $this->sendError($exception->getMessage() . " Line" . $exception->getLine(), 500);
         }
 
+
+    }
+
+    public function changeActive(Request $request){
+
+        $chartOfAccountID = $request->chartOfAccountSystemID;
+        $selectedCompanyId = $request->selectedCompanyId;
+
+        $generalLedger = GeneralLedger::where('chartOfAccountSystemID', $chartOfAccountID)->where('companySystemID',$selectedCompanyId)->first();
+
+        if($generalLedger){
+            return $this->sendError(trans('custom.chart_of_account_has_a_balance_in_gl'),500);
+        }
+
+
+        return $this->sendResponse($generalLedger, 'General Ledger Have No Balance');
 
     }
 
@@ -700,6 +721,10 @@ class ChartOfAccountAPIController extends AppBaseController
         if ($isEmployeeDischarched == 'true') {
             $chartOfAccount = [];
         }
+        $data['order'] = [];
+        $data['search']['value'] = '';
+        $request->merge($data);
+
 
         return \DataTables::of($chartOfAccount)
             ->order(function ($query) use ($input) {

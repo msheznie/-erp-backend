@@ -179,7 +179,8 @@ class GRVDetails extends Model
         'timeStamp',
         'vatMasterCategoryID',
         'vatSubCategoryID',
-        'binNumber'
+        'binNumber',
+        'detail_project_id'
     ];
 
     /**
@@ -266,7 +267,8 @@ class GRVDetails extends Model
         'createdPcID' => 'string',
         'createdUserID' => 'string',
         'modifiedPc' => 'string',
-        'modifiedUser' => 'string'
+        'modifiedUser' => 'string',
+        'detail_project_id' => 'integer'
     ];
 
     /**

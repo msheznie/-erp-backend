@@ -180,6 +180,7 @@ class DirectInvoiceDetails extends Model
         'deductionType',
         'netAmountLocal',
         'netAmountRpt',
+        'detail_project_id'
     ];
 
     /**
@@ -221,7 +222,8 @@ class DirectInvoiceDetails extends Model
         'VATAmountRpt' => 'float',
         'netAmount' => 'float',
         'netAmountLocal' => 'float',
-        'netAmountRpt' => 'float'
+        'netAmountRpt' => 'float',
+        'detail_project_id' => 'integer'
     ];
 
     /**

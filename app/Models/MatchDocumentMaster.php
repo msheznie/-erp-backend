@@ -371,6 +371,8 @@ class MatchDocumentMaster extends Model
         'matchLocalAmount',
         'matchRptAmount',
         'matchingType',
+        'tableType',
+        'serviceLineSystemID',
         'matchingOption',
         'isExchangematch',
         'createdUserSystemID',
@@ -381,7 +383,11 @@ class MatchDocumentMaster extends Model
         'modifiedUser',
         'modifiedPc',
         'createdDateTime',
-        'timestamp'
+        'timestamp',
+        'user_type',
+        'employee_id',
+        'employeeGLCodeSystemID',
+        'employeeGLCode'
     ];
 
     /**
@@ -466,6 +472,10 @@ class MatchDocumentMaster extends Model
         return $this->belongsTo(CustomerReceivePayment::class, 'PayMasterAutoId', 'custReceivePaymentAutoID');
     }
 
+    public function segment(){
+        return $this->belongsTo('App\Models\SegmentMaster','serviceLineSystemID','serviceLineSystemID');
+    }
+
     public function created_by()
     {
         return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
@@ -489,6 +499,11 @@ class MatchDocumentMaster extends Model
     public function supplier()
     {
         return $this->belongsTo('App\Models\SupplierMaster', 'BPVsupplierID', 'supplierCodeSystem');
+    }
+
+    public function employee()
+    {
+        return $this->belongsTo('App\Models\Employee', 'employee_id', 'employeeSystemID');
     }
 
     public function customer()

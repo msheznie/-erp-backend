@@ -339,6 +339,10 @@ class ItemBatchAPIController extends AppBaseController
     {
         $input = $request->all();
 
+        if(!isset($input['warehouse'])) {
+            return $this->sendError("Warehouse not selected");
+        }
+
         $itemSerials = ItemBatch::where('itemSystemCode', $input['itemSystemCode'])
                                  ->when($input['documentSystemID'] == 13, function($query) use ($input){
                                     $query->where(function($query) use ($input) {
@@ -770,6 +774,7 @@ class ItemBatchAPIController extends AppBaseController
 
         $warehouseFrom = "";
         $warehouseTo = "";
+
 
         if (isset($input['warehouse']) && $input['warehouse'] > 0) {
             $warehouse = WarehouseMaster::find($input['warehouse']);

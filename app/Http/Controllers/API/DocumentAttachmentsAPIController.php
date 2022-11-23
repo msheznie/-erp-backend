@@ -34,7 +34,10 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Symfony\Component\Finder\SplFileInfo;
 use App\helper\Helper;
-
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use App\Models\BidDocumentVerification;
+use App\Models\BidSubmissionMaster;
 /**
  * Class DocumentAttachmentsController
  * @package App\Http\Controllers\API
@@ -151,85 +154,91 @@ class DocumentAttachmentsAPIController extends AppBaseController
      */
     public function store(CreateDocumentAttachmentsAPIRequest $request)
     {
+        DB::beginTransaction();
+        try {
 
-        $input = $request->all();
-        $extension = $input['fileType'];
+            $input = $request->all();
+            $extension = $input['fileType'];
 
-        $blockExtensions = [
-            'ace', 'ade', 'adp', 'ani', 'app', 'asp', 'aspx', 'asx', 'bas', 'bat', 'cla', 'cer', 'chm', 'cmd', 'cnt', 'com',
-            'cpl', 'crt', 'csh', 'class', 'der', 'docm', 'exe', 'fxp', 'gadget', 'hlp', 'hpj', 'hta', 'htc', 'inf', 'ins', 'isp', 'its', 'jar',
-            'js', 'jse', 'ksh', 'lnk', 'mad', 'maf', 'mag', 'mam', 'maq', 'mar', 'mas', 'mat', 'mau', 'mav', 'maw', 'mda', 'mdb', 'mde', 'mdt',
-            'mdw', 'mdz', 'mht', 'mhtml', 'msc', 'msh', 'msh1', 'msh1xml', 'msh2', 'msh2xml', 'mshxml', 'msi', 'msp', 'mst', 'ops', 'osd',
-            'ocx', 'pl', 'pcd', 'pif', 'plg', 'prf', 'prg', 'ps1', 'ps1xml', 'ps2', 'ps2xml', 'psc1', 'psc2', 'pst', 'reg', 'scf', 'scr',
-            'sct', 'shb', 'shs', 'tmp', 'url', 'vb', 'vbe', 'vbp', 'vbs', 'vsmacros', 'vss', 'vst', 'vsw', 'ws', 'wsc', 'wsf', 'wsh', 'xml',
-            'xbap', 'xnk', 'php'
-        ];
+            $blockExtensions = [
+                'ace', 'ade', 'adp', 'ani', 'app', 'asp', 'aspx', 'asx', 'bas', 'bat', 'cla', 'cer', 'chm', 'cmd', 'cnt', 'com',
+                'cpl', 'crt', 'csh', 'class', 'der', 'docm', 'exe', 'fxp', 'gadget', 'hlp', 'hpj', 'hta', 'htc', 'inf', 'ins', 'isp', 'its', 'jar',
+                'js', 'jse', 'ksh', 'lnk', 'mad', 'maf', 'mag', 'mam', 'maq', 'mar', 'mas', 'mat', 'mau', 'mav', 'maw', 'mda', 'mdb', 'mde', 'mdt',
+                'mdw', 'mdz', 'mht', 'mhtml', 'msc', 'msh', 'msh1', 'msh1xml', 'msh2', 'msh2xml', 'mshxml', 'msi', 'msp', 'mst', 'ops', 'osd',
+                'ocx', 'pl', 'pcd', 'pif', 'plg', 'prf', 'prg', 'ps1', 'ps1xml', 'ps2', 'ps2xml', 'psc1', 'psc2', 'pst', 'reg', 'scf', 'scr',
+                'sct', 'shb', 'shs', 'tmp', 'url', 'vb', 'vbe', 'vbp', 'vbs', 'vsmacros', 'vss', 'vst', 'vsw', 'ws', 'wsc', 'wsf', 'wsh', 'xml',
+                'xbap', 'xnk', 'php'
+            ];
 
-        if (in_array($extension, $blockExtensions)) {
-            return $this->sendError('This type of file not allow to upload.', 500);
-        }
-
-
-        if (isset($input['size'])) {
-            if ($input['size'] > env('ATTACH_UPLOAD_SIZE_LIMIT')) {
-                return $this->sendError("Maximum allowed file size is exceeded. Please upload lesser than ".\Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT')), 500);
+            if (in_array($extension, $blockExtensions)) {
+                return $this->sendError('This type of file not allow to upload.', 500);
             }
-        }
 
-        if (isset($input['docExpirtyDate'])) {
-            if ($input['docExpirtyDate']) {
-                $input['docExpirtyDate'] = new Carbon($input['docExpirtyDate']);
+
+            if (isset($input['size'])) {
+                if ($input['size'] > env('ATTACH_UPLOAD_SIZE_LIMIT')) {
+                    return $this->sendError("Maximum allowed file size is exceeded. Please upload lesser than ".\Helper::bytesToHuman(env('ATTACH_UPLOAD_SIZE_LIMIT')), 500);
+                }
             }
-        }
 
-        $input = $this->convertArrayToValue($input);
-
-        if (isset($input['documentSystemID'])) {
-
-            $documentMaster = DocumentMaster::where('documentSystemID', $input['documentSystemID'])->first();
-
-            if ($documentMaster) {
-                $input['documentID'] = $documentMaster->documentID;
+            if (isset($input['docExpirtyDate'])) {
+                if ($input['docExpirtyDate']) {
+                    $input['docExpirtyDate'] = new Carbon($input['docExpirtyDate']);
+                }
             }
-        }
+            $input = $this->convertArrayToValue($input);
+            if (isset($input['documentSystemID'])) {
 
-        $companyID = "";
-        if (isset($input['companySystemID'])) {
-
-            $companyMaster = Company::where('companySystemID', $input['companySystemID'])->first();
-
-            if ($companyMaster) {
-                $input['companyID'] = $companyMaster->CompanyID;
-                $companyID = $companyMaster->CompanyID;
+                $documentMaster = DocumentMaster::where('documentSystemID', $input['documentSystemID'])->first();
+                if ($documentMaster) {
+                    $input['documentID'] = $documentMaster->documentID;
+                }
             }
+
+            $companyID = "";
+            if (isset($input['companySystemID'])) {
+
+                $companyMaster = Company::where('companySystemID', $input['companySystemID'])->first();
+
+                if ($companyMaster) {
+                    $input['companyID'] = $companyMaster->CompanyID;
+                    $companyID = $companyMaster->CompanyID;
+                }
+            }
+
+
+            $documentAttachments = $this->documentAttachmentsRepository->create($input);
+
+            $file = $request->request->get('file');
+            $decodeFile = base64_decode($file);
+
+            $input['myFileName'] = $documentAttachments->companyID . '_' . $documentAttachments->documentID . '_' . $documentAttachments->documentSystemCode . '_' . $documentAttachments->attachmentID . '.' . $extension;
+
+            if ($documentAttachments->documentID == 'PRN') {
+                $documentAttachments->documentID =  $documentAttachments->documentID . 'I';
+            }
+
+
+            if (Helper::checkPolicy($input['companySystemID'], 50)) {
+                $path = $companyID . '/G_ERP/' . $documentAttachments->documentID . '/' . $documentAttachments->documentSystemCode . '/' . $input['myFileName'];
+            } else {
+                $path = $documentAttachments->documentID . '/' . $documentAttachments->documentSystemCode . '/' . $input['myFileName'];
+            }
+
+            Storage::disk(Helper::policyWiseDisk($input['companySystemID'], 'public'))->put($path, $decodeFile);
+
+            $input['isUploaded'] = 1;
+            $input['path'] = $path;
+
+            $documentAttachments = $this->documentAttachmentsRepository->update($input, $documentAttachments->attachmentID);
+            
+
+            DB::commit();
+            return $this->sendResponse($documentAttachments->toArray(), 'Document Attachments saved successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError('Unable to upload the attachment', 500);
         }
-
-        $documentAttachments = $this->documentAttachmentsRepository->create($input);
-
-        $file = $request->request->get('file');
-        $decodeFile = base64_decode($file);
-
-        $input['myFileName'] = $documentAttachments->companyID . '_' . $documentAttachments->documentID . '_' . $documentAttachments->documentSystemCode . '_' . $documentAttachments->attachmentID . '.' . $extension;
-
-        if ($documentAttachments->documentID == 'PRN') {
-            $documentAttachments->documentID =  $documentAttachments->documentID . 'I';
-        }
-
-
-        if (Helper::checkPolicy($input['companySystemID'], 50)) {
-            $path = $companyID . '/G_ERP/' . $documentAttachments->documentID . '/' . $documentAttachments->documentSystemCode . '/' . $input['myFileName'];
-        } else {
-            $path = $documentAttachments->documentID . '/' . $documentAttachments->documentSystemCode . '/' . $input['myFileName'];
-        }
-
-        Storage::disk(Helper::policyWiseDisk($input['companySystemID'], 'public'))->put($path, $decodeFile);
-
-        $input['isUploaded'] = 1;
-        $input['path'] = $path;
-
-        $documentAttachments = $this->documentAttachmentsRepository->update($input, $documentAttachments->attachmentID);
-
-        return $this->sendResponse($documentAttachments->toArray(), 'Document Attachments saved successfully');
     }
 
     /**
@@ -264,25 +273,43 @@ class DocumentAttachmentsAPIController extends AppBaseController
     public function update($id, UpdateDocumentAttachmentsAPIRequest $request)
     {
         $input = $request->all();
+        $attachmentType = $input['attachmentType'];
+        $attachmentDescription = $input['attachmentDescription'];
+        $companySystemID = $input['companySystemID'];
+        $documentSystemID = $input['documentSystemID'];
+        $documentSystemCode = $input['documentSystemCode'];
 
-        if (isset($input['docExpirtyDate'])) {
-            if ($input['docExpirtyDate']) {
-                $input['docExpirtyDate'] = new Carbon($input['docExpirtyDate']);
+        //Update check
+        $isExist = DocumentAttachments::where('companySystemID',$companySystemID)
+            ->where('attachmentID', '!=', $id)
+            ->where('documentSystemID',$documentSystemID)
+            ->where('attachmentType',$attachmentType)
+            ->where('documentSystemCode',$documentSystemCode)
+            ->where('attachmentDescription',$attachmentDescription)
+            ->count();
+
+        if($isExist >= 1){
+            return $this->sendError('Description already exists', 400);
+        } else {
+            if (isset($input['docExpirtyDate'])) {
+                if ($input['docExpirtyDate']) {
+                    $input['docExpirtyDate'] = new Carbon($input['docExpirtyDate']);
+                }
             }
+
+            $input = $this->convertArrayToValue($input);
+
+            /** @var DocumentAttachments $documentAttachments */
+            $documentAttachments = $this->documentAttachmentsRepository->findWithoutFail($id);
+
+            if (empty($documentAttachments)) {
+                return $this->sendError('Document Attachments not found');
+            }
+
+            $documentAttachments = $this->documentAttachmentsRepository->update($input, $id);
+
+            return $this->sendResponse($documentAttachments->toArray(), 'DocumentAttachments updated successfully');
         }
-
-        $input = $this->convertArrayToValue($input);
-
-        /** @var DocumentAttachments $documentAttachments */
-        $documentAttachments = $this->documentAttachmentsRepository->findWithoutFail($id);
-
-        if (empty($documentAttachments)) {
-            return $this->sendError('Document Attachments not found');
-        }
-
-        $documentAttachments = $this->documentAttachmentsRepository->update($input, $id);
-
-        return $this->sendResponse($documentAttachments->toArray(), 'DocumentAttachments updated successfully');
     }
 
     /**
@@ -329,6 +356,20 @@ class DocumentAttachmentsAPIController extends AppBaseController
             $documentAttachments->delete();
         }
 
+        if($documentAttachments['attachmentType'] === 3){
+            $exitingAmendmentRecords =  DocumentAttachments::where('companySystemID',$documentAttachments['companySystemID'])
+                ->where('documentSystemID', $documentAttachments['documentSystemID'])
+                ->where('attachmentType', $documentAttachments['attachmentType'])
+                ->where('documentSystemCode', $documentAttachments['documentSystemCode'])
+                ->orderBy('attachmentID', 'asc')
+                ->get();
+            $i = 1;
+            foreach ($exitingAmendmentRecords as $exitingAmendmentRecord){
+                $request['order_number'] = $i;
+                DocumentAttachments::where('attachmentID', $exitingAmendmentRecord['attachmentID'])->update(['order_number' => $i]);
+                $i++;
+            }
+        }
         return $this->sendResponse($id, 'Document Attachments deleted successfully');
     }
 
@@ -585,9 +626,9 @@ class DocumentAttachmentsAPIController extends AppBaseController
                 'contract_details'=>function($query){
                     $query->select('purchaseRequestID','purchaseRequestCode','companySystemID','documentSystemID');
                 },*/
-                'mobile_bill' => function ($query) {
+               /* 'mobile_bill' => function ($query) {
                     $query->select('mobilebillMasterID', 'mobilebillmasterCode', 'documentSystemID');
-                },
+                },*/
                 /*'proforma'=>function($query){
                     $query->select('purchaseRequestID','purchaseRequestCode','companySystemID','documentSystemID');
                 },*/
@@ -971,4 +1012,249 @@ class DocumentAttachmentsAPIController extends AppBaseController
             return $this->sendError('Attachment is not attached', 404);
         }
     }
+    public function storeTenderDocuments(CreateDocumentAttachmentsAPIRequest $request){
+        $input = $request->all();
+        $attachmentType = $input['attachmentType'];
+        $attachmentDescription = $input['attachmentDescription'];
+        $companySystemID = $input['companySystemID'];
+        $documentSystemID = $input['documentSystemID'];
+        $documentSystemCode = $input['documentSystemCode'];
+
+        $isExist = DocumentAttachments::where('companySystemID',$companySystemID)
+        ->where('documentSystemID',$documentSystemID)
+        ->where('attachmentType',$attachmentType)
+        ->where('documentSystemCode',$documentSystemCode)
+        ->where('attachmentDescription',$attachmentDescription)
+        ->count(); 
+        if($isExist >= 1){ 
+           return ['status' => false, 'message' => 'Description already exists'];  
+        }else {
+            $i = 1;
+            if($input['attachmentType'] == 3){
+               $exitingAmendmentRecords =  DocumentAttachments::where('companySystemID',$companySystemID)
+                    ->where('documentSystemID',$documentSystemID)
+                    ->where('attachmentType',$attachmentType)
+                    ->where('documentSystemCode',$documentSystemCode)
+                    ->orderBy('attachmentID', 'asc')
+                    ->get();
+
+               foreach ($exitingAmendmentRecords as $exitingAmendmentRecord){
+                   $request['order_number'] = $i;
+                   DocumentAttachments::where('attachmentID', $exitingAmendmentRecord['attachmentID'])->update(['order_number' => $i]);
+                   $i++;
+               }
+                $request['order_number'] = $i;
+                return self::store($request);
+            } else {
+                return self::store($request);
+            }
+        } 
+      
+    }
+
+
+
+    public function getTenderBitsDoc(Request $request)
+    {
+       
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+        $sort = 'asc';
+        $id = $request['id'];
+        $tenderId = $request['tenderId'];
+
+
+
+        
+        $query = DocumentAttachments::with('bid_verify')->where('documentSystemCode', $id)->where('documentSystemID', 108)->where('attachmentType',0)->where('envelopType',3);
+
+       // return $this->sendResponse($query, 'Tender Masters retrieved successfully');
+
+        $search = $request->input('search.value');
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $query = $query->where(function ($query) use ($search) {
+                    $query->where('originalFileName', 'like', "%{$search}%");
+            });
+        }
+
+
+        return \DataTables::eloquent($query)
+            ->order(function ($query) use ($input,$sort) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('attachmentID', $sort);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+
+    public function getConsolidatedDataAttachment(Request $request)
+    {
+        $input = $request->all();
+
+        $details = $input['extraParams'];
+
+        $attachmentId = $details['attachmentId'];
+
+       // return $this->sendResponse($details['tenderId'], 'Consolidated view data Successfully get');
+
+
+        $attachment = DocumentAttachments::where('attachmentID', $attachmentId)
+            ->where('documentSystemID', 108)
+            ->first();
+
+        $data['attachmentPath'] = Helper::getFileUrlFromS3($attachment['path']);
+        $data['extension'] = strtolower(pathinfo($attachment['path'], PATHINFO_EXTENSION));
+
+        return $this->sendResponse($data, 'Consolidated view data Successfully get');
+ 
+    }
+
+
+
+        public function tenderBIdDocApproveal(Request $request)
+        {
+            
+            
+            $input = $request->all();
+            $id = $input['id'];
+            $comments = $input['comments'];
+            $val = $input['data']['value'];
+            $verify_id = $input['verify_id'];
+            $bid_sub_id = $input['bid_sub_id'];
+    
+            DB::beginTransaction();
+            try {
+                $data['status'] = $val;
+                $data['remarks'] = $comments;
+                $data['verified_by'] = \Helper::getEmployeeSystemID();
+                $data['verified_date'] =  date('Y-m-d H:i:s');
+                
+                $results = BidDocumentVerification::where('id',$verify_id)->update($data,$verify_id);
+
+
+                $bid_verify = BidDocumentVerification::where('bis_submission_master_id',$bid_sub_id)->where('status',0)->count();
+                if($bid_verify == 0)
+                {   
+
+                    $bid_sub_data['doc_verifiy_yn'] = 1;
+                    $bid_sub_data['doc_verifiy_by_emp'] = \Helper::getEmployeeSystemID();
+                    $bid_sub_data['doc_verifiy_date'] =  date('Y-m-d H:i:s');
+
+                    $results = BidSubmissionMaster::where('id',$bid_sub_id)->update($bid_sub_data,$bid_sub_id);
+                }
+
+      
+
+        
+                DB::commit();
+                return ['success' => true, 'message' => 'Successfully updated', 'data' => $results];
+            } catch (\Exception $e) {
+                DB::rollback();
+                Log::error($this->failed($e));
+                return ['success' => false, 'message' => $e];
+            }
+        }
+
+
+        public function tenderBIdDocTypeApproveal(Request $request)
+        {
+          
+           
+            $input = $request->all();
+            $id = $input['id'];
+           // $comments = $input['comments'];
+            $val = $input['data']['value'];
+            $verify_id = $input['verify_id'];
+            
+            DB::beginTransaction();
+            try {
+                $data['document_submit_type'] = $val;
+              //  $data['submit_remarks'] = $comments;
+                
+                $results = BidDocumentVerification::where('id',$verify_id)->update($data,$verify_id);
+        
+                DB::commit();
+                return ['success' => true, 'message' => 'Successfully updated', 'data' => $results];
+            } catch (\Exception $e) {
+                DB::rollback();
+                Log::error($this->failed($e));
+                return ['success' => false, 'message' => $e];
+            }
+        }
+
+
+        
+        public function tenderBIdDocSubmission(Request $request)
+        {
+          
+            $input = $request->all();
+            $id = $input['bid_id'];
+            $comments = $input['comments'];
+            $val = $input['type'];
+            
+            DB::beginTransaction();
+            try {
+                
+                $bid_sub_data['doc_verifiy_by_emp'] = \Helper::getEmployeeSystemID();
+                $bid_sub_data['doc_verifiy_date'] =  date('Y-m-d H:i:s');
+                $bid_sub_data['doc_verifiy_status'] = $val;
+                $bid_sub_data['doc_verifiy_comment'] = $comments;
+
+                $results = BidSubmissionMaster::where('id',$id)->update($bid_sub_data,$id);
+        
+                DB::commit();
+                return ['success' => true, 'message' => 'Successfully updated', 'data' => $results];
+            } catch (\Exception $e) {
+                DB::rollback();
+                Log::error($this->failed($e));
+                return ['success' => false, 'message' => $e];
+            }
+        }
+
+
+        public function checkTenderBidDocExist(Request $request)
+        {
+            $input = $request->all();
+            $details = $input['extraParams'];
+            $tender_id = $details['tenderId'];
+            $id = $details['id'];
+      
+            DB::beginTransaction();
+            try {
+                
+     
+
+                $results = DocumentAttachments::where('documentSystemCode',$id)->where('documentSystemID', 108)->where('envelopType',3)->count();
+
+
+                if($results == 0)
+                {
+                    $bid_sub_data['doc_verifiy_yn'] = 1;
+                    $bid_sub_data['doc_verifiy_by_emp'] = \Helper::getEmployeeSystemID();
+                    $bid_sub_data['doc_verifiy_date'] =  date('Y-m-d H:i:s');
+                    $results = BidSubmissionMaster::where('id',$id)->update($bid_sub_data,$id);
+                }
+        
+                DB::commit();
+                return ['success' => true, 'message' => 'Successfully updated', 'data' => $results];
+            } catch (\Exception $e) {
+                DB::rollback();
+                Log::error($this->failed($e));
+                return ['success' => false, 'message' => $e];
+            }
+        }
+
+
+
 }

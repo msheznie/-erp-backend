@@ -138,7 +138,7 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
         $input = $request->all();
         $companySystemID = $input['companySystemID'];
 
-
+       
         if(isset($input['isInDOorCI'])) {
             unset($input['timesReferred']);
         $item = ItemAssigned::with(['item_master'])
@@ -159,10 +159,13 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
 
         $customerInvoiceDirect = CustomerInvoiceDirect::find($input['custInvoiceDirectAutoID']);
 
+       
+
         if (empty($customerInvoiceDirect)) {
             return $this->sendError('Customer Invoice Direct Not Found');
         }
 
+        $is_pref = $customerInvoiceDirect->isPerforma;
 
         if(CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID',$input['custInvoiceDirectAutoID'])->where('itemFinanceCategoryID','!=',$item->financeCategoryMaster)->exists()){
             return $this->sendError('Different finance category found. You can not add different finance category items for same invoice',500);
@@ -254,8 +257,10 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
 
             $input['sellingCostAfterMargin'] = $catalogDetail->localPrice;
             $input['marginPercentage'] = ($input['sellingCostAfterMargin'] - $input['sellingCost'])/$input['sellingCost']*100;
+            $input['part_no'] = $catalogDetail->partNo;
         }else{
             $input['sellingCostAfterMargin'] = $input['sellingCost'];
+            $input['part_no'] = $item->secondaryItemCode;
         }
 
         if(isset($input['marginPercentage']) && $input['marginPercentage'] != 0){
@@ -280,6 +285,7 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
         $input['issueCostRptTotal'] = Helper::roundValue($input['issueCostRptTotal']);
         $input['sellingCost'] = Helper::roundValue($input['sellingCost']);
         $input['sellingCostAfterMargin'] = Helper::roundValue($input['sellingCostAfterMargin']);
+        $input['salesPrice'] = Helper::roundValue($input['sellingCostAfterMargin']);
         $input['sellingTotal'] = Helper::roundValue($input['sellingTotal']);
         $input['sellingCostAfterMarginLocal'] = Helper::roundValue($input['sellingCostAfterMarginLocal']);
         $input['sellingCostAfterMarginRpt'] = Helper::roundValue($input['sellingCostAfterMarginRpt']);
@@ -313,14 +319,21 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
             || !$input['financeGLcodeRevenueSystemID'] || !$input['financeGLcodeRevenue']) {
             return $this->sendError("Account code not updated.", 500);
         }*/
+        
 
         if ($input['itemFinanceCategoryID'] == 1 || $input['itemFinanceCategoryID'] == 2 || $input['itemFinanceCategoryID'] == 4) {
             $alreadyAdded = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID',$input['custInvoiceDirectAutoID'])->where('itemCodeSystem',$item->itemCodeSystem)->first();
+         
             if ($alreadyAdded) {
-                return $this->sendError("Selected item is already added. Please check again", 500);
+                if(($input['itemFinanceCategoryID'] != 2 )&& ($input['itemFinanceCategoryID'] != 4 ))
+                {
+                    return $this->sendError("Selected item is already added. Please check again", 500);
+                }
+                
             }
-        }
 
+        }
+    
         // check policy 18
 
         $allowPendingApproval = CompanyPolicyMaster::where('companyPolicyCategoryID', 18)
@@ -575,7 +588,7 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
     public function update($id, UpdateCustomerInvoiceItemDetailsAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($request->all(), ['uom_default', 'uom_issuing','item_by','issueUnits','delivery_order','sales_quotation']);
+        $input = array_except($request->all(), ['uom_default', 'uom_issuing','item_by','issueUnits','delivery_order','sales_quotation', 'issueCostTransTotal', 'issueCostTrans']);
         $input = $this->convertArrayToValue($input);
         $qtyError = array('type' => 'qty');
         $message = "Item updated successfully";
@@ -625,28 +638,48 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
         }
 
         /*margin calculation*/
-        if(isset($input['by']) && $input['by']== 'cost' ){
-            if($input['sellingCost'] > 0){
-                $input['marginPercentage'] = ($input['sellingCostAfterMargin'] - $input['sellingCost'])/$input['sellingCost']*100;
+        if(isset($input['by']) && $input['by']== 'salesPrice' ){
+            if($input['sellingCost'] > 0 && $input['issueCostRpt'] > 0){
+                $input['marginPercentage'] = ($input['salesPrice'] - $input['sellingCost'])/$input['sellingCost']*100;
             }else{
                 $input['marginPercentage']=0;
                 if($customerInvoiceItemDetails->itemFinanceCategoryID != 1){
-                    $input['sellingCost'] = $input['sellingCostAfterMargin'];
+                    $input['sellingCost'] = $input['salesPrice'];
                 }
             }
         }elseif (isset($input['by']) && $input['by']== 'margin'){
-            $input['sellingCostAfterMargin'] = ($input['sellingCost']) + ($input['sellingCost']*$input['marginPercentage']/100);
+            $input['salesPrice'] = ($input['sellingCost']) + ($input['sellingCost']*$input['marginPercentage']/100);
         }else{
             if (isset($input['marginPercentage']) && $input['marginPercentage'] != 0){
-                $input['sellingCostAfterMargin'] = ($input['sellingCost']) + ($input['sellingCost']*$input['marginPercentage']/100);
+                $input['salesPrice'] = ($input['sellingCost']) + ($input['sellingCost']*$input['marginPercentage']/100);
             }else{
                 if($customerInvoiceItemDetails->itemFinanceCategoryID == 1){
-                    $input['sellingCostAfterMargin'] = $input['sellingCost'];
+                    $input['salesPrice'] = $input['sellingCost'];
                 }else{
-                    $input['sellingCost'] = $input['sellingCostAfterMargin'];
+                    $input['sellingCost'] = $input['salesPrice'];
                 }
             }
         }
+
+        $input['sellingCostAfterMargin'] = $input['salesPrice'];
+
+        if(isset($input['by']) && ($input['by'] == 'discountPercentage' || $input['by'] == 'discountAmount')){
+            if ($input['by'] === 'discountPercentage') {
+              $input["discountAmount"] = $input['salesPrice'] * $input["discountPercentage"] / 100;
+            } else if ($input['by'] === 'discountAmount') {
+              $input["discountPercentage"] = ($input["discountAmount"] / $input['salesPrice']) * 100;
+            }
+        } else {
+            if ($input['discountPercentage'] != 0) {
+              $input["discountAmount"] = $input['salesPrice'] * $input["discountPercentage"] / 100;
+            } else {
+              $input["discountPercentage"] = ($input["discountAmount"] / $input['salesPrice']) * 100;
+            }
+        }
+
+        $input['sellingCostAfterMargin'] = $input['sellingCostAfterMargin'] - $input["discountAmount"];
+
+
         $costs = $this->updateCostBySellingCost($input,$customerDirectInvoice);
         $input['sellingCostAfterMarginLocal'] = $costs['sellingCostAfterMarginLocal'];
         $input['sellingCostAfterMarginRpt'] = $costs['sellingCostAfterMarginRpt'];
@@ -745,6 +778,18 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
         if (!$resVat['status']) {
            return $this->sendError($resVat['message']); 
         } 
+
+        return $this->sendResponse($customerInvoiceItemDetails->toArray(), $message);
+    }
+
+    public function custItemDetailUpdate($id, UpdateCustomerInvoiceItemDetailsAPIRequest $request){
+        $comments = $request->comments;
+
+        $input = array();
+        $input['comments'] = $comments;
+        $message = "Item updated successfully";
+
+        $customerInvoiceItemDetails = $this->customerInvoiceItemDetailsRepository->update($input, $id);
 
         return $this->sendResponse($customerInvoiceItemDetails->toArray(), $message);
     }
@@ -1088,10 +1133,26 @@ WHERE
                 }
             }
         }
+        
 
+        $customerInvoioce = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->first(); 
+        $is_pref = $customerInvoioce->isPerforma;
+
+       
         $itemExistArray = array();
         //check added item exist
         foreach ($input['detailTable'] as $itemExist) {
+            $item = ItemAssigned::with(['item_master'])
+            ->where('itemCodeSystem', $itemExist['itemCodeSystem'])
+            ->where('companySystemID', $itemExist['companySystemID'])
+            ->first();
+            
+           
+
+            $item = ItemAssigned::with(['item_master'])
+            ->where('itemCodeSystem', $itemExist['itemCodeSystem'])
+            ->where('companySystemID', $itemExist['companySystemID'])
+            ->first();
 
             if ($itemExist['isChecked'] && $itemExist['noQty'] > 0) {
                 $doDetailExist = CustomerInvoiceItemDetails::select(DB::raw('itemPrimaryCode'))
@@ -1099,20 +1160,26 @@ WHERE
                     ->where('itemCodeSystem', $itemExist['itemCodeSystem'])
                     ->get();
 
-                if (!empty($doDetailExist)) {
-                    foreach ($doDetailExist as $row) {
-                        $itemDrt = $row['itemPrimaryCode'] . " is already added";
-                        $itemExistArray[] = [$itemDrt];
+
+                if($item->financeCategoryMaster != 2 && $item->financeCategoryMaster != 4 )
+                {
+                    if (!empty($doDetailExist)) {
+                        foreach ($doDetailExist as $row) {
+                            $itemDrt = $row['itemPrimaryCode'] . " is already added";
+                            $itemExistArray[] = [$itemDrt];
+                        }
                     }
                 }
+
+          
             }
         }
+        
 
         if (!empty($itemExistArray)) {
             return $this->sendError($itemExistArray, 422);
         }
-
-        $customerInvoioce = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->first();
+        
 
         foreach ($input['detailTable'] as $itemExist) {
 
@@ -1416,9 +1483,20 @@ WHERE
             }
         }
 
+        $customerInvoioce = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->first(); 
+        $is_pref = $customerInvoioce->isPerforma;
+   
+
         $itemExistArray = array();
         //check added item exist
         foreach ($input['detailTable'] as $itemExist) {
+
+
+             $item = ItemAssigned::with(['item_master'])
+            ->where('itemCodeSystem', $itemExist['itemAutoID'])
+            ->where('companySystemID', $itemExist['companySystemID'])
+            ->first();
+
 
             if ($itemExist['isChecked'] && $itemExist['noQty'] > 0) {
                 $doDetailExist = CustomerInvoiceItemDetails::select(DB::raw('itemPrimaryCode'))
@@ -1426,12 +1504,15 @@ WHERE
                     ->where('itemCodeSystem', $itemExist['itemAutoID'])
                     ->get();
 
-                if (!empty($doDetailExist)) {
-                    foreach ($doDetailExist as $row) {
-                        $itemDrt = $row['itemPrimaryCode'] . " is already added";
-                        $itemExistArray[] = [$itemDrt];
+                    if(isset($item->financeCategoryMaster) && $item->financeCategoryMaster != 2 && $item->financeCategoryMaster != 4 )
+                    {
+                        if (!empty($doDetailExist)) {
+                            foreach ($doDetailExist as $row) {
+                                $itemDrt = $row['itemPrimaryCode'] . " is already added";
+                                $itemExistArray[] = [$itemDrt];
+                            }
+                        }
                     }
-                }
             }
         }
 
@@ -1439,8 +1520,8 @@ WHERE
             return $this->sendError($itemExistArray, 422);
         }
 
-        $customerInvoioce = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->first();
-
+    
+       
 
         // check qty and validations
 

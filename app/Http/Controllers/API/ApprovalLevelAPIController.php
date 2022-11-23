@@ -21,7 +21,9 @@ use App\Models\Company;
 use App\Models\DocumentMaster;
 use App\Models\FinanceItemCategoryMaster;
 use App\Models\SegmentMaster;
+use App\Models\CompanyDocumentAttachment;
 use App\Models\YesNoSelectionForMinus;
+use App\Models\DocumentApproved;
 use App\Repositories\ApprovalLevelRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -73,6 +75,13 @@ class ApprovalLevelAPIController extends AppBaseController
         $input = $request->all();
         $approvalLevel = "";
         $input = $this->convertArrayToValue($input);
+
+        $approvalLevelValidation = $this->approvalLevelValidation($input);
+
+        if (!$approvalLevelValidation['status']) {
+            return $this->sendError($approvalLevelValidation['message'], 500);
+        }
+
         $companyID = Company::where('companySystemID', $input["companySystemID"])->first();
         $input["companyID"] = $companyID->CompanyID;
 
@@ -183,9 +192,18 @@ class ApprovalLevelAPIController extends AppBaseController
             return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.approval_levels')]));
         }
 
+        $documentApproved = DocumentApproved::where('approvalLevelID',$id )
+                                            ->where('approvedYN',0)
+                                            ->where('rejectedYN',0)
+                                            ->get();
+        
+        if(count($documentApproved) > 0){
+            return $this->sendError('Cannot delete approval level. following documents are pending for approval',500 ,$documentApproved->Toarray());
+        }
+
         $approvalLevel->approvalRole()->delete();
 
-        $approvalLevel->delete();
+        $approvalLevel->update(['is_deleted' => 1 ,'isActive' => 0]);
 
         return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.approval_levels')]));
     }
@@ -237,6 +255,92 @@ class ApprovalLevelAPIController extends AppBaseController
         return $this->sendResponse($output, trans('custom.retrieve', ['attribute' => trans('custom.record')]));
     }
 
+    public function approvalLevelValidation($input, $activate = false)
+    {
+        $checkDuplicateApproval = ApprovalLevel::where('companySystemID', $input["companySystemID"])
+                                               ->where('documentSystemID', $input['documentSystemID'])
+                                               ->when(isset($input['isCategoryWiseApproval']) && ($input['isCategoryWiseApproval'] || $input['isCategoryWiseApproval'] == -1), function($query) use ($input){
+                                                    $query->where('isCategoryWiseApproval', -1)
+                                                          ->where('categoryID', $input['categoryID']);
+                                               })
+                                               ->when((isset($input['isCategoryWiseApproval']) && !$input['isCategoryWiseApproval']) || !isset($input['isCategoryWiseApproval']), function($query) {
+                                                    $query->where('isCategoryWiseApproval', 0)
+                                                          ->whereNull('categoryID');
+                                               })
+                                               ->when(isset($input['serviceLineWise']) && $input['serviceLineWise'], function($query) use ($input){
+                                                    $query->where('serviceLineWise', 1)
+                                                          ->where('serviceLineSystemID', $input['serviceLineSystemID']);
+                                               })
+                                               ->when((isset($input['serviceLineWise']) && !$input['serviceLineWise']) || !isset($input['serviceLineWise']), function($query) {
+                                                    $query->where('serviceLineWise', 0)
+                                                          ->whereNull('serviceLineSystemID');
+                                               })
+                                               ->when(isset($input['valueWise']) && $input['valueWise'], function($query) use ($input){
+                                                    $query->where('valueWise', 1)
+                                                          ->where('valueFrom', $input['valueFrom'])
+                                                          ->where('valueTo', $input['valueTo']);
+                                               })
+                                               ->when((isset($input['valueWise']) && !$input['valueWise']) || !isset($input['valueWise']), function($query) {
+                                                    $query->where('valueWise', 0)
+                                                          ->where('valueFrom', 0)
+                                                          ->where('valueTo', 0);
+                                               })
+                                               ->when(isset($input['approvalLevelID']), function($query) use ($input) {
+                                                    $query->where('approvalLevelID', '!=', $input['approvalLevelID']);
+                                               })
+                                               ->where('isActive', -1)
+                                               ->first();
+
+        if ($checkDuplicateApproval) {
+            return ['status' => false, 'message' => "Appoval level is already exists with this criteria"];
+        }
+
+        $checkPreviousLevels = ApprovalLevel::where('companySystemID', $input["companySystemID"])
+                                            ->where('documentSystemID', $input['documentSystemID'])
+                                            ->where(function($query) {
+                                                $query->where('isCategoryWiseApproval', -1)
+                                                      ->orWhere('serviceLineWise', 1)
+                                                      ->orWhere('valueWise', 1);
+                                            })
+                                            ->where('isActive', -1)
+                                            ->first();
+
+        $action = $activate ? "active/inactive" : "create";
+
+        if (($checkPreviousLevels && $checkPreviousLevels->isCategoryWiseApproval == -1) && ((isset($input['isCategoryWiseApproval']) && !$input['isCategoryWiseApproval']) || !isset($input['isCategoryWiseApproval']))) {
+            return ['status' => false, 'message' => "An Appoval level is created with category wise enabled, therefore you cannot ".$action." without category"];
+        }
+
+        if (($checkPreviousLevels && $checkPreviousLevels->serviceLineWise) && ((isset($input['serviceLineWise']) && !$input['serviceLineWise']) || !isset($input['serviceLineWise']))) {
+            return ['status' => false, 'message' => "An Appoval level is created with segment wise enabled, therefore you cannot ".$action." without segment"];
+        }
+
+        if (($checkPreviousLevels && $checkPreviousLevels->valueWise) && ((isset($input['valueWise']) && !$input['valueWise']) || !isset($input['valueWise']))) {
+            return ['status' => false, 'message' => "An Appoval level is created with value wise enabled, therefore you cannot ".$action." without value"];
+        }
+
+
+        if ($activate) {
+            $documentConf = CompanyDocumentAttachment::where('companySystemID', $input["companySystemID"])
+                                               ->where('documentSystemID', $input['documentSystemID'])
+                                               ->first();
+
+            if ($documentConf) {
+                $isCategoryWiseApproval = isset($input['isCategoryWiseApproval']) && ($input['isCategoryWiseApproval'] || $input['isCategoryWiseApproval'] == -1) ? -1 : 0;
+                $serviceLineWise = isset($input['serviceLineWise']) && ($input['serviceLineWise'] || $input['serviceLineWise'] == 1) ? -1 : 0;
+                $valueWise = isset($input['valueWise']) && ($input['valueWise'] || $input['valueWise'] == 1) ? -1 : 0;
+
+                if (($isCategoryWiseApproval != $documentConf->isCategoryApproval) || ($serviceLineWise != $documentConf->isServiceLineApproval) || ($valueWise != $documentConf->isAmountApproval)) {
+                    return ['status' => false, 'message' => "Appoval level criteria differ from document configuration"];
+                }
+            }
+        }
+
+        return ['status' => true];
+
+    }
+
+
     public function activateApprovalLevel(Request $request)
     {
         $approvalLevel = $this->approvalLevelRepository->findWithoutFail($request->approvalLevelID);
@@ -244,6 +348,13 @@ class ApprovalLevelAPIController extends AppBaseController
         if (empty($approvalLevel)) {
             return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.approval_levels')]));
         }
+
+        $approvalLevelValidation = $this->approvalLevelValidation($approvalLevel->toArray(), true);
+
+        if (!$approvalLevelValidation['status']) {
+            return $this->sendError($approvalLevelValidation['message'], 500);
+        }
+
         if ($request->isActive) {
             $approvalLevel->isActive = -1;
         } else {

@@ -36,15 +36,17 @@ class CreateStockReceive implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
     protected $stMaster;
+    protected $dataBase;
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($stMaster)
+    public function __construct($stMaster, $dataBase)
     {
         $this->stMaster = $stMaster;
+        $this->dataBase = $dataBase;
     }
 
     /**
@@ -527,8 +529,8 @@ class CreateStockReceive implements ShouldQueue
                                 $item['unitOfMeasure'] = $new['unitOfMeasure'];
                                 $item['itemFinanceCategoryID'] = $new['itemFinanceCategoryID'];
                                 $item['itemFinanceCategorySubID'] = $new['itemFinanceCategorySubID'];
-                                $item['financeGLcodebBS'] = WarehouseMaster::checkManuefactoringWareHouse($stockReceive->locationTo) ? WarehouseMaster::getWIPGLCode($stockReceive->locationTo) : $new['financeGLcodebBS'];
-                                $item['financeGLcodebBSSystemID'] = WarehouseMaster::checkManuefactoringWareHouse($stockReceive->locationTo) ?  WarehouseMaster::getWIPGLSystemID($stockReceive->locationTo) : $new['financeGLcodebBSSystemID'];
+                                $item['financeGLcodebBS'] = $new['financeGLcodebBS'];
+                                $item['financeGLcodebBSSystemID'] =  $new['financeGLcodebBSSystemID'];
                                 $item['localCurrencyID'] = $toCompany->localCurrencyID;
                                 // $temUnitCostLocal        = $new['unitCostLocal'] * 1.03;
                                 $temUnitCostRpt = $new['unitCostRpt'] * ((100+$revenuePercentageForInterCompanyInventoryTransfer)/100);
@@ -681,8 +683,8 @@ class CreateStockReceive implements ShouldQueue
                             $item['unitOfMeasure'] = $new['unitOfMeasure'];
                             $item['itemFinanceCategoryID'] = $new['itemFinanceCategoryID'];
                             $item['itemFinanceCategorySubID'] = $new['itemFinanceCategorySubID'];
-                            $item['financeGLcodebBS'] = WarehouseMaster::checkManuefactoringWareHouse($stockReceive->locationTo) ? WarehouseMaster::getWIPGLCode($stockReceive->locationTo) : $new['financeGLcodebBS'];
-                            $item['financeGLcodebBSSystemID'] = WarehouseMaster::checkManuefactoringWareHouse($stockReceive->locationTo) ?  WarehouseMaster::getWIPGLSystemID($stockReceive->locationTo) : $new['financeGLcodebBSSystemID'];
+                            $item['financeGLcodebBS'] = $new['financeGLcodebBS'];
+                            $item['financeGLcodebBSSystemID'] = $new['financeGLcodebBSSystemID'];
                             $item['localCurrencyID'] = $toCompany->localCurrencyID;
                             $item['unitCostLocal'] = $new['unitCostLocal'];
                             $item['reportingCurrencyID'] = $toCompany->reportingCurrency;
@@ -727,8 +729,8 @@ class CreateStockReceive implements ShouldQueue
                                 'companySystemID' => $stockReceive->companySystemID,
                                 'employeeSystemID' => $approval->employeeSystemID];
 
-                            $jobIL = ItemLedgerInsert::dispatch($masterData);
-                            $jobGL = GeneralLedgerInsert::dispatch($masterData);
+                            $jobIL = ItemLedgerInsert::dispatch($masterData, $dataBase);
+                            $jobGL = GeneralLedgerInsert::dispatch($masterData, $this->dataBase);
                             //$jobSI = CreateSupplierInvoice::dispatch($stockReceive);
                         }
 

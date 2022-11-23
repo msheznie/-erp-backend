@@ -241,7 +241,7 @@ class CustomerInvoiceItemDetails extends Model
     const CREATED_AT = 'timestamp';
     const UPDATED_AT = 'timestamp';
 
-
+    protected $appends = ['issueCostTrans', 'issueCostTransTotal'];
 
     public $fillable = [
         'custInvoiceDirectAutoID',
@@ -278,7 +278,10 @@ class CustomerInvoiceItemDetails extends Model
         'marginPercentage',
         'sellingCurrencyID',
         'sellingCurrencyER',
+        'salesPrice',
         'sellingCost',
+        'discountPercentage',
+        'discountAmount',
         'sellingCostAfterMargin',
         'sellingTotal',
         'sellingCostAfterMarginLocal',
@@ -299,7 +302,8 @@ class CustomerInvoiceItemDetails extends Model
         'VATApplicableOn',
         'vatMasterCategoryID',
         'vatSubCategoryID',
-        'timestamp'
+        'timestamp',
+        'part_no'
     ];
 
     /**
@@ -345,6 +349,9 @@ class CustomerInvoiceItemDetails extends Model
         'marginPercentage' => 'float',
         'sellingCurrencyID' => 'integer',
         'sellingCurrencyER' => 'float',
+        'salesPrice' => 'float',
+        'discountPercentage' => 'float',
+        'discountAmount' => 'float',
         'sellingCost' => 'float',
         'sellingCostAfterMargin' => 'float',
         'sellingTotal' => 'float',
@@ -424,5 +431,17 @@ class CustomerInvoiceItemDetails extends Model
         return $this->belongsTo('App\Models\SalesReturnDetail','customerItemDetailID','customerItemDetailID');
     }
 
-    
+    public function getIssueCostTransAttribute()
+    {
+        $currencyConversion = \Helper::currencyConversion(null, $this->localCurrencyID, $this->sellingCurrencyID, $this->issueCostLocal);
+
+        return isset($currencyConversion['documentAmount']) ? $currencyConversion['documentAmount'] : 0;
+    }
+
+    public function getIssueCostTransTotalAttribute()
+    {
+        $currencyConversion = \Helper::currencyConversion(null, $this->localCurrencyID, $this->sellingCurrencyID, $this->issueCostLocalTotal);
+
+        return isset($currencyConversion['documentAmount']) ? $currencyConversion['documentAmount'] : 0;
+    }
 }

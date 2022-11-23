@@ -158,6 +158,21 @@
             background-color: #ffffff !important;
             border-right:  1px solid #ffffffff !important;
         }
+
+        .container
+            {
+                display: block;
+                max-width:230px;
+                max-height:95px;
+                width: auto;
+                height: auto;
+            }
+
+        .table_height
+            {
+                max-height: 60px !important;
+            }
+
     </style>
 </head>
 <body>
@@ -168,7 +183,7 @@
 <div id="watermark"></div>
 <div class="card-body content" id="print-section">
 
-    <table style="width: 100%">
+    <table style="width: 100%" class="table_height">
        {{-- <tr style="width: 100%">
             <td colspan="3" style="bottom: 0;position: absolute;text-align: right">
             --}}{{--<span class="font-weight-bold">
@@ -185,16 +200,12 @@
             </td>
         </tr>--}}
         <tr style="width: 100%">
-            <td valign="top" style="width: 50%">
+            <td valign="top" style="width: 20%">
                 @if($entity->company)
-                <img src="{{$entity->company->logo_url}}" width="180px" height="60px">
+                <img src="{{$entity->company->logo_url}}" width="180px" height="60px" class="container">
                 @endif
-                <br>
-                <div>
-                    <span style="font-size: 18px">Debit Note Voucher</span>
-                </div>
             </td>
-            <td  valign="top" style="width: 50%">
+            <td  valign="top" style="width: 80%">
                 @if($entity->company)
                     <span style="font-size: 24px;font-weight: 400"> {{$entity->company->CompanyName}}</span>
                 @endif
@@ -229,11 +240,17 @@
         </tr>
     </table>
     <hr style="color: #d3d9df">
+    <div>
+        <span style="font-size: 18px">Debit Note Voucher</span>
+    </div>
+    <br>
+    <br>
     <table style="width: 100%">
         <tr style="width:100%">
             <td style="width: 80%">
                 <table>
                     <tr>
+                       @if($entity->type == 1)
                         <td width="150px">
                             <span class="font-weight-bold">Supplier Code</span>
                         </td>
@@ -245,8 +262,24 @@
                                 {{$entity->supplier->primarySupplierCode}}
                             @endif
                         </td>
+                        @endif
+
+                        @if($entity->type == 2)
+                        <td width="150px">
+                            <span class="font-weight-bold">Employee Code</span>
+                        </td>
+                        <td width="10px">
+                            <span class="font-weight-bold">:</span>
+                        </td>
+                        <td>
+                            @if($entity->employee)
+                                {{$entity->employee->empID}}
+                            @endif
+                        </td>
+                        @endif
                     </tr>
                     <tr>
+                       @if($entity->type == 1)
                         <td width="50px">
                             <span class="font-weight-bold">Supplier Name</span>
                         </td>
@@ -258,6 +291,21 @@
                                 {{$entity->supplier->supplierName}}
                             @endif
                         </td>
+                        @endif
+
+                        @if($entity->type == 2)
+                        <td width="50px">
+                            <span class="font-weight-bold">Employee Name</span>
+                        </td>
+                        <td width="10px">
+                            <span class="font-weight-bold">:</span>
+                        </td>
+                        <td>
+                            @if($entity->employee)
+                                {{$entity->employee->empName}}
+                            @endif
+                        </td>
+                        @endif
                     </tr>
                     <tr>
                         <td width="50px">
@@ -417,9 +465,9 @@
                         <br>
                         @if($det->employee)
                             @if($det->approvedYN == -1)
-                                {{ \App\helper\Helper::dateFormat($det->approvedDate)}}
+                                {{ \App\helper\Helper::convertDateWithTime($det->approvedDate)}}
                             @elseif($det->rejectedYN == -1)
-                                {{ \App\helper\Helper::dateFormat($det->rejectedDate)}}
+                                {{ \App\helper\Helper::convertDateWithTime($det->rejectedDate)}}
                             @endif
                         @endif
                     </td>

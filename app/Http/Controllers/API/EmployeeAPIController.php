@@ -25,6 +25,7 @@ use App\Http\Requests\API\UpdateEmployeeAPIRequest;
 use App\Models\Alert;
 use App\Models\Company;
 use App\Models\Employee;
+use App\Models\SrmEmployees;
 use App\Models\EmployeeNavigation;
 use App\Models\EmployeesDepartment;
 use App\Models\LptPermission;
@@ -244,6 +245,35 @@ class EmployeeAPIController extends AppBaseController
         return $this->sendResponse($employees->toArray(), 'Data retrieved successfully');
     }
 
+    public function getAllNotDishachargeEmployeesDropdown(Request $request) {
+        $companyId = $request['empCompanySystemID'];
+        $isGroup = \Helper::checkIsCompanyGroup($companyId);
+        if ($isGroup) {
+            $childCompanies = \Helper::getGroupCompany($companyId);
+        } else {
+            $childCompanies = [$companyId];
+        }
+
+
+        $srm_employees = SrmEmployees::where('company_id',$companyId)->pluck('emp_id')->toArray();
+
+        // $employees = Employee::whereIn('empCompanySystemID', $childCompanies)->where('discharegedYN',0)->where('empActive',1)->whereNotIn('employeeSystemID',$srm_employees)->get();
+
+        $employeeData = Employee::whereNotIn('employeeSystemID',$srm_employees)->where('discharegedYN','!=',-1)->whereHas('hr_emp', function($q){
+            $q->where('isDischarged', 0)->where('empConfirmedYN', 1);
+        });
+        
+        $employees = $employeeData->get();
+
+        $data = [];
+
+        foreach($employees as $emp) {
+            array_push($data,["employeeSystemID"  => $emp->employeeSystemID, "empName" => $emp->empID." | ".$emp->empFullName]);
+        }
+
+        return $this->sendResponse($data, 'Data retrieved successfully');
+    }
+
     public function getEmployeeMasterView(Request $request)
     {
         $input = $request->all();
@@ -388,7 +418,7 @@ class EmployeeAPIController extends AppBaseController
         $input = $request->all();
 
         $employeeSystemID = $input['employeeSystemID'];
-        $password = 'Gears123@';
+        $password = $this->quickRandom();
 
         $employeeMasterData = Employee::find($employeeSystemID);
         if (empty($employeeMasterData)) {
@@ -397,7 +427,6 @@ class EmployeeAPIController extends AppBaseController
 
         // updating fields
         $employeeMasterData->isLock = 0;
-        $employeeMasterData->empPassword = $password;
         $employeeMasterData->save();
 
         //updating users table
@@ -416,7 +445,7 @@ class EmployeeAPIController extends AppBaseController
             "<br>This is an auto generated email. Please do not reply to this email because we are not " .
             "monitoring this inbox.</font>";
 
-        $body = "Dear " . $employeeMasterData->empName . ',<p> Your GEARS password has been reset to Gears123@' . $footer;
+        $body = "Dear " . $employeeMasterData->empName . ',<p> Your GEARS password has been reset to '.$password . $footer;
 
         $dataEmail['empSystemID'] = $employeeMasterData->employeeSystemID;
         $dataEmail['empID'] = $employeeMasterData->empID;
@@ -435,6 +464,13 @@ class EmployeeAPIController extends AppBaseController
         }
 
         return $this->sendResponse($employeeMasterData->toArray(), 'Employee password reset successfully');
+    }
+
+    public static function quickRandom($length = 9)
+    {
+        $pool = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+        return substr(str_shuffle(str_repeat($pool, 2)), 0, $length);
     }
 
     public function getEmployeeMasterData(Request $request)

@@ -238,4 +238,10 @@ class ChartOfAccount extends Model
         return ($checkAccountCode) ? $checkAccountCode->catogaryBLorPLID : "";
 
     }
+
+    public static function getGlAccountCode($chartOfAccountSystemID) {
+        $checkAccountCode = ChartOfAccount::where('chartOfAccountSystemID', $chartOfAccountSystemID)->first();
+        return ($checkAccountCode) ? $checkAccountCode->AccountCode : "";
+
+    }
 }

@@ -106,7 +106,7 @@ class BookInvSuppMasterRepository extends BaseRepository
         }
 
         if (array_key_exists('documentType', $input)) {
-            if (($input['documentType'] == 0 || $input['documentType'] == 1 || $input['documentType'] == 2 || $input['documentType'] == 3) && !is_null($input['documentType'])) {
+            if (($input['documentType'] == 0 || $input['documentType'] == 1 || $input['documentType'] == 2 || $input['documentType'] == 3 || $input['documentType'] == 4) && !is_null($input['documentType'])) {
                 $invMaster->where('documentType', $input['documentType']);
             }
         }
@@ -166,6 +166,7 @@ class BookInvSuppMasterRepository extends BaseRepository
                 'erp_bookinvsuppmaster.documentType',
                 'erp_bookinvsuppmaster.approved',
                 'erp_bookinvsuppmaster.supplierInvoiceNo',
+                'erp_bookinvsuppmaster.postedDate',
                 'erp_bookinvsuppmaster.supplierInvoiceDate'
             ]);
 
@@ -205,9 +206,9 @@ class BookInvSuppMasterRepository extends BaseRepository
                 $data[$x]['Booking Invoice Date'] = \Helper::dateFormat($val->bookingDate);
                 $data[$x]['Comments'] = $val->comments;
                 $data[$x]['Created By'] = $val->created_by? $val->created_by->empName : '';
-                $data[$x]['Created At'] = \Helper::dateFormat($val->createdDateAndTime);
-                $data[$x]['Confirmed on'] = \Helper::dateFormat($val->confirmedDate);
-                $data[$x]['Approved on'] = \Helper::dateFormat($val->approvedDate);
+                $data[$x]['Created At'] = \Helper::convertDateWithTime($val->createdDateAndTime);
+                $data[$x]['Confirmed on'] = \Helper::convertDateWithTime($val->confirmedDate);
+                $data[$x]['Approved on'] = \Helper::convertDateWithTime($val->approvedDate);
                 $data[$x]['Currency'] = $val->transactioncurrency? $val->transactioncurrency->CurrencyCode : '';
                 $data[$x]['Amount'] = $val->transactioncurrency? number_format($val->bookingAmountTrans,  $val->transactioncurrency->DecimalPlaces, ".", "") : '';
                 $data[$x]['Status'] = StatusService::getStatus($val->cancelYN, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);

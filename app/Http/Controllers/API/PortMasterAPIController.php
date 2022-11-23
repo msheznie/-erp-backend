@@ -8,6 +8,7 @@ use App\Models\PortMaster;
 use App\Repositories\PortMasterRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use App\Models\CustomerInvoiceLogistic;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -318,6 +319,14 @@ class PortMasterAPIController extends AppBaseController
         $input = $request->all();
         $portID = $input['id'];
 
+        $customerInvoiceLogistic= CustomerInvoiceLogistic::where(function ($query) use ($portID) {
+            $query->where('port_of_loading', $portID)
+                  ->orWhere('port_of_discharge', $portID);
+                })->first();
+
+        if($customerInvoiceLogistic){
+            return $this->sendError('This port is already used in customer invoice');
+        }
         $deleteData = ['is_deleted'=>1];
         $PortMaster = PortMaster::where('id',$portID )->update($deleteData);
         return $this->sendResponse($PortMaster, 'Port Master deleted successfully');

@@ -205,6 +205,26 @@ class BudgetConsumedData extends Model
     {
         return $this->belongsTo('App\Models\DocumentMaster', 'documentSystemID', 'documentSystemID');
     }
+ 
+    public function segment_by()
+    {
+        return $this->belongsTo('App\Models\SegmentMaster', 'serviceLineSystemID', 'serviceLineSystemID');
+    }
+
+    public function month_by()
+    {
+        return $this->belongsTo('App\Models\Months', 'month', 'monthID');
+    }
+
+     public function reporting_currency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'consumedRptCurrencyID', 'currencyID');
+    }
+
+    public function chart_of_account()
+    {
+        return $this->belongsTo('App\Models\ChartOfAccount', 'chartOfAccountID', 'chartOfAccountSystemID');
+    }
 
     public function budget_detail()
     {
@@ -249,5 +269,16 @@ class BudgetConsumedData extends Model
     public function direct_payment_voucher_detail()
     {
         return $this->belongsTo('App\Models\PaySupplierInvoiceMaster', ['documentSystemCode', 'documentSystemID'], ['PayMasterAutoId', 'documentSystemID']);
+    }
+
+
+    public function budget_master()
+    {
+        return $this->belongsTo('App\Models\BudgetMaster', ['companyFinanceYearID', 'serviceLineSystemID', 'companySystemID'], ['companyFinanceYearID', 'serviceLineSystemID', 'companySystemID']);
+    }
+
+    public function financeyear_by()
+    {
+        return $this->belongsTo('App\Models\CompanyFinanceYear', 'companyFinanceYearID', 'companyFinanceYearID');
     }
 }

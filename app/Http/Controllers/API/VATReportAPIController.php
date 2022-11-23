@@ -161,9 +161,34 @@ class VATReportAPIController extends AppBaseController
             });
         };*/
 
+        $rptAmountTotal = 0;
+        $documentReportingAmountTotal = 0;
+        $localAmountTotal = 0;
+        $documentLocalAmountTotal = 0;
+        $rptDecimalPlace = '';
+        $localDecimalPlace = '';
+        if ($output) {
+            foreach ($output as $val) {
+                $rptAmountTotal += $val->rptAmount;
+                $documentReportingAmountTotal += $val->documentReportingAmount;
+                $localAmountTotal += $val->localAmount;
+                $documentLocalAmountTotal += $val->documentLocalAmount;
+
+                $rptDecimalPlace = $val->rptcurrency->DecimalPlaces;
+                $localDecimalPlace = $val->localcurrency->DecimalPlaces;
+            }
+        }
+        
+
 
         return \DataTables::of($output)
             ->addIndexColumn()
+            ->with('rptAmountTotal', $rptAmountTotal)
+            ->with('documentReportingAmountTotal', $documentReportingAmountTotal)
+            ->with('localAmountTotal', $localAmountTotal)
+            ->with('documentLocalAmountTotal', $documentLocalAmountTotal)
+            ->with('rptDecimalPlace', $rptDecimalPlace)
+            ->with('localDecimalPlace', $localDecimalPlace)
             ->with('orderCondition', 'desc')
             ->make(true);
 
@@ -199,6 +224,26 @@ class VATReportAPIController extends AppBaseController
             });
         }
 
+        $taxableAmountTotal = 0;
+        $VATAmountTotal = 0;
+        $taxableAmountLocalTotal = 0;
+        $VATAmountLocalTotal = 0;
+        $recoverabilityAmountTotal = 0;
+        $transdecimalPlace = '';
+
+        if ($output) {
+            foreach ($output->get() as $val) {
+                $taxableAmountTotal += $val->taxableAmount;
+                $VATAmountTotal += $val->VATAmount;
+                $taxableAmountLocalTotal += $val->taxableAmountLocal;
+                $VATAmountLocalTotal += $val->VATAmountLocal;
+                $recoverabilityAmountTotal += $val->recoverabilityAmount;
+
+                $transdecimalPlace = $val->transcurrency->DecimalPlaces;
+            }
+        }
+        
+
 
         return  \DataTables::eloquent($output)
                         ->order(function ($query) use ($input) {
@@ -211,6 +256,12 @@ class VATReportAPIController extends AppBaseController
                         ->addIndexColumn()
                         ->with('orderCondition', $sort)
                         ->with('companyData', $companyData)
+                        ->with('taxableAmountTotal', $taxableAmountTotal)
+                        ->with('VATAmountTotal', $VATAmountTotal)
+                        ->with('taxableAmountLocalTotal', $taxableAmountLocalTotal)
+                        ->with('VATAmountLocalTotal', $VATAmountLocalTotal)
+                        ->with('recoverabilityAmountTotal', $recoverabilityAmountTotal)
+                        ->with('transdecimalPlace', $transdecimalPlace)
                         ->make(true);
 
     }
@@ -356,23 +407,68 @@ class VATReportAPIController extends AppBaseController
 
     public function exportVATReport(Request $request){
         $input = $request->all();
+        $company = Company::find($request->companySystemID);
         $output = $this->getVatReportQuery($input);
 
         if (count((array)$output)>0) {
             $x = 0;
             $data = [];
+            $rptAmountTotal = 0;
+            $documentReportingAmountTotal = 0;
+            $localAmountTotal = 0;
+            $documentLocalAmountTotal = 0;
             foreach ($output as $val) {
                 $x++;
 
                 $data[$x]['Document Type'] = $val->document_master->documentID;
                 $data[$x]['Document Code'] = $val->documentCode;
+                if($val->documentSystemID == 11){
+                    if($val->supplier_invoice) {
+                        $data[$x]['Reference No'] = $val->supplier_invoice->supplierInvoiceNo;
+                    }else{
+                        $data[$x]['Reference No'] = "";
+                    }
+                }
+                else if($val->documentSystemID == 3){
+                    if($val->grv) {
+                        $data[$x]['Reference No'] = $val->grv->grvDoRefNo;
+                    }else{
+                        $data[$x]['Reference No'] = "";
+                    }
+                }
+                else if($val->documentSystemID == 24){
+                    if($val->purchase_return) {
+                        $data[$x]['Reference No'] = $val->purchase_return->purchaseReturnRefNo;
+                    }else{
+                        $data[$x]['Reference No'] = "";
+                    }
+                }
+                else{
+                    $data[$x]['Reference No'] = "";
+                }
                 $data[$x]['Document Date'] = Helper::dateFormat($val->documentDate);
                 if(in_array($val->documentSystemID, [3, 24, 11, 15,4])){
                     $data[$x]['Party Name'] =isset($val->supplier->supplierName) ? $val->supplier->supplierName: '';
-                }elseif (in_array($val->documentSystemID, [19, 20, 21, 71])){
+                }elseif (in_array($val->documentSystemID, [19, 20, 21, 71, 87])){
                     $data[$x]['Party Name'] =isset($val->customer->CustomerName) ? $val->customer->CustomerName: '';
                 }else{
                     $data[$x]['Party Name'] ='';
+                }
+
+                if(in_array($val->documentSystemID, [3, 24, 11, 15,4])){
+                    $data[$x]['Country'] =isset($val->supplier->country->countryName) ? $val->supplier->country->countryName: '';
+                }elseif (in_array($val->documentSystemID, [19, 20, 21, 71, 87])){
+                    $data[$x]['Country'] =isset($val->customer->country->countryName) ? $val->customer->country->countryName: '';
+                }else{
+                    $data[$x]['Country'] ='';
+                }
+
+                if(in_array($val->documentSystemID, [3, 24, 11, 15,4])){
+                    $data[$x]['VATIN'] =isset($val->supplier->vatNumber) ? $val->supplier->vatNumber: '';
+                }elseif (in_array($val->documentSystemID, [19, 20, 21, 71, 87])){
+                    $data[$x]['VATIN'] =isset($val->customer->vatNumber) ? $val->customer->vatNumber: '';
+                }else{
+                    $data[$x]['VATIN'] ='';
                 }
 
                 $data[$x]['Approved By'] = isset($val->final_approved_by->empName)? $val->final_approved_by->empName : '';
@@ -390,13 +486,61 @@ class VATReportAPIController extends AppBaseController
                 $data[$x]['VAT Main Category'] = isset($val->main_category->mainCategoryDescription) ? $val->main_category->mainCategoryDescription : '-';
                 $data[$x]['VAT Type'] = isset($val->sub_category->subCategoryDescription) ? $val->sub_category->subCategoryDescription : '-';
                 $data[$x]['Is Claimed'] = ($val->isClaimed == 1) ? 'Claimed' : "Not Claimed";
+
+                $rptAmountTotal += $val->rptAmount;
+                $documentReportingAmountTotal += $val->documentReportingAmount;
+                $localAmountTotal += $val->localAmount;
+                $documentLocalAmountTotal += $val->documentLocalAmount;
             }
 
+            $x++;
+            $data[$x]['Document Type'] = '';
+            $data[$x]['Document Code'] = '';
+            $data[$x]['Reference No'] = '';
+            $data[$x]['Document Date'] = '';
+            $data[$x]['Party Name'] = '';
+            $data[$x]['Country'] = '';
+            $data[$x]['VATIN'] = '';
+            $data[$x]['Approved By'] = 'Total';
+            $data[$x]['Document Total Amount'] = round($documentLocalAmountTotal,$localDecimalPlaces);
+            $data[$x]['Document VAT Amount'] = round($localAmountTotal,$localDecimalPlaces);
+            if(isset($input['currencyID'])&&$input['currencyID']==2){
+                $data[$x]['Document Total Amount'] = round($documentReportingAmountTotal,$rptDecimalPlaces);
+                $data[$x]['Document VAT Amount'] = round($rptAmountTotal,$rptDecimalPlaces);
+            }
+            $data[$x]['VAT Main Category'] = '';
+            $data[$x]['VAT Type'] = '';
+            $data[$x]['Is Claimed'] = '';
 
+            $company_name = $company->CompanyName;
+            $to_date = \Helper::dateFormat($request->toDate);
+            $from_date = \Helper::dateFormat($request->fromDate);
             
-            $fileName = 'vat_report';
+            if($input['currencyID']==1){
+                $cur = 'OMR';
+            } else {
+                $cur = 'USD';
+            }
+
+            if($request->reportTypeID == 1){
+                $title = 'Output VAT Summary';
+                $fileName = 'output_vat_summary';
+            } elseif($request->reportTypeID == 2){
+                $title = 'Input VAT Summary';
+                $fileName = 'input_vat_summary';
+            } else{
+                $title = 'VAT Summary Report';
+                $fileName = 'vat_summary_report';
+            }
+            $detail_array = array(  'type' => 4,
+                                    'from_date'=>$from_date,
+                                    'to_date'=>$to_date,
+                                    'company_name'=>$company_name,
+                                    'cur'=>$cur,
+                                    'title'=>$title);
+
             $path = 'general-ledger/report/vat_report/excel/';
-            $basePath = CreateExcel::process($data,$request->type,$fileName,$path);
+            $basePath = CreateExcel::process($data,$request->type,$fileName,$path,$detail_array);
 
             if($basePath == '')
             {
@@ -420,6 +564,13 @@ class VATReportAPIController extends AppBaseController
         if (count((array)$output)>0) {
             $x = 0;
             $data = [];
+            $taxableAmountTotal = 0;
+            $VATAmountTotal = 0;
+            $taxableAmountLocalTotal = 0;
+            $VATAmountLocalTotal = 0;
+            $recoverabilityAmountTotal = 0;
+            $transdecimalPlace = 2;
+
             foreach ($output as $val) {
                 $x++;
 
@@ -427,7 +578,31 @@ class VATReportAPIController extends AppBaseController
                 $data[$x]['Company VAT Registration Number'] = isset($val->company->CompanyID) ? $val->company->CompanyID : "";
                 $data[$x]['Company Name'] = isset($val->company->CompanyID) ? $val->company->CompanyID : "";
                 $data[$x]['Tax Period '] = $input['fromDate']." - ". $input['toDate'];
-                $data[$x]['Accounting Document Number'] = $val->documentNumber ;
+                $data[$x]['Accounting Document Number'] = $val->documentNumber;
+                if($val->documentSystemID == 11){
+                    if($val->supplier_invoice) {
+                        $data[$x]['Reference No'] = $val->supplier_invoice->supplierInvoiceNo;
+                    }else{
+                        $data[$x]['Reference No'] = "";
+                    }
+                }
+                else if($val->documentSystemID == 3){
+                    if($val->grv) {
+                        $data[$x]['Reference No'] = $val->grv->grvDoRefNo;
+                    }else{
+                        $data[$x]['Reference No'] = "";
+                    }
+                }
+                else if($val->documentSystemID == 24){
+                    if($val->purchase_return) {
+                        $data[$x]['Reference No'] = $val->purchase_return->purchaseReturnRefNo;
+                    }else{
+                        $data[$x]['Reference No'] = "";
+                    }
+                }
+                else{
+                    $data[$x]['Reference No'] = "";
+                }
                 $data[$x]['Accounting Document Date'] = Helper::dateFormat($val->documentDate);
                 $data[$x]['Year'] = Carbon::parse($val->documentDate)->format('Y');
                 if ($input['reportTypeID'] == 3) {
@@ -449,22 +624,26 @@ class VATReportAPIController extends AppBaseController
                 $data[$x]['Reference Invoice No'] = "" ;
                 $data[$x]['Reference Invoice Date'] = "";
                 if ($input['reportTypeID'] == 3) {
-                    $data[$x]['Bill To Country'] = isset($val->country->countryName) ? $val->country->countryName : "";
                     if ($val->documentSystemID == 3 || $val->documentSystemID == 24 || $val->documentSystemID == 11 || $val->documentSystemID == 15 || $val->documentSystemID == 4) {
                         $data[$x]['Bill To CustomerName'] = isset($val->supplier->supplierName) ? $val->supplier->supplierName : "";
                     } else if ($val->documentSystemID == 20 || $val->documentSystemID == 19 || $val->documentSystemID == 21 || $val->documentSystemID == 71 || $val->documentSystemID == 87) {
                         $data[$x]['Bill To CustomerName'] = isset($val->customer->CustomerName) ? $val->customer->CustomerName : "";
                     }
-                } else if ($input['reportTypeID'] == 4) {
-                    $data[$x]['Supplier Country'] = isset($val->country->countryName) ? $val->country->countryName : "";
+                } else if ($input['reportTypeID'] == 4 || $input['reportTypeID'] == 5) {
                     if ($val->documentSystemID == 3 || $val->documentSystemID == 24 || $val->documentSystemID == 11 || $val->documentSystemID == 15 || $val->documentSystemID == 4) {
                         $data[$x]['Supplier Name'] = isset($val->supplier->supplierName) ? $val->supplier->supplierName : "";
                     } else if ($val->documentSystemID == 20 || $val->documentSystemID == 19 || $val->documentSystemID == 21 || $val->documentSystemID == 71 || $val->documentSystemID == 87) {
                         $data[$x]['Supplier Name'] = isset($val->customer->CustomerName) ? $val->customer->CustomerName : "";
                     }
                 }
-                $data[$x]['Customer Type'] = ($val->partyVATRegisteredYN) ? "Registered" : "Unregistered";
-                $data[$x]['Customer VAT Registration No'] = $val->partyVATRegNo;
+                if ($input['reportTypeID'] == 3) {
+                    $data[$x]['Customer Type'] = ($val->partyVATRegisteredYN) ? "Registered" : "Unregistered";
+                    $data[$x]['Bill To Country'] = isset($val->country->countryName) ? $val->country->countryName : "";
+                } else if ($input['reportTypeID'] == 4 || $input['reportTypeID'] == 5) {
+                    $data[$x]['Supplier Type'] = ($val->partyVATRegisteredYN) ? "Registered" : "Unregistered";
+                    $data[$x]['Supplier Country'] = isset($val->country->countryName) ? $val->country->countryName : "";
+                }
+                $data[$x]['VATIN'] = $val->partyVATRegNo;
                 $data[$x]['Invoice Line Item No'] = $val->itemCode;
                 $data[$x]['Line Item Description'] = $val->itemDescription;
                 if (isset($val->company->companyCountry) && ($val->company->companyCountry == $val->countryID)) {
@@ -488,19 +667,121 @@ class VATReportAPIController extends AppBaseController
                     $data[$x]['Input Tax Recoverability (Amount)'] = round($val->recoverabilityAmount, $val->transcurrency->DecimalPlaces);
                 }
 
+                
+                $taxableAmountTotal += $val->taxableAmount;
+                $VATAmountTotal += $val->VATAmount;
+                $taxableAmountLocalTotal += $val->taxableAmountLocal;
+                $VATAmountLocalTotal += $val->VATAmountLocal;
+                $recoverabilityAmountTotal += $val->recoverabilityAmount;
+                $transdecimalPlace = $val->transcurrency->DecimalPlaces;
             }
 
-            \Excel::create('vat_detail_report', function ($excel) use ($data) {
-                $excel->sheet('sheet name', function ($sheet) use ($data) {
-                    $sheet->fromArray($data, null, 'A1', true);
-                    $sheet->setAutoSize(true);
-                    $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                });
-                $lastrow = $excel->getActiveSheet()->getHighestRow();
-                $excel->getActiveSheet()->getStyle('A1:N' . $lastrow)->getAlignment()->setWrapText(true);
-            })->download('csv');
+            $x++;
+            $data[$x]['Company Code in ERP'] = "";
+            $data[$x]['Company VAT Registration Number'] =  "";
+            $data[$x]['Company Name'] =  "";
+            $data[$x]['Tax Period '] =  "";
+            $data[$x]['Accounting Document Number'] =  "";
+            $data[$x]['Reference No'] = "";
+            $data[$x]['Accounting Document Date'] = "";
+            $data[$x]['Year'] =  "";
+            
+            if ($input['reportTypeID'] == 3 || $input['reportTypeID'] == 4) {
+                $data[$x]['Revenue GL Code'] =  "";
+                $data[$x]['Revenue GL Code Description'] =  "";
+            }
+            
+            $data[$x]['Document Currency'] =  "";
+            $data[$x]['Document Type'] =  "";
+            $data[$x]['Original Document No'] =  "";
+            $data[$x]['Original Document Date'] =  "";
+            if ($input['reportTypeID'] == 4) {
+                $data[$x]['Payment Due Date'] = "";
+            }
+            $data[$x]['Date Of Supply'] =  "";
+            $data[$x]['Reference Invoice No'] = "" ;
+            $data[$x]['Reference Invoice Date'] = "";
+            
+            if ($input['reportTypeID'] == 3) {
+                
+                    $data[$x]['Bill To CustomerName'] = "";
+                
+            } else if ($input['reportTypeID'] == 4 || $input['reportTypeID'] == 5) {
+                
+                    $data[$x]['Supplier Name'] = "";
+                
+            }
+            
+            if ($input['reportTypeID'] == 3) {
+                $data[$x]['Customer Type'] = "";
+                $data[$x]['Bill To Country'] = "";
+            } else if ($input['reportTypeID'] == 4 || $input['reportTypeID'] == 5) {
+                $data[$x]['Supplier Type'] = "";
+                $data[$x]['Supplier Country'] = "";
+            }
+            $data[$x]['VATIN'] = "";
+            $data[$x]['Invoice Line Item No'] = "";
+            $data[$x]['Line Item Description'] = "";
+            
+            $data[$x]['Place Of Supply'] = "";
 
-            return $this->sendResponse(array(), 'successfully export');
+            $data[$x]['Tax Code Type'] = "";
+            $data[$x]['Tax Code Description'] = "";
+            $data[$x]['VAT Rate'] = "Total";
+            $data[$x]['Value Excluding VAT In Document Currency'] = round($taxableAmountTotal, $transdecimalPlace);
+            $data[$x]['Vat In Document Currency'] = round($VATAmountTotal, $transdecimalPlace);
+            $data[$x]['Document Currency To Local Currency Rate'] = "";
+            $data[$x]['Value Excluding VAT In Local Currency'] = round($taxableAmountLocalTotal, $transdecimalPlace);
+            $data[$x]['VAT In Local Currency'] = round($VATAmountLocalTotal, $transdecimalPlace);
+            $data[$x]['VAT GL Code'] = "";
+            $data[$x]['VAT GL Description'] = "";
+             if ($input['reportTypeID'] == 4) {
+                $data[$x]['Input Tax Recoverability'] = "";
+                $data[$x]['Input Tax Recoverability %'] = "";
+                $data[$x]['Input Tax Recoverability (Amount)'] = round($recoverabilityAmountTotal, $transdecimalPlace);
+            }
+
+
+            $company = Company::find($request->companySystemID);
+            if(!empty($company)){
+                $company_name = $company->CompanyName;
+                $company_vat_registration_number = $company->vatRegistratonNumber;
+            } else {
+                $company_name = '';
+                $company_vat_registration_number = '';
+            }
+            $to_date = \Helper::dateFormat($request->toDate);
+            $from_date = \Helper::dateFormat($request->fromDate);
+            
+
+            if($request->reportTypeID == 3){
+                $title = 'Details Of Outward Supply';
+                $fileName = 'details_of_outward_supply';
+            } elseif($request->reportTypeID == 4){
+                $title = 'Details Of Inward Supply';
+                $fileName = 'details_of_inward_supply';
+            } elseif($request->reportTypeID == 5){
+                $title = 'Details of Capital Asset Purchase';
+                $fileName = 'capital_asset_purchase_details';
+            }
+            $detail_array = array(  'type' => 6,
+                                    'from_date'=>$from_date,
+                                    'to_date'=>$to_date,
+                                    'company_name'=>$company_name,
+                                    'title'=>$title,
+                                    'company_vat_registration_number' =>$company_vat_registration_number);
+
+            $path = 'general-ledger/report/vat_report/excel/';
+            $basePath = CreateExcel::process($data,$request->type,$fileName,$path,$detail_array);
+
+            if($basePath == '')
+            {
+                 return $this->sendError('Unable to export excel');
+            }
+            else
+            {
+                 return $this->sendResponse($basePath, trans('custom.success_export'));
+            }
         }
         return $this->sendError( 'No Records Found');
     }
@@ -578,7 +859,14 @@ class VATReportAPIController extends AppBaseController
                             ->when(isset($input['isClaimed']), function ($query) use ($input) {
                                 $query->where('isClaimed', $input['isClaimed']);
                             })
-                            ->with(['supplier','customer','rptcurrency','localcurrency','final_approved_by','document_master','main_category', 'sub_category'])
+                            ->with(['supplier'=>
+                                function($query){
+                                    $query->with(['country']);
+                                },'customer'=>
+                                function($query){
+                                    $query->with(['country']);
+                                }
+                                ,'rptcurrency','localcurrency','final_approved_by','document_master','main_category', 'sub_category', 'supplier_invoice', 'grv', 'purchase_return'])
                             ->orderBy('taxLedgerID', 'desc');
 
         if($isForDataTable==0){
@@ -706,7 +994,7 @@ class VATReportAPIController extends AppBaseController
                             })
                             ->with(['supplier','customer','rptcurrency','localcurrency','document_master','main_category', 'sub_category', 'transcurrency', 'country', 'company' => function($query) {
                                 $query->with(['country']);
-                            }, 'input_vat', 'input_vat_transfer', 'output_vat', 'output_vat_transfer', 'supplier_invoice']);
+                            }, 'input_vat', 'input_vat_transfer', 'output_vat', 'output_vat_transfer', 'supplier_invoice', 'grv', 'purchase_return']);
         return $output;
 
     }

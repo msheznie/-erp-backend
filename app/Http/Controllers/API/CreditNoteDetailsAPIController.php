@@ -348,7 +348,7 @@ class CreditNoteDetailsAPIController extends AppBaseController
         if ($isVATEligible) {
             $defaultVAT = TaxService::getDefaultVAT($master->companySystemID, $master->customerID, 0);
             $inputData['vatSubCategoryID'] = $defaultVAT['vatSubCategoryID'];
-            $inputData['VATPercentage'] = $defaultVAT['percentage'];
+            $inputData['VATPercentage'] = $master->VATPercentage;
             $inputData['vatMasterCategoryID'] = $defaultVAT['vatMasterCategoryID'];
         }
 
@@ -395,7 +395,7 @@ class CreditNoteDetailsAPIController extends AppBaseController
     public function updateCreditNote(Request $request)
     {
         $input = $request->all();
-        $input=array_except($input, array('segment'));
+        $input=array_except($input, array('segment', 'subCategoryArray', 'subCatgeoryType', 'exempt_vat_portion'));
         $input = $this->convertArrayToValue($input);
         $id = $input['creditNoteDetailsID'];
         array_except($input, 'creditNoteDetailsID');

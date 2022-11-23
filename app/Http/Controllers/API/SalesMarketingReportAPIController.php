@@ -103,7 +103,6 @@ class SalesMarketingReportAPIController extends AppBaseController
                     'currencyID' => 'required',
                     'customers' => 'required',
                     'wareHouse' => 'required',
-                    'customer_category' => 'required',
                 ],
                     ['wareHouse.required' => 'The warehouse field is required']
                 );
@@ -720,7 +719,9 @@ class SalesMarketingReportAPIController extends AppBaseController
         $average_cost = 0;
         if ($itemLedgerData) {
             if ((isset($input['currencyID']) && $input['currencyID'] == 1 && $itemLedgerData->localTotal > 0) || (isset($input['currencyID']) && $input['currencyID'] == 2 && $itemLedgerData->rptTotal > 0)) {
-                $average_cost = (isset($input['currencyID']) && $input['currencyID'] == 1) ? ($itemLedgerData->localTotal / $itemLedgerData->totalQty) : ($itemLedgerData->rptTotal / $itemLedgerData->totalQty); 
+                if($itemLedgerData->totalQty != 0) {
+                    $average_cost = (isset($input['currencyID']) && $input['currencyID'] == 1) ? ($itemLedgerData->localTotal / $itemLedgerData->totalQty) : ($itemLedgerData->rptTotal / $itemLedgerData->totalQty);
+                }
             }
         } 
 

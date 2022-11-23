@@ -6,6 +6,9 @@
                     @endif
                     <table>
                         <tr>
+                            <td width="100px" colspan="2"  style="text-decoration: underline;"><b> Remittance Details  </b></td>
+                        </tr>
+                        <tr>
                             <td width="100px"><span class="font-weight-bold"><b>BANK NAME</b></span></td>
                             <td><b> :
                                 @if($request->secondaryLogoCompanySystemID)
@@ -97,7 +100,7 @@
                                             @endif
                                             <br><br>
                                             @if($det->employee)
-                                                {{ \App\helper\Helper::dateFormat($det->approvedDate)}}
+                                                {{ \App\helper\Helper::convertDateWithTime($det->approvedDate)}}
                                             @endif
                                         @endif
                                         </b>

@@ -67,7 +67,7 @@ class TenderProcurementCategoryController extends AppBaseController
         $validator = \Validator::make($input, [
             'is_active' => 'required|numeric|min:0',
             'description' => 'required',
-            'description_in_secondary' => 'required',
+           // 'description_in_secondary' => 'required',
         ]);
 
         if ($validator->fails()) {
@@ -88,9 +88,9 @@ class TenderProcurementCategoryController extends AppBaseController
 
         if (!empty($procurementCatCodeExist)) {
             if(is_null($procurementCatCodeExist['deleted_at'])){
-                return $this->sendError('Procurement code ' . $input['code'] . ' already exists');
+                return $this->sendError('Procurement code \'' . $input['code'] . '\' already exists');
             } else {
-                $errorMessage = 'Procurement code '. $input['code'] . '  already exist, Do you really want to restore this?';
+                $errorMessage = 'Procurement code \''. $input['code'] . '\'  already exist, Do you really want to restore this?';
                 return $this->sendError([$procurementCatCodeExist['id'], $errorMessage], 409);
             }
         }
@@ -109,9 +109,9 @@ class TenderProcurementCategoryController extends AppBaseController
 
         if (!empty($procurementCatDesExist)) {
             if(is_null($procurementCatDesExist['deleted_at'])){
-                return $this->sendError('Procurement category description ' . $input['description'] . ' already exists');
+                return $this->sendError('Procurement category description \'' . $input['description'] . '\' already exists');
             } else {
-                $errorMessage = 'Procurement category description '. $input['description'] . ' already exist, Do you really want to restore this?';
+                $errorMessage = 'Procurement category description \''. $input['description'] . '\' already exist, Do you really want to restore this?';
                 return $this->sendError([$procurementCatDesExist['id'], $errorMessage], 409);
             }
         }
@@ -207,7 +207,7 @@ class TenderProcurementCategoryController extends AppBaseController
 
         if (!empty($procurementCodeExist)) {
             if(is_null($procurementCodeExist['deleted_at'])) {
-                return $this->sendError('Procurement code ' . $input['code'] . ' already exists');
+                return $this->sendError('Procurement code \'' . $input['code'] . '\' already exists');
             } else {
                 $errorMessage = 'Procurement code '. $input['code'] . '  already exist, Do you really want to restore this?';
                 return $this->sendError([$procurementCodeExist['id'], $errorMessage], 409);
@@ -230,7 +230,7 @@ class TenderProcurementCategoryController extends AppBaseController
 
         if(!empty($procurementDesExist)) {
             if(is_null($procurementCodeExist['deleted_at'])) {
-                return $this->sendError('Procurement category description ' . $input['description'] . ' already exists');
+                return $this->sendError('Procurement category description \'' . $input['description'] . '\' already exists');
             } else {
                 $errorMessage = 'Procurement category description '. $input['description'] . ' already exist, Do you really want to restore this?';
                 return $this->sendError([$procurementCodeExist['id'], $errorMessage], 409);
@@ -296,7 +296,7 @@ class TenderProcurementCategoryController extends AppBaseController
 
         $input['deleted_by'] = Helper::getEmployeeSystemID();
         $procurementCategoryDeleted = TenderProcurementCategory::where('id', $id)->update($input);
-        
+
         if($procurementCategoryDeleted){
             $tenderProcurementCategory->delete();
         }
@@ -365,7 +365,7 @@ class TenderProcurementCategoryController extends AppBaseController
             ->where('level', '=', $level)->first();
 
         if (!empty($procurementCatDesExist)) {
-            return $this->sendError('Procurement category description ' . $input['description'] . ' already exists');
+            return $this->sendError('Procurement category description \'' . $input['description'] . '\' already exists');
         }
         
         $procurementCategory = TenderProcurementCategory::withTrashed()->find($id)->restore();

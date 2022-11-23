@@ -468,6 +468,15 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
     public function updateCustomerReciept(Request $request)
     {
         $input = $request->all();
+        $serviceLineSystemID = null;
+        if (isset($input['ar_data'])) {
+            $serviceLineSystemID = $input['ar_data']['serviceLineSystemID'];
+        }
+
+
+        if (isset($input['ar_data'])) {
+            unset($input['ar_data']);
+        }
 
         $detail = CustomerReceivePaymentDetail::where('custRecivePayDetAutoID', $input['custRecivePayDetAutoID'])->first();
 
@@ -496,10 +505,13 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
             ->where('companySystemID', $input["companySystemID"])
             ->where('PayMasterAutoId', $input["bookingInvCodeSystem"])
             ->where('documentSystemID', $input["addedDocumentSystemID"])
+            ->where('serviceLineSystemID', $serviceLineSystemID)
             ->groupBy('PayMasterAutoId', 'documentSystemID', 'BPVsupplierID', 'supplierTransCurrencyID')->first();
 
-        if($input['tempType'] == 1){
-            $input["receiveAmountTrans"] = $input['custbalanceAmount'];
+        if(isset($input['tempType'])) {
+            if ($input['tempType'] == 1) {
+                $input["receiveAmountTrans"] = $input['custbalanceAmount'];
+            }
         }
 
         if(!$matchedAmountPreCheck){
@@ -535,6 +547,7 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
             ->where('companySystemID', $input["companySystemID"])
             ->where('PayMasterAutoId', $input["bookingInvCodeSystem"])
             ->where('documentSystemID', $input["addedDocumentSystemID"])
+            ->where('serviceLineSystemID', $serviceLineSystemID)
             ->groupBy('PayMasterAutoId', 'documentSystemID', 'BPVsupplierID', 'supplierTransCurrencyID')->first();
 
         $totReceiveAmount = $totalReceiveAmountTrans + $matchedAmount['SumOfmatchedAmount'];
@@ -579,7 +592,7 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
 
     function getReceiptVoucherMatchDetails(Request $request)
     {
-        $data = CustomerReceivePaymentDetail::where('matchingDocID', $request->matchDocumentMasterAutoID)
+        $data = CustomerReceivePaymentDetail::with(['ar_data'])->where('matchingDocID', $request->matchDocumentMasterAutoID)
             ->get();
         return $this->sendResponse($data, 'Details saved successfully');
     }
@@ -701,6 +714,10 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
     {
         $input = $request->all();
 
+        if (isset($input['ar_data'])) {
+            unset($input['ar_data']);
+        }
+
         $receiptVoucherDetails = $this->customerReceivePaymentDetailRepository->findWithoutFail($input['custRecivePayDetAutoID']);
 
         if (empty($receiptVoucherDetails)) {
@@ -748,7 +765,10 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
         $totReceiveAmountDetail = $input['bookingAmountTrans'] - ($totalReceiveAmountPreCheck + $machAmount);
 
         if ($input['addedDocumentSystemID'] == 20) {
-            if ($input["receiveAmountTrans"] > $totReceiveAmountDetail) {
+            $compareValue = $input["receiveAmountTrans"] - $totReceiveAmountDetail;
+            $epsilon = 0.00001;
+
+            if ($compareValue > $epsilon) {
                 return $this->sendError('Matching amount cannot be greater than balance amount', 500, ['type' => 'amountmismatch']);
             }
         } else if ($input['addedDocumentSystemID'] == 19) {

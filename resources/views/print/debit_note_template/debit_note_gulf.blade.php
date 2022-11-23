@@ -155,16 +155,31 @@
             background-color: #ffffff !important;
             border-right:  1px solid #ffffffff !important;
         }
+        .container
+            {
+                display: block;
+                max-width:230px;
+                max-height:95px;
+                width: auto;
+                height: auto;
+            }
+
+        .table_height
+            {
+                max-height: 60px !important;
+            }
+
     </style>
 
 <div class="content">
     <div class="row">
-        <table style="width:100%">
+        <table style="width:100%" class="table_height">
             <tr>
-                <td width="30%">
-                    <img src="{{$entity->company->logo_url}}" width="180px" height="60px"></td>
+                <td width="20%">
+                    <img src="{{$entity->company->logo_url}}" width="180px" height="60px" class="container">
+                </td>
 
-                <td width="50%" style="text-align: center">
+                <td width="80%" style="text-align: center">
                     <div class="text-center">
                         <h3 class="font-weight-bold" style="font-size: 18px">
                             <b>
@@ -218,8 +233,16 @@
                 <td>
                     <b>
                         <p>
-                         @if($entity->supplier)
-                                {{$entity->supplier->supplierName}}
+                         @if($entity->type == 1)
+                            @if($entity->supplier)
+                                    {{$entity->supplier->supplierName}}
+                            @endif
+                         @endif
+
+                         @if($entity->type == 2)
+                            @if($entity->employee)
+                                    {{$entity->employee->empName}}
+                            @endif
                          @endif
                         </p>
                     </b>

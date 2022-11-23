@@ -122,6 +122,14 @@ class AssetManagementReportAPIController extends AppBaseController
                         'currencyID' => 'required',
                         'typeID' => 'required'
                     ]);
+                } else if ($request->reportTypeID == 'ARD3') { // Asset Register Detail 3
+                    $validator = \Validator::make($request->all(), [
+                        'reportTypeID' => 'required',
+                        'fromDate' => 'required',
+                        'assetCategory' => 'required',
+                        'currencyID' => 'required',
+                        'typeID' => 'required'
+                    ]);
                 }else if ($request->reportTypeID == 'ARGD') { // Asset Register Grouped Detail
                 $validator = \Validator::make($request->all(), [
                     'reportTypeID' => 'required',
@@ -235,10 +243,13 @@ class AssetManagementReportAPIController extends AppBaseController
                             $outputArr[$val->financeCatDescription][] = $val;
                         }
                     }
-    
+                    $companyData = \Helper::companyCurrency($request->companySystemID);
+
                     $sort = 'asc';         
                     return \DataTables::of($output)
                     ->addIndexColumn()
+                    ->with('localcurrency', $companyData->localcurrency)
+                    ->with('reportingcurrency', $companyData->reportingcurrency)
                     ->with('localnbv', $localnbv)
                     ->with('rptnbv', $rptnbv)
                     ->with('COSTUNIT', $COSTUNIT)
@@ -250,6 +261,70 @@ class AssetManagementReportAPIController extends AppBaseController
                     ->make(true);
 
                    // return array('reportData' => $outputArr, 'localnbv' => $localnbv, 'rptnbv' => $rptnbv, 'COSTUNIT' => $COSTUNIT, 'costUnitRpt' => $costUnitRpt, 'depAmountLocal' => $depAmountLocal, 'depAmountRpt' => $depAmountRpt);
+                }
+
+                if ($request->reportTypeID == 'ARD3') { // Asset Register Detail 3
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('typeID'));
+                    $typeID = $request->typeID;
+                    $asOfDate = (new Carbon($request->fromDate))->format('Y-m-d');
+                    $assetCategory = collect($request->assetCategory)->pluck('faFinanceCatID')->toArray();
+                    $assetCategory = join(',', $assetCategory);
+
+                    $output = $this->getAssetRegisterDetail3($request);
+                    $outputArr = [];
+
+                    $COSTUNIT = 0;
+                    $costUnitRpt = 0;
+                    $depAmountLocal = 0;
+                    $depAmountRpt = 0;
+                    $localnbv = 0;
+                    $rptnbv = 0;
+                    $acDepAmountRpt = 0;
+                    $adDepAmountLocal = 0;
+                    $costUnitRptDisposed = 0;
+                    $costUnitDisposed = 0;
+                    $profitDisposalRpt = 0;
+                    $profitDisposalLocal = 0;
+                    if ($output) {
+                        foreach ($output as $val) {
+                            $localnbv += ($val->COSTUNIT - $val->depAmountLocal);
+                            $rptnbv += ($val->costUnitRpt - $val->depAmountRpt);
+                            $COSTUNIT += $val->COSTUNIT;
+                            $costUnitRpt += $val->costUnitRpt;
+                            $depAmountRpt += $val->depAmountRpt;
+                            $acDepAmountRpt += $val->acDepAmountRpt;
+                            $adDepAmountLocal += $val->adDepAmountLocal;
+                            $depAmountLocal += $val->depAmountLocal;
+                            $costUnitRptDisposed += (($val->DIPOSED == -1) ? $val->costUnitRpt : 0);
+                            $costUnitDisposed += (($val->DIPOSED == -1) ? $val->COSTUNIT : 0);
+                            $profitDisposalRpt += (($val->DIPOSED == -1 && $request->typeID == 1 && $val->disposalType == 6) ? ($val->sellingPriceRpt - ($val->costUnitRpt - $val->acDepAmountRpt)) : 0);
+                            $profitDisposalLocal += (($val->DIPOSED == -1 && $request->typeID == 1 && $val->disposalType == 6) ? ($val->sellingPriceLocal - ($val->COSTUNIT - $val->adDepAmountLocal)) : 0);
+                            $outputArr[$val->financeCatDescription][] = $val;
+                        }
+                    }
+
+                    $companyData = \Helper::companyCurrency($request->companySystemID);
+    
+                    $sort = 'asc';
+
+                    return \DataTables::of($output)
+                                    ->addIndexColumn()
+                                    ->with('localnbv', $localnbv)
+                                    ->with('rptnbv', $rptnbv)
+                                    ->with('localcurrency', $companyData->localcurrency)
+                                    ->with('reportingcurrency', $companyData->reportingcurrency)
+                                    ->with('COSTUNIT', $COSTUNIT)
+                                    ->with('costUnitRpt', $costUnitRpt)
+                                    ->with('depAmountLocal', $depAmountLocal)
+                                    ->with('depAmountRpt', $depAmountRpt)
+                                    ->with('costUnitRptDisposed', $costUnitRptDisposed)
+                                    ->with('costUnitDisposed', $costUnitDisposed)
+                                    ->with('profitDisposalRpt', $profitDisposalRpt)
+                                    ->with('profitDisposalLocal', $profitDisposalLocal)
+                                    ->with('acDepAmountRpt', $acDepAmountRpt)
+                                    ->with('adDepAmountLocal', $adDepAmountLocal)
+                                    ->addIndexColumn()
+                                    ->make(true);
                 }
 
                 if ($request->reportTypeID == 'ARS') { // Asset Register Summary
@@ -316,9 +391,11 @@ class AssetManagementReportAPIController extends AppBaseController
 
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('typeID'));
 
+                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+
                     $output = $this->getAssetRegisterDetail($request);
 
-                    return $this->getAssetRegisterGroupedDetailFinalArray($output);
+                    return $this->getAssetRegisterGroupedDetailFinalArray($output, $companyCurrency);
 
                 }
 
@@ -606,7 +683,11 @@ class AssetManagementReportAPIController extends AppBaseController
                 $grandTotalRpt = 0;
                 if ($output) {
                     foreach ($output as $val) {
-                        $outputArr[$val->chartOfAccountSystemID][] = $val;
+                        if (isset($request->groupByAsset) && $request->groupByAsset) {
+                            $outputArr[$val->assetID][] = $val;
+                        } else {
+                            $outputArr[$val->chartOfAccountSystemID][] = $val;
+                        }
                         $grandTotalLocal += $val->amountLocal;
                         $grandTotalRpt += $val->amountRpt;
                     }
@@ -640,6 +721,10 @@ class AssetManagementReportAPIController extends AppBaseController
                     // }
                     $x = 2;
                     $data = [];
+                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                    $localDecimalPlace = isset($companyCurrency->localcurrency->DecimalPlaces) ? $companyCurrency->localcurrency->DecimalPlaces: 3;
+                    $rptDecimalPlace = isset($companyCurrency->reportingcurrency->DecimalPlaces) ? $companyCurrency->reportingcurrency->DecimalPlaces: 2;
+
                     if (!empty($output)) {
 
 
@@ -715,12 +800,12 @@ class AssetManagementReportAPIController extends AppBaseController
                                 $data[$x]['Date Aquired'] = \Helper::dateFormat($value->postedDate);
                                 $data[$x]['Dep Start Date'] = \Helper::dateFormat($value->dateDEP);
 
-                                $data[$x]['Local Amount unitcost'] = round($value->COSTUNIT, 2);
-                                $data[$x]['Local Amount accDep'] = round($value->depAmountLocal, 2);
-                                $data[$x]['Local Amount net Value'] = round($value->localnbv, 2);
-                                $data[$x]['Rpt Amount unit cost'] = round($value->costUnitRpt, 2);
-                                $data[$x]['Rpt Amount acc dep'] = round($value->depAmountRpt, 2);
-                                $data[$x]['Rpt Amount acc net value'] = round($value->rptnbv, 2);
+                                $data[$x]['Local Amount unitcost'] = round($value->COSTUNIT, $localDecimalPlace);
+                                $data[$x]['Local Amount accDep'] = round($value->depAmountLocal, $localDecimalPlace);
+                                $data[$x]['Local Amount net Value'] = round($value->localnbv, $localDecimalPlace);
+                                $data[$x]['Rpt Amount unit cost'] = round($value->costUnitRpt, $rptDecimalPlace);
+                                $data[$x]['Rpt Amount acc dep'] = round($value->depAmountRpt, $rptDecimalPlace);
+                                $data[$x]['Rpt Amount acc net value'] = round($value->rptnbv, $rptDecimalPlace);
                      
                                  $x++;
                       
@@ -742,12 +827,12 @@ class AssetManagementReportAPIController extends AppBaseController
                         $data[$x]['DEP %'] = '';
                         $data[$x]['Date Aquired'] = '';
                         $data[$x]['Dep Start Date'] = 'Total';
-                        $data[$x]['Local Amount unitcost'] = $TotalCOSTUNIT;
-                        $data[$x]['Local Amount accDep'] = $TotaldepAmountLocal;
-                        $data[$x]['Local Amount net Value'] = $Totallocalnbv;
-                        $data[$x]['Rpt Amount unit cost'] = $TotalcostUnitRpt;
-                        $data[$x]['Rpt Amount acc dep'] = $TotaldepAmountRpt;
-                        $data[$x]['Rpt Amount acc net value'] = $Totalrptnbv;
+                        $data[$x]['Local Amount unitcost'] = round($TotalCOSTUNIT, $localDecimalPlace);
+                        $data[$x]['Local Amount accDep'] = round($TotaldepAmountLocal, $localDecimalPlace);
+                        $data[$x]['Local Amount net Value'] = round($Totallocalnbv, $localDecimalPlace);
+                        $data[$x]['Rpt Amount unit cost'] = round($TotalcostUnitRpt,$rptDecimalPlace);
+                        $data[$x]['Rpt Amount acc dep'] = round($TotaldepAmountRpt,$rptDecimalPlace);
+                        $data[$x]['Rpt Amount acc net value'] = round($Totalrptnbv, $rptDecimalPlace);
                     }
 
      
@@ -767,6 +852,111 @@ class AssetManagementReportAPIController extends AppBaseController
                     
                    
                     
+                }
+
+                if ($request->reportTypeID == 'ARD3') { // Asset Register Detail 3
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('typeID', 'currencyID'));
+                    $output = $this->getAssetRegisterDetail3($request);
+                    $outputArr = [];
+                    $x = 2;
+                    $totAcq = 0;
+                    $totDepPed = 0;
+                    $totDisVal = 0;
+                    $totNBV = 0;
+                    $totDisPro = 0;
+                    $data = [];
+
+                    $companyData = \Helper::companyCurrency($request->companySystemID);
+
+                    $decimalPlaces = ($request->currencyID == 3) ? $companyData->reportingcurrency->DecimalPlaces : $companyData->localcurrency->DecimalPlaces;
+                    $currencyCode = ($request->currencyID == 3) ? $companyData->reportingcurrency->CurrencyCode : $companyData->localcurrency->CurrencyCode;
+
+                    if (!empty($output)) {
+
+                        foreach ($output as $key => $value) {
+                            $data[$x]["Fixed Asset Code"] = $value->faCode;
+                            $data[$x]["Asset Description"] = $value->assetDescription;
+                            $data[$x]["Account Code"] = $value->COSTGLCODE;
+                            $data[$x]["Asset Class"] = is_string($value->financeCatDescription) ? htmlspecialchars_decode($value->financeCatDescription) : $value->financeCatDescription;
+                            $data[$x]["Serial Number"] = $value->faUnitSerialNo;
+                            $data[$x]["Location"] = $value->locationName;
+                            $data[$x]["Sub-Location"] = $value->ServiceLineDes;
+                            $data[$x]["Acquisition Date"] = Carbon::parse($value->dateAQ)->format('d/m/Y');
+                            $data[$x]["Supplier Name"] = $value->supplierName;
+                            $data[$x]["Acquisition Cost (".$currencyCode.")"] = round(($request->currencyID == 3) ? $value->costUnitRpt : $value->COSTUNIT, $decimalPlaces);
+                            $data[$x]["Place in Service Date"] = Carbon::parse($value->dateDEP)->format('d/m/Y');
+                            $data[$x]["Useful Life"] = $value->depMonth;
+                            $data[$x]["Remaining Life"] = $value->depMonth - $value->depreciatedMonths;
+                            $data[$x]["Depr. Type"] = "SL";
+                            $data[$x]["Depreciation %"] = $value->DEPpercentage;
+                            $data[$x]["Depreciation for the period (".$currencyCode.")"] = round(($request->currencyID == 3) ? $value->depAmountRpt : $value->depAmountLocal, $decimalPlaces);
+                            $data[$x]["Accumulated Depreciation  (".$currencyCode.")"] = round(($request->currencyID == 3) ? $value->acDepAmountRpt : $value->adDepAmountLocal, $decimalPlaces);
+                            $data[$x]["NBV (".$currencyCode.")"] = round(($request->currencyID == 3) ? floatval($value->costUnitRpt) - floatval($value->depAmountRpt) : floatval($value->COSTUNIT) - floatval($value->depAmountLocal), $decimalPlaces);
+                            $data[$x]["Additions"] = 0;
+                            $data[$x]["Revaluations"] = 0;
+
+                            $disposalValue = $request->currencyID == 3 ? $value->costUnitRpt : $value->COSTUNIT;
+                            $data[$x]["Disposals (".$currencyCode.")"] = round((($value->DIPOSED == -1) ? $disposalValue : 0), $decimalPlaces);
+                            $disposalProfit = $request->currencyID == 3 ? (floatval($value->sellingPriceRpt) - (floatval($value->costUnitRpt) - floatval($value->acDepAmountRpt))) : (floatval($value->sellingPriceLocal) - (floatval($value->COSTUNIT) - floatval($value->adDepAmountLocal)));
+                            $data[$x]["Profit / (Loss) on Disposal (".$currencyCode.")"] = round(($value->DIPOSED == -1 && $request->typeID == 1 && $value->disposalType == 6) ? $disposalProfit : 0, $decimalPlaces);
+                            $data[$x]["Impairment"] = 0;
+                            $data[$x]["Write-Offs"] = 0;
+
+                            $totAcq += ($request->currencyID == 3) ? $value->costUnitRpt : $value->COSTUNIT;
+                           $totDepPed += ($request->currencyID == 3) ? $value->depAmountRpt : $value->depAmountLocal;
+                           $totNBV += ($request->currencyID == 3) ? floatval($value->costUnitRpt) - floatval($value->depAmountRpt) : floatval($value->COSTUNIT) - floatval($value->depAmountLocal);
+
+
+                            if($value->DIPOSED == -1){
+                                $totDisVal += $request->currencyID == 3 ? $value->costUnitRpt : $value->COSTUNIT;
+                            }
+                            if($value->DIPOSED == -1 && $request->typeID == 1 && $value->disposalType == 6){
+                                $totDisPro += $request->currencyID == 3 ? (floatval($value->sellingPriceRpt) - (floatval($value->costUnitRpt) - floatval($value->acDepAmountRpt))) : (floatval($value->sellingPriceLocal) - (floatval($value->COSTUNIT) - floatval($value->adDepAmountLocal)));
+                            }
+
+                             $x++;
+                        }
+
+                        $data[$x][0] = "";
+                        $data[$x][1] = "";
+                        $data[$x][2] = "";
+                        $data[$x][3] = "";
+                        $data[$x][4] = "";
+                        $data[$x][5] = "";
+                        $data[$x][6] = "";
+                        $data[$x][7] = "";
+                        $data[$x][8] = "Total";
+                        $data[$x][9] = round($totAcq, $decimalPlaces);;
+                        $data[$x][10] = "";
+                        $data[$x][11] = "";
+                        $data[$x][12] = "";
+                        $data[$x][13] = "";
+                        $data[$x][14] = "";
+                        $data[$x][15] = round($totDepPed, $decimalPlaces);
+                        $data[$x][16] = round($totDepPed, $decimalPlaces);
+                        $data[$x][17] = round($totNBV, $decimalPlaces);
+                        $data[$x][18] = 0;
+                        $data[$x][19] = 0;
+                        $data[$x][20] = round($totDisVal, $decimalPlaces);
+                        $data[$x][21] = round($totDisPro, $decimalPlaces);
+                        $data[$x][22] = 0;
+                        $data[$x][23] = 0;
+                    }
+
+     
+              
+                    $fileName = 'asset_register_detail_3';
+                    $path = 'asset_register/report/excel/';
+                    $basePath = CreateExcel::process($data,$type,$fileName,$path);
+
+                    if($basePath == '')
+                    {
+                         return $this->sendError('Unable to export excel');
+                    }
+                    else
+                    {
+                         return $this->sendResponse($basePath, trans('custom.success_export'));
+                    }
                 }
 
                 if ($request->reportTypeID == 'ARD2') { // Asset Register Detail 2
@@ -945,7 +1135,9 @@ class AssetManagementReportAPIController extends AppBaseController
                 if ($request->reportTypeID == 'ARGD') { // Asset Register Detail
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('typeID'));
                     $output = $this->getAssetRegisterDetail($request);
-                    $final = $this->getAssetRegisterGroupedDetailFinalArray($output);
+                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+
+                    $final = $this->getAssetRegisterGroupedDetailFinalArray($output, $companyCurrency);
                     $outputArr = $final['reportData'];
 
                     $x = 0;
@@ -1025,6 +1217,10 @@ class AssetManagementReportAPIController extends AppBaseController
                             $depAmountRpt = 0;
                             $rptnbv = 0;
 
+                            $localDecimalPlace = isset($companyCurrency->localcurrency->DecimalPlaces) ? $companyCurrency->localcurrency->DecimalPlaces: 3;
+                            $rptDecimalPlace = isset($companyCurrency->reportingcurrency->DecimalPlaces) ? $companyCurrency->reportingcurrency->DecimalPlaces: 2;
+
+
                             foreach ($masterVal as $mainAsset => $assetArray) {
 
                                 foreach ($assetArray as $value){
@@ -1044,12 +1240,12 @@ class AssetManagementReportAPIController extends AppBaseController
                                     $data[$x]['Date Aquired'] = \Helper::dateFormat($value->postedDate);
                                     $data[$x]['Dep Start Date'] = \Helper::dateFormat($value->dateDEP);
 
-                                    $data[$x]['Local Amount unitcost'] = round($value->COSTUNIT, 2);
-                                    $data[$x]['Local Amount accDep'] = round($value->depAmountLocal, 2);
-                                    $data[$x]['Local Amount net Value'] = round($value->localnbv, 2);
-                                    $data[$x]['Rpt Amount unit cost'] = round($value->costUnitRpt, 2);
-                                    $data[$x]['Rpt Amount acc dep'] = round($value->depAmountRpt, 2);
-                                    $data[$x]['Rpt Amount acc net value'] = round($value->rptnbv, 2);
+                                    $data[$x]['Local Amount unitcost'] = round($value->COSTUNIT, $localDecimalPlace);
+                                    $data[$x]['Local Amount accDep'] = round($value->depAmountLocal, $localDecimalPlace);
+                                    $data[$x]['Local Amount net Value'] = round($value->localnbv, $localDecimalPlace);
+                                    $data[$x]['Rpt Amount unit cost'] = round($value->costUnitRpt, $rptDecimalPlace);
+                                    $data[$x]['Rpt Amount acc dep'] = round($value->depAmountRpt, $rptDecimalPlace);
+                                    $data[$x]['Rpt Amount acc net value'] = round($value->rptnbv, $rptDecimalPlace);
 
                                     if(!$value->isHeader ){
                                         $COSTUNIT += $value->COSTUNIT;
@@ -1411,25 +1607,42 @@ class AssetManagementReportAPIController extends AppBaseController
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                 $decimalPlaces = 2;
                 $output = $this->getAssetExpenseQRY($request);
+                $fromDate = $request->fromDate;
+                $toDate = $request->toDate;
                 $data = [];
                 $companyCurrency = Company::with(['localcurrency', 'reportingcurrency'])->find($request->companySystemID);
                 if (count($output) > 0) {
                     $x = 0;
                     foreach ($output as $val) {
-                        $data[$x]['Account Code'] = isset($val->chart_of_account->AccountCode) ? $val->chart_of_account->AccountCode : "";
-                        $data[$x]['Account Description'] = isset($val->chart_of_account->AccountDescription) ? $val->chart_of_account->AccountDescription : "";
-                        $data[$x]['Asset Code'] = isset($val->asset->faCode) ? $val->asset->faCode : "";
-                        $data[$x]['Asset Description'] = isset($val->asset->assetDescription) ? $val->asset->assetDescription : "";
+                        $data[$x]['AccountCode'] = isset($val->chart_of_account->AccountCode) ? $val->chart_of_account->AccountCode : "";
+                        $data[$x]['AccountDescription'] = isset($val->chart_of_account->AccountDescription) ? $val->chart_of_account->AccountDescription : "";
+                        $data[$x]['AssetCode'] = isset($val->asset->faCode) ? $val->asset->faCode : "";
+                        $data[$x]['AssetDescription'] = isset($val->asset->assetDescription) ? $val->asset->assetDescription : "";
+                        $data[$x]['ChartOfAccountSystemID'] = isset($val->chartOfAccountSystemID) ? $val->chartOfAccountSystemID : 0;
+                        $data[$x]['AssetID'] = isset($val->assetID) ? $val->assetID : 0;
 
                         if ($val->documentSystemID == 11) {
-                            $data[$x]['Document Code'] = isset($val->supplier_invoice->bookingInvCode) ? $val->supplier_invoice->bookingInvCode : "";
-                            $data[$x]['Document Date'] = isset($val->supplier_invoice->bookingDate) ? Carbon::parse($val->supplier_invoice->bookingDate)->format('Y-m-d') : "";
+                            $data[$x]['DocumentCode'] = isset($val->supplier_invoice->bookingInvCode) ? $val->supplier_invoice->bookingInvCode : "";
+                            $data[$x]['DocumentDate'] = isset($val->supplier_invoice->bookingDate) ? Carbon::parse($val->supplier_invoice->bookingDate)->format('Y-m-d') : "";
                         } else if ($val->documentSystemID == 4){
-                            $data[$x]['Document Code'] = isset($val->payment_voucher->BPVcode) ? $val->payment_voucher->BPVcode : "";
-                            $data[$x]['Document Date'] = isset($val->payment_voucher->BPVdate) ? Carbon::parse($val->payment_voucher->BPVdate)->format('Y-m-d') : "";                         
-                        } else {
-                            $data[$x]['Document Code'] = isset($val->meterial_issue->itemIssueCode) ? $val->meterial_issue->itemIssueCode : "";
-                            $data[$x]['Document Date'] = isset($val->meterial_issue->master->issueDate) ? Carbon::parse($val->meterial_issue->master->issueDate)->format('Y-m-d') : "";                         
+                            $data[$x]['DocumentCode'] = isset($val->payment_voucher->BPVcode) ? $val->payment_voucher->BPVcode : "";
+                            $data[$x]['DocumentDate'] = isset($val->payment_voucher->BPVdate) ? Carbon::parse($val->payment_voucher->BPVdate)->format('Y-m-d') : "";
+                        }
+                        else if ($val->documentSystemID == 3){
+                            $data[$x]['DocumentCode'] = isset($val->grv->grvPrimaryCode) ? $val->grv->grvPrimaryCode : "";
+                            $data[$x]['DocumentDate'] = isset($val->grv->grvDate) ? Carbon::parse($val->grv->grvDate)->format('Y-m-d') : "";
+                        }
+                        else if ($val->documentSystemID == 17){
+                            $data[$x]['DocumentCode'] = isset($val->journal_voucher->JVcode) ? $val->journal_voucher->JVcode : "";
+                            $data[$x]['DocumentDate'] = isset($val->journal_voucher->JVdate) ? Carbon::parse($val->journal_voucher->JVdate)->format('Y-m-d') : "";
+                        }
+                        else if ($val->documentSystemID == 161){
+                            $data[$x]['DocumentCode'] = isset($val->ioue->bookingCode) ? $val->ioue->bookingCode : "";
+                            $data[$x]['DocumentDate'] = isset($val->ioue->bookingDate) ? Carbon::parse($val->ioue->bookingDate)->format('Y-m-d') : "";
+                        }
+                        else {
+                            $data[$x]['DocumentCode'] = isset($val->meterial_issue->itemIssueCode) ? $val->meterial_issue->itemIssueCode : "";
+                            $data[$x]['DocumentDate'] = isset($val->meterial_issue->master->issueDate) ? Carbon::parse($val->meterial_issue->master->issueDate)->format('Y-m-d') : "";
                         }
 
                         if ($request->currencyID == 2) {
@@ -1443,21 +1656,54 @@ class AssetManagementReportAPIController extends AppBaseController
                         $x++;
                     }
                 }
+                if(isset($request->groupByAsset)) {
+                    if ($request->groupByAsset == false) {
+                        $headers = array();
+                        foreach ($data as $element) {
+                            $headers[$element['AccountCode']][] = $element;
+                        }
+                        $headers = array_values($headers);
 
-                $fileName = 'asset_expenses';
-                $path = 'asset/report/asset_expenses/excel/';
-                $basePath = CreateExcel::process($data,$type,$fileName,$path);
+                        usort($headers, function ($a, $b) {return $a[0]['ChartOfAccountSystemID'] > $b[0]['ChartOfAccountSystemID'];});
 
-                if($basePath == '')
-                {
-                     return $this->sendError('Unable to export excel');
+
+
+                        $reportData = array('reportData' => $data, 'headers' => $headers, 'fromDate' => $fromDate, 'toDate' => $toDate, 'currency' => $companyCurrency, 'currencyID' => $request->currencyID);
+                        $templateName = "export_report.asset_expenses";
+
+                    }
+                    if ($request->groupByAsset == true) {
+                        $headers = array();
+                        foreach ($data as $element) {
+                            $headers[$element['AssetCode']][] = $element;
+                        }
+                        $headers = array_values($headers);
+
+                        usort($headers, function ($a, $b) {return $a[0]['AssetID'] > $b[0]['AssetID'];});
+
+                        $reportData = array('reportData' => $data, 'headers' => $headers, 'fromDate' => $fromDate, 'toDate' => $toDate, 'currency' => $companyCurrency, 'currencyID' => $request->currencyID);
+                        $templateName = "export_report.asset_wise_expenses";
+
+                    }
                 }
-                else
-                {
-                     return $this->sendResponse($basePath, trans('custom.success_export'));
+                else{
+                    $headers = array();
+                    foreach ($data as $element) {
+                        $headers[$element['AccountCode']][] = $element;
+                    }
+                    $headers = array_values($headers);
+
+                    usort($headers, function ($a, $b) {return $a[0]['ChartOfAccountSystemID'] > $b[0]['ChartOfAccountSystemID'];});
+
+                    $reportData = array('reportData' => $data, 'headers' => $headers, 'fromDate' => $fromDate, 'toDate' => $toDate, 'currency' => $companyCurrency, 'currencyID' => $request->currencyID);
+                    $templateName = "export_report.asset_expenses";
                 }
 
-
+                return \Excel::create('finance', function ($excel) use ($reportData, $templateName) {
+                    $excel->sheet('New sheet', function ($sheet) use ($reportData, $templateName) {
+                        $sheet->loadView($templateName, $reportData);
+                    });
+                })->download('xlsx');
                 break;
             default:
                 return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.report_id')]));
@@ -1556,6 +1802,8 @@ FROM
         $assetIds = (isset($request->assets) && count($request->assets) > 0) ? collect($request->assets)->pluck('faID')->toArray() : [];
         $chartOfAccountIds = (isset($request->glAccounts) && count($request->glAccounts) > 0) ? collect($request->glAccounts)->pluck('chartOfAccountSystemID')->toArray() : [];
 
+     
+
         return $assetAllocations = ExpenseAssetAllocation::whereIn('chartOfAccountSystemID', $chartOfAccountIds)
                                                   ->whereIn('assetID', $assetIds)
                                                   ->with(['asset','chart_of_account', 'supplier_invoice' => function($query) use ($companyID, $fromDate, $toDate) {
@@ -1566,12 +1814,25 @@ FROM
                                                         $query->whereIn('companySystemID', $companyID)
                                                               ->whereDate('BPVdate', '>=', $fromDate)
                                                               ->whereDate('BPVdate', '<=', $toDate);
+                                                  },'journal_voucher'  => function($query) use ($companyID, $fromDate, $toDate) {
+                                                    $query->whereIn('companySystemID', $companyID)
+                                                          ->whereDate('JVdate', '>=', $fromDate)
+                                                          ->whereDate('JVdate', '<=', $toDate);
+                                                  }
+                                                  ,'grv'  => function($query) use ($companyID, $fromDate, $toDate) {
+                                                    $query->whereIn('companySystemID', $companyID)
+                                                          ->whereDate('grvDate', '>=', $fromDate)
+                                                          ->whereDate('grvDate', '<=', $toDate);
                                                   },'meterial_issue'  => function($query) use ($companyID, $fromDate, $toDate) {
                                                        $query->with(['master'=>function($query)use($companyID,$fromDate, $toDate){
                                                            $query->whereIn('companySystemID',$companyID)
                                                            ->whereDate('issueDate', '>=', $fromDate)
                                                            ->whereDate('issueDate', '<=', $toDate);
                                                        }]);
+                                                  },'ioue'  => function($query) use ($companyID, $fromDate, $toDate) {
+                                                    $query->whereIn('companyID', $companyID)
+                                                    ->whereDate('bookingDate', '>=', $fromDate)
+                                                    ->whereDate('bookingDate', '<=', $toDate);
                                                   }])
                                                   ->where(function($query) use ($companyID, $fromDate, $toDate) {
                                                       $query->where(function($query) use ($companyID, $fromDate, $toDate) {
@@ -1580,7 +1841,7 @@ FROM
                                                                               ->whereDate('bookingDate', '>=', $fromDate)
                                                                               ->whereDate('bookingDate', '<=', $toDate);
                                                                     })
-                                                                    ->where('documentSystemID', 11);
+                                                                    ->where('documentSystemID', 11)->where('module_id', 1);
                                                           })
                                                          ->orWhere(function($query) use ($companyID, $fromDate, $toDate) {
                                                                 $query->whereHas('payment_voucher', function($query) use ($companyID, $fromDate, $toDate) {
@@ -1588,7 +1849,23 @@ FROM
                                                                               ->whereDate('BPVdate', '>=', $fromDate)
                                                                               ->whereDate('BPVdate', '<=', $toDate);
                                                                     })
-                                                                    ->where('documentSystemID', 4);
+                                                                    ->where('documentSystemID', 4)->where('module_id', 1);
+                                                          })
+                                                          ->orWhere(function($query) use ($companyID, $fromDate, $toDate) {
+                                                            $query->whereHas('journal_voucher', function($query) use ($companyID, $fromDate, $toDate) {
+                                                                    $query->whereIn('companySystemID', $companyID)
+                                                                          ->whereDate('JVdate', '>=', $fromDate)
+                                                                          ->whereDate('JVdate', '<=', $toDate);
+                                                                })
+                                                                ->where('documentSystemID',17)->where('module_id', 1);
+                                                          })
+                                                          ->orWhere(function($query) use ($companyID, $fromDate, $toDate) {
+                                                            $query->whereHas('grv', function($query) use ($companyID, $fromDate, $toDate) {
+                                                                    $query->whereIn('companySystemID', $companyID)
+                                                                          ->whereDate('grvDate', '>=', $fromDate)
+                                                                          ->whereDate('grvDate', '<=', $toDate);
+                                                                })
+                                                                ->where('documentSystemID',3)->where('module_id', 1);
                                                           })
                                                           ->orWhere(function($query) use ($companyID, $fromDate, $toDate) {
                                                             $query->whereHas('meterial_issue', function($query) use ($companyID, $fromDate, $toDate) {
@@ -1598,6 +1875,13 @@ FROM
                                                                             ->whereDate('issueDate', '<=', $toDate);
                                                                 });
                                                                 });
+                                                      })->orWhere(function($query) use ($companyID, $fromDate, $toDate) {
+                                                        $query->whereHas('ioue', function($query) use ($companyID, $fromDate, $toDate) {
+                                                                $query->whereIn('companyID', $companyID)
+                                                                ->whereDate('bookingDate', '>=', $fromDate)
+                                                                ->whereDate('bookingDate', '<=', $toDate);
+                                                            })
+                                                            ->where('documentSystemID',161)->where('module_id', 2);
                                                       });
                                                   })
                                                   ->get();
@@ -2605,6 +2889,14 @@ WHERE
             }
         }
 
+        $companyID = "";
+        $checkIsGroup = Company::find($request->companySystemID);
+        if ($checkIsGroup->isGroup) {
+            $companyID = \Helper::getGroupCompany($request->companySystemID);
+        } else {
+            $companyID = [(int)$request->companySystemID];
+        }
+
         $qry = "
 SELECT * FROM ( SELECT
 IF(groupTO IS NOT  NULL ,groupTO , erp_fa_asset_master.faID ) as sortfaID,
@@ -2653,9 +2945,9 @@ FROM
 	INNER JOIN erp_fa_assettype ON erp_fa_assettype.typeID = erp_fa_asset_master.assetType
 	INNER JOIN erp_fa_financecategory ON AUDITCATOGARY = erp_fa_financecategory.faFinanceCatID
 	INNER JOIN serviceline ON serviceline.ServiceLineCode = erp_fa_asset_master.serviceLineCode
-LEFT JOIN (SELECT assetDescription , faID ,faUnitSerialNo,faCode FROM erp_fa_asset_master WHERE erp_fa_asset_master.companySystemID = $request->companySystemID   )	 assetGroup ON erp_fa_asset_master.groupTO= assetGroup.faID
+LEFT JOIN (SELECT assetDescription , faID ,faUnitSerialNo,faCode FROM erp_fa_asset_master WHERE erp_fa_asset_master.companySystemID IN (" . join(',', $companyID) . ")) assetGroup ON erp_fa_asset_master.groupTO= assetGroup.faID
 WHERE
-	erp_fa_asset_master.companySystemID = $request->companySystemID  AND AUDITCATOGARY IN($assetCategory) AND approved =-1
+	erp_fa_asset_master.companySystemID IN (" . join(',', $companyID) . ")  AND AUDITCATOGARY IN($assetCategory) AND approved =-1
 	AND DATE(erp_fa_asset_master.postedDate) <= '$asOfDate' AND assetType = $typeID
 	$where
 	) t  ORDER BY sortfaID desc  ";
@@ -3417,7 +3709,124 @@ WHERE
         return ['data' => $output, 'period' => $periodArr];
     }
 
-    private function getAssetRegisterGroupedDetailFinalArray($output){
+
+    function getAssetRegisterDetail3($request)
+    {
+        $typeID = $request->typeID;
+        $asOfDate = (new Carbon($request->fromDate))->format('Y-m-d');
+        $assetCategory = collect($request->assetCategory)->pluck('faFinanceCatID')->toArray();
+        $assetCategory = join(',', $assetCategory);
+
+        $companyID = "";
+        $checkIsGroup = Company::find($request->companySystemID);
+        if ($checkIsGroup->isGroup) {
+            $companyID = \Helper::getGroupCompany($request->companySystemID);
+        } else {
+            $companyID = [(int)$request->companySystemID];
+        }
+
+        $where = "";
+        if (isset($request->searchText)) {
+            $searchText = $request->searchText;
+            if ($searchText != '') {
+                $searchText = str_replace("\\", "\\\\", $searchText);
+                $where = " AND ( assetGroup.faCode LIKE '%$searchText%' OR erp_fa_asset_master.assetDescription LIKE '%$searchText%' OR  
+            erp_fa_asset_master.faCode LIKE '%$searchText%' )  ";
+            }
+        }
+
+        $qry = "
+                SELECT * 
+                FROM ( 
+                    SELECT
+                        IF(groupTO IS NOT  NULL ,groupTO , erp_fa_asset_master.faID ) as sortfaID,
+                        groupTO,
+                        assetGroup.faCode as groupbydesc,
+                        erp_fa_asset_master.faUnitSerialNo,
+                        erp_fa_asset_master.faID,
+                        erp_fa_asset_master.DIPOSED,
+                        erp_fa_assettype.typeDes,
+                        erp_fa_financecategory.financeCatDescription,
+                        erp_fa_asset_master.COSTGLCODE,
+                        erp_fa_asset_master.ACCDEPGLCODE,
+                        erp_fa_asset_disposalmaster.disposalType,   
+                        assetType,
+                        serviceline.ServiceLineDes,
+                        erp_fa_asset_master.serviceLineCode,
+                        docOrigin,
+                        AUDITCATOGARY,
+                        postedDate,
+                        erp_fa_asset_master.faCode,
+                        erp_fa_asset_master.assetDescription,
+                        DEPpercentage,
+                        dateAQ,
+                        dateDEP,
+                        depMonth * 12 as depMonth,
+                        locationName,
+                        supplierName,
+                        depreciatedMonths,
+                        erp_fa_asset_master.COSTUNIT,
+                        IFNULL( t.depAmountLocal, 0 ) AS depAmountLocal,
+                        IFNULL( adDepAmountLocal, 0 ) AS adDepAmountLocal,
+                        IFNULL( acDepAmountRpt, 0 ) AS acDepAmountRpt,
+                        IFNULL(erp_fa_asset_master.COSTUNIT,0) - IFNULL( t.depAmountLocal, 0 ) AS localnbv,
+                        erp_fa_asset_master.costUnitRpt,
+                        sellingPriceLocal,
+                        sellingPriceRpt,
+                        IFNULL( t.depAmountRpt, 0 ) AS depAmountRpt,
+                        IFNULL(erp_fa_asset_master.costUnitRpt,0) - IFNULL( t.depAmountRpt, 0 ) AS rptnbv 
+                    FROM
+                        erp_fa_asset_master
+                        LEFT JOIN (
+                            SELECT
+                                count(faID) as depreciatedMonths,
+                                faID,
+                                erp_fa_assetdepreciationperiods.depMasterAutoID,
+                                sum( erp_fa_assetdepreciationperiods.depAmountLocal ) AS depAmountLocal,
+                                sum( erp_fa_assetdepreciationperiods.depAmountRpt ) AS depAmountRpt 
+                            FROM
+                                erp_fa_assetdepreciationperiods
+                                INNER JOIN erp_fa_depmaster ON erp_fa_depmaster.depMasterAutoID = erp_fa_assetdepreciationperiods.depMasterAutoID 
+                            WHERE
+                                erp_fa_depmaster.approved =- 1  AND DATE(erp_fa_depmaster.depDate) <= '$asOfDate'
+                            GROUP BY
+                                faID 
+                        ) t ON erp_fa_asset_master.faID = t.faID
+
+                        LEFT JOIN (
+                            SELECT
+                                faID,
+                                sum( erp_fa_assetdepreciationperiods.depAmountLocal ) AS adDepAmountLocal,
+                                sum( erp_fa_assetdepreciationperiods.depAmountRpt ) AS acDepAmountRpt 
+                            FROM
+                                erp_fa_assetdepreciationperiods
+                                INNER JOIN erp_fa_depmaster ON erp_fa_depmaster.depMasterAutoID = erp_fa_assetdepreciationperiods.depMasterAutoID 
+                            WHERE
+                                erp_fa_depmaster.approved =- 1
+                            GROUP BY
+                                faID 
+                        ) ad ON erp_fa_asset_master.faID = ad.faID
+                        INNER JOIN erp_fa_assettype ON erp_fa_assettype.typeID = erp_fa_asset_master.assetType
+                        LEFT JOIN erp_location ON erp_location.locationID = erp_fa_asset_master.LOCATION
+                        LEFT JOIN erp_grvmaster ON erp_grvmaster.grvAutoID = erp_fa_asset_master.docOriginSystemCode
+                        LEFT JOIN erp_fa_asset_disposaldetail ON erp_fa_asset_disposaldetail.faID = erp_fa_asset_master.faID
+                        LEFT JOIN erp_fa_asset_disposalmaster ON erp_fa_asset_disposaldetail.assetdisposalMasterAutoID = erp_fa_asset_disposalmaster.assetdisposalMasterAutoID 
+                        INNER JOIN erp_fa_financecategory ON AUDITCATOGARY = erp_fa_financecategory.faFinanceCatID
+                        INNER JOIN serviceline ON serviceline.ServiceLineCode = erp_fa_asset_master.serviceLineCode
+                    LEFT JOIN (SELECT assetDescription , faID ,faUnitSerialNo,faCode FROM erp_fa_asset_master WHERE erp_fa_asset_master.companySystemID IN (" . join(',', $companyID) . ")   )  assetGroup ON erp_fa_asset_master.groupTO= assetGroup.faID
+                    WHERE
+                        erp_fa_asset_master.companySystemID IN (" . join(',', $companyID) . ")  AND AUDITCATOGARY IN($assetCategory) AND erp_fa_asset_master.approved =-1
+                        AND DATE(erp_fa_asset_master.postedDate) <= '$asOfDate' AND assetType = $typeID
+                        $where
+                        ) t  ORDER BY sortfaID desc  ";
+
+
+        $output = \DB::select($qry);
+
+        return $output;
+    }
+
+    private function getAssetRegisterGroupedDetailFinalArray($output, $companyCurrency){
         $finalArr = [];
         $totalArray = [];
 
@@ -3536,11 +3945,15 @@ WHERE
             }
 
         }
+        $localDecimalPlace = isset($companyCurrency->localcurrency->DecimalPlaces) ? $companyCurrency->localcurrency->DecimalPlaces: 3;
+        $rptDecimalPlace = isset($companyCurrency->reportingcurrency->DecimalPlaces) ? $companyCurrency->reportingcurrency->DecimalPlaces: 2;
 
         return array(
             'reportData' => $finalArr,
             'localnbv' => $totlocalnbv,
             'rptnbv' => $totrptnbv,
+            'localDecimal' => $localDecimalPlace,
+            'rptDecimal' => $rptDecimalPlace,
             'COSTUNIT' => $totCOSTUNIT,
             'costUnitRpt' => $totcostUnitRpt,
             'depAmountLocal' => $totdepAmountLocal,

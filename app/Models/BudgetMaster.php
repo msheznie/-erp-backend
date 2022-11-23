@@ -11,6 +11,7 @@
 namespace App\Models;
 
 use Eloquent as Model;
+use Awobaz\Compoships\Compoships;
 
 /**
  * @SWG\Definition(
@@ -83,7 +84,7 @@ use Eloquent as Model;
  */
 class BudgetMaster extends Model
 {
-
+    use Compoships;
     public $table = 'erp_budgetmaster';
     
     const CREATED_AT = 'createdDateTime';
@@ -100,6 +101,7 @@ class BudgetMaster extends Model
         'serviceLineSystemID',
         'serviceLineCode',
         'templateMasterID',
+        'cutOffPeriod',
         'Year',
         'month',
         'createdByUserSystemID',
@@ -138,6 +140,7 @@ class BudgetMaster extends Model
         'serviceLineSystemID' => 'integer',
         'serviceLineCode' => 'string',
         'templateMasterID' => 'integer',
+        'cutOffPeriod' => 'integer',
         'sentNotificationAt' => 'float',
         'Year' => 'integer',
         'month' => 'integer',
@@ -232,6 +235,11 @@ class BudgetMaster extends Model
     {
         return $q->leftJoin('serviceline as '.$as,$as.'.serviceLineSystemID','erp_budgetmaster.'.$column)
         ->addSelect($as.".ServiceLineDes as ".$columnAs);
+    }
+
+    public function budget_details()
+    {
+        return $this->hasMany('App\Models\Budjetdetails', 'budgetmasterID','budgetmasterID');
     }
 
 

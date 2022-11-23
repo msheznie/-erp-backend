@@ -267,9 +267,6 @@ class MaterielRequestDetailsAPIController extends AppBaseController
             $input['quantityOnOrder'] = $quantityOnOrder;
             $input['quantityInHand']  = $quantityInHand;
 
-            if($input['qtyIssuedDefaultMeasure'] > $input['quantityInHand']){
-                return $this->sendError("No stock Qty. Please check again.", 500);
-            }
         } else {
             $input['itemDescription'] = $input['itemCode'];
             $input['itemCode'] = null;
@@ -439,18 +436,6 @@ class MaterielRequestDetailsAPIController extends AppBaseController
             }
 
 
-            if ((float)$input['qtyIssuedDefaultMeasure'] > $materielRequestDetails->quantityInHand) {
-
-
-                $diff = ((float)$input['qtyIssuedDefaultMeasure'] - $materielRequestDetails->quantityInHand);
-
-                $data = [
-                    'QntyToMaterialIssue' =>  $materielRequestDetails->quantityInHand,
-                    'QntyToPurchaseRequest' =>  $diff,
-                ];
-
-                return $this->sendError("No stock Qty. Please check again.", 500, $data);
-            }
 
             if((($input['quantityInHand'] - $input['quantityRequested']) + $input['quantityOnOrder']) <= $input['minQty']){
                 $input['allowCreatePR'] =  -1;

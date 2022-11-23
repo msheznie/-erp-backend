@@ -348,7 +348,8 @@ class DirectPaymentReferback extends Model
         'toCompanyRptCurrencyID',
         'toCompanyRptCurrencyER',
         'toCompanyRptCurrencyAmount',
-        'timeStamp'
+        'timeStamp',
+        'detail_project_id'
     ];
 
     /**
@@ -404,7 +405,8 @@ class DirectPaymentReferback extends Model
         'toCompanyLocalCurrencyAmount' => 'float',
         'toCompanyRptCurrencyID' => 'integer',
         'toCompanyRptCurrencyER' => 'float',
-        'toCompanyRptCurrencyAmount' => 'float'
+        'toCompanyRptCurrencyAmount' => 'float',
+        'detail_project_id' => 'integer'
     ];
 
     /**

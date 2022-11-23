@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Storage;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\Models\PricingScheduleDetail;
 
 /**
  * Class TenderMainWorksController
@@ -299,7 +300,12 @@ class TenderMainWorksAPIController extends AppBaseController
         $tender_id = $input['tender_id'];
         $schedule_id = $input['schedule_id'];
 
-        $mainWorks = TenderMainWorks::with(['tender_boq_items','tender_bid_format_detail'])->where('tender_id', $tender_id)->where('schedule_id', $schedule_id)->where('company_id', $companyId);
+        //$mainWorks = TenderMainWorks::with(['tender_boq_items','tender_bid_format_detail'])->where('tender_id', $tender_id)->where('schedule_id', $schedule_id)->where('company_id', $companyId);
+
+        $mainWorks = PricingScheduleDetail::with(['tender_boq_items'])->where('tender_id', $tender_id)->where('pricing_schedule_master_id', $schedule_id)->where('company_id', $companyId)->where(function($query){
+            $query->where('boq_applicable',true);
+            $query->orWhere('is_disabled',false);
+        })->where('field_type','!=',4);
 
         $search = $request->input('search.value');
         if ($search) {
@@ -326,20 +332,40 @@ class TenderMainWorksAPIController extends AppBaseController
     public function addMainWorks(Request $request)
     {
         $input = $request->all();
+      
         $input = $this->convertArrayToSelectedValue($request->all(), array('item'));
         $employee = \Helper::getEmployeeInfo();
-        $priceBidDetail = TenderBidFormatDetail::where('id',$input['item'])->first();
+        //$priceBidDetail = TenderBidFormatDetail::where('id',$input['item'])->first();
+        $priceBidDetail = PricingScheduleDetail::where('id',$input['item'])->first();
+
+
         DB::beginTransaction();
         try {
-            $data['tender_id']=$input['tender_id'];
-            $data['schedule_id']=$input['schedule_id'];
-            $data['bid_format_detail_id']=$input['item'];
-            $data['item']=$priceBidDetail['label'];
-            $data['description']=$input['description'];
-            $data['company_id']=$input['companySystemID'];
-            $data['created_by'] = $employee->employeeSystemID;
+            // $data['tender_id']=$input['tender_id'];
+            // $data['schedule_id']=$input['schedule_id'];
+            // $data['bid_format_detail_id']=$input['item'];
+            // $data['item']=$priceBidDetail['label'];
+            // $data['description']=$input['description'];
+            // $data['company_id']=$input['companySystemID'];
+            // $data['created_by'] = $employee->employeeSystemID;
 
-            $result = TenderMainWorks::create($data);
+            // $result = TenderMainWorks::create($data);
+
+            $dataBidShed['tender_id']=$input['tender_id'];
+            $dataBidShed['bid_format_id']=$priceBidDetail['bid_format_id'];
+            $dataBidShed['bid_format_detail_id']=$priceBidDetail['bid_format_detail_id'];
+            $dataBidShed['label']=$priceBidDetail['label'];
+            $dataBidShed['field_type']=$priceBidDetail['field_type'];
+            $dataBidShed['is_disabled']=$priceBidDetail['is_disabled'];
+            $dataBidShed['boq_applicable']=$priceBidDetail['boq_applicable'];
+            $dataBidShed['pricing_schedule_master_id']=$input['schedule_id'];
+            $dataBidShed['company_id']=$input['companySystemID'];
+            $dataBidShed['description']=$input['description'];
+            $dataBidShed['created_by']=$employee->employeeSystemID;
+
+            $result = PricingScheduleDetail::create($dataBidShed);
+
+
             if($result){
                 DB::commit();
                 return ['success' => true, 'message' => 'Successfully saved', 'data' => $result];
@@ -354,7 +380,7 @@ class TenderMainWorksAPIController extends AppBaseController
     public function downloadMainWorksUploadTemplate(Request $request)
     {
         $input = $request->all();
-        $disk = (isset($input['companySystemID'])) ?  Helper::policyWiseDisk($input['companySystemID'], 'public') : 'public';
+        $disk = Helper::policyWiseDisk($input['companySystemID'], 'public');
         if ($exists = Storage::disk($disk)->exists('main_works_item_upload_template/main_works_item_upload_template.xlsx')) {
             return Storage::disk($disk)->download('main_works_item_upload_template/main_works_item_upload_template.xlsx', 'main_works_item_upload_template.xlsx');
         } else {
@@ -467,7 +493,7 @@ class TenderMainWorksAPIController extends AppBaseController
         $input = $request->all();
         DB::beginTransaction();
         try {
-            $result = TenderMainWorks::where('id',$input['id'])->delete();
+            $result = PricingScheduleDetail::where('id',$input['id'])->delete();
             if($result){
                 DB::commit();
                 return ['success' => true, 'message' => 'Successfully deleted', 'data' => $result];
@@ -487,7 +513,7 @@ class TenderMainWorksAPIController extends AppBaseController
         try {
             $data['description']=$input['description'];
             $data['updated_by'] = $employee->employeeSystemID;
-            $result = TenderMainWorks::where('id',$input['id'])->update($data);
+            $result = PricingScheduleDetail::where('id',$input['id'])->update($data);
             if($result){
                 DB::commit();
                 return ['success' => true, 'message' => 'Successfully updated', 'data' => $result];

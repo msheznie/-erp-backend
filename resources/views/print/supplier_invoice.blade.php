@@ -161,6 +161,19 @@
             background-color: #ffffff !important;
             border-right: 1px solid #ffffffff !important;
         }
+        .container
+            {
+                display: block;
+                max-width:230px;
+                max-height:95px;
+                width: auto;
+                height: auto;
+            }
+
+        .table_height
+            {
+                max-height: 60px !important;
+            }
     </style>
 </head>
 <body>
@@ -193,7 +206,7 @@
                         </div>
                         <div><span>
                 @if(!empty($det->approvedDate))
-                                    {{ \App\helper\Helper::dateFormat($det->approvedDate)}}
+                                    {{ \App\helper\Helper::convertDateWithTime($det->approvedDate)}}
                                 @endif
               </span></div>
                         <div style="width: 3px"></div>
@@ -226,32 +239,14 @@
 </div>
 <div id="watermark"></div>
 <div class="card-body content" id="print-section">
-    <table style="width: 100%">
+    <table style="width: 100%" class="table_height">
         <tr style="width: 100%">
-            <td valign="top" style="width: 50%">
+            <td valign="top" style="width: 20%">
                 @if($masterdata->company)
-                    <img src="{{$masterdata->company->logo_url}}" width="180px" height="60px">
+                    <img src="{{$masterdata->company->logo_url}}" width="180px" height="60px" class="container">
                 @endif
-                <br>
-
-                <div>
-                    <span style="font-size: 18px">
-                        @if($masterdata->documentType == 0 || $masterdata->documentType == 2)
-                            Booking Invoice
-                        @endif
-                        @if($masterdata->documentType == 1)
-                            Direct Invoice Voucher
-                        @endif
-                         @if($masterdata->documentType == 4)
-                            Employee Direct Invoice
-                        @endif
-                        @if($masterdata->documentType == 3)
-                            Supplier Item Invoice Voucher
-                        @endif
-                    </span>
-                </div>
             </td>
-            <td valign="top" style="width: 50%">
+            <td valign="top" style="width: 80%">
                 @if($masterdata->company)
                     <span style="font-size: 24px;font-weight: 400"> {{$masterdata->company->CompanyName}}</span>
                 @endif
@@ -312,6 +307,31 @@
         </tr>
     </table>
     <hr style="color: #d3d9df">
+
+    <table style="width: 100%" class="table_height">
+        <tr style="width: 100%">
+ 
+            <div>
+                <span style="font-size: 18px">
+                    @if($masterdata->documentType == 0 || $masterdata->documentType == 2)
+                        Booking Invoice
+                    @endif
+                    @if($masterdata->documentType == 1)
+                        Direct Invoice Voucher
+                    @endif
+                     @if($masterdata->documentType == 4)
+                        Employee Direct Invoice
+                    @endif
+                    @if($masterdata->documentType == 3)
+                        Supplier Item Invoice Voucher
+                    @endif
+                </span>
+            </div>
+        </tr>
+    </table>
+    <br>
+    <br>
+
     <table style="width: 100%">
         <tr style="width:100%">
             <td style="width: 60%">
@@ -694,6 +714,38 @@
                     </span>
                     </td>
                 </tr>
+                <tr>
+                    <td style="border-bottom: none !important;border-top: none !important;border-left: none !important;">
+                        &nbsp;</td>
+                    <td class="text-right" style="border-left: 1px solid rgb(127, 127, 127)!important;"><span
+                                class="font-weight-bold"
+                                style="font-size: 11px">Retention Amount</span>
+                    </td>
+                    <td class="text-right"
+                        style="font-size: 11px;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;">
+                    <span class="font-weight-bold">
+                    @if ($masterdata->detail)
+                            {{number_format(($subTotal + $VATTotal) * ($masterdata->retentionPercentage/100), $transDecimal)}}
+                        @endif
+                    </span>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="border-bottom: none !important;border-top: none !important;border-left: none !important;">
+                        &nbsp;</td>
+                    <td class="text-right" style="border-left: 1px solid rgb(127, 127, 127)!important;"><span
+                                class="font-weight-bold"
+                                style="font-size: 11px">Net of Retention Amount</span>
+                    </td>
+                    <td class="text-right"
+                        style="font-size: 11px;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;">
+                    <span class="font-weight-bold">
+                    @if ($masterdata->detail)
+                            {{number_format(($subTotal + $VATTotal) - (($subTotal + $VATTotal)* ($masterdata->retentionPercentage/100)), $transDecimal)}}
+                        @endif
+                    </span>
+                    </td>
+                </tr>
                 </tbody>
             </table>
         </div>
@@ -771,6 +823,30 @@
                                 style="background-color: rgb(215,215,215)">{{number_format(($directTotNet + $directTotVAT), $transDecimal)}}</td>
                         @endif
                     </tr>
+                    @if ($masterdata->documentType != 4)
+                        <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
+                            <td colspan="5" class="text-right border-bottom-remov">&nbsp;</td>
+                            <td class="text-right" style="background-color: rgb(215,215,215)">Retention Amount</td>
+                            @if($masterdata->rcmActivated)
+                                <td class="text-right"
+                                    style="background-color: rgb(215,215,215)">{{number_format($directTotNet * ($masterdata->retentionPercentage/100), $transDecimal)}}</td>
+                            @else
+                                <td class="text-right"
+                                    style="background-color: rgb(215,215,215)">{{number_format(($directTotNet + $directTotVAT) * ($masterdata->retentionPercentage/100), $transDecimal)}}</td>
+                            @endif
+                        </tr>
+                        <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
+                            <td colspan="5" class="text-right border-bottom-remov">&nbsp;</td>
+                            <td class="text-right" style="background-color: rgb(215,215,215)">Net of Retention Amount</td>
+                            @if($masterdata->rcmActivated)
+                                <td class="text-right"
+                                    style="background-color: rgb(215,215,215)">{{number_format($directTotNet - ($directTotNet * ($masterdata->retentionPercentage/100)), $transDecimal)}}</td>
+                            @else
+                                <td class="text-right"
+                                    style="background-color: rgb(215,215,215)">{{number_format(($directTotNet + $directTotVAT) - (($directTotNet + $directTotVAT) * ($masterdata->retentionPercentage/100)), $transDecimal)}}</td>
+                            @endif
+                        </tr>
+                    @endif
                 @endif
                 </tbody>
             </table>

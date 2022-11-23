@@ -353,6 +353,10 @@ class ErpItemLedgerAPIController extends AppBaseController
             $subCompanies = [$selectedCompanyId];
         }
 
+        $company = Company::find($subCompanies[0]);
+        $company_name = $company->CompanyName;
+
+
         $startDate = new Carbon($request->fromDate);
         //$startDate = $startDate->addDays(1);
         $startDate = $startDate->format('Y-m-d');
@@ -580,7 +584,8 @@ WHERE
             'grandTotalQty' => $grandTotalQty,
             'grandLocalTotal' => $TotalWacLocal,
             'grandRptTotal' => $TotalWacRpt,
-            'data' => $dataFinal
+            'data' => $dataFinal,
+            'company_name' => $company_name
         );
 
         return $this->sendResponse($output, 'Item ledger record retrieved successfully');
@@ -877,6 +882,8 @@ DATE(erp_itemledger.transactionDate) < '" . $startDate . "'  AND itemmaster.fina
     {
 
         $selectedCompanyId = $request['companySystemID'];
+
+
         $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
 
         if ($isGroup) {
@@ -885,13 +892,20 @@ DATE(erp_itemledger.transactionDate) < '" . $startDate . "'  AND itemmaster.fina
             $subCompanies = [$selectedCompanyId];
         }
 
+        $company = Company::find($subCompanies[0]);
+        $company_name = $company->CompanyName;
+
         $startDate = new Carbon($request->fromDate);
+        $from_date =  ((new Carbon($request->fromDate))->format('d/m/Y'));
         //$startDate = $startDate->addDays(1);
         $startDate = $startDate->format('Y-m-d');
+        
 
         $endDate = new Carbon($request->toDate);
         //$endDate = $endDate->addDays(1);
         $endDate = $endDate->format('Y-m-d');
+
+        $to_date =  ((new Carbon($request->toDate))->format('d/m/Y'));
 
         $input = $request->all();
         if (array_key_exists('Docs', $input)) {
@@ -1043,10 +1057,14 @@ WHERE
 
         // return $this->sendResponse(array(), 'successfully export');
 
-
+        $requestCurrency = null;
         $fileName = 'stock_ledger_report';
+        $title = 'Stock Ledger Report';
         $path = 'inventory/report/stock_ledger_report/excel/';
-        $basePath = CreateExcel::process($data,$request->type,$fileName,$path);
+
+        $detail_array = array('type' => 1,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$requestCurrency,'title'=>$title);
+
+        $basePath = CreateExcel::process($data,$request->type,$fileName,$path,$detail_array);
 
         if($basePath == '')
         {
@@ -1170,6 +1188,10 @@ WHERE
         } else {
             $subCompanies = [$selectedCompanyId];
         }
+
+        $company = Company::find($subCompanies[0]);
+        $company_name = $company->CompanyName;
+
         $input = $request->all();
         $warehouse = [];
         if (array_key_exists('warehouse', $input)) {
@@ -1227,8 +1249,8 @@ WHERE
                 round( erp_itemledger.inOutQty * erp_itemledger.wacLocal, 3 ) AS localAmount,
                 currencymaster_1.CurrencyName AS RepCurrency,
                 round( erp_itemledger.inOutQty * erp_itemledger.wacRpt, 2 ) AS rptAmount,
-                currencymaster.DecimalPlaces AS LocalCurrencyDecimals,
-                currencymaster_1.DecimalPlaces AS RptCurrencyDecimals,               
+                IFNULL(currencymaster.DecimalPlaces,0) AS LocalCurrencyDecimals,
+                IFNULL(currencymaster_1.DecimalPlaces,0) AS RptCurrencyDecimals,               
                 itemassigned.minimumQty as minimumQty,               
                 itemassigned.maximunQty as maximunQty             
             FROM
@@ -1273,7 +1295,8 @@ WHERE
             'subCompanies' => $subCompanies,
             'grandWacLocal' => $GrandWacLocal,
             'grandWacRpt' => $GrandWacRpt,
-            'warehouse' => $request->warehouse
+            'warehouse' => $request->warehouse,
+            'company_name' => $company_name
         );
 
         return $this->sendResponse($output, 'Erp Item Ledger retrieved successfully');
@@ -1300,6 +1323,9 @@ WHERE
         $date = new Carbon($input['date']);
         $date = $date->format('Y-m-d');
 
+        $from_date =  ((new Carbon($input['date']))->format('d/m/Y'));
+        $to_date =  ((new Carbon($input['date']))->format('d/m/Y'));
+
         $selectedCompanyId = $request->companySystemID;
         $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
 
@@ -1308,6 +1334,10 @@ WHERE
         } else {
             $subCompanies = [$selectedCompanyId];
         }
+
+        $company = Company::find($subCompanies[0]);
+        $company_name = $company->CompanyName;
+
 
         $sql = "SELECT
                 ItemLedger.companySystemID,
@@ -1409,8 +1439,11 @@ WHERE
 
 
         $fileName = 'stock_valuation_report';
+        $title = 'Stock Valuation Report';
         $path = 'inventory/report/stock_valuation_report/excel/';
-        $basePath = CreateExcel::process($data,$request->type,$fileName,$path);
+        $cur = NULL;
+        $detail_array = array('type' => 2,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$cur,'title'=>$title);
+        $basePath = CreateExcel::process($data,$request->type,$fileName,$path,$detail_array);
 
         if($basePath == '')
         {
@@ -1448,6 +1481,10 @@ WHERE
         } else {
             $subCompanies = [$selectedCompanyId];
         }
+        
+        $company = Company::find($subCompanies[0]);
+        $company_name = $company->CompanyName;
+
 //        $input = $request->all();
         if (array_key_exists('warehouse', $input)) {
             $warehouse = (array)$input['warehouse'];
@@ -1628,10 +1665,10 @@ GROUP BY
         $dataRec = \DataTables::of($data)
             ->addIndexColumn()
             ->with('orderCondition', $sort)
+            ->with('company_name', $company_name)
             ->make(true);
 
         return $dataRec;
-
     }
 
     public function exportStockTaking(Request $request)
@@ -1650,6 +1687,14 @@ GROUP BY
         } else {
             $subCompanies = [$selectedCompanyId];
         }
+
+        $company = Company::find($subCompanies[0]);
+        $company_name = $company->CompanyName;
+
+        
+        $from_date =  ((new Carbon($request->date))->format('d/m/Y'));
+        $to_date =  ((new Carbon($request->date))->format('d/m/Y'));
+
         $input = $request->all();
         if (array_key_exists('warehouse', $input)) {
             $warehouse = (array)$input['warehouse'];
@@ -1843,8 +1888,11 @@ GROUP BY
 
 
         $fileName = 'stock_taking_report';
+        $title = 'Stock Taking Report';
         $path = 'inventory/report/stock_taking_report/excel/';
-        $basePath = CreateExcel::process($data,$request->type,$fileName,$path);
+        $cur = NULL;
+        $detail_array = array('type' => 2,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$cur,'title'=>$title);
+        $basePath = CreateExcel::process($data,$request->type,$fileName,$path,$detail_array);
 
         if($basePath == '')
         {

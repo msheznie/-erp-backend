@@ -126,6 +126,8 @@ class CustomerInvoiceLogistic extends Model
         'no_of_container',
         'delivery_payment',
         'payment_terms',
+        'packing',
+        'parking',
         'is_deleted',
         'created_by',
         'updated_by'
@@ -149,6 +151,7 @@ class CustomerInvoiceLogistic extends Model
         'no_of_container' => 'string',
         'delivery_payment' => 'string',
         'payment_terms' => 'string',
+        'parking' => 'string',
         'is_deleted' => 'boolean',
         'created_by' => 'integer',
         'updated_by' => 'integer'
@@ -162,6 +165,16 @@ class CustomerInvoiceLogistic extends Model
     public static $rules = [
         'custInvoiceDirectAutoID' => 'required',
     ];
+
+    public function port_of_loading()
+    {
+        return $this->belongsTo('App\Models\PortMaster', 'port_of_loading', 'id');
+    }
+
+    public function port_of_discharge()
+    {
+        return $this->belongsTo('App\Models\PortMaster', 'port_of_discharge', 'id');
+    }
 
     
 }

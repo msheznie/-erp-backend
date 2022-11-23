@@ -92,6 +92,8 @@ use Illuminate\Support\Facades\Schema;
 use Response;
 use App\Models\CompanyFinanceYear;
 use App\Jobs\CreateAccumulatedDepreciation;
+use App\Services\WebPushNotificationService;
+use App\Services\GeneralLedger\GlPostedDateService;
 
 class Helper
 {
@@ -1077,6 +1079,15 @@ class Helper
 
 
                                         $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, 1);
+
+                                        $webPushData = [
+                                            'title' => $pushNotificationMessage,
+                                            'body' => '',
+                                            'url' => $redirectUrl,
+                                        ];
+
+                                        // WebPushNotificationService::sendNotification($webPushData, 1, $pushNotificationUserIds);
+
                                     }
                                 }
 
@@ -1300,6 +1311,9 @@ class Helper
                 return ['success' => true, 'message' => '', 'type' => 5];
         }
 
+        //break this function for the requirment of GCP-515
+        return ['success' => true, 'message' => '', 'type' => 5];
+        
         $approvalLevel = Models\ApprovalLevel::find($input["approvalLevelID"]);
 
         if ($approvalLevel) {
@@ -1349,6 +1363,8 @@ class Helper
     {
         
         $docInforArr = array('tableName' => '', 'modelName' => '', 'primarykey' => '', 'approvedColumnName' => '', 'approvedBy' => '', 'approvedBySystemID' => '', 'approvedDate' => '', 'approveValue' => '', 'confirmedYN' => '', 'confirmedEmpSystemID' => '');
+
+        $dataBase = (isset($input['db'])) ? $input['db'] : "";
         switch ($input["documentSystemID"]) { // check the document id and set relavant parameters
             case 57:
                 $docInforArr["tableName"] = 'itemmaster';
@@ -2023,6 +2039,13 @@ class Helper
 
                         if ($approvalLevel->noOfLevels == $input["rollLevelOrder"]) { // update the document after the final approval
 
+                            $validatePostedDate = GlPostedDateService::validatePostedDate($input["documentSystemCode"], $input["documentSystemID"]);
+
+                            if (!$validatePostedDate['status']) {
+                                DB::rollback();
+                                return ['success' => false, 'message' => $validatePostedDate['message']];
+                            }
+
                             if($input["documentSystemID"] == 2){
                                 $purchaseOrderMaster  = ProcumentOrder::find($input["documentSystemCode"]);
                                 if ($purchaseOrderMaster && $purchaseOrderMaster->supplierID > 0) {
@@ -2226,14 +2249,14 @@ class Helper
 
                                 if ($input['documentSystemID'] == 71) {
                                     if ($sourceModel->isFrom != 5) {
-                                        $jobIL = ItemLedgerInsert::dispatch($masterData);
+                                        $jobIL = ItemLedgerInsert::dispatch($masterData, $dataBase);
                                     }
                                 } else if ($input['documentSystemID'] == 11) {
                                     if ($sourceModel->documentType == 3) {
-                                        $jobIL = ItemLedgerInsert::dispatch($masterData);
+                                        $jobIL = ItemLedgerInsert::dispatch($masterData, $dataBase);
                                     }
                                 } else {
-                                    $jobIL = ItemLedgerInsert::dispatch($masterData);
+                                    $jobIL = ItemLedgerInsert::dispatch($masterData, $dataBase);
                                 }
                             }
 
@@ -2253,20 +2276,20 @@ class Helper
                             if (in_array($input["documentSystemID"], [3, 8, 12, 13, 10, 20, 61, 24, 7, 19, 15, 11, 4, 21, 22, 17, 23, 41, 71, 87, 97])) {
                                 if ($input['documentSystemID'] == 71) {
                                     if ($sourceModel->isFrom != 5) {
-                                        $jobGL = GeneralLedgerInsert::dispatch($masterData);
+                                        $jobGL = GeneralLedgerInsert::dispatch($masterData, $dataBase);
                                     }
                                 } else if ($input['documentSystemID'] == 17) {
                                     if ($sourceModel->jvType != 9) {
-                                        $jobGL = GeneralLedgerInsert::dispatch($masterData);
+                                        $jobGL = GeneralLedgerInsert::dispatch($masterData, $dataBase);
                                     }
                                 } else {
-                                    $jobGL = GeneralLedgerInsert::dispatch($masterData);
+                                    $jobGL = GeneralLedgerInsert::dispatch($masterData, $dataBase);
                                 }
                                 if ($input["documentSystemID"] == 3) {
                                     $sourceData = $namespacedModel::find($input["documentSystemCode"]);
                                     $masterData['supplierID'] = $sourceData->supplierID;
-                                    $jobUGRV = UnbilledGRVInsert::dispatch($masterData);
-                                    $jobSI = CreateGRVSupplierInvoice::dispatch($input["documentSystemCode"]);
+                                    $jobUGRV = UnbilledGRVInsert::dispatch($masterData, $dataBase);
+                                    $jobSI = CreateGRVSupplierInvoice::dispatch($input["documentSystemCode"], $dataBase);
                                     WarehouseItemUpdate::dispatch($input["documentSystemCode"]);
 
                                     if ($sourceData->interCompanyTransferYN == -1) {
@@ -2331,7 +2354,7 @@ class Helper
                                 }
                             }
                             if ($input["documentSystemID"] == 13 && !empty($sourceModel)) {
-                                $jobCI = CreateStockReceive::dispatch($sourceModel);
+                                $jobCI = CreateStockReceive::dispatch($sourceModel, $dataBase);
                             }
                             if ($input["documentSystemID"] == 10 && !empty($sourceModel)) {
                                 $jobSI = CreateSupplierInvoice::dispatch($sourceModel);
@@ -2343,7 +2366,13 @@ class Helper
                                     if (!$jobPV["success"]) {
                                         return ['success' => false, 'message' => $jobPV["message"]];
                                     }
-                                } else {
+                                } else if($sourceModel->invoiceType == 2){
+                                    $jobPV = self::generatePaymentVoucher($sourceModel);
+                                    if (!$jobPV["success"]) {
+                                        return ['success' => false, 'message' => $jobPV["message"]];
+                                    }
+                                }
+                                else {
                                     if ($sourceModel->pdcChequeYN == 0) {
                                         $bankLedger = BankLedgerInsert::dispatch($masterData);
                                     }
@@ -2408,7 +2437,7 @@ class Helper
                             //generate customer invoice or Direct GRV
                             if ($input["documentSystemID"] == 41 && !empty($sourceModel)) {
                                 if ($sourceModel->disposalType == 1) {
-                                    $jobCI = CreateCustomerInvoice::dispatch($sourceModel);
+                                    $jobCI = CreateCustomerInvoice::dispatch($sourceModel, $dataBase);
                                 }
                                 $updateDisposed = Models\AssetDisposalDetail::ofMaster($input["documentSystemCode"])->get();
                                 if (count($updateDisposed) > 0) {
@@ -2616,6 +2645,15 @@ class Helper
                         }
 
                         $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, 1);
+
+                        $webPushData = [
+                            'title' => $pushNotificationMessage,
+                            'body' => '',
+                            'url' => isset($redirectUrl) ? $redirectUrl : "",
+                        ];
+
+                        // WebPushNotificationService::sendNotification($webPushData, 2, $pushNotificationUserIds, $dataBase);
+
                     } else {
                         return ['success' => false, 'message' => 'Approval level not found'];
                     }
@@ -3290,7 +3328,9 @@ class Helper
     public static function getEmployeeInfo()
     {
         $user = Models\User::find(Auth::id());
-        $employee = Models\Employee::with(['profilepic'])->find($user->employee_id);
+        $employee = Models\Employee::with(['profilepic', 'user_data' => function($query) {
+            $query->select('uuid', 'employee_id');
+        }])->find($user->employee_id);
         return $employee;
     }
 
@@ -3366,6 +3406,17 @@ class Helper
         }
     }
 
+    public static function convertDateWithTime($date)
+    {
+        if ($date) {
+
+            return self::dateOnlyFormat($date) ." ". date("g:i A", strtotime($date));
+
+        } else {
+            return null;
+        }
+    }
+
     public static function dateOnlyFormat($date)
     {
         if ($date) {
@@ -3394,6 +3445,15 @@ class Helper
         $user = Models\User::find(Auth::id());
         if (!empty($user)) {
             return $user->employee_id;
+        }
+        return 0;
+    }
+
+    public static function getEmployeeUUID()
+    {
+        $user = Models\User::find(Auth::id());
+        if (!empty($user)) {
+            return $user->uuid;
         }
         return 0;
     }
@@ -4133,6 +4193,7 @@ class Helper
                     $fetchJVDetail[$key]['debitAmount'] = $testCreditAmount;
                     $fetchJVDetail[$key]['creditAmount'] = $testDebitAmount;
                     unset($fetchJVDetail[$key]['jvDetailAutoID']);
+                    $val->setAppends([]);
                 }
             }
 
@@ -4214,6 +4275,7 @@ class Helper
                     $fetchJVDetail[$key]['debitAmount'] = $testCreditAmount;
                     $fetchJVDetail[$key]['creditAmount'] = $testDebitAmount;
                     unset($fetchJVDetail[$key]['jvDetailAutoID']);
+                    $val->setAppends([]);
                 }
             }
 
@@ -4221,6 +4283,16 @@ class Helper
 
             $storeJvDetail = Models\JvDetail::insert($jvDetailArray);
         }
+    }
+
+    public static function generatePaymentVoucher($pvMaster)
+    {
+        $masterData = ['documentSystemID' => $pvMaster->documentSystemID, 'autoID' => $pvMaster->PayMasterAutoId, 'companySystemID' => $pvMaster->companySystemID, 'employeeSystemID' => $pvMaster->confirmedByEmpSystemID];
+        if ($pvMaster->pdcChequeYN == 0) {
+            $jobPV = BankLedgerInsert::dispatch($masterData);
+        }
+        return ['success' => true, 'message' => "Payment voucher created successfully"];
+
     }
 
     public static function generateCustomerReceiptVoucher($pvMaster)
@@ -5438,16 +5510,16 @@ class Helper
     public static function policyWiseDisk($companySystemID, $currentDisk = null)
     {
         $awsPolicy = self::checkPolicy($companySystemID, 50);
-
-        if ($awsPolicy) {
-            return 's3';
-        } else {
-            if (is_null($currentDisk)) {
-                return 'public';
-            } else {
-                return $currentDisk;
-            }
-        }
+        return 's3';
+        // if ($awsPolicy) {
+        //     return 's3';
+        // } else {
+        //     if (is_null($currentDisk)) {
+        //         return 'public';
+        //     } else {
+        //         return $currentDisk;
+        //     }
+        // }
     }
 
     static function isArray($value, $default = 0)
@@ -5970,5 +6042,77 @@ class Helper
         }
 
         
+    }
+
+
+    public static function rowTotalOfReportTemplate($companyHeaderData, $columns, $data)
+    {   
+        $total = 0;
+
+        foreach ($companyHeaderData as $key1 => $company) {
+            foreach ($columns as $key2 => $column) {
+                if (isset($data['columnData'][$company['companyCode']])) {
+                    $strings = explode('-',$column);
+                    if($strings[0]) {
+                        if ($strings[0] == 'CYYTD') {
+                            $total += $data['columnData'][$company['companyCode']][$column];
+                        }
+                    }
+                }
+            }
+        }
+
+        return $total;
+    }
+
+    public static function rowTotalOfReportTemplateBalance($companyHeaderData, $columns, $data)
+    {   
+        $total = 0;
+
+        foreach ($companyHeaderData as $key1 => $company) {
+            foreach ($columns as $key2 => $column) {
+                if (isset($data[$company['companyCode']])) {
+                    $strings = explode('-',$column);
+                    if($strings[0]) {
+                        if ($strings[0] == 'CYYTD') {
+                            $total += $data[$company['companyCode']][$key2];
+                        }
+                    }
+                }
+            }
+        }
+
+        return $total;
+    }
+
+    public static function rowTotalOfReportTemplateGrandTotal($companyHeaderData, $columns, $data)
+    {   
+        $total = 0;
+
+        foreach ($companyHeaderData as $key1 => $company) {
+            $code = $company['companyCode'];
+            foreach ($columns as $key2 => $column) {
+                if (isset($data[$code])) {
+                    $strings = explode('-',$column);
+                    if($strings[0]){
+                        if($strings[0] == 'CYYTD') {
+                            $total += $data[$code]->$column;
+                        }
+                    }
+                }
+            }
+        }
+
+        return $total;
+    }
+
+    public static function grandTotalValueOfReportTemplate($code, $column, $data)
+    {   
+        $value = 0;
+        if (isset($data[$code])) {
+            $value = $data[$code]->$column;
+        }
+
+        return $value;
     }
 }

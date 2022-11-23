@@ -24,6 +24,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Constants\ContractMasterType;
+use App\helper\CreateExcel;
 use App\helper\Helper;
 use App\helper\TaxService;
 use App\Http\Controllers\AppBaseController;
@@ -85,6 +86,8 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\Storage;
 use App\helper\ItemTracking;
+use App\Models\CustomerContactDetails;
+use App\Models\CustomerInvoiceLogistic;
 use App\Models\DeliveryTermsMaster;
 use App\Models\PortMaster;
 use Exception;
@@ -287,8 +290,14 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $input['FYEnd'] = $CompanyFinanceYear->endingDate;
         $input['FYPeriodDateFrom'] = $FYPeriodDateFrom;
         $input['FYPeriodDateTo'] = $FYPeriodDateTo;
-        $input['invoiceDueDate'] = Carbon::parse($input['invoiceDueDate'])->format('Y-m-d') . ' 00:00:00';
+        try{
+            $input['invoiceDueDate'] = Carbon::parse($input['invoiceDueDate'])->format('Y-m-d') . ' 00:00:00';
+        }
+        catch (\Exception $e){
+            return $this->sendError('Invalid Due Date format');
+        }
         $input['bookingDate'] = Carbon::parse($input['bookingDate'])->format('Y-m-d') . ' 00:00:00';
+        $input['date_of_supply'] = Carbon::parse($input['date_of_supply'])->format('Y-m-d') . ' 00:00:00';
         $input['customerInvoiceDate'] = $input['bookingDate'];
         $input['companySystemID'] = $input['companyID'];
         $input['companyID'] = $company['CompanyID'];
@@ -368,6 +377,23 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         if (empty($customerInvoiceDirect)) {
             return $this->sendError('Customer Invoice Direct not found');
         }
+
+         
+        $customerInvoiceLogisticData = [
+            'consignee_address'=>$customerInvoiceDirect->customer->consignee_address, 
+            'consignee_contact_no'=>$customerInvoiceDirect->customer->consignee_contact_no, 
+            'consignee_name'=>$customerInvoiceDirect->customer->consignee_name, 
+            'payment_terms'=>$customerInvoiceDirect->customer->payment_terms,
+            'custInvoiceDirectAutoID'=>$id
+        ];
+
+        $invoiceLogistic = CustomerInvoiceLogistic::where('custInvoiceDirectAutoID',$id)->first();
+        if($invoiceLogistic){
+            $customerInvoiceLogistic = CustomerInvoiceLogistic::where('id', $invoiceLogistic['id'])->update($customerInvoiceLogisticData);
+        } else {
+            $customerInvoiceLogistic = CustomerInvoiceLogistic::create($customerInvoiceLogisticData);
+        }
+
 
 
         return $this->sendResponse($customerInvoiceDirect->toArray(), 'Customer Invoice Direct retrieved successfully');
@@ -702,6 +728,12 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $_post['invoiceDueDate'] = null;
         }
 
+        if ($input['date_of_supply'] != '') {
+            $_post['date_of_supply'] = Carbon::parse($input['date_of_supply'])->format('Y-m-d') . ' 00:00:00';
+        } else {
+            return $this->sendError('Date of supply is required', 500);
+        }
+
         /*validaation*/
         $_post['customerInvoiceDate'] = $customerInvoiceDirect->customerInvoiceDate;
         if ($input['customerInvoiceDate'] != '') {
@@ -890,10 +922,12 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
                             /*margin calculation*/
                             if ($updateItem->marginPercentage != 0 && $updateItem->marginPercentage != null) {
-                                $updateItem->sellingCostAfterMargin = $updateItem->sellingCost + ($updateItem->sellingCost * $updateItem->marginPercentage / 100);
+                                $updateItem->salesPrice = $updateItem->sellingCost + ($updateItem->sellingCost * $updateItem->marginPercentage / 100);
                             } else {
-                                $updateItem->sellingCostAfterMargin = $updateItem->sellingCost;
+                                $updateItem->salesPrice = $updateItem->sellingCost;
                             }
+
+                            $updateItem->sellingCostAfterMargin = $updateItem->salesPrice - $updateItem->discountAmount;
 
                             if ($updateItem->sellingCurrencyID != $updateItem->localCurrencyID) {
                                 $currencyConversion = Helper::currencyConversion($customerInvoiceDirect->companySystemID, $updateItem->sellingCurrencyID, $updateItem->localCurrencyID, $updateItem->sellingCostAfterMargin);
@@ -1077,8 +1111,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
                         if (count($groupby) != 0) {
 
-                            if (count($groupby) > 1 || count($groupbycontract) > 1) {
-                                return $this->sendError('You cannot continue . multiple Segment or contract exist in details.', 500);
+                            if (count($groupbycontract) > 1) {
+                                return $this->sendError('You cannot continue . multiple contract exist in details.', 500);
                             } else {
 
                                 // VAT configuration validation
@@ -2807,6 +2841,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         
         $master = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $id)->first();
         $companySystemID = $master->companySystemID;
+        $localCurrencyER = $master->localCurrencyER;
 
         if ($master->isPerforma == 2 || $master->isPerforma == 3 || $master->isPerforma == 4 || $master->isPerforma == 5) {
             $detail = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $id)->first();
@@ -3100,6 +3135,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $customerInvoice->logo = $logo;
         $customerInvoice->footerDate = $footerDate;
         $customerInvoice->temp = $temp;
+        $customerInvoice->localCurrencyER = $localCurrencyER;
 
         $customerInvoice->is_pdo_vendor = false;
         $customerInvoice->vatNumber = '';
@@ -3183,9 +3219,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 $directTraSubTotal += $customerInvoice->tax->amount;
             }
         }
-
-
-        $amountSplit = explode(".", $directTraSubTotal);
+        $directTraSubTotalnumberformat=  number_format( $directTraSubTotal,empty($customerInvoice->currency) ? 2 : $customerInvoice->currency->DecimalPlaces);
+        $stringReplacedDirectTraSubTotal = str_replace(',', '', $directTraSubTotalnumberformat);
+        $amountSplit = explode(".", $stringReplacedDirectTraSubTotal);
         $intAmt = 0;
         $floatAmt = 00;
 
@@ -3196,7 +3232,6 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $intAmt = $amountSplit[0];
             $floatAmt = $amountSplit[1];
         }
-
         $numFormatter = new \NumberFormatter("ar", \NumberFormatter::SPELLOUT);
         $floatAmountInWords = '';
         $intAmountInWords = ($intAmt > 0) ? strtoupper($numFormatter->format($intAmt)) : '';
@@ -3204,8 +3239,30 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         $customerInvoice->amountInWords = ($floatAmountInWords != "") ? "الريال السعودي " . $intAmountInWords . $floatAmountInWords : "الريال السعودي " . $intAmountInWords . " فقط";
 
-
         $numFormatterEn = new \NumberFormatter("en", \NumberFormatter::SPELLOUT);
+
+        $customerInvoice->floatAmt = (string)$floatAmt;
+
+        //add zeros to decimal point
+        if($customerInvoice->floatAmt != 00){
+            $length = strlen($customerInvoice->floatAmt);
+            if($length<$customerInvoice->currency->DecimalPlaces){
+                $count = $customerInvoice->currency->DecimalPlaces-$length;
+                for ($i=0; $i<$count; $i++){
+                    $customerInvoice->floatAmt .= '0';
+                }
+            }
+        }
+        $customerInvoice->amount_word = ucfirst($numFormatterEn->format($intAmt));
+        $customerInvoice->amount_word = str_replace('-', ' ', $customerInvoice->amount_word);
+
+        $numberfrmtDirectTraSubTotal = number_format( $directTraSubTotal,empty($customerInvoice->currency) ? 2 : $customerInvoice->currency->DecimalPlaces);
+        $numberfrmtDirectTraSubTotal = str_replace(',', '', $numberfrmtDirectTraSubTotal);
+        $floatedDirectTraSubTotal = floatval($numberfrmtDirectTraSubTotal);
+        $floatedAmountInWordsEnglish = ucwords($numFormatterEn->format($floatedDirectTraSubTotal));
+        $customerInvoice->floatedAmountInWordsEnglish = $floatedAmountInWordsEnglish.' Only';
+
+
 
         $amountInWordsEnglish = ucwords($numFormatterEn->format($directTraSubTotal));
 
@@ -3229,8 +3286,11 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         if (!is_null($printTemplate)) {
             $printTemplate = $printTemplate->toArray();
         }
-      
-        
+
+
+        if ($printTemplate['printTemplateID'] == 15) {
+            $customerInvoice->amount_word = ucwords($customerInvoice->amount_word);
+        }
     
         if ($printTemplate['printTemplateID'] == 2 && $master->isPerforma == 1) {
             $proformaBreifData = $this->getProformaInvoiceDetailDataForPrintInvoice($id);
@@ -3250,11 +3310,27 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             }
         }
 
+        $customerID = $customerInvoice->customerID;
+        $CustomerContactDetails = CustomerContactDetails::where('customerID', $customerID)->where('isDefault', -1)->first();
+        if($CustomerContactDetails){
+            $customerInvoice['CustomerContactDetails'] = $CustomerContactDetails;
+        }
+       
+        $customerInvoiceLogistic = CustomerInvoiceLogistic::with('port_of_loading','port_of_discharge')
+                                                            ->where('custInvoiceDirectAutoID', $id)
+                                                            ->first();
         
+        if($customerInvoiceLogistic){
+            $customerInvoiceLogistic = $customerInvoiceLogistic->toArray();
+            $customerInvoice['customerInvoiceLogistic'] = $customerInvoiceLogistic;
+        }
+
+
         $array = array('type'=>$type,'request' => $customerInvoice, 'secondaryBankAccount' => $secondaryBankAccount);
         $time = strtotime("now");
         $fileName = 'customer_invoice_' . $id . '_' . $time . '.pdf';
         $fileName_csv = 'customer_invoice_' . $id . '_' . $time . '.csv';
+        $fileName_xls = 'customer_invoice_' . $id . '_' . $time;
 
      
 
@@ -3281,8 +3357,66 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 })->download('csv');
             }
         
+        } else if ($printTemplate['printTemplateID'] == 13) {
+            if($type == 1)
+            {
+                $html = view('print.APMC_customer_invoice', $array);
+                $pdf = \App::make('dompdf.wrapper');
+                $pdf->loadHTML($html);
+    
+                return $pdf->setPaper('a4')->setWarnings(false)->stream($fileName);
+            }
+            else if($type == 2)
+            {
+                return \Excel::create($fileName_xls, function ($excel) use ($array) {
+                    $excel->sheet('New sheet', function ($sheet) use ($array) {
+                        $sheet->loadView('export_report.APMC_customer_invoice', $array)->with('no_asset', true);
+                    });
+                    
+                })->download('xls');
+            }
+        
+        } else if ($printTemplate['printTemplateID'] == 15) {
+            if($type == 1)
+            {
+                $html = view('print.BNI_customer_invoice', $array);
+                $pdf = \App::make('dompdf.wrapper');
+                $pdf->loadHTML($html);
+    
+                return $pdf->setPaper('a4')->setWarnings(false)->stream($fileName);
+            }
+            else if($type == 2)
+            {
+                return \Excel::create($fileName_xls, function ($excel) use ($array) {
+                    $excel->sheet('New sheet', function ($sheet) use ($array) {
+                        $sheet->loadView('export_report.BNI_customer_invoice', $array)->with('no_asset', true);
+                    });
+                    
+                })->download('xls');
+            }
+        
+        } else if ($printTemplate['printTemplateID'] == 11) {
+            if($type == 1)
+            {
+                $html = view('print.chromite_customer_invoice', $array);
+                $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+                $mpdf->AddPage('P');
+                $mpdf->setAutoBottomMargin = 'stretch';
+                $mpdf->WriteHTML($html);
+                return $mpdf->Output($fileName, 'I');
+            }
+            else if($type == 2)
+            {
+                return \Excel::create($fileName_xls, function ($excel) use ($array) {
+                    $excel->sheet('New sheet', function ($sheet) use ($array) {
+                        $sheet->loadView('export_report.chromite_customer_invoice', $array)->with('no_asset', true);
+                    });
+                    
+                })->download('xls');
+            }
+        
         } else if ($printTemplate['printTemplateID'] == 1 || $printTemplate['printTemplateID'] == null) {
-          
+            
             if($type == 1)
             {
                 $html = view('print.customer_invoice', $array);
@@ -3316,6 +3450,24 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 return \Excel::create($fileName_csv, function ($excel) use ($array) {
                     $excel->sheet('New sheet', function ($sheet) use ($array) {
                         $sheet->loadView('export_report.customer_invoice_tax', $array)->with('no_asset', true);
+                    });
+                })->download('csv');
+            }
+
+        } else if ($printTemplate['printTemplateID'] == 12) {
+            if($type == 1)
+            {
+                $html = view('print.rihal_customer_invoice', $array);
+                $pdf = \App::make('dompdf.wrapper');
+                $pdf->loadHTML($html);
+    
+                return $pdf->setPaper('a4')->setWarnings(false)->stream($fileName);
+            }
+            else if($type == 2)
+            {
+                return \Excel::create($fileName_csv, function ($excel) use ($array) {
+                    $excel->sheet('New sheet', function ($sheet) use ($array) {
+                        $sheet->loadView('export_report.rihal_customer_invoice', $array)->with('no_asset', true);
                     });
                 })->download('csv');
             }
@@ -3895,7 +4047,7 @@ WHERE
 
         $inovicePolicy =  \Helper::checkPolicy($input['companyId'],44);
 
-        if ($isEmployeeDischarched == 'true' || !$inovicePolicy) {
+        if ($isEmployeeDischarched == 'true') {
             $grvMasters = [];
         }
 
@@ -3980,12 +4132,6 @@ WHERE
             });
         }
 
-        $inovicePolicy =  \Helper::checkPolicy($input['companyId'],44);
-
-        if(!$inovicePolicy) {
-            $grvMasters = [];
-        }
-
 
         return \DataTables::of($grvMasters)
             ->order(function ($query) use ($input) {
@@ -4021,7 +4167,6 @@ WHERE
         } else {
             return $this->sendResponse(array(), $approve["message"]);
         }
-
     }
 
 
@@ -4072,12 +4217,12 @@ WHERE
 
         $customerInvoiceDetailArray = $fetchCustomerInvoiceDetails->toArray();
 
-
-
         if($customerInvoiceDirectData->isPerforma == 0 || $customerInvoiceDirectData->isPerforma == 1){
             CustomerInvoiceDirectDetRefferedback::insert($customerInvoiceDetailArray);
         }else{
-            CustomerInvoiceItemDetailsRefferedback::insert($customerInvoiceDetailArray);
+            foreach ($customerInvoiceDetailArray as $key => $valueItem) {
+                $res = CustomerInvoiceItemDetailsRefferedback::create($valueItem);
+            }
         }
 
         $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $custInvoiceDirectAutoID)
@@ -4193,7 +4338,13 @@ WHERE
         }
 
         if($masterData->isPerforma == 2){
-            return $this->sendError('Selected customer invoice cannot be returned back to amend as the invoice is Item Sales Invoice');
+            $checkForInventoryItems = CustomerInvoiceItemDetails::where('itemFinanceCategoryID', 1)
+                                                                ->where('custInvoiceDirectAutoID', $id)
+                                                                ->first();
+
+            if ($checkForInventoryItems) {
+                return $this->sendError('Selected customer invoice cannot be returned back to amend as the invoice is Item Sales Invoice, it contains inventory items');
+            }
         }elseif ($masterData->isPerforma == 4){
             return $this->sendError('Selected customer invoice cannot be returned back to amend as the invoice is From Sales Order');
         }elseif ($masterData->isPerforma == 5){

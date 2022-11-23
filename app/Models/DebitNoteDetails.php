@@ -175,7 +175,8 @@ class DebitNoteDetails extends Model
         'netAmountLocal',
         'vatMasterCategoryID',
         'vatSubCategoryID',
-        'netAmountRpt'
+        'netAmountRpt',
+        'detail_project_id'
     ];
 
     /**
@@ -215,7 +216,8 @@ class DebitNoteDetails extends Model
         'VATAmountRpt' => 'float',
         'netAmount' => 'float',
         'netAmountLocal' => 'float',
-        'netAmountRpt' => 'float'
+        'netAmountRpt' => 'float',
+        'detail_project_id' => 'integer'
     ];
 
     /**

@@ -153,7 +153,8 @@ class DirectReceiptDetail extends Model
         'VATAmountRpt',
         'netAmount',
         'netAmountLocal',
-        'netAmountRpt'
+        'netAmountRpt',
+        'detail_project_id'
     ];
 
     /**
@@ -188,7 +189,8 @@ class DirectReceiptDetail extends Model
         'VATAmountRpt' => 'float',
         'netAmount' => 'float',
         'netAmountLocal' => 'float',
-        'netAmountRpt' => 'float'
+        'netAmountRpt' => 'float',
+        'detail_project_id' => 'integer'
     ];
 
     /**

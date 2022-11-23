@@ -807,9 +807,13 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 $decimalPlaceCollect = collect($outputRevenue)->pluck('documentRptCurrencyID')->toArray();
                 $decimalPlaceUnique = array_unique($decimalPlaceCollect);
 
-                $currencyId = $request->currencyID;
-                if (!empty($decimalPlaceUnique)) {
-                    $currencyId = $decimalPlaceUnique[0];
+                $selectedCurrency = $request->currencyID;
+                if ($selectedCurrency == 2) {
+                    $currencyId = $checkIsGroup->localCurrencyID;
+                } elseif ($selectedCurrency == 3) {
+                    $currencyId = $checkIsGroup->reportingCurrency;
+                } else {
+                    $currencyId = $checkIsGroup->localCurrencyID;
                 }
 
                 $requestCurrency = CurrencyMaster::where('currencyID', $currencyId)->first();
@@ -915,8 +919,21 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 $reportTypeID = $request->reportTypeID;
                 $data = array();
                 $type = $request->type;
-                if ($reportTypeID == 'CBS') {
 
+             
+                $company = Company::find($request->companySystemID);
+                $company_name = $company->CompanyName;
+
+                if ($reportTypeID == 'CBS') {
+                    $typ_re = 1;
+                    $requestCurrency = NULL;
+                    $from_date = $request->fromDate;
+                    $toDate = $request->fromDate;
+
+                    $from_date =  ((new Carbon($from_date))->format('d/m/Y'));
+
+                    $fileName = 'Customer Balance Statement';
+                    $title = 'Customer Balance Statement';
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                     $output = $this->getCustomerBalanceStatementQRY($request);
 
@@ -947,6 +964,19 @@ class AccountsReceivableReportAPIController extends AppBaseController
                         }
                     }
                 } else if ($request->reportTypeID == 'CSA') {
+                    $typ_re = 2;
+                    $from_date = $request->fromDate;
+                    $toDate = $request->toDate;
+                    $requestCurrency = $request->currency;
+                    $new_cu = explode(':',$requestCurrency);
+                    $requestCurrency = $new_cu[1];
+
+
+                    $from_date =  ((new Carbon($from_date))->format('d/m/Y'));
+                    $toDate =  ((new Carbon($toDate))->format('d/m/Y'));
+
+                    $fileName = 'Customer Statement of Account';
+                    $title = 'Customer Statement of Account';
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                     $output = $this->getCustomerStatementAccountQRY($request);
                     if ($output) {
@@ -972,23 +1002,49 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     }
                 }
 
-                 \Excel::create('customer_balance_statement', function ($excel) use ($data) {
-                    $excel->sheet('sheet name', function ($sheet) use ($data) {
-                        $sheet->fromArray($data, null, 'A1', true);
-                        $sheet->setAutoSize(true);
-                        $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-                    });
-                    $lastrow = $excel->getActiveSheet()->getHighestRow();
-                    $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-                })->download($type);
+          
+               
+                $path = 'accounts-receivable/report/customer_balance_statement/excel/';
+                if($typ_re == 1)
+                {
+                    $detail_array = array('type' => 2,'from_date'=>$from_date,'to_date'=>$toDate,'company_name'=>$company_name,'cur'=>$requestCurrency,'title'=>$title);
 
-                return $this->sendResponse(array(), trans('custom.success_export'));
+                    $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
+                }
+                else
+                {
+                    $detail_array = array('type' => 4,'from_date'=>$from_date,'to_date'=>$toDate,'company_name'=>$company_name,'cur'=>$requestCurrency,'title'=>$title);
+
+                    $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
+                }
+                
+
+                if($basePath == '')
+                {
+                     return $this->sendError('Unable to export excel');
+                }
+                else
+                {
+                     return $this->sendResponse($basePath, trans('custom.success_export'));
+                }
+
                 break;
             case 'CA': //Customer Aging
                 $reportTypeID = $request->reportTypeID;
                 $type = $request->type;
+
+                $from_date = $request->fromDate;
+                $to_date = $request->fromDate;
+                $company = Company::find($request->companySystemID);
+                $company_name = $company->CompanyName;
+                $from_date =  ((new Carbon($from_date))->format('d/m/Y'));
+
+
                 $data = array();
                 if ($reportTypeID == 'CAD') { //customer aging detail
+
+                    $fileName = 'Customer Invoice Aging Report';
+                    $title = 'Customer Invoice Aging Report';
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                     $output = $this->getCustomerAgingDetailQRY($request);
 
@@ -1031,7 +1087,8 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 } else {
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                     $output = $this->getCustomerAgingSummaryQRY($request);
-
+                    $fileName = 'Customer Invoice Aging Summary';
+                    $title = 'Customer Invoice Aging Summary';
                     if ($output['data']) {
                         $x = 0;
                         foreach ($output['data'] as $val) {
@@ -1054,10 +1111,12 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     }
                 }
 
-
-                $fileName = 'customer_aging';
+                $requestCurrency = NULL;
+               
                 $path = 'accounts-receivable/report/customer_aging/excel/';
-                $basePath = CreateExcel::process($data,$type,$fileName,$path);
+                $detail_array = array('type' => 2,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$requestCurrency,'title'=>$title);
+
+                $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
 
                 if($basePath == '')
                 {
@@ -1102,7 +1161,8 @@ class AccountsReceivableReportAPIController extends AppBaseController
                              'balanceAmount' => $balanceAmount, 
                              'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 
                              'paidAmount' => $paidAmount, 
-                             'invoiceAmount' => $invoiceAmount);
+                             'invoiceAmount' => $invoiceAmount,
+                             'fromDate' =>  $request->fromDate,);
             
                     return \Excel::create('create_customer_ledger', function ($excel) use ($outputData) {
                         $excel->sheet('New sheet', function ($sheet) use ($outputData) {
@@ -1145,6 +1205,13 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 break;
             case 'CBSUM': //Customer Balance Summery
                 $reportTypeID = $request->reportTypeID;
+                
+                $from_date = $request->fromDate;
+                $to_date = $request->fromDate;
+                $company = Company::find($request->companySystemID);
+                $company_name = $company->CompanyName;
+                $from_date =  ((new Carbon($from_date))->format('d/m/Y'));
+
                 if ($reportTypeID == 'CBSUM') { //customer ledger template 1
 
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
@@ -1211,9 +1278,13 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     }
 
  
-                    $fileName = 'customer_balance_summary';
+                    $fileName = 'Customer Balance Summary';
+                    $title = 'Customer Balance Summary';
                     $path = 'accounts-receivable/report/customer_balance_summary/excel/';
-                    $basePath = CreateExcel::process($data,$type,$fileName,$path);
+                    $requestCurrency = NULL;
+                    $detail_array = array('type' => 2,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$requestCurrency,'title'=>$title);
+    
+                    $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
     
                     if($basePath == '')
                     {
@@ -1226,8 +1297,139 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     break;
                 }
                 break;
+                case 'CRCR': //Customer Summary Report
+                    $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                    $checkIsGroup = Company::find($request->companySystemID);
+                    $outputRevenue = $this->getCustomerSummaryRevenueQRY($request);
+                    $outputCollection = $this->getCustomerSummaryCollectionQRY($request);
+                    //$outputOutstanding = $this->getCustomerSummaryOutstandingQRY($request);
+                    $outputOutstanding = array(); //$this->getCustomerSummaryOutstandingUpdatedQRY($request);
+                    $outputServiceLine = $this->getCustomerSummaryRevenueServiceLineBaseQRY($request);
+    
+                    $decimalPlaceCollect = collect($outputRevenue)->pluck('documentRptCurrencyID')->toArray();
+                    $decimalPlaceUnique = array_unique($decimalPlaceCollect);
+    
+                    $selectedCurrency = $request->currencyID;
+                    if ($selectedCurrency == 2) {
+                        $currencyId = $checkIsGroup->localCurrencyID;
+                    } elseif ($selectedCurrency == 3) {
+                        $currencyId = $checkIsGroup->reportingCurrency;
+                    } else {
+                        $currencyId = $checkIsGroup->localCurrencyID;
+                    }
+    
+                    $requestCurrency = CurrencyMaster::where('currencyID', $currencyId)->first();
+    
+                    $decimalPlace = !empty($requestCurrency) ? $requestCurrency->DecimalPlaces : 2;
+    
+                    $revenueTotal = array();
+                    $collectionTotal = array();
+                    $outstandingTotal = array();
+                    $serviceLineTotal = array();
+    
+                    //revenue total calculation
+                    $revenueTotal['Jan'] = array_sum(collect($outputRevenue)->pluck('Jan')->toArray());
+                    $revenueTotal['Feb'] = array_sum(collect($outputRevenue)->pluck('Feb')->toArray());
+                    $revenueTotal['March'] = array_sum(collect($outputRevenue)->pluck('March')->toArray());
+                    $revenueTotal['April'] = array_sum(collect($outputRevenue)->pluck('April')->toArray());
+                    $revenueTotal['May'] = array_sum(collect($outputRevenue)->pluck('May')->toArray());
+                    $revenueTotal['June'] = array_sum(collect($outputRevenue)->pluck('June')->toArray());
+                    $revenueTotal['July'] = array_sum(collect($outputRevenue)->pluck('July')->toArray());
+                    $revenueTotal['Aug'] = array_sum(collect($outputRevenue)->pluck('Aug')->toArray());
+                    $revenueTotal['Sept'] = array_sum(collect($outputRevenue)->pluck('Sept')->toArray());
+                    $revenueTotal['Oct'] = array_sum(collect($outputRevenue)->pluck('Oct')->toArray());
+                    $revenueTotal['Nov'] = array_sum(collect($outputRevenue)->pluck('Nov')->toArray());
+                    $revenueTotal['Dece'] = array_sum(collect($outputRevenue)->pluck('Dece')->toArray());
+                    $revenueTotal['Total'] = array_sum(collect($outputRevenue)->pluck('Total')->toArray());
+    
+                    //collection total calculation
+                    $collectionTotal['Jan'] = array_sum(collect($outputCollection)->pluck('Jan')->toArray());
+                    $collectionTotal['Feb'] = array_sum(collect($outputCollection)->pluck('Feb')->toArray());
+                    $collectionTotal['March'] = array_sum(collect($outputCollection)->pluck('March')->toArray());
+                    $collectionTotal['April'] = array_sum(collect($outputCollection)->pluck('April')->toArray());
+                    $collectionTotal['May'] = array_sum(collect($outputCollection)->pluck('May')->toArray());
+                    $collectionTotal['June'] = array_sum(collect($outputCollection)->pluck('June')->toArray());
+                    $collectionTotal['July'] = array_sum(collect($outputCollection)->pluck('July')->toArray());
+                    $collectionTotal['Aug'] = array_sum(collect($outputCollection)->pluck('Aug')->toArray());
+                    $collectionTotal['Sept'] = array_sum(collect($outputCollection)->pluck('Sept')->toArray());
+                    $collectionTotal['Oct'] = array_sum(collect($outputCollection)->pluck('Oct')->toArray());
+                    $collectionTotal['Nov'] = array_sum(collect($outputCollection)->pluck('Nov')->toArray());
+                    $collectionTotal['Dece'] = array_sum(collect($outputCollection)->pluck('Dece')->toArray());
+                    $collectionTotal['Total'] = array_sum(collect($outputCollection)->pluck('Total')->toArray());
+    
+                    //outstanding total calculation
+                    $outstandingTotal['Jan'] = array_sum(collect($outputOutstanding)->pluck('balanceAmountJan')->toArray());
+                    $outstandingTotal['Feb'] = array_sum(collect($outputOutstanding)->pluck('balanceAmountFeb')->toArray());
+                    $outstandingTotal['March'] = array_sum(collect($outputOutstanding)->pluck('balanceAmountMar')->toArray());
+                    $outstandingTotal['April'] = array_sum(collect($outputOutstanding)->pluck('balanceAmountApr')->toArray());
+                    $outstandingTotal['May'] = array_sum(collect($outputOutstanding)->pluck('balanceAmountMay')->toArray());
+                    $outstandingTotal['June'] = array_sum(collect($outputOutstanding)->pluck('balanceAmountJun')->toArray());
+                    $outstandingTotal['July'] = array_sum(collect($outputOutstanding)->pluck('balanceAmountJul')->toArray());
+                    $outstandingTotal['Aug'] = array_sum(collect($outputOutstanding)->pluck('balanceAmountAug')->toArray());
+                    $outstandingTotal['Sept'] = array_sum(collect($outputOutstanding)->pluck('balanceAmountSep')->toArray());
+                    $outstandingTotal['Oct'] = array_sum(collect($outputOutstanding)->pluck('balanceAmountOct')->toArray());
+                    $outstandingTotal['Nov'] = array_sum(collect($outputOutstanding)->pluck('balanceAmountNov')->toArray());
+                    $outstandingTotal['Dece'] = array_sum(collect($outputOutstanding)->pluck('balanceAmountDec')->toArray());
+                    $outstandingTotal['Total'] = array_sum(collect($outputOutstanding)->pluck('balanceAmountTot')->toArray());
+    
+                    //Revenue ServiceLine total calculation
+                    $serviceLineTotal['Jan'] = array_sum(collect($outputServiceLine)->pluck('Jan')->toArray());
+                    $serviceLineTotal['Feb'] = array_sum(collect($outputServiceLine)->pluck('Feb')->toArray());
+                    $serviceLineTotal['March'] = array_sum(collect($outputServiceLine)->pluck('March')->toArray());
+                    $serviceLineTotal['April'] = array_sum(collect($outputServiceLine)->pluck('April')->toArray());
+                    $serviceLineTotal['May'] = array_sum(collect($outputServiceLine)->pluck('May')->toArray());
+                    $serviceLineTotal['June'] = array_sum(collect($outputServiceLine)->pluck('June')->toArray());
+                    $serviceLineTotal['July'] = array_sum(collect($outputServiceLine)->pluck('July')->toArray());
+                    $serviceLineTotal['Aug'] = array_sum(collect($outputServiceLine)->pluck('Aug')->toArray());
+                    $serviceLineTotal['Sept'] = array_sum(collect($outputServiceLine)->pluck('Sept')->toArray());
+                    $serviceLineTotal['Oct'] = array_sum(collect($outputServiceLine)->pluck('Oct')->toArray());
+                    $serviceLineTotal['Nov'] = array_sum(collect($outputServiceLine)->pluck('Nov')->toArray());
+                    $serviceLineTotal['Dece'] = array_sum(collect($outputServiceLine)->pluck('Dece')->toArray());
+                    $serviceLineTotal['Total'] = array_sum(collect($outputServiceLine)->pluck('Total')->toArray());
+    
+    
+                    $reportData = array(
+                        'fromDate' =>$request->fromDate,
+                        'year' =>$request->year,
+                        'revenueData' => $outputRevenue,
+                        'outputCollection' => $outputCollection,
+                        'outputOutstanding' => $outputOutstanding,
+                        'outputServiceLine' => $outputServiceLine,
+                        'companyName' => $checkIsGroup->CompanyName,
+                        'decimalPlace' => $decimalPlace,
+                        'revenueTotal' => $revenueTotal,
+                        'collectionTotal' => $collectionTotal,
+                        'outstandingTotal' => $outstandingTotal,
+                        'serviceLineTotal' => $serviceLineTotal,
+                        'currency' => $requestCurrency->CurrencyCode
+                    );
+                    $templateName = "export_report.customer-summary-report";
+                    $fileName = 'customer_summary_report';
+                    $path = 'accounts-receivable/report/customer-summary/excel/';
+                    $file_type = $request->type;
+                    $basePath = CreateExcel::loadView($reportData,$file_type,$fileName,$path,$templateName);
+            
+                    if($basePath == '')
+                    {
+                        return $this->sendError('Unable to export excel');
+                    }
+                    else
+                    {
+                        return $this->sendResponse($basePath, trans('custom.success_export'));
+                    }
+                    break;
+
             case 'CSR': //Customer Sales Register
                 $type = $request->type;
+
+                
+                $from_date = $request->fromDate;
+                $to_date = $request->toDate;
+                $company = Company::find($request->companySystemID);
+                $company_name = $company->CompanyName;
+                $from_date =  ((new Carbon($from_date))->format('d/m/Y'));
+                $to_date =  ((new Carbon($to_date))->format('d/m/Y'));
+
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                 $output = $this->getCustomerSalesRegisterQRY($request);
                 $data = array();
@@ -1262,9 +1464,12 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     }
                 }
 
-                $fileName = 'customer_sales_register';
+                $fileName = 'Sales Register';
+                $title = 'Sales Register';
                 $path = 'accounts-receivable/report/customer_sales_register/excel/';
-                $basePath = CreateExcel::process($data,$type,$fileName,$path);
+                $requestCurrency = NULL;
+                $detail_array = array('type' => 1,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$requestCurrency,'title'=>$title);
+                $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
 
                 if($basePath == '')
                 {
@@ -1280,7 +1485,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 $reportTypeID = $request->reportTypeID;
                 $type = $request->type;
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
-
+                $requestCurrency = $request->currency;
                 $companyCurrency = \Helper::companyCurrency($request->companySystemID);
                 if ($companyCurrency) {
                     if ($request->currencyID == 2) {
@@ -1291,7 +1496,15 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 }
                 $data = [];
                 if ($reportTypeID == 'CCR') { //customer aging detail
-
+                    $fileName = 'Collection Report';
+                    $title = 'Collection Report';
+                    $from_date = $request->fromDate;
+                    $to_date = $request->toDate;
+                    $company = Company::find($request->companySystemID);
+                    $company_name = $company->CompanyName;
+                    $from_date =  ((new Carbon($from_date))->format('d/m/Y'));
+                    $to_date =  ((new Carbon($to_date))->format('d/m/Y'));
+                    $typ_re = 1;
                     if ($request->excelForm == 'bankReport') {
 
                         $output = $this->getCustomerCollectionBRVExcelQRY($request);
@@ -1340,7 +1553,14 @@ class AccountsReceivableReportAPIController extends AppBaseController
 
                 } else {
                     $output = $this->getCustomerCollectionMonthlyQRY($request);
-
+                    $year = $request->year;
+                    $fileName = 'Collection Report By Year -'.$year;
+                    $title = 'Collection Report By Year -'.$year;
+                    $from_date = \App\helper\Helper::dateFormat($request->fromDate);
+                    $to_date = $request->fromDate;
+                    $company = Company::find($request->companySystemID);
+                    $company_name = $company->CompanyName;
+                    $typ_re = 2;
                     if ($output) {
                         $x = 0;
                         foreach ($output as $val) {
@@ -1365,9 +1585,21 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     }
                 }
 
-                $fileName = 'revenue_by_customer';
+                
                 $path = 'accounts-receivable/report/customer_collection/excel/';
-                $basePath = CreateExcel::process($data,$type,$fileName,$path);
+                if($typ_re == 1)
+                {
+                    $detail_array = array('type' => 4,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$requestCurrency,'title'=>$title);
+
+                    $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
+                }
+                else
+                {
+                    $detail_array = array('type' => 5,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$requestCurrency,'title'=>$title);
+
+                    $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
+                }
+               
 
                 if($basePath == '')
                 {
@@ -1382,6 +1614,19 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 $reportTypeID = $request->reportTypeID;
 
                 if ($reportTypeID == 'RC') {
+
+
+                    $fileName = 'Revenue Detail';
+                    $title = 'Revenue Detail';
+                    $company = Company::find($request->companySystemID);
+                    $company_name = $company->CompanyName;
+
+                    $from_date = $request->fromDate;
+                    $toDate = $request->toDate;
+
+                    $from_date =  ((new Carbon($from_date))->format('d/m/Y'));
+                    $toDate =  ((new Carbon($toDate))->format('d/m/Y'));
+
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                     $checkIsGroup = Company::find($request->companySystemID);
                     $output = $this->getRevenueByCustomer($request);
@@ -1449,9 +1694,12 @@ class AccountsReceivableReportAPIController extends AppBaseController
                         $data = array();
                     }
 
-                    $fileName = 'revenue_by_customer';
+                    $requestCurrency = NULL;
+                    $fileName = 'Revenue Detail';
                     $path = 'accounts-receivable/report/revenue_by_customer/excel/';
-                    $basePath = CreateExcel::process($data,$type,$fileName,$path);
+                    $detail_array = array('type' => 1,'from_date'=>$from_date,'to_date'=>$toDate,'company_name'=>$company_name,'cur'=>$requestCurrency,'title'=>$title);
+
+                    $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
     
                     if($basePath == '')
                     {
@@ -1468,9 +1716,21 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $checkIsGroup = Company::find($request->companySystemID);
                     $output = $this->getCustomerRevenueMonthlySummary($request);
                     $type = $request->type;
+                    $year = $request->year;
+
+                    $fileName = 'Revenue Report '.$year;
+                    $title = 'Revenue Report '.$year;
+                    $company = Company::find($request->companySystemID);
+                    $company_name = $company->CompanyName;
+
+                    $from_date = $request->fromDate;
+
+                    $from_date =  ((new Carbon($from_date))->format('d/m/Y'));
+
 
                     $currency = $request->currencyID;
                     $currencyId = 2;
+                    $cure = $request->currency;
 
                     if ($currency == 2) {
                         $decimalPlaceCollect = collect($output)->pluck('documentLocalCurrencyID')->toArray();
@@ -1512,9 +1772,11 @@ class AccountsReceivableReportAPIController extends AppBaseController
                         $data = array();
                     }
 
-                    $fileName = 'revenue_by_customer';
+                    $fileName = 'Revenue Report '.$year;
                     $path = 'accounts-receivable/report/revenue_by_customer/excel/';
-                    $basePath = CreateExcel::process($data,$type,$fileName,$path);
+                    $detail_array = array('type' => 5,'from_date'=>$from_date,'to_date'=>$from_date,'company_name'=>$company_name,'cur'=>$cure,'title'=>$title);
+
+                    $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
     
                     if($basePath == '')
                     {
@@ -1531,6 +1793,14 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                 $output = $this->getCreditNoteRegisterQRY($request);
                 $type = $request->type;
+
+                $from_date = $request->fromDate;
+                $toDate = $request->toDate;
+                $company = Company::find($request->companySystemID);
+                $company_name = $company->CompanyName;
+                $from_date =  ((new Carbon($from_date))->format('d/m/Y'));
+                $toDate =  ((new Carbon($toDate))->format('d/m/Y'));
+
                 $data = array();
                 if ($output) {
                     $x = 0;
@@ -1580,9 +1850,13 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 }
 
    
-                $fileName = 'credit_note_register';
+                $fileName = 'Credit Note Register';
+                $title = 'Credit Note Register';
                 $path = 'accounts-receivable/report/credit_note_register/excel/';
-                $basePath = CreateExcel::process($data,$type,$fileName,$path);
+                $requestCurrency = NULL;
+                $detail_array = array('type' => 1,'from_date'=>$from_date,'to_date'=>$toDate,'company_name'=>$company_name,'cur'=>$requestCurrency,'title'=>$title);
+
+                $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
 
                 if($basePath == '')
                 {
@@ -2239,24 +2513,28 @@ class AccountsReceivableReportAPIController extends AppBaseController
         $customer = $request->singleCustomer;
 
         $balanceAmountQry = '';
+        $balanceAmountWhere = '';
         $receiptAmountQry = '';
         $decimalPlaceQry = '';
         $invoiceAmountQry = '';
         $currencyQry = '';
         if ($currency == 1) {
             $balanceAmountQry = "round(IFNULL(MainQuery.documentTransAmount,0),MainQuery.documentTransDecimalPlaces) - round(IFNULL(InvoiceFromBRVAndMatching.InvoiceTransAmount,0),MainQuery.documentTransDecimalPlaces) AS balanceAmount";
+            $balanceAmountWhere = "round(IFNULL(MainQuery.documentTransAmount,0),MainQuery.documentTransDecimalPlaces) - round(IFNULL(InvoiceFromBRVAndMatching.InvoiceTransAmount,0),MainQuery.documentTransDecimalPlaces)";
             $receiptAmountQry = "round(IFNULL(InvoiceFromBRVAndMatching.InvoiceTransAmount, 0 ),MainQuery.documentTransDecimalPlaces) AS receiptAmount";
             $invoiceAmountQry = "round(IFNULL(MainQuery.documentTransAmount, 0 ),MainQuery.documentTransDecimalPlaces) AS invoiceAmount";
             $decimalPlaceQry = "MainQuery.documentTransDecimalPlaces AS balanceDecimalPlaces";
             $currencyQry = "MainQuery.documentTransCurrency AS documentCurrency";
         } else if ($currency == 2) {
             $balanceAmountQry = "round(IFNULL(MainQuery.documentLocalAmount,0),MainQuery.documentLocalDecimalPlaces) - round(IFNULL(InvoiceFromBRVAndMatching.InvoiceLocalAmount,0),MainQuery.documentLocalDecimalPlaces) AS balanceAmount";
+            $balanceAmountWhere = "round(IFNULL(MainQuery.documentLocalAmount,0),MainQuery.documentLocalDecimalPlaces) - round(IFNULL(InvoiceFromBRVAndMatching.InvoiceLocalAmount,0),MainQuery.documentLocalDecimalPlaces)";
             $receiptAmountQry = "round(IFNULL(InvoiceFromBRVAndMatching.InvoiceLocalAmount, 0 ),MainQuery.documentLocalDecimalPlaces) AS receiptAmount";
             $invoiceAmountQry = "round(IFNULL(MainQuery.documentLocalAmount, 0 ),MainQuery.documentLocalDecimalPlaces) AS invoiceAmount";
             $decimalPlaceQry = "MainQuery.documentLocalDecimalPlaces AS balanceDecimalPlaces";
             $currencyQry = "MainQuery.documentLocalCurrency AS documentCurrency";
         } else {
             $balanceAmountQry = "round(IFNULL(MainQuery.documentRptAmount,0),MainQuery.documentRptDecimalPlaces) - round(IFNULL(InvoiceFromBRVAndMatching.InvoiceRptAmount,0),MainQuery.documentRptDecimalPlaces) AS balanceAmount";
+            $balanceAmountWhere = "round(IFNULL(MainQuery.documentRptAmount,0),MainQuery.documentRptDecimalPlaces) - round(IFNULL(InvoiceFromBRVAndMatching.InvoiceRptAmount,0),MainQuery.documentRptDecimalPlaces)";
             $receiptAmountQry = "round(IFNULL(InvoiceFromBRVAndMatching.InvoiceRptAmount, 0 ),MainQuery.documentRptDecimalPlaces) AS receiptAmount";
             $invoiceAmountQry = "round(IFNULL(MainQuery.documentRptAmount, 0 ),MainQuery.documentRptDecimalPlaces) AS invoiceAmount";
             $decimalPlaceQry = "MainQuery.documentRptDecimalPlaces AS balanceDecimalPlaces";
@@ -2404,7 +2682,7 @@ WHERE
 GROUP BY
 	bookingInvCode 
 	) AS InvoiceFromBRVAndMatching ON InvoiceFromBRVAndMatching.addedDocumentSystemID = MainQuery.documentSystemID 
-	AND MainQuery.documentSystemCode = InvoiceFromBRVAndMatching.bookingInvCodeSystem ORDER BY postedDate ASC;');
+	AND MainQuery.documentSystemCode = InvoiceFromBRVAndMatching.bookingInvCodeSystem WHERE '.$balanceAmountWhere.' <> 0 ORDER BY postedDate ASC;');
     }
 
     function getCustomerBalanceStatementQRY($request)

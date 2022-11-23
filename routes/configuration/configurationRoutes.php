@@ -1,0 +1,51 @@
+<?php
+
+
+/**
+ * This file contains configuration module related routes
+ * 
+ * 
+ * */
+
+
+//report template
+Route::group([], function(){
+	Route::resource('report_templates', 'ReportTemplateAPIController');
+    Route::resource('report_template_cash_banks', 'ReportTemplateCashBankAPIController');
+    Route::resource('report_template_details', 'ReportTemplateDetailsAPIController');
+    Route::resource('report_template_columns', 'ReportTemplateColumnsAPIController');
+    Route::resource('report_template_column_links', 'ReportTemplateColumnLinkAPIController');
+    Route::resource('report_template_field_types', 'ReportTemplateFieldTypeAPIController');
+    Route::resource('report_template_cash_banks', 'ReportTemplateCashBankAPIController');
+    Route::resource('report_template_documents', 'ReportTemplateDocumentAPIController');
+    Route::resource('report_template_cash_banks', 'ReportTemplateCashBankAPIController');
+    Route::resource('report_template_numbers', 'ReportTemplateNumbersAPIController');
+    Route::resource('report_template_employees', 'ReportTemplateEmployeesAPIController');
+    Route::resource('report_column_templates', 'ReportColumnTemplateAPIController');
+    Route::resource('report_column_template_details', 'ReportColumnTemplateDetailAPIController');
+    Route::resource('report_template_links', 'ReportTemplateLinksAPIController');
+
+    Route::post('getAllReportTemplateForCopy', 'ReportTemplateAPIController@getAllReportTemplateForCopy')->name("Get all report templates for copy");
+    Route::post('addTemplateSubCategory', 'ReportTemplateDetailsAPIController@addSubCategory')->name("Add template sub category");
+    Route::post('getAllReportTemplate', 'ReportTemplateAPIController@getAllReportTemplate')->name("Get all report templates");
+    Route::post('mirrorReportTemplateRowConfiguration', 'ReportTemplateDetailsAPIController@mirrorReportTemplateRowConfiguration')->name("Mirror report template row configurations");
+    Route::post('linkPandLGLCodeValidation', 'ReportTemplateDetailsAPIController@linkPandLGLCodeValidation')->name("Link P&L GL Code Validation");
+    Route::post('linkPandLGLCode', 'ReportTemplateDetailsAPIController@linkPandLGLCode')->name("Link P&L GL Codes");
+    Route::post('reportTemplateDetailSubCatLink', 'ReportTemplateLinksAPIController@reportTemplateDetailSubCatLink')->name("Report template detail sub category link");
+    Route::post('deleteAllLinkedGLCodes', 'ReportTemplateLinksAPIController@deleteAllLinkedGLCodes')->name("Delete all linked GL codes");
+    Route::post('loadColumnTemplate', 'ReportTemplateColumnLinkAPIController@loadColumnTemplate')->name("Load column templates");
+    Route::post('getReportTemplateAssignedEmployee', 'ReportTemplateEmployeesAPIController@getReportTemplateAssignedEmployee')->name("Get report template assigned employees");
+ 	Route::post('getUnassignedGLForReportTemplate', 'ReportTemplateDetailsAPIController@getUnassignedGLForReportTemplate')->name("Get unassigned GL codes for report template");
+    
+    Route::get('getReportTemplateFormData', 'ReportTemplateAPIController@getReportTemplateFormData')->name("Get report template form data");
+    Route::get('getReportTemplateDetail/{id}', 'ReportTemplateDetailsAPIController@getReportTemplateDetail')->name("Get report template detail by report template id");
+    Route::get('getReportTemplateSubCat', 'ReportTemplateDetailsAPIController@getReportTemplateSubCat')->name("Get report template sub category");
+    Route::get('getEmployees', 'ReportTemplateAPIController@getEmployees')->name("Get employees for report template");
+    Route::get('getReportHeaderData', 'ReportTemplateAPIController@getReportHeaderData')->name("Get report template header data");
+    Route::get('getTemplateColumnLinks', 'ReportTemplateColumnLinkAPIController@getTemplateColumnLinks')->name("Get report template column links");
+    Route::get('reportTemplateFormulaColumn', 'ReportTemplateColumnLinkAPIController@reportTemplateFormulaColumn')->name("Get report template formula column");
+});
+
+
+Route::resource('control_accounts', 'ControlAccountAPIController');
+Route::get('getChartOfAccounts', 'ChartOfAccountAPIController@getChartOfAccounts')->name("Get chart of accounts");

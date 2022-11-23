@@ -141,5 +141,29 @@ class PricingScheduleMaster extends Model
         return $this->hasOne('App\Models\TenderBidFormatMaster', 'id', 'price_bid_format_id');
     }
 
-    
+    public function bid_schedule()
+    {
+        return $this->hasOne('App\Models\BidSchedule', 'schedule_id', 'id');
+    }
+
+    public function tender_main_works()
+    {
+        return $this->hasMany('App\Models\TenderMainWorks', 'schedule_id', 'id');
+    }
+
+    public function pricing_shedule_details()
+    {
+        return $this->hasMany('App\Models\PricingScheduleDetail', 'pricing_schedule_master_id', 'id');
+    }
+
+    public function pricing_shedule_details1()
+    {
+        return $this->hasMany('App\Models\PricingScheduleDetail', 'pricing_schedule_master_id', 'id');
+    }
+
+    public function bid_schedules()
+    {
+        return $this->hasMany('App\Models\BidSchedule', 'schedule_id', 'id');
+    }
+
 }

@@ -124,5 +124,10 @@ class TenderMainWorks extends Model
     public function tender_bid_format_detail(){
         return $this->hasOne('App\Models\TenderBidFormatDetail', 'id', 'bid_format_detail_id');
     }
+
+    public function bid_main_work()
+    {
+        return $this->hasOne('App\Models\BidMainWork', 'main_works_id', 'id');
+    }
   
 }

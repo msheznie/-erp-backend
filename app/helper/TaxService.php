@@ -145,6 +145,7 @@ class TaxService
                 ->first();
 
             if ($defaultVAT) {
+                $data['applicableOn'] = $defaultVAT->applicableOn;
                 $data['vatSubCategoryID'] = $defaultVAT->taxVatSubCategoriesAutoID;
                 $data['vatMasterCategoryID'] = $defaultVAT->mainCategory;
                 $data['percentage'] = $defaultVAT->percentage;
@@ -1448,10 +1449,9 @@ class TaxService
 
         $totalTransVATAmount = 0;
         foreach ($retentionData as $key => $value) {
-            $bookInvSuppMaster = BookInvSuppMaster::find($value->bookingInvSystemCode);
 
-            if ($bookInvSuppMaster) {
-                $vatAmount = ($bookInvSuppMaster->retentionVatAmount / $bookInvSuppMaster->retentionAmount) * $value->supplierPaymentAmount;
+            if ($retentionData) {
+                $vatAmount = $value->retentionVatAmount;
             
                 $totalTransVATAmount += $vatAmount;
             }

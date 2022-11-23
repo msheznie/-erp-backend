@@ -151,6 +151,7 @@ class CustomerCatalogDetailAPIController extends AppBaseController
         $input['localCurrencyID'] = $customer->customer_default_currency->currencyID;
         $input['itemPrimaryCode'] = $item->primaryCode;
         $input['itemDescription'] = $item->itemDescription;
+        $input['partNo'] = $item->secondaryItemCode;
         $input['itemUnitOfMeasure'] = $item->unit;
 
         $customerCatalogDetail = $this->customerCatalogDetailRepository->create($input);

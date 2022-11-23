@@ -131,6 +131,7 @@ class QuotationDetailsAPIController extends AppBaseController
         $input = array_except($request->all(), 'unit');
         $input = $this->convertArrayToValue($input);
 
+     
 
         $employee = \Helper::getEmployeeInfo();
         $input['itemAutoID'] = isset( $input['itemAutoID']) ?  $input['itemAutoID'] : 0;
@@ -148,14 +149,33 @@ class QuotationDetailsAPIController extends AppBaseController
             ->first();
         }
 
+        $category = $item->financeCategoryMaster;
+
+        $category = $item->financeCategoryMaster;
 
         if($input['itemAutoID']) {
             $itemExist = QuotationDetails::where('itemAutoID', $input['itemAutoID'])
             ->where('quotationMasterID', $input['quotationMasterID'])
             ->first();
 
-            if (!empty($itemExist)) {
-                return $this->sendError('Added item already exist');
+            if(($category != 2 )&& ($category != 4 ))
+            {
+                if (!empty($itemExist)) {
+                    return $this->sendError('Added item already exist');
+                }
+            }
+        }
+        else if(isset($input['itemCode']['id']) && $input['itemCode']['id']) 
+        {
+            $itemExist = QuotationDetails::where('itemAutoID', $input['itemCode']['id'])
+            ->where('quotationMasterID', $input['quotationMasterID'])
+            ->first();
+
+            if(($category != 2 )&& ($category != 4 ))
+            {
+                if (!empty($itemExist)) {
+                    return $this->sendError('Added item already exist');
+                }
             }
         }
 
@@ -337,7 +357,7 @@ class QuotationDetailsAPIController extends AppBaseController
     public function update($id, UpdateQuotationDetailsAPIRequest $request)
     {
         $input = $request->all();
-
+        $input = $this->convertArrayToSelectedValue($input, ['vatMasterCategoryID', 'vatSubCategoryID']);
         $employee = \Helper::getEmployeeInfo();
 
         /** @var QuotationDetails $quotationDetails */
@@ -782,17 +802,32 @@ WHERE
         //check added item exist
         foreach ($input['detailTable'] as $itemExist) {
 
+                $item = ItemAssigned::with(['item_master'])
+                ->where('itemCodeSystem', $itemExist['itemAutoID'])
+                ->where('companySystemID', $itemExist['companySystemID'])
+                ->first();
+
+
             if ($itemExist['isChecked'] && $itemExist['noQty'] > 0) {
                 $QuoDetailExist = QuotationDetails::select(DB::raw('soQuotationDetailID,itemSystemCode'))
                     ->where('quotationMasterID', $salesOrderID)
                     ->where('itemAutoID', $itemExist['itemAutoID'])
                     ->get();
 
+                    $item = ItemAssigned::with(['item_master'])
+                    ->where('itemCodeSystem', $itemExist['itemAutoID'])
+                    ->where('companySystemID', $itemExist['companySystemID'])
+                    ->first();
+
                 if (!empty($QuoDetailExist)) {
-                    foreach ($QuoDetailExist as $row) {
-                        $itemDrt = $row['itemSystemCode'] . " already exist";
-                        $itemExistArray[] = [$itemDrt];
+                    if($item->financeCategoryMaster != 2 && $item->financeCategoryMaster != 4 )
+                    {
+                        foreach ($QuoDetailExist as $row) {
+                            $itemDrt = $row['itemSystemCode'] . " already exist";
+                            $itemExistArray[] = [$itemDrt];
+                        }
                     }
+         
                 }
             }
         }

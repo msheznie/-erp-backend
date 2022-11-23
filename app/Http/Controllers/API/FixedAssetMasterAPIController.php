@@ -1916,7 +1916,7 @@ class FixedAssetMasterAPIController extends AppBaseController
     public function downloadAssetTemplate(Request $request)
     {
         $input = $request->all();
-        $disk = (isset($input['companySystemID'])) ?  Helper::policyWiseDisk($input['companySystemID'], 'public') : 'public';
+        $disk = Helper::policyWiseDisk($input['companySystemID']);
         if ($exists = Storage::disk($disk)->exists('asset_master_template/asset_upload_template.xlsx')) {
             return Storage::disk($disk)->download('asset_master_template/asset_upload_template.xlsx', 'asset_upload_template.xlsx');
         } else {

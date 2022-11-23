@@ -1040,6 +1040,7 @@ class StockTransferAPIController extends AppBaseController
             'erp_stocktransfer.stockTransferCode',
             'erp_stocktransfer.documentSystemID',
             'erp_stocktransfer.refNo',
+            'erp_stocktransfer.postedDate',
             'erp_stocktransfer.tranferDate',
             'erp_stocktransfer.comment',
             'erp_stocktransfer.serviceLineCode',

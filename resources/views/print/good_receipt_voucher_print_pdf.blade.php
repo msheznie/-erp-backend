@@ -146,7 +146,19 @@
         transform-origin: 20% 20%;
         z-index: 1000;
     }
+    .container
+        {
+            display: block;
+            max-width:230px;
+            max-height:95px;
+            width: auto;
+            height: auto;
+        }
 
+    .table_height
+        {
+            max-height: 60px !important;
+        }
 
 </style>
 
@@ -177,7 +189,7 @@
                         </div>
                         <div><span>
                 @if(!empty($det->approvedDate))
-                                    {{ \App\helper\Helper::dateFormat($det->approvedDate)}}
+                                    {{ \App\helper\Helper::convertDateWithTime($det->approvedDate)}}
                                 @endif
               </span></div>
                         <div style="width: 3px"></div>
@@ -226,15 +238,74 @@
 </div>
 <div class="content">
     <div class="row">
-        <table style="width:100%">
-            <tr>
-                <td style="text-align: center">
-                    <h2>{{ $grvData->company_by?$grvData->company_by->CompanyName:'' }}</h2>
-                    <h2>Good Receipt Voucher</h2>
+        <table style="width: 100%" class="table_height">
+            <tr style="width: 100%">
+                <td valign="top" style="width: 20%">
+                    @if($grvData->company_by)
+                        <img src="{{$grvData->company_by->logo_url}}" width="100" class="container">
+                    @endif
+                </td>
+                <td valign="top" style="width: 80%">
+                    
+                    <span style="font-size: 24px;font-weight: 400"> {{ $grvData->company_by?$grvData->company_by->CompanyName:'' }}</span>
+                    <br>
+                    <table>
+                        <tr>
+                            <td width="100px">
+                                <span class="font-weight-bold">Doc Code</span>
+                            </td>
+                            <td width="10px">
+                                <span class="font-weight-bold">:</span>
+                            </td>
+                            <td>
+                                <span>{{$grvData->grvPrimaryCode}}</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td width="70px">
+                                <span class="font-weight-bold">Doc Date </span>
+                            </td>
+                            <td width="10px">
+                                <span class="font-weight-bold">:</span>
+                            </td>
+                            <td>
+                                <span>
+                                    {{ \App\helper\Helper::dateFormat($grvData->grvDate)}}
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td width="70px">
+                                <span class="font-weight-bold">Posted Date</span>
+                            </td>
+                            <td width="10px">
+                                <span class="font-weight-bold">:</span>
+                            </td>
+                            <td>
+                                <span>
+                                    {{ \App\helper\Helper::dateFormat($grvData->approvedDate)}}
+                                </span>
+                            </td>
+                        </tr>
+                    </table>
                 </td>
             </tr>
         </table>
     </div>
+    <hr style="color: #d3d9df">
+    <table style="width: 100%" class="table_height">
+        <tr style="width: 100%">
+ 
+            <div>
+                <span style="font-size: 18px">
+                    Good Receipt Voucher
+                </span>
+            </div>
+        </tr>
+    </table>
+    <br>
+    <br>
+
     <div class="row">
         <table style="width:100%">
             <tr>
@@ -254,25 +325,6 @@
                             <td><span class="font-weight-bold">Doc Ref No </span></td>
                             <td><span class="font-weight-bold">:</span></td>
                             <td><span>{{$grvData->grvDoRefNo}}</span></td>
-                        </tr>
-                    </table>
-                </td>
-                <td style="width: 40%">
-                    <table style="width:100%">
-                        <tr>
-                            <td width="120px"><span class="font-weight-bold">Doc Code</span></td>
-                            <td width="40px"><span class="font-weight-bold">:</span></td>
-                            <td><span>{{$grvData->grvPrimaryCode}}</span></td>
-                        </tr>
-                        <tr>
-                            <td><span class="font-weight-bold">Date </span></td>
-                            <td><span class="font-weight-bold">:</span></td>
-                            <td><span>{{\Helper::dateFormat($grvData->grvDate)}}</span></td>
-                        </tr>
-                        <tr>
-                            <td><span class="font-weight-bold">Posted Date </span></td>
-                            <td><span class="font-weight-bold">:</span></td>
-                            <td><span>{{\Helper::dateFormat($grvData->approvedDate)}}</span></td>
                         </tr>
                     </table>
                 </td>

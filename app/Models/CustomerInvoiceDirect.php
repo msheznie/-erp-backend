@@ -524,7 +524,8 @@ class CustomerInvoiceDirect extends Model
         'vatRegisteredYN',
         'createdFrom',
         'customerVATEligible',
-        'approvedByUserID'
+        'approvedByUserID',
+        'date_of_supply'
     ];
 
     /**
@@ -613,7 +614,8 @@ class CustomerInvoiceDirect extends Model
         'returnStatus' => 'integer',
         'approvedByUserID' => 'integer',
         'vatRegisteredYN' => 'integer',
-        'customerVATEligible' => 'integer'
+        'customerVATEligible' => 'integer',
+        'date_of_supply' => 'string'
     ];
 
     /**

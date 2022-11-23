@@ -34,7 +34,7 @@ class SupplierRegistrationLinkRepository extends BaseRepository
         return SupplierRegistrationLink::class;
     }
 
-    public function save(Request $request, $token): bool
+    public function save(Request $request, $token)
     {
         $supplierRegistrationLink = new SupplierRegistrationLink();
         $supplierRegistrationLink->name = $request->input('name');
@@ -46,6 +46,12 @@ class SupplierRegistrationLinkRepository extends BaseRepository
         $supplierRegistrationLink->created_by = \Helper::getEmployeeSystemID();
         $supplierRegistrationLink->updated_by = '';
         $supplierRegistrationLink->is_bid_tender =  ($request->input('is_bid_tender') == true ? 1:0);
-        return $supplierRegistrationLink->save();
+        $supplierRegistrationLink->created_via =  1;
+        $result = $supplierRegistrationLink->save();
+        if($result){ 
+            return ['status' => true,'id' =>$supplierRegistrationLink->id];
+        }else { 
+            return ['status' => false];
+        }
     }
 }

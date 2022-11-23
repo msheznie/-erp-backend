@@ -425,6 +425,7 @@ class CustomerReceivePayment extends Model
         'PayeeSelectEmp',
         'PayeeEmpID',
         'PayeeName',
+        'payeeTypeID',
         'PayeeCurrency',
         'custChequeNo',
         'custChequeDate',
@@ -658,6 +659,11 @@ class CustomerReceivePayment extends Model
         return $this->belongsTo('App\Models\CurrencyMaster', 'custTransactionCurrencyID', 'currencyID');
     }
 
+    public function bank_currency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'bankCurrency', 'currencyID');
+    }
+
     public function localCurrency()
     {
         return $this->belongsTo('App\Models\CurrencyMaster', 'localCurrencyID', 'currencyID');
@@ -696,6 +702,11 @@ class CustomerReceivePayment extends Model
     public function customer()
     {
         return $this->belongsTo('App\Models\CustomerMaster', 'customerID', 'customerCodeSystem');
+    }
+
+    public function employee()
+    {
+        return $this->belongsTo('App\Models\Employee', 'PayeeEmpID', 'employeeSystemID');
     }
 
     public function bankledger_by()

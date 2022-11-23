@@ -190,7 +190,7 @@
         <tr style="width: 100%">
             <td colspan="3" class="text-center">
                 <h3>
-                    Materiel Request Voucher
+                    Material Request Voucher
                 </h3>
             </td>
         </tr>
@@ -358,9 +358,9 @@
                         <br>
                         @if($det->employee)
                             @if($det->approvedYN == -1)
-                                {{ \App\helper\Helper::dateFormat($det->approvedDate)}}
+                                {{ \App\helper\Helper::convertDateWithTime($det->approvedDate)}}
                             @elseif($det->rejectedYN == -1)
-                                {{ \App\helper\Helper::dateFormat($det->rejectedDate)}}
+                                {{ \App\helper\Helper::convertDateWithTime($det->rejectedDate)}}
                             @endif
                         @endif
                     </td>

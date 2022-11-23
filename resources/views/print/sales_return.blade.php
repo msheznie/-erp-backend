@@ -147,6 +147,18 @@
         .content {
             margin-bottom: 45px;
         }
+        .container
+          {
+            display: block;
+            max-width:230px;
+            max-height:95px;
+            width: auto;
+            height: auto;
+            }
+        .table_height
+        {
+            max-height: 60px !important;
+        }
     </style>
 </head>
 <body>
@@ -156,7 +168,7 @@
 <div id="watermark"></div>
 <div class="card-body content" id="print-section">
 
-    <table style="width: 100%">
+    <table style="width: 100%"  class="table_height">
         <tr style="width: 100%">
             <td colspan="3" style="bottom: 0;position: absolute;text-align: right">
             <span class="font-weight-bold">
@@ -173,13 +185,13 @@
             </td>
         </tr>
         <tr style="width: 100%">
-            <td width="25%">
+            <td width="20%">
                 @if($entity->logoExists)
                     <img src="{{$entity->companyLogo}}"
-                         width="180px" height="60px">
+                    class="container">
                 @endif
             </td>
-            <td width="30%" class="text-center">
+            <td width="50%" class="text-center">
                 <div class="text-center">
 
                     @if($entity->company)
@@ -438,9 +450,9 @@
                         <br>
                         @if($det->employee)
                             @if($det->approvedYN == -1)
-                                {{ \App\helper\Helper::dateFormat($det->approvedDate)}}
+                                {{ \App\helper\Helper::convertDateWithTime($det->approvedDate)}}
                             @elseif($det->rejectedYN == -1)
-                                {{ \App\helper\Helper::dateFormat($det->rejectedDate)}}
+                                {{ \App\helper\Helper::convertDateWithTime($det->rejectedDate)}}
                             @endif
                         @endif
                     </td>

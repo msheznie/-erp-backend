@@ -125,7 +125,7 @@ class CustomerInvoiceDirectRepository extends BaseRepository
     {
 
 
-        $customerInvoiceDirect = $this->with(['company', 'customer', 'tax', 'createduser', 'bankaccount', 'currency', 'local_currency','approved_by' => function ($query) {
+        $customerInvoiceDirect = $this->with(['segment','company', 'customer', 'tax', 'createduser', 'bankaccount', 'currency', 'local_currency','approved_by' => function ($query) {
             $query->with('employee.details.designation')
                 ->where('documentSystemID', 20);
         }, 'invoicedetail'
@@ -172,7 +172,7 @@ class CustomerInvoiceDirectRepository extends BaseRepository
 
     function getAudit2($id)
     {
-         $customerInvoiceDirect = $this->with(['company', 'customer', 'tax', 'createduser', 'bankaccount', 'currency','local_currency', 'approved_by' => function ($query) {
+         $customerInvoiceDirect = $this->with(['segment','company', 'customer', 'tax', 'createduser', 'bankaccount', 'currency','local_currency', 'approved_by' => function ($query) {
              $query->with('employee.details.designation')
                  ->where('documentSystemID', 20);
          }, 'invoicedetails'
@@ -191,12 +191,12 @@ class CustomerInvoiceDirectRepository extends BaseRepository
 
     function getAuditItemInvoice($id)
     {
-        $customerInvoiceDirect = $this->with(['company', 'customer', 'tax', 'createduser', 'bankaccount', 'currency','local_currency', 'approved_by' => function ($query) {
+        $customerInvoiceDirect = $this->with(['segment','company', 'customer', 'tax', 'createduser', 'bankaccount', 'currency','local_currency', 'approved_by' => function ($query) {
             $query->with('employee.details.designation')
                 ->where('documentSystemID', 20);
         },
             'issue_item_details' => function ($query) {
-                $query->with(['uom_issuing']);
+                $query->with(['uom_issuing','sales_quotation']);
             }
         ])->findWithoutFail($id);
         return $customerInvoiceDirect;
@@ -287,7 +287,7 @@ class CustomerInvoiceDirectRepository extends BaseRepository
         }
 
         $request->request->remove('search.value');
-        $invMaster->select('bookingInvCode', 'CurrencyCode', 'erp_custinvoicedirect.approvedDate', 'customerInvoiceNo', 'erp_custinvoicedirect.comments', 'empName', 'DecimalPlaces', 'erp_custinvoicedirect.confirmedYN', 'erp_custinvoicedirect.approved', 'erp_custinvoicedirect.canceledYN', 'erp_custinvoicedirect.customerInvoiceDate', 'erp_custinvoicedirect.refferedBackYN', 'custInvoiceDirectAutoID', 'customermaster.CutomerCode', 'customermaster.CustomerName', 'bookingAmountTrans', 'VATAmount', 'isPerforma', 'returnStatus', 'erp_custinvoicedirect.createdFrom');
+        $invMaster->select('bookingInvCode','postedDate' ,'CurrencyCode', 'erp_custinvoicedirect.approvedDate', 'customerInvoiceNo', 'erp_custinvoicedirect.comments', 'empName', 'DecimalPlaces', 'erp_custinvoicedirect.confirmedYN', 'erp_custinvoicedirect.approved', 'erp_custinvoicedirect.canceledYN', 'erp_custinvoicedirect.customerInvoiceDate', 'erp_custinvoicedirect.refferedBackYN', 'custInvoiceDirectAutoID', 'customermaster.CutomerCode', 'customermaster.CustomerName', 'bookingAmountTrans', 'VATAmount', 'isPerforma', 'returnStatus', 'erp_custinvoicedirect.createdFrom');
 
         return $invMaster;
     }

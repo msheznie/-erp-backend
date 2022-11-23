@@ -161,6 +161,18 @@
             background-color: #ffffff !important;
             border-right: 1px solid #ffffffff !important;
         }
+        .container
+          {
+            display: block;
+            max-width:230px;
+            max-height:95px;
+            width: auto;
+            height: auto;
+            }
+        .table_height
+        {
+            max-height: 60px !important;
+        }
     </style>
 </head>
 <body>
@@ -193,7 +205,7 @@
                         </div>
                         <div><span>
                 @if(!empty($det->approvedDate))
-                                    {{ \App\helper\Helper::dateFormat($det->approvedDate)}}
+                                    {{ \App\helper\Helper::convertDateWithTime($det->approvedDate)}}
                                 @endif
               </span></div>
                         <div style="width: 3px"></div>
@@ -225,30 +237,15 @@
 </div>
 <div id="watermark"></div>
 <div class="card-body content" id="print-section">
-    <table style="width: 100%">
+    <table style="width: 100%" class="table_height">
         <tr style="width: 100%">
-            <td valign="top" style="width: 50%">
+            <td valign="top" style="width: 20%">
                 @if($masterdata->company)
-                    <img src="{{$masterdata->company->logo_url}}" width="180px" height="60px">
+                    <img src="{{$masterdata->company->logo_url}}" class="container">
                 @endif
-                <br>
-
-                <div>
-                    <span style="font-size: 18px">
-                        @if($masterdata->documentSystemID == 67)
-                            @if($masterdata->quotationType == 1)
-                                Rental Quotation
-                            @else
-                                Sales Quotation
-                            @endif
-                        @endif
-                        @if($masterdata->documentSystemID == 68)
-                            Sales Order
-                        @endif
-                    </span>
-                </div>
+                
             </td>
-            <td valign="top" style="width: 50%">
+            <td valign="top" style="width: 80%">
                 @if($masterdata->company)
                     <span style="font-size: 24px;font-weight: 400"> {{$masterdata->company->CompanyName}}</span>
                 @endif
@@ -297,6 +294,30 @@
         </tr>
     </table>
     <hr style="color: #d3d9df">
+
+        
+    <table style="width: 100%" class="table_height">
+        <tr style="width: 100%">
+ 
+        <div>
+                    <span style="font-size: 18px">
+                        @if($masterdata->documentSystemID == 67)
+                            @if($masterdata->quotationType == 1)
+                                Rental Quotation
+                            @else
+                                Sales Quotation
+                            @endif
+                        @endif
+                        @if($masterdata->documentSystemID == 68)
+                            Sales Order
+                        @endif
+                    </span>
+                </div>
+        </tr>
+    </table>
+    <br>
+    <br>
+
     <table style="width: 100%">
         <tr style="width:100%">
             <td style="width: 50%">

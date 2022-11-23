@@ -2442,6 +2442,8 @@ class BudgetMasterAPIController extends AppBaseController
 
         $currencyData = \Helper::companyCurrency($companyId);
 
+        $cutOffUpdatePolicy = \Helper::checkRestrictionByPolicy($companyId,12);
+
         $output = array(
             'reportTemplates' => $reportTemplates,
             'currencyData' => $currencyData,
@@ -2450,12 +2452,30 @@ class BudgetMasterAPIController extends AppBaseController
             'month' => $month,
             'years' => $years,
             'companyFinanceYear' => $companyFinanceYear,
+            'cutOffUpdatePolicy' => $cutOffUpdatePolicy,
             'segments' => $segments,
             'masterTemplates' => $masterTemplates,
             'financeYear' => $financeYear
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
+    }
+
+    public function updateCutOffPeriod(Request $request)
+    {
+        $input = $request->all();
+
+        $cutOffUpdatePolicy = \Helper::checkRestrictionByPolicy($input['companySystemID'],12);
+
+        if (!$cutOffUpdatePolicy) {
+            return $this->sendError("You cannot update budget cutoff period");
+        }        
+
+        $input['cutOffPeriod'] = ($input['cutOffPeriod']) ? $input['cutOffPeriod'] : 0;
+
+        BudgetMaster::where('budgetmasterID', $input['budgetmasterID'])->update(['cutOffPeriod' => $input['cutOffPeriod']]);
+        
+        return $this->sendResponse([], 'updated successfully');
     }
 
     public function getBudgetAudit(Request $request)

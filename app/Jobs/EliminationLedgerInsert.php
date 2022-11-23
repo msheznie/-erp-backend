@@ -56,7 +56,7 @@ class EliminationLedgerInsert implements ShouldQueue
                             $query->selectRaw('SUM(debitAmount) as debitAmountTot, SUM(creditAmount) as creditAmountTot,consoleJvMasterAutoId');
                         }], 'company')->find($masterModel["autoID"]);
 
-                $detailRecords = ConsoleJVDetail::selectRaw("sum(debitAmount) as debitAmountTot, sum(creditAmount) as creditAmountTot, comments, glAccountSystemID, serviceLineSystemID,serviceLineCode,currencyID,currencyER")->WHERE('consoleJvMasterAutoId', $masterModel["autoID"])->groupBy('glAccountSystemID', 'serviceLineSystemID', 'comments')->get();
+                $detailRecords = ConsoleJVDetail::selectRaw("sum(debitAmount) as debitAmountTot, sum(creditAmount) as creditAmountTot, comments, glAccountSystemID, serviceLineSystemID,serviceLineCode,currencyID,currencyER, companySystemID, companyID")->WHERE('consoleJvMasterAutoId', $masterModel["autoID"])->groupBy('glAccountSystemID', 'serviceLineSystemID', 'comments', 'companySystemID')->get();
 
                 $masterDocumentDate = date('Y-m-d H:i:s');
                 if ($masterData) {
@@ -69,8 +69,8 @@ class EliminationLedgerInsert implements ShouldQueue
                     foreach ($detailRecords as $item) {
                         $chartOfAccount = ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'catogaryBLorPLID', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $item->glAccountSystemID)->first();
 
-                        $data['companySystemID'] = $masterData->companySystemID;
-                        $data['companyID'] = $masterData->companyID;
+                        $data['companySystemID'] = $item->companySystemID;
+                        $data['companyID'] = $item->companyID;
                         $data['serviceLineSystemID'] = $item->serviceLineSystemID;
                         $data['serviceLineCode'] = $item->serviceLineCode;
                         $data['masterCompanyID'] = $masterData->companyID;

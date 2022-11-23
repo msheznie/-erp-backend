@@ -176,7 +176,7 @@ class CreditNoteRepository extends BaseRepository
             });
         }
         $request->request->remove('search.value');
-        $master->select('creditNoteCode', 'CurrencyCode', 'erp_creditnote.approvedDate', 'creditNoteDate', 'erp_creditnote.comments', 'empName', 'DecimalPlaces', 'erp_creditnote.confirmedYN', 'erp_creditnote.approved', 'erp_creditnote.refferedBackYN', 'creditNoteAutoID', 'customermaster.CutomerCode', 'customermaster.CustomerName', 'creditAmountTrans', 'erp_projectmaster.description as project_description');
+        $master->select('creditNoteCode','erp_creditnote.postedDate' ,'CurrencyCode', 'erp_creditnote.approvedDate', 'creditNoteDate', 'erp_creditnote.comments', 'empName', 'DecimalPlaces', 'erp_creditnote.confirmedYN', 'erp_creditnote.approved', 'erp_creditnote.refferedBackYN', 'creditNoteAutoID', 'customermaster.CutomerCode', 'customermaster.CustomerName', 'creditAmountTrans', 'erp_projectmaster.description as project_description');
 
 
         return $master;

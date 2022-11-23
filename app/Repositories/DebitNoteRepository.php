@@ -88,7 +88,7 @@ class DebitNoteRepository extends BaseRepository
         }, 'approved_by' => function ($query) {
             $query->with('employee');
             $query->where('documentSystemID', 15);
-        }, 'company', 'transactioncurrency', 'localcurrency', 'rptcurrency', 'supplier', 'confirmed_by', 'created_by', 'modified_by','audit_trial.modified_by'])
+        }, 'company', 'transactioncurrency', 'localcurrency', 'rptcurrency', 'supplier', 'confirmed_by', 'created_by', 'modified_by','audit_trial.modified_by','employee'])
             ->findWithoutFail($id);
     }
 }

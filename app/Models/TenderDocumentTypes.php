@@ -65,13 +65,16 @@ class TenderDocumentTypes extends Model
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
+    public $timestamps = false;
 
     public $fillable = [
         'document_type',
         'srm_action',
         'created_by',
         'updated_by',
-        'company_id'
+        'company_id',
+        'created_at',
+        'updated_at'
     ];
 
     /**
@@ -97,6 +100,16 @@ class TenderDocumentTypes extends Model
         
     ];
 
+    public function attachments()
+    {
+        return $this->hasMany('App\Models\DocumentAttachments', 'attachmentType', 'id');
+    }
 
-    
+    public function tender_document_type_assign(){ 
+        return $this->hasOne('App\Models\TenderDocumentTypeAssign', 'document_type_id', 'id');
+    }
+
+    public function TenderDocumentTypeAssign(){
+        return $this->hasMany('App\Models\TenderDocumentTypeAssign', 'document_type_id', 'id');
+    }
 }

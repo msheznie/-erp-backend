@@ -9,8 +9,10 @@ use App\Jobs\GeneralLedgerInsert;
 use App\Jobs\UnbilledGRVInsert;
 use App\Models\AccountsPayableLedger;
 use App\Models\AccountsReceivableLedger;
+use App\Models\AssetDisposalMaster;
 use App\Models\BankLedger;
 use App\Models\BookInvSuppMaster;
+use App\Models\Route;
 use App\Models\Company;
 use App\Models\CreditNote;
 use App\Models\CustomerInvoiceDirect;
@@ -21,6 +23,7 @@ use App\Models\DocumentMaster;
 use App\Models\ErpItemLedger;
 use App\Models\FixedAssetDepreciationMaster;
 use App\Models\FixedAssetMaster;
+use App\helper\CommonJobService;
 use App\Models\GeneralLedger;
 use App\Models\GRVMaster;
 use App\Models\InventoryReclassification;
@@ -29,11 +32,16 @@ use App\Models\ItemReturnMaster;
 use App\Models\JvMaster;
 use App\Models\EmployeeLedger;
 use App\Models\PaySupplierInvoiceMaster;
+use App\Models\POSGLEntries;
 use App\Models\PurchaseReturn;
+use App\Models\CurrencyMaster;
 use App\Models\SalesReturn;
+use App\Models\CustomerMaster;
 use App\Models\StockAdjustment;
+use App\Models\StockCount;
 use App\Models\StockReceive;
 use App\Models\StockTransfer;
+use App\Models\SupplierMaster;
 use App\Models\UnbilledGrvGroupBy;
 use App\Models\Year;
 use App\Models\SegmentMaster;
@@ -47,6 +55,30 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Models\ChartOfAccount;
 use App\helper\CreateExcel;
+use App\Services\GeneralLedger\GrvGlService;
+use App\Services\GeneralLedger\MaterialIssueGlService;
+use App\Services\GeneralLedger\MaterialReturnGlService;
+use App\Services\GeneralLedger\StockTransferGlService;
+use App\Services\GeneralLedger\StockRecieveGlService;
+use App\Services\GeneralLedger\InventoryReclassificationGlService;
+use App\Services\GeneralLedger\PurchaseReturnGlService;
+use App\Services\GeneralLedger\CustomerInvoiceGlService;
+use App\Services\GeneralLedger\StockAdjustmentGlService;
+use App\Services\GeneralLedger\SupplierInvoiceGlService;
+use App\Services\GeneralLedger\DebitNoteGlService;
+use App\Services\GeneralLedger\CreditNoteGlService;
+use App\Services\GeneralLedger\PaymentVoucherGlService;
+use App\Services\GeneralLedger\CustomerReceivePaymentGlService;
+use App\Services\GeneralLedger\JournalVoucherGlService;
+use App\Services\GeneralLedger\FixedAssetMasterGlService;
+use App\Services\GeneralLedger\FixedAssetDipreciationGlService;
+use App\Services\GeneralLedger\FixedAssetDisposalGlService;
+use App\Services\GeneralLedger\DeliveryOrderGlService;
+use App\Services\GeneralLedger\SalesReturnGlService;
+use App\Services\GeneralLedger\StockCountGlService;
+use App\Services\GeneralLedger\GPOSSalesGlService;
+use App\Services\GeneralLedger\RPOSSalesGlService;
+use App\Services\GeneralLedger\GeneralLedgerPostingService;
 /**
  * Class GeneralLedgerController
  * @package App\Http\Controllers\API
@@ -314,6 +346,37 @@ class GeneralLedgerAPIController extends AppBaseController
         return $this->sendResponse($id, 'General Ledger deleted successfully');
     }
 
+    public function updateNotPostedGLEntries(Request $request)
+    {
+        $input = $request->all();
+
+
+        $tenants = CommonJobService::tenant_list();
+        if(count($tenants) == 0){
+            return  "tenant list is empty";
+        }
+
+
+        foreach ($tenants as $tenant){
+            $tenantDb = $tenant->database;
+
+            CommonJobService::db_switch($tenantDb);
+
+            $data = DB::select("SELECT da.companyID, da.companySystemID, da.documentSystemID,da.employeeSystemID, da.documentID, da.documentSystemCode, da.documentCode, da.TIMESTAMP, da.documentApprovedID FROM erp_documentapproved da WHERE da.approvedYN != 0 AND da.documentSystemID NOT IN ( 1, 2, 56, 66, 59, 58, 50, 57, 101, 51, 107, 96, 62, 67, 68, 9, 65, 64, 100, 102, 103, 46, 99 ) AND da.documentCode NOT IN ( SELECT documentCode FROM erp_generalledger GROUP BY documentCode) AND da.rollLevelOrder = (SELECT max(da_new.rollLevelOrder) FROM erp_documentapproved as da_new WHERE da_new.documentSystemID = da.documentSystemID AND da_new.documentSystemCode = da.documentSystemCode) AND da.`timeStamp` > '2022-09-01'");
+
+            foreach ($data as $dt){
+                $masterData = ['documentSystemID' => $dt->documentSystemID,
+                               'autoID' => $dt->documentSystemCode,
+                               'companySystemID' => $dt->companySystemID,
+                               'documentDateOveride' => $dt->TIMESTAMP,
+                               'employeeSystemID' => $dt->employeeSystemID];
+                $jobGL = GeneralLedgerInsert::dispatch($masterData, $tenantDb);
+            }
+        }
+
+        return $this->sendResponse([], 'General Ledger updated successfully');
+    }
+
 
     public function getGeneralLedgerReview(Request $request)
     {
@@ -370,9 +433,8 @@ class GeneralLedgerAPIController extends AppBaseController
 
 
         $companyCurrency = \Helper::companyCurrency($request->companySystemID);
-
         $generalLedger = [
-                'outputData' => $generalLedger->toArray(), 
+                'outputData' => (!empty($generalLedger->toArray())) ? $generalLedger->toArray() : $this->getNotApprovedGlData($request->documentSystemID, $request->autoID, $request->companySystemID), 
                 'companyCurrency' => $companyCurrency,
                 'accountPaybaleLedgerData' => $accountPaybaleLedgerData,
                 'accountReceviableLedgerData' => $accountReceviableLedgerData,
@@ -382,6 +444,220 @@ class GeneralLedgerAPIController extends AppBaseController
             ];
 
         return $this->sendResponse($generalLedger, 'General Ledger retrieved successfully');
+    }
+
+    public function getNotApprovedGlData($documentSystemID, $autoID, $companySystemID)
+    {
+        $masterModel = [
+            'employeeSystemID' => \Helper::getEmployeeSystemID(),
+            'autoID' => $autoID,
+            'documentSystemID' => $documentSystemID,
+            'companySystemID' => $companySystemID
+        ];
+
+        $result = [];
+        switch ($documentSystemID) {
+            case 3: // GRV
+                $grvMaster = GRVMaster::find($autoID);
+                if($grvMaster && $grvMaster->approved != -1){
+                    $result = GrvGlService::processEntry($masterModel);
+                }
+                else{
+                    $result = [];
+                }
+                break;
+            case 8: // MI - Material issue
+                $materialIssueMaster = ItemIssueMaster::find($autoID);
+                if($materialIssueMaster && $materialIssueMaster->approved != -1){
+                    $result = MaterialIssueGlService::processEntry($masterModel);
+                }
+                else{
+                    $result = [];
+                }
+                break;
+            case 12: // SR - Material Return
+                $materialReturnMaster = ItemReturnMaster::find($autoID);
+                if($materialReturnMaster && $materialReturnMaster->approved != -1){
+                    $result = MaterialReturnGlService::processEntry($masterModel);
+                }
+                else{
+                    $result = [];
+                }
+                break;
+            case 13: // ST - Stock Transfer
+                $stockTransferMaster = StockTransfer::find($autoID);
+                if($stockTransferMaster && $stockTransferMaster->approved != -1){
+                    $result = StockTransferGlService::processEntry($masterModel);
+                }
+                else{
+                   $result = [];
+                }
+                break;
+            case 10: // RS - Stock Receive
+                $stockRecieveMaster = StockReceive::find($autoID);
+                if($stockRecieveMaster && $stockRecieveMaster->approved != -1) {
+                    $result = StockRecieveGlService::processEntry($masterModel);
+                }
+                else{
+                    $result = [];
+                }
+                break;
+            case 61: // INRC - Inventory Reclassififcation
+                $inventoryRecMaster = InventoryReclassification::find($autoID);
+                if($inventoryRecMaster && $inventoryRecMaster->approved != -1) {
+                    $result = InventoryReclassificationGlService::processEntry($masterModel);
+                }
+                else{
+                    $result = [];
+                }
+                break;
+            case 24: // PRN - Purchase Return
+                $purchaseReturnMaster = PurchaseReturn::find($autoID);
+                if($purchaseReturnMaster && $purchaseReturnMaster->approved != -1){
+                    $result = PurchaseReturnGlService::processEntry($masterModel);
+                }
+                else{
+                    $result = [];
+                }
+                break;
+            case 20:
+                $custInvMaster = CustomerInvoiceDirect::find($autoID);
+                if($custInvMaster && $custInvMaster->approved != -1) {
+                    $result = CustomerInvoiceGlService::processEntry($masterModel);
+                }else{
+                    $result = [];
+                }
+                break;
+            case 7: // SA - Stock Adjustment
+                $stockAdjusmentMaster = StockAdjustment::find($autoID);
+                if($stockAdjusmentMaster && $stockAdjusmentMaster->approved != -1){
+                    $result = StockAdjustmentGlService::processEntry($masterModel);
+                }else{
+                    $result = [];
+                }
+                break;
+            case 11: // SI - Supplier Invoice
+                $supplierInvMaster = BookInvSuppMaster::find($autoID);
+                if($supplierInvMaster && $supplierInvMaster->approved != -1){
+                    $result = SupplierInvoiceGlService::processEntry($masterModel);
+                }else{
+                    $result = [];
+                }
+                break;
+            case 15: // DN - Debit Note
+                $debitNoteMaster = DebitNote::find($autoID);
+                if($debitNoteMaster && $debitNoteMaster->approved != -1) {
+                    $result = DebitNoteGlService::processEntry($masterModel);
+                }else{
+                    $result = [];
+                }
+                break;
+            case 19: // CN - Credit Note
+                $creditNoteMaster = CreditNote::find($autoID);
+                if($creditNoteMaster && $creditNoteMaster->approved != -1) {
+                    $result = CreditNoteGlService::processEntry($masterModel);
+                }else{
+                    $result = [];
+                }
+                break;
+            case 4: // PV - Payment Voucher
+                $pvMaster = PaySupplierInvoiceMaster::find($autoID);
+                if($pvMaster && $pvMaster->approved != -1) {
+                    $result = PaymentVoucherGlService::processEntry($masterModel);
+                } else {
+                    $result = [];
+                }
+                break;
+            case 21: // BRV - Customer Receive Payment
+                $custRecPayMaster = CustomerReceivePayment::find($autoID);
+                if($custRecPayMaster && $custRecPayMaster->approved != -1){
+                    $result = CustomerReceivePaymentGlService::processEntry($masterModel);
+                } else {
+                    $result = [];
+                }
+                break;
+            case 17: // JV - Journal Voucher
+                $jvMaster = JvMaster::find($autoID);
+                if($jvMaster && $jvMaster->approved != -1){
+                    $result = JournalVoucherGlService::processEntry($masterModel);
+                } else {
+                    $result = [];
+                }
+                break;
+            case 22: // FA - Fixed Asset Master
+                $faMaster = FixedAssetMaster::find($autoID);
+                if($faMaster && $faMaster->approved != -1){
+                    $result = FixedAssetMasterGlService::processEntry($masterModel);
+                } else{
+                    $result = [];
+                }
+                break;
+            case 23: // FAD - Fixed Asset Depreciation
+                $fadMaster = FixedAssetDepreciationMaster::find($autoID);
+                if($fadMaster && $fadMaster->approved != -1){
+                    $result = FixedAssetDipreciationGlService::processEntry($masterModel);
+                } else {
+                    $result = [];
+                }
+                break;
+            case 41: // FADS - Fixed Asset Disposal
+                $fadsMaster = AssetDisposalMaster::find($autoID);
+                if($fadsMaster && $fadsMaster->approvedYN != -1){
+                    $result = FixedAssetDisposalGlService::processEntry($masterModel);
+                } else {
+                    $result = [];
+                }
+                break;
+            case 71:
+                $deoMaster = DeliveryOrder::find($autoID);
+                if($deoMaster && $deoMaster->approvedYN != -1){
+                    $result = DeliveryOrderGlService::processEntry($masterModel);
+                } else {
+                    $result = [];
+                }
+                break;
+            case 87: // sales return
+                $srMaster = SalesReturn::find($autoID);
+                if($srMaster && $srMaster->approvedYN != -1){
+                    $result = SalesReturnGlService::processEntry($masterModel);
+                } else {
+                    $result = [];
+                }
+                break;
+            case 97: // SA - Stock Count
+                $saMaster = StockCount::find($autoID);
+                if($saMaster && $saMaster->approved != -1){
+                    $result = StockCountGlService::processEntry($masterModel);
+                } else {
+                    $result = [];
+                }
+                break;
+            case 110: // GPOS Sales
+                $result = GPOSSalesGlService::processEntry($masterModel);
+                break;
+            case 111: // RPOS Sales
+                $result = RPOSSalesGlService::processEntry($masterModel);
+                break;
+            default:
+                $result = ['status' => false, 'message' => "Document ID not found"];
+        }
+
+        $resData  = ((isset($result['status']) && $result['status']) && (isset($result['data']['finalData']) && $result['data']['finalData'])) ? $result['data']['finalData'] : [];
+
+        $glData = [];
+        foreach ($resData as $key => $value) {
+              $value['supplier'] = SupplierMaster::find($value['supplierCodeSystem']);
+              $value['customer'] = CustomerMaster::find($value['supplierCodeSystem']);
+              $value['charofaccount'] = ChartOfAccount::find($value['chartOfAccountSystemID']);
+              $value['localcurrency'] = CurrencyMaster::find($value['documentLocalCurrencyID']);
+              $value['transcurrency'] = CurrencyMaster::find($value['documentTransCurrencyID']);
+              $value['rptcurrency'] = CurrencyMaster::find($value['documentRptCurrencyID']);
+              $value['documentDate'] = Carbon::parse($value['documentDate'])->format('Y-m-d');
+
+              $glData[] = $value;
+        } 
+
+        return $glData;
     }
 
     /*
@@ -863,6 +1139,7 @@ class GeneralLedgerAPIController extends AppBaseController
     public function updateGLEntries(Request $request){
 
         $input = $request->all();
+        $dataBase = (isset($input['db'])) ? $input['db'] : "";
         $messages = [
             'documentSystemID.required' => 'Document system ID is required',
             'documentSystemCode.required' => 'Document system code is required.',
@@ -910,7 +1187,7 @@ class GeneralLedgerAPIController extends AppBaseController
                                'autoID' => $input['documentSystemCode'],
                                'companySystemID' => $input['companySystemID'],
                                'employeeSystemID' => $empInfo->employeeSystemID];
-                $generalLedger = GeneralLedgerInsert::dispatch($masterData);
+                $generalLedger = GeneralLedgerInsert::dispatch($masterData, $dataBase);
             }
 
 
@@ -922,7 +1199,7 @@ class GeneralLedgerAPIController extends AppBaseController
                                'supplierID' => ($grvData) ? $grvData->supplierID : 0,
                                'companySystemID' => $input['companySystemID'],
                                'employeeSystemID' => $empInfo->employeeSystemID];
-                $unbilledGRVInsert = UnbilledGRVInsert::dispatch($masterData);
+                $unbilledGRVInsert = UnbilledGRVInsert::dispatch($masterData, $dataBase);
 
                 DB::commit();
                 if ($count == 0) {
@@ -948,10 +1225,11 @@ class GeneralLedgerAPIController extends AppBaseController
         $input = $request->all();
 
         $toDate = (new   Carbon($request->toDate))->format('Y-m-d');
-        $fromDate = ((new Carbon($request->fromDate))->addDays(1)->format('Y-m-d'));
-        $type = $request->currency;
 
-        $details = $this->generateGLReport($fromDate,$toDate,$type);
+        $fromDate = ((new Carbon($request->fromDate))->format('Y-m-d'));
+        $type = $request->currency;
+        $company = $request->company;
+        $details = $this->generateGLReport($fromDate,$toDate,$type,$company);
 
         return $this->sendResponse($details,'Posting date changed successfully');
 
@@ -964,16 +1242,26 @@ class GeneralLedgerAPIController extends AppBaseController
         $input = $request->all();
 
         $toDate = (new   Carbon($request->toDate))->format('Y-m-d');
-        $fromDate = ((new Carbon($request->fromDate))->addDays(1)->format('Y-m-d'));
+        $fromDate = ((new Carbon($request->fromDate))->format('Y-m-d'));
         $type = $request->currency;
         $file_type = $request->type;
+        $company = $request->company;
 
-        $reportData = $this->generateGLReport($fromDate,$toDate,$type);
-        $deb_cred = array("Debit","Credit","Total");
+        $checkIsGroup = Company::find($company);
+        
+        $companyCurrency = \Helper::companyCurrency($company);
+ 
+
+        $reportData = $this->generateGLReport($fromDate,$toDate,$type,$company);
+        $deb_cred = array("Debit","Credit","Balance");
         $reportData['deb_cred'] = $deb_cred;
         $reportData['length'] = ($reportData['j']*3)+3;
-
-        
+        $reportData['fromDate'] = $fromDate;
+        $reportData['toDate'] = $toDate;
+        $reportData['currency'] = ($type[0] == 1) ? $reportData['localcurrency']['CurrencyCode'] : $reportData['reportingcurrency']['CurrencyCode'];
+        $reportData['company'] = $checkIsGroup->CompanyName;
+        $reportData['Title'] = 'Segment Wise GL Report';
+   
         
         $templateName = "export_report.segment-wise-gL-report";
         $fileName = 'gl_segment_report';
@@ -991,7 +1279,7 @@ class GeneralLedgerAPIController extends AppBaseController
 
     }
 
-    public function generateGLReport($fromDate,$toDate,$type)
+    public function generateGLReport($fromDate,$toDate,$type,$company)
     {
 
 
@@ -1010,7 +1298,7 @@ class GeneralLedgerAPIController extends AppBaseController
             $amount = 'documentRptAmount';
             $cur = 'documentRptCurrencyID';
         }
-        $entries = ChartOfAccount::where('controlAccountsSystemID',2)->get();
+        $entries = ChartOfAccount::where('controlAccountsSystemID',2)->orderBy('AccountCode')->get();
 
         $data = [];
         $i = 0;
@@ -1022,20 +1310,24 @@ class GeneralLedgerAPIController extends AppBaseController
 
         $segments = SegmentMaster::get();
 
-
+        $checkIsGroup = Company::find($company);
 
         $char_ac = ChartOfAccount::where('controlAccountsSystemID',2)->pluck('chartOfAccountSystemID');
         $seg_info = SegmentMaster::pluck('serviceLineSystemID');
 
+        $companyCurrency = \Helper::companyCurrency($company);
+        if($companyCurrency) {
+            $requestCurrencyLocal = $companyCurrency->localcurrency;
+            $requestCurrencyRpt = $companyCurrency->reportingcurrency;
+        }
 
         $collection =  DB::table('erp_generalledger')
         ->whereIn('serviceLineSystemID',$seg_info)
         ->whereIn('chartOfAccountSystemID',$char_ac)
-        ->whereBetween('documentDate', [$fromDate, $toDate])
+        ->whereDate('documentDate','>=', $fromDate)
+        ->whereDate('documentDate','<=', $toDate)
         ->groupBy(['serviceLineSystemID','chartOfAccountSystemID'])
          ->get();
-
-
 
         foreach($entries as $entry)
         {
@@ -1043,7 +1335,9 @@ class GeneralLedgerAPIController extends AppBaseController
            
 
 
-                $data[$i]['glAccountId'] =  $entry->AccountDescription.' - '.$entry->AccountCode;
+                $data[$i]['glAccountId'] = $entry->AccountCode.' | '.$entry->AccountDescription;
+                $data[$i]['AccountCode'] = $entry->AccountCode;
+                $data[$i]['AccountDescription'] = $entry->AccountDescription;
                 $j = 0;
                 $tot_credit = 0;
                 $tot_debit = 0;
@@ -1065,7 +1359,8 @@ class GeneralLedgerAPIController extends AppBaseController
                             ->join('currencymaster', $cur, '=', 'currencyID')
                             ->where('serviceLineSystemID',$segment_id)
                             ->where('chartOfAccountSystemID',$entry->chartOfAccountSystemID)
-                            ->whereBetween('documentDate', [$fromDate, $toDate])
+                                ->whereDate('documentDate','>=', $fromDate)
+                                ->whereDate('documentDate','<=', $toDate)
                             ->selectRaw("sum(case when $amount<0 then $amount else 0 end) as credit,
                             sum(case when $amount>0 then $amount else 0 end) as debit, DecimalPlaces")
                              ->first();
@@ -1109,6 +1404,9 @@ class GeneralLedgerAPIController extends AppBaseController
         
         $details['data'] = $data;
         $details['segment'] = $segment_data;
+        $details['company'] = $checkIsGroup->CompanyName;
+        $details['localcurrency'] = $requestCurrencyLocal;
+        $details['reportingcurrency'] = $requestCurrencyRpt;
         $details['j'] = $j;
 
         return $details;
@@ -1123,6 +1421,4 @@ class GeneralLedgerAPIController extends AppBaseController
         }
         return $sum;
     }
-
-
 }

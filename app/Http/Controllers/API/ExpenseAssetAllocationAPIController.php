@@ -16,7 +16,9 @@ use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
-
+use App\Models\GRVDetails;
+use App\Models\FinanceItemCategorySub;
+use App\Models\JvDetail;
 /**
  * Class ExpenseAssetAllocationController
  * @package App\Http\Controllers\API
@@ -118,11 +120,13 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
         if (!isset($input['documentSystemID'])) {
             return $this->sendError("Document system ID not found");
         }
-
+        
+       
         $checkForAssetDuplicate = ExpenseAssetAllocation::where('documentDetailID', $input['documentDetailID'])
                                                   ->where('documentSystemID', $input['documentSystemID'])
                                                   ->where('assetID', $input['assetID'])
                                                   ->first();
+                                                      
 
         if ($checkForAssetDuplicate) {
             return $this->sendError("This asset alreday allocated", 500);
@@ -166,6 +170,62 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
             $input['amountRpt'] = $currencyConversion['reportingAmount'];
             $input['amountLocal'] = $currencyConversion['localAmount'];
         }
+        else if($input['documentSystemID'] == 3) {
+            $grvDetail = GRVDetails::with(['master'])->find($input['documentDetailID']);
+            
+            if (!$grvDetail) {
+                return $this->sendError("GRV detail not found");
+            }
+
+            if(isset($grvDetail->itemFinanceCategorySubID))
+            {
+                $subCat = FinanceItemCategorySub::find($grvDetail->itemFinanceCategorySubID);
+                $chart_of_account = $subCat->financeGLcodePLSystemID;
+            }
+            else
+            {
+                $chart_of_account = null;
+            }
+            
+            $detailTotal = $grvDetail->netAmount;
+            $input['chartOfAccountSystemID'] = $chart_of_account;
+            $companySystemID = isset($grvDetail->master->companySystemID) ? $grvDetail->master->companySystemID : null;
+
+            $transactionCurrencyID = isset($grvDetail->master->supplierTransactionCurrencyID) ? $grvDetail->master->supplierTransactionCurrencyID : null;
+            $currencyConversion = \Helper::currencyConversion($companySystemID, $transactionCurrencyID, $transactionCurrencyID, $input['amount']);
+        
+            $input['amountRpt'] = $currencyConversion['reportingAmount'];
+            $input['amountLocal'] = $currencyConversion['localAmount'];
+        }
+        else if($input['documentSystemID'] == 17) {
+            $jvDetail = JvDetail::with(['master'])->find($input['documentDetailID']);
+
+            if($jvDetail->creditAmount == 0)
+            {
+                $detailTotal = $jvDetail->debitAmount;
+            }
+            else
+            {
+                $detailTotal = $jvDetail->creditAmount;
+
+           
+            }
+
+            if (!$jvDetail) {
+                return $this->sendError("GRV detail not found");
+            }
+
+            
+            
+            $input['chartOfAccountSystemID'] = $jvDetail->chartOfAccountSystemID;
+            $companySystemID = isset($jvDetail->master->companySystemID) ? $jvDetail->master->companySystemID : null;
+
+            $transactionCurrencyID = isset($jvDetail->master->currencyID) ? $jvDetail->master->currencyID : null;
+            $currencyConversion = \Helper::currencyConversion($companySystemID, $transactionCurrencyID, $transactionCurrencyID, $input['amount']);
+        
+            $input['amountRpt'] = $currencyConversion['reportingAmount'];
+            $input['amountLocal'] = $currencyConversion['localAmount'];
+        }
         else
         {
                 $meterialissue = ItemIssueDetails::with(['master'])->find($input['documentDetailID']); 
@@ -183,15 +243,19 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
             
         }
 
-        
+       
+
         
         $allocatedSum = ExpenseAssetAllocation::where('documentDetailID', $input['documentDetailID'])
                                                   ->where('documentSystemID', $input['documentSystemID'])
                                                   ->sum('amount');
 
+                                                 
+
+
         $newTotal = $allocatedSum + floatval($input['amount']);
 
-
+    
         if ($newTotal > $detailTotal) {
             return $this->sendError("Allocated amount cannot be greater than detail amount.");
         }
@@ -402,5 +466,68 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
                                                   ->get();
 
         return $this->sendResponse($allocatedAsssets, 'Data retrieved successfully');
+    }
+
+    public function checkAssetAllocation(Request $request)
+    {
+       
+        $input = $request->all();
+
+        $checkForAsset = ExpenseAssetAllocation::where('assetID', $input['asset_id']);
+
+     
+
+        $data['details'] = null;
+        if($checkForAsset->count()>0)
+        {
+            // $assets = $checkForAsset
+            //           ->when(('documentSystemID') == 3,function($query){
+            //             return $query->with('grv');
+            //           })->get();
+
+            $assets = $checkForAsset->get();
+
+            foreach($assets as $key=>$val)
+            {
+                $document_id = $val->documentSystemID;
+                switch ($document_id) {
+                    case 3:
+                        $checkForAssetss = ExpenseAssetAllocation::where('assetID', $val->assetID)->where('documentSystemID', 3)->where('documentSystemCode', $val->documentSystemCode)->with('grv')->first();
+                        $assets[$key]['code'] = $checkForAssetss->grv->grvPrimaryCode;
+                        $assets[$key]['doc'] = 'GRV';
+                        break;
+                    case 17:
+                        $checkForAssetss = ExpenseAssetAllocation::where('assetID', $val->assetID)->where('documentSystemID', 17)->where('documentSystemCode', $val->documentSystemCode)->with('journal_voucher')->first();
+                        $assets[$key]['code'] = $checkForAssetss->journal_voucher->JVcode;
+                        $assets[$key]['doc'] = 'JV';
+                        break; 
+                    case 8:
+                        $checkForAssetss = ExpenseAssetAllocation::where('assetID', $val->assetID)->where('documentSystemID', 8)->where('documentSystemCode', $val->documentSystemCode)->with('meterial_issue')->first();
+                        $assets[$key]['code'] = $checkForAssetss->meterial_issue->itemIssueCode;
+                        $assets[$key]['doc'] = 'Material Issue';
+                        break;   
+                    case 4:
+                        $checkForAssetss = ExpenseAssetAllocation::where('assetID', $val->assetID)->where('documentSystemID', 4)->where('documentSystemCode', $val->documentSystemCode)->with('payment_voucher')->first();
+                        $assets[$key]['code'] = $checkForAssetss->payment_voucher->BPVcode;
+                        $assets[$key]['doc'] = 'Payment Voucher';
+                        break; 
+                    case 11:
+                        $checkForAssetss = ExpenseAssetAllocation::where('assetID', $val->assetID)->where('documentSystemID', 11)->where('documentSystemCode', $val->documentSystemCode)->with('supplier_invoice')->first();
+                        $assets[$key]['code'] = $checkForAssetss->supplier_invoice->bookingInvCode;
+                        $assets[$key]['doc'] = 'Booking Supplier Invoice';
+                        break;    
+                }
+
+            }
+
+            $data['exit'] = true;
+            $data['details'] = $assets;
+        }
+        else
+        {
+            $data['exit'] = false;
+        }
+
+        return $this->sendResponse($data, 'Data retrieved successfully');
     }
 }

@@ -162,6 +162,19 @@
         font-size: 11.5px;
         color: black;
     }
+    .container
+          {
+            display: block;
+            max-width:230px;
+            max-height:95px;
+            width: auto;
+            height: auto;
+            }
+
+    .table_height
+    {
+        max-height: 60px !important;
+    }
 
 
 </style>
@@ -182,13 +195,13 @@
 
 <div class="content">
     <div class="row">
-        <table style="width:100%">
+        <table style="width:100%" class="table_height">
             <tr>
                 <td width="30%">
                    @if($request->logo)
                            @if($type == 1)
                             <img src="{{$request->companyLogo}}"
-                                width="180px" height="60px">
+                            class="container">
                           @else
                             image not found
                           @endif
@@ -251,8 +264,8 @@
                                 </span>
                                 </td>
                             </tr>
-
                             @if($request->lineSecondAddress)
+
                                 <tr>
                                     <td width="110px"><span class="font-weight-bold">Address Line 2</span></td>
                                     <td width="10px"><span class="font-weight-bold">-</span></td>
@@ -1151,7 +1164,7 @@
                                             @endif
                                             <br><br>
                                             @if($det->employee)
-                                                {{ \App\helper\Helper::dateFormat($det->approvedDate)}}
+                                                {{ \App\helper\Helper::convertDateWithTime($det->approvedDate)}}
                                             @endif
                                         @endif
 

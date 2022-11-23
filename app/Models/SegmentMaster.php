@@ -181,6 +181,11 @@ class SegmentMaster extends Model
         return $this->hasMany('App\Models\HrmsDepartmentMaster','serviceLineSystemID','serviceLineSystemID');
     }
 
+    public function parent()
+    {
+        return $this->belongsTo('App\Models\SegmentMaster', 'masterID', 'serviceLineSystemID')->withoutGlobalScope('final_level');
+    }
+
 
     public function sub_levels()
     {
@@ -190,5 +195,12 @@ class SegmentMaster extends Model
     public function sub_level_deleted()
     {
         return $this->hasMany('App\Models\SegmentMaster', 'masterID', 'serviceLineSystemID')->with('sub_level_deleted')->withoutGlobalScope('final_level')->withoutGlobalScope('deleted_status');
+    }
+
+    public static function getSegmentCode($serviceLineSystemID)
+    {
+        $segment = SegmentMaster::find($serviceLineSystemID);
+
+        return ($segment) ? $segment->ServiceLineCode : null;
     }
 }

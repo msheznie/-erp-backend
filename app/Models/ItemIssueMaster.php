@@ -364,7 +364,9 @@ class ItemIssueMaster extends Model
         'approvedByUserID',
         'approvedByUserSystemID',
         'refferedBackYN',
-        'timesReferred'
+        'timesReferred',
+        'mfqJobID',
+        'mfqJobNo'
     ];
 
     /**

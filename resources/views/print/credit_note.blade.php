@@ -146,7 +146,19 @@
         transform-origin: 20% 20%;
         z-index: 1000;
     }
+    .container
+          {
+            display: block;
+            max-width:230px;
+            max-height:95px;
+            width: auto;
+            height: auto;
+            }
 
+    .table_height
+    {
+        max-height: 60px !important;
+    }
 
 </style>
 
@@ -186,10 +198,10 @@
 
 <div class="content">
     <div class="row">
-        <table style="width:100%">
+        <table style="width:100%" class="table_height">
             <tr>
                 <td width="30%">
-                    <img src="{{$request->company->logo_url}}" width="180px" height="60px"></td>
+                    <img src="{{$request->company->logo_url}}" class="container"></td>
 
                 <td width="50%" style="text-align: center">
                     <div class="text-center">
@@ -301,7 +313,7 @@
             <thead>
             <tr class="theme-tr-head" style="width: 100%;">
                 <th style="text-align: center">Comments</th>
-                <th style="text-align: center">Department</th>
+                <th style="text-align: center">Segment</th>
                 <th style="text-align: center">Amount</th>
                 @if($request->isVATApplicable)
                     <th class="text-center">VAT Amount</th>
@@ -418,7 +430,7 @@
                         @endif
                         <br><br>
                         @if($det->employee)
-                            {{ \App\helper\Helper::dateFormat($det->approvedDate)}}
+                            {{ \App\helper\Helper::convertDateWithTime($det->approvedDate)}}
                         @endif
                     </td>
                 @endforeach

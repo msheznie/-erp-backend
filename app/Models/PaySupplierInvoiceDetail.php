@@ -280,6 +280,7 @@ class PaySupplierInvoiceDetail extends Model
         'paymentSupplierDefaultAmount',
         'paymentLocalAmount',
         'paymentComRptAmount',
+        'retentionVatAmount',
         'timesReferred',
         'isRetention',
         'modifiedUserID',
@@ -359,6 +360,11 @@ class PaySupplierInvoiceDetail extends Model
     public function matching_master()
     {
         return $this->hasOne('App\Models\MatchDocumentMaster', 'matchDocumentMasterAutoID', 'matchingDocID');
+    }
+
+    public function debite_note()
+    {
+        return $this->hasOne('App\Models\DebitNote', 'debitNoteAutoID', 'PayMasterAutoId');
     }
 
     public function pomaster()

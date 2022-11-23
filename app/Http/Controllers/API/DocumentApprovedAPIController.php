@@ -168,8 +168,14 @@ class DocumentApprovedAPIController extends AppBaseController
         }
 
         $documentType = isset($input['documentType']) ? $input['documentType'] : array();
-        $companies    = isset($input['companies']) ? $input['companies'] : array();
+        if(!is_array($documentType)){
+            $documentType = array();
+        }
 
+        $companies = isset($input['companies']) ? $input['companies'] : array();
+        if(!is_array($companies)){
+            $companies = array();
+        }
 
         $filter = 'AND erp_documentapproved.documentSystemID IN (0) ';
 
@@ -304,7 +310,7 @@ SELECT
 	erp_paysupplierinvoicemaster.directPaymentPayee AS SupplierOrCustomer,
 			currencymaster.DecimalPlaces ,
 	currencymaster.CurrencyCode AS DocumentCurrency,
-	erp_paysupplierinvoicemaster.payAmountSuppTrans AS DocumentValue,
+	erp_paysupplierinvoicemaster.payAmountSuppTrans + erp_paysupplierinvoicemaster.VATAmount + erp_paysupplierinvoicemaster.retentionVatAmount AS DocumentValue,
 	0 AS amended,
 	erp_documentapproved.approvedYN,
 	erp_paysupplierinvoicemaster.invoiceType AS documentType 
@@ -728,13 +734,11 @@ FROM
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
 	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
 	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
-	AND employeesdepartments.ServiceLineSystemID = erp_documentapproved.serviceLineSystemID 
 	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
 	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
 	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
 	INNER JOIN erp_purchaseordermaster ON erp_purchaseordermaster.companySystemID = erp_documentapproved.companySystemID 
 	AND erp_purchaseordermaster.documentSystemID = erp_documentapproved.documentSystemID 
-	AND erp_purchaseordermaster.serviceLineSystemID = erp_documentapproved.serviceLineSystemID 
 	AND erp_purchaseordermaster.purchaseOrderID = erp_documentapproved.documentSystemCode 
 	AND erp_purchaseordermaster.RollLevForApp_curr = erp_documentapproved.rollLevelOrder 
 	AND erp_purchaseordermaster.poConfirmedYN = 1 
@@ -748,7 +752,7 @@ WHERE
 	AND erp_documentapproved.approvalGroupID > 0 
 	$filter
 	AND erp_documentapproved.documentSystemID IN ( 2, 5, 52 ) 
-	AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0
+	AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0 GROUP BY erp_purchaseordermaster.purchaseOrderID
 	) AS PendingOrderApprovals UNION ALL
 SELECT
 	* 
@@ -774,7 +778,7 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	erp_paysupplierinvoicemaster.directPaymentPayee AS SupplierOrCustomer,
 			currencymaster.DecimalPlaces ,
 	currencymaster.CurrencyCode AS DocumentCurrency,
-	erp_paysupplierinvoicemaster.payAmountSuppTrans AS DocumentValue,
+	erp_paysupplierinvoicemaster.payAmountSuppTrans + erp_paysupplierinvoicemaster.VATAmount + erp_paysupplierinvoicemaster.retentionVatAmount AS DocumentValue,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
@@ -1443,4 +1447,14 @@ WHERE
 
     }
 
+    public function approveDocument(Request $request)
+    {
+        $approve = \Helper::approveDocument($request);
+        if (!$approve["success"]) {
+            return $this->sendError($approve["message"]);
+        } else {
+            return $this->sendResponse(array(), $approve["message"]);
+        }
+
+    }
 }

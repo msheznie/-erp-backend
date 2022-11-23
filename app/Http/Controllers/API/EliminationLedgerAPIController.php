@@ -282,7 +282,7 @@ class EliminationLedgerAPIController extends AppBaseController
      public function getEliminationLedgerReview(Request $request)
     {
         /** @var GeneralLedger $generalLedger */
-        $generalLedger = $this->eliminationLedgerRepository->with(['supplier','customer','charofaccount','localcurrency','transcurrency','rptcurrency'])->findWhere(['companySystemID' => $request->companySystemID,'documentSystemID' => $request->documentSystemID,'documentSystemCode' => $request->autoID]);
+        $generalLedger = $this->eliminationLedgerRepository->with(['supplier','customer','charofaccount','localcurrency','transcurrency','rptcurrency'])->findWhere(['documentSystemID' => $request->documentSystemID,'documentSystemCode' => $request->autoID]);
 
         if (empty($generalLedger)) {
             return $this->sendError('Elimination Ledger not found');

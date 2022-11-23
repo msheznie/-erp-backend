@@ -69,7 +69,7 @@ class EmployeeNavigationAPIController extends AppBaseController
         $input = $request->all();
         $employees = collect($input["employeeSystemID"])->pluck("employeeSystemID")->toArray();
 
-        $validate = EmployeeNavigation::where('companyID',$request->companyID)->whereIN('employeeSystemID',$employees)->exists();
+        $validate = EmployeeNavigation::where('companyID',$request->companyID)->whereIN('employeeSystemID',$employees)->where('userGroupID', $request->userGroupID)->first();
         if($validate){
             return $this->sendError('Selected employee already exists in the selected user group');
         }else{
@@ -161,13 +161,15 @@ class EmployeeNavigationAPIController extends AppBaseController
                                                                         }]);
         if (array_key_exists('selectedCompanyID', $input)) {
             if ($input['selectedCompanyID'] > 0) {
-                $userGroup->where('companyID', $input['selectedCompanyID']);
+                $userGroup->where('srp_erp_employeenavigation.companyID', $input['selectedCompanyID']);
             }
         } else {
             $companiesByGroup = "";
-            if (!\Helper::checkIsCompanyGroup($input['globalCompanyId'])) {
-                $companiesByGroup = $input['globalCompanyId'];
-                $userGroup->where('companyID', $companiesByGroup);
+            if(isset($input['globalCompanyId'])) {
+                if (!\Helper::checkIsCompanyGroup($input['globalCompanyId'])) {
+                    $companiesByGroup = $input['globalCompanyId'];
+                    $userGroup->where('srp_erp_employeenavigation.companyID', $companiesByGroup);
+                }
             }
         }
 

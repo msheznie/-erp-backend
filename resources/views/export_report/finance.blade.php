@@ -2,6 +2,29 @@
 <table>
     <thead>
         <tr>
+            <th colspan="5" align="center">{{$template->reportName}}</th>
+        </tr>
+        <tr>
+            <th colspan="5" align="center">{{$company->CompanyName}}</th>
+        </tr>
+        <tr></tr>
+        @if ($month != null)
+            <tr>
+                <th>As of - {{$month}}</th>
+            </tr>
+        @endif
+
+        @if ($from_date != null && $to_date != null)
+            <tr>
+                <th>Period From - {{$from_date}}</th>
+            </tr>
+            <tr>
+                <th>Period To - {{$to_date}} </th>
+            </tr>
+        @endif
+        <tr></tr>
+        <tr></tr>
+        <tr>
             @if($fourthLevel)
             	<th colspan="5">Description</th>
             @elseif($thirdLevel)
@@ -154,7 +177,6 @@
         </tr>
         @if($data->isFinalLevel == 1)
         @foreach ($data->glCodes as $data2)
-        @if($data->expanded)
         <tr>
             <td></td>
             <td>
@@ -179,7 +201,6 @@
             </td>
             @endforeach
         </tr>
-        @endif
         @endforeach
         @endif
         @if(isset($data->detail))

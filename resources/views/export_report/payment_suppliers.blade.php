@@ -1,5 +1,21 @@
 <html>
-
+<table>
+        <thead>
+        <div>
+                <td colspan="3"></td>
+                <td><B>{{$companyName}} </B></td>
+            </div>
+        </thead>
+    </table>
+    <table>
+        <thead>
+        <div>
+                <td colspan="3"></td>
+                <td><B>{{$Title}}</B></td>
+            </div>
+        </thead>
+    </table>
+    <br>
 <table>
     <thead>
     <tr>
@@ -11,6 +27,9 @@
     </tr>
     </thead>
 </table>
+
+
+    <br>
     @foreach($reportData as $name => $key)
     <div>
         <h4>{{ $name }}</h4>
@@ -22,6 +41,7 @@
     <tr>
         <th>Document Code</th>
         <th>Posted Date</th>
+        <th>Account</th>
         <th>Invoice Number</th>
         <th>Invoice date</th>
         <th>Document Narration</th>
@@ -41,6 +61,7 @@
             @else
                 <td>-</td>
             @endif
+        <td>{{ $data->glCode }} - {{ $data->AccountDescription }}</td>
         <td>{{ $data->invoiceNumber }}</td>
             @if($data->invoiceDate != null)
         <td>&nbsp;{{ date('d/m/Y', strtotime($data->invoiceDate)) }}</td>
@@ -58,7 +79,7 @@
     </tbody>
     <tfoot>
     <tr>
-        <td colspan="5"></td>
+        <td colspan="6"></td>
         <td><B>Total</B></td>
         @if(isset($reportData[$name][$currencyKey][0]) != null)
             <td style="text-align: right"><B>{{ number_format($total,$reportData[$name][$currencyKey][0]->balanceDecimalPlaces) }}</B></td>
@@ -70,7 +91,7 @@
 @endforeach
 <table>
     <tr>
-        <td colspan="5"></td>
+        <td colspan="6"></td>
         <td><B>Grand Total</B></td>
         <td style="text-align: right"><B>{{ number_format($invoiceAmount,$currencyDecimalPlace) }}</B></td>
     </tr>

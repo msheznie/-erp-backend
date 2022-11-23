@@ -14,6 +14,7 @@
 namespace App\Http\Controllers\API;
 
 use App\helper\Helper;
+use App\Services\WebPushNotificationService;
 use App\Http\Requests\API\CreateUserAPIRequest;
 use App\Http\Requests\API\UpdateUserAPIRequest;
 use App\Models\EmployeeNavigation;
@@ -235,7 +236,7 @@ class UserAPIController extends AppBaseController
       $users=  User::with(['employee'])->where('login_token',$request->id)->first();
       if($users){
           $data['uname'] = $users->email;
-          $data['pw'] = $users->employee->empPassword;
+          $data['pw'] = null;
           $this->userRepository->update(['login_token'=>NULL],$users->id);
           return $this->sendResponse($data, 'User retrieved successfully');
       }else{
@@ -251,5 +252,48 @@ class UserAPIController extends AppBaseController
         }
         $output["imagePath"] =  Illuminate\Support\Facades\Storage::disk('public')->temporaryUrl('noEmployeeImage.JPG', now()->addMinutes(5));*/
         return $this->sendResponse($output, trans('custom.record_retrieve', ['attribute' => trans('custom.user')]));
+    }
+
+    public function getNotifications(Request $request)
+    {
+        $notificationData = WebPushNotificationService::getUserNotifications();
+
+        return $this->sendResponse($notificationData, "Notifications retrieved successfully");
+    } 
+
+
+    public function updateNotification(Request $request)
+    {
+        $input = $request->all();
+
+        $notificationData = WebPushNotificationService::updateNotifications($input);
+
+        $processNotification = WebPushNotificationService::processnotificationData($input);
+
+        return $this->sendResponse($processNotification, "Notifications updated successfully");
+    }
+
+    public function getAllNotifications(Request $request)
+    {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $notificationData = WebPushNotificationService::getAllNotifications();
+
+        return \DataTables::of($notificationData)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
     }
 }

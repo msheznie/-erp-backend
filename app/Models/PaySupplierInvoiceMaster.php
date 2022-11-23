@@ -560,7 +560,7 @@ class PaySupplierInvoiceMaster extends Model
         'payAmountSuppDef',
         'payAmountCompLocal',
         'payAmountCompRpt',
-        'suppAmountDocTotal',
+        '`suppAmountDocTotal`',
         'createMonthlyDeduction',
         'confirmedYN',
         'confirmedByEmpSystemID',
@@ -641,6 +641,7 @@ class PaySupplierInvoiceMaster extends Model
         'createdDateTime',
         'timestamp',
         'rcmActivated',
+        'retentionVatAmount',
         'VATAmount',
         'VATAmountLocal',
         'VATAmountRpt',
@@ -648,7 +649,9 @@ class PaySupplierInvoiceMaster extends Model
         'netAmountLocal',
         'netAmountRpt',
         'bankAccountBalance',
-        'payment_mode'
+        'payment_mode',
+        'advanceAccountSystemID',
+        'AdvanceAccount',
     ];
 
     /**

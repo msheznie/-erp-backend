@@ -474,7 +474,8 @@ class GrvDetailsRefferedback extends Model
         'modifiedUser',
         'createdDateTime',
         'timeStamp',
-        'binNumber'
+        'binNumber',
+        'detail_project_id'
     ];
 
     /**
@@ -553,7 +554,8 @@ class GrvDetailsRefferedback extends Model
         'createdPcID' => 'string',
         'createdUserID' => 'string',
         'modifiedPc' => 'string',
-        'modifiedUser' => 'string'
+        'modifiedUser' => 'string',
+        'detail_project_id' => 'integer'
     ];
 
     /**

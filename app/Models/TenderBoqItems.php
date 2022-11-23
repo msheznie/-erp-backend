@@ -118,5 +118,15 @@ class TenderBoqItems extends Model
         
     ];
 
+    public function bid_boq()
+    {
+        return $this->hasOne('App\Models\BidBoq', 'boq_id', 'id');
+    }
+
+    public function unit()
+    {
+        return $this->belongsTo('App\Models\Unit','uom','UnitID');
+    }
+
     
 }

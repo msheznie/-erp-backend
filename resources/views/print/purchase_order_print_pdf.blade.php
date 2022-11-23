@@ -160,6 +160,28 @@
     .quill-html img {
         max-width: 700px;
     }
+    .container
+            {
+                display: block;
+                max-width:230px;
+                max-height:95px;
+                width: auto;
+                height: auto;
+            }
+
+        .table_height
+            {
+                max-height: 60px !important;
+            }
+
+    .rotate {
+        writing-mode: vertical-lr;
+        -webkit-transform: rotate(-50deg);
+        -moz-transform: rotate(-50deg);
+        font-size: 160px;
+        color: #ff5454 !important;
+    }
+
 
 </style>
 <link href="{{ public_path('assets/css/app.css') }}" rel="stylesheet" type="text/css" />
@@ -235,32 +257,31 @@
                @if($podata->poConfirmedYN == 1 && $podata->approved == 0)
                    Confirmed & Not Approved <br> Draft Copy
                @endif
+
            </h3>
+                @if($podata->poCancelledYN == -1)
+                    <h1 class="rotate">
+                 CANCELLED
+                    </h1>
+             @endif
          </span>
 </div>
 <div class="content">
     <div class="row">
-        <table style="width:100%">
+        <table style="width:100%" class="table_height">
             <tr>
-                <td width="60%">
+                <td width="20%">
                     <table>
                         <tr>
                             @if($isMergedCompany)
-                                <td><img src="{{$secondaryCompany['logo_url']}}" width="180px" height="60px"></td>
+                                <td><img src="{{$secondaryCompany['logo_url']}}" width="180px" height="60px" class="container"></td>
                             @else
-                                <td><img src="{{$podata->company->logo_url}}" width="180px" height="60px"></td>
+                                <td><img src="{{$podata->company->logo_url}}" width="180px" height="60px" class="container"></td>
                             @endif
-                        </tr>
-                        <tr>
-                            <td>
-                                <h3 class="font-weight-bold">
-                                    {{$title}}
-                                </h3>
-                            </td>
                         </tr>
                     </table>
                 </td>
-                <td width="40%">
+                <td width="80%">
                     <table>
                         <tr>
                             <td>
@@ -325,6 +346,20 @@
         </table>
     </div>
     <hr style="background-color: black">
+    
+    <table style="width: 100%" class="table_height">
+        <tr style="width: 100%">
+ 
+            <div>
+                <span style="font-size: 18px">
+                    {{$title}}
+                </span>
+            </div>
+        </tr>
+    </table>
+    <br>
+    <br>
+
     <div class="row">
         <table style="width:100%">
             <tr>
@@ -736,8 +771,8 @@
                     style="font-size: 11px;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;">
                 <span class="font-weight-bold">
                 @if ($podata->detail)
-                        {{number_format($podata->poTotalSupplierTransactionCurrency, $numberFormatting)}}
-                    @endif
+                    @if($podata->rcmActivated){{number_format(($podata->poTotalSupplierTransactionCurrency - $podata->VATAmount), $numberFormatting)}} @else {{number_format($podata->poTotalSupplierTransactionCurrency, $numberFormatting)}}@endif
+                @endif
                 </span>
                 </td>
             </tr>

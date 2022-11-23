@@ -141,7 +141,8 @@ class StockTransferRepository extends BaseRepository
                 'erp_stocktransfer.approved',
                 'erp_stocktransfer.approvedDate',
                 'erp_stocktransfer.fullyReceived',
-                'erp_stocktransfer.refferedBackYN'
+                'erp_stocktransfer.refferedBackYN',
+                'erp_stocktransfer.postedDate'
             ]);
 
         if ($search) {
@@ -169,9 +170,9 @@ class StockTransferRepository extends BaseRepository
                 $data[$x]['Transfer Date'] = \Helper::dateFormat($val->tranferDate);
                 $data[$x]['Comment'] = $val->comment;
                 $data[$x]['Created By'] = $val->created_by? $val->created_by->empName : '';
-                $data[$x]['Created At'] = \Helper::dateFormat($val->createdDateTime);
-                $data[$x]['Confirmed at'] = \Helper::dateFormat($val->confirmedDate);
-                $data[$x]['Approved at'] = \Helper::dateFormat($val->approvedDate);
+                $data[$x]['Created At'] = \Helper::convertDateWithTime($val->createdDateTime);
+                $data[$x]['Confirmed at'] = \Helper::convertDateWithTime($val->confirmedDate);
+                $data[$x]['Approved at'] = \Helper::convertDateWithTime($val->approvedDate);
                 $data[$x]['Status'] = StatusService::getStatus(NULL, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
 
                 $x++;

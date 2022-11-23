@@ -45,13 +45,16 @@ class UserGroupRepository extends BaseRepository
             }
         }else{
             $companiesByGroup = "";
-            if(!\Helper::checkIsCompanyGroup($input['globalCompanyId'])){
-                $companiesByGroup = $input['globalCompanyId'];
-                $userGroup->where('srp_erp_usergroups.companyID',$companiesByGroup);
+            if(isset($input['globalCompanyId'])) {
+                if (!\Helper::checkIsCompanyGroup($input['globalCompanyId'])) {
+                    $companiesByGroup = $input['globalCompanyId'];
+                    $userGroup->where('srp_erp_usergroups.companyID', $companiesByGroup);
+                }
             }
 
             $userGroup->orderBy('userGroupID', 'desc');
         }
+        $userGroup = $userGroup->where('isDeleted', 0);
         $search = $input['search']['value'];
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
@@ -77,7 +80,7 @@ class UserGroupRepository extends BaseRepository
 
     public function getUserGroup($input)
     {
-        $userGroup = $this->model->where('companyID',$input["companyID"])->get();
+        $userGroup = $this->model->where('companyID',$input["companyID"])->where('isDeleted', 0)->get();
         return $userGroup;
     }
 }
