@@ -315,6 +315,12 @@ class PosAPIController extends AppBaseController
                 $sub_category_id = 0;
             }
 
+            if (isset($input['per_page'])) {
+                $per_page = $input['per_page'];
+            } else {
+                $per_page = 10;
+            }
+
             $items = ItemMaster::selectRaw('itemmaster.itemCodeSystem as id, primaryCode as system_code, itemmaster.documentID as document_id, 
             (case when itemmaster.secondaryItemCode = "" or isnull(itemmaster.secondaryItemCode) then primaryCode else itemmaster.secondaryItemCode end) as secondary_code, "" as image,(case when itemShortDescription = "" or isnull(itemShortDescription) then itemmaster.itemDescription else itemShortDescription end) as name,itemmaster.itemDescription as description,
             itemmaster.financeCategoryMaster as category_id, financeitemcategorymaster.categoryDescription as category_description, itemmaster.financeCategorySub as sub_category_id, "" as sub_sub_category_id, itemmaster.barcode as barcode, financeitemcategorymaster.categoryDescription as finance_category, itemmaster.secondaryItemCode as part_number, unit as unit_id, units.UnitShortCode as unit_description, "" as reorder_point, "" as maximum_qty,
@@ -350,7 +356,7 @@ class PosAPIController extends AppBaseController
                     });
                 }
 
-                $items = $items->paginate(10);
+                $items = $items->paginate($per_page);
 
             DB::commit();
             return $this->sendResponse($items, 'Data Retrieved successfully');
