@@ -854,8 +854,8 @@ class BidSubmissionMasterAPIController extends AppBaseController
         $queryResult = [];
         
         $tenderId = $request->input('tenderMasterId');
-        $supplierID = $request->input('supplierID');
-        $selectedSupplierIds = collect($supplierID)->pluck('id')->toArray();
+        $bidSubmissionIDs = $request->input('bidSubmissionID');
+        $bidSubmissionIDs = collect($bidSubmissionIDs)->pluck('id')->toArray();
         $tenderMaster = TenderMaster::find($tenderId);
 
         $suppliers = BidSubmissionMaster::where('tender_id',$tenderId)->where('status',1)->where('bidSubmittedYN',1)->groupBy('supplier_registration_id')->pluck('supplier_registration_id')->toArray();
@@ -888,8 +888,12 @@ class BidSubmissionMasterAPIController extends AppBaseController
     
                         foreach ($items as $item) {
                            $bid_boq =  BidBoq::where('boq_id', $item->id)->where('main_works_id',$item->main_work_id);
-                            if($supplierID) {
-                                $bid_boq->where('created_by',81);
+                            if($supplier) {
+                                $bid_boq->where('created_by',$supplier);
+                            }
+
+                            if($bidSubmissionIDs) {
+                                $bid_boq->whereIn('bid_master_id',$bidSubmissionIDs);
                             }
     
                             $bid_boq = $bid_boq->orderBy("id","desc")->first();
@@ -901,12 +905,15 @@ class BidSubmissionMasterAPIController extends AppBaseController
     
     
                     }else {
-                        if($pricing_shedule_detail->field_type != 4) { 
+                        if($pricing_shedule_detail->field_type != 4 || $pricing_shedule_detail->field_type != 3) { 
                             //BidMainWork
                             $dataBidBoq = BidMainWork::where('tender_id',$tenderId)->where('main_works_id',$pricing_shedule_detail->id);
-                            if($supplierID) 
-                                $dataBidBoq->where('created_by',81);
+                            if($supplier) 
+                                $dataBidBoq->where('created_by',$supplier);
                             
+                            if($bidSubmissionIDs) 
+                                $dataBidBoq->whereIn('bid_master_id',$bidSubmissionIDs);
+
                             $dataBidBoq = $dataBidBoq->orderBy("id","desc")->first();
                             if($dataBidBoq)
                                 $total += $dataBidBoq->total_amount;
