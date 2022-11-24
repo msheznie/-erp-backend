@@ -22,6 +22,9 @@ use Response;
 use App\Models\BidEvaluationSelection;
 use function Clue\StreamFilter\fun;
 use App\Models\EvaluationCriteriaScoreConfig;
+use App\Models\BidBoq;
+use App\Models\BidMainWork;
+use App\Models\SupplierRegistrationLink;
 use App\Repositories\TenderMasterRepository;
 /**
  * Class BidSubmissionMasterController
@@ -850,5 +853,89 @@ class BidSubmissionMasterAPIController extends AppBaseController
 
         return $this->sendResponse($queryResult, 'Data retrieved successfully');
 
+    }
+
+    public function SupplierSheduleWiseReport(Request $request) {
+        $queryResult = [];
+        
+        $tenderId = $request->input('tenderMasterId');
+        $supplierID = $request->input('supplierID');
+        $selectedSupplierIds = collect($supplierID)->pluck('id')->toArray();
+        $tenderMaster = TenderMaster::find($tenderId);
+
+        $suppliers = BidSubmissionMaster::where('tender_id',$tenderId)->where('status',1)->where('bidSubmittedYN',1)->groupBy('supplier_registration_id')->pluck('supplier_registration_id')->toArray();
+
+        $pring_schedul_master_datas =  PricingScheduleMaster::with(['tender_main_works' => function ($q1) use ($tenderId) {
+            $q1->where('tender_id', $tenderId);
+            $q1->with(['bid_main_work' => function ($q2) use ($tenderId) {
+                $q2->where('tender_id', $tenderId);
+            }]);
+        }])
+            ->where('tender_id', $tenderId)
+            ->where('status',1)->get();
+
+        $data = Array();
+        $x=0;
+        $total = 0;
+
+
+
+        foreach($suppliers as $supplier) {
+
+            foreach($pring_schedul_master_datas as $pring_schedul_master_data) {
+
+                $pricing_shedule_details = $pring_schedul_master_data->pricing_shedule_details()->where('is_disabled',0)->get();
+                
+                foreach($pricing_shedule_details as $pricing_shedule_detail) {
+    
+                    if($pricing_shedule_detail->boq_applicable) {
+                        $items = $pricing_shedule_detail->tender_boq_items;
+    
+                        foreach ($items as $item) {
+                           $bid_boq =  BidBoq::where('boq_id', $item->id)->where('main_works_id',$item->main_work_id);
+                            if($supplierID) {
+                                $bid_boq->where('created_by',81);
+                            }
+    
+                            $bid_boq = $bid_boq->orderBy("id","desc")->first();
+    
+                           if($bid_boq) 
+                                $total += $bid_boq->total_amount;
+    
+                        }
+    
+    
+                    }else {
+                        if($pricing_shedule_detail->field_type != 4) { 
+                            //BidMainWork
+                            $dataBidBoq = BidMainWork::where('tender_id',$tenderId)->where('main_works_id',$pricing_shedule_detail->id);
+                            if($supplierID) 
+                                $dataBidBoq->where('created_by',81);
+                            
+                            $dataBidBoq = $dataBidBoq->orderBy("id","desc")->first();
+                            if($dataBidBoq)
+                                $total += $dataBidBoq->total_amount;
+                        }
+                    }
+    
+                }
+                $pring_schedul_master_data['total'] = $total;
+            }
+
+
+            $supplier_data = SupplierRegistrationLink::find($supplier);
+
+            $data[$x]['pring_schedul_master_data'] = $pring_schedul_master_data;
+            $data[$x]['supplier'] = ($supplier_data) ? $supplier_data->name : "";
+            $data[$x]['ranking'] = "L".$x;
+            $x++;
+            
+        }
+
+        
+
+
+        return $this->sendResponse($data, 'Data retrieved successfully');
+ 
     }
 }
