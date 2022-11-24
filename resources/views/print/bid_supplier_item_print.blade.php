@@ -65,7 +65,7 @@
         <tr>
             <td><strong>Total</strong></td>
             @foreach ($srm_bid_submission_master as $doc)
-                <td style="text-align: center;"><strong>{{$doc['SupplierRegistrationLink']['name']}}</strong></td>
+                <td style="text-align: center;"><strong></strong></td>
             @endforeach
         </tr>
 </table>
