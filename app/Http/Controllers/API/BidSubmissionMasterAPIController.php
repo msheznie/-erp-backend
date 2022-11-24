@@ -364,12 +364,25 @@ class BidSubmissionMasterAPIController extends AppBaseController
         $sort = 'asc';
         $companyId = $request['companyId'];
         $tenderId = $request['tenderId'];
+        $type = $request['type'];
 
-        $query = BidSubmissionMaster::with(['SupplierRegistrationLink','bidSubmissionDetail' => function($query){
-            $query->whereHas('srm_evaluation_criteria_details.evaluation_criteria_type', function ($query) {
-                $query->where('id', 1);
-            });
-        }])->where('status', 1)->where('bidSubmittedYN', 1)->where('tender_id', $tenderId);
+        if($type == 1)
+        {
+            $query = BidSubmissionMaster::with(['SupplierRegistrationLink','bidSubmissionDetail' => function($query){
+                $query->whereHas('srm_evaluation_criteria_details.evaluation_criteria_type', function ($query) {
+                    $query->where('id', 1);
+                });
+            }])->where('status', 1)->where('bidSubmittedYN', 1)->where('tender_id', $tenderId);
+        }
+        else if($type == 2)
+        {
+            $query = BidSubmissionMaster::with(['SupplierRegistrationLink','bidSubmissionDetail' => function($query){
+                $query->whereHas('srm_evaluation_criteria_details.evaluation_criteria_type', function ($query) {
+                    $query->where('id', 1);
+                });
+            }])->where('status', 1)->where('bidSubmittedYN', 1)->where('doc_verifiy_status',1)->where('tender_id', $tenderId);
+        }
+      
 
         $search = $request->input('search.value');
         if ($search) {
