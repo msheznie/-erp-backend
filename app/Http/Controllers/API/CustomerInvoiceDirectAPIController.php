@@ -3361,10 +3361,14 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             if($type == 1)
             {
                 $html = view('print.APMC_customer_invoice', $array);
-                $pdf = \App::make('dompdf.wrapper');
-                $pdf->loadHTML($html);
-    
-                return $pdf->setPaper('a4')->setWarnings(false)->stream($fileName);
+                $htmlFooter = view('print.APMC_customer_invoice_footer', $array);
+                $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+                $mpdf->AddPage('P');
+                $mpdf->setAutoBottomMargin = 'stretch';
+                $mpdf->SetHTMLFooter($htmlFooter);
+
+                $mpdf->WriteHTML($html);
+                return $mpdf->Output($fileName, 'I');
             }
             else if($type == 2)
             {
