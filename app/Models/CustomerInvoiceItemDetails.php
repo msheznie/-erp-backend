@@ -247,6 +247,7 @@ class CustomerInvoiceItemDetails extends Model
         'custInvoiceDirectAutoID',
         'itemCodeSystem',
         'itemPrimaryCode',
+        'projectID',
         'itemDescription',
         'itemUnitOfMeasure',
         'unitOfMeasureIssued',
@@ -316,6 +317,7 @@ class CustomerInvoiceItemDetails extends Model
         'custInvoiceDirectAutoID' => 'integer',
         'vatMasterCategoryID' => 'integer',
         'vatSubCategoryID' => 'integer',
+        'projectID' => 'integer',
         'itemCodeSystem' => 'integer',
         'itemPrimaryCode' => 'string',
         'itemDescription' => 'string',
@@ -443,5 +445,9 @@ class CustomerInvoiceItemDetails extends Model
         $currencyConversion = \Helper::currencyConversion(null, $this->localCurrencyID, $this->sellingCurrencyID, $this->issueCostLocalTotal);
 
         return isset($currencyConversion['documentAmount']) ? $currencyConversion['documentAmount'] : 0;
+    }
+
+    public function project(){
+        return $this->belongsTo('App\Models\ErpProjectMaster','projectID','id');
     }
 }
