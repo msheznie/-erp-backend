@@ -929,7 +929,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
 
             $data[$x]['pring_schedul_master_data'] = $pring_schedul_master_data;
             $data[$x]['supplier'] = ($supplier_data) ? $supplier_data->name : "";
-            $data[$x]['ranking'] = "L".$x;
+            $data[$x]['ranking'] = "L".($x+1);
             $x++;
             
         }
