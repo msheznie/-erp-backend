@@ -82,6 +82,7 @@
         <tr>
             <td style="text-align: center;"><strong>Sr. No</strong></td>
             <td style="text-align: center;"><strong>Supplier Registration No</strong></td>
+            <td style="text-align: center;"><strong>Bid Submission Code</strong></td>
             <td style="text-align: center;"><strong>Name of Bidder</strong></td>
             <td style="text-align: center;"><strong>Bid Submission Date</strong></td>
             @foreach ($bidData[0]['DocumentAttachments'] as $doc)
@@ -95,6 +96,7 @@
             <tr>
                 <td>{{$loop->index+1}}</td>
                 <td>{{$item->SupplierRegistrationLink->id}}</td>
+                <td>{{$item->bidSubmissionCode}}</td>
                 <td>{{$item->SupplierRegistrationLink->name}}</td>
                 <td>{{\Carbon\Carbon::parse($item->created_at)->format('d/m/Y')}}</td>
                 @foreach ($attachments[$loop->index] as $doc2)
