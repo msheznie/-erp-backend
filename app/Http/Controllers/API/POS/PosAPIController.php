@@ -329,7 +329,7 @@ class PosAPIController extends AppBaseController
             vatSubCategory as vat_sub_category_id,itemmaster.isActive as is_active,itemApprovedComment as comment, "" as is_sub_item_exist,"" as is_sub_item_applicable,
             "" as local_currency_id,"" as local_currency,"" as local_exchange_rate,"" as local_selling_price,"" as local_decimal_place,
             "" as reporting_currency_id,"" as reporting_currency,"" as reporting_exchange_rate,"" as reporting_selling_price,"" as reporting_decimal_place,
-            "" as is_deleted,"" as deleted_by,"" as deleted_date_time,itemmaster.pos_type')
+            "" as is_deleted,"" as deleted_by,"" as deleted_date_time,itemmaster.pos_type, itemassigned.wacValueLocal as item_cost')
                 ->join('financeitemcategorymaster', 'financeitemcategorymaster.itemCategoryID', '=', 'itemmaster.financeCategoryMaster')
                 ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
                 ->join('units', 'units.UnitID', '=', 'itemmaster.unit')
@@ -347,8 +347,9 @@ class PosAPIController extends AppBaseController
                 ->where('itemmaster.financeCategoryMaster', '!=', 3)
                 ->where('financeitemcategorysub.itemCategorySubID', '=', $sub_category_id);
                 
-                $search = $request->input('search.value');
-                if ($search) {
+
+                if (isset($input['item_search'])) {
+                    $search = $input['item_search'];
                     $search = str_replace("\\", "\\\\", $search);
                     $items = $items->where(function ($query) use ($search) {
                         $query->where('itemmaster.itemDescription', 'LIKE', "%{$search}%")

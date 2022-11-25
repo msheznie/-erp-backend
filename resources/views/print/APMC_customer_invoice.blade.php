@@ -201,19 +201,16 @@
     <div class="row">
         <br>
         <br>
-        <br>
-        <br>
-        <br>
-        <br>
     </div>
     <div class="row underline">
 
     </div>
     <div class="row">
-        <table  style="width: 100%; margin-top: -15px; margin-bottom: -15px!important;">
+        <table  style="width: 100%; margin-top: -10px; margin-bottom: -15px!important;">
             <tr>
                 <td width="100%" style="text-align: center;white-space: nowrap">
-                        <h4 class="text-center">
+                        <h4 class="text-center" style="margin-top: 1px">
+                            <br/>
                             Tax Invoice
                         </h4>
                 </td>
@@ -855,7 +852,7 @@
                     <tbody>
                     <tr>
                         <td class="font-weight-bold" style="border:none !important; width: 10%">
-                            Bank
+                            <B>Bank</B>
                         </td>
                         <td style="border:none !important; width: 35%"> : 
                             @if($request->secondaryLogoCompanySystemID)
@@ -868,13 +865,13 @@
                         </td>
                         <td class="text-left" style="border:none !important;width: 25%">
                                 <span class="font-weight-bold">
-                                    Sub Total (Excluding VAT)
+                                    <B>Sub Total (Excluding VAT)</B>
                                 </span>
                         </td>
 
                         <td class="text-right"
                             style="border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;width: 30%"><span
-                                    class="font-weight-bold">@if ($request->invoicedetails){{number_format($directTraSubTotal, $numberFormatting)}}@endif</span>
+                                    class="font-weight-bold">@if ($request->invoicedetails)<B>{{number_format($directTraSubTotal, $numberFormatting)}}</B>@endif</span>
                         </td>
                     </tr>
 
@@ -882,7 +879,7 @@
                     {{$directTraSubTotal+= $totalVATAmount}}
                     <tr>
                         <td class="font-weight-bold" style="border:none !important; width: 10%" >
-                            Branch
+                            <B>Branch</B>
                         </td>
                         <td style="border:none !important; width: 35%"> : 
                             @if($request->secondaryLogoCompanySystemID)
@@ -891,21 +888,21 @@
                                 @endif
                             @else
                                 {{($request->bankaccount) ? $request->bankaccount->bankBranch : ''}}
-                            @endif
+                               @endif
                         </td>
                         <td class="text-left" style="border:none !important;width: 25%">
                                 <span class="font-weight-bold">
-                                    Total VAT ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}}) ({{round( ( ($request->tax && $request->tax->taxPercent ) ? $request->tax->taxPercent : 0 ), 2)}} %)
+                                    <B>Total VAT ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}}) ({{round( ( ($request->tax && $request->tax->taxPercent ) ? $request->tax->taxPercent : 0 ), 2)}} %)</B>
                                 </span>
                         </td>
                         <td class="text-right"
-                            style="border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;width: 30%"><span class="font-weight-bold">{{number_format($totalVATAmount, $numberFormatting)}}</span>
+                            style="border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;width: 30%"><span class="font-weight-bold"><B>{{number_format($totalVATAmount, $numberFormatting)}}</B></span>
                         </td>
                     </tr>
 
                     <tr>
                         <td class="font-weight-bold" style="border:none !important; width: 10%">
-                            Account No
+                            <B>Account No</B>
                         </td>
                         <td style="border:none !important; width: 35%"> : 
                             @if($request->secondaryLogoCompanySystemID)
@@ -918,12 +915,12 @@
                         </td>
                         <td class="text-left" style="border:none !important;width: 25%">
                                 <span class="font-weight-bold">
-                                    Total Amount Payable
+                                    <B>Total Amount Payable</B>
                                 </span>
                         </td>
                         <td class="text-right"
                             style="border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;width: 30%"><span
-                                    class="font-weight-bold">{{number_format($directTraSubTotal, $numberFormatting)}}</span>
+                                    class="font-weight-bold"><B>{{number_format($directTraSubTotal, $numberFormatting)}}</B></span>
                         </td>
                     </tr>
                     <tr>
@@ -935,20 +932,19 @@
                         </td>
                         <td class="text-left" style="border:none !important;width: 25%">
                                 <span class="font-weight-bold">
-                                    Total Amount Payable in word
+                                    <B>Total Amount Payable in word</B>
                                 </span>
                         </td>
                         <td class="text-right"
                             style="border-left: 1px #EBEBEB !important;border-right: 1px #EBEBEB !important;width: 30%">
-                            <span
-                                    class="font-weight-bold">
-                                    {{$request->amount_word}}
+                            <span class="font-weight-bold">
+                                <B>{{$request->amount_word}}</B>
                                 @if ($request->floatAmt > 0)
-                                    and
-                                    {{$request->floatAmt}}/@if($request->currency->DecimalPlaces == 3)1000 @else 100 @endif
+                                    <B>and</B>
+                                    <B>{{$request->floatAmt}}</B>/@if($request->currency->DecimalPlaces == 3)<B>1000</B> @else <B>100</B> @endif
                                 @endif
 
-                                    only
+                                <B>only</B>
                             </span>
                         </td>
                     </tr>
@@ -958,44 +954,6 @@
     @endif
     <br/>
 </div>
-
-<div id="footer">
-    @if(!$request->line_rentalPeriod)
-        <div style="margin-top: 120px;">
-            <table class="normal_font" width="100%">
-                <tr style="width: 100%">
-                    <td width="10%" style="vertical-align: top;">
-                    </td>
-                    <td width="20%" style="vertical-align: top;">
-                        <span class="font-weight-bold">Electronically Approved By :</span>
-                    </td>
-                    <td width="20%" style="vertical-align: top;">
-                        <span class="font-weight-bold">
-                            @php
-                                $employee = \App\Models\Employee::find($request->approvedByUserSystemID);
-                            @endphp
-                            @if($employee)
-                            {{ $employee->empName }}
-                            @endif
-                        </span>
-                    </td>
-                    <td width="20%" style="vertical-align: top;">
-                        <span class="font-weight-bold">Electronically Approved Date :</span>
-                    </td>
-                    <td width="25%" style="vertical-align: top;">
-                        <span class="font-weight-bold">
-
-
-                        {{ \App\helper\Helper::convertDateWithTime($request->approvedDate)}}
-
-                        </span>
-                    </td>
-                </tr>
-            </table>
-        </div>
-    @endif
-</div>
-
 
 
 
