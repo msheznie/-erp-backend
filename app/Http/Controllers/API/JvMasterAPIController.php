@@ -764,7 +764,7 @@ class JvMasterAPIController extends AppBaseController
         $id = $request->get('matchDocumentMasterAutoID');
         /** @var JvMaster $jvMaster */
         $jvMasterData = $this->jvMasterRepository->with(['created_by', 'confirmed_by', 'modified_by', 'transactioncurrency', 'company', 'detail' => function ($query) {
-            $query->with('segment');
+            $query->with('project','segment');
         }, 'approved_by' => function ($query) {
             $query->with('employee');
             $query->where('documentSystemID', 17);
@@ -773,6 +773,14 @@ class JvMasterAPIController extends AppBaseController
         if (empty($jvMasterData)) {
             return $this->sendError('Jv Master not found');
         }
+
+        $companyId = $jvMasterData->companySystemID;
+        $isProject_base = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
+                        ->where('companySystemID', $companyId)
+                        ->where('isYesNO', 1)
+                        ->exists();
+
+        $jvMasterData['isProject_base'] = $isProject_base;
 
         return $this->sendResponse($jvMasterData, 'Jv Master retrieved successfully');
     }
@@ -1724,7 +1732,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
         }
 
         $jvMasterDataLine = jvMaster::where('jvMasterAutoId', $id)->with(['created_by', 'confirmed_by', 'modified_by', 'transactioncurrency', 'company', 'detail' => function ($query) {
-            $query->with('segment');
+            $query->with('project','segment');
         }, 'approved_by' => function ($query) {
             $query->with('employee');
             $query->where('documentSystemID', 17);
@@ -1735,6 +1743,12 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
         }
 
         $refernaceDoc = \Helper::getCompanyDocRefNo($jvMasterDataLine->companySystemID, $jvMasterDataLine->documentSystemID);
+
+        $companyId = $jvMasterDataLine->companySystemID;
+        $isProject_base = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
+                        ->where('companySystemID', $companyId)
+                        ->where('isYesNO', 1)
+                        ->exists();
 
         $transDecimal = 2;
 
@@ -1753,6 +1767,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
             'docRef' => $refernaceDoc,
             'transDecimal' => $transDecimal,
             'debitTotal' => $debitTotal,
+            'isProject_base' => $isProject_base,
             'creditTotal' => $creditTotal
         );
 

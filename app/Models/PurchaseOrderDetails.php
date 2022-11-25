@@ -402,4 +402,9 @@ class PurchaseOrderDetails extends Model
     public function productmentOrder() {
         return $this->belongsTo(\App\Models\ProcumentOrder::class,'purchaseOrderMasterID','purchaseOrderID');
     }
+    
+    public function project()
+    {
+        return $this->belongsTo('App\Models\ErpProjectMaster', 'detail_project_id', 'id');
+    }
 }

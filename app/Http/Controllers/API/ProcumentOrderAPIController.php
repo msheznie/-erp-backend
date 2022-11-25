@@ -1821,7 +1821,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $output = ProcumentOrder::where('purchaseOrderID', $request->purchaseOrderID)->with(['segment', 'created_by',
             'detail' => function ($query) {
-                $query->with(['unit','altUom','item'=>function($query1){
+                $query->with(['project','unit','altUom','item'=>function($query1){
                     $query1->select('itemCodeSystem','itemDescription')->with('specification');
                 }]);
             }, 'supplier' => function ($query) {
@@ -3176,8 +3176,8 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             return $this->sendError('Procurement Order not found');
         }
 
-        $outputRecord = ProcumentOrder::where('purchaseOrderID', $procumentOrder->purchaseOrderID)->with(['segment','created_by','detail' => function ($query) {
-            $query->with(['unit','altUom','item'=>function($query1){
+        $outputRecord = ProcumentOrder::where('purchaseOrderID', $procumentOrder->purchaseOrderID)->with(['project','segment','created_by','detail' => function ($query) {
+            $query->with(['project','unit','altUom','item'=>function($query1){
                 $query1->select('itemCodeSystem','itemDescription')->with('specification');
             }]);
         }, 'approved_by' => function ($query) {

@@ -431,4 +431,9 @@ class DirectPaymentDetails extends Model
     {
         return $this->belongsTo(MonthlyDeclarationsTypes::class, 'deductionType', 'monthlyDeclarationID');
     }
+
+    public function project()
+    {
+        return $this->belongsTo('App\Models\ErpProjectMaster', 'detail_project_id', 'id');
+    }
 }
