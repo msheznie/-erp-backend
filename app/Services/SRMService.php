@@ -2121,6 +2121,26 @@ class SRMService
             DB::beginTransaction();
             try {
 
+                $lastSerialNo = BidSubmissionMaster::orderBy('id', 'desc')
+                ->first(); 
+    
+                if(isset($lastSerialNo->serialNumber) && $lastSerialNo->serialNumber != null)
+                {
+                    
+    
+                    $lastSerialValue = 1;
+                    if ($lastSerialNo) {
+                        $lastSerialValue = intval($lastSerialNo->serialNumber) + 1;
+                    }
+    
+                    $att['serialNumber'] = $lastSerialValue;
+                    $att['bidSubmissionCode'] = 'Bid_'.str_pad($lastSerialValue, 10, '0', STR_PAD_LEFT);
+    
+                }
+
+
+
+
                 $att['tender_id'] = $tender_id;
                 $att['supplier_registration_id'] = $supplierRegId;
                 $att['uuid'] = Uuid::generate()->string;
@@ -3255,10 +3275,31 @@ class SRMService
         $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid')); 
         $lastSerialNumber = 1;
 
+
+
     
         DB::beginTransaction(); 
         try { 
 
+
+            $lastSerialNo = BidSubmissionMaster::orderBy('id', 'desc')
+            ->first(); 
+
+            if(isset($lastSerialNo->serialNumber) && $lastSerialNo->serialNumber != null)
+            {
+                
+
+                $lastSerialValue = 1;
+                if ($lastSerialNo) {
+                    $lastSerialValue = intval($lastSerialNo->serialNumber) + 1;
+                }
+
+                $att['serialNumber'] = $lastSerialValue;
+                $att['bidSubmissionCode'] = 'Bid_'.str_pad($lastSerialValue, 10, '0', STR_PAD_LEFT);
+
+            }
+         
+            
             $lastSerial = BidSubmissionMaster::where('tender_id', $tenderId)
 				->where('supplier_registration_id', $supplierRegId)
 				->orderBy('id', 'desc')
