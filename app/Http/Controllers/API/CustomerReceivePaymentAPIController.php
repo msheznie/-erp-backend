@@ -2795,11 +2795,11 @@ class CustomerReceivePaymentAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $output = CustomerReceivePayment::where('custReceivePaymentAutoID', $input['custReceivePaymentAutoID'])->with(['payment_type','confirmed_by', 'created_by', 'modified_by', 'cancelled_by', 'company', 'bank', 'currency','bank_currency', 'localCurrency', 'rptCurrency', 'customer', 'employee', 'approved_by' => function ($query) {
+        $output = CustomerReceivePayment::where('custReceivePaymentAutoID', $input['custReceivePaymentAutoID'])->with(['project','payment_type','confirmed_by', 'created_by', 'modified_by', 'cancelled_by', 'company', 'bank', 'currency','bank_currency', 'localCurrency', 'rptCurrency', 'customer', 'employee', 'approved_by' => function ($query) {
             $query->with('employee');
             $query->where('documentSystemID', 21);
         }, 'directdetails' => function ($query) {
-            $query->with('segment');
+            $query->with('segment','project');
         }, 'details', 'bankledger_by' => function ($query) {
             $query->with('bankrec_by');
             $query->where('documentSystemID', 21);
@@ -2923,11 +2923,11 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             return $this->sendError('Customer Receive Payment not found');
         }
 
-        $customerReceivePaymentRecord = CustomerReceivePayment::where('custReceivePaymentAutoID', $id)->with(['payment_type','confirmed_by', 'created_by', 'modified_by', 'company', 'bank', 'currency','bank_currency', 'localCurrency', 'rptCurrency', 'customer', 'employee', 'approved_by' => function ($query) {
+        $customerReceivePaymentRecord = CustomerReceivePayment::where('custReceivePaymentAutoID', $id)->with(['project','payment_type','confirmed_by', 'created_by', 'modified_by', 'company', 'bank', 'currency','bank_currency', 'localCurrency', 'rptCurrency', 'customer', 'employee', 'approved_by' => function ($query) {
             $query->with('employee');
             $query->where('documentSystemID', 21);
         }, 'directdetails' => function ($query) {
-            $query->with('segment');
+            $query->with('project','segment');
         }, 'details','advance_receipt_details'])->first();
 
         if (empty($customerReceivePaymentRecord)) {

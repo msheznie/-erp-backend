@@ -712,11 +712,14 @@
                         <th class="text-center">Account Code</th>
                         <th class="text-center">Account Description</th>
                     @endif
+                    @if($masterdata->documentType == 14 && $masterdata->project)
+                        <th colspan="3" class="text-center">Project</th>
+                    @endif
                     <th class="text-center">Department</th>
                     @if($masterdata->documentType == 14)
                         <th class="text-center">Contract</th>
                     @endif
-                    <th class="text-center">Comments</th>
+                    <th colspan="2" class="text-center">Comments</th>
                     <th class="text-center">Amount</th>
                     @if($masterdata->isVATApplicable)
                         <th class="text-center">VAT Amount</th>
@@ -744,6 +747,13 @@
                             <td>{{$item->glCode}}</td>
                             <td>{{$item->glCodeDes}}</td>
                         @endif
+                        @if($masterdata->documentType == 14 && $masterdata->project)
+                            <td colspan="3">
+                                @if($item->project)
+                                    {{$item->project->projectCode}} - {{$item->project->description}}
+                                @endif
+                            </td>
+                        @endif
                         <td>  @if($item->segment)
                                 {{$item->segment->ServiceLineDes}}
                             @endif
@@ -751,7 +761,7 @@
                         @if($masterdata->documentType == 14)
                             <td>{{$item->contractID}}</td>
                         @endif
-                        <td>{{$item->comments}}</td>
+                        <td colspan="2">{{$item->comments}}</td>
                         <td class="text-right">{{number_format($item->DRAmount, $transDecimal)}}</td>
                         @if($masterdata->isVATApplicable)
                             <td class="text-right">{{number_format($item->VATAmount, $transDecimal)}}</td>
@@ -765,10 +775,13 @@
                     @if($masterdata->documentType == 14)
                         <td colspan="5" class="text-right border-bottom-remov">&nbsp;</td>
                     @endif
+                    @if($masterdata->documentType == 14 && $masterdata->project)
+                        <td colspan="3" class="text-right border-bottom-remov">&nbsp;</td>
+                    @endif
                     @if($masterdata->documentType == 15)
                         <td colspan="2" class="text-right border-bottom-remov">&nbsp;</td>
                     @endif
-                    <td class="text-right" style="background-color: rgb(215,215,215)">Total Payment</td>
+                    <td colspan="2" class="text-right" style="background-color: rgb(215,215,215)">Total Payment</td>
                     <td class="text-right"
                         style="background-color: rgb(215,215,215)">{{number_format($directTotTra, $transDecimal)}}</td>
                     @if($masterdata->isVATApplicable)

@@ -645,6 +645,9 @@
                 <th style="text-align: center">#</th>
                 <th style="text-align: center">Item Code</th>
                 <th style="text-align: center">Item Description</th>
+                @if ($podata->project)
+                    <th colspan="4" style="text-align: center">Project</th>
+                @endif
                 <th style="text-align: center">Part No / Ref.Number</th>
                 <th style="text-align: center">UOM</th>
                 <th style="text-align: center">Qty</th>
@@ -676,7 +679,12 @@
                 <tr style="border-bottom: 1px solid black; width: 100%">
                     <td>{{ $x  }}</td>
                     <td>{{$det->itemPrimaryCode}}</td>
-                    <td nobr="true" style="width: 30%">{{$det->itemDescription}} <br> {!! nl2br($det->comment) !!}</td>
+                    <td nobr="true" >{{$det->itemDescription}} <br> {!! nl2br($det->comment) !!}</td>
+
+                    @if ($podata->project)
+                        <td colspan="4" nobr="true">{{$det->project->projectCode}} - {{$det->project->description}}</td>
+                    @endif
+                    
                     <td>{{$det->supplierPartNumber}}</td>
                     <td>{{$det->unit->UnitShortCode}}</td>
                     <td class="text-right">{{$det->noQty}}</td>
