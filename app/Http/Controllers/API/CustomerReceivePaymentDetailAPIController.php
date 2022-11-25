@@ -765,7 +765,10 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
         $totReceiveAmountDetail = $input['bookingAmountTrans'] - ($totalReceiveAmountPreCheck + $machAmount);
 
         if ($input['addedDocumentSystemID'] == 20) {
-            if ($input["receiveAmountTrans"] > $totReceiveAmountDetail) {
+            $compareValue = $input["receiveAmountTrans"] - $totReceiveAmountDetail;
+            $epsilon = 0.00001;
+
+            if ($compareValue > $epsilon) {
                 return $this->sendError('Matching amount cannot be greater than balance amount', 500, ['type' => 'amountmismatch']);
             }
         } else if ($input['addedDocumentSystemID'] == 19) {
