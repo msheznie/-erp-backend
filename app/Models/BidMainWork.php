@@ -145,5 +145,9 @@ class BidMainWork extends Model
     public function tender_boq_items(){
         return $this->hasMany('App\Models\TenderBoqItems', 'main_work_id', 'main_works_id');
     }
-    
+
+    public function srm_bid_submission_master()
+    {
+        return $this->belongsTo('App\Models\BidSubmissionMaster', 'bid_master_id', 'id');
+    }
 }
