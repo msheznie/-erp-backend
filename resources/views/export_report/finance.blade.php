@@ -22,6 +22,7 @@
                 <th>Period To - {{$to_date}} </th>
             </tr>
         @endif
+        <tr>Currency: {{$currencyCode}}</tr>
         <tr></tr>
         <tr></tr>
         <tr>
@@ -496,7 +497,7 @@
         @endif
         @if($accountType == 2 && $loop->last && $isUncategorize)
         <tr>
-            <td><strong>Un Categorize</strong></td>
+            <td><strong>Uncategorized</strong></td>
             @if($firstLevel)
             <td></td>
             @endif
@@ -548,7 +549,7 @@
         @endif
         @if($accountType == 1 && $loop->last)
         <tr>
-            <td><strong>Un Categorize</strong></td>
+            <td><strong>Uncategorized</strong></td>
             @if($firstLevel)
             <td></td>
             @endif

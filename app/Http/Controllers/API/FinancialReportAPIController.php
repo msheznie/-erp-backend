@@ -6963,7 +6963,7 @@ GROUP BY
                 $data[$x]['Document Number'] = $val->documentCode;
                 $data[$x]['Date'] = \Helper::dateFormat($val->documentDate);
                 $data[$x]['Document Narration'] = $val->documentNarration;
-                $data[$x]['Service Line'] = $val->ServiceLineDes;
+                $data[$x]['Segment'] = $val->ServiceLineDes;
                 $data[$x]['Contract'] = $val->clientContractID;
                 $data[$x]['Supplier/Customer'] = $val->partyName;
                 $data[$x][$input['selectedColumn']] = $tem[$input['selectedColumn']];
@@ -6973,7 +6973,7 @@ GROUP BY
             $data[$x]['Document Number'] = '';
             $data[$x]['Date'] = '';
             $data[$x]['Document Narration'] = '';
-            $data[$x]['Service Line'] = '';
+            $data[$x]['Segment'] = '';
             $data[$x]['Contract'] = '';
             $data[$x]['Supplier/Customer'] = 'Total';
             $data[$x][$input['selectedColumn']] = $total;
@@ -8530,6 +8530,12 @@ GROUP BY
             }
         } else {
             $reportData['decimalPlaces'] = 0;
+        }
+
+        if ($input['currency'] === 1) {
+            $reportData['currencyCode'] = $reportData['companyCurrency']['localcurrency']['CurrencyCode'];
+        } else {
+            $reportData['currencyCode'] = $reportData['companyCurrency']['localcurrency']['CurrencyCode'];
         }
 
         $reportData['accountType'] = $input['accountType'];
