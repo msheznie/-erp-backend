@@ -8535,7 +8535,7 @@ GROUP BY
         if ($input['currency'] === 1) {
             $reportData['currencyCode'] = $reportData['companyCurrency']['localcurrency']['CurrencyCode'];
         } else {
-            $reportData['currencyCode'] = $reportData['companyCurrency']['localcurrency']['CurrencyCode'];
+            $reportData['currencyCode'] = $reportData['companyCurrency']['reportingcurrency']['CurrencyCode'];
         }
 
         $reportData['accountType'] = $input['accountType'];
@@ -8564,6 +8564,17 @@ GROUP BY
         $reportData['report_tittle'] = 'Finance Report';
         $reportData['from_date'] = $input['fromDate'];
         $reportData['to_date'] = $input['toDate'];
+
+        if ($request->dateType == 1) {
+            $toDate = new Carbon($input['toDate']);
+            $reportData['to_date'] = $toDate->format('d/m/Y');
+            $fromDate = new Carbon($input['fromDate']);
+            $reportData['from_date'] = $fromDate->format('d/m/Y');
+        } else {
+            $period = CompanyFinancePeriod::find($request->month);
+            $reportData['to_date'] = Carbon::parse($period->dateTo)->format('d/m/Y');
+            $reportData['from_date'] = Carbon::parse($period->dateFrom)->format('d/m/Y');
+        }
 
         return \Excel::create('finance', function ($excel) use ($reportData, $templateName) {
             $excel->sheet('New sheet', function ($sheet) use ($reportData, $templateName) {
