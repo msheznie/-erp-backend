@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateBidSubmissionMasterAPIRequest;
 use App\Http\Requests\API\UpdateBidSubmissionMasterAPIRequest;
+use App\Models\BidMainWork;
 use App\Models\BidSubmissionDetail;
 use App\Models\BidSubmissionMaster;
 use App\Models\DocumentAttachments;
@@ -693,7 +694,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
         ->join('srm_tender_master', 'srm_tender_master.id', '=', 'srm_bid_submission_master.tender_id')
         ->join('srm_bid_submission_detail', 'srm_bid_submission_detail.bid_master_id', '=', 'srm_bid_submission_master.id')
         ->join('srm_evaluation_criteria_details', 'srm_evaluation_criteria_details.id', '=', 'srm_bid_submission_detail.evaluation_detail_id')
-        ->havingRaw('weightage >= passing_weightage')
+        ->havingRaw('weightage <= passing_weightage')
         ->groupBy('srm_bid_submission_master.id')
         ->where('srm_evaluation_criteria_details.critera_type_id', 2)->where('srm_bid_submission_master.status', 1)->where('srm_bid_submission_master.bidSubmittedYN', 1)->where('srm_bid_submission_master.tender_id', $tenderId)
         ;
@@ -788,7 +789,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
             ->join('srm_tender_master', 'srm_tender_master.id', '=', 'srm_bid_submission_master.tender_id')
             ->join('srm_bid_submission_detail', 'srm_bid_submission_detail.bid_master_id', '=', 'srm_bid_submission_master.id')
             ->join('srm_evaluation_criteria_details', 'srm_evaluation_criteria_details.id', '=', 'srm_bid_submission_detail.evaluation_detail_id')
-            ->havingRaw('weightage >= passing_weightage')
+            ->havingRaw('weightage <= passing_weightage')
             ->groupBy('srm_bid_submission_master.id')
             ->where('srm_evaluation_criteria_details.critera_type_id', 2)
             ->where('srm_bid_submission_master.status', 1)
@@ -834,16 +835,52 @@ class BidSubmissionMasterAPIController extends AppBaseController
                 if(sizeof($notBoqitems) > 0 ){
                     $q->whereIn('id', $notBoqitems);
                 }
-            $q->with(['bid_main_work' => function ($q) use ($bidMasterId, $notBoqitems) {
-                $q->with('tender_boq_items')->whereIn('bid_master_id', $bidMasterId);
-            },'tender_boq_items' => function ($q) use ($bidMasterId, $notBoqitems) {
-                $q->with(['bid_boq' => function ($q) use ($bidMasterId) {
-                    $q->whereIn('bid_master_id', $bidMasterId);
-                }]);
-            }]);
         }])->where('tender_id', $tenderId)->get();
 
-        return $this->sendResponse($queryResult, 'Data retrieved successfully');
+        $data = PricingScheduleMaster::with(['tender_bid_format_master', 'bid_schedule' => function ($q) use ($bidMasterId) {
+            $q->where('bid_master_id', $bidMasterId);
+        }, 'pricing_shedule_details' => function ($q) use ($bidMasterId, $notBoqitems) {
+            $q->with(['tender_boq_items' => function ($q) use ($bidMasterId) {
+                $q->with(['bid_boqs' => function ($q) use ($bidMasterId) {
+                    $q->whereIn('bid_master_id', $bidMasterId);
+                }]);
+            }, 'bid_main_works' => function ($q) use ($bidMasterId) {
+                $q->with('srm_bid_submission_master.SupplierRegistrationLink')->whereIn('bid_master_id', $bidMasterId);
+            }])->whereNotIn('field_type', [3,4])->where('is_disabled', 0);
+                if($notBoqitems){
+                   $q->whereIn('id', $notBoqitems);
+                }
+        }])->where('tender_id', $tenderId)->get();
+
+        $itemsArrayCount = array();
+        $arr = array();
+        foreach ($bidSubmission as $bid) {
+            $totalItemsCount = 0;
+            $totalAmount = PricingScheduleMaster::with(['pricing_shedule_details' => function ($q) use ($bid, $notBoqitems) {
+                $q->with(['bid_main_works' => function ($q) use ($bid) {
+                    $q->where('bid_master_id', $bid)->sum('total_amount');
+                }])->whereNotIn('field_type', [3, 4])->where('is_disabled', 0);
+                if ($notBoqitems) {
+                    $q->whereIn('id', $notBoqitems);
+                }
+            }])->where('tender_id', $tenderId)->get()->toArray();
+
+            foreach ($totalAmount as $pricing_shedule_details) {
+                foreach ($pricing_shedule_details['pricing_shedule_details'] as $item) {
+                    $totalItemsCount = $totalItemsCount + $item['bid_main_works'][0]['total_amount'];
+                }
+            }
+
+            $arr['id'] = $bid['id'];
+            $arr['value'] = $totalItemsCount;
+            $itemsArrayCount[] = $arr;
+        }
+
+        $result = ['supplier_list' => $queryResult,
+            'item_list' => $data,
+            'totalItemsCount' => $itemsArrayCount];
+
+        return $this->sendResponse($result, 'Data retrieved successfully');
 
     }
 }
