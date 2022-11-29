@@ -34,15 +34,15 @@
            @endforeach
        </tr>
 
-      @foreach ($bidData[0]['pricing_shedule_details'] as $doc)
+      @foreach ($supplier_list[0]['pricing_shedule_details'] as $doc)
         @if($doc['boq_applicable'] != 1)
             <tr>
               <td>{{$doc['label']}}</td>
-              <td style="text-align: center;">{{$doc['bid_main_work']['amount']}}</td>
+              <td style="text-align: center;">{{$doc['bid_main_work']['total_amount']}}</td>
             </tr>
         @endif
       @endforeach
-      @foreach ($bidData[0]['pricing_shedule_details'] as $doc)
+      @foreach ($supplier_list[0]['pricing_shedule_details'] as $doc)
         @if($doc['boq_applicable'] == 1)
             @if(sizeof($doc['tender_boq_items']) > 0)
               <tr>
@@ -55,7 +55,7 @@
                       <td>{{ $doc2['item_name'] }}</td>
                       @foreach ($srm_bid_submission_master as $doc3)
                           @if (($doc3['SupplierRegistrationLink']['id']  == $doc2['bid_boq']['supplier_registration_id']))
-                              <td style="text-align: center;">{{$doc2['bid_boq']['unit_amount']}}</td>
+                              <td style="text-align: center;">{{$doc2['bid_boq']['total_amount']}}</td>
                           @endif
                       @endforeach
                       @endforeach
