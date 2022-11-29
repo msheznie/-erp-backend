@@ -349,5 +349,6 @@ return [
     'chart_of_account_has_a_balance_in_gl' => 'The chart of account has a balance amount in general ledger',
     'account_description_cannot_be_empty' => 'Account Description cannot be empty',
     'employee_advance_payment' => 'Employee Advance Payment',
-    'employee_payment' => 'Employee Payment'
+    'employee_payment' => 'Employee Payment',
+    'login_failed_invalid_user_id_or_password' => "Login failed; Invalid user ID or password"
 ];
