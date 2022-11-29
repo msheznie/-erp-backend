@@ -159,12 +159,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::resource('units', 'UnitAPIController');
 
-            Route::resource('finance_item_category_subs', 'FinanceItemCategorySubAPIController');
-            Route::post('finance_item_category_subs_update', 'FinanceItemCategorySubAPIController@finance_item_category_subs_update');
-            Route::post('financeItemCategorySubsExpiryUpdate', 'FinanceItemCategorySubAPIController@financeItemCategorySubsExpiryUpdate');
             Route::post('financeItemCategorySubsAttributesUpdate', 'FinanceItemCategorySubAPIController@financeItemCategorySubsAttributesUpdate');
 
-            Route::resource('itemcategory_sub_assigneds', 'FinanceItemcategorySubAssignedAPIController');
 
             Route::resource('finance_item_category_masters', 'FinanceItemCategoryMasterAPIController');
 
@@ -199,11 +195,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
 
             Route::post('allItemFinanceCategories', 'FinanceItemCategoryMasterAPIController@allItemFinanceCategories');
-            Route::post('getFinanceItemCategoryMasterExpiryStatus', 'FinanceItemCategoryMasterAPIController@getFinanceItemCategoryMasterExpiryStatus');
-            Route::post('getFinanceItemCategoryMasterAttributesStatus', 'FinanceItemCategoryMasterAPIController@getFinanceItemCategoryMasterAttributesStatus');
-            Route::post('allItemFinanceSubCategoriesByMainCategory', 'FinanceItemCategoryMasterAPIController@allItemFinanceSubCategoriesByMainCategory');
-            Route::get('getSubCategoryFormData', 'FinanceItemCategoryMasterAPIController@getSubCategoryFormData');
-            Route::post('getAttributesData', 'FinanceItemCategoryMasterAPIController@getAttributesData');
+
+
+
             Route::get('getDropdownValues', 'FinanceItemCategoryMasterAPIController@getDropdownValues');
 
             Route::post('addItemAttributes', 'FinanceItemCategoryMasterAPIController@addItemAttributes');
@@ -221,7 +215,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('erp_attributes_field_types', 'ErpAttributesFieldTypeAPIController');
 
 
-            Route::get('assignedCompaniesBySubCategory', 'FinanceItemcategorySubAssignedAPIController@assignedCompaniesBySubCategory');
 
             /** Company Navigation Menu access*/
             Route::get('getGroupCompany', 'CompanyNavigationMenusAPIController@getGroupCompany');
@@ -237,7 +230,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('assignUserGroupNavigation', 'UserGroupAssignAPIController');
             Route::get('getUserGroupNavigation', 'UserGroupAssignAPIController@getUserGroupNavigation');
             Route::get('getAllCompanies', 'CompanyAPIController@getAllCompanies');
-            Route::get('getNotAssignedCompanies', 'FinanceItemcategorySubAssignedAPIController@getNotAssignedCompanies');
             Route::resource('user_group_assigns', 'UserGroupAssignAPIController');
             Route::get('checkUserGroupAccessRights', 'UserGroupAssignAPIController@checkUserGroupAccessRights');
             Route::resource('purchase_order_details', 'PurchaseOrderDetailsAPIController');
