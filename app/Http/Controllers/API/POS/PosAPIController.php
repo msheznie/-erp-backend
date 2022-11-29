@@ -329,7 +329,7 @@ class PosAPIController extends AppBaseController
             vatSubCategory as vat_sub_category_id,itemmaster.isActive as is_active,itemApprovedComment as comment, "" as is_sub_item_exist,"" as is_sub_item_applicable,
             "" as local_currency_id,"" as local_currency,"" as local_exchange_rate,"" as local_selling_price,"" as local_decimal_place,
             "" as reporting_currency_id,"" as reporting_currency,"" as reporting_exchange_rate,"" as reporting_selling_price,"" as reporting_decimal_place,
-            "" as is_deleted,"" as deleted_by,"" as deleted_date_time,itemmaster.pos_type, itemassigned.wacValueLocal as item_cost')
+            "" as is_deleted,"" as deleted_by,"" as deleted_date_time,itemmaster.pos_type, itemassigned.wacValueLocal as item_cost, itemassigned.wacValueLocal as selling_price , "" as VAT')
                 ->join('financeitemcategorymaster', 'financeitemcategorymaster.itemCategoryID', '=', 'itemmaster.financeCategoryMaster')
                 ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
                 ->join('units', 'units.UnitID', '=', 'itemmaster.unit')
