@@ -431,7 +431,7 @@ class BarcodeConfigurationAPIController extends AppBaseController
             $pageWidth = 50;
             if($type == 1)
             {
-                $assets = FixedAssetMaster::orderBy('faID', 'desc')->ofCompany($subCompanies)->pluck('faCode');
+                $assets = FixedAssetMaster::with('location')->orderBy('faID', 'desc')->ofCompany($subCompanies)->get();
 
             }
             else
@@ -441,7 +441,7 @@ class BarcodeConfigurationAPIController extends AppBaseController
             
                 $search = $request->get('search_val');
     
-                $assetCositng = FixedAssetMaster::with(['category_by', 'sub_category_by', 'finance_category'])->ofCompany($subCompanies);
+                $assetCositng = FixedAssetMaster::with(['location','category_by', 'sub_category_by', 'finance_category'])->ofCompany($subCompanies);
     
                 if (array_key_exists('confirmedYN', $input)) {
                     if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
@@ -484,7 +484,7 @@ class BarcodeConfigurationAPIController extends AppBaseController
                 }
         
                
-                $assets = $assetCositng->orderBy('faID', 'desc')->pluck('faCode');
+                $assets = $assetCositng->orderBy('faID', 'desc')->get();
     
             }
        
