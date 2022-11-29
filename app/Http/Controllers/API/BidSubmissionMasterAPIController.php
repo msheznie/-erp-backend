@@ -739,6 +739,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
     public function SupplierItemWiseExportReport(Request $request)
     {
         $tenderId = $request['tenderMasterId'];
+        $tenderId = $request->get('tenderMasterId');
         $bidSubmission = $request['bidSubmission'];
         $itemList = $request['itemList'];
 
