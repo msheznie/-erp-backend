@@ -62,22 +62,22 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('getSuppliersByCompany', 'SupplierMasterAPIController@getSuppliersByCompany');
             Route::get('getSearchSupplierByCompany', 'SupplierMasterAPIController@getSearchSupplierByCompany');
 
-            Route::get('getRegisteredSupplierData', 'SupplierMasterAPIController@getRegisteredSupplierData');
-            Route::get('bankMemosByRegisteredSupplierCurrency', 'SupplierMasterAPIController@bankMemosByRegisteredSupplierCurrency');
-            Route::post('notApprovedRegisteredSuppliers', 'SupplierMasterAPIController@notApprovedRegisteredSuppliers');
-            Route::post('approvedRegisteredSuppliers', 'SupplierMasterAPIController@approvedRegisteredSuppliers');
-            Route::post('updateRegisteredSupplierAttachment', 'SupplierMasterAPIController@updateRegisteredSupplierAttachment');
-            Route::post('updateRegisteredSupplierCurrency', 'SupplierMasterAPIController@updateRegisteredSupplierCurrency');
-            Route::post('updateRegisteredSupplierBankMemo', 'SupplierMasterAPIController@updateRegisteredSupplierBankMemo');
-            Route::post('updateRegisteredSupplierMaster', 'SupplierMasterAPIController@updateRegisteredSupplierMaster');
+            
+            
+            
+            
+            
+            
+            
+            
             Route::post('getAllRegisteredSupplierApproval', 'SupplierMasterAPIController@getAllRegisteredSupplierApproval');
-            Route::get('downloadSupplierAttachmentFile', 'SupplierMasterAPIController@downloadSupplierAttachmentFile');
+            
 
 
             Route::resource('registered_supplier_currencies', 'RegisteredSupplierCurrencyAPIController');
             Route::resource('registered_bank_memo_suppliers', 'RegisteredBankMemoSupplierAPIController');
-            Route::resource('registered_supp_contact_details', 'RegisteredSupplierContactDetailAPIController');
-            Route::resource('registered_supplier_attachments', 'RegisteredSupplierAttachmentAPIController');
+            
+            
 
             Route::get('user/menu', 'NavigationUserGroupSetupAPIController@userMenu');
             Route::get('getUserMenu', 'NavigationUserGroupSetupAPIController@getUserMenu');
