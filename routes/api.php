@@ -298,13 +298,13 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             
 
             /** Unit master Created by Pasan  */
-            Route::resource('unit/masters', 'UnitAPIController');
-            Route::post('getAllUnitMaster', 'UnitAPIController@getAllUnitMaster');
-            Route::post('updateUnitMaster', 'UnitAPIController@updateUnitMaster');
-            Route::get('getUnitMasterFormData', 'UnitAPIController@getUnitMasterFormData');
-            Route::resource('unit/conversion', 'UnitConversionAPIController');
-            Route::get('getUnitConversionFormData', 'UnitConversionAPIController@getUnitConversionFormData');
-            Route::post('unit/conversion/update', 'UnitConversionAPIController@updateUnitConversion');
+            
+            
+            
+            
+            
+            
+            
 
             /** Approval Group Created by Mubashir  */
             Route::post('getApprovalGroupByCompanyDatatable', 'ApprovalGroupsAPIController@getApprovalGroupByCompanyDatatable');
