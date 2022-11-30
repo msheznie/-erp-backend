@@ -209,3 +209,17 @@ Route::group([], function() {
 	Route::resource('bank/assign', 'BankAssignAPIController', ['names' => 'Bank assign']);
 });
 
+
+//Units
+Route::group([], function() {
+	Route::get('getUnitMasterFormData', 'UnitAPIController@getUnitMasterFormData')->name("Get unit master form data");
+	Route::get('getUnitConversionFormData', 'UnitConversionAPIController@getUnitConversionFormData')->name("Get unit conversion form data");
+
+	Route::post('getAllUnitMaster', 'UnitAPIController@getAllUnitMaster')->name("Get all unit master");
+	Route::post('unit/conversion/update', 'UnitConversionAPIController@updateUnitConversion')->name("Update unit conversion");
+	Route::post('updateUnitMaster', 'UnitAPIController@updateUnitMaster')->name("Update unit master");
+
+	Route::resource('unit/masters', 'UnitAPIController', ['names' => 'Unit masters']);
+	Route::resource('unit/conversion', 'UnitConversionAPIController', ['names' => 'Unit conversion']);
+});
+
