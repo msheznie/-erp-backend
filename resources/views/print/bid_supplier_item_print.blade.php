@@ -63,7 +63,7 @@
             <tr class="data-row">
                 <td>{{$item['label']}}</td>
                 @foreach ($item['bid_main_works'] as $bid_main_work)
-                    <td style="text-align: center;">{{$bid_main_work['total_amount']}}</td>
+                    <td style="text-align: right;">{{number_format($bid_main_work['total_amount'], 2, '.', ',')}}</td>
                 @endforeach
             </tr>
         @endif
@@ -81,7 +81,7 @@
             <tr class="data-row">
                 <td>{{ $boq['item_name'] }}</td>
                 @foreach ($boq['bid_boqs'] as $bid_boq)
-                   <td style="text-align: center;">{{$bid_boq['total_amount']}}</td>
+                   <td style="text-align: right;">{{ number_format($bid_boq['total_amount'], 2, '.', ',')}}</td>
                 @endforeach
             </tr>
         @endforeach
@@ -91,7 +91,7 @@
         @foreach ($supplier_list as $bid)
             @foreach ($totalItemsCount as $item)
                 @if($item['id'] == $bid['id'])
-                    <td style="text-align: center;"><strong>{{$item['value']}}</strong></td>
+                    <td style="text-align: right;"><strong>{{ number_format($item['value'], 2, '.', ',') }}</strong></td>
                 @endif
             @endforeach
         @endforeach
