@@ -33,7 +33,15 @@
         <td style="border: hidden"></td>
     </tr>
     <tr>
+        <td style="border: hidden"></td>
+        <td style="border: hidden"></td>
+    </tr>
+    <tr>
         <td style="border: hidden"><strong>Tender Description:</strong> {{$tender_description}}</td>
+        <td style="border: hidden"></td>
+    </tr>
+    <tr>
+        <td style="border: hidden"></td>
         <td style="border: hidden"></td>
     </tr>
     <tr>
