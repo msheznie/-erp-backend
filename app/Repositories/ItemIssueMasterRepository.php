@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Models\ItemIssueDetails;
 use App\Models\ItemIssueMaster;
 use InfyOm\Generator\Common\BaseRepository;
 use App\helper\StatusService;
@@ -112,7 +113,7 @@ class ItemIssueMasterRepository extends BaseRepository
         }
 
         $itemIssueMaster = ItemIssueMaster::whereIn('companySystemID', $subCompanies)
-            ->with(['created_by', 'warehouse_by', 'segment_by', 'customer_by']);
+            ->with(['created_by', 'warehouse_by', 'segment_by', 'customer_by','details']);
 
 
         if (array_key_exists('confirmedYN', $input)) {
@@ -169,7 +170,8 @@ class ItemIssueMasterRepository extends BaseRepository
                 'erp_itemissuemaster.createdDateTime',
                 'erp_itemissuemaster.issueRefNo',
                 'erp_itemissuemaster.wareHouseFrom',
-                'erp_itemissuemaster.refferedBackYN'
+                'erp_itemissuemaster.refferedBackYN',
+                'erp_itemissuemaster.issueType'
             ]);
 
         if ($search) {
@@ -180,7 +182,8 @@ class ItemIssueMasterRepository extends BaseRepository
                     ->orWhere('issueRefNo', 'LIKE', "%{$search}%");
             });
         }
-        
+
+
         return $itemIssueMaster;
     }
 
