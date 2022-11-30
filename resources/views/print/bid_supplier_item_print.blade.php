@@ -8,7 +8,11 @@
         }
 
         .sup-item-summary-report {
-            font-size: 12px;
+            font-size: 13px;
+        }
+
+        .sup-item-summary-report-head {
+            font-size: 14px;
         }
 
         .sup-item-summary-report thead th {
@@ -23,64 +27,68 @@
     </style>
 </head>
 <h1><center>Commercial Bid Item Wise Evaluation Report</center></h1>
-<table style="border: none">
-    <tr style="border: hidden">
-        <td style="border: hidden">Tender ID:</td>
+<table style="width:100%;" style="border: none" class="sup-item-summary-report-head">
+    <tr>
+        <td style="border: hidden"><strong>Tender ID:</strong> {{$tender_code}}</td>
         <td style="border: hidden"></td>
     </tr>
     <tr>
-        <td style="border: hidden">Tender Description:</td>
+        <td style="border: hidden"><strong>Tender Description:</strong> {{$tender_description}}</td>
         <td style="border: hidden"></td>
     </tr>
     <tr>
-        <td style="border: hidden">Commercial Bid Opening Date:</td>
+        <td style="border: hidden"><strong>Commercial Bid Opening Date: </strong>{{\Carbon\Carbon::parse($commerical_bid_opening_date)->format('d/m/Y')}}</td>
         <td style="border: hidden"></td>
     </tr>
 </table>
 <br>
-<br>
 <table style="width:100%;" class="sup-item-summary-report">
        <tr class="data-row">
            <th>Item</th>
-           @foreach ($srm_bid_submission_master as $doc)
-               <th style="text-align: center;">{{$doc['SupplierRegistrationLink']['name']}}</th>
+           @foreach ($supplier_list as $bid)
+               <th style="text-align: center;">{{$bid['name']}}</th>
            @endforeach
        </tr>
-
-      @foreach ($supplier_list[0]['pricing_shedule_details'] as $doc)
-        @if($doc['boq_applicable'] != 1)
+    <tbody>
+    @foreach ($item_list[0]['pricing_shedule_details'] as $item)
+        @if($item['boq_applicable'] != 1)
             <tr class="data-row">
-              <td>{{$doc['label']}}</td>
-              <td style="text-align: center;">{{$doc['bid_main_work']['total_amount']}}</td>
+                <td>{{$item['label']}}</td>
+                @foreach ($item['bid_main_works'] as $bid_main_work)
+                    <td style="text-align: center;">{{$bid_main_work['total_amount']}}</td>
+                @endforeach
             </tr>
         @endif
-      @endforeach
-      @foreach ($supplier_list[0]['pricing_shedule_details'] as $doc)
-        @if($doc['boq_applicable'] == 1)
-            @if(sizeof($doc['tender_boq_items']) > 0)
-              <tr class="data-row">
-                  <td><strong>{{$doc['label']}}</strong></td>
-                  <td></td>
-              </tr>
-            @endif
-              @foreach ($doc['tender_boq_items'] as $doc2)
-                  <tr class="data-row">
-                      <td>{{ $doc2['item_name'] }}</td>
-                      @foreach ($srm_bid_submission_master as $doc3)
-                          @if (($doc3['SupplierRegistrationLink']['id']  == $doc2['bid_boq']['supplier_registration_id']))
-                              <td style="text-align: center;">{{$doc2['bid_boq']['total_amount']}}</td>
-                          @endif
-                      @endforeach
-                      @endforeach
-                  </tr>
-                  @endif
-      @endforeach
-        <tr class="data-row">
-            <td><strong>Total</strong></td>
-            @foreach ($srm_bid_submission_master as $doc)
-                <td style="text-align: center;"><strong></strong></td>
+
+        @if($item['boq_applicable'] == 1)
+            <tr class="data-row">
+                <td><strong>{{$item['label']}}</strong></td>
+                @foreach ($supplier_list as $bid)
+                    <td></td>
+                @endforeach
+            </tr>
+        @endif
+
+        @foreach ($item['tender_boq_items'] as $boq)
+            <tr class="data-row">
+                <td>{{ $boq['item_name'] }}</td>
+                @foreach ($boq['bid_boqs'] as $bid_boq)
+                   <td style="text-align: center;">{{$bid_boq['total_amount']}}</td>
+                @endforeach
+            </tr>
+        @endforeach
+    @endforeach
+    <tr class="data-row">
+        <td><strong>Total</strong></td>
+        @foreach ($supplier_list as $bid)
+            @foreach ($totalItemsCount as $item)
+                @if($item['id'] == $bid['id'])
+                    <td style="text-align: center;"><strong>{{$item['value']}}</strong></td>
+                @endif
             @endforeach
-        </tr>
+        @endforeach
+    </tr>
+    </tbody>
 </table>
 </html>
 
