@@ -1,6 +1,6 @@
 <html>
 <head>
-    <title>Item - Supplier</title>
+    <title>Supplier Item Summary</title>
     <style>
         .sup-item-summary-report, th, td{
             border: 1px solid black;
