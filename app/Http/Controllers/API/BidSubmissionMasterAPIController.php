@@ -26,6 +26,8 @@ use App\Models\EvaluationCriteriaScoreConfig;
 use App\Models\BidBoq;
 use App\Models\SupplierRegistrationLink;
 use App\Repositories\TenderMasterRepository;
+use function Doctrine\Common\Cache\Psr6\get;
+
 /**
  * Class BidSubmissionMasterController
  * @package App\Http\Controllers\API
@@ -738,32 +740,44 @@ class BidSubmissionMasterAPIController extends AppBaseController
 
     public function SupplierItemWiseExportReport(Request $request)
     {
-        $tenderId = $request['tenderMasterId'];
-        $bidSubmission = $request['bidSubmission'];
-        $itemList = $request['itemList'];
+        $tenderId = $request->get('tenderMasterId');
+        $bidSubmission = array_map('intval', explode(',', $request->get('bidSubmission')));
+        $itemList = array_map('intval', explode(',', $request->get('itemList')));
 
         $bidMasterId = [];
         if(isset($bidSubmission)){
             foreach ($bidSubmission as $bid){
-                $bidMasterId[] = $bid['id'];
+                $bidMasterId[] = $bid;
             }
         }
+
+        $tenderDetails = TenderMaster::select('description', 'tender_code','commerical_bid_opening_date')->where('id', $tenderId)->get();
 
         $notBoqitems = [];
         if(isset($itemList)){
             foreach ($itemList as $item){
-                $notBoqitems[] = $item['id'];
+                $notBoqitems[] = $item;
             }
         }
 
         $queryResult = PricingScheduleMaster::with(['tender_master.srm_bid_submission_master' => function ($q) use ($bidMasterId, $notBoqitems) {
             $q->with('SupplierRegistrationLink')->whereIn('id', $bidMasterId);
-        }, 'bid_schedules.SupplierRegistrationLink', 'pricing_shedule_details' => function ($q) use ($bidMasterId, $notBoqitems) {
+        }, 'pricing_shedule_details' => function ($q) use ($bidMasterId, $notBoqitems) {
             $q->with('tender_boq_items')->where('is_disabled', 0)->whereNotIn('field_type', [3,4]);
             if(sizeof($notBoqitems) > 0 ){
                 $q->whereIn('id', $notBoqitems);
             }
         }])->where('tender_id', $tenderId)->get();
+
+        $supplierNameCode = array();
+        $supplierArr = array();
+        foreach ($queryResult as $query) {
+            foreach ($query['tender_master']['srm_bid_submission_master'] as $item) {
+                $supplierArr['id'] = $item['id'];
+                $supplierArr['name'] = $item['bidSubmissionCode']  ." - " . $item['SupplierRegistrationLink']['name'] ;
+                $supplierNameCode[] = $supplierArr;
+            }
+        }
 
         $data = PricingScheduleMaster::with(['tender_bid_format_master', 'bid_schedule' => function ($q) use ($bidMasterId) {
             $q->where('bid_master_id', $bidMasterId);
@@ -782,7 +796,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
 
         $itemsArrayCount = array();
         $arr = array();
-        foreach ($bidSubmission as $bid) {
+        foreach ($bidMasterId as $bid) {
             $totalItemsCount = 0;
             $totalAmount = PricingScheduleMaster::with(['pricing_shedule_details' => function ($q) use ($bid, $notBoqitems) {
                 $q->with(['bid_main_works' => function ($q) use ($bid) {
@@ -799,14 +813,17 @@ class BidSubmissionMasterAPIController extends AppBaseController
                 }
             }
 
-            $arr['id'] = $bid['id'];
+            $arr['id'] = $bid;
             $arr['value'] = $totalItemsCount;
             $itemsArrayCount[] = $arr;
         }
         $time = strtotime("now");
         $fileName = 'supplier_item_summary' . $time . '.pdf';
         $order = array(
-            'supplier_list' => $queryResult,
+            'tender_code' => $tenderDetails[0]['tender_code'],
+            'tender_description' => $tenderDetails[0]['description'],
+            'commerical_bid_opening_date' => $tenderDetails[0]['commerical_bid_opening_date'],
+            'supplier_list' => $supplierNameCode,
             'srm_bid_submission_master' => $queryResult[0]['tender_master']['srm_bid_submission_master'],
             'item_list' => $data,
             'totalItemsCount' => $itemsArrayCount
@@ -884,7 +901,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
         foreach ($queryResult as $query) {
             foreach ($query['tender_master']['srm_bid_submission_master'] as $item) {
                 $supplierArr['id'] = $item['id'];
-                $supplierArr['name'] = $item['SupplierRegistrationLink']['name'] ." - " . $item['bidSubmissionCode'];
+                $supplierArr['name'] = $item['bidSubmissionCode']  ." - " . $item['SupplierRegistrationLink']['name'] ;
                 $supplierNameCode[] = $supplierArr;
             }
         }
