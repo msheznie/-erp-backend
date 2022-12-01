@@ -249,3 +249,10 @@ Route::group([], function() {
 	Route::post('getDocumentAmendFromGL', 'GeneralLedgerAPIController@getDocumentAmendFromGL')->name("Get document amend from gl");
 	Route::post('changePostingDate', 'GeneralLedgerAPIController@changePostingDate')->name("Change posting date document amend");
 });
+
+//Attachment Master
+Route::group([], function() {
+	Route::get('getAttachmentFormData', 'DocumentAttachmentsAPIController@getAttachmentFormData')->name("Get attachment form data");
+
+	Route::post('getAllAttachments', 'DocumentAttachmentsAPIController@getAllAttachments')->name("Get all attachments");
+});
