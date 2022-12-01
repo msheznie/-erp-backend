@@ -49,3 +49,19 @@ Route::group([], function(){
 
 Route::resource('control_accounts', 'ControlAccountAPIController');
 Route::get('getChartOfAccounts', 'ChartOfAccountAPIController@getChartOfAccounts')->name("Get chart of accounts");
+
+//cash flow template
+Route::group([], function(){
+    Route::resource('cash_flow_templates', 'CashFlowTemplateAPIController');
+    Route::resource('cash_flow_template_details', 'CashFlowTemplateDetailAPIController');
+    Route::resource('cash_flow_template_links', 'CashFlowTemplateLinkAPIController');
+    
+    Route::get('getCashFlowReportHeaderData', 'CashFlowTemplateAPIController@getCashFlowReportHeaderData')->name("Get cash flow report header data");
+    Route::get('getCashFlowTemplateSubCat', 'CashFlowTemplateDetailAPIController@getCashFlowTemplateSubCat')->name("Get cash flow template sub category");
+    Route::get('getCashFlowTemplateDetail/{id}', 'CashFlowTemplateDetailAPIController@getCashFlowTemplateDetail')->name("Get cash flow template details");
+    
+    Route::post('deleteAllLinkedGLCodesCashFlow', 'CashFlowTemplateLinkAPIController@deleteAllLinkedGLCodesCashFlow')->name("Delete all lined GL codes of cash flow template");
+    Route::post('getAllCashFlowTemplate', 'CashFlowTemplateAPIController@getAllCashFlowTemplate')->name("Get all cash flow templates");
+    Route::post('cashFlowTemplateDetailSubCatLink', 'CashFlowTemplateLinkAPIController@cashFlowTemplateDetailSubCatLink')->name("Cash flow template detail sub category link");
+    Route::post('addCashFlowTemplateSubCategory', 'CashFlowTemplateDetailAPIController@addCashFlowTemplateSubCategory')->name("Add cash flow template sub category");
+});
