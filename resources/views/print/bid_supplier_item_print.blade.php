@@ -1,73 +1,102 @@
 <html>
 <head>
-    <title>Item - Supplier</title>
+    <title>Supplier Item Summary</title>
     <style>
-        table, th, td {
+        .sup-item-summary-report, th, td{
             border: 1px solid black;
             border-collapse: collapse;
         }
+
         .sup-item-summary-report {
-            font-size: 12px;
+            font-size: 13px;
         }
 
-        .sup-item-summary-report-body {
-            font-size: 12px;
+        .sup-item-summary-report-head {
+            font-size: 14px;
         }
 
-        .table thead th {
+        .sup-item-summary-report thead th {
             border-bottom: none !important;
         }
 
-        .table thead th {
+        .sup-item-summary-report thead th {
             vertical-align: bottom;
             border-bottom: 2px solid #c2cfd6;
         }
 
     </style>
 </head>
-
+<h1><center>Commercial Bid Item Wise Evaluation Report</center></h1>
+<table style="width:100%;" style="border: none" class="sup-item-summary-report-head">
+    <tr>
+        <td style="border: hidden"><strong>Tender ID:</strong> {{$tender_code}}</td>
+        <td style="border: hidden"></td>
+    </tr>
+    <tr>
+        <td style="border: hidden"></td>
+        <td style="border: hidden"></td>
+    </tr>
+    <tr>
+        <td style="border: hidden"><strong>Tender Description:</strong> {{$tender_description}}</td>
+        <td style="border: hidden"></td>
+    </tr>
+    <tr>
+        <td style="border: hidden"></td>
+        <td style="border: hidden"></td>
+    </tr>
+    <tr>
+        <td style="border: hidden"><strong>Commercial Bid Opening Date: </strong>{{\Carbon\Carbon::parse($commerical_bid_opening_date)->format('d/m/Y')}}</td>
+        <td style="border: hidden"></td>
+    </tr>
+</table>
+<br>
 <table style="width:100%;" class="sup-item-summary-report">
-       <tr>
-           <th></th>
-           @foreach ($srm_bid_submission_master as $doc)
-               <th style="text-align: center;"><strong>{{$doc['SupplierRegistrationLink']['name']}}</strong></th>
+       <tr class="data-row">
+           <th>Item</th>
+           @foreach ($supplier_list as $bid)
+               <th style="text-align: center;">{{$bid['name']}}</th>
            @endforeach
        </tr>
-
-      @foreach ($bidData[0]['pricing_shedule_details'] as $doc)
-        @if($doc['boq_applicable'] != 1)
-            <tr>
-              <td>{{$doc['label']}}</td>
-              <td style="text-align: center;">{{$doc['bid_main_work']['amount']}}</td>
+    <tbody>
+    @foreach ($item_list[0]['pricing_shedule_details'] as $item)
+        @if($item['boq_applicable'] != 1)
+            <tr class="data-row">
+                <td>{{$item['label']}}</td>
+                @foreach ($item['bid_main_works'] as $bid_main_work)
+                    <td style="text-align: right;">{{number_format($bid_main_work['total_amount'], 2, '.', ',')}}</td>
+                @endforeach
             </tr>
         @endif
-      @endforeach
-      @foreach ($bidData[0]['pricing_shedule_details'] as $doc)
-        @if($doc['boq_applicable'] == 1)
-            @if(sizeof($doc['tender_boq_items']) > 0)
-              <tr>
-                  <td><strong>{{$doc['label']}}</strong></td>
-                  <td></td>
-              </tr>
-            @endif
-              @foreach ($doc['tender_boq_items'] as $doc2)
-                  <tr>
-                      <td>{{ $doc2['item_name'] }}</td>
-                      @foreach ($srm_bid_submission_master as $doc3)
-                          @if (($doc3['SupplierRegistrationLink']['id']  == $doc2['bid_boq']['supplier_registration_id']))
-                              <td style="text-align: center;">{{$doc2['bid_boq']['unit_amount']}}</td>
-                          @endif
-                      @endforeach
-                      @endforeach
-                  </tr>
-                  @endif
-      @endforeach
-        <tr>
-            <td><strong>Total</strong></td>
-            @foreach ($srm_bid_submission_master as $doc)
-                <td style="text-align: center;"><strong></strong></td>
+
+        @if($item['boq_applicable'] == 1)
+            <tr class="data-row">
+                <td><strong>{{$item['label']}}</strong></td>
+                @foreach ($supplier_list as $bid)
+                    <td></td>
+                @endforeach
+            </tr>
+        @endif
+
+        @foreach ($item['tender_boq_items'] as $boq)
+            <tr class="data-row">
+                <td>{{ $boq['item_name'] }}</td>
+                @foreach ($boq['bid_boqs'] as $bid_boq)
+                   <td style="text-align: right;">{{ number_format($bid_boq['total_amount'], 2, '.', ',')}}</td>
+                @endforeach
+            </tr>
+        @endforeach
+    @endforeach
+    <tr class="data-row">
+        <td><strong>Total</strong></td>
+        @foreach ($supplier_list as $bid)
+            @foreach ($totalItemsCount as $item)
+                @if($item['id'] == $bid['id'])
+                    <td style="text-align: right;"><strong>{{ number_format($item['value'], 2, '.', ',') }}</strong></td>
+                @endif
             @endforeach
-        </tr>
+        @endforeach
+    </tr>
+    </tbody>
 </table>
 </html>
 

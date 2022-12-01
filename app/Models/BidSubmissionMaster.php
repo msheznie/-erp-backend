@@ -102,7 +102,9 @@ class BidSubmissionMaster extends Model
         'technical_verify_status',
         'technical_verify_at',
         'technical_verify_by',
-        'technical_eval_remarks'
+        'technical_eval_remarks',
+        'bidSubmissionCode',
+        'serialNumber'
     ];
 
     /**

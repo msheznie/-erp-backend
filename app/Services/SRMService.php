@@ -2121,6 +2121,26 @@ class SRMService
             DB::beginTransaction();
             try {
 
+                $lastSerialNo = BidSubmissionMaster::orderBy('id', 'desc')
+                ->first(); 
+    
+                if(isset($lastSerialNo->serialNumber) && $lastSerialNo->serialNumber != null)
+                {
+                    
+    
+                    $lastSerialValue = 1;
+                    if ($lastSerialNo) {
+                        $lastSerialValue = intval($lastSerialNo->serialNumber) + 1;
+                    }
+    
+                    $att['serialNumber'] = $lastSerialValue;
+                    $att['bidSubmissionCode'] = 'Bid_'.str_pad($lastSerialValue, 10, '0', STR_PAD_LEFT);
+    
+                }
+
+
+
+
                 $att['tender_id'] = $tender_id;
                 $att['supplier_registration_id'] = $supplierRegId;
                 $att['uuid'] = Uuid::generate()->string;
@@ -2729,7 +2749,8 @@ class SRMService
     {
         $tenderId = $request->input('extra.tenderId');
         $bidMasterId = $request->input('extra.bidMasterId');
-
+        $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+        $supplierData =  self::getSupplierData($request->input('supplier_uuid'));
        
 
         $bidSubmissionData = self::BidSubmissionStatusData($bidMasterId, $tenderId);
@@ -2780,11 +2801,13 @@ class SRMService
         $technicalEvaluationCriteria = EvaluationCriteriaDetails::where('is_final_level', 0)
             ->where('critera_type_id', 2)
             ->where('tender_id', $tenderId)
+            ->where('created_by',$supplierData->id)
             ->count();
 
         $technicalEvaluationCriteriaAnswer = EvaluationCriteriaDetails::where('critera_type_id', 2)
             ->where('tender_id', $tenderId)
             ->where('is_final_level', 3)
+            ->where('created_by',$supplierData->id)
             ->count();
 
 
@@ -2796,6 +2819,7 @@ class SRMService
         }
 
 
+
         // $pring_schedul_master_ids = PricingScheduleMaster::where('tender_id',$tenderId)->where('status',1)->pluck('id')->toArray();
         $pring_schedul_master_ids =  PricingScheduleMaster::with(['tender_main_works' => function ($q1) use ($tenderId, $bidMasterId) {
             $q1->where('tender_id', $tenderId);
@@ -2805,6 +2829,7 @@ class SRMService
             }]);
         }])
             ->where('tender_id', $tenderId)
+            ->where('created_by',$supplierData->id)
             ->where('status',1)->pluck('id')->toArray();
 
 
@@ -2817,11 +2842,11 @@ class SRMService
 
         foreach($main_works_ids as $main_works_id) {
             if($main_works_id->boq_applicable) {
-                $boqItems = TenderBoqItems::where('main_work_id',$main_works_id->id)->get();
+                $boqItems = TenderBoqItems::where('main_work_id',$main_works_id->id)->where('created_by',$supplierData->id)->get();
                         
  
                 foreach($boqItems as $boqItem) {
-                    $dataBidBoq = BidBoq::where('boq_id',$boqItem->id)->where('bid_master_id',$bidMasterId)->where('main_works_id',$main_works_id->id)->get();
+                    $dataBidBoq = BidBoq::where('boq_id',$boqItem->id)->where('bid_master_id',$bidMasterId)->where('created_by',$supplierData->id)->where('main_works_id',$main_works_id->id)->get();
 
                     if(count($dataBidBoq) > 0) {
                         foreach($dataBidBoq as $bidBoq){
@@ -2841,7 +2866,7 @@ class SRMService
                
             }else {
                 if($main_works_id->field_type == 4) {
-                    $bid_format_details = DB::table('srm_schedule_bid_format_details')->where('bid_format_detail_id',$main_works_id->id)->get();
+                    $bid_format_details = DB::table('srm_schedule_bid_format_details')->where('bid_format_detail_id',$main_works_id->id)->where('created_by',$supplierData->id)->get();
                          
      
                     if(count($bid_format_details) > 0) {
@@ -2851,7 +2876,7 @@ class SRMService
                     }
                     $i++;
                 }else {
-                    $dataBidBoq = BidMainWork::where('tender_id',$tenderId)->where('main_works_id',$main_works_id->id)->where('bid_master_id',$bidMasterId)->get();
+                    $dataBidBoq = BidMainWork::where('tender_id',$tenderId)->where('main_works_id',$main_works_id->id)->where('bid_master_id',$bidMasterId)->where('created_by',$supplierData->id)->get();
                     if(count($dataBidBoq) > 0) {
                         foreach($dataBidBoq as $bidBoq){
                             if($bidBoq->total_amount > 0) {
@@ -3255,10 +3280,31 @@ class SRMService
         $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid')); 
         $lastSerialNumber = 1;
 
+
+
     
         DB::beginTransaction(); 
         try { 
 
+
+            $lastSerialNo = BidSubmissionMaster::orderBy('id', 'desc')
+            ->first(); 
+
+            if(isset($lastSerialNo->serialNumber) && $lastSerialNo->serialNumber != null)
+            {
+                
+
+                $lastSerialValue = 1;
+                if ($lastSerialNo) {
+                    $lastSerialValue = intval($lastSerialNo->serialNumber) + 1;
+                }
+
+                $att['serialNumber'] = $lastSerialValue;
+                $att['bidSubmissionCode'] = 'Bid_'.str_pad($lastSerialValue, 10, '0', STR_PAD_LEFT);
+
+            }
+         
+            
             $lastSerial = BidSubmissionMaster::where('tender_id', $tenderId)
 				->where('supplier_registration_id', $supplierRegId)
 				->orderBy('id', 'desc')
