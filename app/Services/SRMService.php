@@ -2729,7 +2729,8 @@ class SRMService
     {
         $tenderId = $request->input('extra.tenderId');
         $bidMasterId = $request->input('extra.bidMasterId');
-
+        $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+        $supplierData =  self::getSupplierData($request->input('supplier_uuid'));
        
 
         $bidSubmissionData = self::BidSubmissionStatusData($bidMasterId, $tenderId);
@@ -2780,11 +2781,13 @@ class SRMService
         $technicalEvaluationCriteria = EvaluationCriteriaDetails::where('is_final_level', 0)
             ->where('critera_type_id', 2)
             ->where('tender_id', $tenderId)
+            ->where('created_by',$supplierData->id)
             ->count();
 
         $technicalEvaluationCriteriaAnswer = EvaluationCriteriaDetails::where('critera_type_id', 2)
             ->where('tender_id', $tenderId)
             ->where('is_final_level', 3)
+            ->where('created_by',$supplierData->id)
             ->count();
 
 
@@ -2796,6 +2799,7 @@ class SRMService
         }
 
 
+
         // $pring_schedul_master_ids = PricingScheduleMaster::where('tender_id',$tenderId)->where('status',1)->pluck('id')->toArray();
         $pring_schedul_master_ids =  PricingScheduleMaster::with(['tender_main_works' => function ($q1) use ($tenderId, $bidMasterId) {
             $q1->where('tender_id', $tenderId);
@@ -2805,6 +2809,7 @@ class SRMService
             }]);
         }])
             ->where('tender_id', $tenderId)
+            ->where('created_by',$supplierData->id)
             ->where('status',1)->pluck('id')->toArray();
 
 
