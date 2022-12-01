@@ -1074,6 +1074,7 @@
                                 </td>
                             </tr>
                         </table>
+                        <br>
                         <hr>
                         <table class="normal_font" width="100%">
                             <tr  style="width: 100%">
