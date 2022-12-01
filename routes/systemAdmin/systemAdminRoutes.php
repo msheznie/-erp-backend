@@ -241,3 +241,11 @@ Route::group([], function() {
 	Route::resource('registered_supplier_attachments', 'RegisteredSupplierAttachmentAPIController');
 
 });
+
+//Document Amend
+Route::group([], function() {
+	Route::get('getDocumentAmendFormData', 'GeneralLedgerAPIController@getDocumentAmendFormData')->name("Get document amend form data");
+
+	Route::post('getDocumentAmendFromGL', 'GeneralLedgerAPIController@getDocumentAmendFromGL')->name("Get document amend from gl");
+	Route::post('changePostingDate', 'GeneralLedgerAPIController@changePostingDate')->name("Change posting date document amend");
+});
