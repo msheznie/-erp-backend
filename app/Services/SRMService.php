@@ -2842,11 +2842,11 @@ class SRMService
 
         foreach($main_works_ids as $main_works_id) {
             if($main_works_id->boq_applicable) {
-                $boqItems = TenderBoqItems::where('main_work_id',$main_works_id->id)->get();
+                $boqItems = TenderBoqItems::where('main_work_id',$main_works_id->id)->where('created_by',$supplierData->id)->get();
                         
  
                 foreach($boqItems as $boqItem) {
-                    $dataBidBoq = BidBoq::where('boq_id',$boqItem->id)->where('bid_master_id',$bidMasterId)->where('main_works_id',$main_works_id->id)->get();
+                    $dataBidBoq = BidBoq::where('boq_id',$boqItem->id)->where('bid_master_id',$bidMasterId)->where('created_by',$supplierData->id)->where('main_works_id',$main_works_id->id)->get();
 
                     if(count($dataBidBoq) > 0) {
                         foreach($dataBidBoq as $bidBoq){
@@ -2866,7 +2866,7 @@ class SRMService
                
             }else {
                 if($main_works_id->field_type == 4) {
-                    $bid_format_details = DB::table('srm_schedule_bid_format_details')->where('bid_format_detail_id',$main_works_id->id)->get();
+                    $bid_format_details = DB::table('srm_schedule_bid_format_details')->where('bid_format_detail_id',$main_works_id->id)->where('created_by',$supplierData->id)->get();
                          
      
                     if(count($bid_format_details) > 0) {
@@ -2876,7 +2876,7 @@ class SRMService
                     }
                     $i++;
                 }else {
-                    $dataBidBoq = BidMainWork::where('tender_id',$tenderId)->where('main_works_id',$main_works_id->id)->where('bid_master_id',$bidMasterId)->get();
+                    $dataBidBoq = BidMainWork::where('tender_id',$tenderId)->where('main_works_id',$main_works_id->id)->where('bid_master_id',$bidMasterId)->where('created_by',$supplierData->id)->get();
                     if(count($dataBidBoq) > 0) {
                         foreach($dataBidBoq as $bidBoq){
                             if($bidBoq->total_amount > 0) {
