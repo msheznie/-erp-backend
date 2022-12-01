@@ -2167,8 +2167,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('prMasterRefferedbacksCRUD', 'PurchaseReturnMasterRefferedBackAPIController');
             // Route::resource('purchase_return_details_reffered_backs', 'PurchaseReturnDetailsRefferedBackAPIController');
 
-            Route::post('getAllAttachments', 'DocumentAttachmentsAPIController@getAllAttachments');
-            Route::get('getAttachmentFormData', 'DocumentAttachmentsAPIController@getAttachmentFormData');
+            
+            
 
             Route::post('amendSalesQuotationReview', 'QuotationMasterAPIController@amendSalesQuotationReview');
             Route::post('getDocumentDetails', 'PurchaseRequestAPIController@getDocumentDetails');
