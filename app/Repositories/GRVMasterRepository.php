@@ -276,6 +276,7 @@ class GRVMasterRepository extends BaseRepository
                 'erp_grvmaster.serviceLineSystemID',
                 'erp_grvmaster.grvConfirmedDate',
                 'erp_grvmaster.approvedDate',
+                'erp_grvmaster.postedDate',
                 'erp_grvmaster.supplierTransactionCurrencyID',
                 'erp_grvmaster.grvTotalSupplierTransactionCurrency',
                 'erp_grvmaster.grvCancelledYN',

@@ -190,7 +190,8 @@ class GRVMaster extends Model
         'timeStamp',
         'stampDate',
         'approvedByUserID',
-        'approvedByUserSystemID'
+        'approvedByUserSystemID',
+        'postedDate'
     ];
 
     /**
