@@ -223,3 +223,21 @@ Route::group([], function() {
 	Route::resource('unit/conversion', 'UnitConversionAPIController', ['names' => 'Unit conversion']);
 });
 
+
+//Registered Suppliers
+Route::group([], function() {
+	Route::get('bankMemosByRegisteredSupplierCurrency', 'SupplierMasterAPIController@bankMemosByRegisteredSupplierCurrency')->name("Bank memos by registered supplier currency");
+	Route::get('getRegisteredSupplierData', 'SupplierMasterAPIController@getRegisteredSupplierData')->name("Get registered supplier data");
+	Route::get('downloadSupplierAttachmentFile', 'SupplierMasterAPIController@downloadSupplierAttachmentFile')->name("Download supplier attachment file");
+
+	Route::post('updateRegisteredSupplierBankMemo', 'SupplierMasterAPIController@updateRegisteredSupplierBankMemo')->name("Update registered supplier bank memo");
+	Route::post('notApprovedRegisteredSuppliers', 'SupplierMasterAPIController@notApprovedRegisteredSuppliers')->name("Not approved registered suppliers");
+	Route::post('approvedRegisteredSuppliers', 'SupplierMasterAPIController@approvedRegisteredSuppliers')->name("Approved registered suppliers");
+	Route::post('updateRegisteredSupplierMaster', 'SupplierMasterAPIController@updateRegisteredSupplierMaster')->name("Update registered supplier master");
+	Route::post('updateRegisteredSupplierAttachment', 'SupplierMasterAPIController@updateRegisteredSupplierAttachment')->name("Update registered supplier attachment");
+	Route::post('updateRegisteredSupplierCurrency', 'SupplierMasterAPIController@updateRegisteredSupplierCurrency')->name("Update registered supplier currency");
+
+	Route::resource('registered_supp_contact_details', 'RegisteredSupplierContactDetailAPIController');
+	Route::resource('registered_supplier_attachments', 'RegisteredSupplierAttachmentAPIController');
+
+});
