@@ -1013,7 +1013,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
             ->where('srm_bid_submission_master.bidSubmittedYN', 1)
             ->where('srm_bid_submission_master.tender_id', $tenderId)
             ->orderBy('srm_bid_submission_master.id', 'desc')
-            ->get();;
+            ->get();
 
         $pring_schedul_master_datas =  PricingScheduleMaster::with(['tender_main_works' => function ($q1) use ($tenderId) {
             $q1->where('tender_id', $tenderId);
@@ -1029,8 +1029,8 @@ class BidSubmissionMasterAPIController extends AppBaseController
         $total = 0;
 
 
-
         foreach($suppliers as $supplier) {
+            $rankingArray = [];
 
             foreach($pring_schedul_master_datas as $pring_schedul_master_data) {
 
@@ -1053,9 +1053,20 @@ class BidSubmissionMasterAPIController extends AppBaseController
                         }
     
                 }
+
+
                 $pring_schedul_master_data['total'] = $total;
                 $pring_schedul_master_data['supplier'] = ($supplier) ? $supplier->name : "";
-                $pring_schedul_master_data['ranking'] = "L".($x+1);
+
+                if(array_key_exists((int) $total,$rankingArray)) {
+                    $pring_schedul_master_data['ranking'] = $rankingArray[$total];
+
+                }else {
+                    $rankingArray[$total] =  "L".($x+1);
+                    $pring_schedul_master_data['ranking'] = "L".($x+1);
+
+                }
+
             }
 
 
