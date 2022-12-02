@@ -217,7 +217,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
 
             /** Company Navigation Menu access*/
-            Route::get('getGroupCompany', 'CompanyNavigationMenusAPIController@getGroupCompany');
+            
             Route::get('getCompanyNavigation', 'CompanyNavigationMenusAPIController@getCompanyNavigation');
             Route::resource('company_navigation_menuses', 'CompanyNavigationMenusAPIController');
             Route::resource('assignCompanyNavigation', 'CompanyNavigationMenusAPIController');
@@ -513,30 +513,30 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('rejectPurchaseRequest', 'PurchaseRequestAPIController@rejectPurchaseRequest');
             Route::post('approvePurchaseRequest', 'PurchaseRequestAPIController@approvePurchaseRequest');
 
-            Route::resource('tax_authorities', 'TaxAuthorityAPIController');
-            Route::post('getTaxAuthorityDatatable', 'TaxAuthorityAPIController@getTaxAuthorityDatatable');
-            Route::get('getTaxAuthorityFormData', 'TaxAuthorityAPIController@getTaxAuthorityFormData');
-            Route::resource('taxes', 'TaxAPIController');
-            Route::get('getTaxMasterFormData', 'TaxAPIController@getTaxMasterFormData');
-            Route::post('getTaxMasterDatatable', 'TaxAPIController@getTaxMasterDatatable');
+            
+            
+            
+            
+            
+            
 
-            Route::get('getAuthorityByCompany', 'TaxAuthorityAPIController@getAuthorityByCompany');
-            Route::get('getAccountByAuthority', 'TaxAuthorityAPIController@getAccountByAuthority');
+            
+            
 
             Route::resource('tax_types', 'TaxTypeAPIController');
 
             // Route::resource('tax_formula_mgetAllcompaniesasters', 'TaxFormulaMasterAPIController');
-            Route::post('getTaxFormulaMasterDatatable', 'TaxFormulaMasterAPIController@getTaxFormulaMasterDatatable');
-            Route::resource('tax_formula_details', 'TaxFormulaDetailAPIController');
-            Route::post('getTaxFormulaDetailDatatable', 'TaxFormulaDetailAPIController@getTaxFormulaDetailDatatable');
+            
+            
+            
 
             Route::post('cancelPurchaseRequest', 'PurchaseRequestAPIController@cancelPurchaseRequest');
             Route::post('returnPurchaseRequest', 'PurchaseRequestAPIController@returnPurchaseRequest');
             Route::post('manualClosePurchaseRequest', 'PurchaseRequestAPIController@manualClosePurchaseRequest');
-            Route::resource('tax_formula_masters', 'TaxFormulaMasterAPIController');
+            
 
-            Route::resource('tax_formula_details', 'TaxFormulaDetailAPIController');
-            Route::get('getOtherTax', 'TaxFormulaDetailAPIController@getOtherTax');
+            
+            
 
             Route::resource('advance_payment_details', 'AdvancePaymentDetailsAPIController');
 
@@ -2088,14 +2088,14 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('exportEmployeeMobileBill', 'EmployeeMobileBillMasterAPIController@exportEmployeeMobileBill');
             Route::post('grvMarkupUpdate', 'GRVDetailsAPIController@grvMarkupUpdate');
 
-            Route::resource('tax_vat_categories', 'TaxVatCategoriesAPIController');
-            Route::post('getAllVatCategories', 'TaxVatCategoriesAPIController@getAllVatCategories');
-            Route::get('getVatCategoriesFormData', 'TaxVatCategoriesAPIController@getVatCategoriesFormData');
+            
+            
+            
             Route::get('getVatCategoryFormData', 'TaxVatCategoriesAPIController@getVatCategoryFormData');
 
-            Route::resource('tax_vat_main_categories', 'TaxVatMainCategoriesAPIController');
+            
 
-            Route::post('getAllVatMainCategories', 'TaxVatMainCategoriesAPIController@getAllVatMainCategories');
+            
             Route::post('grvMarkupfinalyze', 'GRVMasterAPIController@grvMarkupfinalyze');
 
 
@@ -2108,10 +2108,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::resource('ci_item_details_refferedbacks', 'CustomerInvoiceItemDetailsRefferedbackAPIController');
 
-            Route::get('getVatSubCategoryItemAssignFromData', 'TaxVatCategoriesAPIController@getVatSubCategoryItemAssignFromData');
-            Route::post('getAllVatSubCategoryItemAssign', 'TaxVatCategoriesAPIController@getAllVatSubCategoryItemAssign');
-            Route::post('assignVatSubCategoryToItem', 'TaxVatCategoriesAPIController@assignVatSubCategoryToItem');
-            Route::post('removeAssignedItemFromVATSubCategory', 'TaxVatCategoriesAPIController@removeAssignedItemFromVATSubCategory');
+            
+            
+            
+            
             Route::post('updateItemVatCategories', 'TaxVatCategoriesAPIController@updateItemVatCategories');
 
             Route::post('generateSalesMarketReport', 'SalesMarketingReportAPIController@generateReport');
