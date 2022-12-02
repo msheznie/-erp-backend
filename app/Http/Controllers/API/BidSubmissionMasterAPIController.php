@@ -956,14 +956,64 @@ class BidSubmissionMasterAPIController extends AppBaseController
     }
 
     public function SupplierSheduleWiseReport(Request $request) {
+       
+
+        return $this->sendResponse($this->getScheduleWiseData($request), 'Data retrieved successfully');
+
+ 
+    }
+    
+
+
+    public function SupplierScheduleWiseExportReport(Request $request)
+    {
+        $data = $this->getScheduleWiseData($request);
+
+
+        $order = array(
+            'items' => $data[0]['pring_schedul_master_datas'],
+            'supplier' => $data['supplierMaster'],
+            'tender' => $data['tender'],
+            );
+
+
+        $time = strtotime("now");
+        $fileName = 'schedule_wise_report' . $time . '.pdf';
+        $html = view('print.schedule_wise_report', $order);
+
+        $pdf = \App::make('dompdf.wrapper');
+       
+        $pdf->loadHTML($html);
+        return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
+    }
+
+    public function getScheduleWiseData(Request $request) {
         $queryResult = [];
         
         $tenderId = $request->input('tenderMasterId');
+
         $bidSubmissionIDs = $request->input('bidSubmissionID');
         $bidSubmissionIDs = collect($bidSubmissionIDs)->pluck('id')->toArray();
         $tenderMaster = TenderMaster::find($tenderId);
 
-        $suppliers = BidSubmissionMaster::where('tender_id',$tenderId)->where('status',1)->where('bidSubmittedYN',1)->groupBy('supplier_registration_id')->pluck('supplier_registration_id')->toArray();
+        $suppliers = BidSubmissionMaster::selectRaw("
+        SUM((srm_bid_submission_detail.eval_result/100)*srm_tender_master.technical_weightage) as weightage, 
+        srm_bid_submission_master.id, 
+        srm_supplier_registration_link.name,
+        srm_supplier_registration_link.id as supplier_id,
+        srm_tender_master.technical_passing_weightage as passing_weightage")
+            ->join('srm_supplier_registration_link', 'srm_supplier_registration_link.id', '=', 'srm_bid_submission_master.supplier_registration_id')
+            ->join('srm_tender_master', 'srm_tender_master.id', '=', 'srm_bid_submission_master.tender_id')
+            ->join('srm_bid_submission_detail', 'srm_bid_submission_detail.bid_master_id', '=', 'srm_bid_submission_master.id')
+            ->join('srm_evaluation_criteria_details', 'srm_evaluation_criteria_details.id', '=', 'srm_bid_submission_detail.evaluation_detail_id')
+            ->havingRaw('weightage >= passing_weightage')
+            ->groupBy('srm_bid_submission_master.id')
+            ->where('srm_evaluation_criteria_details.critera_type_id', 2)
+            ->where('srm_bid_submission_master.status', 1)
+            ->where('srm_bid_submission_master.bidSubmittedYN', 1)
+            ->where('srm_bid_submission_master.tender_id', $tenderId)
+            ->orderBy('srm_bid_submission_master.id', 'desc')
+            ->get();
 
         $pring_schedul_master_datas =  PricingScheduleMaster::with(['tender_main_works' => function ($q1) use ($tenderId) {
             $q1->where('tender_id', $tenderId);
@@ -979,8 +1029,8 @@ class BidSubmissionMasterAPIController extends AppBaseController
         $total = 0;
 
 
-
         foreach($suppliers as $supplier) {
+            $rankingArray = [];
 
             foreach($pring_schedul_master_datas as $pring_schedul_master_data) {
 
@@ -988,33 +1038,11 @@ class BidSubmissionMasterAPIController extends AppBaseController
                 
                 foreach($pricing_shedule_details as $pricing_shedule_detail) {
     
-                    if($pricing_shedule_detail->boq_applicable) {
-                        $items = $pricing_shedule_detail->tender_boq_items;
-    
-                        foreach ($items as $item) {
-                           $bid_boq =  BidBoq::where('boq_id', $item->id)->where('main_works_id',$item->main_work_id);
-                            if($supplier) {
-                                $bid_boq->where('created_by',$supplier);
-                            }
-
-                            if($bidSubmissionIDs) {
-                                $bid_boq->whereIn('bid_master_id',$bidSubmissionIDs);
-                            }
-    
-                            $bid_boq = $bid_boq->orderBy("id","desc")->first();
-    
-                           if($bid_boq) 
-                                $total += $bid_boq->total_amount;
-    
-                        }
-    
-    
-                    }else {
-                        if($pricing_shedule_detail->field_type != 4 || $pricing_shedule_detail->field_type != 3) { 
+                        if($pricing_shedule_detail->field_type != 4) { 
                             //BidMainWork
                             $dataBidBoq = BidMainWork::where('tender_id',$tenderId)->where('main_works_id',$pricing_shedule_detail->id);
                             if($supplier) 
-                                $dataBidBoq->where('created_by',$supplier);
+                                $dataBidBoq->where('created_by',$supplier->supplier_id);
                             
                             if($bidSubmissionIDs) 
                                 $dataBidBoq->whereIn('bid_master_id',$bidSubmissionIDs);
@@ -1023,26 +1051,35 @@ class BidSubmissionMasterAPIController extends AppBaseController
                             if($dataBidBoq)
                                 $total += $dataBidBoq->total_amount;
                         }
-                    }
     
                 }
+
+
                 $pring_schedul_master_data['total'] = $total;
+                $pring_schedul_master_data['supplier'] = ($supplier) ? $supplier->name : "";
+
+                if(array_key_exists((int) $total,$rankingArray)) {
+                    $pring_schedul_master_data['ranking'] = $rankingArray[$total];
+
+                }else {
+                    $rankingArray[$total] =  "L".($x+1);
+                    $pring_schedul_master_data['ranking'] = "L".($x+1);
+
+                }
+
             }
 
 
-            $supplier_data = SupplierRegistrationLink::find($supplier);
 
-            $data[$x]['pring_schedul_master_data'] = $pring_schedul_master_data;
-            $data[$x]['supplier'] = ($supplier_data) ? $supplier_data->name : "";
+            $data[$x]['pring_schedul_master_datas'] = $pring_schedul_master_datas;
+            $data[$x]['supplier'] = ($supplier) ? $supplier->name : "";
             $data[$x]['ranking'] = "L".($x+1);
             $x++;
             
         }
+        $data['tender'] = $tenderMaster;
+        $data['supplierMaster'] = ($supplier) ? $supplier->name : "";
 
-        
-
-
-        return $this->sendResponse($data, 'Data retrieved successfully');
- 
+        return $data;
     }
 }

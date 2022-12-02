@@ -2671,6 +2671,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     Route::get('BidSummaryReport', 'BidSubmissionMasterAPIController@BidSummaryExportReport');
     Route::get('supplier-item-wise-report', 'BidSubmissionMasterAPIController@SupplierItemWiseExportReport');
     Route::post('schedule-wise-report', 'BidSubmissionMasterAPIController@SupplierSheduleWiseReport');
+    Route::post('SupplierScheduleWiseExportReport', 'BidSubmissionMasterAPIController@SupplierScheduleWiseExportReport');
 
     Route::get('pvSupplierPrint', 'BankLedgerAPIController@pvSupplierPrint');
     Route::get('loginwithToken', 'UserAPIController@loginwithToken');
