@@ -998,7 +998,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
 
         $suppliers = BidSubmissionMaster::selectRaw("
         SUM((srm_bid_submission_detail.eval_result/100)*srm_tender_master.technical_weightage) as weightage, 
-        srm_bid_submission_master.id, 
+        srm_bid_submission_master.id,srm_bid_submission_master.bidSubmissionCode, 
         srm_supplier_registration_link.name,
         srm_supplier_registration_link.id as supplier_id,
         srm_tender_master.technical_passing_weightage as passing_weightage")
@@ -1057,6 +1057,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
 
                 $pring_schedul_master_data['total'] = $total;
                 $pring_schedul_master_data['supplier'] = ($supplier) ? $supplier->name : "";
+                $pring_schedul_master_data['bidSubmissionCode'] = $supplier->bidSubmissionCode;
 
                 if(array_key_exists((int) $total,$rankingArray)) {
                     $pring_schedul_master_data['ranking'] = $rankingArray[$total];
@@ -1074,6 +1075,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
             $data[$x]['pring_schedul_master_datas'] = $pring_schedul_master_datas;
             $data[$x]['supplier'] = ($supplier) ? $supplier->name : "";
             $data[$x]['ranking'] = "L".($x+1);
+            $data[$x]['bidSubmissionCode'] = $supplier->bidSubmissionCode;
             $x++;
             
         }

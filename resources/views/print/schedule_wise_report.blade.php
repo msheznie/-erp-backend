@@ -39,6 +39,7 @@
 
 <table style="width:100%; margin-top:5%;" class="sup-item-summary-report">
    <tr>
+    <th>Bid Submission Code</th>
     <th>Supplier Name</th>
     <th>Grand Sum</th>
     <th>Ranking</th>
@@ -46,6 +47,7 @@
 
    @foreach($items as $item)
    <tr>
+    <td>{{$item['bidSubmissionCode']}}</td>
     <td>{{$supplier}}</td>
     <td style="text-align:right">{{number_format($item['total'],2)}}</td>
     <td style="text-align:right">{{$item['ranking']}}</td>
