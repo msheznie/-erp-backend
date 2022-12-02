@@ -171,7 +171,8 @@ class ItemIssueMasterRepository extends BaseRepository
                 'erp_itemissuemaster.issueRefNo',
                 'erp_itemissuemaster.wareHouseFrom',
                 'erp_itemissuemaster.refferedBackYN',
-                'erp_itemissuemaster.issueType'
+                'erp_itemissuemaster.issueType',
+                'erp_itemissuemaster.postedDate'
             ]);
 
         if ($search) {
