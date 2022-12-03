@@ -2836,12 +2836,11 @@ class SRMService
             ->get();
         $has_work_ids = Array();
         $i = 0;
-
+        
         foreach($main_works_ids as $main_works_id) {
             if($main_works_id->boq_applicable) {
-                $boqItems = TenderBoqItems::where('main_work_id',$main_works_id->id)->where('created_by',$supplierData->id)->get();
+                $boqItems = TenderBoqItems::where('main_work_id',$main_works_id->id)->get();
                         
- 
                 foreach($boqItems as $boqItem) {
                     $dataBidBoq = BidBoq::where('boq_id',$boqItem->id)->where('bid_master_id',$bidMasterId)->where('created_by',$supplierData->id)->where('main_works_id',$main_works_id->id)->get();
                     if(count($dataBidBoq) > 0) {
