@@ -778,9 +778,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('poAddonsReffered_backs', 'PoAddonsRefferedBackAPIController');
             Route::get('getPoAddonsForAmendHistory', 'PoAddonsRefferedBackAPIController@getPoAddonsForAmendHistory');
 
-            Route::resource('asset_finance_categories', 'AssetFinanceCategoryAPIController');
-            Route::post('getAllAssetFinanceCategory', 'AssetFinanceCategoryAPIController@getAllAssetFinanceCategory');
-            Route::get('getAssetFinanceCategoryFormData', 'AssetFinanceCategoryAPIController@getAssetFinanceCategoryFormData');
+            
+            
+            
             Route::resource('years', 'YearAPIController');
             Route::resource('unbilled_grv_group_bies', 'UnbilledGrvGroupByAPIController');
             Route::resource('employee_profiles', 'EmployeeProfileAPIController');
