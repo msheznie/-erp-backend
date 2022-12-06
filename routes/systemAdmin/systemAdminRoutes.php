@@ -256,3 +256,31 @@ Route::group([], function() {
 
 	Route::post('getAllAttachments', 'DocumentAttachmentsAPIController@getAllAttachments')->name("Get all attachments");
 });
+
+//Tax Setup
+Route::group([], function() {
+	Route::get('getTaxAuthorityFormData', 'TaxAuthorityAPIController@getTaxAuthorityFormData')->name("Get tax authority form data");
+	Route::get('getTaxMasterFormData', 'TaxAPIController@getTaxMasterFormData')->name("Get tax master form data");
+	Route::get('getAuthorityByCompany', 'TaxAuthorityAPIController@getAuthorityByCompany')->name("Get tax authority by company");
+	Route::get('getAccountByAuthority', 'TaxAuthorityAPIController@getAccountByAuthority')->name("Get account by tax authority");
+	Route::get('getOtherTax', 'TaxFormulaDetailAPIController@getOtherTax')->name("Get other tax");
+	Route::get('getVatCategoriesFormData', 'TaxVatCategoriesAPIController@getVatCategoriesFormData')->name("Get tax vat categories formdata");
+	Route::get('getVatSubCategoryItemAssignFromData', 'TaxVatCategoriesAPIController@getVatSubCategoryItemAssignFromData')->name("Get tax vat sub category item assign formdata");
+
+	Route::post('getTaxFormulaDetailDatatable', 'TaxFormulaDetailAPIController@getTaxFormulaDetailDatatable')->name("Get tax formula detail datatable");
+	Route::post('getAllVatMainCategories', 'TaxVatMainCategoriesAPIController@getAllVatMainCategories')->name("Get all tax vat main categories");
+	Route::post('getAllVatCategories', 'TaxVatCategoriesAPIController@getAllVatCategories')->name("Get all tax vat categories");
+	Route::post('getTaxAuthorityDatatable', 'TaxAuthorityAPIController@getTaxAuthorityDatatable')->name("Get tax authority datatable");
+	Route::post('getTaxMasterDatatable', 'TaxAPIController@getTaxMasterDatatable')->name("Get tax master datatable");
+	Route::post('getTaxFormulaMasterDatatable', 'TaxFormulaMasterAPIController@getTaxFormulaMasterDatatable')->name("Get tax formula master datatable");
+	Route::post('getAllVatSubCategoryItemAssign', 'TaxVatCategoriesAPIController@getAllVatSubCategoryItemAssign')->name("Get all tax vat sub category item assign");
+	Route::post('assignVatSubCategoryToItem', 'TaxVatCategoriesAPIController@assignVatSubCategoryToItem')->name("Assign tax vat sub category to item ");
+	Route::post('removeAssignedItemFromVATSubCategory', 'TaxVatCategoriesAPIController@removeAssignedItemFromVATSubCategory')->name("Remove assigned item from tax vat sub category");
+
+	Route::resource('tax_authorities', 'TaxAuthorityAPIController');
+	Route::resource('taxes', 'TaxAPIController');
+	Route::resource('tax_formula_details', 'TaxFormulaDetailAPIController');
+	Route::resource('tax_formula_masters', 'TaxFormulaMasterAPIController');
+	Route::resource('tax_vat_main_categories', 'TaxVatMainCategoriesAPIController');
+	Route::resource('tax_vat_categories', 'TaxVatCategoriesAPIController');
+});
