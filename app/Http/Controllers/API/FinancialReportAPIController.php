@@ -2643,6 +2643,9 @@ WHERE
         $currencyCodeLocal = $companyCurrency->localcurrency->CurrencyCode;
         $currencyCodeRpt = $companyCurrency->reportingcurrency->CurrencyCode;
 
+        $currencyDecimalLocal = $companyCurrency->localcurrency->DecimalPlaces;
+        $currencyDecimalRpt = $companyCurrency->reportingcurrency->DecimalPlaces;
+
 
 
 
@@ -3039,7 +3042,7 @@ WHERE
 
         $currencyID = isset($currencyID[0]) ? $currencyID[0] : $currencyID;
 
-        $reportData = array('companyName'=>$companyName,'report_tittle'=>'Employee Ledger','datas'=>$data,'employees'=>$employees,'currencyCodeLocal'=>$currencyCodeLocal,'currencyCodeRpt'=>$currencyCodeRpt,'fromDate'=>$fromDate,'toDate'=>$toDate, 'currencyID'=>$currencyID);
+        $reportData = array('companyName'=>$companyName,'report_tittle'=>'Employee Ledger','datas'=>$data,'employees'=>$employees,'currencyCodeLocal'=>$currencyCodeLocal,'currencyCodeRpt'=>$currencyCodeRpt, 'currencyDecimalLocal'=>$currencyDecimalLocal, 'currencyDecimalRpt'=>$currencyDecimalRpt, 'fromDate'=>$fromDate,'toDate'=>$toDate, 'currencyID'=>$currencyID);
         $templateName = "export_report.employee_ledger_report";
 
         return \Excel::create('finance', function ($excel) use ($reportData, $templateName) {
