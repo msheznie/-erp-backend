@@ -559,6 +559,8 @@ class FinancialReportAPIController extends AppBaseController
             $currencyCodeLocal = $companyCurrency->localcurrency->CurrencyCode;
             $currencyCodeRpt = $companyCurrency->reportingcurrency->CurrencyCode;
 
+            $currencyDecimalLocal = $companyCurrency->localcurrency->DecimalPlaces;
+            $currencyDecimalRpt = $companyCurrency->reportingcurrency->DecimalPlaces;
 
 
 
@@ -960,7 +962,7 @@ WHERE
     srp_erp_iouvouchers.approvedYN = 1
     ) t GROUP BY t.employeeID');
 
-        return $this->sendResponse([$data,$employees,$currencyCodeLocal,$currencyCodeRpt], 'Record retrieved successfully');
+        return $this->sendResponse([$data,$employees,$currencyCodeLocal,$currencyCodeRpt,$currencyDecimalLocal,$currencyDecimalRpt], 'Record retrieved successfully');
 
     }
 
