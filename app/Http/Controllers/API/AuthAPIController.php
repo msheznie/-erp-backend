@@ -38,7 +38,7 @@ class AuthAPIController extends PassportAccessTokenController
                 return Response::json(ResponseUtil::makeError(trans('custom.login_failed_invalid_user_id_or_password'),array('type' => '')), 401);
             }
 
-            if($employees->isLock == 4){
+            if($employees->isLock >= 4){
                 return Response::json(ResponseUtil::makeError(trans('custom.login_failed_invalid_user_id_or_password'),array('type' => '')), 401);
             }
 
