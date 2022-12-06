@@ -2936,12 +2936,12 @@ class SRMService
             $activeTab = 2;
         }
 
-        if($activeTab == 0 &&  $data['commercial_bid_submission_status'] != -1) {
-            $activeTab = 4;
-        }
-
         if($activeTab == 0 &&  $data['technicalStatus'] != -1) {
             $activeTab = 3;
+        }
+
+        if($activeTab == 0 &&  $data['commercial_bid_submission_status'] != -1) {
+            $activeTab = 4;
         }
 
         $data['activeTab'] = $activeTab;
