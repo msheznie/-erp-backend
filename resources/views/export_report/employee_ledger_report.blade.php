@@ -71,13 +71,8 @@
 
                                 @endif
                             @else
-                                @if($data->amountLocal > 0)
-                                    <td  style="text-align: right">{{ number_format($data->amountLocal,$data->localCurrencyDecimals) }}</td>
-                                    @php $sumLocal += $data->amountLocal @endphp
-                                @else
-                                    <td  style="text-align: right">{{ number_format($data->amountLocal * -1,$data->localCurrencyDecimals) }}</td>
-                                    @php $sumLocal += $data->amountLocal * -1 @endphp
-                                @endif
+                                    <td  style="text-align: right">{{ number_format(ABS($data->amountLocal),$data->localCurrencyDecimals) }}</td>
+                                    @php $sumLocal += ABS($data->amountLocal) @endphp
                             @endif
                         @endif
                         @if($currencyID == 2)
@@ -90,13 +85,8 @@
                                     @php $sumRpt += $data->amountRpt @endphp
                                 @endif
                             @else
-                                @if($data->amountLocal > 0)
-                                    <td  style="text-align: right">{{ number_format($data->amountRpt,$data->rptCurrencyDecimals) }}</td>
-                                    @php $sumRpt += $data->amountRpt @endphp
-                                @else
-                                    <td  style="text-align: right">{{ number_format($data->amountRpt * -1,$data->rptCurrencyDecimals) }}</td>
-                                    @php $sumRpt += $data->amountRpt * -1 @endphp
-                                @endif
+                                    <td  style="text-align: right">{{ number_format(ABS($data->amountRpt),$data->rptCurrencyDecimals) }}</td>
+                                    @php $sumRpt += ABS($data->amountRpt) @endphp
                             @endif
                         @endif
                         @if($data->referenceDoc != null)
