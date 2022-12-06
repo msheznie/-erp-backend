@@ -2811,12 +2811,6 @@ class SRMService
 
 
 
-        if((count($documentAttachedCountIdsTechnical) == $documentAttachedCountAnswerTechnical) && $bidSubmissionData['technicalEvaluationCriteria'] == 0) {
-            $data['technicalStatus'] = 0;
-        }else {
-            $data['technicalStatus'] =1;
-        }
-
 
 
         // $pring_schedul_master_ids = PricingScheduleMaster::where('tender_id',$tenderId)->where('status',1)->pluck('id')->toArray();
@@ -2891,18 +2885,6 @@ class SRMService
             
         }
 
-        if((count($documentAttachedCountIdsCommercial) == $documentAttachedCountAnswerCommercial)) {
-            if((count(array_flip($has_work_ids)) === 1 && end($has_work_ids) === 'true')) {
-                $data['commercial_bid_submission_status'] = 0;
-            }else {
-                $data['commercial_bid_submission_status'] = 1;
-            }
-        }else {
-            $data['commercial_bid_submission_status'] =1;
-        }
-
-
-
         if($evaluvationCriteriaDetailsCount == $bidSubmissionDataCount)  {
             $data['goNoGoStatus'] = 0;
         }else {
@@ -2914,6 +2896,7 @@ class SRMService
         }
 
         
+       
         if(count($documentAttachedCountIds) == $documentAttachedCountAnswer) {
             $data['commonStatus'] = 0;
         }else {
@@ -2923,6 +2906,46 @@ class SRMService
         if(count($documentAttachedCountIds) == 0) {
             $data['commonStatus'] = -1;
         }
+
+        
+        if((count($documentAttachedCountIdsTechnical) == $documentAttachedCountAnswerTechnical) && $bidSubmissionData['technicalEvaluationCriteria'] == 0) {
+            $data['technicalStatus'] = 0;
+        }else {
+            $data['technicalStatus'] =1;
+        }
+
+
+        if((count($documentAttachedCountIdsCommercial) == $documentAttachedCountAnswerCommercial)) {
+            if((count(array_flip($has_work_ids)) === 1 && end($has_work_ids) === 'true')) {
+                $data['commercial_bid_submission_status'] = 0;
+            }else {
+                $data['commercial_bid_submission_status'] = 1;
+            }
+        }else {
+            $data['commercial_bid_submission_status'] =1;
+        }
+
+
+        $activeTab = 0;
+
+        if($activeTab == 0 &&  $data['goNoGoStatus'] != -1) {
+            $activeTab = 1;
+        }
+
+        if($activeTab == 0 &&  $data['commonStatus'] != -1) {
+            $activeTab = 2;
+        }
+
+        if($activeTab == 0 &&  $data['commercial_bid_submission_status'] != -1) {
+            $activeTab = 4;
+        }
+
+        if($activeTab == 0 &&  $data['technicalStatus'] != -1) {
+            $activeTab = 3;
+        }
+
+        $data['activeTab'] = $activeTab;
+
         
         return [
             'success' => true,
