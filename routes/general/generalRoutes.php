@@ -23,3 +23,6 @@ Route::get('downloadFile', 'DocumentAttachmentsAPIController@downloadFile')->nam
 Route::get('getuserGroupAssignedCompanies', 'EmployeeNavigationAPIController@getuserGroupAssignedCompanies')->name('Get user group assigned companies');
 Route::get('getAllWHForSelectedCompany', 'WarehouseMasterAPIController@getAllWarehouseForSelectedCompany')->name('Get all warehouse for selected company');
 Route::get('getGroupCompany', 'CompanyNavigationMenusAPIController@getGroupCompany')->name("Get group company");
+
+
+Route::get('getAllDocuments', 'DocumentMasterAPIController@getAllDocuments')->name("Get all documents");

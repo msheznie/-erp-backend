@@ -42,6 +42,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             require __DIR__.'/../routes/general/generalRoutes.php';
             require __DIR__.'/../routes/srm/srmRoutes.php';
             require __DIR__.'/../routes/configuration/configurationRoutes.php';
+            require __DIR__.'/../routes/approvalSetup/approvalSetupRoutes.php';
 
             Route::get('getTypeheadEmployees', 'EmployeeAPIController@getTypeheadEmployees');
 
@@ -248,7 +249,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             /** Approval Level*/
             Route::post('getGroupApprovalLevelDatatable', 'ApprovalLevelAPIController@getGroupApprovalLevelDatatable');
             Route::get('getGroupFilterData', 'ApprovalLevelAPIController@getGroupFilterData');
-            Route::get('getAllDocuments', 'DocumentMasterAPIController@getAllDocuments');
+            
             Route::resource('approval_levels', 'ApprovalLevelAPIController');
             Route::resource('approval_roles', 'ApprovalRoleAPIController');
             Route::resource('department_masters', 'DepartmentMasterAPIController');
@@ -287,28 +288,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('getAllCustomersByCompany', 'CustomerAssignedAPIController@getAllCustomersByCompany');
 
             Route::get('getCustomerByCompany', 'CustomerMasterAPIController@getCustomerByCompany');
-
-            /** Bank master Created by Pasan  */
-            
-            
-            
-            
-            
-            
-            
-
-            /** Unit master Created by Pasan  */
-            
-            
-            
-            
-            
-            
-            
-
-            /** Approval Group Created by Mubashir  */
-            Route::post('getApprovalGroupByCompanyDatatable', 'ApprovalGroupsAPIController@getApprovalGroupByCompanyDatatable');
-            Route::resource('approval_groups', 'ApprovalGroupsAPIController');
 
             Route::resource('purchase_requests', 'PurchaseRequestAPIController');
             Route::post('getPurchaseRequestByDocumentType', 'PurchaseRequestAPIController@getPurchaseRequestByDocumentType');
