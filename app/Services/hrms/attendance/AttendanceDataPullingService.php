@@ -96,7 +96,7 @@ class AttendanceDataPullingService{
             $this->insertToLogTb('nothing to pull');
 
             Log::error('No records found for pulling'.$this->log_suffix(__LINE__));
-            return false;
+            return (!$this->isClockOutPulling) ? false : true;
         }  
         return true;
     }
@@ -174,6 +174,12 @@ class AttendanceDataPullingService{
             $thisData['upload_type'] = $uploadType;
 
             $data[] = $thisData;
+
+            DB::table('srp_erp_pay_empattendancetemptable')
+            ->whereIn('autoID', array_column($row, 'autoID'))
+            ->update([
+                'emp_id'=> $empId 
+            ]); 
         }
         
         unset($temp);
@@ -227,7 +233,8 @@ class AttendanceDataPullingService{
         t.upload_type, t.device_id_in, t.machine_id_in, t.machine_id_out, lm.leaveMasterID, lm.leaveHalfDay, 
         shd.onDutyTime, shd.offDutyTime, shd.weekDayNo, IF (IFNULL(shd.isHalfDay, 0), 1, 0) AS isHalfDay, 
         IF(IFNULL(calenders.holiday_flag, 0), 1, 0) AS isHoliday, shd.isWeekend, shd.gracePeriod, shd.isFlexyHour, 
-        shd.flexyHrFrom, shd.flexyHrTo, e.isCheckInMust, shd.shiftID, shd.shiftType, shd.workingHour
+        shd.flexyHrFrom, shd.flexyHrTo, e.isCheckInMust, shd.shiftID, shd.shiftType, shd.workingHour,
+        t.company_id
         FROM attendance_temporary_tbl AS t
         JOIN (
             SELECT EIdNo, ECode, Ename2, isCheckin AS isCheckInMust
@@ -278,13 +285,16 @@ class AttendanceDataPullingService{
 
             $obj = new AttendanceComputationService($row, $this->companyId);
             $obj->execute();
+            
 
+            $flexibleHourFrom = (empty($obj->flexibleHourFrom))? NULL: $obj->flexibleHourFrom;
+            $flexibleHourTo = (empty($obj->flexibleHourTo))? NULL: $obj->flexibleHourTo;
             $shiftHours = ($row['shiftType'] == 1)? $row['workingHour']: $obj->shiftHours;
             $shiftHours = (empty($shiftHours))? 0: $shiftHours;
             $shiftId = (empty($row['shiftID']))? 0: $row['shiftID'];
 
- 
-            $this->data[] = [ 
+           
+             $this->data[] = [ 
                 'empID'=> $empId, 'deviceID'=> $row['device_id_in'], 'machineID'=> $row['machine_id_in'],
                 'attendanceDate'=> $attDate, 'shift_id'=> $shiftId, 'floorID'=> $row['location_in'], 
                 'clockoutFloorID'=> $row['location_out'], 'gracePeriod'=> $obj->gracePeriod, 
@@ -308,9 +318,10 @@ class AttendanceDataPullingService{
                 
                 'mustCheck'=> $row['isCheckInMust'],                
                 'isMultipleOcc'=> $this->moreThan2RecordsExists($empId),
-                'flexyHrFrom'=> $obj->flexibleHourFrom, 'flexyHrTo'=> $obj->flexibleHourTo,
+                'flexyHrFrom'=> $flexibleHourFrom, 'flexyHrTo'=> $flexibleHourTo,
                 'companyID'=> $this->companyId, 'companyCode'=> $companyCode, 'uploadType'=> $row['upload_type'],
-                'pulled_by'=> 0, 'pulled_at'=> $this->dateTime, 'pulled_via'=> $this->pulledVia
+                'pulled_by'=> 0, 'pulled_at'=> $this->dateTime, 'pulled_via'=> $this->pulledVia,'actual_time' => $obj->totalWorkingHours, 
+                'official_work_time' =>   $obj->officialWorkTime
             ];  
             
             $obj = null;
