@@ -2059,7 +2059,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $output = BookInvSuppMaster::where('bookingSuppMasInvAutoID', $input['bookingSuppMasInvAutoID'])->with(['grvdetail' => function ($query) {
             $query->with('grvmaster');
         }, 'directdetail' => function ($query) {
-            $query->with('segment');
+            $query->with('project','segment');
         }, 'detail' => function ($query) {
             $query->with('grvmaster');
         }, 'item_details' => function ($query) {
@@ -2067,7 +2067,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         }, 'approved_by' => function ($query) {
             $query->with('employee');
             $query->where('documentSystemID', 11);
-        }, 'company', 'transactioncurrency', 'localcurrency', 'rptcurrency', 'supplier', 'directdetail', 'suppliergrv', 'confirmed_by', 'created_by', 'modified_by', 'cancelled_by','audit_trial.modified_by', 'employee'])->first();
+        }, 'project','company', 'transactioncurrency', 'localcurrency', 'rptcurrency', 'supplier', 'suppliergrv', 'confirmed_by', 'created_by', 'modified_by', 'cancelled_by','audit_trial.modified_by', 'employee'])->first();
 
         return $this->sendResponse($output, 'Data retrieved successfully');
     }
@@ -2723,7 +2723,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $bookInvSuppMasterRecord = BookInvSuppMaster::where('bookingSuppMasInvAutoID', $id)->with(['grvdetail' => function ($query) {
             $query->with('grvmaster');
         }, 'directdetail' => function ($query) {
-            $query->with('segment');
+            $query->with('project','segment');
         }, 'detail' => function ($query) {
             $query->with('grvmaster');
         }, 'item_details' => function ($query) {
@@ -2731,7 +2731,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         }, 'approved_by' => function ($query) {
             $query->with('employee');
             $query->where('documentSystemID', 11);
-        }, 'company', 'transactioncurrency', 'localcurrency', 'rptcurrency', 'supplier', 'directdetail', 'suppliergrv', 'confirmed_by', 'created_by', 'modified_by', 'cancelled_by', 'employee'])->first();
+        }, 'project','company', 'transactioncurrency', 'localcurrency', 'rptcurrency', 'supplier', 'suppliergrv', 'confirmed_by', 'created_by', 'modified_by', 'cancelled_by', 'employee'])->first();
 
         if (empty($bookInvSuppMasterRecord)) {
             return $this->sendError('Supplier Invoice not found');

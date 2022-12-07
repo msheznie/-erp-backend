@@ -1821,7 +1821,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $output = ProcumentOrder::where('purchaseOrderID', $request->purchaseOrderID)->with(['segment', 'created_by',
             'detail' => function ($query) {
-                $query->with(['unit','altUom','item'=>function($query1){
+                $query->with(['project','unit','altUom','item'=>function($query1){
                     $query1->select('itemCodeSystem','itemDescription')->with('specification');
                 }]);
             }, 'supplier' => function ($query) {
@@ -3176,8 +3176,8 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             return $this->sendError('Procurement Order not found');
         }
 
-        $outputRecord = ProcumentOrder::where('purchaseOrderID', $procumentOrder->purchaseOrderID)->with(['segment','created_by','detail' => function ($query) {
-            $query->with(['unit','altUom','item'=>function($query1){
+        $outputRecord = ProcumentOrder::where('purchaseOrderID', $procumentOrder->purchaseOrderID)->with(['project','segment','created_by','detail' => function ($query) {
+            $query->with(['project','unit','altUom','item'=>function($query1){
                 $query1->select('itemCodeSystem','itemDescription')->with('specification');
             }]);
         }, 'approved_by' => function ($query) {
@@ -6871,6 +6871,15 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             $poIds = $prDetails->pluck('purchaseOrderID')->toArray();
 
             return $this->getPurchaseOrderTracingData($poIds, $type, null, null, $PayMasterAutoId, $debitNoteID);
+        } else if ($paymentVocherData->invoiceType == 7) {
+            $PayMasterAutoIdArray = (is_array($PayMasterAutoId)) ? $PayMasterAutoId : [$PayMasterAutoId];
+            $prDetails = AdvancePaymentDetails::whereIn('PayMasterAutoId', $PayMasterAutoIdArray)
+                ->groupBy('purchaseOrderID')
+                ->get();
+
+            $poIds = $prDetails->pluck('purchaseOrderID')->toArray();
+
+            return $this->getPurchaseOrderTracingData($poIds, $type, null, null, $PayMasterAutoId, $debitNoteID);
         }
     }
 
@@ -7378,6 +7387,30 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             $temp2['documentSystemID'] = $paymount_vaoucher->documentSystemID;
             $temp2['docAutoID'] = $paymount_vaoucher->PayMasterAutoId;
             $temp2['title'] = "{Doc Code :} " . $paymount_vaoucher->BPVcode . " -- {Doc Date :} " . Carbon::parse($paymount_vaoucher->BPVdate)->format('Y-m-d') . " -- {Currency :} " . $paymount_vaoucher->transactioncurrency->CurrencyCode . " -- {Amount :} " . number_format($paymount_vaoucher->payAmountSuppTrans, $paymount_vaoucher->transactioncurrency->DecimalPlaces) . $cancelStatus;
+
+            if ($paymount_vaoucher->invoiceType == 7) {
+                $matchingData = MatchDocumentMaster::where('PayMasterAutoId', $PayMasterAutoId)
+                                                   ->where('documentSystemID', 4)
+                                                   ->get();
+
+                foreach ($matchingData as $matchKey => $matchValue) {
+                    $tempDeb = [];
+
+                    $tempDeb['cssClass'] = "ngx-org-step-four";
+                    $tempDeb['name'] = "Payment Voucher Matching";
+                    $tempDeb['documentSystemID'] = 70;
+                    $tempDeb['docAutoID'] = $matchValue->matchDocumentMasterAutoID;
+                    $tempDeb['title'] = "{Doc Code :} " . $matchValue->matchingDocCode . " -- {Doc Date :} " . Carbon::parse($matchValue->matchingDocdate)->format('Y-m-d') . " -- {Currency :} " . $paymount_vaoucher->transactioncurrency->CurrencyCode . " -- {Amount :} " . number_format(ABS($matchValue->matchingAmount), $paymount_vaoucher->transactioncurrency->DecimalPlaces);
+
+                    $paySupplierInvoiceDetail = PaySupplierInvoiceDetail::where('matchingDocID', $matchValue->matchDocumentMasterAutoID)->get();
+
+                    $bookingIds = collect($paySupplierInvoiceDetail)->pluck('bookingInvSystemCode')->toArray();
+
+                    // $tempDeb['childs'][] = $this->getSupplierInvoiceTracingData($bookingIds, $type, $PayMasterAutoId);;
+
+                    $temp2['childs'][] = $tempDeb;
+                }
+            }
 
 
             $tracingData[] = $temp2;

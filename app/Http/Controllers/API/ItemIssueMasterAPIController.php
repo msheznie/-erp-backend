@@ -1155,6 +1155,9 @@ class ItemIssueMasterAPIController extends AppBaseController
 
         $units = Unit::all();
 
+        $companyCurrency = \Helper::companyCurrency($companyId);
+
+
         $job = [];
         $output = array(
             'job_no' => $job,
@@ -1169,7 +1172,11 @@ class ItemIssueMasterAPIController extends AppBaseController
             'types' => $types,
             'companyFinanceYear' => $companyFinanceYear,
             'contracts' => $contracts,
-            'units' => $units
+            'units' => $units,
+            'localCurrencyCode' => isset($companyCurrency->localcurrency->CurrencyCode) ? $companyCurrency->localcurrency->CurrencyCode : 'OMR',
+            'localCurrencyDecimal' => isset($companyCurrency->localcurrency->DecimalPlaces) ? $companyCurrency->localcurrency->DecimalPlaces : 3
+
+
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');

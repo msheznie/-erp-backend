@@ -188,6 +188,7 @@ class CustomerInvoiceDirectDetail extends Model
         'serviceLineCode',
         'customerID',
         'glCode',
+        'projectID',
         'glCodeDes',
         'accountType',
         'comments',
@@ -236,6 +237,7 @@ class CustomerInvoiceDirectDetail extends Model
         'vatSubCategoryID' => 'integer',
         'vatMasterCategoryID' => 'integer',
         'companySystemID' => 'integer',
+        'projectID' => 'integer',
         'companyID' => 'string',
         'serviceLineCode' => 'string',
         'customerID' => 'integer',
@@ -316,5 +318,9 @@ class CustomerInvoiceDirectDetail extends Model
     public function master()
     {
         return $this->belongsTo('App\Models\CustomerInvoiceDirect', 'custInvoiceDirectID', 'custInvoiceDirectAutoID');
+    }
+
+     public function project(){
+        return $this->belongsTo('App\Models\ErpProjectMaster','projectID','id');
     }
 }

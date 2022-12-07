@@ -160,4 +160,10 @@ class PricingScheduleMaster extends Model
     {
         return $this->hasMany('App\Models\PricingScheduleDetail', 'pricing_schedule_master_id', 'id');
     }
+
+    public function bid_schedules()
+    {
+        return $this->hasMany('App\Models\BidSchedule', 'schedule_id', 'id');
+    }
+
 }

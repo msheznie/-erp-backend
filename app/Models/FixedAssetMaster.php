@@ -761,6 +761,11 @@ class FixedAssetMaster extends Model
         return $query->where('assetType',  $assetType);
     }
 
+    public function location()
+    {
+        return $this->belongsTo('App\Models\ErpLocation','LOCATION','locationID');
+    }
+
     public function category_by(){
         return $this->belongsTo('App\Models\FixedAssetCategory','faCatID','faCatID');
     }

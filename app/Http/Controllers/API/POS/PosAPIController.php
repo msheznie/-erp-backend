@@ -315,6 +315,12 @@ class PosAPIController extends AppBaseController
                 $sub_category_id = 0;
             }
 
+            if (isset($input['per_page'])) {
+                $per_page = $input['per_page'];
+            } else {
+                $per_page = 10;
+            }
+
             $items = ItemMaster::selectRaw('itemmaster.itemCodeSystem as id, primaryCode as system_code, itemmaster.documentID as document_id, 
             (case when itemmaster.secondaryItemCode = "" or isnull(itemmaster.secondaryItemCode) then primaryCode else itemmaster.secondaryItemCode end) as secondary_code, "" as image,(case when itemShortDescription = "" or isnull(itemShortDescription) then itemmaster.itemDescription else itemShortDescription end) as name,itemmaster.itemDescription as description,
             itemmaster.financeCategoryMaster as category_id, financeitemcategorymaster.categoryDescription as category_description, itemmaster.financeCategorySub as sub_category_id, "" as sub_sub_category_id, itemmaster.barcode as barcode, financeitemcategorymaster.categoryDescription as finance_category, itemmaster.secondaryItemCode as part_number, unit as unit_id, units.UnitShortCode as unit_description, "" as reorder_point, "" as maximum_qty,
@@ -323,7 +329,7 @@ class PosAPIController extends AppBaseController
             vatSubCategory as vat_sub_category_id,itemmaster.isActive as is_active,itemApprovedComment as comment, "" as is_sub_item_exist,"" as is_sub_item_applicable,
             "" as local_currency_id,"" as local_currency,"" as local_exchange_rate,"" as local_selling_price,"" as local_decimal_place,
             "" as reporting_currency_id,"" as reporting_currency,"" as reporting_exchange_rate,"" as reporting_selling_price,"" as reporting_decimal_place,
-            "" as is_deleted,"" as deleted_by,"" as deleted_date_time,itemmaster.pos_type')
+            "" as is_deleted,"" as deleted_by,"" as deleted_date_time,itemmaster.pos_type, itemassigned.wacValueLocal as item_cost, itemassigned.wacValueLocal as selling_price , 0 as VAT')
                 ->join('financeitemcategorymaster', 'financeitemcategorymaster.itemCategoryID', '=', 'itemmaster.financeCategoryMaster')
                 ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
                 ->join('units', 'units.UnitID', '=', 'itemmaster.unit')
@@ -341,8 +347,9 @@ class PosAPIController extends AppBaseController
                 ->where('itemmaster.financeCategoryMaster', '!=', 3)
                 ->where('financeitemcategorysub.itemCategorySubID', '=', $sub_category_id);
                 
-                $search = $request->input('search.value');
-                if ($search) {
+
+                if (isset($input['item_search'])) {
+                    $search = $input['item_search'];
                     $search = str_replace("\\", "\\\\", $search);
                     $items = $items->where(function ($query) use ($search) {
                         $query->where('itemmaster.itemDescription', 'LIKE', "%{$search}%")
@@ -350,7 +357,7 @@ class PosAPIController extends AppBaseController
                     });
                 }
 
-                $items = $items->paginate(10);
+                $items = $items->paginate($per_page);
 
             DB::commit();
             return $this->sendResponse($items, 'Data Retrieved successfully');
