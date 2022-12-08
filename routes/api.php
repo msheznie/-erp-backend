@@ -1360,15 +1360,15 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::post('generateAssetInsuranceReport', 'FixedAssetMasterAPIController@generateAssetInsuranceReport');
             Route::post('exportAssetInsuranceReport', 'FixedAssetMasterAPIController@exportAssetInsuranceReport');
-            Route::resource('fixed_asset_categories', 'FixedAssetCategoryAPIController');
-            Route::post('getAllAssetCategory', 'FixedAssetCategoryAPIController@getAllAssetCategory');
-            Route::get('getAssetCategoryFormData', 'FixedAssetCategoryAPIController@getAssetCategoryFormData');
+            
+            
+            
             Route::resource('fixed_asset_depreciation_periods', 'FixedAssetDepreciationPeriodAPIController');
             Route::post('getAssetDepPeriodsByID', 'FixedAssetDepreciationPeriodAPIController@getAssetDepPeriodsByID');
             Route::post('exportAMDepreciation', 'FixedAssetDepreciationPeriodAPIController@exportAMDepreciation');
             Route::resource('asset_types', 'AssetTypeAPIController');
-            Route::resource('fixed_asset_category_subs', 'FixedAssetCategorySubAPIController');
-            Route::post('getAllAssetSubCategoryByMain', 'FixedAssetCategorySubAPIController@getAllAssetSubCategoryByMain');
+            
+            
 
             Route::resource('h_r_m_s_jv_details', 'HRMSJvDetailsAPIController');
             Route::resource('h_r_m_s_jv_masters', 'HRMSJvMasterAPIController');

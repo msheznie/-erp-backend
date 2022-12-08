@@ -293,3 +293,14 @@ Route::group([], function() {
 
 	Route::resource('asset_finance_categories', 'AssetFinanceCategoryAPIController');
 });
+
+//Asset Category
+Route::group([], function() {
+	Route::get('getAssetCategoryFormData', 'FixedAssetCategoryAPIController@getAssetCategoryFormData')->name("Get asset category form data");
+
+	Route::post('getAllAssetCategory', 'FixedAssetCategoryAPIController@getAllAssetCategory')->name("Get all asset category");
+	Route::post('getAllAssetSubCategoryByMain', 'FixedAssetCategorySubAPIController@getAllAssetSubCategoryByMain')->name("Get all asset sub category by main");
+
+	Route::resource('fixed_asset_categories', 'FixedAssetCategoryAPIController');
+	Route::resource('fixed_asset_category_subs', 'FixedAssetCategorySubAPIController');
+});
