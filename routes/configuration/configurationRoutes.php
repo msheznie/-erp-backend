@@ -65,3 +65,14 @@ Route::group([], function(){
     Route::post('cashFlowTemplateDetailSubCatLink', 'CashFlowTemplateLinkAPIController@cashFlowTemplateDetailSubCatLink')->name("Cash flow template detail sub category link");
     Route::post('addCashFlowTemplateSubCategory', 'CashFlowTemplateDetailAPIController@addCashFlowTemplateSubCategory')->name("Add cash flow template sub category");
 });
+
+//document policy
+Route::group([], function(){
+
+Route::get('getCompanyPolicyFilterOptions', 'CompanyPolicyMasterAPIController@getCompanyPolicyFilterOptions')->name('Get company policy filter options');
+Route::post('getAllCompanyPolicy', 'CompanyPolicyMasterAPIController@getAllCompanyPolicy')->name('Get all company policy');
+Route::post('getAllCompanyEmailSendingPolicy', 'DocumentEmailNotificationDetailAPIController@getAllCompanyEmailSendingPolicy')->name('Get all company email sending policy');
+Route::resource('company_policy_masters', 'CompanyPolicyMasterAPIController');
+Route::resource('docEmailNotificationDetails', 'DocumentEmailNotificationDetailAPIController');
+
+});

@@ -340,7 +340,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
 
             Route::resource('document_approveds', 'DocumentApprovedAPIController');
-            Route::resource('company_policy_masters', 'CompanyPolicyMasterAPIController');
 
             Route::resource('currency_conversions', 'CurrencyConversionAPIController');
             Route::post('updateCrossExchange', 'CurrencyConversionAPIController@updateCrossExchange');
@@ -530,8 +529,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::resource('address_types', 'AddressTypeAPIController');
 
-            Route::post('getAllCompanyPolicy', 'CompanyPolicyMasterAPIController@getAllCompanyPolicy');
-            Route::get('getCompanyPolicyFilterOptions', 'CompanyPolicyMasterAPIController@getCompanyPolicyFilterOptions');
 
             Route::get('purchaseRequestsPOHistory', 'PurchaseRequestAPIController@purchaseRequestsPOHistory');
             Route::get('purchaseRequestAudit', 'PurchaseRequestAPIController@purchaseRequestAudit');
@@ -1617,9 +1614,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('getItemsByMainCategoryAndSubCategory', 'ItemAssignedAPIController@getItemsByMainCategoryAndSubCategory');
             Route::post('savePullItemsFromInventory', 'ItemAssignedAPIController@savePullItemsFromInventory');
 
-            Route::post('getAllCompanyEmailSendingPolicy', 'DocumentEmailNotificationDetailAPIController@getAllCompanyEmailSendingPolicy');
+
             Route::resource('docEmailNotificationMasters', 'DocumentEmailNotificationMasterAPIController');
-            Route::resource('docEmailNotificationDetails', 'DocumentEmailNotificationDetailAPIController');
 
 
             Route::resource('salesPersonMasters', 'SalesPersonMasterAPIController');
