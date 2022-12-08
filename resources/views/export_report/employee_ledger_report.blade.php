@@ -28,20 +28,6 @@
         return $modNum;
 
     }
-
- function getSum($data, $key, $emp) {
-     $sum = 0;
-    for ($i = 0; $i < count($data); $i++) {
-      if ($data[$i]['employeeID'] == $emp) {
-        if ($data[$i]['type'] == 2 || $data[$i]['type'] == 5 || $data[$i]['type'] == 6 || $data[$i]['type'] == 3){
-          $sum += $data[$i][$key] * -1;
-        } else {
-          $sum += ($data[$i][$key] < 0) ? $data[$i][$key] * -1 : $data[$i][$key];
-        }
-      }
-    }
-    return $sum;
-  }
 @endphp
 
 @foreach($employees as $employee)
