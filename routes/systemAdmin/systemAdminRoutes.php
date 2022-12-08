@@ -284,3 +284,12 @@ Route::group([], function() {
 	Route::resource('tax_vat_main_categories', 'TaxVatMainCategoriesAPIController');
 	Route::resource('tax_vat_categories', 'TaxVatCategoriesAPIController');
 });
+
+//Asset Finance Category
+Route::group([], function() {
+	Route::get('getAssetFinanceCategoryFormData', 'AssetFinanceCategoryAPIController@getAssetFinanceCategoryFormData')->name("Get asset finance category form data");
+
+	Route::post('getAllAssetFinanceCategory', 'AssetFinanceCategoryAPIController@getAllAssetFinanceCategory')->name("Get all asset finance category");
+
+	Route::resource('asset_finance_categories', 'AssetFinanceCategoryAPIController');
+});
