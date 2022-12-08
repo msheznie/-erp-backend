@@ -16,6 +16,33 @@
         </tr>
     </thead>
 </table>
+@php
+     function isPositive($num, $type){
+        $modNum = 0;
+        $modNum  = ($num < 0) ? $num * -1 : $num;
+
+        if($type == 2|| $type == 5 || $type == 6 || $type == 3)
+        {
+          $modNum = $modNum * -1;
+        }
+        return $modNum;
+
+    }
+
+ function getSum($data, $key, $emp) {
+     $sum = 0;
+    for ($i = 0; $i < count($data); $i++) {
+      if ($data[$i]['employeeID'] == $emp) {
+        if ($data[$i]['type'] == 2 || $data[$i]['type'] == 5 || $data[$i]['type'] == 6 || $data[$i]['type'] == 3){
+          $sum += $data[$i][$key] * -1;
+        } else {
+          $sum += ($data[$i][$key] < 0) ? $data[$i][$key] * -1 : $data[$i][$key];
+        }
+      }
+    }
+    return $sum;
+  }
+@endphp
 
 @foreach($employees as $employee)
     @php
@@ -61,33 +88,14 @@
                         <td>{{ $data->documentCode }}</td>
                         <td>{{ $data->description }}</td>
                         @if($currencyID == 1)
-                            @if($data->type == 2 || $data->type == 5 || $data->type == 6)
-                                @if($data->amountLocal > 0)
-                                    <td  style="text-align: right">{{ number_format($data->amountLocal * -1,$data->localCurrencyDecimals) }}</td>
-                                    @php $sumLocal += $data->amountLocal * -1 @endphp
-                                @else
-                                    <td  style="text-align: right">{{  number_format($data->amountLocal,$data->localCurrencyDecimals) }}</td>
-                                    @php $sumLocal += $data->amountLocal @endphp
+                            <td  style="text-align: right">{{ number_format(isPositive($data->amountLocal,$data->type),$data->localCurrencyDecimals) }}</td>
+                            @php $sumLocal += isPositive($data->amountLocal, $data->type) @endphp
 
-                                @endif
-                            @else
-                                    <td  style="text-align: right">{{ number_format(ABS($data->amountLocal),$data->localCurrencyDecimals) }}</td>
-                                    @php $sumLocal += ABS($data->amountLocal) @endphp
-                            @endif
                         @endif
                         @if($currencyID == 2)
-                            @if($data->type == 2 || $data->type == 5 || $data->type == 6)
-                                @if($data->amountLocal > 0)
-                                    <td  style="text-align: right">{{ number_format($data->amountRpt * -1,$data->rptCurrencyDecimals) }}</td>
-                                    @php $sumRpt += $data->amountRpt * -1 @endphp
-                                @else
-                                    <td  style="text-align: right">{{ number_format($data->amountRpt,$data->rptCurrencyDecimals) }}</td>
-                                    @php $sumRpt += $data->amountRpt @endphp
-                                @endif
-                            @else
-                                    <td  style="text-align: right">{{ number_format(ABS($data->amountRpt),$data->rptCurrencyDecimals) }}</td>
-                                    @php $sumRpt += ABS($data->amountRpt) @endphp
-                            @endif
+                            <td  style="text-align: right">{{ number_format(isPositive($data->amountRpt,$data->type),$data->rptCurrencyDecimals) }}</td>
+                            @php $sumRpt += isPositive($data->amountRpt, $data->type) @endphp
+
                         @endif
                         @if($data->referenceDoc != null)
                         <td>{{ $data->referenceDoc }}</td>
@@ -112,44 +120,46 @@
                             $data->referenceAmountRpt = isset($data->referenceAmountRpt) ? $data->referenceAmountRpt : null;
                         @endphp
                             @if(isset($data->referenceAmountLocal) &&$data->referenceAmountLocal != null && $currencyID == 1)
-                                <td style="text-align: right">{{ number_format(ABS($data->referenceAmountLocal), $data->localCurrencyDecimals) }}</td>
-                            @php $sumRefLocal += ABS($data->referenceAmountLocal) @endphp
-                            @endif
+                                <td style="text-align: right">{{ number_format(isPositive($data->referenceAmountLocal,$data->type), $data->localCurrencyDecimals) }}</td>
+                            @php $sumRefLocal += isPositive($data->referenceAmountLocal, $data->type) @endphp
+
+                        @endif
                             @if(isset($data->referenceAmountRpt) && $data->referenceAmountRpt != null && $currencyID == 2)
-                                <td  style="text-align: right">{{ number_format(ABS($data->referenceAmountRpt), $data->rptCurrencyDecimals) }}</td>
-                            @php $sumRefRpt += ABS($data->referenceAmountRpt) @endphp
+                                <td  style="text-align: right">{{ number_format(isPositive($data->referenceAmountRpt, $data->type), $data->rptCurrencyDecimals) }}</td>
+                            @php $sumRefRpt += isPositive($data->referenceAmountRpt, $data->type) @endphp
                             @endif
                             @if($data->referenceAmountRpt == null && $data->referenceAmountLocal == null)
                                 <td  style="text-align: right">0</td>
                             @endif
-                            @if($data->referenceAmountLocal != null && $data->amountLocal != null && $currencyID == 1)
-                                <td style="text-align: right">{{ number_format($data->amountLocal - ABS($data->referenceAmountLocal), $data->localCurrencyDecimals) }}</td>
-                            @php $sumBalLocal += $data->amountLocal - ABS($data->referenceAmountLocal) @endphp
 
-                        @endif
+                            @if($data->referenceAmountLocal != null && $data->amountLocal != null && $currencyID == 1)
+                                <td style="text-align: right">{{ number_format(isPositive($data->amountLocal, $data->type) - isPositive($data->referenceAmountLocal, $data->type), $data->localCurrencyDecimals) }}</td>
+                            @php $sumBalLocal += isPositive($data->amountLocal,$data->type) - isPositive($data->referenceAmountLocal, $data->type) @endphp
+                            @endif
+
                             @if($data->referenceAmountRpt != null && $data->amountRpt != null && $currencyID == 2)
-                                <td  style="text-align: right">{{ number_format($data->amountRpt - ABS($data->referenceAmountRpt), $data->rptCurrencyDecimals) }}</td>
-                            @php $sumBalRpt += $data->amountRpt - ABS($data->referenceAmountRpt) @endphp
+                                <td  style="text-align: right">{{ number_format(isPositive($data->amountRpt, $data->type) - isPositive($data->referenceAmountRpt, $data->type), $data->rptCurrencyDecimals) }}</td>
+                            @php $sumBalRpt += isPositive($data->amountRpt, $data->type) - isPositive($data->referenceAmountRpt, $data->type) @endphp
                             @endif
 
                             @if($data->referenceAmountLocal == null && $data->amountLocal != null && $currencyID == 1)
-                                    <td style="text-align: right">{{ number_format($data->amountLocal, $data->localCurrencyDecimals) }}</td>
-                            @php $sumBalLocal += $data->amountLocal @endphp
-
+                                    <td style="text-align: right">{{ number_format(isPositive($data->amountLocal, $data->type), $data->localCurrencyDecimals) }}</td>
+                            @php $sumBalLocal += isPositive($data->amountLocal, $data->type) @endphp
                             @endif
-                            @if($data->referenceAmountRpt == null && $data->amountRpt != null && $currencyID == 2)
-                                    <td  style="text-align: right">{{ number_format($data->amountRpt, $data->rptCurrencyDecimals) }}</td>
-                            @php $sumBalRpt += $data->amountRpt @endphp
 
-                        @endif
-                            @if($data->referenceAmountLocal != null && $data->amountLocal == null && $currencyID == 1)
-                                    <td style="text-align: right">{{ number_format(ABS($data->referenceAmountLocal), $data->localCurrencyDecimals) }}</td>
-                            @php $sumBalLocal += ABS($data->referenceAmountLocal) @endphp
+                        @if($data->referenceAmountRpt == null && $data->amountRpt != null && $currencyID == 2)
+                                    <td  style="text-align: right">{{ number_format(isPositive($data->amountRpt, $data->type), $data->rptCurrencyDecimals) }}</td>
+                            @php $sumBalRpt += isPositive($data->amountRpt, $data->type) @endphp
+                            @endif
+
+                        @if($data->referenceAmountLocal != null && $data->amountLocal == null && $currencyID == 1)
+                                    <td style="text-align: right">{{ number_format(isPositive($data->referenceAmountLocal, $data->type), $data->localCurrencyDecimals) }}</td>
+                            @php $sumBalLocal += isPositive($data->referenceAmountLocal, $data->type) @endphp
 
                         @endif
                             @if($data->referenceAmountRpt != null && $data->amountRpt == null && $currencyID == 2)
-                                    <td  style="text-align: right">{{ number_format(ABS($data->referenceAmountRpt), $data->rptCurrencyDecimals) }}</td>
-                            @php $sumBalRpt += ABS($data->referenceAmountRpt) @endphp
+                                    <td  style="text-align: right">{{ number_format(isPositive($data->referenceAmountRpt, $data->type), $data->rptCurrencyDecimals) }}</td>
+                            @php $sumBalRpt += isPositive($data->referenceAmountRpt, $data->type) @endphp
 
                         @endif
                             @if($data->referenceAmountRpt == null && $data->referenceAmountLocal == null && $data->amountRpt == null && $data->amountLocal == null)
@@ -187,4 +197,5 @@
                 </tbody>
       </table>
 @endforeach
+
 

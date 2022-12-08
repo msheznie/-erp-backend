@@ -3052,6 +3052,18 @@ WHERE
         })->download('xlsx');
     }
 
+    public function isPositive($num, $type){
+        $modNum = 0;
+        $modNum  = ($num < 0) ? $num * -1 : $num;
+
+        if($type == 2|| $type == 5 || $type == 6 || $type == 3)
+        {
+            $modNum = $modNum * -1;
+        }
+        return $modNum;
+
+    }
+
     public function exportReport(Request $request)
     {
         $reportID = $request->reportID;
