@@ -28,6 +28,10 @@
         return $modNum;
 
     }
+        $sumGrandLocal = 0;
+        $sumGrandRpt = 0;
+        $sumGrandRefLocal = 0;
+        $sumGrandRefRpt = 0;
 @endphp
 
 @foreach($employees as $employee)
@@ -161,17 +165,21 @@
 
                     @if($currencyID == 1)
                         <td style="text-align: right"><b>{{number_format($sumLocal,$currencyDecimalLocal)}}</b></td>
+                        @php $sumGrandLocal += $sumLocal @endphp
                     @endif
                     @if($currencyID == 2)
                         <td style="text-align: right"><b>{{number_format($sumRpt,$currencyDecimalRpt)}}</b></td>
+                        @php $sumGrandRpt += $sumRpt @endphp
                     @endif
 
                     <td colspan="2" class="text-right" style="border-bottom-color:white !important;border-left-color:white !important; text-align: right !important;"><b>Total</b></td>
                     @if($currencyID == 1)
                         <td style="text-align: right"><b>{{number_format($sumRefLocal,$currencyDecimalLocal)}}</b></td>
+                        @php $sumGrandRefLocal += $sumRefLocal @endphp
                     @endif
                     @if($currencyID == 2)
                         <td style="text-align: right"><b>{{number_format($sumRefRpt,$currencyDecimalRpt)}}</b></td>
+                        @php $sumGrandRefRpt += $sumRefRpt @endphp
                     @endif
                     @if($currencyID == 1)
                         <td style="text-align: right"><b>{{number_format($sumBalLocal,$currencyDecimalLocal)}}</b></td>
@@ -183,5 +191,33 @@
                 </tbody>
       </table>
 @endforeach
+<table>
 
+    <tbody>
+    <tr>
+    <td colspan="3" style="border-bottom-color:white !important;border-left-color:white !important; text-align: right !important;"><b>Grand Total</b></td>
+
+    @if($currencyID == 1)
+        <td style="text-align: right"><b>{{number_format($sumGrandLocal,$currencyDecimalLocal)}}</b></td>
+    @endif
+    @if($currencyID == 2)
+        <td style="text-align: right"><b>{{number_format($sumGrandRpt,$currencyDecimalRpt)}}</b></td>
+    @endif
+
+    <td colspan="2" class="text-right" style="border-bottom-color:white !important;border-left-color:white !important; text-align: right !important;"></td>
+    @if($currencyID == 1)
+        <td style="text-align: right"><b>{{number_format($sumGrandRefLocal,$currencyDecimalLocal)}}</b></td>
+    @endif
+    @if($currencyID == 2)
+        <td style="text-align: right"><b>{{number_format($sumGrandRefRpt,$currencyDecimalRpt)}}</b></td>
+    @endif
+    @if($currencyID == 1)
+        <td style="text-align: right"><b>{{number_format($sumGrandLocal - $sumGrandRefLocal,$currencyDecimalLocal)}}</b></td>
+    @endif
+    @if($currencyID == 2)
+        <td style="text-align: right"><b>{{number_format($sumGrandRpt - $sumGrandRefRpt,$currencyDecimalRpt)}}</b></td>
+    @endif
+    </tr>
+    </tbody>
+</table>
 
