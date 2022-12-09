@@ -44,7 +44,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             require __DIR__.'/../routes/configuration/configurationRoutes.php';
             require __DIR__.'/../routes/approvalSetup/approvalSetupRoutes.php';
 
-            Route::get('getTypeheadEmployees', 'EmployeeAPIController@getTypeheadEmployees');
+            
 
             Route::post('getAllEmployees', 'EmployeeAPIController@getAllEmployees');
 
@@ -246,21 +246,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('generateWorkOrder', 'ProcumentOrderAPIController@generateWorkOrder');
             Route::post('workOrderLog', 'ProcumentOrderAPIController@workOrderLog');
 
-            /** Approval Level*/
-            Route::post('getGroupApprovalLevelDatatable', 'ApprovalLevelAPIController@getGroupApprovalLevelDatatable');
-            Route::get('getGroupFilterData', 'ApprovalLevelAPIController@getGroupFilterData');
-            
-            Route::resource('approval_levels', 'ApprovalLevelAPIController');
             Route::resource('approval_roles', 'ApprovalRoleAPIController');
-            Route::resource('department_masters', 'DepartmentMasterAPIController');
-            Route::resource('approval_groups', 'ApprovalGroupsAPIController');
-
-            Route::get('getCompanyServiceLine', 'ApprovalLevelAPIController@getCompanyServiceLine');
-            Route::post('activateApprovalLevel', 'ApprovalLevelAPIController@activateApprovalLevel');
+            Route::resource('department_masters', 'DepartmentMasterAPIController');            
             Route::get('getAllApprovalGroup', 'ApprovalGroupsAPIController@getAllApprovalGroup');
-            Route::get('getDocumentAccessGroup', 'ApprovalGroupsAPIController@getDocumentAccessGroup');
-            Route::post('assignApprovalGroup', 'ApprovalRoleAPIController@assignApprovalGroup');
-            Route::get('getApprovalRollByLevel', 'ApprovalRoleAPIController@getApprovalRollByLevel');
 
             /** Chart of Account Created by Shafri */
 
@@ -374,10 +362,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('procument_order_details', 'ProcumentOrderDetailAPIController');
             Route::resource('procumentOrderAdvpaymentUD', 'PoAdvancePaymentAPIController');
             Route::post('updatePoPaymentTermsLogistic', 'PoAdvancePaymentAPIController@updatePoPaymentTermsLogistic');
-            Route::resource('employees_departments', 'EmployeesDepartmentAPIController');
+            
             Route::post('getApprovalAccessRights', 'EmployeesDepartmentAPIController@getApprovalAccessRightsDatatable');
-            Route::post('getApprovalPersonsByRoll', 'EmployeesDepartmentAPIController@getApprovalPersonsByRoll');
-            Route::post('updateEmployeeDepartmentActive', 'EmployeesDepartmentAPIController@updateEmployeeDepartmentActive');
+            
+            
             Route::post('mirrorAccessRights', 'EmployeesDepartmentAPIController@mirrorAccessRights');
             Route::get('getApprovalAccessRightsFormData', 'EmployeesDepartmentAPIController@getApprovalAccessRightsFormData');
             Route::get('getDepartmentDocument', 'EmployeesDepartmentAPIController@getDepartmentDocument');
@@ -385,7 +373,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('approvalAccessActiveInactiveAll', 'EmployeesDepartmentAPIController@approvalAccessActiveInactiveAll');
             Route::post('approval/matrix', 'EmployeesDepartmentAPIController@approvalMatrixReport');
             Route::post('approval/matrix/export', 'EmployeesDepartmentAPIController@exportApprovalMatrixReport');
-            Route::post('assignEmployeeToApprovalGroup', 'EmployeesDepartmentAPIController@assignEmployeeToApprovalGroup');
+            
 
             Route::post('approveItem', 'ItemMasterAPIController@approveItem');
             Route::post('rejectItem', 'ItemMasterAPIController@rejectItem');
@@ -1977,7 +1965,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::resource('do_detail_refferedbacks', 'DeliveryOrderDetailRefferedbackAPIController');
 
-            Route::get('checkDocumentAttachmentPolicy', 'CompanyDocumentAttachmentAPIController@checkDocumentAttachmentPolicy');
+            
             Route::resource('customer_invoice_status_types', 'CustomerInvoiceStatusTypeAPIController');
             Route::resource('tax_masters', 'TaxMasterAPIController');
             Route::resource('fcm_tokens', 'FcmTokenAPIController');
