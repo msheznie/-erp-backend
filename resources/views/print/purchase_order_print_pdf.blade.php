@@ -682,7 +682,11 @@
                     <td nobr="true" >{{$det->itemDescription}} <br> {!! nl2br($det->comment) !!}</td>
 
                     @if ($isProjectBase)
-                        <td colspan="4" nobr="true">{{$det->project->projectCode}} - {{$det->project->description}}</td>
+                        @if ($det->project)
+                            <td colspan="4" nobr="true">{{$det->project->projectCode}} - {{$det->project->description}}</td>
+                        @else
+                            <td colspan="4" nobr="true"></td>
+                        @endif
                     @endif
                     
                     <td>{{$det->supplierPartNumber}}</td>
