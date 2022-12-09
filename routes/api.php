@@ -2381,14 +2381,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('getAppointmentById', 'AppointmentAPIController@getAppointmentById');
             Route::post('checkAssetAllocation', 'ExpenseAssetAllocationAPIController@checkAssetAllocation');
 
-            Route::resource('supplier-category-conf', 'SupplierCategoryConfigurationController');
-            Route::resource('supplier-group-conf', 'SupplierGroupConfigurationController');
 
 
-            Route::post('get-supplier-categories', 'SupplierCategoryConfigurationController@getSupplierCategories');
-            Route::post('delete-category', 'SupplierCategoryConfigurationController@deleteCategory');
-            Route::post('get-supplier-groups', 'SupplierGroupConfigurationController@getSupplierGroups');
-            Route::post('delete-group', 'SupplierGroupConfigurationController@deleteGroup');
 
             
 
