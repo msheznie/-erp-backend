@@ -712,7 +712,7 @@
                         <th class="text-center">Account Code</th>
                         <th class="text-center">Account Description</th>
                     @endif
-                    @if($masterdata->documentType == 14 && $masterdata->project)
+                    @if($masterdata->documentType == 14 && $isProjectBase)
                         <th colspan="3" class="text-center">Project</th>
                     @endif
                     <th class="text-center">Department</th>
@@ -747,7 +747,7 @@
                             <td>{{$item->glCode}}</td>
                             <td>{{$item->glCodeDes}}</td>
                         @endif
-                        @if($masterdata->documentType == 14 && $masterdata->project)
+                        @if($masterdata->documentType == 14 && $isProjectBase)
                             <td colspan="3">
                                 @if($item->project)
                                     {{$item->project->projectCode}} - {{$item->project->description}}
@@ -775,7 +775,7 @@
                     @if($masterdata->documentType == 14)
                         <td colspan="5" class="text-right border-bottom-remov">&nbsp;</td>
                     @endif
-                    @if($masterdata->documentType == 14 && $masterdata->project)
+                    @if($masterdata->documentType == 14 && $isProjectBase)
                         <td colspan="3" class="text-right border-bottom-remov">&nbsp;</td>
                     @endif
                     @if($masterdata->documentType == 15)
