@@ -645,7 +645,7 @@
                 <th style="text-align: center">#</th>
                 <th style="text-align: center">Item Code</th>
                 <th style="text-align: center">Item Description</th>
-                @if ($podata->project)
+                @if ($isProjectBase)
                     <th colspan="4" style="text-align: center">Project</th>
                 @endif
                 <th style="text-align: center">Part No / Ref.Number</th>
@@ -681,8 +681,12 @@
                     <td>{{$det->itemPrimaryCode}}</td>
                     <td nobr="true" >{{$det->itemDescription}} <br> {!! nl2br($det->comment) !!}</td>
 
-                    @if ($podata->project)
-                        <td colspan="4" nobr="true">{{$det->project->projectCode}} - {{$det->project->description}}</td>
+                    @if ($isProjectBase)
+                        @if ($det->project)
+                            <td colspan="4" nobr="true">{{$det->project->projectCode}} - {{$det->project->description}}</td>
+                        @else
+                            <td colspan="4" nobr="true"></td>
+                        @endif
                     @endif
                     
                     <td>{{$det->supplierPartNumber}}</td>

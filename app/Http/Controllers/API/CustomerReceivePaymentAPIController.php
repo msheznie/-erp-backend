@@ -2805,6 +2805,13 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             $query->where('documentSystemID', 21);
         },'audit_trial.modified_by','advance_receipt_details'])->first();
 
+        $isProjectBase = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
+        ->where('companySystemID', $output->companySystemID)
+        ->where('isYesNO', 1)
+        ->exists();
+
+        $output['isProjectBase'] = $isProjectBase;
+
         return $this->sendResponse($output, 'Data retrieved successfully');
     }
 
@@ -2968,6 +2975,11 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
         $advanceDetailsTotalNet =  AdvanceReceiptDetails::where('custReceivePaymentAutoID',$id)->sum('paymentAmount');
 
+        $isProjectBase = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
+        ->where('companySystemID', $customerReceivePaymentRecord->companySystemID)
+        ->where('isYesNO', 1)
+        ->exists();
+
         $order = array(
             'masterdata' => $customerReceivePaymentRecord,
             'docRef' => $refernaceDoc,
@@ -2978,6 +2990,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             'directTotalVAT' => $directTotalVAT,
             'directTotalNet' => $directTotalNet,
             'ciDetailTotTra' => $ciDetailTotTra,
+            'isProjectBase' => $isProjectBase,
             'advanceDetailsTotalNet' => $advanceDetailsTotalNet
         );
 

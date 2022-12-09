@@ -2710,6 +2710,13 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     $query->with(['bankrec_by', 'bank_transfer']);
                 },'audit_trial.modified_by'])->first();
 
+        $isProjectBase = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
+        ->where('companySystemID', $output->companySystemID)
+        ->where('isYesNO', 1)
+        ->exists();
+
+        $output['isProjectBase'] = $isProjectBase;
+
         return $this->sendResponse($output, 'Data retrieved successfully');
 
     }
@@ -4090,6 +4097,11 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
         $advancePayDetailTotTra = AdvancePaymentDetails::where('PayMasterAutoId', $id)
             ->sum('paymentAmount');
 
+        $isProjectBase = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
+        ->where('companySystemID', $output->companySystemID)
+        ->where('isYesNO', 1)
+        ->exists();
+
         $order = array(
             'masterdata' => $output,
             'docRef' => $refernaceDoc,
@@ -4098,6 +4110,7 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
             'rptDecimal' => $rptDecimal,
             'supplierdetailTotTra' => $supplierdetailTotTra,
             'directDetailTotTra' => $directDetailTotTra,
+            'isProjectBase' => $isProjectBase,
             'advancePayDetailTotTra' => $advancePayDetailTotTra
         );
 

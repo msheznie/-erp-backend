@@ -471,7 +471,7 @@
                     <th>#</th>
                     <th class="text-center">GL Code</th>
                     <th class="text-center">GL Code Description</th>
-                    @if($masterdata->invoiceType == 3 && $masterdata->project)
+                    @if($masterdata->invoiceType == 3 && $isProjectBase)
                         <th colspan="4" class="text-center">Project</th>
                     @endif
                     <th class="text-center">Segment</th>
@@ -504,7 +504,7 @@
                         <td>{{$item->glCode}}</td>
                         <td>{{$item->glCodeDes}}</td>
 
-                        @if($masterdata->invoiceType == 3 && $masterdata->project)
+                        @if($masterdata->invoiceType == 3 && $isProjectBase)
                             <td colspan="4">
                                 @if($item->project)
                                     {{$item->project->projectCode}} - {{$item->project->description}}
@@ -529,7 +529,7 @@
                     </tr>
                 @endforeach
                 <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
-                    @if($masterdata->invoiceType == 3 && $masterdata->project)
+                    @if($masterdata->invoiceType == 3 && $isProjectBase)
                         <td colspan="4" class="text-right border-bottom-remov">&nbsp;</td>
                     @endif
                     <td colspan="5" class="text-right border-bottom-remov">&nbsp;</td>
