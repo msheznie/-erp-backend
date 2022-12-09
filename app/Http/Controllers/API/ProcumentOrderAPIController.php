@@ -1880,7 +1880,14 @@ class ProcumentOrderAPIController extends AppBaseController
             }
         }
         $output['is_specification'] = $is_specification;
-        // return $output;
+        
+        $isProjectBase = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
+        ->where('companySystemID', $output->companySystemID)
+        ->where('isYesNO', 1)
+        ->exists();
+
+        $output['isProjectBase'] = $isProjectBase;
+        
         return $this->sendResponse($output, 'Data retrieved successfully');
     }
 
@@ -3265,6 +3272,11 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
         ->where('companySystemID', $procumentOrder->companySystemID)
         ->first();
 
+        $isProjectBase = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
+        ->where('companySystemID', $procumentOrder->companySystemID)
+        ->where('isYesNO', 1)
+        ->exists();
+
         $order = array(
             'podata' => $outputRecord[0],
             'docRef' => $refernaceDoc,
@@ -3276,6 +3288,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             'specification' => $is_specification,
             'paymentTermsView' => $paymentTermsView,
             'addons' => $orderAddons,
+            'isProjectBase' => $isProjectBase,
             'allowAltUom' => ($checkAltUOM) ? $checkAltUOM->isYesNO : false
         );
 
