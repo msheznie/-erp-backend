@@ -103,8 +103,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('getCompanyLocalCurrency', 'CurrencyMasterAPIController@getCompanyLocalCurrency');
             Route::get('getCompanyReportingCurrency', 'CurrencyMasterAPIController@getCompanyReportingCurrency');
             Route::get('getCompanyReportingCurrencyCode', 'CurrencyMasterAPIController@getCompanyReportingCurrencyCode');
-            Route::post('getCompanies', 'CompanyAPIController@getCompanies');
-            Route::get('getCompanySettingFormData', 'CompanyAPIController@getCompanySettingFormData');
+
 
             Route::get('checkSelectedSupplierIsActive', 'SupplierAssignedAPIController@checkSelectedSupplierIsActive');
 
@@ -112,7 +111,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::resource('users', 'UserAPIController');
 
-            Route::resource('companies', 'CompanyAPIController');
 
             Route::resource('supplier_category_masters', 'SupplierCategoryMasterAPIController');
 
@@ -2062,11 +2060,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('grvMarkupfinalyze', 'GRVMasterAPIController@grvMarkupfinalyze');
 
 
-            Route::post('getDigitalStamps', 'CompanyAPIController@getDigitalStamps');
-            Route::post('uploadDigitalStamp', 'CompanyAPIController@uploadDigitalStamp');
-            Route::post('updateDefaultStamp', 'CompanyAPIController@updateDefaultStamp');
 
-            Route::resource('company_digital_stamps', 'CompanyDigitalStampAPIController');
 
 
             Route::resource('ci_item_details_refferedbacks', 'CustomerInvoiceItemDetailsRefferedbackAPIController');
