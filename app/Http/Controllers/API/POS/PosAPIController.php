@@ -134,13 +134,6 @@ class PosAPIController extends AppBaseController
                 $sort = 'desc';
             }
 
-
-            if (isset($input['sub_category_id'])) {
-                $sub_category_id = $input['sub_category_id'];
-            } else {
-                $sub_category_id = 0;
-            }
-
             if (isset($input['per_page'])) {
                 $per_page = $input['per_page'];
             } else {
@@ -164,7 +157,9 @@ class PosAPIController extends AppBaseController
                 ->where('chartofaccounts.AccountCode', '!=', '')
                 ->where('chartofaccounts.AccountDescription', '!=', '')
                 ->where('chartofaccounts.catogaryBLorPL', '!=', '')
-                ->where('chartofaccounts.controlAccounts', '!=', '');
+                ->where('chartofaccounts.controlAccounts', '!=', '')
+                ->where('chartofaccounts.isApproved', '=', 1)
+                ->where('chartofaccounts.isActive', '=', 1);
                 
 
                 if (isset($input['coa_search'])) {
