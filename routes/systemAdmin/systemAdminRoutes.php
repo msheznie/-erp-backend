@@ -304,3 +304,14 @@ Route::group([], function() {
 	Route::resource('fixed_asset_categories', 'FixedAssetCategoryAPIController');
 	Route::resource('fixed_asset_category_subs', 'FixedAssetCategorySubAPIController');
 });
+
+//Currency Master
+Route::group([], function() {
+	Route::get('getAllConversionByCurrency', 'CurrencyMasterAPIController@getAllConversionByCurrency')->name("Get all conversion by currency");
+
+	Route::post('updateCrossExchange', 'CurrencyConversionAPIController@updateCrossExchange')->name("Update cross exchange currency conversion");
+	Route::post('getCurrencyConversionHistory', 'CurrencyConversionHistoryAPIController@getCurrencyConversionHistory')->name("Get currency conversion history");
+
+	Route::resource('currency_conversions', 'CurrencyConversionAPIController');
+	Route::resource('currency_masters', 'CurrencyMasterAPIController');
+});
