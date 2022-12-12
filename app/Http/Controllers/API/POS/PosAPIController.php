@@ -147,8 +147,10 @@ class PosAPIController extends AppBaseController
                                                         chartofaccounts.controllAccountYN as is_control_account,
                                                         chartofaccounts.isActive as is_active,
                                                         chartofaccounts.isBank as is_bank, 
-                                                        accountstype.description as category, 
-                                                        controlaccounts.description as controlAccount')
+                                                        accountstype.description as category,
+                                                        accountstype.accountsType as category_id, 
+                                                        controlaccounts.description as controlAccount,
+                                                        controlaccounts.controlAccountsSystemID as control_account_id')
                 ->join('chartofaccountsassigned', 'chartofaccountsassigned.chartOfAccountSystemID', '=', 'chartofaccounts.chartOfAccountSystemID')
                 ->join('accountstype', 'accountstype.accountsType', '=', 'chartofaccounts.catogaryBLorPLID')
                 ->join('controlaccounts', 'controlaccounts.controlAccountsSystemID', '=', 'chartofaccounts.controlAccountsSystemID')
@@ -161,7 +163,16 @@ class PosAPIController extends AppBaseController
                 ->where('chartofaccounts.isApproved', '=', 1)
                 ->where('chartofaccounts.isActive', '=', 1);
                 
-
+                
+                if (isset($input['control_account_id'])) {
+                    $control_account_id = $input['control_account_id'];
+                    $chartOfAccount = $chartOfAccount->where('chartofaccounts.controlAccountsSystemID', '=', $control_account_id);
+                }
+    
+                if (isset($input['category_id'])) {
+                    $category_id = $input['category_id'];
+                    $chartOfAccount = $chartOfAccount->where('chartofaccounts.catogaryBLorPLID', '=', $category_id);
+                }
                 if (isset($input['coa_search'])) {
                     $search = $input['coa_search'];
                     $search = str_replace("\\", "\\\\", $search);
