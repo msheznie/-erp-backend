@@ -2153,16 +2153,16 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::post('exportTransactionsRecord', 'TransactionsExportExcel@exportRecord');
 
-            Route::resource('currency_conversion_masters', 'CurrencyConversionMasterAPIController');
+            
 
-            Route::resource('currency_conversion_details', 'CurrencyConversionDetailAPIController');
+            
 
 
-            Route::post('getAllCurrencyConversions', 'CurrencyConversionMasterAPIController@getAllCurrencyConversions');
-            Route::post('currencyConversionReopen', 'CurrencyConversionMasterAPIController@currencyConversionReopen');
-            Route::post('updateTempCrossExchange', 'CurrencyConversionDetailAPIController@updateTempCrossExchange');
-            Route::get('getConversionMaster', 'CurrencyConversionMasterAPIController@getConversionMaster');
-            Route::get('getAllTempConversionByCurrency', 'CurrencyConversionMasterAPIController@getAllTempConversionByCurrency');
+            
+            
+            
+            
+            
 
             Route::post('getAllCurrencyConversionApproval', 'CurrencyConversionMasterAPIController@getAllCurrencyConversionApproval');
             Route::post('approveCurrencyConversion', 'CurrencyConversionMasterAPIController@approveCurrencyConversion');

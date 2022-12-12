@@ -315,3 +315,16 @@ Route::group([], function() {
 	Route::resource('currency_conversions', 'CurrencyConversionAPIController');
 	Route::resource('currency_masters', 'CurrencyMasterAPIController');
 });
+
+//Currency Conversion
+Route::group([], function() {
+	Route::get('getConversionMaster', 'CurrencyConversionMasterAPIController@getConversionMaster')->name("Get conversion master");
+	Route::get('getAllTempConversionByCurrency', 'CurrencyConversionMasterAPIController@getAllTempConversionByCurrency')->name("Get all temp conversion by currency");
+
+	Route::post('getAllCurrencyConversions', 'CurrencyConversionMasterAPIController@getAllCurrencyConversions')->name("Get all currency conversions");
+	Route::post('currencyConversionReopen', 'CurrencyConversionMasterAPIController@currencyConversionReopen')->name("Currency conversion reopen");
+	Route::post('updateTempCrossExchange', 'CurrencyConversionDetailAPIController@updateTempCrossExchange')->name("Update temp cross exchange");
+
+	Route::resource('currency_conversion_masters', 'CurrencyConversionMasterAPIController');
+	Route::resource('currency_conversion_details', 'CurrencyConversionDetailAPIController');
+});
