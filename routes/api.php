@@ -44,7 +44,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             require __DIR__.'/../routes/configuration/configurationRoutes.php';
             require __DIR__.'/../routes/approvalSetup/approvalSetupRoutes.php';
 
-            Route::get('getTypeheadEmployees', 'EmployeeAPIController@getTypeheadEmployees');
+            
 
             Route::post('getAllEmployees', 'EmployeeAPIController@getAllEmployees');
 
@@ -246,21 +246,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('generateWorkOrder', 'ProcumentOrderAPIController@generateWorkOrder');
             Route::post('workOrderLog', 'ProcumentOrderAPIController@workOrderLog');
 
-            /** Approval Level*/
-            Route::post('getGroupApprovalLevelDatatable', 'ApprovalLevelAPIController@getGroupApprovalLevelDatatable');
-            Route::get('getGroupFilterData', 'ApprovalLevelAPIController@getGroupFilterData');
-            
-            Route::resource('approval_levels', 'ApprovalLevelAPIController');
             Route::resource('approval_roles', 'ApprovalRoleAPIController');
-            Route::resource('department_masters', 'DepartmentMasterAPIController');
-            Route::resource('approval_groups', 'ApprovalGroupsAPIController');
-
-            Route::get('getCompanyServiceLine', 'ApprovalLevelAPIController@getCompanyServiceLine');
-            Route::post('activateApprovalLevel', 'ApprovalLevelAPIController@activateApprovalLevel');
+            Route::resource('department_masters', 'DepartmentMasterAPIController');            
             Route::get('getAllApprovalGroup', 'ApprovalGroupsAPIController@getAllApprovalGroup');
-            Route::get('getDocumentAccessGroup', 'ApprovalGroupsAPIController@getDocumentAccessGroup');
-            Route::post('assignApprovalGroup', 'ApprovalRoleAPIController@assignApprovalGroup');
-            Route::get('getApprovalRollByLevel', 'ApprovalRoleAPIController@getApprovalRollByLevel');
 
             /** Chart of Account Created by Shafri */
 
@@ -340,7 +328,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
 
             Route::resource('document_approveds', 'DocumentApprovedAPIController');
-            Route::resource('company_policy_masters', 'CompanyPolicyMasterAPIController');
 
             Route::resource('currency_conversions', 'CurrencyConversionAPIController');
             Route::post('updateCrossExchange', 'CurrencyConversionAPIController@updateCrossExchange');
@@ -375,10 +362,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('procument_order_details', 'ProcumentOrderDetailAPIController');
             Route::resource('procumentOrderAdvpaymentUD', 'PoAdvancePaymentAPIController');
             Route::post('updatePoPaymentTermsLogistic', 'PoAdvancePaymentAPIController@updatePoPaymentTermsLogistic');
-            Route::resource('employees_departments', 'EmployeesDepartmentAPIController');
+            
             Route::post('getApprovalAccessRights', 'EmployeesDepartmentAPIController@getApprovalAccessRightsDatatable');
-            Route::post('getApprovalPersonsByRoll', 'EmployeesDepartmentAPIController@getApprovalPersonsByRoll');
-            Route::post('updateEmployeeDepartmentActive', 'EmployeesDepartmentAPIController@updateEmployeeDepartmentActive');
+            
+            
             Route::post('mirrorAccessRights', 'EmployeesDepartmentAPIController@mirrorAccessRights');
             Route::get('getApprovalAccessRightsFormData', 'EmployeesDepartmentAPIController@getApprovalAccessRightsFormData');
             Route::get('getDepartmentDocument', 'EmployeesDepartmentAPIController@getDepartmentDocument');
@@ -386,7 +373,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('approvalAccessActiveInactiveAll', 'EmployeesDepartmentAPIController@approvalAccessActiveInactiveAll');
             Route::post('approval/matrix', 'EmployeesDepartmentAPIController@approvalMatrixReport');
             Route::post('approval/matrix/export', 'EmployeesDepartmentAPIController@exportApprovalMatrixReport');
-            Route::post('assignEmployeeToApprovalGroup', 'EmployeesDepartmentAPIController@assignEmployeeToApprovalGroup');
+            
 
             Route::post('approveItem', 'ItemMasterAPIController@approveItem');
             Route::post('rejectItem', 'ItemMasterAPIController@rejectItem');
@@ -530,8 +517,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::resource('address_types', 'AddressTypeAPIController');
 
-            Route::post('getAllCompanyPolicy', 'CompanyPolicyMasterAPIController@getAllCompanyPolicy');
-            Route::get('getCompanyPolicyFilterOptions', 'CompanyPolicyMasterAPIController@getCompanyPolicyFilterOptions');
 
             Route::get('purchaseRequestsPOHistory', 'PurchaseRequestAPIController@purchaseRequestsPOHistory');
             Route::get('purchaseRequestAudit', 'PurchaseRequestAPIController@purchaseRequestAudit');
@@ -757,9 +742,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('poAddonsReffered_backs', 'PoAddonsRefferedBackAPIController');
             Route::get('getPoAddonsForAmendHistory', 'PoAddonsRefferedBackAPIController@getPoAddonsForAmendHistory');
 
-            Route::resource('asset_finance_categories', 'AssetFinanceCategoryAPIController');
-            Route::post('getAllAssetFinanceCategory', 'AssetFinanceCategoryAPIController@getAllAssetFinanceCategory');
-            Route::get('getAssetFinanceCategoryFormData', 'AssetFinanceCategoryAPIController@getAssetFinanceCategoryFormData');
+            
+            
+            
             Route::resource('years', 'YearAPIController');
             Route::resource('unbilled_grv_group_bies', 'UnbilledGrvGroupByAPIController');
             Route::resource('employee_profiles', 'EmployeeProfileAPIController');
@@ -1360,15 +1345,15 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::post('generateAssetInsuranceReport', 'FixedAssetMasterAPIController@generateAssetInsuranceReport');
             Route::post('exportAssetInsuranceReport', 'FixedAssetMasterAPIController@exportAssetInsuranceReport');
-            Route::resource('fixed_asset_categories', 'FixedAssetCategoryAPIController');
-            Route::post('getAllAssetCategory', 'FixedAssetCategoryAPIController@getAllAssetCategory');
-            Route::get('getAssetCategoryFormData', 'FixedAssetCategoryAPIController@getAssetCategoryFormData');
+            
+            
+            
             Route::resource('fixed_asset_depreciation_periods', 'FixedAssetDepreciationPeriodAPIController');
             Route::post('getAssetDepPeriodsByID', 'FixedAssetDepreciationPeriodAPIController@getAssetDepPeriodsByID');
             Route::post('exportAMDepreciation', 'FixedAssetDepreciationPeriodAPIController@exportAMDepreciation');
             Route::resource('asset_types', 'AssetTypeAPIController');
-            Route::resource('fixed_asset_category_subs', 'FixedAssetCategorySubAPIController');
-            Route::post('getAllAssetSubCategoryByMain', 'FixedAssetCategorySubAPIController@getAllAssetSubCategoryByMain');
+            
+            
 
             Route::resource('h_r_m_s_jv_details', 'HRMSJvDetailsAPIController');
             Route::resource('h_r_m_s_jv_masters', 'HRMSJvMasterAPIController');
@@ -1617,9 +1602,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('getItemsByMainCategoryAndSubCategory', 'ItemAssignedAPIController@getItemsByMainCategoryAndSubCategory');
             Route::post('savePullItemsFromInventory', 'ItemAssignedAPIController@savePullItemsFromInventory');
 
-            Route::post('getAllCompanyEmailSendingPolicy', 'DocumentEmailNotificationDetailAPIController@getAllCompanyEmailSendingPolicy');
+
             Route::resource('docEmailNotificationMasters', 'DocumentEmailNotificationMasterAPIController');
-            Route::resource('docEmailNotificationDetails', 'DocumentEmailNotificationDetailAPIController');
 
 
             Route::resource('salesPersonMasters', 'SalesPersonMasterAPIController');
@@ -1981,7 +1965,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::resource('do_detail_refferedbacks', 'DeliveryOrderDetailRefferedbackAPIController');
 
-            Route::get('checkDocumentAttachmentPolicy', 'CompanyDocumentAttachmentAPIController@checkDocumentAttachmentPolicy');
+            
             Route::resource('customer_invoice_status_types', 'CustomerInvoiceStatusTypeAPIController');
             Route::resource('tax_masters', 'TaxMasterAPIController');
             Route::resource('fcm_tokens', 'FcmTokenAPIController');
@@ -2385,14 +2369,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('getAppointmentById', 'AppointmentAPIController@getAppointmentById');
             Route::post('checkAssetAllocation', 'ExpenseAssetAllocationAPIController@checkAssetAllocation');
 
-            Route::resource('supplier-category-conf', 'SupplierCategoryConfigurationController');
-            Route::resource('supplier-group-conf', 'SupplierGroupConfigurationController');
 
 
-            Route::post('get-supplier-categories', 'SupplierCategoryConfigurationController@getSupplierCategories');
-            Route::post('delete-category', 'SupplierCategoryConfigurationController@deleteCategory');
-            Route::post('get-supplier-groups', 'SupplierGroupConfigurationController@getSupplierGroups');
-            Route::post('delete-group', 'SupplierGroupConfigurationController@deleteGroup');
 
             
 

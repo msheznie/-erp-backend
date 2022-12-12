@@ -559,6 +559,8 @@ class FinancialReportAPIController extends AppBaseController
             $currencyCodeLocal = $companyCurrency->localcurrency->CurrencyCode;
             $currencyCodeRpt = $companyCurrency->reportingcurrency->CurrencyCode;
 
+            $currencyDecimalLocal = $companyCurrency->localcurrency->DecimalPlaces;
+            $currencyDecimalRpt = $companyCurrency->reportingcurrency->DecimalPlaces;
 
 
 
@@ -960,7 +962,7 @@ WHERE
     srp_erp_iouvouchers.approvedYN = 1
     ) t GROUP BY t.employeeID');
 
-        return $this->sendResponse([$data,$employees,$currencyCodeLocal,$currencyCodeRpt], 'Record retrieved successfully');
+        return $this->sendResponse([$data,$employees,$currencyCodeLocal,$currencyCodeRpt,$currencyDecimalLocal,$currencyDecimalRpt], 'Record retrieved successfully');
 
     }
 
@@ -2641,6 +2643,9 @@ WHERE
         $currencyCodeLocal = $companyCurrency->localcurrency->CurrencyCode;
         $currencyCodeRpt = $companyCurrency->reportingcurrency->CurrencyCode;
 
+        $currencyDecimalLocal = $companyCurrency->localcurrency->DecimalPlaces;
+        $currencyDecimalRpt = $companyCurrency->reportingcurrency->DecimalPlaces;
+
 
 
 
@@ -3037,7 +3042,7 @@ WHERE
 
         $currencyID = isset($currencyID[0]) ? $currencyID[0] : $currencyID;
 
-        $reportData = array('companyName'=>$companyName,'report_tittle'=>'Employee Ledger','datas'=>$data,'employees'=>$employees,'currencyCodeLocal'=>$currencyCodeLocal,'currencyCodeRpt'=>$currencyCodeRpt,'fromDate'=>$fromDate,'toDate'=>$toDate, 'currencyID'=>$currencyID);
+        $reportData = array('companyName'=>$companyName,'report_tittle'=>'Employee Ledger','datas'=>$data,'employees'=>$employees,'currencyCodeLocal'=>$currencyCodeLocal,'currencyCodeRpt'=>$currencyCodeRpt, 'currencyDecimalLocal'=>$currencyDecimalLocal, 'currencyDecimalRpt'=>$currencyDecimalRpt, 'fromDate'=>$fromDate,'toDate'=>$toDate, 'currencyID'=>$currencyID);
         $templateName = "export_report.employee_ledger_report";
 
         return \Excel::create('finance', function ($excel) use ($reportData, $templateName) {
@@ -3046,6 +3051,8 @@ WHERE
             });
         })->download('xlsx');
     }
+
+ 
 
     public function exportReport(Request $request)
     {

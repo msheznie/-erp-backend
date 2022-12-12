@@ -2069,6 +2069,13 @@ class BookInvSuppMasterAPIController extends AppBaseController
             $query->where('documentSystemID', 11);
         }, 'project','company', 'transactioncurrency', 'localcurrency', 'rptcurrency', 'supplier', 'suppliergrv', 'confirmed_by', 'created_by', 'modified_by', 'cancelled_by','audit_trial.modified_by', 'employee'])->first();
 
+        $isProjectBase = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
+        ->where('companySystemID', $output->companySystemID)
+        ->where('isYesNO', 1)
+        ->exists();
+
+        $output['isProjectBase'] = $isProjectBase;
+
         return $this->sendResponse($output, 'Data retrieved successfully');
     }
 
@@ -2786,6 +2793,10 @@ class BookInvSuppMasterAPIController extends AppBaseController
             $grvTotTra = SupplierInvoiceDirectItem::selectRaw('SUM(netAmount + (VATAmount * noQty)) as total')->where('bookingSuppMasInvAutoID', $id)->first()->total;
         }
 
+        $isProjectBase = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
+        ->where('companySystemID', $bookInvSuppMasterRecord->companySystemID)
+        ->where('isYesNO', 1)
+        ->exists();
 
         $order = array(
             'masterdata' => $bookInvSuppMasterRecord,
@@ -2800,6 +2811,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             'grvTotTra' => $grvTotTra,
             'grvTotLoc' => $grvTotLoc,
             'isVATEligible' => $isVATEligible,
+            'isProjectBase' => $isProjectBase,
             'grvTotRpt' => $grvTotRpt
         );
 

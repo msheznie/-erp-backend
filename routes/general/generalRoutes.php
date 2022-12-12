@@ -26,3 +26,5 @@ Route::get('getGroupCompany', 'CompanyNavigationMenusAPIController@getGroupCompa
 
 
 Route::get('getAllDocuments', 'DocumentMasterAPIController@getAllDocuments')->name("Get all documents");
+
+Route::get('checkDocumentAttachmentPolicy', 'CompanyDocumentAttachmentAPIController@checkDocumentAttachmentPolicy')->name("Check document attachment policy");

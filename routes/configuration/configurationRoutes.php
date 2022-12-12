@@ -65,3 +65,26 @@ Route::group([], function(){
     Route::post('cashFlowTemplateDetailSubCatLink', 'CashFlowTemplateLinkAPIController@cashFlowTemplateDetailSubCatLink')->name("Cash flow template detail sub category link");
     Route::post('addCashFlowTemplateSubCategory', 'CashFlowTemplateDetailAPIController@addCashFlowTemplateSubCategory')->name("Add cash flow template sub category");
 });
+
+//document policy
+Route::group([], function(){
+
+Route::get('getCompanyPolicyFilterOptions', 'CompanyPolicyMasterAPIController@getCompanyPolicyFilterOptions')->name('Get company policy filter options');
+Route::post('getAllCompanyPolicy', 'CompanyPolicyMasterAPIController@getAllCompanyPolicy')->name('Get all company policy');
+Route::post('getAllCompanyEmailSendingPolicy', 'DocumentEmailNotificationDetailAPIController@getAllCompanyEmailSendingPolicy')->name('Get all company email sending policy');
+Route::resource('company_policy_masters', 'CompanyPolicyMasterAPIController');
+Route::resource('docEmailNotificationDetails', 'DocumentEmailNotificationDetailAPIController');
+
+});
+
+//supplier configuration
+Route::group([], function(){
+
+    Route::post('get-supplier-categories', 'SupplierCategoryConfigurationController@getSupplierCategories')->name('Get supplier categories');
+    Route::post('get-supplier-groups', 'SupplierGroupConfigurationController@getSupplierGroups')->name('Get supplier groups');
+    Route::resource('supplier-category-conf', 'SupplierCategoryConfigurationController');
+    Route::post('delete-category', 'SupplierCategoryConfigurationController@deleteCategory')->name('Delete supplier category');
+    Route::resource('supplier-group-conf', 'SupplierGroupConfigurationController');
+    Route::post('delete-group', 'SupplierGroupConfigurationController@deleteGroup')->name('Delete supplier group');
+
+});
