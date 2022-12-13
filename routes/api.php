@@ -356,24 +356,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('getAllCustomerMasterApproval', 'CustomerMasterAPIController@getAllCustomerMasterApproval');
             Route::post('getAllChartOfAccountApproval', 'ChartOfAccountAPIController@getAllChartOfAccountApproval');
 
-
-
             Route::resource('procument_order_details', 'ProcumentOrderDetailAPIController');
             Route::resource('procumentOrderAdvpaymentUD', 'PoAdvancePaymentAPIController');
             Route::post('updatePoPaymentTermsLogistic', 'PoAdvancePaymentAPIController@updatePoPaymentTermsLogistic');
             
-            Route::post('getApprovalAccessRights', 'EmployeesDepartmentAPIController@getApprovalAccessRightsDatatable');
-            
-            
-            Route::post('mirrorAccessRights', 'EmployeesDepartmentAPIController@mirrorAccessRights');
-            Route::get('getApprovalAccessRightsFormData', 'EmployeesDepartmentAPIController@getApprovalAccessRightsFormData');
-            Route::get('getDepartmentDocument', 'EmployeesDepartmentAPIController@getDepartmentDocument');
-            Route::post('deleteAllAccessRights', 'EmployeesDepartmentAPIController@deleteAllAccessRights');
-            Route::post('approvalAccessActiveInactiveAll', 'EmployeesDepartmentAPIController@approvalAccessActiveInactiveAll');
-            Route::post('approval/matrix', 'EmployeesDepartmentAPIController@approvalMatrixReport');
-            Route::post('approval/matrix/export', 'EmployeesDepartmentAPIController@exportApprovalMatrixReport');
-            
-
             Route::post('approveItem', 'ItemMasterAPIController@approveItem');
             Route::post('rejectItem', 'ItemMasterAPIController@rejectItem');
 
