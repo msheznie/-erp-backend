@@ -250,7 +250,14 @@ class GeneralLedgerPostingService
                     }
                 }
                 if (in_array($masterModel["documentSystemID"], [19, 20, 21, 87])) {
-                    $arLedgerInsert = \App\Jobs\AccountReceivableLedgerInsert::dispatch($masterModel, $dataBase);
+                    if ($masterModel["documentSystemID"] == 87) {
+                        $salesReturnDataData = SalesReturn::find($masterModel["autoID"]);
+                        if ($salesReturnDataData->returnType != 1) {
+                            $arLedgerInsert = \App\Jobs\AccountReceivableLedgerInsert::dispatch($masterModel, $dataBase);
+                        }
+                    } else {
+                        $arLedgerInsert = \App\Jobs\AccountReceivableLedgerInsert::dispatch($masterModel, $dataBase);
+                    }
                 }
 
 
