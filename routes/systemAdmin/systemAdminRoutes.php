@@ -328,3 +328,15 @@ Route::group([], function() {
 	Route::resource('currency_conversion_masters', 'CurrencyConversionMasterAPIController');
 	Route::resource('currency_conversion_details', 'CurrencyConversionDetailAPIController');
 });
+
+//Logistic Configuration
+Route::group([], function() {
+	Route::get('getAllcountry', 'CountryMasterAPIController@index')->name("Logistic Configuration get all country");
+
+	Route::post('createDeliveryTerms', 'DeliveryTermsMasterAPIController@store')->name("Logistic Configuration create delivery terms");
+	Route::post('createPort', 'PortMasterAPIController@store')->name("Logistic Configuration create Port");
+	Route::post('getAllPort', 'PortMasterAPIController@getAllPort')->name("Logistic Configuration get all Port");
+	Route::post('getAllDeliveryTerms', 'DeliveryTermsMasterAPIController@getAllDeliveryTerms')->name("Logistic Configuration get all delivery terms");
+	Route::post('deletePort', 'PortMasterAPIController@deletePort')->name("Logistic Configuration delete Port");
+	Route::post('deleteDeliveryTerms', 'DeliveryTermsMasterAPIController@deleteDeliveryTerms')->name("Logistic Configuration delete delivery terms");
+});
