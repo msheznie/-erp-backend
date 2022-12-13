@@ -328,3 +328,12 @@ Route::group([], function() {
 	Route::resource('currency_conversion_masters', 'CurrencyConversionMasterAPIController');
 	Route::resource('currency_conversion_details', 'CurrencyConversionDetailAPIController');
 });
+
+//Logistic Categories
+Route::group([], function() {
+	Route::get('getItemsOptionForLogistic', 'AddonCostCategoriesAPIController@getItemsOptionForLogistic')->name("Get items option for logistic");
+
+	Route::post('getLogisticCategories', 'AddonCostCategoriesAPIController@getLogisticCategories')->name("Get logistic categories");
+
+	Route::resource('addon_cost_categories', 'AddonCostCategoriesAPIController');
+});
