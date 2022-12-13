@@ -107,3 +107,10 @@ Route::group([], function() {
     Route::get('getDocumentControlFilterFormData', 'DocumentControlAPIController@getDocumentControlFilterFormData')->name('Get document control filter form data');
     Route::post('generateDocumentControlReport', 'DocumentControlAPIController@generateDocumentControlReport')->name('Generate document control report');
 });
+
+//document configuration
+Route::group([], function() {
+    Route::get('getCompanyDocumentFilterOptions', 'CompanyDocumentAttachmentAPIController@getCompanyDocumentFilterOptions')->name('Get company document filter options');
+    Route::post('getAllCompanyDocumentAttachment', 'CompanyDocumentAttachmentAPIController@getAllCompanyDocumentAttachment')->name('Get all company document attachment');
+
+});

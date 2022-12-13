@@ -1725,8 +1725,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('downloadHrmsFile', 'HrmsDocumentAttachmentsAPIController@downloadFile');
 
             /*Company Document Attachments*/
-            Route::post('getAllCompanyDocumentAttachment', 'CompanyDocumentAttachmentAPIController@getAllCompanyDocumentAttachment');
-            Route::get('getCompanyDocumentFilterOptions', 'CompanyDocumentAttachmentAPIController@getCompanyDocumentFilterOptions');
 
             Route::post('updateGRVLogistic', 'ProcumentOrderAPIController@updateGRVLogistic');
 
