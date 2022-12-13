@@ -112,5 +112,5 @@ Route::group([], function() {
 Route::group([], function() {
     Route::get('getCompanyDocumentFilterOptions', 'CompanyDocumentAttachmentAPIController@getCompanyDocumentFilterOptions')->name('Get company document filter options');
     Route::post('getAllCompanyDocumentAttachment', 'CompanyDocumentAttachmentAPIController@getAllCompanyDocumentAttachment')->name('Get all company document attachment');
-
+    Route::resource('company_document_attachments', 'CompanyDocumentAttachmentAPIController');
 });
