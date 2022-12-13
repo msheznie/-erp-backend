@@ -314,7 +314,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('months', 'MonthsAPIController');
             Route::get('purchase_requests-isPulled', 'PurchaseRequestAPIController@isPulledFromMR');
 
-            Route::resource('company_document_attachments', 'CompanyDocumentAttachmentAPIController');
             Route::resource('purchase_request_details', 'PurchaseRequestDetailsAPIController');
             Route::post('purchase-request/remove-all-items/{id}', 'PurchaseRequestDetailsAPIController@removeAllItems');
             Route::get('getItemsOptionForPurchaseRequest', 'PurchaseRequestAPIController@getItemsOptionForPurchaseRequest');
@@ -687,10 +686,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('getItemMasterAudit', 'ItemMasterAPIController@getItemMasterAudit');
 
             Route::resource('po_addons', 'PoAddonsAPIController');
-            Route::resource('addon_cost_categories', 'AddonCostCategoriesAPIController');
+            
             Route::get('getProcumentOrderAddons', 'PoAddonsAPIController@getProcumentOrderAddons');
-            Route::post('getLogisticCategories', 'AddonCostCategoriesAPIController@getLogisticCategories');
-            Route::get('getItemsOptionForLogistic', 'AddonCostCategoriesAPIController@getItemsOptionForLogistic');
+            
+            
 
             Route::resource('stock_receives', 'StockReceiveAPIController');
             Route::post('stockReceiveReferBack', 'StockReceiveAPIController@stockReceiveReferBack');
@@ -1509,8 +1508,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('bankRecRefferedBack', 'BankReconciliationRefferedBackAPIController');
             Route::post('getReferBackHistoryByBankRec', 'BankReconciliationRefferedBackAPIController@getReferBackHistoryByBankRec');
 
-            Route::get('getDocumentControlFilterFormData', 'DocumentControlAPIController@getDocumentControlFilterFormData');
-            Route::post('generateDocumentControlReport', 'DocumentControlAPIController@generateDocumentControlReport');
+
 
             Route::resource('grvMasterRefferedbacksCRUD', 'GrvMasterRefferedbackAPIController');
             Route::resource('grvDetailsRefferedbacks', 'GrvDetailsRefferedbackAPIController');
@@ -1726,8 +1724,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('downloadHrmsFile', 'HrmsDocumentAttachmentsAPIController@downloadFile');
 
             /*Company Document Attachments*/
-            Route::post('getAllCompanyDocumentAttachment', 'CompanyDocumentAttachmentAPIController@getAllCompanyDocumentAttachment');
-            Route::get('getCompanyDocumentFilterOptions', 'CompanyDocumentAttachmentAPIController@getCompanyDocumentFilterOptions');
 
             Route::post('updateGRVLogistic', 'ProcumentOrderAPIController@updateGRVLogistic');
 

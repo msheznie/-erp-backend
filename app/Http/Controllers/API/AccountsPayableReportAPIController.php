@@ -3293,7 +3293,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 CONCAT(finalAgingDetail.SupplierCode," - ",finalAgingDetail.suppliername) as concatSupplierName,
                                 CONCAT(finalAgingDetail.companyID," - ",finalAgingDetail.CompanyName) as concatCompanyName,
                                 finalAgingDetail.glCode,
-                                finalAgingDetail.AccountDescription
+                                finalAgingDetail.AccountDescription,
+                                finalAgingDetail.chartOfAccountSystemID
                             FROM
                             (
                             SELECT
@@ -3333,7 +3334,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                             
                                 MAINQUERY.docRptAmount + MAINQUERY.debitNoteMatchedAmountRpt + MAINQUERY.PaidPaymentVoucherRptAmount - MAINQUERY.InvoiceMatchedINMatchingAmountRpt - MAINQUERY.InvoiceMatchedForpaymentAmountRpt AS balanceAmountRpt,
                                 MAINQUERY.glCode,
-                                chartofaccounts.AccountDescription
+                                chartofaccounts.AccountDescription,
+                                chartofaccounts.chartOfAccountSystemID
                             FROM
                                 (
                             SELECT
@@ -3511,7 +3513,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                             LEFT JOIN companymaster ON MAINQUERY.companySystemID = companymaster.companySystemID
                             LEFT JOIN currencymaster as transCurrencyDet ON transCurrencyDet.currencyID=MAINQUERY.documentTransCurrencyID
                             LEFT JOIN currencymaster as localCurrencyDet ON localCurrencyDet.currencyID=MAINQUERY.documentLocalCurrencyID
-                            LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUERY.documentRptCurrencyID) as finalAgingDetail WHERE ' . $whereQry . ' <> 0 ORDER BY documentDate ASC) as grandFinal GROUP BY supplierCodeSystem,companyID ORDER BY suppliername;');
+                            LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUERY.documentRptCurrencyID) as finalAgingDetail WHERE ' . $whereQry . ' <> 0 ORDER BY documentDate ASC) as grandFinal GROUP BY supplierCodeSystem,companyID, chartOfAccountSystemID ORDER BY suppliername;');
         return ['data' => $output, 'aging' => $aging];
     }
 
@@ -3622,7 +3624,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 ' . $decimalPlaceQry . ',
                                 CONCAT(finalAgingDetail.SupplierCode," - ",finalAgingDetail.suppliername) as concatSupplierName,
                                 finalAgingDetail.glCode,
-                                finalAgingDetail.AccountDescription
+                                finalAgingDetail.AccountDescription,
+                                finalAgingDetail.chartOfAccountSystemID
                             FROM
                             (
                             SELECT
@@ -3662,7 +3665,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                             
                                 MAINQUERY.docRptAmount + MAINQUERY.debitNoteMatchedAmountRpt + MAINQUERY.PaidPaymentVoucherRptAmount - MAINQUERY.InvoiceMatchedINMatchingAmountRpt - MAINQUERY.InvoiceMatchedForpaymentAmountRpt AS balanceAmountRpt,
                                 MAINQUERY.glCode,
-                                chartofaccounts.AccountDescription
+                                chartofaccounts.AccountDescription,
+                                chartofaccounts.chartOfAccountSystemID
                             FROM
                                 (
                             SELECT
@@ -3952,7 +3956,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 CONCAT(finalAgingDetail.SupplierCode," - ",finalAgingDetail.suppliername) as concatSupplierName,
                                 CONCAT(finalAgingDetail.companyID," - ",finalAgingDetail.CompanyName) as concatCompanyName,
                                 finalAgingDetail.glCode,
-                                finalAgingDetail.AccountDescription
+                                finalAgingDetail.AccountDescription,
+                                finalAgingDetail.chartOfAccountSystemID
                             FROM
                             (
                             SELECT
@@ -3992,7 +3997,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                             
                                 MAINQUERY.docRptAmount + MAINQUERY.debitNoteMatchedAmountRpt + MAINQUERY.PaidPaymentVoucherRptAmount - MAINQUERY.InvoiceMatchedINMatchingAmountRpt - MAINQUERY.InvoiceMatchedForpaymentAmountRpt AS balanceAmountRpt,
                                 MAINQUERY.glCode,
-                                chartofaccounts.AccountDescription
+                                chartofaccounts.AccountDescription,
+                                chartofaccounts.chartOfAccountSystemID
                             FROM
                                 (
                             SELECT
@@ -4170,7 +4176,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                             LEFT JOIN companymaster ON MAINQUERY.companySystemID = companymaster.companySystemID
                             LEFT JOIN currencymaster as transCurrencyDet ON transCurrencyDet.currencyID=MAINQUERY.documentTransCurrencyID
                             LEFT JOIN currencymaster as localCurrencyDet ON localCurrencyDet.currencyID=MAINQUERY.documentLocalCurrencyID
-                            LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUERY.documentRptCurrencyID) as finalAgingDetail WHERE ' . $whereQry . ' < 0 ORDER BY documentDate ASC) as grandFinal GROUP BY supplierCodeSystem,companyID ORDER BY suppliername;');
+                            LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUERY.documentRptCurrencyID) as finalAgingDetail WHERE ' . $whereQry . ' < 0 ORDER BY documentDate ASC) as grandFinal GROUP BY supplierCodeSystem,companyID, chartOfAccountSystemID ORDER BY suppliername;');
         return ['data' => $output, 'aging' => $aging];
     }
 

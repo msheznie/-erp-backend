@@ -339,4 +339,14 @@ Route::group([], function() {
 	Route::post('getAllDeliveryTerms', 'DeliveryTermsMasterAPIController@getAllDeliveryTerms')->name("Logistic Configuration get all delivery terms");
 	Route::post('deletePort', 'PortMasterAPIController@deletePort')->name("Logistic Configuration delete Port");
 	Route::post('deleteDeliveryTerms', 'DeliveryTermsMasterAPIController@deleteDeliveryTerms')->name("Logistic Configuration delete delivery terms");
+
+});
+
+	//Logistic Categories
+Route::group([], function() {
+	Route::get('getItemsOptionForLogistic', 'AddonCostCategoriesAPIController@getItemsOptionForLogistic')->name("Get items option for logistic");
+
+	Route::post('getLogisticCategories', 'AddonCostCategoriesAPIController@getLogisticCategories')->name("Get logistic categories");
+
+	Route::resource('addon_cost_categories', 'AddonCostCategoriesAPIController');
 });
