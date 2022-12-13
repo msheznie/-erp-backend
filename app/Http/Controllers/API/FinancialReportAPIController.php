@@ -734,7 +734,8 @@ WHERE
     srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID,
     srp_erp_payrolldetail.companyLocalAmount as referenceAmountLocal,
     srp_erp_payrolldetail.companyReportingAmount as referenceAmountRpt,
-    srp_erp_payrolldetail.empID as employeeID
+    srp_erp_payrolldetail.empID as employeeID,
+    1 as refType                 
 FROM
     erp_bookinvsuppmaster
         LEFT JOIN srp_erp_pay_monthlydeductionmaster ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = srp_erp_pay_monthlydeductionmaster.supplierInvoiceID
@@ -750,7 +751,8 @@ WHERE
     srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID,
     srp_erp_payrolldetail.companyLocalAmount as referenceAmountLocal,
     srp_erp_payrolldetail.companyReportingAmount as referenceAmountRpt,
-    srp_erp_payrolldetail.empID as employeeID
+    srp_erp_payrolldetail.empID as employeeID,
+    1 as refType
 FROM
     expense_employee_allocation
     LEFT JOIN employees ON expense_employee_allocation.employeeSystemID = employees.employeeSystemID
@@ -768,7 +770,8 @@ WHERE
     srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID,
     SUM(srp_erp_payrolldetail.companyLocalAmount) as referenceAmountLocal,
     SUM(srp_erp_payrolldetail.companyReportingAmount) as referenceAmountRpt,
-    0 as employeeID
+    0 as employeeID,
+    1 as refType
 FROM
     erp_paysupplierinvoicemaster
     LEFT JOIN srp_erp_pay_monthlydeductionmaster ON erp_paysupplierinvoicemaster.PayMasterAutoId = srp_erp_pay_monthlydeductionmaster.pv_id
@@ -785,7 +788,8 @@ WHERE
         $refIouAmounts = DB::select("SELECT * FROM (SELECT
     srp_erp_ioubookingmaster.companyLocalAmount as referenceAmountLocal,
     srp_erp_ioubookingmaster.companyReportingAmount as referenceAmountRpt,
-    srp_erp_ioubookingmaster.bookingMasterID AS masterID
+    srp_erp_ioubookingmaster.bookingMasterID AS masterID,    
+    1 as refType
 FROM
     srp_erp_ioubookingmaster 
 WHERE 
@@ -796,18 +800,25 @@ srp_erp_ioubookingmaster.approvedYN = 1
             $da->referenceAmountLocal = 0;
             $da->referenceAmountRpt = 0;
             $da->isLine = 0;
+            $da->refType = 0;
             foreach($refAmounts as $amount) {
                 if($da->masterID == $amount->masterID && $da->type == 1 && $da->employeeID == $amount->employeeID) {
                     $da->referenceAmountLocal = $amount->referenceAmountLocal;
                     $da->referenceAmountRpt = $amount->referenceAmountRpt;
+                    $da->refType = $amount->refType;
+
                 }
                 if($da->masterID == $amount->masterID && $da->type == 4 && $da->employeeID == $amount->employeeID) {
                     $da->referenceAmountLocal = $amount->referenceAmountLocal;
                     $da->referenceAmountRpt = $amount->referenceAmountRpt;
+                    $da->refType = $amount->refType;
+
                 }
                 if($da->masterID == $amount->masterID && $da->type == 2) {
                     $da->referenceAmountLocal = $amount->referenceAmountLocal;
                     $da->referenceAmountRpt = $amount->referenceAmountRpt;
+                    $da->refType = $amount->refType;
+
                 }
             }
             foreach ($refIouAmounts as $iouAmount){
@@ -2817,7 +2828,8 @@ WHERE
     srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID,
     srp_erp_payrolldetail.companyLocalAmount as referenceAmountLocal,
     srp_erp_payrolldetail.companyReportingAmount as referenceAmountRpt,
-    srp_erp_payrolldetail.empID as employeeID
+    srp_erp_payrolldetail.empID as employeeID,
+    1 as refType
 FROM
     erp_bookinvsuppmaster
     LEFT JOIN srp_erp_pay_monthlydeductionmaster ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = srp_erp_pay_monthlydeductionmaster.supplierInvoiceID
@@ -2833,7 +2845,8 @@ WHERE
     srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID,
     srp_erp_payrolldetail.companyLocalAmount as referenceAmountLocal,
     srp_erp_payrolldetail.companyReportingAmount as referenceAmountRpt,
-    srp_erp_payrolldetail.empID as employeeID
+    srp_erp_payrolldetail.empID as employeeID,
+    1 as refType
 FROM
     expense_employee_allocation
     LEFT JOIN employees ON expense_employee_allocation.employeeSystemID = employees.employeeSystemID
@@ -2851,7 +2864,8 @@ WHERE
     srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID,
     SUM(srp_erp_payrolldetail.companyLocalAmount) as referenceAmountLocal,
     SUM(srp_erp_payrolldetail.companyReportingAmount) as referenceAmountRpt,
-    0 as employeeID
+    0 as employeeID,
+    1 as refType
 FROM
     erp_paysupplierinvoicemaster
     LEFT JOIN srp_erp_pay_monthlydeductionmaster ON erp_paysupplierinvoicemaster.PayMasterAutoId = srp_erp_pay_monthlydeductionmaster.pv_id
@@ -2879,18 +2893,22 @@ srp_erp_ioubookingmaster.approvedYN = 1
             $da->referenceAmountLocal = 0;
             $da->referenceAmountRpt = 0;
             $da->isLine = 0;
+            $da->refType = 0;
             foreach($refAmounts as $amount) {
                 if($da->masterID == $amount->masterID && $da->type == 1 && $da->employeeID == $amount->employeeID) {
                     $da->referenceAmountLocal = $amount->referenceAmountLocal;
                     $da->referenceAmountRpt = $amount->referenceAmountRpt;
+                    $da->refType = $amount->refType;
                 }
                 if($da->masterID == $amount->masterID && $da->type == 4 && $da->employeeID == $amount->employeeID) {
                     $da->referenceAmountLocal = $amount->referenceAmountLocal;
                     $da->referenceAmountRpt = $amount->referenceAmountRpt;
+                    $da->refType = $amount->refType;
                 }
                 if($da->masterID == $amount->masterID && $da->type == 2) {
                     $da->referenceAmountLocal = $amount->referenceAmountLocal;
                     $da->referenceAmountRpt = $amount->referenceAmountRpt;
+                    $da->refType = $amount->refType;
                 }
             }
             foreach ($refIouAmounts as $iouAmount){
