@@ -24,8 +24,8 @@
         {
           $modNum = $num * -1;
         }
-        else{
-          $modNum = $num;
+        else {
+          $modNum = ($num < 0) ? $num * -1 : $num;
         }
         return $modNum;
 
