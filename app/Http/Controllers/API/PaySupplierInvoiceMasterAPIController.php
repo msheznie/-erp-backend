@@ -1699,14 +1699,22 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
                     $totalAmountForPDC = 0;
                     if ($paySupplierInvoiceMaster->invoiceType == 2 || $paySupplierInvoiceMaster->invoiceType == 6) {
-                        $totalAmountForPDC = PaySupplierInvoiceDetail::where('PayMasterAutoId', $id)
-                                                                        ->sum('supplierPaymentAmount');
+                        $totalAmountForPDCData = PaySupplierInvoiceDetail::where('PayMasterAutoId', $id)
+                                                                        ->selectRaw('SUM(supplierPaymentAmount + retentionVatAmount) as total')
+                                                                        ->first();
+
+                        $totalAmountForPDC = $totalAmountForPDCData ? $totalAmountForPDCData->total : 0;
 
                     } else if ($paySupplierInvoiceMaster->invoiceType == 5 || $paySupplierInvoiceMaster->invoiceType == 7) {
                         $totalAmountForPDC = AdvancePaymentDetails::where('PayMasterAutoId', $id)
                                                                     ->sum('paymentAmount');
+
                     } else if ($paySupplierInvoiceMaster->invoiceType == 3) {
-                        $totalAmountForPDC = DirectPaymentDetails::where('directPaymentAutoID', $id)->sum('DPAmount');
+                        $totalAmountForPDCData = DirectPaymentDetails::where('directPaymentAutoID', $id)
+                                                                        ->selectRaw('SUM(DPAmount + vatAmount) as total')
+                                                                        ->first();
+                                                                        
+                        $totalAmountForPDC = $totalAmountForPDCData ? $totalAmountForPDCData->total : 0;
                     }
 
                     $pdcLog = PdcLog::where('documentSystemID', $paySupplierInvoiceMaster->documentSystemID)
