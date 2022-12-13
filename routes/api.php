@@ -96,7 +96,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
 
 
-            Route::get('getAllConversionByCurrency', 'CurrencyMasterAPIController@getAllConversionByCurrency');
+            
 
 
 
@@ -134,7 +134,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::resource('supplier_currencies', 'SupplierCurrencyAPIController');
 
-            Route::resource('currency_masters', 'CurrencyMasterAPIController');
+            
 
             Route::resource('supplier_criticals', 'SupplierCriticalAPIController');
 
@@ -327,8 +327,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::resource('document_approveds', 'DocumentApprovedAPIController');
 
-            Route::resource('currency_conversions', 'CurrencyConversionAPIController');
-            Route::post('updateCrossExchange', 'CurrencyConversionAPIController@updateCrossExchange');
+            
+            
             Route::post('currencyConvert', 'CurrencyConversionAPIController@currencyConvert');
 
             Route::resource('bank_accounts', 'BankAccountAPIController');
@@ -2162,7 +2162,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('approveCurrencyConversion', 'CurrencyConversionMasterAPIController@approveCurrencyConversion');
             Route::post('rejectCurrencyConversion', 'CurrencyConversionMasterAPIController@rejectCurrencyConversion');
 
-            Route::post('getCurrencyConversionHistory', 'CurrencyConversionHistoryAPIController@getCurrencyConversionHistory');
+            
 
             Route::resource('stock_counts', 'StockCountAPIController');
 
