@@ -88,3 +88,15 @@ Route::group([], function(){
     Route::post('delete-group', 'SupplierGroupConfigurationController@deleteGroup')->name('Delete supplier group');
 
 });
+
+
+//company settings
+Route::group([], function() {
+    Route::post('getCompanies', 'CompanyAPIController@getCompanies')->name('Get companies');
+    Route::get('getCompanySettingFormData', 'CompanyAPIController@getCompanySettingFormData')->name('Get company setting form data');
+    Route::resource('companies', 'CompanyAPIController');
+    Route::post('getDigitalStamps', 'CompanyAPIController@getDigitalStamps')->name('Get digital stamps');
+    Route::post('uploadDigitalStamp', 'CompanyAPIController@uploadDigitalStamp')->name('Upload digital stamp');
+    Route::post('updateDefaultStamp', 'CompanyAPIController@updateDefaultStamp')->name('Update default stamp');
+    Route::resource('company_digital_stamps', 'CompanyDigitalStampAPIController');
+});
