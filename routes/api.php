@@ -949,15 +949,15 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('project_gl_details', 'ProjectGlDetailAPIController');
 
             //Logistic Configuration Master
-            Route::get('getAllcountry', 'CountryMasterAPIController@index');
+            
             Route::resource('port_masters', 'PortMasterAPIController');
-            Route::post('createPort', 'PortMasterAPIController@store');
-            Route::post('getAllPort', 'PortMasterAPIController@getAllPort');
-            Route::post('deletePort', 'PortMasterAPIController@deletePort');
+            
+            
+            
             Route::resource('delivery_terms_masters', 'DeliveryTermsMasterAPIController');
-            Route::post('createDeliveryTerms', 'DeliveryTermsMasterAPIController@store');
-            Route::post('getAllDeliveryTerms', 'DeliveryTermsMasterAPIController@getAllDeliveryTerms');
-            Route::post('deleteDeliveryTerms', 'DeliveryTermsMasterAPIController@deleteDeliveryTerms');
+            
+            
+            
 
 
             Route::get('getPaymentVoucherGL', 'ChartOfAccountsAssignedAPIController@getPaymentVoucherGL');
