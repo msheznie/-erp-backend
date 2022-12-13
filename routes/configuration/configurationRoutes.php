@@ -100,3 +100,10 @@ Route::group([], function() {
     Route::post('updateDefaultStamp', 'CompanyAPIController@updateDefaultStamp')->name('Update default stamp');
     Route::resource('company_digital_stamps', 'CompanyDigitalStampAPIController');
 });
+
+
+//document control check
+Route::group([], function() {
+    Route::get('getDocumentControlFilterFormData', 'DocumentControlAPIController@getDocumentControlFilterFormData')->name('Get document control filter form data');
+    Route::post('generateDocumentControlReport', 'DocumentControlAPIController@generateDocumentControlReport')->name('Generate document control report');
+});
