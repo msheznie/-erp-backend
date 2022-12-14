@@ -10,6 +10,7 @@ use App\Models\BidSubmissionMaster;
 use App\Models\DocumentAttachments;
 use App\Models\PricingScheduleDetail;
 use App\Models\PricingScheduleMaster;
+use App\Models\ScheduleBidFormatDetails;
 use App\Models\TenderMaster;
 use App\Repositories\BidSubmissionMasterRepository;
 use Carbon\Carbon;
@@ -992,7 +993,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
         
         $tenderId = $request->input('tenderMasterId');
 
-        $bidSubmissionIDs = $request->input('bidSubmissionID');
+        $bidSubmissionIDs = $request->input('supplierID');
         $bidSubmissionIDs = collect($bidSubmissionIDs)->pluck('id')->toArray();
         $tenderMaster = TenderMaster::find($tenderId);
 
@@ -1026,30 +1027,51 @@ class BidSubmissionMasterAPIController extends AppBaseController
 
         $data = Array();
         $x=0;
+    
         $total = 0;
-
 
         foreach($suppliers as $supplier) {
             $rankingArray = [];
 
             foreach($pring_schedul_master_datas as $pring_schedul_master_data) {
 
-                $pricing_shedule_details = $pring_schedul_master_data->pricing_shedule_details()->where('is_disabled',0)->get();
-                
+                $pricing_shedule_details = $pring_schedul_master_data->pricing_shedule_details()->get();
                 foreach($pricing_shedule_details as $pricing_shedule_detail) {
     
                         if($pricing_shedule_detail->field_type != 4) { 
-                            //BidMainWork
-                            $dataBidBoq = BidMainWork::where('tender_id',$tenderId)->where('main_works_id',$pricing_shedule_detail->id);
-                            if($supplier) 
-                                $dataBidBoq->where('created_by',$supplier->supplier_id);
-                            
-                            if($bidSubmissionIDs) 
-                                $dataBidBoq->whereIn('bid_master_id',$bidSubmissionIDs);
+                                //BidMainWork
 
-                            $dataBidBoq = $dataBidBoq->orderBy("id","desc")->first();
-                            if($dataBidBoq)
-                                $total += $dataBidBoq->total_amount;
+                                $dataBidBoq = BidMainWork::where('tender_id',$tenderId)->where('main_works_id',$pricing_shedule_detail->id);
+                                if($supplier) 
+                                    $dataBidBoq->where('created_by',$supplier->supplier_id);
+                                
+                                if($bidSubmissionIDs) 
+                                    $dataBidBoq->whereIn('bid_master_id',$bidSubmissionIDs);
+
+                                $dataBidBoq = $dataBidBoq->orderBy("id","desc")->first();
+
+                                if($dataBidBoq) {
+                                    if($pricing_shedule_detail->field_type != 3)
+                                        $total += $dataBidBoq['total_amount'];
+                                }
+
+
+                                if($pricing_shedule_detail->is_disabled == 1 && $pricing_shedule_detail->field_type != 3) {
+                                    $ScheduleBidFormatDetailsAmount = ScheduleBidFormatDetails::where('bid_format_detail_id',$pricing_shedule_detail->id)->first();
+                                    $total += $ScheduleBidFormatDetailsAmount->value;
+                                }
+
+                                if($pricing_shedule_detail->field_type == 3) {
+                                    if($pricing_shedule_detail->is_disabled == 1) {
+                                        $ScheduleBidFormatDetails = ScheduleBidFormatDetails::where('bid_format_detail_id',$pricing_shedule_detail->id)->first();
+                                        $total += ($ScheduleBidFormatDetails->value)/100;
+                                    }else {
+                                        Log::info($dataBidBoq['total_amount']);
+                                        $total += ($dataBidBoq['total_amount']/100);
+                                    }
+                                    
+                                }
+
                         }
     
                 }
