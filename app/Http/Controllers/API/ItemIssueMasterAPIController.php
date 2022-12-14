@@ -60,6 +60,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use SwaggerFixures\Customer;
 use App\helper\ItemTracking;
+use App\Models\ErpProjectMaster;
 Use App\Models\UserToken;
 use GuzzleHttp\Client;
 /**
@@ -1157,6 +1158,14 @@ class ItemIssueMasterAPIController extends AppBaseController
 
         $companyCurrency = \Helper::companyCurrency($companyId);
 
+        $isProject_base = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
+        ->where('companySystemID', $companyId)
+        ->where('isYesNO', 1)
+        ->exists();
+        $projects = [];
+        if ($isProject_base) {
+            $projects = ErpProjectMaster::where('companySystemID', $companyId)->get();
+        }
 
         $job = [];
         $output = array(
@@ -1173,6 +1182,8 @@ class ItemIssueMasterAPIController extends AppBaseController
             'companyFinanceYear' => $companyFinanceYear,
             'contracts' => $contracts,
             'units' => $units,
+            'isProjectBase' => $isProject_base,
+            'projects' => $projects,
             'localCurrencyCode' => isset($companyCurrency->localcurrency->CurrencyCode) ? $companyCurrency->localcurrency->CurrencyCode : 'OMR',
             'localCurrencyDecimal' => isset($companyCurrency->localcurrency->DecimalPlaces) ? $companyCurrency->localcurrency->DecimalPlaces : 3
 
