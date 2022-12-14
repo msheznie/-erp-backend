@@ -1076,7 +1076,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
                 }
 
 
-                $pring_schedul_master_data['total'] = $total;
+                $pring_schedul_master_data['total'] = number_format((float)$total, 2, '.', '');
                 $pring_schedul_master_data['supplier'] = ($supplier) ? $supplier->name : "";
                 $pring_schedul_master_data['bidSubmissionCode'] = $supplier->bidSubmissionCode;
 
