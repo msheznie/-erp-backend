@@ -1074,7 +1074,7 @@ class ProcumentOrderAPIController extends AppBaseController
                 ->count();
 
             if ($checkPoPaymentTermsAmount > 0) {
-                return $this->sendError('You cannot confirm payment term with 0 amount', 500);
+                // return $this->sendError('You cannot confirm payment term with 0 amount', 500);
             }
 
             //po payment terms exist
@@ -1098,10 +1098,14 @@ class ProcumentOrderAPIController extends AppBaseController
             // return abs($poMasterSumDeducted - $paymentTotalSum['paymentTotalSum']);
 
             $paymentTotalSumComp = round($paymentTotalSum['paymentTotalSum'], $supplierCurrencyDecimalPlace);
-            if (abs(($poMasterSumDeducted - $paymentTotalSumComp) / $paymentTotalSumComp) < 0.00001) {
-            } else {
-                return $this->sendError('Payment terms total is not matching with the PO total');
+
+            if ($paymentTotalSumComp > 0) {
+                if (abs(($poMasterSumDeducted - $paymentTotalSumComp) / $paymentTotalSumComp) < 0.00001) {
+                } else {
+                    return $this->sendError('Payment terms total is not matching with the PO total');
+                }
             }
+
 
    
             $poAdvancePaymentType = PoPaymentTerms::where("poID", $input['purchaseOrderID'])
@@ -1121,9 +1125,11 @@ class ProcumentOrderAPIController extends AppBaseController
                     // $payAdCompAmount = round($payment['comAmount'], $supplierCurrencyDecimalPlace);
                     $payAdCompAmount = floatval(sprintf("%.".$supplierCurrencyDecimalPlace."f", $payment['comAmount']));
 
-                    if (abs(($payAdCompAmount - $paymentPercentageAmount) / $paymentPercentageAmount) < 0.00001) {
-                    } else {
-                        return $this->sendError('Payment term calculation is mismatched');
+                    if ($paymentPercentageAmount > 0) {
+                        if (abs(($payAdCompAmount - $paymentPercentageAmount) / $paymentPercentageAmount) < 0.00001) {
+                        } else {
+                            return $this->sendError('Payment term calculation is mismatched');
+                        }
                     }
                 }
             }
@@ -1821,7 +1827,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $output = ProcumentOrder::where('purchaseOrderID', $request->purchaseOrderID)->with(['segment', 'created_by',
             'detail' => function ($query) {
-                $query->with(['unit','altUom','item'=>function($query1){
+                $query->with(['project','unit','altUom','item'=>function($query1){
                     $query1->select('itemCodeSystem','itemDescription')->with('specification');
                 }]);
             }, 'supplier' => function ($query) {
@@ -1880,7 +1886,14 @@ class ProcumentOrderAPIController extends AppBaseController
             }
         }
         $output['is_specification'] = $is_specification;
-        // return $output;
+        
+        $isProjectBase = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
+        ->where('companySystemID', $output->companySystemID)
+        ->where('isYesNO', 1)
+        ->exists();
+
+        $output['isProjectBase'] = $isProjectBase;
+        
         return $this->sendResponse($output, 'Data retrieved successfully');
     }
 
@@ -3176,8 +3189,8 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             return $this->sendError('Procurement Order not found');
         }
 
-        $outputRecord = ProcumentOrder::where('purchaseOrderID', $procumentOrder->purchaseOrderID)->with(['segment','created_by','detail' => function ($query) {
-            $query->with(['unit','altUom','item'=>function($query1){
+        $outputRecord = ProcumentOrder::where('purchaseOrderID', $procumentOrder->purchaseOrderID)->with(['project','segment','created_by','detail' => function ($query) {
+            $query->with(['project','unit','altUom','item'=>function($query1){
                 $query1->select('itemCodeSystem','itemDescription')->with('specification');
             }]);
         }, 'approved_by' => function ($query) {
@@ -3265,6 +3278,11 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
         ->where('companySystemID', $procumentOrder->companySystemID)
         ->first();
 
+        $isProjectBase = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
+        ->where('companySystemID', $procumentOrder->companySystemID)
+        ->where('isYesNO', 1)
+        ->exists();
+
         $order = array(
             'podata' => $outputRecord[0],
             'docRef' => $refernaceDoc,
@@ -3276,6 +3294,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
             'specification' => $is_specification,
             'paymentTermsView' => $paymentTermsView,
             'addons' => $orderAddons,
+            'isProjectBase' => $isProjectBase,
             'allowAltUom' => ($checkAltUOM) ? $checkAltUOM->isYesNO : false
         );
 
@@ -6871,6 +6890,15 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             $poIds = $prDetails->pluck('purchaseOrderID')->toArray();
 
             return $this->getPurchaseOrderTracingData($poIds, $type, null, null, $PayMasterAutoId, $debitNoteID);
+        } else if ($paymentVocherData->invoiceType == 7) {
+            $PayMasterAutoIdArray = (is_array($PayMasterAutoId)) ? $PayMasterAutoId : [$PayMasterAutoId];
+            $prDetails = AdvancePaymentDetails::whereIn('PayMasterAutoId', $PayMasterAutoIdArray)
+                ->groupBy('purchaseOrderID')
+                ->get();
+
+            $poIds = $prDetails->pluck('purchaseOrderID')->toArray();
+
+            return $this->getPurchaseOrderTracingData($poIds, $type, null, null, $PayMasterAutoId, $debitNoteID);
         }
     }
 
@@ -7378,6 +7406,30 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             $temp2['documentSystemID'] = $paymount_vaoucher->documentSystemID;
             $temp2['docAutoID'] = $paymount_vaoucher->PayMasterAutoId;
             $temp2['title'] = "{Doc Code :} " . $paymount_vaoucher->BPVcode . " -- {Doc Date :} " . Carbon::parse($paymount_vaoucher->BPVdate)->format('Y-m-d') . " -- {Currency :} " . $paymount_vaoucher->transactioncurrency->CurrencyCode . " -- {Amount :} " . number_format($paymount_vaoucher->payAmountSuppTrans, $paymount_vaoucher->transactioncurrency->DecimalPlaces) . $cancelStatus;
+
+            if ($paymount_vaoucher->invoiceType == 7) {
+                $matchingData = MatchDocumentMaster::where('PayMasterAutoId', $PayMasterAutoId)
+                                                   ->where('documentSystemID', 4)
+                                                   ->get();
+
+                foreach ($matchingData as $matchKey => $matchValue) {
+                    $tempDeb = [];
+
+                    $tempDeb['cssClass'] = "ngx-org-step-four";
+                    $tempDeb['name'] = "Payment Voucher Matching";
+                    $tempDeb['documentSystemID'] = 70;
+                    $tempDeb['docAutoID'] = $matchValue->matchDocumentMasterAutoID;
+                    $tempDeb['title'] = "{Doc Code :} " . $matchValue->matchingDocCode . " -- {Doc Date :} " . Carbon::parse($matchValue->matchingDocdate)->format('Y-m-d') . " -- {Currency :} " . $paymount_vaoucher->transactioncurrency->CurrencyCode . " -- {Amount :} " . number_format(ABS($matchValue->matchingAmount), $paymount_vaoucher->transactioncurrency->DecimalPlaces);
+
+                    $paySupplierInvoiceDetail = PaySupplierInvoiceDetail::where('matchingDocID', $matchValue->matchDocumentMasterAutoID)->get();
+
+                    $bookingIds = collect($paySupplierInvoiceDetail)->pluck('bookingInvSystemCode')->toArray();
+
+                    // $tempDeb['childs'][] = $this->getSupplierInvoiceTracingData($bookingIds, $type, $PayMasterAutoId);;
+
+                    $temp2['childs'][] = $tempDeb;
+                }
+            }
 
 
             $tracingData[] = $temp2;

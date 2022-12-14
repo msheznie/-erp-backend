@@ -2691,13 +2691,13 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         $input = $request->all();
 
         $output = PaySupplierInvoiceMaster::where('PayMasterAutoId', $input['PayMasterAutoId'])
-            ->with(['supplier', 'bankaccount', 'transactioncurrency', 'paymentmode',
+            ->with(['project','supplier', 'bankaccount', 'transactioncurrency', 'paymentmode',
                 'supplierdetail' => function ($query) {
                     $query->with(['pomaster']);
                 },
                 'company', 'localcurrency', 'rptcurrency', 'advancedetail', 'confirmed_by',
                 'modified_by', 'cheque_treasury_by', 'directdetail' => function ($query) {
-                    $query->with('segment');
+                    $query->with('project','segment');
                 }, 'approved_by' => function ($query) {
                     $query->with('employee');
                     $query->where('documentSystemID', 4);
@@ -2709,6 +2709,13 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     $query->where('documentSystemID', 4);
                     $query->with(['bankrec_by', 'bank_transfer']);
                 },'audit_trial.modified_by'])->first();
+
+        $isProjectBase = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
+        ->where('companySystemID', $output->companySystemID)
+        ->where('isYesNO', 1)
+        ->exists();
+
+        $output['isProjectBase'] = $isProjectBase;
 
         return $this->sendResponse($output, 'Data retrieved successfully');
 
@@ -4049,11 +4056,11 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
         }
 
         $output = PaySupplierInvoiceMaster::where('PayMasterAutoId', $id)
-            ->with(['supplier', 'bankaccount', 'transactioncurrency', 'paymentmode',
+            ->with(['project','supplier', 'bankaccount', 'transactioncurrency', 'paymentmode',
                 'supplierdetail' => function ($query) {
                     $query->with(['pomaster']);
                 }, 'company', 'localcurrency', 'rptcurrency', 'advancedetail', 'confirmed_by', 'directdetail' => function ($query) {
-                    $query->with('segment');
+                    $query->with('project','segment');
                 }, 'approved_by' => function ($query) {
                     $query->with('employee');
                     $query->where('documentSystemID', 4);
@@ -4090,6 +4097,11 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
         $advancePayDetailTotTra = AdvancePaymentDetails::where('PayMasterAutoId', $id)
             ->sum('paymentAmount');
 
+        $isProjectBase = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
+        ->where('companySystemID', $output->companySystemID)
+        ->where('isYesNO', 1)
+        ->exists();
+
         $order = array(
             'masterdata' => $output,
             'docRef' => $refernaceDoc,
@@ -4098,6 +4110,7 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
             'rptDecimal' => $rptDecimal,
             'supplierdetailTotTra' => $supplierdetailTotTra,
             'directDetailTotTra' => $directDetailTotTra,
+            'isProjectBase' => $isProjectBase,
             'advancePayDetailTotTra' => $advancePayDetailTotTra
         );
 

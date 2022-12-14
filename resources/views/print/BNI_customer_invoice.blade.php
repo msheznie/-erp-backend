@@ -302,7 +302,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <td style="width: 23% !important;"><b>Narration </b></td>
+                            <td style="width: 23% !important;"><b>Comment / Contract</b></td>
                             <td style="width: 2% !important; vertical-align: top;">:</td>
 
                             <td>@if(!empty($request->comments))
@@ -956,11 +956,11 @@
                                     class="font-weight-bold">
                                     {{$request->amount_word}}
                                 @if ($request->floatAmt > 0)
-                                    and
+                                    And
                                     {{$request->floatAmt}}/@if($request->currency->DecimalPlaces == 3)1000 @else 100 @endif
                                 @endif
 
-                                    only
+                                    Only
                             </span>
                         </td>
                     </tr>
@@ -1026,7 +1026,7 @@
                         </tr>
                         <tr>
                             <td width="600px"><span class="font-weight-bold">Amount in words : </span>
-                                {{$request->amount_word}}@if ($request->floatAmt > 0) and {{$request->floatAmt}}/@if($request->currency->DecimalPlaces == 3)1000 @else 100 @endif @endif only
+                                {{$request->amount_word}}@if ($request->floatAmt > 0) And {{$request->floatAmt}}/@if($request->currency->DecimalPlaces == 3)1000 @else 100 @endif @endif Only
                             </td>
                         </tr>
                     </table>
@@ -1036,34 +1036,45 @@
                     <div >
                         <table class="normal_font" width="100%">
                             <tr style="width: 100%">
-                                <td width="50%" style="vertical-align: top;">
-                                    <span class="font-weight-bold">Electronically Approved By</span>
+                                <td width="10%" style="vertical-align: top;">
+                                    <span class="font-weight-bold">Prepared By :</span>
                                 </td>
-                                <td width="50%" style="vertical-align: top;">
-                                    <span class="font-weight-bold">:
+                                <td width="22%" style="vertical-align: top;">
+                                    <span class="font-weight-bold">
+                                        @if($request->createduser)
+                                        {{ $request->createduser->empName }}
+                                        @endif
+                                    </span>
+                                </td>
+                                <td width="10%" style="vertical-align: top;">
+                                    <span class="font-weight-bold">Verified By :</span>
+                                </td>
+                                <td width="22%" style="vertical-align: top;">
+                                    <span class="font-weight-bold">
                                         @php
-                                            $employee = \App\Models\Employee::find($request->approvedByUserSystemID);
+                                            $verifiedEmployee = \App\Models\Employee::find($request->confirmedByEmpSystemID);
                                         @endphp
-                                        @if($employee)
-                                        {{ $employee->empName }}
+                                        @if($verifiedEmployee)
+                                        {{ $verifiedEmployee->empName }}
+                                        @endif
+                                    </span>
+                                </td>
+                                <td width="10%" style="vertical-align: top;">
+                                    <span class="font-weight-bold">Approved By :</span>
+                                </td>
+                                <td width="22%" style="vertical-align: top;">
+                                    <span class="font-weight-bold">
+                                        @php
+                                            $approvedEmployee = \App\Models\Employee::find($request->approvedByUserSystemID);
+                                        @endphp
+                                        @if($approvedEmployee)
+                                        {{ $approvedEmployee->empName }}
                                         @endif
                                     </span>
                                 </td>
                             </tr>
-                            <tr  style="width: 100%">
-                                <td width="50%" style="vertical-align: top;">
-                                    <span class="font-weight-bold">Electronically Approved Date</span>
-                                </td>
-                                <td width="50%" style="vertical-align: top;">
-                                    <span class="font-weight-bold">:
-
-
-                                    {{ \App\helper\Helper::convertDateWithTime($request->approvedDate)}}
-
-                                    </span>
-                                </td>
-                            </tr>
                         </table>
+                        <br>
                         <hr>
                         <table class="normal_font" width="100%">
                             <tr  style="width: 100%">

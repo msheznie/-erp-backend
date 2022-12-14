@@ -156,9 +156,12 @@ Route::get('download_tender_files', 'SrmBidDocumentattachmentsAPIController@down
 
 Route::post('getEmployeesCommercialApproval','TenderBidEmployeeDetailsController@getEmployeesCommercialApproval');
 Route::post('getTenderCommercialBids', 'BidSubmissionMasterAPIController@getTenderCommercialBids');
+Route::post('getSupplierItemList', 'BidSubmissionMasterAPIController@getSupplierItemList');
+Route::post('generateSupplierItemReportTableView', 'BidSubmissionMasterAPIController@generateSupplierItemReportTableView');
 Route::post('getCommercialBidTenderList', 'TenderMasterAPIController@getCommercialBidTenderList');
 Route::post('getCommercialEval', 'TenderMasterAPIController@getCommercialEval');
 Route::post('getCommercialEvalBoq', 'TenderMasterAPIController@getCommercialEvalBoq');
+
 
 
 Route::resource('bid_document_verifications', 'BidDocumentVerificationAPIController');
@@ -187,3 +190,5 @@ Route::post('bidGoNoGoCommentAndStatus', 'BidSubmissionMasterAPIController@bidGo
 Route::post('getBidVerificationStatus', 'BidSubmissionMasterAPIController@getBidVerificationStatus');
 Route::post('getVerifieddBids', 'BidSubmissionMasterAPIController@getVerifieddBids');
 Route::post('saveTechnicalEvalBidSubmissionLine', 'BidSubmissionMasterAPIController@saveTechnicalEvalBidSubmissionLine');
+Route::post('removeBid', 'BidEvaluationSelectionAPIController@removeBid');
+Route::post('addBid', 'BidEvaluationSelectionAPIController@addBid');

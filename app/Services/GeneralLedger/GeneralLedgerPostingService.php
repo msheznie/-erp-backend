@@ -185,6 +185,24 @@ class GeneralLedgerPostingService
                         }
                         break;
 
+                    case 8: // Material Issue
+                        $documentUpdateData = ItemIssueMaster::find($masterModel["autoID"]);
+
+                        if ($glDocumentDate) {
+                            $documentUpdateData->postedDate = $glDocumentDate->documentDate;
+                            $documentUpdateData->save();
+                        }
+                        break;
+
+                    case 3: // Good Receipt Voucher
+                        $documentUpdateData = GRVMaster::find($masterModel["autoID"]);
+
+                        if ($glDocumentDate) {
+                            $documentUpdateData->postedDate = $glDocumentDate->documentDate;
+                            $documentUpdateData->save();
+                        }
+                        break;
+
                     default:
                         Log::warning('Posted date document id not found ' . date('H:i:s'));
                 }

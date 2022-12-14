@@ -22,3 +22,9 @@ Route::post('getItemStockDetails', 'ErpItemLedgerAPIController@getItemStockDetai
 Route::get('downloadFile', 'DocumentAttachmentsAPIController@downloadFile')->name('Download file');
 Route::get('getuserGroupAssignedCompanies', 'EmployeeNavigationAPIController@getuserGroupAssignedCompanies')->name('Get user group assigned companies');
 Route::get('getAllWHForSelectedCompany', 'WarehouseMasterAPIController@getAllWarehouseForSelectedCompany')->name('Get all warehouse for selected company');
+Route::get('getGroupCompany', 'CompanyNavigationMenusAPIController@getGroupCompany')->name("Get group company");
+
+
+Route::get('getAllDocuments', 'DocumentMasterAPIController@getAllDocuments')->name("Get all documents");
+
+Route::get('checkDocumentAttachmentPolicy', 'CompanyDocumentAttachmentAPIController@checkDocumentAttachmentPolicy')->name("Check document attachment policy");

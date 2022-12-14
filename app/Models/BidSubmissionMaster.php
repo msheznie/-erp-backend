@@ -98,7 +98,11 @@ class BidSubmissionMaster extends Model
         'bidSubmittedYN',
         'commercial_verify_status',
         'commercial_verify_at',
-        'commercial_verify_by'
+        'commercial_verify_by',
+        'technical_verify_status',
+        'technical_verify_at',
+        'technical_verify_by',
+        'technical_eval_remarks'
     ];
 
     /**

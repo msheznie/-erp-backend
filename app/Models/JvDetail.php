@@ -316,4 +316,8 @@ class JvDetail extends Model
         return $segments;
     }
     
+    public function project()
+    {
+        return $this->belongsTo('App\Models\ErpProjectMaster', 'detail_project_id', 'id');
+    }
 }

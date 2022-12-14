@@ -471,6 +471,9 @@
                     <th>#</th>
                     <th class="text-center">GL Code</th>
                     <th class="text-center">GL Code Description</th>
+                    @if($masterdata->invoiceType == 3 && $isProjectBase)
+                        <th colspan="4" class="text-center">Project</th>
+                    @endif
                     <th class="text-center">Segment</th>
                     <th class="text-center">Amount</th>
                     <th class="text-center">VAT</th>
@@ -500,6 +503,15 @@
                         <td>{{$loop->iteration}}</td>
                         <td>{{$item->glCode}}</td>
                         <td>{{$item->glCodeDes}}</td>
+
+                        @if($masterdata->invoiceType == 3 && $isProjectBase)
+                            <td colspan="4">
+                                @if($item->project)
+                                    {{$item->project->projectCode}} - {{$item->project->description}}
+                                @endif
+                            </td>
+                        @endif
+
                         <td>@if($item->segment)
                                 {{$item->segment->ServiceLineDes}}
                             @endif
@@ -517,6 +529,9 @@
                     </tr>
                 @endforeach
                 <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
+                    @if($masterdata->invoiceType == 3 && $isProjectBase)
+                        <td colspan="4" class="text-right border-bottom-remov">&nbsp;</td>
+                    @endif
                     <td colspan="5" class="text-right border-bottom-remov">&nbsp;</td>
                     <td class="text-right" style="background-color: rgb(215,215,215)">Total Payment</td>
                     <td class="text-right"
