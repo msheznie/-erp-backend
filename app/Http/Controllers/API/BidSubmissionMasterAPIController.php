@@ -1066,7 +1066,6 @@ class BidSubmissionMasterAPIController extends AppBaseController
                                         $ScheduleBidFormatDetails = ScheduleBidFormatDetails::where('bid_format_detail_id',$pricing_shedule_detail->id)->first();
                                         $total += ($ScheduleBidFormatDetails->value)/100;
                                     }else {
-                                        Log::info($dataBidBoq['total_amount']);
                                         $total += ($dataBidBoq['total_amount']/100);
                                     }
                                     
