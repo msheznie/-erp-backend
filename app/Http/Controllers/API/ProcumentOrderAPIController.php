@@ -1074,7 +1074,7 @@ class ProcumentOrderAPIController extends AppBaseController
                 ->count();
 
             if ($checkPoPaymentTermsAmount > 0) {
-                return $this->sendError('You cannot confirm payment term with 0 amount', 500);
+                // return $this->sendError('You cannot confirm payment term with 0 amount', 500);
             }
 
             //po payment terms exist
@@ -1098,10 +1098,14 @@ class ProcumentOrderAPIController extends AppBaseController
             // return abs($poMasterSumDeducted - $paymentTotalSum['paymentTotalSum']);
 
             $paymentTotalSumComp = round($paymentTotalSum['paymentTotalSum'], $supplierCurrencyDecimalPlace);
-            if (abs(($poMasterSumDeducted - $paymentTotalSumComp) / $paymentTotalSumComp) < 0.00001) {
-            } else {
-                return $this->sendError('Payment terms total is not matching with the PO total');
+
+            if ($paymentTotalSumComp > 0) {
+                if (abs(($poMasterSumDeducted - $paymentTotalSumComp) / $paymentTotalSumComp) < 0.00001) {
+                } else {
+                    return $this->sendError('Payment terms total is not matching with the PO total');
+                }
             }
+
 
    
             $poAdvancePaymentType = PoPaymentTerms::where("poID", $input['purchaseOrderID'])
@@ -1121,9 +1125,11 @@ class ProcumentOrderAPIController extends AppBaseController
                     // $payAdCompAmount = round($payment['comAmount'], $supplierCurrencyDecimalPlace);
                     $payAdCompAmount = floatval(sprintf("%.".$supplierCurrencyDecimalPlace."f", $payment['comAmount']));
 
-                    if (abs(($payAdCompAmount - $paymentPercentageAmount) / $paymentPercentageAmount) < 0.00001) {
-                    } else {
-                        return $this->sendError('Payment term calculation is mismatched');
+                    if ($paymentPercentageAmount > 0) {
+                        if (abs(($payAdCompAmount - $paymentPercentageAmount) / $paymentPercentageAmount) < 0.00001) {
+                        } else {
+                            return $this->sendError('Payment term calculation is mismatched');
+                        }
                     }
                 }
             }
