@@ -219,7 +219,9 @@ class CreateStageCustomerInvoice implements ShouldQueue
 //                if (!$approve["success"]) {
 //                    return $this->sendError($approve["message"]);
 //                }
-
+                StageCustomerInvoice::truncate();
+                StageCustomerInvoiceItemDetails::truncate();
+                StageCustomerInvoiceDirectDetail::truncate();
                 DB::commit();
 
             }
