@@ -26,14 +26,14 @@
     </style>
 </head>
 
-<table style="width:60%;" class="sup-item-summary-report">
+<table style="min-width:30%;" class="sup-item-summary-report">
    <tr>
     <td>Tender ID</td>
-    <td>{{$tender->tender_code}}</td>
+    <td>{{ $data[0]['tender']['tender_code'] }}</td>
    </tr>
    <tr>
     <td>Tender Title</td>
-    <td>{{$tender->title}}</td>
+    <td>{{ $data[0]['tender']['title'] }}</td>
    </tr>
 </table>
 
@@ -45,10 +45,10 @@
     <th>Ranking</th>
    </tr>
 
-   @foreach($items as $item)
+   @foreach($data as $item)
    <tr>
-    <td>{{$item['bidSubmissionCode']}}</td>
-    <td>{{$supplier}}</td>
+    <td width="15%">{{$item['bidSubmissionCode']}}</td>
+    <td width="35%">{{$item['supplier']}}</td>
     <td style="text-align:right">{{number_format($item['total'],2)}}</td>
     <td style="text-align:right">{{$item['ranking']}}</td>
    </tr>
