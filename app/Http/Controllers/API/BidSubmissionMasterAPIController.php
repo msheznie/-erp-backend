@@ -1040,9 +1040,9 @@ class BidSubmissionMasterAPIController extends AppBaseController
     
 
         foreach($suppliersData as $supplier) {
-            $total = 0;
 
             foreach($pring_schedul_master_datas as $pring_schedul_master_data) {
+                $total = 0;
 
                 $pricing_shedule_details = $pring_schedul_master_data->pricing_shedule_details()->get();
                 foreach($pricing_shedule_details as $pricing_shedule_detail) {
@@ -1101,12 +1101,11 @@ class BidSubmissionMasterAPIController extends AppBaseController
             $data[$x]['bidSubmissionCode'] = $supplier->bidSubmissionCode;
             $data[$x]['tender'] = $tenderMaster;
             $data[$x]['supplierMaster'] = ($supplier) ? $supplier->name : "";
-            $data[$x]['total'] = $total;
+            $data[$x]['total'] =  number_format((float)$total, 2, '.', '');
 
             $x++;
             
         }
-        asort($data);
 
         foreach($data as $dt) {
             if(array_key_exists((int) $total,$rankingArray)) {
