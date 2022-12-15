@@ -1036,10 +1036,10 @@ class BidSubmissionMasterAPIController extends AppBaseController
            
         $data = Array();
         $x=0;
+        $rankingArray = [];
     
 
         foreach($suppliersData as $supplier) {
-            $rankingArray = [];
             $total = 0;
 
             foreach($pring_schedul_master_datas as $pring_schedul_master_data) {
@@ -1093,15 +1093,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
 
             }
 
-            if(array_key_exists((int) $total,$rankingArray)) {
-                $data[$x]['ranking'] = $rankingArray[$total];
 
-            }else {
-                $rankingArray[$total] =  "L".($x+1);
-                $data[$x]['ranking'] = "L".($x+1);
-
-            }
-            Log::info($rankingArray);
 
             $data[$x]['pring_schedul_master_datas'] = $pring_schedul_master_datas;
             $data[$x]['supplier'] = ($supplier) ? $supplier->name : "";
@@ -1115,6 +1107,17 @@ class BidSubmissionMasterAPIController extends AppBaseController
             
         }
         asort($data);
+
+        foreach($data as $dt) {
+            if(array_key_exists((int) $total,$rankingArray)) {
+                $dt['ranking'] = $rankingArray[$total];
+
+            }else {
+                $rankingArray[$total] =  "L".($x+1);
+                $dt['ranking'] = "L".($x+1);
+
+            }
+        }
         
         return $data;
     }
