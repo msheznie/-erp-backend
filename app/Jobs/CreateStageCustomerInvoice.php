@@ -202,7 +202,7 @@ class CreateStageCustomerInvoice implements ShouldQueue
                 );
 
 
-                $confirm = \Helper::confirmDocument($params);
+                $confirm = \Helper::confirmDocumentForApi($params);
                 Log::info($confirm);
 
                 $documentApproved = DocumentApproved::where('documentSystemCode', $dt['custInvoiceDirectAutoID'])->where('documentSystemID', 20)->first();
