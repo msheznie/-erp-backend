@@ -1058,7 +1058,6 @@ class BidSubmissionMasterAPIController extends AppBaseController
                                     
 
                                 $dataBidBoqData = $dataBidBoq->orderBy("id","desc")->first();
-                                Log::info($dataBidBoqData);
 
                                 if($dataBidBoqData) {
                                     if($pricing_shedule_detail->field_type != 3)
