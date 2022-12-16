@@ -1029,7 +1029,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
             ->get();
 
             if($bidSubmissionIDs) {
-               $suppliersData = $suppliers->whereIn('srm_bid_submission_master.id',$bidSubmissionIDs)->get();
+               $suppliersData = $suppliers->whereIn('srm_bid_submission_detail.bid_master_id',$bidSubmissionIDs)->get();
             }else {
                 $suppliersData = $suppliers->get();
             }
@@ -1038,27 +1038,27 @@ class BidSubmissionMasterAPIController extends AppBaseController
         $x=0;
         $rankingArray = [];
     
-
+        
         foreach($suppliersData as $supplier) {
-
+            $total = 0;
             foreach($pring_schedul_master_datas as $pring_schedul_master_data) {
-                $total = 0;
+                
 
                 $pricing_shedule_details = $pring_schedul_master_data->pricing_shedule_details()->get();
+            
                 foreach($pricing_shedule_details as $pricing_shedule_detail) {
-    
                         if($pricing_shedule_detail->field_type != 4) { 
                                 //BidMainWork
 
                                 $dataBidBoq = BidMainWork::where('tender_id',$tenderId)->where('main_works_id',$pricing_shedule_detail->id);
-                                if($supplier) 
-                                    $dataBidBoq->where('created_by',$supplier->supplier_id);
+  
                                 
-                                if($bidSubmissionIDs)
-                                    $dataBidBoq->whereIn('bid_master_id',$bidSubmissionIDs);
+                                if($supplier)
+                                    $dataBidBoq->where('bid_master_id',$supplier->id);
                                     
 
                                 $dataBidBoqData = $dataBidBoq->orderBy("id","desc")->first();
+                                Log::info($dataBidBoqData);
 
                                 if($dataBidBoqData) {
                                     if($pricing_shedule_detail->field_type != 3)
@@ -1085,6 +1085,8 @@ class BidSubmissionMasterAPIController extends AppBaseController
     
                 }
 
+            
+
                 $pring_schedul_master_data['total'] = number_format((float)$total, 2, '.', '');
                 $pring_schedul_master_data['supplier'] = ($supplier) ? $supplier->name : "";
                 $pring_schedul_master_data['bidSubmissionCode'] = $supplier->bidSubmissionCode;
@@ -1093,7 +1095,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
 
             }
 
-
+        
 
             $data[$x]['pring_schedul_master_datas'] = $pring_schedul_master_datas;
             $data[$x]['supplier'] = ($supplier) ? $supplier->name : "";
