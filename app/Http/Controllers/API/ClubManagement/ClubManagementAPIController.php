@@ -54,11 +54,13 @@ class ClubManagementAPIController extends AppBaseController
             $customer = CustomerMaster::where('customerCodeSystem', $dt['customerID'])->first();
             $companyCurrencyConversionVat = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['VATAmount']);
 
+            $company = Company::where('companySystemID', $dt['companySystemID'])->first();
+
 
             $custInvoiceArray[] = array(
                 'custInvoiceDirectAutoID' => $dt['custInvoiceDirectAutoID'],
                 'companySystemID' => $dt['companySystemID'],
-                'companyID' => $dt['companyID'],
+                'companyID' => $company->CompanyID,
                 'documentSystemiD' => 20,
                 'documentID' => "INV",
                 'isPerforma' => $dt['isPerforma'],
@@ -112,10 +114,11 @@ class ClubManagementAPIController extends AppBaseController
             $companyCurrencyConversion = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, 0);
             $companyCurrencyConversionTrans = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['invoiceAmount']);
             $companyCurrencyConversionVat = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['VATAmount']);
+                $company = Company::where('companySystemID', $dt['companySystemID'])->first();
 
                 $custInvoiceDetArray[] = array(
                     'custInvoiceDirectID' => $dt['custInvoiceDirectAutoID'],
-                    'companyID' => $dt['companyID'],
+                    'companyID' => $company->CompanyID,
                     'companySystemID' => $dt['companySystemID'],
                     'serviceLineSystemID' => $dt['serviceLineSystemID'],
                     'serviceLineCode' => $segment->ServiceLineCode,
