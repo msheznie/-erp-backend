@@ -5,7 +5,10 @@ namespace App\Http\Controllers\API\ClubManagement;
 use App\helper\inventory;
 use App\Http\Controllers\AppBaseController;
 use App\Http\Requests\CreateStageCustomerInvoiceAPIRequest;
+use App\Http\Requests\CreateStageReceiptVoucherAPIRequest;
 use App\Jobs\CreateStageCustomerInvoice;
+use App\Jobs\CreateStageReceiptVoucher;
+use App\Models\ChartOfAccount;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\Company;
 use App\Models\CompanyFinancePeriod;
@@ -17,6 +20,9 @@ use App\Models\CustomerInvoiceDirect;
 use App\Models\CustomerInvoiceDirectDetail;
 use App\Models\CustomerInvoiceItemDetails;
 use App\Models\CustomerMaster;
+use App\Models\CustomerReceivePayment;
+use App\Models\CustomerReceivePaymentDetail;
+use App\Models\DirectReceiptDetail;
 use App\Models\FinanceItemcategorySubAssigned;
 use App\Models\GeneralLedger;
 use App\Models\ItemAssigned;
@@ -24,6 +30,9 @@ use App\Models\SegmentMaster;
 use App\Models\StageCustomerInvoice;
 use App\Models\StageCustomerInvoiceDirectDetail;
 use App\Models\StageCustomerInvoiceItemDetails;
+use App\Models\StageCustomerReceivePayment;
+use App\Models\StageCustomerReceivePaymentDetail;
+use App\Models\StageDirectReceiptDetail;
 use Illuminate\Support\Facades\DB;
 
 class ClubManagementAPIController extends AppBaseController
@@ -262,5 +271,164 @@ class ClubManagementAPIController extends AppBaseController
 
         return $this->sendResponse($lastSerialNumber, trans('custom.save', ['attribute' => trans('custom.customer_invoice')]));
     }
+
+    public function createReceiptVoucher(CreateStageReceiptVoucherAPIRequest  $request){
+
+        $input = $request->all();
+
+        $custReceiptVoucherArray = array();
+        foreach ($input[0] as $dt){
+            $financeYear = CompanyFinanceYear::where('companySystemID',$dt['companySystemID'])->where('bigginingDate', "<=",  $dt['custPaymentReceiveDate'])->where('endingDate', ">=", $dt['custPaymentReceiveDate'])->first();
+            $financePeriod = CompanyFinancePeriod::where('companySystemID',$dt['companySystemID'])->where('departmentSystemID', 1)->where('dateFrom', "<=",  $dt['custPaymentReceiveDate'])->where('dateTo', ">=", $dt['custPaymentReceiveDate'])->first();
+            $customer = CustomerCurrency::where('customerCodeSystem', $dt['customerID'])->first();
+            $myCurr = $customer->currencyID;
+
+            $companyCurrencyConversion = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, 0);
+            $companyCurrencyConversionTrans = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['receivedAmount']);
+            $companyCurrencyConversionVat = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['VATAmount']);
+            $companyCurrencyConversionNet = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['netAmount']);
+
+
+            $company = Company::where('companySystemID', $dt['companySystemID'])->first();
+
+            $custReceiptVoucherArray[] = array(
+                'custReceivePaymentAutoID' => $dt['custReceivePaymentAutoID'],
+                'companySystemID' => $dt['companySystemID'],
+                'companyID' => $company->CompanyID,
+                'documentSystemID' => 21,
+                'documentID' => 'BRV',
+                'companyFinanceYearID' =>  $financeYear->companyFinanceYearID,
+                'FYBiggin' => $financeYear->bigginingDate,
+                'FYPeriodDateFrom' => $financePeriod->dateFrom,
+                'companyFinancePeriodID' => $financeYear->companyFinanceYearID,
+                'FYEnd' => $financeYear->endingDate,
+                'FYPeriodDateTo' => $financePeriod->dateTo,
+                'custPaymentReceiveDate' => $dt['custPaymentReceiveDate'],
+                'narration' => $dt['narration'],
+                'customerID' => $dt['customerID'],
+                'customerGLCodeSystemID' => $customer->custGLAccountSystemID,
+                'customerGLCode' => $customer->custGLaccount,
+                'custTransactionCurrencyID' => $myCurr,
+                'custTransactionCurrencyER' => 1,
+                'bankID' => $dt['bankID'],
+                'bankAccount' => $dt['bankAccount'],
+                'bankCurrency' => $dt['bankCurrency'],
+                'bankCurrencyER' => 1,
+                'custChequeDate' => $dt['custChequeDate'],
+                'receivedAmount' => $dt['receivedAmount'],
+                'localCurrencyID' => $company->localCurrencyID,
+                'localCurrencyER' => $companyCurrencyConversion['trasToLocER'],
+                'localAmount' => \Helper::roundValue($companyCurrencyConversionTrans['localAmount']),
+                'companyRptCurrencyID' => $company->reportingCurrency,
+                'companyRptCurrencyER' => $companyCurrencyConversion['trasToRptER'],
+                'companyRptAmount' => \Helper::roundValue($companyCurrencyConversionTrans['reportingAmount']),
+                'bankAmount' => $dt['bankAmount'],
+                'documentType' => 13,
+                'isVATApplicable' => $dt['isVATApplicable'],
+                'VATPercentage' => $dt['VATPercentage'],
+                'VATAmount' => $dt['VATAmount'],
+                'VATAmountLocal' => $companyCurrencyConversionVat['localAmount'],
+                'VATAmountRpt' => $companyCurrencyConversionVat['reportingAmount'],
+                'netAmount' => $dt['netAmount'],
+                'netAmountLocal' => $companyCurrencyConversionNet['localAmount'],
+                'netAmountRpt' => $companyCurrencyConversionNet['reportingAmount'],
+                'RollLevForApp_curr' => 1,
+            );
+        }
+        StageCustomerReceivePayment::insert($custReceiptVoucherArray);
+
+        $custReceiptVoucherDetArray = array();
+        foreach ($input[1] as $dt){
+            $company = Company::where('companySystemID', $dt['companySystemID'])->first();
+            $myCurr = $dt['custTransactionCurrencyID'];
+            $companyCurrencyConversion = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, 0);
+            $companyCurrency = \Helper::companyCurrency($dt['companySystemID']);
+            $companyCurrencyConversionTrans = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['bookingAmountTrans']);
+
+            $custReceiptVoucherDetArray[] = array(
+                'custReceivePaymentAutoID' => $dt['custReceivePaymentAutoID'],
+                'arAutoID' => $dt['arAutoID'],
+                'companySystemID' => $dt['companySystemID'],
+                'companyID' => $company->CompanyID,
+                'addedDocumentSystemID' => 20,
+                'addedDocumentID' => "INV",
+                'bookingInvCodeSystem' => $dt['bookingInvCodeSystem'],
+                'bookingDate' => $dt['bookingDate'],
+                'comments' => $dt['comments'],
+                'custTransactionCurrencyID' => $dt['custTransactionCurrencyID'],
+                'custTransactionCurrencyER' => 1,
+                'companyReportingCurrencyID' =>  $companyCurrency->reportingcurrency->currencyID,
+                'companyReportingER' => $companyCurrencyConversion['trasToRptER'],
+                'localCurrencyID' => $companyCurrency->localcurrency->currencyID,
+                'localCurrencyER' => $companyCurrencyConversion['trasToLocER'],
+                'bookingAmountTrans' => \Helper::roundValue($dt['bookingAmountTrans']),
+                'bookingAmountLocal' => \Helper::roundValue($companyCurrencyConversionTrans['localAmount']),
+                'bookingAmountRpt' => \Helper::roundValue($companyCurrencyConversionTrans['reportingAmount']),
+                'custReceiveCurrencyID' => $myCurr,
+                'custReceiveCurrencyER' => 1,
+                'custbalanceAmount' => $dt['custbalanceAmount'],
+                'receiveAmountTrans' => 0,
+                'receiveAmountLocal' => 0,
+                'receiveAmountRpt' => 0
+
+            );
+        }
+        StageCustomerReceivePaymentDetail::insert($custReceiptVoucherDetArray);
+
+        $custReceiptDetails = array();
+        foreach ($input[2] as $dt){
+            $company = Company::where('companySystemID', $dt['companySystemID'])->first();
+            $serviceLine = SegmentMaster::select('serviceLineSystemID', 'ServiceLineCode')
+                ->where('serviceLineSystemID', $dt['serviceLineSystemID'])
+                ->first();
+
+
+            $master = StageCustomerReceivePayment::where('custReceivePaymentAutoID', $dt['directReceiptAutoID'])->first();
+            $chartOfAccount = ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'chartOfAccountSystemID', 'controlAccounts')
+                ->where('chartOfAccountSystemID', $dt['chartOfAccountSystemID'])
+                ->first();
+            $myCurr = $master->custTransactionCurrencyID;
+
+            $companyCurrencyConversionTrans = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['DRAmount']);
+            $companyCurrencyConversionVat = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['VATAmount']);
+            $companyCurrencyConversionNet = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['netAmount']);
+
+
+            $custReceiptDetails[] = array(
+            'directReceiptAutoID' => $dt['directReceiptAutoID'],
+            'companySystemID' => $dt['companySystemID'],
+            'companyID' => $company->CompanyID,
+            'serviceLineSystemID' => $dt['serviceLineSystemID'],
+            'serviceLineCode' => $serviceLine->ServiceLineCode,
+            'chartOfAccountSystemID' => $dt['chartOfAccountSystemID'],
+            'glCode' => $chartOfAccount->AccountCode,
+            'glCodeDes' => $chartOfAccount->AccountDescription,
+            'comments' => $master->narration,
+            'DRAmountCurrency' => $master->custTransactionCurrencyID,
+            'DDRAmountCurrencyER' => $master->custTransactionCurrencyER,
+            'DRAmount' => $dt['DRAmount'],
+            'localCurrency' => $master->localCurrencyID,
+            'localCurrencyER' => $master->localCurrencyER,
+            'localAmount' => $companyCurrencyConversionTrans['localAmount'],
+            'comRptCurrency' => $master->companyRptCurrencyID,
+            'comRptCurrencyER' => $master->companyRptCurrencyER,
+            'comRptAmount' => $companyCurrencyConversionTrans['reportingAmount'],
+            'VATAmount' => $dt['VATAmount'],
+            'VATAmountLocal' => $companyCurrencyConversionVat['localAmount'],
+            'VATAmountRpt' => $companyCurrencyConversionVat['reportingAmount'],
+            'netAmount' => $dt['netAmount'],
+            'netAmountLocal' => $companyCurrencyConversionNet['localAmount'],
+            'netAmountRpt' => $companyCurrencyConversionNet['reportingAmount'],
+            );
+        }
+        StageDirectReceiptDetail::insert($custReceiptDetails);
+
+        CreateStageReceiptVoucher::dispatch();
+
+        return $this->sendResponse(1, trans('custom.save', ['attribute' => trans('custom.customer_invoice')]));
+
+    }
+
+
 
 }
