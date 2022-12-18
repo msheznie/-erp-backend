@@ -232,44 +232,11 @@ class ClubManagementAPIController extends AppBaseController
 
 
         }
-        $stagCustomerUpdateInvoices = StageCustomerInvoice::all();
-        $i = 1;
-
-        foreach ($stagCustomerUpdateInvoices as $dt){
-            $lastSerial = CustomerInvoiceDirect::where('companySystemID', $dt['companySystemID'])
-                ->where('companyFinanceYearID', $dt['companyFinanceYearID'])
-                ->orderBy('serialNo', 'desc')
-                ->first();
-
-            $lastAutoID = CustomerInvoiceDirect::orderBy('custInvoiceDirectAutoID', 'desc')
-                ->first();
-
-
-                $lastSerialNumber = 1;
-                if ($lastSerial) {
-                    $lastSerialNumber = intval($lastSerial->serialNo) + $i;
-                }
-
-                    $custInvoiceDirectAutoID = 1;
-                  if ($lastAutoID) {
-                      $custInvoiceDirectAutoID = intval($lastAutoID->custInvoiceDirectAutoID) +$i;
-                  }
-
-
-
-
-                $y = date('Y', strtotime($dt->FYBiggin));
-                $bookingInvCode = ($dt->companyID . '\\' . $y . '\\INV' . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
-                StageCustomerInvoice::where('custInvoiceDirectAutoID', $dt->custInvoiceDirectAutoID)->update(['custInvoiceDirectAutoID' => $custInvoiceDirectAutoID,'serialNo' => $lastSerialNumber, 'bookingInvCode' => $bookingInvCode]);
-            StageCustomerInvoiceDirectDetail::where('custInvoiceDirectID', $dt->custInvoiceDirectAutoID)->update(['custInvoiceDirectID' => $custInvoiceDirectAutoID]);
-            StageCustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $dt->custInvoiceDirectAutoID)->update(['custInvoiceDirectAutoID' => $custInvoiceDirectAutoID]);
-            $i++;
-        }
 
 
         CreateStageCustomerInvoice::dispatch();
 
-        return $this->sendResponse($lastSerialNumber, trans('custom.save', ['attribute' => trans('custom.customer_invoice')]));
+        return $this->sendResponse($custInvoiceArray, trans('custom.save', ['attribute' => trans('custom.customer_invoice')]));
     }
 
     public function createReceiptVoucher(CreateStageReceiptVoucherAPIRequest  $request){
@@ -279,7 +246,7 @@ class ClubManagementAPIController extends AppBaseController
         $custReceiptVoucherArray = array();
         foreach ($input[0] as $dt){
             $financeYear = CompanyFinanceYear::where('companySystemID',$dt['companySystemID'])->where('bigginingDate', "<=",  $dt['custPaymentReceiveDate'])->where('endingDate', ">=", $dt['custPaymentReceiveDate'])->first();
-            $financePeriod = CompanyFinancePeriod::where('companySystemID',$dt['companySystemID'])->where('departmentSystemID', 1)->where('dateFrom', "<=",  $dt['custPaymentReceiveDate'])->where('dateTo', ">=", $dt['custPaymentReceiveDate'])->first();
+            $financePeriod = CompanyFinancePeriod::where('companySystemID',$dt['companySystemID'])->where('departmentSystemID', 4)->where('dateFrom', "<=",  $dt['custPaymentReceiveDate'])->where('dateTo', ">=", $dt['custPaymentReceiveDate'])->first();
             $customer = CustomerCurrency::where('customerCodeSystem', $dt['customerID'])->first();
             $myCurr = $customer->currencyID;
 

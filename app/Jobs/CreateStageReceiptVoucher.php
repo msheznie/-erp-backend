@@ -229,7 +229,7 @@ class CreateStageReceiptVoucher implements ShouldQueue
                 $customerInvoiceDirects["documentSystemID"] = $dt['documentSystemID'];
                 $customerInvoiceDirects["approvedComments"] = "Generated Customer Invoice through Club Management System";
                 $customerInvoiceDirects["rollLevelOrder"] = 1;
-                $approve = \Helper::approveDocument($customerInvoiceDirects);
+                $approve = \Helper::approveDocumentForApi($customerInvoiceDirects);
                 Log::info($approve);
 
 //                if (!$approve["success"]) {
