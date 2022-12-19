@@ -5,7 +5,11 @@ namespace App\Http\Controllers\API\ClubManagement;
 use App\helper\inventory;
 use App\Http\Controllers\AppBaseController;
 use App\Http\Requests\CreateStageCustomerInvoiceAPIRequest;
+use App\Http\Requests\CreateStageReceiptVoucherAPIRequest;
 use App\Jobs\CreateStageCustomerInvoice;
+use App\Jobs\CreateStageReceiptVoucher;
+use App\Models\AccountsReceivableLedger;
+use App\Models\ChartOfAccount;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\Company;
 use App\Models\CompanyFinancePeriod;
@@ -17,6 +21,9 @@ use App\Models\CustomerInvoiceDirect;
 use App\Models\CustomerInvoiceDirectDetail;
 use App\Models\CustomerInvoiceItemDetails;
 use App\Models\CustomerMaster;
+use App\Models\CustomerReceivePayment;
+use App\Models\CustomerReceivePaymentDetail;
+use App\Models\DirectReceiptDetail;
 use App\Models\FinanceItemcategorySubAssigned;
 use App\Models\GeneralLedger;
 use App\Models\ItemAssigned;
@@ -24,6 +31,9 @@ use App\Models\SegmentMaster;
 use App\Models\StageCustomerInvoice;
 use App\Models\StageCustomerInvoiceDirectDetail;
 use App\Models\StageCustomerInvoiceItemDetails;
+use App\Models\StageCustomerReceivePayment;
+use App\Models\StageCustomerReceivePaymentDetail;
+use App\Models\StageDirectReceiptDetail;
 use Illuminate\Support\Facades\DB;
 
 class ClubManagementAPIController extends AppBaseController
@@ -40,13 +50,14 @@ class ClubManagementAPIController extends AppBaseController
 
             $financePeriod = CompanyFinancePeriod::where('companySystemID',$dt['companySystemID'])->where('departmentSystemID', 4)->where('dateFrom', "<=",  $dt['bookingDate'])->where('dateTo', ">=", $dt['bookingDate'])->first();
 
-            $customer = CustomerCurrency::where('customerCodeSystem', $dt['customerID'])->first();
-            $currency = CurrencyMaster::where('currencyID', $customer->currencyID)->first();
+            $customerCurr = CustomerCurrency::where('customerCodeSystem', $dt['customerID'])->first();
 
 
             $companyCurrency = \Helper::companyCurrency($dt['companySystemID']);
-
-            $myCurr = $customer->currencyID;
+            $myCurr = 1;
+            if($customerCurr){
+                $myCurr = $customerCurr->currencyID;
+            }
 
             $companyCurrencyConversion = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, 0);
 
@@ -60,19 +71,19 @@ class ClubManagementAPIController extends AppBaseController
             $custInvoiceArray[] = array(
                 'custInvoiceDirectAutoID' => $dt['custInvoiceDirectAutoID'],
                 'companySystemID' => $dt['companySystemID'],
-                'companyID' => $company->CompanyID,
+                'companyID' => isset($company->CompanyID) ? $company->CompanyID: null,
                 'documentSystemiD' => 20,
                 'documentID' => "INV",
                 'isPerforma' => $dt['isPerforma'],
                 'customerID' => $dt['customerID'],
-                'customerGLCode' => $customer->custGLaccount,
-                'customerGLSystemID' => $customer->custGLAccountSystemID,
+                'customerGLCode' => isset($customer->custGLaccount) ? $customer->custGLaccount: null,
+                'customerGLSystemID' => isset($customer->custGLAccountSystemID) ? $customer->custGLAccountSystemID: null,
                 'customerInvoiceNo' => $dt['customerInvoiceNo'],
                 'custTransactionCurrencyID' => $myCurr,
                 'custTransactionCurrencyER' => 1,
-                'companyReportingCurrencyID' => $companyCurrency->reportingcurrency->currencyID,
+                'companyReportingCurrencyID' => isset($companyCurrency->reportingcurrency->currencyID) ? $companyCurrency->reportingcurrency->currencyID: null,
                 'companyReportingER' => $companyCurrencyConversion['trasToRptER'],
-                'localCurrencyID' => $companyCurrency->localcurrency->currencyID,
+                'localCurrencyID' => isset($companyCurrency->localcurrency->currencyID) ? $companyCurrency->localcurrency->currencyID: null,
                 'localCurrencyER' => $companyCurrencyConversion['trasToLocER'],
                 'comments' => $dt['comments'],
                 'bookingDate' => $dt['bookingDate'],
@@ -86,12 +97,12 @@ class ClubManagementAPIController extends AppBaseController
                 'VATAmount' => $dt['VATAmount'],
                 'VATAmountLocal' => $companyCurrencyConversionVat['localAmount'],
                 'VATAmountRpt' => $companyCurrencyConversionVat['reportingAmount'],
-                'companyFinanceYearID' => $financeYear->companyFinanceYearID,
-                'FYBiggin' => $financeYear->bigginingDate,
-                'FYEnd' => $financeYear->endingDate,
-                'companyFinancePeriodID' => $financePeriod->companyFinancePeriodID,
-                'FYPeriodDateFrom' => $financePeriod->dateFrom,
-                'FYPeriodDateTo' => $financePeriod->dateTo,
+                'companyFinanceYearID' => isset($financeYear->companyFinanceYearID) ? $financeYear->companyFinanceYearID: null,
+                'FYBiggin' => isset($financeYear->bigginingDate) ? $financeYear->bigginingDate: null,
+                'FYEnd' => isset($financeYear->endingDate) ? $financeYear->endingDate: null,
+                'companyFinancePeriodID' => isset($financePeriod->companyFinancePeriodID) ? $financePeriod->companyFinancePeriodID: null,
+                'FYPeriodDateFrom' => isset($financePeriod->dateFrom) ? $financePeriod->dateFrom: null,
+                'FYPeriodDateTo' => isset($financePeriod->dateTo) ? $financePeriod->dateTo: null,
                 'bankID' => $dt['bankID'],
                 'bankAccountID' => $dt['bankAccountID'],
 
@@ -108,8 +119,10 @@ class ClubManagementAPIController extends AppBaseController
             $glCode = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $dt['glSystemID'])->where('companySystemID', $dt['companySystemID'])->first();
             $customer = CustomerCurrency::where('customerCodeSystem', $dt['customerID'])->first();
             $companyCurrency = \Helper::companyCurrency($dt['companySystemID']);
-
+                $myCurr = 1;
+            if($customer){
                 $myCurr = $customer->currencyID;
+            }
 
             $companyCurrencyConversion = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, 0);
             $companyCurrencyConversionTrans = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['invoiceAmount']);
@@ -118,15 +131,15 @@ class ClubManagementAPIController extends AppBaseController
 
                 $custInvoiceDetArray[] = array(
                     'custInvoiceDirectID' => $dt['custInvoiceDirectAutoID'],
-                    'companyID' => $company->CompanyID,
+                    'companyID' => isset($company->CompanyID) ? $company->CompanyID: null,
                     'companySystemID' => $dt['companySystemID'],
                     'serviceLineSystemID' => $dt['serviceLineSystemID'],
-                    'serviceLineCode' => $segment->ServiceLineCode,
+                    'serviceLineCode' => isset($segment->ServiceLineCode) ? $segment->ServiceLineCode: null,
                     'customerID' => $dt['customerID'],
                     'glSystemID' => $dt['glSystemID'],
-                    'glCode' => $glCode->AccountCode,
-                    'glCodeDes' => $glCode->AccountDescription,
-                    'accountType' => $glCode->catogaryBLorPL,
+                    'glCode' => isset($glCode->AccountCode) ? $glCode->AccountCode: null,
+                    'glCodeDes' => isset($glCode->AccountDescription) ? $glCode->AccountDescription: null,
+                    'accountType' => isset($glCode->catogaryBLorPL) ? $glCode->AccountDescription: null,
                     'comments' => $dt['comments'],
                     'invoiceAmountCurrency' => $myCurr,
                     'invoiceAmountCurrencyER' => 1,
@@ -136,9 +149,9 @@ class ClubManagementAPIController extends AppBaseController
                     'invoiceAmount' => $dt['invoiceAmount'],
                     'localAmount' => $companyCurrencyConversionTrans['localAmount'],
                     'comRptAmount' => $companyCurrencyConversionTrans['reportingAmount'],
-                    'comRptCurrency' => $companyCurrency->reportingcurrency->currencyID,
+                    'comRptCurrency' => isset($companyCurrency->reportingcurrency->currencyID) ? $companyCurrency->reportingcurrency->currencyID: null,
                     'comRptCurrencyER' => $companyCurrencyConversion['trasToRptER'],
-                    'localCurrency' => $companyCurrency->localcurrency->currencyID,
+                    'localCurrency' => isset($companyCurrency->localcurrency->currencyID) ? $companyCurrency->localcurrency->currencyID: null,
                     'localCurrencyER' => $companyCurrencyConversion['trasToLocER'],
                     'vatMasterCategoryID' => $dt['vatMasterCategoryID'],
                     'vatSubCategoryID' => $dt['vatSubCategoryID'],
@@ -169,9 +182,9 @@ class ClubManagementAPIController extends AppBaseController
                 $custInvoiceItemDetArray[] = array(
                     'custInvoiceDirectAutoID' => $dt['custInvoiceDirectAutoID'],
                     'itemCodeSystem' => $dt['itemCodeSystem'],
-                    'itemPrimaryCode' => $item->itemPrimaryCode,
-                    'itemDescription' => $item->itemDescription,
-                    'itemUnitOfMeasure' => $item->itemUnitOfMeasure,
+                    'itemPrimaryCode' => isset($item->itemPrimaryCode) ? $item->itemPrimaryCode: null,
+                    'itemDescription' => isset($item->itemDescription) ? $item->itemDescription: null,
+                    'itemUnitOfMeasure' => isset($item->itemUnitOfMeasure) ? $item->itemUnitOfMeasure: null,
                     'unitOfMeasureIssued' => $dt['unitOfMeasureIssued'],
                     'convertionMeasureVal' => $dt['convertionMeasureVal'],
                     'qtyIssued' => $dt['qtyIssued'],
@@ -188,11 +201,11 @@ class ClubManagementAPIController extends AppBaseController
                    'financeGLcodePL' => isset($financeItemCategorySubAssigned->financeGLcodePL) ? $financeItemCategorySubAssigned->financeGLcodePL: null,
                   'financeGLcodeRevenueSystemID' => isset($financeItemCategorySubAssigned->financeGLcodeRevenueSystemID) ? $financeItemCategorySubAssigned->financeGLcodeRevenueSystemID: null,
                    'financeGLcodeRevenue' => isset($financeItemCategorySubAssigned->financeGLcodeRevenue) ? $financeItemCategorySubAssigned->financeGLcodeRevenue: null,
-                    'localCurrencyID' => $companyCurrency->localcurrency->currencyID,
+                    'localCurrencyID' => isset($companyCurrency->localcurrency->currencyID) ? $companyCurrency->localcurrency->currencyID: null,
                     'localCurrencyER' => $companyCurrencyConversion['trasToLocER'],
                     'issueCostLocal' => $itemCurrentCostAndQty['wacValueLocal'],
                     'issueCostLocalTotal' => $itemCurrentCostAndQty['wacValueLocal'] * $dt['qtyIssuedDefaultMeasure'],
-                    'reportingCurrencyID' => $companyCurrency->reportingcurrency->currencyID,
+                    'reportingCurrencyID' => isset($companyCurrency->reportingcurrency->currencyID) ? $companyCurrency->reportingcurrency->currencyID: null,
                     'reportingCurrencyER' => $companyCurrencyConversion['trasToRptER'],
                     'issueCostRpt' => $itemCurrentCostAndQty['wacValueReporting'],
                     'issueCostRptTotal' => $itemCurrentCostAndQty['wacValueReporting'] * $dt['qtyIssuedDefaultMeasure'],
@@ -223,44 +236,176 @@ class ClubManagementAPIController extends AppBaseController
 
 
         }
-        $stagCustomerUpdateInvoices = StageCustomerInvoice::all();
-        $i = 1;
-
-        foreach ($stagCustomerUpdateInvoices as $dt){
-            $lastSerial = CustomerInvoiceDirect::where('companySystemID', $dt['companySystemID'])
-                ->where('companyFinanceYearID', $dt['companyFinanceYearID'])
-                ->orderBy('serialNo', 'desc')
-                ->first();
-
-            $lastAutoID = CustomerInvoiceDirect::orderBy('custInvoiceDirectAutoID', 'desc')
-                ->first();
-
-
-                $lastSerialNumber = 1;
-                if ($lastSerial) {
-                    $lastSerialNumber = intval($lastSerial->serialNo) + $i;
-                }
-
-                    $custInvoiceDirectAutoID = 1;
-                  if ($lastAutoID) {
-                      $custInvoiceDirectAutoID = intval($lastAutoID->custInvoiceDirectAutoID) +$i;
-                  }
-
-
-
-
-                $y = date('Y', strtotime($dt->FYBiggin));
-                $bookingInvCode = ($dt->companyID . '\\' . $y . '\\INV' . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
-                StageCustomerInvoice::where('custInvoiceDirectAutoID', $dt->custInvoiceDirectAutoID)->update(['custInvoiceDirectAutoID' => $custInvoiceDirectAutoID,'serialNo' => $lastSerialNumber, 'bookingInvCode' => $bookingInvCode]);
-            StageCustomerInvoiceDirectDetail::where('custInvoiceDirectID', $dt->custInvoiceDirectAutoID)->update(['custInvoiceDirectID' => $custInvoiceDirectAutoID]);
-            StageCustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $dt->custInvoiceDirectAutoID)->update(['custInvoiceDirectAutoID' => $custInvoiceDirectAutoID]);
-            $i++;
-        }
 
 
         CreateStageCustomerInvoice::dispatch();
 
-        return $this->sendResponse($lastSerialNumber, trans('custom.save', ['attribute' => trans('custom.customer_invoice')]));
+        return $this->sendResponse($custInvoiceArray, trans('custom.save', ['attribute' => trans('custom.customer_invoice')]));
     }
+
+    public function createReceiptVoucher(CreateStageReceiptVoucherAPIRequest  $request){
+
+        $input = $request->all();
+
+        $custReceiptVoucherArray = array();
+        foreach ($input[0] as $dt){
+            $financeYear = CompanyFinanceYear::where('companySystemID',$dt['companySystemID'])->where('bigginingDate', "<=",  $dt['custPaymentReceiveDate'])->where('endingDate', ">=", $dt['custPaymentReceiveDate'])->first();
+            $financePeriod = CompanyFinancePeriod::where('companySystemID',$dt['companySystemID'])->where('departmentSystemID', 4)->where('dateFrom', "<=",  $dt['custPaymentReceiveDate'])->where('dateTo', ">=", $dt['custPaymentReceiveDate'])->first();
+            $customer = CustomerCurrency::where('customerCodeSystem', $dt['customerID'])->first();
+
+            $myCurr = 1;
+            if($customer){
+                $myCurr = $customer->currencyID;
+            }
+
+            $companyCurrencyConversion = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, 0);
+            $companyCurrencyConversionTrans = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['receivedAmount']);
+            $companyCurrencyConversionVat = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['VATAmount']);
+            $companyCurrencyConversionNet = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['netAmount']);
+
+
+            $company = Company::where('companySystemID', $dt['companySystemID'])->first();
+
+            $custReceiptVoucherArray[] = array(
+                'custReceivePaymentAutoID' => $dt['custReceivePaymentAutoID'],
+                'companySystemID' => $dt['companySystemID'],
+                'companyID' => isset($company->CompanyID) ? $company->CompanyID: null,
+                'documentSystemID' => 21,
+                'documentID' => 'BRV',
+                'companyFinanceYearID' =>  isset($financeYear->companyFinanceYearID) ? $financeYear->companyFinanceYearID: null,
+                'FYBiggin' => isset($financeYear->bigginingDate) ? $financeYear->bigginingDate: null,
+                'FYPeriodDateFrom' => isset($financePeriod->dateFrom) ? $financePeriod->dateFrom: null,
+                'companyFinancePeriodID' => isset($financeYear->companyFinanceYearID) ? $financeYear->companyFinanceYearID: null,
+                'FYEnd' => isset($financeYear->endingDate) ? $financeYear->endingDate: null,
+                'FYPeriodDateTo' => isset($financePeriod->dateTo) ? $financePeriod->dateTo: null,
+                'custPaymentReceiveDate' => $dt['custPaymentReceiveDate'],
+                'narration' => $dt['narration'],
+                'customerID' => $dt['customerID'],
+                'customerGLCodeSystemID' => isset($customer->custGLAccountSystemID) ? $customer->custGLAccountSystemID: null,
+                'customerGLCode' => isset($customer->custGLaccount) ? $customer->custGLaccount: null,
+                'custTransactionCurrencyID' => $myCurr,
+                'custTransactionCurrencyER' => 1,
+                'bankID' => $dt['bankID'],
+                'bankAccount' => $dt['bankAccount'],
+                'bankCurrency' => $dt['bankCurrency'],
+                'bankCurrencyER' => 1,
+                'custChequeDate' => $dt['custChequeDate'],
+                'receivedAmount' => $dt['receivedAmount'],
+                'localCurrencyID' => isset($company->localCurrencyID) ? $company->localCurrencyID: null,
+                'localCurrencyER' => $companyCurrencyConversion['trasToLocER'],
+                'localAmount' => \Helper::roundValue($companyCurrencyConversionTrans['localAmount']),
+                'companyRptCurrencyID' => isset($company->reportingCurrency) ? $company->reportingCurrency: null,
+                'companyRptCurrencyER' => $companyCurrencyConversion['trasToRptER'],
+                'companyRptAmount' => \Helper::roundValue($companyCurrencyConversionTrans['reportingAmount']),
+                'bankAmount' => $dt['bankAmount'],
+                'documentType' => 13,
+                'isVATApplicable' => $dt['isVATApplicable'],
+                'VATPercentage' => $dt['VATPercentage'],
+                'VATAmount' => $dt['VATAmount'],
+                'VATAmountLocal' => $companyCurrencyConversionVat['localAmount'],
+                'VATAmountRpt' => $companyCurrencyConversionVat['reportingAmount'],
+                'netAmount' => $dt['netAmount'],
+                'netAmountLocal' => $companyCurrencyConversionNet['localAmount'],
+                'netAmountRpt' => $companyCurrencyConversionNet['reportingAmount'],
+                'RollLevForApp_curr' => 1,
+            );
+        }
+        StageCustomerReceivePayment::insert($custReceiptVoucherArray);
+
+        $custReceiptVoucherDetArray = array();
+        foreach ($input[1] as $dt){
+            $company = Company::where('companySystemID', $dt['companySystemID'])->first();
+            $myCurr = $dt['custTransactionCurrencyID'];
+            $companyCurrencyConversion = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, 0);
+            $companyCurrency = \Helper::companyCurrency($dt['companySystemID']);
+            $companyCurrencyConversionTrans = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['bookingAmountTrans']);
+            $companyCurrencyConversionReceive = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['receiveAmountTrans']);
+            $arAutoID = AccountsReceivableLedger::where('documentCodeSystem', $dt['bookingInvCodeSystem'])->first();
+
+            $custReceiptVoucherDetArray[] = array(
+                'custReceivePaymentAutoID' => $dt['custReceivePaymentAutoID'],
+                'companySystemID' => $dt['companySystemID'],
+                'companyID' => isset($company->CompanyID) ? $company->CompanyID: null,
+                'addedDocumentSystemID' => 20,
+                'addedDocumentID' => "INV",
+                'bookingInvCodeSystem' => $dt['bookingInvCodeSystem'],
+                'bookingInvCode' => isset($arAutoID->documentCode) ? $arAutoID->documentCode: null,
+                'bookingDate' => isset($arAutoID->documentDate) ? $arAutoID->documentDate: null,
+                'arAutoID' => isset($arAutoID->arAutoID) ? $arAutoID->arAutoID: null,
+                'comments' => $dt['comments'],
+                'custTransactionCurrencyID' => $dt['custTransactionCurrencyID'],
+                'custTransactionCurrencyER' => 1,
+                'companyReportingCurrencyID' =>  isset($companyCurrency->reportingcurrency->currencyID) ? $companyCurrency->reportingcurrency->currencyID: null,
+                'companyReportingER' => $companyCurrencyConversion['trasToRptER'],
+                'localCurrencyID' => isset($companyCurrency->localcurrency->currencyID) ? $companyCurrency->localcurrency->currencyID: null,
+                'localCurrencyER' => $companyCurrencyConversion['trasToLocER'],
+                'bookingAmountTrans' => \Helper::roundValue($dt['bookingAmountTrans']),
+                'bookingAmountLocal' => \Helper::roundValue($companyCurrencyConversionTrans['localAmount']),
+                'bookingAmountRpt' => \Helper::roundValue($companyCurrencyConversionTrans['reportingAmount']),
+                'custReceiveCurrencyID' => $myCurr,
+                'custReceiveCurrencyER' => 1,
+                'custbalanceAmount' => $dt['custbalanceAmount'],
+                'receiveAmountTrans' => \Helper::roundValue($dt['receiveAmountTrans']),
+                'receiveAmountLocal' => \Helper::roundValue($companyCurrencyConversionReceive['localAmount']),
+                'receiveAmountRpt' => \Helper::roundValue($companyCurrencyConversionReceive['reportingAmount'])
+            );
+        }
+        StageCustomerReceivePaymentDetail::insert($custReceiptVoucherDetArray);
+
+        $custReceiptDetails = array();
+        foreach ($input[2] as $dt){
+            $company = Company::where('companySystemID', $dt['companySystemID'])->first();
+            $serviceLine = SegmentMaster::select('serviceLineSystemID', 'ServiceLineCode')
+                ->where('serviceLineSystemID', $dt['serviceLineSystemID'])
+                ->first();
+
+
+            $master = StageCustomerReceivePayment::where('custReceivePaymentAutoID', $dt['directReceiptAutoID'])->first();
+            $chartOfAccount = ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'chartOfAccountSystemID', 'controlAccounts')
+                ->where('chartOfAccountSystemID', $dt['chartOfAccountSystemID'])
+                ->first();
+            $myCurr = $master->custTransactionCurrencyID;
+
+            $companyCurrencyConversionTrans = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['DRAmount']);
+            $companyCurrencyConversionVat = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['VATAmount']);
+            $companyCurrencyConversionNet = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['netAmount']);
+
+
+            $custReceiptDetails[] = array(
+            'directReceiptAutoID' => $dt['directReceiptAutoID'],
+            'companySystemID' => $dt['companySystemID'],
+            'companyID' => isset($company->CompanyID) ? $company->CompanyID: 1,
+            'serviceLineSystemID' => $dt['serviceLineSystemID'],
+            'serviceLineCode' => isset($serviceLine->ServiceLineCode) ? $serviceLine->ServiceLineCode: null,
+            'chartOfAccountSystemID' => $dt['chartOfAccountSystemID'],
+            'glCode' => isset($chartOfAccount->AccountCode) ? $chartOfAccount->AccountCode: null,
+            'glCodeDes' => isset($chartOfAccount->AccountDescription) ? $chartOfAccount->AccountDescription: null,
+            'comments' => isset($master->narration) ? $master->narration: null,
+            'DRAmountCurrency' => isset($master->custTransactionCurrencyID) ? $master->custTransactionCurrencyID: null,
+            'DDRAmountCurrencyER' => isset($master->custTransactionCurrencyER) ? $master->custTransactionCurrencyER: null,
+            'DRAmount' => $dt['DRAmount'],
+            'localCurrency' => isset($master->localCurrencyID) ? $master->localCurrencyID: null,
+            'localCurrencyER' => isset($master->localCurrencyER) ? $master->localCurrencyER: null,
+            'localAmount' => $companyCurrencyConversionTrans['localAmount'],
+            'comRptCurrency' => isset($master->companyRptCurrencyID) ? $master->companyRptCurrencyID: null,
+            'comRptCurrencyER' => isset($master->companyRptCurrencyER) ? $master->companyRptCurrencyER: null,
+            'comRptAmount' => $companyCurrencyConversionTrans['reportingAmount'],
+            'VATAmount' => $dt['VATAmount'],
+            'VATAmountLocal' => $companyCurrencyConversionVat['localAmount'],
+            'VATAmountRpt' => $companyCurrencyConversionVat['reportingAmount'],
+            'netAmount' => $dt['netAmount'],
+            'netAmountLocal' => $companyCurrencyConversionNet['localAmount'],
+            'netAmountRpt' => $companyCurrencyConversionNet['reportingAmount'],
+            );
+        }
+        StageDirectReceiptDetail::insert($custReceiptDetails);
+
+        CreateStageReceiptVoucher::dispatch();
+
+        return $this->sendResponse(1, trans('custom.save', ['attribute' => trans('custom.customer_invoice')]));
+
+    }
+
+
 
 }

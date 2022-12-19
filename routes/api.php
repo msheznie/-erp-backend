@@ -12,6 +12,7 @@
 */
 
 Route::get('getConfigurationInfo', 'ConfigurationAPIController@getConfigurationInfo');
+Route::post('post_receipt_voucher', 'ClubManagement\ClubManagementAPIController@createReceiptVoucher');
 
 
 Route::group(['middleware' => ['tenant','locale']], function () {
