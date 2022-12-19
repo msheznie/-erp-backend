@@ -8,7 +8,6 @@ use App\Http\Requests\CreateStageCustomerInvoiceAPIRequest;
 use App\Http\Requests\CreateCustomerMasterRequest;
 use App\Jobs\CreateStageCustomerInvoice;
 use App\Http\Requests\CreateStageReceiptVoucherAPIRequest;
-use App\Jobs\CreateStageCustomerInvoice;
 use App\Jobs\CreateStageReceiptVoucher;
 use App\Models\AccountsReceivableLedger;
 use App\Models\ChartOfAccount;
