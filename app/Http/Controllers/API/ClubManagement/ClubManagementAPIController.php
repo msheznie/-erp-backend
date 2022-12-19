@@ -8,7 +8,6 @@ use App\Http\Requests\CreateStageCustomerInvoiceAPIRequest;
 use App\Http\Requests\CreateCustomerMasterRequest;
 use App\Jobs\CreateStageCustomerInvoice;
 use App\Http\Requests\CreateStageReceiptVoucherAPIRequest;
-use App\Jobs\CreateStageCustomerInvoice;
 use App\Jobs\CreateStageReceiptVoucher;
 use App\Models\AccountsReceivableLedger;
 use App\Models\ChartOfAccount;
@@ -16,19 +15,10 @@ use App\Models\ChartOfAccountsAssigned;
 use App\Models\Company;
 use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
-use App\Models\CurrencyMaster;
 use App\Models\CustomerCurrency;
-use App\Models\CustomerInvoice;
-use App\Models\CustomerInvoiceDirect;
-use App\Models\CustomerInvoiceDirectDetail;
-use App\Models\CustomerInvoiceItemDetails;
 use App\Models\CustomerMaster;
 use App\Models\DocumentMaster;
-use App\Models\CustomerReceivePayment;
-use App\Models\CustomerReceivePaymentDetail;
-use App\Models\DirectReceiptDetail;
 use App\Models\FinanceItemcategorySubAssigned;
-use App\Models\GeneralLedger;
 use App\Models\ItemAssigned;
 use App\Models\SegmentMaster;
 use App\Models\StageCustomerInvoice;
@@ -38,7 +28,6 @@ use App\Repositories\CustomerMasterRepository;
 use App\Models\StageCustomerReceivePayment;
 use App\Models\StageCustomerReceivePaymentDetail;
 use App\Models\StageDirectReceiptDetail;
-use Illuminate\Support\Facades\DB;
 
 class ClubManagementAPIController extends AppBaseController
 {
@@ -58,26 +47,40 @@ class ClubManagementAPIController extends AppBaseController
         foreach ($input[0] as $dt){
 
             $financeYear = CompanyFinanceYear::where('companySystemID',$dt['companySystemID'])->where('bigginingDate', "<=",  $dt['bookingDate'])->where('endingDate', ">=", $dt['bookingDate'])->first();
+                if(empty($financeYear)){
+                    return $this->sendError('Finance Year not found');
+                }
+
 
             $financePeriod = CompanyFinancePeriod::where('companySystemID',$dt['companySystemID'])->where('departmentSystemID', 4)->where('dateFrom', "<=",  $dt['bookingDate'])->where('dateTo', ">=", $dt['bookingDate'])->first();
+            if(empty($financePeriod)){
+                return $this->sendError('Finance Period not found');
+            }
 
             $customerCurr = CustomerCurrency::where('customerCodeSystem', $dt['customerID'])->first();
-
-
-            $companyCurrency = \Helper::companyCurrency($dt['companySystemID']);
-            $myCurr = 1;
+            if(empty($customerCurr)){
+                return $this->sendError('Customer currency not found');
+            }
             if($customerCurr){
                 $myCurr = $customerCurr->currencyID;
             }
+
+            $companyCurrency = \Helper::companyCurrency($dt['companySystemID']);
+
 
             $companyCurrencyConversion = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, 0);
 
             $companyCurrencyConversionTrans = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['bookingAmountTrans']);
             $customer = CustomerMaster::where('customerCodeSystem', $dt['customerID'])->first();
+            if(empty($customer)){
+                return $this->sendError('Customer not found');
+            }
             $companyCurrencyConversionVat = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['VATAmount']);
 
             $company = Company::where('companySystemID', $dt['companySystemID'])->first();
-
+            if(empty($company)){
+                return $this->sendError('Company not found');
+            }
 
             $custInvoiceArray[] = array(
                 'custInvoiceDirectAutoID' => $dt['custInvoiceDirectAutoID'],
@@ -125,28 +128,39 @@ class ClubManagementAPIController extends AppBaseController
         $custInvoiceItemDetArray = array();
 
         foreach ($input[1] as $dt) {
-            if ($dt['isPerforma'] == 0) {
+            $custInvoice = StageCustomerInvoice::where('custInvoiceDirectAutoID',$dt['custInvoiceDirectAutoID'])->first();
+            if(empty($custInvoice)){
+                return $this->sendError('Customer Invoice not found');
+            }
+            if ($custInvoice->isPerforma == 0) {
+
             $segment = SegmentMaster::find($dt['serviceLineSystemID']);
-            $glCode = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $dt['glSystemID'])->where('companySystemID', $dt['companySystemID'])->first();
-            $customer = CustomerCurrency::where('customerCodeSystem', $dt['customerID'])->first();
-            $companyCurrency = \Helper::companyCurrency($dt['companySystemID']);
-                $myCurr = 1;
+            $glCode = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $dt['glSystemID'])->where('companySystemID', $custInvoice->companySystemID)->first();
+
+            $customer = CustomerCurrency::where('customerCodeSystem', $custInvoice->customerID)->first();
+            $companyCurrency = \Helper::companyCurrency($custInvoice->companySystemID);
+            if(empty($customer)){
+                    return $this->sendError('Customer not found');
+            }
             if($customer){
                 $myCurr = $customer->currencyID;
             }
 
-            $companyCurrencyConversion = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, 0);
-            $companyCurrencyConversionTrans = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['invoiceAmount']);
-            $companyCurrencyConversionVat = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['VATAmount']);
-                $company = Company::where('companySystemID', $dt['companySystemID'])->first();
+            $companyCurrencyConversion = \Helper::currencyConversion($custInvoice->companySystemID, $myCurr, $myCurr, 0);
+            $companyCurrencyConversionTrans = \Helper::currencyConversion($custInvoice->companySystemID, $myCurr, $myCurr, $dt['invoiceAmount']);
+            $companyCurrencyConversionVat = \Helper::currencyConversion($custInvoice->companySystemID, $myCurr, $myCurr, $dt['VATAmount']);
+                $company = Company::where('companySystemID', $custInvoice->companySystemID)->first();
+                if(empty($company)){
+                    return $this->sendError('Company not found');
+                }
 
                 $custInvoiceDetArray[] = array(
                     'custInvoiceDirectID' => $dt['custInvoiceDirectAutoID'],
                     'companyID' => isset($company->CompanyID) ? $company->CompanyID: null,
-                    'companySystemID' => $dt['companySystemID'],
+                    'companySystemID' => $custInvoice->companySystemID,
                     'serviceLineSystemID' => $dt['serviceLineSystemID'],
                     'serviceLineCode' => isset($segment->ServiceLineCode) ? $segment->ServiceLineCode: null,
-                    'customerID' => $dt['customerID'],
+                    'customerID' => $custInvoice->customerID,
                     'glSystemID' => $dt['glSystemID'],
                     'glCode' => isset($glCode->AccountCode) ? $glCode->AccountCode: null,
                     'glCodeDes' => isset($glCode->AccountDescription) ? $glCode->AccountDescription: null,
@@ -172,20 +186,22 @@ class ClubManagementAPIController extends AppBaseController
                     'VATAmountRpt' => $companyCurrencyConversionVat['reportingAmount'],
                     'salesPrice' => $dt['salesPrice']
                 );
-            } else if($dt['isPerforma'] == 0) {
-                $companyCurrencyConversion = \Helper::currencyConversion($dt['companySystemID'], $dt['localCurrencyID'], $dt['localCurrencyID'], 0);
-                $companyCurrency = \Helper::companyCurrency($dt['companySystemID']);
-                $companyCurrencyConversionMargin = \Helper::currencyConversion($dt['companySystemID'], $dt['localCurrencyID'], $dt['localCurrencyID'], $dt['sellingCostAfterMargin']);
-                $companyCurrencyConversionVat = \Helper::currencyConversion($dt['companySystemID'], $dt['localCurrencyID'], $dt['localCurrencyID'], $dt['VATAmount']);
+            } else if($custInvoice->isPerforma == 2) {
+                $companyCurrencyConversion = \Helper::currencyConversion($custInvoice->companySystemID, $dt['localCurrencyID'], $dt['localCurrencyID'], 0);
+                $companyCurrency = \Helper::companyCurrency($custInvoice->companySystemID);
+                $companyCurrencyConversionMargin = \Helper::currencyConversion($custInvoice->companySystemID, $dt['localCurrencyID'], $dt['localCurrencyID'], $dt['sellingCostAfterMargin']);
+                $companyCurrencyConversionVat = \Helper::currencyConversion($custInvoice->companySystemID, $dt['localCurrencyID'], $dt['localCurrencyID'], $dt['VATAmount']);
                 $item = ItemAssigned::where('itemCodeSystem',$dt['itemCodeSystem'])->first();
+                if(empty($item)){
+                    return $this->sendError('Item not found');
+                }
 
-
-                $data = array('companySystemID' => $dt['companySystemID'],
+                $data = array('companySystemID' => $custInvoice->companySystemID,
                     'itemCodeSystem' => $dt['itemCodeSystem'],
                     'wareHouseId' => $dt['wareHouseSystemCode']);
 
                 $itemCurrentCostAndQty = inventory::itemCurrentCostAndQty($data);
-                $financeItemCategorySubAssigned = FinanceItemcategorySubAssigned::where('companySystemID', $dt['companySystemID'])
+                $financeItemCategorySubAssigned = FinanceItemcategorySubAssigned::where('companySystemID', $custInvoice->companySystemID)
                     ->where('mainItemCategoryID', $dt['itemFinanceCategoryID'])
                     ->where('itemCategorySubID', $dt['itemFinanceCategorySubID'])
                     ->first();
@@ -207,11 +223,11 @@ class ClubManagementAPIController extends AppBaseController
                     'itemFinanceCategoryID' => $dt['itemFinanceCategoryID'],
                     'itemFinanceCategorySubID' => $dt['itemFinanceCategorySubID'],
                     'financeGLcodebBS' => isset($financeItemCategorySubAssigned->financeGLcodebBS) ? $financeItemCategorySubAssigned->financeGLcodebBS : null,
-                   'financeGLcodebBSSystemID' => isset($financeItemCategorySubAssigned->financeGLcodebBSSystemID) ? $financeItemCategorySubAssigned->financeGLcodebBSSystemID: null,
-                   'financeGLcodePLSystemID' => isset($financeItemCategorySubAssigned->financeGLcodePLSystemID) ? $financeItemCategorySubAssigned->financeGLcodePLSystemID: null,
-                   'financeGLcodePL' => isset($financeItemCategorySubAssigned->financeGLcodePL) ? $financeItemCategorySubAssigned->financeGLcodePL: null,
-                  'financeGLcodeRevenueSystemID' => isset($financeItemCategorySubAssigned->financeGLcodeRevenueSystemID) ? $financeItemCategorySubAssigned->financeGLcodeRevenueSystemID: null,
-                   'financeGLcodeRevenue' => isset($financeItemCategorySubAssigned->financeGLcodeRevenue) ? $financeItemCategorySubAssigned->financeGLcodeRevenue: null,
+                    'financeGLcodebBSSystemID' => isset($financeItemCategorySubAssigned->financeGLcodebBSSystemID) ? $financeItemCategorySubAssigned->financeGLcodebBSSystemID: null,
+                    'financeGLcodePLSystemID' => isset($financeItemCategorySubAssigned->financeGLcodePLSystemID) ? $financeItemCategorySubAssigned->financeGLcodePLSystemID: null,
+                    'financeGLcodePL' => isset($financeItemCategorySubAssigned->financeGLcodePL) ? $financeItemCategorySubAssigned->financeGLcodePL: null,
+                    'financeGLcodeRevenueSystemID' => isset($financeItemCategorySubAssigned->financeGLcodeRevenueSystemID) ? $financeItemCategorySubAssigned->financeGLcodeRevenueSystemID: null,
+                    'financeGLcodeRevenue' => isset($financeItemCategorySubAssigned->financeGLcodeRevenue) ? $financeItemCategorySubAssigned->financeGLcodeRevenue: null,
                     'localCurrencyID' => isset($companyCurrency->localcurrency->currencyID) ? $companyCurrency->localcurrency->currencyID: null,
                     'localCurrencyER' => $companyCurrencyConversion['trasToLocER'],
                     'issueCostLocal' => $itemCurrentCostAndQty['wacValueLocal'],
@@ -245,9 +261,7 @@ class ClubManagementAPIController extends AppBaseController
             StageCustomerInvoiceDirectDetail::insert($custInvoiceDetArray);
             StageCustomerInvoiceItemDetails::insert($custInvoiceItemDetArray);
 
-
         }
-
 
         CreateStageCustomerInvoice::dispatch();
 
@@ -264,10 +278,23 @@ class ClubManagementAPIController extends AppBaseController
             $financePeriod = CompanyFinancePeriod::where('companySystemID',$dt['companySystemID'])->where('departmentSystemID', 4)->where('dateFrom', "<=",  $dt['custPaymentReceiveDate'])->where('dateTo', ">=", $dt['custPaymentReceiveDate'])->first();
             $customer = CustomerCurrency::where('customerCodeSystem', $dt['customerID'])->first();
 
-            $myCurr = 1;
+
+            if(empty($customer)){
+                return $this->sendError('Customer not found');
+            }
+
             if($customer){
                 $myCurr = $customer->currencyID;
             }
+
+            if(empty($financeYear)){
+                return $this->sendError('Company finance year not found');
+            }
+
+            if(empty($financePeriod)){
+                return $this->sendError('Company finance period not found');
+            }
+
 
             $companyCurrencyConversion = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, 0);
             $companyCurrencyConversionTrans = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['receivedAmount']);
@@ -276,6 +303,9 @@ class ClubManagementAPIController extends AppBaseController
 
 
             $company = Company::where('companySystemID', $dt['companySystemID'])->first();
+            if(empty($company)){
+                return $this->sendError('Company not found');
+            }
 
             $custReceiptVoucherArray[] = array(
                 'custReceivePaymentAutoID' => $dt['custReceivePaymentAutoID'],
@@ -325,18 +355,30 @@ class ClubManagementAPIController extends AppBaseController
 
         $custReceiptVoucherDetArray = array();
         foreach ($input[1] as $dt){
-            $company = Company::where('companySystemID', $dt['companySystemID'])->first();
+            $master = StageCustomerReceivePayment::where('custReceivePaymentAutoID', $dt['custReceivePaymentAutoID'])->first();
+            if(empty($master)){
+                return $this->sendError('Receipt voucher master not found');
+            }
+            $company = Company::where('companySystemID', $master->companySystemID)->first();
+            if(empty($company)){
+                return $this->sendError('Company not found');
+            }
             $myCurr = $dt['custTransactionCurrencyID'];
-            $companyCurrencyConversion = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, 0);
-            $companyCurrency = \Helper::companyCurrency($dt['companySystemID']);
-            $companyCurrencyConversionTrans = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['bookingAmountTrans']);
-            $companyCurrencyConversionReceive = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['receiveAmountTrans']);
+            $companyCurrencyConversion = \Helper::currencyConversion($master->companySystemID, $myCurr, $myCurr, 0);
+            $companyCurrency = \Helper::companyCurrency($master->companySystemID);
+            $companyCurrencyConversionTrans = \Helper::currencyConversion($master->companySystemID, $myCurr, $myCurr, $dt['bookingAmountTrans']);
+            $companyCurrencyConversionReceive = \Helper::currencyConversion($master->companySystemID, $myCurr, $myCurr, $dt['receiveAmountTrans']);
             $arAutoID = AccountsReceivableLedger::where('documentCodeSystem', $dt['bookingInvCodeSystem'])->first();
+            if(empty($arAutoID)){
+                return $this->sendError('Customer Invoice not found');
+            }
+
+
 
             $custReceiptVoucherDetArray[] = array(
                 'custReceivePaymentAutoID' => $dt['custReceivePaymentAutoID'],
-                'companySystemID' => $dt['companySystemID'],
-                'companyID' => isset($company->CompanyID) ? $company->CompanyID: null,
+                'companySystemID' => isset($master->companySystemID) ? $master->companySystemID: null,
+                'companyID' => isset($master->companyID) ? $master->companyID: null,
                 'addedDocumentSystemID' => 20,
                 'addedDocumentID' => "INV",
                 'bookingInvCodeSystem' => $dt['bookingInvCodeSystem'],
@@ -365,27 +407,42 @@ class ClubManagementAPIController extends AppBaseController
 
         $custReceiptDetails = array();
         foreach ($input[2] as $dt){
-            $company = Company::where('companySystemID', $dt['companySystemID'])->first();
+
             $serviceLine = SegmentMaster::select('serviceLineSystemID', 'ServiceLineCode')
                 ->where('serviceLineSystemID', $dt['serviceLineSystemID'])
                 ->first();
-
+            if(empty($serviceLine)){
+                return $this->sendError('Segment not found');
+            }
 
             $master = StageCustomerReceivePayment::where('custReceivePaymentAutoID', $dt['directReceiptAutoID'])->first();
+            if(empty($master)){
+                return $this->sendError('Receipt voucher master not found');
+            }
+            $company = Company::where('companySystemID', $master->companySystemID)->first();
+            if(empty($company)){
+                return $this->sendError('Company not found');
+            }
             $chartOfAccount = ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'chartOfAccountSystemID', 'controlAccounts')
                 ->where('chartOfAccountSystemID', $dt['chartOfAccountSystemID'])
                 ->first();
-            $myCurr = $master->custTransactionCurrencyID;
+            if(empty($chartOfAccount)){
+                return $this->sendError('Chart of account not found');
+            }
 
-            $companyCurrencyConversionTrans = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['DRAmount']);
-            $companyCurrencyConversionVat = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['VATAmount']);
-            $companyCurrencyConversionNet = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['netAmount']);
+            if($master){
+                $myCurr = $master->custTransactionCurrencyID;
+            }
+
+            $companyCurrencyConversionTrans = \Helper::currencyConversion($master->companySystemID, $myCurr, $myCurr, $dt['DRAmount']);
+            $companyCurrencyConversionVat = \Helper::currencyConversion($master->companySystemID, $myCurr, $myCurr, $dt['VATAmount']);
+            $companyCurrencyConversionNet = \Helper::currencyConversion($master->companySystemID, $myCurr, $myCurr, $dt['netAmount']);
 
 
             $custReceiptDetails[] = array(
             'directReceiptAutoID' => $dt['directReceiptAutoID'],
-            'companySystemID' => $dt['companySystemID'],
-            'companyID' => isset($company->CompanyID) ? $company->CompanyID: 1,
+            'companySystemID' => isset($company->companySystemID) ? $company->companySystemID: null,
+            'companyID' => isset($company->CompanyID) ? $company->CompanyID: null,
             'serviceLineSystemID' => $dt['serviceLineSystemID'],
             'serviceLineCode' => isset($serviceLine->ServiceLineCode) ? $serviceLine->ServiceLineCode: null,
             'chartOfAccountSystemID' => $dt['chartOfAccountSystemID'],
@@ -413,7 +470,7 @@ class ClubManagementAPIController extends AppBaseController
 
         CreateStageReceiptVoucher::dispatch();
 
-        return $this->sendResponse(1, trans('custom.save', ['attribute' => trans('custom.customer_invoice')]));
+        return $this->sendResponse($custReceiptVoucherArray, trans('custom.save', ['attribute' => trans('custom.receipt_voucher')]));
 
     }
 
