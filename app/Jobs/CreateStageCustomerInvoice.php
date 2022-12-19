@@ -40,8 +40,7 @@ class CreateStageCustomerInvoice implements ShouldQueue
 
     public function handle()
     {
-        Log::useFiles(storage_path().'/logs/laravel.log');
-        Log::warning('Test - Clubmanagment' . date('H:i:s'));
+        Log::useFiles(storage_path().'/logs/stage_create_customer_invoice.log');
 
         DB::beginTransaction();
         try {
