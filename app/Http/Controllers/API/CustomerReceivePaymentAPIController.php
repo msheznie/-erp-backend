@@ -261,8 +261,8 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             $input['companyID'] = $company->CompanyID;
             $input['localCurrencyID'] = $company->localCurrencyID;
             $input['companyRptCurrencyID'] = $company->reportingCurrency;
-                $input['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
-                $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+            $input['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+            $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
 
         }
 

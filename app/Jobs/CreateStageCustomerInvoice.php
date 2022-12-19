@@ -45,6 +45,38 @@ class CreateStageCustomerInvoice implements ShouldQueue
 
         DB::beginTransaction();
         try {
+
+            $stagCustomerUpdateInvoices = StageCustomerInvoice::all();
+            $i = 1;
+
+            foreach ($stagCustomerUpdateInvoices as $dt){
+                $lastSerial = CustomerInvoiceDirect::where('companySystemID', $dt['companySystemID'])
+                    ->where('companyFinanceYearID', $dt['companyFinanceYearID'])
+                    ->orderBy('serialNo', 'desc')
+                    ->first();
+
+                $lastAutoID = CustomerInvoiceDirect::orderBy('custInvoiceDirectAutoID', 'desc')
+                    ->first();
+
+
+                $lastSerialNumber = 1;
+                if ($lastSerial) {
+                    $lastSerialNumber = intval($lastSerial->serialNo) + $i;
+                }
+
+                $custInvoiceDirectAutoID = 1;
+                if ($lastAutoID) {
+                    $custInvoiceDirectAutoID = intval($lastAutoID->custInvoiceDirectAutoID) +$i;
+                }
+
+                $y = date('Y', strtotime($dt->FYBiggin));
+                $bookingInvCode = ($dt->companyID . '\\' . $y . '\\INV' . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
+                StageCustomerInvoice::where('custInvoiceDirectAutoID', $dt->custInvoiceDirectAutoID)->update(['custInvoiceDirectAutoID' => $custInvoiceDirectAutoID,'serialNo' => $lastSerialNumber, 'bookingInvCode' => $bookingInvCode]);
+                StageCustomerInvoiceDirectDetail::where('custInvoiceDirectID', $dt->custInvoiceDirectAutoID)->update(['custInvoiceDirectID' => $custInvoiceDirectAutoID]);
+                StageCustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $dt->custInvoiceDirectAutoID)->update(['custInvoiceDirectAutoID' => $custInvoiceDirectAutoID]);
+                $i++;
+            }
+
             $custInvoiceArray = array();
 
             $stagCustomerInvoices = StageCustomerInvoice::all();
@@ -202,7 +234,7 @@ class CreateStageCustomerInvoice implements ShouldQueue
                 );
 
 
-                $confirm = \Helper::confirmDocument($params);
+                $confirm = \Helper::confirmDocumentForApi($params);
                 Log::info($confirm);
 
                 $documentApproved = DocumentApproved::where('documentSystemCode', $dt['custInvoiceDirectAutoID'])->where('documentSystemID', 20)->first();
@@ -213,23 +245,27 @@ class CreateStageCustomerInvoice implements ShouldQueue
                 $customerInvoiceDirects["documentSystemID"] = $dt['documentSystemiD'];
                 $customerInvoiceDirects["approvedComments"] = "Generated Customer Invoice through Club Management System";
                 $customerInvoiceDirects["rollLevelOrder"] = 1;
-                $approve = \Helper::approveDocument($customerInvoiceDirects);
+                $approve = \Helper::approveDocumentForApi($customerInvoiceDirects);
                 Log::info($approve);
 
 //                if (!$approve["success"]) {
 //                    return $this->sendError($approve["message"]);
 //                }
-                StageCustomerInvoice::truncate();
-                StageCustomerInvoiceItemDetails::truncate();
-                StageCustomerInvoiceDirectDetail::truncate();
+
                 DB::commit();
 
             }
+            StageCustomerInvoice::truncate();
+            StageCustomerInvoiceItemDetails::truncate();
+            StageCustomerInvoiceDirectDetail::truncate();
                 DB::commit();
         }
 
         catch (\Exception $e) {
                 DB::rollback();
+                StageCustomerInvoice::truncate();
+                StageCustomerInvoiceItemDetails::truncate();
+                StageCustomerInvoiceDirectDetail::truncate();
                 Log::info('Error Line No: ' . $e->getLine());
                 Log::info('Error Line No: ' . $e->getFile());
                 Log::info($e->getMessage());
