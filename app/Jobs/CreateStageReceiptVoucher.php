@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Models\AccountsReceivableLedger;
 use App\Models\CustomerInvoiceDirect;
 use App\Models\CustomerReceivePayment;
 use App\Models\CustomerReceivePaymentDetail;
@@ -67,8 +68,6 @@ class CreateStageReceiptVoucher implements ShouldQueue
                 if ($lastSerial) {
                     $lastSerialNumber = intval($lastSerial->serialNo) + $i;
                 }
-                Log::info($lastSerial);
-                Log::info($lastSerialNumber);
 
 
                 $custReceiptVocuherAutoID = 1;
@@ -145,12 +144,13 @@ class CreateStageReceiptVoucher implements ShouldQueue
             foreach ($stageReceiptVouchersDetails as $dt){
                 $custReceiptVoucherDetArray[] = array(
                     'custReceivePaymentAutoID' => $dt['custReceivePaymentAutoID'],
-                    'arAutoID' => $dt['arAutoID'],
                     'companySystemID' => $dt['companySystemID'],
                     'companyID' => $dt['companyID'],
+                    'arAutoID' => $dt['arAutoID'],
                     'addedDocumentSystemID' => $dt['addedDocumentSystemID'],
                     'addedDocumentID' => $dt['addedDocumentID'],
                     'bookingInvCodeSystem' => $dt['bookingInvCodeSystem'],
+                    'bookingInvCode' => $dt['bookingInvCode'],
                     'bookingDate' => $dt['bookingDate'],
                     'comments' => $dt['comments'],
                     'custTransactionCurrencyID' => $dt['custTransactionCurrencyID'],
@@ -165,9 +165,9 @@ class CreateStageReceiptVoucher implements ShouldQueue
                     'custReceiveCurrencyID' => $dt['custReceiveCurrencyID'],
                     'custReceiveCurrencyER' => $dt['custReceiveCurrencyER'],
                     'custbalanceAmount' => $dt['custbalanceAmount'],
-                    'receiveAmountTrans' => 0,
-                    'receiveAmountLocal' => 0,
-                    'receiveAmountRpt' => 0
+                    'receiveAmountTrans' => $dt['receiveAmountTrans'],
+                    'receiveAmountLocal' => $dt['receiveAmountLocal'],
+                    'receiveAmountRpt' => $dt['receiveAmountRpt']
 
                 );
             }
@@ -232,9 +232,6 @@ class CreateStageReceiptVoucher implements ShouldQueue
                 $approve = \Helper::approveDocumentForApi($customerInvoiceDirects);
                 Log::info($approve);
 
-//                if (!$approve["success"]) {
-//                    return $this->sendError($approve["message"]);
-//                }
                 DB::commit();
 
             }
