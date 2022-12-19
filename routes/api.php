@@ -19,6 +19,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
     Route::group(['middleware' => ['pos_api']], function (){
         Route::post('post_customer_invoice', 'ClubManagement\ClubManagementAPIController@createCustomerInvoice');
+        Route::post('post_customer_master', 'ClubManagement\ClubManagementAPIController@createCustomerMaster');
         Route::post('pull_customer_category', 'POS\PosAPIController@pullCustomerCategory');
         Route::post('pull_location', 'POS\PosAPIController@pullLocation');
         Route::post('pull_segment', 'POS\PosAPIController@pullSegment');

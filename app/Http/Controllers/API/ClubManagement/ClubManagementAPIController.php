@@ -5,6 +5,8 @@ namespace App\Http\Controllers\API\ClubManagement;
 use App\helper\inventory;
 use App\Http\Controllers\AppBaseController;
 use App\Http\Requests\CreateStageCustomerInvoiceAPIRequest;
+use App\Http\Requests\CreateCustomerMasterRequest;
+use App\Jobs\CreateStageCustomerInvoice;
 use App\Http\Requests\CreateStageReceiptVoucherAPIRequest;
 use App\Jobs\CreateStageCustomerInvoice;
 use App\Jobs\CreateStageReceiptVoucher;
@@ -21,6 +23,7 @@ use App\Models\CustomerInvoiceDirect;
 use App\Models\CustomerInvoiceDirectDetail;
 use App\Models\CustomerInvoiceItemDetails;
 use App\Models\CustomerMaster;
+use App\Models\DocumentMaster;
 use App\Models\CustomerReceivePayment;
 use App\Models\CustomerReceivePaymentDetail;
 use App\Models\DirectReceiptDetail;
@@ -31,6 +34,7 @@ use App\Models\SegmentMaster;
 use App\Models\StageCustomerInvoice;
 use App\Models\StageCustomerInvoiceDirectDetail;
 use App\Models\StageCustomerInvoiceItemDetails;
+use App\Repositories\CustomerMasterRepository;
 use App\Models\StageCustomerReceivePayment;
 use App\Models\StageCustomerReceivePaymentDetail;
 use App\Models\StageDirectReceiptDetail;
@@ -38,6 +42,13 @@ use Illuminate\Support\Facades\DB;
 
 class ClubManagementAPIController extends AppBaseController
 {
+        /** @var  CustomerMasterRepository */
+        private $customerMasterRepository;
+        public function __construct(CustomerMasterRepository $customerMasterRepo)
+        {
+            $this->customerMasterRepository = $customerMasterRepo;
+        }
+
 
     public function createCustomerInvoice(CreateStageCustomerInvoiceAPIRequest  $request){
         $input = $request->all();
@@ -406,6 +417,83 @@ class ClubManagementAPIController extends AppBaseController
 
     }
 
+    public function createCustomerMaster(CreateCustomerMasterRequest  $request){
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('custGLAccountSystemID', 'custUnbilledAccountSystemID'));
 
+        if($input['custGLAccountSystemID'] == $input['custUnbilledAccountSystemID'] ){
+           return $this->sendError('Receivable account and unbilled account cannot be same. Please select different chart of accounts.');
+        }
+
+        if($input['custUnbilledAccountSystemID'] == 0){
+            return $this->sendError('Unbilled Receivable Account field is required.');
+        }
+
+        $validatorResult = \Helper::checkCompanyForMasters($input['primaryCompanySystemID']);
+        if (!$validatorResult['success']) {
+            return $this->sendError($validatorResult['message']);
+        }
+
+        $company = Company::where('companySystemID', $input['primaryCompanySystemID'])->first();
+
+        if ($company) {
+            $input['primaryCompanyID'] = $company->CompanyID;
+        }
+
+
+        if (array_key_exists('custGLAccountSystemID', $input)) {
+            $financePL = ChartOfAccount::where('chartOfAccountSystemID', $input['custGLAccountSystemID'])->first();
+            if ($financePL) {
+                $input['custGLaccount'] = $financePL->AccountCode;
+            }
+        }
+
+        if (array_key_exists('custUnbilledAccountSystemID', $input)) {
+            $unbilled = ChartOfAccount::where('chartOfAccountSystemID', $input['custUnbilledAccountSystemID'])->first();
+            if ($unbilled) {
+                $input['custUnbilledAccount'] = $unbilled->AccountCode;
+            }
+        }
+
+        $commonValidorMessages = [
+            'customerCountry.required' => 'Country field is required.',
+            'custUnbilledAccountSystemID.required' => 'Unbilled Receivable Account field is required.'
+        ];
+
+        $commonValidator = \Validator::make($input, [
+            'customerCountry' => 'required',
+            'custUnbilledAccountSystemID' => 'required'
+
+        ], $commonValidorMessages);
+
+        if ($commonValidator->fails()) {
+            return $this->sendError($commonValidator->messages(), 422);
+        }
+
+        if($input['customerCountry']==0 || $input['customerCountry']==''){
+            return $this->sendError('Country field is required',500);
+        }
+
+        $document = DocumentMaster::where('documentID', 'CUSTM')->first();
+        $input['documentSystemID'] = $document->documentSystemID;
+        $input['documentID'] = $document->documentID;
+
+        $lastCustomer = CustomerMaster::orderBy('customerCodeSystem', 'DESC')->first();
+        $lastSerialOrder = 1;
+        if(!empty($lastCustomer)){
+            $lastSerialOrder = $lastCustomer->lastSerialOrder + 1;
+        }
+
+        $customerCode = 'C' . str_pad($lastSerialOrder, 7, '0', STR_PAD_LEFT);
+
+        $input['lastSerialOrder'] = $lastSerialOrder;
+        $input['CutomerCode'] = $customerCode;
+        $input['isCustomerActive'] = 1;
+   
+        $customerMasters = $this->customerMasterRepository->create($input);
+
+        return $this->sendResponse($customerMasters->toArray(), 'Customer Master created successfully');
+
+    }
 
 }
