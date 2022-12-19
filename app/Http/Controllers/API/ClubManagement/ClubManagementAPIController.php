@@ -17,6 +17,7 @@ use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
 use App\Models\CustomerCurrency;
 use App\Models\CustomerMaster;
+use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
 use App\Models\FinanceItemcategorySubAssigned;
 use App\Models\ItemAssigned;
@@ -548,6 +549,27 @@ class ClubManagementAPIController extends AppBaseController
         $input['isCustomerActive'] = 1;
    
         $customerMasters = $this->customerMasterRepository->create($input);
+
+        $params = array('autoID' => $customerMasters->customerCodeSystem,
+            'company' => $customerMasters->primaryCompanySystemID,
+            'document' => $customerMasters->documentSystemID,
+            'segment' => '',
+            'category' => '',
+            'amount' => ''
+        );
+
+
+         \Helper::confirmDocumentForApi($params);
+
+        $documentApproved = DocumentApproved::where('documentSystemCode', $customerMasters->customerCodeSystem)->where('documentSystemID', $customerMasters->documentSystemID)->first();
+        $customerInvoiceDirects = array();
+        $customerInvoiceDirects["approvalLevelID"] = 14;
+        $customerInvoiceDirects["documentApprovedID"] = $documentApproved->documentApprovedID;
+        $customerInvoiceDirects["documentSystemCode"] =$customerMasters->customerCodeSystem;
+        $customerInvoiceDirects["documentSystemID"] = $customerMasters->documentSystemID;
+        $customerInvoiceDirects["approvedComments"] = "Generated Customer Invoice through Club Management System";
+        $customerInvoiceDirects["rollLevelOrder"] = 1;
+         \Helper::approveDocumentForApi($customerInvoiceDirects);
 
         return $this->sendResponse($customerMasters->toArray(), 'Customer Master created successfully');
 
