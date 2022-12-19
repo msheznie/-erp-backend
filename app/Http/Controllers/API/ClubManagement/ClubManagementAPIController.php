@@ -128,13 +128,15 @@ class ClubManagementAPIController extends AppBaseController
         $custInvoiceItemDetArray = array();
 
         foreach ($input[1] as $dt) {
-            if ($dt['isPerforma'] == 0) {
-            $segment = SegmentMaster::find($dt['serviceLineSystemID']);
-            $glCode = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $dt['glSystemID'])->where('companySystemID', $dt['companySystemID'])->first();
             $custInvoice = StageCustomerInvoice::where('custInvoiceDirectAutoID',$dt['custInvoiceDirectAutoID'])->first();
             if(empty($custInvoice)){
                 return $this->sendError('Customer Invoice not found');
             }
+            if ($custInvoice->isPerforma == 0) {
+
+            $segment = SegmentMaster::find($dt['serviceLineSystemID']);
+            $glCode = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $dt['glSystemID'])->where('companySystemID', $custInvoice->companySystemID)->first();
+
             $customer = CustomerCurrency::where('customerCodeSystem', $custInvoice->customerID)->first();
             $companyCurrency = \Helper::companyCurrency($custInvoice->companySystemID);
             if(empty($customer)){
@@ -184,22 +186,22 @@ class ClubManagementAPIController extends AppBaseController
                     'VATAmountRpt' => $companyCurrencyConversionVat['reportingAmount'],
                     'salesPrice' => $dt['salesPrice']
                 );
-            } else if($dt['isPerforma'] == 0) {
-                $companyCurrencyConversion = \Helper::currencyConversion($dt['companySystemID'], $dt['localCurrencyID'], $dt['localCurrencyID'], 0);
-                $companyCurrency = \Helper::companyCurrency($dt['companySystemID']);
-                $companyCurrencyConversionMargin = \Helper::currencyConversion($dt['companySystemID'], $dt['localCurrencyID'], $dt['localCurrencyID'], $dt['sellingCostAfterMargin']);
-                $companyCurrencyConversionVat = \Helper::currencyConversion($dt['companySystemID'], $dt['localCurrencyID'], $dt['localCurrencyID'], $dt['VATAmount']);
+            } else if($custInvoice->isPerforma == 2) {
+                $companyCurrencyConversion = \Helper::currencyConversion($custInvoice->companySystemID, $dt['localCurrencyID'], $dt['localCurrencyID'], 0);
+                $companyCurrency = \Helper::companyCurrency($custInvoice->companySystemID);
+                $companyCurrencyConversionMargin = \Helper::currencyConversion($custInvoice->companySystemID, $dt['localCurrencyID'], $dt['localCurrencyID'], $dt['sellingCostAfterMargin']);
+                $companyCurrencyConversionVat = \Helper::currencyConversion($custInvoice->companySystemID, $dt['localCurrencyID'], $dt['localCurrencyID'], $dt['VATAmount']);
                 $item = ItemAssigned::where('itemCodeSystem',$dt['itemCodeSystem'])->first();
                 if(empty($item)){
                     return $this->sendError('Item not found');
                 }
 
-                $data = array('companySystemID' => $dt['companySystemID'],
+                $data = array('companySystemID' => $custInvoice->companySystemID,
                     'itemCodeSystem' => $dt['itemCodeSystem'],
                     'wareHouseId' => $dt['wareHouseSystemCode']);
 
                 $itemCurrentCostAndQty = inventory::itemCurrentCostAndQty($data);
-                $financeItemCategorySubAssigned = FinanceItemcategorySubAssigned::where('companySystemID', $dt['companySystemID'])
+                $financeItemCategorySubAssigned = FinanceItemcategorySubAssigned::where('companySystemID', $custInvoice->companySystemID)
                     ->where('mainItemCategoryID', $dt['itemFinanceCategoryID'])
                     ->where('itemCategorySubID', $dt['itemFinanceCategorySubID'])
                     ->first();
