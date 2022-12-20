@@ -17,6 +17,7 @@ use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
 use App\Models\CustomerCurrency;
 use App\Models\CustomerMaster;
+use App\Models\CustomerMasterCategory;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
 use App\Models\FinanceItemcategorySubAssigned;
@@ -29,6 +30,7 @@ use App\Repositories\CustomerMasterRepository;
 use App\Models\StageCustomerReceivePayment;
 use App\Models\StageCustomerReceivePaymentDetail;
 use App\Models\StageDirectReceiptDetail;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -594,6 +596,19 @@ class ClubManagementAPIController extends AppBaseController
         }
 
         return $this->sendResponse($customerMasters->toArray(), 'Customer Master created successfully');
+
+    }
+
+    public function createCustomerCategory(Request $request){
+
+        $company = Company::where('companySystemID', $request->company_id)->first();
+        if(empty($company)){
+            return $this->sendError('Company not found');
+        }
+        $customerMasterCategory = ['categoryDescription' => $request->categoryDescription, 'companySystemID' => $request->company_id, 'companyID' => $company->CompanyID];
+         $customerMasterCategory = CustomerMasterCategory::create($customerMasterCategory);
+
+        return $this->sendResponse($customerMasterCategory->toArray(), 'Customer Master Category created successfully');
 
     }
 
