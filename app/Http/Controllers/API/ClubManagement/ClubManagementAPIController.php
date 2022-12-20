@@ -29,6 +29,8 @@ use App\Repositories\CustomerMasterRepository;
 use App\Models\StageCustomerReceivePayment;
 use App\Models\StageCustomerReceivePaymentDetail;
 use App\Models\StageDirectReceiptDetail;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ClubManagementAPIController extends AppBaseController
 {
@@ -486,6 +488,12 @@ class ClubManagementAPIController extends AppBaseController
         if($input['custUnbilledAccountSystemID'] == 0){
             return $this->sendError('Unbilled Receivable Account field is required.');
         }
+        if(isset($request->company_id)){
+            $input['primaryCompanySystemID'] = $request->company_id;
+        }else{
+            return $this->sendError('Company System ID not found.');
+        }
+
 
         $validatorResult = \Helper::checkCompanyForMasters($input['primaryCompanySystemID']);
         if (!$validatorResult['success']) {
@@ -549,27 +557,41 @@ class ClubManagementAPIController extends AppBaseController
         $input['isCustomerActive'] = 1;
    
         $customerMasters = $this->customerMasterRepository->create($input);
+        Log::useFiles(storage_path().'/logs/laravel.log');
 
-        $params = array('autoID' => $customerMasters->customerCodeSystem,
-            'company' => $customerMasters->primaryCompanySystemID,
-            'document' => $customerMasters->documentSystemID,
-            'segment' => '',
-            'category' => '',
-            'amount' => ''
-        );
+        DB::beginTransaction();
+        try {
+
+            $params = array('autoID' => $customerMasters->customerCodeSystem,
+                'company' => $customerMasters->primaryCompanySystemID,
+                'document' => $customerMasters->documentSystemID,
+                'segment' => '',
+                'category' => '',
+                'amount' => ''
+            );
 
 
-         \Helper::confirmDocumentForApi($params);
+            \Helper::confirmDocumentForApi($params);
 
-        $documentApproved = DocumentApproved::where('documentSystemCode', $customerMasters->customerCodeSystem)->where('documentSystemID', $customerMasters->documentSystemID)->first();
-        $customerInvoiceDirects = array();
-        $customerInvoiceDirects["approvalLevelID"] = 14;
-        $customerInvoiceDirects["documentApprovedID"] = $documentApproved->documentApprovedID;
-        $customerInvoiceDirects["documentSystemCode"] =$customerMasters->customerCodeSystem;
-        $customerInvoiceDirects["documentSystemID"] = $customerMasters->documentSystemID;
-        $customerInvoiceDirects["approvedComments"] = "Generated Customer Invoice through Club Management System";
-        $customerInvoiceDirects["rollLevelOrder"] = 1;
-         \Helper::approveDocumentForApi($customerInvoiceDirects);
+            $documentApproved = DocumentApproved::where('documentSystemCode', $customerMasters->customerCodeSystem)->where('documentSystemID', $customerMasters->documentSystemID)->first();
+            $customerInvoiceDirects = array();
+            $customerInvoiceDirects["approvalLevelID"] = 14;
+            $customerInvoiceDirects["documentApprovedID"] = $documentApproved->documentApprovedID;
+            $customerInvoiceDirects["documentSystemCode"] = $customerMasters->customerCodeSystem;
+            $customerInvoiceDirects["documentSystemID"] = $customerMasters->documentSystemID;
+            $customerInvoiceDirects["approvedComments"] = "Generated Customer Invoice through Club Management System";
+            $customerInvoiceDirects["rollLevelOrder"] = 1;
+            \Helper::approveDocumentForApi($customerInvoiceDirects);
+            DB::commit();
+
+        }
+        catch(\Exception $e){
+            DB::rollback();
+            Log::info('Error Line No: ' . $e->getLine());
+            Log::info('Error Line No: ' . $e->getFile());
+            Log::info($e->getMessage());
+            Log::info('---- GL  End with Error-----' . date('H:i:s'));
+        }
 
         return $this->sendResponse($customerMasters->toArray(), 'Customer Master created successfully');
 
