@@ -48,6 +48,7 @@ use App\Models\TenderMaster;
 use App\Models\TenderMasterSupplier;
 use App\Models\TenderSupplierAssignee;
 use App\Models\WarehouseMaster;
+use App\Models\BookInvSuppMaster;
 use App\Repositories\DocumentAttachmentsRepository;
 use App\Repositories\SupplierInvoiceItemDetailRepository;
 use App\Repositories\TenderBidClarificationsRepository;
@@ -631,32 +632,69 @@ class SRMService
     {
         $supplierID = self::getSupplierIdByUUID($request->input('supplier_uuid'));
         $id = $request->input('extra.id');
+        $typeId = (int) $request->input('extra.typeId');
         $masterData = $this->invoiceService->getInvoiceDetailsById($id, $supplierID);
-        if (!empty($masterData)) {
-            $masterData = $masterData->toArray();
-            $input['bookingSuppMasInvAutoID'] = $id;
-            $masterData['detail_data'] = ['grvDetails' => [], 'logisticYN' => 0];
 
-            foreach ($masterData['detail'] as $detail) {
-                $input['bookingSupInvoiceDetAutoID'] = $detail['bookingSupInvoiceDetAutoID'];
-                $detailData = $this->supplierInvoiceItemDetailRepository->getGRVDetailsForSupplierInvoice($input);
-                if ($detailData['status']) {
-                    foreach ($detailData['data']['grvDetails'] as $detailItem) {
-                        array_push($masterData['detail_data']['grvDetails'], $detailItem);
+        switch($typeId) {
+            case 0:
+                $details = BookInvSuppMaster::where('bookingSuppMasInvAutoID', $id)->with(['grvdetail' => function ($query) {
+                    $query->with('grvmaster');
+                }, 'directdetail' => function ($query) {
+                    $query->with('segment');
+                }, 'detail' => function ($query) {
+                    $query->with('grvmaster');
+                }, 'item_details' => function ($query) {
+                    $query->with('unit');
+                }, 'approved_by' => function ($query) {
+                    $query->with('employee');
+                    $query->where('documentSystemID', 11);
+                }, 'company', 'transactioncurrency', 'localcurrency', 'rptcurrency', 'supplier', 'directdetail', 'suppliergrv', 'confirmed_by', 'created_by', 'modified_by', 'cancelled_by','audit_trial.modified_by', 'employee'])->first();
+  
+
+                
+                return [
+                    'success' => true,
+                    'message' => 'Record retrieved successfully',
+                    'data' => $details
+                ];
+            case 1:
+                if (!empty($masterData)) {
+                    $masterData = $masterData->toArray();
+                    $input['bookingSuppMasInvAutoID'] = $id;
+                    $masterData['detail_data'] = ['grvDetails' => [], 'logisticYN' => 0];
+        
+                    foreach ($masterData['detail'] as $detail) {
+                        $input['bookingSupInvoiceDetAutoID'] = $detail['bookingSupInvoiceDetAutoID'];
+                        $detailData = $this->supplierInvoiceItemDetailRepository->getGRVDetailsForSupplierInvoice($input);
+                        if ($detailData['status']) {
+                            foreach ($detailData['data']['grvDetails'] as $detailItem) {
+                                array_push($masterData['detail_data']['grvDetails'], $detailItem);
+                            }
+                            $masterData['detail_data']['logisticYN'] = $detailData['data']['logisticYN'];
+                        }
                     }
-                    $masterData['detail_data']['logisticYN'] = $detailData['data']['logisticYN'];
+                    $masterData['extraCharges'] = DirectInvoiceDetails::where('directInvoiceAutoID', $id)
+                        ->with(['segment'])
+                        ->get();;
                 }
-            }
-            $masterData['extraCharges'] = DirectInvoiceDetails::where('directInvoiceAutoID', $id)
-                ->with(['segment'])
-                ->get();;
-        }
+                return [
+                    'success' => true,
+                    'message' => 'Record retrieved successfully',
+                    'data' => $masterData
+                ];
 
-        return [
-            'success' => true,
-            'message' => 'Record retrieved successfully',
-            'data' => $masterData
-        ];
+                break;
+            default: 
+                return [
+                    'success' => false,
+                    'message' => 'No records found',
+                    'data' => []
+                ];
+            break;
+        }
+       
+
+
     }
 
     private function amendPoAppointment($appointmentID, $slotCompanyId)
