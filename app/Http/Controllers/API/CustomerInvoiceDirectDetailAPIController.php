@@ -443,7 +443,7 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
     {
 
         $input = $request->all();
-        $input = array_except($input, array('unit', 'department','performadetails','contract'));
+        $input = array_except($input, array('unit', 'department','performadetails','contract', 'project'));
         $input = $this->convertArrayToValue($input);
         $id = $input['custInvDirDetAutoID'];
 
@@ -497,6 +497,14 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
                 return $this->sendError('Contract not exist.');
 
             }
+        }
+
+        if (isset($input["discountPercentage"]) && $input["discountPercentage"] > 100) {
+            return $this->sendError('Discount Percentage cannot be greater than 100 percentage');
+        }
+
+        if (isset($input["discountAmountLine"]) && isset($input['salesPrice']) && $input['discountAmountLine'] > $input['salesPrice']) {
+            return $this->sendError('Discount amount cannot be greater than sales price');
         }
 
         if ($input['serviceLineSystemID'] != $detail->serviceLineSystemID) {

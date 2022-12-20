@@ -1,0 +1,70 @@
+<?php
+
+namespace App\Http\Controllers\API;
+
+use App\Http\Controllers\AppBaseController;
+use App\Models\Tenant;
+use App\Models\TenantConfiguration;
+use Illuminate\Http\Request;
+
+class ConfigurationAPIController extends AppBaseController
+{
+    /**
+     * Handle an incoming request.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @param \Closure $next
+     * @return mixed
+     */
+
+    public function getConfigurationInfo(Request $request){
+
+        $isLang = 0;
+        $environment = 'Local';
+        $version = null;
+        if (env('IS_MULTI_TENANCY', false)) {
+
+
+            $url = $request->getHttpHost();
+            $url_array = explode('.', $url);
+
+            $subDomain = $url_array[0];
+
+            if ($subDomain == 'www') {
+                $subDomain = $url_array[1];
+            }
+
+            if ($subDomain != 'localhost:8000') {
+                if (!$subDomain) {
+                    return $subDomain . "Not found";
+                }
+
+                $tenant = Tenant::where('sub_domain', 'like', $subDomain)->first();
+                if($tenant){
+                    $isLang = TenantConfiguration::orderBy('id', 'desc')->where('tenant_id', $tenant->id)->where('application_id', 0)->where('configuration_id', 3)->first();
+                    if($isLang){
+                        $isLang = $isLang->value;
+                    }
+                }
+
+                $environment = TenantConfiguration::orderBy('id', 'desc')->where('configuration_id', 1)->where('application_id', 0)->first();
+                if($environment){
+                    $environment = $environment->value;
+                }
+
+                $version = TenantConfiguration::orderBy('id', 'desc')->where('application_id', 0)->where('configuration_id', 2)->first();
+                if($version){
+                    $version = $version->value;
+                }
+
+            }
+        }
+
+
+
+        $configuration = array('environment' => $environment, 'isLang' => $isLang, 'version' => $version);
+
+        return $this->sendResponse($configuration, 'Configurations retrieved successfully');
+
+    }
+}

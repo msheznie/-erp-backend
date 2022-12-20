@@ -27,27 +27,27 @@ class AuthAPIController extends PassportAccessTokenController
             $employees = Employee::find($user->employee_id);
 
             if(empty($employees)){
-                return Response::json(ResponseUtil::makeError(trans('custom.not_found', ['attribute' => trans('custom.user')]),array('type' => '')), 401);
+                return Response::json(ResponseUtil::makeError(trans('custom.login_failed_invalid_user_id_or_password'),array('type' => '')), 401);
             }
 
             if($employees->discharegedYN){
-                return Response::json(ResponseUtil::makeError(trans('custom.login_failed_the_user_is_discharged_please_contact_admin'),array('type' => '')), 401);
+                return Response::json(ResponseUtil::makeError(trans('custom.login_failed_invalid_user_id_or_password'),array('type' => '')), 401);
             }
 
             if(!$employees->ActivationFlag){
-                return Response::json(ResponseUtil::makeError(trans('custom.login_failed_the_user_is_not_activated_please_contact_admin'),array('type' => '')), 401);
+                return Response::json(ResponseUtil::makeError(trans('custom.login_failed_invalid_user_id_or_password'),array('type' => '')), 401);
             }
 
-            if($employees->isLock == 4){
-                return Response::json(ResponseUtil::makeError(trans('custom.your_account_is_blocked'),array('type' => '')), 401);
+            if($employees->isLock >= 4){
+                return Response::json(ResponseUtil::makeError(trans('custom.login_failed_invalid_user_id_or_password'),array('type' => '')), 401);
             }
 
             if($employees->empLoginActive != 1){
-                return Response::json(ResponseUtil::makeError(trans('custom.login_failed_the_user_is_not_activated_please_contact_admin'),array('type' => '')), 401);
+                return Response::json(ResponseUtil::makeError(trans('custom.login_failed_invalid_user_id_or_password'),array('type' => '')), 401);
             }
 
             if($employees->empActive != 1){
-                return Response::json(ResponseUtil::makeError(trans('custom.login_failed_the_user_is_not_activated_please_contact_admin'),array('type' => '')), 401);
+                return Response::json(ResponseUtil::makeError(trans('custom.login_failed_invalid_user_id_or_password'),array('type' => '')), 401);
             }
         }
         try {
@@ -65,40 +65,29 @@ class AuthAPIController extends PassportAccessTokenController
                 $employees = Employee::find($user->employee_id);
 
                 if(empty($employees)){
-                    return Response::json(ResponseUtil::makeError(trans('custom.not_found', ['attribute' => trans('custom.user')]),array('type' => '')), 401);
+                    return Response::json(ResponseUtil::makeError(trans('custom.login_failed_invalid_user_id_or_password'),array('type' => '')), 401);
                 }
 
                 if($employees->discharegedYN){
-                    return Response::json(ResponseUtil::makeError(trans('custom.login_failed_the_user_is_discharged_please_contact_admin'),array('type' => '')), 401);
+                    return Response::json(ResponseUtil::makeError(trans('custom.login_failed_invalid_user_id_or_password'),array('type' => '')), 401);
                 }
 
                 if(!$employees->ActivationFlag){
-                    return Response::json(ResponseUtil::makeError(trans('custom.login_failed_the_user_is_not_activated_please_contact_admin'),array('type' => '')), 401);
+                    return Response::json(ResponseUtil::makeError(trans('custom.login_failed_invalid_user_id_or_password'),array('type' => '')), 401);
                 }
 
                 if($employees->empLoginActive != 1){
-                    return Response::json(ResponseUtil::makeError(trans('custom.login_failed_the_user_is_not_activated_please_contact_admin'),array('type' => '')), 401);
+                    return Response::json(ResponseUtil::makeError(trans('custom.login_failed_invalid_user_id_or_password'),array('type' => '')), 401);
                 }
 
                 if($employees->empActive != 1){
-                    return Response::json(ResponseUtil::makeError(trans('custom.login_failed_the_user_is_not_activated_please_contact_admin'),array('type' => '')), 401);
+                    return Response::json(ResponseUtil::makeError(trans('custom.login_failed_invalid_user_id_or_password'),array('type' => '')), 401);
                 }
 
                  Employee::find($user->employee_id)->increment('isLock');
             }
             return $this->withErrorHandling(function () use($exception,$user) {
-
-                if($user) {
-                    $employees = Employee::find($user->employee_id);
-                    $totalAttempt = 4 - $employees->isLock;
-                    if ($totalAttempt == 0) {
-                        return Response::json(ResponseUtil::makeError(trans('custom.your_account_is_blocked'), array('type' => '')), 401);
-                    } else {
-                        return response(["message" => trans('custom.invalid_username_or_password_you_have') .'  '. $totalAttempt .' '. trans('custom.more_attempt')], 401);
-                    }
-                }else{
-                    return response(["message" => trans('custom.invalid_username_or_password')], 401);
-                }
+                return Response::json(ResponseUtil::makeError(trans('custom.login_failed_invalid_user_id_or_password'),array('type' => '')), 401);
             });
         }
     }

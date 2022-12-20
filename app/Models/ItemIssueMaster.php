@@ -366,7 +366,8 @@ class ItemIssueMaster extends Model
         'refferedBackYN',
         'timesReferred',
         'mfqJobID',
-        'mfqJobNo'
+        'mfqJobNo',
+        'postedDate'
     ];
 
     /**

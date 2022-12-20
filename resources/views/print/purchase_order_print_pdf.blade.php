@@ -174,6 +174,15 @@
                 max-height: 60px !important;
             }
 
+    .rotate {
+        writing-mode: vertical-lr;
+        -webkit-transform: rotate(-50deg);
+        -moz-transform: rotate(-50deg);
+        font-size: 160px;
+        color: #ff5454 !important;
+    }
+
+
 </style>
 <link href="{{ public_path('assets/css/app.css') }}" rel="stylesheet" type="text/css" />
 <div class="footer">
@@ -248,7 +257,13 @@
                @if($podata->poConfirmedYN == 1 && $podata->approved == 0)
                    Confirmed & Not Approved <br> Draft Copy
                @endif
+
            </h3>
+                @if($podata->poCancelledYN == -1)
+                    <h1 class="rotate">
+                 CANCELLED
+                    </h1>
+             @endif
          </span>
 </div>
 <div class="content">
@@ -630,6 +645,9 @@
                 <th style="text-align: center">#</th>
                 <th style="text-align: center">Item Code</th>
                 <th style="text-align: center">Item Description</th>
+                @if ($isProjectBase)
+                    <th colspan="4" style="text-align: center">Project</th>
+                @endif
                 <th style="text-align: center">Part No / Ref.Number</th>
                 <th style="text-align: center">UOM</th>
                 <th style="text-align: center">Qty</th>
@@ -661,7 +679,16 @@
                 <tr style="border-bottom: 1px solid black; width: 100%">
                     <td>{{ $x  }}</td>
                     <td>{{$det->itemPrimaryCode}}</td>
-                    <td nobr="true" style="width: 30%">{{$det->itemDescription}} <br> {!! nl2br($det->comment) !!}</td>
+                    <td nobr="true" >{{$det->itemDescription}} <br> {!! nl2br($det->comment) !!}</td>
+
+                    @if ($isProjectBase)
+                        @if ($det->project)
+                            <td colspan="4" nobr="true">{{$det->project->projectCode}} - {{$det->project->description}}</td>
+                        @else
+                            <td colspan="4" nobr="true"></td>
+                        @endif
+                    @endif
+                    
                     <td>{{$det->supplierPartNumber}}</td>
                     <td>{{$det->unit->UnitShortCode}}</td>
                     <td class="text-right">{{$det->noQty}}</td>

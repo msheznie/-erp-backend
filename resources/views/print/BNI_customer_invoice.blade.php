@@ -5,8 +5,7 @@
     }
 
     #footer {
-        /* position: fixed; */
-        margin-top: 260px;
+        position: fixed;
         left: 0px;
         bottom: 10px;
         right: 0px;
@@ -40,7 +39,7 @@
     }
 
     .theme-tr-head {
-        /* background-color: #EBEBEB !important; */
+        background-color: #EBEBEB !important;
     }
 
     .text-left {
@@ -63,21 +62,21 @@
     }
 
     .table th {
-        border: 1px solid  !important;
+        border: 1px solid rgb(253, 254, 255) !important;
     }
 
     .table th, .table td {
         padding: 3px !important;
         vertical-align: top;
-        border-bottom: 1px solid  !important;
+        border-bottom: 1px solid rgb(253, 254, 255) !important;
     }
 
     .table th {
-        background-color:  !important;
+        background-color: #EBEBEB !important;
     }
 
     tfoot > tr > td {
-        border: 1px solid ;
+        border: 1px solid rgb(253, 254, 255);
     }
 
     .text-right {
@@ -200,12 +199,40 @@
 
 <div class="content">
     <div class="row">
-        <br>
-        <br>
-        <br>
-        <br>
-        <br>
-        <br>
+        <table class="table_height head_font" style="width:100%">
+            <tr>
+                <td width="20%">
+                    @if($request->logo)
+                           @if($type == 1)
+                            <img style="height: 130px" src="{{$request->companyLogo}}">
+                          @else
+                            image not found
+                          @endif
+
+                    @endif
+                </td>
+
+                <td width="40%">
+                </td>
+                <td width="40%" style="text-align: right;white-space: nowrap">
+                    <table style="width: 100%">
+                        <tr>
+                            <th>{{$request->CompanyName}}</th>
+                        </tr>
+                        <tr>
+                            <td>{{$request->CompanyAddress}},</td>
+                        </tr>
+                        <tr>
+                            <td>{{$request->CompanyCountry}}</td>
+                        </tr>
+                        <tr>
+                            <td><b>Tel</b>&nbsp;&nbsp;:&nbsp;{{$request->CompanyTelephone}}, <b>Fax</b>&nbsp;:&nbsp;{{$request->CompanyFax}}</td>
+                        </tr>
+                    </table>
+                    <br>
+                </td>
+            </tr>
+        </table>
     </div>
     <div class="row underline">
 
@@ -275,7 +302,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <td style="width: 23% !important;"><b>Narration </b></td>
+                            <td style="width: 23% !important;"><b>Comment / Contract</b></td>
                             <td style="width: 2% !important; vertical-align: top;">:</td>
 
                             <td>@if(!empty($request->comments))
@@ -306,11 +333,25 @@
                                 @endif
                             </td>
                         </tr>
+                        <tr>
+                            <td style="width: 38% !important;"><b>PO Number </b></td>
+                            <td>: @if(!empty($request->PONumber))
+                                    {{$request->PONumber}}
+                                @endif
+                            </td>
+                        </tr>
 
                         <tr>
                             <td style="width: 38% !important;"><b>Currency </b></td>
                             <td>: @if(!empty($request->currency->CurrencyName))
                                     {{$request->currency->CurrencyName}} ({{$request->currency->CurrencyCode}})
+                                @endif
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="width: 38% !important;"><b>VATIN </b></td>
+                            <td>: @if(!empty($request->vatRegistratonNumber))
+                                {{$request->vatRegistratonNumber}}
                                 @endif
                             </td>
                         </tr>
@@ -459,7 +500,11 @@
             <table class="table table-bordered normal_font" style="width: 100%;">
                 <thead>
                     <tr class="theme-tr-head">
-                        <th style="text-align: center" colspan="5">Item Details</th>
+                        @if($request->isProjectBase && $request->isPerforma == 0)
+                            <th style="text-align: center" colspan="6">Item Details</th>
+                        @else
+                            <th style="text-align: center" colspan="5">Item Details</th>
+                        @endif
                         <th style="text-align: center" colspan="8">Price 
                             @if(!empty($request->currency->CurrencyCode))
                                 ({{$request->currency->CurrencyCode}})
@@ -470,18 +515,21 @@
                 <thead>
                 <tr class="theme-tr-head">
                     <th style="width:3%">#</th>
-                    <th style="width:10%;text-align: center">GL Code</th>
-                    <th style="width:14%;text-align: center">Description</th>
-                    <th style="width:7%;text-align: center">UOM</th>
-                    <th style="width:7%;text-align: center">QTY</th>
-                    <th style="width:10%;text-align: center">Sales Price</th>
-                    <th style="width:7%;text-align: center">Dis <br/>%</th>
-                    <th style="width:10%;text-align: center">Discount Amount</th>
-                    <th style="width:10%;text-align: center">Selling Unit Price</th>
-                    <th style="width:10%;text-align: center">Taxable Amount</th>
-                    <th style="width:7%;text-align: center">VAT</th>
-                    <th style="width:10%;text-align: center">VAT Amount</th>
-                    <th style="width:18%;text-align: center">Net Amount @if(!empty($request->currency->CurrencyCode))
+                    <th style="text-align: center">GL Code</th>
+                    <th style="text-align: center">Description</th>
+                    @if($request->isProjectBase && $request->isPerforma == 0)
+                        <th style="text-align: center">Project</th>
+                    @endif
+                    <th style="text-align: center">UOM</th>
+                    <th style="text-align: center">QTY</th>
+                    <th style="text-align: center">Sales Price</th>
+                    <th style="text-align: center">Dis <br/>%</th>
+                    <th style="text-align: center">Discount Amount</th>
+                    <th style="text-align: center">Selling Unit Price</th>
+                    <th style="text-align: center">Taxable Amount</th>
+                    <th style="text-align: center">VAT</th>
+                    <th style="text-align: center">VAT Amount</th>
+                    <th style="text-align: center">Net Amount @if(!empty($request->currency->CurrencyCode))
                                                                             ({{$request->currency->CurrencyCode}})
                                                                         @endif
                     </th>
@@ -500,6 +548,13 @@
                         <td>{{$x}}</td>
                         <td>{{$item->glCode}}</td>
                         <td>{{$item->comments}}</td>
+                        @if($request->isProjectBase && $request->isPerforma == 0)
+                            <td>
+                                @if(isset($item->project) && $item->project != null)
+                                    {{$item->project->projectCode}} - {{$item->project->description}}
+                                @endif
+                            </td>
+                        @endif
                         <td style="text-align: left">{{isset($item->unit->UnitShortCode)?$item->unit->UnitShortCode:''}}</td>
                         <td class="text-center" style="text-align: right">{{number_format($item->invoiceQty,2)}}</td>
                         <td class="text-right">{{number_format($item->salesPrice,$numberFormatting)}}</td>
@@ -542,7 +597,11 @@
             <table class="table table-bordered normal_font" style="width: 100%;">
                 <thead>
                     <tr class="theme-tr-head">
-                        <th style="text-align: center" colspan="5">Item Details</th>
+                        @if($request->isProjectBase && $request->isPerforma == 2)
+                            <th style="text-align: center" colspan="6">Item Details</th>
+                        @else
+                            <th style="text-align: center" colspan="5">Item Details</th>
+                        @endif
                         <th style="text-align: center" colspan="8">Price 
                             @if(!empty($request->currency->CurrencyCode))
                                 ({{$request->currency->CurrencyCode}})
@@ -553,18 +612,21 @@
                 <thead>
                 <tr class="theme-tr-head">
                     <th style="width:2%">#</th>
-                    <th style="width:15%;text-align: center">Description</th>
-                    <th style="width:10%;text-align: center">Ref. No</th>
-                    <th style="width:5%;text-align: center">UOM</th>
-                    <th style="width:5%;text-align: center">QTY</th>
-                    <th style="width:10%;text-align: center">Sales Price</th>
-                    <th style="width:10%;text-align: center">Dis %</th>
-                    <th style="width:10%;text-align: center">Discount Amount</th>
-                    <th style="width:10%;text-align: center">Selling Unit Price</th>
-                    <th style="width:10%;text-align: center">Taxable Amount</th>
-                    <th style="width:7%;text-align: center">VAT</th>
-                    <th style="width:10%;text-align: center">VAT Amount</th>
-                    <th style="width:10%;text-align: center">Net Amount @if(!empty($request->currency->CurrencyCode))
+                    <th style="text-align: center">Description</th>
+                    @if($request->isProjectBase && $request->isPerforma == 2)
+                        <th style="text-align: center">Project</th>
+                    @endif
+                    <th style="text-align: center">Ref. No</th>
+                    <th style="text-align: center">UOM</th>
+                    <th style="text-align: center">QTY</th>
+                    <th style="text-align: center">Sales Price</th>
+                    <th style="text-align: center">Dis %</th>
+                    <th style="text-align: center">Discount Amount</th>
+                    <th style="text-align: center">Selling Unit Price</th>
+                    <th style="text-align: center">Taxable Amount</th>
+                    <th style="text-align: center">VAT</th>
+                    <th style="text-align: center">VAT Amount</th>
+                    <th style="text-align: center">Net Amount @if(!empty($request->currency->CurrencyCode))
                                                                             ({{$request->currency->CurrencyCode}})
                                                                         @endif</th>
                 </tr>
@@ -584,6 +646,13 @@
                                 <td>{{$item->itemPrimaryCode.' - '.$item->itemDescription}}<br>
                                     {{$item->comments}}
                                 </td>
+                                @if($request->isProjectBase && $request->isPerforma == 2)
+                                    <td>
+                                        @if(isset($item->project) && $item->project != null)
+                                            {{$item->project->projectCode}} - {{$item->project->description}}
+                                        @endif
+                                    </td>
+                                @endif
                                 <td class="text-center" style="text-align: center">{{$item->part_no}}</td>
                                 <td style="text-align: left">{{isset($item->uom_issuing->UnitShortCode)?$item->uom_issuing->UnitShortCode:''}}</td>
                                 <td class="text-right" style="text-align: right">{{$item->qtyIssued}}</td>
@@ -887,11 +956,11 @@
                                     class="font-weight-bold">
                                     {{$request->amount_word}}
                                 @if ($request->floatAmt > 0)
-                                    and
+                                    And
                                     {{$request->floatAmt}}/@if($request->currency->DecimalPlaces == 3)1000 @else 100 @endif
                                 @endif
 
-                                    only
+                                    Only
                             </span>
                         </td>
                     </tr>
@@ -957,7 +1026,7 @@
                         </tr>
                         <tr>
                             <td width="600px"><span class="font-weight-bold">Amount in words : </span>
-                                {{$request->amount_word}}@if ($request->floatAmt > 0) and {{$request->floatAmt}}/@if($request->currency->DecimalPlaces == 3)1000 @else 100 @endif @endif only
+                                {{$request->amount_word}}@if ($request->floatAmt > 0) And {{$request->floatAmt}}/@if($request->currency->DecimalPlaces == 3)1000 @else 100 @endif @endif Only
                             </td>
                         </tr>
                     </table>
@@ -967,31 +1036,58 @@
                     <div >
                         <table class="normal_font" width="100%">
                             <tr style="width: 100%">
-                                <td width="50%" style="vertical-align: top;">
-                                    <span class="font-weight-bold">Electronically Approved By</span>
+                                <td width="10%" style="vertical-align: top;">
+                                    <span class="font-weight-bold">Prepared By :</span>
                                 </td>
-                                <td width="50%" style="vertical-align: top;">
-                                    <span class="font-weight-bold">:
+                                <td width="22%" style="vertical-align: top;">
+                                    <span class="font-weight-bold">
+                                        @if($request->createduser)
+                                        {{ $request->createduser->empName }}
+                                        @endif
+                                    </span>
+                                </td>
+                                <td width="10%" style="vertical-align: top;">
+                                    <span class="font-weight-bold">Verified By :</span>
+                                </td>
+                                <td width="22%" style="vertical-align: top;">
+                                    <span class="font-weight-bold">
                                         @php
-                                            $employee = \App\Models\Employee::find($request->approvedByUserSystemID);
+                                            $verifiedEmployee = \App\Models\Employee::find($request->confirmedByEmpSystemID);
                                         @endphp
-                                        @if($employee)
-                                        {{ $employee->empName }}
+                                        @if($verifiedEmployee)
+                                        {{ $verifiedEmployee->empName }}
+                                        @endif
+                                    </span>
+                                </td>
+                                <td width="10%" style="vertical-align: top;">
+                                    <span class="font-weight-bold">Approved By :</span>
+                                </td>
+                                <td width="22%" style="vertical-align: top;">
+                                    <span class="font-weight-bold">
+                                        @php
+                                            $approvedEmployee = \App\Models\Employee::find($request->approvedByUserSystemID);
+                                        @endphp
+                                        @if($approvedEmployee)
+                                        {{ $approvedEmployee->empName }}
                                         @endif
                                     </span>
                                 </td>
                             </tr>
+                        </table>
+                        <br>
+                        <hr>
+                        <table class="normal_font" width="100%">
                             <tr  style="width: 100%">
-                                <td width="50%" style="vertical-align: top;">
-                                    <span class="font-weight-bold">Electronically Approved Date</span>
+                                <td width="33%" style="vertical-align: top;">
+                                    <span class="font-weight-bold"></span>
                                 </td>
-                                <td width="50%" style="vertical-align: top;">
-                                    <span class="font-weight-bold">:
-
-
-                                    {{ \App\helper\Helper::convertDateWithTime($request->approvedDate)}}
-
-                                    </span>
+                                <td width="33%" style="vertical-align: top; text-align:center;">
+                                    <span class="font-weight-bold">This is a computer generated document and does not require signature</span>
+                                </td>
+                                <td width="5%" style="vertical-align: top;">
+                                </td>
+                                <td width="27%" style="vertical-align: top;">
+                                    <span class="font-weight-bold">{{date('l jS \of F Y h:i:s A')}}</span>
                                 </td>
                             </tr>
                         </table>

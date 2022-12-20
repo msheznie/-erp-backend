@@ -450,9 +450,9 @@
                         <br>
                         @if($det->employee)
                             @if($det->approvedYN == -1)
-                                {{ \App\helper\Helper::dateFormat($det->approvedDate)}}
+                                {{ \App\helper\Helper::convertDateWithTime($det->approvedDate)}}
                             @elseif($det->rejectedYN == -1)
-                                {{ \App\helper\Helper::dateFormat($det->rejectedDate)}}
+                                {{ \App\helper\Helper::convertDateWithTime($det->rejectedDate)}}
                             @endif
                         @endif
                     </td>

@@ -265,10 +265,15 @@ function Barcode($x, $y, $barcode, $h, $w, $fSize, $len,$bool,$price,$name)
     
 }
 
-function Code128($code,$fSize) {
+function Code128($assetData,$fSize) {
+    $code = $assetData->faCode;
+    $companyCode = $assetData->companyID;
+    $segment = $assetData->serviceLineCode ? $assetData->serviceLineCode : '';
+    $location = $assetData->location ? '/'.$assetData->location->locationName : '';
+
     $x = 7;
     $y = 7;
-    $h = 25.4;
+    $h = 15.4;
     $w = 50.4;
     $this->SetFont('Arial', '', 8);
     $this->Text($x, $y+$h+4, $code);
@@ -281,6 +286,18 @@ function Code128($code,$fSize) {
         $Bguid .= ((strpos($this->Bset,$needle)===false) ? "N" : "O"); 
         $Cguid .= ((strpos($this->Cset,$needle)===false) ? "N" : "O");
     }
+
+           //Display Company Code
+            $a = 7;
+            $b = -13.5;
+            $this->SetFont('Arial', '', 8);
+            $this->Text($a, $b+$h+4, $companyCode);
+
+           //Display Segment/Location
+            $a = 7;
+            $b = 10;
+            $this->SetFont('Arial', '', 8);
+            $this->Text($a, $b+$h+4, $segment.$location);
 
     $SminiC = "OOOO";
     $IminiC = 4;
@@ -386,7 +403,12 @@ function Transform($tm) {
     $this->_out(sprintf('%.3F %.3F %.3F %.3F %.3F %.3F cm', $tm[0], $tm[1], $tm[2], $tm[3], $tm[4], $tm[5]));
 }
 
-function Code39($code, $ext = true, $cks = false, $w = 0.4, $h = 20, $wide = true) {
+function Code39($assetData, $ext = true, $cks = false, $w = 0.4, $h = 20, $wide = true) {
+    $h = 15.4;
+    $code = $assetData->faCode;
+    $companyCode = $assetData->companyID;
+    $segment = $assetData->serviceLineCode ? $assetData->serviceLineCode : '';
+    $location = $assetData->location ? '/'.$assetData->location->locationName : '';
 
     //Display code
 
@@ -397,6 +419,18 @@ function Code39($code, $ext = true, $cks = false, $w = 0.4, $h = 20, $wide = tru
 
     // $this->SetFont('Arial', '', 10);
    //  $this->Text($x-80,$y+$h+10,$price.'.00/=');
+
+    //Display Company Code
+    $a = 5;
+    $b = -15.5;
+    $this->SetFont('Arial', '', 8);
+    $this->Text($a, $b+$h+4, $companyCode);
+
+    //Display Segment/Location
+    $c = 5;
+    $d = 8;
+    $this->SetFont('Arial', '', 8);
+    $this->Text($c, $d+$h+4, $segment.$location);
 
    
    
