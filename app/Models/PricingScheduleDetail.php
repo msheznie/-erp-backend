@@ -200,4 +200,9 @@ class PricingScheduleDetail extends Model
     {
         return $this->hasOne('App\Models\TenderFieldType', 'id', 'field_type');
     }
+
+    public function ranking_items()
+    {
+        return $this->hasOne('App\Models\CommercialBidRankingItems', 'bid_format_detail_id', 'id');
+    }
 }

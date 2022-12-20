@@ -233,7 +233,6 @@ class BidSubmissionMasterAPIController extends AppBaseController
     {
         $input = $request->all();
         
-        
             
         /** @var BidSubmissionMaster $bidSubmissionMaster */
         $bidSubmissionMaster = $this->bidSubmissionMasterRepository->findWithoutFail($id);
@@ -249,12 +248,29 @@ class BidSubmissionMasterAPIController extends AppBaseController
 
             if($meth == 1)
             {
+
+                $evaluation = BidSubmissionDetail::where('tender_id',$tender_id)->where('bid_master_id',$id)->where('eval_result',null)->whereHas('srm_evaluation_criteria_details',function($q){
+                    $q->where('critera_type_id',2);
+                })->count();
     
+             
+                if($evaluation > 0)
+                {
+                    return $this->sendError('Please enter the remaining user values for the techniqal evaluation',500);
+                }
+
+
+
                 $input['technical_verify_by'] = \Helper::getEmployeeSystemID();
                 $input['technical_verify_at'] = Carbon::now();
                 $input['technical_eval_remarks'] = $input['technical_eval_remarks'];
         
                 $bidSubmissionMaster = $this->bidSubmissionMasterRepository->update($input, $id);
+
+
+
+             
+
     
                 $query = BidSubmissionMaster::where('tender_id', $tender_id)->where('technical_verify_status','!=', 1)->where('bidSubmittedYN',1)->where('status',1)->count();
                 if($query == 0)

@@ -150,4 +150,6 @@ class BidMainWork extends Model
     {
         return $this->belongsTo('App\Models\BidSubmissionMaster', 'bid_master_id', 'id');
     }
+
+
 }
