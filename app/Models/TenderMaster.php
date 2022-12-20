@@ -300,7 +300,11 @@ class TenderMaster extends Model
         'go_no_go_status',
         'commercial_verify_status',
         'commercial_verify_at',
-        'commercial_verify_by'
+        'commercial_verify_by',
+        'commercial_ranking_line_item_status',
+        'combined_ranking_status',
+        'is_awarded',
+        'award_comment'
     ];
 
     /**
