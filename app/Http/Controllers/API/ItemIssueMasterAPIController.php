@@ -1116,17 +1116,25 @@ class ItemIssueMasterAPIController extends AppBaseController
         }
         $wareHouseLocation = $wareHouseLocation->get();
 
-        $companyPolicy = CompanyPolicyMaster::where('companySystemID', $companyId)
+        $companyPolicyDirect = CompanyPolicyMaster::where('companySystemID', $companyId)
             ->where('companyPolicyCategoryID', 22)
+            ->first();
+
+        $companyPolicyRequest = CompanyPolicyMaster::where('companySystemID', $companyId)
+            ->where('companyPolicyCategoryID', 70)
             ->first();
 
         $typeId = [];
 
-        if (!empty($companyPolicy)) {
-            if ($companyPolicy->isYesNO == 0) {
-                $typeId = [2];
-            } else if ($companyPolicy->isYesNO == 1) {
-                $typeId = [1];
+        if (!empty($companyPolicyDirect)) {
+            if ($companyPolicyDirect->isYesNO == 1) {
+                array_push($typeId,1);
+            }
+        }
+
+        if (!empty($companyPolicyRequest)) {
+            if ($companyPolicyRequest->isYesNO == 1) {
+                array_push($typeId,2);
             }
         }
 
