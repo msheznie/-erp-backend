@@ -928,7 +928,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                                 $updateItem->salesPrice = $updateItem->sellingCost;
                             }
 
-                            $updateItem->sellingCostAfterMargin = $updateItem->salesPrice - $updateItem->discountAmount;
+                            $updateItem->sellingCostAfterMargin = ($updateItem->salesPrice - $updateItem->discountAmount < 0.00001) ? 0 : ($updateItem->salesPrice - $updateItem->discountAmount);
 
                             if ($updateItem->sellingCurrencyID != $updateItem->localCurrencyID) {
                                 $currencyConversion = Helper::currencyConversion($customerInvoiceDirect->companySystemID, $updateItem->sellingCurrencyID, $updateItem->localCurrencyID, $updateItem->sellingCostAfterMargin);
@@ -1033,7 +1033,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                     } else {
                         $detailValidation = CustomerInvoiceDirectDetail::selectRaw("glSystemID,IF ( serviceLineCode IS NULL OR serviceLineCode = '', null, 1 ) AS serviceLineCode,IF ( serviceLineSystemID IS NULL OR serviceLineSystemID = '' OR serviceLineSystemID = 0, null, 1 ) AS serviceLineSystemID, IF ( unitOfMeasure IS NULL OR unitOfMeasure = '' OR unitOfMeasure = 0, null, 1 ) AS unitOfMeasure, IF ( invoiceQty IS NULL OR invoiceQty = '' OR invoiceQty = 0, null, 1 ) AS invoiceQty, IF ( contractID IS NULL OR contractID = '' OR contractID = 0, null, 1 ) AS contractID,
                     IF ( invoiceAmount IS NULL OR invoiceAmount = '' OR invoiceAmount = 0, null, 1 ) AS invoiceAmount,
-                    IF ( unitCost IS NULL OR unitCost = '' OR unitCost = 0, null, 1 ) AS unitCost")->
+                    IF ( unitCost IS NULL OR unitCost = '' OR unitCost = 0, null, 1 ) AS unitCost, IF ( salesPrice IS NULL OR salesPrice = '' OR salesPrice = 0, null, 1 ) AS salesPrice")->
                         where('custInvoiceDirectID', $id)
                             ->where(function ($query) {
 
