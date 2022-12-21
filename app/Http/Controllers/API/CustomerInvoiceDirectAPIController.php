@@ -988,7 +988,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                                     }
                                 }else{
                                     if ($updateItem->sellingCostAfterMargin == 0) {
-                                        return $this->sendError('Item must not have zero selling cost', 500);
+                                        // return $this->sendError('Item must not have zero selling cost', 500);
                                     }
                                 }
 
@@ -1658,7 +1658,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                                     }
                                 }else{
                                     if ($updateItem->sellingCostAfterMargin == 0) {
-                                        return $this->sendError('Item must not have zero selling cost', 500);
+                                        // return $this->sendError('Item must not have zero selling cost', 500);
                                     }
                                 }
 
