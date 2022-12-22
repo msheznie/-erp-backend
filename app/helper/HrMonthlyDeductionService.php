@@ -413,7 +413,6 @@ class HrMonthlyDeductionService
         foreach ($details as $row){
             $ded_det = $row->invoice_detail->monthly_deduction_det;
 
-
             $sup_currency = $row->supplier_invoice->supplierTransactionCurrencyID;
             $emp_currency = ($employeeCurrency) ? $employeeCurrency->currencyID : null;
 
@@ -433,12 +432,12 @@ class HrMonthlyDeductionService
             $data[] = [
                 'monthlyDeductionMasterID'=> $monthly_ded_id, 'empID'=> $row->employeeSystemID,
                 'accessGroupID'=> 0,
-                'declarationID'=> $row->supplier_invoice->deductionType, 'GLCode'=> $ded_det->expenseGLCode,
+                'declarationID'=> $row->invoice_detail->deductionType, 'GLCode'=> $ded_det->expenseGLCode,
                 'categoryID'=> $ded_det->salaryCategoryID,
 
-                'transactionCurrencyID'=> ($employeeCurrency) ? $employeeCurrency->currencyID : 0,
-                'transactionCurrency'=> ($employeeCurrency) ? $employeeCurrency->CurrencyCode : null,
-                'transactionCurrencyDecimalPlaces'=> ($employeeCurrency) ? $employeeCurrency->DecimalPlaces : null,
+                'transactionCurrencyID'=> ($local_currency) ? $local_currency->currencyID : 0,
+                'transactionCurrency'=> ($local_currency) ? $local_currency->CurrencyCode : null,
+                'transactionCurrencyDecimalPlaces'=> ($local_currency) ? $local_currency->DecimalPlaces : null,
                 'transactionExchangeRate'=> 1, 'transactionAmount'=> ($row->amount * (($employeeCurrency) ? $employeeCurrency->ExchangeRate : 1)),
 
                 'companyLocalCurrencyID'=> $local_currency->currencyID,
