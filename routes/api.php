@@ -2193,6 +2193,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('getBudgetReviewTransferAddition', 'BudgetReviewTransferAdditionAPIController@getBudgetReviewTransferAddition');
 
 
+            Route::resource('po_detail_expected_delivery_dates', 'PoDetailExpectedDeliveryDateAPIController');
+            Route::post('getAllocatedExpectedDeliveryDates', 'PoDetailExpectedDeliveryDateAPIController@getAllocatedExpectedDeliveryDates');
+            Route::post('allocateExpectedDeliveryDates', 'PoDetailExpectedDeliveryDateAPIController@allocateExpectedDeliveryDates');
+
 
             Route::resource('segment_allocated_items', 'SegmentAllocatedItemAPIController');
             Route::post('allocateSegmentWiseItem', 'SegmentAllocatedItemAPIController@allocateSegmentWiseItem');
