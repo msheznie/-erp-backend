@@ -3825,4 +3825,103 @@ class SRMService
 
         return $array_value;
     }
+
+    public function addInvoiceAttachment(Request $request) {
+        $attachment = $request->input('extra.attachment');
+        $companySystemID = $request->input('extra.slotCompanyId');
+        $invoiceID = $request->input('extra.invoiceID');
+        $description = $request->input('extra.description');
+        $company = Company::where('companySystemID', $companySystemID)->first();
+        $documentCode = DocumentMaster::where('documentSystemID', 11)->first();
+
+        try {
+            if (!empty($attachment) && isset($attachment['file'])) {
+                $extension = $attachment['fileType'];
+                $allowExtensions = ['png', 'jpg', 'jpeg', 'pdf', 'txt', 'xlsx', 'docx'];
+
+                if (!in_array(strtolower($extension), $allowExtensions)) {
+                    return $this->sendError('This type of file not allow to upload.', 500);
+                }
+
+                if (isset($attachment['size'])) {
+                    if ($attachment['size'] > 2097152) {
+                        return $this->sendError("Maximum allowed file size is 2 MB. Please upload lesser than 2 MB.", 500);
+                    }
+                }
+                $file = $attachment['file'];
+                $decodeFile = base64_decode($file);
+                $attachmentNameWithExtension = time() . '_Supplier_Invoice.' . $extension;
+                $path = $company->CompanyID . '/SI/' . $invoiceID . '/' . $attachmentNameWithExtension;
+                Storage::disk('s3')->put($path, $decodeFile);
+
+                $att['companySystemID'] = $companySystemID;
+                $att['companyID'] = $company->CompanyID;
+                $att['documentSystemID'] = $documentCode->documentSystemID;
+                $att['documentID'] = $documentCode->documentID;
+                $att['documentSystemCode'] = $invoiceID;
+                $att['attachmentDescription'] = $description;
+                $att['path'] = $path;
+                $att['originalFileName'] = $attachment['originalFileName'];
+                $att['myFileName'] = $company->CompanyID . '_' . time() . '_Supplier_Invoice.' . $extension;
+                $att['attachmentType'] = $extension;
+                $att['sizeInKbs'] = $attachment['sizeInKbs'];
+                $att['isUploaded'] = 1;
+                $result = DocumentAttachments::create($att);
+                if ($result) {
+                    return ['success' => true, 'message' => 'Successfully uploaded', 'data' => $result];
+                }
+            } else {
+                Log::info("NO ATTACHMENT");
+            }
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => $e,
+                'data' => ''
+            ];
+        }
+    }
+
+    public function getInvoiceAttachment($request)
+    {
+        $id = $request->input('extra.id');
+
+        $queryRecordsCount = DocumentAttachments::where('documentSystemID', 11)
+            ->where('documentSystemCode', $id)
+            ->where('attachmentType', 0)
+            ->firstOrFail()->toArray();
+
+        if (sizeof($queryRecordsCount)) {
+            $result = DocumentAttachments::where('documentSystemID', 11)
+                ->where('documentSystemCode', $id)
+                ->where('attachmentType', 0)
+                ->get();
+
+            return [
+                'success' => true,
+                'message' => 'Invoice attachment successfully get',
+                'data' => $result
+            ];
+        } else {
+            return [
+                'success' => true,
+                'message' => 'No records found',
+                'data' => ''
+            ];
+        }
+    }
+
+    public function removeInvoiceAttachment($request)
+    {
+        $attachmentID = $request->input('extra.attachmentID');
+
+        $data = DocumentAttachments::where('attachmentID', $attachmentID)
+            ->delete();
+
+        return [
+            'success' => true,
+            'message' => 'Attachment deleted successfully ',
+            'data' => $data
+        ];
+    }
 }

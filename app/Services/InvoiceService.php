@@ -26,6 +26,7 @@ class InvoiceService
 
         $query = BookInvSuppMaster::select(
             ['bookingSuppMasInvAutoID',
+                'companySystemID',
                 'bookingInvCode',
                 'documentSystemID',
                 'supplierInvoiceNo',
@@ -78,7 +79,7 @@ class InvoiceService
             ->where('supplierID', $supplierID)
             ->where('approved', -1)
             ->where('cancelYN', 0)
-            ->whereIn('documentType', [0,1])
+            ->whereIn('documentType', [0])
             ->orderBy('bookingSuppMasInvAutoID', 'desc');
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
