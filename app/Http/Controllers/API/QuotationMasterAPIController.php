@@ -649,11 +649,14 @@ class QuotationMasterAPIController extends AppBaseController
                 //return floatval($soMasterSumDeducted)." - ".floatval($paymentTotalSum['paymentTotalSum']);
 
                 //return $soMasterSumDeducted.'-'.$paymentTotalSum['paymentTotalSum'];
-                if (abs(($soMasterSumDeducted - $paymentTotalSum['paymentTotalSum']) / $paymentTotalSum['paymentTotalSum']) < 0.00001) {
 
-                } else {
-                    return $this->sendError('Payment terms total is not matching with the SO total');
-                }
+                if ($paymentTotalSum['paymentTotalSum'] > 0) {
+                    if (abs(($soMasterSumDeducted - $paymentTotalSum['paymentTotalSum']) / $paymentTotalSum['paymentTotalSum']) < 0.00001) {
+
+                    } else {
+                        return $this->sendError('Payment terms total is not matching with the SO total');
+                    }
+                } 
 
                 $poAdvancePaymentType = SoPaymentTerms::where("soID", $id)
                     ->get();
