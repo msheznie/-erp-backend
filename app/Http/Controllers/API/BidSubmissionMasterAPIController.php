@@ -1100,7 +1100,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
             $data[$x]['bidSubmissionCode'] = $supplier->bidSubmissionCode;
             $data[$x]['tender'] = $tenderMaster;
             $data[$x]['supplierMaster'] = ($supplier) ? $supplier->name : "";
-            $data[$x]['total'] =  number_format((float)$total, 2, '.', '');
+            $data[$x]['total'] =  number_format((float)$total, 3, '.', '');
 
             $x++;
             
@@ -1113,7 +1113,6 @@ class BidSubmissionMasterAPIController extends AppBaseController
         $rankingArray = [];
    
         for($i=0; $i < count($data); $i++){
-            Log::info($rankingArray);
             if(array_key_exists($data[$i]['total'],$rankingArray)) {
                 $data[$i]['ranking'] = $rankingArray[$total];
 
@@ -1121,7 +1120,6 @@ class BidSubmissionMasterAPIController extends AppBaseController
             }else {
                 $rankingArray[$total] =  "L".($i+1);
                 $data[$i]['ranking'] = "L".($i+1);
-                Log::info($data[$i]['total']);
 
             }
 

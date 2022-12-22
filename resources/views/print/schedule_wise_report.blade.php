@@ -49,7 +49,7 @@
    <tr>
     <td width="15%">{{$item['bidSubmissionCode']}}</td>
     <td width="35%">{{$item['supplier']}}</td>
-    <td style="text-align:right">{{number_format($item['total'],2)}}</td>
+    <td style="text-align:right">{{number_format($item['total'],3)}}</td>
     <td style="text-align:right">{{$item['ranking']}}</td>
    </tr>
    @endforeach

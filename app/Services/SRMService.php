@@ -48,6 +48,7 @@ use App\Models\TenderMaster;
 use App\Models\TenderMasterSupplier;
 use App\Models\TenderSupplierAssignee;
 use App\Models\WarehouseMaster;
+use App\Models\BookInvSuppMaster;
 use App\Repositories\DocumentAttachmentsRepository;
 use App\Repositories\SupplierInvoiceItemDetailRepository;
 use App\Repositories\TenderBidClarificationsRepository;
@@ -631,32 +632,69 @@ class SRMService
     {
         $supplierID = self::getSupplierIdByUUID($request->input('supplier_uuid'));
         $id = $request->input('extra.id');
+        $typeId = (int) $request->input('extra.typeId');
         $masterData = $this->invoiceService->getInvoiceDetailsById($id, $supplierID);
-        if (!empty($masterData)) {
-            $masterData = $masterData->toArray();
-            $input['bookingSuppMasInvAutoID'] = $id;
-            $masterData['detail_data'] = ['grvDetails' => [], 'logisticYN' => 0];
 
-            foreach ($masterData['detail'] as $detail) {
-                $input['bookingSupInvoiceDetAutoID'] = $detail['bookingSupInvoiceDetAutoID'];
-                $detailData = $this->supplierInvoiceItemDetailRepository->getGRVDetailsForSupplierInvoice($input);
-                if ($detailData['status']) {
-                    foreach ($detailData['data']['grvDetails'] as $detailItem) {
-                        array_push($masterData['detail_data']['grvDetails'], $detailItem);
+        switch($typeId) {
+            case 0:
+                $details = BookInvSuppMaster::where('bookingSuppMasInvAutoID', $id)->with(['grvdetail' => function ($query) {
+                    $query->with('grvmaster');
+                }, 'directdetail' => function ($query) {
+                    $query->with('segment');
+                }, 'detail' => function ($query) {
+                    $query->with('grvmaster');
+                }, 'item_details' => function ($query) {
+                    $query->with('unit');
+                }, 'approved_by' => function ($query) {
+                    $query->with('employee');
+                    $query->where('documentSystemID', 11);
+                }, 'company', 'transactioncurrency', 'localcurrency', 'rptcurrency', 'supplier', 'directdetail', 'suppliergrv', 'confirmed_by', 'created_by', 'modified_by', 'cancelled_by','audit_trial.modified_by', 'employee'])->first();
+  
+
+                
+                return [
+                    'success' => true,
+                    'message' => 'Record retrieved successfully',
+                    'data' => $details
+                ];
+            case 1:
+                if (!empty($masterData)) {
+                    $masterData = $masterData->toArray();
+                    $input['bookingSuppMasInvAutoID'] = $id;
+                    $masterData['detail_data'] = ['grvDetails' => [], 'logisticYN' => 0];
+        
+                    foreach ($masterData['detail'] as $detail) {
+                        $input['bookingSupInvoiceDetAutoID'] = $detail['bookingSupInvoiceDetAutoID'];
+                        $detailData = $this->supplierInvoiceItemDetailRepository->getGRVDetailsForSupplierInvoice($input);
+                        if ($detailData['status']) {
+                            foreach ($detailData['data']['grvDetails'] as $detailItem) {
+                                array_push($masterData['detail_data']['grvDetails'], $detailItem);
+                            }
+                            $masterData['detail_data']['logisticYN'] = $detailData['data']['logisticYN'];
+                        }
                     }
-                    $masterData['detail_data']['logisticYN'] = $detailData['data']['logisticYN'];
+                    $masterData['extraCharges'] = DirectInvoiceDetails::where('directInvoiceAutoID', $id)
+                        ->with(['segment'])
+                        ->get();;
                 }
-            }
-            $masterData['extraCharges'] = DirectInvoiceDetails::where('directInvoiceAutoID', $id)
-                ->with(['segment'])
-                ->get();;
-        }
+                return [
+                    'success' => true,
+                    'message' => 'Record retrieved successfully',
+                    'data' => $masterData
+                ];
 
-        return [
-            'success' => true,
-            'message' => 'Record retrieved successfully',
-            'data' => $masterData
-        ];
+                break;
+            default: 
+                return [
+                    'success' => false,
+                    'message' => 'No records found',
+                    'data' => []
+                ];
+            break;
+        }
+       
+
+
     }
 
     private function amendPoAppointment($appointmentID, $slotCompanyId)
@@ -3786,5 +3824,104 @@ class SRMService
         }
 
         return $array_value;
+    }
+
+    public function addInvoiceAttachment(Request $request) {
+        $attachment = $request->input('extra.attachment');
+        $companySystemID = $request->input('extra.slotCompanyId');
+        $invoiceID = $request->input('extra.invoiceID');
+        $description = $request->input('extra.description');
+        $company = Company::where('companySystemID', $companySystemID)->first();
+        $documentCode = DocumentMaster::where('documentSystemID', 11)->first();
+
+        try {
+            if (!empty($attachment) && isset($attachment['file'])) {
+                $extension = $attachment['fileType'];
+                $allowExtensions = ['png', 'jpg', 'jpeg', 'pdf', 'txt', 'xlsx', 'docx'];
+
+                if (!in_array(strtolower($extension), $allowExtensions)) {
+                    return $this->sendError('This type of file not allow to upload.', 500);
+                }
+
+                if (isset($attachment['size'])) {
+                    if ($attachment['size'] > 2097152) {
+                        return $this->sendError("Maximum allowed file size is 2 MB. Please upload lesser than 2 MB.", 500);
+                    }
+                }
+                $file = $attachment['file'];
+                $decodeFile = base64_decode($file);
+                $attachmentNameWithExtension = time() . '_Supplier_Invoice.' . $extension;
+                $path = $company->CompanyID . '/SI/' . $invoiceID . '/' . $attachmentNameWithExtension;
+                Storage::disk('s3')->put($path, $decodeFile);
+
+                $att['companySystemID'] = $companySystemID;
+                $att['companyID'] = $company->CompanyID;
+                $att['documentSystemID'] = $documentCode->documentSystemID;
+                $att['documentID'] = $documentCode->documentID;
+                $att['documentSystemCode'] = $invoiceID;
+                $att['attachmentDescription'] = $description;
+                $att['path'] = $path;
+                $att['originalFileName'] = $attachment['originalFileName'];
+                $att['myFileName'] = $company->CompanyID . '_' . time() . '_Supplier_Invoice.' . $extension;
+                $att['attachmentType'] = $extension;
+                $att['sizeInKbs'] = $attachment['sizeInKbs'];
+                $att['isUploaded'] = 1;
+                $result = DocumentAttachments::create($att);
+                if ($result) {
+                    return ['success' => true, 'message' => 'Successfully uploaded', 'data' => $result];
+                }
+            } else {
+                Log::info("NO ATTACHMENT");
+            }
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'message' => $e,
+                'data' => ''
+            ];
+        }
+    }
+
+    public function getInvoiceAttachment($request)
+    {
+        $id = $request->input('extra.id');
+
+        $queryRecordsCount = DocumentAttachments::where('documentSystemID', 11)
+            ->where('documentSystemCode', $id)
+            ->where('attachmentType', 0)
+            ->firstOrFail()->toArray();
+
+        if (sizeof($queryRecordsCount)) {
+            $result = DocumentAttachments::where('documentSystemID', 11)
+                ->where('documentSystemCode', $id)
+                ->where('attachmentType', 0)
+                ->get();
+
+            return [
+                'success' => true,
+                'message' => 'Invoice attachment successfully get',
+                'data' => $result
+            ];
+        } else {
+            return [
+                'success' => true,
+                'message' => 'No records found',
+                'data' => ''
+            ];
+        }
+    }
+
+    public function removeInvoiceAttachment($request)
+    {
+        $attachmentID = $request->input('extra.attachmentID');
+
+        $data = DocumentAttachments::where('attachmentID', $attachmentID)
+            ->delete();
+
+        return [
+            'success' => true,
+            'message' => 'Attachment deleted successfully ',
+            'data' => $data
+        ];
     }
 }

@@ -78,6 +78,10 @@ define('BID_SUBMISSION_CREATE', 'BID_SUBMISSION_CREATE');
 define('GET_BID_SUBMITTED_DATA', 'GET_BID_SUBMITTED_DATA');
 define('BID_SUBMISSION_DELETE', 'BID_SUBMISSION_DELETE');
 define('FAQ_CLARIFICATIONS', 'FAQ_CLARIFICATIONS');
+define('ADD_INVOICE_ATTACHMENT', 'ADD_INVOICE_ATTACHMENT');
+define('GET_INVOICE_ATTACHMENT', 'GET_INVOICE_ATTACHMENT');
+define('REMOVE_INVOICE_ATTACHMENT', 'REMOVE_INVOICE_ATTACHMENT');
+
 
 
 class APIController extends Controller
@@ -223,6 +227,13 @@ class APIController extends Controller
                 return $this->SRMService->deleteBidData($request);
             case FAQ_CLARIFICATIONS :
                 return $this->SRMService->exportReport($request);
+            case ADD_INVOICE_ATTACHMENT:
+                return $this->SRMService->addInvoiceAttachment($request);
+            case GET_INVOICE_ATTACHMENT:
+                return $this->SRMService->getInvoiceAttachment($request);
+            case REMOVE_INVOICE_ATTACHMENT:
+                return $this->SRMService->removeInvoiceAttachment($request);
+                
             default:
                 return [
                     'success'   => false,
