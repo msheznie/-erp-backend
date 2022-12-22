@@ -451,6 +451,13 @@ class ProcumentOrderAPIController extends AppBaseController
         }
 
         $procumentOrder->isLocalSupplier = Helper::isLocalSupplier($procumentOrder->supplierID, $procumentOrder->companySystemID);
+
+        $isExpectedDeliveryDateEnabled = CompanyPolicyMaster::where('companyPolicyCategoryID', 71)
+        ->where('companySystemID', $procumentOrder->companySystemID)
+        ->where('isYesNO', 1)
+        ->exists();
+        $procumentOrder->isExpectedDeliveryDateEnabled = $isExpectedDeliveryDateEnabled;
+
         return $this->sendResponse($procumentOrder->toArray(), 'Procurement Order retrieved successfully');
     }
 
@@ -492,6 +499,10 @@ class ProcumentOrderAPIController extends AppBaseController
 
         if (isset($input['totalOrderAmountPreview'])) {
             unset($input['totalOrderAmountPreview']);
+        }
+
+        if (isset($input['isExpectedDeliveryDateEnabled'])) {
+            unset($input['isExpectedDeliveryDateEnabled']);
         }
 
         // po total vat
