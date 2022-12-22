@@ -6115,4 +6115,25 @@ class Helper
 
         return $value;
     }
+
+    public static function currencyConversionByER($transactionCurrencyID, $documentCurrencyID, $transactionAmount, $transER)
+    {
+        $trasToSuppER = 1;
+        $transactionAmount = self::stringToFloat($transactionAmount);
+        $documentAmount = null;
+        if ($documentCurrencyID) {
+            $transToDocER = $transER;
+
+            if ($transactionCurrencyID == $documentCurrencyID) {
+                $documentAmount = $transactionAmount;
+            } else {
+                $documentAmount = $transactionAmount * $transToDocER;
+            }
+        }
+        $array = array(
+            'documentAmount' => $documentAmount
+        );
+
+        return $array;
+    }
 }
