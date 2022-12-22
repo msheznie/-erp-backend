@@ -501,6 +501,10 @@ class ProcumentOrderAPIController extends AppBaseController
             unset($input['totalOrderAmountPreview']);
         }
 
+        if (isset($input['isExpectedDeliveryDateEnabled'])) {
+            unset($input['isExpectedDeliveryDateEnabled']);
+        }
+
         // po total vat
         $poMasterVATSum = PurchaseOrderDetails::select(DB::raw('COALESCE(SUM(VATAmount * noQty),0) as masterTotalVATSum'))
             ->where('purchaseOrderMasterID', $input['purchaseOrderID'])
