@@ -637,27 +637,6 @@ class SRMService
 
         switch($typeId) {
             case 0:
-                $details = BookInvSuppMaster::where('bookingSuppMasInvAutoID', $id)->with(['grvdetail' => function ($query) {
-                    $query->with('grvmaster');
-                }, 'directdetail' => function ($query) {
-                    $query->with('segment');
-                }, 'detail' => function ($query) {
-                    $query->with('grvmaster');
-                }, 'item_details' => function ($query) {
-                    $query->with('unit');
-                }, 'approved_by' => function ($query) {
-                    $query->with('employee');
-                    $query->where('documentSystemID', 11);
-                }, 'company', 'transactioncurrency', 'localcurrency', 'rptcurrency', 'supplier', 'directdetail', 'suppliergrv', 'confirmed_by', 'created_by', 'modified_by', 'cancelled_by','audit_trial.modified_by', 'employee'])->first();
-  
-
-                
-                return [
-                    'success' => true,
-                    'message' => 'Record retrieved successfully',
-                    'data' => $details
-                ];
-            case 1:
                 if (!empty($masterData)) {
                     $masterData = $masterData->toArray();
                     $input['bookingSuppMasInvAutoID'] = $id;

@@ -79,7 +79,7 @@ class InvoiceService
             ->where('supplierID', $supplierID)
             ->where('approved', -1)
             ->where('cancelYN', 0)
-            ->whereIn('documentType', [0])
+            ->where('documentType', 0)
             ->orderBy('bookingSuppMasInvAutoID', 'desc');
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
@@ -109,19 +109,11 @@ class InvoiceService
     public function getInvoiceDetailsById($id, $supplierID)
     {
 
-       /* 'grvdetail' => function ($query) {
-                $query->with('grvmaster');
-            }, 'directdetail' => function ($query) {
-                $query->with('segment');
-            }, 'detail' => function ($query) {
-                $query->with('grvmaster');
-            }*/
-
         return BookInvSuppMaster::where('bookingSuppMasInvAutoID', $id)
             ->where('supplierID', $supplierID)
             ->where('approved', -1)
             ->where('cancelYN', 0)
-            ->whereIn('documentType', [0,1])
+            ->where('documentType', 0)
             ->with(['detail', 'approved_by' => function ($query) {
                 $query->select(['employeeSystemID',
                                 'approvedDate',
