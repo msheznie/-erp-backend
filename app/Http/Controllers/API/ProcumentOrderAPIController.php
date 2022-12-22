@@ -451,6 +451,13 @@ class ProcumentOrderAPIController extends AppBaseController
         }
 
         $procumentOrder->isLocalSupplier = Helper::isLocalSupplier($procumentOrder->supplierID, $procumentOrder->companySystemID);
+
+        $isExpectedDeliveryDateEnabled = CompanyPolicyMaster::where('companyPolicyCategoryID', 71)
+        ->where('companySystemID', $procumentOrder->companySystemID)
+        ->where('isYesNO', 1)
+        ->exists();
+        $procumentOrder->isExpectedDeliveryDateEnabled = $isExpectedDeliveryDateEnabled;
+
         return $this->sendResponse($procumentOrder->toArray(), 'Procurement Order retrieved successfully');
     }
 
