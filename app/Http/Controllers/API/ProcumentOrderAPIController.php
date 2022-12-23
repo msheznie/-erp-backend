@@ -8253,8 +8253,22 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 }])
                 ->groupBy('custReceivePaymentAutoID')
                 ->where('custReceivePaymentAutoID', $custReceivePaymentAutoID)
+                ->first();
+
+            if ($recieptVouchers) {
+                $recieptVouchers = $recieptVouchers->toArray();
+            } else {
+                $recieptVouchers = DirectReceiptDetail::selectRaw('sum(netAmountLocal) as localAmount,
+                                             sum(netAmountRpt) as rptAmount, SUM(netAmount) as transAmount,directReceiptAutoID')
+                ->with(['master' => function ($query) {
+                    $query->with(['currency']);
+                }])
+                ->groupBy('directReceiptAutoID')
+                ->where('directReceiptAutoID', $custReceivePaymentAutoID)
                 ->first()
                 ->toArray();
+            }
+
 
 
             $tracingData[] = $this->setReceiptPaymentChain($recieptVouchers, $type, $custReceivePaymentAutoID, null, null, $creditNoteAutoID);
@@ -8499,7 +8513,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
     public function setReceiptPaymentChain($value2, $type, $custReceivePaymentAutoID = null, $salesReturnID = null, $matchDocumentMasterAutoID = null, $creditNoteAutoID = null)
     {
         $temp2 = [];
-        if ($type == 'reciptVoucher' && ($value2['master']['custReceivePaymentAutoID'] == $custReceivePaymentAutoID)) {
+        if ($type == 'reciptVoucher' && isset($value2['master']) && ($value2['master']['custReceivePaymentAutoID'] == $custReceivePaymentAutoID)) {
             $temp2['cssClass'] = "ngx-org-step-five root-tracing-node";
         } else {
             $temp2['cssClass'] = "ngx-org-step-five";
