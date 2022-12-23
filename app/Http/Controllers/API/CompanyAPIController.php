@@ -220,7 +220,8 @@ class CompanyAPIController extends AppBaseController
             'hasExternalSupplierGeneratePolicy' => $hasExternalSupplierGeneratePolicy,
             'isEEOSSPolicy' => $hasEEOSSPolicy,
             'supplierCategories' => $supplierCategories,
-            'supplierGroups' => $supplierGroups
+            'supplierGroups' => $supplierGroups,
+            'isGroup' => $isGroup
             );
         return $this->sendResponse($output, 'Record retrieved successfully');
 
