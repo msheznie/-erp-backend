@@ -277,8 +277,7 @@ class CompanyAPIController extends AppBaseController
         $messages = [
             'CompanyID.required' => 'CompanyID is required.',
             'localCurrencyID.required' => 'Local Currency ID is required.',
-            'reportingCurrency.required' => 'Reporting Currency ID is required.',
-            'exchangeGainLossGLCodeSystemID.required' => 'Exchange Gain/Loss GL is required.',
+            'reportingCurrency.required' => 'Reporting Currency ID is required.'
         ];
         $validator = \Validator::make($input, [
             'CompanyID' => 'required|unique:companymaster',
@@ -289,8 +288,7 @@ class CompanyAPIController extends AppBaseController
             'CompanyEmail' => 'required',
             'registrationNumber' => 'required',
             'localCurrencyID' => 'required|numeric|min:1',
-            'reportingCurrency' => 'required|numeric|min:1',
-            'exchangeGainLossGLCodeSystemID' => 'required|numeric|min:1'
+            'reportingCurrency' => 'required|numeric|min:1'
         ], $messages);
 
         if ($validator->fails()) {
