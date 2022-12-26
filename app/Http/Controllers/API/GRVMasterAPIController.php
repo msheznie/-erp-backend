@@ -892,7 +892,6 @@ class GRVMasterAPIController extends AppBaseController
            $dataEmail['emailAlertMessage'] = $temp;
            $sendEmail = \Email::sendEmailErp($dataEmail);
 
-           return $this->sendResponse($sendEmail, 'email');
 
 
         }
