@@ -46,7 +46,8 @@ use Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Repositories\SegmentAllocatedItemRepository;
-
+use App\Models\GRVMaster;
+use App\Models\AppointmentDetails;
 
 /**
  * Class PurchaseOrderDetailsController
@@ -1465,6 +1466,10 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
     {
         $input = $request->all();
         $poID = $input['purchaseOrderID'];
+        $grvAutoID = $input['grvAutoID'];
+
+
+        $appoinrment_id = GRVMaster::where('grvAutoID',$grvAutoID)->pluck('deliveryAppoinmentID')->first();
 
         $detail = PurchaseOrderDetails::select(DB::raw('itemPrimaryCode,itemDescription,supplierPartNumber,"" as isChecked, "" as noQty,noQty as poQty,unitOfMeasure,purchaseOrderMasterID,purchaseOrderDetailsID,serviceLineCode,itemCode,companySystemID,companyID,serviceLineCode,itemPrimaryCode,itemDescription,itemFinanceCategoryID,itemFinanceCategorySubID,financeGLcodebBSSystemID,financeGLcodebBS,financeGLcodePLSystemID,financeGLcodePL,includePLForGRVYN,supplierPartNumber,unitOfMeasure,unitCost,discountPercentage,discountAmount,netAmount,comment,supplierDefaultCurrencyID,supplierDefaultER,supplierItemCurrencyID,foreignToLocalER,companyReportingCurrencyID,companyReportingER,localCurrencyID,localCurrencyER,addonDistCost,GRVcostPerUnitLocalCur,GRVcostPerUnitSupDefaultCur,GRVcostPerUnitSupTransCur,GRVcostPerUnitComRptCur,VATPercentage,VATAmount,VATAmountLocal,VATAmountRpt,receivedQty,markupPercentage,markupTransactionAmount,markupLocalAmount,markupReportingAmount, vatMasterCategoryID,vatSubCategoryID, exempt_vat_portion'))
             ->with(['unit' => function ($query) {
@@ -1474,6 +1479,22 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
             ->where('goodsRecievedYN', '<>', 2)
             ->where('manuallyClosed', 0)
             ->get();
+
+        if(isset($appoinrment_id))
+        {
+            foreach($detail as $key=>$val)
+            {
+                $planned_qty = AppointmentDetails::where('appointment_id',$appoinrment_id)->where('po_master_id',$val->purchaseOrderMasterID)->where('po_detail_id',$val->purchaseOrderDetailsID)->first();
+                if(isset($planned_qty))
+                {
+                    $detail[$key]['noQty'] = $planned_qty->qty;
+
+                }
+
+   
+            }   
+        }
+
 
         return $this->sendResponse($detail, 'Purchase Order Details retrieved successfully');
 

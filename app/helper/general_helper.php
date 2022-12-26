@@ -94,6 +94,7 @@ use App\Models\CompanyFinanceYear;
 use App\Jobs\CreateAccumulatedDepreciation;
 use App\Services\WebPushNotificationService;
 use App\Services\GeneralLedger\GlPostedDateService;
+use App\Jobs\DeliveryAppoinmentGRV;
 
 class Helper
 {
@@ -2497,6 +2498,8 @@ class Helper
                                     $dataEmail['emailAlertMessage'] = $temp;
                                     $sendEmail = \Email::sendEmailErp($dataEmail);
                                 }
+
+                                $acc_d = DeliveryAppoinmentGRV::dispatch($input);
                             }
 
                             if ($input["documentSystemID"] == 22) {

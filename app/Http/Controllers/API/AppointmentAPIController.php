@@ -14,6 +14,9 @@ use Illuminate\Support\Facades\Log;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\Models\CompanyFinanceYear;
+use Carbon\Carbon;
+use App\Models\ApprovalLevel;
 
 /**
  * Class AppointmentController
@@ -415,15 +418,18 @@ class AppointmentAPIController extends AppBaseController
     public function approveCalanderDelAppointment(Request $request)
     {
         $input = $request->all();
-
         $params = array(
             'documentApprovedID' => $input['document_approved']['documentApprovedID'],
             'documentSystemCode' => $input['id'],
                 'documentSystemID' => $input['document_system_id'],
             'approvalLevelID' => $input['document_approved']['approvalLevelID'],
             'rollLevelOrder' => $input['document_approved']['rollLevelOrder'],
-            'approvedComments' => $input['approvedComments']
+            'approvedComments' => $input['approvedComments'],
+            'location' => $input['location'],
+                'segment' => $input['segment'],
+            'companySystemID' => $input['companySystemID']
         );
+
 
         $approve = \Helper::approveDocument($params);
         if (!$approve["success"]) {
@@ -436,7 +442,7 @@ class AppointmentAPIController extends AppBaseController
     public function rejectCalanderDelAppointment(Request $request)
     {
         $input = $request->all();
-
+    
         $params = array(
             'documentApprovedID' => $input['document_approved']['documentApprovedID'],
             'documentSystemCode' => $input['id'],
@@ -502,5 +508,45 @@ class AppointmentAPIController extends AppBaseController
             ->with('orderCondition', $sort)
             ->addColumn('Actions', 'Actions', "Actions")
             ->make(true);
+    }
+
+    public function checkDeliveryAppoinrmentApproval(Request $request)
+    {
+        $input = $request->all();
+
+        $approval_id = $input['document_approved']['approvalLevelID'];
+        $approvalLevel = ApprovalLevel::find($approval_id);
+
+        $appointments = Appointment::where('appointment.id',$input['id'])->selectRaw('erp_purchaseordermaster.purchaseOrderCode,appointment.id,appointment_details.id,appointment_details.qty as planned_qty,erp_purchaseorderdetails.noQty as total_qty,erp_purchaseorderdetails.receivedQty as receivedQty,(erp_purchaseorderdetails.noQty - erp_purchaseorderdetails.receivedQty) as balance_qty,erp_purchaseorderdetails.itemPrimaryCode')
+        ->join('appointment_details', 'appointment_details.appointment_id', '=', 'appointment.id')
+        ->join('erp_purchaseordermaster', 'erp_purchaseordermaster.purchaseOrderID', '=', 'appointment_details.po_master_id')
+        ->join('erp_purchaseorderdetails', 'erp_purchaseorderdetails.purchaseOrderDetailsID', '=', 'appointment_details.po_detail_id')
+        ->get();
+
+        $is_valid = true;
+        $msg = 'Unable to approve the appoinment pls check below details '. "<br>";;
+        foreach($appointments as $detail)
+        {
+          
+
+            if($detail->balance_qty < $detail->planned_qty)
+            {
+                $info =" The item ".$detail->itemPrimaryCode. " from  purchase order ".$detail->purchaseOrderCode." has planned qty(".$detail->planned_qty.") is greater than balance qty(".$detail->balance_qty.").";
+                $msg .= $info . "<br>";
+                $is_valid = false;
+            }
+        }
+
+        if(!$is_valid)
+        {
+            return $this->sendError($msg, 500);
+        }
+        else
+        {
+            $data['appoval'] = $approvalLevel->noOfLevels;
+            return $this->sendResponse($data, 'succesfully checked');
+
+        }
+
     }
 }
