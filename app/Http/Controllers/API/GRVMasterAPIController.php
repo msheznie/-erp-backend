@@ -802,7 +802,7 @@ class GRVMasterAPIController extends AppBaseController
 
       
 
-       // $gRVMaster = $this->gRVMasterRepository->update($input, $id);
+        $gRVMaster = $this->gRVMasterRepository->update($input, $id);
 
         if(isset($gRVMaster->deliveryAppoinmentID))
         {
