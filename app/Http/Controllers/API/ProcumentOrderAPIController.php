@@ -573,6 +573,8 @@ class ProcumentOrderAPIController extends AppBaseController
             }
         }
 
+        $this->poDetailExpectedDeliveryDateRepository->checkAndUpdateExpectedDeliveryDate($id, $input['expectedDeliveryDate']);
+
         $oldPoTotalSupplierTransactionCurrency = $procumentOrder->poTotalSupplierTransactionCurrency;
 
         $employee = \Helper::getEmployeeInfo();

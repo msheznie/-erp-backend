@@ -62,5 +62,29 @@ class PoDetailExpectedDeliveryDateRepository extends BaseRepository
         }
 
         return ['status' => true];
+    } 
+
+    public function checkAndUpdateExpectedDeliveryDate($purchaseOrderID, $expectedDeliveryDate)
+    {
+        $purchaseOrder = ProcumentOrder::find($purchaseOrderID);
+
+        $isExpectedDeliveryDateEnabled = CompanyPolicyMaster::where('companyPolicyCategoryID', 71)
+                                                            ->where('companySystemID', $purchaseOrder->companySystemID)
+                                                            ->where('isYesNO', 1)
+                                                            ->exists();
+
+        if ($isExpectedDeliveryDateEnabled) {
+            return ['status' => true];
+        }
+
+        $items = PurchaseOrderDetails::where('purchaseOrderMasterID', $purchaseOrderID)
+                                       ->get();
+
+        foreach ($items as $key => $value) {
+            $allocatedQty = PoDetailExpectedDeliveryDate::where('po_detail_auto_id', $value->purchaseOrderDetailsID)
+                                                 ->update(['expected_delivery_date' => $expectedDeliveryDate]);
+        }
+
+        return ['status' => true];
     }
 }
