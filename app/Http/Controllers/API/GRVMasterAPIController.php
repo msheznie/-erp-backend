@@ -79,6 +79,8 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use App\helper\CancelDocument;
 use Response;
+use App\Models\Appointment;
+use App\Models\AppointmentDetails;
 
 /**
  * Class GRVMasterController
@@ -340,6 +342,8 @@ class GRVMasterAPIController extends AppBaseController
     {
         $input = $request->all();
 
+        
+
         $userId = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($userId);
 
@@ -349,6 +353,7 @@ class GRVMasterAPIController extends AppBaseController
         /** @var GRVMaster $gRVMaster */
         $gRVMaster = $this->gRVMasterRepository->findWithoutFail($id);
 
+
         if (empty($gRVMaster)) {
             return $this->sendError('Good Receipt Voucher not found');
         }
@@ -356,6 +361,8 @@ class GRVMasterAPIController extends AppBaseController
         if ($gRVMaster->grvCancelledYN == -1) {
             return $this->sendError('Good Receipt Voucher closed. You cannot edit.', 500);
         }
+
+
         $currentDate = Carbon::parse(now())->format('Y-m-d');
         if (isset($input['grvDate'])) {
             if ($input['grvDate']) {
@@ -378,7 +385,7 @@ class GRVMasterAPIController extends AppBaseController
                 }
             }
         }
-
+        
         $grvType = GRVTypes::where('grvTypeID', $input['grvTypeID'])->first();
         if ($grvType) {
             $input['grvType'] = $grvType->idERP_GrvTpes;
@@ -423,7 +430,7 @@ class GRVMasterAPIController extends AppBaseController
                 }
             }
         }
-
+        
         if ($input['grvLocation'] != $gRVMaster->grvLocation) {
             $resWareHouseUpdate = ItemTracking::updateTrackingDetailWareHouse($input['grvLocation'], $id, $gRVMaster->documentSystemID);
 
@@ -436,7 +443,7 @@ class GRVMasterAPIController extends AppBaseController
         if ($segment) {
             $input['serviceLineCode'] = $segment->ServiceLineCode;
         }
-
+        
         // changing supplier related details when supplier changed
         if ($gRVMaster->supplierID != $input['supplierID']) {
             $supplier = SupplierMaster::where('supplierCodeSystem', $input['supplierID'])->first();
@@ -448,7 +455,7 @@ class GRVMasterAPIController extends AppBaseController
                 $input['supplierFax'] = $supplier->fax;
                 $input['supplierEmail'] = $supplier->supEmail;
             }
-
+            
             $supplierCurrency = SupplierCurrency::where('supplierCodeSystem', $input['supplierID'])
                 ->where('isDefault', -1)
                 ->first();
@@ -463,7 +470,7 @@ class GRVMasterAPIController extends AppBaseController
                     $input['supplierDefaultER'] = $erCurrency->ExchangeRate;
                 }
             }
-
+                
             // adding supplier grv details
             $supplierAssignedDetail = SupplierAssigned::where('supplierCodeSytem', $input['supplierID'])
                 ->where('companySystemID', $input['companySystemID'])
@@ -477,7 +484,7 @@ class GRVMasterAPIController extends AppBaseController
             }
 
         }
-
+        
         //getting transaction amount
         $grvTotalSupplierTransactionCurrency = GRVDetails::select(DB::raw('COALESCE(SUM(GRVcostPerUnitSupTransCur * noQty),0) as transactionTotalSum, COALESCE(SUM(GRVcostPerUnitComRptCur * noQty),0) as reportingTotalSum, COALESCE(SUM(GRVcostPerUnitLocalCur * noQty),0) as localTotalSum, COALESCE(SUM(GRVcostPerUnitSupDefaultCur * noQty),0) as defaultTotalSum'))
             ->where('grvAutoID', $input['grvAutoID'])
@@ -509,6 +516,7 @@ class GRVMasterAPIController extends AppBaseController
 
             $inputParam = $input;
             $inputParam["departmentSystemID"] = 10;
+            
             $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
             if (!$companyFinancePeriod["success"]) {
                 return $this->sendError($companyFinancePeriod["message"], 500);
@@ -516,7 +524,7 @@ class GRVMasterAPIController extends AppBaseController
                 $input['FYBiggin'] = $companyFinancePeriod["message"]->dateFrom;
                 $input['FYEnd'] = $companyFinancePeriod["message"]->dateTo;
             }
-
+            
             unset($inputParam);
 
             $documentDate = $input['grvDate'];
@@ -792,7 +800,103 @@ class GRVMasterAPIController extends AppBaseController
         $input['modifiedUser'] = $user->employee['empID'];
         $input['modifiedUserSystemID'] = $user->employee['employeeSystemID'];
 
-        $gRVMaster = $this->gRVMasterRepository->update($input, $id);
+      
+
+       // $gRVMaster = $this->gRVMasterRepository->update($input, $id);
+
+        if(isset($gRVMaster->deliveryAppoinmentID))
+        {
+           
+           $appoinmnet_po_ids =  AppointmentDetails::where('appointment_id',$gRVMaster->deliveryAppoinmentID)->groupBy('po_master_id')->pluck('po_master_id')->toArray();
+
+           $grv_purchase =  GRVDetails::where('grvAutoID',$id)->groupBy('purchaseOrderMastertID')->pluck('purchaseOrderMastertID')->toArray();
+
+
+           $appoinmnet_details =  AppointmentDetails::where('appointment_id',$gRVMaster->deliveryAppoinmentID)->get();;
+
+
+           $extra_po =  array_values(array_diff($grv_purchase,$appoinmnet_po_ids));
+
+           $ignore_po =  array_values(array_diff($appoinmnet_po_ids,$grv_purchase));
+
+           $extra_po_msg = 'The extra purchase order added to grv is ';
+           $ignore_po_msg = "The avoided purchase order from delivery appointmnet is";
+           $total_msg = '';
+
+           if(count($extra_po) > 0)
+           {
+            $xtra_po_order = ProcumentOrder::whereIn('purchaseOrderID',$extra_po)->pluck('purchaseOrderCode');
+             foreach($xtra_po_order as $extra)
+             {
+                $extra_po_msg .= ', '.$extra ;
+             }
+           
+           }
+           else
+           {
+            $extra_po_msg .= " zero <br>";
+           }
+
+
+
+
+           if(count($ignore_po) > 0)
+           {
+             $ignore_po_order =  ProcumentOrder::whereIn('purchaseOrderID',$ignore_po)->pluck('purchaseOrderCode');
+             foreach($ignore_po_order as $extra)
+             {
+                $ignore_po_msg .= ', '.$extra ;
+             }
+           }
+           else
+           {
+            $ignore_po_msg .= " zero <br>";
+           }
+
+
+
+
+           $msg = '';
+           foreach($appoinmnet_details as $po)
+           {
+                
+              $planeed_qty =  $po->qty;
+              $po_detail_id = $po->po_detail_id;
+              $grv_Details = GRVDetails::where('grvAutoID',$id)->where('purchaseOrderMastertID',$po->po_master_id)->where('purchaseOrderDetailsID',$po_detail_id)
+                            ->with(['po_master'=>function($q){
+                                $q->select('purchaseOrderID','purchaseOrderCode');
+                            }])->first();
+              if(isset($grv_Details))
+              {
+                 $grv_qty =  $grv_Details->noQty;
+
+                 if($planeed_qty != $grv_qty)
+                 {  
+                    $info = "In purchase order ".$grv_Details->po_master->purchaseOrderCode." Item ".$grv_Details->itemPrimaryCode." Has delivery quantity is ".$planeed_qty." But grv quantity is ".$grv_qty;
+                    $msg .= $info . "<br>";
+                 }
+              }
+
+              
+           }
+
+           
+           $total_msg .= $extra_po_msg ."<br>".$ignore_po_msg. "<br>".$msg; 
+
+
+           $dataEmail['empEmail'] = 'nilaf.ahamed@osos.om';
+           $dataEmail['companySystemID'] = $input['companySystemID'];
+           $temp = '<p>Dear Supplier, <br /></p><p>Please be informed that the delivery appoinment grv is confirmed.Check below detail <br><br> 
+                 '.$total_msg.'<br><br>Thank You. </p>';
+           $dataEmail['alertMessage'] = "GRV  Confirmed";
+           $dataEmail['emailAlertMessage'] = $temp;
+           $sendEmail = \Email::sendEmailErp($dataEmail);
+
+           return $this->sendResponse($sendEmail, 'email');
+
+
+        }
+
 
         return $this->sendResponse($gRVMaster->toArray(), 'GRV updated successfully');
     }
