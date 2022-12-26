@@ -132,6 +132,7 @@ use App\Models\YesNoSelectionForMinus;
 use App\Models\PoCategory;
 use App\Repositories\ProcumentOrderRepository;
 use App\Repositories\SegmentAllocatedItemRepository;
+use App\Repositories\PoDetailExpectedDeliveryDateRepository;
 use App\Repositories\UserRepository;
 use App\Services\PrintTemplateService;
 use App\Traits\AuditTrial;
@@ -163,13 +164,15 @@ class ProcumentOrderAPIController extends AppBaseController
     private $procumentOrderRepository;
     private $userRepository;
     private $segmentAllocatedItemRepository;
+    private $poDetailExpectedDeliveryDateRepository;
     private $printTemplateService;
 
-    public function __construct(ProcumentOrderRepository $procumentOrderRepo, UserRepository $userRepo, SegmentAllocatedItemRepository $segmentAllocatedItemRepo, PrintTemplateService $printTemplateService)
+    public function __construct(ProcumentOrderRepository $procumentOrderRepo, UserRepository $userRepo, SegmentAllocatedItemRepository $segmentAllocatedItemRepo,PoDetailExpectedDeliveryDateRepository $poDetailExpectedDeliveryDateRepo, PrintTemplateService $printTemplateService)
     {
         $this->procumentOrderRepository = $procumentOrderRepo;
         $this->userRepository = $userRepo;
         $this->segmentAllocatedItemRepository = $segmentAllocatedItemRepo;
+        $this->poDetailExpectedDeliveryDateRepository = $poDetailExpectedDeliveryDateRepo;
         $this->printTemplateService = $printTemplateService;
     }
 
@@ -1043,6 +1046,11 @@ class ProcumentOrderAPIController extends AppBaseController
             $validateAllocatedQuantity = $this->segmentAllocatedItemRepository->validatePurchaseRequestAllocatedQuantity($id);
             if (!$validateAllocatedQuantity['status']) {
                 return $this->sendError($validateAllocatedQuantity['message'], 500);
+            }
+
+            $validateAllocatedEDD = $this->poDetailExpectedDeliveryDateRepository->validateAllocatedExpectedDeliveryDate($id);
+            if (!$validateAllocatedEDD['status']) {
+                return $this->sendError($validateAllocatedEDD['message'], 500);
             }
 
             if ($checkQuantity > 0) {
