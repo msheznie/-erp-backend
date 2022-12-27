@@ -339,6 +339,12 @@ class TenderMasterAPIController extends AppBaseController
 
         $tenderMaster = TenderMaster::with(['tender_type', 'envelop_type', 'currency'])->where('company_id', $companyId);
 
+        if(isset($input['rfx']) && $input['rfx']){
+            $tenderMaster = $tenderMaster->where('document_type', 1);
+        } else {
+            $tenderMaster = $tenderMaster->where('document_type', 0);
+        }
+
         $search = $request->input('search.value');
         if ($search) {
             $tenderMaster = $tenderMaster->where(function ($query) use ($search) {
