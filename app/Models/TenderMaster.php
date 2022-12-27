@@ -304,7 +304,9 @@ class TenderMaster extends Model
         'commercial_ranking_line_item_status',
         'combined_ranking_status',
         'is_awarded',
-        'award_comment'
+        'award_comment',
+        'commercial_line_item_status',
+        'commercial_ranking_comment'
     ];
 
     /**

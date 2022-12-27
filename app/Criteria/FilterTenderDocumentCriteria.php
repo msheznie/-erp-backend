@@ -32,6 +32,6 @@ class FilterTenderDocumentCriteria implements CriteriaInterface
     public function apply($model, RepositoryInterface $repository)
     {
         return  $model->where('documentSystemID',$this->request['documentSystemID'])
-        ->where('tender_id',$this->request['documentSystemCode']);
+        ->where('tender_id',$this->request['documentSystemCode'])->where('type',$this->request['type']);
     }
 }

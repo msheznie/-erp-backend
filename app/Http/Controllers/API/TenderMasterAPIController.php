@@ -2656,26 +2656,14 @@ WHERE
         ->havingRaw('weightage >= passing_weightage')
         ->groupBy('srm_bid_submission_master.id')
         ->where('srm_bid_submission_master.status', 1)->where('srm_bid_submission_master.bidSubmittedYN', 1)->where('srm_bid_submission_master.tender_id', $tenderId)->where('srm_bid_submission_master.commercial_verify_status', 1)
-        ->orderBy('srm_bid_submission_master.comm_weightage','desc')->pluck('supplier_id')->toArray();
+        ->orderBy('srm_bid_submission_master.comm_weightage','asc')->pluck('supplier_id')->toArray();
 
-
-
-        // $query = BidSubmissionMaster::selectRaw("round(SUM((srm_bid_submission_detail.eval_result/100)*srm_tender_master.technical_weightage),3) as weightage,srm_bid_submission_master.id,srm_bid_submission_master.bidSubmittedDatetime,srm_bid_submission_master.tender_id,srm_supplier_registration_link.name,srm_bid_submission_detail.id as bid_id,srm_bid_submission_master.commercial_verify_status,srm_bid_submission_master.bidSubmissionCode,srm_tender_master.technical_passing_weightage as passing_weightage,srm_bid_submission_master.comm_weightage,srm_bid_submission_master.line_item_total,srm_supplier_registration_link.id as supplier_id")
-        // ->join('srm_supplier_registration_link', 'srm_supplier_registration_link.id', '=', 'srm_bid_submission_master.supplier_registration_id')
-        // ->join('srm_tender_master', 'srm_tender_master.id', '=', 'srm_bid_submission_master.tender_id')
-        // ->join('srm_bid_submission_detail', 'srm_bid_submission_detail.bid_master_id', '=', 'srm_bid_submission_master.id')
-        // ->join('srm_evaluation_criteria_details', 'srm_evaluation_criteria_details.id', '=', 'srm_bid_submission_detail.evaluation_detail_id')
-        // ->join('srm_bid_main_work', 'srm_bid_main_work.bid_master_id', '=', 'srm_bid_submission_master.id')
-        // ->havingRaw('weightage >= passing_weightage')
-        // ->groupBy('srm_bid_submission_master.id')
-        // ->where('srm_bid_submission_master.status', 1)->where('srm_bid_submission_master.bidSubmittedYN', 1)->where('srm_bid_submission_master.tender_id', $tenderId)->where('srm_bid_submission_master.commercial_verify_status', 1)
-        // ->orderBy('srm_bid_submission_master.comm_weightage','desc');
 
 
         $query = TenderFinalBids::selectRaw('srm_tender_final_bids.id,srm_tender_final_bids.status,srm_tender_final_bids.supplier_id,srm_tender_final_bids.com_weightage as weightage,srm_tender_final_bids.bid_id,srm_bid_submission_master.bidSubmittedDatetime,srm_supplier_registration_link.name,srm_bid_submission_master.bidSubmissionCode,srm_bid_submission_master.line_item_total')
         ->join('srm_bid_submission_master', 'srm_bid_submission_master.id', '=', 'srm_tender_final_bids.bid_id')
         ->join('srm_supplier_registration_link', 'srm_supplier_registration_link.id', '=', 'srm_bid_submission_master.supplier_registration_id')
-        ->orderBy('srm_tender_final_bids.com_weightage','desc');
+        ->orderBy('srm_tender_final_bids.com_weightage','asc');
 
       
 
@@ -2818,28 +2806,32 @@ WHERE
         try {
             
            
-
+      
             $tenderId = $request['tenderMasterId'];
             $id = $request['id'];
             $checked = $request['checked'];
             $rang_id = $request['rang_id'];
+            $type = $request['type'];
 
+            if($type == 1)
+            {
+                $update =  CommercialBidRankingItems::where('tender_id',$tenderId)->update(['status'=>$checked]);
+                TenderMaster::where('id',$tenderId)->update(['commercial_line_item_status'=>$checked]);
+            }
+            else
+            {
+                $ranging =  CommercialBidRankingItems::find($rang_id);
 
-           $ranging =  CommercialBidRankingItems::find($rang_id);
-
-           if($ranging->is_child_exist == 1 && $ranging->is_main == 1)
-           {
-             $update =  CommercialBidRankingItems::where('parent_id',$id)->update(['status'=>$checked]);
-           }
-
-          
-
-            
-            CommercialBidRankingItems::updateOrCreate(
-                ['id'=>$rang_id,'bid_format_detail_id' => $id,'tender_id' => $tenderId],
-                ['bid_format_detail_id' => $id,'tender_id' => $tenderId,'status'=>$checked]
-               );
-               
+                if($ranging->is_child_exist == 1 && $ranging->is_main == 1)
+                {
+                  $update =  CommercialBidRankingItems::where('parent_id',$id)->update(['status'=>$checked]);
+                }
+     
+                CommercialBidRankingItems::updateOrCreate(
+                    ['id'=>$rang_id,'bid_format_detail_id' => $id,'tender_id' => $tenderId],
+                    ['bid_format_detail_id' => $id,'tender_id' => $tenderId,'status'=>$checked]
+                );
+            }
 
             $bidMasterId = $this->getCommercialBids($tenderId);
 
@@ -2937,6 +2929,7 @@ WHERE
             $tenderId = $inputs['tenderMasterId']; 
             $selected_suppliers = $inputs['suppliers']; 
             $ids = $inputs['ids']; 
+            $comment = $inputs['comment']; 
             $suppliers = TenderFinalBids::where('tender_id',$tenderId)->pluck('supplier_id')->unique()->toArray();        ;
             $suppliers = array_values($suppliers);
             $is_equal = $this->array_equal($selected_suppliers,$suppliers);
@@ -2947,7 +2940,7 @@ WHERE
             else
             {
                 TenderFinalBids::whereIn('id',$ids)->update(['status'=>true]);
-                TenderMaster::where('id',$tenderId)->update(['combined_ranking_status'=>true]);
+                TenderMaster::where('id',$tenderId)->update(['combined_ranking_status'=>true,'commercial_ranking_comment'=>$comment]);
             }
       
 
