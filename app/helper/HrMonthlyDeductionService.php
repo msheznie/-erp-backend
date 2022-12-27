@@ -5,6 +5,7 @@ namespace App\helper;
 
 
 use App\Models\CurrencyConversion;
+use App\Models\CurrencyMaster;
 use App\Models\DirectPaymentDetails;
 use App\Models\HrMonthlyDeductionDetail;
 use App\Models\HrMonthlyDeductionMaster;
@@ -413,9 +414,11 @@ class HrMonthlyDeductionService
         foreach ($details as $row){
             $ded_det = $row->invoice_detail->monthly_deduction_det;
 
-
             $sup_currency = $row->supplier_invoice->supplierTransactionCurrencyID;
             $emp_currency = ($employeeCurrency) ? $employeeCurrency->currencyID : null;
+
+
+
 
             if($emp_currency == $sup_currency){
                 $employeeCurrency->ExchangeRate = 1;
@@ -430,15 +433,17 @@ class HrMonthlyDeductionService
             $local_currency->ExchangeRate = self::currency_conversion($emp_currency, $local_currency->currencyID);
             $rpt_currency->ExchangeRate = self::currency_conversion($emp_currency, $rpt_currency->currencyID);
 
+            $transCurrency = CurrencyMaster::where('currencyID', $sup_currency)->first();
+
             $data[] = [
                 'monthlyDeductionMasterID'=> $monthly_ded_id, 'empID'=> $row->employeeSystemID,
                 'accessGroupID'=> 0,
-                'declarationID'=> $row->supplier_invoice->deductionType, 'GLCode'=> $ded_det->expenseGLCode,
+                'declarationID'=> $row->invoice_detail->deductionType, 'GLCode'=> $ded_det->expenseGLCode,
                 'categoryID'=> $ded_det->salaryCategoryID,
 
-                'transactionCurrencyID'=> ($employeeCurrency) ? $employeeCurrency->currencyID : 0,
-                'transactionCurrency'=> ($employeeCurrency) ? $employeeCurrency->CurrencyCode : null,
-                'transactionCurrencyDecimalPlaces'=> ($employeeCurrency) ? $employeeCurrency->DecimalPlaces : null,
+                'transactionCurrencyID'=> ($sup_currency) ? $sup_currency : 0,
+                'transactionCurrency'=> ($transCurrency) ? $transCurrency->CurrencyCode : null,
+                'transactionCurrencyDecimalPlaces'=> ($transCurrency) ? $transCurrency->DecimalPlaces : null,
                 'transactionExchangeRate'=> 1, 'transactionAmount'=> ($row->amount * (($employeeCurrency) ? $employeeCurrency->ExchangeRate : 1)),
 
                 'companyLocalCurrencyID'=> $local_currency->currencyID,

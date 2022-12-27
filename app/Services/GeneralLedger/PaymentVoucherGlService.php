@@ -330,8 +330,8 @@ class PaymentVoucherGlService
 
                         Log::info('Payment Voucher ---- GL -----' . date('H:i:s'));
 
-                        $data['chartOfAccountSystemID'] = $company->exchangeGainLossGLCodeSystemID;
-                        $data['glCode'] = $company->exchangeGainLossGLCode;
+                        $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 14);
+                        $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 14);
                         $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                         $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                         $data['documentTransCurrencyID'] = $masterData->BPVbankCurrency;
@@ -1161,8 +1161,8 @@ class PaymentVoucherGlService
 
                     Log::info('Payment Voucher ---- GL -----' . date('H:i:s'));
 
-                    $data['chartOfAccountSystemID'] = $company->exchangeGainLossGLCodeSystemID;
-                    $data['glCode'] = $company->exchangeGainLossGLCode;
+                    $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($masterData->companySystemID, $masterData->documentSystemID, 14);
+                    $data['glCode'] =  SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 14);
                     $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                     $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                     $data['documentTransCurrencyID'] = $masterData->BPVbankCurrency;

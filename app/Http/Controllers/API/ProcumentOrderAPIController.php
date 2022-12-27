@@ -132,6 +132,7 @@ use App\Models\YesNoSelectionForMinus;
 use App\Models\PoCategory;
 use App\Repositories\ProcumentOrderRepository;
 use App\Repositories\SegmentAllocatedItemRepository;
+use App\Repositories\PoDetailExpectedDeliveryDateRepository;
 use App\Repositories\UserRepository;
 use App\Services\PrintTemplateService;
 use App\Traits\AuditTrial;
@@ -163,13 +164,15 @@ class ProcumentOrderAPIController extends AppBaseController
     private $procumentOrderRepository;
     private $userRepository;
     private $segmentAllocatedItemRepository;
+    private $poDetailExpectedDeliveryDateRepository;
     private $printTemplateService;
 
-    public function __construct(ProcumentOrderRepository $procumentOrderRepo, UserRepository $userRepo, SegmentAllocatedItemRepository $segmentAllocatedItemRepo, PrintTemplateService $printTemplateService)
+    public function __construct(ProcumentOrderRepository $procumentOrderRepo, UserRepository $userRepo, SegmentAllocatedItemRepository $segmentAllocatedItemRepo,PoDetailExpectedDeliveryDateRepository $poDetailExpectedDeliveryDateRepo, PrintTemplateService $printTemplateService)
     {
         $this->procumentOrderRepository = $procumentOrderRepo;
         $this->userRepository = $userRepo;
         $this->segmentAllocatedItemRepository = $segmentAllocatedItemRepo;
+        $this->poDetailExpectedDeliveryDateRepository = $poDetailExpectedDeliveryDateRepo;
         $this->printTemplateService = $printTemplateService;
     }
 
@@ -451,6 +454,13 @@ class ProcumentOrderAPIController extends AppBaseController
         }
 
         $procumentOrder->isLocalSupplier = Helper::isLocalSupplier($procumentOrder->supplierID, $procumentOrder->companySystemID);
+
+        $isExpectedDeliveryDateEnabled = CompanyPolicyMaster::where('companyPolicyCategoryID', 71)
+        ->where('companySystemID', $procumentOrder->companySystemID)
+        ->where('isYesNO', 1)
+        ->exists();
+        $procumentOrder->isExpectedDeliveryDateEnabled = $isExpectedDeliveryDateEnabled;
+
         return $this->sendResponse($procumentOrder->toArray(), 'Procurement Order retrieved successfully');
     }
 
@@ -492,6 +502,10 @@ class ProcumentOrderAPIController extends AppBaseController
 
         if (isset($input['totalOrderAmountPreview'])) {
             unset($input['totalOrderAmountPreview']);
+        }
+
+        if (isset($input['isExpectedDeliveryDateEnabled'])) {
+            unset($input['isExpectedDeliveryDateEnabled']);
         }
 
         // po total vat
@@ -558,6 +572,8 @@ class ProcumentOrderAPIController extends AppBaseController
                 return $this->sendError('WO Period From cannot be greater than WO Period To');
             }
         }
+
+        $this->poDetailExpectedDeliveryDateRepository->checkAndUpdateExpectedDeliveryDate($id, $input['expectedDeliveryDate']);
 
         $oldPoTotalSupplierTransactionCurrency = $procumentOrder->poTotalSupplierTransactionCurrency;
 
@@ -1032,6 +1048,11 @@ class ProcumentOrderAPIController extends AppBaseController
             $validateAllocatedQuantity = $this->segmentAllocatedItemRepository->validatePurchaseRequestAllocatedQuantity($id);
             if (!$validateAllocatedQuantity['status']) {
                 return $this->sendError($validateAllocatedQuantity['message'], 500);
+            }
+
+            $validateAllocatedEDD = $this->poDetailExpectedDeliveryDateRepository->validateAllocatedExpectedDeliveryDate($id);
+            if (!$validateAllocatedEDD['status']) {
+                return $this->sendError($validateAllocatedEDD['message'], 500);
             }
 
             if ($checkQuantity > 0) {
@@ -8242,8 +8263,22 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 }])
                 ->groupBy('custReceivePaymentAutoID')
                 ->where('custReceivePaymentAutoID', $custReceivePaymentAutoID)
+                ->first();
+
+            if ($recieptVouchers) {
+                $recieptVouchers = $recieptVouchers->toArray();
+            } else {
+                $recieptVouchers = DirectReceiptDetail::selectRaw('sum(netAmountLocal) as localAmount,
+                                             sum(netAmountRpt) as rptAmount, SUM(netAmount) as transAmount,directReceiptAutoID')
+                ->with(['master' => function ($query) {
+                    $query->with(['currency']);
+                }])
+                ->groupBy('directReceiptAutoID')
+                ->where('directReceiptAutoID', $custReceivePaymentAutoID)
                 ->first()
                 ->toArray();
+            }
+
 
 
             $tracingData[] = $this->setReceiptPaymentChain($recieptVouchers, $type, $custReceivePaymentAutoID, null, null, $creditNoteAutoID);
@@ -8488,7 +8523,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
     public function setReceiptPaymentChain($value2, $type, $custReceivePaymentAutoID = null, $salesReturnID = null, $matchDocumentMasterAutoID = null, $creditNoteAutoID = null)
     {
         $temp2 = [];
-        if ($type == 'reciptVoucher' && ($value2['master']['custReceivePaymentAutoID'] == $custReceivePaymentAutoID)) {
+        if ($type == 'reciptVoucher' && isset($value2['master']) && ($value2['master']['custReceivePaymentAutoID'] == $custReceivePaymentAutoID)) {
             $temp2['cssClass'] = "ngx-org-step-five root-tracing-node";
         } else {
             $temp2['cssClass'] = "ngx-org-step-five";
