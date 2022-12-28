@@ -114,3 +114,10 @@ Route::group([], function() {
     Route::post('getAllCompanyDocumentAttachment', 'CompanyDocumentAttachmentAPIController@getAllCompanyDocumentAttachment')->name('Get all company document attachment');
     Route::resource('company_document_attachments', 'CompanyDocumentAttachmentAPIController');
 });
+
+
+//widget master
+Route::group([], function() {
+    Route::resource('dashboard_widget_masters', 'DashboardWidgetMasterAPIController');
+    Route::get('getWidgetMasterFormData', 'DashboardWidgetMasterAPIController@getWidgetMasterFormData')->name('Get widget master form data');
+});
