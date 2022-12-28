@@ -461,7 +461,7 @@ class TenderMasterAPIController extends AppBaseController
         try {
             $data['currency_id'] = isset($input['currency_id']) ? $input['currency_id'] : null;
             $data['description'] = isset($input['description']) ? $input['description'] : null;
-            $data['envelop_type_id'] = $input['envelop_type_id'];
+            $data['envelop_type_id'] = isset($input['envelop_type_id']) ? $input['envelop_type_id'] : null;
             $data['tender_type_id'] = $input['tender_type_id'];
             $data['title'] = $input['title'];
             $data['document_system_id'] = 108;
@@ -470,6 +470,7 @@ class TenderMasterAPIController extends AppBaseController
             $data['created_by'] = $employee->employeeSystemID;
             $data['tender_code'] = $tenderCode;
             $data['serial_number'] = $lastSerialNumber;
+            $data['document_type'] = isset($input['rfx']) ? 1 : 0;
 
             $result = TenderMaster::create($data);
 
