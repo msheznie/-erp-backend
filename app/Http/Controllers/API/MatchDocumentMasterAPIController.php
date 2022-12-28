@@ -1306,10 +1306,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
             // Booking of Exchange Gain or Loss at Matching for debit note
             if ($matchDocumentMaster->documentSystemID == 15) {
-                $checkExchangeGainLossAccount = SystemGlCodeScenarioDetail::getGlByScenario($matchDocumentMaster->companySystemID, $matchDocumentMaster->documentSystemID , 14);
-                if (is_null($checkExchangeGainLossAccount)) {
-                    return $this->sendError('Please configure Exchange Gain/Loss account for this company', 500);
-                }
+
                 $diffLocal = 0;
                 $diffRpt = 0;
                 $DebitNoteMasterExData = DebitNote::find($matchDocumentMaster->PayMasterAutoId);
@@ -1326,6 +1323,11 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 if (round($DebitNoteMasterExData->debitAmountTrans - $totalAmountPayEx->supplierPaymentAmount, 2) == 0) {
 
                     if ((round($DebitNoteMasterExData->debitAmountLocal - $totalAmountPayEx->paymentLocalAmount, 2) != 0) || (round($DebitNoteMasterExData->debitAmountRpt - $totalAmountPayEx->paymentComRptAmount, 2) != 0)) {
+
+                        $checkExchangeGainLossAccount = SystemGlCodeScenarioDetail::getGlByScenario($matchDocumentMaster->companySystemID, $matchDocumentMaster->documentSystemID , 14);
+                        if (is_null($checkExchangeGainLossAccount)) {
+                            return $this->sendError('Please configure Exchange Gain/Loss account for this company', 500);
+                        }
 
                         $data = [];
                         $finalData = [];
@@ -1432,10 +1434,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
             }
             else if ($matchDocumentMaster->documentSystemID == 4) {
-                $checkExchangeGainLossAccount = SystemGlCodeScenarioDetail::getGlByScenario($matchDocumentMaster->companySystemID, $matchDocumentMaster->documentSystemID , 14);
-                if (is_null($checkExchangeGainLossAccount)) {
-                    return $this->sendError('Please configure Exchange Gain/Loss account for this company', 500);
-                }
+
                 $diffLocal = 0;
                 $diffRpt = 0;
                 $PaySupplierInvoiceMasterExData = PaySupplierInvoiceMaster::find($matchDocumentMaster->PayMasterAutoId);
@@ -1451,6 +1450,11 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 if (round($PaySupplierInvoiceMasterExData->payAmountSuppTrans - $totalAmountPayEx->supplierPaymentAmount, 2) == 0) {
 
                     if ((round($PaySupplierInvoiceMasterExData->payAmountCompLocal - $totalAmountPayEx->paymentLocalAmount, 2) != 0) || (round($PaySupplierInvoiceMasterExData->payAmountCompRpt - $totalAmountPayEx->paymentComRptAmount, 2) != 0)) {
+
+                        $checkExchangeGainLossAccount = SystemGlCodeScenarioDetail::getGlByScenario($matchDocumentMaster->companySystemID, $matchDocumentMaster->documentSystemID , 14);
+                        if (is_null($checkExchangeGainLossAccount)) {
+                            return $this->sendError('Please configure Exchange Gain/Loss account for this company', 500);
+                        }
 
                         $data = [];
                         $finalData = [];

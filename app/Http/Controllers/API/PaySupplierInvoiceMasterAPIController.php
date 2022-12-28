@@ -1545,13 +1545,6 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 $input['supplierDefCurrencyER'] = 1;
             }
 
-            if ($input['invoiceType'] == 2 || $input['invoiceType'] == 6) {
-             $checkExchangeGainLossAccount = SystemGlCodeScenarioDetail::getGlByScenario($companySystemID, $documentSystemID, 14);
-                if (is_null($checkExchangeGainLossAccount)) {
-                    return $this->sendError('Please configure Exchange Gain/Loss account for this company', 500);
-                }
-            }
-
             if ($input['invoiceType'] == 6 || $input['invoiceType'] == 7) {
                 $checkEmployeeControlAccount = SystemGlCodeScenarioDetail::getGlByScenario($input['companySystemID'], $input['documentSystemID'], 12);
 
@@ -1747,6 +1740,34 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                         return $this->sendError('Please configure PDC Payable account for payment voucher', 500);
                     } 
                 }
+
+                if ($input['invoiceType'] == 2 || $input['invoiceType'] == 6) {
+                    $si = PaySupplierInvoiceDetail::selectRaw("SUM(paymentLocalAmount) as localAmount, SUM(paymentComRptAmount) as rptAmount,SUM(supplierPaymentAmount) as transAmount,localCurrencyID,comRptCurrencyID as reportingCurrencyID,supplierPaymentCurrencyID as transCurrencyID,comRptER as reportingCurrencyER,localER as localCurrencyER,supplierPaymentER as transCurrencyER")->WHERE('PayMasterAutoId', $paySupplierInvoiceMaster->PayMasterAutoId)->WHERE('matchingDocID', 0)->first();
+                    $convertAmount = \Helper::convertAmountToLocalRpt(203, $paySupplierInvoiceMaster->PayMasterAutoId, $si->transAmount);
+
+                    $masterTransAmountTotal = $si->transAmount;
+                    $masterLocalAmountTotal = $si->localAmount;
+                    $masterRptAmountTotal = $si->rptAmount;
+
+                    $transAmountTotal = $si->transAmount;
+                    $localAmountTotal = $convertAmount["localAmount"];
+                    $rptAmountTotal = $convertAmount["reportingAmount"];
+
+                    $diffTrans = $transAmountTotal - $masterTransAmountTotal;
+                    $diffLocal = $localAmountTotal - $masterLocalAmountTotal;
+                    $diffRpt = $rptAmountTotal - $masterRptAmountTotal;
+
+                    $masterData = PaySupplierInvoiceMaster::with(['localcurrency', 'rptcurrency'])->find($paySupplierInvoiceMaster->PayMasterAutoId);
+
+                    if (ABS(round($diffTrans)) != 0 || ABS(round($diffLocal, $masterData->localcurrency->DecimalPlaces)) != 0 || ABS(round($diffRpt, $masterData->rptcurrency->DecimalPlaces)) != 0) {
+
+                        $checkExchangeGainLossAccount = SystemGlCodeScenarioDetail::getGlByScenario($companySystemID, $documentSystemID, 14);
+                        if (is_null($checkExchangeGainLossAccount)) {
+                            return $this->sendError('Please configure Exchange Gain/Loss account for this company', 500);
+                        }
+                    }
+                }
+
 
 
                 $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
