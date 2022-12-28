@@ -46,6 +46,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             require __DIR__.'/../routes/approvalSetup/approvalSetupRoutes.php';
             require __DIR__.'/../routes/inventory/inventoryRoutes.php';
             require __DIR__.'/../routes/procurement/procurementRoutes.php';
+            require __DIR__.'/../routes/accountsPayable/accountsPayableRoutes.php';
 
             
 
@@ -794,8 +795,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('getADVPaymentForPV', 'PaySupplierInvoiceMasterAPIController@getADVPaymentForPV');
             Route::get('getADVPaymentForMatchingDocument', 'PaySupplierInvoiceMasterAPIController@getADVPaymentForMatchingDocument');
             Route::post('paymentVoucherReopen', 'PaySupplierInvoiceMasterAPIController@paymentVoucherReopen');
-            Route::post('getPaymentApprovalByUser', 'PaySupplierInvoiceMasterAPIController@getPaymentApprovalByUser');
-            Route::post('getPaymentApprovedByUser', 'PaySupplierInvoiceMasterAPIController@getPaymentApprovedByUser');
+            
             Route::get('getPaymentVoucherMaster', 'PaySupplierInvoiceMasterAPIController@getPaymentVoucherMaster');
             Route::post('checkPVDocumentActive', 'PaySupplierInvoiceMasterAPIController@checkPVDocumentActive');
             Route::get('getPOPaymentForPV', 'PaySupplierInvoiceMasterAPIController@getPOPaymentForPV');
@@ -865,16 +865,15 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::put('updateDebiteNoteType/{id}', 'DebitNoteAPIController@updateDebiteNoteType');
             Route::post('getAllDebitNotes', 'DebitNoteAPIController@getAllDebitNotes');
             Route::post('exportDebitNotesByCompany', 'DebitNoteAPIController@exportDebitNotesByCompany');
-            Route::post('getDebitNoteApprovedByUser', 'DebitNoteAPIController@getDebitNoteApprovedByUser');
-            Route::post('getDebitNoteApprovalByUser', 'DebitNoteAPIController@getDebitNoteApprovalByUser');
+            
             Route::post('debitNoteReopen', 'DebitNoteAPIController@debitNoteReopen');
-            Route::get('getDebitNoteFormData', 'DebitNoteAPIController@getDebitNoteFormData');
+            
             Route::resource('debit_note_details', 'DebitNoteDetailsAPIController');
             Route::get('getDetailsByDebitNote', 'DebitNoteDetailsAPIController@getDetailsByDebitNote');
             Route::get('getDebitNotePaymentStatusHistory', 'DebitNoteAPIController@getDebitNotePaymentStatusHistory');
             Route::post('amendDebitNote', 'DebitNoteAPIController@amendDebitNote');
             Route::post('amendDebitNoteReview', 'DebitNoteAPIController@amendDebitNoteReview');
-            Route::post('approvalPreCheckDebitNote', 'DebitNoteAPIController@approvalPreCheckDebitNote');
+            
             Route::post('checkPaymentStatusDNPrint', 'DebitNoteAPIController@checkPaymentStatusDNPrint');
 
             Route::resource('performa_masters', 'PerformaMasterAPIController');
@@ -935,11 +934,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('getCreditNoteMasterRecord', 'CreditNoteAPIController@getCreditNoteMasterRecord');
             Route::get('getFilteredGRV', 'GRVMasterAPIController@getFilteredGRV');
             Route::get('getDirectItems', 'DirectInvoiceDetailsAPIController@getDirectItems');
-            Route::post('getInvoiceMasterApproval', 'BookInvSuppMasterAPIController@getInvoiceMasterApproval');
+            
             Route::post('supplierInvoiceReopen', 'BookInvSuppMasterAPIController@supplierInvoiceReopen');
-            Route::post('getApprovedInvoiceForCurrentUser', 'BookInvSuppMasterAPIController@getApprovedInvoiceForCurrentUser');
             Route::post('approveSupplierInvoice', 'BookInvSuppMasterAPIController@approveSupplierInvoice');
-            Route::post('rejectSupplierInvoice', 'BookInvSuppMasterAPIController@rejectSupplierInvoice');
+            
             Route::post('saveSupplierInvoiceTaxDetails', 'BookInvSuppMasterAPIController@saveSupplierInvoiceTaxDetails');
             Route::get('supplierInvoiceTaxTotal', 'BookInvSuppMasterAPIController@supplierInvoiceTaxTotal');
             Route::post('clearSupplierInvoiceNo', 'BookInvSuppMasterAPIController@clearSupplierInvoiceNo');
