@@ -45,6 +45,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             require __DIR__.'/../routes/configuration/configurationRoutes.php';
             require __DIR__.'/../routes/approvalSetup/approvalSetupRoutes.php';
             require __DIR__.'/../routes/inventory/inventoryRoutes.php';
+            require __DIR__.'/../routes/procurement/procurementRoutes.php';
 
             
 
@@ -296,8 +297,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('getItemsOptionForProcumentOrder', 'ProcumentOrderAPIController@getItemsOptionForProcumentOrder');
             Route::get('getShippingAndInvoiceDetails', 'ProcumentOrderAPIController@getShippingAndInvoiceDetails');
             Route::get('getProcumentOrderPaymentTerms', 'PoPaymentTermsAPIController@getProcumentOrderPaymentTerms');
-            Route::post('getPOMasterApproval', 'ProcumentOrderAPIController@getPOMasterApproval');
-            Route::post('getApprovedPOForCurrentUser', 'ProcumentOrderAPIController@getApprovedPOForCurrentUser');
+            
+            
             Route::post('getProcumentOrderAllAmendments', 'ProcumentOrderAPIController@getProcumentOrderAllAmendments');
             Route::get('getGRVBasedPODropdowns', 'ProcumentOrderAPIController@getGRVBasedPODropdowns');
             Route::get('getLogisticPrintDetail', 'PoAdvancePaymentAPIController@getLogisticPrintDetail');
@@ -390,7 +391,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('assetCWIPDrillDown', 'AssetManagementReportAPIController@assetCWIPDrillDown');
 
             Route::post('approveProcurementOrder', 'ProcumentOrderAPIController@approveProcurementOrder');
-            Route::post('rejectProcurementOrder', 'ProcumentOrderAPIController@rejectProcurementOrder');
+            
             Route::get('getGoodReceivedNoteDetailsForPO', 'ProcumentOrderAPIController@getGoodReceivedNoteDetailsForPO');
             Route::post('getGRVDrilldownSpentAnalysis', 'ProcumentOrderAPIController@getGRVDrilldownSpentAnalysis');
             Route::post('getGRVDrilldownSpentAnalysisTotal', 'ProcumentOrderAPIController@getGRVDrilldownSpentAnalysisTotal');
@@ -458,8 +459,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::get('getProcurementOrderRecord', 'ProcumentOrderAPIController@getProcurementOrderRecord');
 
-            Route::post('getPurchaseRequestApprovalByUser', 'PurchaseRequestAPIController@getPurchaseRequestApprovalByUser');
-            Route::post('getPurchaseRequestApprovedByUser', 'PurchaseRequestAPIController@getPurchaseRequestApprovedByUser');
+            
+            
 
             Route::resource('tax_types', 'TaxTypeAPIController');
 
@@ -1852,7 +1853,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('downloadQuotationItemUploadTemplate', 'QuotationMasterAPIController@downloadQuotationItemUploadTemplate');
             Route::get('downloadDeliveryOrderUploadTemplate', 'DeliveryOrderAPIController@downloadQuotationItemUploadTemplate');
             Route::post('poItemsUpload', 'ProcumentOrderAPIController@poItemsUpload');
-            Route::post('checkBudgetCutOffForPo', 'ProcumentOrderAPIController@checkBudgetCutOffForPo');
+            
 
 
             Route::post('sales-order/is-link-item', 'DeliveryOrderAPIController@isLinkItem');
