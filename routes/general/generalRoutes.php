@@ -26,5 +26,10 @@ Route::get('getGroupCompany', 'CompanyNavigationMenusAPIController@getGroupCompa
 
 
 Route::get('getAllDocuments', 'DocumentMasterAPIController@getAllDocuments')->name("Get all documents");
-
 Route::get('checkDocumentAttachmentPolicy', 'CompanyDocumentAttachmentAPIController@checkDocumentAttachmentPolicy')->name("Check document attachment policy");
+
+//approval
+Route::post('approvalPreCheckAllDoc', 'DocumentApprovedAPIController@approvalPreCheckAllDoc')->name("Approval pre check");
+Route::post('approveDocument', 'DocumentApprovedAPIController@approveDocument')->name("Approve Document");
+Route::post('rejectPurchaseRequest', 'PurchaseRequestAPIController@rejectPurchaseRequest')->name("Reject Document");
+Route::post('approvePurchaseRequest', 'PurchaseRequestAPIController@approvePurchaseRequest')->name("Approve purchase request");

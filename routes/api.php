@@ -44,6 +44,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             require __DIR__.'/../routes/srm/srmRoutes.php';
             require __DIR__.'/../routes/configuration/configurationRoutes.php';
             require __DIR__.'/../routes/approvalSetup/approvalSetupRoutes.php';
+            require __DIR__.'/../routes/inventory/inventoryRoutes.php';
 
             
 
@@ -460,34 +461,12 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('getPurchaseRequestApprovalByUser', 'PurchaseRequestAPIController@getPurchaseRequestApprovalByUser');
             Route::post('getPurchaseRequestApprovedByUser', 'PurchaseRequestAPIController@getPurchaseRequestApprovedByUser');
 
-            Route::post('rejectPurchaseRequest', 'PurchaseRequestAPIController@rejectPurchaseRequest');
-            Route::post('approvePurchaseRequest', 'PurchaseRequestAPIController@approvePurchaseRequest');
-
-            
-            
-            
-            
-            
-            
-
-            
-            
-
             Route::resource('tax_types', 'TaxTypeAPIController');
-
-            // Route::resource('tax_formula_mgetAllcompaniesasters', 'TaxFormulaMasterAPIController');
-            
-            
-            
 
             Route::post('cancelPurchaseRequest', 'PurchaseRequestAPIController@cancelPurchaseRequest');
             Route::post('returnPurchaseRequest', 'PurchaseRequestAPIController@returnPurchaseRequest');
             Route::post('manualClosePurchaseRequest', 'PurchaseRequestAPIController@manualClosePurchaseRequest');
             
-
-            
-            
-
             Route::resource('advance_payment_details', 'AdvancePaymentDetailsAPIController');
 
             Route::resource('alerts', 'AlertAPIController');
@@ -574,9 +553,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('requestReopen', 'MaterielRequestAPIController@requestReopen');
             Route::post('requestReferBack', 'MaterielRequestAPIController@requestReferBack');
             Route::post('getAllRequestByCompany', 'MaterielRequestAPIController@getAllRequestByCompany');
-            Route::get('getRequestFormData', 'MaterielRequestAPIController@getRequestFormData');
-            Route::post('getAllNotApprovedRequestByUser', 'MaterielRequestAPIController@getAllNotApprovedRequestByUser');
-            Route::post('getApprovedMaterielRequestsByUser', 'MaterielRequestAPIController@getApprovedMaterielRequestsByUser');
+            
+            
             Route::get('materielRequestAudit', 'MaterielRequestAPIController@materielRequestAudit');
             Route::resource('materiel_request_details', 'MaterielRequestDetailsAPIController');
             Route::get('getItemsByMaterielRequest', 'MaterielRequestDetailsAPIController@getItemsByMaterielRequest');
@@ -603,19 +581,16 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::resource('item_issue_masters', 'ItemIssueMasterAPIController');
             Route::post('getAllMaterielIssuesByCompany', 'ItemIssueMasterAPIController@getAllMaterielIssuesByCompany');
-            Route::post('getMaterielIssueApprovedByUser', 'ItemIssueMasterAPIController@getMaterielIssueApprovedByUser');
-            Route::post('getMaterielIssueApprovalByUser', 'ItemIssueMasterAPIController@getMaterielIssueApprovalByUser');
-            Route::get('getMaterielIssueFormData', 'ItemIssueMasterAPIController@getMaterielIssueFormData');
+            
+            
             Route::get('allMaterielRequestNotSelectedForIssue', 'ItemIssueMasterAPIController@getAllMaterielRequestNotSelectedForIssueByCompany');
             Route::get('getMaterielIssueAudit', 'ItemIssueMasterAPIController@getMaterielIssueAudit');
             Route::post('materielIssueReopen', 'ItemIssueMasterAPIController@materielIssueReopen');
             Route::post('materielIssueReferBack', 'ItemIssueMasterAPIController@materielIssueReferBack');
             Route::get('getItemsByMaterielIssue', 'ItemIssueDetailsAPIController@getItemsByMaterielIssue');
             Route::get('getItemsOptionsMaterielIssue', 'ItemIssueDetailsAPIController@getItemsOptionsMaterielIssue');
-            Route::post('getGRVMasterApproval', 'GRVMasterAPIController@getGRVMasterApproval');
-            Route::post('getApprovedGRVForCurrentUser', 'GRVMasterAPIController@getApprovedGRVForCurrentUser');
-            Route::post('approveGoodReceiptVoucher', 'GRVMasterAPIController@approveGoodReceiptVoucher');
-            Route::post('rejectGoodReceiptVoucher', 'GRVMasterAPIController@rejectGoodReceiptVoucher');
+            
+            
             Route::resource('general_ledgers', 'GeneralLedgerAPIController');
             Route::get('getGeneralLedgerReview', 'GeneralLedgerAPIController@getGeneralLedgerReview');
             Route::resource('item_issue_types', 'ItemIssueTypeAPIController');
@@ -661,8 +636,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('stock_transfer_details', 'StockTransferDetailsAPIController');
             Route::resource('stock_transfers', 'StockTransferAPIController');
             Route::get('StockTransferAudit', 'StockTransferAPIController@StockTransferAudit');
-            Route::post('getStockTransferApproval', 'StockTransferAPIController@getStockTransferApproval');
-            Route::post('getApprovedSTForCurrentUser', 'StockTransferAPIController@getApprovedSTForCurrentUser');
             Route::post('approveStockTransfer', 'StockTransferAPIController@approveStockTransfer');
             Route::post('rejectStockTransfer', 'StockTransferAPIController@rejectStockTransfer');
             Route::post('stockTransferReferBack', 'StockTransferAPIController@stockTransferReferBack');
@@ -671,17 +644,13 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('item_return_details', 'ItemReturnDetailsAPIController');
             Route::resource('item_return_masters', 'ItemReturnMasterAPIController');
             Route::post('getAllMaterielReturnByCompany', 'ItemReturnMasterAPIController@getAllMaterielReturnByCompany');
-            Route::post('getMaterielReturnApprovedByUser', 'ItemReturnMasterAPIController@getMaterielReturnApprovedByUser');
-            Route::post('getMaterielReturnApprovalByUser', 'ItemReturnMasterAPIController@getMaterielReturnApprovalByUser');
-            Route::get('getMaterielReturnFormData', 'ItemReturnMasterAPIController@getMaterielReturnFormData');
+            
+            
             Route::get('getItemsByMaterielReturn', 'ItemReturnDetailsAPIController@getItemsByMaterielReturn');
             Route::get('getItemsOptionsMaterielReturn', 'ItemReturnDetailsAPIController@getItemsOptionsMaterielReturn');
             Route::get('getMaterielReturnAudit', 'ItemReturnMasterAPIController@getMaterielReturnAudit');
             Route::post('materielReturnReopen', 'ItemReturnMasterAPIController@materielReturnReopen');
             Route::post('materielReturnReferBack', 'ItemReturnMasterAPIController@materielReturnReferBack');
-            Route::post('getMaterielReturnApprovalByUser', 'ItemReturnMasterAPIController@getMaterielReturnApprovalByUser');
-
-
 
             Route::get('getItemMasterAudit', 'ItemMasterAPIController@getItemMasterAudit');
 
@@ -693,8 +662,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::resource('stock_receives', 'StockReceiveAPIController');
             Route::post('stockReceiveReferBack', 'StockReceiveAPIController@stockReceiveReferBack');
-            Route::post('getStockReceiveApproval', 'StockReceiveAPIController@getStockReceiveApproval');
-            Route::post('getApprovedSRForCurrentUser', 'StockReceiveAPIController@getApprovedSRForCurrentUser');
+            
             Route::post('getAllStockReceiveByCompany', 'StockReceiveAPIController@getAllStockReceiveByCompany');
             Route::post('stockReceiveReopen', 'StockReceiveAPIController@stockReceiveReopen');
             Route::get('getStockReceiveFormData', 'StockReceiveAPIController@getStockReceiveFormData');
@@ -744,12 +712,12 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('getPurchaseReturnAmendHistory', 'PurchaseReturnMasterRefferedBackAPIController@getPurchaseReturnAmendHistory');
             Route::post('purchaseReturnAmend', 'PurchaseReturnAPIController@purchaseReturnAmend');
             Route::get('getPurchaseReturnAudit', 'PurchaseReturnAPIController@getPurchaseReturnAudit');
-            Route::post('getPurchaseReturnApprovalByUser', 'PurchaseReturnAPIController@getPurchaseReturnApprovalByUser');
+            
             Route::post('purchaseReturnReopen', 'PurchaseReturnAPIController@purchaseReturnReopen');
-            Route::post('getPurchaseReturnApprovedByUser', 'PurchaseReturnAPIController@getPurchaseReturnApprovedByUser');
+            
             Route::get('grvForPurchaseReturn', 'PurchaseReturnAPIController@grvForPurchaseReturn');
             Route::get('grvDetailByMasterForPurchaseReturn', 'PurchaseReturnAPIController@grvDetailByMasterForPurchaseReturn');
-            Route::get('getPurchaseReturnFormData', 'PurchaseReturnAPIController@getPurchaseReturnFormData');
+            
             Route::post('purchaseReturnSegmentChkActive', 'PurchaseReturnAPIController@purchaseReturnSegmentChkActive');
             Route::resource('purchase_return_details', 'PurchaseReturnDetailsAPIController');
             Route::get('getItemsByPurchaseReturnMaster', 'PurchaseReturnDetailsAPIController@getItemsByPurchaseReturnMaster');
@@ -777,8 +745,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::post('getAllDocumentApproval', 'DocumentApprovedAPIController@getAllDocumentApproval');
             Route::post('getAllDocumentApprovalTest', 'DocumentApprovedAPIController@getAllDocumentApproval');
-            Route::post('approvalPreCheckAllDoc', 'DocumentApprovedAPIController@approvalPreCheckAllDoc');
-            Route::post('approveDocument', 'DocumentApprovedAPIController@approveDocument');
+            
 
             //Route::get('getTotalCountOfApproval', 'DocumentApprovedAPIController@getTotalCountOfApproval');
 
@@ -844,7 +811,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('customerInvoiceDetails', 'CustomerInvoiceDirectAPIController@customerInvoiceDetails');
             Route::put('custItemDetailUpdate/{id}', 'CustomerInvoiceItemDetailsAPIController@custItemDetailUpdate');
             Route::post('getAllInvReclassificationByCompany', 'InventoryReclassificationAPIController@getAllInvReclassificationByCompany');
-            Route::get('getInvReclassificationFormData', 'InventoryReclassificationAPIController@getInvReclassificationFormData');
+            
             Route::get('getINVFormData', 'CustomerInvoiceDirectAPIController@getINVFormData');
             Route::post('getCustomerInvoiceMasterView', 'CustomerInvoiceDirectAPIController@getCustomerInvoiceMasterView');
             Route::get('getcreateINVFormData', 'CustomerInvoiceDirectAPIController@getcreateINVFormData');
@@ -866,8 +833,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('inv_reclassification_details', 'InventoryReclassificationDetailAPIController');
             Route::resource('inv_reclassifications', 'InventoryReclassificationAPIController');
             Route::get('getInvReclassificationAudit', 'InventoryReclassificationAPIController@getInvReclassificationAudit');
-            Route::post('getInvReclassificationApprovedByUser', 'InventoryReclassificationAPIController@getInvReclassificationApprovedByUser');
-            Route::post('getInvReclassificationApprovalByUser', 'InventoryReclassificationAPIController@getInvReclassificationApprovalByUser');
+            
             Route::get('getItemsOptionForReclassification', 'InventoryReclassificationAPIController@getItemsOptionForReclassification');
             Route::get('getItemsByReclassification', 'InventoryReclassificationDetailAPIController@getItemsByReclassification');
 
@@ -924,10 +890,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::post('getAllStockAdjustmentsByCompany', 'StockAdjustmentAPIController@getAllStockAdjustmentsByCompany');
 
-            Route::post('getStockAdjustmentApprovedByUser', 'StockAdjustmentAPIController@getStockAdjustmentApprovedByUser');
-            Route::post('getStockAdjustmentApprovalByUser', 'StockAdjustmentAPIController@getStockAdjustmentApprovalByUser');
-
-            Route::get('getStockAdjustmentFormData', 'StockAdjustmentAPIController@getStockAdjustmentFormData');
+            
             Route::get('getStockAdjustmentAudit', 'StockAdjustmentAPIController@getStockAdjustmentAudit');
             Route::get('getItemsByStockAdjustment', 'StockAdjustmentDetailsAPIController@getItemsByStockAdjustment');
             Route::get('getItemsOptionsStockAdjustment', 'StockAdjustmentDetailsAPIController@getItemsOptionsStockAdjustment');
@@ -2154,8 +2117,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('removeAllStockCountItems', 'StockCountDetailAPIController@removeAllStockCountItems');
             Route::post('getAllStockCountsByCompany', 'StockCountAPIController@getAllStockCountsByCompany');
             Route::post('stockCountReopen', 'StockCountAPIController@stockCountReopen');
-            Route::post('getStockCountApprovalByUser', 'StockCountAPIController@getStockCountApprovalByUser');
-            Route::post('getStockCountApprovedByUser', 'StockCountAPIController@getStockCountApprovedByUser');
+            
             Route::post('stockCountReferBack', 'StockCountAPIController@stockCountReferBack');
             Route::get('stockCountAudit', 'StockCountAPIController@getStockCountAudit');
 
