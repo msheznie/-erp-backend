@@ -306,7 +306,8 @@ class TenderMaster extends Model
         'is_awarded',
         'award_comment',
         'commercial_line_item_status',
-        'commercial_ranking_comment'
+        'commercial_ranking_comment',
+        'document_type'
     ];
 
     /**
@@ -378,6 +379,7 @@ class TenderMaster extends Model
         'commerical_bid_closing_date'  => 'datetime',
         'doc_verifiy_status' => 'integer',
         'published_at' => 'datetime',
+        'document_type' => 'integer',
     ];
 
     /**
