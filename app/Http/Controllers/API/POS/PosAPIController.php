@@ -125,6 +125,15 @@ class PosAPIController extends AppBaseController
         DB::beginTransaction();
         try {
             $company_id = $request->get('company_id');
+
+            $isGroup = \Helper::checkIsCompanyGroup($company_id);
+    
+            if ($isGroup) {
+                $childCompanies = \Helper::getGroupCompany($company_id);
+            } else {
+                $childCompanies = [$company_id];
+            }
+
             $input = $request->all();
             $input = $this->convertArrayToSelectedValue($input, array());
 
@@ -151,10 +160,8 @@ class PosAPIController extends AppBaseController
                                                         accountstype.accountsType as category_id, 
                                                         controlaccounts.description as controlAccount,
                                                         controlaccounts.controlAccountsSystemID as control_account_id')
-                ->join('chartofaccountsassigned', 'chartofaccountsassigned.chartOfAccountSystemID', '=', 'chartofaccounts.chartOfAccountSystemID')
                 ->join('accountstype', 'accountstype.accountsType', '=', 'chartofaccounts.catogaryBLorPLID')
                 ->join('controlaccounts', 'controlaccounts.controlAccountsSystemID', '=', 'chartofaccounts.controlAccountsSystemID')
-                ->where('chartofaccountsassigned.companySystemID', '=', $company_id)
                 ->where('chartofaccounts.chartOfAccountSystemID', '!=', '')
                 ->where('chartofaccounts.AccountCode', '!=', '')
                 ->where('chartofaccounts.AccountDescription', '!=', '')
@@ -177,8 +184,8 @@ class PosAPIController extends AppBaseController
                     $search = $input['coa_search'];
                     $search = str_replace("\\", "\\\\", $search);
                     $chartOfAccount = $chartOfAccount->where(function ($query) use ($search) {
-                        $query->where('controlaccounts.description', 'LIKE', "%{$search}%")
-                            ->orWhere('accountstype.description', 'LIKE', "%{$search}%");
+                        $query->where('chartofaccounts.AccountDescription', 'LIKE', "%{$search}%")
+                            ->orWhere('chartofaccounts.AccountCode', 'LIKE', "%{$search}%");
                     });
                 }
 
