@@ -245,8 +245,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('poCheckDetailExistinGrv', 'ProcumentOrderAPIController@poCheckDetailExistinGrv');
             Route::post('poExpectedDeliveryDateAmend', 'ProcumentOrderAPIController@poExpectedDeliveryDateAmend');
             Route::post('amendProcumentSubWorkOrderReview', 'ProcumentOrderAPIController@amendProcumentSubWorkOrderReview');
-            Route::post('generateWorkOrder', 'ProcumentOrderAPIController@generateWorkOrder');
-            Route::post('workOrderLog', 'ProcumentOrderAPIController@workOrderLog');
 
             Route::resource('approval_roles', 'ApprovalRoleAPIController');
             Route::resource('department_masters', 'DepartmentMasterAPIController');            
