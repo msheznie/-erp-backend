@@ -33,3 +33,4 @@ Route::post('approvalPreCheckAllDoc', 'DocumentApprovedAPIController@approvalPre
 Route::post('approveDocument', 'DocumentApprovedAPIController@approveDocument')->name("Approve Document");
 Route::post('rejectPurchaseRequest', 'PurchaseRequestAPIController@rejectPurchaseRequest')->name("Reject Document");
 Route::post('approvePurchaseRequest', 'PurchaseRequestAPIController@approvePurchaseRequest')->name("Approve purchase request");
+Route::post('rejectProcurementOrder', 'ProcumentOrderAPIController@rejectProcurementOrder')->name('Reject procurement order');
