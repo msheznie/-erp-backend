@@ -26,6 +26,7 @@ use App\Models\SegmentMaster;
 use App\Models\StageCustomerInvoice;
 use App\Models\StageCustomerInvoiceDirectDetail;
 use App\Models\StageCustomerInvoiceItemDetails;
+use App\Models\Tax;
 use App\Repositories\CustomerMasterRepository;
 use App\Models\StageCustomerReceivePayment;
 use App\Models\StageCustomerReceivePaymentDetail;
@@ -611,6 +612,60 @@ class ClubManagementAPIController extends AppBaseController
 
         return $this->sendResponse($customerMasterCategory->toArray(), 'Customer Master Category created successfully');
 
+    }
+
+    public function pullTaxDetails(Request $request){
+        DB::beginTransaction();
+        try {
+            $taxes = Tax::with(['authority', 'type', 'vat_categories', 'formula_detail'])->where('companySystemID', $request->company_id)->get();
+
+            $taxArray = array();
+
+            foreach ($taxes as $tax) {
+                $subCategories = array();
+                if ($tax->vat_categories) {
+                    foreach ($tax->vat_categories as $sub) {
+                        $subCategories[] = array(
+                            'taxVatSubCategoriesAutoID' => $sub->taxVatSubCategoriesAutoID,
+                            'mainCategory' => $sub->mainCategory,
+                            'subCategoryDescription' => $sub->subCategoryDescription
+                        );
+                    }
+                }
+
+
+                $formulaDetails = array();
+                if ($tax->formula_detail) {
+                    foreach ($tax->formula_detail as $formula) {
+                        $formulaDetails[] = array(
+                            'formulaDetailID' => $formula->formulaDetailID,
+                            'taxCalculationformulaID' => $formula->taxCalculationformulaID,
+                            'formula' => $formula->formula
+                        );
+                    }
+                }
+
+
+                $taxArray[] = array(
+                    'taxTypeID' => isset($tax->type->taxTypeID) ? $tax->type->taxTypeID : null,
+                    'taxTypeDescription' => isset($tax->type->typeDescription) ? $tax->type->typeDescription : null,
+                    'taxDescription' => $tax->taxDescription,
+                    'authority' => isset($tax->type->taxTypeID) ? $tax->type->taxTypeID : null,
+                    'taxAuthourityMasterID' => isset($tax->authority->taxAuthourityMasterID) ? $tax->authority->taxAuthourityMasterID : null,
+                    'authorityName' => isset($tax->authority->AuthorityName) ? $tax->authority->AuthorityName : null,
+                    'categories' => $subCategories,
+                    'formula' => $formulaDetails
+                );
+            }
+
+            DB::commit();
+
+            return $this->sendResponse($taxArray, 'Data retrieved successfully');
+        }
+        catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
     }
 
 }

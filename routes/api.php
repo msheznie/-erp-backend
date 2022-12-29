@@ -17,6 +17,7 @@ Route::get('getConfigurationInfo', 'ConfigurationAPIController@getConfigurationI
 Route::group(['middleware' => ['tenant','locale']], function () {
 
     Route::group(['middleware' => ['pos_api']], function (){
+        Route::get('pull_tax_details', 'ClubManagement\ClubManagementAPIController@pullTaxDetails');
         Route::post('post_customer_category', 'ClubManagement\ClubManagementAPIController@createCustomerCategory');
         Route::post('post_receipt_voucher', 'ClubManagement\ClubManagementAPIController@createReceiptVoucher');
         Route::post('post_customer_invoice', 'ClubManagement\ClubManagementAPIController@createCustomerInvoice');
