@@ -245,8 +245,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('poCheckDetailExistinGrv', 'ProcumentOrderAPIController@poCheckDetailExistinGrv');
             Route::post('poExpectedDeliveryDateAmend', 'ProcumentOrderAPIController@poExpectedDeliveryDateAmend');
             Route::post('amendProcumentSubWorkOrderReview', 'ProcumentOrderAPIController@amendProcumentSubWorkOrderReview');
-            Route::post('generateWorkOrder', 'ProcumentOrderAPIController@generateWorkOrder');
-            Route::post('workOrderLog', 'ProcumentOrderAPIController@workOrderLog');
 
             Route::resource('approval_roles', 'ApprovalRoleAPIController');
             Route::resource('department_masters', 'DepartmentMasterAPIController');            
@@ -291,8 +289,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('confirmDocument', 'PurchaseRequestAPIController@confirmDocument');
 
             Route::resource('procurement-order', 'ProcumentOrderAPIController');
-            Route::post('getProcumentOrderByDocumentType', 'ProcumentOrderAPIController@getProcumentOrderByDocumentType');
-            Route::get('getProcumentOrderFormData', 'ProcumentOrderAPIController@getProcumentOrderFormData');
             Route::get('segment/projects', 'ProcumentOrderAPIController@getProjectsBySegment');
             Route::get('getItemsByProcumentOrder', 'PurchaseOrderDetailsAPIController@getItemsByProcumentOrder');
             Route::get('getItemsOptionForProcumentOrder', 'ProcumentOrderAPIController@getItemsOptionForProcumentOrder');

@@ -121,3 +121,11 @@ Route::group([], function() {
     Route::resource('dashboard_widget_masters', 'DashboardWidgetMasterAPIController');
     Route::get('getWidgetMasterFormData', 'DashboardWidgetMasterAPIController@getWidgetMasterFormData')->name('Get widget master form data');
 });
+
+//generate work order
+Route::group([], function() {
+    Route::post('generateWorkOrder', 'ProcumentOrderAPIController@generateWorkOrder')->name('Generate work order');
+    Route::post('workOrderLog', 'ProcumentOrderAPIController@workOrderLog')->name('Work order log');
+    Route::post('getProcumentOrderByDocumentType', 'ProcumentOrderAPIController@getProcumentOrderByDocumentType')->name('Get procument order by document type');
+    Route::get('getProcumentOrderFormData', 'ProcumentOrderAPIController@getProcumentOrderFormData')->name('Get procument order from data');
+});
