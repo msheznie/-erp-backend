@@ -184,7 +184,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::post('reOrderTest', 'ItemAssignedAPIController@reOrderTest');//nee to delete
 
-            Route::get('getItemMasterPurchaseHistory', 'PurchaseOrderDetailsAPIController@getItemMasterPurchaseHistory');
+            
 
             Route::get('getItemMasterPurchaseRequestHistory', 'PurchaseRequestDetailsAPIController@getItemMasterPurchaseRequestHistory');
 
@@ -193,10 +193,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('exportPurchaseHistory', 'PurchaseOrderDetailsAPIController@exportPurchaseHistory');
             Route::post('validateItemAlllocationInPO', 'PurchaseOrderDetailsAPIController@validateItemAlllocationInPO');
 
-            Route::post('purchase-request-validate-item', 'PurchaseRequestAPIController@validateItem');
+            
 
 
-            Route::post('allItemFinanceCategories', 'FinanceItemCategoryMasterAPIController@allItemFinanceCategories');
+            
 
 
 
@@ -278,14 +278,14 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::get('getCustomerByCompany', 'CustomerMasterAPIController@getCustomerByCompany');
 
-            Route::resource('purchase_requests', 'PurchaseRequestAPIController');
-            Route::post('getPurchaseRequestByDocumentType', 'PurchaseRequestAPIController@getPurchaseRequestByDocumentType');
-            Route::get('getPurchaseRequestFormData', 'PurchaseRequestAPIController@getPurchaseRequestFormData');
-            Route::get('getEligibleMr', 'PurchaseRequestAPIController@getEligibleMr');
-            Route::get('getWarehouse', 'PurchaseRequestAPIController@getWarehouse');
-            Route::post('createPrMaterialRequest', 'PurchaseRequestAPIController@createPrMaterialRequest');
+            
+            
+            
+            
+            
+            
             Route::get('getPurchaseRequestForPO', 'PurchaseRequestAPIController@getPurchaseRequestForPO');
-            Route::post('amendPurchaseRequest', 'PurchaseRequestAPIController@amendPurchaseRequest');
+            
             //confirmation
             Route::post('confirmDocument', 'PurchaseRequestAPIController@confirmDocument');
 
@@ -306,7 +306,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('procumentOrderPRAttachment', 'ProcumentOrderAPIController@procumentOrderPRAttachment');
             Route::post('updateSentSupplierDetail', 'ProcumentOrderAPIController@updateSentSupplierDetail');
 
-            Route::resource('item-specification', 'ItemSpecificationController');
+            
             Route::resource('priorities', 'PriorityAPIController');
 
             Route::resource('locations', 'LocationAPIController');
@@ -314,14 +314,14 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('yes_no_selection_for_minuses', 'YesNoSelectionForMinusAPIController');
 
             Route::resource('months', 'MonthsAPIController');
-            Route::get('purchase_requests-isPulled', 'PurchaseRequestAPIController@isPulledFromMR');
+            
 
-            Route::resource('purchase_request_details', 'PurchaseRequestDetailsAPIController');
-            Route::post('purchase-request/remove-all-items/{id}', 'PurchaseRequestDetailsAPIController@removeAllItems');
-            Route::get('getItemsOptionForPurchaseRequest', 'PurchaseRequestAPIController@getItemsOptionForPurchaseRequest');
-            Route::get('get-all-uom-options', 'PurchaseRequestAPIController@getAllUomOptions');
+            
+            
+            
+            
 
-            Route::get('getItemsByPurchaseRequest', 'PurchaseRequestDetailsAPIController@getItemsByPurchaseRequest');
+            
             Route::post('mapLineItemPr', 'PurchaseRequestDetailsAPIController@mapLineItemPr');
             Route::get('getPurchaseRequestDetailForPO', 'PurchaseRequestDetailsAPIController@getPurchaseRequestDetailForPO');
             Route::post('delete-item-qnty-by-pr', 'PurchaseRequestAPIController@delteItemQntyPR');
@@ -432,13 +432,13 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('exportPoToPaymentReport', 'ProcumentOrderAPIController@exportPoToPaymentReport');
             Route::get('reportPoToPaymentFilterOptions', 'ProcumentOrderAPIController@reportPoToPaymentFilterOptions');
             Route::get('getReportSavingFliterData', 'ProcumentOrderAPIController@getReportSavingFliterData');
-            Route::get('getDocumentTracingData', 'ProcumentOrderAPIController@getDocumentTracingData');
+            
 
 
             Route::get('reportPrToGrvFilterOptions', 'PurchaseRequestAPIController@reportPrToGrvFilterOptions');
 
-            Route::post('getPurchaseRequestReopen', 'PurchaseRequestAPIController@getPurchaseRequestReopen');
-            Route::post('getPurchaseRequestReferBack', 'PurchaseRequestAPIController@getPurchaseRequestReferBack');
+            
+            
 
 
             Route::post('advancePaymentTermCancel', 'PoAdvancePaymentAPIController@advancePaymentTermCancel');
@@ -457,16 +457,16 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::resource('purchase_order_process_details', 'PurchaseOrderProcessDetailsAPIController');
 
-            Route::get('getProcurementOrderRecord', 'ProcumentOrderAPIController@getProcurementOrderRecord');
+            
 
             
             
 
             Route::resource('tax_types', 'TaxTypeAPIController');
 
-            Route::post('cancelPurchaseRequest', 'PurchaseRequestAPIController@cancelPurchaseRequest');
-            Route::post('returnPurchaseRequest', 'PurchaseRequestAPIController@returnPurchaseRequest');
-            Route::post('manualClosePurchaseRequest', 'PurchaseRequestAPIController@manualClosePurchaseRequest');
+            
+            
+            
             
             Route::resource('advance_payment_details', 'AdvancePaymentDetailsAPIController');
 
@@ -482,17 +482,17 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('address_types', 'AddressTypeAPIController');
 
 
-            Route::get('purchaseRequestsPOHistory', 'PurchaseRequestAPIController@purchaseRequestsPOHistory');
-            Route::get('purchaseRequestAudit', 'PurchaseRequestAPIController@purchaseRequestAudit');
+            
+            
             Route::resource('company_policy_categories', 'CompanyPolicyCategoryAPIController');
 
 
 
 
             Route::post('amendProcurementOrder', 'ProcumentOrderAPIController@amendProcurementOrder');
-            Route::get('manualClosePurchaseRequestPreCheck', 'PurchaseRequestAPIController@manualClosePurchaseRequestPreCheck');
-            Route::get('returnPurchaseRequestPreCheck', 'PurchaseRequestAPIController@returnPurchaseRequestPreCheck');
-            Route::get('cancelPurchaseRequestPreCheck', 'PurchaseRequestAPIController@cancelPurchaseRequestPreCheck');
+            
+            
+            
             Route::get('procumentOrderPrHistory', 'ProcumentOrderAPIController@procumentOrderPrHistory');
             Route::get('amendProcurementOrderPreCheck', 'ProcumentOrderAPIController@amendProcurementOrderPreCheck');
             Route::post('procumentOrderChangeSupplier', 'ProcumentOrderAPIController@procumentOrderChangeSupplier');
@@ -574,7 +574,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('material-issue/update-qnty-by-location', 'ItemIssueMasterAPIController@updateQntyByLocation');
             Route::get('material-issue/check/product/{id}/{companySystemID}', 'ItemIssueMasterAPIController@checkProductExistInIssues');
             Route::get('purchase_requests/check/product/{itemCode}/{companySystemID}', 'PurchaseRequestAPIController@checkProductExistInIssues');
-            Route::post('get-item-qnty-by-pr', 'PurchaseRequestAPIController@getItemQntyByPR');
+            
             Route::get('checkManWareHouse', 'ItemIssueMasterAPIController@checkManWareHouse');
 
 
@@ -657,7 +657,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::resource('po_addons', 'PoAddonsAPIController');
             
-            Route::get('getProcumentOrderAddons', 'PoAddonsAPIController@getProcumentOrderAddons');
+            
             
             
 
@@ -688,7 +688,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('poAdv_payment_refferedbacks', 'PurchaseOrderAdvPaymentRefferedbackAPIController');
             Route::resource('po_payment_terms_refferedbacks', 'PoPaymentTermsRefferedbackAPIController');
             Route::resource('document_refered_histories', 'DocumentReferedHistoryAPIController');
-            Route::post('getPoMasterAmendHistory', 'PurchaseOrderMasterRefferedHistoryAPIController@getPoMasterAmendHistory');
+            
             Route::get('getPoItemsForAmendHistory', 'PurchaseOrderDetailsRefferedHistoryAPIController@getPoItemsForAmendHistory');
             Route::get('getPoLogisticsItemsForAmendHistory', 'PurchaseOrderAdvPaymentRefferedbackAPIController@getPoLogisticsItemsForAmendHistory');
             Route::get('getPoPaymentTermsForAmendHistory', 'PoPaymentTermsRefferedbackAPIController@getPoPaymentTermsForAmendHistory');
@@ -726,13 +726,13 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('storePurchaseReturnDetailsFromGRV', 'PurchaseReturnDetailsAPIController@storePurchaseReturnDetailsFromGRV');
             Route::post('purchaseReturnDeleteAllDetails', 'PurchaseReturnDetailsAPIController@purchaseReturnDeleteAllDetails');
 
-            Route::resource('purchaseRequestReferreds', 'PurchaseRequestReferredAPIController');
+            
             Route::resource('prDetailsReferedHistories', 'PrDetailsReferedHistoryAPIController');
 
-            Route::post('getPrMasterAmendHistory', 'PurchaseRequestReferredAPIController@getPrMasterAmendHistory');
+            
 
             Route::resource('contracts', 'ContractAPIController');
-            Route::get('getPrItemsForAmendHistory', 'PrDetailsReferedHistoryAPIController@getPrItemsForAmendHistory');
+            
             Route::resource('customer_invoice_direct_details', 'CustomerInvoiceDirectDetailAPIController');
 
             Route::get('getINVFilterData', 'InventoryReportAPIController@getInventoryFilterData');
@@ -1240,7 +1240,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('reportBudgetTemplateCategoryWise', 'BudgetMasterAPIController@reportBudgetTemplateCategoryWise');
             Route::get('getBudgetFormData', 'BudgetMasterAPIController@getBudgetFormData');
             Route::get('downloadBudgetUploadTemplate', 'BudgetMasterAPIController@downloadBudgetUploadTemplate');
-            Route::get('checkBudgetShowPolicy', 'BudgetMasterAPIController@checkBudgetShowPolicy');
+            
             Route::get('getBudgetConsumptionByDocument', 'BudgetMasterAPIController@getBudgetConsumptionByDocument');
             Route::post('syncGlBudget', 'BudjetdetailsAPIController@syncGlBudget');
             Route::post('getBudgetDetailHistory', 'BudjetdetailsAPIController@getBudgetDetailHistory');
@@ -1334,12 +1334,12 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('assetCostingUpload', 'FixedAssetMasterAPIController@assetCostingUpload');
             Route::get('downloadAssetTemplate', 'FixedAssetMasterAPIController@downloadAssetTemplate');
             Route::get('downloadPrItemUploadTemplate', 'PurchaseRequestAPIController@downloadPrItemUploadTemplate');
-            Route::post('pull-mr-details', 'PurchaseRequestAPIController@pullMrDetails');
+            
             Route::get('downloadQuotationItemUploadTemplate','QuotationMasterAPIController@downloadQuotationItemUploadTemplate');
 
-            Route::resource('pulled-mr-details', 'PulledItemFromMRController');
-            Route::post('remove-pulled-mr-details', 'PulledItemFromMRController@removeMRDetails');
-            Route::get('purchase_requests/pull/items/', 'PulledItemFromMRController@pullAllItemsByPr');
+            
+            
+            
 
 
 
@@ -1710,14 +1710,14 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('revertChequePrint', 'BankLedgerAPIController@revertChequePrint');
             Route::get('getCancelledDetails', 'PurchaseRequestAPIController@getCancelledDetails');
             Route::get('getClosedDetails', 'PurchaseRequestAPIController@getClosedDetails');
-            Route::get('getQtyOrderDetails', 'PurchaseRequestDetailsAPIController@getQtyOrderDetails');
-            Route::get('getWarehouseStockDetails', 'PurchaseRequestDetailsAPIController@getWarehouseStockDetails');
-            Route::post('updateQtyOnOrder', 'PurchaseRequestDetailsAPIController@updateQtyOnOrder');
-            Route::post('prItemsUpload', 'PurchaseRequestDetailsAPIController@prItemsUpload');
+            
+            
+            
+            
 
-            Route::post('purchase-request-add-all-items', 'PurchaseRequestDetailsAPIController@addAllItemsToPurchaseRequest');
+            
 
-            Route::get('copy_pr/{id}', 'PurchaseRequestDetailsAPIController@copyPr');
+            
 
             Route::resource('allocation_masters', 'AllocationMasterAPIController');
 
@@ -2161,10 +2161,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('allocateExpectedDeliveryDates', 'PoDetailExpectedDeliveryDateAPIController@allocateExpectedDeliveryDates');
 
 
-            Route::resource('segment_allocated_items', 'SegmentAllocatedItemAPIController');
-            Route::post('allocateSegmentWiseItem', 'SegmentAllocatedItemAPIController@allocateSegmentWiseItem');
-            Route::post('getSegmentAllocatedItems', 'SegmentAllocatedItemAPIController@getSegmentAllocatedItems');
-            Route::post('getSegmentAllocatedFormData', 'SegmentAllocatedItemAPIController@getSegmentAllocatedFormData');
+            
+            
+            
+            
             Route::get('getVerificationFormData', 'AssetVerificationAPIController@getVerificationFormData');
             Route::post('getAllAssetVerification', 'AssetVerificationAPIController@index');
             Route::post('storeVerification', 'AssetVerificationAPIController@store');
