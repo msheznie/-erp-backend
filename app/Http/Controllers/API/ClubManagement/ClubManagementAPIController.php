@@ -47,10 +47,12 @@ class ClubManagementAPIController extends AppBaseController
     public function createCustomerInvoice(CreateStageCustomerInvoiceAPIRequest  $request){
         $input = $request->all();
 
+
+
         $custInvoiceArray = array();
 
         foreach ($input[0] as $dt){
-
+            $dt['companySystemID'] = $request->company_id;
             $financeYear = CompanyFinanceYear::where('companySystemID',$dt['companySystemID'])->where('bigginingDate', "<=",  $dt['bookingDate'])->where('endingDate', ">=", $dt['bookingDate'])->first();
                 if(empty($financeYear)){
                     return $this->sendError('Finance Year not found');
@@ -263,10 +265,9 @@ class ClubManagementAPIController extends AppBaseController
                 );
             }
 
-            StageCustomerInvoiceDirectDetail::insert($custInvoiceDetArray);
-            StageCustomerInvoiceItemDetails::insert($custInvoiceItemDetArray);
-
         }
+        StageCustomerInvoiceDirectDetail::insert($custInvoiceDetArray);
+        StageCustomerInvoiceItemDetails::insert($custInvoiceItemDetArray);
 
         CreateStageCustomerInvoice::dispatch();
 
