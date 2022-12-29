@@ -47,8 +47,6 @@ class ClubManagementAPIController extends AppBaseController
     public function createCustomerInvoice(CreateStageCustomerInvoiceAPIRequest  $request){
         $input = $request->all();
 
-
-
         $custInvoiceArray = array();
 
         foreach ($input[0] as $dt){
@@ -280,6 +278,8 @@ class ClubManagementAPIController extends AppBaseController
 
         $custReceiptVoucherArray = array();
         foreach ($input[0] as $dt){
+            $dt['companySystemID'] = $request->company_id;
+
             $financeYear = CompanyFinanceYear::where('companySystemID',$dt['companySystemID'])->where('bigginingDate', "<=",  $dt['custPaymentReceiveDate'])->where('endingDate', ">=", $dt['custPaymentReceiveDate'])->first();
             $financePeriod = CompanyFinancePeriod::where('companySystemID',$dt['companySystemID'])->where('departmentSystemID', 4)->where('dateFrom', "<=",  $dt['custPaymentReceiveDate'])->where('dateTo', ">=", $dt['custPaymentReceiveDate'])->first();
             $customer = CustomerCurrency::where('customerCodeSystem', $dt['customerID'])->first();
