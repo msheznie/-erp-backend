@@ -516,6 +516,7 @@ class AppointmentAPIController extends AppBaseController
 
         $approval_id = $input['document_approved']['approvalLevelID'];
         $approvalLevel = ApprovalLevel::find($approval_id);
+        
 
         $appointments = Appointment::where('appointment.id',$input['id'])->selectRaw('erp_purchaseordermaster.purchaseOrderCode,appointment.id,appointment_details.id,appointment_details.qty as planned_qty,erp_purchaseorderdetails.noQty as total_qty,erp_purchaseorderdetails.receivedQty as receivedQty,(erp_purchaseorderdetails.noQty - erp_purchaseorderdetails.receivedQty) as balance_qty,erp_purchaseorderdetails.itemPrimaryCode')
         ->join('appointment_details', 'appointment_details.appointment_id', '=', 'appointment.id')
@@ -524,14 +525,14 @@ class AppointmentAPIController extends AppBaseController
         ->get();
 
         $is_valid = true;
-        $msg = 'Unable to approve the appoinment pls check below details '. "<br>";;
+        $msg = 'Unable to approve the appointment, please check below details '. "<br>";;
         foreach($appointments as $detail)
         {
           
 
             if($detail->balance_qty < $detail->planned_qty)
             {
-                $info =" The item ".$detail->itemPrimaryCode. " from  purchase order ".$detail->purchaseOrderCode." has planned qty(".$detail->planned_qty.") is greater than balance qty(".$detail->balance_qty.").";
+                $info =" The item ".$detail->itemPrimaryCode. " from  purchase order ".$detail->purchaseOrderCode." has been planned quantity(".$detail->planned_qty.") is greater than balance quantity(".$detail->balance_qty.").";
                 $msg .= $info . "<br>";
                 $is_valid = false;
             }
@@ -543,7 +544,15 @@ class AppointmentAPIController extends AppBaseController
         }
         else
         {
-            $data['appoval'] = $approvalLevel->noOfLevels;
+            if(isset($approvalLevel))
+            {
+                $data['appoval'] = $approvalLevel->noOfLevels;
+            }
+            else
+            {
+                $data['appoval'] = 1;
+            }
+           
             return $this->sendResponse($data, 'succesfully checked');
 
         }

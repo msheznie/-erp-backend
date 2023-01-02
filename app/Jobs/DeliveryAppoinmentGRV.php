@@ -80,8 +80,8 @@ class DeliveryAppoinmentGRV implements ShouldQueue
                 $detail['companyFinancePeriodID'] = $fromCompanyFinancePeriod->companyFinancePeriodID;
                 $detail['grvTypeID'] = 2;
                 $detail['serviceLineSystemID'] = $this->data['segment'];
-                $detail['grvDoRefNo'] = 'Delivery Appointment grv';
-                $detail['grvNarration'] = 'Delivery Appointment grv';
+                $detail['grvDoRefNo'] = $appoinment->primary_code;
+                $detail['grvNarration'] = 'Created from SRM Delivery Appointment '.$appoinment->primary_code;
                 $detail['grvLocation'] = $this->data['location'];
                 $detail['supplierID'] = $appoinment->supplier_id;
                 $detail['supplierTransactionCurrencyID'] = $supplierCurrencies->currencyID;
