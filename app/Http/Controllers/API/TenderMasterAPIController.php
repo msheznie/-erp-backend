@@ -667,7 +667,11 @@ WHERE
             return $this->updateCalenderDates($input);
         }
 
-        $rfq = ($input['rfq'] == true) ? true : false;
+        $rfq = false;
+
+        if(isset($input['rfq'])){
+            $rfq = ($input['rfq'] == true) ? true : false;
+        }
 
         $site_visit_date = null;
         $technical_bid_opening_time = null;
@@ -1305,7 +1309,7 @@ WHERE
 
     public function validateTenderHeader($input)
     {
-        if($input['rfq']){
+        if(isset($input['rfq']) && $input['rfq']){
             $messages = [
                 'title.required' => 'Title is required.',
                 'currency_id.required' => 'Currency is required.',
@@ -1347,7 +1351,7 @@ WHERE
             ];
         }
 
-        if($input['rfq']){
+        if(isset($input['rfq']) && $input['rfq']){
             $validator = \Validator::make($input, [
                 'title' => 'required',
                 'currency_id' => 'required',
