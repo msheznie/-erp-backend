@@ -175,4 +175,9 @@ class Appointment extends Model
     {
         return $this->hasMany('App\Models\DocumentAttachments',['documentSystemID', 'documentSystemCode'], ['document_system_id', 'id']);
     }
+
+    public function grv()
+    {
+        return $this->hasOne('App\Models\GRVMaster', 'deliveryAppoinmentID', 'id');
+    }
 }

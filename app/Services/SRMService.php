@@ -73,6 +73,7 @@ use App\Models\PricingScheduleDetail;
 use App\Models\ScheduleBidFormatDetails;
 use App\helper\PirceBidFormula;
 use App\Models\BidDocumentVerification;
+use App\jobs\DeliveryAppointmentInvoice;
 
 class SRMService
 {
@@ -444,7 +445,7 @@ class SRMService
                         ->selectRaw('sum(qty) as qty');
                 }]);
             }]);
-        }, 'created_by'])
+        }, 'created_by','grv'])
             ->where('slot_detail_id', $slotDetailID)
             ->where('created_by', $supplierID)
             ->get();
@@ -3900,6 +3901,19 @@ class SRMService
         return [
             'success' => true,
             'message' => 'Attachment deleted successfully ',
+            'data' => $data
+        ];
+    }
+
+    public function createInvoice(Request $request)
+    {
+        $data['id'] = $request->input('extra.id');
+        $data['companySystemID'] = $request->input('extra.companySystemID');
+
+        $acc_d = DeliveryAppointmentInvoice::dispatch($data);
+        return [
+            'success' => true,
+            'message' => 'Invoice create successfully ',
             'data' => $data
         ];
     }

@@ -81,7 +81,7 @@ define('FAQ_CLARIFICATIONS', 'FAQ_CLARIFICATIONS');
 define('ADD_INVOICE_ATTACHMENT', 'ADD_INVOICE_ATTACHMENT');
 define('GET_INVOICE_ATTACHMENT', 'GET_INVOICE_ATTACHMENT');
 define('REMOVE_INVOICE_ATTACHMENT', 'REMOVE_INVOICE_ATTACHMENT');
-
+define('SAVE_INVOICE', 'SAVE_INVOICE');
 
 
 class APIController extends Controller
@@ -233,6 +233,8 @@ class APIController extends Controller
                 return $this->SRMService->getInvoiceAttachment($request);
             case REMOVE_INVOICE_ATTACHMENT:
                 return $this->SRMService->removeInvoiceAttachment($request);
+            case SAVE_INVOICE:
+                return $this->SRMService->createInvoice($request);
                 
             default:
                 return [
