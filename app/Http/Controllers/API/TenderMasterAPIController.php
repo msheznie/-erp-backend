@@ -667,6 +667,8 @@ WHERE
             return $this->updateCalenderDates($input);
         }
 
+        $rfq = ($input['rfq'] == true) ? true : false;
+
         $site_visit_date = null;
         $technical_bid_opening_time = null;
         $technical_bid_opening_date = null;
@@ -686,30 +688,47 @@ WHERE
         $bid_opening_time = null;
         $bid_opeing_end_time = null;
         $bid_opening_date = null;
+        $document_sales_start_date = null;
+        $document_sales_end_date = null;
+        $pre_bid_clarification_start_date = null;
+        $pre_bid_clarification_end_date = null;
+        $bankId = (empty($input['bank_id'])) ? 0 : $input['bank_id'] ;
 
-        $document_sales_start_time = ($input['document_sales_start_time']) ? new Carbon($input['document_sales_start_time']) : null;
-        $document_sales_start_date = new Carbon($input['document_sales_start_date']);
-        $document_sales_start_date = ($input['document_sales_start_time']) ? $document_sales_start_date->format('Y-m-d').' '.$document_sales_start_time->format('H:i:s') : $document_sales_start_date->format('Y-m-d');
+        if(isset($input['document_sales_start_date'])){
+            $document_sales_start_time = ($input['document_sales_start_time']) ? new Carbon($input['document_sales_start_time']) : null;
+            $document_sales_start_date = new Carbon($input['document_sales_start_date']);
+            $document_sales_start_date = ($input['document_sales_start_time']) ? $document_sales_start_date->format('Y-m-d').' '.$document_sales_start_time->format('H:i:s') : $document_sales_start_date->format('Y-m-d');
+        }
 
-        $document_sales_end_time =  ($input['document_sales_end_time']) ?  new Carbon($input['document_sales_end_time']) : null;
-        $document_sales_end_date = new Carbon($input['document_sales_end_date']);
-        $document_sales_end_date = ($input['document_sales_end_time']) ? $document_sales_end_date->format('Y-m-d').' '.$document_sales_end_time->format('H:i:s') : $document_sales_end_date->format('Y-m-d') ;
+        if(isset($input['document_sales_end_time'])){
+            $document_sales_end_time =  ($input['document_sales_end_time']) ?  new Carbon($input['document_sales_end_time']) : null;
+            $document_sales_end_date = new Carbon($input['document_sales_end_date']);
+            $document_sales_end_date = ($input['document_sales_end_time']) ? $document_sales_end_date->format('Y-m-d').' '.$document_sales_end_time->format('H:i:s') : $document_sales_end_date->format('Y-m-d') ;
+        }
 
-        $bid_submission_opening_time =  ($input['bid_submission_opening_time']) ? new Carbon($input['bid_submission_opening_time']) : null;
-        $bid_submission_opening_date = new Carbon($input['bid_submission_opening_date']);
-        $bid_submission_opening_date = ($input['bid_submission_opening_time']) ? $bid_submission_opening_date->format('Y-m-d').' '.$bid_submission_opening_time->format('H:i:s'): $bid_submission_opening_date->format('Y-m-d');
+        if(isset($input['bid_submission_opening_time'])){
+            $bid_submission_opening_time =  ($input['bid_submission_opening_time']) ? new Carbon($input['bid_submission_opening_time']) : null;
+            $bid_submission_opening_date = new Carbon($input['bid_submission_opening_date']);
+            $bid_submission_opening_date = ($input['bid_submission_opening_time']) ? $bid_submission_opening_date->format('Y-m-d').' '.$bid_submission_opening_time->format('H:i:s'): $bid_submission_opening_date->format('Y-m-d');
+        }
 
-        $bid_submission_closing_time =  ($input['bid_submission_closing_time']) ? new Carbon($input['bid_submission_closing_time']) : null;
-        $bid_submission_closing_date = new Carbon($input['bid_submission_closing_date']);
-        $bid_submission_closing_date = ($input['bid_submission_closing_time']) ? $bid_submission_closing_date->format('Y-m-d').' '.$bid_submission_closing_time->format('H:i:s'):$bid_submission_closing_date->format('Y-m-d');
+        if(isset($input['bid_submission_closing_time'])){
+            $bid_submission_closing_time =  ($input['bid_submission_closing_time']) ? new Carbon($input['bid_submission_closing_time']) : null;
+            $bid_submission_closing_date = new Carbon($input['bid_submission_closing_date']);
+            $bid_submission_closing_date = ($input['bid_submission_closing_time']) ? $bid_submission_closing_date->format('Y-m-d').' '.$bid_submission_closing_time->format('H:i:s'):$bid_submission_closing_date->format('Y-m-d');
+        }
 
-        $pre_bid_clarification_start_time =  ($input['pre_bid_clarification_start_time']) ? new Carbon($input['pre_bid_clarification_start_time']) : null;
-        $pre_bid_clarification_start_date = new Carbon($input['pre_bid_clarification_start_date']);
-        $pre_bid_clarification_start_date = ($input['pre_bid_clarification_start_time']) ?$pre_bid_clarification_start_date->format('Y-m-d').' '.$pre_bid_clarification_start_time->format('H:i:s'):$pre_bid_clarification_start_date->format('Y-m-d');
+        if(isset($input['pre_bid_clarification_start_time'])){
+            $pre_bid_clarification_start_time =  ($input['pre_bid_clarification_start_time']) ? new Carbon($input['pre_bid_clarification_start_time']) : null;
+            $pre_bid_clarification_start_date = new Carbon($input['pre_bid_clarification_start_date']);
+            $pre_bid_clarification_start_date = ($input['pre_bid_clarification_start_time']) ?$pre_bid_clarification_start_date->format('Y-m-d').' '.$pre_bid_clarification_start_time->format('H:i:s'):$pre_bid_clarification_start_date->format('Y-m-d');
+        }
 
-        $pre_bid_clarification_end_time =  ($input['pre_bid_clarification_end_time']) ?  new Carbon($input['pre_bid_clarification_end_time']) : null;
-        $pre_bid_clarification_end_date = new Carbon($input['pre_bid_clarification_end_date']);
-        $pre_bid_clarification_end_date =($input['pre_bid_clarification_end_time']) ?  $pre_bid_clarification_end_date->format('Y-m-d').' '.$pre_bid_clarification_end_time->format('H:i:s'): $pre_bid_clarification_end_date->format('Y-m-d');
+        if(isset($input['pre_bid_clarification_end_time'])){
+            $pre_bid_clarification_end_time =  ($input['pre_bid_clarification_end_time']) ?  new Carbon($input['pre_bid_clarification_end_time']) : null;
+            $pre_bid_clarification_end_date = new Carbon($input['pre_bid_clarification_end_date']);
+            $pre_bid_clarification_end_date =($input['pre_bid_clarification_end_time']) ?  $pre_bid_clarification_end_date->format('Y-m-d').' '.$pre_bid_clarification_end_time->format('H:i:s'): $pre_bid_clarification_end_date->format('Y-m-d');
+        }
 
         if ($input['site_visit_date']) {
             $site_visit_time = ($input['site_visit_start_time']) ?  new Carbon($input['site_visit_start_time']) : null;
@@ -729,44 +748,44 @@ WHERE
 
         // vaidation lists
 
-        if(!isset(($input['document_sales_start_time']))) {
+        if(!isset(($input['document_sales_start_time'])) && !$rfq) {
             return ['success' => false, 'message' => 'Document sales from time is required'];
         }
 
-        if(!isset(($input['document_sales_end_time']))) {
+        if(!isset(($input['document_sales_end_time'])) && !$rfq) {
             return ['success' => false, 'message' => 'Document sales to time is required'];
         }
 
         
-        if ($document_sales_start_date > $document_sales_end_date) {
+        if ((isset($document_sales_start_date) && isset($document_sales_end_date)) && (($document_sales_start_date > $document_sales_end_date))) {
             return ['success' => false, 'message' => 'From date and time cannot be greater than the To date and time  for Document Sales'];
         }
 
-        if(!isset(($input['pre_bid_clarification_start_time']))) {
+        if(!isset(($input['pre_bid_clarification_start_time'])) && !$rfq) {
             return ['success' => false, 'message' => 'Pre bid clarification from time is required'];
 
         }
-        if(!isset(($input['pre_bid_clarification_end_time']))) {
+        if(!isset(($input['pre_bid_clarification_end_time'])) && !$rfq) {
             return ['success' => false, 'message' => 'Pre bid clarification to time is required'];
 
         }
 
-        if ($pre_bid_clarification_start_date > $pre_bid_clarification_end_date) {
+        if ((isset($pre_bid_clarification_start_date) && isset($pre_bid_clarification_end_date)) && (($pre_bid_clarification_start_date > $pre_bid_clarification_end_date))) {
             return ['success' => false, 'message' => 'From date and time cannot be greater than the To date and time  for Pre-bid Clarification'];
         }
 
 
-        if(!isset(($input['site_visit_start_time']))) {
+        if(!isset(($input['site_visit_start_time'])) && !$rfq) {
             return ['success' => false, 'message' => 'Site visit from time is required'];
 
         }
 
-        if(!isset(($input['site_visit_end_time']))) {
+        if(!isset(($input['site_visit_end_time'])) && !$rfq) {
             return ['success' => false, 'message' => 'Site visit to time is required'];
 
         }
 
-        if ($site_visit_date > $site_visit_end_date) {
+        if (($site_visit_date > $site_visit_end_date) && !$rfq) {
             return ['success' => false, 'message' => 'From date and time cannot be greater than the To date and time  for Site Visit'];
         }
 
@@ -786,9 +805,16 @@ WHERE
 
 
 
-        if(isset($document_sales_start_date) && $document_sales_start_date < $currenctDate || isset($bid_submission_opening_date) && $bid_submission_opening_date < $currenctDate ||isset($pre_bid_clarification_start_date) && $pre_bid_clarification_start_date < $currenctDate ||isset($site_visit_date) && $site_visit_date < $currenctDate) {
-            return ['success' => false, 'message' => 'All the date and time should greater than current date and time'];
+        if(!$rfq){
+            if(isset($document_sales_start_date) && $document_sales_start_date < $currenctDate || isset($bid_submission_opening_date) && $bid_submission_opening_date < $currenctDate ||isset($pre_bid_clarification_start_date) && $pre_bid_clarification_start_date < $currenctDate ||isset($site_visit_date) && $site_visit_date < $currenctDate) {
+                return ['success' => false, 'message' => 'All the date and time should greater than current date and time'];
+            }
+        } else {
+            if(isset($bid_submission_opening_date) && $bid_submission_opening_date < $currenctDate) {
+                return ['success' => false, 'message' => 'All the date and time should greater than current date and time'];
+            }
         }
+
 
 
         if(is_null($bid_submission_closing_date)) {
@@ -803,22 +829,19 @@ WHERE
           
             if($input['stage'][0] == 1) {
 
+                if(isset($input['bid_opening_date_time'])){
+                    $bid_opening_time =  ($input['bid_opening_date_time']) ?  new Carbon($input['bid_opening_date_time']) : null;
+                    $bid_opening_date = new Carbon($input['bid_opening_date']);
+                    $bid_opening_date = ($input['bid_opening_date_time']) ? $bid_opening_date->format('Y-m-d').' '.$bid_opening_time->format('H:i:s'):$bid_opening_date->format('Y-m-d');
+                }
 
-                $bid_opening_time =  ($input['bid_opening_date_time']) ?  new Carbon($input['bid_opening_date_time']) : null;
-                $bid_opening_date = new Carbon($input['bid_opening_date']);
-                $bid_opening_date = ($input['bid_opening_date_time']) ? $bid_opening_date->format('Y-m-d').' '.$bid_opening_time->format('H:i:s'):$bid_opening_date->format('Y-m-d');
-        
-                
                 if((isset($input['bid_opening_end_date']))) {
-            
-
                     $bid_opeing_end_time = (isset($input['bid_opening_end_date_time'])) ? new Carbon($input['bid_opening_end_date_time']) : null;
                     $bid_opeing_end_date = (isset($input['bid_opening_end_date'])) ? new Carbon($input['bid_opening_end_date']) : null;
                     $bid_opeing_end_date = (isset($input['bid_opening_end_date_time'])) ? $bid_opeing_end_date->format('Y-m-d').' '.$bid_opeing_end_time->format('H:i:s') : $bid_opeing_end_date->format('Y-m-d');
                 }else {
                     $bid_opeing_end_date = null;
                     $bid_opeing_end_time = null;
-                    
                 }
 
 
@@ -826,7 +849,7 @@ WHERE
                     return ['success' => false, 'message' => 'Bid Submission date cannot be empty'];
                 }
 
-                if(is_null($input['bid_opening_date_time'])) {
+                if(is_null($input['bid_opening_date_time']) && !$rfq) {
                     return ['success' => false, 'message' => 'Bid Opening Time cannot be empty'];
                 }
 
@@ -837,31 +860,25 @@ WHERE
                     }
                 }else {
 
-                    if($bid_sub_date > $bid_opening_date) {
-                        return ['success' => false, 'message' => 'Bid Opening from date and time should greater than bid submission to date and time'];
+                    if($bid_sub_date > $bid_opening_date && !$rfq) {
+                        return ['success' => false, 'message' => 'Bid Opening from date and time should greater than bid submission to date and time 232'];
                     }
                 }
 
 
                 if(isset($bid_opeing_end_date)) {
-
-                    if(is_null($input['bid_opening_end_date_time'])) {
+                    if(is_null($input['bid_opening_end_date_time']) && !$rfq) {
                         return ['success' => false, 'message' => 'Bid Opening to time cannot be empty'];
                     }
 
-
                     if($bid_opening_date > $bid_opeing_end_date) {
                         return ['success' => false, 'message' => 'Bid Opening to date and time should greater than bid opening from date and time'];
-    
                     }
                 }
- 
-
             }
 
 
             if($input['stage'][0] == 2) {
-
                 if(is_null($input['technical_bid_opening_date'])) {
                     return ['success' => false, 'message' => 'Technical Bid Opening from date cannot be empty'];
                 }
@@ -874,8 +891,6 @@ WHERE
             $technical_bid_opening_time = ($input['technical_bid_opening_date_time']) ? new Carbon($input['technical_bid_opening_date_time']) : null;
             $technical_bid_opening_date = new Carbon($input['technical_bid_opening_date']);
             $technical_bid_opening_date = ($input['technical_bid_opening_date_time']) ? $technical_bid_opening_date->format('Y-m-d').' '.$technical_bid_opening_time->format('H:i:s') : $technical_bid_opening_date->format('Y-m-d');
-
-
 
             if(isset($input['technical_bid_closing_date'])) {
                 if(is_null($input['technical_bid_closing_date_time'])) {
@@ -899,7 +914,6 @@ WHERE
                 if(!(isset($input['commerical_bid_closing_date_time']))) {
                     return ['success' => false, 'message' => 'Commercial Bid Opening to time cannot be empty'];
                 }
-                
 
                 $commerical_bid_closing_time = (isset($input['commerical_bid_closing_date_time'])) ? new Carbon($input['commerical_bid_closing_date_time']) : null;
                 $commerical_bid_closing_date = (isset($input['commerical_bid_closing_date'])) ? new Carbon($input['commerical_bid_closing_date']) : null;
@@ -920,7 +934,7 @@ WHERE
                 
                 }else {
 
-                    
+
                     if(is_null($bid_submission_closing_date)) {
                         if($bid_sub_date > $technical_bid_opening_date) {
                             return ['success' => false, 'message' => 'Technical Bid Opening from date and time should greater than bid submission from date and time'];
@@ -967,7 +981,6 @@ WHERE
             return ['success' => false, 'message' => 'Tender title cannot be duplicated'];
         }
 
-
         $employee = \Helper::getEmployeeInfo();
         $exist = TenderMaster::where('id', $input['id'])->first();
         
@@ -987,7 +1000,7 @@ WHERE
             $data['estimated_value'] = $input['estimated_value'];
             $data['allocated_budget'] = $input['allocated_budget'];
             $data['tender_document_fee'] = $input['tender_document_fee'];
-            $data['bank_id'] = $input['bank_id'];
+            $data['bank_id'] = $bankId;
             $data['bank_account_id'] = $input['bank_account_id'];
             $data['document_sales_start_date'] = $document_sales_start_date;
             $data['document_sales_end_date'] = $document_sales_end_date;
@@ -1292,59 +1305,89 @@ WHERE
 
     public function validateTenderHeader($input)
     {
-        $messages = [
-            'title.required' => 'Title is required.',
-            'currency_id.required' => 'Currency is required.',
-            'estimated_value.required' => 'Estimated Value is required.',
-            'allocated_budget.required' => 'Allocated Budget is required.',
-            'tender_document_fee.required' => 'Tender Document Fee is required.',
-            'bank_id.required' => 'Bank is required.',
-            'bank_account_id.required' => 'Bank Account is required.',
-            'document_sales_start_date.required' => 'Document Sales From Date is required.',
-            'document_sales_end_date.required' => 'Document Sales To Date is required.',
-            'pre_bid_clarification_start_date.required' => 'Pre-bid Clarification From Date.',
-            'pre_bid_clarification_end_date.required' => 'Pre-bid Clarification To Date.',
-            'pre_bid_clarification_method.required' => 'Pre-bid Clarifications Method.',
-            'bid_submission_opening_date.required' => 'Bid Submission From Date.',
-            'bid_submission_closing_date.required' => 'Bid Submission To Date.',
-            'site_visit_date.required' => 'Site Visit From Date.',
-            'site_visit_end_date.required' => 'Site Visit To Date.',
-            'tender_type_id.required' => 'Type is required.',
-            'envelop_type_id.required' => 'Envelop Type is required.',
-            'evaluation_type_id.required' => 'Evaluation Type is required.',
-            'stage.required' => 'Stage is required.',
-            'no_of_alternative_solutions.required' => 'Number of Alternative solutions is required.',
-            'commercial_weightage.required' => 'Commercial Criteria Weightage is required.',
-            'technical_weightage.required' => 'Technical Criteria Weightage is required.',
+        if($input['rfq']){
+            $messages = [
+                'title.required' => 'Title is required.',
+                'currency_id.required' => 'Currency is required.',
+                'pre_bid_clarification_method.required' => 'Pre-bid Clarifications Method.',
+                'bid_submission_opening_date.required' => 'Bid Submission From Date.',
+                'tender_type_id.required' => 'Type is required.',
+                'envelop_type_id.required' => 'Envelop Type is required.',
+                'evaluation_type_id.required' => 'Evaluation Type is required.',
+                'stage.required' => 'Stage is required.',
+                'no_of_alternative_solutions.required' => 'Number of Alternative solutions is required.',
+                'commercial_weightage.required' => 'Commercial Criteria Weightage is required.',
+                'technical_weightage.required' => 'Technical Criteria Weightage is required.',
+            ];
+        } else {
+            $messages = [
+                'title.required' => 'Title is required.',
+                'currency_id.required' => 'Currency is required.',
+                'estimated_value.required' => 'Estimated Value is required.',
+                'allocated_budget.required' => 'Allocated Budget is required.',
+                'tender_document_fee.required' => 'Tender Document Fee is required.',
+                'bank_id.required' => 'Bank is required.',
+                'bank_account_id.required' => 'Bank Account is required.',
+                'document_sales_start_date.required' => 'Document Sales From Date is required.',
+                'document_sales_end_date.required' => 'Document Sales To Date is required.',
+                'pre_bid_clarification_start_date.required' => 'Pre-bid Clarification From Date.',
+                'pre_bid_clarification_end_date.required' => 'Pre-bid Clarification To Date.',
+                'pre_bid_clarification_method.required' => 'Pre-bid Clarifications Method.',
+                'bid_submission_opening_date.required' => 'Bid Submission From Date.',
+                'bid_submission_closing_date.required' => 'Bid Submission To Date.',
+                'site_visit_date.required' => 'Site Visit From Date.',
+                'site_visit_end_date.required' => 'Site Visit To Date.',
+                'tender_type_id.required' => 'Type is required.',
+                'envelop_type_id.required' => 'Envelop Type is required.',
+                'evaluation_type_id.required' => 'Evaluation Type is required.',
+                'stage.required' => 'Stage is required.',
+                'no_of_alternative_solutions.required' => 'Number of Alternative solutions is required.',
+                'commercial_weightage.required' => 'Commercial Criteria Weightage is required.',
+                'technical_weightage.required' => 'Technical Criteria Weightage is required.',
+            ];
+        }
 
-        ];
+        if($input['rfq']){
+            $validator = \Validator::make($input, [
+                'title' => 'required',
+                'currency_id' => 'required',
+                'bid_submission_opening_date' => 'required',
+                'tender_type_id' => 'required',
+                'envelop_type_id' => 'required',
+                'evaluation_type_id' => 'required',
+                'stage' => 'required',
+                'no_of_alternative_solutions' => 'required',
+                'commercial_weightage' => 'required',
+                'technical_weightage' => 'required'
+            ], $messages);
+        } else {
+            $validator = \Validator::make($input, [
+                'title' => 'required',
+                'currency_id' => 'required',
+                'estimated_value' => 'required',
+                'allocated_budget' => 'required',
+                'tender_document_fee' => 'required',
+                'bank_id' => 'required',
+                'bank_account_id' => 'required',
+                'document_sales_start_date' => 'required',
+                'document_sales_end_date' => 'required',
+                'pre_bid_clarification_start_date' => 'required',
+                'pre_bid_clarification_end_date' => 'required',
+                'pre_bid_clarification_method' => 'required',
+                'bid_submission_opening_date' => 'required',
+                'bid_submission_closing_date' => 'required',
+                'site_visit_date' => 'required',
+                'site_visit_end_date' => 'required',
+                'tender_type_id' => 'required',
+                'envelop_type_id' => 'required',
+                'evaluation_type_id' => 'required',
+                'stage' => 'required',
+                'no_of_alternative_solutions' => 'required',
+                'commercial_weightage' => 'required',
+                'technical_weightage' => 'required'
+            ], $messages);
+        }
 
-        $validator = \Validator::make($input, [
-            'title' => 'required',
-            'currency_id' => 'required',
-            'estimated_value' => 'required',
-            'allocated_budget' => 'required',
-            'tender_document_fee' => 'required',
-            'bank_id' => 'required',
-            'bank_account_id' => 'required',
-            'document_sales_start_date' => 'required',
-            'document_sales_end_date' => 'required',
-            'pre_bid_clarification_start_date' => 'required',
-            'pre_bid_clarification_end_date' => 'required',
-            'pre_bid_clarification_method' => 'required',
-            'bid_submission_opening_date' => 'required',
-            'bid_submission_closing_date' => 'required',
-            'site_visit_date' => 'required',
-            'site_visit_end_date' => 'required',
-            'tender_type_id' => 'required',
-            'envelop_type_id' => 'required',
-            'evaluation_type_id' => 'required',
-            'stage' => 'required',
-            'no_of_alternative_solutions' => 'required',
-            'commercial_weightage' => 'required',
-            'technical_weightage' => 'required'
-
-        ], $messages);
 
         if ($validator->fails()) {
             return ['status' => false, 'message' => $validator->messages()];
