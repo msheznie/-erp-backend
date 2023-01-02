@@ -510,8 +510,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('erp_item_ledgers', 'ErpItemLedgerAPIController');
             Route::post('validateStockLedgerReport', 'ErpItemLedgerAPIController@validateStockLedgerReport');
             Route::post('generateStockLedgerReport', 'ErpItemLedgerAPIController@generateStockLedgerReport');
-            Route::post('getReportOpenRequest', 'PurchaseRequestAPIController@getReportOpenRequest');
-            Route::post('exportReportOpenRequest', 'PurchaseRequestAPIController@exportReportOpenRequest');
+            
+            
             Route::resource('g_r_v_types', 'GRVTypesAPIController');
             Route::resource('budget_consumed_datas', 'BudgetConsumedDataAPIController');
             Route::post('getBudgetConsumptionForReview', 'BudgetConsumedDataAPIController@getBudgetConsumptionForReview');

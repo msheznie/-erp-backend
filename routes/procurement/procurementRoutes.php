@@ -70,3 +70,9 @@ Route::group([], function() {
     Route::resource('segment_allocated_items', 'SegmentAllocatedItemAPIController');
     Route::resource('purchaseRequestReferreds', 'PurchaseRequestReferredAPIController');
 });
+
+//Report Open Requests
+Route::group([], function() {
+    Route::post('getReportOpenRequest', 'PurchaseRequestAPIController@getReportOpenRequest')->name('Get report open request');
+    Route::post('exportReportOpenRequest', 'PurchaseRequestAPIController@exportReportOpenRequest')->name('Export report open request');
+});
