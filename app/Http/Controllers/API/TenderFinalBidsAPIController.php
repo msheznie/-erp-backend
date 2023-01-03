@@ -318,9 +318,8 @@ class TenderFinalBidsAPIController extends AppBaseController
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
             $query = $query->where(function ($query) use ($search) {
-                $query->WhereHas('SupplierRegistrationLink', function ($query) use ($search) {
-                    $query->where('name', 'like', "%{$search}%");
-                });
+                $query->where('name', 'LIKE', "%{$search}%")
+                ->orWhere('bidSubmissionCode', 'LIKE', "%{$search}%");
             });
         }
 
