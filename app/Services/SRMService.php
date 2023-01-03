@@ -73,7 +73,7 @@ use App\Models\PricingScheduleDetail;
 use App\Models\ScheduleBidFormatDetails;
 use App\helper\PirceBidFormula;
 use App\Models\BidDocumentVerification;
-use App\jobs\DeliveryAppointmentInvoice;
+use App\Jobs\DeliveryAppointmentInvoice;
 
 class SRMService
 {
