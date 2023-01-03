@@ -39,7 +39,7 @@ class DeliveryAppointmentInvoice implements ShouldQueue
      */
     public function handle(BookInvSuppMasterRepository $bookInvSuppMasterRepository)
     {
-        $mytime =  '2022-12-12 00:00:00';//new Carbon();
+        $mytime =  new Carbon();
 
     
 
@@ -86,8 +86,8 @@ class DeliveryAppointmentInvoice implements ShouldQueue
                 $detail['FYPeriodDateFrom'] = $fromCompanyFinancePeriod->dateFrom; 
                 $detail['FYPeriodDateTo'] = $fromCompanyFinancePeriod->dateTo; 
                 $detail['retentionPercentage'] = 0;
-                $detail['createdPcID'] = 11;//gethostname();
-                $detail['createdUserID'] =  11;//\Helper::getEmployeeID();
+                $detail['createdPcID'] = gethostname();
+                $detail['createdUserID'] =  \Helper::getEmployeeID();
                 $detail['createdUserSystemID'] = \Helper::getEmployeeSystemID();
                 $detail['documentSystemID'] =  11;
                 $detail['documentID'] = "SI";
@@ -143,7 +143,7 @@ class DeliveryAppointmentInvoice implements ShouldQueue
                     $detail['UnbilledGRVAccount'] = $supplierAssignedDetail->UnbilledGRVAccount;
                     $detail['VATPercentage'] = $supplierAssignedDetail->VATPercentage;
                 }
-
+                $detail['deliveryAppoinmentID'] = $this->data['id'];
                 
                 $invoice = $bookInvSuppMasterRepository->create($detail);
 

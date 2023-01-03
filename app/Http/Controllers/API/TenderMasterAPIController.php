@@ -2767,9 +2767,7 @@ WHERE
 
     
         $data['bids'] = $bidMasterId;
-        $items = PricingScheduleMaster::with(['tender_bid_format_master', 'bid_schedule' => function ($q) use ($bidMasterId) {
-            $q->where('bid_master_id', $bidMasterId);
-        }, 'pricing_shedule_details' => function ($q) use ($bidMasterId) {
+        $items = PricingScheduleMaster::with(['tender_bid_format_master','pricing_shedule_details' => function ($q) use ($bidMasterId) {
             $q->with(['bid_main_works' => function ($q) use ($bidMasterId) {
                 $q->whereIn('bid_master_id', $bidMasterId);
             },'bid_format_detail' =>function ($q) use ($bidMasterId) {
