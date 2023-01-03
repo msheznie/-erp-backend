@@ -1306,6 +1306,15 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
             // Booking of Exchange Gain or Loss at Matching for debit note
             if ($matchDocumentMaster->documentSystemID == 15) {
+                $checkExchangeGainLossAccount = SystemGlCodeScenarioDetail::getGlByScenario($matchDocumentMaster->companySystemID, $matchDocumentMaster->documentSystemID , 14);
+                if (is_null($checkExchangeGainLossAccount)) {
+                    $checkExchangeGainLossAccountCode = SystemGlCodeScenarioDetail::getGlCodeByScenario($matchDocumentMaster->companySystemID, $matchDocumentMaster->documentSystemID, 14);
+
+                    if ($checkExchangeGainLossAccountCode) {
+                        return $this->sendError('Please assign Exchange Gain/Loss account for this company', 500);
+                    }
+                    return $this->sendError('Please configure Exchange Gain/Loss account for this company', 500);
+                }
 
                 $diffLocal = 0;
                 $diffRpt = 0;
@@ -1434,6 +1443,14 @@ class MatchDocumentMasterAPIController extends AppBaseController
 
             }
             else if ($matchDocumentMaster->documentSystemID == 4) {
+                $checkExchangeGainLossAccount = SystemGlCodeScenarioDetail::getGlByScenario($matchDocumentMaster->companySystemID, $matchDocumentMaster->documentSystemID, 14);
+                if (is_null($checkExchangeGainLossAccount)) {
+                    $checkExchangeGainLossAccountCode = SystemGlCodeScenarioDetail::getGlCodeByScenario($matchDocumentMaster->companySystemID, $matchDocumentMaster->documentSystemID, 14);
+                    if ($checkExchangeGainLossAccountCode) {
+                        return $this->sendError('Please assign Exchange Gain/Loss account for this company', 500);
+                    }
+                    return $this->sendError('Please configure Exchange Gain/Loss account for this company', 500);
+                }
 
                 $diffLocal = 0;
                 $diffRpt = 0;

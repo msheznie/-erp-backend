@@ -1545,6 +1545,19 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 $input['supplierDefCurrencyER'] = 1;
             }
 
+            if ($input['invoiceType'] == 2 || $input['invoiceType'] == 6) {
+             $checkExchangeGainLossAccount = SystemGlCodeScenarioDetail::getGlByScenario($companySystemID, $documentSystemID, 14);
+                if (is_null($checkExchangeGainLossAccount)) {
+
+                    $checkExchangeGainLossAccountCode = SystemGlCodeScenarioDetail::getGlCodeByScenario($companySystemID, $documentSystemID, 14);
+
+                    if ($checkExchangeGainLossAccountCode) {
+                        return $this->sendError('Please assign Exchange Gain/Loss account for this company', 500);
+                    }
+                    return $this->sendError('Please configure Exchange Gain/Loss account for this company', 500);
+                }
+            }
+
             if ($input['invoiceType'] == 6 || $input['invoiceType'] == 7) {
                 $checkEmployeeControlAccount = SystemGlCodeScenarioDetail::getGlByScenario($input['companySystemID'], $input['documentSystemID'], 12);
 
