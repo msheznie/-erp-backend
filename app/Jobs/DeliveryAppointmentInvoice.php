@@ -86,8 +86,8 @@ class DeliveryAppointmentInvoice implements ShouldQueue
                 $detail['FYPeriodDateFrom'] = $fromCompanyFinancePeriod->dateFrom; 
                 $detail['FYPeriodDateTo'] = $fromCompanyFinancePeriod->dateTo; 
                 $detail['retentionPercentage'] = 0;
-                $detail['createdPcID'] = gethostname();
-                $detail['createdUserID'] =  \Helper::getEmployeeID();
+                $detail['createdPcID'] = 11;//gethostname();
+                $detail['createdUserID'] =  11;//\Helper::getEmployeeID();
                 $detail['createdUserSystemID'] = \Helper::getEmployeeSystemID();
                 $detail['documentSystemID'] =  11;
                 $detail['documentID'] = "SI";

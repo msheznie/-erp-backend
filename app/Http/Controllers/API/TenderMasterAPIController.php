@@ -2664,9 +2664,8 @@ WHERE
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
             $query = $query->where(function ($query) use ($search) {
-                $query->WhereHas('SupplierRegistrationLink', function ($query) use ($search) {
-                    $query->where('name', 'like', "%{$search}%");
-                });
+                $query->where('name', 'LIKE', "%{$search}%")
+                ->orWhere('bidSubmissionCode', 'LIKE', "%{$search}%");
             });
         }
 
@@ -2725,9 +2724,8 @@ WHERE
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
             $query = $query->where(function ($query) use ($search) {
-                $query->WhereHas('SupplierRegistrationLink', function ($query) use ($search) {
-                    $query->where('name', 'like', "%{$search}%");
-                });
+                $query->where('name', 'LIKE', "%{$search}%")
+                ->orWhere('bidSubmissionCode', 'LIKE', "%{$search}%");
             });
         }
 
@@ -3038,11 +3036,11 @@ WHERE
  
                          if($item->filed_type == 3)
                          {
-                         $total += (int)$boq->total_amount/100;
+                         $total += $boq->total_amount/100;
                          }
                          else
                          {
-                         $total += (int)$boq->total_amount;
+                         $total += $boq->total_amount;
                          }
                          
                      }
@@ -3054,11 +3052,11 @@ WHERE
                         
                          if($item->filed_type == 3)
                          {
-                         $total += (int)$boq_mai->total_amount/100;
+                         $total += $boq_mai->total_amount/100;
                          }
                          else
                          {
-                         $total += (int)$boq_mai->total_amount;
+                         $total += $boq_mai->total_amount;
                          }
                      }
                     
@@ -3067,11 +3065,11 @@ WHERE
                  {
                      if($item->filed_type == 3)
                      {
-                     $total += (int)$item->value/100;
+                     $total += $item->value/100;
                      }
                      else
                      {
-                     $total += (int)$item->value;
+                     $total += $item->value;
                      }
                  }
  
