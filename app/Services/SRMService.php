@@ -3910,7 +3910,7 @@ class SRMService
         $data['id'] = $request->input('extra.id');
         $data['companySystemID'] = $request->input('extra.companySystemID');
 
-        //$acc_d = DeliveryAppointmentInvoice::dispatch($data);
+        $acc_d = DeliveryAppointmentInvoice::dispatch($data);
         return [
             'success' => true,
             'message' => 'Invoice create successfully ',
