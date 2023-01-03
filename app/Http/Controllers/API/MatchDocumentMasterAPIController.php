@@ -1310,7 +1310,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 if (is_null($checkExchangeGainLossAccount)) {
                     $checkExchangeGainLossAccountCode = SystemGlCodeScenarioDetail::getGlCodeByScenario($matchDocumentMaster->companySystemID, $matchDocumentMaster->documentSystemID, 14);
 
-                    if (!is_null($checkExchangeGainLossAccountCode)) {
+                    if ($checkExchangeGainLossAccountCode) {
                         return $this->sendError('Please assign Exchange Gain/Loss account for this company', 500);
                     }
                     return $this->sendError('Please configure Exchange Gain/Loss account for this company', 500);
@@ -1440,7 +1440,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 $checkExchangeGainLossAccount = SystemGlCodeScenarioDetail::getGlByScenario($matchDocumentMaster->companySystemID, $matchDocumentMaster->documentSystemID, 14);
                 if (is_null($checkExchangeGainLossAccount)) {
                     $checkExchangeGainLossAccountCode = SystemGlCodeScenarioDetail::getGlCodeByScenario($matchDocumentMaster->companySystemID, $matchDocumentMaster->documentSystemID, 14);
-                    if (!is_null($checkExchangeGainLossAccountCode)) {
+                    if ($checkExchangeGainLossAccountCode) {
                         return $this->sendError('Please assign Exchange Gain/Loss account for this company', 500);
                     }
                     return $this->sendError('Please configure Exchange Gain/Loss account for this company', 500);
