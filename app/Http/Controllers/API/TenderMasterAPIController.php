@@ -1104,7 +1104,7 @@ WHERE
 
 
                         $technical = EvaluationCriteriaDetails::where('tender_id', $input['id'])->where('critera_type_id', 2)->first();
-                        if (empty($technical)) {
+                        if (empty($technical) && !$rfq) {
                             return ['success' => false, 'message' => 'At least one technical criteria should be added'];
                         }
 
