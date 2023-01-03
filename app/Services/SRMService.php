@@ -445,7 +445,7 @@ class SRMService
                         ->selectRaw('sum(qty) as qty');
                 }]);
             }]);
-        }, 'created_by','grv'])
+        }, 'created_by','grv','invoice'])
             ->where('slot_detail_id', $slotDetailID)
             ->where('created_by', $supplierID)
             ->get();
@@ -3913,7 +3913,7 @@ class SRMService
         $acc_d = DeliveryAppointmentInvoice::dispatch($data);
         return [
             'success' => true,
-            'message' => 'Invoice create successfully ',
+            'message' => 'Invoice created successfully ',
             'data' => $data
         ];
     }

@@ -180,4 +180,9 @@ class Appointment extends Model
     {
         return $this->hasOne('App\Models\GRVMaster', 'deliveryAppoinmentID', 'id');
     }
+
+    public function invoice()
+    {
+        return $this->hasOne('App\Models\BookInvSuppMaster', 'deliveryAppoinmentID', 'id');
+    }
 }
