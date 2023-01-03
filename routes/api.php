@@ -44,6 +44,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             require __DIR__.'/../routes/srm/srmRoutes.php';
             require __DIR__.'/../routes/configuration/configurationRoutes.php';
             require __DIR__.'/../routes/approvalSetup/approvalSetupRoutes.php';
+            require __DIR__.'/../routes/inventory/inventoryRoutes.php';
+            require __DIR__.'/../routes/procurement/procurementRoutes.php';
+            require __DIR__.'/../routes/accountsPayable/accountsPayableRoutes.php';
 
             
 
@@ -182,7 +185,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::post('reOrderTest', 'ItemAssignedAPIController@reOrderTest');//nee to delete
 
-            Route::get('getItemMasterPurchaseHistory', 'PurchaseOrderDetailsAPIController@getItemMasterPurchaseHistory');
+            
 
             Route::get('getItemMasterPurchaseRequestHistory', 'PurchaseRequestDetailsAPIController@getItemMasterPurchaseRequestHistory');
 
@@ -191,10 +194,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('exportPurchaseHistory', 'PurchaseOrderDetailsAPIController@exportPurchaseHistory');
             Route::post('validateItemAlllocationInPO', 'PurchaseOrderDetailsAPIController@validateItemAlllocationInPO');
 
-            Route::post('purchase-request-validate-item', 'PurchaseRequestAPIController@validateItem');
+            
 
 
-            Route::post('allItemFinanceCategories', 'FinanceItemCategoryMasterAPIController@allItemFinanceCategories');
+            
 
 
 
@@ -242,8 +245,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('poCheckDetailExistinGrv', 'ProcumentOrderAPIController@poCheckDetailExistinGrv');
             Route::post('poExpectedDeliveryDateAmend', 'ProcumentOrderAPIController@poExpectedDeliveryDateAmend');
             Route::post('amendProcumentSubWorkOrderReview', 'ProcumentOrderAPIController@amendProcumentSubWorkOrderReview');
-            Route::post('generateWorkOrder', 'ProcumentOrderAPIController@generateWorkOrder');
-            Route::post('workOrderLog', 'ProcumentOrderAPIController@workOrderLog');
 
             Route::resource('approval_roles', 'ApprovalRoleAPIController');
             Route::resource('department_masters', 'DepartmentMasterAPIController');            
@@ -276,27 +277,25 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::get('getCustomerByCompany', 'CustomerMasterAPIController@getCustomerByCompany');
 
-            Route::resource('purchase_requests', 'PurchaseRequestAPIController');
-            Route::post('getPurchaseRequestByDocumentType', 'PurchaseRequestAPIController@getPurchaseRequestByDocumentType');
-            Route::get('getPurchaseRequestFormData', 'PurchaseRequestAPIController@getPurchaseRequestFormData');
-            Route::get('getEligibleMr', 'PurchaseRequestAPIController@getEligibleMr');
-            Route::get('getWarehouse', 'PurchaseRequestAPIController@getWarehouse');
-            Route::post('createPrMaterialRequest', 'PurchaseRequestAPIController@createPrMaterialRequest');
+            
+            
+            
+            
+            
+            
             Route::get('getPurchaseRequestForPO', 'PurchaseRequestAPIController@getPurchaseRequestForPO');
-            Route::post('amendPurchaseRequest', 'PurchaseRequestAPIController@amendPurchaseRequest');
+            
             //confirmation
             Route::post('confirmDocument', 'PurchaseRequestAPIController@confirmDocument');
 
             Route::resource('procurement-order', 'ProcumentOrderAPIController');
-            Route::post('getProcumentOrderByDocumentType', 'ProcumentOrderAPIController@getProcumentOrderByDocumentType');
-            Route::get('getProcumentOrderFormData', 'ProcumentOrderAPIController@getProcumentOrderFormData');
             Route::get('segment/projects', 'ProcumentOrderAPIController@getProjectsBySegment');
             Route::get('getItemsByProcumentOrder', 'PurchaseOrderDetailsAPIController@getItemsByProcumentOrder');
             Route::get('getItemsOptionForProcumentOrder', 'ProcumentOrderAPIController@getItemsOptionForProcumentOrder');
             Route::get('getShippingAndInvoiceDetails', 'ProcumentOrderAPIController@getShippingAndInvoiceDetails');
             Route::get('getProcumentOrderPaymentTerms', 'PoPaymentTermsAPIController@getProcumentOrderPaymentTerms');
-            Route::post('getPOMasterApproval', 'ProcumentOrderAPIController@getPOMasterApproval');
-            Route::post('getApprovedPOForCurrentUser', 'ProcumentOrderAPIController@getApprovedPOForCurrentUser');
+            
+            
             Route::post('getProcumentOrderAllAmendments', 'ProcumentOrderAPIController@getProcumentOrderAllAmendments');
             Route::get('getGRVBasedPODropdowns', 'ProcumentOrderAPIController@getGRVBasedPODropdowns');
             Route::get('getLogisticPrintDetail', 'PoAdvancePaymentAPIController@getLogisticPrintDetail');
@@ -304,7 +303,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('procumentOrderPRAttachment', 'ProcumentOrderAPIController@procumentOrderPRAttachment');
             Route::post('updateSentSupplierDetail', 'ProcumentOrderAPIController@updateSentSupplierDetail');
 
-            Route::resource('item-specification', 'ItemSpecificationController');
+            
             Route::resource('priorities', 'PriorityAPIController');
 
             Route::resource('locations', 'LocationAPIController');
@@ -312,14 +311,14 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('yes_no_selection_for_minuses', 'YesNoSelectionForMinusAPIController');
 
             Route::resource('months', 'MonthsAPIController');
-            Route::get('purchase_requests-isPulled', 'PurchaseRequestAPIController@isPulledFromMR');
+            
 
-            Route::resource('purchase_request_details', 'PurchaseRequestDetailsAPIController');
-            Route::post('purchase-request/remove-all-items/{id}', 'PurchaseRequestDetailsAPIController@removeAllItems');
-            Route::get('getItemsOptionForPurchaseRequest', 'PurchaseRequestAPIController@getItemsOptionForPurchaseRequest');
-            Route::get('get-all-uom-options', 'PurchaseRequestAPIController@getAllUomOptions');
+            
+            
+            
+            
 
-            Route::get('getItemsByPurchaseRequest', 'PurchaseRequestDetailsAPIController@getItemsByPurchaseRequest');
+            
             Route::post('mapLineItemPr', 'PurchaseRequestDetailsAPIController@mapLineItemPr');
             Route::get('getPurchaseRequestDetailForPO', 'PurchaseRequestDetailsAPIController@getPurchaseRequestDetailForPO');
             Route::post('delete-item-qnty-by-pr', 'PurchaseRequestAPIController@delteItemQntyPR');
@@ -389,7 +388,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('assetCWIPDrillDown', 'AssetManagementReportAPIController@assetCWIPDrillDown');
 
             Route::post('approveProcurementOrder', 'ProcumentOrderAPIController@approveProcurementOrder');
-            Route::post('rejectProcurementOrder', 'ProcumentOrderAPIController@rejectProcurementOrder');
+            
             Route::get('getGoodReceivedNoteDetailsForPO', 'ProcumentOrderAPIController@getGoodReceivedNoteDetailsForPO');
             Route::post('getGRVDrilldownSpentAnalysis', 'ProcumentOrderAPIController@getGRVDrilldownSpentAnalysis');
             Route::post('getGRVDrilldownSpentAnalysisTotal', 'ProcumentOrderAPIController@getGRVDrilldownSpentAnalysisTotal');
@@ -430,13 +429,13 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('exportPoToPaymentReport', 'ProcumentOrderAPIController@exportPoToPaymentReport');
             Route::get('reportPoToPaymentFilterOptions', 'ProcumentOrderAPIController@reportPoToPaymentFilterOptions');
             Route::get('getReportSavingFliterData', 'ProcumentOrderAPIController@getReportSavingFliterData');
-            Route::get('getDocumentTracingData', 'ProcumentOrderAPIController@getDocumentTracingData');
+            
 
 
             Route::get('reportPrToGrvFilterOptions', 'PurchaseRequestAPIController@reportPrToGrvFilterOptions');
 
-            Route::post('getPurchaseRequestReopen', 'PurchaseRequestAPIController@getPurchaseRequestReopen');
-            Route::post('getPurchaseRequestReferBack', 'PurchaseRequestAPIController@getPurchaseRequestReferBack');
+            
+            
 
 
             Route::post('advancePaymentTermCancel', 'PoAdvancePaymentAPIController@advancePaymentTermCancel');
@@ -455,19 +454,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::resource('purchase_order_process_details', 'PurchaseOrderProcessDetailsAPIController');
 
-            Route::get('getProcurementOrderRecord', 'ProcumentOrderAPIController@getProcurementOrderRecord');
-
-            Route::post('getPurchaseRequestApprovalByUser', 'PurchaseRequestAPIController@getPurchaseRequestApprovalByUser');
-            Route::post('getPurchaseRequestApprovedByUser', 'PurchaseRequestAPIController@getPurchaseRequestApprovedByUser');
-
-            Route::post('rejectPurchaseRequest', 'PurchaseRequestAPIController@rejectPurchaseRequest');
-            Route::post('approvePurchaseRequest', 'PurchaseRequestAPIController@approvePurchaseRequest');
-
-            
-            
-            
-            
-            
             
 
             
@@ -475,19 +461,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::resource('tax_types', 'TaxTypeAPIController');
 
-            // Route::resource('tax_formula_mgetAllcompaniesasters', 'TaxFormulaMasterAPIController');
             
             
             
-
-            Route::post('cancelPurchaseRequest', 'PurchaseRequestAPIController@cancelPurchaseRequest');
-            Route::post('returnPurchaseRequest', 'PurchaseRequestAPIController@returnPurchaseRequest');
-            Route::post('manualClosePurchaseRequest', 'PurchaseRequestAPIController@manualClosePurchaseRequest');
             
-
-            
-            
-
             Route::resource('advance_payment_details', 'AdvancePaymentDetailsAPIController');
 
             Route::resource('alerts', 'AlertAPIController');
@@ -502,17 +479,17 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('address_types', 'AddressTypeAPIController');
 
 
-            Route::get('purchaseRequestsPOHistory', 'PurchaseRequestAPIController@purchaseRequestsPOHistory');
-            Route::get('purchaseRequestAudit', 'PurchaseRequestAPIController@purchaseRequestAudit');
+            
+            
             Route::resource('company_policy_categories', 'CompanyPolicyCategoryAPIController');
 
 
 
 
             Route::post('amendProcurementOrder', 'ProcumentOrderAPIController@amendProcurementOrder');
-            Route::get('manualClosePurchaseRequestPreCheck', 'PurchaseRequestAPIController@manualClosePurchaseRequestPreCheck');
-            Route::get('returnPurchaseRequestPreCheck', 'PurchaseRequestAPIController@returnPurchaseRequestPreCheck');
-            Route::get('cancelPurchaseRequestPreCheck', 'PurchaseRequestAPIController@cancelPurchaseRequestPreCheck');
+            
+            
+            
             Route::get('procumentOrderPrHistory', 'ProcumentOrderAPIController@procumentOrderPrHistory');
             Route::get('amendProcurementOrderPreCheck', 'ProcumentOrderAPIController@amendProcurementOrderPreCheck');
             Route::post('procumentOrderChangeSupplier', 'ProcumentOrderAPIController@procumentOrderChangeSupplier');
@@ -533,8 +510,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('erp_item_ledgers', 'ErpItemLedgerAPIController');
             Route::post('validateStockLedgerReport', 'ErpItemLedgerAPIController@validateStockLedgerReport');
             Route::post('generateStockLedgerReport', 'ErpItemLedgerAPIController@generateStockLedgerReport');
-            Route::post('getReportOpenRequest', 'PurchaseRequestAPIController@getReportOpenRequest');
-            Route::post('exportReportOpenRequest', 'PurchaseRequestAPIController@exportReportOpenRequest');
+            
+            
             Route::resource('g_r_v_types', 'GRVTypesAPIController');
             Route::resource('budget_consumed_datas', 'BudgetConsumedDataAPIController');
             Route::post('getBudgetConsumptionForReview', 'BudgetConsumedDataAPIController@getBudgetConsumptionForReview');
@@ -574,9 +551,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('requestReopen', 'MaterielRequestAPIController@requestReopen');
             Route::post('requestReferBack', 'MaterielRequestAPIController@requestReferBack');
             Route::post('getAllRequestByCompany', 'MaterielRequestAPIController@getAllRequestByCompany');
-            Route::get('getRequestFormData', 'MaterielRequestAPIController@getRequestFormData');
-            Route::post('getAllNotApprovedRequestByUser', 'MaterielRequestAPIController@getAllNotApprovedRequestByUser');
-            Route::post('getApprovedMaterielRequestsByUser', 'MaterielRequestAPIController@getApprovedMaterielRequestsByUser');
+            
+            
             Route::get('materielRequestAudit', 'MaterielRequestAPIController@materielRequestAudit');
             Route::resource('materiel_request_details', 'MaterielRequestDetailsAPIController');
             Route::get('getItemsByMaterielRequest', 'MaterielRequestDetailsAPIController@getItemsByMaterielRequest');
@@ -595,7 +571,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('material-issue/update-qnty-by-location', 'ItemIssueMasterAPIController@updateQntyByLocation');
             Route::get('material-issue/check/product/{id}/{companySystemID}', 'ItemIssueMasterAPIController@checkProductExistInIssues');
             Route::get('purchase_requests/check/product/{itemCode}/{companySystemID}', 'PurchaseRequestAPIController@checkProductExistInIssues');
-            Route::post('get-item-qnty-by-pr', 'PurchaseRequestAPIController@getItemQntyByPR');
+            
             Route::get('checkManWareHouse', 'ItemIssueMasterAPIController@checkManWareHouse');
 
 
@@ -603,19 +579,16 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::resource('item_issue_masters', 'ItemIssueMasterAPIController');
             Route::post('getAllMaterielIssuesByCompany', 'ItemIssueMasterAPIController@getAllMaterielIssuesByCompany');
-            Route::post('getMaterielIssueApprovedByUser', 'ItemIssueMasterAPIController@getMaterielIssueApprovedByUser');
-            Route::post('getMaterielIssueApprovalByUser', 'ItemIssueMasterAPIController@getMaterielIssueApprovalByUser');
-            Route::get('getMaterielIssueFormData', 'ItemIssueMasterAPIController@getMaterielIssueFormData');
+            
+            
             Route::get('allMaterielRequestNotSelectedForIssue', 'ItemIssueMasterAPIController@getAllMaterielRequestNotSelectedForIssueByCompany');
             Route::get('getMaterielIssueAudit', 'ItemIssueMasterAPIController@getMaterielIssueAudit');
             Route::post('materielIssueReopen', 'ItemIssueMasterAPIController@materielIssueReopen');
             Route::post('materielIssueReferBack', 'ItemIssueMasterAPIController@materielIssueReferBack');
             Route::get('getItemsByMaterielIssue', 'ItemIssueDetailsAPIController@getItemsByMaterielIssue');
             Route::get('getItemsOptionsMaterielIssue', 'ItemIssueDetailsAPIController@getItemsOptionsMaterielIssue');
-            Route::post('getGRVMasterApproval', 'GRVMasterAPIController@getGRVMasterApproval');
-            Route::post('getApprovedGRVForCurrentUser', 'GRVMasterAPIController@getApprovedGRVForCurrentUser');
-            Route::post('approveGoodReceiptVoucher', 'GRVMasterAPIController@approveGoodReceiptVoucher');
-            Route::post('rejectGoodReceiptVoucher', 'GRVMasterAPIController@rejectGoodReceiptVoucher');
+            
+            
             Route::resource('general_ledgers', 'GeneralLedgerAPIController');
             Route::get('getGeneralLedgerReview', 'GeneralLedgerAPIController@getGeneralLedgerReview');
             Route::resource('item_issue_types', 'ItemIssueTypeAPIController');
@@ -661,8 +634,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('stock_transfer_details', 'StockTransferDetailsAPIController');
             Route::resource('stock_transfers', 'StockTransferAPIController');
             Route::get('StockTransferAudit', 'StockTransferAPIController@StockTransferAudit');
-            Route::post('getStockTransferApproval', 'StockTransferAPIController@getStockTransferApproval');
-            Route::post('getApprovedSTForCurrentUser', 'StockTransferAPIController@getApprovedSTForCurrentUser');
             Route::post('approveStockTransfer', 'StockTransferAPIController@approveStockTransfer');
             Route::post('rejectStockTransfer', 'StockTransferAPIController@rejectStockTransfer');
             Route::post('stockTransferReferBack', 'StockTransferAPIController@stockTransferReferBack');
@@ -671,30 +642,25 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('item_return_details', 'ItemReturnDetailsAPIController');
             Route::resource('item_return_masters', 'ItemReturnMasterAPIController');
             Route::post('getAllMaterielReturnByCompany', 'ItemReturnMasterAPIController@getAllMaterielReturnByCompany');
-            Route::post('getMaterielReturnApprovedByUser', 'ItemReturnMasterAPIController@getMaterielReturnApprovedByUser');
-            Route::post('getMaterielReturnApprovalByUser', 'ItemReturnMasterAPIController@getMaterielReturnApprovalByUser');
-            Route::get('getMaterielReturnFormData', 'ItemReturnMasterAPIController@getMaterielReturnFormData');
+            
+            
             Route::get('getItemsByMaterielReturn', 'ItemReturnDetailsAPIController@getItemsByMaterielReturn');
             Route::get('getItemsOptionsMaterielReturn', 'ItemReturnDetailsAPIController@getItemsOptionsMaterielReturn');
             Route::get('getMaterielReturnAudit', 'ItemReturnMasterAPIController@getMaterielReturnAudit');
             Route::post('materielReturnReopen', 'ItemReturnMasterAPIController@materielReturnReopen');
             Route::post('materielReturnReferBack', 'ItemReturnMasterAPIController@materielReturnReferBack');
-            Route::post('getMaterielReturnApprovalByUser', 'ItemReturnMasterAPIController@getMaterielReturnApprovalByUser');
-
-
 
             Route::get('getItemMasterAudit', 'ItemMasterAPIController@getItemMasterAudit');
 
             Route::resource('po_addons', 'PoAddonsAPIController');
             
-            Route::get('getProcumentOrderAddons', 'PoAddonsAPIController@getProcumentOrderAddons');
+            
             
             
 
             Route::resource('stock_receives', 'StockReceiveAPIController');
             Route::post('stockReceiveReferBack', 'StockReceiveAPIController@stockReceiveReferBack');
-            Route::post('getStockReceiveApproval', 'StockReceiveAPIController@getStockReceiveApproval');
-            Route::post('getApprovedSRForCurrentUser', 'StockReceiveAPIController@getApprovedSRForCurrentUser');
+            
             Route::post('getAllStockReceiveByCompany', 'StockReceiveAPIController@getAllStockReceiveByCompany');
             Route::post('stockReceiveReopen', 'StockReceiveAPIController@stockReceiveReopen');
             Route::get('getStockReceiveFormData', 'StockReceiveAPIController@getStockReceiveFormData');
@@ -719,7 +685,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('poAdv_payment_refferedbacks', 'PurchaseOrderAdvPaymentRefferedbackAPIController');
             Route::resource('po_payment_terms_refferedbacks', 'PoPaymentTermsRefferedbackAPIController');
             Route::resource('document_refered_histories', 'DocumentReferedHistoryAPIController');
-            Route::post('getPoMasterAmendHistory', 'PurchaseOrderMasterRefferedHistoryAPIController@getPoMasterAmendHistory');
+            
             Route::get('getPoItemsForAmendHistory', 'PurchaseOrderDetailsRefferedHistoryAPIController@getPoItemsForAmendHistory');
             Route::get('getPoLogisticsItemsForAmendHistory', 'PurchaseOrderAdvPaymentRefferedbackAPIController@getPoLogisticsItemsForAmendHistory');
             Route::get('getPoPaymentTermsForAmendHistory', 'PoPaymentTermsRefferedbackAPIController@getPoPaymentTermsForAmendHistory');
@@ -744,12 +710,12 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('getPurchaseReturnAmendHistory', 'PurchaseReturnMasterRefferedBackAPIController@getPurchaseReturnAmendHistory');
             Route::post('purchaseReturnAmend', 'PurchaseReturnAPIController@purchaseReturnAmend');
             Route::get('getPurchaseReturnAudit', 'PurchaseReturnAPIController@getPurchaseReturnAudit');
-            Route::post('getPurchaseReturnApprovalByUser', 'PurchaseReturnAPIController@getPurchaseReturnApprovalByUser');
+            
             Route::post('purchaseReturnReopen', 'PurchaseReturnAPIController@purchaseReturnReopen');
-            Route::post('getPurchaseReturnApprovedByUser', 'PurchaseReturnAPIController@getPurchaseReturnApprovedByUser');
+            
             Route::get('grvForPurchaseReturn', 'PurchaseReturnAPIController@grvForPurchaseReturn');
             Route::get('grvDetailByMasterForPurchaseReturn', 'PurchaseReturnAPIController@grvDetailByMasterForPurchaseReturn');
-            Route::get('getPurchaseReturnFormData', 'PurchaseReturnAPIController@getPurchaseReturnFormData');
+            
             Route::post('purchaseReturnSegmentChkActive', 'PurchaseReturnAPIController@purchaseReturnSegmentChkActive');
             Route::resource('purchase_return_details', 'PurchaseReturnDetailsAPIController');
             Route::get('getItemsByPurchaseReturnMaster', 'PurchaseReturnDetailsAPIController@getItemsByPurchaseReturnMaster');
@@ -757,13 +723,13 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('storePurchaseReturnDetailsFromGRV', 'PurchaseReturnDetailsAPIController@storePurchaseReturnDetailsFromGRV');
             Route::post('purchaseReturnDeleteAllDetails', 'PurchaseReturnDetailsAPIController@purchaseReturnDeleteAllDetails');
 
-            Route::resource('purchaseRequestReferreds', 'PurchaseRequestReferredAPIController');
+            
             Route::resource('prDetailsReferedHistories', 'PrDetailsReferedHistoryAPIController');
 
-            Route::post('getPrMasterAmendHistory', 'PurchaseRequestReferredAPIController@getPrMasterAmendHistory');
+            
 
             Route::resource('contracts', 'ContractAPIController');
-            Route::get('getPrItemsForAmendHistory', 'PrDetailsReferedHistoryAPIController@getPrItemsForAmendHistory');
+            
             Route::resource('customer_invoice_direct_details', 'CustomerInvoiceDirectDetailAPIController');
 
             Route::get('getINVFilterData', 'InventoryReportAPIController@getInventoryFilterData');
@@ -777,8 +743,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::post('getAllDocumentApproval', 'DocumentApprovedAPIController@getAllDocumentApproval');
             Route::post('getAllDocumentApprovalTest', 'DocumentApprovedAPIController@getAllDocumentApproval');
-            Route::post('approvalPreCheckAllDoc', 'DocumentApprovedAPIController@approvalPreCheckAllDoc');
-            Route::post('approveDocument', 'DocumentApprovedAPIController@approveDocument');
+            
 
             //Route::get('getTotalCountOfApproval', 'DocumentApprovedAPIController@getTotalCountOfApproval');
 
@@ -826,8 +791,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('getADVPaymentForPV', 'PaySupplierInvoiceMasterAPIController@getADVPaymentForPV');
             Route::get('getADVPaymentForMatchingDocument', 'PaySupplierInvoiceMasterAPIController@getADVPaymentForMatchingDocument');
             Route::post('paymentVoucherReopen', 'PaySupplierInvoiceMasterAPIController@paymentVoucherReopen');
-            Route::post('getPaymentApprovalByUser', 'PaySupplierInvoiceMasterAPIController@getPaymentApprovalByUser');
-            Route::post('getPaymentApprovedByUser', 'PaySupplierInvoiceMasterAPIController@getPaymentApprovedByUser');
+            
             Route::get('getPaymentVoucherMaster', 'PaySupplierInvoiceMasterAPIController@getPaymentVoucherMaster');
             Route::post('checkPVDocumentActive', 'PaySupplierInvoiceMasterAPIController@checkPVDocumentActive');
             Route::get('getPOPaymentForPV', 'PaySupplierInvoiceMasterAPIController@getPOPaymentForPV');
@@ -844,7 +808,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('customerInvoiceDetails', 'CustomerInvoiceDirectAPIController@customerInvoiceDetails');
             Route::put('custItemDetailUpdate/{id}', 'CustomerInvoiceItemDetailsAPIController@custItemDetailUpdate');
             Route::post('getAllInvReclassificationByCompany', 'InventoryReclassificationAPIController@getAllInvReclassificationByCompany');
-            Route::get('getInvReclassificationFormData', 'InventoryReclassificationAPIController@getInvReclassificationFormData');
+            
             Route::get('getINVFormData', 'CustomerInvoiceDirectAPIController@getINVFormData');
             Route::post('getCustomerInvoiceMasterView', 'CustomerInvoiceDirectAPIController@getCustomerInvoiceMasterView');
             Route::get('getcreateINVFormData', 'CustomerInvoiceDirectAPIController@getcreateINVFormData');
@@ -866,8 +830,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('inv_reclassification_details', 'InventoryReclassificationDetailAPIController');
             Route::resource('inv_reclassifications', 'InventoryReclassificationAPIController');
             Route::get('getInvReclassificationAudit', 'InventoryReclassificationAPIController@getInvReclassificationAudit');
-            Route::post('getInvReclassificationApprovedByUser', 'InventoryReclassificationAPIController@getInvReclassificationApprovedByUser');
-            Route::post('getInvReclassificationApprovalByUser', 'InventoryReclassificationAPIController@getInvReclassificationApprovalByUser');
+            
             Route::get('getItemsOptionForReclassification', 'InventoryReclassificationAPIController@getItemsOptionForReclassification');
             Route::get('getItemsByReclassification', 'InventoryReclassificationDetailAPIController@getItemsByReclassification');
 
@@ -898,16 +861,15 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::put('updateDebiteNoteType/{id}', 'DebitNoteAPIController@updateDebiteNoteType');
             Route::post('getAllDebitNotes', 'DebitNoteAPIController@getAllDebitNotes');
             Route::post('exportDebitNotesByCompany', 'DebitNoteAPIController@exportDebitNotesByCompany');
-            Route::post('getDebitNoteApprovedByUser', 'DebitNoteAPIController@getDebitNoteApprovedByUser');
-            Route::post('getDebitNoteApprovalByUser', 'DebitNoteAPIController@getDebitNoteApprovalByUser');
+            
             Route::post('debitNoteReopen', 'DebitNoteAPIController@debitNoteReopen');
-            Route::get('getDebitNoteFormData', 'DebitNoteAPIController@getDebitNoteFormData');
+            
             Route::resource('debit_note_details', 'DebitNoteDetailsAPIController');
             Route::get('getDetailsByDebitNote', 'DebitNoteDetailsAPIController@getDetailsByDebitNote');
             Route::get('getDebitNotePaymentStatusHistory', 'DebitNoteAPIController@getDebitNotePaymentStatusHistory');
             Route::post('amendDebitNote', 'DebitNoteAPIController@amendDebitNote');
             Route::post('amendDebitNoteReview', 'DebitNoteAPIController@amendDebitNoteReview');
-            Route::post('approvalPreCheckDebitNote', 'DebitNoteAPIController@approvalPreCheckDebitNote');
+            
             Route::post('checkPaymentStatusDNPrint', 'DebitNoteAPIController@checkPaymentStatusDNPrint');
 
             Route::resource('performa_masters', 'PerformaMasterAPIController');
@@ -924,10 +886,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::post('getAllStockAdjustmentsByCompany', 'StockAdjustmentAPIController@getAllStockAdjustmentsByCompany');
 
-            Route::post('getStockAdjustmentApprovedByUser', 'StockAdjustmentAPIController@getStockAdjustmentApprovedByUser');
-            Route::post('getStockAdjustmentApprovalByUser', 'StockAdjustmentAPIController@getStockAdjustmentApprovalByUser');
-
-            Route::get('getStockAdjustmentFormData', 'StockAdjustmentAPIController@getStockAdjustmentFormData');
+            
             Route::get('getStockAdjustmentAudit', 'StockAdjustmentAPIController@getStockAdjustmentAudit');
             Route::get('getItemsByStockAdjustment', 'StockAdjustmentDetailsAPIController@getItemsByStockAdjustment');
             Route::get('getItemsOptionsStockAdjustment', 'StockAdjustmentDetailsAPIController@getItemsOptionsStockAdjustment');
@@ -971,11 +930,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('getCreditNoteMasterRecord', 'CreditNoteAPIController@getCreditNoteMasterRecord');
             Route::get('getFilteredGRV', 'GRVMasterAPIController@getFilteredGRV');
             Route::get('getDirectItems', 'DirectInvoiceDetailsAPIController@getDirectItems');
-            Route::post('getInvoiceMasterApproval', 'BookInvSuppMasterAPIController@getInvoiceMasterApproval');
+            
             Route::post('supplierInvoiceReopen', 'BookInvSuppMasterAPIController@supplierInvoiceReopen');
-            Route::post('getApprovedInvoiceForCurrentUser', 'BookInvSuppMasterAPIController@getApprovedInvoiceForCurrentUser');
             Route::post('approveSupplierInvoice', 'BookInvSuppMasterAPIController@approveSupplierInvoice');
-            Route::post('rejectSupplierInvoice', 'BookInvSuppMasterAPIController@rejectSupplierInvoice');
+            
             Route::post('saveSupplierInvoiceTaxDetails', 'BookInvSuppMasterAPIController@saveSupplierInvoiceTaxDetails');
             Route::get('supplierInvoiceTaxTotal', 'BookInvSuppMasterAPIController@supplierInvoiceTaxTotal');
             Route::post('clearSupplierInvoiceNo', 'BookInvSuppMasterAPIController@clearSupplierInvoiceNo');
@@ -1276,7 +1234,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('reportBudgetTemplateCategoryWise', 'BudgetMasterAPIController@reportBudgetTemplateCategoryWise');
             Route::get('getBudgetFormData', 'BudgetMasterAPIController@getBudgetFormData');
             Route::get('downloadBudgetUploadTemplate', 'BudgetMasterAPIController@downloadBudgetUploadTemplate');
-            Route::get('checkBudgetShowPolicy', 'BudgetMasterAPIController@checkBudgetShowPolicy');
+            
             Route::get('getBudgetConsumptionByDocument', 'BudgetMasterAPIController@getBudgetConsumptionByDocument');
             Route::post('syncGlBudget', 'BudjetdetailsAPIController@syncGlBudget');
             Route::post('getBudgetDetailHistory', 'BudjetdetailsAPIController@getBudgetDetailHistory');
@@ -1370,12 +1328,12 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('assetCostingUpload', 'FixedAssetMasterAPIController@assetCostingUpload');
             Route::get('downloadAssetTemplate', 'FixedAssetMasterAPIController@downloadAssetTemplate');
             Route::get('downloadPrItemUploadTemplate', 'PurchaseRequestAPIController@downloadPrItemUploadTemplate');
-            Route::post('pull-mr-details', 'PurchaseRequestAPIController@pullMrDetails');
+            
             Route::get('downloadQuotationItemUploadTemplate','QuotationMasterAPIController@downloadQuotationItemUploadTemplate');
 
-            Route::resource('pulled-mr-details', 'PulledItemFromMRController');
-            Route::post('remove-pulled-mr-details', 'PulledItemFromMRController@removeMRDetails');
-            Route::get('purchase_requests/pull/items/', 'PulledItemFromMRController@pullAllItemsByPr');
+            
+            
+            
 
 
 
@@ -1746,14 +1704,14 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('revertChequePrint', 'BankLedgerAPIController@revertChequePrint');
             Route::get('getCancelledDetails', 'PurchaseRequestAPIController@getCancelledDetails');
             Route::get('getClosedDetails', 'PurchaseRequestAPIController@getClosedDetails');
-            Route::get('getQtyOrderDetails', 'PurchaseRequestDetailsAPIController@getQtyOrderDetails');
-            Route::get('getWarehouseStockDetails', 'PurchaseRequestDetailsAPIController@getWarehouseStockDetails');
-            Route::post('updateQtyOnOrder', 'PurchaseRequestDetailsAPIController@updateQtyOnOrder');
-            Route::post('prItemsUpload', 'PurchaseRequestDetailsAPIController@prItemsUpload');
+            
+            
+            
+            
 
-            Route::post('purchase-request-add-all-items', 'PurchaseRequestDetailsAPIController@addAllItemsToPurchaseRequest');
+            
 
-            Route::get('copy_pr/{id}', 'PurchaseRequestDetailsAPIController@copyPr');
+            
 
             Route::resource('allocation_masters', 'AllocationMasterAPIController');
 
@@ -1853,8 +1811,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             
             Route::post('getSupplierCatalogDetailBySupplierAllItem', 'SupplierCatalogMasterAPIController@getSupplierCatalogDetailBySupplierAllItem');
             Route::post('getSupplierCatalogDetailBySupplierItemForPo', 'SupplierCatalogMasterAPIController@getSupplierCatalogDetailBySupplierItemForPo');
-            Route::resource('dashboard_widget_masters', 'DashboardWidgetMasterAPIController');
-            Route::get('getWidgetMasterFormData', 'DashboardWidgetMasterAPIController@getWidgetMasterFormData');
             Route::get('getDashboardDepartment', 'DashboardWidgetMasterAPIController@getDashboardDepartment');
             Route::get('getDashboardWidget', 'DashboardWidgetMasterAPIController@getDashboardWidget');
             Route::post('getCustomWidgetGraphData', 'DashboardWidgetMasterAPIController@getCustomWidgetGraphData');
@@ -1889,7 +1845,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('downloadQuotationItemUploadTemplate', 'QuotationMasterAPIController@downloadQuotationItemUploadTemplate');
             Route::get('downloadDeliveryOrderUploadTemplate', 'DeliveryOrderAPIController@downloadQuotationItemUploadTemplate');
             Route::post('poItemsUpload', 'ProcumentOrderAPIController@poItemsUpload');
-            Route::post('checkBudgetCutOffForPo', 'ProcumentOrderAPIController@checkBudgetCutOffForPo');
+            
 
 
             Route::post('sales-order/is-link-item', 'DeliveryOrderAPIController@isLinkItem');
@@ -2154,8 +2110,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('removeAllStockCountItems', 'StockCountDetailAPIController@removeAllStockCountItems');
             Route::post('getAllStockCountsByCompany', 'StockCountAPIController@getAllStockCountsByCompany');
             Route::post('stockCountReopen', 'StockCountAPIController@stockCountReopen');
-            Route::post('getStockCountApprovalByUser', 'StockCountAPIController@getStockCountApprovalByUser');
-            Route::post('getStockCountApprovedByUser', 'StockCountAPIController@getStockCountApprovedByUser');
+            
             Route::post('stockCountReferBack', 'StockCountAPIController@stockCountReferBack');
             Route::get('stockCountAudit', 'StockCountAPIController@getStockCountAudit');
 
@@ -2198,10 +2153,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('allocateExpectedDeliveryDates', 'PoDetailExpectedDeliveryDateAPIController@allocateExpectedDeliveryDates');
 
 
-            Route::resource('segment_allocated_items', 'SegmentAllocatedItemAPIController');
-            Route::post('allocateSegmentWiseItem', 'SegmentAllocatedItemAPIController@allocateSegmentWiseItem');
-            Route::post('getSegmentAllocatedItems', 'SegmentAllocatedItemAPIController@getSegmentAllocatedItems');
-            Route::post('getSegmentAllocatedFormData', 'SegmentAllocatedItemAPIController@getSegmentAllocatedFormData');
+            
+            
+            
+            
             Route::get('getVerificationFormData', 'AssetVerificationAPIController@getVerificationFormData');
             Route::post('getAllAssetVerification', 'AssetVerificationAPIController@index');
             Route::post('storeVerification', 'AssetVerificationAPIController@store');
