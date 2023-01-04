@@ -801,7 +801,7 @@ class GRVMasterAPIController extends AppBaseController
         $input['modifiedUserSystemID'] = $user->employee['employeeSystemID'];
 
       
-
+     
         $gRVMaster = $this->gRVMasterRepository->update($input, $id);
 
         if(isset($gRVMaster->deliveryAppoinmentID))
@@ -819,44 +819,50 @@ class GRVMasterAPIController extends AppBaseController
 
            $ignore_po =  array_values(array_diff($appoinmnet_po_ids,$grv_purchase));
 
-           $extra_po_msg = 'The extra purchase order added to grv is ';
-           $ignore_po_msg = "The avoided purchase order from delivery appointmnet is";
            $total_msg = '';
 
            if(count($extra_po) > 0)
            {
-            $xtra_po_order = ProcumentOrder::whereIn('purchaseOrderID',$extra_po)->pluck('purchaseOrderCode');
-             foreach($xtra_po_order as $extra)
+             foreach($extra_po as $extra)
              {
-                $extra_po_msg .= ', '.$extra ;
+
+               $extra_po_msg =  GRVDetails::where('grvAutoID',$id)->where('purchaseOrderMastertID',$extra)->with(['po_master'=>function($q){
+                $q->select('purchaseOrderID','purchaseOrderCode');
+               }])->select('grvDetailsID','itemPrimaryCode','itemDescription','noQty','purchaseOrderMastertID')->get();
+
+
              }
            
            }
            else
            {
-            $extra_po_msg .= " zero <br>";
+            $extra_po_msg = [];
            }
-
-
 
 
            if(count($ignore_po) > 0)
            {
-             $ignore_po_order =  ProcumentOrder::whereIn('purchaseOrderID',$ignore_po)->pluck('purchaseOrderCode');
-             foreach($ignore_po_order as $extra)
+             foreach($ignore_po as $extra)
              {
-                $ignore_po_msg .= ', '.$extra ;
+
+                $ignore_po_msg =  AppointmentDetails::where('po_master_id',$extra)->where('appointment_id',$gRVMaster->deliveryAppoinmentID)->with(['po_master'=>function($q){
+                    $q->select('purchaseOrderID','purchaseOrderCode');
+                   },'item'=>function($q){
+                    $q->select('itemCodeSystem','primaryCode','itemDescription');
+                   }])->select('id','qty','po_master_id','item_id')->get();
              }
            }
            else
            {
-            $ignore_po_msg .= " zero <br>";
+            $ignore_po_msg = [];
+        
            }
 
+           $appointment_info = Appointment::where('id',$gRVMaster->deliveryAppoinmentID)->select('id','primary_code')->first();
 
+      
 
-
-           $msg = '';
+           $changes_item = [];
            foreach($appoinmnet_details as $po)
            {
                 
@@ -868,32 +874,102 @@ class GRVMasterAPIController extends AppBaseController
                             }])->first();
               if(isset($grv_Details))
               {
-                 $grv_qty =  $grv_Details->noQty;
 
-                 if($planeed_qty != $grv_qty)
-                 {  
-                    $info = "In purchase order ".$grv_Details->po_master->purchaseOrderCode." Item ".$grv_Details->itemPrimaryCode." Has delivery quantity is ".$planeed_qty." But grv quantity is ".$grv_qty;
-                    $msg .= $info . "<br>";
-                 }
+                $grv_changes['po_code'] = $po->po_master->purchaseOrderCode;
+                $grv_changes['item'] = $grv_Details->itemPrimaryCode;
+                $grv_changes['description'] = $grv_Details->itemDescription;
+                $grv_changes['appoinment_qty'] = $po->qty;
+                $grv_changes['grv_qty'] = $grv_Details->noQty;
+                $changes_item[]=$grv_changes;
+
+           
               }
 
               
            }
+         
+       
+            $body = "Dear Supplier, <br><br> Please be informed GRV <b>$gRVMaster->grvPrimaryCode</b> created for delivery appointment <b>$appointment_info->primary_code</b>  is confirmed. 
+            <br><br>Please note below changes.<br><br> <b>Extra purchase order documents added to GRV</b><br><br>";
+            $body .= '<table style="width:100%;border: 1px solid black;border-collapse: collapse;">
+            <thead>
+                <tr>
+                    <th style="text-align: center;border: 1px solid black;">PO Code</th> 
+                    <th style="text-align: center;border: 1px solid black;">Item Code</th>
+                    <th style="text-align: center;border: 1px solid black;">Item Description </th> 
+                    <th style="text-align: center;border: 1px solid black;">Qty </th> 
+                </tr>
+            </thead>';
+            $body .= '<tbody>';
+            foreach ($extra_po_msg as $val) {
+                $body .= '<tr>
+                    <td style="text-align:center;border: 1px solid black;">' . $val->po_master->purchaseOrderCode . '</td>  
+                    <td style="text-align:center;border: 1px solid black;">' . $val->itemPrimaryCode . '</td>  
+                    <td style="text-align:center;border: 1px solid black;">' . $val->itemDescription . '</td>   
+                    <td style="text-align:center;border: 1px solid black;">' . $val->noQty . '</td>  
+                </tr>';
+            
+            }
+            $body .= '</tbody>
+            </table>';
+            $body .= "<br><br>";
+            $body .= "<b>Purchase order documents removed from GRV</b> <br<br>";
+            $body .= "<br><br>";
+            $body .= '<table style="width:100%;border: 1px solid black;border-collapse: collapse;">
+            <thead>
+                <tr>
+                    <th style="text-center: center;border: 1px solid black;">PO Code</th> 
+                    <th style="text-center: center;border: 1px solid black;">Item Code</th>
+                    <th style="text-center: center;border: 1px solid black;">Item Description </th> 
+                    <th style="text-center: center;border: 1px solid black;">Qty </th> 
+                </tr>
+            </thead>';
+            $body .= '<tbody>';
+            foreach ($ignore_po_msg as $val) {
+                $body .= '<tr>
+                    <td style="text-align:center;border: 1px solid black;">' . $val->po_master->purchaseOrderCode . '</td>  
+                    <td style="text-align:center;border: 1px solid black;">' . $val->item->primaryCode . '</td>  
+                    <td style="text-align:center;border: 1px solid black;">' . $val->item->itemDescription . '</td>   
+                    <td style="text-align:center;border: 1px solid black;">' . $val->qty . '</td>  
+                </tr>';
+            
+                }
+            $body .= '</tbody>
+            </table>';
+            $body .= "<br><br>";
+            $body .= "<b>Quantity changes from delivery appointment</b> <br<br>";
+            $body .= "<br><br>";
+            $body .= '<table style="width:100%;border: 1px solid black;border-collapse: collapse;">
+            <thead>
+                <tr>
+                    <th style="text-align: center;border: 1px solid black;">PO Code</th> 
+                    <th style="text-align: center;border: 1px solid black;">Item Code</th>
+                    <th style="text-align: center;border: 1px solid black;">Item Description </th> 
+                    <th style="text-align: center;border: 1px solid black;">Appointment Qty </th> 
+                    <th style="text-align: center;border: 1px solid black;">GRV Qty </th> 
+                </tr>
+            </thead>';
+            $body .= '<tbody>';
+            foreach ($changes_item as $val) {
+                $body .= '<tr>
+                    <td style="text-align:center;border: 1px solid black;">' . $val['po_code'] . '</td>  
+                    <td style="text-align:center;border: 1px solid black;">' . $val['item'] . '</td>  
+                    <td style="text-align:center;border: 1px solid black;">' . $val['description'] . '</td>   
+                    <td style="text-align:center;border: 1px solid black;">' . $val['appoinment_qty'] . '</td>  
+                    <td style="text-align:center;border: 1px solid black;">' . $val['grv_qty'] . '</td>  
+                </tr>';
+            
+                }
+            $body .= '</tbody>
+            </table>';
+            $dataEmail['empEmail'] = 'nilaf.ahamed@osos.om';
+            $dataEmail['companySystemID'] = $input['companySystemID'];
+            $dataEmail['alertMessage'] = "GRV  Confirmed";
+            $dataEmail['emailAlertMessage'] = $body;
+            $sendEmail = \Email::sendEmailErp($dataEmail);
 
-           
-           $total_msg .= $extra_po_msg ."<br>".$ignore_po_msg. "<br>".$msg; 
 
-
-           $dataEmail['empEmail'] = 'nilaf.ahamed@osos.om';
-           $dataEmail['companySystemID'] = $input['companySystemID'];
-           $temp = '<p>Dear Supplier, <br /></p><p>Please be informed that the delivery appoinment grv is confirmed.Check below detail <br><br> 
-                 '.$total_msg.'<br><br>Thank You. </p>';
-           $dataEmail['alertMessage'] = "GRV  Confirmed";
-           $dataEmail['emailAlertMessage'] = $temp;
-           $sendEmail = \Email::sendEmailErp($dataEmail);
-
-
-
+         
         }
 
 
