@@ -97,14 +97,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             });
 
 
-
-
-
-            
-
-
-
-            Route::get('getCompanyLocalCurrency', 'CurrencyMasterAPIController@getCompanyLocalCurrency');
             Route::get('getCompanyReportingCurrency', 'CurrencyMasterAPIController@getCompanyReportingCurrency');
             Route::get('getCompanyReportingCurrencyCode', 'CurrencyMasterAPIController@getCompanyReportingCurrencyCode');
 
@@ -530,39 +522,15 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             
             Route::resource('purchase_order_details', 'PurchaseOrderDetailsAPIController');
             
-            
-            Route::resource('materiel_requests', 'MaterielRequestAPIController');
-            Route::get('materiel_requests/{id}/purchase-requests', 'MaterielRequestAPIController@checkPurcahseRequestExist');
-            Route::post('requestReopen', 'MaterielRequestAPIController@requestReopen');
-            Route::post('requestReferBack', 'MaterielRequestAPIController@requestReferBack');
-            Route::post('getAllRequestByCompany', 'MaterielRequestAPIController@getAllRequestByCompany');
-            
-            
-            Route::get('materielRequestAudit', 'MaterielRequestAPIController@materielRequestAudit');
-            Route::resource('materiel_request_details', 'MaterielRequestDetailsAPIController');
-            Route::get('getItemsByMaterielRequest', 'MaterielRequestDetailsAPIController@getItemsByMaterielRequest');
-            Route::get('getItemsOptionForMaterielRequest', 'MaterielRequestDetailsAPIController@getItemsOptionForMaterielRequest');
             Route::post('exportStockEvaluation', 'ErpItemLedgerAPIController@exportStockEvaluation');
             Route::post('exportStockLedgerReport', 'ErpItemLedgerAPIController@exportStockLedgerReport');
             Route::post('validateStockValuationReport', 'ErpItemLedgerAPIController@validateStockValuationReport');
             Route::post('validateStockTakingReport', 'ErpItemLedgerAPIController@validateStockTakingReport');
-            Route::get('getItemWarehouseQnty', 'MaterielRequestDetailsAPIController@getItemWarehouseQnty');
-            Route::get('cancelMaterielRequest', 'MaterielRequestAPIController@cancelMaterielRequest');
-            Route::get('update-qnty-by-location', 'MaterielRequestAPIController@updateQntyByLocation');
-            Route::get('materiel_request/details/{id}', 'MaterielRequestAPIController@getMaterielRequestDetails');
-            Route::get('returnMaterialRequestPreCheck', 'MaterielRequestAPIController@returnMaterialRequestPreCheck');
-            Route::post('returnMaterialRequest', 'MaterielRequestAPIController@returnMaterialRequest');
-
+            
             Route::get('material-issue/update-qnty-by-location', 'ItemIssueMasterAPIController@updateQntyByLocation');
-            Route::get('material-issue/check/product/{id}/{companySystemID}', 'ItemIssueMasterAPIController@checkProductExistInIssues');
-            Route::get('purchase_requests/check/product/{itemCode}/{companySystemID}', 'PurchaseRequestAPIController@checkProductExistInIssues');
             
             Route::get('checkManWareHouse', 'ItemIssueMasterAPIController@checkManWareHouse');
 
-
-            Route::resource('item_issue_details', 'ItemIssueDetailsAPIController');
-
-            Route::resource('item_issue_masters', 'ItemIssueMasterAPIController');
             Route::post('getAllMaterielIssuesByCompany', 'ItemIssueMasterAPIController@getAllMaterielIssuesByCompany');
             
             
@@ -580,9 +548,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('getSearchCustomerByCompany', 'CustomerMasterAPIController@getSearchCustomerByCompany');
             Route::post('generateStockTakingReport', 'ErpItemLedgerAPIController@generateStockTakingReport');
             Route::post('exportStockTaking', 'ErpItemLedgerAPIController@exportStockTaking');
-
-            Route::get('material-issue-by-refno', 'ItemIssueMasterAPIController@getMaterialIssueByRefNo');
-
 
             Route::resource('accounts_payable_ledgers', 'AccountsPayableLedgerAPIController');
             Route::get('getAPFilterData', 'AccountsPayableReportAPIController@getAPFilterData');
@@ -1431,11 +1396,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('assetDepreciationHistoryByID', 'DepreciationMasterReferredHistoryAPIController@assetDepreciationHistoryByID');
             Route::resource('depperiodsreferredhistory', 'DepreciationPeriodsReferredHistoryAPIController');
             Route::post('getAssetDepPeriodHistoryByID', 'DepreciationPeriodsReferredHistoryAPIController@getAssetDepPeriodHistoryByID');
-
-            Route::resource('request_reffered_back', 'RequestRefferedBackAPIController');
-            Route::post('getReferBackHistoryByRequest', 'RequestRefferedBackAPIController@getReferBackHistoryByRequest');
-            Route::resource('request_details_reffered_backs', 'RequestDetailsRefferedBackAPIController');
-            Route::get('getItemRequestDetailsReferBack', 'RequestDetailsRefferedBackAPIController@getItemRequestDetailsReferBack');
 
             Route::resource('asset_capitalization_referreds', 'AssetCapitalizationReferredAPIController');
             Route::resource('asset_capitalizatio_det_referreds', 'AssetCapitalizatioDetReferredAPIController');
