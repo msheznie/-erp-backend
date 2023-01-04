@@ -2739,7 +2739,9 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         $input = $request->all();
 
         $output = PaySupplierInvoiceMaster::where('PayMasterAutoId', $input['PayMasterAutoId'])
-            ->with(['project','supplier', 'bankaccount', 'transactioncurrency', 'paymentmode',
+            ->with(['project','supplier', 'bankaccount'=> function($query){
+                $query->with('currency');
+            }, 'transactioncurrency', 'paymentmode',
                 'supplierdetail' => function ($query) {
                     $query->with(['pomaster']);
                 },
