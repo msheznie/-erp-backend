@@ -1975,14 +1975,6 @@ WHERE
             return ['status' => false, 'message' => 'The total Evaluation Criteria Weightage cannot be less than 100'];
         }
 
-        if ($input['commercial_weightage'] != 0 && ($input['commercial_passing_weightage'] == 0 || is_null($input['commercial_passing_weightage']))) {
-            //return ['status' => false, 'message' => 'Commercial Passing Weightage is required'];
-        }
-
-        if ($input['technical_weightage'] != 0 && ($input['technical_passing_weightage'] == 0 || is_null($input['technical_passing_weightage']))) {
-            // return ['status' => false, 'message' => 'Technical Passing Weightage is required'];
-        }
-
         $tenderMaster = TenderMaster::find($input['id']);
         $tenderbidEmployee = SrmTenderBidEmployeeDetails::where('tender_id',$input['id'])->count();
         
@@ -2042,9 +2034,7 @@ WHERE
             'stage.required' => 'Stage is required.',
             'no_of_alternative_solutions.required' => 'Number of Alternative solutions is required.',
             'commercial_weightage.required' => 'Commercial Criteria Weightage is required.',
-            'technical_weightage.required' => 'Technical Criteria Weightage is required.',
-            //'commercial_passing_weightage.required' => 'Commercial Passing Weightage is required.',
-            //'technical_passing_weightage.required' => 'Technical Passing Weightage is required.'
+            'technical_weightage.required' => 'Technical Criteria Weightage is required.'
         ];
 
         $validator = \Validator::make($input, [
@@ -2053,9 +2043,7 @@ WHERE
             'stage' => 'required',
             'no_of_alternative_solutions' => 'required',
             'commercial_weightage' => 'required',
-            'technical_weightage' => 'required',
-            //'commercial_passing_weightage' => 'required',
-           // 'technical_passing_weightage' => 'required'
+            'technical_weightage' => 'required'
         ], $messages);
 
         if ($validator->fails()) {
