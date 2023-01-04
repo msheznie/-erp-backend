@@ -456,7 +456,26 @@ class TenderMasterAPIController extends AppBaseController
         if ($lastSerial) {
             $lastSerialNumber = intval($lastSerial->serial_number) + 1;
         }
+
         $tenderCode = ($company->CompanyID . '/' . $documentMaster['documentID'] . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
+        $document_system_id = 108;
+
+        if(isset($input['rfx']) && $input['rfx']){
+            $lastSerialNumber = 1;
+            $documentMaster = DocumentMaster::where('documentSystemID', 113)->first();
+            $lastSerial = TenderMaster::where('company_id', $input['companySystemID'])
+                ->where('document_system_id', 113)
+                ->orderBy('id', 'desc')
+                ->first();
+
+            if ($lastSerial) {
+                $lastSerialNumber = intval($lastSerial->serial_number) + 1;
+            }
+
+            $tenderCode =  ($company->CompanyID . '/' . $documentMaster['documentID'] . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
+            $document_system_id = 113;
+        }
+
         DB::beginTransaction();
         try {
             $data['currency_id'] = isset($input['currency_id']) ? $input['currency_id'] : null;
@@ -464,7 +483,7 @@ class TenderMasterAPIController extends AppBaseController
             $data['envelop_type_id'] = isset($input['envelop_type_id']) ? $input['envelop_type_id'] : null;
             $data['tender_type_id'] = $input['tender_type_id'];
             $data['title'] = $input['title'];
-            $data['document_system_id'] = 108;
+            $data['document_system_id'] = $document_system_id;
             $data['document_id'] = $documentMaster['documentID'];
             $data['company_id'] = $input['companySystemID'];
             $data['created_by'] = $employee->employeeSystemID;
@@ -3091,5 +3110,4 @@ WHERE
         ->where('srm_bid_submission_master.status', 1)->where('srm_bid_submission_master.bidSubmittedYN', 1)->where('srm_bid_submission_master.tender_id', $tenderId)->where('srm_bid_submission_master.commercial_verify_status', 1)
         ->orderBy('srm_bid_submission_master.id','asc')->pluck('id');
     }
-
 }
