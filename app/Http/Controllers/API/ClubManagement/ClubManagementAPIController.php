@@ -10,6 +10,7 @@ use App\Jobs\CreateStageCustomerInvoice;
 use App\Http\Requests\CreateStageReceiptVoucherAPIRequest;
 use App\Jobs\CreateStageReceiptVoucher;
 use App\Models\AccountsReceivableLedger;
+use App\Models\BankAccount;
 use App\Models\ChartOfAccount;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\Company;
@@ -663,6 +664,23 @@ class ClubManagementAPIController extends AppBaseController
             return $this->sendResponse($taxArray, 'Data retrieved successfully');
         }
         catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+    }
+
+    public function pullBankAccounts(Request $request){
+        DB::beginTransaction();
+        try {
+            $company_id = $request->get('company_id');
+            $banks = BankAccount::selectRaw('bankShortCode As bankCode, bankName As bankName, AccountNo as accountNo, accountCurrencyID as currency, chartOfAccountSystemID as glCode, bankBranch as bankBranch, accountSwiftCode as swiftCode, isAccountActive as isActive')
+                ->where('companySystemID', $company_id)
+                ->where('approvedYN', 1)
+                ->get();
+
+            DB::commit();
+            return $this->sendResponse($banks, 'Data Retrieved successfully');
+        } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
         }
