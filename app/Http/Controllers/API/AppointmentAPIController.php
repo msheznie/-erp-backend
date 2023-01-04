@@ -525,7 +525,7 @@ class AppointmentAPIController extends AppBaseController
         ->get();
 
         $is_valid = true;
-        $msg = 'Delivery appointment failed,please check the below details.'. "<br>";;
+        $msg = 'Delivery appointment approval failed,please check below details.'. "<br>";;
         foreach($appointments as $detail)
         {
           
