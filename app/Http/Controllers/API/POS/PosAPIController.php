@@ -120,6 +120,86 @@ class PosAPIController extends AppBaseController
         }
     }
 
+    public function pullChartOfAccountMaster(Request $request)
+    {
+        DB::beginTransaction();
+        try {
+            $company_id = $request->get('company_id');
+
+            $isGroup = \Helper::checkIsCompanyGroup($company_id);
+    
+            if ($isGroup) {
+                $childCompanies = \Helper::getGroupCompany($company_id);
+            } else {
+                $childCompanies = [$company_id];
+            }
+
+            $input = $request->all();
+            $input = $this->convertArrayToSelectedValue($input, array());
+
+            if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+                $sort = 'asc';
+            } else {
+                $sort = 'desc';
+            }
+
+            if (isset($input['per_page'])) {
+                $per_page = $input['per_page'];
+            } else {
+                $per_page = 10;
+            }
+
+            $chartOfAccount = ChartOfAccount::selectRaw('chartofaccounts.chartOfAccountSystemID As id,
+                                                        chartofaccounts.AccountCode As accountCode,
+                                                        chartofaccounts.AccountCode As secondary_code,
+                                                        chartofaccounts.AccountDescription as AccountDescription,
+                                                        chartofaccounts.controllAccountYN as is_control_account,
+                                                        chartofaccounts.isActive as is_active,
+                                                        chartofaccounts.isBank as is_bank, 
+                                                        accountstype.description as category,
+                                                        accountstype.accountsType as category_id, 
+                                                        controlaccounts.description as controlAccount,
+                                                        controlaccounts.controlAccountsSystemID as control_account_id')
+                ->join('accountstype', 'accountstype.accountsType', '=', 'chartofaccounts.catogaryBLorPLID')
+                ->join('controlaccounts', 'controlaccounts.controlAccountsSystemID', '=', 'chartofaccounts.controlAccountsSystemID')
+                ->where('chartofaccounts.chartOfAccountSystemID', '!=', '')
+                ->where('chartofaccounts.AccountCode', '!=', '')
+                ->where('chartofaccounts.AccountDescription', '!=', '')
+                ->where('chartofaccounts.catogaryBLorPL', '!=', '')
+                ->where('chartofaccounts.controlAccounts', '!=', '')
+                ->where('chartofaccounts.isApproved', '=', 1)
+                ->where('chartofaccounts.isActive', '=', 1);
+                
+                
+                if (isset($input['control_account_id'])) {
+                    $control_account_id = $input['control_account_id'];
+                    $chartOfAccount = $chartOfAccount->where('chartofaccounts.controlAccountsSystemID', '=', $control_account_id);
+                }
+    
+                if (isset($input['category_id'])) {
+                    $category_id = $input['category_id'];
+                    $chartOfAccount = $chartOfAccount->where('chartofaccounts.catogaryBLorPLID', '=', $category_id);
+                }
+                if (isset($input['coa_search'])) {
+                    $search = $input['coa_search'];
+                    $search = str_replace("\\", "\\\\", $search);
+                    $chartOfAccount = $chartOfAccount->where(function ($query) use ($search) {
+                        $query->where('chartofaccounts.AccountDescription', 'LIKE', "%{$search}%")
+                            ->orWhere('chartofaccounts.AccountCode', 'LIKE', "%{$search}%");
+                    });
+                }
+
+                $chartOfAccount = $chartOfAccount->paginate($per_page);
+
+            DB::commit();
+            return $this->sendResponse($chartOfAccount, 'Data Retrieved successfully');
+
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+    }
+
     public function pullUnitOfMeasure(Request $request)
     {
         DB::beginTransaction();

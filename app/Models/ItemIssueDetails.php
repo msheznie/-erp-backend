@@ -396,7 +396,8 @@ class ItemIssueDetails extends Model
         'pl3',
         'deliveryComments',
         'timestamp',
-        'timesReferred'
+        'timesReferred',
+        'detail_project_id'
     ];
 
     /**
@@ -461,7 +462,8 @@ class ItemIssueDetails extends Model
         'pl3' => 'integer',
         'pl10' => 'string',
         'deliveryComments' => 'string',
-        'timesReferred' => 'integer'
+        'timesReferred' => 'integer',
+        'detail_project_id' => 'integer'
     ];
 
     /**
