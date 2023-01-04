@@ -525,14 +525,14 @@ class AppointmentAPIController extends AppBaseController
         ->get();
 
         $is_valid = true;
-        $msg = 'Unable to approve the appointment, please check below details '. "<br>";;
+        $msg = 'Delivery appointment failed,please check the below details.'. "<br>";;
         foreach($appointments as $detail)
         {
           
 
             if($detail->balance_qty < $detail->planned_qty)
             {
-                $info =" The item ".$detail->itemPrimaryCode. " from  purchase order ".$detail->purchaseOrderCode." has been planned quantity(".$detail->planned_qty.") is greater than balance quantity(".$detail->balance_qty.").";
+                $info =" The item ".$detail->itemPrimaryCode. " from  purchase order ".$detail->purchaseOrderCode." has planned quantity(".$detail->planned_qty.") is greater than balance quantity(".$detail->balance_qty.").";
                 $msg .= $info . "<br>";
                 $is_valid = false;
             }

@@ -812,7 +812,7 @@ class GRVMasterAPIController extends AppBaseController
            $grv_purchase =  GRVDetails::where('grvAutoID',$id)->groupBy('purchaseOrderMastertID')->pluck('purchaseOrderMastertID')->toArray();
 
 
-           $appoinmnet_details =  AppointmentDetails::where('appointment_id',$gRVMaster->deliveryAppoinmentID)->get();;
+           $appoinmnet_details =  AppointmentDetails::where('appointment_id',$gRVMaster->deliveryAppoinmentID)->get();
 
 
            $extra_po =  array_values(array_diff($grv_purchase,$appoinmnet_po_ids));
@@ -962,6 +962,8 @@ class GRVMasterAPIController extends AppBaseController
                 }
             $body .= '</tbody>
             </table>';
+            $body .= "<br><br>";
+            $body .= "Thank You.";
             $dataEmail['empEmail'] = 'nilaf.ahamed@osos.om';
             $dataEmail['companySystemID'] = $input['companySystemID'];
             $dataEmail['alertMessage'] = "GRV  Confirmed";
