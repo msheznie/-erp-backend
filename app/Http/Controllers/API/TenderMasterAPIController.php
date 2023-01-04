@@ -1975,6 +1975,17 @@ WHERE
             return ['status' => false, 'message' => 'The total Evaluation Criteria Weightage cannot be less than 100'];
         }
 
+        if(!isset($input['rfx'])){
+            if ($input['commercial_weightage'] != 0 && ($input['commercial_passing_weightage'] == 0 || is_null($input['commercial_passing_weightage']))) {
+                return ['status' => false, 'message' => 'Commercial Passing Weightage is required'];
+            }
+
+            if ($input['technical_weightage'] != 0 && ($input['technical_passing_weightage'] == 0 || is_null($input['technical_passing_weightage']))) {
+                return ['status' => false, 'message' => 'Technical Passing Weightage is required'];
+            }
+        }
+
+
         $tenderMaster = TenderMaster::find($input['id']);
         $tenderbidEmployee = SrmTenderBidEmployeeDetails::where('tender_id',$input['id'])->count();
         
@@ -2028,23 +2039,50 @@ WHERE
 
     public function validateTenderStrategy($input)
     {
-        $messages = [
-            'tender_type_id.required' => 'Type is required.',
-            'evaluation_type_id.required' => 'Evaluation Type is required.',
-            'stage.required' => 'Stage is required.',
-            'no_of_alternative_solutions.required' => 'Number of Alternative solutions is required.',
-            'commercial_weightage.required' => 'Commercial Criteria Weightage is required.',
-            'technical_weightage.required' => 'Technical Criteria Weightage is required.'
+        if(isset($input['rfx']) && $input['rfx']){
+            $messages = [
+                'tender_type_id.required' => 'Type is required.',
+                'evaluation_type_id.required' => 'Evaluation Type is required.',
+                'stage.required' => 'Stage is required.',
+                'no_of_alternative_solutions.required' => 'Number of Alternative solutions is required.',
+                'commercial_weightage.required' => 'Commercial Criteria Weightage is required.',
+                'technical_weightage.required' => 'Technical Criteria Weightage is required.'
+            ];
+
+            $validator = \Validator::make($input, [
+                'tender_type_id' => 'required',
+                'evaluation_type_id' => 'required',
+                'stage' => 'required',
+                'no_of_alternative_solutions' => 'required',
+                'commercial_weightage' => 'required',
+                'technical_weightage' => 'required'
+            ], $messages);
+
+        } else {
+            $messages = [
+                'tender_type_id.required' => 'Type is required.',
+                'envelop_type_id.required' => 'Envelop Type is required.',
+                'evaluation_type_id.required' => 'Evaluation Type is required.',
+                'stage.required' => 'Stage is required.',
+                'no_of_alternative_solutions.required' => 'Number of Alternative solutions is required.',
+                'commercial_weightage.required' => 'Commercial Criteria Weightage is required.',
+                'technical_weightage.required' => 'Technical Criteria Weightage is required.',
+                'commercial_passing_weightage.required' => 'Commercial Passing Weightage is required.',
+                'technical_passing_weightage.required' => 'Technical Passing Weightage is required.'
         ];
 
         $validator = \Validator::make($input, [
             'tender_type_id' => 'required',
+            'envelop_type_id' => 'required',
             'evaluation_type_id' => 'required',
             'stage' => 'required',
             'no_of_alternative_solutions' => 'required',
             'commercial_weightage' => 'required',
-            'technical_weightage' => 'required'
+            'technical_weightage' => 'required',
+            'commercial_passing_weightage' => 'required',
+            'technical_passing_weightage' => 'required'
         ], $messages);
+        }
 
         if ($validator->fails()) {
             return ['status' => false, 'message' => $validator->messages()];
