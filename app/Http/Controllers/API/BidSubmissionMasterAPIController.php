@@ -1114,18 +1114,15 @@ class BidSubmissionMasterAPIController extends AppBaseController
    
         for($i=0; $i < count($data); $i++){
             if(array_key_exists($data[$i]['total'],$rankingArray)) {
-                $data[$i]['ranking'] = $rankingArray[$total];
-
-
+                $data[$i]['ranking'] = $rankingArray[number_format((float)$total, 3, '.', '')];
             }else {
-                $rankingArray[$total] =  "L".($i+1);
+                $rankingArray[number_format((float)$total, 3, '.', '')] =  "L".($i+1);
                 $data[$i]['ranking'] = "L".($i+1);
 
             }
 
         }
 
-        
         return $data;
     }
 }
