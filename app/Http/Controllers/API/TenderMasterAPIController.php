@@ -715,7 +715,7 @@ WHERE
         $document_sales_end_date = null;
         $pre_bid_clarification_start_date = null;
         $pre_bid_clarification_end_date = null;
-        $bankId = (empty($input['bank_id'])) ? 0 : $input['bank_id'] ;
+        $bankId = (empty($input['bank_id'])) ? 0 : $input['bank_id'];
 
         if(isset($input['document_sales_start_date'])){
             $document_sales_start_time = ($input['document_sales_start_time']) ? new Carbon($input['document_sales_start_time']) : null;
@@ -1976,11 +1976,11 @@ WHERE
         }
 
         if ($input['commercial_weightage'] != 0 && ($input['commercial_passing_weightage'] == 0 || is_null($input['commercial_passing_weightage']))) {
-            return ['status' => false, 'message' => 'Commercial Passing Weightage is required'];
+            //return ['status' => false, 'message' => 'Commercial Passing Weightage is required'];
         }
 
         if ($input['technical_weightage'] != 0 && ($input['technical_passing_weightage'] == 0 || is_null($input['technical_passing_weightage']))) {
-            return ['status' => false, 'message' => 'Technical Passing Weightage is required'];
+            // return ['status' => false, 'message' => 'Technical Passing Weightage is required'];
         }
 
         $tenderMaster = TenderMaster::find($input['id']);
@@ -1996,7 +1996,7 @@ WHERE
         DB::beginTransaction();
         try {
             $data['tender_type_id'] = $input['tender_type_id'];
-            $data['envelop_type_id'] = $input['envelop_type_id'];
+            $data['envelop_type_id'] = (empty($input['envelop_type_id'])) ? 0 : $input['envelop_type_id'];
             $data['evaluation_type_id'] = $input['evaluation_type_id'];
             $data['stage'] = $input['stage'];
             $data['no_of_alternative_solutions'] = $input['no_of_alternative_solutions'];
@@ -2038,26 +2038,24 @@ WHERE
     {
         $messages = [
             'tender_type_id.required' => 'Type is required.',
-            'envelop_type_id.required' => 'Envelop Type is required.',
             'evaluation_type_id.required' => 'Evaluation Type is required.',
             'stage.required' => 'Stage is required.',
             'no_of_alternative_solutions.required' => 'Number of Alternative solutions is required.',
             'commercial_weightage.required' => 'Commercial Criteria Weightage is required.',
             'technical_weightage.required' => 'Technical Criteria Weightage is required.',
-            'commercial_passing_weightage.required' => 'Commercial Passing Weightage is required.',
-            'technical_passing_weightage.required' => 'Technical Passing Weightage is required.'
+            //'commercial_passing_weightage.required' => 'Commercial Passing Weightage is required.',
+            //'technical_passing_weightage.required' => 'Technical Passing Weightage is required.'
         ];
 
         $validator = \Validator::make($input, [
             'tender_type_id' => 'required',
-            'envelop_type_id' => 'required',
             'evaluation_type_id' => 'required',
             'stage' => 'required',
             'no_of_alternative_solutions' => 'required',
             'commercial_weightage' => 'required',
             'technical_weightage' => 'required',
-            'commercial_passing_weightage' => 'required',
-            'technical_passing_weightage' => 'required'
+            //'commercial_passing_weightage' => 'required',
+           // 'technical_passing_weightage' => 'required'
         ], $messages);
 
         if ($validator->fails()) {
