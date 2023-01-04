@@ -513,40 +513,12 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('customer_invoices', 'CustomerInvoiceAPIController');
             Route::resource('accounts_receivable_ledgers', 'AccountsReceivableLedgerAPIController');
 
-            Route::post('getGoodReceiptVoucherMasterView', 'GRVMasterAPIController@getGoodReceiptVoucherMasterView');
             
-            Route::get('getBinLocationsByWarehouse', 'GRVMasterAPIController@getBinLocationsByWarehouse');
             Route::get('getWarehouse', 'ErpItemLedgerAPIController@getWarehouse');
             Route::post('generateStockValuationReport', 'ErpItemLedgerAPIController@generateStockValuationReport');
             
             Route::get('getAllFinancePeriodBasedFY', 'CompanyFinancePeriodAPIController@getAllFinancePeriodBasedFY');
             Route::get('getAllFinancePeriodForYear', 'CompanyFinancePeriodAPIController@getAllFinancePeriodForYear');
-            Route::resource('goodReceiptVoucherCRUD', 'GRVMasterAPIController');
-            Route::get('getItemsByGRVMaster', 'GRVDetailsAPIController@getItemsByGRVMaster');
-            Route::get('getLogisticsItemsByGRV', 'PoAdvancePaymentAPIController@loadPoPaymentTermsLogisticForGRV');
-            Route::post('GRVSegmentChkActive', 'GRVMasterAPIController@GRVSegmentChkActive');
-            Route::post('getGoodReceiptVoucherReopen', 'GRVMasterAPIController@getGoodReceiptVoucherReopen');
-            Route::get('purchaseOrderForGRV', 'ProcumentOrderAPIController@purchaseOrderForGRV');
-            Route::get('purchaseReturnForGRV', 'PurchaseReturnAPIController@purchaseReturnForGRV');
-            
-            Route::get('getPurchaseReturnDetailForGRV', 'PurchaseReturnAPIController@getPurchaseReturnDetailForGRV');
-            
-            Route::post('storeGRVDetailsFromPR', 'GRVDetailsAPIController@storeGRVDetailsFromPR');
-            
-            Route::post('grvDeleteAllDetails', 'GRVDetailsAPIController@grvDeleteAllDetails');
-            Route::get('goodReceiptVoucherAudit', 'GRVMasterAPIController@goodReceiptVoucherAudit');
-            Route::post('getGoodReceiptVoucherAmend', 'GRVMasterAPIController@getGoodReceiptVoucherAmend');
-            Route::resource('materiel_requests', 'MaterielRequestAPIController');
-            Route::get('materiel_requests/{id}/purchase-requests', 'MaterielRequestAPIController@checkPurcahseRequestExist');
-            Route::post('requestReopen', 'MaterielRequestAPIController@requestReopen');
-            Route::post('requestReferBack', 'MaterielRequestAPIController@requestReferBack');
-            Route::post('getAllRequestByCompany', 'MaterielRequestAPIController@getAllRequestByCompany');
-            
-            
-            Route::get('materielRequestAudit', 'MaterielRequestAPIController@materielRequestAudit');
-            Route::resource('materiel_request_details', 'MaterielRequestDetailsAPIController');
-            Route::get('getItemsByMaterielRequest', 'MaterielRequestDetailsAPIController@getItemsByMaterielRequest');
-            Route::get('getItemsOptionForMaterielRequest', 'MaterielRequestDetailsAPIController@getItemsOptionForMaterielRequest');
             
             Route::resource('purchase_order_details', 'PurchaseOrderDetailsAPIController');
             
@@ -1952,16 +1924,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('getBillMastersByCompany', 'MobileBillMasterAPIController@getBillMastersByCompany');
             Route::post('exportEmployeeMobileBill', 'EmployeeMobileBillMasterAPIController@exportEmployeeMobileBill');
             
-            
-
-            
-
-            
-            Route::post('grvMarkupfinalyze', 'GRVMasterAPIController@grvMarkupfinalyze');
-
-
-
-
 
             Route::get('getVatCategoryFormData', 'TaxVatCategoriesAPIController@getVatCategoryFormData');
             Route::resource('ci_item_details_refferedbacks', 'CustomerInvoiceItemDetailsRefferedbackAPIController');
