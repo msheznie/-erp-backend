@@ -1328,23 +1328,33 @@ WHERE
 
     public function validateTenderHeader($input)
     {
-        if(isset($input['rfq']) && $input['rfq']){
+        $messages = [
+            'title.required' => 'Title is required.',
+            'currency_id.required' => 'Currency is required.',
+            'pre_bid_clarification_method.required' => 'Pre-bid Clarifications Method.',
+            'bid_submission_opening_date.required' => 'Bid Submission From Date.',
+            'tender_type_id.required' => 'Type is required.',
+            'evaluation_type_id.required' => 'Evaluation Type is required.',
+            'stage.required' => 'Stage is required.',
+            'no_of_alternative_solutions.required' => 'Number of Alternative solutions is required.',
+            'commercial_weightage.required' => 'Commercial Criteria Weightage is required.',
+            'technical_weightage.required' => 'Technical Criteria Weightage is required.',
+        ];
+
+        $validator = \Validator::make($input, [
+            'title' => 'required',
+            'currency_id' => 'required',
+            'bid_submission_opening_date' => 'required',
+            'tender_type_id' => 'required',
+            'evaluation_type_id' => 'required',
+            'stage' => 'required',
+            'no_of_alternative_solutions' => 'required',
+            'commercial_weightage' => 'required',
+            'technical_weightage' => 'required'
+        ], $messages);
+
+        if(!isset($input['rfq'])){
             $messages = [
-                'title.required' => 'Title is required.',
-                'currency_id.required' => 'Currency is required.',
-                'pre_bid_clarification_method.required' => 'Pre-bid Clarifications Method.',
-                'bid_submission_opening_date.required' => 'Bid Submission From Date.',
-                'tender_type_id.required' => 'Type is required.',
-                'evaluation_type_id.required' => 'Evaluation Type is required.',
-                'stage.required' => 'Stage is required.',
-                'no_of_alternative_solutions.required' => 'Number of Alternative solutions is required.',
-                'commercial_weightage.required' => 'Commercial Criteria Weightage is required.',
-                'technical_weightage.required' => 'Technical Criteria Weightage is required.',
-            ];
-        } else {
-            $messages = [
-                'title.required' => 'Title is required.',
-                'currency_id.required' => 'Currency is required.',
                 'estimated_value.required' => 'Estimated Value is required.',
                 'allocated_budget.required' => 'Allocated Budget is required.',
                 'tender_document_fee.required' => 'Tender Document Fee is required.',
@@ -1354,37 +1364,13 @@ WHERE
                 'document_sales_end_date.required' => 'Document Sales To Date is required.',
                 'pre_bid_clarification_start_date.required' => 'Pre-bid Clarification From Date.',
                 'pre_bid_clarification_end_date.required' => 'Pre-bid Clarification To Date.',
-                'pre_bid_clarification_method.required' => 'Pre-bid Clarifications Method.',
-                'bid_submission_opening_date.required' => 'Bid Submission From Date.',
                 'bid_submission_closing_date.required' => 'Bid Submission To Date.',
                 'site_visit_date.required' => 'Site Visit From Date.',
                 'site_visit_end_date.required' => 'Site Visit To Date.',
-                'tender_type_id.required' => 'Type is required.',
                 'envelop_type_id.required' => 'Envelop Type is required.',
-                'evaluation_type_id.required' => 'Evaluation Type is required.',
                 'stage.required' => 'Stage is required.',
-                'no_of_alternative_solutions.required' => 'Number of Alternative solutions is required.',
-                'commercial_weightage.required' => 'Commercial Criteria Weightage is required.',
-                'technical_weightage.required' => 'Technical Criteria Weightage is required.',
             ];
-        }
-
-        if(isset($input['rfq']) && $input['rfq']){
             $validator = \Validator::make($input, [
-                'title' => 'required',
-                'currency_id' => 'required',
-                'bid_submission_opening_date' => 'required',
-                'tender_type_id' => 'required',
-                'evaluation_type_id' => 'required',
-                'stage' => 'required',
-                'no_of_alternative_solutions' => 'required',
-                'commercial_weightage' => 'required',
-                'technical_weightage' => 'required'
-            ], $messages);
-        } else {
-            $validator = \Validator::make($input, [
-                'title' => 'required',
-                'currency_id' => 'required',
                 'estimated_value' => 'required',
                 'allocated_budget' => 'required',
                 'tender_document_fee' => 'required',
@@ -1395,20 +1381,13 @@ WHERE
                 'pre_bid_clarification_start_date' => 'required',
                 'pre_bid_clarification_end_date' => 'required',
                 'pre_bid_clarification_method' => 'required',
-                'bid_submission_opening_date' => 'required',
                 'bid_submission_closing_date' => 'required',
                 'site_visit_date' => 'required',
                 'site_visit_end_date' => 'required',
-                'tender_type_id' => 'required',
                 'envelop_type_id' => 'required',
                 'evaluation_type_id' => 'required',
-                'stage' => 'required',
-                'no_of_alternative_solutions' => 'required',
-                'commercial_weightage' => 'required',
-                'technical_weightage' => 'required'
             ], $messages);
         }
-
 
         if ($validator->fails()) {
             return ['status' => false, 'message' => $validator->messages()];
@@ -2037,49 +2016,35 @@ WHERE
 
     public function validateTenderStrategy($input)
     {
-        if(isset($input['rfx']) && $input['rfx']){
-            $messages = [
-                'tender_type_id.required' => 'Type is required.',
-                'evaluation_type_id.required' => 'Evaluation Type is required.',
-                'stage.required' => 'Stage is required.',
-                'no_of_alternative_solutions.required' => 'Number of Alternative solutions is required.',
-                'commercial_weightage.required' => 'Commercial Criteria Weightage is required.',
-                'technical_weightage.required' => 'Technical Criteria Weightage is required.'
-            ];
-
-            $validator = \Validator::make($input, [
-                'tender_type_id' => 'required',
-                'evaluation_type_id' => 'required',
-                'stage' => 'required',
-                'no_of_alternative_solutions' => 'required',
-                'commercial_weightage' => 'required',
-                'technical_weightage' => 'required'
-            ], $messages);
-
-        } else {
-            $messages = [
-                'tender_type_id.required' => 'Type is required.',
-                'envelop_type_id.required' => 'Envelop Type is required.',
-                'evaluation_type_id.required' => 'Evaluation Type is required.',
-                'stage.required' => 'Stage is required.',
-                'no_of_alternative_solutions.required' => 'Number of Alternative solutions is required.',
-                'commercial_weightage.required' => 'Commercial Criteria Weightage is required.',
-                'technical_weightage.required' => 'Technical Criteria Weightage is required.',
-                'commercial_passing_weightage.required' => 'Commercial Passing Weightage is required.',
-                'technical_passing_weightage.required' => 'Technical Passing Weightage is required.'
+        $messages = [
+            'tender_type_id.required' => 'Type is required.',
+            'evaluation_type_id.required' => 'Evaluation Type is required.',
+            'stage.required' => 'Stage is required.',
+            'no_of_alternative_solutions.required' => 'Number of Alternative solutions is required.',
+            'commercial_weightage.required' => 'Commercial Criteria Weightage is required.',
+            'technical_weightage.required' => 'Technical Criteria Weightage is required.'
         ];
 
         $validator = \Validator::make($input, [
             'tender_type_id' => 'required',
-            'envelop_type_id' => 'required',
             'evaluation_type_id' => 'required',
             'stage' => 'required',
             'no_of_alternative_solutions' => 'required',
             'commercial_weightage' => 'required',
-            'technical_weightage' => 'required',
-            'commercial_passing_weightage' => 'required',
-            'technical_passing_weightage' => 'required'
+            'technical_weightage' => 'required'
         ], $messages);
+
+        if(!isset($input['rfx'])){
+            $messages = [
+                'envelop_type_id.required' => 'Envelop Type is required.',
+                'commercial_passing_weightage.required' => 'Commercial Passing Weightage is required.',
+                'technical_passing_weightage.required' => 'Technical Passing Weightage is required.'
+            ];
+
+            $validator = \Validator::make($input, [
+                'commercial_passing_weightage' => 'required',
+                'technical_passing_weightage' => 'required'
+            ], $messages);
         }
 
         if ($validator->fails()) {
