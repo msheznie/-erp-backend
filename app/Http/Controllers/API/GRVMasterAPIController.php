@@ -804,32 +804,46 @@ class GRVMasterAPIController extends AppBaseController
      
         $gRVMaster = $this->gRVMasterRepository->update($input, $id);
 
+       
+
         if(isset($gRVMaster->deliveryAppoinmentID))
         {
-           
-           $appoinmnet_po_ids =  AppointmentDetails::where('appointment_id',$gRVMaster->deliveryAppoinmentID)->groupBy('po_master_id')->pluck('po_master_id')->toArray();
+           $selected_segment = $gRVMaster->serviceLineSystemID;
+           $appoinmnet_po_ids =  AppointmentDetails::whereHas('po_master',function($q) use($selected_segment){
+            $q->where('serviceLineSystemID',$selected_segment);
+                })->where('appointment_id',$gRVMaster->deliveryAppoinmentID)->groupBy('po_master_id')->pluck('po_master_id')->toArray();
 
            $grv_purchase =  GRVDetails::where('grvAutoID',$id)->groupBy('purchaseOrderMastertID')->pluck('purchaseOrderMastertID')->toArray();
 
 
-           $appoinmnet_details =  AppointmentDetails::where('appointment_id',$gRVMaster->deliveryAppoinmentID)->get();
+           $appoinmnet_details =  AppointmentDetails::whereHas('po_master',function($q) use($selected_segment){
+            $q->where('serviceLineSystemID',$selected_segment);
+             })->where('appointment_id',$gRVMaster->deliveryAppoinmentID)->get();
 
 
            $extra_po =  array_values(array_diff($grv_purchase,$appoinmnet_po_ids));
 
            $ignore_po =  array_values(array_diff($appoinmnet_po_ids,$grv_purchase));
 
+
+
            $total_msg = '';
+           $extra_po_msg = [];
 
            if(count($extra_po) > 0)
            {
              foreach($extra_po as $extra)
              {
 
-               $extra_po_msg =  GRVDetails::where('grvAutoID',$id)->where('purchaseOrderMastertID',$extra)->with(['po_master'=>function($q){
+               $extra_po_msg_info =  GRVDetails::where('grvAutoID',$id)->where('purchaseOrderMastertID',$extra)->with(['po_master'=>function($q){
                 $q->select('purchaseOrderID','purchaseOrderCode');
                }])->select('grvDetailsID','itemPrimaryCode','itemDescription','noQty','purchaseOrderMastertID')->get();
 
+               foreach($extra_po_msg_info as $info)
+               {
+                array_push($extra_po_msg,$info);
+
+               }
 
              }
            
@@ -839,17 +853,24 @@ class GRVMasterAPIController extends AppBaseController
             $extra_po_msg = [];
            }
 
-
+           $ignore_po_msg = [];
            if(count($ignore_po) > 0)
            {
              foreach($ignore_po as $extra)
              {
 
-                $ignore_po_msg =  AppointmentDetails::where('po_master_id',$extra)->where('appointment_id',$gRVMaster->deliveryAppoinmentID)->with(['po_master'=>function($q){
+                $ignore_po_msg_info =  AppointmentDetails::where('po_master_id',$extra)->where('appointment_id',$gRVMaster->deliveryAppoinmentID)->with(['po_master'=>function($q){
                     $q->select('purchaseOrderID','purchaseOrderCode');
                    },'item'=>function($q){
                     $q->select('itemCodeSystem','primaryCode','itemDescription');
                    }])->select('id','qty','po_master_id','item_id')->get();
+
+                   foreach($ignore_po_msg_info as $info)
+                   {
+                    array_push($ignore_po_msg,$info);
+    
+                   }
+
              }
            }
            else
