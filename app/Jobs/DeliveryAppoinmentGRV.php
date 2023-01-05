@@ -55,316 +55,315 @@ class DeliveryAppoinmentGRV implements ShouldQueue
      */
     public function handle(GRVMasterRepository $grvMasterRepo,GRVDetailsRepository $gRVDetailsRepo)
     {
-        $mytime = new Carbon();
 
-        $appoinment = Appointment::find($this->data['documentSystemCode']);
+        DB::beginTransaction();
+        try {
 
-        $fromCompanyFinanceYear = CompanyFinanceYear::where('companySystemID', $this->data['companySystemID'])
-        ->whereDate('bigginingDate', '<=', $mytime)
-        ->whereDate('endingDate', '>=', $mytime)
-        ->first();
+            $mytime = new Carbon();
 
-
-        if (!empty($fromCompanyFinanceYear)) {
-
-            
-            $fromCompanyFinancePeriod = CompanyFinancePeriod::where('companySystemID', $this->data['companySystemID'])
-            ->where('departmentSystemID', 10)
-            ->where('companyFinanceYearID', $fromCompanyFinanceYear->companyFinanceYearID)
-            ->whereDate('dateFrom', '<=', $mytime)
-            ->whereDate('dateTo', '>=', $mytime)
+            $appoinment = Appointment::find($this->data['documentSystemCode']);
+    
+            $fromCompanyFinanceYear = CompanyFinanceYear::where('companySystemID', $this->data['companySystemID'])
+            ->whereDate('bigginingDate', '<=', $mytime)
+            ->whereDate('endingDate', '>=', $mytime)
             ->first();
-
-
-            if(!empty($fromCompanyFinancePeriod)){
-
-                $supplierCurrencies = DB::table('suppliercurrency')
-                ->leftJoin('currencymaster', 'suppliercurrency.currencyID', '=', 'currencymaster.currencyID')
-                ->where('supplierCodeSystem', '=', $appoinment->supplier_id)->first();
-
-               $serviceLine = SegmentMaster::where('serviceLineSystemID',$this->data['segment'])->first();
-
-
-                $detail['companySystemID'] = $this->data['companySystemID'];
-                $detail['stampDate'] = $mytime;
-                $detail['grvDate'] = $mytime;
-                $detail['companyFinanceYearID'] = $fromCompanyFinancePeriod->companyFinanceYearID;
-                $detail['companyFinancePeriodID'] = $fromCompanyFinancePeriod->companyFinancePeriodID;
-                $detail['grvTypeID'] = 2;
-                $detail['serviceLineSystemID'] = $this->data['segment'];
-                $detail['grvDoRefNo'] = $appoinment->primary_code;
-                $detail['grvNarration'] = 'Created from SRM Delivery Appointment '.$appoinment->primary_code;
-                $detail['grvLocation'] = $this->data['location'];
-                $detail['supplierID'] = $appoinment->supplier_id;
-                $detail['supplierTransactionCurrencyID'] = $supplierCurrencies->currencyID;
-                $detail['FYBiggin'] = $fromCompanyFinancePeriod->dateFrom;
-                $detail['FYEnd'] = $fromCompanyFinancePeriod->dateTo;              
-                $detail['createdPcID'] = gethostname();
-                $detail['createdUserID'] =  \Helper::getEmployeeID();
-                $detail['createdUserSystemID'] = \Helper::getEmployeeSystemID();
-                $detail['documentSystemID'] =  3;
-                $detail['documentID'] = "GRV";
-                $detail["grvType"] = 'POG';
-                $detail["serviceLineCode"] = $serviceLine->ServiceLineCode;
-
-                $company = Company::find($this->data['companySystemID']);
-                if ($company) {
-                $detail['companyID'] = $company->CompanyID;
-                $detail['localCurrencyID'] = $company->localCurrencyID;
-                $detail['companyReportingCurrencyID'] = $company->reportingCurrency;
-                }
+    
+    
+            if (!empty($fromCompanyFinanceYear)) {
+    
                 
-                $detail['vatRegisteredYN'] = 1;
-                $companyCurrencyConversion = \Helper::currencyConversion($this->data['companySystemID'], $supplierCurrencies->currencyID, $supplierCurrencies->currencyID, 0);
-
-
-                $detail['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
-                $detail['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
-                $detail['supplierTransactionER'] = 1;
-
-                $supplier = SupplierMaster::where('supplierCodeSystem', $appoinment->supplier_id)->first();
-                if ($supplier) {
-                    $detail['supplierPrimaryCode'] = $supplier->primarySupplierCode;
-                    $detail['supplierName'] = $supplier->supplierName;
-                    $detail['supplierAddress'] = $supplier->address;
-                    $detail['supplierTelephone'] = $supplier->telephone;
-                    $detail['supplierFax'] = $supplier->fax;
-                    $detail['supplierEmail'] = $supplier->supEmail;
-                }
-
-                $lastSerial = GRVMaster::where('companySystemID', $this->data['companySystemID'])
-                ->where('companyFinanceYearID', $fromCompanyFinancePeriod->companyFinanceYearID)
-                ->orderBy('grvSerialNo', 'desc')
+                $fromCompanyFinancePeriod = CompanyFinancePeriod::where('companySystemID', $this->data['companySystemID'])
+                ->where('departmentSystemID', 10)
+                ->where('companyFinanceYearID', $fromCompanyFinanceYear->companyFinanceYearID)
+                ->whereDate('dateFrom', '<=', $mytime)
+                ->whereDate('dateTo', '>=', $mytime)
                 ->first();
     
-                $lastSerialNumber = 1;
-                if ($lastSerial) {
-                    $lastSerialNumber = intval($lastSerial->grvSerialNo) + 1;
-                }
-                $detail['grvSerialNo'] = $lastSerialNumber;
-
-                if ($fromCompanyFinancePeriod) {
-                    $grvStartYear = $fromCompanyFinanceYear->bigginingDate;
-                    $grvFinYearExp = explode('-', $grvStartYear);
-                    $grvFinYear = $grvFinYearExp[0];
-                } else {
-                    $grvFinYear = date("Y");
-                }
-                $document_id = "GRV";
-                $grvCode = ($company->CompanyID . '\\' . $grvFinYear . '\\' . $document_id . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
-                $detail['grvPrimaryCode'] = $grvCode;
-
-                $supplierCurrency = SupplierCurrency::where('supplierCodeSystem', $appoinment->supplier_id)
-                ->where('isDefault', -1)
-                ->first();
     
-                if ($supplierCurrency) {
-        
-                    $erCurrency = CurrencyMaster::where('currencyID', $supplierCurrency->currencyID)->first();
-        
-                    $detail['supplierDefaultCurrencyID'] = $supplierCurrency->currencyID;
-        
-                    if ($erCurrency) {
-                        $detail['supplierDefaultER'] = $erCurrency->ExchangeRate;
+                if(!empty($fromCompanyFinancePeriod)){
+    
+                    $supplierCurrencies = DB::table('suppliercurrency')
+                    ->leftJoin('currencymaster', 'suppliercurrency.currencyID', '=', 'currencymaster.currencyID')
+                    ->where('supplierCodeSystem', '=', $appoinment->supplier_id)->first();
+    
+                   $serviceLine = SegmentMaster::where('serviceLineSystemID',$this->data['segment'])->first();
+ 
+                    $detail['companySystemID'] = $this->data['companySystemID'];
+                    $detail['stampDate'] = $mytime;
+                    $detail['grvDate'] = $mytime;
+                    $detail['companyFinanceYearID'] = $fromCompanyFinancePeriod->companyFinanceYearID;
+                    $detail['companyFinancePeriodID'] = $fromCompanyFinancePeriod->companyFinancePeriodID;
+                    $detail['grvTypeID'] = 2;
+                    $detail['serviceLineSystemID'] = $this->data['segment'];
+                    $detail['grvDoRefNo'] = $appoinment->primary_code;
+                    $detail['grvNarration'] = 'Created from SRM Delivery Appointment '.$appoinment->primary_code;
+                    $detail['grvLocation'] = $this->data['location'];
+                    $detail['supplierID'] = $appoinment->supplier_id;
+                    $detail['supplierTransactionCurrencyID'] = $supplierCurrencies->currencyID;
+                    $detail['FYBiggin'] = $fromCompanyFinancePeriod->dateFrom;
+                    $detail['FYEnd'] = $fromCompanyFinancePeriod->dateTo;              
+                    $detail['createdPcID'] = gethostname();
+                    $detail['createdUserID'] =  \Helper::getEmployeeID();
+                    $detail['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+                    $detail['documentSystemID'] =  3;
+                    $detail['documentID'] = "GRV";
+                    $detail["grvType"] = 'POG';
+                    $detail["serviceLineCode"] = $serviceLine->ServiceLineCode;
+    
+                    $company = Company::find($this->data['companySystemID']);
+                    if ($company) {
+                    $detail['companyID'] = $company->CompanyID;
+                    $detail['localCurrencyID'] = $company->localCurrencyID;
+                    $detail['companyReportingCurrencyID'] = $company->reportingCurrency;
                     }
-                }
-
-                $supplierAssignedDetail = SupplierAssigned::where('supplierCodeSytem', $appoinment->supplier_id)
-                ->where('companySystemID', $this->data['companySystemID'])
-                ->first();
+                    
+                    $detail['vatRegisteredYN'] = 1;
+                    $companyCurrencyConversion = \Helper::currencyConversion($this->data['companySystemID'], $supplierCurrencies->currencyID, $supplierCurrencies->currencyID, 0);
     
-                if ($supplierAssignedDetail) {
-                    $detail['liabilityAccountSysemID'] = $supplierAssignedDetail->liabilityAccountSysemID;
-                    $detail['liabilityAccount'] = $supplierAssignedDetail->liabilityAccount;
-                    $detail['UnbilledGRVAccountSystemID'] = $supplierAssignedDetail->UnbilledGRVAccountSystemID;
-                    $detail['UnbilledGRVAccount'] = $supplierAssignedDetail->UnbilledGRVAccount;
-                }
-                $detail['deliveryAppoinmentID'] = $this->data['documentSystemCode'];
-                
-                $grvMaster = $grvMasterRepo->create($detail);
-
-
-                $grvAutoID =  $grvMaster->grvAutoID;
-                $GRVMaster = GRVMaster::where('grvAutoID', $grvAutoID)
-                ->first();
-               
-                $appoinment_details = AppointmentDetails::where('appointment_id',$appoinment->id)->with(['item'])->get();
-       
+                    $detail['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
+                    $detail['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                    $detail['supplierTransactionER'] = 1;
+    
+                    $supplier = SupplierMaster::where('supplierCodeSystem', $appoinment->supplier_id)->first();
+                    if ($supplier) {
+                        $detail['supplierPrimaryCode'] = $supplier->primarySupplierCode;
+                        $detail['supplierName'] = $supplier->supplierName;
+                        $detail['supplierAddress'] = $supplier->address;
+                        $detail['supplierTelephone'] = $supplier->telephone;
+                        $detail['supplierFax'] = $supplier->fax;
+                        $detail['supplierEmail'] = $supplier->supEmail;
+                    }
+    
+                    $lastSerial = GRVMaster::where('companySystemID', $this->data['companySystemID'])
+                    ->where('companyFinanceYearID', $fromCompanyFinancePeriod->companyFinanceYearID)
+                    ->orderBy('grvSerialNo', 'desc')
+                    ->first();
         
-                foreach($appoinment_details as $val)
-                {
-
-
-                    $po_details =  PurchaseOrderDetails::find($val->po_detail_id);
-                    $POMaster = ProcumentOrder::find($val->po_master_id);
-                   
-                    $totalAddedQty = $val->qty + $po_details->receivedQty;
-                    if ($po_details->noQty == $totalAddedQty) {
-                        $goodsRecievedYN = 2;
-                        $GRVSelectedYN = 1;
+                    $lastSerialNumber = 1;
+                    if ($lastSerial) {
+                        $lastSerialNumber = intval($lastSerial->grvSerialNo) + 1;
+                    }
+                    $detail['grvSerialNo'] = $lastSerialNumber;
+    
+                    if ($fromCompanyFinancePeriod) {
+                        $grvStartYear = $fromCompanyFinanceYear->bigginingDate;
+                        $grvFinYearExp = explode('-', $grvStartYear);
+                        $grvFinYear = $grvFinYearExp[0];
                     } else {
-                        $goodsRecievedYN = 1;
-                        $GRVSelectedYN = 0;
+                        $grvFinYear = date("Y");
                     }
-                   
-                   
-                   
-                    $detail['grvAutoID'] = $grvAutoID;
-                    $detail['companySystemID'] = $GRVMaster->companySystemID;
-                    $detail['companyID'] = $GRVMaster->companyID;
-                    $detail['serviceLineCode'] = $GRVMaster->serviceLineCode;
-                    $detail['purchaseOrderMastertID'] = $val->po_master_id;
-                    $detail['purchaseOrderDetailsID'] = $val->po_detail_id;
-                    $detail['itemCode'] = $val->item_id;
-                    $detail['itemPrimaryCode'] = $val->item->primaryCode;
-                    $detail['itemDescription'] = $val->item->itemDescription;
+                    $document_id = "GRV";
+                    $grvCode = ($company->CompanyID . '\\' . $grvFinYear . '\\' . $document_id . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
+                    $detail['grvPrimaryCode'] = $grvCode;
+    
+                    $supplierCurrency = SupplierCurrency::where('supplierCodeSystem', $appoinment->supplier_id)
+                    ->where('isDefault', -1)
+                    ->first();
+        
+                    if ($supplierCurrency) {
+            
+                        $erCurrency = CurrencyMaster::where('currencyID', $supplierCurrency->currencyID)->first();
+            
+                        $detail['supplierDefaultCurrencyID'] = $supplierCurrency->currencyID;
+            
+                        if ($erCurrency) {
+                            $detail['supplierDefaultER'] = $erCurrency->ExchangeRate;
+                        }
+                    }
+    
+                    $supplierAssignedDetail = SupplierAssigned::where('supplierCodeSytem', $appoinment->supplier_id)
+                    ->where('companySystemID', $this->data['companySystemID'])
+                    ->first();
+        
+                    if ($supplierAssignedDetail) {
+                        $detail['liabilityAccountSysemID'] = $supplierAssignedDetail->liabilityAccountSysemID;
+                        $detail['liabilityAccount'] = $supplierAssignedDetail->liabilityAccount;
+                        $detail['UnbilledGRVAccountSystemID'] = $supplierAssignedDetail->UnbilledGRVAccountSystemID;
+                        $detail['UnbilledGRVAccount'] = $supplierAssignedDetail->UnbilledGRVAccount;
+                    }
+                    $detail['deliveryAppoinmentID'] = $this->data['documentSystemCode'];
                     
-                    $financeCategorySub = FinanceItemCategorySub::find($val->item->financeCategorySub);
-                    if(isset($financeCategorySub))
-                    {
-                        $financeGLcodePL = $financeCategorySub->financeGLcodePL;
-                        $financeGLcodePLSystemID = $financeCategorySub->financeGLcodePLSystemID;
-                        $financeGLcodebBS = $financeCategorySub->financeGLcodebBS;
-                        $financeGLcodebBSSystemID = $financeCategorySub->financeGLcodebBSSystemID;
-                    }
-                    else
-                    {
-                        $financeGLcodePL = null;
-                        $financeGLcodePLSystemID = null;
-                        $financeGLcodebBS = null;
-                        $financeGLcodebBSSystemID = null;
-                    }
-        
-                    $detail['financeGLcodebBSSystemID'] = $financeGLcodebBSSystemID;
-                    $detail['financeGLcodebBS'] = $financeGLcodebBS;
-                    $detail['financeGLcodePLSystemID'] = $financeGLcodePLSystemID;
-                    $detail['financeGLcodePL'] = $financeGLcodePL;
-        
-        
-                    $detail['itemFinanceCategoryID'] = $val->item->financeCategoryMaster;
-                    $detail['itemFinanceCategorySubID'] = $val->item->financeCategorySub;
-                    $detail['includePLForGRVYN'] =0;
-                    $detail['supplierPartNumber'] = $val->item->secondaryItemCode;
-                    $detail['unitOfMeasure'] = $val->item->unit;
-                    $detail['noQty'] = $val->qty;
-                    $detail['wasteQty'] = 0;
-        
-        
-                    
-                    $detail['trackingType'] = (isset($val->trackingType)) ? $val->trackingType : null;
-           
-        
-        
-        
+                    $grvMaster = $grvMasterRepo->create($detail);
+    
+                    $grvAutoID =  $grvMaster->grvAutoID;
+                    $GRVMaster = GRVMaster::where('grvAutoID', $grvAutoID)
+                    ->first();
+                   
+                    $appoinment_details = AppointmentDetails::where('appointment_id',$appoinment->id)->with(['item'])->get();
+    
                     $warehouseBinLocationPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 40)
                     ->where('companySystemID', $GRVMaster->companySystemID)
                     ->where('isYesNO', 1)
                     ->exists();
-        
-        
-                    $warehouseItem = array();
-                    if($warehouseBinLocationPolicy && $val->item->financeCategoryMaster){
-                        $warehouseItemTemp = WarehouseItems::where('warehouseSystemCode',$GRVMaster->grvLocation)
-                                                             ->where('companySystemID' , $GRVMaster->companySystemID)
-                                                             ->where('itemSystemCode',$val->item_id)
-                                                             ->first();
-                        if(!empty($warehouseItemTemp)){
-                            $warehouseItem = $warehouseItemTemp;
+
+                    foreach($appoinment_details as $val)
+                    {
+    
+                        $po_details =  PurchaseOrderDetails::find($val->po_detail_id);
+                        $POMaster = ProcumentOrder::find($val->po_master_id);
+                       
+                        $totalAddedQty = $val->qty + $po_details->receivedQty;
+                        if ($po_details->noQty == $totalAddedQty) {
+                            $goodsRecievedYN = 2;
+                            $GRVSelectedYN = 1;
+                        } else {
+                            $goodsRecievedYN = 1;
+                            $GRVSelectedYN = 0;
                         }
+                       
+                        $detail['grvAutoID'] = $grvAutoID;
+                        $detail['companySystemID'] = $GRVMaster->companySystemID;
+                        $detail['companyID'] = $GRVMaster->companyID;
+                        $detail['serviceLineCode'] = $GRVMaster->serviceLineCode;
+                        $detail['purchaseOrderMastertID'] = $val->po_master_id;
+                        $detail['purchaseOrderDetailsID'] = $val->po_detail_id;
+                        $detail['itemCode'] = $val->item_id;
+                        $detail['itemPrimaryCode'] = $val->item->primaryCode;
+                        $detail['itemDescription'] = $val->item->itemDescription;
+                        
+                        $financeCategorySub = FinanceItemCategorySub::find($val->item->financeCategorySub);
+                        if(isset($financeCategorySub))
+                        {
+                            $financeGLcodePL = $financeCategorySub->financeGLcodePL;
+                            $financeGLcodePLSystemID = $financeCategorySub->financeGLcodePLSystemID;
+                            $financeGLcodebBS = $financeCategorySub->financeGLcodebBS;
+                            $financeGLcodebBSSystemID = $financeCategorySub->financeGLcodebBSSystemID;
+                        }
+                        else
+                        {
+                            $financeGLcodePL = null;
+                            $financeGLcodePLSystemID = null;
+                            $financeGLcodebBS = null;
+                            $financeGLcodebBSSystemID = null;
+                        }
+            
+                        $detail['financeGLcodebBSSystemID'] = $financeGLcodebBSSystemID;
+                        $detail['financeGLcodebBS'] = $financeGLcodebBS;
+                        $detail['financeGLcodePLSystemID'] = $financeGLcodePLSystemID;
+                        $detail['financeGLcodePL'] = $financeGLcodePL;
+                        $detail['itemFinanceCategoryID'] = $val->item->financeCategoryMaster;
+                        $detail['itemFinanceCategorySubID'] = $val->item->financeCategorySub;
+                        $detail['includePLForGRVYN'] =0;
+                        $detail['supplierPartNumber'] = $val->item->secondaryItemCode;
+                        $detail['unitOfMeasure'] = $val->item->unit;
+                        $detail['noQty'] = $val->qty;
+                        $detail['wasteQty'] = 0;
+            
+                        $detail['trackingType'] = (isset($val->trackingType)) ? $val->trackingType : null;
+               
+                        $warehouseItem = array();
+                        if($warehouseBinLocationPolicy && $val->item->financeCategoryMaster){
+                            $warehouseItemTemp = WarehouseItems::where('warehouseSystemCode',$GRVMaster->grvLocation)
+                                                                 ->where('companySystemID' , $GRVMaster->companySystemID)
+                                                                 ->where('itemSystemCode',$val->item_id)
+                                                                 ->first();
+                            if(!empty($warehouseItemTemp)){
+                                $warehouseItem = $warehouseItemTemp;
+                            }
+                        }
+            
+                        $detail['prvRecievedQty'] = $po_details->receivedQty;
+                        $detail['poQty'] = $po_details->noQty;
+                        $totalNetcost = $po_details->GRVcostPerUnitSupTransCur * $val->qty;
+                        $detail['unitCost'] = $po_details->GRVcostPerUnitSupTransCur;
+                        $detail['discountPercentage'] = $po_details->discountPercentage;
+                        $detail['discountAmount'] = $po_details->discountAmount;
+                        $detail['netAmount'] = $totalNetcost;
+                        $detail['comment'] = $po_details->comment;
+                        $detail['supplierDefaultCurrencyID'] = $po_details->supplierDefaultCurrencyID;
+                        $detail['supplierDefaultER'] = $po_details->supplierDefaultER;
+                        $detail['supplierItemCurrencyID'] = $po_details->supplierItemCurrencyID;
+                        $detail['foreignToLocalER'] = $po_details->foreignToLocalER;
+                        $detail['companyReportingCurrencyID'] = $po_details->companyReportingCurrencyID;
+                        $detail['companyReportingER'] = $po_details->companyReportingER;
+                        $detail['localCurrencyID'] = $po_details->localCurrencyID;
+                        $detail['localCurrencyER'] = $po_details->localCurrencyER;
+                        $detail['addonDistCost'] = $po_details->addonDistCost;
+                        $detail['GRVcostPerUnitLocalCur'] = $po_details->GRVcostPerUnitLocalCur;
+                        $detail['GRVcostPerUnitSupDefaultCur'] = $po_details->GRVcostPerUnitSupDefaultCur;
+                        $detail['GRVcostPerUnitSupTransCur'] = $po_details->GRVcostPerUnitSupTransCur;
+                        $detail['GRVcostPerUnitComRptCur'] = $po_details->GRVcostPerUnitComRptCur;
+                        $detail['landingCost_LocalCur'] =  $po_details->GRVcostPerUnitLocalCur;
+                        $detail['landingCost_TransCur'] = $po_details->GRVcostPerUnitSupTransCur;
+                        $detail['landingCost_RptCur'] = $po_details->GRVcostPerUnitComRptCur;
+                        $detail['vatRegisteredYN'] = $POMaster->vatRegisteredYN;
+                        $detail['supplierVATEligible'] = $POMaster->supplierVATEligible;
+                        $detail['VATPercentage'] = $po_details->VATPercentage;
+                        $detail['VATAmount'] = $po_details->VATAmount;
+                        $detail['VATAmountLocal'] = $po_details->VATAmountLocal;
+                        $detail['VATAmountRpt'] = $po_details->VATAmountRpt;
+                        $detail['vatMasterCategoryID'] = $po_details->vatMasterCategoryID;
+                        $detail['vatSubCategoryID'] = $po_details->vatSubCategoryID;
+                        $detail['exempt_vat_portion'] = $po_details->exempt_vat_portion;
+                        $detail['logisticsAvailable'] = $POMaster->logisticsAvailable;
+                        $detail['binNumber'] = $warehouseItem ? $warehouseItem->binNumber : 0;
+            
+                        $detail['createdPcID'] = gethostname();
+                        $detail['createdUserID'] = \Helper::getEmployeeID();
+                        $detail['createdUserSystemID'] = \Helper::getEmployeeSystemID();
+            
+                        $mp = isset($po_details->markupPercentage)?$po_details->markupPercentage:0;
+                        $markupArray = $this->setMarkupPercentage($po_details->GRVcostPerUnitSupTransCur,$GRVMaster,$mp);
+            
+                        $detail['markupPercentage'] = $markupArray['markupPercentage'];
+                        $detail['markupTransactionAmount'] = $markupArray['markupTransactionAmount'];
+                        $detail['markupLocalAmount'] = $markupArray['markupLocalAmount'];
+                        $detail['markupReportingAmount'] = $markupArray['markupReportingAmount'];
+    
+                        $item = $gRVDetailsRepo->create($detail);
+    
+                        $update = PurchaseOrderDetails::where('purchaseOrderDetailsID', $val->po_detail_id)
+                            ->update(['GRVSelectedYN' => $GRVSelectedYN, 'goodsRecievedYN' => $goodsRecievedYN, 'receivedQty' => $totalAddedQty]);
+    
+    
+                        $this->checkPrnAndUpdateAsReturnedUsed($val->po_detail_id, $val->qty, $item->grvDetailsID);
+                        
+    
+                        $purchaseOrderDetailTotalAmount = PurchaseOrderDetails::select(DB::raw('SUM(noQty) as detailQty,SUM(receivedQty) as receivedQty'))
+                        ->where('purchaseOrderMasterID', $val->po_master_id)
+                        ->first();
+    
+                        if ($purchaseOrderDetailTotalAmount['detailQty'] == $purchaseOrderDetailTotalAmount['receivedQty']) {
+                            $updatePO = ProcumentOrder::find($val->po_master_id)
+                                ->update(['poClosedYN' => 1, 'grvRecieved' => 2]);
+                        } else {
+                            $updatePO = ProcumentOrder::find($val->po_master_id)
+                                ->update(['poClosedYN' => 0, 'grvRecieved' => 1]);
+                        }
+            
                     }
-        
-        
-        
-                    $detail['prvRecievedQty'] = $po_details->receivedQty;
-                    $detail['poQty'] = $po_details->noQty;
-                    $totalNetcost = $po_details->GRVcostPerUnitSupTransCur * $val->qty;
-                    $detail['unitCost'] = $po_details->GRVcostPerUnitSupTransCur;
-                    $detail['discountPercentage'] = $po_details->discountPercentage;
-                    $detail['discountAmount'] = $po_details->discountAmount;
-                    $detail['netAmount'] = $totalNetcost;
-                    $detail['comment'] = $po_details->comment;
-                    $detail['supplierDefaultCurrencyID'] = $po_details->supplierDefaultCurrencyID;
-                    $detail['supplierDefaultER'] = $po_details->supplierDefaultER;
-                    $detail['supplierItemCurrencyID'] = $po_details->supplierItemCurrencyID;
-                    $detail['foreignToLocalER'] = $po_details->foreignToLocalER;
-                    $detail['companyReportingCurrencyID'] = $po_details->companyReportingCurrencyID;
-                    $detail['companyReportingER'] = $po_details->companyReportingER;
-                    $detail['localCurrencyID'] = $po_details->localCurrencyID;
-                    $detail['localCurrencyER'] = $po_details->localCurrencyER;
-                    $detail['addonDistCost'] = $po_details->addonDistCost;
-                    $detail['GRVcostPerUnitLocalCur'] = $po_details->GRVcostPerUnitLocalCur;
-                    $detail['GRVcostPerUnitSupDefaultCur'] = $po_details->GRVcostPerUnitSupDefaultCur;
-                    $detail['GRVcostPerUnitSupTransCur'] = $po_details->GRVcostPerUnitSupTransCur;
-                    $detail['GRVcostPerUnitComRptCur'] = $po_details->GRVcostPerUnitComRptCur;
-                    $detail['landingCost_LocalCur'] =  $po_details->GRVcostPerUnitLocalCur;
-                    $detail['landingCost_TransCur'] = $po_details->GRVcostPerUnitSupTransCur;
-                    $detail['landingCost_RptCur'] = $po_details->GRVcostPerUnitComRptCur;
-                    $detail['vatRegisteredYN'] = $POMaster->vatRegisteredYN;
-                    $detail['supplierVATEligible'] = $POMaster->supplierVATEligible;
-                    $detail['VATPercentage'] = $po_details->VATPercentage;
-                    $detail['VATAmount'] = $po_details->VATAmount;
-                    $detail['VATAmountLocal'] = $po_details->VATAmountLocal;
-                    $detail['VATAmountRpt'] = $po_details->VATAmountRpt;
-                    $detail['vatMasterCategoryID'] = $po_details->vatMasterCategoryID;
-                    $detail['vatSubCategoryID'] = $po_details->vatSubCategoryID;
-                    $detail['exempt_vat_portion'] = $po_details->exempt_vat_portion;
-                    $detail['logisticsAvailable'] = $POMaster->logisticsAvailable;
-                    $detail['binNumber'] = $warehouseItem ? $warehouseItem->binNumber : 0;
-        
-                    $detail['createdPcID'] = gethostname();
-                    $detail['createdUserID'] = \Helper::getEmployeeID();
-                    $detail['createdUserSystemID'] = \Helper::getEmployeeSystemID();
-        
-                    $mp = isset($po_details->markupPercentage)?$po_details->markupPercentage:0;
-                    $markupArray = $this->setMarkupPercentage($po_details->GRVcostPerUnitSupTransCur,$GRVMaster,$mp);
-        
-                    $detail['markupPercentage'] = $markupArray['markupPercentage'];
-                    $detail['markupTransactionAmount'] = $markupArray['markupTransactionAmount'];
-                    $detail['markupLocalAmount'] = $markupArray['markupLocalAmount'];
-                    $detail['markupReportingAmount'] = $markupArray['markupReportingAmount'];
-
-                    $item = $gRVDetailsRepo->create($detail);
-
-                    $update = PurchaseOrderDetails::where('purchaseOrderDetailsID', $val->po_detail_id)
-                        ->update(['GRVSelectedYN' => $GRVSelectedYN, 'goodsRecievedYN' => $goodsRecievedYN, 'receivedQty' => $totalAddedQty]);
-
-
-                    $this->checkPrnAndUpdateAsReturnedUsed($val->po_detail_id, $val->qty, $item->grvDetailsID);
+    
                     
+                    $updateGrvMaster = GRVMaster::where('grvAutoID', $grvAutoID)
+                    ->update(['pullType' => 1]);
 
-                    $purchaseOrderDetailTotalAmount = PurchaseOrderDetails::select(DB::raw('SUM(noQty) as detailQty,SUM(receivedQty) as receivedQty'))
-                    ->where('purchaseOrderMasterID', $val->po_master_id)
-                    ->first();
-
-                    if ($purchaseOrderDetailTotalAmount['detailQty'] == $purchaseOrderDetailTotalAmount['receivedQty']) {
-                        $updatePO = ProcumentOrder::find($val->po_master_id)
-                            ->update(['poClosedYN' => 1, 'grvRecieved' => 2]);
-                    } else {
-                        $updatePO = ProcumentOrder::find($val->po_master_id)
-                            ->update(['poClosedYN' => 0, 'grvRecieved' => 1]);
-                    }
-        
-        
+                    DB::commit();
+    
+                    Log::info('delivert appoinment grv completed... : ');
                 }
-
-                
-                $updateGrvMaster = GRVMaster::where('grvAutoID', $grvAutoID)
-                ->update(['pullType' => 1]);
-
-                Log::info('delivert appoinment grv completed... : ');
+                else
+                {
+                    Log::info('From Company Finance period not found, date : ');
+                }
+    
             }
-            else
-            {
-                Log::info('From Company Finance period not found, date : ');
+            else{
+                Log::info('From Company Finance Year not found, date : ');
             }
 
-        }
-        else{
-            Log::info('From Company Finance Year not found, date : ');
+
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($this->failed($e));
         }
 
     }
 
+    public function failed($exception)
+    {
+        return $exception->getMessage();
+    }
 
     public function setMarkupPercentage($unitCost, $grvData , $markupPercentage=0, $markupTransAmount=0, $by = ''){
         $output['markupPercentage'] = 0;
