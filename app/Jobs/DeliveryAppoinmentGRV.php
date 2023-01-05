@@ -62,6 +62,7 @@ class DeliveryAppoinmentGRV implements ShouldQueue
             $mytime = new Carbon();
 
             $appoinment = Appointment::find($this->data['documentSystemCode']);
+            $selected_segment = $this->data['segment'];
     
             $fromCompanyFinanceYear = CompanyFinanceYear::where('companySystemID', $this->data['companySystemID'])
             ->whereDate('bigginingDate', '<=', $mytime)
@@ -189,7 +190,10 @@ class DeliveryAppoinmentGRV implements ShouldQueue
                     $GRVMaster = GRVMaster::where('grvAutoID', $grvAutoID)
                     ->first();
                    
-                    $appoinment_details = AppointmentDetails::where('appointment_id',$appoinment->id)->with(['item'])->get();
+                   
+                    $appoinment_details = AppointmentDetails::whereHas('po_master',function($q) use($selected_segment){
+                        $q->where('serviceLineSystemID',$selected_segment);
+                    })->where('appointment_id',$appoinment->id)->with(['item'])->get();
     
                     $warehouseBinLocationPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 40)
                     ->where('companySystemID', $GRVMaster->companySystemID)
