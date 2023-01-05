@@ -1858,6 +1858,7 @@ WHERE
 
                                     $data[$x]['debit_report'] = round($val->rptDebit, $decimalPlaceRpt);
                                     $data[$x]['credit_report'] = round($val->rptCredit, $decimalPlaceRpt);
+                                    $data[$x]['isGroup']= $checkIsGroup->isGroup;
                                     $subTotalDebitRpt += $val->rptDebit;
                                     $subTotalCreditRpt += $val->rptCredit;
 
@@ -1865,8 +1866,8 @@ WHERE
                                     $subTotalCreditRptLocal += $val->localCredit;
                                 }
                                 $x++;
+                                $data[$x]['show_total']= true;
                                 if ($checkIsGroup->isGroup == 0) {
-                                    $data[$x]['show_total']= true;
                                     $data[$x]['decimalPlaceLocal']= $decimalPlaceLocal;
                                     $data[$x]['decimalPlaceRpt']= $decimalPlaceRpt;
                                     $data[$x]['debit_total_local'] = round($subTotalDebitLocal, $decimalPlaceLocal);
@@ -1876,6 +1877,7 @@ WHERE
 
                                 }
 
+                                $data[$x]['isGroup']= $checkIsGroup->isGroup;
                                 $data[$x]['debit_total_repot'] = round($subTotalDebitRpt, $decimalPlaceRpt);
                                 $data[$x]['credit_total_repot'] = round($subTotalCreditRpt, $decimalPlaceRpt);
                                 $balanceReport = $subTotalDebitRpt - $subTotalCreditRpt;
@@ -1889,6 +1891,7 @@ WHERE
                         $data[$x]['decimalPlaceLocal']= $decimalPlaceLocal;
                         $data[$x]['decimalPlaceRpt']= $decimalPlaceRpt;
                         $data[$x]['com_id'] = "";
+                        $data[$x]['isGroup']= $checkIsGroup->isGroup;
                         $data[$x]['show_grand_total'] = true;
                         $data[$x]['com_name'] = "";
                         $data[$x]['gl_type'] = "";
@@ -1925,6 +1928,7 @@ WHERE
                         $data[$x]['tem_desc'] = "";
                         $data[$x]['doc_type'] = "";
                         $data[$x]['doc_no'] = "";
+                        $data[$x]['isGroup']= $checkIsGroup->isGroup;
                         $data[$x]['data'] = "";
                         $data[$x]['doc_narration'] = "";
                         $data[$x]['documentSystemCode'] = "";
