@@ -5,6 +5,7 @@ namespace App\helper;
 use App\Models\SrpEmployeeDetails;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class BirthdayWishService
 {
@@ -88,7 +89,7 @@ class BirthdayWishService
 
     public function insertToLogTb($logData, $logType = 'info'){
         $logData = json_encode($logData);
-        $currentDate = date('Y-m-d H:i:s');
+        $currentDate = Carbon::now()->format('Y-m-d H:i:s');
         $data = [
             'company_id'=> $this->companyId,
             'module'=> 'HRMS',
