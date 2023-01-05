@@ -48,7 +48,8 @@ class BirthdayWishScheduler extends Command
         foreach ($tenants as $tenant){
             $tenant_database = $tenant->database;
 
-            Log::info("{$tenant_database} DB added to queue for birthday wishes initiate . \t on file: " . __CLASS__ ." \tline no :".__LINE__);
+            Log::info("{$tenant_database} DB added to queue for birthday wishes initiate . \t on file: " . __CLASS__ . " 
+                \tline no :" . __LINE__);
 
             BirthdayWishInitiate::dispatch($tenant_database);
         }
