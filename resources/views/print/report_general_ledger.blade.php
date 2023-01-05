@@ -162,7 +162,9 @@
         @foreach ($reportData as $key => $det)
             <tr>
                 <th colspan="{{6 + count($extraColumns)}}">{{ $key  }}</th>
-                <th colspan="2" style="text-align: center">Local Currency ({{$currencyLocal}})</th>
+                 @if($isGroup == 0)
+                    <th colspan="2" style="text-align: center">Local Currency ({{$currencyLocal}})</th>
+                @endif
                 <th colspan="2" style="text-align: center">Reporting Currency ({{$currencyRpt}})</th>
             </tr>
             <tr>
