@@ -56,12 +56,12 @@ class BirthdayWishInitiate implements ShouldQueue
             return;
         }
 
-        $ser = new BirthdayWishService($company_list, []);
+        $company_list = $company_list->toArray();
+
+        Log::info("Birthday wish job initiated on {$db} \t on file: " . __CLASS__ . " \tline no :" . __LINE__);
+
         foreach ($company_list as $company) {
-            $company = $company->toArray();
-            $this->company_id = $company->id;
-            $this->company_code = $company->code;
-            $this->company_name = $company->name;
+            $ser = new BirthdayWishService($company);
             $ser->execute();
         }
     }
