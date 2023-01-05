@@ -19,7 +19,8 @@ use App\Services\hrms\attendance\ForgotToPunchOutService;
 use App\Services\hrms\attendance\AttendanceDataPullingService;
 use App\Services\hrms\attendance\AttendanceDailySummaryService;
 use App\Services\hrms\attendance\AttendanceWeeklySummaryService;
-
+use App\helper\BirthdayWishService;
+use App\Models\Company;
 
 class HRJobInvokeAPIController extends AppBaseController
 {
@@ -145,5 +146,19 @@ class HRJobInvokeAPIController extends AppBaseController
         $resp = $obj->execute();
 
         return $this->sendResponse($data, 'clock out pulling job added to queue');
+    }
+
+    function birthdayWishesEmailDebug(Request $request){
+
+        $companyId = $request->input('companyId');
+
+        $company = Company::selectRaw('companySystemID AS id, CompanyID AS code, CompanyName AS name')
+                   ->find($companyId);
+        $company = $company->toArray();
+
+        $job = new BirthdayWishService($company);
+
+        $job->execute();
+
     }
 }

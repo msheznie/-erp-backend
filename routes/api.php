@@ -2924,7 +2924,7 @@ Route::get('updateRoleRoutes', 'RouteAPIController@updateRoleRoutes');
         Route::get('viewDocumentEmployeeImgBulk', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@viewDocumentEmployeeImgBulk');
         Route::post('documentUploadDelete', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@documentUploadDelete');
         Route::get('viewHrDocuments', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@viewHrDocuments');
-
+        Route::get('birthdayWishesEmailDebug', 'HRJobInvokeAPIController@birthdayWishesEmailDebug');
 /*
  * End external related routes
  */
