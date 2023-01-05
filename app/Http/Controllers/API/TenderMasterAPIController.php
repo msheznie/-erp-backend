@@ -2972,10 +2972,10 @@ WHERE
                 $results = BidSubmissionMaster::find($val->id)
                 ->update(['total_weightage' => $total]);
 
-                $status_val = false;
+                $status_val = 0;
                 if($count == 1)
                 {
-                    $status_val = true;
+                    $status_val = 1;
                 }
                 TenderFinalBids::updateOrCreate(
                     ['tender_id'=>$tenderId,'bid_id' => $val->id,'supplier_id' => $val->supplier_registration_id],
@@ -2990,7 +2990,7 @@ WHERE
 
     
             DB::commit();
-            return ['success' => true, 'message' => 'Successfully updated', 'data' => $results];
+            return ['success' => true, 'message' => 'Line items Successfully updated', 'data' => $results];
         } catch (\Exception $e) {
             DB::rollback();
             Log::error($this->failed($e));
