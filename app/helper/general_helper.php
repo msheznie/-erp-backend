@@ -3481,8 +3481,12 @@ class Helper
 
     public static function getEmployeeID()
     {
+
         $user = Models\User::find(Auth::id());
-        return $user->empID;
+        if (!empty($user)) {
+            return $user->empID;
+        }
+        return 0;
     }
 
 
