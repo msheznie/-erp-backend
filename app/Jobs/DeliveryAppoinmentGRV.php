@@ -318,7 +318,6 @@ class DeliveryAppoinmentGRV implements ShouldQueue
     
                         $this->checkPrnAndUpdateAsReturnedUsed($val->po_detail_id, $val->qty, $item->grvDetailsID);
                         
-    
                         $purchaseOrderDetailTotalAmount = PurchaseOrderDetails::select(DB::raw('SUM(noQty) as detailQty,SUM(receivedQty) as receivedQty'))
                         ->where('purchaseOrderMasterID', $val->po_master_id)
                         ->first();
@@ -333,7 +332,6 @@ class DeliveryAppoinmentGRV implements ShouldQueue
             
                     }
     
-                    
                     $updateGrvMaster = GRVMaster::where('grvAutoID', $grvAutoID)
                     ->update(['pullType' => 1]);
 
