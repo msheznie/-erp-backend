@@ -2735,6 +2735,7 @@ WHERE
         $query = TenderFinalBids::selectRaw('srm_tender_final_bids.id,srm_tender_final_bids.status,srm_tender_final_bids.supplier_id,srm_tender_final_bids.com_weightage as weightage,srm_tender_final_bids.bid_id,srm_bid_submission_master.bidSubmittedDatetime,srm_supplier_registration_link.name,srm_bid_submission_master.bidSubmissionCode,srm_bid_submission_master.line_item_total')
         ->join('srm_bid_submission_master', 'srm_bid_submission_master.id', '=', 'srm_tender_final_bids.bid_id')
         ->join('srm_supplier_registration_link', 'srm_supplier_registration_link.id', '=', 'srm_bid_submission_master.supplier_registration_id')
+        ->where('srm_tender_final_bids.tender_id', $tenderId)
         ->orderBy('srm_tender_final_bids.com_weightage','asc');
 
       
@@ -2937,6 +2938,8 @@ WHERE
             $total_amount = BidSubmissionMaster::whereIn('id',$bids)->sum('line_item_total');
     
             $result = BidSubmissionMaster::whereIn('id',$bids)->select('id','line_item_total','tech_weightage','supplier_registration_id')->get();
+
+            $supplier_ids = BidSubmissionMaster::whereIn('id',$bids)->pluck('supplier_registration_id')->toArray();
     
             $highest_val1 = 0;
             foreach($result as $key=>$val)
@@ -2954,6 +2957,8 @@ WHERE
             {
     
                 $output = round(($val->new_val/$highest_val1)*100,3);
+
+                $count =  count(array_keys($supplier_ids, $val->supplier_registration_id));
     
     
                 $weightage= round(($output/100)*$techniqal_wightage->commercial_weightage,3);
@@ -2967,10 +2972,14 @@ WHERE
                 $results = BidSubmissionMaster::find($val->id)
                 ->update(['total_weightage' => $total]);
 
-
+                $status_val = false;
+                if($count == 1)
+                {
+                    $status_val = true;
+                }
                 TenderFinalBids::updateOrCreate(
                     ['tender_id'=>$tenderId,'bid_id' => $val->id,'supplier_id' => $val->supplier_registration_id],
-                    ['tender_id'=>$tenderId,'bid_id' => $val->id,'supplier_id' => $val->supplier_registration_id,'com_weightage'=>$weightage,'tech_weightage'=>$val->tech_weightage,'total_weightage'=>$total]
+                    ['tender_id'=>$tenderId,'bid_id' => $val->id,'supplier_id' => $val->supplier_registration_id,'com_weightage'=>$weightage,'tech_weightage'=>$val->tech_weightage,'total_weightage'=>$total,'status'=>$status_val]
                    );
 
 
@@ -2994,14 +3003,16 @@ WHERE
      {
         DB::beginTransaction();
         try {
+
+            
             $inputs = $request['extraParams'];
             $tenderId = $inputs['tenderMasterId']; 
             $selected_suppliers = $inputs['suppliers']; 
             $ids = $inputs['ids']; 
             $comment = $inputs['comment']; 
-            $suppliers = TenderFinalBids::where('tender_id',$tenderId)->pluck('supplier_id')->unique()->toArray();        ;
-            $suppliers = array_values($suppliers);
+            $suppliers = TenderFinalBids::distinct('supplier_id')->where('tender_id',$tenderId)->where('status',0)->pluck('supplier_id')->toArray();
             $is_equal = $this->array_equal($selected_suppliers,$suppliers);
+
             if(!$is_equal)
             {
                 return $this->sendError('Please select atleast one bid for each suppliers', 500);
