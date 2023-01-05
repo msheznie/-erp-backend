@@ -1335,7 +1335,6 @@ WHERE
                 'pre_bid_clarification_method.required' => 'Pre-bid Clarifications Method.',
                 'bid_submission_opening_date.required' => 'Bid Submission From Date.',
                 'tender_type_id.required' => 'Type is required.',
-                'envelop_type_id.required' => 'Envelop Type is required.',
                 'evaluation_type_id.required' => 'Evaluation Type is required.',
                 'stage.required' => 'Stage is required.',
                 'no_of_alternative_solutions.required' => 'Number of Alternative solutions is required.',
@@ -1376,7 +1375,6 @@ WHERE
                 'currency_id' => 'required',
                 'bid_submission_opening_date' => 'required',
                 'tender_type_id' => 'required',
-                'envelop_type_id' => 'required',
                 'evaluation_type_id' => 'required',
                 'stage' => 'required',
                 'no_of_alternative_solutions' => 'required',
@@ -1972,7 +1970,7 @@ WHERE
         $total = ((int)$commercialWeightage + (int)$technicalWeightage);
         $employee = \Helper::getEmployeeInfo();
         if ($total != 100) {
-            return ['status' => false, 'message' => 'The total Evaluation Criteria Weightage cannot be less than 100'];
+           return ['status' => false, 'message' => 'The total Evaluation Criteria Weightage cannot be less than 100'];
         }
 
         if(!isset($input['rfx'])){
