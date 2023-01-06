@@ -318,6 +318,7 @@ class ClubManagementAPIController extends AppBaseController
 
             $custReceiptVoucherArray[] = array(
                 'custReceivePaymentAutoID' => $dt['custReceivePaymentAutoID'],
+                'referenceNumber' => $dt['referenceNumber'],
                 'companySystemID' => $dt['companySystemID'],
                 'companyID' => isset($company->CompanyID) ? $company->CompanyID: null,
                 'documentSystemID' => 21,
@@ -477,7 +478,7 @@ class ClubManagementAPIController extends AppBaseController
         }
         StageDirectReceiptDetail::insert($custReceiptDetails);
 
-        CreateStageReceiptVoucher::dispatch();
+        CreateStageReceiptVoucher::dispatch($request->api_external_key,$request->api_external_url);
 
         return $this->sendResponse($custReceiptVoucherArray, trans('custom.save', ['attribute' => trans('custom.receipt_voucher')]));
 
