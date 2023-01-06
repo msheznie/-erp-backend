@@ -91,6 +91,7 @@ class ClubManagementAPIController extends AppBaseController
 
             $custInvoiceArray[] = array(
                 'custInvoiceDirectAutoID' => $dt['custInvoiceDirectAutoID'],
+                'referenceNumber' => $dt['referenceNumber'],
                 'companySystemID' => $dt['companySystemID'],
                 'companyID' => isset($company->CompanyID) ? $company->CompanyID: null,
                 'documentSystemiD' => 20,
@@ -269,7 +270,7 @@ class ClubManagementAPIController extends AppBaseController
         StageCustomerInvoiceDirectDetail::insert($custInvoiceDetArray);
         StageCustomerInvoiceItemDetails::insert($custInvoiceItemDetArray);
 
-        CreateStageCustomerInvoice::dispatch();
+        CreateStageCustomerInvoice::dispatch($request->api_external_key,$request->api_external_url);
 
         return $this->sendResponse($custInvoiceArray, trans('custom.save', ['attribute' => trans('custom.customer_invoice')]));
     }

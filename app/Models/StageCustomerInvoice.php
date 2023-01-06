@@ -16,6 +16,7 @@ class StageCustomerInvoice extends Model
     protected $dates = ['deleted_at'];
 
     public $fillable = [
+        'referenceNumber',
         'transactionMode',
         'companyID',
         'companySystemID',
