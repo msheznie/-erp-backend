@@ -3885,9 +3885,6 @@ class SRMService
                 ->addColumn('Actions', 'Actions', "Actions")
                 ->order(function ($query) use ($input) {
                     if (request()->has('order')) {
-                        // if ($input['order'][0]['column'] == 0) {
-                        //     $query->orderBy('documentSystemCode', $input['order'][0]['dir']);
-                        // }
                     }
                 })
                 ->addIndexColumn()
@@ -3895,7 +3892,7 @@ class SRMService
 
             return [
                 'success' => true,
-                'message' => 'Appointment list successfully get',
+                'message' => 'Invoice attachment successfully get',
                 'data' => $data
             ];
      
