@@ -3820,7 +3820,11 @@ class SRMService
                 $allowExtensions = ['png', 'jpg', 'jpeg', 'pdf', 'txt', 'xlsx', 'docx'];
 
                 if (!in_array(strtolower($extension), $allowExtensions)) {
-                    return $this->sendError('This type of file not allow to upload.', 500);
+                    return [
+                        'success' => false,
+                        'message' => 'This type of file not allow to upload.',
+                        'data' => 'This type of file not allow to upload.'
+                    ];
                 }
 
                 if (isset($attachment['size'])) {
@@ -3872,16 +3876,29 @@ class SRMService
             ->firstOrFail()->toArray();
 
         if (sizeof($queryRecordsCount)) {
-            $result = DocumentAttachments::where('documentSystemID', 11)
+            $query = DocumentAttachments::where('documentSystemID', 11)
                 ->where('documentSystemCode', $id)
                 ->where('attachmentType', 0)
                 ->get();
 
+            $data = DataTables::of($query)
+                ->addColumn('Actions', 'Actions', "Actions")
+                ->order(function ($query) use ($input) {
+                    if (request()->has('order')) {
+                        // if ($input['order'][0]['column'] == 0) {
+                        //     $query->orderBy('documentSystemCode', $input['order'][0]['dir']);
+                        // }
+                    }
+                })
+                ->addIndexColumn()
+                ->make(true);
+
             return [
                 'success' => true,
-                'message' => 'Invoice attachment successfully get',
-                'data' => $result
+                'message' => 'Appointment list successfully get',
+                'data' => $data
             ];
+     
         } else {
             return [
                 'success' => true,
