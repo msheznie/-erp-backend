@@ -74,7 +74,9 @@ use App\Models\ScheduleBidFormatDetails;
 use App\helper\PirceBidFormula;
 use App\Models\BidDocumentVerification;
 use App\Jobs\DeliveryAppointmentInvoice;
-
+use App\Repositories\BookInvSuppMasterRepository;
+use App\Models\GRVDetails;
+use App\Models\SupplierInvoiceItemDetail;
 class SRMService
 {
     private $POService = null;
@@ -84,8 +86,10 @@ class SRMService
     private $supplierInvoiceItemDetailRepository;
     private $tenderBidClarificationsRepository;
     private $documentAttachmentsRepo;
+    private $bookInvSuppMasterRepository;
 
     public function __construct(
+        BookInvSuppMasterRepository $bookInvSuppMasterRepository,
         POService                           $POService,
         SupplierService                     $supplierService,
         SharedService                       $sharedService,
@@ -3907,6 +3911,7 @@ class SRMService
 
     public function createInvoice(Request $request)
     {
+     
         $data['id'] = $request->input('extra.id');
         $data['companySystemID'] = $request->input('extra.companySystemID');
 
@@ -3916,5 +3921,7 @@ class SRMService
             'message' => 'Invoice created successfully ',
             'data' => $data
         ];
+
     }
+
 }
