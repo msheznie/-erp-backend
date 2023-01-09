@@ -1642,7 +1642,7 @@ class SRMService
                 $allowExtensions = ['png', 'jpg', 'jpeg', 'pdf', 'txt', 'xlsx', 'docx'];
 
                 if (!in_array(strtolower($extension), $allowExtensions)) {
-                    throw new Exception("This type of file not allow to upload.", 500);
+                    throw new Exception("This file type is not allowed to upload.", 500);
                 }
 
                 if (isset($attachment['size'])) {
@@ -1689,7 +1689,11 @@ class SRMService
                 $allowExtensions = ['png', 'jpg', 'jpeg', 'pdf', 'txt', 'xlsx', 'docx'];
 
                 if (!in_array(strtolower($extension), $allowExtensions)) {
-                    return $this->sendError('This type of file not allow to upload.', 500);
+                    return [
+                        'success' => false,
+                        'message' => 'This file type is not allowed to upload.',
+                        'data' => 'This file type is not allowed to upload.'
+                    ];
                 }
 
                 if (isset($attachment['size'])) {
@@ -2637,7 +2641,7 @@ class SRMService
         $allowExtensions = ['png', 'jpg', 'jpeg', 'pdf', 'txt', 'xlsx', 'docx', 'pptx'];
 
         if (!in_array(strtolower($extension), $allowExtensions)) {
-            throw new Exception("This type of file not allow to upload.", 500);
+            throw new Exception("This file type is not allowed to upload.", 500);
         }
 
         if (isset($attachment['size'])) {
@@ -3822,8 +3826,8 @@ class SRMService
                 if (!in_array(strtolower($extension), $allowExtensions)) {
                     return [
                         'success' => false,
-                        'message' => 'This type of file not allow to upload.',
-                        'data' => 'This type of file not allow to upload.'
+                        'message' => 'This file type is not allowed to upload.',
+                        'data' => 'This file type is not allowed to upload.'
                     ];
                 }
 
