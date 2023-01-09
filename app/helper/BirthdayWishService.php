@@ -22,9 +22,9 @@ class BirthdayWishService
         $this->companyId = $companyData['id'];
         $this->companyCode = $companyData['code'];
         $this->switchDb = $db;
-        $this->image = public_path("image/Birthday-ASAAS-01.jpg");
+        $this->image = asset("image/Birthday-ASAAS-01.jpg");
         $this->image2 = "https://gearsentattachments-qa.s3.us-west-1.amazonaws.com/BG/logos/BG_logo.png?X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAX7MLAY73AFHLFUGD%2F20230109%2Fus-west-1%2Fs3%2Faws4_request&X-Amz-Date=20230109T072408Z&X-Amz-SignedHeaders=host&X-Amz-Expires=3600&X-Amz-Signature=5663f03c89ffe4be54deef4473d334b1d1cad74fe33e2c339959548e7f974c36";
-        $this->image3 = public_path("logos/BIT_logo.png");
+        $this->image3 = asset("logos/BIT_logo.png");
 
     }
 
