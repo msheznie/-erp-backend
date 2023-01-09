@@ -1646,7 +1646,7 @@ class SRMService
                 $allowExtensions = ['png', 'jpg', 'jpeg', 'pdf', 'txt', 'xlsx', 'docx'];
 
                 if (!in_array(strtolower($extension), $allowExtensions)) {
-                    throw new Exception("This type of file not allow to upload.", 500);
+                    throw new Exception("This file type is not allowed to upload.", 500);
                 }
 
                 if (isset($attachment['size'])) {
@@ -1693,7 +1693,11 @@ class SRMService
                 $allowExtensions = ['png', 'jpg', 'jpeg', 'pdf', 'txt', 'xlsx', 'docx'];
 
                 if (!in_array(strtolower($extension), $allowExtensions)) {
-                    return $this->sendError('This type of file not allow to upload.', 500);
+                    return [
+                        'success' => false,
+                        'message' => 'This file type is not allowed to upload.',
+                        'data' => 'This file type is not allowed to upload.'
+                    ];
                 }
 
                 if (isset($attachment['size'])) {
@@ -2641,7 +2645,7 @@ class SRMService
         $allowExtensions = ['png', 'jpg', 'jpeg', 'pdf', 'txt', 'xlsx', 'docx', 'pptx'];
 
         if (!in_array(strtolower($extension), $allowExtensions)) {
-            throw new Exception("This type of file not allow to upload.", 500);
+            throw new Exception("This file type is not allowed to upload.", 500);
         }
 
         if (isset($attachment['size'])) {
@@ -3824,7 +3828,11 @@ class SRMService
                 $allowExtensions = ['png', 'jpg', 'jpeg', 'pdf', 'txt', 'xlsx', 'docx'];
 
                 if (!in_array(strtolower($extension), $allowExtensions)) {
-                    return $this->sendError('This type of file not allow to upload.', 500);
+                    return [
+                        'success' => false,
+                        'message' => 'This file type is not allowed to upload.',
+                        'data' => 'This file type is not allowed to upload.'
+                    ];
                 }
 
                 if (isset($attachment['size'])) {
@@ -3876,16 +3884,26 @@ class SRMService
             ->firstOrFail()->toArray();
 
         if (sizeof($queryRecordsCount)) {
-            $result = DocumentAttachments::where('documentSystemID', 11)
+            $query = DocumentAttachments::where('documentSystemID', 11)
                 ->where('documentSystemCode', $id)
                 ->where('attachmentType', 0)
                 ->get();
 
+            $data = DataTables::of($query)
+                ->addColumn('Actions', 'Actions', "Actions")
+                ->order(function ($query) use ($input) {
+                    if (request()->has('order')) {
+                    }
+                })
+                ->addIndexColumn()
+                ->make(true);
+
             return [
                 'success' => true,
                 'message' => 'Invoice attachment successfully get',
-                'data' => $result
+                'data' => $data
             ];
+     
         } else {
             return [
                 'success' => true,
