@@ -74,7 +74,6 @@ use App\Models\ScheduleBidFormatDetails;
 use App\helper\PirceBidFormula;
 use App\Models\BidDocumentVerification;
 use App\Jobs\DeliveryAppointmentInvoice;
-
 use App\Repositories\BookInvSuppMasterRepository;
 use App\Models\GRVDetails;
 use App\Models\SupplierInvoiceItemDetail;
@@ -3922,8 +3921,6 @@ class SRMService
             'message' => 'Invoice created successfully ',
             'data' => $data
         ];
-
-    
 
     }
 
