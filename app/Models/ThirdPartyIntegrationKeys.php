@@ -59,7 +59,9 @@ class ThirdPartyIntegrationKeys extends Model
     public $fillable = [
         'company_id',
         'third_party_system_id',
-        'api_key'
+        'api_key',
+        'api_external_key',
+        'api_external_url'
     ];
 
     /**
