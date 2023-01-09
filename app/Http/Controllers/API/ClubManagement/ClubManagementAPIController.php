@@ -628,6 +628,13 @@ class ClubManagementAPIController extends AppBaseController
         if(empty($company)){
             return $this->sendError('Company not found');
         }
+
+        $duplicateCategoryDescription = CustomerMasterCategory::where('categoryDescription', $request->categoryDescription)->first();
+
+        if($duplicateCategoryDescription){
+            return $this->sendError('Customer master category description already exists.' ,422);
+        }
+
         $customerMasterCategory = ['categoryDescription' => $request->categoryDescription, 'companySystemID' => $request->company_id, 'companyID' => $company->CompanyID];
          $customerMasterCategory = CustomerMasterCategory::create($customerMasterCategory);
 
