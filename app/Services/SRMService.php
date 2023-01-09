@@ -74,9 +74,19 @@ use App\Models\ScheduleBidFormatDetails;
 use App\helper\PirceBidFormula;
 use App\Models\BidDocumentVerification;
 use App\Jobs\DeliveryAppointmentInvoice;
+
 use App\Repositories\BookInvSuppMasterRepository;
+use App\Models\CompanyFinanceYear;
+use App\Models\CompanyFinancePeriod;
+use App\Models\SupplierAssigned;
+use App\Models\GRVMaster;
+use App\Models\UnbilledGrvGroupBy;
+use App\Models\PoAdvancePayment;
+use App\helper\TaxService;
 use App\Models\GRVDetails;
+use App\Repositories\BookInvSuppDetRepository;
 use App\Models\SupplierInvoiceItemDetail;
+use App\Models\BookInvSuppDet;
 class SRMService
 {
     private $POService = null;
@@ -87,6 +97,7 @@ class SRMService
     private $tenderBidClarificationsRepository;
     private $documentAttachmentsRepo;
     private $bookInvSuppMasterRepository;
+    private $bookInvSuppDetRepository;
 
     public function __construct(
         BookInvSuppMasterRepository $bookInvSuppMasterRepository,
@@ -96,7 +107,8 @@ class SRMService
         InvoiceService                      $invoiceService,
         SupplierInvoiceItemDetailRepository $supplierInvoiceItemDetailRepo,
         TenderBidClarificationsRepository   $tenderBidClarificationsRepo,
-        DocumentAttachmentsRepository       $documentAttachmentsRepo
+        DocumentAttachmentsRepository       $documentAttachmentsRepo,
+        BookInvSuppDetRepository $bookInvSuppDetRepo
     ) {
         $this->POService = $POService;
         $this->supplierService = $supplierService;
@@ -105,6 +117,7 @@ class SRMService
         $this->supplierInvoiceItemDetailRepository = $supplierInvoiceItemDetailRepo;
         $this->tenderBidClarificationsRepository = $tenderBidClarificationsRepo;
         $this->documentAttachmentsRepo = $documentAttachmentsRepo;
+        $this->bookInvSuppDetRepository = $bookInvSuppDetRepo;
     }
 
     /**
@@ -3921,6 +3934,8 @@ class SRMService
             'message' => 'Invoice created successfully ',
             'data' => $data
         ];
+
+    
 
     }
 
