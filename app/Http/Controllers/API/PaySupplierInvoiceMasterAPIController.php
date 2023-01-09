@@ -28,6 +28,7 @@ use App\Models\AdvancePaymentDetails;
 use App\Models\AdvancePaymentReferback;
 use App\Models\BankAccount;
 use App\Models\EmployeeLedger;
+use App\Models\PdcLogPrintedHistory;
 use App\Models\BankAssign;
 use App\Models\BookInvSuppMaster;
 use App\Models\ExpenseEmployeeAllocation;
@@ -4612,6 +4613,41 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
             $paymentVoucherData->chequePrintedYN = 0;
             $paymentVoucherData->save();
 
+            $cheqkPrintedPdcs = PdcLog::where('documentmasterAutoID', $PayMasterAutoId)
+                                      ->where('documentSystemID', $paymentVoucherData->documentSystemID)
+                                      ->where('chequePrinted', 1)
+                                      ->get();
+
+            if (count($cheqkPrintedPdcs) > 0) {
+                foreach ($cheqkPrintedPdcs as $key => $value) {
+                    $printHistory = [
+                        'pdcLogID' => $value->id,
+                        'chequePrintedBy' => $value->chequePrintedBy,
+                        'chequePrintedDate' => $value->chequePrintedDate
+                    ];
+
+                    $res = PdcLogPrintedHistory::create($printHistory);
+
+                    PdcLog::where('id', $value->id)->update(['chequePrintedBy' => null, 'chequePrintedDate' => null, 'chequePrinted' => 0]);
+
+                    $is_exist_policy_GCNFCR = CompanyPolicyMaster::where('companySystemID', $value->companySystemID)
+                                                                ->where('companyPolicyCategoryID', 35)
+                                                                ->where('isYesNO', 1)
+                                                                ->first();
+                    if (!empty($is_exist_policy_GCNFCR)) {
+                        $check_registry = [
+                            'isPrinted' => 0,
+                            'cheque_printed_at' => null,
+                            'cheque_print_by' => null
+                        ];
+                        ChequeRegisterDetail::where('cheque_no', $value->chequeNo)
+                            ->where('company_id', $value->companySystemID)
+                            ->where('document_id', $value->documentmasterAutoID)
+                            ->update($check_registry);
+                    }
+                }
+            }
+
             AuditTrial::createAuditTrial($paymentVoucherData->documentSystemID,$PayMasterAutoId,$input['returnComment'],'returned back to amend');
 
             $this->expenseAssetAllocationRepository->deleteExpenseAssetAllocation($PayMasterAutoId, $paymentVoucherData->documentSystemID);
@@ -4656,17 +4692,31 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
             ->where('documentSystemID', $paymentVoucherData->documentSystemID)
             ->first();
 
+
         if ($checkBLDataExist) {
             if ($checkBLDataExist->trsClearedYN == -1 && $checkBLDataExist->bankClearedYN == 0 && $checkBLDataExist->pulledToBankTransferYN == 0) {
-                return $this->sendError('Treasury cleared, You cannot return back to amend.');
+                return $this->sendError('Treasury cleared, You cannot return back to amend.', 404,['type' => 'error']);
             } else if ($checkBLDataExist->trsClearedYN == -1 && $checkBLDataExist->bankClearedYN == -1 && $checkBLDataExist->pulledToBankTransferYN == 0) {
-                return $this->sendError('Bank cleared. You cannot return back to amend.');
+                return $this->sendError('Bank cleared. You cannot return back to amend.', 404,['type' => 'error']);
             } else if ($checkBLDataExist->trsClearedYN == -1 && $checkBLDataExist->bankClearedYN == 0 && $checkBLDataExist->pulledToBankTransferYN == -1) {
-                return $this->sendError('Added to bank transfer. You cannot return back to amend.');
+                return $this->sendError('Added to bank transfer. You cannot return back to amend.', 404,['type' => 'error']);
             } else if ($checkBLDataExist->trsClearedYN == -1 && $checkBLDataExist->bankClearedYN == -1 && $checkBLDataExist->pulledToBankTransferYN == -1) {
-                return $this->sendError('Added to bank transfer and bank cleared. You cannot return back to amend.');
+                return $this->sendError('Added to bank transfer and bank cleared. You cannot return back to amend.', 404, ['type' => 'error']);
             } else if ($checkBLDataExist->trsClearedYN == 0 && $checkBLDataExist->bankClearedYN == 0 && $checkBLDataExist->pulledToBankTransferYN == -1) {
-                return $this->sendError('Added to bank transfer. You cannot return back to amend.');
+                return $this->sendError('Added to bank transfer. You cannot return back to amend.', 404, ['type' => 'error']);
+            }
+        }
+
+        if ($paymentVoucherData->pdcChequeYN) {
+            $cheqkPrintedPdcs = PdcLog::where('documentmasterAutoID', $PayMasterAutoId)
+                                      ->where('documentSystemID', $paymentVoucherData->documentSystemID)
+                                      ->where('chequePrinted', 1)
+                                      ->count();
+
+            if ($cheqkPrintedPdcs == 1) {
+                return $this->sendError('The PDC cheque is already printed.', 404, ['type' => 'warning']);
+            } else if ($cheqkPrintedPdcs > 1) {
+                return $this->sendError('The PDC cheques are already printed.', 404, ['type' => 'warning']);
             }
         }
 

@@ -2171,6 +2171,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::resource('pdc_logs', 'PdcLogAPIController');
             Route::post('getPdcCheques', 'PdcLogAPIController@getPdcCheques');
+            Route::post('printPdcCheque', 'PdcLogAPIController@printPdcCheque');
 
             Route::post('get-all-issued-cheques', 'PdcLogAPIController@getIssuedCheques');
 
@@ -2520,3 +2521,6 @@ Route::get('viewHrDocuments', 'ThirdPartySystemsDocumentUploadAndDownloadAPICont
 /*
  * End external related routes
  */
+
+
+Route::resource('pdc_log_printed_histories', 'PdcLogPrintedHistoryAPIController');
