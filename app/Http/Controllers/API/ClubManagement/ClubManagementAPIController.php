@@ -560,19 +560,19 @@ class ClubManagementAPIController extends AppBaseController
         $duplicateCustomerName = CustomerMaster::where('CustomerName', $input['CustomerName'])->first();
 
         if($duplicateCustomerName){
-            return $this->sendError('Customer name already exists.' ,422);
+            return $this->sendError('Customer name already exists.' ,500);
         }
 
         $duplicateReportTitle = CustomerMaster::where('ReportTitle', $input['ReportTitle'])->first();
 
         if($duplicateReportTitle){
-            return $this->sendError('Report tittle already exists.' ,422);
+            return $this->sendError('Report tittle already exists.' ,500);
         }
 
         $duplicatecustomerShortCode = CustomerMaster::where('customerShortCode', $input['customerShortCode'])->first();
 
         if($duplicatecustomerShortCode){
-            return $this->sendError('Secondary code already exists.' ,422);
+            return $this->sendError('Secondary code already exists.' ,500);
         }
 
         $customerCode = 'C' . str_pad($lastSerialOrder, 7, '0', STR_PAD_LEFT);
@@ -632,7 +632,7 @@ class ClubManagementAPIController extends AppBaseController
         $duplicateCategoryDescription = CustomerMasterCategory::where('categoryDescription', $request->categoryDescription)->first();
 
         if($duplicateCategoryDescription){
-            return $this->sendError('Customer master category description already exists.' ,422);
+            return $this->sendError('Customer master category description already exists.' ,500);
         }
 
         $customerMasterCategory = ['categoryDescription' => $request->categoryDescription, 'companySystemID' => $request->company_id, 'companyID' => $company->CompanyID];
