@@ -350,7 +350,7 @@ class TenderMasterAPIController extends AppBaseController
         $tenderMaster = TenderMaster::with(['tender_type', 'envelop_type', 'currency'])->where('company_id', $companyId);
 
         if(isset($input['rfx']) && $input['rfx']){
-            $tenderMaster = $tenderMaster->where('document_type', 1);
+            $tenderMaster = $tenderMaster->where('document_type', '!=', 0);
         } else {
             $tenderMaster = $tenderMaster->where('document_type', 0);
         }
@@ -489,7 +489,7 @@ class TenderMasterAPIController extends AppBaseController
             $data['created_by'] = $employee->employeeSystemID;
             $data['tender_code'] = $tenderCode;
             $data['serial_number'] = $lastSerialNumber;
-            $data['document_type'] = isset($input['rfx']) ? 1 : 0;
+            $data['document_type'] = isset($input['rfx']) ? $input['document_type'] : 0;
 
             $result = TenderMaster::create($data);
 
