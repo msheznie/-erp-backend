@@ -155,7 +155,7 @@ class DeliveryAppointmentInvoice implements ShouldQueue
                     }
                     $detail['deliveryAppoinmentID'] = $this->data['id'];
                     
-                   $invoice = $bookInvSuppMasterRepository->create($detail);
+                    $invoice = $bookInvSuppMasterRepository->create($detail);
 
                     $invoice_id = $invoice->bookingSuppMasInvAutoID;
                     $grv_Details = GRVMaster::where('deliveryAppoinmentID',$this->data['id'])->select('grvAutoID')->first();
@@ -276,12 +276,14 @@ class DeliveryAppointmentInvoice implements ShouldQueue
             return $this->sendError('Supplier Invoice not found');
         }
 
-        $unbilledFilter = "";
-        if ($purchaseOrderID > 0) {
-            $unbilledFilter = 'AND unbilledMaster.purchaseOrderID = ' . $purchaseOrderID ;
-        } else if ($grvAutoID > 0) {
-            $unbilledFilter = 'AND unbilledMaster.grvAutoID = ' . $grvAutoID ;
-        }
+        // $unbilledFilter = "";
+        // if ($purchaseOrderID > 0) {
+        //     $unbilledFilter = 'AND unbilledMaster.purchaseOrderID = ' . $purchaseOrderID ;
+        // } else if ($grvAutoID > 0) {
+        //     $unbilledFilter = 'AND unbilledMaster.grvAutoID = ' . $grvAutoID ;
+        // }
+        $unbilledFilter = 'AND unbilledMaster.purchaseOrderID = ' . $purchaseOrderID ;
+        $unbilledFilter = 'AND unbilledMaster.grvAutoID = ' . $grvAutoID ;
 
         $bookingDate = Carbon::parse($bookInvSuppMaster->bookingDate)->format('Y-m-d');
 
@@ -471,7 +473,7 @@ class DeliveryAppointmentInvoice implements ShouldQueue
     
             $totalPullAmount = 0;
             foreach ($unbilledData->grv_details as $key => $value) {
-                $unbilledData->grv_details[$key]['supplierInvoAmount'] = $value['localAmount'];
+                $unbilledData->grv_details[$key]['supplierInvoAmount'] = $value['balanceAmountCheck'];
                 $totalPullAmount += ((isset($value['supplierInvoAmount']) && $value['supplierInvoAmount'] > 0) ? $value['supplierInvoAmount'] : 0); 
     
                 $totalPendingAmount = 0;
