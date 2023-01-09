@@ -11,6 +11,7 @@ use App\Models\StageCustomerInvoice;
 use App\Models\StageCustomerInvoiceDirectDetail;
 use App\Models\StageCustomerInvoiceItemDetails;
 use App\Services\JobErrorLogService;
+use GuzzleHttp\Client;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -22,11 +23,13 @@ use Illuminate\Support\Facades\Log;
 class CreateStageCustomerInvoice implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-    protected $disposalMaster;
-    protected $dataBase;
+    protected $api_external_key;
+    protected $api_external_url;
 
-    public function __construct()
+    public function __construct($api_external_key, $api_external_url)
     {
+
+
         if(env('QUEUE_DRIVER_CHANGE','database') == 'database'){
             if(env('IS_MULTI_TENANCY',false)){
                 self::onConnection('database_main');
@@ -36,14 +39,19 @@ class CreateStageCustomerInvoice implements ShouldQueue
         }else{
             self::onConnection(env('QUEUE_DRIVER_CHANGE','database'));
         }
+
+        $this->api_external_key = $api_external_key;
+        $this->api_external_url = $api_external_url;
     }
 
     public function handle()
     {
-        Log::useFiles(storage_path().'/logs/stage_create_customer_invoice.log');
 
         DB::beginTransaction();
         try {
+            Log::useFiles(storage_path().'/logs/stage_create_customer_invoice.log');
+            $api_external_key = $this->api_external_key;
+            $api_external_url = $this->api_external_url;
 
             $stagCustomerUpdateInvoices = StageCustomerInvoice::all();
             $i = 1;
@@ -222,8 +230,13 @@ class CreateStageCustomerInvoice implements ShouldQueue
 
 
             $stagCustomerInvoices = StageCustomerInvoice::all();
+            $custInvoiceApiArray = array();
 
             foreach ($stagCustomerInvoices as $dt) {
+                $custInvoiceApiArray = array('custInvoiceAutoID' => $dt['custInvoiceDirectAutoID'],
+                'referenceNumber' => $dt['referenceNumber']
+                );
+
                 $params = array('autoID' => $dt['custInvoiceDirectAutoID'],
                     'company' => $dt['companySystemID'],
                     'document' => $dt['documentSystemiD'],
@@ -257,6 +270,26 @@ class CreateStageCustomerInvoice implements ShouldQueue
             StageCustomerInvoice::truncate();
             StageCustomerInvoiceItemDetails::truncate();
             StageCustomerInvoiceDirectDetail::truncate();
+
+
+        if($api_external_key != null && $api_external_url != null) {
+
+            $client = new Client();
+            $headers = [
+                'content-type' => 'application/json',
+                'api_external_key' => $api_external_key
+            ];
+            $res = $client->request('POST', $api_external_url . '/updated_customer_invoice', [
+                'headers' => $headers,
+                'json' => [
+                    'data' => $custInvoiceApiArray
+                ]
+            ]);
+            $json = $res->getBody();
+
+            Log::info('API guzzle: ' . $json);
+        }
+
                 DB::commit();
         }
 

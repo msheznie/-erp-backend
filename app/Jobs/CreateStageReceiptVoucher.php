@@ -14,6 +14,7 @@ use App\Models\StageCustomerInvoiceItemDetails;
 use App\Models\StageCustomerReceivePayment;
 use App\Models\StageCustomerReceivePaymentDetail;
 use App\Models\StageDirectReceiptDetail;
+use GuzzleHttp\Client;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -25,11 +26,11 @@ use Illuminate\Support\Facades\Log;
 class CreateStageReceiptVoucher implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-    protected $disposalMaster;
-    protected $dataBase;
+    protected $api_external_key;
+    protected $api_external_url;
 
 
-    public function __construct()
+    public function __construct($api_external_key, $api_external_url)
     {
         if(env('QUEUE_DRIVER_CHANGE','database') == 'database'){
             if(env('IS_MULTI_TENANCY',false)){
@@ -40,16 +41,21 @@ class CreateStageReceiptVoucher implements ShouldQueue
         }else{
             self::onConnection(env('QUEUE_DRIVER_CHANGE','database'));
         }
+        $this->api_external_key = $api_external_key;
+        $this->api_external_url = $api_external_url;
     }
 
 
     public function handle()
     {
-        Log::useFiles(storage_path().'/logs/stage_create_customer_invoice.log');
 
         DB::beginTransaction();
 
         try {
+            Log::useFiles(storage_path().'/logs/stage_create_receipt_voucher.log');
+
+            $api_external_key = $this->api_external_key;
+            $api_external_url = $this->api_external_url;
             $stagCustomerUpdateReceipts = StageCustomerReceivePayment::all();
             $i = 1;
 
@@ -206,8 +212,12 @@ class CreateStageReceiptVoucher implements ShouldQueue
             DirectReceiptDetail::insert($custReceiptDetails);
 
             $stagCustomerPayments = StageCustomerReceivePayment::all();
+            $custReceiptApiArray = array();
 
             foreach ($stagCustomerPayments as $dt) {
+                $custReceiptApiArray = array('custReceivePaymentAutoID' => $dt['custReceivePaymentAutoID'],
+                    'referenceNumber' => $dt['referenceNumber']
+                );
                 $params = array('autoID' => $dt['custReceivePaymentAutoID'],
                     'company' => $dt['companySystemID'],
                     'document' => $dt['documentSystemID'],
@@ -237,6 +247,25 @@ class CreateStageReceiptVoucher implements ShouldQueue
             StageCustomerReceivePayment::truncate();
             StageCustomerReceivePaymentDetail::truncate();
             StageDirectReceiptDetail::truncate();
+            if($api_external_key != null && $api_external_url != null) {
+
+                $client = new Client();
+                $headers = [
+                    'content-type' => 'application/json',
+                    'api_external_key' => $api_external_key
+                ];
+                $res = $client->request('POST', $api_external_url . '/updated_receipt_voucher', [
+                    'headers' => $headers,
+                    'json' => [
+                        'data' => $custReceiptApiArray
+                    ]
+                ]);
+                $json = $res->getBody();
+
+                Log::info('API guzzle: ' . $json);
+            }
+
+
             DB::commit();
 
             }

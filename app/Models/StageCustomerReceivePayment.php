@@ -17,6 +17,7 @@ class StageCustomerReceivePayment extends Model
 
 
     public $fillable = [
+        'referenceNumber',
         'companySystemID',
         'companyID',
         'documentSystemID',
