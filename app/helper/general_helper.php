@@ -827,7 +827,9 @@ class Helper
                         if (!$isConfirm) {
                             // get current employee detail.
                             if (!in_array($params['document'], $empInfoSkip)) {
-                                $empInfo = self::getEmployeeInfoForApi();
+                                $empInfo = Models\Employee::with(['profilepic', 'user_data' => function($query) {
+                                    $query->select('uuid', 'employee_id');
+                                }])->find(11);
                             } else {
                                 $empInfo  =  (object) ['empName' => null, 'empID' => null, 'employeeSystemID' => null];
                             }
@@ -1685,7 +1687,9 @@ class Helper
             if ($docApproved) {
 
                 // get current employee detail
-                $empInfo = self::getEmployeeInfoForApi();
+                $empInfo = Models\Employee::with(['profilepic', 'user_data' => function($query) {
+                    $query->select('uuid', 'employee_id');
+                }])->find(11);
                 $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
                 $isConfirmed = $namespacedModel::find($input["documentSystemCode"]);
                 if (!$isConfirmed[$docInforArr["confirmedYN"]]) { // check document is confirmed or not
