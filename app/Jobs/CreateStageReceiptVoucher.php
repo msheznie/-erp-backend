@@ -229,7 +229,7 @@ class CreateStageReceiptVoucher implements ShouldQueue
                 $client = new Client();
                 $headers = [
                     'content-type' => 'application/json',
-                    'api_external_key' => 'ERP '.$api_external_key
+                    'Authorization' => 'ERP '.$api_external_key
                 ];
                 $res = $client->request('POST', $api_external_url . '/updated_receipt_voucher', [
                     'headers' => $headers,
