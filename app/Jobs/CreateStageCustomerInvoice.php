@@ -240,13 +240,14 @@ class CreateStageCustomerInvoice implements ShouldQueue
                 );
             }
 
+            Log::info('API Return call back starting');
 
             if($api_external_key != null && $api_external_url != null) {
 
                 $client = new Client();
                 $headers = [
                     'content-type' => 'application/json',
-                    'api_external_key' => $api_external_key
+                    'api_external_key' => 'ERP '.$api_external_key
                 ];
                 $res = $client->request('POST', $api_external_url . '/updated_customer_invoice', [
                     'headers' => $headers,
@@ -258,6 +259,8 @@ class CreateStageCustomerInvoice implements ShouldQueue
 
                 Log::info('API guzzle: ' . $json);
             }
+            Log::info('API Return call back ending');
+
 
             foreach ($stagCustomerInvoices as $dt) {
 
