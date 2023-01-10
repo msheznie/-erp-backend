@@ -35,7 +35,6 @@ use App\Models\StageDirectReceiptDetail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use mysql_xdevapi\Exception;
 
 class ClubManagementAPIController extends AppBaseController
 {
