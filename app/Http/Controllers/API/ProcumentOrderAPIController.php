@@ -7338,10 +7338,10 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                                     } else {
                                         $temp2['cssClass'] = "ngx-org-step-five";
                                     }
-                                    $temp2['name'] = "Debit Note";
+                                    $temp2['name'] = "Payment Matching";
                                     $temp2['documentSystemID'] = $value2['matching_master']['documentSystemID'];
                                     $temp2['docAutoID'] = $value2['matching_master']['PayMasterAutoId'];
-                                    $temp2['title'] = "{Doc Code :} " . $value2['matching_master']['BPVcode'] . " -- {Doc Date :} " . Carbon::parse($value2['matching_master']['BPVdate'])->format('Y-m-d') . " -- {Currency :} " . $value2['matching_master']['transactioncurrency']['CurrencyCode'] . " -- {Amount :} " . number_format($value2['matching_master']['payAmountSuppTrans'], $value2['matching_master']['transactioncurrency']['DecimalPlaces']);
+                                    $temp2['title'] = "{Doc Code :} " . $value2['matching_master']['matchingDocCode'] . " -- {Doc Date :} " . Carbon::parse($value2['matching_master']['matchingDocdate'])->format('Y-m-d') . " -- {Currency :} " . $value2['matching_master']['transactioncurrency']['CurrencyCode'] . " -- {Amount :} " . number_format($value2['matching_master']['matchingAmount'], $value2['matching_master']['transactioncurrency']['DecimalPlaces']);
                                 }
     
                                 $temp1['childs'][] = $temp2;
