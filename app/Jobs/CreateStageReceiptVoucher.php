@@ -222,13 +222,14 @@ class CreateStageReceiptVoucher implements ShouldQueue
                 );
             }
 
+            Log::info('API Return call back starting');
 
             if($api_external_key != null && $api_external_url != null) {
 
                 $client = new Client();
                 $headers = [
                     'content-type' => 'application/json',
-                    'api_external_key' => $api_external_key
+                    'Authorization' => 'ERP '.$api_external_key
                 ];
                 $res = $client->request('POST', $api_external_url . '/updated_receipt_voucher', [
                     'headers' => $headers,
@@ -240,6 +241,8 @@ class CreateStageReceiptVoucher implements ShouldQueue
 
                 Log::info('API guzzle: ' . $json);
             }
+            Log::info('API Return call back ending');
+
 
             foreach ($stagCustomerPayments as $dt) {
                
@@ -266,7 +269,6 @@ class CreateStageReceiptVoucher implements ShouldQueue
                 $approve = \Helper::approveDocumentForApi($customerInvoiceDirects);
                 Log::info($approve);
 
-                DB::commit();
             }
 
             StageCustomerReceivePayment::truncate();
