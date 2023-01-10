@@ -35,6 +35,7 @@ use App\Models\StageDirectReceiptDetail;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use mysql_xdevapi\Exception;
 
 class ClubManagementAPIController extends AppBaseController
 {
@@ -47,241 +48,255 @@ class ClubManagementAPIController extends AppBaseController
 
 
     public function createCustomerInvoice(CreateStageCustomerInvoiceAPIRequest  $request){
-        $input = $request->all();
+        DB::beginTransaction();
+        try {
+            $input = $request->all();
 
-        $custInvoiceArray = array();
-        if(!empty($input[0])) {
-            foreach ($input[0] as $dt) {
-                $dt['companySystemID'] = $request->company_id;
-                $financeYear = CompanyFinanceYear::where('companySystemID', $dt['companySystemID'])->where('bigginingDate', "<=", $dt['bookingDate'])->where('endingDate', ">=", $dt['bookingDate'])->first();
-                if (empty($financeYear)) {
-                    return $this->sendError('Finance Year not found');
-                }
-
-
-                $financePeriod = CompanyFinancePeriod::where('companySystemID', $dt['companySystemID'])->where('departmentSystemID', 4)->where('dateFrom', "<=", $dt['bookingDate'])->where('dateTo', ">=", $dt['bookingDate'])->first();
-                if (empty($financePeriod)) {
-                    return $this->sendError('Finance Period not found');
-                }
-
-                $customerCurr = CustomerCurrency::where('customerCodeSystem', $dt['customerID'])->first();
-                if (empty($customerCurr)) {
-                    return $this->sendError('Customer currency not found');
-                }
-                if ($customerCurr) {
-                    $myCurr = $customerCurr->currencyID;
-                }
-
-                $companyCurrency = \Helper::companyCurrency($dt['companySystemID']);
+            $custInvoiceArray = array();
+            if (!empty($input[0])) {
+                foreach ($input[0] as $dt) {
+                    $dt['companySystemID'] = $request->company_id;
+                    $financeYear = CompanyFinanceYear::where('companySystemID', $dt['companySystemID'])->where('bigginingDate', "<=", $dt['bookingDate'])->where('endingDate', ">=", $dt['bookingDate'])->first();
+                    if (empty($financeYear)) {
+                        return $this->sendError('Finance Year not found');
+                    }
 
 
-                $companyCurrencyConversion = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, 0);
+                    $financePeriod = CompanyFinancePeriod::where('companySystemID', $dt['companySystemID'])->where('departmentSystemID', 4)->where('dateFrom', "<=", $dt['bookingDate'])->where('dateTo', ">=", $dt['bookingDate'])->first();
+                    if (empty($financePeriod)) {
+                        return $this->sendError('Finance Period not found');
+                    }
 
-                $companyCurrencyConversionTrans = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['bookingAmountTrans']);
-                $customer = CustomerMaster::where('customerCodeSystem', $dt['customerID'])->first();
-                if (empty($customer)) {
-                    return $this->sendError('Customer not found');
-                }
-                $companyCurrencyConversionVat = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['VATAmount']);
+                    $customerCurr = CustomerCurrency::where('customerCodeSystem', $dt['customerID'])->first();
+                    if (empty($customerCurr)) {
+                        return $this->sendError('Customer currency not found');
+                    }
+                    if ($customerCurr) {
+                        $myCurr = $customerCurr->currencyID;
+                    }
 
-                $company = Company::where('companySystemID', $dt['companySystemID'])->first();
-                if (empty($company)) {
-                    return $this->sendError('Company not found');
-                }
+                    $companyCurrency = \Helper::companyCurrency($dt['companySystemID']);
 
-                $custInvoiceArray[] = array(
-                    'custInvoiceDirectAutoID' => $dt['custInvoiceDirectAutoID'],
-                    'referenceNumber' => $dt['referenceNumber'],
-                    'companySystemID' => $dt['companySystemID'],
-                    'companyID' => isset($company->CompanyID) ? $company->CompanyID : null,
-                    'documentSystemiD' => 20,
-                    'documentID' => "INV",
-                    'isPerforma' => $dt['isPerforma'],
-                    'customerID' => $dt['customerID'],
-                    'customerGLCode' => isset($customer->custGLaccount) ? $customer->custGLaccount : null,
-                    'customerGLSystemID' => isset($customer->custGLAccountSystemID) ? $customer->custGLAccountSystemID : null,
-                    'customerInvoiceNo' => $dt['customerInvoiceNo'],
-                    'custTransactionCurrencyID' => $myCurr,
-                    'custTransactionCurrencyER' => 1,
-                    'companyReportingCurrencyID' => isset($companyCurrency->reportingcurrency->currencyID) ? $companyCurrency->reportingcurrency->currencyID : null,
-                    'companyReportingER' => $companyCurrencyConversion['trasToRptER'],
-                    'localCurrencyID' => isset($companyCurrency->localcurrency->currencyID) ? $companyCurrency->localcurrency->currencyID : null,
-                    'localCurrencyER' => $companyCurrencyConversion['trasToLocER'],
-                    'comments' => $dt['comments'],
-                    'bookingDate' => $dt['bookingDate'],
-                    'customerInvoiceDate' => $dt['bookingDate'],
-                    'invoiceDueDate' => $dt['invoiceDueDate'],
-                    'date_of_supply' => $dt['dateOfSupply'],
-                    'bookingAmountTrans' => \Helper::roundValue($dt['bookingAmountTrans']),
-                    'bookingAmountLocal' => \Helper::roundValue($companyCurrencyConversionTrans['localAmount']),
-                    'bookingAmountRpt' => \Helper::roundValue($companyCurrencyConversionTrans['reportingAmount']),
-                    'VATPercentage' => $dt['VATPercentage'],
-                    'VATAmount' => $dt['VATAmount'],
-                    'VATAmountLocal' => $companyCurrencyConversionVat['localAmount'],
-                    'VATAmountRpt' => $companyCurrencyConversionVat['reportingAmount'],
-                    'companyFinanceYearID' => isset($financeYear->companyFinanceYearID) ? $financeYear->companyFinanceYearID : null,
-                    'FYBiggin' => isset($financeYear->bigginingDate) ? $financeYear->bigginingDate : null,
-                    'FYEnd' => isset($financeYear->endingDate) ? $financeYear->endingDate : null,
-                    'companyFinancePeriodID' => isset($financePeriod->companyFinancePeriodID) ? $financePeriod->companyFinancePeriodID : null,
-                    'FYPeriodDateFrom' => isset($financePeriod->dateFrom) ? $financePeriod->dateFrom : null,
-                    'FYPeriodDateTo' => isset($financePeriod->dateTo) ? $financePeriod->dateTo : null,
-                    'bankID' => $dt['bankID'],
-                    'bankAccountID' => $dt['bankAccountID'],
 
-                );
-            }
-            StageCustomerInvoice::insert($custInvoiceArray);
-        }
+                    $companyCurrencyConversion = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, 0);
 
-        $custInvoiceDetArray = array();
-        $custInvoiceItemDetArray = array();
-        if(!empty($input[1])) {
-
-            foreach ($input[1] as $dt) {
-                $custInvoice = StageCustomerInvoice::where('custInvoiceDirectAutoID', $dt['custInvoiceDirectAutoID'])->first();
-                if (empty($custInvoice)) {
-                    return $this->sendError('Customer Invoice not found');
-                }
-                if ($custInvoice->isPerforma == 0) {
-
-                    $segment = SegmentMaster::find($dt['serviceLineSystemID']);
-                    $glCode = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $dt['glSystemID'])->where('companySystemID', $custInvoice->companySystemID)->first();
-
-                    $customer = CustomerCurrency::where('customerCodeSystem', $custInvoice->customerID)->first();
-                    $companyCurrency = \Helper::companyCurrency($custInvoice->companySystemID);
+                    $companyCurrencyConversionTrans = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['bookingAmountTrans']);
+                    $customer = CustomerMaster::where('customerCodeSystem', $dt['customerID'])->first();
                     if (empty($customer)) {
                         return $this->sendError('Customer not found');
                     }
-                    if ($customer) {
-                        $myCurr = $customer->currencyID;
-                    }
+                    $companyCurrencyConversionVat = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['VATAmount']);
 
-                    $companyCurrencyConversion = \Helper::currencyConversion($custInvoice->companySystemID, $myCurr, $myCurr, 0);
-                    $companyCurrencyConversionTrans = \Helper::currencyConversion($custInvoice->companySystemID, $myCurr, $myCurr, $dt['invoiceAmount']);
-                    $companyCurrencyConversionVat = \Helper::currencyConversion($custInvoice->companySystemID, $myCurr, $myCurr, $dt['VATAmount']);
-                    $company = Company::where('companySystemID', $custInvoice->companySystemID)->first();
+                    $company = Company::where('companySystemID', $dt['companySystemID'])->first();
                     if (empty($company)) {
                         return $this->sendError('Company not found');
                     }
 
-                    $custInvoiceDetArray[] = array(
-                        'custInvoiceDirectID' => $dt['custInvoiceDirectAutoID'],
-                        'companyID' => isset($company->CompanyID) ? $company->CompanyID : null,
-                        'companySystemID' => $custInvoice->companySystemID,
-                        'serviceLineSystemID' => $dt['serviceLineSystemID'],
-                        'serviceLineCode' => isset($segment->ServiceLineCode) ? $segment->ServiceLineCode : null,
-                        'customerID' => $custInvoice->customerID,
-                        'glSystemID' => $dt['glSystemID'],
-                        'glCode' => isset($glCode->AccountCode) ? $glCode->AccountCode : null,
-                        'glCodeDes' => isset($glCode->AccountDescription) ? $glCode->AccountDescription : null,
-                        'accountType' => isset($glCode->catogaryBLorPL) ? $glCode->AccountDescription : null,
-                        'comments' => $dt['comments'],
-                        'invoiceAmountCurrency' => $myCurr,
-                        'invoiceAmountCurrencyER' => 1,
-                        'unitOfMeasure' => $dt['unitOfMeasure'],
-                        'invoiceQty' => $dt['invoiceQty'],
-                        'unitCost' => $dt['unitCost'],
-                        'invoiceAmount' => $dt['invoiceAmount'],
-                        'localAmount' => $companyCurrencyConversionTrans['localAmount'],
-                        'comRptAmount' => $companyCurrencyConversionTrans['reportingAmount'],
-                        'comRptCurrency' => isset($companyCurrency->reportingcurrency->currencyID) ? $companyCurrency->reportingcurrency->currencyID : null,
-                        'comRptCurrencyER' => $companyCurrencyConversion['trasToRptER'],
-                        'localCurrency' => isset($companyCurrency->localcurrency->currencyID) ? $companyCurrency->localcurrency->currencyID : null,
-                        'localCurrencyER' => $companyCurrencyConversion['trasToLocER'],
-                        'vatMasterCategoryID' => $dt['vatMasterCategoryID'],
-                        'vatSubCategoryID' => $dt['vatSubCategoryID'],
-                        'VATPercentage' => $dt['VATPercentage'],
-                        'VATAmount' => $dt['VATAmount'],
-                        'VATAmountLocal' => $companyCurrencyConversionVat['localAmount'],
-                        'VATAmountRpt' => $companyCurrencyConversionVat['reportingAmount'],
-                        'salesPrice' => $dt['salesPrice']
-                    );
-                } else if ($custInvoice->isPerforma == 2) {
-                    $companyCurrencyConversion = \Helper::currencyConversion($custInvoice->companySystemID, $dt['localCurrencyID'], $dt['localCurrencyID'], 0);
-                    $companyCurrency = \Helper::companyCurrency($custInvoice->companySystemID);
-                    $companyCurrencyConversionMargin = \Helper::currencyConversion($custInvoice->companySystemID, $dt['localCurrencyID'], $dt['localCurrencyID'], $dt['sellingCostAfterMargin']);
-                    $companyCurrencyConversionVat = \Helper::currencyConversion($custInvoice->companySystemID, $dt['localCurrencyID'], $dt['localCurrencyID'], $dt['VATAmount']);
-                    $item = ItemAssigned::where('itemCodeSystem', $dt['itemCodeSystem'])->first();
-                    if (empty($item)) {
-                        return $this->sendError('Item not found');
-                    }
-
-                    $data = array('companySystemID' => $custInvoice->companySystemID,
-                        'itemCodeSystem' => $dt['itemCodeSystem'],
-                        'wareHouseId' => $dt['wareHouseSystemCode']);
-
-                    $itemCurrentCostAndQty = inventory::itemCurrentCostAndQty($data);
-                    $financeItemCategorySubAssigned = FinanceItemcategorySubAssigned::where('companySystemID', $custInvoice->companySystemID)
-                        ->where('mainItemCategoryID', $dt['itemFinanceCategoryID'])
-                        ->where('itemCategorySubID', $dt['itemFinanceCategorySubID'])
-                        ->first();
-
-                    $custInvoiceItemDetArray[] = array(
+                    $custInvoiceArray[] = array(
                         'custInvoiceDirectAutoID' => $dt['custInvoiceDirectAutoID'],
-                        'itemCodeSystem' => $dt['itemCodeSystem'],
-                        'itemPrimaryCode' => isset($item->itemPrimaryCode) ? $item->itemPrimaryCode : null,
-                        'itemDescription' => isset($item->itemDescription) ? $item->itemDescription : null,
-                        'itemUnitOfMeasure' => isset($item->itemUnitOfMeasure) ? $item->itemUnitOfMeasure : null,
-                        'unitOfMeasureIssued' => $dt['unitOfMeasureIssued'],
-                        'convertionMeasureVal' => $dt['convertionMeasureVal'],
-                        'qtyIssued' => $dt['qtyIssued'],
-                        'qtyIssuedDefaultMeasure' => $dt['qtyIssuedDefaultMeasure'],
-                        'currentStockQty' => $itemCurrentCostAndQty['currentStockQty'],
-                        'currentWareHouseStockQty' => $itemCurrentCostAndQty['currentWareHouseStockQty'],
-                        'currentStockQtyInDamageReturn' => $itemCurrentCostAndQty['currentStockQtyInDamageReturn'],
-                        'comments' => $dt['comments'],
-                        'itemFinanceCategoryID' => $dt['itemFinanceCategoryID'],
-                        'itemFinanceCategorySubID' => $dt['itemFinanceCategorySubID'],
-                        'financeGLcodebBS' => isset($financeItemCategorySubAssigned->financeGLcodebBS) ? $financeItemCategorySubAssigned->financeGLcodebBS : null,
-                        'financeGLcodebBSSystemID' => isset($financeItemCategorySubAssigned->financeGLcodebBSSystemID) ? $financeItemCategorySubAssigned->financeGLcodebBSSystemID : null,
-                        'financeGLcodePLSystemID' => isset($financeItemCategorySubAssigned->financeGLcodePLSystemID) ? $financeItemCategorySubAssigned->financeGLcodePLSystemID : null,
-                        'financeGLcodePL' => isset($financeItemCategorySubAssigned->financeGLcodePL) ? $financeItemCategorySubAssigned->financeGLcodePL : null,
-                        'financeGLcodeRevenueSystemID' => isset($financeItemCategorySubAssigned->financeGLcodeRevenueSystemID) ? $financeItemCategorySubAssigned->financeGLcodeRevenueSystemID : null,
-                        'financeGLcodeRevenue' => isset($financeItemCategorySubAssigned->financeGLcodeRevenue) ? $financeItemCategorySubAssigned->financeGLcodeRevenue : null,
+                        'referenceNumber' => $dt['referenceNumber'],
+                        'companySystemID' => $dt['companySystemID'],
+                        'companyID' => isset($company->CompanyID) ? $company->CompanyID : null,
+                        'documentSystemiD' => 20,
+                        'documentID' => "INV",
+                        'isPerforma' => $dt['isPerforma'],
+                        'customerID' => $dt['customerID'],
+                        'customerGLCode' => isset($customer->custGLaccount) ? $customer->custGLaccount : null,
+                        'customerGLSystemID' => isset($customer->custGLAccountSystemID) ? $customer->custGLAccountSystemID : null,
+                        'customerInvoiceNo' => $dt['customerInvoiceNo'],
+                        'custTransactionCurrencyID' => $myCurr,
+                        'custTransactionCurrencyER' => 1,
+                        'companyReportingCurrencyID' => isset($companyCurrency->reportingcurrency->currencyID) ? $companyCurrency->reportingcurrency->currencyID : null,
+                        'companyReportingER' => $companyCurrencyConversion['trasToRptER'],
                         'localCurrencyID' => isset($companyCurrency->localcurrency->currencyID) ? $companyCurrency->localcurrency->currencyID : null,
                         'localCurrencyER' => $companyCurrencyConversion['trasToLocER'],
-                        'issueCostLocal' => $itemCurrentCostAndQty['wacValueLocal'],
-                        'issueCostLocalTotal' => $itemCurrentCostAndQty['wacValueLocal'] * $dt['qtyIssuedDefaultMeasure'],
-                        'reportingCurrencyID' => isset($companyCurrency->reportingcurrency->currencyID) ? $companyCurrency->reportingcurrency->currencyID : null,
-                        'reportingCurrencyER' => $companyCurrencyConversion['trasToRptER'],
-                        'issueCostRpt' => $itemCurrentCostAndQty['wacValueReporting'],
-                        'issueCostRptTotal' => $itemCurrentCostAndQty['wacValueReporting'] * $dt['qtyIssuedDefaultMeasure'],
-                        'marginPercentage' => $dt['marginPercentage'],
-                        'sellingCurrencyID' => $dt['sellingCurrencyID'],
-                        'sellingCurrencyER' => $dt['sellingCurrencyER'],
-                        'sellingCost' => $dt['sellingCost'],
-                        'sellingCostAfterMargin' => $dt['sellingCostAfterMargin'],
-                        'sellingTotal' => $dt['sellingTotal'],
-                        'sellingCostAfterMarginLocal' => $companyCurrencyConversionMargin['localAmount'],
-                        'sellingCostAfterMarginRpt' => $companyCurrencyConversionMargin['reportingAmount'],
-                        'deliveryOrderDetailID' => $dt['deliveryOrderDetailID'],
-                        'deliveryOrderID' => $dt['deliveryOrderID'],
-                        'quotationMasterID' => $dt['quotationMasterID'],
-                        'quotationDetailsID' => $dt['quotationDetailsID'],
+                        'comments' => $dt['comments'],
+                        'bookingDate' => $dt['bookingDate'],
+                        'customerInvoiceDate' => $dt['bookingDate'],
+                        'invoiceDueDate' => $dt['invoiceDueDate'],
+                        'date_of_supply' => $dt['dateOfSupply'],
+                        'bookingAmountTrans' => \Helper::roundValue($dt['bookingAmountTrans']),
+                        'bookingAmountLocal' => \Helper::roundValue($companyCurrencyConversionTrans['localAmount']),
+                        'bookingAmountRpt' => \Helper::roundValue($companyCurrencyConversionTrans['reportingAmount']),
                         'VATPercentage' => $dt['VATPercentage'],
-                        'vatMasterCategoryID' => $dt['vatMasterCategoryID'],
-                        'vatSubCategoryID' => $dt['vatSubCategoryID'],
                         'VATAmount' => $dt['VATAmount'],
                         'VATAmountLocal' => $companyCurrencyConversionVat['localAmount'],
                         'VATAmountRpt' => $companyCurrencyConversionVat['reportingAmount'],
-                        'salesPrice' => $dt['salesPrice']
+                        'companyFinanceYearID' => isset($financeYear->companyFinanceYearID) ? $financeYear->companyFinanceYearID : null,
+                        'FYBiggin' => isset($financeYear->bigginingDate) ? $financeYear->bigginingDate : null,
+                        'FYEnd' => isset($financeYear->endingDate) ? $financeYear->endingDate : null,
+                        'companyFinancePeriodID' => isset($financePeriod->companyFinancePeriodID) ? $financePeriod->companyFinancePeriodID : null,
+                        'FYPeriodDateFrom' => isset($financePeriod->dateFrom) ? $financePeriod->dateFrom : null,
+                        'FYPeriodDateTo' => isset($financePeriod->dateTo) ? $financePeriod->dateTo : null,
+                        'bankID' => $dt['bankID'],
+                        'bankAccountID' => $dt['bankAccountID'],
+
                     );
                 }
-
+                StageCustomerInvoice::insert($custInvoiceArray);
             }
-            StageCustomerInvoiceDirectDetail::insert($custInvoiceDetArray);
-            StageCustomerInvoiceItemDetails::insert($custInvoiceItemDetArray);
+
+            $custInvoiceDetArray = array();
+            $custInvoiceItemDetArray = array();
+            if (!empty($input[1])) {
+
+                foreach ($input[1] as $dt) {
+                    $custInvoice = StageCustomerInvoice::where('custInvoiceDirectAutoID', $dt['custInvoiceDirectAutoID'])->first();
+                    if (empty($custInvoice)) {
+                        return $this->sendError('Customer Invoice not found');
+                    }
+                    if ($custInvoice->isPerforma == 0) {
+
+                        $segment = SegmentMaster::find($dt['serviceLineSystemID']);
+                        $glCode = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $dt['glSystemID'])->where('companySystemID', $custInvoice->companySystemID)->first();
+
+                        $customer = CustomerCurrency::where('customerCodeSystem', $custInvoice->customerID)->first();
+                        $companyCurrency = \Helper::companyCurrency($custInvoice->companySystemID);
+                        if (empty($customer)) {
+                            return $this->sendError('Customer not found');
+                        }
+                        if ($customer) {
+                            $myCurr = $customer->currencyID;
+                        }
+
+                        $companyCurrencyConversion = \Helper::currencyConversion($custInvoice->companySystemID, $myCurr, $myCurr, 0);
+                        $companyCurrencyConversionTrans = \Helper::currencyConversion($custInvoice->companySystemID, $myCurr, $myCurr, $dt['invoiceAmount']);
+                        $companyCurrencyConversionVat = \Helper::currencyConversion($custInvoice->companySystemID, $myCurr, $myCurr, $dt['VATAmount']);
+                        $company = Company::where('companySystemID', $custInvoice->companySystemID)->first();
+                        if (empty($company)) {
+                            return $this->sendError('Company not found');
+                        }
+
+                        $custInvoiceDetArray[] = array(
+                            'custInvoiceDirectID' => $dt['custInvoiceDirectAutoID'],
+                            'companyID' => isset($company->CompanyID) ? $company->CompanyID : null,
+                            'companySystemID' => $custInvoice->companySystemID,
+                            'serviceLineSystemID' => $dt['serviceLineSystemID'],
+                            'serviceLineCode' => isset($segment->ServiceLineCode) ? $segment->ServiceLineCode : null,
+                            'customerID' => $custInvoice->customerID,
+                            'glSystemID' => $dt['glSystemID'],
+                            'glCode' => isset($glCode->AccountCode) ? $glCode->AccountCode : null,
+                            'glCodeDes' => isset($glCode->AccountDescription) ? $glCode->AccountDescription : null,
+                            'accountType' => isset($glCode->catogaryBLorPL) ? $glCode->AccountDescription : null,
+                            'comments' => $dt['comments'],
+                            'invoiceAmountCurrency' => $myCurr,
+                            'invoiceAmountCurrencyER' => 1,
+                            'unitOfMeasure' => $dt['unitOfMeasure'],
+                            'invoiceQty' => $dt['invoiceQty'],
+                            'unitCost' => $dt['unitCost'],
+                            'invoiceAmount' => $dt['invoiceAmount'],
+                            'localAmount' => $companyCurrencyConversionTrans['localAmount'],
+                            'comRptAmount' => $companyCurrencyConversionTrans['reportingAmount'],
+                            'comRptCurrency' => isset($companyCurrency->reportingcurrency->currencyID) ? $companyCurrency->reportingcurrency->currencyID : null,
+                            'comRptCurrencyER' => $companyCurrencyConversion['trasToRptER'],
+                            'localCurrency' => isset($companyCurrency->localcurrency->currencyID) ? $companyCurrency->localcurrency->currencyID : null,
+                            'localCurrencyER' => $companyCurrencyConversion['trasToLocER'],
+                            'vatMasterCategoryID' => $dt['vatMasterCategoryID'],
+                            'vatSubCategoryID' => $dt['vatSubCategoryID'],
+                            'VATPercentage' => $dt['VATPercentage'],
+                            'VATAmount' => $dt['VATAmount'],
+                            'VATAmountLocal' => $companyCurrencyConversionVat['localAmount'],
+                            'VATAmountRpt' => $companyCurrencyConversionVat['reportingAmount'],
+                            'salesPrice' => $dt['salesPrice']
+                        );
+                    } else if ($custInvoice->isPerforma == 2) {
+                        $companyCurrencyConversion = \Helper::currencyConversion($custInvoice->companySystemID, $dt['localCurrencyID'], $dt['localCurrencyID'], 0);
+                        $companyCurrency = \Helper::companyCurrency($custInvoice->companySystemID);
+                        $companyCurrencyConversionMargin = \Helper::currencyConversion($custInvoice->companySystemID, $dt['localCurrencyID'], $dt['localCurrencyID'], $dt['sellingCostAfterMargin']);
+                        $companyCurrencyConversionVat = \Helper::currencyConversion($custInvoice->companySystemID, $dt['localCurrencyID'], $dt['localCurrencyID'], $dt['VATAmount']);
+                        $item = ItemAssigned::where('itemCodeSystem', $dt['itemCodeSystem'])->first();
+                        if (empty($item)) {
+                            return $this->sendError('Item not found');
+                        }
+
+                        $data = array('companySystemID' => $custInvoice->companySystemID,
+                            'itemCodeSystem' => $dt['itemCodeSystem'],
+                            'wareHouseId' => $dt['wareHouseSystemCode']);
+
+                        $itemCurrentCostAndQty = inventory::itemCurrentCostAndQty($data);
+                        $financeItemCategorySubAssigned = FinanceItemcategorySubAssigned::where('companySystemID', $custInvoice->companySystemID)
+                            ->where('mainItemCategoryID', $dt['itemFinanceCategoryID'])
+                            ->where('itemCategorySubID', $dt['itemFinanceCategorySubID'])
+                            ->first();
+
+                        $custInvoiceItemDetArray[] = array(
+                            'custInvoiceDirectAutoID' => $dt['custInvoiceDirectAutoID'],
+                            'itemCodeSystem' => $dt['itemCodeSystem'],
+                            'itemPrimaryCode' => isset($item->itemPrimaryCode) ? $item->itemPrimaryCode : null,
+                            'itemDescription' => isset($item->itemDescription) ? $item->itemDescription : null,
+                            'itemUnitOfMeasure' => isset($item->itemUnitOfMeasure) ? $item->itemUnitOfMeasure : null,
+                            'unitOfMeasureIssued' => $dt['unitOfMeasureIssued'],
+                            'convertionMeasureVal' => $dt['convertionMeasureVal'],
+                            'qtyIssued' => $dt['qtyIssued'],
+                            'qtyIssuedDefaultMeasure' => $dt['qtyIssuedDefaultMeasure'],
+                            'currentStockQty' => $itemCurrentCostAndQty['currentStockQty'],
+                            'currentWareHouseStockQty' => $itemCurrentCostAndQty['currentWareHouseStockQty'],
+                            'currentStockQtyInDamageReturn' => $itemCurrentCostAndQty['currentStockQtyInDamageReturn'],
+                            'comments' => $dt['comments'],
+                            'itemFinanceCategoryID' => $dt['itemFinanceCategoryID'],
+                            'itemFinanceCategorySubID' => $dt['itemFinanceCategorySubID'],
+                            'financeGLcodebBS' => isset($financeItemCategorySubAssigned->financeGLcodebBS) ? $financeItemCategorySubAssigned->financeGLcodebBS : null,
+                            'financeGLcodebBSSystemID' => isset($financeItemCategorySubAssigned->financeGLcodebBSSystemID) ? $financeItemCategorySubAssigned->financeGLcodebBSSystemID : null,
+                            'financeGLcodePLSystemID' => isset($financeItemCategorySubAssigned->financeGLcodePLSystemID) ? $financeItemCategorySubAssigned->financeGLcodePLSystemID : null,
+                            'financeGLcodePL' => isset($financeItemCategorySubAssigned->financeGLcodePL) ? $financeItemCategorySubAssigned->financeGLcodePL : null,
+                            'financeGLcodeRevenueSystemID' => isset($financeItemCategorySubAssigned->financeGLcodeRevenueSystemID) ? $financeItemCategorySubAssigned->financeGLcodeRevenueSystemID : null,
+                            'financeGLcodeRevenue' => isset($financeItemCategorySubAssigned->financeGLcodeRevenue) ? $financeItemCategorySubAssigned->financeGLcodeRevenue : null,
+                            'localCurrencyID' => isset($companyCurrency->localcurrency->currencyID) ? $companyCurrency->localcurrency->currencyID : null,
+                            'localCurrencyER' => $companyCurrencyConversion['trasToLocER'],
+                            'issueCostLocal' => $itemCurrentCostAndQty['wacValueLocal'],
+                            'issueCostLocalTotal' => $itemCurrentCostAndQty['wacValueLocal'] * $dt['qtyIssuedDefaultMeasure'],
+                            'reportingCurrencyID' => isset($companyCurrency->reportingcurrency->currencyID) ? $companyCurrency->reportingcurrency->currencyID : null,
+                            'reportingCurrencyER' => $companyCurrencyConversion['trasToRptER'],
+                            'issueCostRpt' => $itemCurrentCostAndQty['wacValueReporting'],
+                            'issueCostRptTotal' => $itemCurrentCostAndQty['wacValueReporting'] * $dt['qtyIssuedDefaultMeasure'],
+                            'marginPercentage' => $dt['marginPercentage'],
+                            'sellingCurrencyID' => $dt['sellingCurrencyID'],
+                            'sellingCurrencyER' => $dt['sellingCurrencyER'],
+                            'sellingCost' => $dt['sellingCost'],
+                            'sellingCostAfterMargin' => $dt['sellingCostAfterMargin'],
+                            'sellingTotal' => $dt['sellingTotal'],
+                            'sellingCostAfterMarginLocal' => $companyCurrencyConversionMargin['localAmount'],
+                            'sellingCostAfterMarginRpt' => $companyCurrencyConversionMargin['reportingAmount'],
+                            'deliveryOrderDetailID' => $dt['deliveryOrderDetailID'],
+                            'deliveryOrderID' => $dt['deliveryOrderID'],
+                            'quotationMasterID' => $dt['quotationMasterID'],
+                            'quotationDetailsID' => $dt['quotationDetailsID'],
+                            'VATPercentage' => $dt['VATPercentage'],
+                            'vatMasterCategoryID' => $dt['vatMasterCategoryID'],
+                            'vatSubCategoryID' => $dt['vatSubCategoryID'],
+                            'VATAmount' => $dt['VATAmount'],
+                            'VATAmountLocal' => $companyCurrencyConversionVat['localAmount'],
+                            'VATAmountRpt' => $companyCurrencyConversionVat['reportingAmount'],
+                            'salesPrice' => $dt['salesPrice']
+                        );
+                    }
+
+                }
+                StageCustomerInvoiceDirectDetail::insert($custInvoiceDetArray);
+                StageCustomerInvoiceItemDetails::insert($custInvoiceItemDetArray);
+            }
+            DB::commit();
+
+
+            $db = isset($request->db) ? $request->db : "";
+
+            CreateStageCustomerInvoice::dispatch($db, $request->api_external_key, $request->api_external_url);
+
+            return $this->sendResponse($custInvoiceArray, trans('custom.save', ['attribute' => trans('custom.customer_invoice')]));
+        }  catch(\Exception $e){
+            DB::rollback();
+            Log::info('Error Line No: ' . $e->getLine());
+            Log::info('Error File: ' . $e->getFile());
+            Log::info($e->getMessage());
+            Log::info('---- GL  End with Error-----' . date('H:i:s'));
+            return $this->sendError($e->getMessage(),500);
         }
-        $db = isset($request->db) ? $request->db : "";
-
-        CreateStageCustomerInvoice::dispatch($db,$request->api_external_key,$request->api_external_url);
-
-        return $this->sendResponse($custInvoiceArray, trans('custom.save', ['attribute' => trans('custom.customer_invoice')]));
     }
 
     public function createReceiptVoucher(CreateStageReceiptVoucherAPIRequest  $request)
     {
-
+        DB::beginTransaction();
+        try {
         $input = $request->all();
 
         $custReceiptVoucherArray = array();
@@ -488,15 +503,25 @@ class ClubManagementAPIController extends AppBaseController
             }
             StageDirectReceiptDetail::insert($custReceiptDetails);
         }
+        DB::commit();
 
         $db = isset($request->db) ? $request->db : "";
         CreateStageReceiptVoucher::dispatch($db,$request->api_external_key,$request->api_external_url);
-
         return $this->sendResponse($custReceiptVoucherArray, trans('custom.save', ['attribute' => trans('custom.receipt_voucher')]));
-
+    }
+    catch(\Exception $e){
+        DB::rollback();
+        Log::info('Error Line No: ' . $e->getLine());
+        Log::info('Error File: ' . $e->getFile());
+        Log::info($e->getMessage());
+        Log::info('---- GL  End with Error-----' . date('H:i:s'));
+        return $this->sendError($e->getMessage(),500);
+        }
     }
 
     public function createCustomerMaster(CreateCustomerMasterRequest  $request){
+        DB::beginTransaction();
+        try {
         $input = $request->all();
         $input = $this->convertArrayToSelectedValue($input, array('custGLAccountSystemID', 'custUnbilledAccountSystemID'));
 
@@ -596,8 +621,7 @@ class ClubManagementAPIController extends AppBaseController
         $customerMasters = $this->customerMasterRepository->create($input);
         Log::useFiles(storage_path().'/logs/laravel.log');
 
-        DB::beginTransaction();
-        try {
+
 
             $params = array('autoID' => $customerMasters->customerCodeSystem,
                 'company' => $customerMasters->primaryCompanySystemID,
@@ -627,17 +651,18 @@ class ClubManagementAPIController extends AppBaseController
                 'createdBy' => "8888"
             ]);
             DB::commit();
+            return $this->sendResponse($customerMasters->toArray(), 'Customer Master created successfully');
 
         }
         catch(\Exception $e){
             DB::rollback();
             Log::info('Error Line No: ' . $e->getLine());
-            Log::info('Error Line No: ' . $e->getFile());
+            Log::info('Error File: ' . $e->getFile());
             Log::info($e->getMessage());
             Log::info('---- GL  End with Error-----' . date('H:i:s'));
+            return $this->sendError($e->getMessage(),500);
         }
 
-        return $this->sendResponse($customerMasters->toArray(), 'Customer Master created successfully');
 
     }
 
