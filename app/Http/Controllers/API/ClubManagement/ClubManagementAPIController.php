@@ -656,6 +656,7 @@ class ClubManagementAPIController extends AppBaseController
                         $subCategories[] = array(
                             'taxVatSubCategoriesAutoID' => $sub->taxVatSubCategoriesAutoID,
                             'mainCategory' => $sub->mainCategory,
+                            'percentage' => $sub->percentage,
                             'subCategoryDescription' => $sub->subCategoryDescription
                         );
                     }
