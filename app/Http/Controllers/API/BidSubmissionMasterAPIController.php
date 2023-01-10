@@ -1057,6 +1057,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
         foreach($suppliersData as $supplier) {
             $total = 0;
             foreach($pring_schedul_master_datas as $pring_schedul_master_data) {
+
                 $pricing_shedule_details = $pring_schedul_master_data->pricing_shedule_details()->get();
                 foreach($pricing_shedule_details as $pricing_shedule_detail) {
                         if($pricing_shedule_detail->field_type != 4) { 
@@ -1078,15 +1079,15 @@ class BidSubmissionMasterAPIController extends AppBaseController
                                     $total += $ScheduleBidFormatDetailsAmount->value;
                                 }
 
-                                if($pricing_shedule_detail->field_type == 3) {
-                                    if($pricing_shedule_detail->is_disabled == 1) {
-                                        $ScheduleBidFormatDetails = ScheduleBidFormatDetails::where('bid_format_detail_id',$pricing_shedule_detail->id)->first();
-                                        $total += ($ScheduleBidFormatDetails->value)/100;
-                                    }else {
-                                        $total += ($dataBidBoqData['total_amount']/100);
-                                    }
+                                // if($pricing_shedule_detail->field_type == 3) {
+                                //     if($pricing_shedule_detail->is_disabled == 1) {
+                                //         $ScheduleBidFormatDetails = ScheduleBidFormatDetails::where('bid_format_detail_id',$pricing_shedule_detail->id)->first();
+                                //         $total += ($ScheduleBidFormatDetails->value)/100;
+                                //     }else {
+                                //         $total += ($dataBidBoqData['total_amount']/100);
+                                //     }
                                     
-                                }
+                                // }
 
                         }
     
@@ -1111,18 +1112,24 @@ class BidSubmissionMasterAPIController extends AppBaseController
         });
 
         $rankingArray = [];
-   
-        for($i=0; $i < count($data); $i++){
+
+        $i = 0;
+        $x = 0;
+
+        foreach($data as $dt) {
             if(array_key_exists($data[$i]['total'],$rankingArray)) {
                 $data[$i]['ranking'] = $rankingArray[$data[$i]['total']];
-                $i = (int) str_replace("L","",$rankingArray[$data[$i]['total']]);
             }else {
-                $rankingArray[$data[$i]['total']] =  "L".($i+1);
-                $data[$i]['ranking'] = "L".($i+1);
+                    $rankingArray[$data[$i]['total']] =  "L".($x+1);
+                    $data[$i]['ranking'] = "L".($x+1);
+                   $x++;
+                    
             }
+            $i++;
+           
         }
-
-
+   
+  
         return $data;
     }
 }
