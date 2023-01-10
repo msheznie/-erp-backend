@@ -50,12 +50,11 @@ class CreateStageReceiptVoucher implements ShouldQueue
 
     public function handle()
     {
-
+        CommonJobService::db_switch($this->dataBase);
         DB::beginTransaction();
 
         try {
             Log::useFiles(storage_path().'/logs/stage_create_receipt_voucher.log');
-            CommonJobService::db_switch($this->dataBase);
             $api_external_key = $this->api_external_key;
             $api_external_url = $this->api_external_url;
             $stagCustomerUpdateReceipts = StageCustomerReceivePayment::all();
