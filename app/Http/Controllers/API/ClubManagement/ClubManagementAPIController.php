@@ -346,7 +346,7 @@ class ClubManagementAPIController extends AppBaseController
                 'companyFinanceYearID' => isset($financeYear->companyFinanceYearID) ? $financeYear->companyFinanceYearID : null,
                 'FYBiggin' => isset($financeYear->bigginingDate) ? $financeYear->bigginingDate : null,
                 'FYPeriodDateFrom' => isset($financePeriod->dateFrom) ? $financePeriod->dateFrom : null,
-                'companyFinancePeriodID' => isset($financeYear->companyFinancePeriodID) ? $financeYear->companyFinancePeriodID : null,
+                'companyFinancePeriodID' => isset($financePeriod->companyFinancePeriodID) ? $financePeriod->companyFinancePeriodID : null,
                 'FYEnd' => isset($financeYear->endingDate) ? $financeYear->endingDate : null,
                 'FYPeriodDateTo' => isset($financePeriod->dateTo) ? $financePeriod->dateTo : null,
                 'custPaymentReceiveDate' => $dt['custPaymentReceiveDate'],
