@@ -666,22 +666,33 @@ class ClubManagementAPIController extends AppBaseController
     }
 
     public function createCustomerCategory(Request $request){
+        DB::beginTransaction();
+        try {
+            $company = Company::where('companySystemID', $request->company_id)->first();
+            if (empty($company)) {
+                return $this->sendError('Company not found');
+            }
 
-        $company = Company::where('companySystemID', $request->company_id)->first();
-        if(empty($company)){
-            return $this->sendError('Company not found');
+            $duplicateCategoryDescription = CustomerMasterCategory::where('categoryDescription', $request->categoryDescription)->first();
+
+            if ($duplicateCategoryDescription) {
+                return $this->sendError('Customer master category description already exists.', 500);
+            }
+
+            $customerMasterCategory = ['categoryDescription' => $request->categoryDescription, 'companySystemID' => $request->company_id, 'companyID' => $company->CompanyID];
+            $customerMasterCategory = CustomerMasterCategory::create($customerMasterCategory);
+            DB::commit();
+
+            return $this->sendResponse($customerMasterCategory->toArray(), 'Customer Master Category created successfully');
         }
-
-        $duplicateCategoryDescription = CustomerMasterCategory::where('categoryDescription', $request->categoryDescription)->first();
-
-        if($duplicateCategoryDescription){
-            return $this->sendError('Customer master category description already exists.' ,500);
+        catch(\Exception $e){
+            DB::rollback();
+            Log::info('Error Line No: ' . $e->getLine());
+            Log::info('Error File: ' . $e->getFile());
+            Log::info($e->getMessage());
+            Log::info('---- GL  End with Error-----' . date('H:i:s'));
+            return $this->sendError($e->getMessage(),500);
         }
-
-        $customerMasterCategory = ['categoryDescription' => $request->categoryDescription, 'companySystemID' => $request->company_id, 'companyID' => $company->CompanyID];
-         $customerMasterCategory = CustomerMasterCategory::create($customerMasterCategory);
-
-        return $this->sendResponse($customerMasterCategory->toArray(), 'Customer Master Category created successfully');
 
     }
 
