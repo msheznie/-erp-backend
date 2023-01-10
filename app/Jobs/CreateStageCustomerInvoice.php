@@ -276,20 +276,12 @@ class CreateStageCustomerInvoice implements ShouldQueue
                 $confirm = \Helper::confirmDocumentForApi($params);
                 Log::info($confirm);
 
-                $documentApproved = DocumentApproved::where('documentSystemCode', $dt['custInvoiceDirectAutoID'])->where('documentSystemID', 20)->first();
-                $customerInvoiceDirects = array();
-                $customerInvoiceDirects["approvalLevelID"] = 14;
-                $customerInvoiceDirects["documentApprovedID"] = $documentApproved->documentApprovedID;
-                $customerInvoiceDirects["documentSystemCode"] = $dt['custInvoiceDirectAutoID'];
-                $customerInvoiceDirects["documentSystemID"] = $dt['documentSystemiD'];
-                $customerInvoiceDirects["approvedComments"] = "Generated Customer Invoice through Club Management System";
-                $customerInvoiceDirects["rollLevelOrder"] = 1;
-                $approve = \Helper::approveDocumentForApi($customerInvoiceDirects);
-                Log::info($approve);
+                $documentApproveds = DocumentApproved::where('documentSystemCode', $dt['custInvoiceDirectAutoID'])->where('documentSystemID', 20)->first();
+                foreach ($documentApproveds as $documentApproved) {
+                    $documentApproved["approvedComments"] = "Generated Customer Invoice through Club Management System";
+                    \Helper::approveDocumentForApi($documentApproved);
+                }
 
-//                if (!$approve["success"]) {
-//                    return $this->sendError($approve["message"]);
-//                }
 
 
             }

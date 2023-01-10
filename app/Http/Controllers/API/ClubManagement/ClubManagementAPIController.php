@@ -619,7 +619,13 @@ class ClubManagementAPIController extends AppBaseController
    
         $customerMasters = $this->customerMasterRepository->create($input);
         Log::useFiles(storage_path().'/logs/laravel.log');
-
+            CustomerCurrency::create(['customerCodeSystem' => $customerMasters->customerCodeSystem,
+                'customerCode' => $customerMasters->CutomerCode,
+                'currencyID' => 1,
+                'isDefault' => -1,
+                'isAssigned' => -1,
+                'createdBy' => "8888"
+            ]);
 
 
             $params = array('autoID' => $customerMasters->customerCodeSystem,
@@ -633,22 +639,12 @@ class ClubManagementAPIController extends AppBaseController
 
             \Helper::confirmDocumentForApi($params);
 
-            $documentApproved = DocumentApproved::where('documentSystemCode', $customerMasters->customerCodeSystem)->where('documentSystemID', $customerMasters->documentSystemID)->first();
-            $customerInvoiceDirects = array();
-            $customerInvoiceDirects["approvalLevelID"] = 14;
-            $customerInvoiceDirects["documentApprovedID"] = $documentApproved->documentApprovedID;
-            $customerInvoiceDirects["documentSystemCode"] = $customerMasters->customerCodeSystem;
-            $customerInvoiceDirects["documentSystemID"] = $customerMasters->documentSystemID;
-            $customerInvoiceDirects["approvedComments"] = "Generated Customer Invoice through Club Management System";
-            $customerInvoiceDirects["rollLevelOrder"] = 1;
-            \Helper::approveDocumentForApi($customerInvoiceDirects);
-            CustomerCurrency::create(['customerCodeSystem' => $customerMasters->customerCodeSystem,
-                'customerCode' => $customerMasters->CutomerCode,
-                'currencyID' => 1,
-                'isDefault' => -1,
-                'isAssigned' => -1,
-                'createdBy' => "8888"
-            ]);
+            $documentApproveds = DocumentApproved::where('documentSystemCode', $customerMasters->customerCodeSystem)->where('documentSystemID', $customerMasters->documentSystemID)->get();
+            foreach ($documentApproveds as $documentApproved) {
+                $documentApproved["approvedComments"] = "Generated Customer Invoice through Club Management System";
+                \Helper::approveDocumentForApi($documentApproved);
+            }
+
             DB::commit();
             return $this->sendResponse($customerMasters->toArray(), 'Customer Master created successfully');
 

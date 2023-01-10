@@ -258,17 +258,11 @@ class CreateStageReceiptVoucher implements ShouldQueue
                 $confirm = \Helper::confirmDocumentForApi($params);
                 Log::info($confirm);
 
-                $documentApproved = DocumentApproved::where('documentSystemCode', $dt['custReceivePaymentAutoID'])->where('documentSystemID', 21)->first();
-                $customerInvoiceDirects = array();
-                $customerInvoiceDirects["approvalLevelID"] = 14;
-                $customerInvoiceDirects["documentApprovedID"] = $documentApproved->documentApprovedID;
-                $customerInvoiceDirects["documentSystemCode"] = $dt['custReceivePaymentAutoID'];
-                $customerInvoiceDirects["documentSystemID"] = $dt['documentSystemID'];
-                $customerInvoiceDirects["approvedComments"] = "Generated Customer Invoice through Club Management System";
-                $customerInvoiceDirects["rollLevelOrder"] = 1;
-                $approve = \Helper::approveDocumentForApi($customerInvoiceDirects);
-                Log::info($approve);
-
+                $documentApproveds = DocumentApproved::where('documentSystemCode', $dt['custReceivePaymentAutoID'])->where('documentSystemID', 21)->first();
+                foreach ($documentApproveds as $documentApproved) {
+                    $documentApproved["approvedComments"] = "Generated Customer Invoice through Club Management System";
+                    \Helper::approveDocumentForApi($documentApproved);
+                }
             }
 
             StageCustomerReceivePayment::truncate();
