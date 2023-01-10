@@ -3877,7 +3877,6 @@ class SRMService
     public function getInvoiceAttachment($request)
     {
         $id = $request->input('extra.id');
-
         $queryRecordsCount = DocumentAttachments::where('documentSystemID', 11)
             ->where('documentSystemCode', $id)
             ->where('attachmentType', 0)
@@ -3891,9 +3890,7 @@ class SRMService
 
             $data = DataTables::of($query)
                 ->addColumn('Actions', 'Actions', "Actions")
-                ->order(function ($query) use ($input) {
-                    if (request()->has('order')) {
-                    }
+                ->order(function ($query){
                 })
                 ->addIndexColumn()
                 ->make(true);
