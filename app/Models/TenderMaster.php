@@ -310,9 +310,10 @@ class TenderMaster extends Model
         'document_type',
         'final_tender_award_comment',
         'final_tender_awarded',
-        'final_tender_award_email'
+        'final_tender_award_email',
+        'award_commite_mem_status',
+        'final_tender_comment_status'
     ];
-
     /**
      * The attributes that should be casted to native types.
      *
