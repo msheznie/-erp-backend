@@ -619,7 +619,13 @@ class ClubManagementAPIController extends AppBaseController
    
         $customerMasters = $this->customerMasterRepository->create($input);
         Log::useFiles(storage_path().'/logs/laravel.log');
-
+            CustomerCurrency::create(['customerCodeSystem' => $customerMasters->customerCodeSystem,
+                'customerCode' => $customerMasters->CutomerCode,
+                'currencyID' => 1,
+                'isDefault' => -1,
+                'isAssigned' => -1,
+                'createdBy' => "8888"
+            ]);
 
 
             $params = array('autoID' => $customerMasters->customerCodeSystem,
@@ -633,22 +639,12 @@ class ClubManagementAPIController extends AppBaseController
 
             \Helper::confirmDocumentForApi($params);
 
-            $documentApproved = DocumentApproved::where('documentSystemCode', $customerMasters->customerCodeSystem)->where('documentSystemID', $customerMasters->documentSystemID)->first();
-            $customerInvoiceDirects = array();
-            $customerInvoiceDirects["approvalLevelID"] = 14;
-            $customerInvoiceDirects["documentApprovedID"] = $documentApproved->documentApprovedID;
-            $customerInvoiceDirects["documentSystemCode"] = $customerMasters->customerCodeSystem;
-            $customerInvoiceDirects["documentSystemID"] = $customerMasters->documentSystemID;
-            $customerInvoiceDirects["approvedComments"] = "Generated Customer Invoice through Club Management System";
-            $customerInvoiceDirects["rollLevelOrder"] = 1;
-            \Helper::approveDocumentForApi($customerInvoiceDirects);
-            CustomerCurrency::create(['customerCodeSystem' => $customerMasters->customerCodeSystem,
-                'customerCode' => $customerMasters->CutomerCode,
-                'currencyID' => 1,
-                'isDefault' => -1,
-                'isAssigned' => -1,
-                'createdBy' => "8888"
-            ]);
+            $documentApproveds = DocumentApproved::where('documentSystemCode', $customerMasters->customerCodeSystem)->where('documentSystemID', $customerMasters->documentSystemID)->get();
+            foreach ($documentApproveds as $documentApproved) {
+                $documentApproved["approvedComments"] = "Generated Customer Invoice through Club Management System";
+                \Helper::approveDocumentForApi($documentApproved);
+            }
+
             DB::commit();
             return $this->sendResponse($customerMasters->toArray(), 'Customer Master created successfully');
 
@@ -666,22 +662,33 @@ class ClubManagementAPIController extends AppBaseController
     }
 
     public function createCustomerCategory(Request $request){
+        DB::beginTransaction();
+        try {
+            $company = Company::where('companySystemID', $request->company_id)->first();
+            if (empty($company)) {
+                return $this->sendError('Company not found');
+            }
 
-        $company = Company::where('companySystemID', $request->company_id)->first();
-        if(empty($company)){
-            return $this->sendError('Company not found');
+            $duplicateCategoryDescription = CustomerMasterCategory::where('categoryDescription', $request->categoryDescription)->first();
+
+            if ($duplicateCategoryDescription) {
+                return $this->sendError('Customer master category description already exists.', 500);
+            }
+
+            $customerMasterCategory = ['categoryDescription' => $request->categoryDescription, 'companySystemID' => $request->company_id, 'companyID' => $company->CompanyID];
+            $customerMasterCategory = CustomerMasterCategory::create($customerMasterCategory);
+            DB::commit();
+
+            return $this->sendResponse($customerMasterCategory->toArray(), 'Customer Master Category created successfully');
         }
-
-        $duplicateCategoryDescription = CustomerMasterCategory::where('categoryDescription', $request->categoryDescription)->first();
-
-        if($duplicateCategoryDescription){
-            return $this->sendError('Customer master category description already exists.' ,500);
+        catch(\Exception $e){
+            DB::rollback();
+            Log::info('Error Line No: ' . $e->getLine());
+            Log::info('Error File: ' . $e->getFile());
+            Log::info($e->getMessage());
+            Log::info('---- GL  End with Error-----' . date('H:i:s'));
+            return $this->sendError($e->getMessage(),500);
         }
-
-        $customerMasterCategory = ['categoryDescription' => $request->categoryDescription, 'companySystemID' => $request->company_id, 'companyID' => $company->CompanyID];
-         $customerMasterCategory = CustomerMasterCategory::create($customerMasterCategory);
-
-        return $this->sendResponse($customerMasterCategory->toArray(), 'Customer Master Category created successfully');
 
     }
 
