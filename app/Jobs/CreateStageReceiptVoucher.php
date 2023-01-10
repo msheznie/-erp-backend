@@ -266,7 +266,6 @@ class CreateStageReceiptVoucher implements ShouldQueue
                 $approve = \Helper::approveDocumentForApi($customerInvoiceDirects);
                 Log::info($approve);
 
-                DB::commit();
             }
 
             StageCustomerReceivePayment::truncate();
