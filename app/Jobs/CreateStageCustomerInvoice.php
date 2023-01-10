@@ -236,8 +236,30 @@ class CreateStageCustomerInvoice implements ShouldQueue
 
             foreach ($stagCustomerInvoices as $dt) {
                 $custInvoiceApiArray = array('custInvoiceAutoID' => $dt['custInvoiceDirectAutoID'],
-                'referenceNumber' => $dt['referenceNumber']
+                    'referenceNumber' => $dt['referenceNumber']
                 );
+            }
+
+
+            if($api_external_key != null && $api_external_url != null) {
+
+                $client = new Client();
+                $headers = [
+                    'content-type' => 'application/json',
+                    'api_external_key' => $api_external_key
+                ];
+                $res = $client->request('POST', $api_external_url . '/updated_customer_invoice', [
+                    'headers' => $headers,
+                    'json' => [
+                        'data' => $custInvoiceApiArray
+                    ]
+                ]);
+                $json = $res->getBody();
+
+                Log::info('API guzzle: ' . $json);
+            }
+
+            foreach ($stagCustomerInvoices as $dt) {
 
                 $params = array('autoID' => $dt['custInvoiceDirectAutoID'],
                     'company' => $dt['companySystemID'],
@@ -274,23 +296,7 @@ class CreateStageCustomerInvoice implements ShouldQueue
             StageCustomerInvoiceDirectDetail::truncate();
 
 
-        if($api_external_key != null && $api_external_url != null) {
 
-            $client = new Client();
-            $headers = [
-                'content-type' => 'application/json',
-                'api_external_key' => $api_external_key
-            ];
-            $res = $client->request('POST', $api_external_url . '/updated_customer_invoice', [
-                'headers' => $headers,
-                'json' => [
-                    'data' => $custInvoiceApiArray
-                ]
-            ]);
-            $json = $res->getBody();
-
-            Log::info('API guzzle: ' . $json);
-        }
 
                 DB::commit();
         }
