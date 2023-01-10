@@ -608,6 +608,13 @@ class ClubManagementAPIController extends AppBaseController
             $customerInvoiceDirects["approvedComments"] = "Generated Customer Invoice through Club Management System";
             $customerInvoiceDirects["rollLevelOrder"] = 1;
             \Helper::approveDocumentForApi($customerInvoiceDirects);
+            CustomerCurrency::create(['customerCodeSystem' => $customerMasters->customerCodeSystem,
+                'customerCode' => $customerMasters->CutomerCode,
+                'currencyID' => 1,
+                'isDefault' => -1,
+                'isAssigned' => -1,
+                'createdBy' => "8888"
+            ]);
             DB::commit();
 
         }
