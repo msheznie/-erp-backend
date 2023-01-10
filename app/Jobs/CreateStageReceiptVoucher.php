@@ -220,6 +220,29 @@ class CreateStageReceiptVoucher implements ShouldQueue
                 $custReceiptApiArray = array('custReceivePaymentAutoID' => $dt['custReceivePaymentAutoID'],
                     'referenceNumber' => $dt['referenceNumber']
                 );
+            }
+
+
+            if($api_external_key != null && $api_external_url != null) {
+
+                $client = new Client();
+                $headers = [
+                    'content-type' => 'application/json',
+                    'api_external_key' => $api_external_key
+                ];
+                $res = $client->request('POST', $api_external_url . '/updated_receipt_voucher', [
+                    'headers' => $headers,
+                    'json' => [
+                        'data' => $custReceiptApiArray
+                    ]
+                ]);
+                $json = $res->getBody();
+
+                Log::info('API guzzle: ' . $json);
+            }
+
+            foreach ($stagCustomerPayments as $dt) {
+               
                 $params = array('autoID' => $dt['custReceivePaymentAutoID'],
                     'company' => $dt['companySystemID'],
                     'document' => $dt['documentSystemID'],
@@ -249,23 +272,7 @@ class CreateStageReceiptVoucher implements ShouldQueue
             StageCustomerReceivePayment::truncate();
             StageCustomerReceivePaymentDetail::truncate();
             StageDirectReceiptDetail::truncate();
-            if($api_external_key != null && $api_external_url != null) {
 
-                $client = new Client();
-                $headers = [
-                    'content-type' => 'application/json',
-                    'api_external_key' => $api_external_key
-                ];
-                $res = $client->request('POST', $api_external_url . '/updated_receipt_voucher', [
-                    'headers' => $headers,
-                    'json' => [
-                        'data' => $custReceiptApiArray
-                    ]
-                ]);
-                $json = $res->getBody();
-
-                Log::info('API guzzle: ' . $json);
-            }
 
 
             DB::commit();
