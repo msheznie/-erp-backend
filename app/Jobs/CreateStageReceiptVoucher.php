@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\helper\CommonJobService;
 use App\Models\AccountsReceivableLedger;
 use App\Models\CustomerInvoiceDirect;
 use App\Models\CustomerReceivePayment;
@@ -30,7 +31,7 @@ class CreateStageReceiptVoucher implements ShouldQueue
     protected $api_external_url;
 
 
-    public function __construct($api_external_key, $api_external_url)
+    public function __construct($dataBase, $api_external_key, $api_external_url)
     {
         if(env('QUEUE_DRIVER_CHANGE','database') == 'database'){
             if(env('IS_MULTI_TENANCY',false)){
@@ -41,6 +42,7 @@ class CreateStageReceiptVoucher implements ShouldQueue
         }else{
             self::onConnection(env('QUEUE_DRIVER_CHANGE','database'));
         }
+        $this->dataBase = $dataBase;
         $this->api_external_key = $api_external_key;
         $this->api_external_url = $api_external_url;
     }
@@ -53,7 +55,7 @@ class CreateStageReceiptVoucher implements ShouldQueue
 
         try {
             Log::useFiles(storage_path().'/logs/stage_create_receipt_voucher.log');
-
+            CommonJobService::db_switch($this->dataBase);
             $api_external_key = $this->api_external_key;
             $api_external_url = $this->api_external_url;
             $stagCustomerUpdateReceipts = StageCustomerReceivePayment::all();

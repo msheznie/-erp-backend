@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\helper\CommonJobService;
 use App\Models\CustomerInvoice;
 use App\Models\CustomerInvoiceDirect;
 use App\Models\CustomerInvoiceDirectDetail;
@@ -26,7 +27,7 @@ class CreateStageCustomerInvoice implements ShouldQueue
     protected $api_external_key;
     protected $api_external_url;
 
-    public function __construct($api_external_key, $api_external_url)
+    public function __construct($dataBase,$api_external_key, $api_external_url)
     {
 
 
@@ -39,7 +40,7 @@ class CreateStageCustomerInvoice implements ShouldQueue
         }else{
             self::onConnection(env('QUEUE_DRIVER_CHANGE','database'));
         }
-
+        $this->dataBase = $dataBase;
         $this->api_external_key = $api_external_key;
         $this->api_external_url = $api_external_url;
     }
@@ -50,6 +51,7 @@ class CreateStageCustomerInvoice implements ShouldQueue
         DB::beginTransaction();
         try {
             Log::useFiles(storage_path().'/logs/stage_create_customer_invoice.log');
+            CommonJobService::db_switch($this->dataBase);
             $api_external_key = $this->api_external_key;
             $api_external_url = $this->api_external_url;
 

@@ -269,8 +269,9 @@ class ClubManagementAPIController extends AppBaseController
         }
         StageCustomerInvoiceDirectDetail::insert($custInvoiceDetArray);
         StageCustomerInvoiceItemDetails::insert($custInvoiceItemDetArray);
+        $db = isset($request->db) ? $request->db : "";
 
-        CreateStageCustomerInvoice::dispatch($request->api_external_key,$request->api_external_url);
+        CreateStageCustomerInvoice::dispatch($db,$request->api_external_key,$request->api_external_url);
 
         return $this->sendResponse($custInvoiceArray, trans('custom.save', ['attribute' => trans('custom.customer_invoice')]));
     }
@@ -477,8 +478,8 @@ class ClubManagementAPIController extends AppBaseController
             );
         }
         StageDirectReceiptDetail::insert($custReceiptDetails);
-
-        CreateStageReceiptVoucher::dispatch($request->api_external_key,$request->api_external_url);
+        $db = isset($request->db) ? $request->db : "";
+        CreateStageReceiptVoucher::dispatch($db,$request->api_external_key,$request->api_external_url);
 
         return $this->sendResponse($custReceiptVoucherArray, trans('custom.save', ['attribute' => trans('custom.receipt_voucher')]));
 
