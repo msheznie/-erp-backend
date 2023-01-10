@@ -638,10 +638,12 @@ class ClubManagementAPIController extends AppBaseController
 
 
             \Helper::confirmDocumentForApi($params);
+            $db = isset($request->db) ? $request->db : "";
 
             $documentApproveds = DocumentApproved::where('documentSystemCode', $customerMasters->customerCodeSystem)->where('documentSystemID', $customerMasters->documentSystemID)->get();
             foreach ($documentApproveds as $documentApproved) {
                 $documentApproved["approvedComments"] = "Generated Customer Invoice through Club Management System";
+                $documentApproved["db"] = $db;
                 \Helper::approveDocumentForApi($documentApproved);
             }
 
