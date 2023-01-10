@@ -558,17 +558,17 @@ class ClubManagementAPIController extends AppBaseController
             $lastSerialOrder = $lastCustomer->lastSerialOrder + 1;
         }
 
-        $duplicateCustomerName = CustomerMaster::where('CustomerName', $input['CustomerName'])->first();
-
-        if($duplicateCustomerName){
-            return $this->sendError('Customer name already exists.' ,500);
-        }
-
-        $duplicateReportTitle = CustomerMaster::where('ReportTitle', $input['ReportTitle'])->first();
-
-        if($duplicateReportTitle){
-            return $this->sendError('Report tittle already exists.' ,500);
-        }
+//        $duplicateCustomerName = CustomerMaster::where('CustomerName', $input['CustomerName'])->first();
+//
+//        if($duplicateCustomerName){
+//            return $this->sendError('Customer name already exists.' ,500);
+//        }
+//
+//        $duplicateReportTitle = CustomerMaster::where('ReportTitle', $input['ReportTitle'])->first();
+//
+//        if($duplicateReportTitle){
+//            return $this->sendError('Report tittle already exists.' ,500);
+//        }
 
         $duplicatecustomerShortCode = CustomerMaster::where('customerShortCode', $input['customerShortCode'])->first();
 
