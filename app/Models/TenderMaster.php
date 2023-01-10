@@ -307,7 +307,10 @@ class TenderMaster extends Model
         'award_comment',
         'commercial_line_item_status',
         'commercial_ranking_comment',
-        'document_type'
+        'document_type',
+        'final_tender_award_comment',
+        'final_tender_awarded',
+        'final_tender_award_email'
     ];
 
     /**

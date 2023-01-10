@@ -201,3 +201,4 @@ Route::post('confirmCommBidLineItem', 'TenderMasterAPIController@confirmCommBidL
 Route::post('confirmFinalCommercial', 'TenderMasterAPIController@confirmFinalCommercial');
 Route::post('getFinalBids', 'TenderFinalBidsAPIController@getFinalBids');
 Route::post('confirmFinalBid', 'TenderFinalBidsAPIController@confirmFinalBid');
+Route::post('getRankingCompletedTenderList', 'TenderMasterAPIController@getRankingCompletedTenderList');
