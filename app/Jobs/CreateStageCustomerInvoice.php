@@ -26,6 +26,7 @@ class CreateStageCustomerInvoice implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
     protected $api_external_key;
     protected $api_external_url;
+    protected $dataBase;
 
     public function __construct($dataBase,$api_external_key, $api_external_url)
     {
