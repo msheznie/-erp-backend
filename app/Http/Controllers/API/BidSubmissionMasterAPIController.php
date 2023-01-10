@@ -1079,15 +1079,15 @@ class BidSubmissionMasterAPIController extends AppBaseController
                                     $total += $ScheduleBidFormatDetailsAmount->value;
                                 }
 
-                                // if($pricing_shedule_detail->field_type == 3) {
-                                //     if($pricing_shedule_detail->is_disabled == 1) {
-                                //         $ScheduleBidFormatDetails = ScheduleBidFormatDetails::where('bid_format_detail_id',$pricing_shedule_detail->id)->first();
-                                //         $total += ($ScheduleBidFormatDetails->value)/100;
-                                //     }else {
-                                //         $total += ($dataBidBoqData['total_amount']/100);
-                                //     }
+                                if($pricing_shedule_detail->field_type == 3) {
+                                    if($pricing_shedule_detail->is_disabled == 1) {
+                                        $ScheduleBidFormatDetails = ScheduleBidFormatDetails::where('bid_format_detail_id',$pricing_shedule_detail->id)->first();
+                                        $total += ($ScheduleBidFormatDetails->value)/100;
+                                    }else {
+                                        $total += ($dataBidBoqData['total_amount']/100);
+                                    }
                                     
-                                // }
+                                }
 
                         }
     
