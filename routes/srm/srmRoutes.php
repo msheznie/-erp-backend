@@ -202,3 +202,7 @@ Route::post('confirmFinalCommercial', 'TenderMasterAPIController@confirmFinalCom
 Route::post('getFinalBids', 'TenderFinalBidsAPIController@getFinalBids');
 Route::post('confirmFinalBid', 'TenderFinalBidsAPIController@confirmFinalBid');
 Route::post('getRankingCompletedTenderList', 'TenderMasterAPIController@getRankingCompletedTenderList');
+Route::post('getAwardedFormData', 'TenderMasterAPIController@getAwardedFormData');
+Route::post('getEmployeesTenderAwardinglApproval','TenderBidEmployeeDetailsController@getEmployeesTenderAwardinglApproval');
+Route::post('confirmFinalBidAwardComment', 'TenderMasterAPIController@confirmFinalBidAwardComment');
+Route::post('sendTenderAwardEmail', 'TenderMasterAPIController@sendTenderAwardEmail');

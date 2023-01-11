@@ -152,4 +152,8 @@ class TenderFinalBids extends Model
     {
         return $this->belongsTo('App\Models\TenderMaster', 'tender_id', 'id');
     }
+    public function supplier()
+    {
+        return $this->belongsTo('App\Models\SupplierRegistrationLink', 'supplier_id', 'id');
+    }
 }

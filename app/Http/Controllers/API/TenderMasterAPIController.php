@@ -2366,13 +2366,30 @@ WHERE
                 $data['status'] = $val;
                 $data['remarks'] = $comments;
             }
-            else
+            else if($type == 1)
             {
                 $data['commercial_eval_status'] = $val;
                 $data['commercial_eval_remarks'] = $comments;
             }
+            else if($type == 3)
+            {
+                $data['tender_award_commite_mem_status'] = $val;
+                $data['tender_award_commite_mem_comment'] = $comments;
+                
+            }
           
             $results = SrmTenderBidEmployeeDetails::where('emp_id',$emp_id)->where('tender_id',$tender_id)->where('emp_id',$emp_id)->update($data,$id);
+
+
+            if($type == 3)
+            {
+                $min_Approval = $input['min_approval'];
+                $results = SrmTenderBidEmployeeDetails::where('tender_id',$tender_id)->where('tender_award_commite_mem_status',1)->count();
+                if($min_Approval >= $results)
+                {
+                    $results = TenderMaster::where('id',$tender_id)->update(['award_commite_mem_status'=>1]);
+                }
+            }
     
             DB::commit();
             return ['success' => true, 'message' => 'Successfully updated', 'data' => $results];
@@ -3147,5 +3164,79 @@ WHERE
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->make(true);
+    }
+
+    public function getAwardedFormData(Request $request)
+    {
+        $tenderId = $request['tenderMasterId'];
+        $tender = TenderMaster::where('id',$tenderId)->with(['ranking_supplier'=>function($q){
+            $q->where('award',1)->with('supplier');
+        }])->first();
+      
+        return $this->sendResponse($tender, 'data retrieved successfully');
+    }
+
+    public function confirmFinalBidAwardComment(Request $request)
+    {
+       
+        DB::beginTransaction();
+        try {
+            $tenderId = $request['tender_id'];
+            $status = $request['final_tender_comment_status'];
+            $comment = $request['final_tender_award_comment'];
+            $emails = SrmTenderBidEmployeeDetails::where('tender_id', $tenderId)->with('employee')->get()->pluck('employee.empUserName');
+    
+    
+            $tender = TenderMaster::find($tenderId);
+            $tender->final_tender_award_comment = $comment;
+            $tender->final_tender_comment_status = $status;
+            $tender->save();
+    
+            foreach($emails as $mail)
+            {
+                $body = "Dear Employee , <br><br> The Tender $tender->tender_code has been available for the final employee committee approval for tender awarding. <br><br> Thank you.";
+                $dataEmail['empEmail'] = $mail;
+                $dataEmail['companySystemID'] = $request['companySystemID'];
+                $dataEmail['alertMessage'] = "Employee Committee Approval";
+                $dataEmail['emailAlertMessage'] = $body;
+                $sendEmail = \Email::sendEmailErp($dataEmail);
+            }
+
+            DB::commit();
+            return $this->sendResponse($tender, 'GRV successfully reversed');
+        } catch (\Exception $e) {
+            DB::rollback();
+            return $this->sendError($e->getMessage());
+        }
+       
+
+    }
+
+    public function sendTenderAwardEmail(Request $request)
+    {
+   
+        DB::beginTransaction();
+        try {
+            $tenderId = $request['tender_id'];
+            $tender = TenderMaster::where('id',$tenderId)->with(['ranking_supplier'=>function($q){
+                $q->where('award',1)->with('supplier');
+            }])->first();
+
+            $tender->final_tender_award_email = 1;
+            $tender->save();
+
+            $body = "Dear Supplier  , <br><br> You are awarded for the tender $tender->tender_code <br><br> Thank you.";
+            $dataEmail['empEmail'] = $tender->ranking_supplier->supplier->email;
+            $dataEmail['companySystemID'] = $tender->company_id;
+            $dataEmail['alertMessage'] = "Tender Award";
+            $dataEmail['emailAlertMessage'] = $body;
+            $sendEmail = \Email::sendEmailErp($dataEmail);
+    
+            DB::commit();
+            return $this->sendResponse($tender, 'Email Send successfully');
+        } catch (\Exception $e) {
+            DB::rollback();
+            return $this->sendError($e->getMessage());
+        }
     }
 }

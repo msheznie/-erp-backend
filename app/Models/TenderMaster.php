@@ -451,6 +451,11 @@ class TenderMaster extends Model
     {
         return $this->hasOne('App\Models\EvaluationType', 'id', 'evaluation_type_id');
     }
+
+    public function ranking_supplier()
+    {
+        return $this->hasOne('App\Models\TenderFinalBids', 'tender_id', 'id');
+    }
     
     public function getDocumentSalesStartTimeAttribute() {
         if($this->document_sales_start_date) {
