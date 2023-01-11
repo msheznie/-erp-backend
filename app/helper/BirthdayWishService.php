@@ -40,7 +40,7 @@ class BirthdayWishService
 
         $employeeDetails = $this->getEmployeeDetails();
 
-        if(empty($employeeDetails)){
+        if($employeeDetails->count() == 0){
 
             $msg = "There is no employee found for send Birthday wish on {$this->companyCode} company";
             $this->insertToLogTb($msg,'error');
