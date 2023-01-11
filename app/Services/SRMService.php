@@ -3877,16 +3877,19 @@ class SRMService
     public function getInvoiceAttachment($request)
     {
         $id = $request->input('extra.id');
-        $queryRecordsCount = DocumentAttachments::where('documentSystemID', 11)
+       
+       $query = DocumentAttachments::where('documentSystemID', 11)
             ->where('documentSystemCode', $id)
-            ->where('attachmentType', 0)
-            ->firstOrFail()->toArray();
+            ->where('attachmentType', 0);
+        $search = $request->input('search.value');
 
-        if (sizeof($queryRecordsCount)) {
-            $query = DocumentAttachments::where('documentSystemID', 11)
-                ->where('documentSystemCode', $id)
-                ->where('attachmentType', 0)
-                ->get();
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $query = $query->where(function ($query) use ($search) {
+            $query->where('originalFileName', 'LIKE', "%{$search}%")
+                 ->orWhere('attachmentDescription', 'LIKE', "%{$search}%");
+            });
+        }
 
             $data = DataTables::of($query)
                 ->addColumn('Actions', 'Actions', "Actions")
@@ -3901,13 +3904,7 @@ class SRMService
                 'data' => $data
             ];
      
-        } else {
-            return [
-                'success' => true,
-                'message' => 'No records found',
-                'data' => ''
-            ];
-        }
+      
     }
 
     public function removeInvoiceAttachment($request)
