@@ -671,6 +671,10 @@ class ClubManagementAPIController extends AppBaseController
                 return $this->sendError('Company not found');
             }
 
+            if (empty($request->categoryDescription)){
+                return $this->sendError('Category Description cannot be empty',500);
+            }
+
             $duplicateCategoryDescription = CustomerMasterCategory::where('categoryDescription', $request->categoryDescription)->first();
 
             if ($duplicateCategoryDescription) {
