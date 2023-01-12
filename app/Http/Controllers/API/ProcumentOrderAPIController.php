@@ -6783,52 +6783,52 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             case 2:
             case 5:
             case 52:
-                $tracingData = $this->getPurchaseOrderTracingData($input['id']);
+                $tracingData[] = $this->getPurchaseOrderTracingData($input['id']);
                 break;
             case 3:
-                $tracingData = $this->getGrvTracingData($input['id']);
+                $tracingData[] = $this->getGrvTracingData($input['id']);
                 break;
             case 11:
-                $tracingData = $this->getSupplierInvoiceTracingData($input['id']);
+                $tracingData[] = $this->getSupplierInvoiceTracingData($input['id']);
                 break;
             case 1:
-                $tracingData[] = $this->getPurchaseRequestTracingData($input['id'], 'pr');
+                $tracingData[][] = $this->getPurchaseRequestTracingData($input['id'], 'pr');
                 break;
             case 9:
-                $tracingData[] = $this->getMaterialRequestTracingData($input['id']);
+                $tracingData[][] = $this->getMaterialRequestTracingData($input['id']);
                 break;
             case 67:
-                $tracingData[] = $this->getQuotationTracingData($input['id'], $input['documentSystemID']);
+                $tracingData[][] = $this->getQuotationTracingData($input['id'], $input['documentSystemID']);
                 break;
             case 68:
-                $tracingData = $this->getSalesOrderTracingData($input['id']);
+                $tracingData[] = $this->getSalesOrderTracingData($input['id']);
                 break;
             case 71:
-                $tracingData = $this->getDeliveryOrderTracingData($input['id']);
+                $tracingData[] = $this->getDeliveryOrderTracingData($input['id']);
                 break;
             case 20:
-                $tracingData = $this->getCustomerInvoiceTracingData($input['id']);
+                $tracingData[] = $this->getCustomerInvoiceTracingData($input['id']);
                 break;
             case 21:
                 $tracingData = $this->getReciptVoucherTracingData($input['id']);
                 break;
             case 87:
-                $tracingData = $this->getSalesReturnTracingData($input['id']);
+                $tracingData[] = $this->getSalesReturnTracingData($input['id']);
                 break;
             case 70:
-                $tracingData = $this->getReciptMatchingTracingData($input['id']);
+                $tracingData[] = $this->getReciptMatchingTracingData($input['id']);
                 break;
             case 19:
-                $tracingData = $this->getCreditNoteTracingData($input['id']);
+                $tracingData[] = $this->getCreditNoteTracingData($input['id']);
                 break;
             case 4:
-                $tracingData = $this->getPaymentVoucherTracingData($input['id']);
+                $tracingData[] = $this->getPaymentVoucherTracingData($input['id']);
                 break;
             case 15:
-                $tracingData = $this->getDebitNoteTracingData($input['id']);
+                $tracingData[] = $this->getDebitNoteTracingData($input['id']);
                 break;
             case 103:
-                $tracingData = $this->getAssetTransferTracingData($input['id']);
+                $tracingData[] = $this->getAssetTransferTracingData($input['id']);
                 break;
             default:
                 # code...
@@ -8240,7 +8240,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
             $quoIds = $soDetails->pluck('bookingInvCodeSystem');
             foreach ($quoIds as $key => $value) {
-                $tracingData = $this->getCustomerInvoiceTracingData($value, $type, $custReceivePaymentAutoID, null, null, $creditNoteAutoID);
+                $tracingData[] = $this->getCustomerInvoiceTracingData($value, $type, $custReceivePaymentAutoID, null, null, $creditNoteAutoID);
             }
         } else if ($ciData->documentType == 14) {
             $recieptVouchers = DirectReceiptDetail::selectRaw('sum(netAmountLocal) as localAmount,
@@ -8254,19 +8254,21 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 ->toArray();
 
 
-            $tracingData[] = $this->setReceiptPaymentChain($recieptVouchers, $type, $custReceivePaymentAutoID, null, null, $creditNoteAutoID);
+            $tracingData[][] = $this->setReceiptPaymentChain($recieptVouchers, $type, $custReceivePaymentAutoID, null, null, $creditNoteAutoID);
         } else if ($ciData->documentType == 15) {
             $recieptVouchers = AdvanceReceiptDetails::selectRaw('sum(localAmount) as localAmount,
-                                             sum(comRptAmount) as rptAmount, SUM(supplierTransAmount) as transAmount,custReceivePaymentAutoID')
+                                             sum(comRptAmount) as rptAmount, SUM(supplierTransAmount) as transAmount,custReceivePaymentAutoID, salesOrderID')
                 ->with(['master' => function ($query) {
                     $query->with(['currency']);
                 }])
-                ->groupBy('custReceivePaymentAutoID')
+                ->groupBy('custReceivePaymentAutoID', 'salesOrderID')
                 ->where('custReceivePaymentAutoID', $custReceivePaymentAutoID)
-                ->first();
+                ->get();
 
-            if ($recieptVouchers) {
-                $recieptVouchers = $recieptVouchers->toArray();
+            if (count($recieptVouchers) > 0) {
+                foreach ($recieptVouchers as $key => $value) {
+                    $tracingData[] = $this->getSalesOrderTracingData($value->salesOrderID, $type, null, null, $custReceivePaymentAutoID);
+                }
             } else {
                 $recieptVouchers = DirectReceiptDetail::selectRaw('sum(netAmountLocal) as localAmount,
                                              sum(netAmountRpt) as rptAmount, SUM(netAmount) as transAmount,directReceiptAutoID')
@@ -8277,11 +8279,9 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                 ->where('directReceiptAutoID', $custReceivePaymentAutoID)
                 ->first()
                 ->toArray();
+                
+                $tracingData[][] = $this->setReceiptPaymentChain($recieptVouchers, $type, $custReceivePaymentAutoID, null, null, $creditNoteAutoID);
             }
-
-
-
-            $tracingData[] = $this->setReceiptPaymentChain($recieptVouchers, $type, $custReceivePaymentAutoID, null, null, $creditNoteAutoID);
         }
 
         return $tracingData;
@@ -8351,6 +8351,35 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
             $tracingData['childs'][] = $tempSo;
         }
+
+        // xxxxxxx
+
+        $advancePayments = AdvanceReceiptDetails::selectRaw('custReceivePaymentAutoID, customerTransCurrencyID, SUM(supplierTransAmount) as transAmount')
+                    ->with(['master', 'customer_currency'])
+                    ->where('salesOrderID', $quotationMasterID)
+                    ->groupBy('salesOrderID');
+    
+        if (!is_null($custReceivePaymentAutoID)) {
+            $advancePayments = $advancePayments->where('custReceivePaymentAutoID', $custReceivePaymentAutoID);
+        }
+
+        $advancePayments = $advancePayments->get();
+        $tempAdbv = [];
+        foreach ($advancePayments as $keyAd => $valueAd) {
+            $tempAdPay['name'] = "Receipt Voucher";
+            if ($type == 'reciptVoucher' && ($valueAd->custReceivePaymentAutoID == $custReceivePaymentAutoID)) {
+                $tempAdPay['cssClass'] = "ngx-org-step-four root-tracing-node";
+            } else {
+                $tempAdPay['cssClass'] = "ngx-org-step-four";
+            }
+
+            $tempAdPay['documentSystemID'] = $valueAd->master->documentSystemID;
+            $tempAdPay['docAutoID'] = $valueAd->master->custReceivePaymentAutoID;
+            $tempAdPay['title'] = "{Doc Code :} " . $valueAd->master->custPaymentReceiveCode . " -- {Doc Date :} " . Carbon::parse($valueAd->master->custPaymentReceiveDate)->format('Y-m-d') . " -- {Currency :} " . $valueAd->customer_currency->CurrencyCode . " -- {Amount :} " . number_format($valueAd->transAmount, $valueAd->customer_currency->DecimalPlaces);
+
+            $tracingData['childs'][] = $tempAdPay;
+        }
+
 
         return $tracingData;
     }
@@ -8638,7 +8667,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                     $tempCN['docAutoID'] = $valueCN['reciept_voucher']['custReceivePaymentAutoID'];
                     $tempCN['title'] = "{Doc Code :} " . $valueCN['reciept_voucher']['custPaymentReceiveCode'] . " -- {Doc Date :} " . Carbon::parse($valueCN['reciept_voucher']['custPaymentReceiveDate'])->format('Y-m-d') . " -- {Currency :} " . $valueCN['reciept_voucher']['currency']['CurrencyCode'] . " -- {Amount :} " . number_format($valueCN['reciept_voucher']['netAmount'], $valueCN['reciept_voucher']['currency']['DecimalPlaces']);
 
-                    $temp2['childs'][] = $tempCN;
+                    // $temp2['childs'][] = $tempCN;
                 }
             }
         }

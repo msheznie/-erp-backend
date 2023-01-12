@@ -262,5 +262,10 @@ class AdvanceReceiptDetails extends Model
     {
         return $this->belongsTo(CustomerReceivePayment::class, 'custReceivePaymentAutoID', 'custReceivePaymentAutoID');
     }
+
+    public function customer_currency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'customerTransCurrencyID', 'currencyID');
+    }
     
 }
