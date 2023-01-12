@@ -912,7 +912,7 @@ class BudjetdetailsAPIController extends AppBaseController
                                                                      ->where('serviceLineSystemID', $budgetMaster->serviceLineSystemID)
                                                                      ->whereNull('fromGLCodeSystemID')
                                                                      ->whereNotNull('toGLCodeSystemID')
-                                                                     ->where('adjustmentRptAmount', '>', 0)
+                                                                     // ->where('adjustmentRptAmount', '>', 0)
                                                                      ->get();
 
 

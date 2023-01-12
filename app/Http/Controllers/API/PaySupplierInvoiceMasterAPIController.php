@@ -1545,7 +1545,6 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 $input['supplierDefCurrencyER'] = 1;
             }
 
-
             if ($input['invoiceType'] == 6 || $input['invoiceType'] == 7) {
                 $checkEmployeeControlAccount = SystemGlCodeScenarioDetail::getGlByScenario($input['companySystemID'], $input['documentSystemID'], 12);
 
@@ -1699,14 +1698,22 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
                     $totalAmountForPDC = 0;
                     if ($paySupplierInvoiceMaster->invoiceType == 2 || $paySupplierInvoiceMaster->invoiceType == 6) {
-                        $totalAmountForPDC = PaySupplierInvoiceDetail::where('PayMasterAutoId', $id)
-                                                                        ->sum('supplierPaymentAmount');
+                        $totalAmountForPDCData = PaySupplierInvoiceDetail::where('PayMasterAutoId', $id)
+                                                                        ->selectRaw('SUM(supplierPaymentAmount + retentionVatAmount) as total')
+                                                                        ->first();
+
+                        $totalAmountForPDC = $totalAmountForPDCData ? $totalAmountForPDCData->total : 0;
 
                     } else if ($paySupplierInvoiceMaster->invoiceType == 5 || $paySupplierInvoiceMaster->invoiceType == 7) {
                         $totalAmountForPDC = AdvancePaymentDetails::where('PayMasterAutoId', $id)
                                                                     ->sum('paymentAmount');
+
                     } else if ($paySupplierInvoiceMaster->invoiceType == 3) {
-                        $totalAmountForPDC = DirectPaymentDetails::where('directPaymentAutoID', $id)->sum('DPAmount');
+                        $totalAmountForPDCData = DirectPaymentDetails::where('directPaymentAutoID', $id)
+                                                                        ->selectRaw('SUM(DPAmount + vatAmount) as total')
+                                                                        ->first();
+                                                                        
+                        $totalAmountForPDC = $totalAmountForPDCData ? $totalAmountForPDCData->total : 0;
                     }
 
                     $pdcLog = PdcLog::where('documentSystemID', $paySupplierInvoiceMaster->documentSystemID)
@@ -1733,6 +1740,39 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                         return $this->sendError('Please configure PDC Payable account for payment voucher', 500);
                     } 
                 }
+
+                if ($input['invoiceType'] == 2 || $input['invoiceType'] == 6) {
+                    $si = PaySupplierInvoiceDetail::selectRaw("SUM(paymentLocalAmount) as localAmount, SUM(paymentComRptAmount) as rptAmount,SUM(supplierPaymentAmount) as transAmount,localCurrencyID,comRptCurrencyID as reportingCurrencyID,supplierPaymentCurrencyID as transCurrencyID,comRptER as reportingCurrencyER,localER as localCurrencyER,supplierPaymentER as transCurrencyER")->WHERE('PayMasterAutoId', $paySupplierInvoiceMaster->PayMasterAutoId)->WHERE('matchingDocID', 0)->first();
+                    $convertAmount = \Helper::convertAmountToLocalRpt(203, $paySupplierInvoiceMaster->PayMasterAutoId, $si->transAmount);
+
+                    $masterTransAmountTotal = $si->transAmount;
+                    $masterLocalAmountTotal = $si->localAmount;
+                    $masterRptAmountTotal = $si->rptAmount;
+
+                    $transAmountTotal = $si->transAmount;
+                    $localAmountTotal = $convertAmount["localAmount"];
+                    $rptAmountTotal = $convertAmount["reportingAmount"];
+
+                    $diffTrans = $transAmountTotal - $masterTransAmountTotal;
+                    $diffLocal = $localAmountTotal - $masterLocalAmountTotal;
+                    $diffRpt = $rptAmountTotal - $masterRptAmountTotal;
+
+                    $masterData = PaySupplierInvoiceMaster::with(['localcurrency', 'rptcurrency'])->find($paySupplierInvoiceMaster->PayMasterAutoId);
+
+                    if (ABS(round($diffTrans)) != 0 || ABS(round($diffLocal, $masterData->localcurrency->DecimalPlaces)) != 0 || ABS(round($diffRpt, $masterData->rptcurrency->DecimalPlaces)) != 0) {
+
+                        $checkExchangeGainLossAccount = SystemGlCodeScenarioDetail::getGlByScenario($companySystemID, $documentSystemID, 14);
+                        if (is_null($checkExchangeGainLossAccount)) {
+                            $checkExchangeGainLossAccountCode = SystemGlCodeScenarioDetail::getGlCodeByScenario($companySystemID, $documentSystemID, 14);
+
+                            if ($checkExchangeGainLossAccountCode) {
+                                return $this->sendError('Please assign Exchange Gain/Loss account for this company', 500);
+                            }
+                            return $this->sendError('Please configure Exchange Gain/Loss account for this company', 500);
+                        }
+                    }
+                }
+
 
 
                 $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
@@ -2691,13 +2731,13 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         $input = $request->all();
 
         $output = PaySupplierInvoiceMaster::where('PayMasterAutoId', $input['PayMasterAutoId'])
-            ->with(['supplier', 'bankaccount', 'transactioncurrency', 'paymentmode',
+            ->with(['project','supplier', 'bankaccount', 'transactioncurrency', 'paymentmode',
                 'supplierdetail' => function ($query) {
                     $query->with(['pomaster']);
                 },
                 'company', 'localcurrency', 'rptcurrency', 'advancedetail', 'confirmed_by',
                 'modified_by', 'cheque_treasury_by', 'directdetail' => function ($query) {
-                    $query->with('segment');
+                    $query->with('project','segment');
                 }, 'approved_by' => function ($query) {
                     $query->with('employee');
                     $query->where('documentSystemID', 4);
@@ -2709,6 +2749,13 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                     $query->where('documentSystemID', 4);
                     $query->with(['bankrec_by', 'bank_transfer']);
                 },'audit_trial.modified_by'])->first();
+
+        $isProjectBase = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
+        ->where('companySystemID', $output->companySystemID)
+        ->where('isYesNO', 1)
+        ->exists();
+
+        $output['isProjectBase'] = $isProjectBase;
 
         return $this->sendResponse($output, 'Data retrieved successfully');
 
@@ -4049,11 +4096,11 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
         }
 
         $output = PaySupplierInvoiceMaster::where('PayMasterAutoId', $id)
-            ->with(['supplier', 'bankaccount', 'transactioncurrency', 'paymentmode',
+            ->with(['project','supplier', 'bankaccount', 'transactioncurrency', 'paymentmode',
                 'supplierdetail' => function ($query) {
                     $query->with(['pomaster']);
                 }, 'company', 'localcurrency', 'rptcurrency', 'advancedetail', 'confirmed_by', 'directdetail' => function ($query) {
-                    $query->with('segment');
+                    $query->with('project','segment');
                 }, 'approved_by' => function ($query) {
                     $query->with('employee');
                     $query->where('documentSystemID', 4);
@@ -4090,6 +4137,11 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
         $advancePayDetailTotTra = AdvancePaymentDetails::where('PayMasterAutoId', $id)
             ->sum('paymentAmount');
 
+        $isProjectBase = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
+        ->where('companySystemID', $output->companySystemID)
+        ->where('isYesNO', 1)
+        ->exists();
+
         $order = array(
             'masterdata' => $output,
             'docRef' => $refernaceDoc,
@@ -4098,6 +4150,7 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
             'rptDecimal' => $rptDecimal,
             'supplierdetailTotTra' => $supplierdetailTotTra,
             'directDetailTotTra' => $directDetailTotTra,
+            'isProjectBase' => $isProjectBase,
             'advancePayDetailTotTra' => $advancePayDetailTotTra
         );
 

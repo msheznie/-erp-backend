@@ -310,7 +310,7 @@ SELECT
 	erp_paysupplierinvoicemaster.directPaymentPayee AS SupplierOrCustomer,
 			currencymaster.DecimalPlaces ,
 	currencymaster.CurrencyCode AS DocumentCurrency,
-	erp_paysupplierinvoicemaster.payAmountSuppTrans + erp_paysupplierinvoicemaster.VATAmount AS DocumentValue,
+	erp_paysupplierinvoicemaster.payAmountSuppTrans + erp_paysupplierinvoicemaster.VATAmount + erp_paysupplierinvoicemaster.retentionVatAmount AS DocumentValue,
 	0 AS amended,
 	erp_documentapproved.approvedYN,
 	erp_paysupplierinvoicemaster.invoiceType AS documentType 
@@ -591,6 +591,57 @@ WHERE
 	) AS PendingSalesOrderApprovals
 	UNION All
 	SELECT
+	* 
+FROM
+	(
+SELECT
+	erp_documentapproved.documentApprovedID,
+	erp_documentapproved.companySystemID,
+	erp_documentapproved.companyID,
+	erp_documentapproved.documentSystemID,
+	erp_documentapproved.documentID,
+	erp_documentapproved.documentSystemCode,
+	erp_documentapproved.documentCode,
+	erp_jvmaster.JVNarration AS comments,
+	erp_documentapproved.docConfirmedDate,
+	erp_documentapproved.approvedDate,
+	employees.empName AS approvedEmployee,
+	'' AS SupplierOrCustomer,
+	currencymaster.DecimalPlaces ,
+	currencymaster.CurrencyCode AS DocumentCurrency,
+	jvDetails.debitSum AS DocumentValue,
+	0 AS amended,
+	erp_documentapproved.approvedYN,
+	erp_jvmaster.jvType AS documentType 
+FROM
+	erp_documentapproved
+	INNER JOIN employees ON erp_documentapproved.employeeSystemID = employees.employeeSystemID
+	INNER JOIN erp_jvmaster ON erp_jvmaster.companySystemID = erp_documentapproved.companySystemID 
+	AND erp_jvmaster.documentSystemID = erp_documentapproved.documentSystemID 
+	AND erp_jvmaster.jvMasterAutoId = erp_documentapproved.documentSystemCode 
+	AND erp_jvmaster.RollLevForApp_curr = erp_documentapproved.rollLevelOrder 
+	AND erp_jvmaster.approved = -1 
+	INNER JOIN currencymaster ON currencymaster.currencyID = erp_jvmaster.currencyID 
+	INNER JOIN(
+                SELECT
+                    COALESCE(SUM(debitAmount),0) as debitSum,
+                    jvMasterAutoId 
+                FROM
+                    erp_jvdetail
+                GROUP BY jvMasterAutoId
+                ) AS jvDetails
+        ON
+            jvDetails.jvMasterAutoId = erp_jvmaster.jvMasterAutoId 
+WHERE
+	erp_documentapproved.approvedYN = -1
+	AND erp_documentapproved.rejectedYN = 0 
+	AND erp_documentapproved.approvalGroupID > 0 
+	$filter
+	AND erp_documentapproved.documentSystemID IN ( 17 ) 
+	AND erp_documentapproved.employeeSystemID = $employeeSystemID
+	) AS PendingJVApprovals
+	UNION All
+	SELECT
 	*
 FROM
 	(
@@ -734,13 +785,11 @@ FROM
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
 	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
 	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
-	AND employeesdepartments.ServiceLineSystemID = erp_documentapproved.serviceLineSystemID 
 	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
 	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
 	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
 	INNER JOIN erp_purchaseordermaster ON erp_purchaseordermaster.companySystemID = erp_documentapproved.companySystemID 
 	AND erp_purchaseordermaster.documentSystemID = erp_documentapproved.documentSystemID 
-	AND erp_purchaseordermaster.serviceLineSystemID = erp_documentapproved.serviceLineSystemID 
 	AND erp_purchaseordermaster.purchaseOrderID = erp_documentapproved.documentSystemCode 
 	AND erp_purchaseordermaster.RollLevForApp_curr = erp_documentapproved.rollLevelOrder 
 	AND erp_purchaseordermaster.poConfirmedYN = 1 
@@ -754,7 +803,7 @@ WHERE
 	AND erp_documentapproved.approvalGroupID > 0 
 	$filter
 	AND erp_documentapproved.documentSystemID IN ( 2, 5, 52 ) 
-	AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0
+	AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0 GROUP BY erp_purchaseordermaster.purchaseOrderID
 	) AS PendingOrderApprovals UNION ALL
 SELECT
 	* 
@@ -780,7 +829,7 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	erp_paysupplierinvoicemaster.directPaymentPayee AS SupplierOrCustomer,
 			currencymaster.DecimalPlaces ,
 	currencymaster.CurrencyCode AS DocumentCurrency,
-	erp_paysupplierinvoicemaster.payAmountSuppTrans + erp_paysupplierinvoicemaster.VATAmount AS DocumentValue,
+	erp_paysupplierinvoicemaster.payAmountSuppTrans + erp_paysupplierinvoicemaster.VATAmount + erp_paysupplierinvoicemaster.retentionVatAmount AS DocumentValue,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
@@ -1126,6 +1175,68 @@ WHERE
 	AND erp_documentapproved.documentSystemID IN ( 68 ) 
 	AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0
 	) AS PendingSalesOrderApprovals
+	UNION All
+	SELECT
+	* 
+FROM
+	(
+SELECT
+DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
+	erp_documentapproved.documentApprovedID,
+	erp_documentapproved.approvalLevelID,
+	erp_documentapproved.rollLevelOrder,
+	erp_approvallevel.noOfLevels AS NoOfLevels,
+	erp_documentapproved.companySystemID,
+	erp_documentapproved.companyID,
+	'' as approval_remarks,	erp_documentapproved.documentSystemID,
+	erp_documentapproved.documentID,
+	erp_documentapproved.documentSystemCode,
+	erp_documentapproved.documentCode,
+	erp_jvmaster.JVNarration AS comments,
+	erp_documentapproved.docConfirmedDate,
+	erp_documentapproved.approvedDate,
+	employees.empName AS confirmedEmployee,
+	'' AS SupplierOrCustomer,
+	currencymaster.DecimalPlaces ,
+	currencymaster.CurrencyCode AS DocumentCurrency,
+	jvDetails.debitSum AS DocumentValue,
+	0 AS amended,
+	employeesdepartments.employeeID,
+	erp_documentapproved.approvedYN,
+	erp_jvmaster.jvType AS documentType 
+FROM
+	erp_documentapproved
+	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
+	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
+	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
+	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
+	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
+	INNER JOIN erp_jvmaster ON erp_jvmaster.companySystemID = erp_documentapproved.companySystemID 
+	AND erp_jvmaster.documentSystemID = erp_documentapproved.documentSystemID 
+	AND erp_jvmaster.jvMasterAutoId = erp_documentapproved.documentSystemCode 
+	AND erp_jvmaster.RollLevForApp_curr = erp_documentapproved.rollLevelOrder 
+	AND erp_jvmaster.approved = 0 
+	AND erp_jvmaster.confirmedYN = 1 
+	INNER JOIN currencymaster ON currencymaster.currencyID = erp_jvmaster.currencyID 
+	INNER JOIN(
+                SELECT
+                    COALESCE(SUM(debitAmount),0) as debitSum,
+                    jvMasterAutoId 
+                FROM
+                    erp_jvdetail
+                GROUP BY jvMasterAutoId
+                ) AS jvDetails
+        ON
+            jvDetails.jvMasterAutoId = erp_jvmaster.jvMasterAutoId 
+WHERE
+	erp_documentapproved.approvedYN = 0
+	AND erp_documentapproved.rejectedYN = 0 
+	AND erp_documentapproved.approvalGroupID > 0 
+	$filter
+	AND erp_documentapproved.documentSystemID IN ( 17 ) 
+	AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0
+	) AS PendingJVApprovals
 	UNION All
 	SELECT
 	*

@@ -19,6 +19,8 @@ class SrmTenderBidEmployeeDetails extends Model
         'status',
         'remarks',
         'created_at',
+        'commercial_eval_status',
+        'commercial_eval_remarks'
 
     ];
 

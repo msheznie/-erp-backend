@@ -169,20 +169,22 @@ class GlPostedDateService
         $masterModel = 'App\Models\\' . $docInforArr["masterModelName"]; // Model name
         $detailModel = 'App\Models\\' . $docInforArr["detailModelName"]; // Model name
 
-        $masterRec = $masterModel::with([$docInforArr["financePeriod"]])->find($documentSystemCode);
 
         $financePeriodRelation = $docInforArr["financePeriod"];
         $documentDate = $docInforArr["documentDate"];
 
         if (in_array($documentSystemID, [15, 19, 21, 17, 22, 23, 41, 4])) {
             if (in_array($documentSystemID, [22])) {
+                $masterRec = $masterModel::find($documentSystemCode);
                 $postedDate = $masterRec->$documentDate;
             } else {
+                $masterRec = $masterModel::with([$docInforArr["financePeriod"]])->find($documentSystemCode);
                 if ($masterRec->$financePeriodRelation && $masterRec->$financePeriodRelation->isActive == -1) {
                     $postedDate = $masterRec->$documentDate;
                 } 
             }
         } else {
+            $masterRec = $masterModel::with([$docInforArr["financePeriod"]])->find($documentSystemCode);
 
             if ($masterRec) {
                 if ($documentSystemID == 20) {

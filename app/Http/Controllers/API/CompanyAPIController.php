@@ -220,7 +220,8 @@ class CompanyAPIController extends AppBaseController
             'hasExternalSupplierGeneratePolicy' => $hasExternalSupplierGeneratePolicy,
             'isEEOSSPolicy' => $hasEEOSSPolicy,
             'supplierCategories' => $supplierCategories,
-            'supplierGroups' => $supplierGroups
+            'supplierGroups' => $supplierGroups,
+            'isGroup' => $isGroup
             );
         return $this->sendResponse($output, 'Record retrieved successfully');
 
@@ -277,8 +278,7 @@ class CompanyAPIController extends AppBaseController
         $messages = [
             'CompanyID.required' => 'CompanyID is required.',
             'localCurrencyID.required' => 'Local Currency ID is required.',
-            'reportingCurrency.required' => 'Reporting Currency ID is required.',
-            'exchangeGainLossGLCodeSystemID.required' => 'Exchange Gain/Loss GL is required.',
+            'reportingCurrency.required' => 'Reporting Currency ID is required.'
         ];
         $validator = \Validator::make($input, [
             'CompanyID' => 'required|unique:companymaster',
@@ -289,8 +289,7 @@ class CompanyAPIController extends AppBaseController
             'CompanyEmail' => 'required',
             'registrationNumber' => 'required',
             'localCurrencyID' => 'required|numeric|min:1',
-            'reportingCurrency' => 'required|numeric|min:1',
-            'exchangeGainLossGLCodeSystemID' => 'required|numeric|min:1'
+            'reportingCurrency' => 'required|numeric|min:1'
         ], $messages);
 
         if ($validator->fails()) {
@@ -427,8 +426,7 @@ class CompanyAPIController extends AppBaseController
         $messages = [
             'CompanyID.required' => 'CompanyID is required.',
             'localCurrencyID.required' => 'Local Currency ID is required.',
-            'reportingCurrency.required' => 'Reporting Currency ID is required.',
-            'exchangeGainLossGLCodeSystemID.required' => 'Exchange Gain/Loss GL is required.',
+            'reportingCurrency.required' => 'Reporting Currency ID is required.'
         ];
         $validator = \Validator::make($input, [
             'CompanyID' => ['required',Rule::unique('companymaster')->ignore($id, 'companySystemID')],
@@ -439,8 +437,7 @@ class CompanyAPIController extends AppBaseController
             'CompanyEmail' => 'required',
             'registrationNumber' => 'required',
             'localCurrencyID' => 'required|numeric|min:1',
-            'reportingCurrency' => 'required|numeric|min:1',
-            'exchangeGainLossGLCodeSystemID' => 'required|numeric|min:1'
+            'reportingCurrency' => 'required|numeric|min:1'
         ], $messages);
 
         if ($validator->fails()) {

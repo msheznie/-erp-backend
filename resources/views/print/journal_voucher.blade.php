@@ -332,6 +332,9 @@
                 <th></th>
                 <th class="text-center">GL Code</th>
                 <th class="text-center">GL Code Description</th>
+                @if ($isProject_base)
+                    <th class="text-center">Project</th>
+                @endif
                 <th class="text-center">Department</th>
                 <th class="text-center">Client Contract</th>
                 <th class="text-center">Comments</th>
@@ -345,6 +348,13 @@
                     <td>{{$loop->iteration}}</td>
                     <td>{{$item->glAccount}}</td>
                     <td>{{$item->glAccountDescription}}</td>
+                    @if($isProject_base)
+                        <td>
+                            @if($item->project)
+                                {{$item->project->projectCode}} - {{$item->project->description}}
+                            @endif
+                        </td>
+                    @endif
                     <td>
                         @if($item->segment)
                             {{$item->segment->ServiceLineDes}}
@@ -357,6 +367,9 @@
                 </tr>
             @endforeach
             <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
+                @if($isProject_base)
+                    <td class="text-right border-bottom-remov">&nbsp;</td>
+                @endif
                 <td colspan="5" class="text-right border-bottom-remov">&nbsp;</td>
                 <td class="text-right" style="background-color: rgb(215,215,215)">Total</td>
                 <td class="text-right" style="background-color: rgb(215,215,215)">{{number_format($debitTotal, $transDecimal)}}</td>

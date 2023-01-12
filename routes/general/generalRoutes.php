@@ -22,3 +22,18 @@ Route::post('getItemStockDetails', 'ErpItemLedgerAPIController@getItemStockDetai
 Route::get('downloadFile', 'DocumentAttachmentsAPIController@downloadFile')->name('Download file');
 Route::get('getuserGroupAssignedCompanies', 'EmployeeNavigationAPIController@getuserGroupAssignedCompanies')->name('Get user group assigned companies');
 Route::get('getAllWHForSelectedCompany', 'WarehouseMasterAPIController@getAllWarehouseForSelectedCompany')->name('Get all warehouse for selected company');
+Route::get('getGroupCompany', 'CompanyNavigationMenusAPIController@getGroupCompany')->name("Get group company");
+
+
+Route::get('getAllDocuments', 'DocumentMasterAPIController@getAllDocuments')->name("Get all documents");
+Route::get('checkDocumentAttachmentPolicy', 'CompanyDocumentAttachmentAPIController@checkDocumentAttachmentPolicy')->name("Check document attachment policy");
+
+//approval
+Route::post('approvalPreCheckAllDoc', 'DocumentApprovedAPIController@approvalPreCheckAllDoc')->name("Approval pre check");
+Route::post('approveDocument', 'DocumentApprovedAPIController@approveDocument')->name("Approve Document");
+Route::post('rejectPurchaseRequest', 'PurchaseRequestAPIController@rejectPurchaseRequest')->name("Reject Document");
+Route::post('approvePurchaseRequest', 'PurchaseRequestAPIController@approvePurchaseRequest')->name("Approve purchase request");
+Route::post('rejectProcurementOrder', 'ProcumentOrderAPIController@rejectProcurementOrder')->name('Reject procurement order');
+
+Route::get('getDocumentTracingData', 'ProcumentOrderAPIController@getDocumentTracingData')->name('Get document tracing data');
+Route::get('checkBudgetShowPolicy', 'BudgetMasterAPIController@checkBudgetShowPolicy')->name('Check budget show policy');

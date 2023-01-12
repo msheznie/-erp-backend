@@ -385,9 +385,10 @@ class FixedAssetCategoryAPIController extends AppBaseController
             ->with(['company'])
             ->orderBy('faCatID', $sort);
 
-        if (isset($input['isAll']) && !$input['isAll']) {
+        if (!$isGroup) {
             $assetCategories = $assetCategories->whereIn('companySystemID', $subCompanies);
         }
+
 
         $search = $request->input('search.value');
 
