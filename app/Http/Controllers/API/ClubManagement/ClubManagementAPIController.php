@@ -531,7 +531,6 @@ class ClubManagementAPIController extends AppBaseController
                 'CustomerName.required' => 'Customer Name field is required.',
                 'customerCategoryID.required' => 'Customer Category field is required.',
                 'ReportTitle.required' => 'Report Title field is required.',
-                'customerAddress1.required' => 'Customer Address field is required.',
             ];
 
             $commonValidator = \Validator::make($input, [
@@ -541,8 +540,7 @@ class ClubManagementAPIController extends AppBaseController
                 'customerShortCode' => 'required',
                 'CustomerName' => 'required',
                 'customerCategoryID' => 'required',
-                'ReportTitle' => 'required',
-                'customerAddress1' => 'required'
+                'ReportTitle' => 'required'
             ], $commonValidorMessages);
 
             if ($commonValidator->fails()) {
