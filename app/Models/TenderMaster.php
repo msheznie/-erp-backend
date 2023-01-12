@@ -307,9 +307,13 @@ class TenderMaster extends Model
         'award_comment',
         'commercial_line_item_status',
         'commercial_ranking_comment',
-        'document_type'
+        'document_type',
+        'final_tender_award_comment',
+        'final_tender_awarded',
+        'final_tender_award_email',
+        'award_commite_mem_status',
+        'final_tender_comment_status'
     ];
-
     /**
      * The attributes that should be casted to native types.
      *
@@ -446,6 +450,11 @@ class TenderMaster extends Model
     public function evaluation_type()
     {
         return $this->hasOne('App\Models\EvaluationType', 'id', 'evaluation_type_id');
+    }
+
+    public function ranking_supplier()
+    {
+        return $this->hasOne('App\Models\TenderFinalBids', 'tender_id', 'id');
     }
     
     public function getDocumentSalesStartTimeAttribute() {

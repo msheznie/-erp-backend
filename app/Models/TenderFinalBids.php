@@ -148,5 +148,12 @@ class TenderFinalBids extends Model
         'tender_id' => 'required'
     ];
 
-    
+    public function tender_master()
+    {
+        return $this->belongsTo('App\Models\TenderMaster', 'tender_id', 'id');
+    }
+    public function supplier()
+    {
+        return $this->belongsTo('App\Models\SupplierRegistrationLink', 'supplier_id', 'id');
+    }
 }
