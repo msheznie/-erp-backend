@@ -522,6 +522,30 @@ class ClubManagementAPIController extends AppBaseController
         DB::beginTransaction();
         try {
         $input = $request->all();
+
+            $commonValidorMessages = [
+                'customerCountry.required' => 'Country field is required.',
+                'custUnbilledAccountSystemID.required' => 'Unbilled Receivable Account field is required.',
+                'custGLAccountSystemID.required' => 'Control Account field is required.',
+                'customerShortCode.required' => 'Customer Short Code field is required.',
+                'CustomerName.required' => 'Customer Name field is required.',
+                'customerCategoryID.required' => 'Customer Category field is required.',
+                'ReportTitle.required' => 'Report Title field is required.',
+            ];
+
+            $commonValidator = \Validator::make($input, [
+                'customerCountry' => 'required',
+                'custUnbilledAccountSystemID' => 'required',
+                'custGLAccountSystemID' => 'required',
+                'customerShortCode' => 'required',
+                'CustomerName' => 'required',
+                'customerCategoryID' => 'required',
+                'ReportTitle' => 'required'
+            ], $commonValidorMessages);
+
+            if ($commonValidator->fails()) {
+                return $this->sendError($commonValidator->messages(), 422);
+            }
         $input = $this->convertArrayToSelectedValue($input, array('custGLAccountSystemID', 'custUnbilledAccountSystemID'));
 
         if($input['custGLAccountSystemID'] == $input['custUnbilledAccountSystemID'] ){
@@ -564,20 +588,7 @@ class ClubManagementAPIController extends AppBaseController
             }
         }
 
-        $commonValidorMessages = [
-            'customerCountry.required' => 'Country field is required.',
-            'custUnbilledAccountSystemID.required' => 'Unbilled Receivable Account field is required.'
-        ];
 
-        $commonValidator = \Validator::make($input, [
-            'customerCountry' => 'required',
-            'custUnbilledAccountSystemID' => 'required'
-
-        ], $commonValidorMessages);
-
-        if ($commonValidator->fails()) {
-            return $this->sendError($commonValidator->messages(), 422);
-        }
 
         if($input['customerCountry']==0 || $input['customerCountry']==''){
             return $this->sendError('Country field is required',500);
@@ -669,6 +680,10 @@ class ClubManagementAPIController extends AppBaseController
             $company = Company::where('companySystemID', $request->company_id)->first();
             if (empty($company)) {
                 return $this->sendError('Company not found');
+            }
+
+            if (empty($request->categoryDescription)){
+                return $this->sendError('Category Description cannot be empty',500);
             }
 
             $duplicateCategoryDescription = CustomerMasterCategory::where('categoryDescription', $request->categoryDescription)->first();
