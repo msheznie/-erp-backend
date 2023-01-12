@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Jobs\BirthdayWishInitiate;
 use Exception;
 use Carbon\Carbon;
 use App\Models\CompanyJobs;
@@ -19,7 +20,8 @@ use App\Services\hrms\attendance\ForgotToPunchOutService;
 use App\Services\hrms\attendance\AttendanceDataPullingService;
 use App\Services\hrms\attendance\AttendanceDailySummaryService;
 use App\Services\hrms\attendance\AttendanceWeeklySummaryService;
-
+use App\helper\BirthdayWishService;
+use App\Models\Company;
 
 class HRJobInvokeAPIController extends AppBaseController
 {
@@ -145,5 +147,38 @@ class HRJobInvokeAPIController extends AppBaseController
         $resp = $obj->execute();
 
         return $this->sendResponse($data, 'clock out pulling job added to queue');
+    }
+
+    function birthdayWishesEmailDebug(){
+        Log::useFiles( CommonJobService::get_specific_log_file('birthday-wishes') );
+        $tenants = CommonJobService::tenant_list();
+        if(count($tenants) == 0){
+            Log::info("Tenant details not found. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
+        }
+
+        $tenants = $tenants->toArray();
+
+        foreach ($tenants as $tenant){
+            $tenant_database = $tenant['database'];
+
+            Log::info("{$tenant_database} DB added to queue for birthday wishes initiate . \t on file: "
+                . __CLASS__ . " \tline no :" . __LINE__);
+
+            BirthdayWishInitiate::dispatch($tenant_database);
+        }
+    }
+
+    function birthdayWishesEmailDebug2(Request $request){
+
+        $companyId = $request->input('companyId');
+
+        $company = Company::selectRaw('companySystemID AS id, CompanyID AS code, CompanyName AS name')
+                   ->find($companyId);
+        $company = $company->toArray();
+
+        $job = new BirthdayWishService($company);
+
+        $job->execute();
+
     }
 }
