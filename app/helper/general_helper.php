@@ -769,6 +769,17 @@ class Helper
                     $docInforArr["modelName"] = 'TenderMaster';
                     $docInforArr["primarykey"] = 'id';
                     break;
+                case 113: //SRM RFX
+                    $docInforArr["documentCodeColumnName"] = 'tender_code';
+                    $docInforArr["confirmColumnName"] = 'confirmed_yn';
+                    $docInforArr["confirmed_by_name"] = 'confirmed_by_name';
+                    $docInforArr["confirmedByEmpID"] = 'confirmed_by_emp_system_id';
+                    $docInforArr["confirmedBySystemID"] = 'confirmed_by_emp_system_id';
+                    $docInforArr["confirmedDate"] = 'confirmed_date';
+                    $docInforArr["tableName"] = 'srm_tender_master';
+                    $docInforArr["modelName"] = 'TenderMaster';
+                    $docInforArr["primarykey"] = 'id';
+                    break;
                 case 69:
                     $docInforArr["documentCodeColumnName"] = 'consoleJVcode';
                     $docInforArr["confirmColumnName"] = 'confirmedYN';
@@ -1902,6 +1913,18 @@ class Helper
                 $docInforArr["confirmedEmpSystemID"] = "confirmed_by_emp_id";
                 break;
             case 108: //SRM Tender
+                $docInforArr["tableName"] = 'srm_tender_master';
+                $docInforArr["modelName"] = 'TenderMaster';
+                $docInforArr["primarykey"] = 'id';
+                $docInforArr["approvedColumnName"] = 'approved';
+                $docInforArr["approvedBy"] = 'approved_by_emp_name';
+                $docInforArr["approvedBySystemID"] = 'approved_by_user_system_id';
+                $docInforArr["approvedDate"] = 'approved_date';
+                $docInforArr["approveValue"] = -1;
+                $docInforArr["confirmedYN"] = "confirmed_yn";
+                $docInforArr["confirmedEmpSystemID"] = "confirmed_by_emp_system_id";
+                break;
+            case 113: //SRM RFX
                 $docInforArr["tableName"] = 'srm_tender_master';
                 $docInforArr["modelName"] = 'TenderMaster';
                 $docInforArr["primarykey"] = 'id';

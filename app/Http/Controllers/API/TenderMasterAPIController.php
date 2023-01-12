@@ -1415,6 +1415,7 @@ WHERE
     public function getTenderMasterApproval(Request $request)
     {
         $input = $request->all();
+        $rfx = false;
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -1424,6 +1425,9 @@ WHERE
 
         $companyID = $request->companyId;
         $empID = \Helper::getEmployeeSystemID();
+        if(isset($input['rfx'])){
+            $rfx = $input['rfx'];
+        }
 
         $poMasters = DB::table('erp_documentapproved')->select(
             'srm_tender_master.id',
@@ -1442,28 +1446,47 @@ WHERE
             'approvalLevelID',
             'documentSystemCode',
             'employees.empName As created_user'
-        )->join('employeesdepartments', function ($query) use ($companyID, $empID) {
+        )->join('employeesdepartments', function ($query) use ($companyID, $empID, $rfx) {
             $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
                 ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
                 /*->on('erp_documentapproved.departmentSystemID', '=', 'employeesdepartments.departmentSystemID')*/
                 ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
-            $query->where('employeesdepartments.documentSystemID', 108)
-                ->where('employeesdepartments.companySystemID', $companyID)
+            if($rfx){
+                $query->where('employeesdepartments.documentSystemID', 113);
+            } else{
+                $query->where('employeesdepartments.documentSystemID', 108);
+            }
+            $query->where('employeesdepartments.companySystemID', $companyID)
                 ->where('employeesdepartments.employeeSystemID', $empID)
                 ->where('employeesdepartments.isActive', 1)
                 ->where('employeesdepartments.removedYN', 0);
-        })->join('srm_tender_master', function ($query) use ($companyID, $empID) {
+        })->join('srm_tender_master', function ($query) use ($companyID, $empID, $rfx) {
             $query->on('erp_documentapproved.documentSystemCode', '=', 'id')
                 ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
                 ->where('srm_tender_master.company_id', $companyID)
                 ->where('srm_tender_master.approved', 0)
                 ->where('srm_tender_master.confirmed_yn', 1);
-        })->where('erp_documentapproved.approvedYN', 0)
-            ->join('currencymaster', 'currency_id', '=', 'currencyID')
-            ->join('employees', 'created_by', 'employees.employeeSystemID')
-            ->where('erp_documentapproved.rejectedYN', 0)
-            ->where('erp_documentapproved.documentSystemID', 108)
-            ->where('erp_documentapproved.companySystemID', $companyID);
+            if($rfx){
+                $query->where('srm_tender_master.document_type', '!=',0);
+            }
+        });
+
+        if($rfx){
+            $poMasters = $poMasters->where('erp_documentapproved.approvedYN', 0)
+                ->join('currencymaster', 'currency_id', '=', 'currencyID')
+                ->join('employees', 'created_by', 'employees.employeeSystemID')
+                ->where('erp_documentapproved.rejectedYN', 0)
+                ->where('erp_documentapproved.documentSystemID', 113)
+                ->where('erp_documentapproved.companySystemID', $companyID);
+        } else {
+            $poMasters = $poMasters->where('erp_documentapproved.approvedYN', 0)
+                ->join('currencymaster', 'currency_id', '=', 'currencyID')
+                ->join('employees', 'created_by', 'employees.employeeSystemID')
+                ->where('erp_documentapproved.rejectedYN', 0)
+                ->where('erp_documentapproved.documentSystemID', 108)
+                ->where('erp_documentapproved.companySystemID', $companyID);
+        }
+
 
         $search = $request->input('search.value');
 
@@ -1524,7 +1547,7 @@ WHERE
     public function getTenderMasterFullApproved(Request $request)
     {
         $input = $request->all();
-
+        $rfx = false;
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
@@ -1533,6 +1556,10 @@ WHERE
 
         $companyID = $request->companyId;
         $empID = \Helper::getEmployeeSystemID();
+        if(isset($input['rfx'])){
+            $rfx = $input['rfx'];
+        }
+
 
         $poMasters = DB::table('erp_documentapproved')->select(
             'srm_tender_master.id',
@@ -1552,27 +1579,46 @@ WHERE
             'approvalLevelID',
             'documentSystemCode',
             'employees.empName As created_user'
-        )->join('employeesdepartments', function ($query) use ($companyID, $empID) {
+        )->join('employeesdepartments', function ($query) use ($companyID, $empID, $rfx) {
             $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
                 ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
                 /*->on('erp_documentapproved.departmentSystemID', '=', 'employeesdepartments.departmentSystemID')*/
                 ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
-            $query->where('employeesdepartments.documentSystemID', 108)
-                ->where('employeesdepartments.companySystemID', $companyID)
+
+            if($rfx){
+                $query->where('employeesdepartments.documentSystemID', 113);
+            } else{
+                $query->where('employeesdepartments.documentSystemID', 108);
+            }
+
+            $query->where('employeesdepartments.companySystemID', $companyID)
                 ->where('employeesdepartments.employeeSystemID', $empID)
                 ->where('employeesdepartments.isActive', 1)
                 ->where('employeesdepartments.removedYN', 0);
-        })->join('srm_tender_master', function ($query) use ($companyID, $empID) {
+        })->join('srm_tender_master', function ($query) use ($companyID, $empID, $rfx) {
             $query->on('erp_documentapproved.documentSystemCode', '=', 'id')
                 ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
                 ->where('srm_tender_master.company_id', $companyID)
                 ->where('srm_tender_master.approved', -1)
                 ->where('srm_tender_master.confirmed_yn', 1);
-        })->where('erp_documentapproved.approvedYN', -1)
-            ->join('currencymaster', 'currency_id', '=', 'currencyID')
-            ->join('employees', 'created_by', 'employees.employeeSystemID')
-            ->where('erp_documentapproved.documentSystemID', 108)
-            ->where('erp_documentapproved.companySystemID', $companyID);
+            if($rfx){
+                $query->where('srm_tender_master.document_type', '!=',0);
+            }
+        });
+        if($rfx){
+            $poMasters = $poMasters->where('erp_documentapproved.approvedYN', -1)
+                ->join('currencymaster', 'currency_id', '=', 'currencyID')
+                ->join('employees', 'created_by', 'employees.employeeSystemID')
+                ->where('erp_documentapproved.documentSystemID', 113)
+                ->where('erp_documentapproved.companySystemID', $companyID);
+        } else {
+            $poMasters = $poMasters->where('erp_documentapproved.approvedYN', -1)
+                ->join('currencymaster', 'currency_id', '=', 'currencyID')
+                ->join('employees', 'created_by', 'employees.employeeSystemID')
+                ->where('erp_documentapproved.documentSystemID', 108)
+                ->where('erp_documentapproved.companySystemID', $companyID);
+        }
+
 
         $search = $request->input('search.value');
 
