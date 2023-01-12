@@ -10,10 +10,10 @@ use Carbon\CarbonPeriod;
 	        <thead>
             <tr></tr>
             <tr>
-              <th colspan="7" align='center' style="font-size:50px">{{$reportTittle}}</th>
+              <th colspan="6" align='center' style="font-size:50px">{{$reportTittle}}</th>
             </tr>
             <tr>
-              <th colspan="7" align='center' style="font-size:50px">{{$companyName}}</th>
+              <th colspan="6" align='center' style="font-size:50px">{{$companyName}}</th>
             </tr>
             <tr></tr>
             <tr>
@@ -41,17 +41,22 @@ use Carbon\CarbonPeriod;
               $CurrencyCode = 'N/A';
             } 
             ?>
-    
-            <tr>
-                <td colspan="2">Project Description - {{$projectDetail->description}}</td>
-                <td colspan="2">Project Currency - {{$projectDetail->currency->CurrencyCode}}/{{$projectDetail->currency->CurrencyName}}</td>
-                <td colspan="3"></td>
-            </tr>
-            <tr>
-              <td  colspan="2">Segment - {{$projectDetail->service_line->ServiceLineCode}}/{{$projectDetail->service_line->ServiceLineDes}}</td>
-              <td  colspan="2">Reporting  Currency - {{$CurrencyName}}</td>
-              <td  colspan="3">Total Estimated Amount - {{ round($projectAmount, $decimalPoint)}}({{$CurrencyCode}})</td>
-            </tr>
+                <tr>
+                  <td>Project Description</td>
+                  <td> -  {{$projectDetail->description}}</td>
+                  <td>Project Currency</td>
+                  <td > -  {{$projectDetail->currency->CurrencyCode}}/{{$projectDetail->currency->CurrencyName}}</td>
+                  <td>Project Budget</td>
+                  <td > :-  {{ round($projectAmount, $decimalPoint)}}({{$CurrencyCode}})</td>
+                </tr>
+                <tr>
+                  <td>Segment</td>
+                  <td > -  {{$projectDetail->service_line->ServiceLineCode}}/{{$projectDetail->service_line->ServiceLineDes}}</td>
+                  <td>Reporting  Currency</td>
+                  <td > -  {{$CurrencyName}}</td>
+                  <td>Balance Amount</td>
+                  <td > :-  {{ round(($projectAmount-$closingBalance), $decimalPoint)}}({{$CurrencyCode}})</td>
+                </tr>
             <tr></tr>
           </tbody>
           <tbody>
@@ -61,14 +66,12 @@ use Carbon\CarbonPeriod;
                 <th  style="background-color:#e4e5e6">GL Description</th>
                 <th  style="background-color:#e4e5e6">Document Number</th>
                 <th  style="background-color:#e4e5e6">Document Date</th>
-                <th  style="background-color:#e4e5e6">Document Narration</th>
                 <th  style="background-color:#e4e5e6">Segment</th>
                 <th  style="background-color:#e4e5e6">Amount</th>
               </thead>
               <tbody>
                 <tr>
                   <th>Opening Balance</th>
-                  <th></th>
                   <th></th>
                   <th></th>
                   <th></th>
@@ -89,11 +92,10 @@ use Carbon\CarbonPeriod;
                   $date = (new Carbon($date[0]))->format('d/m/Y');
                 ?>
                 <tr>
-                  <td>{{$item->GLCode}}</td>
+                  <td style="text-align: left;">{{$item->GLCode}}</td>
                   <td>{{$item->chart_of_account->AccountDescription}}</td>
                   <td>{{$item->documentCode}}</td>
                   <td>{{$date }}</td>
-                  <td>-</td>
                   <td>{{$item->segment_by->ServiceLineDes}}</td>
                   <td>{{round($item->consumedRptAmount, $decimalPoint)}}</td>
                 </tr>
@@ -105,12 +107,10 @@ use Carbon\CarbonPeriod;
                     <td></td>
                     <td></td>
                     <td></td>
-                    <td></td>
                     <th>{{round($budgetConsumptionAmount, $decimalPoint)}}</th>
                   </tr>
                   <tr>
                     <th>Closing Balance</th>
-                    <th></th>
                     <th></th>
                     <th></th>
                     <th></th>
