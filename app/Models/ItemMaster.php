@@ -90,6 +90,8 @@ class ItemMaster extends Model
         'itemPicture',
         'selectedForAssign',
         'isActive',
+        'isSubItem',
+        'mainItemID',
         'RollLevForApp_curr',
         'sentConfirmationEmail',
         'confirmationEmailSentByEmpID',
