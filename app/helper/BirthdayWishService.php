@@ -6,6 +6,7 @@ use App\Models\SrpEmployeeDetails;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Storage;
 
 class BirthdayWishService
 {
@@ -20,7 +21,7 @@ class BirthdayWishService
         $this->companyId = $companyData['id'];
         $this->companyCode = $companyData['code'];
         $this->switchDb = $db;
-        $this->image = asset("image/Birthday-ASAAS-01.jpg");
+        $this->image = Storage::disk('local_public')->url('image/Birthday-ASAAS-01.jpg');
     }
 
     function execute()
