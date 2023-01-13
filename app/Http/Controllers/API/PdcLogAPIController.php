@@ -613,7 +613,7 @@ class PdcLogAPIController extends AppBaseController
         } else if($input['type'] == 1) {   
             if(isset($input['bank_master_id']) && $input['bank_master_id'] > 0) {
             
-                $bankTemplate = ChequeTemplateBank::where('bank_id',$input['bank_master_id'])->with('template')->get();
+                $bankTemplate = ChequeTemplateBank::where('bank_id',$input['bank_master_id'])->where('is_active', 1)->with('template')->get();
          
                 if(count($bankTemplate) == 0) {
                     return $this->sendError(trans('custom.no_templates'),500);
