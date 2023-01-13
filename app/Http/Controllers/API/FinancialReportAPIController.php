@@ -129,6 +129,33 @@ class FinancialReportAPIController extends AppBaseController
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
 
+    public function getUtilizationFilterFormData(Request $request)
+    {
+        $selectedCompanyId = $request['selectedCompanyId'];
+        $companiesByGroup = "";
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+        if ($isGroup) {
+            $companiesByGroup = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $companiesByGroup = (array)$selectedCompanyId;
+        }
+
+        $company = Company::whereIN('companySystemID', $companiesByGroup)->where('isGroup', 0)->get();
+
+
+        $departments1 = collect(\Helper::getCompanyServiceline($selectedCompanyId));
+        $departments2 = collect(SegmentMaster::where('serviceLineSystemID', 24)->get());
+        $departments = $departments1->merge($departments2)->all();
+
+        $output = array(
+            'departments' => $departments,
+            'segment' => $departments,
+            'company' => $company,
+        );
+
+        return $this->sendResponse($output, 'Record retrieved successfully');
+    }
+
     public function getSubsidiaryCompanies(Request $request)
     {
         $input = $request->all();
@@ -423,15 +450,21 @@ class FinancialReportAPIController extends AppBaseController
         $toDate = (new   Carbon($request->toDate))->format('Y-m-d');
         $projectID = $request->projectID;
         $projectDetail = ErpProjectMaster::with('currency', 'service_line')->where('id', $projectID)->first();
-
+        $serviceline = collect($request->selectedServicelines)->pluck('serviceLineSystemID')->toArray();
+        
         $companySystemID = $projectDetail['companySystemID'];
         $transactionCurrencyID = $projectDetail->currency['currencyID'];
         $documentCurrencyID = $projectDetail->currency['currencyID'];
         $reportingCurrency = Company::with('reportingcurrency')->where('companySystemID',$companySystemID)->first();
 
-        $budgetConsumedData = BudgetConsumedData::with('purchase_order','debit_note', 'credit_note', 'direct_payment_voucher')->where('projectID', $projectID)->whereIn('documentSystemID', $documentSystemIDs)->get();
+        $budgetConsumedData = BudgetConsumedData::with('purchase_order','debit_note', 'credit_note', 'direct_payment_voucher')
+                                                    ->where('projectID', $projectID)
+                                                    ->when(count($serviceline) > 0, function ($query) use ($serviceline) {
+                                                        $query->whereIn('serviceLineSystemID', $serviceline);
+                                                    })
+                                                    ->whereIn('documentSystemID', $documentSystemIDs)->get();
 
-        $detailsPOWise = BudgetConsumedData::with(['purchase_order_detail' => function ($query) use ($fromDate, $toDate) {
+        $detailsPOWise = BudgetConsumedData::with(['segment_by','chart_of_account','purchase_order_detail' => function ($query) use ($fromDate, $toDate) {
                 $query->whereBetween('approvedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
                 }, 
                 'debit_note_detail' => function ($query) use ($fromDate, $toDate) {
@@ -462,12 +495,16 @@ class FinancialReportAPIController extends AppBaseController
             })
             ->where('projectID', $projectID)
             ->whereIn('documentSystemID', $documentSystemIDs)
-            ->selectRaw('sum(consumedRptAmount) as documentAmount, documentCode, documentSystemCode, timestamp, documentSystemID')
-            ->groupBy('documentSystemCode')
+            ->when(count($serviceline) > 0, function ($query) use ($serviceline) {
+                $query->whereIn('serviceLineSystemID', $serviceline);
+            })
             ->get();
 
         $budgetAmount = BudgetConsumedData::where('projectID', $projectID)
             ->whereIn('documentSystemID', $documentSystemIDs)
+            ->when(count($serviceline) > 0, function ($query) use ($serviceline) {
+                $query->whereIn('serviceLineSystemID', $serviceline);
+            })
             ->where(function($subQuery) use ($fromDate, $toDate)
             {   
                 $subQuery->whereHas('purchase_order', function ($query) use ($fromDate, $toDate) {
@@ -490,6 +527,9 @@ class FinancialReportAPIController extends AppBaseController
 
         $budgetOpeningConsumption = BudgetConsumedData::where('projectID', $projectID)
             ->whereIn('documentSystemID', $documentSystemIDs)
+            ->when(count($serviceline) > 0, function ($query) use ($serviceline) {
+                $query->whereIn('serviceLineSystemID', $serviceline);
+            })
             ->where(function($subQuery) use ($fromDate, $toDate)
             {   
                 $subQuery->whereHas('purchase_order', function ($query) use ($fromDate, $toDate) {
@@ -2511,15 +2551,22 @@ WHERE
         $projectID = $request->projectID;
          $projectDetail = ErpProjectMaster::with('currency', 'service_line')->where('id', $projectID)->first();
 
+         $serviceline = collect($request->selectedServicelines)->pluck('serviceLineSystemID')->toArray();
+
          $companySystemID = $projectDetail['companySystemID'];
         $transactionCurrencyID = $projectDetail->currency['currencyID'];
         $documentCurrencyID = $projectDetail->currency['currencyID'];
         $reportingCurrency = Company::with('reportingcurrency')->where('companySystemID',$companySystemID)->first();
 
 
-        $budgetConsumedData = BudgetConsumedData::with('purchase_order','debit_note', 'credit_note', 'direct_payment_voucher')->where('projectID', $projectID)->whereIn('documentSystemID', $documentSystemIDs)->get();
+        $budgetConsumedData = BudgetConsumedData::with('purchase_order','debit_note', 'credit_note', 'direct_payment_voucher')
+                                                ->where('projectID', $projectID)
+                                                ->when(count($serviceline) > 0, function ($query) use ($serviceline) {
+                                                    $query->whereIn('serviceLineSystemID', $serviceline);
+                                                })
+                                                ->whereIn('documentSystemID', $documentSystemIDs)->get();
 
-        $detailsPOWise = BudgetConsumedData::with(['purchase_order_detail' => function ($query) use ($fromDate, $toDate) {
+        $detailsPOWise = BudgetConsumedData::with(['segment_by','chart_of_account','purchase_order_detail' => function ($query) use ($fromDate, $toDate) {
                 $query->whereBetween('approvedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
                 }, 
                 'debit_note_detail' => function ($query) use ($fromDate, $toDate) {
@@ -2550,12 +2597,16 @@ WHERE
             })
             ->where('projectID', $projectID)
             ->whereIn('documentSystemID', $documentSystemIDs)
-            ->selectRaw('sum(consumedRptAmount) as documentAmount, documentCode, documentSystemCode, timestamp, documentSystemID')
-            ->groupBy('documentSystemCode')
+            ->when(count($serviceline) > 0, function ($query) use ($serviceline) {
+                $query->whereIn('serviceLineSystemID', $serviceline);
+            })
             ->get();
 
         $budgetAmount = BudgetConsumedData::where('projectID', $projectID)
             ->whereIn('documentSystemID', $documentSystemIDs)
+            ->when(count($serviceline) > 0, function ($query) use ($serviceline) {
+                $query->whereIn('serviceLineSystemID', $serviceline);
+            })
             ->where(function($subQuery) use ($fromDate, $toDate)
             {   
                 $subQuery->whereHas('purchase_order', function ($query) use ($fromDate, $toDate) {
@@ -2578,6 +2629,9 @@ WHERE
 
         $budgetOpeningConsumption = BudgetConsumedData::where('projectID', $projectID)
             ->whereIn('documentSystemID', $documentSystemIDs)
+            ->when(count($serviceline) > 0, function ($query) use ($serviceline) {
+                $query->whereIn('serviceLineSystemID', $serviceline);
+            })
             ->where(function($subQuery) use ($fromDate, $toDate)
             {   
                 $subQuery->whereHas('purchase_order', function ($query) use ($fromDate, $toDate) {
