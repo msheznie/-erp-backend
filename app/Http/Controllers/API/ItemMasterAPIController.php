@@ -479,6 +479,16 @@ class ItemMasterAPIController extends AppBaseController
             $isPosIntegrated = false;
         }
 
+        $isSubItemEnabledPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 72)
+            ->where('companySystemID', $selectedCompanyId)
+            ->first();
+        if(!empty($isSubItemEnabledPolicy->isYesNO)){
+            $isSubItemEnabled = $isSubItemEnabledPolicy->isYesNO;
+        } else {
+            $isSubItemEnabled = false;
+        }
+
+
         $warehouseSystemCode = isset($input['warehouseSystemCode']) ? $input['warehouseSystemCode'] : 0;
 
         $warehouse           =  WarehouseMaster::find($warehouseSystemCode);
@@ -577,7 +587,8 @@ class ItemMasterAPIController extends AppBaseController
             'wareHouseBinLocations' => $wareHouseBinLocations,
             'vatSubCategory' => $vatSubCategory,
             'masterCompany' => $masterCompany,
-            'isPosIntegrated' => $isPosIntegrated
+            'isPosIntegrated' => $isPosIntegrated,
+            'isSubItemEnabled' => $isSubItemEnabled
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
@@ -1244,6 +1255,32 @@ class ItemMasterAPIController extends AppBaseController
         $itemMaster->delete();
 
         return $this->sendResponse($id, 'Item Master deleted successfully');
+    }
+
+    public function getAllMainItemsByCompany(Request $request){
+
+        $selectedCompanyId = $request->selectedCompanyId;
+        $itemCodeSystem = $request->itemCodeSystem;
+
+        $isSubItem = ItemMaster::selectRaw('primaryCode, itemmaster.itemDescription')->where('mainItemID', $itemCodeSystem)->first();
+        $subItems = ItemMaster::selectRaw('primaryCode, itemmaster.itemDescription, units.UnitShortCode, SUM(inOutQty) as availableQty, itemCodeSystem')->where('mainItemID', $itemCodeSystem)->leftjoin('units', 'UnitID', '=', 'unit')->leftjoin('erp_itemledger', 'itemCodeSystem', '=', 'itemSystemCode')->get();
+
+        $mainItemUOM =  ItemMaster::selectRaw('units.UnitShortCode')->where('itemCodeSystem', $itemCodeSystem)->join('units', 'UnitID', '=', 'unit')->first();
+
+        $mainItems = ItemAssigned::selectRaw('CONCAT(itemassigned.itemPrimaryCode, " - " ,itemassigned.itemDescription) as itemCode, itemassigned.itemCodeSystem')->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'itemassigned.itemCodeSystem')->where('companySystemID', $selectedCompanyId)->where('itemmaster.isSubItem', 0)->get();
+
+        $output = array('subItems' => $subItems, 'isSubItem'=>$isSubItem, 'mainItemUOM' => $mainItemUOM, 'mainItems' => $mainItems);
+
+        return $this->sendResponse($output, 'Main item details retrieved successfully');
+
+    }
+
+    public function getMainItemById($id)
+    {
+        $itemMasters = ItemAssigned::where('itemCodeSystem', $id)->selectRaw('itemPrimaryCode, itemDescription, units.UnitShortCode')->join('units', 'UnitID', '=', 'itemUnitOfMeasure')->first();
+
+        return $this->sendResponse($itemMasters->toArray(), 'Item Assigned saved successfully');
+
     }
 
 
