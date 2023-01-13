@@ -4623,7 +4623,11 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
                     $printHistory = [
                         'pdcLogID' => $value->id,
                         'chequePrintedBy' => $value->chequePrintedBy,
-                        'chequePrintedDate' => $value->chequePrintedDate
+                        'chequePrintedDate' => $value->chequePrintedDate,
+                        'changedBy' => $employee->employeeSystemID,
+                        'documentSystemID' => $value->documentSystemID,
+                        'documentmasterAutoID' => $value->documentmasterAutoID,
+                        'chequeNo' => $value->chequeNo,
                     ];
 
                     $res = PdcLogPrintedHistory::create($printHistory);

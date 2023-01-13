@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Models;
+use Awobaz\Compoships\Compoships;
 
 use Eloquent as Model;
 
@@ -60,7 +61,7 @@ use Eloquent as Model;
  */
 class PdcLogPrintedHistory extends Model
 {
-
+    use Compoships;
     public $table = 'pdc_log_printed_history';
     
     const CREATED_AT = 'created_at';
@@ -72,6 +73,10 @@ class PdcLogPrintedHistory extends Model
     public $fillable = [
         'pdcLogID',
         'chequePrintedBy',
+        'changedBy',
+        'documentSystemID',
+        'documentmasterAutoID',
+        'chequeNo',
         'chequePrintedDate'
     ];
 
@@ -83,6 +88,10 @@ class PdcLogPrintedHistory extends Model
     protected $casts = [
         'id' => 'integer',
         'pdcLogID' => 'integer',
+        'documentSystemID' => 'integer',
+        'documentmasterAutoID' => 'integer',
+        'chequeNo' => 'integer',
+        'changedBy' => 'integer',
         'chequePrintedBy' => 'integer',
         'chequePrintedDate' => 'datetime'
     ];
@@ -99,5 +108,14 @@ class PdcLogPrintedHistory extends Model
     public function cheque_printed_by()
     {
         return $this->belongsTo('App\Models\Employee','chequePrintedBy',  'employeeSystemID');
+    }
+
+    public function changed_by()
+    {
+        return $this->belongsTo('App\Models\Employee','changedBy',  'employeeSystemID');
+    }
+
+     public function pay_supplier() {
+        return $this->belongsTo('App\Models\PaySupplierInvoiceMaster','documentmasterAutoID',  'PayMasterAutoId');
     }
 }

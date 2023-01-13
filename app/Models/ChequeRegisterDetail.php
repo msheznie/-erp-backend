@@ -10,6 +10,7 @@
  * -- REVISION HISTORY
  */
 namespace App\Models;
+use Awobaz\Compoships\Compoships;
 
 use Eloquent as Model;
 
@@ -101,7 +102,7 @@ use Eloquent as Model;
  */
 class ChequeRegisterDetail extends Model
 {
-
+    use Compoships;
     public $table = 'erp_cheque_register_detail';
     
     const CREATED_AT = 'created_at';
@@ -164,6 +165,11 @@ class ChequeRegisterDetail extends Model
     public function document()
     {
         return $this->belongsTo('App\Models\PaySupplierInvoiceMaster', 'document_id', 'PayMasterAutoId');
+    }
+
+    public function pdc_printed_history()
+    {
+        return $this->hasMany('App\Models\PdcLogPrintedHistory', ['documentmasterAutoID', 'chequeNo'], ['document_id', 'cheque_no']);
     }
 
     public function master()

@@ -392,7 +392,7 @@ class PdcLogAPIController extends AppBaseController
                                 ->where('companySystemID',$companyId)
                                 ->withCount('printed_history')
                                 ->with(['currency','bank','pay_supplier', 'cheque_printed_by', 'printed_history' => function($query) {
-                                    $query->with(['cheque_printed_by']);
+                                    $query->with(['cheque_printed_by', 'changed_by', 'pay_supplier']);
                                 }]);
 
         return \DataTables::eloquent($issuedCheques)
@@ -463,6 +463,8 @@ class PdcLogAPIController extends AppBaseController
     }
 
     public function getFormData(Request $request) {
+        $input = $request->all();
+
         $bankIds =  PdcLog::whereNotNull('paymentBankID')->get()->pluck('paymentBankID')->unique();
         /** Yes and No Selection */
         $yesNoSelection = YesNoSelection::all();
