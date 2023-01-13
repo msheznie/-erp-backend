@@ -471,9 +471,12 @@ class PdcLogAPIController extends AppBaseController
         /** all Units*/
         $yesNoSelectionForMinus = YesNoSelectionForMinus::all();
 
+        $policy = Helper::checkRestrictionByPolicy($input['companySystemID'],4);
+
         $data = [
             'banks' => $banks,
             'yesNoSelection' => $yesNoSelection,
+            'chequeRePrintPolicy' => $policy,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus
         ];
 
@@ -741,6 +744,7 @@ class PdcLogAPIController extends AppBaseController
                 $entity = $item;
                 $entity->totalAmount = $totalAmount;
                 $entity->payAmountBank = $totalAmount;
+                $entity->BPVdate = $pdcData->chequeDate;
                 $totalAmount = round($totalAmount, $entity->decimalPlaces);
                 $amountSplit = explode(".", $totalAmount);
                 $intAmt = 0;
@@ -793,7 +797,7 @@ class PdcLogAPIController extends AppBaseController
                 $entity = null;
             }
         
-            $array = array('entity' => $entity, 'date' => now(),'type'=>$htmlName);
+            $array = array('entity' => $entity, 'date' => $pdcData->chequeDate ,'type'=>$htmlName);
             if ($htmlName) {
                 $html = view('print.' . $htmlName, $array)->render();
                 DB::commit();
