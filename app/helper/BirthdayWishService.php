@@ -21,7 +21,7 @@ class BirthdayWishService
         $this->companyId = $companyData['id'];
         $this->companyCode = $companyData['code'];
         $this->switchDb = $db;
-        $this->image = Storage::disk('local_public')->url('image/Birthday-ASAAS-01.jpg');
+        $this->image = base64_encode(Storage::disk('local_public')->get('image/Birthday-ASAAS-01.jpg'));
     }
 
     function execute()
@@ -75,7 +75,7 @@ class BirthdayWishService
 
             $emailData['empEmail'] = $employee->EEmail;
             $emailData['companySystemID'] = $employee->Erp_companyID;
-            $temp = '<img src= '.$this->image.' />';
+            $temp = '<img src="data:image/jpg;base64,'.$this->image.'">';
             $emailData['alertMessage'] = "Happy Birthday $employee->Ename2.";
             $emailData['emailAlertMessage'] = $temp;
             $sendEmail = \Email::sendEmailErp($emailData);
