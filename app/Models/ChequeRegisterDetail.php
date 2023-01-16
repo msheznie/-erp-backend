@@ -169,7 +169,7 @@ class ChequeRegisterDetail extends Model
 
     public function pdc_printed_history()
     {
-        return $this->hasMany('App\Models\PdcLogPrintedHistory', ['documentmasterAutoID', 'chequeNo'], ['document_id', 'cheque_no']);
+        return $this->hasMany('App\Models\PdcLogPrintedHistory', 'chequeNo', 'cheque_no');
     }
 
     public function master()
