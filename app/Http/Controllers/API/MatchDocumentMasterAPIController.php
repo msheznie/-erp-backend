@@ -1367,6 +1367,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                         $data['chartOfAccountSystemID'] = $DebitNoteMasterExData->liabilityAccountSysemID;
                         $data['glCode'] = $DebitNoteMasterExData->liabilityAccount;
                         $data['glAccountType'] = 'BS';
+                        $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                         $data['documentTransCurrencyID'] = $DebitNoteMasterExData->supplierTransactionCurrencyID;
                         $data['documentTransCurrencyER'] = $DebitNoteMasterExData->supplierTransactionCurrencyER;
                         $data['documentLocalCurrencyID'] = $DebitNoteMasterExData->localCurrencyID;
@@ -1416,6 +1417,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                         $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($DebitNoteMasterExData->companySystemID, $DebitNoteMasterExData->documentSystemID, 14);
                         $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($DebitNoteMasterExData->companySystemID, $DebitNoteMasterExData->documentSystemID, 14);
                         $data['glAccountType'] = 'PL';
+                        $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                         if ($diffLocal > 0) {
                             $data['documentLocalAmount'] = \Helper::roundValue(ABS($diffLocal) * -1);
                         } else {
@@ -1498,6 +1500,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                         $data['chartOfAccountSystemID'] = $PaySupplierInvoiceMasterExData->supplierGLCodeSystemID;
                         $data['glCode'] = $PaySupplierInvoiceMasterExData->supplierGLCode;
                         $data['glAccountType'] = 'BS';
+                        $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                         $data['documentTransCurrencyID'] = $PaySupplierInvoiceMasterExData->supplierTransCurrencyID;
                         $data['documentTransCurrencyER'] = $PaySupplierInvoiceMasterExData->supplierTransCurrencyER;
                         $data['documentLocalCurrencyID'] = $PaySupplierInvoiceMasterExData->localCurrencyID;
@@ -1546,6 +1549,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                         $data['chartOfAccountSystemID'] = SystemGlCodeScenarioDetail::getGlByScenario($PaySupplierInvoiceMasterExData->companySystemID, $PaySupplierInvoiceMasterExData->documentSystemID, 14);
                         $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($PaySupplierInvoiceMasterExData->companySystemID, $PaySupplierInvoiceMasterExData->documentSystemID, 14);
                         $data['glAccountType'] = 'PL';
+                        $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                         if ($diffLocal > 0) {
                             $data['documentLocalAmount'] = \Helper::roundValue(ABS($diffLocal) * -1);
                         } else {
