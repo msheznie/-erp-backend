@@ -1862,6 +1862,15 @@ class PurchaseRequestAPIController extends AppBaseController
         }
 
         if ($purchaseRequest->PRConfirmedYN == 0 && $input['PRConfirmedYN'] == 1) {
+
+            if ($purchaseRequest->comments == null || $purchaseRequest->comments == "") {
+                return $this->sendError('Comment cannot be empty.', 500);
+            }
+
+            if ($purchaseRequest->location == null || $purchaseRequest->location == 0) {
+                return $this->sendError('Location cannot be empty.', 500);
+            }
+
             $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
                 ->where('companySystemID', $purchaseRequest->companySystemID)
                 ->first();
