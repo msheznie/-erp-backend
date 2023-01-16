@@ -3195,6 +3195,11 @@ class Helper
                     $docInforArr["modelName"] = 'TenderMaster';
                     $docInforArr["primarykey"] = 'id';
                     $docInforArr["referredColumnName"] = 'timesReferred';
+                case 113:
+                    $docInforArr["tableName"] = 'srm_tender_master';
+                    $docInforArr["modelName"] = 'TenderMaster';
+                    $docInforArr["primarykey"] = 'id';
+                    $docInforArr["referredColumnName"] = 'timesReferred';
                     break;
                  case 69: // Console Journal Voucher
                     $docInforArr["tableName"] = 'erp_consolejvmaster';
@@ -3225,7 +3230,7 @@ class Helper
                         // update record in document approved table
                         $approvedeDoc = $docApprove->update(['rejectedYN' => -1, 'rejectedDate' => now(), 'rejectedComments' => $input["rejectedComments"], 'employeeID' => $empInfo->empID, 'employeeSystemID' => $empInfo->employeeSystemID]);
 
-                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19, 13, 10, 15, 8, 12, 17, 9, 63, 41, 64, 62, 3, 57, 56, 58, 59, 66, 7, 67, 68, 71, 86, 87, 24, 96, 97, 99, 100, 103, 102, 65, 104, 106,107,108, 69])) {
+                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19, 13, 10, 15, 8, 12, 17, 9, 63, 41, 64, 62, 3, 57, 56, 58, 59, 66, 7, 67, 68, 71, 86, 87, 24, 96, 97, 99, 100, 103, 102, 65, 104, 106,107,108, 113, 69])) {
                             $timesReferredUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->increment($docInforArr["referredColumnName"]);
                             $refferedBackYNUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->update(['refferedBackYN' => -1]);
                         }
