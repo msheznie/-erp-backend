@@ -444,7 +444,11 @@ class TenderMasterAPIController extends AppBaseController
         $employee = \Helper::getEmployeeInfo();
         $exist = TenderMaster::where('title', $input['title'])->where('company_id', $input['companySystemID'])->first();
         if (!empty($exist)) {
-            return ['success' => false, 'message' => 'Tender title cannot be duplicated'];
+            if(isset($input['rfx']) && $input['rfx']){
+                return ['success' => false, 'message' => 'RFX title cannot be duplicated'];
+            } else {
+                return ['success' => false, 'message' => 'Tender title cannot be duplicated'];
+            }
         }
         $company = Company::where('companySystemID', $input['companySystemID'])->first();
         $documentMaster = DocumentMaster::where('documentSystemID', 108)->first();
@@ -901,7 +905,7 @@ WHERE
             }
 
 
-            if($input['stage'][0] == 2) {
+            if(($input['stage'][0] == 2) && !$rfq) {
                 if(is_null($input['technical_bid_opening_date'])) {
                     return ['success' => false, 'message' => 'Technical Bid Opening from date cannot be empty'];
                 }
@@ -1001,7 +1005,11 @@ WHERE
 
         $existTndr = TenderMaster::where('title', $input['title'])->where('id', '!=', $input['id'])->where('company_id', $input['companySystemID'])->first();
         if (!empty($existTndr)) {
-            return ['success' => false, 'message' => 'Tender title cannot be duplicated'];
+            if($rfq){
+                return ['success' => false, 'message' => 'RFX title cannot be duplicated'];
+            } else {
+                return ['success' => false, 'message' => 'Tender title cannot be duplicated'];
+            }
         }
 
         $employee = \Helper::getEmployeeInfo();
