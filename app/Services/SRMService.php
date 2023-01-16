@@ -905,7 +905,7 @@ class SRMService
         $appointmentID = $request->input('extra.appointmentID');
 
         $detail = AppointmentDetails::where('appointment_id', $appointmentID)
-            ->with(['getPoMaster', 'getPoMaster.transactioncurrency', 'getPoDetails' => function ($query) use ($appointmentID) {
+            ->with(['getPoMaster.segment', 'getPoMaster.transactioncurrency', 'getPoDetails' => function ($query) use ($appointmentID) {
                 $query->with(['unit', 'appointmentDetails' => function ($q) use ($appointmentID) {
                     $q->whereHas('appointment', function ($q) use ($appointmentID) {
                         $q->where('refferedBackYN', '!=', -1);
@@ -948,6 +948,9 @@ class SRMService
         $purchaseOrderID = $request->input('extra.purchaseOrderID');
         $appointmentID = $request->input('extra.appointmentID');
         $searchText = $request->input('extra.searchText');
+        $segment = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)->with(['segment'=>function($q){
+            $q->select('serviceLineSystemID','ServiceLineDes');
+        }])->select('purchaseOrderID','serviceLineSystemID')->first();
 
         $po = PurchaseOrderDetails::where('purchaseOrderMasterID', $purchaseOrderID);
 
@@ -975,6 +978,7 @@ class SRMService
             });
 
         $result['poDetail'] = $po;
+        $result['segment'] = $segment->segment->ServiceLineDes;
         return [
             'success' => true,
             'message' => 'Po Details Retrieved',
@@ -992,6 +996,8 @@ class SRMService
         return [
             'purchaseOrderCode' => $data['order']['purchaseOrderCode'],
             'purchaseOrderID' => $data['order']['purchaseOrderID'],
+            'segment' => $data['order']['serviceLineSystemID'],
+            'segment_des' => $data['order']['segment']['ServiceLineDes'],
             'purchaseOrderDetailID' => $data['purchaseOrderDetailsID'],
             'itemPrimaryCode' => $data['itemPrimaryCode'],
             'itemDescription' => $data['itemDescription'],
@@ -1016,6 +1022,8 @@ class SRMService
         return [
             'purchaseOrderCode' => $data['getPoMaster']['purchaseOrderCode'],
             'purchaseOrderID' => $data['getPoMaster']['purchaseOrderID'],
+            'segment' => $data['getPoMaster']['serviceLineSystemID'],
+            'segment_des' => $data['getPoMaster']['segment']['ServiceLineDes'],
             'purchaseOrderDetailID' => $data['getPoDetails']['purchaseOrderDetailsID'],
             'itemPrimaryCode' => $data['getPoDetails']['itemPrimaryCode'],
             'itemDescription' => $data['getPoDetails']['itemDescription'],
