@@ -23,8 +23,8 @@
         }
 
         .birthdayImg{
-            width: 700px !important;
-            height: 570px !important;
+            width: 100% !important;
+            height: auto !important;
         }
 
         @media only screen and (max-width: 640px) {
