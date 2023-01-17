@@ -775,11 +775,11 @@ WHERE
 
         // vaidation lists
 
-        if(!isset(($input['document_sales_start_time'])) && !$rfq) {
+        if(!isset(($input['document_sales_start_time']))) {
             return ['success' => false, 'message' => 'Document sales from time is required'];
         }
 
-        if(!isset(($input['document_sales_end_time'])) && !$rfq) {
+        if(!isset(($input['document_sales_end_time']))) {
             return ['success' => false, 'message' => 'Document sales to time is required'];
         }
 
@@ -788,11 +788,11 @@ WHERE
             return ['success' => false, 'message' => 'From date and time cannot be greater than the To date and time  for Document Sales'];
         }
 
-        if(!isset(($input['pre_bid_clarification_start_time'])) && !$rfq) {
+        if(!isset(($input['pre_bid_clarification_start_time']))) {
             return ['success' => false, 'message' => 'Pre bid clarification from time is required'];
 
         }
-        if(!isset(($input['pre_bid_clarification_end_time'])) && !$rfq) {
+        if(!isset(($input['pre_bid_clarification_end_time']))) {
             return ['success' => false, 'message' => 'Pre bid clarification to time is required'];
 
         }
@@ -802,12 +802,12 @@ WHERE
         }
 
 
-        if(!isset(($input['site_visit_start_time'])) && !$rfq) {
+        if(!isset(($input['site_visit_start_time']))) {
             return ['success' => false, 'message' => 'Site visit from time is required'];
 
         }
 
-        if(!isset(($input['site_visit_end_time'])) && !$rfq) {
+        if(!isset(($input['site_visit_end_time']))) {
             return ['success' => false, 'message' => 'Site visit to time is required'];
 
         }
@@ -905,12 +905,13 @@ WHERE
             }
 
 
-            if(($input['stage'][0] == 2) && !$rfq) {
-                if(is_null($input['technical_bid_opening_date'])) {
+            if(($input['stage'][0] == 2)) {
+
+                if(is_null($input['technical_bid_opening_date']) && !$rfq) {
                     return ['success' => false, 'message' => 'Technical Bid Opening from date cannot be empty'];
                 }
 
-                if(is_null($input['technical_bid_opening_date_time'])) {
+                if(is_null($input['technical_bid_opening_date_time']) && isset($input['technical_bid_opening_date'])) {
                     return ['success' => false, 'message' => 'Technical Bid Opening from time cannot be empty'];
                 }
 
