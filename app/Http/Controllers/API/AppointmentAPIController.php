@@ -468,7 +468,7 @@ class AppointmentAPIController extends AppBaseController
             $q->with(['getPoDetails' => function ($q1) {
                 $q1->with(['productmentOrder', 'unit']);
             }]);
-        }, 'detail.getPoMaster.transactioncurrency'])
+        }, 'detail.getPoMaster.transactioncurrency','detail.getPoMaster.segment'])
             ->where('id', $appointmentId)->first();
 
         return $data;
