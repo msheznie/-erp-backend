@@ -15,12 +15,14 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\TaxService;
 use App\helper\Helper;
 use App\helper\ItemTracking;
 use App\Http\Requests\API\CreateGRVDetailsAPIRequest;
 use App\Http\Requests\API\UpdateGRVDetailsAPIRequest;
 use App\Models\FinanceItemCategorySub;
 use App\Models\GRVDetails;
+use App\Models\TaxVatCategories;
 use App\Models\GRVMaster;
 use App\Models\ItemSerial;
 use App\Models\ItemBatch;
@@ -1471,6 +1473,24 @@ class GRVDetailsAPIController extends AppBaseController
             $GRVDetail_arr['createdUserID'] = $user->empID;
             $GRVDetail_arr['createdUserSystemID'] = $user->employeeSystemID;
 
+            $GRVDetail_arr['VATAmount'] = 0;
+            if ($grvMaster->vatRegisteredYN) {
+                $vatDetails = TaxService::getVATDetailsByItem($grvMaster->companySystemID, $GRVDetail_arr['itemCode'], $grvMaster->supplierID);
+                $GRVDetail_arr['VATPercentage'] = $vatDetails['percentage'];
+                $GRVDetail_arr['vatMasterCategoryID'] = $vatDetails['vatMasterCategoryID'];
+                $GRVDetail_arr['vatSubCategoryID'] = $vatDetails['vatSubCategoryID'];
+                $GRVDetail_arr['VATAmount'] = 0;
+                if ($GRVDetail_arr['unitCost'] > 0) {
+                    $GRVDetail_arr['VATAmount'] = (($GRVDetail_arr['unitCost'] / 100) * $vatDetails['percentage']);
+                }
+                $prDetail_arr['netAmount'] = ($GRVDetail_arr['unitCost'] + $GRVDetail_arr['VATAmount']) * $GRVDetail_arr['noQty'];
+                $currencyConversionVAT = \Helper::currencyConversion($grvMaster->companySystemID, $grvMaster->supplierTransactionCurrencyID, $grvMaster->supplierTransactionCurrencyID, $GRVDetail_arr['VATAmount']);
+
+                $GRVDetail_arr['VATAmount'] = 0;
+                $GRVDetail_arr['VATAmountLocal'] = 0;
+                $GRVDetail_arr['VATAmountRpt'] = 0;
+            }
+
 
             $item = $this->gRVDetailsRepository->create($GRVDetail_arr);
 
@@ -1486,7 +1506,7 @@ class GRVDetailsAPIController extends AppBaseController
     public function updateGRVDetailsDirect(Request $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['unit', 'po_master', 'item_by']);
+        $input = array_except($input, ['unit', 'po_master', 'item_by', 'vat_sub_category']);
         $input = $this->convertArrayToValue($input);
 
         $id=$input['grvDetailsID'];
@@ -1529,28 +1549,77 @@ class GRVDetailsAPIController extends AppBaseController
                 return $this->sendError('Item not found');
             }
 
+            $validateVATCategories = TaxService::validateVatCategoriesInDocumentDetails($grvMaster->documentSystemID, $grvMaster->companySystemID, $id, $input);
+
+            if (!$validateVATCategories['status']) {
+                return $this->sendError($validateVATCategories['message'], 500,array('type' => 'no_qty_issues'));
+            } else {
+                $GRVDetail_arr['vatMasterCategoryID'] = $validateVATCategories['vatMasterCategoryID'];        
+                $GRVDetail_arr['vatSubCategoryID'] = $validateVATCategories['vatSubCategoryID'];        
+            }
+
+            if (isset($GRVDetail_arr['vatSubCategoryID']) && $GRVDetail_arr['vatSubCategoryID'] > 0) {
+                $subcategoryVAT = TaxVatCategories::find($GRVDetail_arr['vatSubCategoryID']);
+                $GRVDetail_arr['exempt_vat_portion'] = (isset($input['exempt_vat_portion']) && $subcategoryVAT && $subcategoryVAT->subCatgeoryType == 1) ? $input['exempt_vat_portion'] : 0;
+            }
+
+            $input['VATAmount'] = isset($input['VATAmount']) ? $input['VATAmount'] : 0;
+            $GRVDetail_arr['VATPercentage'] = isset($input['VATPercentage']) ? $input['VATPercentage'] : 0;
+
+            if (isset($input['VATAmount']) && $input['VATAmount'] > 0) {
+                $currencyConversionVAT = \Helper::currencyConversion($grvMaster->companySystemID, $grvMaster->supplierTransactionCurrencyID, $grvMaster->supplierTransactionCurrencyID, $input['VATAmount']);
+                $GRVDetail_arr['VATAmountLocal'] = \Helper::roundValue($currencyConversionVAT['localAmount']);
+                $GRVDetail_arr['VATAmountRpt'] = \Helper::roundValue($currencyConversionVAT['reportingAmount']);
+                $GRVDetail_arr['VATAmount'] = \Helper::roundValue($input['VATAmount']);
+            } else {
+                $GRVDetail_arr['VATAmount'] = 0;
+                $GRVDetail_arr['VATAmountLocal'] = 0;
+                $GRVDetail_arr['VATAmountRpt'] = 0;
+            }
+
+
             $user = \Helper::getEmployeeInfo();
             $financeCategorySub = FinanceItemCategorySub::find($itemAssign->financeCategorySub);
-            $currency = \Helper::convertAmountToLocalRpt($grvMaster->documentSystemID,$grvAutoID,$input['unitCost']);
 
             // checking the qty request is matching with sum total
             $GRVDetail_arr['grvAutoID'] = $grvAutoID;
             $GRVDetail_arr['noQty'] = $input['noQty'];
             $GRVDetail_arr['wasteQty'] = $input['wasteQty'];
-            $totalNetcost = $input['unitCost'] * $input['noQty'];
+            $totalNetcost = (floatval($input['unitCost']) + floatval($input['VATAmount'])) * $input['noQty'];
             $GRVDetail_arr['unitCost'] = $input['unitCost'];
             $GRVDetail_arr['netAmount'] = $totalNetcost;
             $GRVDetail_arr['comment'] = $input['comment'];
+
+            $calculateItemDiscount = $input['unitCost'];
+            if (!$grvMaster->vatRegisteredYN) {
+                $calculateItemDiscount = $input['unitCost'];
+            } else {
+                $checkVATCategory = TaxVatCategories::with(['type'])->find($GRVDetail_arr['vatSubCategoryID']);
+                if ($checkVATCategory) {
+                    if (isset($checkVATCategory->type->id) && $checkVATCategory->type->id == 1 && $GRVDetail_arr['exempt_vat_portion'] > 0 && $GRVDetail_arr['VATAmount'] > 0) {
+                       $exemptVAT = $GRVDetail_arr['VATAmount'] * ($GRVDetail_arr['exempt_vat_portion'] / 100);
+
+                       $calculateItemDiscount = $calculateItemDiscount + $exemptVAT;
+                    } else if (isset($checkVATCategory->type->id) && $checkVATCategory->type->id == 3) {
+                        $calculateItemDiscount = $calculateItemDiscount + $GRVDetail_arr['VATAmount'];
+                    }
+                }
+            }
+
+            $currency = \Helper::convertAmountToLocalRpt($grvMaster->documentSystemID,$grvAutoID,$calculateItemDiscount);
+
             $GRVDetail_arr['GRVcostPerUnitLocalCur'] = \Helper::roundValue($currency['localAmount']);
             $GRVDetail_arr['GRVcostPerUnitSupDefaultCur'] = \Helper::roundValue($currency['defaultAmount']);
-            $GRVDetail_arr['GRVcostPerUnitSupTransCur'] = \Helper::roundValue($input['unitCost']);
+            $GRVDetail_arr['GRVcostPerUnitSupTransCur'] = \Helper::roundValue($calculateItemDiscount);
             $GRVDetail_arr['GRVcostPerUnitComRptCur'] = \Helper::roundValue($currency['reportingAmount']);
+            
             $GRVDetail_arr['landingCost_LocalCur'] = \Helper::roundValue($currency['localAmount']);
-            $GRVDetail_arr['landingCost_TransCur'] = \Helper::roundValue($input['unitCost']);
+            $GRVDetail_arr['landingCost_TransCur'] = \Helper::roundValue($calculateItemDiscount);
             $GRVDetail_arr['landingCost_RptCur'] = \Helper::roundValue($currency['reportingAmount']);
             $GRVDetail_arr['modifiedPc'] = gethostname();
             $GRVDetail_arr['modifiedUser'] = $user->empID;
             $GRVDetail_arr['detail_project_id'] = $input['detail_project_id'];
+
 
             $item = $this->gRVDetailsRepository->update($GRVDetail_arr,$id);
 
