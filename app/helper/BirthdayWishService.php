@@ -75,7 +75,7 @@ class BirthdayWishService
 
             $emailData['empEmail'] = $employee->EEmail;
             $emailData['companySystemID'] = $employee->Erp_companyID;
-            $temp = '<img src="data:image/jpg;base64,'.$this->image.'" style="width: 100% !important;height: auto !important;">';
+            $temp = '<img src="data:image/jpg;base64,'.$this->image.'" style="width: 500px !important;height: 500px !important;">';
             $emailData['alertMessage'] = "Happy Birthday $employee->Ename2.";
             $emailData['emailAlertMessage'] = $temp;
             $sendEmail = \Email::sendEmailErp($emailData);
