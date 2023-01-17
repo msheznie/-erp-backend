@@ -22,6 +22,11 @@
             background-color: #f6f6f6;
         }
 
+        .birthdayImg{
+            width: 700px !important;
+            height: 570px !important;
+        }
+
         @media only screen and (max-width: 640px) {
             body {
                 padding: 0 !important;
