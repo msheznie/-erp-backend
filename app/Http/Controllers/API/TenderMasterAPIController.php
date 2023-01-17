@@ -2411,7 +2411,7 @@ WHERE
         $id = $input['id'];
         $type = $input['type'];
         
-
+        
 
         DB::beginTransaction();
         try {
@@ -2438,11 +2438,22 @@ WHERE
             if($type == 3)
             {
                 $min_Approval = $input['min_approval'];
+
                 $results = SrmTenderBidEmployeeDetails::where('tender_id',$tender_id)->where('tender_award_commite_mem_status',1)->count();
-                if($min_Approval >= $results)
+                $pending = SrmTenderBidEmployeeDetails::where('tender_id',$tender_id)->where('tender_award_commite_mem_status',0)->count();
+
+                $need = $min_Approval - $results;
+                $status = 0;
+                if($min_Approval <= $results)
                 {
-                    $results = TenderMaster::where('id',$tender_id)->update(['award_commite_mem_status'=>1]);
+                     $status = 1;
                 }
+                else if($need > $pending)
+                {
+                     $status = 2;
+                }
+
+                TenderMaster::where('id',$tender_id)->update(['award_commite_mem_status'=>$status]);
             }
     
             DB::commit();
@@ -3013,8 +3024,12 @@ WHERE
     
             foreach($result as $key=>$val)
             {
-    
-                $output = round(($val->new_val/$highest_val1)*100,3);
+                $output = 0;
+                if($output != 0)
+                {
+                    $output = round(($val->new_val/$highest_val1)*100,3);
+                }
+                
 
                 $count =  count(array_keys($supplier_ids, $val->supplier_registration_id));
     
@@ -3135,15 +3150,18 @@ WHERE
                         
                          $boq_mai = BidMainWork::where('main_works_id',$item->bid_format_detail_id)->where('bid_master_id',$val)->where('tender_id',$tenderId)->select('total_amount')->first();
  
-                        
-                         if($item->filed_type == 3)
-                         {
-                         $total += $boq_mai->total_amount/100;
-                         }
-                         else
-                         {
-                         $total += $boq_mai->total_amount;
-                         }
+                        if(isset($boq_mai))
+                        {
+                            if($item->filed_type == 3)
+                            {
+                            $total += $boq_mai->total_amount/100;
+                            }
+                            else
+                            {
+                            $total += $boq_mai->total_amount;
+                            }
+                        }
+                    
                      }
                     
                  }
@@ -3203,6 +3221,7 @@ WHERE
                 $query->orWhere('description_sec_lang', 'LIKE', "%{$search}%");
                 $query->orWhere('title', 'LIKE', "%{$search}%");
                 $query->orWhere('title_sec_lang', 'LIKE', "%{$search}%");
+                $query->orWhere('tender_code', 'LIKE', "%{$search}%");
             });
         }
 
@@ -3233,14 +3252,16 @@ WHERE
     public function confirmFinalBidAwardComment(Request $request)
     {
        
+       
         DB::beginTransaction();
         try {
             $tenderId = $request['tender_id'];
             $status = $request['final_tender_comment_status'];
             $comment = $request['final_tender_award_comment'];
-            $emails = SrmTenderBidEmployeeDetails::where('tender_id', $tenderId)->with('employee')->get()->pluck('employee.empUserName');
+            $emails = SrmTenderBidEmployeeDetails::where('tender_id', $tenderId)->with('employee')->get();
     
-    
+            $redirectUrl =  $this->checkDomain($tenderId);
+
             $tender = TenderMaster::find($tenderId);
             $tender->final_tender_award_comment = $comment;
             $tender->final_tender_comment_status = $status;
@@ -3248,8 +3269,9 @@ WHERE
     
             foreach($emails as $mail)
             {
-                $body = "Dear Employee , <br><br> The Tender $tender->tender_code has been available for the final employee committee approval for tender awarding. <br><br> Thank you.";
-                $dataEmail['empEmail'] = $mail;
+                $name = $mail->employee->empFullName;
+                $body = "Dear $name , <br><br> The Tender $tender->tender_code has been available for the final employee committee approval for tender awarding. <br><br> <a href=$redirectUrl>Click here to approve</a> <br><br>Thank you.";
+                $dataEmail['empEmail'] = $mail->employee->empUserName;
                 $dataEmail['companySystemID'] = $request['companySystemID'];
                 $dataEmail['alertMessage'] = "Employee Committee Approval";
                 $dataEmail['emailAlertMessage'] = $body;
@@ -3264,6 +3286,26 @@ WHERE
         }
        
 
+    }
+
+    public static function checkDomain($id)
+    {
+
+        $redirectUrl =  env("TENDER_COMMITEE_APPROVE_URL").'/'.$id;
+        $url = $_SERVER['HTTP_HOST'];
+        if (env('IS_MULTI_TENANCY') == true) {
+
+
+            $url_array = explode('.', $url);
+            $subDomain = $url_array[0];
+
+            $tenantDomain = (isset(explode('-', $subDomain)[0])) ? explode('-', $subDomain)[0] : "";
+
+            $search = '*';
+            $redirectUrl = str_replace($search, $tenantDomain, $redirectUrl);
+        }
+
+        return $redirectUrl;
     }
 
     public function sendTenderAwardEmail(Request $request)
