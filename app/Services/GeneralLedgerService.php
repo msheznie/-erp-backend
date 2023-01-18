@@ -121,7 +121,10 @@ class GeneralLedgerService
 
     public static function validateDebitCredit($documentSystemID, $documentSystemCode)
     {
-        $geData = GeneralLedger::selectRaw('SUM(documentTransAmount) as documentTransAmountTotal, SUM(documentLocalAmount) as documentLocalAmountTotal, SUM(documentRptAmount) as documentRptAmountTotal')
+        $geData = GeneralLedger::selectRaw('round(SUM(documentTransAmount), transCurrency.DecimalPlaces) as documentTransAmountTotal, round(SUM(documentLocalAmount), localCurrency.DecimalPlaces) as documentLocalAmountTotal, round(SUM(documentRptAmount), reportingCurrency.DecimalPlaces) as documentRptAmountTotal')
+                               ->join('currencymaster as transCurrency', 'transCurrency.currencyID', '=', 'documentTransCurrencyID')
+                               ->join('currencymaster as localCurrency', 'localCurrency.currencyID', '=', 'documentLocalCurrencyID')
+                               ->join('currencymaster as reportingCurrency', 'reportingCurrency.currencyID', '=', 'documentRptCurrencyID')
                                ->where('documentSystemID', $documentSystemID)
                                ->where('documentSystemCode', $documentSystemCode)
                                ->first();
