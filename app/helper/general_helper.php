@@ -2554,7 +2554,7 @@ class Helper
 
                                 if ($approvalLevel->noOfLevels == $input["rollLevelOrder"]) { // if fully approved
                                     $subject = $subjectName . " is fully approved";
-                                    $body = $bodyName . " is fully approved . ";
+                                    $body = "<p>". $bodyName . " is fully approved . ";
                                     $pushNotificationMessage = $subject;
                                     $pushNotificationUserIds[] = $sourceModel[$docInforArr["confirmedEmpSystemID"]];
                                 } else {
@@ -2636,7 +2636,7 @@ class Helper
                                     }
 
                                     $subject = $subjectName . " Level " . $currentApproved->rollLevelOrder . " is approved and sent to next level approval";
-                                    $body = $bodyName . " Level " . $currentApproved->rollLevelOrder . " is approved and sent to next level approval to below employees < br>" . $nextApproveNameList;
+                                    $body = '<p>'.$bodyName . " Level " . $currentApproved->rollLevelOrder . " is approved and sent to next level approval to below employees <br>" . $nextApproveNameList;
                                 }
 
 
@@ -3254,7 +3254,7 @@ class Helper
                             // }
 
                             $subjectName = $document->documentDescription . ' ' . $currentApproved->documentCode;
-                            $bodyName = $document->documentDescription . ' ' . '<b>' . $currentApproved->documentCode . '</b>';
+                            $bodyName = '<p>'.$document->documentDescription . ' ' . '<b>' . $currentApproved->documentCode . '</b>';
 
                             $subject = $subjectName . " is rejected.";
                             $body = $bodyName . " is rejected for below reason by " . $empInfo->empName . "<br> " . $input["rejectedComments"];
