@@ -976,6 +976,8 @@ class ItemMasterAPIController extends AppBaseController
                 $input['itemPicture'] = $itemMaster->itemPicture;
                 $itemMaster->itemUrl = $input['itemUrl'];
                 $itemMaster->isActive = $input['isActive'];
+                $itemMaster->isSubItem = $input['isSubItem'];
+                $itemMaster->mainItemID = $input['mainItemID'];
                 $itemMaster->itemPicture = $input['itemPicture'];
                 $itemMaster->pos_type = $input['pos_type'];
                 $itemMaster->itemDescription = $input['itemDescription'];
@@ -1067,7 +1069,7 @@ class ItemMasterAPIController extends AppBaseController
         }
         
         $afterConfirm = array('secondaryItemCode', 'barcode', 'itemDescription', 'itemShortDescription', 'itemUrl', 'unit',
-                         'itemPicture', 'isActive', 'itemConfirmedYN', 'modifiedPc', 'modifiedUser','financeCategorySub','modifiedUserSystemID','faFinanceCatID','pos_type');
+                         'itemPicture', 'isActive', 'itemConfirmedYN', 'modifiedPc', 'modifiedUser','financeCategorySub','modifiedUserSystemID','faFinanceCatID','pos_type','isSubItem','mainItemID');
                        
         foreach ($input as $key => $value) {
             if ($itemMaster->itemConfirmedYN == 1) {
