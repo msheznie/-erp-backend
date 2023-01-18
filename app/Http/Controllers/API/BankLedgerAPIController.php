@@ -410,7 +410,11 @@ class BankLedgerAPIController extends AppBaseController
                             $conditionChecking = false;
                         }
 
-                        if ($conditionChecking && abs($bankLedger->payAmountBank) != abs($glAmount)) {
+                        $a = abs($bankLedger->payAmountBank);
+                        $b = abs($glAmount);
+                        $epsilon = 0.00001;
+
+                        if ($conditionChecking && (abs($a-$b) > $epsilon)) {
                             return $this->sendError(trans('custom.bank_amount_is_not_matching_with_gl_amount'), 500);
                         }
                     } else {
