@@ -4441,7 +4441,7 @@ class Helper
                             $documentYear = $documentDate->format('Y');
                             $documentYearMonth = $documentDate->format('Y-m');
 
-                            $companyFinanceYear = Models\CompanyFinanceYear::where('companySystemID', $pvMaster->companySystemID)->whereRaw('YEAR(bigginingDate) = ?', [$documentYear])->first();
+                            $companyFinanceYear = Models\CompanyFinanceYear::where('companySystemID', $pvMaster->companySystemID)->whereRaw('? between bigginingDate and endingDate', $documentDate)->first();
 
                             if (empty($companyFinanceYear)) {
                                 return ['success' => false, 'message' => "Financial year not found"];
