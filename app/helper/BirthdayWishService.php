@@ -6,14 +6,12 @@ use App\Models\SrpEmployeeDetails;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Storage;
 
 class BirthdayWishService
 {
 
     public $companyId;
     public $companyCode;
-    public $image;
     public $switchDb;
 
     public function __construct($companyData, $db='')
@@ -21,7 +19,6 @@ class BirthdayWishService
         $this->companyId = $companyData['id'];
         $this->companyCode = $companyData['code'];
         $this->switchDb = $db;
-        $this->image = base64_encode(Storage::disk('local_public')->get('image/Birthday-ASAAS-01.jpg'));
     }
 
     function execute()
@@ -71,11 +68,12 @@ class BirthdayWishService
             $empList
         ]);
 
+        $image = Helper::getFileUrlFromS3('images/birthday/Birthday-ASAAS-01.jpg','+10080 minutes');
         foreach ($employeeDetails as $employee) {
 
             $emailData['empEmail'] = $employee->EEmail;
             $emailData['companySystemID'] = $employee->Erp_companyID;
-            $temp = '<img src="data:image/jpg;base64,'.$this->image.'">';
+            $temp = '<img src="'.$image.'">';
             $emailData['alertMessage'] = "Happy Birthday $employee->Ename2.";
             $emailData['emailAlertMessage'] = $temp;
             $sendEmail = \Email::sendEmailErp($emailData);
