@@ -2548,7 +2548,7 @@ class Helper
                         if (!empty($sourceModel)) {
                             $document = Models\DocumentMaster::where('documentSystemID', $currentApproved->documentSystemID)->first();
                             $subjectName = $document->documentDescription . ' ' . $currentApproved->documentCode;
-                            $bodyName =  $document->documentDescription . ' ' . '<b>' . $currentApproved->documentCode . '</b>';
+                            $bodyName = $document->documentDescription . ' ' . '<b>' . $currentApproved->documentCode . '</b>';
 
                             if ($sourceModel[$docInforArr["confirmedYN"]] == 1 || $sourceModel[$docInforArr["confirmedYN"]] == -1) {
 
@@ -3254,7 +3254,7 @@ class Helper
                             // }
 
                             $subjectName = $document->documentDescription . ' ' . $currentApproved->documentCode;
-                            $bodyName = '<br><br>'.$document->documentDescription . ' ' . '<b>' . $currentApproved->documentCode . '</b>';
+                            $bodyName = '<p>'.$document->documentDescription . ' ' . '<b>' . $currentApproved->documentCode . '</b>';
 
                             $subject = $subjectName . " is rejected.";
                             $body = $bodyName . " is rejected for below reason by " . $empInfo->empName . "<br> " . $input["rejectedComments"];
