@@ -4627,6 +4627,8 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
                         'changedBy' => $employee->employeeSystemID,
                         'documentSystemID' => $value->documentSystemID,
                         'documentmasterAutoID' => $value->documentmasterAutoID,
+                        'amount' => $value->amount,
+                        'currencyID' => $value->currencyID,
                         'chequeNo' => $value->chequeNo,
                     ];
 

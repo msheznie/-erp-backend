@@ -392,7 +392,7 @@ class PdcLogAPIController extends AppBaseController
                                 ->where('companySystemID',$companyId)
                                 ->withCount('printed_history')
                                 ->with(['currency','bank','pay_supplier', 'cheque_printed_by', 'printed_history' => function($query) {
-                                    $query->with(['cheque_printed_by', 'changed_by', 'pay_supplier']);
+                                    $query->with(['cheque_printed_by', 'changed_by', 'pay_supplier', 'currency']);
                                 }]);
 
         return \DataTables::eloquent($issuedCheques)

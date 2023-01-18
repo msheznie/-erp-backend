@@ -334,7 +334,7 @@ class ChequeRegisterDetailAPIController extends AppBaseController
         $isExistPolicyGCNFCR = ($is_exist_policy_GCNFCR) ? true : false;
 
         $chequeRegisterDetails = ChequeRegisterDetail::with(['document', 'pdc_printed_history' => function($query) {
-                                    $query->with(['cheque_printed_by', 'changed_by', 'pay_supplier']);
+                                    $query->with(['cheque_printed_by', 'changed_by', 'pay_supplier', 'currency']);
                                 }])->where('cheque_register_master_id', $id);
         $search = $request->input('search.value');
         if ($search) {

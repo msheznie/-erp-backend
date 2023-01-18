@@ -76,6 +76,8 @@ class PdcLogPrintedHistory extends Model
         'changedBy',
         'documentSystemID',
         'documentmasterAutoID',
+        'amount',
+        'currencyID',
         'chequeNo',
         'chequePrintedDate'
     ];
@@ -90,7 +92,9 @@ class PdcLogPrintedHistory extends Model
         'pdcLogID' => 'integer',
         'documentSystemID' => 'integer',
         'documentmasterAutoID' => 'integer',
+        'currencyID' => 'integer',
         'chequeNo' => 'integer',
+        'amount' => 'float',
         'changedBy' => 'integer',
         'chequePrintedBy' => 'integer',
         'chequePrintedDate' => 'datetime'
@@ -117,5 +121,10 @@ class PdcLogPrintedHistory extends Model
 
      public function pay_supplier() {
         return $this->belongsTo('App\Models\PaySupplierInvoiceMaster','documentmasterAutoID',  'PayMasterAutoId');
+    }
+
+    public function currency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster','currencyID',  'currencyID');
     }
 }
