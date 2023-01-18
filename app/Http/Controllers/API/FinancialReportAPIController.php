@@ -147,9 +147,11 @@ class FinancialReportAPIController extends AppBaseController
         $departments2 = collect(SegmentMaster::where('serviceLineSystemID', 24)->get());
         $departments = $departments1->merge($departments2)->all();
 
+        $segment = SegmentMaster::where('isActive', 1)->get();
+
         $output = array(
             'departments' => $departments,
-            'segment' => $departments,
+            'segment' => $segment,
             'company' => $company,
         );
 
