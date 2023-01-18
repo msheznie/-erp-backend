@@ -456,6 +456,10 @@ class TenderMaster extends Model
     {
         return $this->hasOne('App\Models\TenderFinalBids', 'tender_id', 'id');
     }
+
+    public function company(){
+        return $this->belongsTo('App\Models\Company','company_id','companySystemID');
+    }
     
     public function getDocumentSalesStartTimeAttribute() {
         if($this->document_sales_start_date) {

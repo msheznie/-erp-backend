@@ -3271,7 +3271,7 @@ WHERE
             foreach($emails as $mail)
             {
                 $name = $mail->employee->empFullName;
-                $body = "Dear $name , <br><br> The Tender $tender->tender_code has been available for the final employee committee approval for tender awarding. <br><br> <a href=$redirectUrl>Click here to approve</a> <br><br>Thank you.";
+                $body = "Hi $name , <br><br> The Tender $tender->tender_code has been available for the final employee committee approval for tender awarding. <br><br> <a href=$redirectUrl>Click here to approve</a> <br><br>Thank you.";
                 $dataEmail['empEmail'] = $mail->employee->empUserName;
                 $dataEmail['companySystemID'] = $request['companySystemID'];
                 $dataEmail['alertMessage'] = "Employee Committee Approval";
@@ -3300,10 +3300,10 @@ WHERE
             $url_array = explode('.', $url);
             $subDomain = $url_array[0];
 
-            $tenantDomain = (isset(explode('-', $subDomain)[0])) ? explode('-', $subDomain)[0] : "";
+            //$tenantDomain = (isset(explode('-', $subDomain)[0])) ? explode('-', $subDomain)[0] : "";
 
             $search = '*';
-            $redirectUrl = str_replace($search, $tenantDomain, $redirectUrl);
+            $redirectUrl = str_replace($search, $subDomain, $redirectUrl);
         }
 
         return $redirectUrl;
@@ -3317,12 +3317,15 @@ WHERE
             $tenderId = $request['tender_id'];
             $tender = TenderMaster::where('id',$tenderId)->with(['ranking_supplier'=>function($q){
                 $q->where('award',1)->with('supplier');
-            }])->first();
+            },'company'])->first();
 
+           
             $tender->final_tender_award_email = 1;
             $tender->save();
 
-            $body = "Dear Supplier  , <br><br> You are awarded for the tender $tender->tender_code <br><br> Thank you.";
+            $name = $tender->ranking_supplier->supplier->name;
+            $company = $tender->company->CompanyName;
+            $body = "Tender Awarding Mail <br><br> Dear $name <br><br> We are pleased to inform, that $company decided to award Tender ($tender->tender_code & $tender->description) to $name.<br>For more details kindly contact the Contact Person <br><br> Regards,<br>$company.";
             $dataEmail['empEmail'] = $tender->ranking_supplier->supplier->email;
             $dataEmail['companySystemID'] = $tender->company_id;
             $dataEmail['alertMessage'] = "Tender Award";
