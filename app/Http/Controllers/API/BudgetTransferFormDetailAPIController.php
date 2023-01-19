@@ -226,7 +226,13 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
         $input['toGLCode'] = $toChartOfAccount->AccountCode;
         $input['toGLCodeDescription'] = $toChartOfAccount->AccountDescription;
 
-        $currency = \Helper::currencyConversion($budgetTransferMaster->companySystemID, 2, 2, $input['adjustmentAmountRpt']);
+        $companyData = Company::find($budgetTransferMaster->companySystemID);
+
+        if (empty($companyData)) {
+            return $this->sendError('Company not found');
+        }
+
+        $currency = \Helper::currencyConversion($budgetTransferMaster->companySystemID, $companyData->reportingCurrency, $companyData->reportingCurrency, $input['adjustmentAmountRpt']);
         $input['adjustmentAmountLocal'] = $currency['localAmount'];
 
         try {
