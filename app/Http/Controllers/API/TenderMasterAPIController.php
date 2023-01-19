@@ -775,26 +775,39 @@ WHERE
 
         // vaidation lists
 
-        if(!isset(($input['document_sales_start_time']))) {
-            return ['success' => false, 'message' => 'Document sales from time is required'];
+        if(!isset($input['document_sales_start_time'])) {
+            if(isset($input['document_sales_start_date']) && $rfq){
+                return ['success' => false, 'message' => 'Document sales from time is required'];
+            } elseif(!$rfq){
+                return ['success' => false, 'message' => 'Document sales from time is required'];
+            }
         }
 
-        if(!isset(($input['document_sales_end_time']))) {
-            return ['success' => false, 'message' => 'Document sales to time is required'];
+        if(!isset($input['document_sales_end_time'])) {
+            if(isset($input['document_sales_end_date']) && $rfq){
+                return ['success' => false, 'message' => 'Document sales to time is required'];
+            } elseif(!$rfq) {
+                return ['success' => false, 'message' => 'Document sales to time is required'];
+            }
         }
-
         
         if ((isset($document_sales_start_date) && isset($document_sales_end_date)) && (($document_sales_start_date > $document_sales_end_date))) {
             return ['success' => false, 'message' => 'From date and time cannot be greater than the To date and time  for Document Sales'];
         }
 
-        if(!isset(($input['pre_bid_clarification_start_time']))) {
-            return ['success' => false, 'message' => 'Pre bid clarification from time is required'];
-
+        if(!isset($input['pre_bid_clarification_start_time'])) {
+            if(isset($input['pre_bid_clarification_start_date']) && $rfq){
+                return ['success' => false, 'message' => 'Pre bid clarification from time is required'];
+            } else if(!$rfq) {
+                return ['success' => false, 'message' => 'Pre bid clarification from time is required'];
+            }
         }
-        if(!isset(($input['pre_bid_clarification_end_time']))) {
-            return ['success' => false, 'message' => 'Pre bid clarification to time is required'];
-
+        if(!isset($input['pre_bid_clarification_end_time'])) {
+            if(isset($input['pre_bid_clarification_end_date']) && $rfq){
+                return ['success' => false, 'message' => 'Pre bid clarification to time is required'];
+            } elseif(!$rfq) {
+                return ['success' => false, 'message' => 'Pre bid clarification to time is required'];
+            }
         }
 
         if ((isset($pre_bid_clarification_start_date) && isset($pre_bid_clarification_end_date)) && (($pre_bid_clarification_start_date > $pre_bid_clarification_end_date))) {
@@ -802,18 +815,28 @@ WHERE
         }
 
 
-        if(!isset(($input['site_visit_start_time']))) {
-            return ['success' => false, 'message' => 'Site visit from time is required'];
-
+        if(!isset($input['site_visit_start_time'])) {
+            if(isset($input['site_visit_date']) && $rfq) {
+                return ['success' => false, 'message' => 'Site visit from time is required'];
+            } elseif(!$rfq) {
+                return ['success' => false, 'message' => 'Site visit from time is required'];
+            }
         }
 
-        if(!isset(($input['site_visit_end_time']))) {
-            return ['success' => false, 'message' => 'Site visit to time is required'];
-
+        if(!isset($input['site_visit_end_time'])) {
+            if(isset($input['site_visit_end_date']) && $rfq) {
+                return ['success' => false, 'message' => 'Site visit to time is required'];
+            } elseif(!$rfq) {
+                return ['success' => false, 'message' => 'Site visit to time is required'];
+            }
         }
 
-        if (($site_visit_date > $site_visit_end_date) && !$rfq) {
-            return ['success' => false, 'message' => 'From date and time cannot be greater than the To date and time  for Site Visit'];
+        if (($site_visit_date > $site_visit_end_date)) {
+            if(isset($input['site_visit_date']) && isset($input['site_visit_end_date'])){
+                return ['success' => false, 'message' => 'From date and time cannot be greater than the To date and time  for Site Visit'];
+            } elseif (!$rfq) {
+                return ['success' => false, 'message' => 'From date and time cannot be greater than the To date and time  for Site Visit'];
+            }
         }
 
         if(!isset(($input['bid_submission_opening_time']))) {
@@ -876,8 +899,12 @@ WHERE
                     return ['success' => false, 'message' => 'Bid Submission date cannot be empty'];
                 }
 
-                if(is_null($input['bid_opening_date_time']) && !$rfq) {
-                    return ['success' => false, 'message' => 'Bid Opening Time cannot be empty'];
+                if(is_null($input['bid_opening_date_time'])) {
+                    if($input['bid_opening_date'] && $rfq){
+                        return ['success' => false, 'message' => 'Bid Opening Time cannot be empty'];
+                    } elseif(!$rfq){
+                        return ['success' => false, 'message' => 'Bid Opening Time cannot be empty'];
+                    }
                 }
 
 
@@ -888,13 +915,13 @@ WHERE
                 }else {
 
                     if($bid_sub_date > $bid_opening_date && !$rfq) {
-                        return ['success' => false, 'message' => 'Bid Opening from date and time should greater than bid submission to date and time 232'];
+                        return ['success' => false, 'message' => 'Bid Opening from date and time should greater than bid submission to date and time'];
                     }
                 }
 
 
                 if(isset($bid_opeing_end_date)) {
-                    if(is_null($input['bid_opening_end_date_time']) && !$rfq) {
+                    if(is_null($input['bid_opening_end_date_time'])) {
                         return ['success' => false, 'message' => 'Bid Opening to time cannot be empty'];
                     }
 
@@ -912,13 +939,18 @@ WHERE
                 }
 
                 if(is_null($input['technical_bid_opening_date_time']) && isset($input['technical_bid_opening_date'])) {
-                    return ['success' => false, 'message' => 'Technical Bid Opening from time cannot be empty'];
+                    if($rfq && isset($input['technical_bid_opening_date'])){
+                        return ['success' => false, 'message' => 'Technical Bid Opening from time cannot be empty'];
+                    } elseif (!$rfq){
+                        return ['success' => false, 'message' => 'Technical Bid Opening from time cannot be empty'];
+                    }
                 }
 
-
-            $technical_bid_opening_time = ($input['technical_bid_opening_date_time']) ? new Carbon($input['technical_bid_opening_date_time']) : null;
-            $technical_bid_opening_date = new Carbon($input['technical_bid_opening_date']);
-            $technical_bid_opening_date = ($input['technical_bid_opening_date_time']) ? $technical_bid_opening_date->format('Y-m-d').' '.$technical_bid_opening_time->format('H:i:s') : $technical_bid_opening_date->format('Y-m-d');
+            if(isset($input['technical_bid_opening_date'])){
+                $technical_bid_opening_time = ($input['technical_bid_opening_date_time']) ? new Carbon($input['technical_bid_opening_date_time']) : null;
+                $technical_bid_opening_date = new Carbon($input['technical_bid_opening_date']);
+                $technical_bid_opening_date = ($input['technical_bid_opening_date_time']) ? $technical_bid_opening_date->format('Y-m-d').' '.$technical_bid_opening_time->format('H:i:s') : $technical_bid_opening_date->format('Y-m-d');
+            }
 
             if(isset($input['technical_bid_closing_date'])) {
                 if(is_null($input['technical_bid_closing_date_time'])) {
@@ -932,13 +964,18 @@ WHERE
                 $technical_bid_closing_date = null;
                 $technical_bid_closing_time = null;
             }
-        
-            $commerical_bid_opening_time = ($input['commerical_bid_opening_date_time']) ? new Carbon($input['commerical_bid_opening_date_time']) : null;
-            $commerical_bid_opening_date = new Carbon($input['commerical_bid_opening_date']);
-            $commerical_bid_opening_date = ($input['commerical_bid_opening_date_time']) ? $commerical_bid_opening_date->format('Y-m-d').' '.$commerical_bid_opening_time->format('H:i:s') : $commerical_bid_opening_date->format('Y-m-d');
+
+            if(isset($input['commerical_bid_opening_date'])){
+                $commerical_bid_opening_time = ($input['commerical_bid_opening_date_time']) ? new Carbon($input['commerical_bid_opening_date_time']) : null;
+                $commerical_bid_opening_date = new Carbon($input['commerical_bid_opening_date']);
+                $commerical_bid_opening_date = ($input['commerical_bid_opening_date_time']) ? $commerical_bid_opening_date->format('Y-m-d').' '.$commerical_bid_opening_time->format('H:i:s') : $commerical_bid_opening_date->format('Y-m-d');
+
+                if(is_null($input['commerical_bid_opening_date_time']) && $rfq) {
+                    return ['success' => false, 'message' => 'Commercial Bid Opening to time cannot be empty'];
+                }
+            }
 
             if(isset($input['commerical_bid_closing_date'])) {
-
                 if(!(isset($input['commerical_bid_closing_date_time']))) {
                     return ['success' => false, 'message' => 'Commercial Bid Opening to time cannot be empty'];
                 }
@@ -958,8 +995,11 @@ WHERE
                 }
 
                 if(is_null($input['technical_bid_opening_date_time'])) {
-                    return ['success' => false, 'message' => 'Technical Bid Opening Time cannot be empty'];
-                
+                    if($rfq && isset($input['technical_bid_opening_date'])){
+                        return ['success' => false, 'message' => 'Technical Bid Opening Time cannot be empty'];
+                    } elseif (!$rfq){
+                        return ['success' => false, 'message' => 'Technical Bid Opening Time cannot be empty'];
+                    }
                 }else {
 
 
@@ -975,12 +1015,14 @@ WHERE
                     }
 
 
-                    if(is_null($input['commerical_bid_opening_date_time'])) {
+                    if(is_null($input['commerical_bid_opening_date_time']) && !$rfq) {
                         return ['success' => false, 'message' => 'Commercial Bid Opening Time cannot be empty'];
                     }
 
                     if(is_null($technical_bid_closing_date)) {
-                        if($technical_bid_opening_date > $commerical_bid_opening_date) {
+                        if($technical_bid_opening_date > $commerical_bid_opening_date && !$rfq) {
+                            return ['success' => false, 'message' => 'Commercial Bid Opening from date and time should be greater than technical bid from date and time'];
+                        } elseif (!is_null($input['commerical_bid_opening_date_time']) && !is_null($input['technical_bid_opening_date_time']) && isset($input['technical_bid_closing_date'])) {
                             return ['success' => false, 'message' => 'Commercial Bid Opening from date and time should be greater than technical bid from date and time'];
                         }
                     }else {
