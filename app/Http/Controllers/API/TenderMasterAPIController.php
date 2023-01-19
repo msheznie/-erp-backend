@@ -3280,7 +3280,7 @@ WHERE
             }
 
             DB::commit();
-            return $this->sendResponse($tender, 'GRV successfully reversed');
+            return $this->sendResponse($tender, 'successfully confirmed');
         } catch (\Exception $e) {
             DB::rollback();
             return $this->sendError($e->getMessage());
@@ -3292,7 +3292,7 @@ WHERE
     public static function checkDomain($id)
     {
 
-        $redirectUrl =  env("TENDER_COMMITEE_APPROVE_URL").'/'.$id;
+        $redirectUrl =  env("APP_URL");
         $url = $_SERVER['HTTP_HOST'];
         if (env('IS_MULTI_TENANCY') == true) {
 
@@ -3325,7 +3325,7 @@ WHERE
 
             $name = $tender->ranking_supplier->supplier->name;
             $company = $tender->company->CompanyName;
-            $body = "Tender Awarding Mail <br><br> Dear $name <br><br> We are pleased to inform, that $company decided to award Tender ($tender->tender_code & $tender->description) to $name.<br>For more details kindly contact the Contact Person <br><br> Regards,<br>$company.";
+            $body = "Hi $name <br><br> We are pleased to inform, that $company decided to award Tender ($tender->tender_code & $tender->description) to $name.<br>For more details kindly contact the Contact Person <br><br> Regards,<br>$company.";
             $dataEmail['empEmail'] = $tender->ranking_supplier->supplier->email;
             $dataEmail['companySystemID'] = $tender->company_id;
             $dataEmail['alertMessage'] = "Tender Award";
