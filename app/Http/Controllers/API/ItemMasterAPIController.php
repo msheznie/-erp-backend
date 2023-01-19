@@ -1267,7 +1267,7 @@ class ItemMasterAPIController extends AppBaseController
         $isSubItem = ItemMaster::selectRaw('primaryCode, itemmaster.itemDescription')->where('mainItemID', $itemCodeSystem)->first();
         $subItems = ItemMaster::selectRaw('primaryCode, itemmaster.itemDescription, units.UnitShortCode, SUM(inOutQty) as availableQty, itemCodeSystem')->where('mainItemID', $itemCodeSystem)->leftjoin('units', 'UnitID', '=', 'unit')->leftjoin('erp_itemledger', 'itemCodeSystem', '=', 'itemSystemCode')->get();
 
-        $mainItemUOM =  ItemMaster::selectRaw('units.UnitShortCode')->where('itemCodeSystem', $itemCodeSystem)->join('units', 'UnitID', '=', 'unit')->first();
+        $mainItemUOM =  ItemMaster::selectRaw('units.UnitShortCode, SUM(inOutQty) as availableQty')->where('itemCodeSystem', $itemCodeSystem)->join('units', 'UnitID', '=', 'unit')->leftjoin('erp_itemledger', 'itemCodeSystem', '=', 'itemSystemCode')->first();
 
         $mainItems = ItemAssigned::selectRaw('CONCAT(itemassigned.itemPrimaryCode, " - " ,itemassigned.itemDescription) as itemCode, itemassigned.itemCodeSystem')->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'itemassigned.itemCodeSystem')->where('companySystemID', $selectedCompanyId)->where('itemmaster.isSubItem', 0)->get();
 
