@@ -449,6 +449,7 @@ class FixedAssetMasterAPIController extends AppBaseController
         $input = $request->all();
         $itemImgaeArr = $input['itemImage'];
         $itemPicture = $input['itemPicture'];
+        $isCurrencySame = $input['isCurrencySame'];
         $input = array_except($request->all(), 'itemImage');
         $input = $this->convertArrayToValue($input);
 
@@ -577,19 +578,21 @@ class FixedAssetMasterAPIController extends AppBaseController
             $input["faCode"] = $documentCode;
             $input["faBarcode"] = $documentCode;
 
-            $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $company->reportingCurrency, $company->reportingCurrency, $input['costUnitRpt']);
-            if ($companyCurrencyConversion) {
-                $input['COSTUNIT'] = $companyCurrencyConversion['localAmount'];
-            }
+            if($isCurrencySame) {
+                $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $company->reportingCurrency, $company->reportingCurrency, $input['costUnitRpt']);
+                if ($companyCurrencyConversion) {
+                    $input['COSTUNIT'] = $companyCurrencyConversion['localAmount'];
+                }
 
-            $salvageCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $company->reportingCurrency, $company->reportingCurrency, $input['salvage_value_rpt']);
-            if ($salvageCurrencyConversion) {
-                $input['salvage_value'] = $salvageCurrencyConversion['localAmount'];
-            }
+                $salvageCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $company->reportingCurrency, $company->reportingCurrency, $input['salvage_value_rpt']);
+                if ($salvageCurrencyConversion) {
+                    $input['salvage_value'] = $salvageCurrencyConversion['localAmount'];
+                }
 
-            $accumulateCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $company->reportingCurrency, $company->reportingCurrency, $input['accumulated_depreciation_amount_rpt']);
-            if ($accumulateCurrencyConversion) {
-                $input['accumulated_depreciation_amount_lcl'] = $accumulateCurrencyConversion['localAmount'];
+                $accumulateCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $company->reportingCurrency, $company->reportingCurrency, $input['accumulated_depreciation_amount_rpt']);
+                if ($accumulateCurrencyConversion) {
+                    $input['accumulated_depreciation_amount_lcl'] = $accumulateCurrencyConversion['localAmount'];
+                }
             }
 
 
