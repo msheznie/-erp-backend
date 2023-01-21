@@ -45,17 +45,17 @@ use Carbon\CarbonPeriod;
                   <td>Project Description</td>
                   <td> -  {{$projectDetail->description}}</td>
                   <td>Project Currency</td>
-                  <td > -  {{$projectDetail->currency->CurrencyCode}}/{{$projectDetail->currency->CurrencyName}}</td>
+                  <td > -  {{$projectDetail->currency->CurrencyName}}</td>
                   <td>Project Budget</td>
                   <td > :-  {{ round($projectAmount, $decimalPoint)}}({{$CurrencyCode}})</td>
                 </tr>
                 <tr>
                   <td>Segment</td>
-                  <td > -  {{$projectDetail->service_line->ServiceLineCode}}/{{$projectDetail->service_line->ServiceLineDes}}</td>
+                  <td > -  {{$projectDetail->service_line->ServiceLineDes}}</td>
                   <td>Reporting  Currency</td>
                   <td > -  {{$CurrencyName}}</td>
                   <td>Balance Amount</td>
-                  <td > :-  {{ round(($projectAmount-$closingBalance), $decimalPoint)}}({{$CurrencyCode}})</td>
+                  <td > :-  {{ round(($closingBalance), $decimalPoint)}}({{$CurrencyCode}})</td>
                 </tr>
             <tr></tr>
           </tbody>

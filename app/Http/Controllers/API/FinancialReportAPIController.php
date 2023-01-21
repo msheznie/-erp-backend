@@ -383,6 +383,11 @@ class FinancialReportAPIController extends AppBaseController
     {
         $fromDate = (new Carbon($request->fromDate))->format('Y-m-d');
         $toDate = (new   Carbon($request->toDate))->format('Y-m-d');
+
+        if ($fromDate > $toDate) {
+            return $this->sendError('The To date must be greater than the From date !', 500);
+        }
+
         $projectID = $request->projectID;
         $projectDetail = ErpProjectMaster::with('currency', 'service_line')->where('id', $projectID)->first();
 
