@@ -80,16 +80,17 @@ use Carbon\CarbonPeriod;
                 </tr>
                 @foreach ($detailsPOWise as $item)
                 <?php 
-                if ($item->documentSystemID == 2) {
+                $date = '';
+                if ($item->documentSystemID == 2 && isset($item->purchase_order_detail->approvedDate)) {
                   $date = explode(' ',$item->purchase_order_detail->approvedDate);
-                } elseif ($item->documentSystemID == 15) {
+                } elseif ($item->documentSystemID == 15 && isset($item->debit_note_detail->approvedDate)) {
                   $date = explode(' ',$item->debit_note_detail->approvedDate);
-                } elseif ($item->documentSystemID == 19) {
+                } elseif ($item->documentSystemID == 19 && isset($item->credit_note_detail->approvedDate)) {
                   $date = explode(' ',$item->credit_note_detail->approvedDate);
-                } elseif ($item->documentSystemID == 4) {
+                } elseif ($item->documentSystemID == 4 && isset($item->direct_payment_voucher_detail->approvedDate)) {
                   $date = explode(' ',$item->direct_payment_voucher_detail->approvedDate);
                 }
-                  $date = (new Carbon($date[0]))->format('d/m/Y');
+                  $date = $date?  (new Carbon($date[0]))->format('d/m/Y'):'';
                 ?>
                 <tr>
                   <td style="text-align: left;">{{$item->GLCode}}</td>
