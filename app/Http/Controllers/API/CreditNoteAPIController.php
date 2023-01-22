@@ -32,6 +32,7 @@ use App\Models\DocumentReferedHistory;
 use App\Models\GeneralLedger;
 use App\Models\MatchDocumentMaster;
 use App\Models\Taxdetail;
+use App\Models\TaxLedger;
 use App\Models\YesNoSelectionForMinus;
 use App\Models\YesNoSelection;
 use App\Models\Months;
@@ -1800,6 +1801,18 @@ WHERE
 
             //deleting records from accounts receivable
             $deleteARData = AccountsReceivableLedger::where('documentCodeSystem', $id)
+                ->where('companySystemID', $masterData->companySystemID)
+                ->where('documentSystemID', $masterData->documentSystemiD)
+                ->delete();
+
+            //deleting records from tax detail
+            $deleteTaxDetailData = Taxdetail::where('documentSystemCode', $id)
+                ->where('companySystemID', $masterData->companySystemID)
+                ->where('documentSystemID', $masterData->documentSystemiD)
+                ->delete();
+
+            //deleting records from tax ledger
+            $deleteTaxLedgerData = TaxLedger::where('documentMasterAutoID', $id)
                 ->where('companySystemID', $masterData->companySystemID)
                 ->where('documentSystemID', $masterData->documentSystemiD)
                 ->delete();
