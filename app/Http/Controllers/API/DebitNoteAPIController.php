@@ -50,6 +50,7 @@ use App\Models\SupplierAssigned;
 use App\Models\SupplierMaster;
 use App\Models\Taxdetail;
 use App\Models\TaxLedger;
+use App\Models\TaxLedgerDetail;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Models\SystemGlCodeScenarioDetail;
@@ -2229,6 +2230,11 @@ UNION ALL
             $deleteTaxLedgerData = TaxLedger::where('documentMasterAutoID', $debitNoteAutoID)
                 ->where('companySystemID', $debitNoteMasterData->companySystemID)
                 ->where('documentSystemID', $debitNoteMasterData->documentSystemiD)
+                ->delete();
+
+            TaxLedgerDetail::where('documentMasterAutoID', $debitNoteAutoID)
+                ->where('companySystemID', $debitNoteMasterData->companySystemID)
+                ->where('documentSystemID', $debitNoteMasterData->documentSystemID)
                 ->delete();
 
             // updating fields

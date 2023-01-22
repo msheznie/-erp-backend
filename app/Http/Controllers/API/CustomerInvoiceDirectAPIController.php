@@ -70,6 +70,7 @@ use App\Models\PerformaMaster;
 use App\Models\SegmentMaster;
 use App\Models\Taxdetail;
 use App\Models\TaxLedger;
+use App\Models\TaxLedgerDetail;
 use App\Models\TaxMaster;
 use App\Models\TicketMaster;
 use App\Models\Unit;
@@ -4455,6 +4456,12 @@ WHERE
             $deleteTaxLedgerData = TaxLedger::where('documentMasterAutoID', $id)
                 ->where('companySystemID', $masterData->companySystemID)
                 ->where('documentSystemID', $masterData->documentSystemiD)
+                ->delete();
+
+
+            TaxLedgerDetail::where('documentMasterAutoID', $id)
+                ->where('companySystemID', $masterData->companySystemID)
+                ->where('documentSystemID', $masterData->documentSystemID)
                 ->delete();
 
             // updating fields

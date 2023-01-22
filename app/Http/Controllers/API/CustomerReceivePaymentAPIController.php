@@ -63,6 +63,7 @@ use App\Models\BankAssign;
 use App\Models\CompanyFinancePeriod;
 use App\Models\Taxdetail;
 use App\Models\TaxLedger;
+use App\Models\TaxLedgerDetail;
 use App\Models\YesNoSelectionForMinus;
 use App\Models\YesNoSelection;
 use App\Models\Months;
@@ -3464,6 +3465,11 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             $deleteTaxLedgerData = TaxLedger::where('documentSystemCode', $id)
                 ->where('companySystemID', $masterData->companySystemID)
                 ->where('documentSystemID', $masterData->documentSystemiD)
+                ->delete();
+
+            TaxLedgerDetail::where('documentMasterAutoID', $id)
+                ->where('companySystemID', $masterData->companySystemID)
+                ->where('documentSystemID', $masterData->documentSystemID)
                 ->delete();
 
             // updating fields

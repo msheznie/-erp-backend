@@ -33,6 +33,7 @@ use App\Models\GeneralLedger;
 use App\Models\MatchDocumentMaster;
 use App\Models\Taxdetail;
 use App\Models\TaxLedger;
+use App\Models\TaxLedgerDetail;
 use App\Models\YesNoSelectionForMinus;
 use App\Models\YesNoSelection;
 use App\Models\Months;
@@ -1815,6 +1816,11 @@ WHERE
             $deleteTaxLedgerData = TaxLedger::where('documentMasterAutoID', $id)
                 ->where('companySystemID', $masterData->companySystemID)
                 ->where('documentSystemID', $masterData->documentSystemiD)
+                ->delete();
+
+            TaxLedgerDetail::where('documentMasterAutoID', $id)
+                ->where('companySystemID', $masterData->companySystemID)
+                ->where('documentSystemID', $masterData->documentSystemID)
                 ->delete();
 
             // updating fields
