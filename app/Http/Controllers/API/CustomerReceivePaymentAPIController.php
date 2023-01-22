@@ -62,6 +62,7 @@ use App\Models\DirectReceiptDetail;
 use App\Models\BankAssign;
 use App\Models\CompanyFinancePeriod;
 use App\Models\Taxdetail;
+use App\Models\TaxLedger;
 use App\Models\YesNoSelectionForMinus;
 use App\Models\YesNoSelection;
 use App\Models\Months;
@@ -3451,6 +3452,18 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             $deleteBLData = BankLedger::where('documentSystemCode', $id)
                 ->where('companySystemID', $masterData->companySystemID)
                 ->where('documentSystemID', $masterData->documentSystemID)
+                ->delete();
+
+            //deleting records from tax detail
+            $deleteTaxDetailData = Taxdetail::where('documentSystemCode', $id)
+                ->where('companySystemID', $masterData->companySystemID)
+                ->where('documentSystemID', $masterData->documentSystemiD)
+                ->delete();
+
+            //deleting records from tax ledger
+            $deleteTaxLedgerData = TaxLedger::where('documentSystemCode', $id)
+                ->where('companySystemID', $masterData->companySystemID)
+                ->where('documentSystemID', $masterData->documentSystemiD)
                 ->delete();
 
             // updating fields

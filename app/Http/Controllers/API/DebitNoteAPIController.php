@@ -49,6 +49,7 @@ use App\Models\ErpProjectMaster;
 use App\Models\SupplierAssigned;
 use App\Models\SupplierMaster;
 use App\Models\Taxdetail;
+use App\Models\TaxLedger;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Models\SystemGlCodeScenarioDetail;
@@ -2216,6 +2217,18 @@ UNION ALL
             $deleteAPData = AccountsPayableLedger::where('documentSystemCode', $debitNoteAutoID)
                 ->where('companySystemID', $debitNoteMasterData->companySystemID)
                 ->where('documentSystemID', $debitNoteMasterData->documentSystemID)
+                ->delete();
+
+            //deleting records from tax detail
+            $deleteTaxDetailData = Taxdetail::where('documentSystemCode', $debitNoteAutoID)
+                ->where('companySystemID', $debitNoteMasterData->companySystemID)
+                ->where('documentSystemID', $debitNoteMasterData->documentSystemiD)
+                ->delete();
+
+            //deleting records from tax ledger
+            $deleteTaxLedgerData = TaxLedger::where('documentMasterAutoID', $debitNoteAutoID)
+                ->where('companySystemID', $debitNoteMasterData->companySystemID)
+                ->where('documentSystemID', $debitNoteMasterData->documentSystemiD)
                 ->delete();
 
             // updating fields
