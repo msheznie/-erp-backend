@@ -69,7 +69,6 @@ use App\Models\PerformaDetails;
 use App\Models\PerformaMaster;
 use App\Models\SegmentMaster;
 use App\Models\Taxdetail;
-use App\Models\TaxLedger;
 use App\Models\TaxMaster;
 use App\Models\TicketMaster;
 use App\Models\Unit;
@@ -4441,18 +4440,6 @@ WHERE
 
             //deleting records from accounts receivable
             $deleteARData = AccountsReceivableLedger::where('documentCodeSystem', $id)
-                ->where('companySystemID', $masterData->companySystemID)
-                ->where('documentSystemID', $masterData->documentSystemiD)
-                ->delete();
-
-            //deleting records from tax detail
-            $deleteTaxDetailData = Taxdetail::where('documentSystemCode', $id)
-                ->where('companySystemID', $masterData->companySystemID)
-                ->where('documentSystemID', $masterData->documentSystemiD)
-                ->delete();
-
-            //deleting records from tax ledger
-            $deleteTaxLedgerData = TaxLedger::where('documentMasterAutoID', $id)
                 ->where('companySystemID', $masterData->companySystemID)
                 ->where('documentSystemID', $masterData->documentSystemiD)
                 ->delete();
