@@ -105,6 +105,9 @@ class PdcLog extends Model
         'chequeDate',
         'chequeStatus',
         'amount',
+        'chequePrinted',
+        'chequePrintedDate',
+        'chequePrintedBy',
         'referenceChequeID',
         'timestamp'
     ];
@@ -117,6 +120,9 @@ class PdcLog extends Model
     protected $casts = [
         'id' => 'integer',
         'documentSystemID' => 'integer',
+        'chequePrintedBy' => 'integer',
+        'chequePrintedDate' => 'datetime',
+        'chequePrinted' => 'integer',
         'referenceChequeID' => 'integer',
         'documentmasterAutoID' => 'string',
         'paymentBankID' => 'integer',
@@ -154,6 +160,16 @@ class PdcLog extends Model
     public function currency()
     {
         return $this->belongsTo('App\Models\CurrencyMaster','currencyID',  'currencyID');
+    }
+
+    public function printed_history()
+    {
+        return $this->hasMany('App\Models\PdcLogPrintedHistory','pdcLogID',  'id');
+    }
+
+    public function cheque_printed_by()
+    {
+        return $this->belongsTo('App\Models\Employee','chequePrintedBy',  'employeeSystemID');
     }
 
     public function bank() {
