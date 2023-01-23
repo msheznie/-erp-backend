@@ -1792,7 +1792,13 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
             //deleting records from tax ledger
             $deleteTaxLedgerData = TaxLedger::where('documentMasterAutoID', $input['grvAutoID'])
                 ->where('companySystemID', $grv->companySystemID)
-                ->where('documentSystemID', $grv->documentSystemiD)
+                ->where('documentSystemID', 3)
+                ->delete();
+
+            //deleting records from tax detail
+            $deleteTaxDetailData = Taxdetail::where('documentSystemCode', $input['grvAutoID'])
+                ->where('companySystemID', $grv->companySystemID)
+                ->where('documentSystemID', 3)
                 ->delete();
 
             AuditTrial::createAuditTrial($grv->documentSystemID,$input['grvAutoID'],$input['grvReversalComment'],'reversed');

@@ -4461,7 +4461,7 @@ WHERE
 
             TaxLedgerDetail::where('documentMasterAutoID', $id)
                 ->where('companySystemID', $masterData->companySystemID)
-                ->where('documentSystemID', $masterData->documentSystemID)
+                ->where('documentSystemID', $masterData->documentSystemiD)
                 ->delete();
 
             // updating fields
