@@ -3981,14 +3981,14 @@ class SRMService
 
 
 
-        // if ($search) {
-        //     $search = str_replace("\\", "\\\\", $search);
-        //     $search_without_comma = str_replace(",", "", $search);
-        //     $paymentVoucher = $paymentVoucher->where(function ($query) use ($search, $search_without_comma) {
-        //         $query->where('BPVcode', 'LIKE', "%{$search}%")
-        //             ->orWhere('BPVNarration', 'LIKE', "%{$search}%")->orWhere('suppAmountDocTotal', 'LIKE', "%{$search_without_comma}%")->orWhere('payAmountBank', 'LIKE', "%{$search_without_comma}%")->orWhere('BPVchequeNo', 'LIKE', "%{$search_without_comma}%")->orWhere('directPaymentPayee', 'LIKE', "%{$search_without_comma}%");
-        //     });
-        // }
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $search_without_comma = str_replace(",", "", $search);
+            $paymentVoucher = $paymentVoucher->where(function ($query) use ($search, $search_without_comma) {
+                $query->where('BPVcode', 'LIKE', "%{$search}%")
+                    ->orWhere('BPVNarration', 'LIKE', "%{$search}%")->orWhere('suppAmountDocTotal', 'LIKE', "%{$search_without_comma}%")->orWhere('payAmountBank', 'LIKE', "%{$search_without_comma}%")->orWhere('BPVchequeNo', 'LIKE', "%{$search_without_comma}%")->orWhere('directPaymentPayee', 'LIKE', "%{$search_without_comma}%");
+            });
+        }
 
         $data = \DataTables::eloquent($paymentVoucher)
             ->addColumn('Actions', 'Actions', "Actions")
