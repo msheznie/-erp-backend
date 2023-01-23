@@ -3458,13 +3458,13 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             //deleting records from tax detail
             $deleteTaxDetailData = Taxdetail::where('documentSystemCode', $id)
                 ->where('companySystemID', $masterData->companySystemID)
-                ->where('documentSystemID', $masterData->documentSystemiD)
+                ->where('documentSystemID', $masterData->documentSystemID)
                 ->delete();
 
             //deleting records from tax ledger
             $deleteTaxLedgerData = TaxLedger::where('documentSystemCode', $id)
                 ->where('companySystemID', $masterData->companySystemID)
-                ->where('documentSystemID', $masterData->documentSystemiD)
+                ->where('documentSystemID', $masterData->documentSystemID)
                 ->delete();
 
             TaxLedgerDetail::where('documentMasterAutoID', $id)
