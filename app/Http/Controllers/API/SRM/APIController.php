@@ -82,7 +82,8 @@ define('ADD_INVOICE_ATTACHMENT', 'ADD_INVOICE_ATTACHMENT');
 define('GET_INVOICE_ATTACHMENT', 'GET_INVOICE_ATTACHMENT');
 define('REMOVE_INVOICE_ATTACHMENT', 'REMOVE_INVOICE_ATTACHMENT');
 define('SAVE_INVOICE', 'SAVE_INVOICE');
-
+define('GET_PAYMENTVOUCHERS', 'GET_PAYMENTVOUCHERS');
+define('GET_PAYMENT_VOUCHER_DETAILS', 'GET_PAYMENT_VOUCHER_DETAILS');
 
 class APIController extends Controller
 {
@@ -235,7 +236,11 @@ class APIController extends Controller
                 return $this->SRMService->removeInvoiceAttachment($request);
             case SAVE_INVOICE:
                 return $this->SRMService->createInvoice($request);
-                
+            case GET_PAYMENTVOUCHERS:
+                return $this->SRMService->getPaymentVouchers($request);   
+            case GET_PAYMENT_VOUCHER_DETAILS:
+                return $this->SRMService->getPaymentVouchersDetails($request);  
+                 
             default:
                 return [
                     'success'   => false,

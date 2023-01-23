@@ -73,8 +73,10 @@ use App\Models\PricingScheduleDetail;
 use App\Models\ScheduleBidFormatDetails;
 use App\helper\PirceBidFormula;
 use App\Models\BidDocumentVerification;
+use App\Models\PaySupplierInvoiceMaster;
 use App\Jobs\DeliveryAppointmentInvoice;
 use App\Repositories\BookInvSuppMasterRepository;
+use App\Repositories\PaySupplierInvoiceMasterRepository;
 use App\Models\GRVDetails;
 use App\Models\SupplierInvoiceItemDetail;
 class SRMService
@@ -87,6 +89,7 @@ class SRMService
     private $tenderBidClarificationsRepository;
     private $documentAttachmentsRepo;
     private $bookInvSuppMasterRepository;
+    private $paySupplierInvoiceMasterRepository;
 
     public function __construct(
         BookInvSuppMasterRepository $bookInvSuppMasterRepository,
@@ -96,7 +99,8 @@ class SRMService
         InvoiceService                      $invoiceService,
         SupplierInvoiceItemDetailRepository $supplierInvoiceItemDetailRepo,
         TenderBidClarificationsRepository   $tenderBidClarificationsRepo,
-        DocumentAttachmentsRepository       $documentAttachmentsRepo
+        DocumentAttachmentsRepository       $documentAttachmentsRepo,
+        PaySupplierInvoiceMasterRepository  $paySupplierInvoiceMasterRepository
     ) {
         $this->POService = $POService;
         $this->supplierService = $supplierService;
@@ -105,6 +109,7 @@ class SRMService
         $this->supplierInvoiceItemDetailRepository = $supplierInvoiceItemDetailRepo;
         $this->tenderBidClarificationsRepository = $tenderBidClarificationsRepo;
         $this->documentAttachmentsRepo = $documentAttachmentsRepo;
+        $this->paySupplierInvoiceMasterRepository = $paySupplierInvoiceMasterRepository;
     }
 
     /**
@@ -3942,6 +3947,108 @@ class SRMService
             'data' => $data
         ];
 
+    }
+
+    public function convertArrayToSelectedValue ($input,$params){
+        foreach ($input as $key => $value) {
+            if(in_array($key,$params)){
+                if (is_array($input[$key])){
+                    if(count($input[$key]) > 0){
+                        $input[$key] = $input[$key][0];
+                    }
+                }
+            }
+        }
+        return $input;
+    }
+
+    public function getPaymentVouchers(Request $request) {
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('month'.'companyID', 'year', 'cancelYN', 'confirmedYN', 'approved', 'invoiceType', 'supplierID', 'chequePaymentYN', 'BPVbank', 'BPVAccount', 'chequeSentToTreasury', 'payment_mode', 'projectID','payeeTypeID'));
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $supplierID = self::getSupplierIdByUUID($request->input('supplier_uuid'));
+
+        $employeeID = $request['employeeID'];
+        $employeeID = (array)$employeeID;
+        $employeeID = collect($employeeID)->pluck('id');
+
+        $projectID = $request['projectID'];
+        $projectID = (array)$projectID;
+        $projectID = collect($projectID)->pluck('id');
+
+        $search = $request->input('search.value');
+        
+
+        $paymentVoucher = PaySupplierInvoiceMaster::where('BPVsupplierID', $supplierID)->where('invoiceType',2)->with(['supplier', 'created_by', 'suppliercurrency', 'bankcurrency', 'expense_claim_type', 'paymentmode', 'project']);
+
+
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $search_without_comma = str_replace(",", "", $search);
+            $paymentVoucher = $paymentVoucher->where(function ($query) use ($search, $search_without_comma) {
+                $query->where('BPVcode', 'LIKE', "%{$search}%")
+                    ->orWhere('BPVNarration', 'LIKE', "%{$search}%")->orWhere('suppAmountDocTotal', 'LIKE', "%{$search_without_comma}%")->orWhere('payAmountBank', 'LIKE', "%{$search_without_comma}%")->orWhere('BPVchequeNo', 'LIKE', "%{$search_without_comma}%")->orWhere('directPaymentPayee', 'LIKE', "%{$search_without_comma}%");
+            });
+        }
+
+        $data = \DataTables::eloquent($paymentVoucher)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('PayMasterAutoId', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+
+
+        return [
+            'success' => true,
+            'message' => 'Payment Vouchers successfully get',
+            'data' => $data
+        ];
+    }
+
+    public function getPaymentVouchersDetails(Request $request) {
+
+        $input = $request->all();
+
+        $output = PaySupplierInvoiceMaster::where('PayMasterAutoId',  $input['extra']['id'])
+            ->with(['project','supplier', 'bankaccount', 'transactioncurrency', 'paymentmode',
+                'supplierdetail' => function ($query) {
+                    $query->with(['pomaster']);
+                },
+                'company', 'localcurrency', 'rptcurrency', 'advancedetail', 'confirmed_by',
+                'modified_by', 'cheque_treasury_by', 'directdetail' => function ($query) {
+                    $query->with('project','segment');
+                }, 'approved_by' => function ($query) {
+                    $query->with('employee');
+                    $query->where('documentSystemID', 4);
+                }, 'created_by', 'cancelled_by', 'bankledgers' => function ($query) {
+                    $query->where('documentSystemID', 4);
+                    $query->with(['bankrec_by']);
+                },
+                'bankledger_by' => function ($query) {
+                    $query->where('documentSystemID', 4);
+                    $query->with(['bankrec_by', 'bank_transfer']);
+                },'audit_trial.modified_by'])->first();
+
+        return [
+            'success' => true,
+            'message' => 'Payment Vouchers successfully get',
+            'data' => $output
+        ]; 
+   
     }
 
 }
