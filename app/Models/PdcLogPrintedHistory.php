@@ -93,7 +93,7 @@ class PdcLogPrintedHistory extends Model
         'documentSystemID' => 'integer',
         'documentmasterAutoID' => 'integer',
         'currencyID' => 'integer',
-        'chequeNo' => 'integer',
+        'chequeNo' => 'string',
         'amount' => 'float',
         'changedBy' => 'integer',
         'chequePrintedBy' => 'integer',
