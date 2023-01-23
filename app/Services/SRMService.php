@@ -3331,7 +3331,7 @@ class SRMService
     public function submitBidSubmissionCreate($request)
     {
         $tenderId = $request->input('extra.tenderId');
-        $noOfBids = $request->input('extra.noOfBids');
+        $noOfBids = $request->input('extra.noOfBids') + 1;
         $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid')); 
         $lastSerialNumber = 1;
 
