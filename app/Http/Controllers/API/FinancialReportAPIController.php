@@ -5696,6 +5696,7 @@ AND MASTER .canceledYN = 0';
         switch ($reportID) {
             case 'FGL':
                 $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+
                 $db = isset($request->db) ? $request->db : ""; 
 
                 $employeeID = \Helper::getEmployeeSystemID();
