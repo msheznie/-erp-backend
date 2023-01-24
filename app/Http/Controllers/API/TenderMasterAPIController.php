@@ -594,9 +594,9 @@ WHERE
             $dataArray[$i]['calendar_date'] = $calenderDate->calendar_date;
             $dataArray[$i]['company_id'] = $calenderDataDetail->company_id;
             $dataArray[$i]['from_date'] = $fromDate->format('Y-m-d H:i:s');
-            $dataArray[$i]['to_date'] = $toDate->format('Y-m-d H:i:s');
+            $dataArray[$i]['to_date'] = isset($toDate) ? $toDate->format('Y-m-d H:i:s') : null;
             $dataArray[$i]['from_time'] = $calenderDataDetail->from_time;
-            $dataArray[$i]['to_time'] = $calenderDataDetail->to_time;
+            $dataArray[$i]['to_time'] = isset($toDate) ? $calenderDataDetail->to_time : null;
 
 
             $i++;
@@ -1025,11 +1025,11 @@ WHERE
                     }
 
                     if(is_null($technical_bid_closing_date)) {
-                        if($technical_bid_opening_date > $commerical_bid_opening_date && !$rfq) {
+                        if($technical_bid_opening_date > $commerical_bid_opening_date) {
                             return ['success' => false, 'message' => 'Commercial Bid Opening from date and time should be greater than technical bid from date and time'];
                         }
                     }else {
-                        if(!$rfq && ($technical_bid_closing_date > $commerical_bid_opening_date)) {
+                        if(($technical_bid_closing_date > $commerical_bid_opening_date)) {
                             return ['success' => false, 'message' => 'Commercial Bid Opening from date and time should be greater than technical bid to date and time'];
                         }
 
@@ -1288,6 +1288,11 @@ WHERE
 
     public function updateCalenderDates($input)
     {
+        $rfq = false;
+        if(isset($input['rfq'])){
+            $rfq = ($input['rfq'] == true) ? true : false;
+        }
+
         $employee = \Helper::getEmployeeInfo();
         $currenctDate = Carbon::now();
         if (isset($input['calendarDates'])) {
@@ -1301,7 +1306,12 @@ WHERE
                     }
 
                     if (empty($toTime)) {
-                        return ['success' => false, 'message' => 'To time cannot be empty'];
+                        if(!empty($calDate['to_date']) && $rfq){
+                            return ['success' => false, 'message' => 'To time cannot be empty'];
+                        } elseif (!$rfq){
+                            return ['success' => false, 'message' => 'To time cannot be empty'];
+                        }
+
                     }
 
                     if (!empty($calDate['from_date'])) {
@@ -1321,7 +1331,11 @@ WHERE
                     }
 
                     if (!empty($frm_date) && empty($to_date)) {
-                        return ['success' => false, 'message' => 'To date cannot be empty'];
+                        if(!empty($toTime) && $rfq){
+                            return ['success' => false, 'message' => 'To date cannot be empty'];
+                        } elseif (!$rfq){
+                            return ['success' => false, 'message' => 'To date cannot be empty'];
+                        }
                     }
 
                     if (!empty($frm_date) && !empty($to_date)) {
@@ -1344,8 +1358,9 @@ WHERE
 
 
                     if (!empty($to_date) || !empty($frm_date)) {
-
-                        if($frm_date > $to_date) {
+                        if(($frm_date > $to_date) && !empty($to_date) && $rfq){
+                            return ['success' => false, 'message' => 'From date and time should greater than to date and time'];
+                        } elseif($frm_date > $to_date && !$rfq) {
                             return ['success' => false, 'message' => 'From date and time should greater than to date and time'];
                         }
                     }
@@ -1356,12 +1371,13 @@ WHERE
                         $fromTime =new Carbon($calDate['from_time']);
                         $frm_date = new Carbon($calDate['from_date']);
                         $frm_date = ($calDate['from_time']) ? $frm_date->format('Y-m-d').' '.$fromTime->format('H:i:s') : $frm_date->format('Y-m-d');
+                        $to_date = null;
+                        if (!empty($calDate['to_date'])) {
+                            $toTime = new Carbon($calDate['to_time']);
+                            $to_date = new Carbon($calDate['to_date']);
+                            $to_date = ($calDate['to_time']) ? $to_date->format('Y-m-d').' '.$toTime->format('H:i:s') : $to_date->format('Y-m-d') ;
+                        }
 
-                        $toTime = new Carbon($calDate['to_time']);
-                        $to_date = new Carbon($calDate['to_date']);
-                        $to_date = ($calDate['to_time']) ? $to_date->format('Y-m-d').' '.$toTime->format('H:i:s') : $to_date->format('Y-m-d') ;
-
-                        
                         $calDt['tender_id'] = $input['id'];
                         $calDt['calendar_date_id'] = $calDate['id'];
                         $calDt['from_date'] = $frm_date;
