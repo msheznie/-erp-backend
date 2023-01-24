@@ -914,8 +914,13 @@ WHERE
                     }
                 }else {
 
-                    if($bid_sub_date > $bid_opening_date && !$rfq) {
-                        return ['success' => false, 'message' => 'Bid Opening from date and time should greater than bid submission to date and time'];
+                    if($bid_sub_date > $bid_opening_date ) {
+                        if(isset($bid_opening_date) && $rfq){
+                            return ['success' => false, 'message' => 'Bid Opening from date and time should greater than bid submission to date and time'];
+                        } elseif (!$rfq){
+                            return ['success' => false, 'message' => 'Bid Opening from date and time should greater than bid submission to date and time'];
+                        }
+
                     }
                 }
 
@@ -971,7 +976,7 @@ WHERE
                 $commerical_bid_opening_date = ($input['commerical_bid_opening_date_time']) ? $commerical_bid_opening_date->format('Y-m-d').' '.$commerical_bid_opening_time->format('H:i:s') : $commerical_bid_opening_date->format('Y-m-d');
 
                 if(is_null($input['commerical_bid_opening_date_time']) && $rfq) {
-                    return ['success' => false, 'message' => 'Commercial Bid Opening to time cannot be empty'];
+                    return ['success' => false, 'message' => 'Commercial Bid Opening from time cannot be empty'];
                 }
             }
 
@@ -1026,7 +1031,7 @@ WHERE
                             return ['success' => false, 'message' => 'Commercial Bid Opening from date and time should be greater than technical bid from date and time'];
                         }
                     }else {
-                        if($technical_bid_closing_date > $commerical_bid_opening_date) {
+                        if(!$rfq && ($technical_bid_closing_date > $commerical_bid_opening_date)) {
                             return ['success' => false, 'message' => 'Commercial Bid Opening from date and time should be greater than technical bid to date and time'];
                         }
 
