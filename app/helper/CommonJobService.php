@@ -39,6 +39,8 @@ class CommonJobService
                 return storage_path() . '/logs/attendance_job_service.log';
             case 'attendance-notification':
                 return storage_path() . '/logs/attendance_notification_service.log';
+            case 'birthday-wishes':
+                return storage_path() . '/logs/birthday_wishes_service.log';
 
         }
     }
