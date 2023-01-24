@@ -432,16 +432,19 @@
                 <thead>
                 <tr class="theme-tr-head">
                     <th style="width:3%"></th>
-                    <th style="width:10%;text-align: center">GL Code</th>
-                    <th style="width:30%;text-align: center">GL Code Description</th>
-                    <th style="width:10%;text-align: center">UOM</th>
-                    <th style="width:10%;text-align: center">QTY</th>
-                    <th style="width:10%;text-align: center">Sales Price</th>
-                    <th style="width:10%;text-align: center">Dis %</th>
-                    <th style="width:10%;text-align: center">Discount Amount</th>
-                    <th style="width:10%;text-align: center">Selling Unit Price</th>
-                    <th style="width:10%;text-align: center">VAT Per Unit</th>    
-                    <th style="width:10%;text-align: center">Total Amount ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
+                    <th style="text-align: center">GL Code</th>
+                    <th style="text-align: center">GL Code Description</th>
+                    @if($request->isProjectBase && $request->isPerforma == 0)
+                        <th style="text-align: center">Project</th>
+                    @endif
+                    <th style="text-align: center">UOM</th>
+                    <th style="text-align: center">QTY</th>
+                    <th style="text-align: center">Sales Price</th>
+                    <th style="text-align: center">Dis %</th>
+                    <th style="text-align: center">Discount Amount</th>
+                    <th style="text-align: center">Selling Unit Price</th>
+                    <th style="text-align: center">VAT Per Unit</th>    
+                    <th style="text-align: center">Total Amount ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -455,6 +458,13 @@
                         <td>{{$x}}</td>
                         <td>{{$item->glCode}}</td>
                         <td>{{$item->glCodeDes}}</td>
+                        @if($request->isProjectBase && $request->isPerforma == 0)
+                            <td>
+                                @if(isset($item->project) && $item->project != null)
+                                    {{$item->project->projectCode}} - {{$item->project->description}}
+                                @endif
+                            </td>
+                        @endif
                         <td style="text-align: left">{{isset($item->unit->UnitShortCode)?$item->unit->UnitShortCode:''}}</td>
                         <td class="text-center" style="text-align: right">{{number_format($item->invoiceQty,2)}}</td>
                         <td class="text-right">{{number_format($item->salesPrice,$numberFormatting)}}</td>
@@ -476,18 +486,21 @@
                 <thead>
                 <tr class="theme-tr-head">
                     <th style="width:2%"></th>
-                    <th style="width:13%;text-align: center">Description</th>
-                    <th style="width:10%;text-align: center">Part No / Ref.Number</th>
-                    <th style="width:5%;text-align: center">UOM</th>
-                    <th style="width:5%;text-align: center">Quantity</th>
-                    <th style="width:9%;text-align: center">Sales Price</th>
-                    <th style="width:5%;text-align: center">Dis %</th>
-                    <th style="width:8%;text-align: center">Discount Amount</th>
-                    <th style="width:9%;text-align: center">Selling Unit Price</th>
-                    <th style="width:9%;text-align: center">Taxable Amount ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
-                    <th style="width:5%;text-align: center">Taxable Rate</th>
-                    <th style="width:10%;text-align: center">Tax ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
-                    <th style="width:10%;text-align: center">Total Amount ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
+                    <th style="text-align: center">Description</th>
+                    @if($request->isProjectBase && $request->isPerforma == 2)
+                        <th style="text-align: center">Project</th>
+                    @endif
+                    <th style="text-align: center">Part No / Ref.Number</th>
+                    <th style="text-align: center">UOM</th>
+                    <th style="text-align: center">Quantity</th>
+                    <th style="text-align: center">Sales Price</th>
+                    <th style="text-align: center">Dis %</th>
+                    <th style="text-align: center">Discount Amount</th>
+                    <th style="text-align: center">Selling Unit Price</th>
+                    <th style="text-align: center">Taxable Amount ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
+                    <th style="text-align: center">Taxable Rate</th>
+                    <th style="text-align: center">Tax ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
+                    <th style="text-align: center">Total Amount ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -502,6 +515,13 @@
                             <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;">
                                 <td>{{$x}}</td>
                                 <td>{{$item->itemPrimaryCode.' - '.$item->itemDescription}}</td>
+                                @if($request->isProjectBase && $request->isPerforma == 2)
+                                    <td>
+                                        @if($request->isProjectBase && $request->isPerforma == 2 && isset($item->project) && $item->project != null)
+                                            {{$item->project->projectCode}} - {{$item->project->description}}
+                                        @endif
+                                    </td>
+                                @endif
                                 <td class="text-center" style="text-align: center">{{$item->part_no}}</td>
                                 <td style="text-align: left">{{isset($item->uom_issuing->UnitShortCode)?$item->uom_issuing->UnitShortCode:''}}</td>
                                 <td class="text-right" style="text-align: right">{{$item->qtyIssued}}</td>

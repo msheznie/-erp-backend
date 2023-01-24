@@ -32,6 +32,7 @@ use App\Http\Requests\API\CreateCustomerInvoiceDirectAPIRequest;
 use App\Http\Requests\API\UpdateCustomerInvoiceDirectAPIRequest;
 use App\Models\AccountsReceivableLedger;
 use App\Models\BankAccount;
+use App\Models\ErpProjectMaster;
 use App\Models\BankAssign;
 use App\Models\QuotationMaster;
 use App\Models\QuotationDetails;
@@ -927,7 +928,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                                 $updateItem->salesPrice = $updateItem->sellingCost;
                             }
 
-                            $updateItem->sellingCostAfterMargin = $updateItem->salesPrice - $updateItem->discountAmount;
+                            $updateItem->sellingCostAfterMargin = ($updateItem->salesPrice - $updateItem->discountAmount < 0.00001) ? 0 : ($updateItem->salesPrice - $updateItem->discountAmount);
 
                             if ($updateItem->sellingCurrencyID != $updateItem->localCurrencyID) {
                                 $currencyConversion = Helper::currencyConversion($customerInvoiceDirect->companySystemID, $updateItem->sellingCurrencyID, $updateItem->localCurrencyID, $updateItem->sellingCostAfterMargin);
@@ -987,7 +988,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                                     }
                                 }else{
                                     if ($updateItem->sellingCostAfterMargin == 0) {
-                                        return $this->sendError('Item must not have zero selling cost', 500);
+                                        // return $this->sendError('Item must not have zero selling cost', 500);
                                     }
                                 }
 
@@ -1032,7 +1033,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                     } else {
                         $detailValidation = CustomerInvoiceDirectDetail::selectRaw("glSystemID,IF ( serviceLineCode IS NULL OR serviceLineCode = '', null, 1 ) AS serviceLineCode,IF ( serviceLineSystemID IS NULL OR serviceLineSystemID = '' OR serviceLineSystemID = 0, null, 1 ) AS serviceLineSystemID, IF ( unitOfMeasure IS NULL OR unitOfMeasure = '' OR unitOfMeasure = 0, null, 1 ) AS unitOfMeasure, IF ( invoiceQty IS NULL OR invoiceQty = '' OR invoiceQty = 0, null, 1 ) AS invoiceQty, IF ( contractID IS NULL OR contractID = '' OR contractID = 0, null, 1 ) AS contractID,
                     IF ( invoiceAmount IS NULL OR invoiceAmount = '' OR invoiceAmount = 0, null, 1 ) AS invoiceAmount,
-                    IF ( unitCost IS NULL OR unitCost = '' OR unitCost = 0, null, 1 ) AS unitCost")->
+                    IF ( unitCost IS NULL OR unitCost = '' OR unitCost = 0, null, 1 ) AS unitCost, IF ( salesPrice IS NULL OR salesPrice = '' OR salesPrice = 0, null, 1 ) AS salesPrice")->
                         where('custInvoiceDirectID', $id)
                             ->where(function ($query) {
 
@@ -1065,15 +1066,14 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                                     'serviceLineCode' => 'required|min:1',
                                     'unitOfMeasure' => 'required|numeric|min:1',
                                     'invoiceQty' => 'required|numeric|min:1',
-                                    'invoiceAmount' => 'required|numeric|min:1',
-                                    'unitCost' => 'required|numeric|min:1',
+                                    'salesPrice' => 'required|numeric|min:1',
                                 ], [
 
                                     'serviceLineSystemID.required' => 'Segment is required.',
                                     'serviceLineCode.required' => 'Cannot confirm. Segment is not updated.',
                                     'unitOfMeasure.required' => 'UOM is required.',
                                     'invoiceQty.required' => 'Qty is required.',
-                                    'invoiceAmount.required' => 'Amount is required.',
+                                    'salesPrice.required' => 'Sales price is required.',
                                     'unitCost.required' => 'Unit cost is required.'
 
                                 ]);
@@ -1657,7 +1657,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                                     }
                                 }else{
                                     if ($updateItem->sellingCostAfterMargin == 0) {
-                                        return $this->sendError('Item must not have zero selling cost', 500);
+                                        // return $this->sendError('Item must not have zero selling cost', 500);
                                     }
                                 }
 
@@ -1995,7 +1995,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 ->where('documentSystemID', 20);
         }, 'invoicedetails'
         => function ($query) {
-                $query->with(['unit', 'department', 'contract' => function ($q) {
+                $query->with(['unit', 'department', 'project','contract' => function ($q) {
                     $q->with(['secondary_bank_account']);
                 }, 'performadetails' => function ($query) {
                     $query->with(['freebillingmaster' => function ($query) {
@@ -2006,7 +2006,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 }]);
             },
             'issue_item_details' => function ($query) {
-                $query->with(['uom_default', 'uom_issuing']);
+                $query->with(['uom_default', 'uom_issuing', 'project']);
             }
 
         ])->findWithoutFail($id);
@@ -2020,6 +2020,11 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         if ($detail) {
             $customerInvoiceDirect['clientContractID'] = $detail->clientContractID;
         }
+
+        $customerInvoiceDirect->projectEnabled = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
+            ->where('companySystemID', $customerInvoiceDirect->companySystemID)
+            ->where('isYesNO', 1)
+            ->exists();
 
         $customerInvoiceDirect->isVATEligible = TaxService::checkCompanyVATEligible($customerInvoiceDirect->companySystemID);
         return $this->sendResponse($customerInvoiceDirect, 'Customer Invoice Direct retrieved successfully');
@@ -2277,6 +2282,15 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                     ->exists();
             }
 
+        }
+
+        $output['isProjectBase'] = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
+            ->where('companySystemID', $companyId)
+            ->where('isYesNO', 1)
+            ->exists();
+        $output['projects'] = [];
+        if ($output['isProjectBase']) {
+            $output['projects'] = ErpProjectMaster::where('companySystemID', $companyId)->get();
         }
 
         $output['isVATEligible'] = TaxService::checkCompanyVATEligible($companyId);
@@ -2843,6 +2857,11 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $companySystemID = $master->companySystemID;
         $localCurrencyER = $master->localCurrencyER;
 
+        $isProjectBase = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
+            ->where('companySystemID', $companySystemID)
+            ->where('isYesNO', 1)
+            ->exists();
+
         if ($master->isPerforma == 2 || $master->isPerforma == 3 || $master->isPerforma == 4 || $master->isPerforma == 5) {
             $detail = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $id)->first();
         } else {
@@ -2945,6 +2964,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                             WHERE sumofsumofStandbyAmount <> 0 	ORDER BY sortOrder ASC ");
         }
         $customerInvoice->is_po_in_line = false;
+        $customerInvoice->isProjectBase = $isProjectBase;
         switch ($companySystemID) {
             case 7:
                 /*BO*/
@@ -3286,8 +3306,11 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         if (!is_null($printTemplate)) {
             $printTemplate = $printTemplate->toArray();
         }
-      
-        
+
+
+        if ($printTemplate['printTemplateID'] == 15) {
+            $customerInvoice->amount_word = ucwords($customerInvoice->amount_word);
+        }
     
         if ($printTemplate['printTemplateID'] == 2 && $master->isPerforma == 1) {
             $proformaBreifData = $this->getProformaInvoiceDetailDataForPrintInvoice($id);
@@ -3357,7 +3380,30 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         } else if ($printTemplate['printTemplateID'] == 13) {
             if($type == 1)
             {
-                $html = view('print.APMC_customer_invoice1', $array);
+                $html = view('print.APMC_customer_invoice', $array);
+                $htmlFooter = view('print.APMC_customer_invoice_footer', $array);
+                $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+                $mpdf->AddPage('P');
+                $mpdf->setAutoBottomMargin = 'stretch';
+                $mpdf->SetHTMLFooter($htmlFooter);
+
+                $mpdf->WriteHTML($html);
+                return $mpdf->Output($fileName, 'I');
+            }
+            else if($type == 2)
+            {
+                return \Excel::create($fileName_xls, function ($excel) use ($array) {
+                    $excel->sheet('New sheet', function ($sheet) use ($array) {
+                        $sheet->loadView('export_report.APMC_customer_invoice', $array)->with('no_asset', true);
+                    });
+                    
+                })->download('xls');
+            }
+        
+        } else if ($printTemplate['printTemplateID'] == 15) {
+            if($type == 1)
+            {
+                $html = view('print.BNI_customer_invoice', $array);
                 $pdf = \App::make('dompdf.wrapper');
                 $pdf->loadHTML($html);
     
@@ -3367,7 +3413,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             {
                 return \Excel::create($fileName_xls, function ($excel) use ($array) {
                     $excel->sheet('New sheet', function ($sheet) use ($array) {
-                        $sheet->loadView('export_report.APMC_customer_invoice', $array)->with('no_asset', true);
+                        $sheet->loadView('export_report.BNI_customer_invoice', $array)->with('no_asset', true);
                     });
                     
                 })->download('xls');

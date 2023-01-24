@@ -333,6 +333,13 @@
                                 @endif
                             </td>
                         </tr>
+                        <tr>
+                            <td style="width: 38% !important;"><b>PO Number </b></td>
+                            <td>: @if(!empty($request->PONumber))
+                                    {{$request->PONumber}}
+                                @endif
+                            </td>
+                        </tr>
 
                         <tr>
                             <td style="width: 38% !important;"><b>Currency </b></td>
@@ -493,7 +500,11 @@
             <table class="table table-bordered normal_font" style="width: 100%;">
                 <thead>
                     <tr class="theme-tr-head">
-                        <th style="text-align: center" colspan="5">Item Details</th>
+                        @if($request->isProjectBase && $request->isPerforma == 0)
+                            <th style="text-align: center" colspan="6">Item Details</th>
+                        @else
+                            <th style="text-align: center" colspan="5">Item Details</th>
+                        @endif
                         <th style="text-align: center" colspan="8">Price 
                             @if(!empty($request->currency->CurrencyCode))
                                 ({{$request->currency->CurrencyCode}})
@@ -504,18 +515,21 @@
                 <thead>
                 <tr class="theme-tr-head">
                     <th style="width:3%">#</th>
-                    <th style="width:10%;text-align: center">GL Code</th>
-                    <th style="width:14%;text-align: center">Description</th>
-                    <th style="width:7%;text-align: center">UOM</th>
-                    <th style="width:7%;text-align: center">QTY</th>
-                    <th style="width:10%;text-align: center">Sales Price</th>
-                    <th style="width:7%;text-align: center">Dis <br/>%</th>
-                    <th style="width:10%;text-align: center">Discount Amount</th>
-                    <th style="width:10%;text-align: center">Selling Unit Price</th>
-                    <th style="width:10%;text-align: center">Taxable Amount</th>
-                    <th style="width:7%;text-align: center">VAT</th>
-                    <th style="width:10%;text-align: center">VAT Amount</th>
-                    <th style="width:18%;text-align: center">Net Amount @if(!empty($request->currency->CurrencyCode))
+                    <th style="text-align: center">GL Code</th>
+                    <th style="text-align: center">Description</th>
+                    @if($request->isProjectBase && $request->isPerforma == 0)
+                        <th style="text-align: center">Project</th>
+                    @endif
+                    <th style="text-align: center">UOM</th>
+                    <th style="text-align: center">QTY</th>
+                    <th style="text-align: center">Sales Price</th>
+                    <th style="text-align: center">Dis <br/>%</th>
+                    <th style="text-align: center">Discount Amount</th>
+                    <th style="text-align: center">Selling Unit Price</th>
+                    <th style="text-align: center">Taxable Amount</th>
+                    <th style="text-align: center">VAT</th>
+                    <th style="text-align: center">VAT Amount</th>
+                    <th style="text-align: center">Net Amount @if(!empty($request->currency->CurrencyCode))
                                                                             ({{$request->currency->CurrencyCode}})
                                                                         @endif
                     </th>
@@ -534,6 +548,13 @@
                         <td>{{$x}}</td>
                         <td>{{$item->glCode}}</td>
                         <td>{{$item->comments}}</td>
+                        @if($request->isProjectBase && $request->isPerforma == 0)
+                            <td>
+                                @if(isset($item->project) && $item->project != null)
+                                    {{$item->project->projectCode}} - {{$item->project->description}}
+                                @endif
+                            </td>
+                        @endif
                         <td style="text-align: left">{{isset($item->unit->UnitShortCode)?$item->unit->UnitShortCode:''}}</td>
                         <td class="text-center" style="text-align: right">{{number_format($item->invoiceQty,2)}}</td>
                         <td class="text-right">{{number_format($item->salesPrice,$numberFormatting)}}</td>
@@ -553,7 +574,7 @@
                 $company = \App\Models\Company::with(['localcurrency'])->find($request->companySystemID);
                 ?>
 
-                @if(!empty($company->localcurrency->currencyID) && !empty($request->currency->currencyID) && $company->localcurrency->currencyID != $request->currency->currencyID && $totalVATAmount > 0)
+                @if(!empty($company->localcurrency->currencyID) && !empty($request->currency->currencyID) && $company->localcurrency->currencyID != $request->currency->currencyID)
                 <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;">
                     <td class="text-center" colspan="6" style="text-align: center"></td>
                     <td class="text-center" colspan="3" style="text-align: center"><B>Grand Total @if(!empty($request->currency->CurrencyCode))({{$request->currency->CurrencyCode}}) @endif</B></td>
@@ -576,7 +597,11 @@
             <table class="table table-bordered normal_font" style="width: 100%;">
                 <thead>
                     <tr class="theme-tr-head">
-                        <th style="text-align: center" colspan="5">Item Details</th>
+                        @if($request->isProjectBase && $request->isPerforma == 2)
+                            <th style="text-align: center" colspan="6">Item Details</th>
+                        @else
+                            <th style="text-align: center" colspan="5">Item Details</th>
+                        @endif
                         <th style="text-align: center" colspan="8">Price 
                             @if(!empty($request->currency->CurrencyCode))
                                 ({{$request->currency->CurrencyCode}})
@@ -587,18 +612,21 @@
                 <thead>
                 <tr class="theme-tr-head">
                     <th style="width:2%">#</th>
-                    <th style="width:15%;text-align: center">Description</th>
-                    <th style="width:10%;text-align: center">Ref. No</th>
-                    <th style="width:5%;text-align: center">UOM</th>
-                    <th style="width:5%;text-align: center">QTY</th>
-                    <th style="width:10%;text-align: center">Sales Price</th>
-                    <th style="width:10%;text-align: center">Dis %</th>
-                    <th style="width:10%;text-align: center">Discount Amount</th>
-                    <th style="width:10%;text-align: center">Selling Unit Price</th>
-                    <th style="width:10%;text-align: center">Taxable Amount</th>
-                    <th style="width:7%;text-align: center">VAT</th>
-                    <th style="width:10%;text-align: center">VAT Amount</th>
-                    <th style="width:10%;text-align: center">Net Amount @if(!empty($request->currency->CurrencyCode))
+                    <th style="text-align: center">Description</th>
+                    @if($request->isProjectBase && $request->isPerforma == 2)
+                        <th style="text-align: center">Project</th>
+                    @endif
+                    <th style="text-align: center">Ref. No</th>
+                    <th style="text-align: center">UOM</th>
+                    <th style="text-align: center">QTY</th>
+                    <th style="text-align: center">Sales Price</th>
+                    <th style="text-align: center">Dis %</th>
+                    <th style="text-align: center">Discount Amount</th>
+                    <th style="text-align: center">Selling Unit Price</th>
+                    <th style="text-align: center">Taxable Amount</th>
+                    <th style="text-align: center">VAT</th>
+                    <th style="text-align: center">VAT Amount</th>
+                    <th style="text-align: center">Net Amount @if(!empty($request->currency->CurrencyCode))
                                                                             ({{$request->currency->CurrencyCode}})
                                                                         @endif</th>
                 </tr>
@@ -618,6 +646,13 @@
                                 <td>{{$item->itemPrimaryCode.' - '.$item->itemDescription}}<br>
                                     {{$item->comments}}
                                 </td>
+                                @if($request->isProjectBase && $request->isPerforma == 2)
+                                    <td>
+                                        @if(isset($item->project) && $item->project != null)
+                                            {{$item->project->projectCode}} - {{$item->project->description}}
+                                        @endif
+                                    </td>
+                                @endif
                                 <td class="text-center" style="text-align: center">{{$item->part_no}}</td>
                                 <td style="text-align: left">{{isset($item->uom_issuing->UnitShortCode)?$item->uom_issuing->UnitShortCode:''}}</td>
                                 <td class="text-right" style="text-align: right">{{$item->qtyIssued}}</td>
@@ -639,7 +674,7 @@
                     $company = \App\Models\Company::with(['localcurrency'])->find($request->companySystemID);
                     ?>
 
-                    @if(!empty($company->localcurrency->currencyID) && !empty($request->currency->currencyID) && $company->localcurrency->currencyID != $request->currency->currencyID && $totalVATAmount > 0)
+                    @if(!empty($company->localcurrency->currencyID) && !empty($request->currency->currencyID) && $company->localcurrency->currencyID != $request->currency->currencyID)
                         <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;">
                             <td class="text-center" colspan="6" style="text-align: center"></td>
                             <td class="text-center" colspan="3" style="text-align: center"><B>Grand Total @if(!empty($request->currency->CurrencyCode))({{$request->currency->CurrencyCode}}) @endif</B></td>
@@ -670,7 +705,7 @@
         $company = \App\Models\Company::with(['localcurrency'])->find($request->companySystemID);
         ?>
 
-    @if(!empty($company->localcurrency->currencyID) && !empty($request->currency->currencyID) && $company->localcurrency->currencyID != $request->currency->currencyID && $totalVATAmount > 0)
+    @if(!empty($company->localcurrency->currencyID) && !empty($request->currency->currencyID) && $company->localcurrency->currencyID != $request->currency->currencyID)
         <p class="normal_font"><B>(Grand Total in @if(!empty($request->currency->CurrencyCode)){{$request->currency->CurrencyCode}} @endif :   {{$request->amount_word}}
                 @if ($request->floatAmt > 0)
                     and
@@ -682,7 +717,7 @@
 
         @php $totalVATAmount = (($request->tax && $request->tax->amount) ? $request->tax->amount : 0) @endphp
 
-        @if(!empty($company->localcurrency->currencyID) && !empty($request->currency->currencyID) && $company->localcurrency->currencyID != $request->currency->currencyID && $totalVATAmount > 0)
+        @if(!empty($company->localcurrency->currencyID) && !empty($request->currency->currencyID) && $company->localcurrency->currencyID != $request->currency->currencyID)
         <table class="table table-bordered table-striped table-sm normal_font" style="width: 100%;">
             <thead>
             <tr class="">
@@ -756,7 +791,7 @@
 
                 @php $totalVATAmount = (($request->tax && $request->tax->amount) ? $request->tax->amount : 0) @endphp
 
-    @if(!empty($company->localcurrency->currencyID) && !empty($request->currency->currencyID) && $company->localcurrency->currencyID != $request->currency->currencyID && $totalVATAmount > 0)
+    @if(!empty($company->localcurrency->currencyID) && !empty($request->currency->currencyID) && $company->localcurrency->currencyID != $request->currency->currencyID)
     <div class="row">
         <br/>
         <table style="width:100%;" class="table table-bordered normal_font">

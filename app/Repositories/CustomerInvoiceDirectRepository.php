@@ -177,7 +177,7 @@ class CustomerInvoiceDirectRepository extends BaseRepository
                  ->where('documentSystemID', 20);
          }, 'invoicedetails'
          => function ($query) {
-                 $query->with(['unit', 'department', 'performadetails' => function ($query) {
+                 $query->with(['unit', 'department', 'project', 'performadetails' => function ($query) {
                      $query->with(['freebillingmaster' => function ($query) {
                          $query->with(['ticketmaster' => function ($query) {
                              $query->with(['field']);
@@ -196,7 +196,7 @@ class CustomerInvoiceDirectRepository extends BaseRepository
                 ->where('documentSystemID', 20);
         },
             'issue_item_details' => function ($query) {
-                $query->with(['uom_issuing','sales_quotation']);
+                $query->with(['uom_issuing','sales_quotation', 'project']);
             }
         ])->findWithoutFail($id);
         return $customerInvoiceDirect;

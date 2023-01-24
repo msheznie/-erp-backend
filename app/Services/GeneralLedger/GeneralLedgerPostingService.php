@@ -185,6 +185,24 @@ class GeneralLedgerPostingService
                         }
                         break;
 
+                    case 8: // Material Issue
+                        $documentUpdateData = ItemIssueMaster::find($masterModel["autoID"]);
+
+                        if ($glDocumentDate) {
+                            $documentUpdateData->postedDate = $glDocumentDate->documentDate;
+                            $documentUpdateData->save();
+                        }
+                        break;
+
+                    case 3: // Good Receipt Voucher
+                        $documentUpdateData = GRVMaster::find($masterModel["autoID"]);
+
+                        if ($glDocumentDate) {
+                            $documentUpdateData->postedDate = $glDocumentDate->documentDate;
+                            $documentUpdateData->save();
+                        }
+                        break;
+
                     default:
                         Log::warning('Posted date document id not found ' . date('H:i:s'));
                 }
@@ -232,7 +250,14 @@ class GeneralLedgerPostingService
                     }
                 }
                 if (in_array($masterModel["documentSystemID"], [19, 20, 21, 87])) {
-                    $arLedgerInsert = \App\Jobs\AccountReceivableLedgerInsert::dispatch($masterModel, $dataBase);
+                    if ($masterModel["documentSystemID"] == 87) {
+                        $salesReturnDataData = SalesReturn::find($masterModel["autoID"]);
+                        if ($salesReturnDataData->returnType != 1) {
+                            $arLedgerInsert = \App\Jobs\AccountReceivableLedgerInsert::dispatch($masterModel, $dataBase);
+                        }
+                    } else {
+                        $arLedgerInsert = \App\Jobs\AccountReceivableLedgerInsert::dispatch($masterModel, $dataBase);
+                    }
                 }
 
 

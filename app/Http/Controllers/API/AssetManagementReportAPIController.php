@@ -391,9 +391,11 @@ class AssetManagementReportAPIController extends AppBaseController
 
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('typeID'));
 
+                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+
                     $output = $this->getAssetRegisterDetail($request);
 
-                    return $this->getAssetRegisterGroupedDetailFinalArray($output);
+                    return $this->getAssetRegisterGroupedDetailFinalArray($output, $companyCurrency);
 
                 }
 
@@ -719,6 +721,10 @@ class AssetManagementReportAPIController extends AppBaseController
                     // }
                     $x = 2;
                     $data = [];
+                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                    $localDecimalPlace = isset($companyCurrency->localcurrency->DecimalPlaces) ? $companyCurrency->localcurrency->DecimalPlaces: 3;
+                    $rptDecimalPlace = isset($companyCurrency->reportingcurrency->DecimalPlaces) ? $companyCurrency->reportingcurrency->DecimalPlaces: 2;
+
                     if (!empty($output)) {
 
 
@@ -794,12 +800,12 @@ class AssetManagementReportAPIController extends AppBaseController
                                 $data[$x]['Date Aquired'] = \Helper::dateFormat($value->postedDate);
                                 $data[$x]['Dep Start Date'] = \Helper::dateFormat($value->dateDEP);
 
-                                $data[$x]['Local Amount unitcost'] = round($value->COSTUNIT, 2);
-                                $data[$x]['Local Amount accDep'] = round($value->depAmountLocal, 2);
-                                $data[$x]['Local Amount net Value'] = round($value->localnbv, 2);
-                                $data[$x]['Rpt Amount unit cost'] = round($value->costUnitRpt, 2);
-                                $data[$x]['Rpt Amount acc dep'] = round($value->depAmountRpt, 2);
-                                $data[$x]['Rpt Amount acc net value'] = round($value->rptnbv, 2);
+                                $data[$x]['Local Amount unitcost'] = round($value->COSTUNIT, $localDecimalPlace);
+                                $data[$x]['Local Amount accDep'] = round($value->depAmountLocal, $localDecimalPlace);
+                                $data[$x]['Local Amount net Value'] = round($value->localnbv, $localDecimalPlace);
+                                $data[$x]['Rpt Amount unit cost'] = round($value->costUnitRpt, $rptDecimalPlace);
+                                $data[$x]['Rpt Amount acc dep'] = round($value->depAmountRpt, $rptDecimalPlace);
+                                $data[$x]['Rpt Amount acc net value'] = round($value->rptnbv, $rptDecimalPlace);
                      
                                  $x++;
                       
@@ -821,12 +827,12 @@ class AssetManagementReportAPIController extends AppBaseController
                         $data[$x]['DEP %'] = '';
                         $data[$x]['Date Aquired'] = '';
                         $data[$x]['Dep Start Date'] = 'Total';
-                        $data[$x]['Local Amount unitcost'] = $TotalCOSTUNIT;
-                        $data[$x]['Local Amount accDep'] = $TotaldepAmountLocal;
-                        $data[$x]['Local Amount net Value'] = $Totallocalnbv;
-                        $data[$x]['Rpt Amount unit cost'] = $TotalcostUnitRpt;
-                        $data[$x]['Rpt Amount acc dep'] = $TotaldepAmountRpt;
-                        $data[$x]['Rpt Amount acc net value'] = $Totalrptnbv;
+                        $data[$x]['Local Amount unitcost'] = round($TotalCOSTUNIT, $localDecimalPlace);
+                        $data[$x]['Local Amount accDep'] = round($TotaldepAmountLocal, $localDecimalPlace);
+                        $data[$x]['Local Amount net Value'] = round($Totallocalnbv, $localDecimalPlace);
+                        $data[$x]['Rpt Amount unit cost'] = round($TotalcostUnitRpt,$rptDecimalPlace);
+                        $data[$x]['Rpt Amount acc dep'] = round($TotaldepAmountRpt,$rptDecimalPlace);
+                        $data[$x]['Rpt Amount acc net value'] = round($Totalrptnbv, $rptDecimalPlace);
                     }
 
      
@@ -1129,7 +1135,9 @@ class AssetManagementReportAPIController extends AppBaseController
                 if ($request->reportTypeID == 'ARGD') { // Asset Register Detail
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('typeID'));
                     $output = $this->getAssetRegisterDetail($request);
-                    $final = $this->getAssetRegisterGroupedDetailFinalArray($output);
+                    $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+
+                    $final = $this->getAssetRegisterGroupedDetailFinalArray($output, $companyCurrency);
                     $outputArr = $final['reportData'];
 
                     $x = 0;
@@ -1209,6 +1217,10 @@ class AssetManagementReportAPIController extends AppBaseController
                             $depAmountRpt = 0;
                             $rptnbv = 0;
 
+                            $localDecimalPlace = isset($companyCurrency->localcurrency->DecimalPlaces) ? $companyCurrency->localcurrency->DecimalPlaces: 3;
+                            $rptDecimalPlace = isset($companyCurrency->reportingcurrency->DecimalPlaces) ? $companyCurrency->reportingcurrency->DecimalPlaces: 2;
+
+
                             foreach ($masterVal as $mainAsset => $assetArray) {
 
                                 foreach ($assetArray as $value){
@@ -1228,12 +1240,12 @@ class AssetManagementReportAPIController extends AppBaseController
                                     $data[$x]['Date Aquired'] = \Helper::dateFormat($value->postedDate);
                                     $data[$x]['Dep Start Date'] = \Helper::dateFormat($value->dateDEP);
 
-                                    $data[$x]['Local Amount unitcost'] = round($value->COSTUNIT, 2);
-                                    $data[$x]['Local Amount accDep'] = round($value->depAmountLocal, 2);
-                                    $data[$x]['Local Amount net Value'] = round($value->localnbv, 2);
-                                    $data[$x]['Rpt Amount unit cost'] = round($value->costUnitRpt, 2);
-                                    $data[$x]['Rpt Amount acc dep'] = round($value->depAmountRpt, 2);
-                                    $data[$x]['Rpt Amount acc net value'] = round($value->rptnbv, 2);
+                                    $data[$x]['Local Amount unitcost'] = round($value->COSTUNIT, $localDecimalPlace);
+                                    $data[$x]['Local Amount accDep'] = round($value->depAmountLocal, $localDecimalPlace);
+                                    $data[$x]['Local Amount net Value'] = round($value->localnbv, $localDecimalPlace);
+                                    $data[$x]['Rpt Amount unit cost'] = round($value->costUnitRpt, $rptDecimalPlace);
+                                    $data[$x]['Rpt Amount acc dep'] = round($value->depAmountRpt, $rptDecimalPlace);
+                                    $data[$x]['Rpt Amount acc net value'] = round($value->rptnbv, $rptDecimalPlace);
 
                                     if(!$value->isHeader ){
                                         $COSTUNIT += $value->COSTUNIT;
@@ -2877,6 +2889,14 @@ WHERE
             }
         }
 
+        $companyID = "";
+        $checkIsGroup = Company::find($request->companySystemID);
+        if ($checkIsGroup->isGroup) {
+            $companyID = \Helper::getGroupCompany($request->companySystemID);
+        } else {
+            $companyID = [(int)$request->companySystemID];
+        }
+
         $qry = "
 SELECT * FROM ( SELECT
 IF(groupTO IS NOT  NULL ,groupTO , erp_fa_asset_master.faID ) as sortfaID,
@@ -2925,9 +2945,9 @@ FROM
 	INNER JOIN erp_fa_assettype ON erp_fa_assettype.typeID = erp_fa_asset_master.assetType
 	INNER JOIN erp_fa_financecategory ON AUDITCATOGARY = erp_fa_financecategory.faFinanceCatID
 	INNER JOIN serviceline ON serviceline.ServiceLineCode = erp_fa_asset_master.serviceLineCode
-LEFT JOIN (SELECT assetDescription , faID ,faUnitSerialNo,faCode FROM erp_fa_asset_master WHERE erp_fa_asset_master.companySystemID = $request->companySystemID   )	 assetGroup ON erp_fa_asset_master.groupTO= assetGroup.faID
+LEFT JOIN (SELECT assetDescription , faID ,faUnitSerialNo,faCode FROM erp_fa_asset_master WHERE erp_fa_asset_master.companySystemID IN (" . join(',', $companyID) . ")) assetGroup ON erp_fa_asset_master.groupTO= assetGroup.faID
 WHERE
-	erp_fa_asset_master.companySystemID = $request->companySystemID  AND AUDITCATOGARY IN($assetCategory) AND approved =-1
+	erp_fa_asset_master.companySystemID IN (" . join(',', $companyID) . ")  AND AUDITCATOGARY IN($assetCategory) AND approved =-1
 	AND DATE(erp_fa_asset_master.postedDate) <= '$asOfDate' AND assetType = $typeID
 	$where
 	) t  ORDER BY sortfaID desc  ";
@@ -3697,6 +3717,14 @@ WHERE
         $assetCategory = collect($request->assetCategory)->pluck('faFinanceCatID')->toArray();
         $assetCategory = join(',', $assetCategory);
 
+        $companyID = "";
+        $checkIsGroup = Company::find($request->companySystemID);
+        if ($checkIsGroup->isGroup) {
+            $companyID = \Helper::getGroupCompany($request->companySystemID);
+        } else {
+            $companyID = [(int)$request->companySystemID];
+        }
+
         $where = "";
         if (isset($request->searchText)) {
             $searchText = $request->searchText;
@@ -3785,9 +3813,9 @@ WHERE
                         LEFT JOIN erp_fa_asset_disposalmaster ON erp_fa_asset_disposaldetail.assetdisposalMasterAutoID = erp_fa_asset_disposalmaster.assetdisposalMasterAutoID 
                         INNER JOIN erp_fa_financecategory ON AUDITCATOGARY = erp_fa_financecategory.faFinanceCatID
                         INNER JOIN serviceline ON serviceline.ServiceLineCode = erp_fa_asset_master.serviceLineCode
-                    LEFT JOIN (SELECT assetDescription , faID ,faUnitSerialNo,faCode FROM erp_fa_asset_master WHERE erp_fa_asset_master.companySystemID = $request->companySystemID   )  assetGroup ON erp_fa_asset_master.groupTO= assetGroup.faID
+                    LEFT JOIN (SELECT assetDescription , faID ,faUnitSerialNo,faCode FROM erp_fa_asset_master WHERE erp_fa_asset_master.companySystemID IN (" . join(',', $companyID) . ")   )  assetGroup ON erp_fa_asset_master.groupTO= assetGroup.faID
                     WHERE
-                        erp_fa_asset_master.companySystemID = $request->companySystemID  AND AUDITCATOGARY IN($assetCategory) AND erp_fa_asset_master.approved =-1
+                        erp_fa_asset_master.companySystemID IN (" . join(',', $companyID) . ")  AND AUDITCATOGARY IN($assetCategory) AND erp_fa_asset_master.approved =-1
                         AND DATE(erp_fa_asset_master.postedDate) <= '$asOfDate' AND assetType = $typeID
                         $where
                         ) t  ORDER BY sortfaID desc  ";
@@ -3798,7 +3826,7 @@ WHERE
         return $output;
     }
 
-    private function getAssetRegisterGroupedDetailFinalArray($output){
+    private function getAssetRegisterGroupedDetailFinalArray($output, $companyCurrency){
         $finalArr = [];
         $totalArray = [];
 
@@ -3917,11 +3945,15 @@ WHERE
             }
 
         }
+        $localDecimalPlace = isset($companyCurrency->localcurrency->DecimalPlaces) ? $companyCurrency->localcurrency->DecimalPlaces: 3;
+        $rptDecimalPlace = isset($companyCurrency->reportingcurrency->DecimalPlaces) ? $companyCurrency->reportingcurrency->DecimalPlaces: 2;
 
         return array(
             'reportData' => $finalArr,
             'localnbv' => $totlocalnbv,
             'rptnbv' => $totrptnbv,
+            'localDecimal' => $localDecimalPlace,
+            'rptDecimal' => $rptDecimalPlace,
             'COSTUNIT' => $totCOSTUNIT,
             'costUnitRpt' => $totcostUnitRpt,
             'depAmountLocal' => $totdepAmountLocal,

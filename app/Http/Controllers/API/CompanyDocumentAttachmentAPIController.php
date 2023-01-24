@@ -18,6 +18,7 @@ use App\helper\Helper;
 use App\Http\Requests\API\CreateCompanyDocumentAttachmentAPIRequest;
 use App\Http\Requests\API\UpdateCompanyDocumentAttachmentAPIRequest;
 use App\Models\Company;
+use App\Models\ApprovalLevel;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\DocumentMaster;
 use App\Repositories\CompanyDocumentAttachmentRepository;
@@ -116,6 +117,17 @@ class CompanyDocumentAttachmentAPIController extends AppBaseController
 
         if (empty($companyDocumentAttachment)) {
             return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.company_document_attachments')]));
+        }
+
+        if($companyDocumentAttachment->isServiceLineApproval != $input['isServiceLineApproval'] || $companyDocumentAttachment->isAmountApproval != $input['isAmountApproval'] || $companyDocumentAttachment->isCategoryApproval != $input['isCategoryApproval']){
+        $checkForActiveApprovalLevel = ApprovalLevel::where('companySystemID', $companyDocumentAttachment->companySystemID)
+                                                    ->where('documentSystemID', $companyDocumentAttachment->documentSystemID)
+                                                    ->where('isActive', -1)
+                                                    ->first();
+
+            if ($checkForActiveApprovalLevel) {
+             return $this->sendError("There is an approval level created for this document, Please delete or inactive and continue", 500);
+            }
         }
 
         $companyDocumentAttachment = $this->companyDocumentAttachmentRepository->update($input, $id);

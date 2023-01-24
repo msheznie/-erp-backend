@@ -29,7 +29,7 @@ class CreditNoteGlService
         $validatePostedDate = GlPostedDateService::validatePostedDate($masterModel["autoID"], $masterModel["documentSystemID"]);
 
         if (!$validatePostedDate['status']) {
-            return ['success' => false, 'message' => $validatePostedDate['message']];
+            return ['status' => false, 'message' => $validatePostedDate['message']];
         }
         
         $masterData = CreditNote::with(['details' => function ($query) {

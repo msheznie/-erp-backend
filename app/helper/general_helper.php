@@ -2271,50 +2271,6 @@ class Helper
                             }
 
 
-                            // insert the record to general ledger
-
-                            if (in_array($input["documentSystemID"], [3, 8, 12, 13, 10, 20, 61, 24, 7, 19, 15, 11, 4, 21, 22, 17, 23, 41, 71, 87, 97])) {
-                                if ($input['documentSystemID'] == 71) {
-                                    if ($sourceModel->isFrom != 5) {
-                                        $jobGL = GeneralLedgerInsert::dispatch($masterData, $dataBase);
-                                    }
-                                } else if ($input['documentSystemID'] == 17) {
-                                    if ($sourceModel->jvType != 9) {
-                                        $jobGL = GeneralLedgerInsert::dispatch($masterData, $dataBase);
-                                    }
-                                } else {
-                                    $jobGL = GeneralLedgerInsert::dispatch($masterData, $dataBase);
-                                }
-                                if ($input["documentSystemID"] == 3) {
-                                    $sourceData = $namespacedModel::find($input["documentSystemCode"]);
-                                    $masterData['supplierID'] = $sourceData->supplierID;
-                                    $jobUGRV = UnbilledGRVInsert::dispatch($masterData, $dataBase);
-                                    $jobSI = CreateGRVSupplierInvoice::dispatch($input["documentSystemCode"], $dataBase);
-                                    WarehouseItemUpdate::dispatch($input["documentSystemCode"]);
-
-                                    if ($sourceData->interCompanyTransferYN == -1) {
-                                        $consoleJVData = [
-                                            'data' => InterCompanyAssetDisposal::where('grvID', $sourceData->grvAutoID)->first(),
-                                            'type' => "INTER_ASSET_DISPOSAL"
-                                        ];
-
-                                        CreateConsoleJV::dispatch($consoleJVData);
-                                    }
-                                }
-
-                                if ($input["documentSystemID"] == 21) {
-                                    $sourceData = $namespacedModel::find($input["documentSystemCode"]);
-                                    if ($sourceData->intercompanyPaymentID > 0) {
-                                        $receiptData = [
-                                            'data' => $sourceData,
-                                            'type' => "FUND_TRANSFER"
-                                        ];
-
-                                        CreateConsoleJV::dispatch($receiptData);
-                                    }
-                                }
-
-                            }
 
                             if ($input["documentSystemID"] == 69) {
                                 $outputEL = Models\EliminationLedger::where('documentSystemCode', $input["documentSystemCode"])->where('documentSystemID', $input["documentSystemID"])->first();
@@ -2505,6 +2461,50 @@ class Helper
                                 $acc_d = CreateAccumulatedDepreciation::dispatch($input["faID"]);
                             }
                             //
+
+                            // insert the record to general ledger
+                            if (in_array($input["documentSystemID"], [3, 8, 12, 13, 10, 20, 61, 24, 7, 19, 15, 11, 4, 21, 22, 17, 23, 41, 71, 87, 97])) {
+                                if ($input['documentSystemID'] == 71) {
+                                    if ($sourceModel->isFrom != 5) {
+                                        $jobGL = GeneralLedgerInsert::dispatch($masterData, $dataBase);
+                                    }
+                                } else if ($input['documentSystemID'] == 17) {
+                                    if ($sourceModel->jvType != 9) {
+                                        $jobGL = GeneralLedgerInsert::dispatch($masterData, $dataBase);
+                                    }
+                                } else {
+                                    $jobGL = GeneralLedgerInsert::dispatch($masterData, $dataBase);
+                                }
+                                
+                                if ($input["documentSystemID"] == 3) {
+                                    $sourceData = $namespacedModel::find($input["documentSystemCode"]);
+                                    $masterData['supplierID'] = $sourceData->supplierID;
+                                    $jobUGRV = UnbilledGRVInsert::dispatch($masterData, $dataBase);
+                                    $jobSI = CreateGRVSupplierInvoice::dispatch($input["documentSystemCode"], $dataBase);
+                                    WarehouseItemUpdate::dispatch($input["documentSystemCode"]);
+
+                                    if ($sourceData->interCompanyTransferYN == -1) {
+                                        $consoleJVData = [
+                                            'data' => InterCompanyAssetDisposal::where('grvID', $sourceData->grvAutoID)->first(),
+                                            'type' => "INTER_ASSET_DISPOSAL"
+                                        ];
+
+                                        CreateConsoleJV::dispatch($consoleJVData);
+                                    }
+                                }
+
+                                if ($input["documentSystemID"] == 21) {
+                                    $sourceData = $namespacedModel::find($input["documentSystemCode"]);
+                                    if ($sourceData->intercompanyPaymentID > 0) {
+                                        $receiptData = [
+                                            'data' => $sourceData,
+                                            'type' => "FUND_TRANSFER"
+                                        ];
+
+                                        CreateConsoleJV::dispatch($receiptData);
+                                    }
+                                }
+                            }
 
                         } else {
                             // update roll level in master table
@@ -4441,7 +4441,7 @@ class Helper
                             $documentYear = $documentDate->format('Y');
                             $documentYearMonth = $documentDate->format('Y-m');
 
-                            $companyFinanceYear = Models\CompanyFinanceYear::where('companySystemID', $pvMaster->companySystemID)->whereRaw('YEAR(bigginingDate) = ?', [$documentYear])->first();
+                            $companyFinanceYear = Models\CompanyFinanceYear::where('companySystemID', $pvMaster->companySystemID)->whereRaw('? between bigginingDate and endingDate', $documentDate)->first();
 
                             if (empty($companyFinanceYear)) {
                                 return ['success' => false, 'message' => "Financial year not found"];
@@ -6052,7 +6052,12 @@ class Helper
         foreach ($companyHeaderData as $key1 => $company) {
             foreach ($columns as $key2 => $column) {
                 if (isset($data['columnData'][$company['companyCode']])) {
-                    $total += $data['columnData'][$company['companyCode']][$column];
+                    $strings = explode('-',$column);
+                    if($strings[0]) {
+                        if ($strings[0] == 'CYYTD') {
+                            $total += $data['columnData'][$company['companyCode']][$column];
+                        }
+                    }
                 }
             }
         }
@@ -6067,7 +6072,12 @@ class Helper
         foreach ($companyHeaderData as $key1 => $company) {
             foreach ($columns as $key2 => $column) {
                 if (isset($data[$company['companyCode']])) {
-                    $total += $data[$company['companyCode']][$key2];
+                    $strings = explode('-',$column);
+                    if($strings[0]) {
+                        if ($strings[0] == 'CYYTD') {
+                            $total += $data[$company['companyCode']][$key2];
+                        }
+                    }
                 }
             }
         }
@@ -6083,7 +6093,12 @@ class Helper
             $code = $company['companyCode'];
             foreach ($columns as $key2 => $column) {
                 if (isset($data[$code])) {
-                    $total += $data[$code]->$column;
+                    $strings = explode('-',$column);
+                    if($strings[0]){
+                        if($strings[0] == 'CYYTD') {
+                            $total += $data[$code]->$column;
+                        }
+                    }
                 }
             }
         }
@@ -6099,5 +6114,26 @@ class Helper
         }
 
         return $value;
+    }
+
+    public static function currencyConversionByER($transactionCurrencyID, $documentCurrencyID, $transactionAmount, $transER)
+    {
+        $trasToSuppER = 1;
+        $transactionAmount = self::stringToFloat($transactionAmount);
+        $documentAmount = null;
+        if ($documentCurrencyID) {
+            $transToDocER = $transER;
+
+            if ($transactionCurrencyID == $documentCurrencyID) {
+                $documentAmount = $transactionAmount;
+            } else {
+                $documentAmount = $transactionAmount * $transToDocER;
+            }
+        }
+        $array = array(
+            'documentAmount' => $documentAmount
+        );
+
+        return $array;
     }
 }

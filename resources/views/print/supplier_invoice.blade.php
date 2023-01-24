@@ -758,6 +758,9 @@
                     <th></th>
                     <th class="text-center">GL Code</th>
                     <th class="text-center">GL Code Description</th>
+                    @if($masterdata->documentType == 1 && $isProjectBase)
+                        <th colspan="3" class="text-center">Project</th>
+                    @endif
                     <th class="text-center">Segment</th>
                     <th class="text-center">Amount</th>
                     @if($isVATEligible)
@@ -782,6 +785,13 @@
                         <td>{{$loop->iteration}}</td>
                         <td>{{$item->glCode}}</td>
                         <td>{{$item->glCodeDes}}</td>
+                        @if($masterdata->documentType == 1 && $isProjectBase)
+                            <td colspan="3">
+                                @if($item->project)
+                                    {{$item->project->projectCode}} - {{$item->project->description}}
+                                @endif
+                            </td>
+                        @endif
                         <td>
                             @if($item->segment)
                                 {{$item->segment->ServiceLineDes}}
@@ -800,6 +810,9 @@
                     @else
                         <td colspan="3" class="text-right border-bottom-remov">&nbsp;</td>
                     @endif
+                    @if($masterdata->documentType == 1 && $isProjectBase)
+                        <td colspan="3" class="text-right border-bottom-remov">&nbsp;</td>
+                    @endif
                     <td class="text-right" style="background-color: rgb(215,215,215)">Total</td>
                     <td class="text-right"
                         style="background-color: rgb(215,215,215)">{{number_format($directTotTra, $transDecimal)}}</td>
@@ -807,6 +820,9 @@
                 @if($isVATEligible)
                     <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
                         <td colspan="5" class="text-right border-bottom-remov">&nbsp;</td>
+                        @if($masterdata->documentType == 1 && $isProjectBase)
+                            <td colspan="3" class="text-right border-bottom-remov">&nbsp;</td>
+                        @endif
                         <td class="text-right" style="background-color: rgb(215,215,215)">VAT</td>
                         <td class="text-right"
                             style="background-color: rgb(215,215,215)">{{number_format($directTotVAT, $transDecimal)}}</td>
@@ -814,6 +830,9 @@
                     </tr>
                     <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
                         <td colspan="5" class="text-right border-bottom-remov">&nbsp;</td>
+                        @if($masterdata->documentType == 1 && $isProjectBase)
+                            <td colspan="3" class="text-right border-bottom-remov">&nbsp;</td>
+                        @endif
                         <td class="text-right" style="background-color: rgb(215,215,215)">Net Total</td>
                         @if($masterdata->rcmActivated)
                             <td class="text-right"
@@ -826,6 +845,9 @@
                     @if ($masterdata->documentType != 4)
                         <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
                             <td colspan="5" class="text-right border-bottom-remov">&nbsp;</td>
+                            @if($masterdata->documentType == 1 && $isProjectBase)
+                                <td colspan="3" class="text-right border-bottom-remov">&nbsp;</td>
+                            @endif
                             <td class="text-right" style="background-color: rgb(215,215,215)">Retention Amount</td>
                             @if($masterdata->rcmActivated)
                                 <td class="text-right"
@@ -837,6 +859,9 @@
                         </tr>
                         <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
                             <td colspan="5" class="text-right border-bottom-remov">&nbsp;</td>
+                            @if($masterdata->documentType == 1 && $isProjectBase)
+                                <td colspan="3" class="text-right border-bottom-remov">&nbsp;</td>
+                            @endif
                             <td class="text-right" style="background-color: rgb(215,215,215)">Net of Retention Amount</td>
                             @if($masterdata->rcmActivated)
                                 <td class="text-right"

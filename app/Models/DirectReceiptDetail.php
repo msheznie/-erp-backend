@@ -217,4 +217,8 @@ class DirectReceiptDetail extends Model
         return $this->belongsTo(CustomerReceivePayment::class, 'directReceiptAutoID', 'custReceivePaymentAutoID');
     }
     
+    public function project()
+    {
+        return $this->belongsTo('App\Models\ErpProjectMaster', 'detail_project_id', 'id');
+    }
 }

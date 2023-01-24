@@ -96,7 +96,6 @@ Route::group([], function(){
 	Route::resource('chart_of_accounts_assigned', 'ChartOfAccountsAssignedAPIController');
 	Route::resource('chart_of_account', 'ChartOfAccountAPIController');
 	Route::resource('chartOfAccountsReferBack', 'ChartOfAccountsRefferedBackAPIController');
-	Route::resource('report_template_links', 'ReportTemplateLinksAPIController');
 });
 
 //customer 
@@ -136,6 +135,20 @@ Route::group([], function(){
 	Route::resource('customer_currencies', 'CustomerCurrencyAPIController');
 });
 
+//item-finance
+Route::group([], function() {
+    Route::post('getFinanceItemCategoryMasterExpiryStatus', 'FinanceItemCategoryMasterAPIController@getFinanceItemCategoryMasterExpiryStatus')->name('Get finance item category master expiry status');
+    Route::post('getFinanceItemCategoryMasterAttributesStatus', 'FinanceItemCategoryMasterAPIController@getFinanceItemCategoryMasterAttributesStatus')->name('Get finance item category master attributes status');
+    Route::post('allItemFinanceSubCategoriesByMainCategory', 'FinanceItemCategoryMasterAPIController@allItemFinanceSubCategoriesByMainCategory')->name('All item finance sub categories by main category');
+    Route::get('getSubCategoryFormData', 'FinanceItemCategoryMasterAPIController@getSubCategoryFormData')->name('Get sub category form data');
+    Route::post('getAttributesData', 'FinanceItemCategoryMasterAPIController@getAttributesData')->name('Get attributes data');
+    Route::post('finance_item_category_subs_update', 'FinanceItemCategorySubAPIController@finance_item_category_subs_update')->name('Finance item category subs update');
+    Route::resource('itemcategory_sub_assigneds', 'FinanceItemcategorySubAssignedAPIController');
+    Route::get('assignedCompaniesBySubCategory', 'FinanceItemcategorySubAssignedAPIController@assignedCompaniesBySubCategory')->name('Assigned companies by sub category');
+    Route::get('getNotAssignedCompanies', 'FinanceItemcategorySubAssignedAPIController@getNotAssignedCompanies')->name('Get not assigned companies');
+    Route::post('financeItemCategorySubsExpiryUpdate', 'FinanceItemCategorySubAPIController@financeItemCategorySubsExpiryUpdate')->name('Finance item category subs expiry update');
+    Route::resource('finance_item_category_subs', 'FinanceItemCategorySubAPIController');
+});
 //warehouse
 Route::group([], function() {
     Route::get('getWarehouseMasterFormData', 'WarehouseMasterAPIController@getWarehouseMasterFormData')->name('Get warehouse master form data');
@@ -176,3 +189,164 @@ Route::group([], function() {
     Route::post('getAllAssignedItemsByCompany', 'ItemAssignedAPIController@getAllAssignedItemsByCompany')->name('All assigned item by company');
 });
 
+
+	//Bank Master
+Route::group([], function() {
+	Route::get('getBankMasterFormData', 'BankMasterAPIController@getBankMasterFormData')->name("Get bank master form data");
+
+	Route::post('getAllBankAccounts', 'BankAccountAPIController@getAllBankAccounts')->name("Get all bank accounts");
+	Route::post('exportBankAccountMaster', 'BankAccountAPIController@exportBankAccountMaster')->name("Export bank account master");
+	Route::post('assignedTemplatesByBank', 'ChequeTemplateBankAPIController@assignedTemplatesByBank')->name("Assigned templates by bank");
+	Route::post('bank/update/template', 'ChequeTemplateBankAPIController@updateBankAssingTemplate')->name("Update bank assigned template");
+	Route::post('getAllBankMaster', 'BankMasterAPIController@getAllBankMaster')->name("Get all bank master");
+	Route::post('updateBankMaster', 'BankMasterAPIController@updateBankMaster')->name("Update bank master");
+	Route::post('assignedCompaniesByBank', 'BankMasterAPIController@assignedCompaniesByBank')->name("Assigned companies by bank");
+	Route::post('bank/update/assign', 'BankAssignAPIController@updateBankAssingCompany')->name("Update bank assigned company");
+
+	Route::resource('cheque_template_masters', 'ChequeTemplateMasterAPIController');
+	Route::resource('cheque_template_banks', 'ChequeTemplateBankAPIController');
+	Route::resource('bank/masters', 'BankMasterAPIController', ['names' => 'Bank masters']);
+	Route::resource('bank/assign', 'BankAssignAPIController', ['names' => 'Bank assign']);
+});
+
+
+//Units
+Route::group([], function() {
+	Route::get('getUnitMasterFormData', 'UnitAPIController@getUnitMasterFormData')->name("Get unit master form data");
+	Route::get('getUnitConversionFormData', 'UnitConversionAPIController@getUnitConversionFormData')->name("Get unit conversion form data");
+
+	Route::post('getAllUnitMaster', 'UnitAPIController@getAllUnitMaster')->name("Get all unit master");
+	Route::post('unit/conversion/update', 'UnitConversionAPIController@updateUnitConversion')->name("Update unit conversion");
+	Route::post('updateUnitMaster', 'UnitAPIController@updateUnitMaster')->name("Update unit master");
+
+	Route::resource('unit/masters', 'UnitAPIController', ['names' => 'Unit masters']);
+	Route::resource('unit/conversion', 'UnitConversionAPIController', ['names' => 'Unit conversion']);
+});
+
+
+//Registered Suppliers
+Route::group([], function() {
+	Route::get('bankMemosByRegisteredSupplierCurrency', 'SupplierMasterAPIController@bankMemosByRegisteredSupplierCurrency')->name("Bank memos by registered supplier currency");
+	Route::get('getRegisteredSupplierData', 'SupplierMasterAPIController@getRegisteredSupplierData')->name("Get registered supplier data");
+	Route::get('downloadSupplierAttachmentFile', 'SupplierMasterAPIController@downloadSupplierAttachmentFile')->name("Download supplier attachment file");
+
+	Route::post('updateRegisteredSupplierBankMemo', 'SupplierMasterAPIController@updateRegisteredSupplierBankMemo')->name("Update registered supplier bank memo");
+	Route::post('notApprovedRegisteredSuppliers', 'SupplierMasterAPIController@notApprovedRegisteredSuppliers')->name("Not approved registered suppliers");
+	Route::post('approvedRegisteredSuppliers', 'SupplierMasterAPIController@approvedRegisteredSuppliers')->name("Approved registered suppliers");
+	Route::post('updateRegisteredSupplierMaster', 'SupplierMasterAPIController@updateRegisteredSupplierMaster')->name("Update registered supplier master");
+	Route::post('updateRegisteredSupplierAttachment', 'SupplierMasterAPIController@updateRegisteredSupplierAttachment')->name("Update registered supplier attachment");
+	Route::post('updateRegisteredSupplierCurrency', 'SupplierMasterAPIController@updateRegisteredSupplierCurrency')->name("Update registered supplier currency");
+
+	Route::resource('registered_supp_contact_details', 'RegisteredSupplierContactDetailAPIController');
+	Route::resource('registered_supplier_attachments', 'RegisteredSupplierAttachmentAPIController');
+
+});
+
+//Document Amend
+Route::group([], function() {
+	Route::get('getDocumentAmendFormData', 'GeneralLedgerAPIController@getDocumentAmendFormData')->name("Get document amend form data");
+
+	Route::post('getDocumentAmendFromGL', 'GeneralLedgerAPIController@getDocumentAmendFromGL')->name("Get document amend from gl");
+	Route::post('changePostingDate', 'GeneralLedgerAPIController@changePostingDate')->name("Change posting date document amend");
+});
+
+//Attachment Master
+Route::group([], function() {
+	Route::get('getAttachmentFormData', 'DocumentAttachmentsAPIController@getAttachmentFormData')->name("Get attachment form data");
+
+	Route::post('getAllAttachments', 'DocumentAttachmentsAPIController@getAllAttachments')->name("Get all attachments");
+});
+
+//Tax Setup
+Route::group([], function() {
+	Route::get('getTaxAuthorityFormData', 'TaxAuthorityAPIController@getTaxAuthorityFormData')->name("Get tax authority form data");
+	Route::get('getTaxMasterFormData', 'TaxAPIController@getTaxMasterFormData')->name("Get tax master form data");
+	Route::get('getAuthorityByCompany', 'TaxAuthorityAPIController@getAuthorityByCompany')->name("Get tax authority by company");
+	Route::get('getAccountByAuthority', 'TaxAuthorityAPIController@getAccountByAuthority')->name("Get account by tax authority");
+	Route::get('getOtherTax', 'TaxFormulaDetailAPIController@getOtherTax')->name("Get other tax");
+	Route::get('getVatCategoriesFormData', 'TaxVatCategoriesAPIController@getVatCategoriesFormData')->name("Get tax vat categories formdata");
+	Route::get('getVatSubCategoryItemAssignFromData', 'TaxVatCategoriesAPIController@getVatSubCategoryItemAssignFromData')->name("Get tax vat sub category item assign formdata");
+
+	Route::post('getTaxFormulaDetailDatatable', 'TaxFormulaDetailAPIController@getTaxFormulaDetailDatatable')->name("Get tax formula detail datatable");
+	Route::post('getAllVatMainCategories', 'TaxVatMainCategoriesAPIController@getAllVatMainCategories')->name("Get all tax vat main categories");
+	Route::post('getAllVatCategories', 'TaxVatCategoriesAPIController@getAllVatCategories')->name("Get all tax vat categories");
+	Route::post('getTaxAuthorityDatatable', 'TaxAuthorityAPIController@getTaxAuthorityDatatable')->name("Get tax authority datatable");
+	Route::post('getTaxMasterDatatable', 'TaxAPIController@getTaxMasterDatatable')->name("Get tax master datatable");
+	Route::post('getTaxFormulaMasterDatatable', 'TaxFormulaMasterAPIController@getTaxFormulaMasterDatatable')->name("Get tax formula master datatable");
+	Route::post('getAllVatSubCategoryItemAssign', 'TaxVatCategoriesAPIController@getAllVatSubCategoryItemAssign')->name("Get all tax vat sub category item assign");
+	Route::post('assignVatSubCategoryToItem', 'TaxVatCategoriesAPIController@assignVatSubCategoryToItem')->name("Assign tax vat sub category to item ");
+	Route::post('removeAssignedItemFromVATSubCategory', 'TaxVatCategoriesAPIController@removeAssignedItemFromVATSubCategory')->name("Remove assigned item from tax vat sub category");
+
+	Route::resource('tax_authorities', 'TaxAuthorityAPIController');
+	Route::resource('taxes', 'TaxAPIController');
+	Route::resource('tax_formula_details', 'TaxFormulaDetailAPIController');
+	Route::resource('tax_formula_masters', 'TaxFormulaMasterAPIController');
+	Route::resource('tax_vat_main_categories', 'TaxVatMainCategoriesAPIController');
+	Route::resource('tax_vat_categories', 'TaxVatCategoriesAPIController');
+});
+
+//Asset Finance Category
+Route::group([], function() {
+	Route::get('getAssetFinanceCategoryFormData', 'AssetFinanceCategoryAPIController@getAssetFinanceCategoryFormData')->name("Get asset finance category form data");
+
+	Route::post('getAllAssetFinanceCategory', 'AssetFinanceCategoryAPIController@getAllAssetFinanceCategory')->name("Get all asset finance category");
+
+	Route::resource('asset_finance_categories', 'AssetFinanceCategoryAPIController');
+});
+
+//Asset Category
+Route::group([], function() {
+	Route::get('getAssetCategoryFormData', 'FixedAssetCategoryAPIController@getAssetCategoryFormData')->name("Get asset category form data");
+
+	Route::post('getAllAssetCategory', 'FixedAssetCategoryAPIController@getAllAssetCategory')->name("Get all asset category");
+	Route::post('getAllAssetSubCategoryByMain', 'FixedAssetCategorySubAPIController@getAllAssetSubCategoryByMain')->name("Get all asset sub category by main");
+
+	Route::resource('fixed_asset_categories', 'FixedAssetCategoryAPIController');
+	Route::resource('fixed_asset_category_subs', 'FixedAssetCategorySubAPIController');
+});
+
+//Currency Master
+Route::group([], function() {
+	Route::get('getAllConversionByCurrency', 'CurrencyMasterAPIController@getAllConversionByCurrency')->name("Get all conversion by currency");
+
+	Route::post('updateCrossExchange', 'CurrencyConversionAPIController@updateCrossExchange')->name("Update cross exchange currency conversion");
+	Route::post('getCurrencyConversionHistory', 'CurrencyConversionHistoryAPIController@getCurrencyConversionHistory')->name("Get currency conversion history");
+
+	Route::resource('currency_conversions', 'CurrencyConversionAPIController');
+	Route::resource('currency_masters', 'CurrencyMasterAPIController');
+});
+
+//Currency Conversion
+Route::group([], function() {
+	Route::get('getConversionMaster', 'CurrencyConversionMasterAPIController@getConversionMaster')->name("Get conversion master");
+	Route::get('getAllTempConversionByCurrency', 'CurrencyConversionMasterAPIController@getAllTempConversionByCurrency')->name("Get all temp conversion by currency");
+
+	Route::post('getAllCurrencyConversions', 'CurrencyConversionMasterAPIController@getAllCurrencyConversions')->name("Get all currency conversions");
+	Route::post('currencyConversionReopen', 'CurrencyConversionMasterAPIController@currencyConversionReopen')->name("Currency conversion reopen");
+	Route::post('updateTempCrossExchange', 'CurrencyConversionDetailAPIController@updateTempCrossExchange')->name("Update temp cross exchange");
+
+	Route::resource('currency_conversion_masters', 'CurrencyConversionMasterAPIController');
+	Route::resource('currency_conversion_details', 'CurrencyConversionDetailAPIController');
+});
+
+//Logistic Configuration
+Route::group([], function() {
+	Route::get('getAllcountry', 'CountryMasterAPIController@index')->name("Logistic Configuration get all country");
+
+	Route::post('createDeliveryTerms', 'DeliveryTermsMasterAPIController@store')->name("Logistic Configuration create delivery terms");
+	Route::post('createPort', 'PortMasterAPIController@store')->name("Logistic Configuration create Port");
+	Route::post('getAllPort', 'PortMasterAPIController@getAllPort')->name("Logistic Configuration get all Port");
+	Route::post('getAllDeliveryTerms', 'DeliveryTermsMasterAPIController@getAllDeliveryTerms')->name("Logistic Configuration get all delivery terms");
+	Route::post('deletePort', 'PortMasterAPIController@deletePort')->name("Logistic Configuration delete Port");
+	Route::post('deleteDeliveryTerms', 'DeliveryTermsMasterAPIController@deleteDeliveryTerms')->name("Logistic Configuration delete delivery terms");
+
+});
+
+	//Logistic Categories
+Route::group([], function() {
+	Route::get('getItemsOptionForLogistic', 'AddonCostCategoriesAPIController@getItemsOptionForLogistic')->name("Get items option for logistic");
+
+	Route::post('getLogisticCategories', 'AddonCostCategoriesAPIController@getLogisticCategories')->name("Get logistic categories");
+
+	Route::resource('addon_cost_categories', 'AddonCostCategoriesAPIController');
+});
