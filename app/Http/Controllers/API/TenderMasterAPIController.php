@@ -1022,7 +1022,7 @@ WHERE
                     if(is_null($technical_bid_closing_date)) {
                         if($technical_bid_opening_date > $commerical_bid_opening_date && !$rfq) {
                             return ['success' => false, 'message' => 'Commercial Bid Opening from date and time should be greater than technical bid from date and time'];
-                        } elseif (!is_null($input['commerical_bid_opening_date_time']) && !is_null($input['technical_bid_opening_date_time']) && isset($input['technical_bid_closing_date'])) {
+                        } elseif (!is_null($input['commerical_bid_opening_date_time']) && !is_null($input['technical_bid_opening_date_time']) && isset($input['technical_bid_closing_date']) && $rfq) {
                             return ['success' => false, 'message' => 'Commercial Bid Opening from date and time should be greater than technical bid from date and time'];
                         }
                     }else {
