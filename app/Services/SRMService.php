@@ -3977,7 +3977,7 @@ class SRMService
         $search = $request->input('search.value');
         
 
-        $paymentVoucher = PaySupplierInvoiceMaster::where('BPVsupplierID', $supplierID)->where('invoiceType',2)->with(['supplier', 'created_by', 'suppliercurrency', 'bankcurrency', 'expense_claim_type', 'paymentmode', 'project']);
+        $paymentVoucher = PaySupplierInvoiceMaster::where('BPVsupplierID', $supplierID)->whereIn('invoiceType',[2,3,5])->where('approved',-1)->with(['supplier', 'created_by', 'suppliercurrency', 'bankcurrency', 'expense_claim_type', 'paymentmode', 'project']);
 
 
 
