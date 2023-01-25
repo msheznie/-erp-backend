@@ -449,7 +449,6 @@ class FixedAssetMasterAPIController extends AppBaseController
         $input = $request->all();
         $itemImgaeArr = $input['itemImage'];
         $itemPicture = $input['itemPicture'];
-        $isCurrencySame = $input['isCurrencySame'];
         $input = array_except($request->all(), 'itemImage');
         $input = $this->convertArrayToValue($input);
 
@@ -578,20 +577,15 @@ class FixedAssetMasterAPIController extends AppBaseController
             $input["faCode"] = $documentCode;
             $input["faBarcode"] = $documentCode;
 
-            if($isCurrencySame) {
-                $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $company->reportingCurrency, $company->reportingCurrency, $input['costUnitRpt']);
-                if ($companyCurrencyConversion) {
-                    $input['COSTUNIT'] = $companyCurrencyConversion['localAmount'];
+            if(isset($input['isCurrencySame']) && $input['isCurrencySame'] == true) {
+                if ($input['costUnitRpt']) {
+                    $input['COSTUNIT'] = $input['costUnitRpt'];
                 }
-
-                $salvageCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $company->reportingCurrency, $company->reportingCurrency, $input['salvage_value_rpt']);
-                if ($salvageCurrencyConversion) {
-                    $input['salvage_value'] = $salvageCurrencyConversion['localAmount'];
+                if ($input['salvage_value_rpt']) {
+                    $input['salvage_value'] = $input['salvage_value_rpt'];
                 }
-
-                $accumulateCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $company->reportingCurrency, $company->reportingCurrency, $input['accumulated_depreciation_amount_rpt']);
-                if ($accumulateCurrencyConversion) {
-                    $input['accumulated_depreciation_amount_lcl'] = $accumulateCurrencyConversion['localAmount'];
+                if ($input['accumulated_depreciation_amount_rpt']) {
+                    $input['accumulated_depreciation_amount_lcl'] = $input['accumulated_depreciation_amount_rpt'];
                 }
             }
 
@@ -882,6 +876,18 @@ class FixedAssetMasterAPIController extends AppBaseController
             if (isset($input['documentDate'])) {
                 if ($input['documentDate']) {
                     $input['documentDate'] = new Carbon($input['documentDate']);
+                }
+            }
+
+            if(isset($input['isCurrencySame']) && $input['isCurrencySame'] == true) {
+                if ($input['costUnitRpt']) {
+                    $input['COSTUNIT'] = $input['costUnitRpt'];
+                }
+                if ($input['salvage_value_rpt']) {
+                    $input['salvage_value'] = $input['salvage_value_rpt'];
+                }
+                if ($input['accumulated_depreciation_amount_rpt']) {
+                    $input['accumulated_depreciation_amount_lcl'] = $input['accumulated_depreciation_amount_rpt'];
                 }
             }
 
