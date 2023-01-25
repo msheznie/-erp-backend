@@ -1270,7 +1270,7 @@ class ItemMasterAPIController extends AppBaseController
 
         $mainItemUOM =  ItemMaster::selectRaw('units.UnitShortCode, SUM(IFNULL(erp_itemledger.inOutQty,0)) as availableQty')->where('itemCodeSystem', $itemCodeSystem)->join('units', 'UnitID', '=', 'unit')->leftjoin('erp_itemledger', 'itemCodeSystem', '=', 'itemSystemCode')->groupBy('itemSystemCode')->first();
 
-        $mainItems = ItemAssigned::selectRaw('CONCAT(itemassigned.itemPrimaryCode, " - " ,itemassigned.itemDescription, " - ", units.UnitShortCode) as itemCode, itemassigned.itemCodeSystem')->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'itemassigned.itemCodeSystem')->join('units', 'UnitID', '=', 'unit')->where('companySystemID', $selectedCompanyId)->where('itemmaster.isSubItem', 0)->get();
+        $mainItems = ItemAssigned::selectRaw('CONCAT(itemassigned.itemPrimaryCode, " - " ,itemassigned.itemDescription, " - ", units.UnitShortCode) as itemCode, itemassigned.itemCodeSystem')->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'itemassigned.itemCodeSystem')->join('units', 'UnitID', '=', 'unit')->where('companySystemID', $selectedCompanyId)->where('itemmaster.isSubItem', 0)->where('itemassigned.isActive', 1)->where('itemassigned.isAssigned', -1)->get();
 
         $output = array('subItems' => $subItems, 'isSubItem'=>$isSubItem, 'mainItemUOM' => $mainItemUOM, 'mainItems' => $mainItems);
 
