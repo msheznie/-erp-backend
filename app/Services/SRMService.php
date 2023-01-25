@@ -1925,6 +1925,10 @@ class SRMService
             'site_visit_end_date',
             'bid_submission_opening_date',
             'bid_submission_closing_date',
+            'technical_bid_opening_date',
+            'technical_bid_closing_date',
+            'commerical_bid_opening_date',
+            'commerical_bid_closing_date',
             'no_of_alternative_solutions',
             'is_active_go_no_go'
         )
@@ -1966,6 +1970,16 @@ class SRMService
                     'calendar_date' => 'Bid Submission Date',
                     'from_date' => (!is_null($tenderMaster['bid_submission_opening_date'])) ? Carbon::parse($tenderMaster['bid_submission_opening_date'])->format('Y-m-d') : null,
                     'to_date' => (!is_null($tenderMaster['bid_submission_closing_date'])) ? Carbon::parse($tenderMaster['bid_submission_closing_date'])->format('Y-m-d') : null
+                ],
+                [
+                    'calendar_date' => 'Technical Bid Date',
+                    'from_date' => (!is_null($tenderMaster['technical_bid_opening_date'])) ? Carbon::parse($tenderMaster['technical_bid_opening_date'])->format('Y-m-d') : null,
+                    'to_date' => (!is_null($tenderMaster['technical_bid_closing_date'])) ? Carbon::parse($tenderMaster['technical_bid_closing_date'])->format('Y-m-d') : null
+                ],
+                [
+                    'calendar_date' => 'Commercial Bid Date',
+                    'from_date' => (!is_null($tenderMaster['commerical_bid_opening_date'])) ? Carbon::parse($tenderMaster['commerical_bid_opening_date'])->format('Y-m-d') : null,
+                    'to_date' => (!is_null($tenderMaster['commerical_bid_closing_date'])) ? Carbon::parse($tenderMaster['commerical_bid_closing_date'])->format('Y-m-d') : null
                 ]
             );
         }
