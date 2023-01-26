@@ -1833,11 +1833,6 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
                 ->where('documentSystemID', 3)
                 ->delete();
 
-            //deleting records from tax detail
-            $deleteTaxDetailData = Taxdetail::where('documentSystemCode', $input['grvAutoID'])
-                ->where('companySystemID', $grv->companySystemID)
-                ->where('documentSystemID', 3)
-                ->delete();
 
             AuditTrial::createAuditTrial($grv->documentSystemID,$input['grvAutoID'],$input['grvReversalComment'],'reversed');
 
