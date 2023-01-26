@@ -108,8 +108,7 @@ Route::group([], function() {
     Route::get('ProcurementOrderAudit', 'ProcumentOrderAPIController@ProcurementOrderAudit')->name('Procurement order audit');
     Route::get('getPurchaseOrderDetailForGRV', 'PurchaseOrderDetailsAPIController@getPurchaseOrderDetailForGRV')->name('Get purchase order detail for grv');
     Route::get('getLogisticPrintDetail', 'PoAdvancePaymentAPIController@getLogisticPrintDetail')->name('Get logistic print detail');
-    Route::get('getPoLogisticPrintPDF', 'PoAdvancePaymentAPIController@getPoLogisticPrintPDF')->name('Get procurement order logistic print pdf');
-    Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF')->name('Get procurement order print pdf');
+    
 
     Route::post('allocateExpectedDeliveryDates', 'PoDetailExpectedDeliveryDateAPIController@allocateExpectedDeliveryDates')->name('Allocate expected delivery dates');
     Route::post('getAllocatedExpectedDeliveryDates', 'PoDetailExpectedDeliveryDateAPIController@getAllocatedExpectedDeliveryDates')->name('Get allocated expected delivery dates');
