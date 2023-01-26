@@ -1051,7 +1051,7 @@ WHERE
         } else {
             $existTndr = TenderMaster::where('title', $input['title'])->where('id', '!=', $input['id'])->where('company_id', $input['companySystemID'])->where('document_type', 0)->first();
         }
-        
+
         if (!empty($existTndr)) {
             if($rfq){
                 return ['success' => false, 'message' => 'RFX title cannot be duplicated'];
