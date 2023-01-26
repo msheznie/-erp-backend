@@ -442,7 +442,12 @@ class TenderMasterAPIController extends AppBaseController
         $input = $request->all();
         $input = $this->convertArrayToSelectedValue($request->all(), array('currency_id'));
         $employee = \Helper::getEmployeeInfo();
-        $exist = TenderMaster::where('title', $input['title'])->where('company_id', $input['companySystemID'])->first();
+        if(isset($input['rfx']) && $input['rfx']){
+            $exist = TenderMaster::where('title', $input['title'])->where('company_id', $input['companySystemID'])->where('document_type', '!=', 0)->first();
+        } else {
+            $exist = TenderMaster::where('title', $input['title'])->where('company_id', $input['companySystemID'])->where('document_type', 0)->first();
+        }
+
         if (!empty($exist)) {
             if(isset($input['rfx']) && $input['rfx']){
                 return ['success' => false, 'message' => 'RFX title cannot be duplicated'];
