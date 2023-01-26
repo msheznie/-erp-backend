@@ -3456,7 +3456,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 ->delete();
 
             //deleting records from tax ledger
-            $deleteTaxLedgerData = TaxLedger::where('documentSystemCode', $id)
+            $deleteTaxLedgerData = TaxLedger::where('documentMasterAutoID', $id)
                 ->where('companySystemID', $masterData->companySystemID)
                 ->where('documentSystemID', $masterData->documentSystemID)
                 ->delete();
