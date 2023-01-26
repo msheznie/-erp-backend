@@ -17,6 +17,7 @@ use App\Models\BidSubmissionMaster;
 use App\Models\CircularSuppliers;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
+use App\Models\CompanyPolicyMaster;
 use App\Models\CountryMaster;
 use App\Models\CurrencyMaster;
 use App\Models\DirectInvoiceDetails;
@@ -4056,6 +4057,13 @@ class SRMService
                     $query->where('documentSystemID', 4);
                     $query->with(['bankrec_by', 'bank_transfer']);
                 },'audit_trial.modified_by'])->first();
+
+        
+        $isProjectBase = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
+        ->where('companySystemID', $output->companySystemID)
+        ->where('isYesNO', 1)
+        ->exists();
+        $output['isProjectBase'] = $isProjectBase;
 
         return [
             'success' => true,
