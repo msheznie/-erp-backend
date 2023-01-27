@@ -2204,9 +2204,9 @@ WHERE
     {
         $employee = \Helper::getEmployeeInfo();
 
+        $rfx = isset($request['rfq']) ? true : false;
         $fromTime =($request['from_time']) ? new Carbon($request['from_time']) : null;
         $toTime = ($request['to_time']) ? new Carbon($request['to_time']) : null;
-
 
         $calendarDatesDetail = CalendarDatesDetail::where('calendar_date_id', $request['calenderDateTypeId'])
             ->where('tender_id', $request['tenderMasterId'])
@@ -2228,16 +2228,19 @@ WHERE
         }
 
 
-        if (isset($request['to_date'])) {
+        if (isset($request['to_date']) && !empty($request['to_date'])) {
             $to_date = new Carbon($request['to_date']);
             $to_date = ($toTime) ? $to_date->format('Y-m-d').' '.$toTime->format('H:i:s') : $to_date->format('Y-m-d');
+            $data['to_date'] = $to_date;
+        } else {
+            $to_date = null;
             $data['to_date'] = $to_date;
         }
 
         if (!empty($to_date) && empty($frm_date)) {
             return ['success' => false, 'message' => 'From date cannot be empty'];
         }
-        if (!empty($frm_date) && empty($to_date)) {
+        if (!empty($frm_date) && empty($to_date) && !$rfx) {
             return ['success' => false, 'message' => 'To date cannot be empty'];
         }
 
