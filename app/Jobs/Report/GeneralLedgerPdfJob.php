@@ -221,7 +221,7 @@ class GeneralLedgerPdfJob implements ShouldQueue
                     IF
                         ( documentRptAmount < 0, ( documentRptAmount *- 1 ), 0 ) AS rptCredit,
                     IF
-                        ( erp_generalledger.documentSystemID = 71 OR erp_generalledger.documentSystemID = 20 OR erp_generalledger.documentSystemID = 21 OR erp_generalledger.documentSystemID = 19, customermaster.CustomerName, suppliermaster.supplierName ) AS isCustomer 
+                        ( erp_generalledger.documentSystemID = 87 OR erp_generalledger.documentSystemID = 71 OR erp_generalledger.documentSystemID = 20 OR erp_generalledger.documentSystemID = 21 OR erp_generalledger.documentSystemID = 19, customermaster.CustomerName, suppliermaster.supplierName ) AS isCustomer 
                     FROM
                         erp_generalledger
                         LEFT JOIN employees as approveEmp ON erp_generalledger.documentFinalApprovedByEmpSystemID = approveEmp.employeeSystemID
@@ -295,7 +295,7 @@ class GeneralLedgerPdfJob implements ShouldQueue
                         AND erp_generalledger.glAccountTypeID = 1
                         AND  erp_generalledger.chartOfAccountSystemID IN (' . join(',', $chartOfAccountId) . ')
                         AND  erp_generalledger.serviceLineSystemID IN (' . join(',', $serviceLineId) . ')
-                        AND DATE(erp_generalledger.documentDate) <= "' . $fromDate . '"
+                        AND DATE(erp_generalledger.documentDate) < "' . $fromDate . '"
                     GROUP BY
                         erp_generalledger.companySystemID,
                         erp_generalledger.serviceLineSystemID,
