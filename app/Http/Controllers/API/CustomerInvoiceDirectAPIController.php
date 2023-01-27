@@ -4446,12 +4446,6 @@ WHERE
                 ->where('documentSystemID', $masterData->documentSystemiD)
                 ->delete();
 
-            //deleting records from tax detail
-            $deleteTaxDetailData = Taxdetail::where('documentSystemCode', $id)
-                ->where('companySystemID', $masterData->companySystemID)
-                ->where('documentSystemID', $masterData->documentSystemiD)
-                ->delete();
-
             //deleting records from tax ledger
             $deleteTaxLedgerData = TaxLedger::where('documentMasterAutoID', $id)
                 ->where('companySystemID', $masterData->companySystemID)

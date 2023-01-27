@@ -2220,12 +2220,6 @@ UNION ALL
                 ->where('documentSystemID', $debitNoteMasterData->documentSystemID)
                 ->delete();
 
-            //deleting records from tax detail
-            $deleteTaxDetailData = Taxdetail::where('documentSystemCode', $debitNoteAutoID)
-                ->where('companySystemID', $debitNoteMasterData->companySystemID)
-                ->where('documentSystemID', $debitNoteMasterData->documentSystemID)
-                ->delete();
-
             //deleting records from tax ledger
             $deleteTaxLedgerData = TaxLedger::where('documentMasterAutoID', $debitNoteAutoID)
                 ->where('companySystemID', $debitNoteMasterData->companySystemID)
