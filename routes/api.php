@@ -2517,6 +2517,7 @@ Route::get('viewDocumentEmployeeImg', 'ThirdPartySystemsDocumentUploadAndDownloa
 Route::get('viewDocumentEmployeeImgBulk', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@viewDocumentEmployeeImgBulk');
 Route::post('documentUploadDelete', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@documentUploadDelete');
 Route::get('viewHrDocuments', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@viewHrDocuments');
+        
 
 
 /*
