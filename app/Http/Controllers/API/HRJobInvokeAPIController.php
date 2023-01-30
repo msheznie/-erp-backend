@@ -22,6 +22,7 @@ use App\Services\hrms\attendance\AttendanceDailySummaryService;
 use App\Services\hrms\attendance\AttendanceWeeklySummaryService;
 use App\helper\BirthdayWishService;
 use App\Models\Company;
+use Illuminate\Support\Facades\Artisan;
 
 class HRJobInvokeAPIController extends AppBaseController
 {
@@ -180,5 +181,10 @@ class HRJobInvokeAPIController extends AppBaseController
 
         $job->execute();
 
+    }
+
+    function birthdayWishesEmailSchedulerDebug(){
+
+        Artisan::call('command:birthday_wish_schedule');
     }
 }
