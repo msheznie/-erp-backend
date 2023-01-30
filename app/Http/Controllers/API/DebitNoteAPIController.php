@@ -915,34 +915,7 @@ class DebitNoteAPIController extends AppBaseController
 
                  Taxdetail::create($taxDetail);
             }
-
-            // updating header amounts
-            $totalAmount = DebitNoteDetails::selectRaw("COALESCE(SUM(debitAmount),0) as debitAmountTrans, 
-                                                    COALESCE(SUM(localAmount),0) as debitAmountLocal, 
-                                                    COALESCE(SUM(comRptAmount),0) as debitAmountRpt,
-                                                    COALESCE(SUM(VATAmount),0) as VATAmount,
-                                                    COALESCE(SUM(VATAmountLocal),0) as VATAmountLocal, 
-                                                    COALESCE(SUM(VATAmountRpt),0) as VATAmountRpt,
-                                                    COALESCE(SUM(netAmount),0) as netAmount,
-                                                    COALESCE(SUM(netAmountLocal),0) as netAmountLocal, 
-                                                    COALESCE(SUM(netAmountRpt),0) as netAmountRpt
-                                                    ")
-                ->where('debitNoteAutoID', $id)
-                ->first();
-
-            $input['debitAmountTrans'] = \Helper::roundValue($totalAmount->debitAmountTrans);
-            $input['debitAmountLocal'] = \Helper::roundValue($totalAmount->debitAmountLocal);
-            $input['debitAmountRpt'] = \Helper::roundValue($totalAmount->debitAmountRpt);
-
-
-            $input['VATAmount'] = \Helper::roundValue($totalAmount->VATAmount);
-            $input['VATAmountLocal'] = \Helper::roundValue($totalAmount->VATAmountLocal);
-            $input['VATAmountRpt'] = \Helper::roundValue($totalAmount->VATAmountRpt);
-
-
-            $input['netAmount'] = \Helper::roundValue($totalAmount->netAmount);
-            $input['netAmountLocal'] = \Helper::roundValue($totalAmount->netAmountLocal);
-            $input['netAmountRpt'] = \Helper::roundValue($totalAmount->netAmountRpt);
+            
 
             $input['RollLevForApp_curr'] = 1;
             $params = array('autoID' => $id,
