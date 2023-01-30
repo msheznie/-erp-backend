@@ -58,6 +58,10 @@ class Kernel extends ConsoleKernel
             ->weeklyOn(5, '09:00')
             ->withoutOverlapping();
 
+        $schedule->command('command:birthday_wish_schedule')
+            ->timezone('Asia/Muscat')
+            ->dailyAt('02:00')
+            ->withoutOverlapping();
     }
 
     /**
