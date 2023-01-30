@@ -2534,5 +2534,3 @@ Route::get('viewHrDocuments', 'ThirdPartySystemsDocumentUploadAndDownloadAPICont
  * End external related routes
  */
 
-
-Route::resource('pdc_log_printed_histories', 'PdcLogPrintedHistoryAPIController');

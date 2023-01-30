@@ -33,6 +33,8 @@ use App\Http\Requests\API\UpdateGRVMasterAPIRequest;
 use App\Models\PurchaseOrderDetails;
 use App\Models\BudgetConsumedData;
 use App\Models\ErpItemLedger;
+use App\Models\Taxdetail;
+use App\Models\TaxLedger;
 use App\Models\TaxLedgerDetail;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
@@ -1786,6 +1788,18 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
             $itemLedger = ErpItemLedger::where(['companySystemID' => $grv->companySystemID, 'documentSystemID' => 3, 'documentSystemCode' => $input['grvAutoID']])->delete();
             $approvers = DocumentApproved::where(['companySystemID' => $grv->companySystemID, 'documentSystemID' => 3, 'documentSystemCode' => $input['grvAutoID']])->delete();
             $taxLedger = TaxLedgerDetail::where(['companySystemID' => $grv->companySystemID, 'documentSystemID' => 3, 'documentMasterAutoID' => $input['grvAutoID']])->delete();
+
+            //deleting records from tax ledger
+            $deleteTaxLedgerData = TaxLedger::where('documentMasterAutoID', $input['grvAutoID'])
+                ->where('companySystemID', $grv->companySystemID)
+                ->where('documentSystemID', 3)
+                ->delete();
+
+            //deleting records from tax detail
+            $deleteTaxDetailData = Taxdetail::where('documentSystemCode', $input['grvAutoID'])
+                ->where('companySystemID', $grv->companySystemID)
+                ->where('documentSystemID', 3)
+                ->delete();
 
             AuditTrial::createAuditTrial($grv->documentSystemID,$input['grvAutoID'],$input['grvReversalComment'],'reversed');
 

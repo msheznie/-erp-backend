@@ -3089,6 +3089,12 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
                 ->where('documentSystemID', $bookInvSuppMasterData->documentSystemID)
                 ->delete();
 
+            //deleting records from tax detail
+            $deleteTaxDetailData = Taxdetail::where('documentSystemCode', $bookingSuppMasInvAutoID)
+                ->where('companySystemID', $bookInvSuppMasterData->companySystemID)
+                ->where('documentSystemID', $bookInvSuppMasterData->documentSystemID)
+                ->delete();
+
             // updating fields
             $bookInvSuppMasterData->confirmedYN = 0;
             $bookInvSuppMasterData->confirmedByEmpSystemID = null;
