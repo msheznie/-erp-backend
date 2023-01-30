@@ -2506,7 +2506,7 @@ Route::group(['prefix' => 'external'], function (){
 Route::get('attendance-clock-out', 'HRJobInvokeAPIController@clockOutDebug');
 Route::get('attendance-clock-in', 'HRJobInvokeAPIController@attendanceClockIn');
 Route::get('attendance-notification-debug', 'HRJobInvokeAPIController@attendance_notification_debug');
-Route::get('birthdayWishesEmailDebug', 'HRJobInvokeAPIController@birthdayWishesEmailSchedulerDebug');
+Route::get('birthdayWishesEmailDebug', 'HRJobInvokeAPIController@birthdayWishesEmailDebug');
 /* end of separated from tenant, auth middlewares */
 
 
