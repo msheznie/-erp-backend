@@ -1278,14 +1278,6 @@ class ItemMasterAPIController extends AppBaseController
 
     }
 
-    public function getMainItemById($id)
-    {
-        $itemMasters = ItemAssigned::where('itemCodeSystem', $id)->selectRaw('itemPrimaryCode, itemDescription, units.UnitShortCode')->join('units', 'UnitID', '=', 'itemUnitOfMeasure')->first();
-
-        return $this->sendResponse($itemMasters->toArray(), 'Item Assigned saved successfully');
-
-    }
-
 
     public function approveItem(Request $request)
     {
