@@ -464,7 +464,7 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
         $transferAmount = collect($budgetTransferToData)->sum('adjustmentAmountRpt');
         if ($transferAmount > $balance) {
 
-            $balance = CurrencyValidation::convertToLocalCurrencyDecimal($budgetTransferMaster->companySystemID, $balance);
+            $balance = CurrencyValidation::convertToRptCurrencyDecimal($budgetTransferMaster->companySystemID, $balance);
 
             $msg = "You cannot transfer more than the balance amount, Balance amount is {$balance}";
             throw new \Exception($msg, 500);

@@ -410,7 +410,23 @@ class CurrencyValidation
         return number_format($amount, $dPlace);
     }
 
+    public static function convertToRptCurrencyDecimal($companyId, $amount)
+    {
+        $dPlace = 2;
+        $rpt_currency_id = self::companyRptCurrency($companyId);
+
+        if($rpt_currency_id){
+            $dPlace = Helper::getCurrencyDecimalPlace($rpt_currency_id);
+        }
+
+        return number_format($amount, $dPlace);
+    }
+
 	public static function companyLocalCurrency($companyId){
 	    return Company::find($companyId)->localCurrencyID;
+    }
+
+    public static function companyRptCurrency($companyId){
+        return Company::find($companyId)->reportingCurrency;
     }
 }
