@@ -66,8 +66,22 @@ class ErpProjectMasterAPIController extends AppBaseController
      * )
      */
     
-     public function get_projects(){
-        $projectMaster = ErpProjectMaster::with('company:CompanyID,companySystemID,CompanyName','currency', 'service_line')->get();
+     public function get_projects(Request $request){
+
+        $input = $request->all();
+        $companySystemID = $input['company_id'];
+
+        $companyID = "";
+        $checkIsGroup = Company::find($companySystemID);
+        if ($checkIsGroup->isGroup) {
+            $companyID = \Helper::getGroupCompany($companySystemID);
+        } else {
+            $companyID = [$companySystemID];
+        }
+
+        $projectMaster = ErpProjectMaster::with('company:CompanyID,companySystemID,CompanyName','currency', 'service_line')
+                                            ->whereIN('companySystemID', $companyID)
+                                            ->get();
         return $this->sendResponse($projectMaster, 'Projects retrieved successfully');
     }
 

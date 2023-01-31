@@ -24,6 +24,7 @@ use App\Http\Requests\API\CreateChequeRegisterDetailAPIRequest;
 use App\Http\Requests\API\UpdateChequeRegisterDetailAPIRequest;
 use App\Models\ChequeRegister;
 use App\Models\ChequeRegisterDetail;
+use App\Models\CompanyPolicyMaster;
 use App\Models\PaySupplierInvoiceMaster;
 use App\Repositories\ChequeRegisterDetailRepository;
 use Carbon\Carbon;
@@ -325,7 +326,16 @@ class ChequeRegisterDetailAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $chequeRegisterDetails = ChequeRegisterDetail::with(['document'])->where('cheque_register_master_id', $id);
+        $is_exist_policy_GCNFCR = CompanyPolicyMaster::where('companySystemID', $input['companySystemID'])
+                                                                ->where('companyPolicyCategoryID', 35)
+                                                                ->where('isYesNO', 1)
+                                                                ->first();
+
+        $isExistPolicyGCNFCR = ($is_exist_policy_GCNFCR) ? true : false;
+
+        $chequeRegisterDetails = ChequeRegisterDetail::with(['document', 'pdc_printed_history' => function($query) {
+                                    $query->with(['cheque_printed_by', 'changed_by', 'pay_supplier', 'currency']);
+                                }])->where('cheque_register_master_id', $id);
         $search = $request->input('search.value');
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
@@ -348,6 +358,7 @@ class ChequeRegisterDetailAPIController extends AppBaseController
             })
             ->addIndexColumn()
             ->with('orderCondition', $sort)
+            ->with('isExistPolicyGCNFCR', $isExistPolicyGCNFCR)
             ->make(true);
 
     }
