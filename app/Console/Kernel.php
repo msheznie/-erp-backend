@@ -60,7 +60,7 @@ class Kernel extends ConsoleKernel
 
         $schedule->command('command:birthday_wish_schedule')
             ->timezone('Asia/Muscat')
-            ->dailyAt('08:30')
+            ->dailyAt('02:00')
             ->withoutOverlapping();
     }
 
