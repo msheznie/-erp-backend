@@ -900,6 +900,13 @@ class ItemMasterAPIController extends AppBaseController
             $input['faFinanceCatID'] = null;
         }
 
+        if (isset($input['isSubItem']) && $input['isSubItem'] == 1) {
+            $mainItemID = isset($input['mainItemID'][0]) ? $input['mainItemID'][0] : $input['mainItemID'];
+            if (!$mainItemID) {
+                return $this->sendError('Main Item field is required.');
+            }
+        }
+
 
              
         $disk = Helper::policyWiseDisk($input['primaryCompanySystemID'], 'public');

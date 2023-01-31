@@ -24,6 +24,7 @@ use App\helper\BirthdayWishService;
 use App\Models\Company;
 use Illuminate\Support\Facades\Artisan;
 
+
 class HRJobInvokeAPIController extends AppBaseController
 {
     public function attendanceClockIn(Request $request)
@@ -151,7 +152,6 @@ class HRJobInvokeAPIController extends AppBaseController
     }
 
     function birthdayWishesEmailDebug(){
-
         Artisan::call('command:birthday_wish_schedule');
     }
 
