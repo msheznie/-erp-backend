@@ -896,13 +896,13 @@ class ItemMasterAPIController extends AppBaseController
             return $this->sendError('Finance Audit category is required.');
         }
 
-        if (isset($input['financeCategoryMaster']) && $input['financeCategoryMaster'] == 3 && (!isset($input['faFinanceCatID']) || (isset($input['faFinanceCatID']) && is_null($input['faFinanceCatID'])))) {
-            return $this->sendError('Finance Audit category is required.');
+        if (isset($input['financeCategoryMaster']) && $input['financeCategoryMaster'] != 3) {
+            $input['faFinanceCatID'] = null;
         }
 
         if (isset($input['isSubItem']) && $input['isSubItem'] == 1) {
-            $mainItemID = isset($input['mainItemID'][0]) ?  $input['mainItemID'][0]: $input['mainItemID'];
-            if(!$mainItemID){
+            $mainItemID = isset($input['mainItemID'][0]) ? $input['mainItemID'][0] : $input['mainItemID'];
+            if (!$mainItemID) {
                 return $this->sendError('Main Item field is required.');
             }
         }
