@@ -768,10 +768,28 @@ class ClubManagementAPIController extends AppBaseController
         DB::beginTransaction();
         try {
             $company_id = $request->get('company_id');
-            $banks = BankAccount::selectRaw('bankShortCode As bankCode, bankName As bankName, AccountNo as accountNo, accountCurrencyID as currency, chartOfAccountSystemID as glCode, bankBranch as bankBranch, accountSwiftCode as swiftCode, isAccountActive as isActive')
-                ->where('companySystemID', $company_id)
-                ->where('approvedYN', 1)
-                ->get();
+
+            $bank_master_id = $request->get('bank_master_id');
+
+            if($bank_master_id) {
+
+                $banks = BankAccount::selectRaw('bankAccountAutoID,bankMasterAutoID, bankShortCode As bankCode, bankName As bankName, AccountNo as accountNo, accountCurrencyID as currency, chartOfAccountSystemID as glCode, bankBranch as bankBranch, accountSwiftCode as swiftCode, isAccountActive as isActive')
+                    ->where('companySystemID', $company_id)
+                    ->where('bankMasterAutoID', $bank_master_id)
+                    ->where('approvedYN', 1)
+                    ->get();
+            } else{
+
+                $banks = BankAccount::selectRaw('bankAccountAutoID,bankMasterAutoID, bankShortCode As bankCode, bankName As bankName, AccountNo as accountNo, accountCurrencyID as currency, chartOfAccountSystemID as glCode, bankBranch as bankBranch, accountSwiftCode as swiftCode, isAccountActive as isActive')
+                    ->where('companySystemID', $company_id)
+                    ->where('approvedYN', 1)
+                    ->get();
+            }
+
+
+
+
+
 
             DB::commit();
             return $this->sendResponse($banks, 'Data Retrieved successfully');
