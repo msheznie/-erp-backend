@@ -235,6 +235,7 @@ class GlPostedDateService
 
         if (is_null($postedDate)) {
             $postedDate = date('Y-m-d H:i:s');
+            $postedDateOnly = date('Y-m-d');
 
             $documentMaster = DocumentMaster::find($documentSystemID);
 
@@ -244,8 +245,8 @@ class GlPostedDateService
                 $financePeriod = CompanyFinancePeriod::where('departmentSystemID', $documentMaster->departmentSystemID)
                                                      ->where('isActive', -1)
                                                      ->where('companySystemID', $companySystemID)
-                                                     ->whereDate('dateFrom', '<=', $postedDate)
-                                                     ->whereDate('dateTo', '>=', $postedDate)
+                                                     ->whereDate('dateFrom', '<=', $postedDateOnly)
+                                                     ->whereDate('dateTo', '>=', $postedDateOnly)
                                                      ->first();
 
                 if (!$financePeriod) {
