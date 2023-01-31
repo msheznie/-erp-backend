@@ -307,6 +307,18 @@ class ClubManagementAPIController extends AppBaseController
             $financePeriod = CompanyFinancePeriod::where('companySystemID', $dt['companySystemID'])->where('departmentSystemID', 4)->where('dateFrom', "<=", $dt['custPaymentReceiveDate'])->where('dateTo', ">=", $dt['custPaymentReceiveDate'])->first();
             $customer = CustomerCurrency::where('customerCodeSystem', $dt['customerID'])->first();
 
+                if(!isset($dt['customerGLCodeSystemID'])){
+                    return $this->sendError('customerGLCodeSystemID is required');
+                }
+                
+            $customerGLCode = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $dt['customerGLCodeSystemID'])->where('companySystemID', $dt['companySystemID'])->first();
+
+
+
+            if (empty($customerGLCode)) {
+                    return $this->sendError('Customer GL Code not found');
+            }
+
 
             if (empty($customer)) {
                 return $this->sendError('Customer not found');
@@ -352,8 +364,8 @@ class ClubManagementAPIController extends AppBaseController
                 'custPaymentReceiveDate' => $dt['custPaymentReceiveDate'],
                 'narration' => $dt['narration'],
                 'customerID' => $dt['customerID'],
-                'customerGLCodeSystemID' => isset($customer->custGLAccountSystemID) ? $customer->custGLAccountSystemID : null,
-                'customerGLCode' => isset($customer->custGLaccount) ? $customer->custGLaccount : null,
+                'customerGLCodeSystemID' => $dt['customerGLCodeSystemID'],
+                'customerGLCode' => isset($customerGLCode->AccountCode) ? $customerGLCode->AccountCode: null,
                 'custTransactionCurrencyID' => $myCurr,
                 'custTransactionCurrencyER' => 1,
                 'bankID' => $dt['bankID'],
