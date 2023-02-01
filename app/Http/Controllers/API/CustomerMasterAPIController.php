@@ -808,11 +808,17 @@ class CustomerMasterAPIController extends AppBaseController
     {
 
         $companySystemID = $request['companySystemID'];
+        $selectedCompanySystemID = $request['selectedCompanySystemID'];
 
-        $customerCompanies = CustomerAssigned::where('companySystemID', $companySystemID)
-            ->with(['company', 'customer_master' => function ($query) {
-                $query->select('customerCodeSystem', 'companyLinkedToSystemID');
+        $customerCompanies = CustomerAssigned::where('companySystemID', $selectedCompanySystemID)
+            ->with(['company', 'customer_master' => function ($query) use ($companySystemID) {
+                $query->select('customerCodeSystem', 'companyLinkedToSystemID')
+                      ->where('companyLinkedToSystemID', $companySystemID);
             }])
+            ->whereHas('customer_master', function($query) use ($companySystemID){
+                $query->where('companyLinkedToSystemID', $companySystemID);
+            })
+            ->where('isAssigned', -1)
             ->orderBy('customerAssignedID', 'DESC')
             ->get();
 
