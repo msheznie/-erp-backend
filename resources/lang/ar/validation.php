@@ -173,7 +173,7 @@ return [
         'expenseClaimCategoriesAutoID' => 'الفئة',
         'yearID' => 'السنة',
         'reportTypeID' => 'نوع التقرير',
-        'chartOfAccountSystemID' => 'رمز الحساب العام
+        'chartOfAccountSystemID' => 'رمز الحساب العام',
         'accountCurrencyID' => 'العملة',
         'financeCategorySub' => 'الفئة المالية الفرعية',
         'primaryCompanySystemID' => 'الشركة الأساسية',
