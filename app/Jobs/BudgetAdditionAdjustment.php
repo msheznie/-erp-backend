@@ -6,6 +6,7 @@ use App\Models\ErpBudgetAddition;
 use App\Models\Budjetdetails;
 use App\Models\ChartOfAccount;
 use App\Models\CompanyFinanceYear;
+use App\Models\Company;
 use App\Models\TemplatesDetails;
 use App\Repositories\AuditTrailRepository;
 use App\Repositories\BudgetAdjustmentRepository;
@@ -44,6 +45,18 @@ class BudgetAdditionAdjustment implements ShouldQueue
         Log::useFiles(storage_path() . '/logs/budget_addition_adjustment_jobs.log');
         if (!empty($budgetAddition)) {
             DB::beginTransaction();
+
+            $companyData = Company::with(['localcurrency', 'reportingcurrency'])->where('companySystemID', $budgetAddition->companySystemID)
+                                  ->first();
+
+            $localDecimalPlaces = 3; // set default value as 3, since old code hard coded as 3
+            $reportingDecimalPlaces = 2;
+
+            if ($companyData) {
+                $localDecimalPlaces = $companyData->localcurrency ? $companyData->localcurrency->DecimalPlaces : 3;
+                $reportingDecimalPlaces = $companyData->reportingcurrency ? $companyData->reportingcurrency->DecimalPlaces : 2;
+            }
+
             try {
                 Log::info('Successfully start  budget_addition_adjustment' . date('H:i:s'));
                 Log::info($budgetAddition);
@@ -106,8 +119,8 @@ class BudgetAdditionAdjustment implements ShouldQueue
                     Log::info('conversion ' .  $conversion);
                     $budgetmasterID = null;
                     if($TotalCount > 0){
-                        $toAddAmountRpt = round(($item['adjustmentAmountRpt']/$TotalCount),2);
-                        $toAddAmountLocal = round(($item['adjustmentAmountLocal']/$TotalCount),3);
+                        $toAddAmountRpt = round(($item['adjustmentAmountRpt']/$TotalCount),$reportingDecimalPlaces);
+                        $toAddAmountLocal = round(($item['adjustmentAmountLocal']/$TotalCount),$localDecimalPlaces);
 
                         foreach ($BudgetDetails as $BudgetDetailVal){
                             Log::info('budjetAmtLocal conversion ' .  ((($BudgetDetailVal['budjetAmtLocal'] * $conversion)  + $toAddAmountLocal) * $conversion));

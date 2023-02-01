@@ -7,6 +7,7 @@ use App\Http\Requests\API\CreateErpBudgetAdditionDetailAPIRequest;
 use App\Http\Requests\API\UpdateErpBudgetAdditionDetailAPIRequest;
 use App\Models\BudgetMaster;
 use App\Models\Budjetdetails;
+use App\Models\Company;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\CompanyFinanceYearperiodMaster;
 use App\Models\ErpBudgetAdditionDetail;
@@ -147,6 +148,13 @@ class ErpBudgetAdditionDetailAPIController extends AppBaseController
             return $this->sendError('Please select an active to department', 500);
         }
 
+        $companyData = Company::find($budgetAdditionMaster->companySystemID);
+
+        if (empty($companyData)) {
+            return $this->sendError('Company not found');
+        }
+
+
         $input['serviceLineCode'] = $department->ServiceLineCode;
 
         /*GL Code*/
@@ -162,7 +170,7 @@ class ErpBudgetAdditionDetailAPIController extends AppBaseController
         $input['gLCodeDescription'] = $chartOfAccount->AccountDescription;
 
         /*Local Amount*/
-        $currency = \Helper::currencyConversion($budgetAdditionMaster->companySystemID, 2, 2, $input['adjustmentAmountRpt']);
+        $currency = \Helper::currencyConversion($budgetAdditionMaster->companySystemID, $companyData->reportingCurrency, $companyData->reportingCurrency, $input['adjustmentAmountRpt']);
         $input['adjustmentAmountLocal'] = $currency['localAmount'];
 
         /*Budget details id*/
