@@ -50,11 +50,13 @@ class BirthdayWishService
 
     function getEmployeeDetails()
     {
-        return $employeeDetails = SrpEmployeeDetails::select('EIdNo','Ename2', 'EEmail', 'EDOB','Erp_companyID')
-        ->whereRaw('DATE_FORMAT(EDOB, "%m %d") = DATE_FORMAT(curdate() , "%m %d")')
-        ->where('Erp_companyID', $this->companyId)
-        ->where('isDischarged',0)
-        ->get();
+        $currentDate = Carbon::now('Asia/Muscat')->format('d-m');
+
+        return SrpEmployeeDetails::select('EIdNo','Ename2', 'EEmail', 'EDOB','Erp_companyID')
+            ->whereRaw("DATE_FORMAT(EDOB, '%m-%d') = '$currentDate'")
+            ->where('Erp_companyID', $this->companyId)
+            ->where('isDischarged',0)
+            ->get();
     }
 
     function sendEachEmail($employeeDetails)
