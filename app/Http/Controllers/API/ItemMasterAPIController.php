@@ -43,6 +43,7 @@ use App\Models\ItemMasterRefferedBack;
 use App\Models\SupplierCatalogMaster;
 use App\Models\TaxVatCategories;
 use App\Models\Unit;
+use App\Models\UnitConversion;
 use App\Models\WarehouseBinLocation;
 use App\Models\WarehouseMaster;
 use App\Models\YesNoSelection;
@@ -69,6 +70,7 @@ use App\Models\StockAdjustmentDetails;
 use App\Models\QuotationDetails;
 use App\Models\DeliveryOrderDetail;
 use App\Models\CustomerInvoiceItemDetails;
+use App\Repositories\UnitConversionRepository;
 
 /**
  * Class ItemMasterController
@@ -79,11 +81,13 @@ class ItemMasterAPIController extends AppBaseController
     /** @var  ItemMasterRepository */
     private $itemMasterRepository;
     private $userRepository;
+    private $unitConversionRepository;
 
-    public function __construct(ItemMasterRepository $itemMasterRepo, UserRepository $userRepo)
+    public function __construct(ItemMasterRepository $itemMasterRepo, UserRepository $userRepo, UnitConversionRepository $unitConversionRepo)
     {
         $this->itemMasterRepository = $itemMasterRepo;
         $this->userRepository = $userRepo;
+        $this->unitConversionRepository = $unitConversionRepo;
     }
 
     /**
@@ -1137,7 +1141,55 @@ class ItemMasterAPIController extends AppBaseController
     }
 
 
-    /**
+    public function checkUnitConversions(Request $request){
+
+        $mainItemID = $request->mainItemID;
+        $unitID = $request->unitID;
+        $unitID = isset($unitID[0]) ? $unitID[0] : $unitID;
+
+        $isConversion = 1;
+
+            $mainItem = ItemMaster::where('itemCodeSystem', $mainItemID)->first();
+            if($mainItem){
+                $mainItemUnitID = $mainItem->unit;
+
+                $conversion = UnitConversion::where('masterUnitID', $mainItemUnitID)->where('subUnitID', $unitID)->first();
+                if($conversion){
+                    $isConversion = 1;
+                }else{
+                    $isConversion = 0;
+                }
+            } else {
+                return $this->sendError('Item not found');
+            }
+        $subItemUnit = Unit::find($unitID);
+        $mainItemUnit = Unit::find($mainItemUnitID);
+
+
+        $output = array('isConversion' => $isConversion, 'subItemUnit'=>$subItemUnit, 'mainItemUnit' => $mainItemUnit);
+
+        return $this->sendResponse($output, 'pre check unit conversion retrieved successfully');
+
+    }
+
+    public function updateUnitConversion(Request $request)
+    {
+        $input = $request->all();
+
+        $validator = \Validator::make($input, [
+            'conversion' => 'required | numeric'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422 );
+        }
+
+        $unitConversions = $this->unitConversionRepository->create($input);
+
+        return $this->sendResponse($unitConversions->toArray(), 'Unit Conversion saved successfully');
+    }
+
+        /**
      * Display the specified ItemMaster.
      * GET|HEAD /itemMasters/{id}
      *
@@ -1273,9 +1325,19 @@ class ItemMasterAPIController extends AppBaseController
 
         $isSubItem = ItemMaster::selectRaw('primaryCode, itemmaster.itemDescription')->where('mainItemID', $itemCodeSystem)->first();
 
-        $subItems = ItemMaster::selectRaw('primaryCode, itemmaster.itemDescription, units.UnitShortCode, SUM(IFNULL(erp_itemledger.inOutQty,0)) as availableQty, itemCodeSystem')->where('mainItemID', $itemCodeSystem)->leftJoin('units', 'UnitID', '=', 'unit')->leftJoin('erp_itemledger', 'itemCodeSystem', '=', 'itemSystemCode')->groupBy('itemCodeSystem')->get();
+        $subItems = ItemMaster::selectRaw('primaryCode, itemmaster.itemDescription, units.UnitShortCode, units.unitID, SUM(IFNULL(erp_itemledger.inOutQty,0)) as availableQty, itemCodeSystem')->where('mainItemID', $itemCodeSystem)->leftJoin('units', 'UnitID', '=', 'unit')->leftJoin('erp_itemledger', 'itemCodeSystem', '=', 'itemSystemCode')->groupBy('itemCodeSystem')->get();
 
-        $mainItemUOM =  ItemMaster::selectRaw('units.UnitShortCode, SUM(IFNULL(erp_itemledger.inOutQty,0)) as availableQty')->where('itemCodeSystem', $itemCodeSystem)->join('units', 'UnitID', '=', 'unit')->leftjoin('erp_itemledger', 'itemCodeSystem', '=', 'itemSystemCode')->groupBy('itemSystemCode')->first();
+
+        $mainItemUOM =  ItemMaster::selectRaw('units.UnitShortCode, units.unitID, SUM(IFNULL(erp_itemledger.inOutQty,0)) as availableQty')->where('itemCodeSystem', $itemCodeSystem)->join('units', 'UnitID', '=', 'unit')->leftjoin('erp_itemledger', 'itemCodeSystem', '=', 'itemSystemCode')->groupBy('itemSystemCode')->first();
+
+        foreach ($subItems as $subItem){
+            $subItem->conversion = null;
+            $conversion = UnitConversion::where('masterUnitID', $mainItemUOM->unitID)->where('subUnitID', $subItem->unitID)->first();
+            if($conversion){
+                $subItem->conversion = $conversion->conversion;
+
+            }
+        }
 
         $mainItems = ItemAssigned::selectRaw('CONCAT(itemassigned.itemPrimaryCode, " - " ,itemassigned.itemDescription, " - ", units.UnitShortCode) as itemCode, itemassigned.itemCodeSystem')->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'itemassigned.itemCodeSystem')->join('units', 'UnitID', '=', 'unit')->where('companySystemID', $selectedCompanyId)->where('itemmaster.isSubItem', 0)->where('itemassigned.isActive', 1)->where('itemassigned.isAssigned', -1)->get();
 
