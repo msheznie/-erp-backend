@@ -62,6 +62,8 @@ use App\Models\DirectReceiptDetail;
 use App\Models\BankAssign;
 use App\Models\CompanyFinancePeriod;
 use App\Models\Taxdetail;
+use App\Models\TaxLedger;
+use App\Models\TaxLedgerDetail;
 use App\Models\YesNoSelectionForMinus;
 use App\Models\YesNoSelection;
 use App\Models\Months;
@@ -261,8 +263,8 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             $input['companyID'] = $company->CompanyID;
             $input['localCurrencyID'] = $company->localCurrencyID;
             $input['companyRptCurrencyID'] = $company->reportingCurrency;
-                $input['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
-                $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+            $input['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+            $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
 
         }
 
@@ -3449,6 +3451,17 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
             //deleting records from bank ledger
             $deleteBLData = BankLedger::where('documentSystemCode', $id)
+                ->where('companySystemID', $masterData->companySystemID)
+                ->where('documentSystemID', $masterData->documentSystemID)
+                ->delete();
+
+            //deleting records from tax ledger
+            $deleteTaxLedgerData = TaxLedger::where('documentMasterAutoID', $id)
+                ->where('companySystemID', $masterData->companySystemID)
+                ->where('documentSystemID', $masterData->documentSystemID)
+                ->delete();
+
+            TaxLedgerDetail::where('documentMasterAutoID', $id)
                 ->where('companySystemID', $masterData->companySystemID)
                 ->where('documentSystemID', $masterData->documentSystemID)
                 ->delete();

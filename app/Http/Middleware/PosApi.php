@@ -32,6 +32,8 @@ class PosApi
                 if(!empty($third_party_key))
                 {
                     $request->request->add(['company_id' => $third_party_key->company_id]);
+                    $request->request->add(['api_external_key' => $third_party_key->api_external_key]);
+                    $request->request->add(['api_external_url' => $third_party_key->api_external_url]);
                 }
                 else
                 {

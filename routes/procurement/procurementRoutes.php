@@ -76,3 +76,85 @@ Route::group([], function() {
     Route::post('getReportOpenRequest', 'PurchaseRequestAPIController@getReportOpenRequest')->name('Get report open request');
     Route::post('exportReportOpenRequest', 'PurchaseRequestAPIController@exportReportOpenRequest')->name('Export report open request');
 });
+
+
+//Purchase Order
+Route::group([], function() {
+    Route::get('poCheckDetailExistinGrv', 'ProcumentOrderAPIController@poCheckDetailExistinGrv')->name('Po check detail exist in grv');
+    Route::get('amendProcurementOrderPreCheck', 'ProcumentOrderAPIController@amendProcurementOrderPreCheck')->name('Amend procurement order precheck');
+    Route::get('segment/projects', 'ProcumentOrderAPIController@getProjectsBySegment')->name('Get projects by segment');
+    Route::get('getItemsByProcumentOrder', 'PurchaseOrderDetailsAPIController@getItemsByProcumentOrder')->name('Get items by procurement order');
+    Route::get('getItemsOptionForProcumentOrder', 'ProcumentOrderAPIController@getItemsOptionForProcumentOrder')->name('Get items option for procurement order');
+    Route::get('getShippingAndInvoiceDetails', 'ProcumentOrderAPIController@getShippingAndInvoiceDetails')->name('Get shipping and invoice details');
+    Route::get('getProcumentOrderPaymentTerms', 'PoPaymentTermsAPIController@getProcumentOrderPaymentTerms')->name('Get procurement order payment terms');
+    Route::get('procumentOrderDetailTotal', 'ProcumentOrderAPIController@procumentOrderDetailTotal')->name('Procurement order detail total');
+    Route::get('poPaymentTermsAdvanceDetailView', 'PoAdvancePaymentAPIController@poPaymentTermsAdvanceDetailView')->name('Po payment terms advance detail view');
+    Route::get('getLogisticsItemsByProcumentOrder', 'PoAdvancePaymentAPIController@loadPoPaymentTermsLogistic')->name('Get logistics items by procurement order');
+    Route::get('checkEOSPolicyAndSupplier', 'ProcumentOrderAPIController@checkEOSPolicyAndSupplier')->name('Check EOS policy and supplier');
+    Route::get('getVatCategoryFormData', 'TaxVatCategoriesAPIController@getVatCategoryFormData')->name('Get vat category form data');
+    Route::get('downloadPoItemUploadTemplate', 'ProcumentOrderAPIController@downloadPoItemUploadTemplate')->name('Download procurement order item upload template');
+    Route::get('getPurchaseRequestForPO', 'PurchaseRequestAPIController@getPurchaseRequestForPO')->name('Get purchase request for procurement order');
+    Route::get('getPurchaseRequestDetailForPO', 'PurchaseRequestDetailsAPIController@getPurchaseRequestDetailForPO')->name('Get purchase request detail for procurement order');
+    Route::get('getGoodReceivedNoteDetailsForPO', 'ProcumentOrderAPIController@getGoodReceivedNoteDetailsForPO')->name('Get good recieved note details for procurement order');
+    Route::get('getInvoiceDetailsForPO', 'ProcumentOrderAPIController@getInvoiceDetailsForPO')->name('Get invoice details for procurement order');
+    Route::get('getPurchasePaymentStatusHistory', 'ProcumentOrderAPIController@getPurchasePaymentStatusHistory')->name('Get purchase payment status history');
+    Route::get('procumentOrderPrHistory', 'ProcumentOrderAPIController@procumentOrderPrHistory')->name('Procurement order pr history');
+    Route::get('getPoItemsForAmendHistory', 'PurchaseOrderDetailsRefferedHistoryAPIController@getPoItemsForAmendHistory')->name('Get procurement order items for amend history');
+    Route::get('getPoPaymentTermsForAmendHistory', 'PoPaymentTermsRefferedbackAPIController@getPoPaymentTermsForAmendHistory')->name('Get procurement order payment terms for amend history');
+    Route::get('getPoLogisticsItemsForAmendHistory', 'PurchaseOrderAdvPaymentRefferedbackAPIController@getPoLogisticsItemsForAmendHistory')->name('Get procurement order logistics items for amend history');
+    Route::get('getPoAddonsForAmendHistory', 'PoAddonsRefferedBackAPIController@getPoAddonsForAmendHistory')->name('Get procurement order addons for amend history');
+    Route::get('getAllStatusByPurchaseOrder', 'PurchaseOrderStatusAPIController@getAllStatusByPurchaseOrder')->name('Get all status by purchase order');
+    Route::get('destroyPreCheck', 'PurchaseOrderStatusAPIController@destroyPreCheck')->name('destroy precheck');
+    Route::get('ProcurementOrderAudit', 'ProcumentOrderAPIController@ProcurementOrderAudit')->name('Procurement order audit');
+    Route::get('getPurchaseOrderDetailForGRV', 'PurchaseOrderDetailsAPIController@getPurchaseOrderDetailForGRV')->name('Get purchase order detail for grv');
+    Route::get('getLogisticPrintDetail', 'PoAdvancePaymentAPIController@getLogisticPrintDetail')->name('Get logistic print detail');
+    
+
+    Route::post('allocateExpectedDeliveryDates', 'PoDetailExpectedDeliveryDateAPIController@allocateExpectedDeliveryDates')->name('Allocate expected delivery dates');
+    Route::post('getAllocatedExpectedDeliveryDates', 'PoDetailExpectedDeliveryDateAPIController@getAllocatedExpectedDeliveryDates')->name('Get allocated expected delivery dates');
+    Route::post('exportProcumentOrderMaster', 'ProcumentOrderAPIController@exportProcumentOrderMaster')->name('Export procurement order master');
+    Route::post('amendProcumentSubWorkOrderReview', 'ProcumentOrderAPIController@amendProcumentSubWorkOrderReview')->name('Amend procurement sub work order review');
+    Route::post('poExpectedDeliveryDateAmend', 'ProcumentOrderAPIController@poExpectedDeliveryDateAmend')->name('Po expected delivery date amend');
+    Route::post('getProcumentOrderAllAmendments', 'ProcumentOrderAPIController@getProcumentOrderAllAmendments')->name('Get procurement order all amendments');
+    Route::post('procumentOrderCancel', 'ProcumentOrderAPIController@procumentOrderCancel')->name('Procurement order cancel');
+    Route::post('procumentOrderReturnBack', 'ProcumentOrderAPIController@procumentOrderReturnBack')->name('Procurement order return back');
+    Route::post('manualCloseProcurementOrder', 'ProcumentOrderAPIController@manualCloseProcurementOrder')->name('Manual close procurement order');
+    Route::post('manualCloseProcurementOrderPrecheck', 'ProcumentOrderAPIController@manualCloseProcurementOrderPrecheck')->name('Manual close procurement order precheck');
+    Route::post('amendProcurementOrder', 'ProcumentOrderAPIController@amendProcurementOrder')->name('Amend procurement order');
+    Route::post('procumentOrderChangeSupplier', 'ProcumentOrderAPIController@procumentOrderChangeSupplier')->name('Procurement order change supplier');
+    Route::post('updateGRVLogistic', 'ProcumentOrderAPIController@updateGRVLogistic')->name('Update grv logistic');
+    Route::post('procumentOrderSegmentchk', 'ProcumentOrderAPIController@procumentOrderSegmentchk')->name('Procurement order segment check');
+    Route::post('advancePaymentTermCancel', 'PoAdvancePaymentAPIController@advancePaymentTermCancel')->name('Advance payment term cancel');
+    Route::post('procumentOrderDeleteAllDetails', 'PurchaseOrderDetailsAPIController@procumentOrderDeleteAllDetails')->name('Procurement order delete all details');
+    Route::post('procumentOrderTotalDiscountUD', 'PurchaseOrderDetailsAPIController@procumentOrderTotalDiscountUD')->name('Procurement order total discount UD');
+    Route::post('procumentOrderTotalTaxUD', 'PurchaseOrderDetailsAPIController@procumentOrderTotalTaxUD')->name('Procurement order total tax UD');
+    Route::post('unlinkLogistic', 'PoAdvancePaymentAPIController@unlinkLogistic')->name('Unlink logistic');
+    Route::post('getProcurementOrderReopen', 'ProcumentOrderAPIController@getProcurementOrderReopen')->name('Get procurement order reopen');
+    Route::post('procumentOrderPRAttachment', 'ProcumentOrderAPIController@procumentOrderPRAttachment')->name('Procurement order PR Attachment');
+    Route::post('getProcurementOrderReferBack', 'ProcumentOrderAPIController@getProcurementOrderReferBack')->name('Get procurement order refer back');
+    Route::post('updateSentSupplierDetail', 'ProcumentOrderAPIController@updateSentSupplierDetail')->name('Update sent supplier detail');
+    Route::post('updateAllPaymentTerms', 'PoPaymentTermsAPIController@updateAllPaymentTerms')->name('Update all payment terms');
+    Route::post('amendProcumentSubWorkOrder', 'ProcumentOrderAPIController@amendProcumentSubWorkOrder')->name('Amend procurement sub work order');
+    Route::post('mapLineItemPr', 'PurchaseRequestDetailsAPIController@mapLineItemPr')->name('Map line item pr');
+    Route::post('validateItemAlllocationInPO', 'PurchaseOrderDetailsAPIController@validateItemAlllocationInPO')->name('Validate item allocation in procurement order');
+    Route::post('purchase_order_details_frm_pr', 'PurchaseOrderDetailsAPIController@storePurchaseOrderDetailsFromPR')->name('Store purchase order details from pr');
+    Route::post('getSupplierCatalogDetailBySupplierAllItem', 'SupplierCatalogMasterAPIController@getSupplierCatalogDetailBySupplierAllItem')->name('Get supplier catalog detail by supplier all item');
+    Route::post('poItemsUpload', 'ProcumentOrderAPIController@poItemsUpload')->name('procurement order items upload');
+    Route::post('currencyConvert', 'CurrencyConversionAPIController@currencyConvert')->name('Currency convert');
+    Route::post('storePoPaymentTermsLogistic', 'PoAdvancePaymentAPIController@storePoPaymentTermsLogistic')->name('Store procurement order payment terms logistic');
+    Route::post('purchaseOrderStatusesSendEmail', 'PurchaseOrderStatusAPIController@purchaseOrderStatusesSendEmail')->name('Purchase order statuses send email');
+    Route::post('storeGRVDetailsFromPO', 'GRVDetailsAPIController@storeGRVDetailsFromPO')->name('Store grv details from procurement order');
+
+    Route::resource('po_detail_expected_delivery_dates', 'PoDetailExpectedDeliveryDateAPIController');
+    Route::resource('procurement-order', 'ProcumentOrderAPIController');
+    Route::resource('purchase_order_details', 'PurchaseOrderDetailsAPIController');
+    Route::resource('procumentOrderPaymentTermsCRUD', 'PoPaymentTermsAPIController');
+    Route::resource('po_addons', 'PoAddonsAPIController');
+    Route::resource('procumentOrderPaymentTermsUD', 'PoPaymentTermsAPIController');
+    Route::resource('poPaymentTermsRequestCRUD', 'PoAdvancePaymentAPIController');
+    Route::resource('procumentOrderAdvpaymentUD', 'PoAdvancePaymentAPIController');
+    Route::resource('poMaster_reffered_histories', 'PurchaseOrderMasterRefferedHistoryAPIController');
+    Route::resource('purchase_order_statuses', 'PurchaseOrderStatusAPIController');
+    Route::resource('purchase_order_categories', 'PurchaseOrderCategoryAPIController');
+    
+});
