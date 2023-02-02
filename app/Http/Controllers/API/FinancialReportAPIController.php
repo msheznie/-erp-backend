@@ -49,6 +49,7 @@ use Carbon\CarbonPeriod;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\helper\CreateExcel;
+use App\Models\Employee;
 use Illuminate\Support\Facades\Storage;
 ini_set('max_execution_time', 500);
 
@@ -5703,6 +5704,166 @@ AND MASTER .canceledYN = 0';
 
                 return $this->sendResponse([], "General Ledger PDF report has been sent to queue");
                 break;
+
+            case 'FTB':
+                $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+                $db = isset($request->db) ? $request->db : ""; 
+
+                $checkIsGroup = Company::find($request->companySystemID);
+                $companyName = $checkIsGroup->CompanyName;
+                $companyLogo = $checkIsGroup->logo_url;
+
+                $currencyId =  $request->currencyID;
+
+                $employeeID = \Helper::getEmployeeSystemID();
+                $employeeData = Employee::where('employeeSystemID',$employeeID)->first();
+
+                
+                $output = $this->getTrialBalance($request);
+                $companyCurrency = \Helper::companyCurrency($request->companySystemID);
+                if($companyCurrency) {
+                    $requestCurrencyLocal = $companyCurrency->localcurrency;
+                    $requestCurrencyRpt = $companyCurrency->reportingcurrency;
+                }
+
+                $decimalPlaceLocal = !empty($requestCurrencyLocal) ? $requestCurrencyLocal->DecimalPlaces : 3;
+                $decimalPlaceRpt = !empty($requestCurrencyRpt) ? $requestCurrencyRpt->DecimalPlaces : 2;
+
+
+                $currencyLocal = $requestCurrencyLocal->CurrencyCode;
+                $currencyRpt = $requestCurrencyRpt->CurrencyCode;
+
+                $totalOpeningBalanceRpt = 0;
+                $totalOpeningBalanceLocal = 0;
+                $totaldocumentLocalAmountDebit = 0;
+                $totaldocumentRptAmountDebit = 0;
+                $totaldocumentLocalAmountCredit= 0;
+                $totaldocumentRptAmountCredit = 0;
+                $totalClosingBalanceRpt = 0;
+                $totalClosingBalanceLocal= 0;
+
+                if ($output) {
+                    foreach ($output as $val) {
+
+                        if ($checkIsGroup->isGroup == 0 && $currencyId ==1 || $currencyId ==3) {
+                            $totalOpeningBalanceLocal = round( $totalOpeningBalanceRpt,$decimalPlaceLocal) + round($val->openingBalLocal,$decimalPlaceLocal);
+                            $totaldocumentLocalAmountDebit = round( $totaldocumentLocalAmountDebit,$decimalPlaceLocal) + round($val->documentLocalAmountDebit,$decimalPlaceLocal);
+                            $totaldocumentLocalAmountCredit = round( $totaldocumentLocalAmountCredit,$decimalPlaceLocal) + round($val->documentLocalAmountCredit,$decimalPlaceLocal);
+
+                            $totalClosingBalanceLocal = round( $totalClosingBalanceLocal,$decimalPlaceLocal) + round($val->openingBalLocal + ($val->documentLocalAmountDebit - $val->documentLocalAmountCredit),$decimalPlaceLocal);
+                        }
+                        if($currencyId == 2 || $currencyId == 3) {
+                            $totalOpeningBalanceRpt = round( $totalOpeningBalanceRpt,$decimalPlaceRpt) + round($val->openingBalRpt,$decimalPlaceRpt);
+                            $totaldocumentRptAmountDebit = round( $totaldocumentRptAmountDebit,$decimalPlaceRpt) + round($val->documentRptAmountDebit,$decimalPlaceRpt);
+                            $totalClosingBalanceRpt = round( $totalClosingBalanceRpt,$decimalPlaceRpt) + round($val->openingBalRpt + ($val->documentRptAmountDebit - $val->documentRptAmountCredit),$decimalPlaceRpt);
+
+                            $totaldocumentRptAmountCredit = round( $totaldocumentRptAmountCredit,$decimalPlaceRpt) + round($val->documentRptAmountCredit,$decimalPlaceRpt);
+                        }
+                    }
+                }
+
+                $dataArr = array(   'output'=>$output,
+                                    'employeeData'=>$employeeData,
+                                    'fromDate' => \Helper::dateFormat($request->fromDate),
+                                    'toDate' => \Helper::dateFormat($request->toDate), 
+                                    'companyLogo'=>$companyLogo, 
+                                    'companyName'=>$companyName, 
+                                    'totalOpeningBalanceRpt'=>$totalOpeningBalanceRpt, 
+                                    'totalOpeningBalanceLocal'=>$totalOpeningBalanceLocal, 
+                                    'totaldocumentLocalAmountDebit'=>$totaldocumentLocalAmountDebit, 
+                                    'totaldocumentRptAmountDebit'=>$totaldocumentRptAmountDebit, 
+                                    'totaldocumentLocalAmountCredit'=>$totaldocumentLocalAmountCredit, 
+                                    'totaldocumentRptAmountCredit'=>$totaldocumentRptAmountCredit, 
+                                    'totalClosingBalanceRpt'=>$totalClosingBalanceRpt, 
+                                    'totalClosingBalanceLocal'=>$totalClosingBalanceLocal,
+                                    'requestCurrencyLocal'=>$requestCurrencyLocal,
+                                    'requestCurrencyRpt'=>$requestCurrencyRpt,
+                                    'decimalPlaceLocal'=>$decimalPlaceLocal,
+                                    'decimalPlaceRpt'=>$decimalPlaceRpt,
+                                    'currencyId'=>$currencyId
+                                );
+
+                $html = view('print.financial_trial_balance', $dataArr);
+
+                $pdf = \App::make('dompdf.wrapper');
+                $pdf->loadHTML($html);
+
+                return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream();
+                break;
+                
+            case 'FCT':
+                
+                $companyName = $request->companySystemID[0]['CompanyName'];
+                $employeeID = \Helper::getEmployeeSystemID();
+                $employeeData = Employee::where('employeeSystemID',$employeeID)->first();
+
+                $reportData = $this->generateFRReport($request);
+
+                $input = $this->convertArrayToSelectedValue($request->all(), array('currency'));
+                if (isset($reportData['template']) && $reportData['template']['showDecimalPlaceYN']) {
+                    if ($input['currency'] === 1) {
+                        $reportData['decimalPlaces'] = $reportData['companyCurrency']['localcurrency']['DecimalPlaces'];
+                    } else {
+                        $reportData['decimalPlaces'] = $reportData['companyCurrency']['reportingcurrency']['DecimalPlaces'];
+                    }
+                } else {
+                    $reportData['decimalPlaces'] = 0;
+                }
+        
+                if ($input['currency'] === 1) {
+                    $reportData['currencyCode'] = $reportData['companyCurrency']['localcurrency']['CurrencyCode'];
+                } else {
+                    $reportData['currencyCode'] = $reportData['companyCurrency']['reportingcurrency']['CurrencyCode'];
+                }
+        
+                $reportData['accountType'] = $input['accountType'];
+        
+                if (is_array($reportData['uncategorize']) && $reportData['columnTemplateID'] == null) {
+                    $reportData['isUncategorize'] = false;
+                } else {
+                    $reportData['isUncategorize'] = true;
+                }
+        
+                if ($reportData['columnTemplateID'] == 1 || $reportData['columnTemplateID'] == 2) {
+                    $templateName = "print.finance_column_template_one";
+                } else {
+                    $templateName = "print.finance";
+                }
+        
+                $month = '';
+                if ($request->dateType != 1) {
+                    $period = CompanyFinancePeriod::find($request->month);
+                    $toDate = Carbon::parse($period->dateTo)->format('Y-m-d');
+                    $month = Carbon::parse($toDate)->format('Y-m-d');
+                }
+                if($month){
+                    $reportData['month'] = ((new Carbon($month))->format('d/m/Y'));
+                }
+                $reportData['report_tittle'] = 'Finance Report';
+                $reportData['from_date'] = $input['fromDate'];
+                $reportData['to_date'] = $input['toDate'];
+        
+                if ($request->dateType == 1) {
+                    $toDate = new Carbon($input['toDate']);
+                    $reportData['to_date'] = $toDate->format('d/m/Y');
+                    $fromDate = new Carbon($input['fromDate']);
+                    $reportData['from_date'] = $fromDate->format('d/m/Y');
+                } else {
+                    $period = CompanyFinancePeriod::find($request->month);
+                    $reportData['to_date'] = Carbon::parse($period->dateTo)->format('d/m/Y');
+                    $reportData['from_date'] = Carbon::parse($period->dateFrom)->format('d/m/Y');
+                }
+
+                $reportData['employeeData'] = $employeeData;
+                $reportData['CompanyName'] = $companyName;
+                
+                $html = view($templateName, $reportData);
+                $pdf = \App::make('dompdf.wrapper');
+                $pdf->loadHTML($html);
+
+                return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream();
+                break;
+
             default:
                 return $this->sendError('No report ID found');
         }
