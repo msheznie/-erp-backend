@@ -180,6 +180,22 @@ class PosAPIController extends AppBaseController
                     $category_id = $input['category_id'];
                     $chartOfAccount = $chartOfAccount->where('chartofaccounts.catogaryBLorPLID', '=', $category_id);
                 }
+
+                if (isset($input['is_control_account'])) {
+                    $is_control_account = $input['is_control_account'];
+                    $chartOfAccount = $chartOfAccount->where('chartofaccounts.controllAccountYN', '=', $is_control_account);
+                }
+                
+                if (isset($input['is_bank'])) {
+                    $is_bank = $input['is_bank'];
+                    $chartOfAccount = $chartOfAccount->where('chartofaccounts.isBank', '=', $is_bank);
+                }
+                
+                if (isset($input['chart_of_account_system_id'])) {
+                    $chart_of_account_system_id = $input['chart_of_account_system_id'];
+                    $chartOfAccount = $chartOfAccount->where('chartofaccounts.chartOfAccountSystemID', '=', $chart_of_account_system_id);
+                }
+
                 if (isset($input['coa_search'])) {
                     $search = $input['coa_search'];
                     $search = str_replace("\\", "\\\\", $search);
