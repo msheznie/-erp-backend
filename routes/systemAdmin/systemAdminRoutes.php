@@ -188,6 +188,8 @@ Route::group([], function() {
     Route::resource('item/assigneds', 'ItemAssignedAPIController', ['names' => 'Item assigned']);
     Route::post('getAllAssignedItemsByCompany', 'ItemAssignedAPIController@getAllAssignedItemsByCompany')->name('All assigned item by company');
     Route::get('getAllMainItemsByCompany', 'ItemMasterAPIController@getAllMainItemsByCompany')->name('All main items by company');
+    Route::get('checkUnitConversions', 'ItemMasterAPIController@checkUnitConversions')->name('Check unit conversions');
+    Route::post('updateUnitConversion', 'ItemMasterAPIController@updateUnitConversion')->name('Update unit conversion');
 });
 
 
