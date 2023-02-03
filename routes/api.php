@@ -2066,6 +2066,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('getRPOSInvoiceData', 'POS\PosAPIController@getRPOSInvoiceData');
 
             Route::post('generateGeneralLedgerReportPDF', 'FinancialReportAPIController@pdfExportReport');
+            Route::post('generateFinancialTrialBalanceReportPDF', 'FinancialReportAPIController@pdfExportReport');
+            Route::post('exportFinanceReportPDF', 'FinancialReportAPIController@pdfExportReport');
 
             Route::resource('envelop_types', 'EnvelopTypeAPIController');
             Route::resource('evaluation_types', 'EvaluationTypeAPIController');
