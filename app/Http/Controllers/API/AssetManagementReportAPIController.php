@@ -3755,7 +3755,7 @@ WHERE
                         erp_fa_asset_master.serviceLineCode,
                         docOrigin,
                         AUDITCATOGARY,
-                        postedDate,
+                        erp_fa_asset_master.postedDate,
                         erp_fa_asset_master.faCode,
                         erp_fa_asset_master.assetDescription,
                         DEPpercentage,
