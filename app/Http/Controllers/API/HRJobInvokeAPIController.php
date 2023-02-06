@@ -22,6 +22,8 @@ use App\Services\hrms\attendance\AttendanceDailySummaryService;
 use App\Services\hrms\attendance\AttendanceWeeklySummaryService;
 use App\helper\BirthdayWishService;
 use App\Models\Company;
+use Illuminate\Support\Facades\Artisan;
+
 
 class HRJobInvokeAPIController extends AppBaseController
 {
@@ -150,22 +152,7 @@ class HRJobInvokeAPIController extends AppBaseController
     }
 
     function birthdayWishesEmailDebug(){
-        Log::useFiles( CommonJobService::get_specific_log_file('birthday-wishes') );
-        $tenants = CommonJobService::tenant_list();
-        if(count($tenants) == 0){
-            Log::info("Tenant details not found. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
-        }
-
-        $tenants = $tenants->toArray();
-
-        foreach ($tenants as $tenant){
-            $tenant_database = $tenant['database'];
-
-            Log::info("{$tenant_database} DB added to queue for birthday wishes initiate . \t on file: "
-                . __CLASS__ . " \tline no :" . __LINE__);
-
-            BirthdayWishInitiate::dispatch($tenant_database);
-        }
+        Artisan::call('command:birthday_wish_schedule');
     }
 
     function birthdayWishesEmailDebug2(Request $request){
