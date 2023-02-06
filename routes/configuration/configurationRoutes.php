@@ -36,6 +36,7 @@ Route::group([], function(){
     Route::post('loadColumnTemplate', 'ReportTemplateColumnLinkAPIController@loadColumnTemplate')->name("Load column templates");
     Route::post('getReportTemplateAssignedEmployee', 'ReportTemplateEmployeesAPIController@getReportTemplateAssignedEmployee')->name("Get report template assigned employees");
  	Route::post('getUnassignedGLForReportTemplate', 'ReportTemplateDetailsAPIController@getUnassignedGLForReportTemplate')->name("Get unassigned GL codes for report template");
+    Route::post('reAssignAndDeleteGlLink', 'ReportTemplateLinksAPIController@reAssignAndDeleteGlLink')->name("Re Assign And Delete Gl Link");
     
     Route::get('getReportTemplateFormData', 'ReportTemplateAPIController@getReportTemplateFormData')->name("Get report template form data");
     Route::get('getReportTemplateDetail/{id}', 'ReportTemplateDetailsAPIController@getReportTemplateDetail')->name("Get report template detail by report template id");

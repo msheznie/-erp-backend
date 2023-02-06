@@ -27,6 +27,8 @@ use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\helper\ChartOfAccountDependency;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Class ReportTemplateLinksController
@@ -508,5 +510,54 @@ class ReportTemplateLinksAPIController extends AppBaseController
         }
 
         return $this->sendResponse([], 'Report Template Links saved successfully');
+    }
+
+    public function reAssignAndDeleteGlLink(Request $request)
+    {
+        $input = $request->all();
+
+        if (!isset($input['reportTemplateCategory']) || (isset($input['reportTemplateCategory']) && $input['reportTemplateCategory'] == null)) {
+            return $this->sendError("Please select a template category");
+        }
+
+        DB::beginTransaction();
+        try {
+            $id = isset($input['deleteGlLinkID']) ? $input['deleteGlLinkID'] : 0;
+            $reportTemplateLinks = $this->reportTemplateLinksRepository->findWithoutFail($id);
+
+            if (empty($reportTemplateLinks)) {
+                return $this->sendError('Report Template Links not found');
+            }
+
+            $checkLinkInBudget = Budjetdetails::where('chartOfAccountID', $reportTemplateLinks->glAutoID)
+                                              ->where('templateDetailID', $reportTemplateLinks->templateDetailID)
+                                              ->first();
+
+            if ($checkLinkInBudget) {
+                 return $this->sendError('This chart Of Account cannot be deleted, since the Chart Of Account has been pulled to budget');
+            }
+
+            $reportTemplateLinks->delete();
+
+            $checkTemplateLinksExists = ReportTemplateLinks::where('templateDetailID', $reportTemplateLinks->templateDetailID)->first();
+
+            if (!$checkTemplateLinksExists) {
+                $updateTemplateDetailAsFinal = ReportTemplateDetails::where('detID', $reportTemplateLinks->templateDetailID)->update(['isFinalLevel' => 0]);
+            }
+
+            $result = ChartOfAccountDependency::addChartOfAccountToTemplate($reportTemplateLinks->glAutoID, $reportTemplateLinks->companySystemID, $reportTemplateLinks->templateMasterID, $input['reportTemplateCategory']);
+
+            if (!$result['status']) {
+                DB::rollBack();
+                return $this->sendError("Error occured while assigned to report template category");
+            }
+
+            DB::commit();
+            return $this->sendResponse($id, 'Report Template Links deleted successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage() . " Line" . $exception->getLine(), 500);
+        }
+
     }
 }
