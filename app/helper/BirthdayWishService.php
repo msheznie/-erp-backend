@@ -50,7 +50,7 @@ class BirthdayWishService
 
     function getEmployeeDetails()
     {
-        $currentDate = Carbon::now('Asia/Muscat')->format('d-m');
+        $currentDate = Carbon::now('Asia/Muscat')->format('m-d');
 
         return SrpEmployeeDetails::select('EIdNo','Ename2', 'EEmail', 'EDOB','Erp_companyID')
             ->whereRaw("DATE_FORMAT(EDOB, '%m-%d') = '$currentDate'")
