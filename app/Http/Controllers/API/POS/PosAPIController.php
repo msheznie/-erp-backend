@@ -24,6 +24,7 @@ use App\Models\POSSourceMenuSalesMaster;
 use App\Models\POSSourceSalesReturn;
 use App\Models\POSSTAGInvoice;
 use App\Models\POSSTAGInvoiceDetail;
+use App\Models\SupplierMaster;
 use App\Services\POSService;
 
 class PosAPIController extends AppBaseController
@@ -512,6 +513,55 @@ class PosAPIController extends AppBaseController
 
             DB::commit();
             return $this->sendResponse($financeItemCategory, 'Data Retrieved successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+    }
+
+    public function pullSupplierMaster(Request $request)
+    {
+        DB::beginTransaction();
+        try {
+            $input = $request->all();
+            $input = $this->convertArrayToSelectedValue($input, array());
+
+            if (isset($input['per_page'])) {
+                $per_page = $input['per_page'];
+            } else {
+                $per_page = 10;
+            }
+
+            $supplierMaster = SupplierMaster::selectRaw('supplierCodeSystem As supplier_id,
+                                                        supplierName As supplier_name,
+                                                        primarySupplierCode As supplier_code,
+                                                        liabilityAccount as gl_code,
+                                                        UnbilledGRVAccount,
+                                                        address,
+                                                        telephone,
+                                                        fax,
+                                                        supEmail
+                                                        ')
+                ->where('supplierCodeSystem', '!=', '')
+                ->where('isActive', '=', 1);
+
+            if (isset($input['supplier_id'])) {
+                $supplier_id = $input['supplier_id'];
+                $supplierMaster = $supplierMaster->where('suppliermaster.supplierCodeSystem', '=', $supplier_id);
+            }
+            if (isset($input['supplier_search'])) {
+                $search = $input['supplier_search'];
+                $search = str_replace("\\", "\\\\", $search);
+                $supplierMaster = $supplierMaster->where(function ($query) use ($search) {
+                    $query->where('suppliermaster.supplierName', 'LIKE', "%{$search}%")
+                        ->orWhere('suppliermaster.primarySupplierCode', 'LIKE', "%{$search}%");
+                });
+            }
+
+            $supplierMaster = $supplierMaster->paginate($per_page);
+
+            DB::commit();
+            return $this->sendResponse($supplierMaster, 'Data Retrieved successfully');
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());
