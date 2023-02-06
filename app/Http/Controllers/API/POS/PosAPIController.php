@@ -9,6 +9,7 @@ use App\Models\ItemMaster;
 use Illuminate\Support\Facades\DB;
 use App\Models\SegmentMaster;
 use App\Models\ChartOfAccount;
+use App\Models\CustomerMaster;
 use App\Models\Unit;
 use App\Models\UnitConversion;
 use App\Models\WarehouseMaster;
@@ -181,6 +182,22 @@ class PosAPIController extends AppBaseController
                     $category_id = $input['category_id'];
                     $chartOfAccount = $chartOfAccount->where('chartofaccounts.catogaryBLorPLID', '=', $category_id);
                 }
+
+                if (isset($input['is_control_account'])) {
+                    $is_control_account = $input['is_control_account'];
+                    $chartOfAccount = $chartOfAccount->where('chartofaccounts.controllAccountYN', '=', $is_control_account);
+                }
+                
+                if (isset($input['is_bank'])) {
+                    $is_bank = $input['is_bank'];
+                    $chartOfAccount = $chartOfAccount->where('chartofaccounts.isBank', '=', $is_bank);
+                }
+                
+                if (isset($input['chart_of_account_system_id'])) {
+                    $chart_of_account_system_id = $input['chart_of_account_system_id'];
+                    $chartOfAccount = $chartOfAccount->where('chartofaccounts.chartOfAccountSystemID', '=', $chart_of_account_system_id);
+                }
+
                 if (isset($input['coa_search'])) {
                     $search = $input['coa_search'];
                     $search = str_replace("\\", "\\\\", $search);
@@ -757,5 +774,53 @@ class PosAPIController extends AppBaseController
         ->where('menuSalesID',$menuSalesID)
         ->first();
         return $data;
+    }
+
+    public function pullCustomerMaster(Request $request)
+    {
+        DB::beginTransaction();
+        try {
+            $input = $request->all();
+            $input = $this->convertArrayToSelectedValue($input, array());
+
+            if (isset($input['per_page'])) {
+                $per_page = $input['per_page'];
+            } else {
+                $per_page = 10;
+            }
+
+            $customerMaster = CustomerMaster::selectRaw('customerCodeSystem as customer_id,
+                                                        CustomerName As customer_name,
+                                                        CutomerCode As customer_code,
+                                                        custGLaccount as gl_code,
+                                                        custUnbilledAccount,
+                                                        customerAddress1,
+                                                        customerAddress2,
+                                                        customerCity
+                                                        ')
+                ->where('customerCodeSystem', '!=', '')
+                ->where('isCustomerActive', '=', 1);
+
+            if (isset($input['customer_id'])) {
+                $customer_id = $input['customer_id'];
+                $customerMaster = $customerMaster->where('customermaster.customerCodeSystem', '=', $customer_id);
+            }
+            if (isset($input['customer_search'])) {
+                $search = $input['customer_search'];
+                $search = str_replace("\\", "\\\\", $search);
+                $customerMaster = $customerMaster->where(function ($query) use ($search) {
+                    $query->where('customermaster.CustomerName', 'LIKE', "%{$search}%")
+                        ->orWhere('customermaster.CutomerCode', 'LIKE', "%{$search}%");
+                });
+            }
+
+            $customerMaster = $customerMaster->paginate($per_page);
+
+            DB::commit();
+            return $this->sendResponse($customerMaster, 'Data Retrieved successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
     }
 }
