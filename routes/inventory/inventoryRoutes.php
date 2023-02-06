@@ -117,3 +117,28 @@ Route::group([], function(){
     Route::post('getAllRequestByCompany', 'MaterielRequestAPIController@getAllRequestByCompany')->name("Get All Material Request By Company");
 
 });
+
+//Material Issue Trans
+Route::group([], function(){
+    Route::resource('item_issue_masters', 'ItemIssueMasterAPIController');
+    Route::resource('materiel_requests', 'MaterielRequestAPIController');
+    Route::resource('item_issue_referred_back', 'ItemIssueMasterRefferedBackAPIController');
+    Route::resource('item_issue_details_reffered_backs', 'ItemIssueDetailsRefferedBackAPIController');
+    Route::resource('materiel_request_details', 'MaterielRequestDetailsAPIController');
+    Route::resource('item_issue_details', 'ItemIssueDetailsAPIController');
+   
+    Route::get('getAllMaterielRequestNotSelectedForIssueByCompany', 'ItemIssueMasterAPIController@getAllMaterielRequestNotSelectedForIssueByCompany')->name("Get All Materiel Request Not Selected For Issue By Company");
+    Route::get('allMaterielRequestNotSelectedForIssue', 'ItemIssueMasterAPIController@allMaterielRequestNotSelectedForIssue')->name("All Materiel Request Not Selected For Issue");
+    Route::get('getMaterielIssueAudit', 'ItemIssueMasterAPIController@getMaterielIssueAudit')->name("Get Materiel Issue Audit");
+    Route::get('material-issue/update-qnty-by-location', 'ItemIssueMasterAPIController@updateQntyByLocation')->name("Update Qnty By Location");
+    Route::get('checkManWareHouse', 'ItemIssueMasterAPIController@checkManWareHouse')->name("Check Man Ware House");    
+    Route::get('getItemsByMaterielIssue', 'ItemIssueDetailsAPIController@getItemsByMaterielIssue')->name("Get Items By Materiel Issue");
+    Route::get('getItemsOptionsMaterielIssue', 'ItemIssueDetailsAPIController@getItemsOptionsMaterielIssue')->name("Get Items Options Materiel Issue");
+    Route::get('getItemIssueDetailsReferBack', 'ItemIssueDetailsRefferedBackAPIController@getItemIssueDetailsReferBack')->name("Get Item Issue Details ReferBack"); 
+
+    Route::post('materielIssueReopen', 'ItemIssueMasterAPIController@materielIssueReopen')->name("Material Issue Reopen");
+    Route::post('materielIssueReferBack', 'ItemIssueMasterAPIController@materielIssueReferBack')->name("Material Issue Refer Back");
+    Route::post('getAllMaterielIssuesByCompany', 'ItemIssueMasterAPIController@getAllMaterielIssuesByCompany')->name("Get All Material Issue By Company");
+    Route::post('getReferBackHistoryByMaterielIssues', 'ItemIssueMasterRefferedBackAPIController@getReferBackHistoryByMaterielIssues')->name("Get ReferBack History By Materiel Issues");
+
+});
