@@ -127,6 +127,8 @@ class CreateStageCustomerInvoice implements ShouldQueue
                     'companyFinancePeriodID' => $dt['companyFinancePeriodID'],
                     'FYPeriodDateFrom' => $dt['FYPeriodDateFrom'],
                     'FYPeriodDateTo' => $dt['FYPeriodDateTo'],
+                    'serviceLineSystemID' => $dt['serviceLineSystemID'],
+                    'serviceLineCode' => $dt['serviceLineCode'],
                     'bankID' => $dt['bankID'],
                     'bankAccountID' => $dt['bankAccountID'],
                     'documentType' => 11,
