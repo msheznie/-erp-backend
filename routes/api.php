@@ -40,6 +40,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('pull_user', 'POS\PosAPIController@pullUser');
         Route::post('pull_item_category', 'POS\PosAPIController@pullItemCategory');
         Route::post('posMappingRequest', 'POS\PosAPIController@handleRequest');
+        Route::post('pull_supplier_master', 'POS\PosAPIController@pullSupplierMaster');
+        Route::post('pull_customer_master', 'POS\PosAPIController@pullCustomerMaster');
     });
 
     Route::group(['middleware' => 'auth:api'], function () {

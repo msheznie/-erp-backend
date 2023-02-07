@@ -9,6 +9,7 @@ use App\Models\ItemMaster;
 use Illuminate\Support\Facades\DB;
 use App\Models\SegmentMaster;
 use App\Models\ChartOfAccount;
+use App\Models\CustomerMaster;
 use App\Models\Unit;
 use App\Models\UnitConversion;
 use App\Models\WarehouseMaster;
@@ -23,6 +24,7 @@ use App\Models\POSSourceMenuSalesMaster;
 use App\Models\POSSourceSalesReturn;
 use App\Models\POSSTAGInvoice;
 use App\Models\POSSTAGInvoiceDetail;
+use App\Models\SupplierMaster;
 use App\Services\POSService;
 
 class PosAPIController extends AppBaseController
@@ -180,6 +182,22 @@ class PosAPIController extends AppBaseController
                     $category_id = $input['category_id'];
                     $chartOfAccount = $chartOfAccount->where('chartofaccounts.catogaryBLorPLID', '=', $category_id);
                 }
+
+                if (isset($input['is_control_account'])) {
+                    $is_control_account = $input['is_control_account'];
+                    $chartOfAccount = $chartOfAccount->where('chartofaccounts.controllAccountYN', '=', $is_control_account);
+                }
+                
+                if (isset($input['is_bank'])) {
+                    $is_bank = $input['is_bank'];
+                    $chartOfAccount = $chartOfAccount->where('chartofaccounts.isBank', '=', $is_bank);
+                }
+                
+                if (isset($input['chart_of_account_system_id'])) {
+                    $chart_of_account_system_id = $input['chart_of_account_system_id'];
+                    $chartOfAccount = $chartOfAccount->where('chartofaccounts.chartOfAccountSystemID', '=', $chart_of_account_system_id);
+                }
+
                 if (isset($input['coa_search'])) {
                     $search = $input['coa_search'];
                     $search = str_replace("\\", "\\\\", $search);
@@ -501,6 +519,55 @@ class PosAPIController extends AppBaseController
         }
     }
 
+    public function pullSupplierMaster(Request $request)
+    {
+        DB::beginTransaction();
+        try {
+            $input = $request->all();
+            $input = $this->convertArrayToSelectedValue($input, array());
+
+            if (isset($input['per_page'])) {
+                $per_page = $input['per_page'];
+            } else {
+                $per_page = 10;
+            }
+
+            $supplierMaster = SupplierMaster::selectRaw('supplierCodeSystem As supplier_id,
+                                                        supplierName As supplier_name,
+                                                        primarySupplierCode As supplier_code,
+                                                        liabilityAccount as gl_code,
+                                                        UnbilledGRVAccount,
+                                                        address,
+                                                        telephone,
+                                                        fax,
+                                                        supEmail
+                                                        ')
+                ->where('supplierCodeSystem', '!=', '')
+                ->where('isActive', '=', 1);
+
+            if (isset($input['supplier_id'])) {
+                $supplier_id = $input['supplier_id'];
+                $supplierMaster = $supplierMaster->where('suppliermaster.supplierCodeSystem', '=', $supplier_id);
+            }
+            if (isset($input['supplier_search'])) {
+                $search = $input['supplier_search'];
+                $search = str_replace("\\", "\\\\", $search);
+                $supplierMaster = $supplierMaster->where(function ($query) use ($search) {
+                    $query->where('suppliermaster.supplierName', 'LIKE', "%{$search}%")
+                        ->orWhere('suppliermaster.primarySupplierCode', 'LIKE', "%{$search}%");
+                });
+            }
+
+            $supplierMaster = $supplierMaster->paginate($per_page);
+
+            DB::commit();
+            return $this->sendResponse($supplierMaster, 'Data Retrieved successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+    }
+
     public function handleRequest(Request $request)
     {
         define('INVOICE', 'INVOICE');
@@ -707,5 +774,60 @@ class PosAPIController extends AppBaseController
         ->where('menuSalesID',$menuSalesID)
         ->first();
         return $data;
+    }
+
+    public function pullCustomerMaster(Request $request)
+    {
+        DB::beginTransaction();
+        try {
+            $input = $request->all();
+            $input = $this->convertArrayToSelectedValue($input, array());
+
+            if (isset($input['per_page'])) {
+                $per_page = $input['per_page'];
+            } else {
+                $per_page = 10;
+            }
+
+            $customerMaster = CustomerMaster::selectRaw('customerCodeSystem as customer_id,
+                                                        CustomerName As customer_name,
+                                                        CutomerCode As customer_code,
+                                                        custGLaccount as gl_code,
+                                                        custUnbilledAccount,
+                                                        customerAddress1,
+                                                        customerAddress2,
+                                                        customerCity
+                                                        ')
+                ->where('customerCodeSystem', '!=', '')
+                ->where('isCustomerActive', '=', 1);
+
+            if (isset($input['customer_id'])) {
+                $customer_id = $input['customer_id'];
+                $customerMaster = $customerMaster->where('customermaster.customerCodeSystem', '=', $customer_id);
+            }
+            if (isset($input['customer_search'])) {
+                $search = $input['customer_search'];
+                $search = str_replace("\\", "\\\\", $search);
+                $customerMaster = $customerMaster->where(function ($query) use ($search) {
+                    $query->where('customermaster.CustomerName', 'LIKE', "%{$search}%")
+                        ->orWhere('customermaster.CutomerCode', 'LIKE', "%{$search}%");
+                });
+            }
+            if (isset($input['is_paginate'])){
+                if($input['is_paginate']==1){
+                    $customerMaster = $customerMaster->paginate($per_page);
+                } else {
+                    $customerMaster = $customerMaster->get();
+                }
+            } else {
+                $customerMaster = $customerMaster->paginate($per_page);
+            }
+
+            DB::commit();
+            return $this->sendResponse($customerMaster, 'Data Retrieved successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
     }
 }
