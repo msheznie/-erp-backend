@@ -102,7 +102,9 @@ class Appointment extends Model
         'canceledDate',
         'canceledByEmpId',
         'canceledReason',
-        'canceledByName'
+        'canceledByName',
+        'grv_create_yn',
+        'grv'
     ];
 
     /**

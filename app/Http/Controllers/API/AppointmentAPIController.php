@@ -17,7 +17,7 @@ use Response;
 use App\Models\CompanyFinanceYear;
 use Carbon\Carbon;
 use App\Models\ApprovalLevel;
-
+use App\Jobs\DeliveryAppoinmentGRV;
 /**
  * Class AppointmentController
  * @package App\Http\Controllers\API
@@ -424,10 +424,7 @@ class AppointmentAPIController extends AppBaseController
                 'documentSystemID' => $input['document_system_id'],
             'approvalLevelID' => $input['document_approved']['approvalLevelID'],
             'rollLevelOrder' => $input['document_approved']['rollLevelOrder'],
-            'approvedComments' => $input['approvedComments'],
-            'location' => $input['location'],
-                'segment' => $input['segment'],
-            'companySystemID' => $input['companySystemID']
+            'approvedComments' => $input['approvedComments']
         );
 
 
@@ -514,10 +511,6 @@ class AppointmentAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $approval_id = $input['document_approved']['approvalLevelID'];
-        $approvalLevel = ApprovalLevel::find($approval_id);
-        
-
         $appointments = Appointment::where('appointment.id',$input['id'])->selectRaw('erp_purchaseordermaster.purchaseOrderCode,appointment.id,appointment_details.id,appointment_details.qty as planned_qty,erp_purchaseorderdetails.noQty as total_qty,erp_purchaseorderdetails.receivedQty as receivedQty,(erp_purchaseorderdetails.noQty - erp_purchaseorderdetails.receivedQty) as balance_qty,erp_purchaseorderdetails.itemPrimaryCode')
         ->join('appointment_details', 'appointment_details.appointment_id', '=', 'appointment.id')
         ->join('erp_purchaseordermaster', 'erp_purchaseordermaster.purchaseOrderID', '=', 'appointment_details.po_master_id')
@@ -544,18 +537,19 @@ class AppointmentAPIController extends AppBaseController
         }
         else
         {
-            if(isset($approvalLevel))
-            {
-                $data['appoval'] = $approvalLevel->noOfLevels;
-            }
-            else
-            {
-                $data['appoval'] = 1;
-            }
-           
-            return $this->sendResponse($data, 'succesfully checked');
+            return $this->sendResponse(true, 'succesfully checked');
 
         }
+
+    }
+
+    public function createAppointmentGrv(Request $request)
+    {
+        $input = $request->all();
+        $acc_d = DeliveryAppoinmentGRV::dispatch($input);
+
+        return $this->sendResponse($acc_d, 'succesfully created');
+
 
     }
 }
