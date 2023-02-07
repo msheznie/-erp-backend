@@ -355,7 +355,6 @@ class DeliveryAppoinmentGRV implements ShouldQueue
             }
             else{
                 Log::info('From Company Finance Year not found, date3 : ');
-                return 'From Company Finance Year not found, date3 : ';
             }
 
 
