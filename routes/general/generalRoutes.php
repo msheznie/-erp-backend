@@ -1,14 +1,17 @@
 <?php
 
 
-Route::resource('document_attachments', 'DocumentAttachmentsAPIController');   
+Route::resource('document_attachments', 'DocumentAttachmentsAPIController');  
 Route::resource('document_attachment_types', 'DocumentAttachmentTypeAPIController');
-
+Route::resource('general_ledgers', 'GeneralLedgerAPIController');
 
 Route::get('downloadTemplate', 'CustomerMasterAPIController@downloadTemplate')->name('Master data bulk upload template');
 Route::get('getExampleTableData', 'ExampleTableTemplateAPIController@getExampleTableData')->name("Get example table for upload");
 Route::post('masterBulkUpload', 'CustomerMasterAPIController@masterBulkUpload')->name("Master data bulk upload");
 Route::post('getUserActivityLog', 'UserActivityLogAPIController@getViewLog')->name("Get user Activity log");
+
+Route::get('getSearchCustomerByCompany', 'CustomerMasterAPIController@getSearchCustomerByCompany')->name("Get Search Customer By Company");
+Route::get('getContractByCustomer', 'CustomerMasterAPIController@getContractByCustomer')->name("Get Contract By Customer");
 
 Route::get('checkRestrictionByPolicy', 'DocumentRestrictionAssignAPIController@checkRestrictionByPolicy')->name("Check document restriction policy");
 
@@ -42,3 +45,10 @@ Route::get('checkUserGroupAccessRights', 'UserGroupAssignAPIController@checkUser
 Route::get('getGRVFormData', 'GRVMasterAPIController@getGRVFormData')->name('Get grv form data');
 Route::get('getAllFinancePeriod', 'CompanyFinancePeriodAPIController@getAllFinancePeriod')->name('Get all finance period');
 Route::get('getSearchSupplierByCompany', 'SupplierMasterAPIController@getSearchSupplierByCompany')->name('Get search supplier by company');
+
+Route::get('getGeneralLedgerReview', 'GeneralLedgerAPIController@getGeneralLedgerReview')->name('Get General Ledger Review');
+// Route::get('updateNotPostedGLEntries', 'GeneralLedgerAPIController@updateNotPostedGLEntries');
+
+Route::post('updateGLEntries', 'GeneralLedgerAPIController@updateGLEntries');
+Route::post('generateSegmentGlReport', 'GeneralLedgerAPIController@generateSegmentGlReport');
+Route::post('generateSegmentGlReportExcel', 'GeneralLedgerAPIController@generateSegmentGlReportExcel');
