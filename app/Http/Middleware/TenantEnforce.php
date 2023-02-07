@@ -48,7 +48,9 @@ class TenantEnforce
             'api/v1/generateGeneralLedgerReportPDF',
             'api/v1/uploadItems',
             'api/v1/assignUserGroupNavigation',
-            'api/v1/approvePurchaseRequest'
+            'api/v1/approvePurchaseRequest',
+            'api/v1/post_receipt_voucher',
+            'api/v1/post_customer_invoice'
         ];
 
 

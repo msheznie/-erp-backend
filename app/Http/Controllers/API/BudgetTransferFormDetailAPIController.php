@@ -135,21 +135,38 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
     public function store(CreateBudgetTransferFormDetailAPIRequest $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToValue($input);
+        $budgetTransferToData = isset($input['budgetTransferToData']) ? $input['budgetTransferToData'] : [];
+
+        $input = $this->convertArrayToValue(array_except($input, 'budgetTransferToData'));
         $validator = \Validator::make($input, [
             'budgetTransferFormAutoID' => 'required',
             'fromServiceLineSystemID' => 'required|numeric|min:1',
             'isFromContingency' => 'required|numeric',
-            'toTemplateDetailID' => 'required|numeric|min:1',
-            'toServiceLineSystemID' => 'required|numeric|min:1',
-            'toChartOfAccountSystemID' => 'required|numeric|min:1',
-            'remarks' => 'required',
-            'adjustmentAmountRpt' => 'required|numeric'
         ]);
 
         if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
         }
+
+        if (count($budgetTransferToData) == 0) {
+            return $this->sendError('Budget Transfer To data not found', 500);
+        }
+
+        foreach ($budgetTransferToData as $key => $value) {
+            $value = $this->convertArrayToValue($value);
+            $validator = \Validator::make($value, [
+                'toTemplateDetailID' => 'required|numeric|min:1',
+                'toServiceLineSystemID' => 'required|numeric|min:1',
+                'toChartOfAccountSystemID' => 'required|numeric|min:1',
+                'remarks' => 'required',
+                'adjustmentAmountRpt' => 'required|numeric'
+            ]);
+
+            if ($validator->fails()) {
+                return $this->sendError($validator->messages(), 422);
+            }            
+        }
+
         $budgetTransferMaster = $this->budgetTransferFormRepository->find($input['budgetTransferFormAutoID']);
 
         if (empty($budgetTransferMaster)) {
@@ -165,27 +182,6 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
             return $this->sendError($masterValidate->messages(), 422);
         }
 
-        $toChartOfAccount  = ChartOfAccountsAssigned::where('companySystemID',$budgetTransferMaster->companySystemID)
-            ->where('chartOfAccountSystemID',$input['toChartOfAccountSystemID'])
-            ->first();
-
-        if(empty($toChartOfAccount)){
-            return $this->sendError('To Account Not Found', 500);
-        }
-
-        $toDataBudgetCheck = Budjetdetails::where('companySystemID', $budgetTransferMaster->companySystemID)
-            ->where('chartOfAccountID',$input['toChartOfAccountSystemID'])
-            ->where('serviceLineSystemID',$input['toServiceLineSystemID'])
-            ->where('templateDetailID',$input['toTemplateDetailID'])
-            ->where('Year',$budgetTransferMaster->year)
-            ->count();
-
-        if($toDataBudgetCheck == 0){
-            return $this->sendError('There is no budget allocated for '.$toChartOfAccount->AccountCode, 500);
-        }
-
-        $input['year'] = $budgetTransferMaster->year;
-
         $fromDepartment = SegmentMaster::where('companySystemID', $budgetTransferMaster->companySystemID)
             ->where('serviceLineSystemID', $input['fromServiceLineSystemID'])
             ->first();
@@ -198,33 +194,8 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
             throw new \Exception("Please select an active from department", 500);
         }
 
+        $input['year'] = $budgetTransferMaster->year;
         $input['fromServiceLineCode'] = $fromDepartment->ServiceLineCode;
-
-
-        $toDepartment = SegmentMaster::where('companySystemID', $budgetTransferMaster->companySystemID)
-            ->where('serviceLineSystemID', $input['toServiceLineSystemID'])
-            ->first();
-
-        if (empty($toDepartment)) {
-            return $this->sendError('To Department not found');
-        }
-
-        if ($toDepartment->isActive == 0) {
-            return $this->sendError('Please select an active to department', 500);
-        }
-
-        $input['toServiceLineCode'] = $toDepartment->ServiceLineCode;
-
-
-        $toChartOfAccount = ChartOfAccountsAssigned::where('companySystemID', $budgetTransferMaster->companySystemID)
-            ->where('chartOfAccountSystemID', $input['toChartOfAccountSystemID'])->first();
-
-        if (empty($toChartOfAccount)) {
-            return $this->sendError('To Account Code not found');
-        }
-
-        $input['toGLCode'] = $toChartOfAccount->AccountCode;
-        $input['toGLCodeDescription'] = $toChartOfAccount->AccountDescription;
 
         $companyData = Company::find($budgetTransferMaster->companySystemID);
 
@@ -232,17 +203,89 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
             return $this->sendError('Company not found');
         }
 
-        $currency = \Helper::currencyConversion($budgetTransferMaster->companySystemID, $companyData->reportingCurrency, $companyData->reportingCurrency, $input['adjustmentAmountRpt']);
-        $input['adjustmentAmountLocal'] = $currency['localAmount'];
 
         try {
-            if( $input['isFromContingency'] == 1){
-                $this->from_contingency($input, $budgetTransferMaster);
-            }
-            else{
-                $this->general_transfer($input, $budgetTransferMaster);
+            if( $input['isFromContingency'] != 1){
+                $fromChartOfAccount = ChartOfAccountsAssigned::where('companySystemID', $budgetTransferMaster->companySystemID)
+                    ->where('chartOfAccountSystemID', $input['fromChartOfAccountSystemID'])
+                    ->first();
+
+                if (empty($fromChartOfAccount)) {
+                    return $this->sendError('From Account Code not found');
+                }
+
+                $input['FromGLCode'] = $fromChartOfAccount->AccountCode;
+                $input['FromGLCodeDescription'] = $fromChartOfAccount->AccountDescription;
+                
+                $this->validateTransferBalance($input, $budgetTransferMaster, $budgetTransferToData);
+            } else {
+                $this->validateContingencyBudget($input, $budgetTransferMaster, $budgetTransferToData);
             }
 
+            DB::beginTransaction();
+                foreach ($budgetTransferToData as $key => $value) {
+                    $value = $this->convertArrayToValue($value);
+                    $input['toChartOfAccountSystemID'] = $value['toChartOfAccountSystemID'];
+                    $input['toServiceLineSystemID'] = $value['toServiceLineSystemID'];
+                    $input['toTemplateDetailID'] = $value['toTemplateDetailID'];
+                    $input['remarks'] = $value['remarks'];
+                    $input['adjustmentAmountRpt'] = $value['adjustmentAmountRpt'];
+
+                    $toChartOfAccount  = ChartOfAccountsAssigned::where('companySystemID',$budgetTransferMaster->companySystemID)
+                        ->where('chartOfAccountSystemID',$input['toChartOfAccountSystemID'])
+                        ->first();
+
+                    if(empty($toChartOfAccount)){
+                        return $this->sendError('To Account Not Found', 500);
+                    }
+
+                    $toDataBudgetCheck = Budjetdetails::where('companySystemID', $budgetTransferMaster->companySystemID)
+                        ->where('chartOfAccountID',$input['toChartOfAccountSystemID'])
+                        ->where('serviceLineSystemID',$input['toServiceLineSystemID'])
+                        ->where('templateDetailID',$input['toTemplateDetailID'])
+                        ->where('Year',$budgetTransferMaster->year)
+                        ->count();
+
+                    if($toDataBudgetCheck == 0){
+                        return $this->sendError('There is no budget allocated for '.$toChartOfAccount->AccountCode, 500);
+                    }
+            
+                    $toDepartment = SegmentMaster::where('companySystemID', $budgetTransferMaster->companySystemID)
+                        ->where('serviceLineSystemID', $input['toServiceLineSystemID'])
+                        ->first();
+
+                    if (empty($toDepartment)) {
+                        return $this->sendError('To Department not found');
+                    }
+
+                    if ($toDepartment->isActive == 0) {
+                        return $this->sendError('Please select an active to department', 500);
+                    }
+                    
+                    $input['toServiceLineCode'] = $toDepartment->ServiceLineCode;
+                    
+                    $toChartOfAccount = ChartOfAccountsAssigned::where('companySystemID', $budgetTransferMaster->companySystemID)
+                        ->where('chartOfAccountSystemID', $input['toChartOfAccountSystemID'])->first();
+
+                    if (empty($toChartOfAccount)) {
+                        return $this->sendError('To Account Code not found');
+                    }
+
+                    $input['toGLCode'] = $toChartOfAccount->AccountCode;
+                    $input['toGLCodeDescription'] = $toChartOfAccount->AccountDescription;
+                    
+                    $currency = \Helper::currencyConversion($budgetTransferMaster->companySystemID, $companyData->reportingCurrency, $companyData->reportingCurrency, $input['adjustmentAmountRpt']);
+                    $input['adjustmentAmountLocal'] = $currency['localAmount'];
+                    
+                    if( $input['isFromContingency'] == 1){
+                        $this->from_contingency($input, $budgetTransferMaster);
+                    }
+                    else{
+                        $this->general_transfer($input, $budgetTransferMaster);
+                    }
+                }
+
+            DB::commit();
             return $this->sendResponse([], 'Budget Transfer Form Detail saved successfully');
         }
         catch (\Exception $ex){
@@ -254,80 +297,9 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
         }
     }
 
-    function from_contingency($input, $budgetTransferMaster){
-        $validator = \Validator::make($input, [
-            'contingencyBudgetID' => 'required|numeric|min:1',
-        ]);
-
-        if ($validator->fails()) {
-            throw new \Exception($validator->messages(), 422);
-        }
-
-        $contingencyBudgetID = $input['contingencyBudgetID'];
-        $contingencyBudgetPlan = ContingencyBudgetPlan::find( $contingencyBudgetID );
-
-        if( empty($contingencyBudgetPlan) ){
-            throw new \Exception("Contingency Budget details not found", 500);
-        }
-
-
-        $checkSameEntry = BudgetTransferFormDetail::where('contingencyBudgetID' , $input['contingencyBudgetID'])
-            ->where('toTemplateDetailID' , $input['toTemplateDetailID'])
-            ->where('toChartOfAccountSystemID' , $input['toChartOfAccountSystemID'])
-            ->where('budgetTransferFormAutoID' , $input['budgetTransferFormAutoID'])
-            ->count();
-
-        if ($checkSameEntry > 0) {
-            throw new \Exception("Selected GL Code is already added. Please check again", 500);
-        }
-
-
-        $checkPendingFromGL = BudgetTransferFormDetail::where(function ($q) use($input){
-            $q->where(function ($q2) use($input){
-                $q2->where('fromTemplateDetailID', $input['toTemplateDetailID'])
-                    ->where('fromChartOfAccountSystemID', $input['toChartOfAccountSystemID']);
-            })->orWhere(function ($q2)use($input) {
-                $q2->where('toTemplateDetailID', $input['toTemplateDetailID'])
-                    ->where('toChartOfAccountSystemID', $input['toChartOfAccountSystemID']);
-            });
-        })
-        ->whereHas('master',function ($q) use ($budgetTransferMaster) {
-            $q->where('companySystemID', $budgetTransferMaster->companySystemID)
-                ->where('year', $budgetTransferMaster->year)
-                ->where('approvedYN', 0);
-        })
-        ->with(['master'])
-        ->first();
-
-        if (!empty($checkPendingFromGL)) {
-            throw new \Exception("There is a Budget Transfer (" . $checkPendingFromGL->master->transferVoucherNo . ") 
-                        pending for approval for the GL Code you are trying to add. Please check again.", 500);
-        }
-
-
-        $utilized = BudgetTransferFormDetail::where('isFromContingency', 1)
-            ->where('contingencyBudgetID', $input['contingencyBudgetID'])
-            ->sum('adjustmentAmountRpt');
-
-
-        $balance = $contingencyBudgetPlan->contigencyAmount - $utilized;
-        if ($input['adjustmentAmountRpt'] > $balance) {
-
-            $balance = CurrencyValidation::convertToLocalCurrencyDecimal($budgetTransferMaster->companySystemID, $balance);
-
-            $msg = "You cannot transfer more than the balance amount, Balance amount is {$balance}";
-            throw new \Exception($msg, 500);
-        }
-
-        $budgetTransferFormDetails = $this->budgetTransferFormDetailRepository->create($input);
-
-        return ['status'=> true, 'data'=> $budgetTransferFormDetails];
-
-    }
-
-    public function general_transfer($input, $budgetTransferMaster)
+    public function validateTransferBalance($input, $budgetTransferMaster, $budgetTransferToData)
     {
-        $validator = \Validator::make($input, [
+         $validator = \Validator::make($input, [
             'fromTemplateDetailID' => 'required|numeric|min:1',
             'fromChartOfAccountSystemID' => 'required|numeric|min:1',
         ]);
@@ -335,14 +307,7 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
         if ($validator->fails()) {
             throw new \Exception($validator->messages(), 422);
         }
-
-        if ($input['fromTemplateDetailID'] == $input['toTemplateDetailID']
-            && $input['fromChartOfAccountSystemID'] == $input['toChartOfAccountSystemID']
-            && $input['fromServiceLineSystemID'] == $input['toServiceLineSystemID']
-        ) {
-            throw new \Exception("You cannot transfer to the same account, Please select a different account", 500);
-        }
-
+        
         $fromChartOfAccount  = ChartOfAccountsAssigned::where('companySystemID',$budgetTransferMaster->companySystemID)
             ->where('chartOfAccountSystemID',$input['fromChartOfAccountSystemID'])
             ->first();
@@ -364,6 +329,7 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
                             Please allocate and try again.", 500);
         }
 
+
         $checkSameEntry = BudgetTransferFormDetail::where(function ($q) use($input){
             $q->where(function ($q1) use($input){
                 $q1->where(function ($q2) use($input){
@@ -373,17 +339,7 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
                     $q2->where('toTemplateDetailID', $input['fromTemplateDetailID'])
                         ->where('toChartOfAccountSystemID', $input['fromChartOfAccountSystemID']);
                 });
-            })->orWhere(function ($q1)use($input) {
-                $q1->where(function ($q2) use($input){
-                    $q2->where('fromTemplateDetailID', $input['toTemplateDetailID'])
-                        ->where('fromChartOfAccountSystemID', $input['toChartOfAccountSystemID']);
-                })->orWhere(function ($q2)use($input) {
-                    $q2->where('toTemplateDetailID', $input['toTemplateDetailID'])
-                        ->where('toChartOfAccountSystemID', $input['toChartOfAccountSystemID']);
-                });
             });
-
-            //( (((A = C) && (B = D )) || ((A1 = C) && (B1 = C))) || ( ((A = C1) && (B = D1 )) || ((A1 = C1) && (B1 = C1)) )   ) && H = I
         })
         ->where('budgetTransferFormAutoID' , $input['budgetTransferFormAutoID'])
         ->count();
@@ -391,7 +347,6 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
         if ($checkSameEntry > 0) {
             throw new \Exception("Selected GL Code is already added. Please check again", 500);
         }
-
 
 
         $checkPendingFromGL = BudgetTransferFormDetail::where(function ($q) use($input){
@@ -403,17 +358,7 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
                     $q2->where('toTemplateDetailID', $input['fromTemplateDetailID'])
                         ->where('toChartOfAccountSystemID', $input['fromChartOfAccountSystemID']);
                 });
-            })->orWhere(function ($q1)use($input) {
-                $q1->where(function ($q2) use($input){
-                    $q2->where('fromTemplateDetailID', $input['toTemplateDetailID'])
-                        ->where('fromChartOfAccountSystemID', $input['toChartOfAccountSystemID']);
-                })->orWhere(function ($q2)use($input) {
-                    $q2->where('toTemplateDetailID', $input['toTemplateDetailID'])
-                        ->where('toChartOfAccountSystemID', $input['toChartOfAccountSystemID']);
-                });
             });
-
-            //( (((A = C) && (B = D )) || ((A1 = C) && (B1 = C))) || ( ((A = C1) && (B = D1 )) || ((A1 = C1) && (B1 = C1)) )   ) && H = I
         })
         ->whereHas('master',function ($q) use ($budgetTransferMaster) {
             $q->where('companySystemID', $budgetTransferMaster->companySystemID)
@@ -478,31 +423,149 @@ class BudgetTransferFormDetailAPIController extends AppBaseController
                 'erp_budjetdetails.chartOfAccountID', 'erp_budjetdetails.Year'])
             ->first();
 
+        $transferAmount = collect($budgetTransferToData)->sum('adjustmentAmountRpt');
+
         if (!empty($checkBalance)) {
             if ($checkBalance->balance <= 0) {
                 $msg = "You cannot transfer from a negative balance amount or a zero balance amount";
                 throw new \Exception($msg, 500);
             }
-            if ($input['adjustmentAmountRpt'] > abs($checkBalance->balance) && $checkBalance->balance > 0) {
+            if ($transferAmount > abs($checkBalance->balance) && $checkBalance->balance > 0) {
                 $balanceShow = abs($checkBalance->balance);
                 $msg = "You cannot transfer more than the balance amount, Balance amount is {$balanceShow}";
                 throw new \Exception($msg, 500);
             }
         }
+    }
 
+    public function validateContingencyBudget($input, $budgetTransferMaster, $budgetTransferToData)
+    {
+        $validator = \Validator::make($input, [
+            'contingencyBudgetID' => 'required|numeric|min:1',
+        ]);
 
-
-        $fromChartOfAccount = ChartOfAccountsAssigned::where('companySystemID', $budgetTransferMaster->companySystemID)
-            ->where('chartOfAccountSystemID', $input['fromChartOfAccountSystemID'])
-            ->first();
-
-        if (empty($fromChartOfAccount)) {
-            throw new \Exception("From Account Code not found", 500);
+        if ($validator->fails()) {
+            throw new \Exception($validator->messages(), 422);
         }
 
-        $input['FromGLCode'] = $fromChartOfAccount->AccountCode;
-        $input['FromGLCodeDescription'] = $fromChartOfAccount->AccountDescription;
+        $contingencyBudgetID = $input['contingencyBudgetID'];
+        $contingencyBudgetPlan = ContingencyBudgetPlan::find( $contingencyBudgetID );
 
+        if( empty($contingencyBudgetPlan) ){
+            throw new \Exception("Contingency Budget details not found", 500);
+        }
+
+        $utilized = BudgetTransferFormDetail::where('isFromContingency', 1)
+            ->where('contingencyBudgetID', $input['contingencyBudgetID'])
+            ->sum('adjustmentAmountRpt');
+
+
+        $balance = $contingencyBudgetPlan->contigencyAmount - $utilized;
+        $transferAmount = collect($budgetTransferToData)->sum('adjustmentAmountRpt');
+        if ($transferAmount > $balance) {
+
+            $balance = CurrencyValidation::convertToRptCurrencyDecimal($budgetTransferMaster->companySystemID, $balance);
+
+            $msg = "You cannot transfer more than the balance amount, Balance amount is {$balance}";
+            throw new \Exception($msg, 500);
+        }
+    }
+
+    function from_contingency($input, $budgetTransferMaster){
+       
+        $checkSameEntry = BudgetTransferFormDetail::where('contingencyBudgetID' , $input['contingencyBudgetID'])
+            ->where('toTemplateDetailID' , $input['toTemplateDetailID'])
+            ->where('toChartOfAccountSystemID' , $input['toChartOfAccountSystemID'])
+            ->where('budgetTransferFormAutoID' , $input['budgetTransferFormAutoID'])
+            ->count();
+
+        if ($checkSameEntry > 0) {
+            throw new \Exception("Selected GL Code is already added. Please check again", 500);
+        }
+
+
+        $checkPendingFromGL = BudgetTransferFormDetail::where(function ($q) use($input){
+            $q->where(function ($q2) use($input){
+                $q2->where('fromTemplateDetailID', $input['toTemplateDetailID'])
+                    ->where('fromChartOfAccountSystemID', $input['toChartOfAccountSystemID']);
+            })->orWhere(function ($q2)use($input) {
+                $q2->where('toTemplateDetailID', $input['toTemplateDetailID'])
+                    ->where('toChartOfAccountSystemID', $input['toChartOfAccountSystemID']);
+            });
+        })
+        ->whereHas('master',function ($q) use ($budgetTransferMaster) {
+            $q->where('companySystemID', $budgetTransferMaster->companySystemID)
+                ->where('year', $budgetTransferMaster->year)
+                ->where('approvedYN', 0);
+        })
+        ->with(['master'])
+        ->first();
+
+        if (!empty($checkPendingFromGL)) {
+            throw new \Exception("There is a Budget Transfer (" . $checkPendingFromGL->master->transferVoucherNo . ") 
+                        pending for approval for the GL Code you are trying to add. Please check again.", 500);
+        }
+       
+        $budgetTransferFormDetails = $this->budgetTransferFormDetailRepository->create($input);
+
+        return ['status'=> true, 'data'=> $budgetTransferFormDetails];
+
+    }
+
+    public function general_transfer($input, $budgetTransferMaster)
+    {
+        if ($input['fromTemplateDetailID'] == $input['toTemplateDetailID']
+            && $input['fromChartOfAccountSystemID'] == $input['toChartOfAccountSystemID']
+            && $input['fromServiceLineSystemID'] == $input['toServiceLineSystemID']
+        ) {
+            throw new \Exception("You cannot transfer to the same account, Please select a different account", 500);
+        }
+
+        $checkSameEntry = BudgetTransferFormDetail::where(function ($q) use($input){
+            $q->where(function ($q1)use($input) {
+                $q1->where(function ($q2) use($input){
+                    $q2->where('fromTemplateDetailID', $input['toTemplateDetailID'])
+                        ->where('fromChartOfAccountSystemID', $input['toChartOfAccountSystemID']);
+                })->orWhere(function ($q2)use($input) {
+                    $q2->where('toTemplateDetailID', $input['toTemplateDetailID'])
+                        ->where('toChartOfAccountSystemID', $input['toChartOfAccountSystemID']);
+                });
+            });
+        })
+        ->where('budgetTransferFormAutoID' , $input['budgetTransferFormAutoID'])
+        ->count();
+
+        if ($checkSameEntry > 0) {
+            throw new \Exception("Selected GL Code is already added. Please check again", 500);
+        }
+
+
+
+        $checkPendingFromGL = BudgetTransferFormDetail::where(function ($q) use($input){
+            $q->where(function ($q1)use($input) {
+                $q1->where(function ($q2) use($input){
+                    $q2->where('fromTemplateDetailID', $input['toTemplateDetailID'])
+                        ->where('fromChartOfAccountSystemID', $input['toChartOfAccountSystemID']);
+                })->orWhere(function ($q2)use($input) {
+                    $q2->where('toTemplateDetailID', $input['toTemplateDetailID'])
+                        ->where('toChartOfAccountSystemID', $input['toChartOfAccountSystemID']);
+                });
+            });
+        })
+        ->whereHas('master',function ($q) use ($budgetTransferMaster) {
+            $q->where('companySystemID', $budgetTransferMaster->companySystemID)
+                ->where('year', $budgetTransferMaster->year)
+                ->where('approvedYN', 0);
+        })
+        ->with(['master'])
+        ->first();
+
+        if (!empty($checkPendingFromGL)) {
+            $msg = "There is a Budget Transfer (" . $checkPendingFromGL->master->transferVoucherNo . ") pending for 
+                    approval for the GL Code you are trying to add. Please check again.";
+
+            throw new \Exception($msg, 500);
+        }
 
         $budgetTransferFormDetails = $this->budgetTransferFormDetailRepository->create($input);
 

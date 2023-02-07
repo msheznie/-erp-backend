@@ -7,6 +7,7 @@ use Illuminate\Console\Command;
 use App\Jobs\BirthdayWishInitiate;
 use Illuminate\Support\Facades\Log;
 
+
 class BirthdayWishScheduler extends Command
 {
     /**

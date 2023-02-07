@@ -6,6 +6,8 @@ use App\Http\Requests\API\CreatePdcLogAPIRequest;
 use App\Http\Requests\API\UpdatePdcLogAPIRequest;
 use App\Models\PdcLog;
 use App\Models\PaySupplierInvoiceMaster;
+use App\Models\CompanyPolicyMaster;
+use App\Models\ChequeTemplateBank;
 use App\Models\BankMaster;
 use App\Models\BankAccount;
 use App\helper\Helper;
@@ -388,7 +390,10 @@ class PdcLogAPIController extends AppBaseController
                                     return $q->whereIn('paymentBankID', $bankmasterAutoID);
                                 })
                                 ->where('companySystemID',$companyId)
-                                ->with(['currency','bank','pay_supplier']);
+                                ->withCount('printed_history')
+                                ->with(['currency','bank','pay_supplier', 'cheque_printed_by', 'printed_history' => function($query) {
+                                    $query->with(['cheque_printed_by', 'changed_by', 'pay_supplier', 'currency']);
+                                }]);
 
         return \DataTables::eloquent($issuedCheques)
             ->addColumn('Actions', 'Actions', "Actions")
@@ -458,6 +463,8 @@ class PdcLogAPIController extends AppBaseController
     }
 
     public function getFormData(Request $request) {
+        $input = $request->all();
+
         $bankIds =  PdcLog::whereNotNull('paymentBankID')->get()->pluck('paymentBankID')->unique();
         /** Yes and No Selection */
         $yesNoSelection = YesNoSelection::all();
@@ -466,9 +473,12 @@ class PdcLogAPIController extends AppBaseController
         /** all Units*/
         $yesNoSelectionForMinus = YesNoSelectionForMinus::all();
 
+        $policy = Helper::checkRestrictionByPolicy($input['companySystemID'],4);
+
         $data = [
             'banks' => $banks,
             'yesNoSelection' => $yesNoSelection,
+            'chequeRePrintPolicy' => $policy,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus
         ];
 
@@ -587,5 +597,226 @@ class PdcLogAPIController extends AppBaseController
         }
 
         return $this->sendResponse([], "Generated Cheque reversed successfully");
+    }
+
+
+    public function printPdcCheque(Request $request)
+    {
+        $input = $request->all();
+        $htmlName = '';
+        
+        $employee = \Helper::getEmployeeInfo();
+        $pvData = PaySupplierInvoiceMaster::where('PayMasterAutoId',$input['documentmasterAutoID'])->first();
+
+        if (!$pvData) {
+            return $this->sendError("Payment voucher not found");
+        }
+
+
+        if($input['type'] == 2 && $input['name'] != '') {
+            $htmlName = $input['name'];
+        } else if($input['type'] == 1) {   
+            if(isset($input['bank_master_id']) && $input['bank_master_id'] > 0) {
+            
+                $bankTemplate = ChequeTemplateBank::where('bank_id',$input['bank_master_id'])->where('is_active', 1)->with('template')->get();
+         
+                if(count($bankTemplate) == 0) {
+                    return $this->sendError(trans('custom.no_templates'),500);
+                } else if(count($bankTemplate) == 1) {
+                    $htmlName=$bankTemplate[0]['template']['view_name'];
+                } else if(count($bankTemplate) > 1) {
+                    $details['is_modal'] = true;
+                    $details['data'] = $bankTemplate;
+                    return $this->sendResponse($details, trans('custom.retrieved_successfully'));
+                }
+            } else {
+                return $this->sendError(trans('custom.no_bank'),500);
+            }
+        }
+        
+
+        $selectedCompanyId = $input['companySystemID'];
+        $isGroup = \Helper::checkIsCompanyGroup($selectedCompanyId);
+
+        if ($isGroup) {
+            $subCompanies = \Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompanies = [$selectedCompanyId];
+        }
+
+        $bankAccount = null;
+        if(isset($input['bankID']) && $input['bankID'] > 0 &&  isset($input['bankAccountID']) && $input['bankAccountID'] > 0){
+            $bankAccount = BankAccount::where('bankmasterAutoID', $input['bankID'])
+                ->where('bankAccountAutoID', $input['bankAccountID'])
+                ->with(['currency'])
+                ->first();
+        }
+
+        $bank_currency_id = 2;
+        if ($bankAccount && $bankAccount->currency) {
+            $bank_currency_id = $bankAccount->currency->currencyID;
+        }
+  
+        $pdcData = PdcLog::where('id', $input['pdcLogID'])
+                            ->with(['pay_supplier' => function ($query) {
+                                $query->with(['bankcurrency', 'company', 'bankaccount', 'supplier']);
+                            }, 'currency'])
+                            ->whereHas('pay_supplier')
+                            ->first();
+
+        if (!$pdcData) {
+            return $this->sendError(trans('custom.no_items_found_for_print'), 500);
+        }
+
+        $supplierTransCurrencyID = $pdcData->pay_supplier->supplierTransCurrencyID;
+                
+        DB::beginTransaction();
+        try {
+            $time = strtotime("now");
+            $fileName = 'cheque_ahli' . $time . '.pdf';
+            $f = new \NumberFormatter("en", \NumberFormatter::SPELLOUT);
+            $totalAmount = 0;
+            $temArray = array();
+            $temArray['chequePrinted'] = 1;
+            $temArray['chequePrintedDate'] = now();
+            $temArray['chequePrintedBy'] = $employee->employeeSystemID;
+            if(isset($input['isPrint']) && $input['isPrint']) {
+                PdcLog::where('id', $input['pdcLogID'])->update($temArray);
+
+                /*
+                 * update cheque registry table print status if GCNFCR policy is on
+                 * */
+                $is_exist_policy_GCNFCR = CompanyPolicyMaster::where('companySystemID', $selectedCompanyId)
+                    ->where('companyPolicyCategoryID', 35)
+                    ->where('isYesNO', 1)
+                    ->first();
+                if (!empty($is_exist_policy_GCNFCR)) {
+                    $check_registry = [
+                        'isPrinted' => -1,
+                        'cheque_printed_at' => now(),
+                        'cheque_print_by' => $employee->employeeSystemID
+                    ];
+                    ChequeRegisterDetail::where('cheque_no', $pdcData->chequeNo)
+                        ->where('company_id', $pdcData->companySystemID)
+                        ->where('document_id', $pdcData->documentmasterAutoID)
+                        ->update($check_registry);
+                }
+            }
+
+            $item = PaySupplierInvoiceMaster::where('PayMasterAutoId', $pdcData->documentmasterAutoID)
+                                             ->with(['bankcurrency', 'company', 'bankaccount', 'supplier' => function ($q3) use ($pdcData) {
+                                                $q3->with(['supplierCurrency' => function ($q4) use ($pdcData) {
+                                                    $q4->where('currencyID', $pdcData->pay_supplier->supplierTransCurrencyID)
+                                                        ->where('isAssigned', -1)
+                                                        ->with(['bankMemo_by']);
+                                                }]);
+                                            }, 'payee_memo' => function($q) use($subCompanies){
+                                                $q->where('documentSystemID', 4)
+                                                ->whereIn('companySystemID',$subCompanies);
+                                            }])
+                                            ->whereHas('bankcurrency')
+                                            ->first();
+
+            $item['decimalPlaces'] = 2;
+            if ($item['bankcurrency']) {
+                $item['decimalPlaces'] = $item['bankcurrency']['DecimalPlaces'];
+            }
+
+            $item->memos = isset($item['supplier']['supplierCurrency'][0]['bankMemo_by']) ? $item['supplier']['supplierCurrency'][0]['bankMemo_by'] : null;
+            $temDetails = PaySupplierInvoiceMaster::where('PayMasterAutoId', $pdcData->documentmasterAutoID)
+                                                  ->first();
+
+            if (!empty($temDetails)) {
+                if ($temDetails->invoiceType == 2) {
+                    $item['details'] = $temDetails->supplierdetail;
+                } else if ($temDetails->invoiceType == 3) {
+                    $item['details'] = $temDetails->directdetail;
+                } else if ($temDetails->invoiceType == 5) {
+                    $item['details'] = $temDetails->advancedetail;
+                } else {
+                    $item['details'] = [];
+                }
+            } else {
+                $item['details'] = [];
+            }
+
+            $totalAmount = $pdcData->amount;
+
+            if($item){
+                $entity = $item;
+                $entity->totalAmount = $totalAmount;
+                $entity->payAmountBank = $totalAmount;
+                $entity->BPVdate = $pdcData->chequeDate;
+                $totalAmount = round($totalAmount, $entity->decimalPlaces);
+                $amountSplit = explode(".", $totalAmount);
+                $intAmt = 0;
+                $floatAmt = 00;
+
+                if (count($amountSplit) == 1) {
+                    $intAmt = $amountSplit[0];
+                    $floatAmt = 00;
+                } else if (count($amountSplit) == 2) {
+                    $intAmt = $amountSplit[0];
+                    $floatAmt = $amountSplit[1];
+                }
+
+                $entity->floatAmt = (string)$floatAmt;
+
+                //add zeros to decimal point
+                if($entity->floatAmt != 00){
+                    $length = strlen($entity->floatAmt);
+                    if($length<$entity->decimalPlaces){
+                        $count = $entity->decimalPlaces-$length;
+                        for ($i=0; $i<$count; $i++){
+                            $entity->floatAmt .= '0';
+                        }
+                    }
+                }
+
+                // get supplier transaction currency
+                $entity->instruction = '';
+                $entity->supplierTransactionCurrencyDetails = [];
+                if(isset($entity->supplier->supplierCurrency[0]->currencyMaster) && $entity->supplier->supplierCurrency[0]->currencyMaster){
+                    $entity->supplierTransactionCurrencyDetails = $entity->supplier->supplierCurrency[0]->currencyMaster;
+                    if($supplierTransCurrencyID != $bank_currency_id){
+                        $entity->instruction = 'The exchange rate agreed with treasury department is '.$entity->supplierTransactionCurrencyDetails->CurrencyCode.' '.$entity->supplierTransCurrencyER.' = '.$entity->bankcurrency->CurrencyCode.' '.number_format($entity->companyRptCurrencyER,4);
+                    }
+                }else{
+                    $entity->supplierTransactionCurrencyDetails = $entity->bankcurrency;
+                }
+
+
+                $entity->amount_word = ucfirst($f->format($intAmt));
+                $entity->amount_word = str_replace('-', ' ', $entity->amount_word);
+                $entity->chequePrintedByEmpName = $employee->empName;
+                if($entity->supplier){
+                    $entity->nameOnCheque = isset($entity->supplier->nameOnPaymentCheque)?$entity->supplier->nameOnPaymentCheque:'';
+                }else{
+                    $entity->nameOnCheque = $entity->directPaymentPayee;
+                }
+
+            }else{
+                $entity = null;
+            }
+        
+            $array = array('entity' => $entity, 'date' => $pdcData->chequeDate ,'type'=>$htmlName);
+            if ($htmlName) {
+                $html = view('print.' . $htmlName, $array)->render();
+                DB::commit();
+                if(isset($input['isPrint']) && $input['isPrint']) {
+                    return $this->sendResponse($html, trans('custom.print_successfully'));
+                }else{
+                    $details['is_modal'] = false;
+                    $details['data'] = $array;
+                    return $this->sendResponse($details, trans('custom.retrieved_successfully'));
+                }
+
+            } else {
+                return $this->sendError(trans('custom.error'), 500);
+            }
+        } catch (\Exception $e) {
+            DB::rollback();
+            return ['success' => false, 'message' => $e . trans('custom.error')];
+        }
     }
 }

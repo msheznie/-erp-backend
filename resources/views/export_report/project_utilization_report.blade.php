@@ -10,127 +10,115 @@ use Carbon\CarbonPeriod;
 	        <thead>
             <tr></tr>
             <tr>
-              <th colspan="5" align='center' style="font-size:50px">{{$reportTittle}}</th>
+              <th colspan="6" align='center' style="font-size:50px">{{$reportTittle}}</th>
             </tr>
             <tr>
-              <th colspan="5" align='center' style="font-size:50px">{{$companyName}}</th>
+              <th colspan="6" align='center' style="font-size:50px">{{$companyName}}</th>
             </tr>
             <tr></tr>
             <tr>
-              <th style="font-size:15px;">Date From: {{$fromDate}}</th>
+              <th colspan="2" style="font-size:15px;">Date From: {{$fromDate}}</th>
+              <th colspan="2" style="font-size:15px;">Date To: {{$toDate}}</th>
             </tr>
-            <tr>
-              <th style="font-size:15px;">Date To: {{$toDate}}</th>
-            </tr>
-            <tr></tr>
             <tr></tr>
             <tr>
               <th>Project Details</th>
             </tr>
           </thead>
-	 	<tbody>
-                      <?php 
+          <tbody>
+            <?php 
 
-                      if(isset($companyReportingCurrency))
-                      {
-                        $decimalPoint = $companyReportingCurrency->DecimalPlaces;
-                        $CurrencyName =$companyReportingCurrency->CurrencyName;
-                        $CurrencyCode = $companyReportingCurrency->CurrencyCode;
-                      }
-                      else
-                      {
-                        $decimalPoint = 2;
-                        $CurrencyName ='N/A';
-                        $CurrencyCode = 'N/A';
-                      } 
-                      ?>
-             
-                    <tr>
-                        <td>Description - {{$projectDetail->description}}</td>
-                    </tr>
-                    <tr>
-                        <td>Segment - {{$projectDetail->service_line->ServiceLineCode}}/{{$projectDetail->service_line->ServiceLineDes}}</td>
-                    </tr>
-                    <tr>
-                        <td>Project Currency - {{$projectDetail->currency->CurrencyCode}}/{{$projectDetail->currency->CurrencyName}}</td>
-                    </tr>
-                    <tr>
-                      <td>Reporting  Currency :- {{$CurrencyName}}</td>
-                    </tr>
-                    <tr>
-                        <td>Amount - {{ round($projectAmount, $decimalPoint)}}({{$CurrencyCode}})</td>
-                    </tr>
-              
-	 	</tbody>
-        <thead>
+            if(isset($companyReportingCurrency))
+            {
+              $decimalPoint = $companyReportingCurrency->DecimalPlaces;
+              $CurrencyName =$companyReportingCurrency->CurrencyName;
+              $CurrencyCode = $companyReportingCurrency->CurrencyCode;
+            }
+            else
+            {
+              $decimalPoint = 2;
+              $CurrencyName ='N/A';
+              $CurrencyCode = 'N/A';
+            } 
+            ?>
+                <tr>
+                  <td>Project Description</td>
+                  <td> -  {{$projectDetail->description}}</td>
+                  <td>Project Currency</td>
+                  <td > -  {{$projectDetail->currency->CurrencyName}}</td>
+                  <td>Project Budget</td>
+                  <td > :-  {{ round($projectAmount, $decimalPoint)}}({{$CurrencyCode}})</td>
+                </tr>
+                <tr>
+                  <td>Segment</td>
+                  <td > -  {{$projectDetail->service_line->ServiceLineDes}}</td>
+                  <td>Reporting  Currency</td>
+                  <td > -  {{$CurrencyName}}</td>
+                  <td>Balance Amount</td>
+                  <td > :-  {{ round(($closingBalance), $decimalPoint)}}({{$CurrencyCode}})</td>
+                </tr>
             <tr></tr>
-            <tr></tr>
-            <tr>
-              <th>Opening Balance</th>
-              <th></th>
-              <th></th>
-              <th></th>
-              <th>{{round($openingBalance, $decimalPoint)}}</th>
-            </tr>
-            <tr></tr>
-            <tr></tr>
-            <tr>
-              <th>Consumption</th>
-            </tr>
-          </thead>
+          </tbody>
           <tbody>
             <tr>
               <thead>
-                <th></th>
-                <th>Document Code</th>
-                <th>Document Date</th>
-                <th>Document Amount</th>
+                <th  style="background-color:#e4e5e6">GL Code</th>
+                <th  style="background-color:#e4e5e6">GL Description</th>
+                <th  style="background-color:#e4e5e6">Document Number</th>
+                <th  style="background-color:#e4e5e6">Document Date</th>
+                <th  style="background-color:#e4e5e6">Segment</th>
+                <th  style="background-color:#e4e5e6">Amount</th>
               </thead>
               <tbody>
+                <tr>
+                  <th>Opening Balance</th>
+                  <th></th>
+                  <th></th>
+                  <th></th>
+                  <th></th>
+                  <th>{{round($openingBalance, $decimalPoint)}}</th>
+                </tr>
                 @foreach ($detailsPOWise as $item)
                 <?php 
-                if ($item->documentSystemID == 2) {
+                $date = '';
+                if ($item->documentSystemID == 2 && isset($item->purchase_order_detail->approvedDate)) {
                   $date = explode(' ',$item->purchase_order_detail->approvedDate);
-                } elseif ($item->documentSystemID == 15) {
+                } elseif ($item->documentSystemID == 15 && isset($item->debit_note_detail->approvedDate)) {
                   $date = explode(' ',$item->debit_note_detail->approvedDate);
-                } elseif ($item->documentSystemID == 19) {
+                } elseif ($item->documentSystemID == 19 && isset($item->credit_note_detail->approvedDate)) {
                   $date = explode(' ',$item->credit_note_detail->approvedDate);
-                } elseif ($item->documentSystemID == 4) {
+                } elseif ($item->documentSystemID == 4 && isset($item->direct_payment_voucher_detail->approvedDate)) {
                   $date = explode(' ',$item->direct_payment_voucher_detail->approvedDate);
                 }
-                  $date = (new Carbon($date[0]))->format('d/m/Y');
+                  $date = $date?  (new Carbon($date[0]))->format('d/m/Y'):'';
                 ?>
                 <tr>
-                  <td></td>
+                  <td style="text-align: left;">{{$item->GLCode}}</td>
+                  <td>{{$item->chart_of_account->AccountDescription}}</td>
                   <td>{{$item->documentCode}}</td>
                   <td>{{$date }}</td>
-                  <td>{{round($item->documentAmount, $decimalPoint)}}</td>
-                  <td></td>
+                  <td>{{$item->segment_by->ServiceLineDes}}</td>
+                  <td>{{round($item->consumedRptAmount, $decimalPoint)}}</td>
                 </tr>
                 @endforeach
 
                 <tr>
+                    <th>Total Consumption</th>
                     <td></td>
                     <td></td>
                     <td></td>
                     <td></td>
                     <th>{{round($budgetConsumptionAmount, $decimalPoint)}}</th>
                   </tr>
-
+                  <tr>
+                    <th>Closing Balance</th>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                    <th></th>
+                    <th>{{round($closingBalance, $decimalPoint)}}</th>
+                  </tr>
               </tbody>
-
-              <thead>
-                <tr></tr>
-                <tr></tr>
-                <tr>
-                  <th>Closing Balance</th>
-                  <th></th>
-                  <th></th>
-                  <th></th>
-                  <th>{{round($closingBalance, $decimalPoint)}}</th>
-                </tr>
-              </thead>
-
             </tr>
           </tbody>
 

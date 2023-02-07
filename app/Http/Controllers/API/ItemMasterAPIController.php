@@ -479,6 +479,16 @@ class ItemMasterAPIController extends AppBaseController
             $isPosIntegrated = false;
         }
 
+        $isSubItemEnabledPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 72)
+            ->where('companySystemID', $selectedCompanyId)
+            ->first();
+        if(!empty($isSubItemEnabledPolicy->isYesNO)){
+            $isSubItemEnabled = $isSubItemEnabledPolicy->isYesNO;
+        } else {
+            $isSubItemEnabled = false;
+        }
+
+
         $warehouseSystemCode = isset($input['warehouseSystemCode']) ? $input['warehouseSystemCode'] : 0;
 
         $warehouse           =  WarehouseMaster::find($warehouseSystemCode);
@@ -577,7 +587,8 @@ class ItemMasterAPIController extends AppBaseController
             'wareHouseBinLocations' => $wareHouseBinLocations,
             'vatSubCategory' => $vatSubCategory,
             'masterCompany' => $masterCompany,
-            'isPosIntegrated' => $isPosIntegrated
+            'isPosIntegrated' => $isPosIntegrated,
+            'isSubItemEnabled' => $isSubItemEnabled
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
@@ -889,6 +900,13 @@ class ItemMasterAPIController extends AppBaseController
             $input['faFinanceCatID'] = null;
         }
 
+        if (isset($input['isSubItem']) && $input['isSubItem'] == 1) {
+            $mainItemID = isset($input['mainItemID'][0]) ? $input['mainItemID'][0] : $input['mainItemID'];
+            if (!$mainItemID) {
+                return $this->sendError('Main Item field is required.');
+            }
+        }
+
 
              
         $disk = Helper::policyWiseDisk($input['primaryCompanySystemID'], 'public');
@@ -965,6 +983,8 @@ class ItemMasterAPIController extends AppBaseController
                 $input['itemPicture'] = $itemMaster->itemPicture;
                 $itemMaster->itemUrl = $input['itemUrl'];
                 $itemMaster->isActive = $input['isActive'];
+                $itemMaster->isSubItem = $input['isSubItem'];
+                $itemMaster->mainItemID = $input['mainItemID'];
                 $itemMaster->itemPicture = $input['itemPicture'];
                 $itemMaster->pos_type = $input['pos_type'];
                 $itemMaster->itemDescription = $input['itemDescription'];
@@ -1056,7 +1076,7 @@ class ItemMasterAPIController extends AppBaseController
         }
         
         $afterConfirm = array('secondaryItemCode', 'barcode', 'itemDescription', 'itemShortDescription', 'itemUrl', 'unit',
-                         'itemPicture', 'isActive', 'itemConfirmedYN', 'modifiedPc', 'modifiedUser','financeCategorySub','modifiedUserSystemID','faFinanceCatID','pos_type');
+                         'itemPicture', 'isActive', 'itemConfirmedYN', 'modifiedPc', 'modifiedUser','financeCategorySub','modifiedUserSystemID','faFinanceCatID','pos_type','isSubItem','mainItemID');
                        
         foreach ($input as $key => $value) {
             if ($itemMaster->itemConfirmedYN == 1) {
@@ -1244,6 +1264,25 @@ class ItemMasterAPIController extends AppBaseController
         $itemMaster->delete();
 
         return $this->sendResponse($id, 'Item Master deleted successfully');
+    }
+
+    public function getAllMainItemsByCompany(Request $request){
+
+        $selectedCompanyId = $request->selectedCompanyId;
+        $itemCodeSystem = $request->itemCodeSystem;
+
+        $isSubItem = ItemMaster::selectRaw('primaryCode, itemmaster.itemDescription')->where('mainItemID', $itemCodeSystem)->first();
+
+        $subItems = ItemMaster::selectRaw('primaryCode, itemmaster.itemDescription, units.UnitShortCode, SUM(IFNULL(erp_itemledger.inOutQty,0)) as availableQty, itemCodeSystem')->where('mainItemID', $itemCodeSystem)->leftJoin('units', 'UnitID', '=', 'unit')->leftJoin('erp_itemledger', 'itemCodeSystem', '=', 'itemSystemCode')->groupBy('itemCodeSystem')->get();
+
+        $mainItemUOM =  ItemMaster::selectRaw('units.UnitShortCode, SUM(IFNULL(erp_itemledger.inOutQty,0)) as availableQty')->where('itemCodeSystem', $itemCodeSystem)->join('units', 'UnitID', '=', 'unit')->leftjoin('erp_itemledger', 'itemCodeSystem', '=', 'itemSystemCode')->groupBy('itemSystemCode')->first();
+
+        $mainItems = ItemAssigned::selectRaw('CONCAT(itemassigned.itemPrimaryCode, " - " ,itemassigned.itemDescription, " - ", units.UnitShortCode) as itemCode, itemassigned.itemCodeSystem')->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'itemassigned.itemCodeSystem')->join('units', 'UnitID', '=', 'unit')->where('companySystemID', $selectedCompanyId)->where('itemmaster.isSubItem', 0)->where('itemassigned.isActive', 1)->where('itemassigned.isAssigned', -1)->get();
+
+        $output = array('subItems' => $subItems, 'isSubItem'=>$isSubItem, 'mainItemUOM' => $mainItemUOM, 'mainItems' => $mainItems);
+
+        return $this->sendResponse($output, 'Main item details retrieved successfully');
+
     }
 
 

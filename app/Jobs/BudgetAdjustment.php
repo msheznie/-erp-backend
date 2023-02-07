@@ -6,6 +6,7 @@ use App\Models\BudgetTransferForm;
 use App\Models\Budjetdetails;
 use App\Models\ChartOfAccount;
 use App\Models\CompanyFinanceYear;
+use App\Models\Company;
 use App\Models\TemplatesDetails;
 use App\Repositories\AuditTrailRepository;
 use App\Repositories\BudgetAdjustmentRepository;
@@ -46,6 +47,18 @@ class BudgetAdjustment implements ShouldQueue
         Log::useFiles(storage_path() . '/logs/budget_adjustment_jobs.log');
         if (!empty($budgetTransfer)) {
             DB::beginTransaction();
+
+            $companyData = Company::with(['localcurrency', 'reportingcurrency'])->where('companySystemID', $budgetTransfer->companySystemID)
+                                  ->first();
+
+            $localDecimalPlaces = 3; // set default value as 3, since old code hard coded as 3
+            $reportingDecimalPlaces = 2;
+
+            if ($companyData) {
+                $localDecimalPlaces = $companyData->localcurrency ? $companyData->localcurrency->DecimalPlaces : 3;
+                $reportingDecimalPlaces = $companyData->reportingcurrency ? $companyData->reportingcurrency->DecimalPlaces : 2;
+            }
+
             try {
                 Log::info('Successfully start  budget_adjustment' . date('H:i:s'));
                 Log::info($budgetTransfer);
@@ -162,8 +175,8 @@ class BudgetAdjustment implements ShouldQueue
                     $fromTotalCount = count($fromBudgetDetails);
 
                     if($fromTotalCount > 0){
-                        $fromMinusAmountRpt = round(($item['adjustmentAmountRpt']/$fromTotalCount),2);
-                        $fromMinusAmountLocal = round(($item['adjustmentAmountLocal']/$fromTotalCount),3);
+                        $fromMinusAmountRpt = round(($item['adjustmentAmountRpt']/$fromTotalCount),$reportingDecimalPlaces);
+                        $fromMinusAmountLocal = round(($item['adjustmentAmountLocal']/$fromTotalCount),$localDecimalPlaces);
 
                         foreach ($fromBudgetDetails as $fromBudgetDetail){
                             $budjetdetailsRepo->update([
@@ -192,8 +205,8 @@ class BudgetAdjustment implements ShouldQueue
                     $toTotalCount = count($toTotalBudgetDetails);
 
                     if($toTotalCount > 0){
-                        $toAddAmountRpt = round(($item['adjustmentAmountRpt']/$toTotalCount),2);
-                        $toAddAmountLocal = round(($item['adjustmentAmountLocal']/$toTotalCount),3);
+                        $toAddAmountRpt = round(($item['adjustmentAmountRpt']/$toTotalCount),$reportingDecimalPlaces);
+                        $toAddAmountLocal = round(($item['adjustmentAmountLocal']/$toTotalCount),$localDecimalPlaces);
 
                         foreach ($toTotalBudgetDetails as $toBudgetDetail){
                             $budjetdetailsRepo->update([
