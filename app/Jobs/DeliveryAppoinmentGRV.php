@@ -339,6 +339,9 @@ class DeliveryAppoinmentGRV implements ShouldQueue
                     $updateGrvMaster = GRVMaster::where('grvAutoID', $grvAutoID)
                     ->update(['pullType' => 1]);
 
+                    $updateGrvMaster = Appointment::where('id', $this->data['documentSystemCode'])
+                    ->update(['grv_create_yn' => 1,'grv' => $GRVMaster->grvPrimaryCode]);
+
                     DB::commit();
     
                     Log::info('delivert appoinment grv completed... : ');
@@ -346,11 +349,12 @@ class DeliveryAppoinmentGRV implements ShouldQueue
                 else
                 {
                     Log::info('From Company Finance period not found, date : ');
+                    
                 }
     
             }
             else{
-                Log::info('From Company Finance Year not found, date : ');
+                Log::info('From Company Finance Year not found, date3 : ');
             }
 
 
