@@ -495,7 +495,7 @@ class JvDetailAPIController extends AppBaseController
             $detail_arr['chartOfAccountSystemID'] = $new['chartOfAccountSystemID'];
             $detail_arr['glAccount'] = $new['GlCode'];
             $detail_arr['glAccountDescription'] = $new['AccountDescription'];
-            $detail_arr['comments'] = 'Staff cost (Salary direct + Job bonus + Social insurance ) for the month of ' . date('F Y') . '';
+            $detail_arr['comments'] = 'Staff cost (Salary direct + Job bonus + Social insurance ) for the month of ' . date('F, Y', strtotime($jvMasterData->JVdate)) . '';
             $detail_arr['currencyID'] = $jvMasterData->currencyID;
             $detail_arr['currencyER'] = $jvMasterData->currencyER;
             $detail_arr['createdPcID'] = gethostname();
@@ -531,7 +531,7 @@ class JvDetailAPIController extends AppBaseController
         //updating JV master
         $updateJvMaster = JvMaster::find($jvMasterAutoId)
             ->update([
-                'JVNarration' => 'Staff cost (Salary direct + Job bonus + Social insurance ) for the month of ' . date('F Y') . ''
+                'JVNarration' => 'Staff cost (Salary direct + Job bonus + Social insurance ) for the month of ' . date('F Y', strtotime($jvMasterData->JVdate)) . ''
             ]);
 
         return $this->sendResponse('', 'JV Details saved successfully');
