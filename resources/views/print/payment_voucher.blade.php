@@ -75,7 +75,7 @@
         }
 
         .font-weight-bold {
-            font-weight: 700 !important;
+            font-weight: bold
         }
 
         .table thead th {
@@ -93,7 +93,7 @@
         }
 
         .font-weight-bold {
-            font-weight: 700 !important;
+            font-weight: bold
         }
 
         .table thead th {
@@ -164,9 +164,9 @@
         }
 
         .border-bottom-remov {
-            border-bottom: 1px solid #ffffffff !important;
-            background-color: #ffffff !important;
-            border-right: 1px solid #ffffffff !important;
+            border-bottom: 1px solid #ffffffff;
+            background-color: #ffffff;
+            border-right: 1px solid #ffffffff;
         }
 
         .container
@@ -185,29 +185,7 @@
     </style>
 </head>
 <body>
-<div class="footer">
-    <table style="width:100%;">
-        <tr>
-            <td colspan="3" style="width:100%">
-                <hr style="background-color: black">
-            </td>
-        </tr>
-        <tr>
-            <td style="width:33%;font-size: 10px;vertical-align: top;">
-                <span class="white-space-pre-line font-weight-bold">{!! nl2br($docRef) !!}</span>
-            </td>
-            <td style="width:33%; text-align: center;font-size: 10px;vertical-align: top;">
-                <span style="text-align: center">Page <span class="pagenum"></span></span><br>
-                @if ($masterdata->company)
-                    {{$masterdata->company->CompanyName}}
-                @endif
-            </td>
-            <td style="width:33%;font-size: 10px;vertical-align: top;">
-                <span style="margin-left: 50%;">Printed Date : {{date("d-M-y", strtotime(now()))}}</span>
-            </td>
-        </tr>
-    </table>
-</div>
+
 <div id="watermark"></div>
 <div class="card-body content" id="print-section">
     <table style="width: 100%" class="table_height">
@@ -225,10 +203,10 @@
                 <table>
                     <tr>
                         <td width="100px">
-                            <span class="font-weight-bold">Doc Code</span>
+                            <span style="font-weight: bold">Doc Code</span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold">:</span>
                         </td>
                         <td>
                             <span>{{$masterdata->BPVcode}}</span>
@@ -236,10 +214,10 @@
                     </tr>
                     <tr>
                         <td width="70px">
-                            <span class="font-weight-bold">Doc Date </span>
+                            <span style="font-weight: bold">Doc Date </span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold">:</span>
                         </td>
                         <td>
                             <span>
@@ -249,10 +227,10 @@
                     </tr>
                     <tr>
                         <td width="100px">
-                            <span class="font-weight-bold">Payment Mode</span>
+                            <span style="font-weight: bold">Payment Mode</span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold">:</span>
                         </td>
                         <td>
                             @if ($masterdata->paymentmode)
@@ -293,10 +271,10 @@
                     @if($masterdata->invoiceType != 6 && $masterdata->invoiceType != 7)
                         <tr>
                             <td width="150px">
-                                <span class="font-weight-bold">Payee Code</span>
+                                <span style="font-weight: bold">Payee Code</span>
                             </td>
                             <td width="10px">
-                                <span class="font-weight-bold">:</span>
+                                <span style="font-weight: bold">:</span>
                             </td>
                             <td>
                                 @if($masterdata->supplier)
@@ -308,14 +286,14 @@
                     <tr>
                         <td width="50px">
                             @if($masterdata->invoiceType == 6 || $masterdata->invoiceType == 7)
-                                <span class="font-weight-bold">Employee Name</span>
+                                <span style="font-weight: bold">Employee Name</span>
                             @endif
                             @if($masterdata->invoiceType != 6 && $masterdata->invoiceType != 7)
-                                <span class="font-weight-bold">Payee Name</span>
+                                <span style="font-weight: bold">Payee Name</span>
                             @endif
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold">:</span>
                         </td>
                         <td>
                             {{$masterdata->directPaymentPayee}}
@@ -323,10 +301,10 @@
                     </tr>
                     <tr>
                         <td width="50px">
-                            <span class="font-weight-bold">Bank Name</span>
+                            <span style="font-weight: bold">Bank Name</span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold">:</span>
                         </td>
                         <td>
                             @if($masterdata->bankaccount)
@@ -336,10 +314,10 @@
                     </tr>
                     <tr>
                         <td width="50px">
-                            <span class="font-weight-bold">Bank</span>
+                            <span style="font-weight: bold">Bank</span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold">:</span>
                         </td>
                         <td>
                             @if($masterdata->bankaccount)
@@ -350,10 +328,10 @@
                     @if($masterdata->payment_mode == 2)
                     <tr>
                         <td width="50px">
-                            <span class="font-weight-bold">Cheque No</span>
+                            <span style="font-weight: bold">Cheque No</span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold">:</span>
                         </td>
                         <td>
                             <span>{{$masterdata->BPVchequeNo}}</span>
@@ -363,10 +341,10 @@
                     @if($masterdata->payment_mode == 2)
                     <tr>
                         <td width="50px">
-                            <span class="font-weight-bold">Cheque Date</span>
+                            <span style="font-weight: bold">Cheque Date</span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold">:</span>
                         </td>
                         <td>
                             {{ \App\helper\Helper::convertDateWithTime($masterdata->BPVchequeDate)}}
@@ -375,10 +353,10 @@
                     @endif
                     <tr>
                         <td width="70px">
-                            <span class="font-weight-bold">Narration </span>
+                            <span style="font-weight: bold">Narration </span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold">:</span>
                         </td>
                         <td>
                             <span>{{$masterdata->BPVNarration}}</span>
@@ -389,8 +367,8 @@
             <td style="width: 40%">
                 <table style="width: 100%">
                     <tr style="width: 100%">
-                        <td valign="bottom" class="text-right">
-                                         <span class="font-weight-bold">
+                        <td valign="bottom" style="text-align: right">
+                                         <span style="font-weight: bold">
                          <h3 class="text-muted">
                              @if($masterdata->confirmedYN == 0 && $masterdata->approved == 0)
                                  Not Confirmed
@@ -407,8 +385,8 @@
                         <td>&nbsp;</td>
                     </tr>
                     <tr>
-                        <td valign="bottom" class="text-right">
-                            <span class="font-weight-bold"> Currency:</span>
+                        <td valign="bottom" style="text-align: right">
+                            <span style="font-weight: bold"> Currency:</span>
                             @if($masterdata->transactioncurrency)
                                 {{$masterdata->transactioncurrency->CurrencyCode}}
                             @endif
@@ -424,13 +402,13 @@
                 <thead>
                 <tr class="theme-tr-head">
                     <th>#</th>
-                    <th class="text-center">Booking Inv Code</th>
-                    <th class="text-center">PO Number</th>
-                    <th class="text-center">Supplier Invoice No</th>
-                    <th class="text-center">Invoice Date</th>
-                    <th class="text-center">Invoice Amount</th>
-                    <th class="text-center">Amount Paid</th>
-                    <th class="text-center">Balance</th>
+                    <th style="text-align: center">Booking Inv Code</th>
+                    <th style="text-align: center">PO Number</th>
+                    <th style="text-align: center">Supplier Invoice No</th>
+                    <th style="text-align: center">Invoice Date</th>
+                    <th style="text-align: center">Invoice Amount</th>
+                    <th style="text-align: center">Amount Paid</th>
+                    <th style="text-align: center">Balance</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -447,17 +425,17 @@
                         @endif
                         <td>{{$ddet->supplierInvoiceNo}}</td>
                         <td>{{ \App\helper\Helper::dateFormat($ddet->supplierInvoiceDate)}}</td>
-                        <td class="text-right">{{number_format($ddet->supplierInvoiceAmount, $transDecimal)}}</td>
-                        <td class="text-right">{{number_format($ddet->supplierPaymentAmount, $transDecimal)}}</td>
-                        <td class="text-right">{{number_format($ddet->paymentBalancedAmount, $transDecimal)}}</td>
+                        <td style="text-align: right">{{number_format($ddet->supplierInvoiceAmount, $transDecimal)}}</td>
+                        <td style="text-align: right">{{number_format($ddet->supplierPaymentAmount, $transDecimal)}}</td>
+                        <td style="text-align: right">{{number_format($ddet->paymentBalancedAmount, $transDecimal)}}</td>
                     </tr>
                 @endforeach
                 <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
-                    <td colspan="5" class="text-right border-bottom-remov">&nbsp;</td>
-                    <td class="text-right" style="background-color: rgb(215,215,215)">Total Payment</td>
-                    <td class="text-right"
+                    <td colspan="5" style="border-bottom: 1px solid #ffffffff; background-color:#ffffff; border-right: 1px solid #ffffffff">&nbsp;</td>
+                    <td style="text-align: right" style="background-color: rgb(215,215,215)">Total Payment</td>
+                    <td style="text-align: right"
                         style="background-color: rgb(215,215,215)">{{number_format($supplierdetailTotTra, $transDecimal)}}</td>
-                    <td class="text-right border-bottom-remov"></td>
+                    <td style="border-bottom: 1px solid #ffffffff; background-color:#ffffff; border-right: 1px solid #ffffffff"></td>
                 </tr>
                 </tbody>
             </table>
@@ -469,22 +447,22 @@
                 <thead>
                 <tr class="theme-tr-head">
                     <th>#</th>
-                    <th class="text-center">GL Code</th>
-                    <th class="text-center">GL Code Description</th>
+                    <th style="text-align: center">GL Code</th>
+                    <th style="text-align: center">GL Code Description</th>
                     @if($masterdata->invoiceType == 3 && $isProjectBase)
-                        <th colspan="4" class="text-center">Project</th>
+                        <th colspan="4" style="text-align: center">Project</th>
                     @endif
-                    <th class="text-center">Segment</th>
-                    <th class="text-center">Amount</th>
-                    <th class="text-center">VAT</th>
-                    <th class="text-center">Payment Amount</th>
-                    <th class="text-center">Local Amt (
+                    <th style="text-align: center">Segment</th>
+                    <th style="text-align: center">Amount</th>
+                    <th style="text-align: center">VAT</th>
+                    <th style="text-align: center">Payment Amount</th>
+                    <th style="text-align: center">Local Amt (
                         @if($masterdata->localCurrency)
                             {{$masterdata->localCurrency->CurrencyCode}}
                         @endif
                         )
                     </th>
-                    <th class="text-center">Rpt Amt (
+                    <th style="text-align: center">Rpt Amt (
                         @if($masterdata->rptCurrency)
                             {{$masterdata->rptCurrency->CurrencyCode}}
                         @endif
@@ -516,11 +494,11 @@
                                 {{$item->segment->ServiceLineDes}}
                             @endif
                         </td>
-                        <td class="text-right">{{number_format($item->DPAmount, $transDecimal)}}</td>
-                        <td class="text-right">{{number_format($item->vatAmount, $transDecimal)}}</td>
-                        <td class="text-right">{{number_format($item->DPAmount + $item->vatAmount, $transDecimal)}}</td>
-                        <td class="text-right">{{number_format($item->localAmount + $item->VATAmountLocal, $localDecimal)}}</td>
-                        <td class="text-right">{{number_format($item->comRptAmount + $item->VATAmountRpt, $rptDecimal)}}</td>
+                        <td style="text-align: right">{{number_format($item->DPAmount, $transDecimal)}}</td>
+                        <td style="text-align: right">{{number_format($item->vatAmount, $transDecimal)}}</td>
+                        <td style="text-align: right">{{number_format($item->DPAmount + $item->vatAmount, $transDecimal)}}</td>
+                        <td style="text-align: right">{{number_format($item->localAmount + $item->VATAmountLocal, $localDecimal)}}</td>
+                        <td style="text-align: right">{{number_format($item->comRptAmount + $item->VATAmountRpt, $rptDecimal)}}</td>
                         @php
                             $tot += $item->DPAmount + $item->vatAmount;
                             $totLocal += $item->localAmount + $item->VATAmountLocal;
@@ -530,15 +508,15 @@
                 @endforeach
                 <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
                     @if($masterdata->invoiceType == 3 && $isProjectBase)
-                        <td colspan="4" class="text-right border-bottom-remov">&nbsp;</td>
+                        <td colspan="4" style="border-bottom: 1px solid #ffffffff; background-color:#ffffff; border-right: 1px solid #ffffffff">&nbsp;</td>
                     @endif
-                    <td colspan="5" class="text-right border-bottom-remov">&nbsp;</td>
-                    <td class="text-right" style="background-color: rgb(215,215,215)">Total Payment</td>
-                    <td class="text-right"
+                    <td colspan="5" style="border-bottom: 1px solid #ffffffff; background-color:#ffffff; border-right: 1px solid #ffffffff">&nbsp;</td>
+                    <td style="text-align: right" style="background-color: rgb(215,215,215)">Total Payment</td>
+                    <td style="text-align: right"
                         style="background-color: rgb(215,215,215)">{{number_format($tot, $transDecimal)}}</td>
-                    <td class="text-right"
+                    <td style="text-align: right"
                         style="background-color: rgb(215,215,215)">{{number_format($totLocal, $localDecimal)}}</td>
-                    <td class="text-right"
+                    <td style="text-align: right"
                         style="background-color: rgb(215,215,215)">{{number_format($totRpt, $rptDecimal)}}</td>
                    
                 </tr>
@@ -553,17 +531,17 @@
                 <tr class="theme-tr-head">
                     <th>#</th>
                     @if($masterdata->invoiceType == 5)
-                        <th class="text-center">Purchase Order No</th>
+                        <th style="text-align: center">Purchase Order No</th>
                     @endif
-                    <th class="text-center">Comment</th>
-                    <th class="text-center">Payment Amount</th>
-                    <th class="text-center">Local Amt (
+                    <th style="text-align: center">Comment</th>
+                    <th style="text-align: center">Payment Amount</th>
+                    <th style="text-align: center">Local Amt (
                         @if($masterdata->localCurrency)
                             {{$masterdata->localCurrency->CurrencyCode}}
                         @endif
                         )
                     </th>
-                    <th class="text-center">Rpt Amt (
+                    <th style="text-align: center">Rpt Amt (
                         @if($masterdata->rptCurrency)
                             {{$masterdata->rptCurrency->CurrencyCode}}
                         @endif
@@ -579,22 +557,22 @@
                             <td>{{$item->purchaseOrderCode}}</td>
                         @endif
                         <td>{{$item->comments}}</td>
-                        <td class="text-right">{{number_format($item->paymentAmount, $transDecimal)}}</td>
-                        <td class="text-right">{{number_format($item->localAmount, $localDecimal)}}</td>
-                        <td class="text-right">{{number_format($item->comRptAmount, $rptDecimal)}}</td>
+                        <td style="text-align: right">{{number_format($item->paymentAmount, $transDecimal)}}</td>
+                        <td style="text-align: right">{{number_format($item->localAmount, $localDecimal)}}</td>
+                        <td style="text-align: right">{{number_format($item->comRptAmount, $rptDecimal)}}</td>
                     </tr>
                 @endforeach
                 <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
                     @if($masterdata->invoiceType == 5)
-                        <td colspan="2" class="text-right border-bottom-remov">&nbsp;</td>
+                        <td colspan="2" style="border-bottom: 1px solid #ffffffff; background-color:#ffffff; border-right: 1px solid #ffffffff; text-align: right">&nbsp;</td>
                     @else
-                        <td class="text-right border-bottom-remov">&nbsp;</td>
+                        <td style="border-bottom: 1px solid #ffffffff; background-color:#ffffff; border-right: 1px solid #ffffffff; text-align: right">&nbsp;</td>
                     @endif
-                    <td class="text-right" style="background-color: rgb(215,215,215)">Total Payment</td>
-                    <td class="text-right"
+                    <td style="text-align: right" style="background-color: rgb(215,215,215)">Total Payment</td>
+                    <td style="text-align: right"
                         style="background-color: rgb(215,215,215)">{{number_format($advancePayDetailTotTra, $transDecimal)}}</td>
-                    <td class="text-right border-bottom-remov"></td>
-                    <td class="text-right border-bottom-remov"></td>
+                    <td style="border-bottom: 1px solid #ffffffff; background-color:#ffffff; border-right: 1px solid #ffffffff"></td>
+                    <td style="border-bottom: 1px solid #ffffffff; background-color:#ffffff; border-right: 1px solid #ffffffff"></td>
                 </tr>
                 </tbody>
             </table>
@@ -603,13 +581,12 @@
     <div style="padding-bottom: 20px!important; padding-top: 15px!important; page-break-inside: avoid; !important;">
     <table style="width:100%;">
         <tr>
-            <td width="40%"><span
-                        class="font-weight-bold">Confirmed By :</span> {{ $masterdata->confirmed_by? $masterdata->confirmed_by->empFullName:'' }}
+            <td width="40%"><span style="font-weight: bold">Confirmed By :</span> {{ $masterdata->confirmed_by? $masterdata->confirmed_by->empFullName:'' }}
             </td>
-            <td><span class="font-weight-bold">Review By :</span></td>
+            <td><span style="font-weight: bold">Review By :</span></td>
         </tr>
         <tr>
-            <td><span class="font-weight-bold">Electronically Approved By :</span>
+            <td><span style="font-weight: bold">Electronically Approved By :</span>
                 @if ($masterdata->approved_by)
                     @foreach ($masterdata->approved_by as $det)
                         <div style="padding-right: 25px;font-size: 9px;">
