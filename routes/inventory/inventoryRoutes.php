@@ -1,4 +1,5 @@
 <?php
+
 /**
  * This file contains inventory module related routes
  * 
@@ -7,7 +8,7 @@
 
 
 //approval
-Route::group([], function(){
+Route::group([], function () {
     Route::post('getGRVMasterApproval', 'GRVMasterAPIController@getGRVMasterApproval')->name("Get pending for approval - GRV");
     Route::post('getApprovedGRVForCurrentUser', 'GRVMasterAPIController@getApprovedGRVForCurrentUser')->name("Get approved - GRV");
     Route::post('approveGoodReceiptVoucher', 'GRVMasterAPIController@approveGoodReceiptVoucher')->name("Approve GRV");
@@ -48,11 +49,11 @@ Route::group([], function(){
 });
 
 //GRV Trans
-Route::group([], function(){
+Route::group([], function () {
     Route::resource('grvMasterRefferedbacksCRUD', 'GrvMasterRefferedbackAPIController');
     Route::resource('g_r_v_details', 'GRVDetailsAPIController');
     Route::resource('goodReceiptVoucherCRUD', 'GRVMasterAPIController');
-    
+
     Route::get('getGRVFormData', 'GRVMasterAPIController@getGRVFormData')->name("Get GRV form data");
     Route::get('getGRVDetailsAmendHistory', 'GrvDetailsRefferedbackAPIController@getGRVDetailsAmendHistory')->name("Get GRV Details Amend History");
     Route::get('goodReceiptVoucherAudit', 'GRVMasterAPIController@goodReceiptVoucherAudit')->name("Good Receipt Voucher Audit");
@@ -69,7 +70,7 @@ Route::group([], function(){
     Route::get('purchaseReturnForGRV', 'PurchaseReturnAPIController@purchaseReturnForGRV')->name("Purchase Return For GRV");
     Route::get('getPurchaseReturnDetailForGRV', 'PurchaseReturnAPIController@getPurchaseReturnDetailForGRV')->name("Get Purchase Return Detail For GRV");
     Route::get('grvReturnDetails', 'PurchaseReturnDetailsAPIController@grvReturnDetails')->name("Grv Return Details");
-    
+
     Route::post('getGoodReceiptVoucherMasterView', 'GRVMasterAPIController@getGoodReceiptVoucherMasterView')->name("Get Good Receipt Voucher Master View");
     Route::post('getGRVMasterAmendHistory', 'GrvMasterRefferedbackAPIController@getGRVMasterAmendHistory')->name("Get GRV Master Amend History");
     Route::post('GRVSegmentChkActive', 'GRVMasterAPIController@GRVSegmentChkActive')->name("GRV Segment Chk Active");
@@ -87,7 +88,7 @@ Route::group([], function(){
 
 
 //Material request Trans
-Route::group([], function(){
+Route::group([], function () {
     Route::resource('materiel_requests', 'MaterielRequestAPIController');
     Route::resource('request_reffered_back', 'RequestRefferedBackAPIController');
     Route::resource('request_details_reffered_backs', 'RequestDetailsRefferedBackAPIController');
@@ -109,36 +110,52 @@ Route::group([], function(){
     Route::get('material-issue-by-refno', 'ItemIssueMasterAPIController@getMaterialIssueByRefNo')->name("Get Material Issue By RefNo");
     Route::get('material-issue/check/product/{id}/{companySystemID}', 'ItemIssueMasterAPIController@checkProductExistInIssues')->name("Check Product Exist In Issues");
     Route::get('getCompanyLocalCurrency', 'CurrencyMasterAPIController@getCompanyLocalCurrency')->name("Get Company Local Currency");
-    
+
     Route::post('returnMaterialRequest', 'MaterielRequestAPIController@returnMaterialRequest')->name("Return Material Request");
     Route::post('getReferBackHistoryByRequest', 'RequestRefferedBackAPIController@getReferBackHistoryByRequest')->name("Get ReferBack History By Request");
     Route::post('requestReopen', 'MaterielRequestAPIController@requestReopen')->name("Material Request Reopen");
     Route::post('requestReferBack', 'MaterielRequestAPIController@requestReferBack')->name("Material Request ReferBack");
     Route::post('getAllRequestByCompany', 'MaterielRequestAPIController@getAllRequestByCompany')->name("Get All Material Request By Company");
-
 });
 
 //Material Issue Trans
-Route::group([], function(){
+Route::group([], function () {
     Route::resource('item_issue_masters', 'ItemIssueMasterAPIController');
     Route::resource('materiel_requests', 'MaterielRequestAPIController');
     Route::resource('item_issue_referred_back', 'ItemIssueMasterRefferedBackAPIController');
     Route::resource('item_issue_details_reffered_backs', 'ItemIssueDetailsRefferedBackAPIController');
     Route::resource('materiel_request_details', 'MaterielRequestDetailsAPIController');
     Route::resource('item_issue_details', 'ItemIssueDetailsAPIController');
-   
+
     Route::get('getAllMaterielRequestNotSelectedForIssueByCompany', 'ItemIssueMasterAPIController@getAllMaterielRequestNotSelectedForIssueByCompany')->name("Get All Materiel Request Not Selected For Issue By Company");
     Route::get('allMaterielRequestNotSelectedForIssue', 'ItemIssueMasterAPIController@allMaterielRequestNotSelectedForIssue')->name("All Materiel Request Not Selected For Issue");
     Route::get('getMaterielIssueAudit', 'ItemIssueMasterAPIController@getMaterielIssueAudit')->name("Get Materiel Issue Audit");
     Route::get('material-issue/update-qnty-by-location', 'ItemIssueMasterAPIController@updateQntyByLocation')->name("Update Qnty By Location");
-    Route::get('checkManWareHouse', 'ItemIssueMasterAPIController@checkManWareHouse')->name("Check Man Ware House");    
+    Route::get('checkManWareHouse', 'ItemIssueMasterAPIController@checkManWareHouse')->name("Check Man Ware House");
     Route::get('getItemsByMaterielIssue', 'ItemIssueDetailsAPIController@getItemsByMaterielIssue')->name("Get Items By Materiel Issue");
     Route::get('getItemsOptionsMaterielIssue', 'ItemIssueDetailsAPIController@getItemsOptionsMaterielIssue')->name("Get Items Options Materiel Issue");
-    Route::get('getItemIssueDetailsReferBack', 'ItemIssueDetailsRefferedBackAPIController@getItemIssueDetailsReferBack')->name("Get Item Issue Details ReferBack"); 
+    Route::get('getItemIssueDetailsReferBack', 'ItemIssueDetailsRefferedBackAPIController@getItemIssueDetailsReferBack')->name("Get Item Issue Details ReferBack");
 
     Route::post('materielIssueReopen', 'ItemIssueMasterAPIController@materielIssueReopen')->name("Material Issue Reopen");
     Route::post('materielIssueReferBack', 'ItemIssueMasterAPIController@materielIssueReferBack')->name("Material Issue Refer Back");
     Route::post('getAllMaterielIssuesByCompany', 'ItemIssueMasterAPIController@getAllMaterielIssuesByCompany')->name("Get All Material Issue By Company");
     Route::post('getReferBackHistoryByMaterielIssues', 'ItemIssueMasterRefferedBackAPIController@getReferBackHistoryByMaterielIssues')->name("Get ReferBack History By Materiel Issues");
+});
 
+//Material return Trans
+Route::group([], function () {
+    Route::resource('item_return_masters', 'ItemReturnMasterAPIController');
+    Route::resource('item_return_details', 'ItemReturnDetailsAPIController');
+    Route::resource('mr_master_referred_back', 'ItemReturnMasterRefferedBackAPIController');
+    Route::resource('mr_details_reffered_backs', 'ItemReturnDetailsRefferedBackAPIController');
+
+    Route::get('getMaterielReturnAudit', 'ItemReturnMasterAPIController@getMaterielReturnAudit')->name("Get Materiel Return Audit");
+    Route::get('getItemsByMaterielReturn', 'ItemReturnDetailsAPIController@getItemsByMaterielReturn')->name("Get Items By Materiel Return");
+    Route::get('getItemsOptionsMaterielReturn', 'ItemReturnDetailsAPIController@getItemsOptionsMaterielReturn')->name("Get Items Options Materiel Return");
+    Route::get('getItemReturnDetailsReferBack', 'ItemReturnDetailsRefferedBackAPIController@getItemReturnDetailsReferBack')->name("Get Item Return Details Referback");
+
+    Route::post('materielReturnReopen', 'ItemReturnMasterAPIController@materielReturnReopen')->name("Materiel Return Reopen");
+    Route::post('materielReturnReferBack', 'ItemReturnMasterAPIController@materielReturnReferBack')->name("Materiel Return Referback");
+    Route::post('getAllMaterielReturnByCompany', 'ItemReturnMasterAPIController@getAllMaterielReturnByCompany')->name("Get All Materiel Return By Company");
+    Route::post('getReferBackHistoryByMaterielReturn', 'ItemReturnMasterRefferedBackAPIController@getReferBackHistoryByMaterielReturn')->name("Get Referback History By Materiel Return");
 });
