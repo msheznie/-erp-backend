@@ -813,8 +813,15 @@ class PosAPIController extends AppBaseController
                         ->orWhere('customermaster.CutomerCode', 'LIKE', "%{$search}%");
                 });
             }
-
-            $customerMaster = $customerMaster->paginate($per_page);
+            if (isset($input['is_paginate'])){
+                if($input['is_paginate']==1){
+                    $customerMaster = $customerMaster->paginate($per_page);
+                } else {
+                    $customerMaster = $customerMaster->get();
+                }
+            } else {
+                $customerMaster = $customerMaster->paginate($per_page);
+            }
 
             DB::commit();
             return $this->sendResponse($customerMaster, 'Data Retrieved successfully');
