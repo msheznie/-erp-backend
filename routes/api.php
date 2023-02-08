@@ -420,18 +420,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('rejectStockTransfer', 'StockTransferAPIController@rejectStockTransfer');
             Route::post('stockTransferReferBack', 'StockTransferAPIController@stockTransferReferBack');
 
-
-            Route::resource('item_return_details', 'ItemReturnDetailsAPIController');
-            Route::resource('item_return_masters', 'ItemReturnMasterAPIController');
-            Route::post('getAllMaterielReturnByCompany', 'ItemReturnMasterAPIController@getAllMaterielReturnByCompany');
-            
-            
-            Route::get('getItemsByMaterielReturn', 'ItemReturnDetailsAPIController@getItemsByMaterielReturn');
-            Route::get('getItemsOptionsMaterielReturn', 'ItemReturnDetailsAPIController@getItemsOptionsMaterielReturn');
-            Route::get('getMaterielReturnAudit', 'ItemReturnMasterAPIController@getMaterielReturnAudit');
-            Route::post('materielReturnReopen', 'ItemReturnMasterAPIController@materielReturnReopen');
-            Route::post('materielReturnReferBack', 'ItemReturnMasterAPIController@materielReturnReferBack');
-
             Route::get('getItemMasterAudit', 'ItemMasterAPIController@getItemMasterAudit');
 
             Route::resource('stock_receives', 'StockReceiveAPIController');
@@ -1161,11 +1149,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('jvDetailsReferredbacks', 'JvDetailsReferredbackAPIController');
             Route::post('getJournalVoucherAmendHistory', 'JvMasterReferredbackAPIController@getJournalVoucherAmendHistory');
             Route::get('getJVDetailAmendHistory', 'JvDetailsReferredbackAPIController@getJVDetailAmendHistory');
-
-            Route::resource('mr_master_referred_back', 'ItemReturnMasterRefferedBackAPIController');
-            Route::post('getReferBackHistoryByMaterielReturn', 'ItemReturnMasterRefferedBackAPIController@getReferBackHistoryByMaterielReturn');
-            Route::resource('mr_details_reffered_backs', 'ItemReturnDetailsRefferedBackAPIController');
-            Route::get('getItemReturnDetailsReferBack', 'ItemReturnDetailsRefferedBackAPIController@getItemReturnDetailsReferBack');
 
             Route::resource('asset_capitalization_referreds', 'AssetCapitalizationReferredAPIController');
             Route::post('getAllCapitalizationAmendHistory', 'AssetCapitalizationReferredAPIController@getAllCapitalizationAmendHistory');
