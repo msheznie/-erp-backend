@@ -406,22 +406,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('reportTemplateGLDrillDown', 'FinancialReportAPIController@reportTemplateGLDrillDown');
             Route::post('reportTemplateGLDrillDownExport', 'FinancialReportAPIController@reportTemplateGLDrillDownExport');
 
-
-
             Route::get('getItemMasterAudit', 'ItemMasterAPIController@getItemMasterAudit');
-
-            Route::resource('stock_receives', 'StockReceiveAPIController');
-            Route::post('stockReceiveReferBack', 'StockReceiveAPIController@stockReceiveReferBack');
-            
-            Route::post('getAllStockReceiveByCompany', 'StockReceiveAPIController@getAllStockReceiveByCompany');
-            Route::post('stockReceiveReopen', 'StockReceiveAPIController@stockReceiveReopen');
-            Route::get('getStockReceiveFormData', 'StockReceiveAPIController@getStockReceiveFormData');
-            Route::get('stockReceiveAudit', 'StockReceiveAPIController@stockReceiveAudit');
-            Route::resource('stock_receive_details', 'StockReceiveDetailsAPIController');
-            Route::post('storeReceiveDetailsFromTransfer', 'StockReceiveDetailsAPIController@storeReceiveDetailsFromTransfer');
-            Route::get('getStockReceiveDetailsByMaster', 'StockReceiveDetailsAPIController@getStockReceiveDetailsByMaster');
-            Route::post('srPullFromTransferPreCheck', 'StockReceiveAPIController@srPullFromTransferPreCheck');
-
 
             Route::get('getCurrentUserInfo', 'UserAPIController@getCurrentUserInfo');
             Route::get('getNotifications', 'UserAPIController@getNotifications');
@@ -429,7 +414,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('getAllNotifications', 'UserAPIController@getAllNotifications');
             Route::get('getImageByPath', 'DocumentAttachmentsAPIController@getImageByPath');
 
-            
             Route::resource('poDetails_reffered_histories', 'PurchaseOrderDetailsRefferedHistoryAPIController');
             Route::resource('poAdv_payment_refferedbacks', 'PurchaseOrderAdvPaymentRefferedbackAPIController');
             Route::resource('po_payment_terms_refferedbacks', 'PoPaymentTermsRefferedbackAPIController');
@@ -1110,11 +1094,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('customerInvoiceDetRefferedbacks', 'CustomerInvoiceDirectDetRefferedbackAPIController');
             Route::post('getCIMasterAmendHistory', 'CustomerInvoiceDirectRefferedbackAPIController@getCIMasterAmendHistory');
             Route::get('getCIDetailsForAmendHistory', 'CustomerInvoiceDirectDetRefferedbackAPIController@getCIDetailsForAmendHistory');
-
-            Route::resource('sr_details_reffered_backs', 'StockReceiveDetailsRefferedBackAPIController');
-            Route::get('getStockReceiveDetailsReferBack', 'StockReceiveDetailsRefferedBackAPIController@getStockReceiveDetailsReferBack');
-            Route::resource('stock_receive_reffered_backs', 'StockReceiveRefferedBackAPIController');
-            Route::post('getReferBackHistoryByStockReceive', 'StockReceiveRefferedBackAPIController@getReferBackHistoryByStockReceive');
 
             Route::resource('supplier_category_icv_subs', 'SupplierCategoryICVSubAPIController');
             Route::resource('supplier_category_icv_masters', 'SupplierCategoryICVMasterAPIController');
