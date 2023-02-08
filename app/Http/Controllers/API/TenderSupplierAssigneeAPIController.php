@@ -344,6 +344,10 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
         $input = $request->all();
         $tenderId = $input['tenderId'];
         $companyId = $input['companySystemId'];
+        $rfx =  false;
+        if(isset($input['rfx'])){
+            $rfx =  $input['rfx'];
+        }
         $companyName = "";
         $company = Company::find($companyId);
         if (isset($company->CompanyName)) {
@@ -382,13 +386,13 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
                             $urlString = implode('/', $urlArray) . '/';
                             TenderSupplierAssignee::find($val['id'])
                                 ->update(['mail_sent' => 1, 'registration_link_id' => $isExist['id']]);
-                            $this->sendSupplierEmailInvitation($email, $companyName, $urlString, $tenderId, $companyId, 1);
+                            $this->sendSupplierEmailInvitation($email, $companyName, $urlString, $tenderId, $companyId, 1, $rfx);
                         } else if ($isExist['STATUS'] === 0){
                             $loginUrl = env('SRM_LINK') . $isExist['token'] . '/' . $apiKey;
                             $updateRec['token_expiry_date_time'] = Carbon::now()->addHours(48);
                             $isUpdated = SupplierRegistrationLink::where('id', $isExist['id'])->update($updateRec);
                             if($isUpdated){
-                                $this->sendSupplierEmailInvitation($email, $companyName, $loginUrl, $tenderId, $companyId, 1);
+                                $this->sendSupplierEmailInvitation($email, $companyName, $loginUrl, $tenderId, $companyId, 1, $rfx);
                                 TenderSupplierAssignee::find($val['id'])
                                     ->update(['mail_sent' => 1, 'registration_link_id' => $isExist['id']]);
                             }
@@ -401,7 +405,7 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
                         ]), $token);
                         $loginUrl = env('SRM_LINK') . $token . '/' . $apiKey;
                         if ($isCreated['status'] == true) {
-                            $this->sendSupplierEmailInvitation($email, $companyName, $loginUrl, $tenderId, $companyId, 2);
+                            $this->sendSupplierEmailInvitation($email, $companyName, $loginUrl, $tenderId, $companyId, 2, $rfx);
                             TenderSupplierAssignee::find($val['id'])
                                 ->update(['mail_sent' => 1, 'registration_link_id' => $isCreated['id']]);
                         }
@@ -424,6 +428,10 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
         $tenderId = $input['tenderId'];
         $companySystemId = $input['companySystemId'];
         $tenderAssigneeId = $input['tenderAssigneeId'];
+        $rfx =  false;
+        if(isset($input['rfx'])){
+            $rfx =  $input['rfx'];
+        }
         $companyName = "";
         $company = Company::find($companySystemId);
         if (isset($company->CompanyName)) {
@@ -459,7 +467,7 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
             if (!empty($isExist)) {
                 if($isExist['STATUS'] === 1){
                     $urlString = implode('/', $urlArray) . '/';
-                    $this->sendSupplierEmailInvitation($email, $companyName, $urlString, $tenderId, $companySystemId, 1);
+                    $this->sendSupplierEmailInvitation($email, $companyName, $urlString, $tenderId, $companySystemId, 1, $rfx);
                     TenderSupplierAssignee::find($getSupplierAssignedData['id'])
                         ->update(['mail_sent' => 1, 'registration_link_id' => $isExist['id']]);
                 } elseif ($isExist['STATUS'] === 0) {
@@ -467,7 +475,7 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
                     $updateRec['token_expiry_date_time'] = Carbon::now()->addHours(48);
                     $isUpdated = SupplierRegistrationLink::where('id', $isExist['id'])->update($updateRec);
                     if($isUpdated){
-                        $this->sendSupplierEmailInvitation($email, $companyName, $loginUrl, $tenderId, $companySystemId, 1);
+                        $this->sendSupplierEmailInvitation($email, $companyName, $loginUrl, $tenderId, $companySystemId, 1, $rfx);
                         TenderSupplierAssignee::find($getSupplierAssignedData['id'])
                             ->update(['mail_sent' => 1, 'registration_link_id' => $isExist['id']]);
                     }
@@ -480,7 +488,7 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
                 ]), $token);
 
                 if ($isCreated['status'] == true) {
-                    $this->sendSupplierEmailInvitation($email, $companyName, $loginUrl, $tenderId, $companySystemId, 2);
+                    $this->sendSupplierEmailInvitation($email, $companyName, $loginUrl, $tenderId, $companySystemId, 2, $rfx);
                     TenderSupplierAssignee::find($getSupplierAssignedData['id'])
                         ->update(['mail_sent' => 1, 'registration_link_id' => $isCreated['id']]); 
                         DB::commit();
@@ -493,20 +501,24 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
         }
     }
 
-    public function sendSupplierEmailInvitation($email, $companyName, $loginUrl, $tenderId, $companySystemId, $type)
+    public function sendSupplierEmailInvitation($email, $companyName, $loginUrl, $tenderId, $companySystemId, $type, $rfx)
     {
+        $docType = 'tender';
         $tenderMaster = TenderMaster::select('title')
             ->where('id', $tenderId)
             ->where('company_id', $companySystemId)
             ->first();
+        if($rfx){
+            $docType = 'RFX';
+        }
 
         if ($type == 1) {
             Mail::to($email)->send(new EmailForQueuing("Registration Link", "Dear Supplier," . "<br /><br />" . "
-            You are invited to participate in a new tender, " . $tenderMaster['title'] . ".
+            You are invited to participate in a new ".$docType.", " . $tenderMaster['title'] . ".
             Please find the link below to login to the supplier portal. " . "<br /><br />" . "Click Here: " . "</b><a href='" . $loginUrl . "'>" . $loginUrl . "</a><br /><br />" . " Thank You" . "<br /><br /><b>"));
         } else {
             Mail::to($email)->send(new EmailForQueuing("Registration Link", "Dear Supplier," . "<br /><br />" . "
-            You are invited to participate in a new tender, " . $tenderMaster['title'] . ".
+            You are invited to participate in a new ".$docType.", " . $tenderMaster['title'] . ".
             Please find the below link to register at " . $companyName . " supplier portal. It will expire in 48 hours. " . "<br /><br />" . "Click Here: " . "</b><a href='" . $loginUrl . "'>" . $loginUrl . "</a><br /><br />" . " Thank You" . "<br /><br /><b>"));
         }
     }
