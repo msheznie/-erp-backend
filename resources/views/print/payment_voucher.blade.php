@@ -242,7 +242,7 @@
             </td>
         </tr>
     </table>
-    <hr style="color: #d3d9df">
+    <hr style="color: #d3d9df border-top: 2px solid black; height: 2px; color: black">
     <div>
         <span style="font-size: 18px">
             @if($masterdata->invoiceType == 2)
