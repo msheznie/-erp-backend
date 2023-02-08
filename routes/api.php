@@ -408,17 +408,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('reportTemplateGLDrillDown', 'FinancialReportAPIController@reportTemplateGLDrillDown');
             Route::post('reportTemplateGLDrillDownExport', 'FinancialReportAPIController@reportTemplateGLDrillDownExport');
 
-            Route::post('getAllStockTransferByCompany', 'StockTransferAPIController@getStockTransferMasterView');
-            Route::get('getStockTransferFormData', 'StockTransferAPIController@getStockTransferFormData');
-            Route::post('stockTransferReopen', 'StockTransferAPIController@stockTransferReopen');
-            Route::get('getStockTransferDetails', 'StockTransferDetailsAPIController@getStockTransferDetails');
-            Route::get('getItemsOptionForStockTransfer', 'StockTransferAPIController@getItemsOptionForStockTransfer');
-            Route::resource('stock_transfer_details', 'StockTransferDetailsAPIController');
-            Route::resource('stock_transfers', 'StockTransferAPIController');
-            Route::get('StockTransferAudit', 'StockTransferAPIController@StockTransferAudit');
-            Route::post('approveStockTransfer', 'StockTransferAPIController@approveStockTransfer');
-            Route::post('rejectStockTransfer', 'StockTransferAPIController@rejectStockTransfer');
-            Route::post('stockTransferReferBack', 'StockTransferAPIController@stockTransferReferBack');
+
 
             Route::get('getItemMasterAudit', 'ItemMasterAPIController@getItemMasterAudit');
 
@@ -433,8 +423,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('storeReceiveDetailsFromTransfer', 'StockReceiveDetailsAPIController@storeReceiveDetailsFromTransfer');
             Route::get('getStockReceiveDetailsByMaster', 'StockReceiveDetailsAPIController@getStockReceiveDetailsByMaster');
             Route::post('srPullFromTransferPreCheck', 'StockReceiveAPIController@srPullFromTransferPreCheck');
-            Route::get('getStockTransferForReceive', 'StockTransferAPIController@getStockTransferForReceive');
-            Route::get('getStockTransferDetailsByMaster', 'StockTransferAPIController@getStockTransferDetailsByMaster');
+
 
             Route::get('getCurrentUserInfo', 'UserAPIController@getCurrentUserInfo');
             Route::get('getNotifications', 'UserAPIController@getNotifications');
@@ -1103,11 +1092,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('payeeBankMemosByDocument', 'BankMemoPayeeAPIController@payeeBankMemosByDocument');
 
             Route::post('payeeBankMemoDeleteAll', 'BankMemoPayeeAPIController@payeeBankMemoDeleteAll');
-
-            Route::post('getReferBackHistoryByStockTransfer', 'StockTransferRefferedBackAPIController@getReferBackHistoryByStockTransfer');
-            Route::resource('stock_transfer_reffered_backs', 'StockTransferRefferedBackAPIController');
-            Route::resource('st_details_reffered_backs', 'StockTransferDetailsRefferedBackAPIController');
-            Route::get('getStockTransferDetailsReferBack', 'StockTransferDetailsRefferedBackAPIController@getStockTransferDetailsReferBack');
 
             Route::post('getCreditNoteAmendHistory', 'CreditNoteReferredbackAPIController@getCreditNoteAmendHistory');
             Route::resource('creditNoteReferredbackCRUD', 'CreditNoteReferredbackAPIController');

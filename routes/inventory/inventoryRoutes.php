@@ -46,6 +46,8 @@ Route::group([], function () {
 
     Route::post('getStockTransferApproval', 'StockTransferAPIController@getStockTransferApproval')->name("Get pending for approval - Stock Transfer");
     Route::post('getApprovedSTForCurrentUser', 'StockTransferAPIController@getApprovedSTForCurrentUser')->name("Get approved - Stock Transfer");
+    Route::post('approveStockTransfer', 'StockTransferAPIController@approveStockTransfer')->name("Approve Stock Transfer");
+
 });
 
 //GRV Trans
@@ -158,4 +160,29 @@ Route::group([], function () {
     Route::post('materielReturnReferBack', 'ItemReturnMasterAPIController@materielReturnReferBack')->name("Materiel Return Referback");
     Route::post('getAllMaterielReturnByCompany', 'ItemReturnMasterAPIController@getAllMaterielReturnByCompany')->name("Get All Materiel Return By Company");
     Route::post('getReferBackHistoryByMaterielReturn', 'ItemReturnMasterRefferedBackAPIController@getReferBackHistoryByMaterielReturn')->name("Get Referback History By Materiel Return");
+});
+
+//Stock Transfer
+Route::group([], function () {
+    Route::resource('stock_transfer_details', 'StockTransferDetailsAPIController');
+    Route::resource('stock_transfers', 'StockTransferAPIController');
+    Route::resource('stock_transfer_reffered_backs', 'StockTransferRefferedBackAPIController');
+    Route::resource('st_details_reffered_backs', 'StockTransferDetailsRefferedBackAPIController');
+    
+    Route::get('getStockTransferFormData', 'StockTransferAPIController@getStockTransferFormData')->name("Get Stock Transfer Form Data");
+    Route::get('getStockTransferDetails', 'StockTransferDetailsAPIController@getStockTransferDetails')->name("Get Stock Transfer Details");
+    Route::get('getItemsOptionForStockTransfer', 'StockTransferAPIController@getItemsOptionForStockTransfer')->name("Get Items Option For Stock Transfer");
+    Route::get('StockTransferAudit', 'StockTransferAPIController@StockTransferAudit')->name("Stock Transfer Audit");
+    Route::get('getStockTransferForReceive', 'StockTransferAPIController@getStockTransferForReceive')->name("Get Stock Transfer For Receive");
+    Route::get('getStockTransferDetailsByMaster', 'StockTransferAPIController@getStockTransferDetailsByMaster')->name("Get Stock Transfer Details By Master");
+    Route::get('getStockTransferDetailsReferBack', 'StockTransferDetailsRefferedBackAPIController@getStockTransferDetailsReferBack')->name("Get Stock Transfer Details ReferBack");
+
+    Route::post('rejectStockTransfer', 'StockTransferAPIController@rejectStockTransfer')->name("Reject Stock Transfer");
+    Route::post('stockTransferReferBack', 'StockTransferAPIController@stockTransferReferBack')->name("Stock Transfer ReferBack");
+    Route::post('getReferBackHistoryByStockTransfer', 'StockTransferAPIController@getReferBackHistoryByStockTransfer')->name("Get ReferBack History By Stock Transfer");
+    Route::post('stock_transfer_reffered_backs', 'StockTransferAPIController@stockTransferRefferedBacks')->name("Stock Transfer RefferedBacks");
+    Route::post('stockTransferReopen', 'StockTransferAPIController@stockTransferReopen')->name("Stock Transfer Reopen");
+    Route::post('getAllStockTransferByCompany', 'StockTransferAPIController@getStockTransferMasterView')->name("Get All Stock Transfer By Company");
+    Route::post('getReferBackHistoryByStockTransfer', 'StockTransferRefferedBackAPIController@getReferBackHistoryByStockTransfer')->name("Get ReferBack History By Stock Transfer");
+
 });
