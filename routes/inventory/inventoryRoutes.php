@@ -208,3 +208,35 @@ Route::group([], function () {
     Route::post('getReferBackHistoryByStockReceive', 'StockReceiveRefferedBackAPIController@getReferBackHistoryByStockReceive')->name("Get ReferBack History By Stock Receive");
 
 });
+
+//Stock Adjustment
+Route::group([], function () {
+    Route::resource('stock_adjustments', 'StockAdjustmentAPIController');
+    Route::resource('stock_adjustment_details', 'StockAdjustmentDetailsAPIController');
+    Route::resource('stockAdjustmentRefferedBack', 'StockAdjustmentRefferedBackAPIController');
+    Route::resource('sAdjustmentDetailsRefferedBack', 'StockAdjustmentDetailsRefferedBackAPIController');
+    Route::resource('stock_counts', 'StockCountAPIController');
+    Route::resource('stock_count_details', 'StockCountDetailAPIController');
+    Route::resource('stock_count_reffered_backs', 'StockCountRefferedBackAPIController');
+    Route::resource('stockcountdetailsreffered', 'StockCountDetailsRefferedBackAPIController');
+
+    Route::get('getSADetailsReferBack', 'StockAdjustmentDetailsRefferedBackAPIController@getSADetailsReferBack')->name("Get SA Details ReferBack");
+    Route::get('getStockAdjustmentAudit', 'StockAdjustmentAPIController@getStockAdjustmentAudit')->name("Get Stock Adjustment Audit");
+    Route::get('getItemsByStockAdjustment', 'StockAdjustmentDetailsAPIController@getItemsByStockAdjustment')->name("Get Items By Stock Adjustment");
+    Route::get('getItemsOptionsStockAdjustment', 'StockAdjustmentDetailsAPIController@getItemsOptionsStockAdjustment')->name("Get Items Options Stock Adjustment");
+    Route::get('stockCountAudit', 'StockCountAPIController@getStockCountAudit')->name("Get Stock Count Audit");
+    Route::get('getItemsByStockCount', 'StockCountDetailAPIController@getItemsByStockCount')->name("Get Items By Stock Count");
+    Route::get('getSCDetailsReferBack', 'StockCountDetailsRefferedBackAPIController@getSCDetailsReferBack')->name("Get SC Details ReferBack");
+
+    Route::post('stockAdjustmentReferBack', 'StockAdjustmentAPIController@stockAdjustmentReferBack')->name("Stock Adjustment ReferBack");
+    Route::post('stockAdjustmentReopen', 'StockAdjustmentAPIController@stockAdjustmentReopen')->name("Stock Adjustment Reopen");
+    Route::post('getReferBackHistoryByStockAdjustments', 'StockAdjustmentRefferedBackAPIController@getReferBackHistoryByStockAdjustments')->name("Get ReferBack History By Stock Adjustments");
+    Route::post('getAllStockAdjustmentsByCompany', 'StockAdjustmentAPIController@getAllStockAdjustmentsByCompany')->name("Get All Stock Adjustments By Company");
+    Route::post('getAllStockCountsByCompany', 'StockCountAPIController@getAllStockCountsByCompany')->name("Get All Stock Counts By Company");
+    Route::post('stockCountReopen', 'StockCountAPIController@stockCountReopen')->name("Stock Count Reopen");
+    Route::post('stockCountReferBack', 'StockCountAPIController@stockCountReferBack')->name("Stock Count ReferBack");
+    Route::post('removeAllStockCountItems', 'StockCountDetailAPIController@removeAllStockCountItems')->name("Remove All Stock Count Items");
+    Route::post('getReferBackHistoryByStockCounts', 'StockCountRefferedBackAPIController@getReferBackHistoryByStockCounts')->name("Get ReferBack History By Stock Counts");
+
+  
+});
