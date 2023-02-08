@@ -463,7 +463,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
                     }
 
                     //For supplier companySystemID
-                    $suppliermaster = SupplierMaster::where('companyLinkedToSystemID', $assetDisposalMaster->companySystemID)->first();
+                    $suppliermaster = SupplierMaster::where('companyLinkedToSystemID', $assetDisposalMaster->toCompanySystemID)->first();
 
                     if (empty($suppliermaster)) {
                         return $this->sendError(trans('custom.there_is_no_supplier_created_to_the_selected_company_please_create_a_supplier'), 500, ['type' => 'confirm']);
@@ -498,7 +498,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
                                                                  ->first();
 
                         if (!$checkSupplierCurrency) {
-                            return $this->sendError("Reporting currency of from company is not assign to the supplier of To company");
+                            return $this->sendError("Reporting currency of from company is not assign to the supplier of To company", 500, ['type' => 'confirm']);
                         }
                     }
                 }
