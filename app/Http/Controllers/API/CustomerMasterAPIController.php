@@ -816,7 +816,8 @@ class CustomerMasterAPIController extends AppBaseController
                       ->where('companyLinkedToSystemID', $companySystemID);
             }])
             ->whereHas('customer_master', function($query) use ($companySystemID){
-                $query->where('companyLinkedToSystemID', $companySystemID);
+                $query->where('companyLinkedToSystemID', $companySystemID)
+                      ->where('isCustomerActive', 1);
             })
             ->where('isAssigned', -1)
             ->orderBy('customerAssignedID', 'DESC')
