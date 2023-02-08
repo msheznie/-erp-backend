@@ -5045,6 +5045,7 @@ AND erp_generalledger.documentRptAmount > 0 AND erp_generalledger.glAccountTypeI
                             
                                 AND DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" 
                                 AND "' . $toDate . '"
+                                GROUP BY tax_ledger_details.chartOfAccountSystemID
                                 ) AS revenueCustomerDetail
                                 LEFT JOIN customermaster ON revenueCustomerDetail.mySupplierCode = customermaster.customerCodeSystem
                                 WHERE (revenueCustomerDetail.mySupplierCode IN (' . join(',', $customerSystemID) . ')' . $nullCustomer . ')');
