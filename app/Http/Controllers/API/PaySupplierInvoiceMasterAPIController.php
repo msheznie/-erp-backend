@@ -2266,7 +2266,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
                 $paySupplierInvoice = PaySupplierInvoiceMaster::find($id);
                 if ($input['BPVbankCurrency'] == $input['localCurrencyID'] && $input['supplierTransCurrencyID'] == $input['localCurrencyID']) {
-                    if ($input['chequePaymentYN'] == -1) {
+                    if ($input['chequePaymentYN'] == -1 &&  $input['pdcChequeYN'] == 0) {
                         $bankAccount = BankAccount::find($input['BPVAccount']);
                         /*
                          * check 'Get cheque number from cheque register' policy exist
