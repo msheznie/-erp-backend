@@ -997,9 +997,9 @@ class AssetManagementReportAPIController extends AppBaseController
                                 $sumPeriod += $val->$val2;
                             }
                             $data[$x]['Charge during the year'] = round($sumPeriod, $currencyDecimalPlace);
-                            $data[$x]['Charge on disposal'] = round($val->disposedDep, $currencyDecimalPlace);
-                            $data[$x]['Closing Dep'] = round($val->closingDep, $currencyDecimalPlace);
-                            $data[$x]['NBV'] = round($val->costClosing - $val->closingDep, $currencyDecimalPlace);
+                            $data[$x]['Charge on disposal'] = round($val->disposedDep + $sumPeriod, $currencyDecimalPlace);
+                            $data[$x]['Closing Dep'] = round($val->closingDep - $val->disposedDep, $currencyDecimalPlace);
+                            $data[$x]['NBV'] = round($val->costClosing - ($val->openingDep - $val->closingDep), $currencyDecimalPlace);
                             foreach ($output['period'] as $val2) {
                                 $data[$x][$val2] = round($val->$val2, $currencyDecimalPlace);
                             }
