@@ -4088,4 +4088,26 @@ class SRMService
    
     }
 
+
+    public function checkGrvCreation(Request $request)
+    {
+     
+        $id = $request->input('extra.id');
+        $data['exit'] = false;
+
+        $is_grv_exit = Appointment::where('id',$id)->where('grv_create_yn',0)->first();
+        if(isset($is_grv_exit))
+        {
+            $data['exit'] = true;
+
+        }
+        return [
+            'success' => true,
+            'message' => 'Invoice created successfully ',
+            'data' => $data
+        ];
+
+    }
+
+
 }
