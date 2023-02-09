@@ -596,17 +596,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('getInvoiceMasterFormData', 'BookInvSuppMasterAPIController@getInvoiceMasterFormData');
             Route::get('getInvoiceSupplierTypeBase', 'BookInvSuppMasterAPIController@getInvoiceSupplierTypeBase');
 
-            Route::resource('stock_adjustments', 'StockAdjustmentAPIController');
-            Route::post('stockAdjustmentReopen', 'StockAdjustmentAPIController@stockAdjustmentReopen');
-            Route::resource('stock_adjustment_details', 'StockAdjustmentDetailsAPIController');
-
-            Route::post('getAllStockAdjustmentsByCompany', 'StockAdjustmentAPIController@getAllStockAdjustmentsByCompany');
-
-            Route::get('getStockAdjustmentAudit', 'StockAdjustmentAPIController@getStockAdjustmentAudit');
-            Route::get('getItemsByStockAdjustment', 'StockAdjustmentDetailsAPIController@getItemsByStockAdjustment');
-            Route::get('getItemsOptionsStockAdjustment', 'StockAdjustmentDetailsAPIController@getItemsOptionsStockAdjustment');
-            Route::post('stockAdjustmentReferBack', 'StockAdjustmentAPIController@stockAdjustmentReferBack');
-
             Route::post('customerInvoiceReopen', 'CustomerInvoiceDirectAPIController@customerInvoiceReopen');
             Route::post('clearCustomerInvoiceNumber', 'CustomerInvoiceDirectAPIController@clearCustomerInvoiceNumber');
             
@@ -1257,21 +1246,13 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('getSalesQuotationRevisionHistory', 'QuotationMasterVersionAPIController@getSalesQuotationRevisionHistory');
             Route::get('getSQVDetailsHistory', 'QuotationVersionDetailsAPIController@getSQVDetailsHistory');
 
-
             Route::resource('quotationDetailsRefferedbacks', 'QuotationDetailsRefferedbackAPIController');
             Route::resource('quotationMasterRefferedbacks', 'QuotationMasterRefferedbackAPIController');
             Route::post('getSalesQuotationAmendHistory', 'QuotationMasterRefferedbackAPIController@getSalesQuotationAmendHistory');
             Route::get('getSQHDetailsHistory', 'QuotationDetailsRefferedbackAPIController@getSQHDetailsHistory');
-
            
             Route::get('printInvoice', 'GposInvoiceAPIController@printInvoice');
 
-            Route::resource('stockAdjustmentRefferedBack', 'StockAdjustmentRefferedBackAPIController');
-            Route::resource('sAdjustmentDetailsRefferedBack', 'StockAdjustmentDetailsRefferedBackAPIController');
-            Route::post('getReferBackHistoryByStockAdjustments', 'StockAdjustmentRefferedBackAPIController@getReferBackHistoryByStockAdjustments');
-            Route::get('getSADetailsReferBack', 'StockAdjustmentDetailsRefferedBackAPIController@getSADetailsReferBack');
-
-           
             // console jv
             Route::resource('console_j_v_masters', 'ConsoleJVMasterAPIController');
             Route::resource('console_j_v_details', 'ConsoleJVDetailAPIController');
@@ -1708,23 +1689,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('approveCurrencyConversion', 'CurrencyConversionMasterAPIController@approveCurrencyConversion');
             Route::post('rejectCurrencyConversion', 'CurrencyConversionMasterAPIController@rejectCurrencyConversion');
 
-            Route::resource('stock_counts', 'StockCountAPIController');
-
-            Route::resource('stock_count_details', 'StockCountDetailAPIController');
-            Route::get('getItemsByStockCount', 'StockCountDetailAPIController@getItemsByStockCount');
-            Route::post('removeAllStockCountItems', 'StockCountDetailAPIController@removeAllStockCountItems');
-            Route::post('getAllStockCountsByCompany', 'StockCountAPIController@getAllStockCountsByCompany');
-            Route::post('stockCountReopen', 'StockCountAPIController@stockCountReopen');
-            
-            Route::post('stockCountReferBack', 'StockCountAPIController@stockCountReferBack');
-            Route::get('stockCountAudit', 'StockCountAPIController@getStockCountAudit');
-
-
-            Route::resource('stock_count_reffered_backs', 'StockCountRefferedBackAPIController');
-            Route::post('getReferBackHistoryByStockCounts', 'StockCountRefferedBackAPIController@getReferBackHistoryByStockCounts');
-
-            Route::resource('stockcountdetailsreffered', 'StockCountDetailsRefferedBackAPIController');
-            Route::get('getSCDetailsReferBack', 'StockCountDetailsRefferedBackAPIController@getSCDetailsReferBack');
             // contingency budget plan
             Route::resource('contingency_budget_plans', 'ContingencyBudgetPlanAPIController');
             Route::get('contingency_budget_list', 'ContingencyBudgetPlanAPIController@budget_list');
