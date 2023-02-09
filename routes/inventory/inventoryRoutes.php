@@ -294,3 +294,15 @@ Route::group([], function () {
     Route::post('validateStockTakingReport', 'ErpItemLedgerAPIController@validateStockTakingReport')->name('Validate Stock Taking Report');
 
 });
+
+// Stock Aging
+Route::group([], function () {
+    Route::resource('erp_stock_valuation', 'InventoryReportAPIController');
+    
+    Route::get('getScrapFilterData', 'InventoryReportAPIController@getScarpInventoryFilterData')->name('Get Scarp Inventory Filter Data');
+
+    Route::post('validateINVReport', 'InventoryReportAPIController@validateReport')->name('Validate Inv Report');
+    Route::post('generateINVReport', 'InventoryReportAPIController@generateReport')->name('Generate Inv Report');
+    Route::post('exportINVReport', 'InventoryReportAPIController@exportReport')->name('Export Inv Report');
+
+});
