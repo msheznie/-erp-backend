@@ -427,25 +427,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('employee_details', 'EmployeeDetailsAPIController');
             Route::resource('designations', 'DesignationAPIController');
 
-            Route::resource('purchase_returns', 'PurchaseReturnAPIController');
-            Route::post('getPurchaseReturnByCompany', 'PurchaseReturnAPIController@getPurchaseReturnByCompany');
-            Route::post('getPurchaseReturnAmendHistory', 'PurchaseReturnMasterRefferedBackAPIController@getPurchaseReturnAmendHistory');
-            Route::post('purchaseReturnAmend', 'PurchaseReturnAPIController@purchaseReturnAmend');
-            Route::get('getPurchaseReturnAudit', 'PurchaseReturnAPIController@getPurchaseReturnAudit');
-            
-            Route::post('purchaseReturnReopen', 'PurchaseReturnAPIController@purchaseReturnReopen');
-            
-            Route::get('grvForPurchaseReturn', 'PurchaseReturnAPIController@grvForPurchaseReturn');
-            Route::get('grvDetailByMasterForPurchaseReturn', 'PurchaseReturnAPIController@grvDetailByMasterForPurchaseReturn');
-            
-            Route::post('purchaseReturnSegmentChkActive', 'PurchaseReturnAPIController@purchaseReturnSegmentChkActive');
-            Route::resource('purchase_return_details', 'PurchaseReturnDetailsAPIController');
-            Route::get('getItemsByPurchaseReturnMaster', 'PurchaseReturnDetailsAPIController@getItemsByPurchaseReturnMaster');
-            
-            Route::post('storePurchaseReturnDetailsFromGRV', 'PurchaseReturnDetailsAPIController@storePurchaseReturnDetailsFromGRV');
-            Route::post('purchaseReturnDeleteAllDetails', 'PurchaseReturnDetailsAPIController@purchaseReturnDeleteAllDetails');
-
-            
             Route::resource('prDetailsReferedHistories', 'PrDetailsReferedHistoryAPIController');
             Route::resource('contracts', 'ContractAPIController');
             
@@ -1660,9 +1641,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('deleteAllADVReceiptDetail', 'AdvanceReceiptDetailsAPIController@deleteAllADVReceiptDetail');
 
 
-            Route::get('getPRDetailsAmendHistory', 'PurchaseReturnDetailsRefferedBackAPIController@getPRDetailsAmendHistory');
-            Route::resource('prMasterRefferedbacksCRUD', 'PurchaseReturnMasterRefferedBackAPIController');
-            // Route::resource('purchase_return_details_reffered_backs', 'PurchaseReturnDetailsRefferedBackAPIController');
             Route::post('amendSalesQuotationReview', 'QuotationMasterAPIController@amendSalesQuotationReview');
             Route::post('getDocumentDetails', 'PurchaseRequestAPIController@getDocumentDetails');
 
@@ -1873,7 +1851,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::resource('po_categories', 'PoCategoryAPIController');
 
-            Route::resource('purchase_return_logistics', 'PurchaseReturnLogisticAPIController');
 
             Route::resource('item_serials', 'ItemSerialAPIController');
             Route::post('generateItemSerialNumbers', 'ItemSerialAPIController@generateItemSerialNumbers');

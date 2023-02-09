@@ -237,6 +237,29 @@ Route::group([], function () {
     Route::post('stockCountReferBack', 'StockCountAPIController@stockCountReferBack')->name("Stock Count ReferBack");
     Route::post('removeAllStockCountItems', 'StockCountDetailAPIController@removeAllStockCountItems')->name("Remove All Stock Count Items");
     Route::post('getReferBackHistoryByStockCounts', 'StockCountRefferedBackAPIController@getReferBackHistoryByStockCounts')->name("Get ReferBack History By Stock Counts");
-
-  
 });
+
+//Purchase Return
+Route::group([], function () {
+    Route::resource('purchase_return_details', 'PurchaseReturnDetailsAPIController');
+    Route::resource('purchase_returns', 'PurchaseReturnAPIController');
+    Route::resource('prMasterRefferedbacksCRUD', 'PurchaseReturnMasterRefferedBackAPIController');
+    // Route::resource('purchase_return_details_reffered_backs', 'PurchaseReturnDetailsRefferedBackAPIController');
+    Route::resource('purchase_return_logistics', 'PurchaseReturnLogisticAPIController');
+
+
+    Route::get('getPurchaseReturnAudit', 'PurchaseReturnAPIController@getPurchaseReturnAudit')->name("Get Purchase Return Audit");            
+    Route::get('grvForPurchaseReturn', 'PurchaseReturnAPIController@grvForPurchaseReturn')->name("Grv For Purchase Return");
+    Route::get('grvDetailByMasterForPurchaseReturn', 'PurchaseReturnAPIController@grvDetailByMasterForPurchaseReturn')->name("Grv Detail By Master For Purchase Return");
+    Route::get('getPRDetailsAmendHistory', 'PurchaseReturnDetailsRefferedBackAPIController@getPRDetailsAmendHistory')->name("Get PR Details Amend History");
+    Route::get('getItemsByPurchaseReturnMaster', 'PurchaseReturnDetailsAPIController@getItemsByPurchaseReturnMaster')->name("Get Items By Purchase Return Master");
+
+    Route::post('purchaseReturnSegmentChkActive', 'PurchaseReturnAPIController@purchaseReturnSegmentChkActive')->name("Purchase Return Segment Chk Active");
+    Route::post('purchaseReturnReopen', 'PurchaseReturnAPIController@purchaseReturnReopen')->name("Purchase Return Reopen");
+    Route::post('getPurchaseReturnByCompany', 'PurchaseReturnAPIController@getPurchaseReturnByCompany')->name("Get Purchase Return By Company");
+    Route::post('getPurchaseReturnAmendHistory', 'PurchaseReturnMasterRefferedBackAPIController@getPurchaseReturnAmendHistory')->name("Get Purchase Return Amend History");
+    Route::post('purchaseReturnAmend', 'PurchaseReturnAPIController@purchaseReturnAmend')->name("Purchase Return Amend");
+    Route::post('storePurchaseReturnDetailsFromGRV', 'PurchaseReturnDetailsAPIController@storePurchaseReturnDetailsFromGRV')->name("Store Purchase Return Details From GRV");
+    Route::post('purchaseReturnDeleteAllDetails', 'PurchaseReturnDetailsAPIController@purchaseReturnDeleteAllDetails')->name("Purchase Return Delete All Details");
+
+   });
