@@ -1251,6 +1251,10 @@ class SRMService
         $tenderMasterId = array();
         $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
         $supplierRegIdAll =  $this->getAllSupplierRegIdByUUID($request->input('supplier_uuid'));
+        $is_rfx = $request->input('extra.rfx');
+        
+
+
 
         foreach ($supplierRegIdAll as $supplierReg) {
             $registrationLinkIds[] = $supplierReg['id'];
@@ -1272,10 +1276,23 @@ class SRMService
         }
 
         //Get Open Tenders Not Purchased
-        $openTendersNotPurchased = TenderMaster::select('id')->where('tender_type_id', 1)
+        if($is_rfx)
+        {
+            $openTendersNotPurchased = TenderMaster::select('id')->where('tender_type_id', 1)
             ->whereNotIn('id', $purchasedTenderIds)
+            ->where('document_type','!=',0)
             ->get()
             ->toArray();
+        }
+        else
+        {
+            $openTendersNotPurchased = TenderMaster::select('id')->where('tender_type_id', 1)
+            ->whereNotIn('id', $purchasedTenderIds)
+            ->where('document_type','=',0)
+            ->get()
+            ->toArray();
+        }
+    
 
         foreach ($openTendersNotPurchased as $openTendersNotPurchasedId) {
             $tenderMasterId[] = $openTendersNotPurchasedId['id'];
@@ -1301,6 +1318,15 @@ class SRMService
             }])->whereHas('srmTenderMasterSupplier', function ($q) use ($supplierRegId) {
                 $q->where('purchased_by', '=', $supplierRegId);
             })->where('published_yn', 1);
+
+            if($is_rfx)
+            {
+                $query->where('document_type','!=',0);
+            }
+            else
+            {
+                $query->where('document_type','=',0);
+            }
         }
         $search = $request->input('search.value');
         if ($search) {
@@ -1312,6 +1338,15 @@ class SRMService
                 $query->orWhere('title_sec_lang', 'LIKE', "%{$search}%");
             });
         }
+
+        if($is_rfx)
+        {
+            if($request->input('extra.rfx_typ') != '')
+            {
+              $query->where('document_type', $request->input('extra.rfx_typ'));
+            }
+        }
+
 
         $data = DataTables::eloquent($query)
             ->order(function ($query) use ($input) {
