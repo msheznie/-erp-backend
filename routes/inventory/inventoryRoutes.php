@@ -186,3 +186,25 @@ Route::group([], function () {
     Route::post('getReferBackHistoryByStockTransfer', 'StockTransferRefferedBackAPIController@getReferBackHistoryByStockTransfer')->name("Get ReferBack History By Stock Transfer");
 
 });
+
+//Stock Receive
+Route::group([], function () {
+    Route::resource('stock_receive_details', 'StockReceiveDetailsAPIController');
+    Route::resource('stock_receives', 'StockReceiveAPIController');
+    Route::resource('sr_details_reffered_backs', 'StockReceiveDetailsRefferedBackAPIController');
+    Route::resource('stock_receive_reffered_backs', 'StockReceiveRefferedBackAPIController');
+    
+    Route::get('getStockReceiveFormData', 'StockReceiveAPIController@getStockReceiveFormData')->name("Get Stock Receive Form Data");
+    Route::get('stockReceiveAudit', 'StockReceiveAPIController@stockReceiveAudit')->name("Stock Receive Audit");
+    Route::get('getStockReceiveDetailsByMaster', 'StockReceiveDetailsAPIController@getStockReceiveDetailsByMaster')->name("Get Stock Receive Details By Master");
+    Route::get('getStockReceiveDetailsReferBack', 'StockReceiveDetailsRefferedBackAPIController@getStockReceiveDetailsReferBack')->name("Get StockReceive Details ReferBack");
+    Route::get('getItemsOptionForStockReceive', 'StockReceiveAPIController@getItemsOptionForStockReceive')->name("Get Items Option For Stock Receive");
+
+    Route::post('stockReceiveReferBack', 'StockReceiveAPIController@stockReceiveReferBack')->name("Stock Receive ReferBack");
+    Route::post('getAllStockReceiveByCompany', 'StockReceiveAPIController@getAllStockReceiveByCompany')->name("Get All Stock Receive By Company");
+    Route::post('stockReceiveReopen', 'StockReceiveAPIController@stockReceiveReopen')->name("Stock Receive Reopen");
+    Route::post('storeReceiveDetailsFromTransfer', 'StockReceiveDetailsAPIController@storeReceiveDetailsFromTransfer')->name("Store Receive Details From Transfer");
+    Route::post('srPullFromTransferPreCheck', 'StockReceiveAPIController@srPullFromTransferPreCheck')->name("Sr Pull From Transfer Pre Check");
+    Route::post('getReferBackHistoryByStockReceive', 'StockReceiveRefferedBackAPIController@getReferBackHistoryByStockReceive')->name("Get ReferBack History By Stock Receive");
+
+});
