@@ -84,6 +84,8 @@ define('REMOVE_INVOICE_ATTACHMENT', 'REMOVE_INVOICE_ATTACHMENT');
 define('SAVE_INVOICE', 'SAVE_INVOICE');
 define('GET_PAYMENTVOUCHERS', 'GET_PAYMENTVOUCHERS');
 define('GET_PAYMENT_VOUCHER_DETAILS', 'GET_PAYMENT_VOUCHER_DETAILS');
+define('CHECK_GRV_CREATION', 'CHECK_GRV_CREATION');
+
 
 class APIController extends Controller
 {
@@ -240,6 +242,8 @@ class APIController extends Controller
                 return $this->SRMService->getPaymentVouchers($request);   
             case GET_PAYMENT_VOUCHER_DETAILS:
                 return $this->SRMService->getPaymentVouchersDetails($request);  
+            case CHECK_GRV_CREATION:
+                return $this->SRMService->checkGrvCreation($request);  
                      
             default:
                 return [
