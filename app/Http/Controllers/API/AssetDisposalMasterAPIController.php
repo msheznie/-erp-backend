@@ -463,7 +463,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
                     }
 
                     //For supplier companySystemID
-                    $suppliermaster = SupplierMaster::where('companyLinkedToSystemID', $assetDisposalMaster->toCompanySystemID)->first();
+                    $suppliermaster = SupplierMaster::where('companyLinkedToSystemID', $assetDisposalMaster->companySystemID)->first();
 
                     if (empty($suppliermaster)) {
                         return $this->sendError(trans('custom.there_is_no_supplier_created_to_the_selected_company_please_create_a_supplier'), 500, ['type' => 'confirm']);
