@@ -238,6 +238,11 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
                 //$transactionCurrencyID = isset($meterialissue->localCurrencyID) ? $meterialissue->localCurrencyID : null;
 
                 $input['amountRpt'] = $input['amount'];
+
+                if ($meterialissue->issueCostRptTotal == 0) {
+                    return $this->sendError("Total Value cannot be zero.");
+                }
+
                 $input['amountLocal'] = ($meterialissue->issueCostLocalTotal/$meterialissue->issueCostRptTotal)*$input['amount'];
               
             
