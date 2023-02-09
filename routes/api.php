@@ -338,17 +338,11 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             
             Route::post('exportPoEmployeePerformance', 'ProcumentOrderAPIController@exportPoEmployeePerformance');
 
-            Route::post('getErpLedgerItems', 'ErpItemLedgerAPIController@getErpLedgerItems');
-
             Route::post('reportOrderStatus', 'PurchaseOrderStatusAPIController@reportOrderStatus');
             Route::get('reportOrderStatusFilterOptions', 'PurchaseOrderStatusAPIController@reportOrderStatusFilterOptions');
             Route::post('reportOrderStatusPreCheck', 'PurchaseOrderStatusAPIController@reportOrderStatusPreCheck');
             Route::post('exportReportOrderStatus', 'PurchaseOrderStatusAPIController@exportReportOrderStatus');
-            Route::resource('erp_item_ledgers', 'ErpItemLedgerAPIController');
-            Route::post('validateStockLedgerReport', 'ErpItemLedgerAPIController@validateStockLedgerReport');
-            Route::post('generateStockLedgerReport', 'ErpItemLedgerAPIController@generateStockLedgerReport');
-            
-            
+         
             Route::resource('g_r_v_types', 'GRVTypesAPIController');
             Route::resource('budget_consumed_datas', 'BudgetConsumedDataAPIController');
             Route::post('getBudgetConsumptionForReview', 'BudgetConsumedDataAPIController@getBudgetConsumptionForReview');
@@ -359,24 +353,12 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('company_finance_periods', 'CompanyFinancePeriodAPIController');
             Route::resource('customer_invoices', 'CustomerInvoiceAPIController');
             Route::resource('accounts_receivable_ledgers', 'AccountsReceivableLedgerAPIController');
-
-            
-            Route::get('getWarehouse', 'ErpItemLedgerAPIController@getWarehouse');
-            Route::post('generateStockValuationReport', 'ErpItemLedgerAPIController@generateStockValuationReport');
-            
+      
             Route::get('getAllFinancePeriodBasedFY', 'CompanyFinancePeriodAPIController@getAllFinancePeriodBasedFY');
             Route::get('getAllFinancePeriodForYear', 'CompanyFinancePeriodAPIController@getAllFinancePeriodForYear');
             
             Route::resource('purchase_order_details', 'PurchaseOrderDetailsAPIController');
-            
-            Route::post('exportStockEvaluation', 'ErpItemLedgerAPIController@exportStockEvaluation');
-            Route::post('exportStockLedgerReport', 'ErpItemLedgerAPIController@exportStockLedgerReport');
-            Route::post('validateStockValuationReport', 'ErpItemLedgerAPIController@validateStockValuationReport');
-            Route::post('validateStockTakingReport', 'ErpItemLedgerAPIController@validateStockTakingReport');            
-            
             Route::resource('item_issue_types', 'ItemIssueTypeAPIController');
-            Route::post('generateStockTakingReport', 'ErpItemLedgerAPIController@generateStockTakingReport');
-            Route::post('exportStockTaking', 'ErpItemLedgerAPIController@exportStockTaking');
 
             Route::resource('accounts_payable_ledgers', 'AccountsPayableLedgerAPIController');
             Route::get('getAPFilterData', 'AccountsPayableReportAPIController@getAPFilterData');
