@@ -416,7 +416,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             
             Route::resource('customer_invoice_direct_details', 'CustomerInvoiceDirectDetailAPIController');
 
-            Route::get('getINVFilterData', 'InventoryReportAPIController@getInventoryFilterData');
             Route::get('getScrapFilterData', 'InventoryReportAPIController@getScarpInventoryFilterData');
             Route::post('validateINVReport', 'InventoryReportAPIController@validateReport');
 

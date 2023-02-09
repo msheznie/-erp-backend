@@ -272,17 +272,25 @@ Route::group([], function () {
     Route::get('getWarehouse', 'ErpItemLedgerAPIController@getWarehouse')->name('Get Warehouse');
     Route::get('getErpLedger', 'ErpItemLedgerAPIController@getErpLedger')->name('Get Erp Ledger');
 
-    Route::post('generateStockValuationReport', 'ErpItemLedgerAPIController@generateStockValuationReport')->name('Generate Stock Valuation Report');
     Route::post('getErpLedgerItems', 'ErpItemLedgerAPIController@getErpLedgerItems')->name('Get Erp Ledger Items');
     Route::post('validateStockLedgerReport', 'ErpItemLedgerAPIController@validateStockLedgerReport')->name('Validate Stock Ledger Report');
     Route::post('generateStockLedgerReport', 'ErpItemLedgerAPIController@generateStockLedgerReport')->name('Generate Stock Ledger Report');
-    Route::post('exportStockEvaluation', 'ErpItemLedgerAPIController@exportStockEvaluation')->name('Export Stock Evaluation');
     Route::post('exportStockLedgerReport', 'ErpItemLedgerAPIController@exportStockLedgerReport')->name('Export Stock Ledger Report');
-    Route::post('validateStockValuationReport', 'ErpItemLedgerAPIController@validateStockValuationReport')->name('Validate Stock Valuation Report');
-    Route::post('validateStockTakingReport', 'ErpItemLedgerAPIController@validateStockTakingReport')->name('Validate Stock Taking Report'); 
-    Route::post('generateStockTakingReport', 'ErpItemLedgerAPIController@generateStockTakingReport')->name('Generate Stock Taking Report');
-    Route::post('exportStockTaking', 'ErpItemLedgerAPIController@exportStockTaking')->name('Export Stock Taking');
     Route::post('generateStockLedger', 'ErpItemLedgerAPIController@generateStockLedger')->name('Generate Stock Ledger');
     Route::post('getItemStockDetails', 'ErpItemLedgerAPIController@getItemStockDetails')->name('Get Item Stock Details');   
+
+});
+
+// Stock Valuation
+Route::group([], function () {
+    Route::resource('erp_stock_valuation', 'InventoryReportAPIController');
+    Route::resource('erp_item_ledgers', 'ErpItemLedgerAPIController');
+
+    Route::get('getINVFilterData', 'InventoryReportAPIController@getInventoryFilterData')->name('Get Inventory Filter Data');
+
+    Route::post('validateStockValuationReport', 'ErpItemLedgerAPIController@validateStockValuationReport')->name('Validate Stock Valuation Report');
+    Route::post('generateStockValuationReport', 'ErpItemLedgerAPIController@generateStockValuationReport')->name('Generate Stock Valuation Report');
+    Route::post('exportStockEvaluation', 'ErpItemLedgerAPIController@exportStockEvaluation')->name('Export Stock Evaluation');
+    Route::post('validateStockTakingReport', 'ErpItemLedgerAPIController@validateStockTakingReport')->name('Validate Stock Taking Report');
 
 });
