@@ -5044,7 +5044,7 @@ AND erp_generalledger.documentRptAmount > 0 AND erp_generalledger.glAccountTypeI
                                 erp_companyreporttemplate.isDefault = 1 AND erp_companyreporttemplate.reportID = 2
                                 ) AS revenueGLCodes ON erp_generalledger.chartOfAccountSystemID = revenueGLCodes.chartOfAccountSystemID
                                 WHERE erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
-                            
+                                AND chartofaccounts.controlAccountsSystemID = 1
                                 AND DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" 
                                 AND "' . $toDate . '"
                                 ) AS revenueCustomerDetail
