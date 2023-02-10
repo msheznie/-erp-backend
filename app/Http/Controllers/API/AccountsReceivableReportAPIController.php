@@ -5021,7 +5021,7 @@ AND erp_generalledger.documentRptAmount > 0 AND erp_generalledger.glAccountTypeI
                                 erp_generalledger
                                 INNER JOIN chartofaccounts ON erp_generalledger.chartOfAccountSystemID = chartofaccounts.chartOfAccountSystemID
                                 INNER JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID
-                                LEFT JOIN tax_ledger_details ON erp_generalledger.chartOfAccountSystemID = tax_ledger_details.chartOfAccountSystemID AND erp_generalledger.documentSystemID = tax_ledger_details.documentSystemID AND  erp_generalledger.documentSystemCode = tax_ledger_details.documentMasterAutoID
+                                LEFT JOIN tax_ledger_details ON erp_generalledger.chartOfAccountSystemID = tax_ledger_details.chartOfAccountSystemID AND erp_generalledger.documentSystemID = tax_ledger_details.documentSystemID AND  erp_generalledger.documentSystemCode = tax_ledger_details.documentMasterAutoID AND erp_generalledger.serviceLineSystemID = tax_ledger_details.serviceLineSystemID
                                 LEFT JOIN contractmaster ON erp_generalledger.companyID = contractmaster.CompanyID 
                                 AND erp_generalledger.clientContractID = contractmaster.ContractNumber
                                 LEFT JOIN currencymaster currLocal ON erp_generalledger.documentLocalCurrencyID = currLocal.currencyID
@@ -5045,7 +5045,6 @@ AND erp_generalledger.documentRptAmount > 0 AND erp_generalledger.glAccountTypeI
                             
                                 AND DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" 
                                 AND "' . $toDate . '"
-                                GROUP BY tax_ledger_details.chartOfAccountSystemID
                                 ) AS revenueCustomerDetail
                                 LEFT JOIN customermaster ON revenueCustomerDetail.mySupplierCode = customermaster.customerCodeSystem
                                 WHERE (revenueCustomerDetail.mySupplierCode IN (' . join(',', $customerSystemID) . ')' . $nullCustomer . ')');
