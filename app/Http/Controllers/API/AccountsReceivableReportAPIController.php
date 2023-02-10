@@ -4984,6 +4984,8 @@ AND erp_generalledger.documentRptAmount > 0 AND erp_generalledger.glAccountTypeI
                                 erp_generalledger.documentSystemID,
                                 erp_generalledger.documentDate,
                                 erp_generalledger.documentNarration,
+                                erp_generalledger.serviceLineSystemID,
+                                erp_generalledger.chartOfAccountSystemID,
                                 erp_generalledger.glCode,
                                 erp_generalledger.glAccountType,
                                 chartofaccounts.controlAccounts,
@@ -5045,10 +5047,10 @@ AND erp_generalledger.documentRptAmount > 0 AND erp_generalledger.glAccountTypeI
                             
                                 AND DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" 
                                 AND "' . $toDate . '"
-                                GROUP BY tax_ledger_details.chartOfAccountSystemID
                                 ) AS revenueCustomerDetail
                                 LEFT JOIN customermaster ON revenueCustomerDetail.mySupplierCode = customermaster.customerCodeSystem
-                                WHERE (revenueCustomerDetail.mySupplierCode IN (' . join(',', $customerSystemID) . ')' . $nullCustomer . ')');
+                                WHERE (revenueCustomerDetail.mySupplierCode IN (' . join(',', $customerSystemID) . ')' . $nullCustomer . ')
+                                GROUP BY customermaster.customerCodeSystem, serviceLineSystemID, chartOfAccountSystemID');
 
         return $output;
     }
