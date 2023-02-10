@@ -1953,6 +1953,7 @@ class SRMService
         $tenderMaster = TenderMaster::select(
             'title',
             'tender_code',
+            'document_type',
             'document_sales_start_date',
             'document_sales_end_date',
             'pre_bid_clarification_start_date',
@@ -2049,6 +2050,7 @@ class SRMService
         $data['goNoGoEnable'] = $tenderMaster['is_active_go_no_go'];
         $data['title'] = $tenderMaster['title'];
         $data['tender_code'] = $tenderMaster['tender_code'];
+        $data['document_type'] = $tenderMaster['document_type'];
         $data['sequenceDate'] = $calendarDateMerge;
         $data['isBidSubmission'] = ($data['currentSequence'] === 'Bid Submission Date' ? 1 : 0);
         $attachments = TenderDocumentTypes::with(['attachments' => function ($q) use ($tenderMasterId) {
@@ -3557,6 +3559,10 @@ class SRMService
                 ->where('srm_evaluation_criteria_details.critera_type_id',1)
                 ->count();
             $goNoGoActiveStatus = TenderMaster::select('is_active_go_no_go')->where('id', $group['tender_id'])->first();
+
+            $document_type = TenderMaster::select('document_type')->where('id', $group['tender_id'])->first();
+
+            $group['document_type'] =  $document_type['document_type'];
 
             $documentTypeAssignedCount = TenderDocumentTypeAssign::where('tender_id',$group['tender_id'])->count();
 
