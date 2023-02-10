@@ -4194,7 +4194,9 @@ class Helper
                     ->exists();
 
                 if (!$checkUserHasApprovalAccess) {
-                    return ['success' => false, 'message' => 'You do not have access to approve this document.'];
+                    if (($input["documentSystemID"] == 9 && ($isConfirmed && $isConfirmed->isFromPortal == 0)) || $input["documentSystemID"] != 9) {
+                        return ['success' => false, 'message' => 'You do not have access to approve this document.'];
+                    } 
                 }
 
                 if ($policyConfirmedUserToApprove && $policyConfirmedUserToApprove['isYesNO'] == 0) {
