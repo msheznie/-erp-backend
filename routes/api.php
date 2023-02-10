@@ -416,8 +416,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             
             Route::resource('customer_invoice_direct_details', 'CustomerInvoiceDirectDetailAPIController');
 
-            Route::post('generateScrapReport', 'InventoryReportAPIController@generateScrapReport');
-
             Route::post('getAllDocumentApproval', 'DocumentApprovedAPIController@getAllDocumentApproval');
             Route::post('getAllDocumentApprovalTest', 'DocumentApprovedAPIController@getAllDocumentApproval');
             //Route::get('getTotalCountOfApproval', 'DocumentApprovedAPIController@getTotalCountOfApproval');
@@ -1223,10 +1221,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('approveConsoleJV', 'ConsoleJVMasterAPIController@approveConsoleJV');
             Route::post('rejectConsoleJV', 'ConsoleJVMasterAPIController@rejectConsoleJV');
 
-
             Route::resource('currency_conversion_histories', 'CurrencyConversionHistoryAPIController');
-            Route::get('minAndMaxAnalysis', 'InventoryReportAPIController@minAndMaxAnalysis');
-
             
             Route::resource('document_attachment_type', 'DocumentAttachmentTypeController');
             Route::post('get_all_document_attachment_type', 'DocumentAttachmentTypeController@getAllDocumentAttachmentTypes');
