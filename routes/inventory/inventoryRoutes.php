@@ -306,3 +306,11 @@ Route::group([], function () {
     Route::post('exportINVReport', 'InventoryReportAPIController@exportReport')->name('Export Inv Report');
 
 });
+
+// Stock Taking
+Route::group([], function () {
+    Route::resource('erp_item_ledgers', 'ErpItemLedgerAPIController');
+    
+    Route::post('generateStockTakingReport', 'ErpItemLedgerAPIController@generateStockTakingReport')->name('Generate Stock Taking Report');
+    Route::post('exportStockTaking', 'ErpItemLedgerAPIController@exportStockTaking')->name('Export Stock Taking');
+});
