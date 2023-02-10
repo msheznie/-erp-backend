@@ -698,7 +698,7 @@ class StockTransferAPIController extends AppBaseController
             $checkPlAccount = ($stockTransfer->interCompanyTransferYN == -1) ? SystemGlCodeScenarioDetail::getGlByScenario($stockTransfer->companySystemID, $stockTransfer->documentSystemID, 1) : SystemGlCodeScenarioDetail::getGlByScenario($stockTransfer->companySystemID, $stockTransfer->documentSystemID, 2);
 
             if (is_null($checkPlAccount)) {
-                return $this->sendError('Please configure PL account for stock transfer', 500);
+                return $this->sendError('Transit account for stock transfer is not configured. Please update it in Chart of Account → Chart of Account Configuration', 500);
             }
 
             if ($stockTransfer->interCompanyTransferYN == -1) {
