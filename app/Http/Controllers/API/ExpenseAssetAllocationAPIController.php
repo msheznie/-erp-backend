@@ -243,6 +243,10 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
                     return $this->sendError("Total Value cannot be zero.");
                 }
 
+                if(is_numeric($input['amount']) != 1){
+                    return $this->sendError("Please enter a numeric value to the amount field.");
+                }
+
                 $input['amountLocal'] = ($meterialissue->issueCostLocalTotal/$meterialissue->issueCostRptTotal)*$input['amount'];
               
             
