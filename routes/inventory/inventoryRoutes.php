@@ -314,3 +314,13 @@ Route::group([], function () {
     Route::post('generateStockTakingReport', 'ErpItemLedgerAPIController@generateStockTakingReport')->name('Generate Stock Taking Report');
     Route::post('exportStockTaking', 'ErpItemLedgerAPIController@exportStockTaking')->name('Export Stock Taking');
 });
+
+// Inventory Min & Max Analysis
+Route::group([], function () {
+
+    Route::get('minAndMaxAnalysis', 'InventoryReportAPIController@minAndMaxAnalysis')->name('Min And Max Analysis');
+    
+    Route::post('generateScrapReport', 'InventoryReportAPIController@generateScrapReport')->name('Generate Scrap Report');
+
+});
+
