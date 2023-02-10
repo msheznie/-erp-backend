@@ -997,9 +997,24 @@ class AssetManagementReportAPIController extends AppBaseController
                                 $sumPeriod += $val->$val2;
                             }
                             $data[$x]['Charge during the year'] = round($sumPeriod, $currencyDecimalPlace);
-                            $data[$x]['Charge on disposal'] = round($val->disposedDep, $currencyDecimalPlace);
-                            $data[$x]['Closing Dep'] = round($val->closingDep, $currencyDecimalPlace);
-                            $data[$x]['NBV'] = round($val->costClosing - $val->closingDep, $currencyDecimalPlace);
+                            if($val->disposedDep == 0){
+                                $data[$x]['Charge on disposal'] = round($val->disposedDep, $currencyDecimalPlace);
+                            }
+                            if($val->disposedDep != 0){
+                                $data[$x]['Charge on disposal'] = round($val->disposedDep + $sumPeriod, $currencyDecimalPlace);
+                            }
+                            if($val->disposedDep == 0) {
+                                $data[$x]['Closing Dep'] = round($val->openingDep + $sumPeriod - $val->disposedDep, $currencyDecimalPlace);
+                            }
+                            if($val->disposedDep != 0) {
+                                $data[$x]['Closing Dep'] = round($val->openingDep - $val->disposedDep, $currencyDecimalPlace);
+                            }
+                            if($val->disposedDep == 0) {
+                                $data[$x]['NBV'] = round($val->costClosing - ($val->openingDep + $sumPeriod - $val->disposedDep), $currencyDecimalPlace);
+                            }
+                            if($val->disposedDep != 0) {
+                                $data[$x]['NBV'] = round($val->costClosing - ($val->openingDep - $val->disposedDep), $currencyDecimalPlace);
+                            }
                             foreach ($output['period'] as $val2) {
                                 $data[$x][$val2] = round($val->$val2, $currencyDecimalPlace);
                             }
