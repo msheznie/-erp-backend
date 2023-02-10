@@ -25,6 +25,7 @@ use App\Http\Requests\API\UpdateChequeRegisterDetailAPIRequest;
 use App\Models\ChequeRegister;
 use App\Models\ChequeRegisterDetail;
 use App\Models\CompanyPolicyMaster;
+use App\Models\PdcLog;
 use App\Models\PaySupplierInvoiceMaster;
 use App\Repositories\ChequeRegisterDetailRepository;
 use Carbon\Carbon;
@@ -434,17 +435,25 @@ class ChequeRegisterDetailAPIController extends AppBaseController
         try {
             $is_update = $this->chequeRegisterDetailRepository->update($update_array, $input['new_cheque_id']);  // update new old check documents to new cheque
             if ($is_update) {
-                // update supplier invoice master
-                PaySupplierInvoiceMaster::find($document_id)->update(
-                    [
-                        'BPVchequeNo' => $unUsedChequeRegisterDetails->cheque_no,
-                        'chequePrintedYN'=> 0,
-                        'chequePrintedDateTime'=> null,
-                        'chequePrintedByEmpSystemID'=> 0,
-                        'chequePrintedByEmpID'=> null,
-                        'chequePrintedByEmpName'=> null
-                    ]
-                );
+
+                if ($paySupplierInvoiceMaster->pdcChequeYN) {
+                    PdcLog::where('documentSystemID', $paySupplierInvoiceMaster->documentSystemID)
+                          ->where('documentmasterAutoID', $document_id)
+                          ->where('chequeNo', $chequeRegisterDetails->cheque_no)
+                          ->update(['chequeNo' => $unUsedChequeRegisterDetails->cheque_no, 'chequePrinted' => 0, 'chequePrintedDate' => null, 'chequePrintedBy' => null]);
+                } else {
+                    // update supplier invoice master
+                    PaySupplierInvoiceMaster::find($document_id)->update(
+                        [
+                            'BPVchequeNo' => $unUsedChequeRegisterDetails->cheque_no,
+                            'chequePrintedYN'=> 0,
+                            'chequePrintedDateTime'=> null,
+                            'chequePrintedByEmpSystemID'=> 0,
+                            'chequePrintedByEmpID'=> null,
+                            'chequePrintedByEmpName'=> null
+                        ]
+                    );
+                }
 
                 // update cheque register details
                 if ($isChange){
