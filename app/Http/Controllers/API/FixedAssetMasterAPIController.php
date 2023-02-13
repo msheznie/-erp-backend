@@ -880,14 +880,20 @@ class FixedAssetMasterAPIController extends AppBaseController
             }
 
             if(isset($input['isCurrencySame']) && $input['isCurrencySame'] == true) {
-                if ($input['costUnitRpt']) {
-                    $input['COSTUNIT'] = $input['costUnitRpt'];
+                if (isset($input['costUnitRpt'])) {
+                    if($input['costUnitRpt']) {
+                        $input['COSTUNIT'] = $input['costUnitRpt'];
+                    }
                 }
-                if ($input['salvage_value_rpt']) {
-                    $input['salvage_value'] = $input['salvage_value_rpt'];
+                if (isset($input['salvage_value_rpt'])) {
+                    if($input['salvage_value_rpt']) {
+                        $input['salvage_value'] = $input['salvage_value_rpt'];
+                    }
                 }
-                if ($input['accumulated_depreciation_amount_rpt']) {
-                    $input['accumulated_depreciation_amount_lcl'] = $input['accumulated_depreciation_amount_rpt'];
+                if (isset($input['accumulated_depreciation_amount_rpt'])) {
+                    if($input['accumulated_depreciation_amount_rpt']){
+                        $input['accumulated_depreciation_amount_lcl'] = $input['accumulated_depreciation_amount_rpt'];
+                    }
                 }
             }
 
