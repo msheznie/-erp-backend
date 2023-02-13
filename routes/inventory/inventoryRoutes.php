@@ -366,6 +366,17 @@ Route::group([], function () {
 
 });
 
+//Warehouses
+   Route::resource('warehouse/masters', 'WarehouseMasterAPIController', ['names' => 'Warehouse master']);
+   Route::resource('outlet_users', 'OutletUsersAPIController');
+
+   Route::get('getUnAssignUsersByOutlet', 'OutletUsersAPIController@getUnAssignUsersByOutlet')->name('Get UnAssign Users By Outlet');
+
+   Route::post('getAssignedUsersOutlet', 'OutletUsersAPIController@getAssignedUsersOutlet')->name('Get Assigned Users Outlet');
+   Route::post('uploadWarehouseImage', 'WarehouseMasterAPIController@uploadWarehouseImage')->name('Upload Warehouse Image');
+   /** Warehouse master Created by Pasan  */
+   Route::post('updateWarehouseMaster', 'WarehouseMasterAPIController@updateWarehouseMaster')->name('Update Warehouse Master');
+
 /* INV Master End */
 
 

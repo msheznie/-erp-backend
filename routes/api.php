@@ -192,9 +192,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::post('updateSegmentMaster', 'SegmentMasterAPIController@updateSegmentMaster');
 
-            /** Warehouse master Created by Pasan  */
-            Route::post('updateWarehouseMaster', 'WarehouseMasterAPIController@updateWarehouseMaster');
-
             Route::post('getAllCustomersByCompany', 'CustomerAssignedAPIController@getAllCustomersByCompany');
 
             Route::get('getCustomerByCompany', 'CustomerMasterAPIController@getCustomerByCompany');
@@ -1105,11 +1102,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('getFinanceYearFormData', 'CompanyFinanceYearAPIController@getFinanceYearFormData');
             Route::post('getFinancialPeriodsByYear', 'CompanyFinancePeriodAPIController@getFinancialPeriodsByYear');
             Route::resource('companyFinanceYearPeriodMasters', 'CompanyFinanceYearperiodMasterAPIController');
-
-            Route::resource('outlet_users', 'OutletUsersAPIController');
-            Route::post('getAssignedUsersOutlet', 'OutletUsersAPIController@getAssignedUsersOutlet');
-            Route::get('getUnAssignUsersByOutlet', 'OutletUsersAPIController@getUnAssignUsersByOutlet');
-            Route::post('uploadWarehouseImage', 'WarehouseMasterAPIController@uploadWarehouseImage');
 
             Route::resource('counter', 'CounterAPIController');
             Route::post('getCountersByCompany', 'CounterAPIController@getCountersByCompany');
