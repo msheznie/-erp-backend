@@ -162,7 +162,6 @@ Route::group([], function() {
     Route::resource('warehouse/masters', 'WarehouseMasterAPIController', ['names' => 'Warehouse master']);
     Route::post('getAllWarehouseSubLevels', 'WarehouseSubLevelsAPIController@getAllWarehouseSubLevels')->name('Get all warehouse sub levels');
     Route::resource('warehouse_sub_levels', 'WarehouseSubLevelsAPIController');
-    Route::post('getWarehouseRightEmployees', 'WarehouseRightsAPIController@getWarehouseRightEmployees')->name('Get warehouse right employees');
     Route::resource('warehouse_rights', 'WarehouseRightsAPIController');
     Route::get('getSubLevelsByWarehouse', 'WarehouseSubLevelsAPIController@getSubLevelsByWarehouse')->name('Get sub levels by warehouse');
     Route::post('getAllBinLocationsByWarehouse', 'WarehouseBinLocationAPIController@getAllBinLocationsByWarehouse')->name('Get all bin locations by warehouse');

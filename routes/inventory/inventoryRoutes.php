@@ -47,7 +47,6 @@ Route::group([], function () {
     Route::post('getStockTransferApproval', 'StockTransferAPIController@getStockTransferApproval')->name("Get pending for approval - Stock Transfer");
     Route::post('getApprovedSTForCurrentUser', 'StockTransferAPIController@getApprovedSTForCurrentUser')->name("Get approved - Stock Transfer");
     Route::post('approveStockTransfer', 'StockTransferAPIController@approveStockTransfer')->name("Approve Stock Transfer");
-
 });
 
 //GRV Trans
@@ -319,8 +318,62 @@ Route::group([], function () {
 Route::group([], function () {
 
     Route::get('minAndMaxAnalysis', 'InventoryReportAPIController@minAndMaxAnalysis')->name('Min And Max Analysis');
-    
+
     Route::post('generateScrapReport', 'InventoryReportAPIController@generateScrapReport')->name('Generate Scrap Report');
 
 });
+/* INV Reports End */
+
+/* INV Master Start */
+
+// Items
+Route::group([], function () {
+    Route::resource('item/assigneds', 'ItemAssignedAPIController', ['names' => 'Item assigned']);
+    Route::resource('item/masters', 'ItemMasterAPIController',['names' => 'Item master']);
+    Route::resource('warehouse_items', 'WarehouseItemsAPIController');
+    Route::resource('itemMasterRefferedBack', 'ItemMasterRefferedBackAPIController');
+    Route::resource('item_serials', 'ItemSerialAPIController');
+    Route::resource('item_batches', 'ItemBatchAPIController');
+
+    Route::get('getItemMasterAudit', 'ItemMasterAPIController@getItemMasterAudit')->name('Get Item Master Audit');
+    Route::get('getPosItemSearch', 'ItemMasterAPIController@getPosItemSearch')->name('Get Pos Item Search');
+    Route::get('getSupplierCatalog','ItemMasterAPIController@getSupplierByCatalogItemDetail')->name('Get Supplier By Catalog Item Detail');
+    Route::get('getGeneratedSerialNumbers', 'ItemSerialAPIController@getGeneratedSerialNumbers')->name('Get Generated Serial Numbers');
+    Route::get('getSerialNumbersForOut', 'ItemSerialAPIController@getSerialNumbersForOut')->name('Get Serial Numbers For Out');
+    Route::get('getSerialNumbersForReturn', 'ItemSerialAPIController@getSerialNumbersForReturn')->name('Get Serial Numbers For Return');
+    Route::get('getBatchNumbersForOut', 'ItemBatchAPIController@getBatchNumbersForOut')->name('Get Batch Numbers For Out');
+    Route::get('getBatchNumbersForReturn', 'ItemBatchAPIController@getBatchNumbersForReturn')->name('Get Batch Numbers For Return');
+    Route::get('getWareHouseDataForItemOut', 'ItemBatchAPIController@getWareHouseDataForItemOut')->name('Get Ware House Data For Item Out');
+
+    Route::post('getAllAssignedItemsForCompany', 'ItemMasterAPIController@getAllAssignedItemsForCompany')->name('Get all assigned items for company');
+    Route::post('exportItemAssignedByCompanyReport', 'ItemAssignedAPIController@exportItemAssignedByCompanyReport')->name('Export Item Assigned By Company Report');
+    Route::post('reOrderTest', 'ItemAssignedAPIController@reOrderTest')->name('Re Order Test');//nee to delete
+    Route::post('getAllNonPosItemsByCompany', 'ItemAssignedAPIController@getAllNonPosItemsByCompany')->name('Get All Non Pos Items By Company');
+    Route::post('getItemsByMainCategoryAndSubCategory', 'ItemAssignedAPIController@getItemsByMainCategoryAndSubCategory')->name('Get Items By Main Category And Sub Category');
+    Route::post('savePullItemsFromInventory', 'ItemAssignedAPIController@savePullItemsFromInventory')->name('Save Pull Items From Inventory');
+    Route::post('approveItem', 'ItemMasterAPIController@approveItem')->name('Approve Item');
+    Route::post('rejectItem', 'ItemMasterAPIController@rejectItem')->name('Reject Item');
+    Route::post('referBackHistoryByItemsMaster', 'ItemMasterRefferedBackAPIController@referBackHistoryByItemsMaster')->name('Refer Back History By Items Master');
+    Route::post('generateItemSerialNumbers', 'ItemSerialAPIController@generateItemSerialNumbers')->name('Generate Item Serial Numbers');
+    Route::post('serialItemDeleteAllDetails', 'ItemSerialAPIController@serialItemDeleteAllDetails')->name('Serial Item Delete All Details');
+    Route::post('updateSoldStatusOfSerial', 'ItemSerialAPIController@updateSoldStatusOfSerial')->name('Update Sold Status Of Serial');
+    Route::post('updateReturnStatusOfSerial', 'ItemSerialAPIController@updateReturnStatusOfSerial')->name('Update Return Status Of Serial');
+    Route::post('updateReturnStatusOfBatch', 'ItemBatchAPIController@updateReturnStatusOfBatch')->name('Update Return Status Of Batch');
+    Route::post('updateSoldStatusOfBatch', 'ItemBatchAPIController@updateSoldStatusOfBatch')->name('Update Sold Status Of Batch');
+
+});
+
+//Warehouses
+   Route::resource('warehouse/masters', 'WarehouseMasterAPIController', ['names' => 'Warehouse master']);
+   Route::resource('outlet_users', 'OutletUsersAPIController');
+
+   Route::get('getUnAssignUsersByOutlet', 'OutletUsersAPIController@getUnAssignUsersByOutlet')->name('Get UnAssign Users By Outlet');
+
+   Route::post('getAssignedUsersOutlet', 'OutletUsersAPIController@getAssignedUsersOutlet')->name('Get Assigned Users Outlet');
+   Route::post('uploadWarehouseImage', 'WarehouseMasterAPIController@uploadWarehouseImage')->name('Upload Warehouse Image');
+   /** Warehouse master Created by Pasan  */
+   Route::post('updateWarehouseMaster', 'WarehouseMasterAPIController@updateWarehouseMaster')->name('Update Warehouse Master');
+
+/* INV Master End */
+
 
