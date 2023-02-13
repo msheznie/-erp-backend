@@ -47,9 +47,6 @@ Route::group([], function () {
     Route::post('getStockTransferApproval', 'StockTransferAPIController@getStockTransferApproval')->name("Get pending for approval - Stock Transfer");
     Route::post('getApprovedSTForCurrentUser', 'StockTransferAPIController@getApprovedSTForCurrentUser')->name("Get approved - Stock Transfer");
     Route::post('approveStockTransfer', 'StockTransferAPIController@approveStockTransfer')->name("Approve Stock Transfer");
-   
-    Route::post('getAllItemsMasterApproval', 'ItemMasterAPIController@getAllItemsMasterApproval')->name("Get All Items Master Approval"); //chk navigationMenuID
-
 });
 
 //GRV Trans
