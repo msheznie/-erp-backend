@@ -129,7 +129,7 @@
     <table style="width:100%;">
         <tr>
             <td style="width:50%;font-size: 10px;vertical-align: bottom;">
-                <span>Printed Date : {{date("d-M-y, h:i:s A")}}</span><br>
+                <span>Printer Date & Time : {{date("d-M-y, h:i:s A")}}</span><br>
                 <span>Printed By : {{$employeeData->empName}}</span>
             </td>
             <td style="width:50%; text-align: center;font-size: 10px;vertical-align: bottom;">
@@ -244,7 +244,7 @@
             @if($header->itemType == 3)
             <td style="font-weight: bold;">
                 @if(isset($header->$column))
-                {{round($header->$column, $decimalPlaces)}}
+                {{number_format($header->$column, $decimalPlaces)}}
                 @else
                 0
                 @endif
@@ -253,7 +253,7 @@
             @if($header->itemType == 5)
             <td>
                 @if(isset($header->$column))
-                {{round($header->$column, $decimalPlaces)}}
+                {{number_format($header->$column, $decimalPlaces)}}
                 @else
                 0
                 @endif
@@ -288,7 +288,7 @@
             @if($data->itemType == 3)
             <td style="font-weight: bold;">
                 @if(isset($data->$column))
-                {{round($data->$column, $decimalPlaces)}}
+                {{number_format($data->$column, $decimalPlaces)}}
                 @else
                 0
                 @endif
@@ -296,7 +296,7 @@
             @else
             <td>
                 @if(isset($data->$column))
-                {{round($data->$column, $decimalPlaces)}}
+                {{number_format($data->$column, $decimalPlaces)}}
                 @else
                 0
                 @endif
@@ -322,7 +322,7 @@
             @if($data->itemType == 8 || $data->itemType == 7)
             <td>
                 @if(isset($data->$column))
-                {{round($data->$column, $decimalPlaces)}}
+                {{number_format($data->$column, $decimalPlaces)}}
                 @else
                 0
                 @endif
@@ -353,7 +353,7 @@
             @foreach ($columns as $column)
             <td>
                 @if(isset($data2->$column))
-                {{round($data2->$column, $decimalPlaces)}}
+                {{number_format($data2->$column, $decimalPlaces)}}
                 @else
                 0
                 @endif
@@ -388,7 +388,7 @@
             @if($dataSubTwo->itemType == 3)
             <td style="font-weight: bold;">
                 @if(isset($dataSubTwo->$column))
-                {{round($dataSubTwo->$column, $decimalPlaces)}}
+                {{number_format($dataSubTwo->$column, $decimalPlaces)}}
                 @else
                 0
                 @endif
@@ -396,7 +396,7 @@
             @else
             <td>
                 @if(isset($dataSubTwo->$column))
-                {{round($dataSubTwo->$column, $decimalPlaces)}}
+                {{number_format($dataSubTwo->$column, $decimalPlaces)}}
                 @else
                 0
                 @endif
@@ -439,7 +439,7 @@
             @foreach ($columns as $column)
             <td>
                 @if(isset($data23->$column))
-                {{round($data23->$column, $decimalPlaces)}}
+                {{number_format($data23->$column, $decimalPlaces)}}
                 @else
                 0
                 @endif
@@ -472,7 +472,7 @@
             @if($dataSubThree->itemType == 3)
             <td style="font-weight: bold;">
                 @if(isset($dataSubThree->$column))
-                {{round($dataSubThree->$column, $decimalPlaces)}}
+                {{number_format($dataSubThree->$column, $decimalPlaces)}}
                 @else
                 0
                 @endif
@@ -480,7 +480,7 @@
             @else
             <td>
                 @if(isset($dataSubThree->$column))
-                {{round($dataSubThree->$column, $decimalPlaces)}}
+                {{number_format($dataSubThree->$column, $decimalPlaces)}}
                 @else
                 0
                 @endif
@@ -519,7 +519,7 @@
             @foreach ($columns as $column)
             <td>
                 @if(isset($data24->$column))
-                {{round($data24->$column, $decimalPlaces)}}
+                {{number_format($data24->$column, $decimalPlaces)}}
                 @else
                 0
                 @endif
@@ -550,7 +550,7 @@
             @if($dataSubFour->itemType == 3)
             <td style="font-weight: bold;">
                 @if(isset($dataSubFour->$column))
-                {{round($dataSubFour->$column, $decimalPlaces)}}
+                {{number_format($dataSubFour->$column, $decimalPlaces)}}
                 @else
                 0
                 @endif
@@ -558,7 +558,7 @@
             @else
             <td>
                 @if(isset($dataSubFour->$column))
-                {{round($dataSubFour->$column, $decimalPlaces)}}
+                {{number_format($dataSubFour->$column, $decimalPlaces)}}
                 @else
                 0
                 @endif
@@ -593,7 +593,7 @@
             @foreach ($columns as $column)
             <td>
                 @if(isset($data25->$column))
-                {{round($data25->$column, $decimalPlaces)}}
+                {{number_format($data25->$column, $decimalPlaces)}}
                 @else
                 0
                 @endif
@@ -627,7 +627,7 @@
             @endif
             @foreach ($openingBalance as $column)
             <td style="font-weight: bold;">
-                {{round($column, $decimalPlaces)}}
+                {{number_format($column, $decimalPlaces)}}
             </td>
             @endforeach
         </tr>
@@ -647,7 +647,7 @@
             @endif
             @foreach ($closingBalance as $column)
             <td style="font-weight: bold;">
-                {{round($column, $decimalPlaces)}}
+                {{number_format($column, $decimalPlaces)}}
             </td>
             @endforeach
         </tr>
@@ -670,7 +670,7 @@
             @foreach ($columns as $column)
             <td>
                 @if(isset($uncategorize->$column))
-                {{round($uncategorize->$column, $decimalPlaces)}}
+                {{number_format($uncategorize->$column, $decimalPlaces)}}
                 @else
                 0
                 @endif
@@ -696,7 +696,7 @@
             @foreach ($columns as $column)
             <td style="font-weight: bold;">
                 @if(isset($grandTotalUncatArr->$column))
-                {{round($grandTotalUncatArr->$column, $decimalPlaces)}}
+                {{number_format($grandTotalUncatArr->$column, $decimalPlaces)}}
                 @else
                 0
                 @endif
@@ -722,7 +722,7 @@
             @foreach ($columns as $column)
             <td>
                 @if(isset($uncategorize[$column]))
-                {{round($uncategorize[$column], $decimalPlaces)}}
+                {{number_format($uncategorize[$column], $decimalPlaces)}}
                 @else
                 0
                 @endif
