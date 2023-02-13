@@ -1253,9 +1253,6 @@ class SRMService
         $supplierRegIdAll =  $this->getAllSupplierRegIdByUUID($request->input('supplier_uuid'));
         $is_rfx = $request->input('extra.rfx');
         
-
-
-
         foreach ($supplierRegIdAll as $supplierReg) {
             $registrationLinkIds[] = $supplierReg['id'];
         }
@@ -1274,24 +1271,21 @@ class SRMService
         foreach ($tenderIds as $tenderId) {
             $tenderMasterId[] = $tenderId['tender_master_id'];
         }
-
         //Get Open Tenders Not Purchased
         if($is_rfx)
         {
-            $openTendersNotPurchased = TenderMaster::select('id')->where('tender_type_id', 1)
-            ->whereNotIn('id', $purchasedTenderIds)
-            ->where('document_type','!=',0)
-            ->get()
-            ->toArray();
+            $type = [1,2,3];
         }
         else
         {
-            $openTendersNotPurchased = TenderMaster::select('id')->where('tender_type_id', 1)
-            ->whereNotIn('id', $purchasedTenderIds)
-            ->where('document_type','=',0)
-            ->get()
-            ->toArray();
+            $type = [0];
         }
+
+        $openTendersNotPurchased = TenderMaster::select('id')->where('tender_type_id', 1)
+        ->whereNotIn('id', $purchasedTenderIds)
+        ->whereIn('document_type',$type)
+        ->get()
+        ->toArray();
     
 
         foreach ($openTendersNotPurchased as $openTendersNotPurchasedId) {
