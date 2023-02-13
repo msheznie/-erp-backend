@@ -1251,7 +1251,8 @@ class SRMService
         $tenderMasterId = array();
         $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
         $supplierRegIdAll =  $this->getAllSupplierRegIdByUUID($request->input('supplier_uuid'));
-
+        $is_rfx = $request->input('extra.rfx');
+        
         foreach ($supplierRegIdAll as $supplierReg) {
             $registrationLinkIds[] = $supplierReg['id'];
         }
@@ -1270,12 +1271,22 @@ class SRMService
         foreach ($tenderIds as $tenderId) {
             $tenderMasterId[] = $tenderId['tender_master_id'];
         }
-
         //Get Open Tenders Not Purchased
+        if($is_rfx)
+        {
+            $type = [1,2,3];
+        }
+        else
+        {
+            $type = [0];
+        }
+
         $openTendersNotPurchased = TenderMaster::select('id')->where('tender_type_id', 1)
-            ->whereNotIn('id', $purchasedTenderIds)
-            ->get()
-            ->toArray();
+        ->whereNotIn('id', $purchasedTenderIds)
+        ->whereIn('document_type',$type)
+        ->get()
+        ->toArray();
+    
 
         foreach ($openTendersNotPurchased as $openTendersNotPurchasedId) {
             $tenderMasterId[] = $openTendersNotPurchasedId['id'];
@@ -1301,6 +1312,15 @@ class SRMService
             }])->whereHas('srmTenderMasterSupplier', function ($q) use ($supplierRegId) {
                 $q->where('purchased_by', '=', $supplierRegId);
             })->where('published_yn', 1);
+
+            if($is_rfx)
+            {
+                $query->where('document_type','!=',0);
+            }
+            else
+            {
+                $query->where('document_type','=',0);
+            }
         }
         $search = $request->input('search.value');
         if ($search) {
@@ -1312,6 +1332,15 @@ class SRMService
                 $query->orWhere('title_sec_lang', 'LIKE', "%{$search}%");
             });
         }
+
+        if($is_rfx)
+        {
+            if($request->input('extra.rfx_typ') != '')
+            {
+              $query->where('document_type', $request->input('extra.rfx_typ'));
+            }
+        }
+
 
         $data = DataTables::eloquent($query)
             ->order(function ($query) use ($input) {
@@ -1918,6 +1947,7 @@ class SRMService
         $tenderMaster = TenderMaster::select(
             'title',
             'tender_code',
+            'document_type',
             'document_sales_start_date',
             'document_sales_end_date',
             'pre_bid_clarification_start_date',
@@ -2014,6 +2044,7 @@ class SRMService
         $data['goNoGoEnable'] = $tenderMaster['is_active_go_no_go'];
         $data['title'] = $tenderMaster['title'];
         $data['tender_code'] = $tenderMaster['tender_code'];
+        $data['document_type'] = $tenderMaster['document_type'];
         $data['sequenceDate'] = $calendarDateMerge;
         $data['isBidSubmission'] = ($data['currentSequence'] === 'Bid Submission Date' ? 1 : 0);
         $attachments = TenderDocumentTypes::with(['attachments' => function ($q) use ($tenderMasterId) {
@@ -3522,6 +3553,10 @@ class SRMService
                 ->where('srm_evaluation_criteria_details.critera_type_id',1)
                 ->count();
             $goNoGoActiveStatus = TenderMaster::select('is_active_go_no_go')->where('id', $group['tender_id'])->first();
+
+            $document_type = TenderMaster::select('document_type')->where('id', $group['tender_id'])->first();
+
+            $group['document_type'] =  $document_type['document_type'];
 
             $documentTypeAssignedCount = TenderDocumentTypeAssign::where('tender_id',$group['tender_id'])->count();
 
