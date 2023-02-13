@@ -54,7 +54,7 @@ class GeneralLedgerPdfJob implements ShouldQueue
         CommonJobService::db_switch($db);
 
         $output = $this->getGeneralLedgerQryForPDF($request);
-        $outputChunkData = collect($output)->chunk(1000);
+        $outputChunkData = collect($output)->chunk(500);
 
         $reportCount = 1;
         foreach ($outputChunkData as $key1 => $output1) {
