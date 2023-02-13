@@ -47,6 +47,6 @@ Route::get('getSearchSupplierByCompany', 'SupplierMasterAPIController@getSearchS
 Route::get('getGeneralLedgerReview', 'GeneralLedgerAPIController@getGeneralLedgerReview')->name('Get General Ledger Review');
 // Route::get('updateNotPostedGLEntries', 'GeneralLedgerAPIController@updateNotPostedGLEntries');
 
-Route::post('updateGLEntries', 'GeneralLedgerAPIController@updateGLEntries');
+Route::post('updateGLEntries', 'GeneralLedgerAPIController@updateGLEntries')->name('Update GL Entries');
 Route::post('generateSegmentGlReport', 'GeneralLedgerAPIController@generateSegmentGlReport');
 Route::post('generateSegmentGlReportExcel', 'GeneralLedgerAPIController@generateSegmentGlReportExcel');
