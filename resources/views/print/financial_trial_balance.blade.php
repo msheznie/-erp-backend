@@ -146,7 +146,7 @@
     <table style="width:100%;">
         <tr>
             <td style="width:50%;font-size: 10px;vertical-align: bottom;">
-                <span>Printed Date : {{date("d-M-y, h:i:s A")}}</span><br>
+                <span>Printer Date & Time : {{date("d-M-y, h:i:s A")}}</span><br>
                 <span>Printed By : {{$employeeData->empName}}</span>
             </td>
             <td style="width:50%; text-align: center;font-size: 10px;vertical-align: bottom;">
