@@ -44,7 +44,7 @@ Route::get('getGRVFormData', 'GRVMasterAPIController@getGRVFormData')->name('Get
 Route::get('getAllFinancePeriod', 'CompanyFinancePeriodAPIController@getAllFinancePeriod')->name('Get all finance period');
 Route::get('getSearchSupplierByCompany', 'SupplierMasterAPIController@getSearchSupplierByCompany')->name('Get search supplier by company');
 
-Route::get('getGeneralLedgerReview', 'GeneralLedgerAPIController@getGeneralLedgerReview')->name('Get General Ledger Review');
+Route::get('getGeneralLedgerReview', 'GeneralLedgerAPIController@getGeneralLedgerReview');
 // Route::get('updateNotPostedGLEntries', 'GeneralLedgerAPIController@updateNotPostedGLEntries');
 
 Route::post('updateGLEntries', 'GeneralLedgerAPIController@updateGLEntries');

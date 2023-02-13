@@ -165,8 +165,8 @@ class VATReportAPIController extends AppBaseController
         $documentReportingAmountTotal = 0;
         $localAmountTotal = 0;
         $documentLocalAmountTotal = 0;
-        $rptDecimalPlace = '';
-        $localDecimalPlace = '';
+        $rptDecimalPlace = 2;
+        $localDecimalPlace = 2;
         if ($output) {
             foreach ($output as $val) {
                 $rptAmountTotal += $val->rptAmount;
