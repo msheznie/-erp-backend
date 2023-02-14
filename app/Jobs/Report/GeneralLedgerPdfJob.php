@@ -15,6 +15,8 @@ use Carbon\Carbon;
 use App\Services\WebPushNotificationService;
 use App\helper\CommonJobService;
 use Illuminate\Support\Facades\Log;
+use ZipArchive;
+use File;
 
 class GeneralLedgerPdfJob implements ShouldQueue
 {
@@ -53,15 +55,18 @@ class GeneralLedgerPdfJob implements ShouldQueue
         $db = $this->dispatch_db;
         CommonJobService::db_switch($db);
 
+        $currentDate = strtotime(date("Y-m-d H:i:s"));
+        $root = "general-ledger-pdf/".$currentDate;
+
         $output = $this->getGeneralLedgerQryForPDF($request);
         $outputChunkData = collect($output)->chunk(300);
 
         $reportCount = 1;
+
         foreach ($outputChunkData as $key1 => $output1) {
-            GenerateGlPdfReport::dispatch($db, $request, $reportCount, $this->userIds, $output1, count($outputChunkData));
+            GenerateGlPdfReport::dispatch($db, $request, $reportCount, $this->userIds, $output1, count($outputChunkData), $root);
             $reportCount++;
         }
-
     }
 
     function getGeneralLedgerQryForPDF($request)
