@@ -173,7 +173,6 @@ class HRJobInvokeAPIController extends AppBaseController
 
     function sendTravelRequestNotifications(Request $request)
     { 
-       // CommonJobService::db_switch('gears_erp_hrms_qa');
         $input = $request->all();  
         $tenantId = $input['tenantId'];
         $companyId = $input['companyId'];
@@ -182,33 +181,5 @@ class HRJobInvokeAPIController extends AppBaseController
         $tripRequestBookings = $input['tripRequestBookings'];
         TravelRequestNotificationJob::dispatch($tenantId, $companyId, $id,$tripMaster,$tripRequestBookings); 
         return $this->sendResponse([], 'Travel request notification scenario added to queue');
-    }
-
-    function test($withUser)
-    {
-        //CommonJobService::db_switch('gears_erp_hrms_qa');
-        $test =  NotificationCompanyScenario::select('id')
-            ->where('scenarioID', 20)
-            ->where('companyID', 3)
-            ->where('isActive', 1);
-
-        if ($withUser) {
-            $test = $test->with(['user' => function ($q) {
-                $q->select('id','empID','companyScenarionID','isActive')
-                ->where('isActive', '=', 1)
-                ->with(['employee' => function ($q3){ 
-                    $q3->select('employeeSystemID','empFullName','empEmail','empID');
-                }])
-                ->with(['notificationUserDayCheck' => function ($q2) {
-                    $q2->select('id','notificationUserID','notificationDaySetupID','emailNotification')
-                    ->where('emailNotification', 1);
-                }]);
-            }])
-                ->whereHas('user', function ($query) {
-                    $query->where('isActive', '=', 1);  
-                });
-        }
-
-        return $test->first();
     }
 }
