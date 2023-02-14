@@ -14,6 +14,8 @@ use Carbon\Carbon;
 use App\Services\WebPushNotificationService;
 use App\helper\CommonJobService;
 use Illuminate\Support\Facades\Log;
+use ZipArchive;
+use File;
 
 class GenerateGlPdfReport implements ShouldQueue
 {
@@ -24,13 +26,14 @@ class GenerateGlPdfReport implements ShouldQueue
     public $userIds;
     public $outputChunkData;
     public $outputData;
+    public $rootPath;
     
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($dispatch_db, $request, $reportCount, $userId, $outputData, $outputChunkData)
+    public function __construct($dispatch_db, $request, $reportCount, $userId, $outputData, $outputChunkData, $rootPath)
     {
         if(env('IS_MULTI_TENANCY',false)){
             self::onConnection('database_main');
@@ -43,6 +46,7 @@ class GenerateGlPdfReport implements ShouldQueue
         $this->userIds = $userId;
         $this->outputChunkData = $outputChunkData;
         $this->outputData = $outputData;
+        $this->rootPath = $rootPath;
     }
 
 
@@ -59,6 +63,7 @@ class GenerateGlPdfReport implements ShouldQueue
         $request = $this->requestData;
         $outputChunkCount = $this->outputChunkData;
         $output = $this->outputData;
+        $rootPaths = $this->rootPath;
 
         $count = $this->reportCount;
         CommonJobService::db_switch($db);
@@ -139,26 +144,55 @@ class GenerateGlPdfReport implements ShouldQueue
 
         $pdf_content =  $pdf->setPaper('a4', 'landscape')->setWarnings(false)->output();
 
-        $fileName = 'general_ledger_'.strtotime(date("Y-m-d H:i:s")).'.pdf';
-        $path = "general-ledger/repots/".$fileName;
-        $disk = 's3';
-        $result = Storage::disk($disk)->put($path, $pdf_content);
-        
-        $fromDate = new Carbon($request->fromDate);
-        $fromDate = $fromDate->format('Y-m-d');
+        $fileName = 'general_ledger_'.strtotime(date("Y-m-d H:i:s")).'_Part_'.$count.'.pdf';
+        $path = $rootPaths.'/'.$fileName;
 
-        $toDate = new Carbon($request->toDate);
-        $toDate = $toDate->format('Y-m-d');
+        $result = Storage::disk('local_public')->put($path, $pdf_content);
 
-        $reportTitle = $outputChunkCount > 1 ? "Financial General Ledger Report PDF has been generated - Part ".$count : "Financial General Ledger Report PDF has been generated";
 
-        $webPushData = [
-            'title' => $reportTitle,
-            'body' => 'Period : '.$fromDate.' - '.$toDate,
-            'url' => "",
-            'path' => $path,
-        ];
+        if ($count == $outputChunkCount) {
+            $fromDate = new Carbon($request->fromDate);
+            $fromDate = $fromDate->format('Y-m-d');
 
-        WebPushNotificationService::sendNotification($webPushData, 3, $this->userIds);
+            $toDate = new Carbon($request->toDate);
+            $toDate = $toDate->format('Y-m-d');
+
+            $zip = new ZipArchive;
+            $fileName = 'general_ledger_report_('.$fromDate.'_'.$toDate.')_'.strtotime(date("Y-m-d H:i:s")).'.zip';
+            if ($zip->open(public_path($fileName), ZipArchive::CREATE) === TRUE)
+            {
+                $files = File::files(public_path($rootPaths));
+                foreach($files as $key => $value) {
+                    $relativeNameInZipFile = basename($value);
+                    $zip->addFile($value, $relativeNameInZipFile);
+                }
+                $zip->close();
+            }
+
+            $contents = Storage::disk('local_public')->get($fileName);
+            $zipPath = "general-ledger/repots/".$fileName;
+            $fileMoved = Storage::disk('s3')->put($zipPath, $contents);
+
+            if ($fileMoved) {
+                if ($exists = Storage::disk('local_public')->exists($fileName)) {
+                    $fileDeleted = Storage::disk('local_public')->delete($fileName);
+                }
+            }
+
+            $reportTitle = "Financial General Ledger Report PDF has been generated";
+
+            $webPushData = [
+                'title' => $reportTitle,
+                'body' => 'Period : '.$fromDate.' - '.$toDate,
+                'url' => "",
+                'path' => $zipPath,
+            ];
+
+            WebPushNotificationService::sendNotification($webPushData, 3, $this->userIds);
+
+            Storage::disk('local_public')->deleteDirectory('general-ledger-pdf');
+        }
+
+        return true;
     }
 }
