@@ -22,6 +22,7 @@ class TravelRequestNotificationService
     private $tripMaster;
     private $pdfName;
     private $tripRequestBookings;
+    private $documentCode;
 
 
     public function __construct($companyId, $tenantId, $id,$tripMaster,$tripRequestBookings)
@@ -35,6 +36,7 @@ class TravelRequestNotificationService
         $this->tripMaster = $tripMaster;
         $this->pdfName = null;
         $this->tripRequestBookings = $tripRequestBookings;
+        $this->documentCode = $this->tripMaster['document_code'];
     }
 
     function execute()
@@ -48,12 +50,12 @@ class TravelRequestNotificationService
             return false;
         }
         $this->sendEmail();
-        $this->insertToLogTb([ 'Document Code'=> $this->tripMaster['document_code'] ,'Message'=> 'execution successfully completed']);
+        $this->insertToLogTb([ 'Document Code'=> $this->documentCode ,'Message'=> 'execution successfully completed']);
     }
 
     public function sendEmail()
     { 
-        $this->insertToLogTb([ 'Document Code'=> $this->tripMaster['document_code'] ,'Message'=> 'Email Function Triggered']);
+        $this->insertToLogTb([ 'Document Code'=> $this->documentCode ,'Message'=> 'Email Function Triggered']);
         $msg = '';
         $logType = 'info';
         $this->generateTravelRequestPdf(); 
@@ -63,9 +65,9 @@ class TravelRequestNotificationService
             $dataEmail['empEmail'] = $val['employee']['empEmail'];
             $dataEmail['companySystemID'] = $this->companyId;
             $temp = '<p>Dear ' . $val['employee']['empFullName'] . ', <br /></p><p> Please find the attached document
-            '.$this->tripMaster['document_code'].' for your further arrangements and action.</p>';
+            '.$this->documentCode.' for your further arrangements and action.</p>';
             $dataEmail['emailAlertMessage'] = $temp;
-            $dataEmail['alertMessage'] = 'Travel Request - '.$this->tripMaster['document_code'].'';
+            $dataEmail['alertMessage'] = 'Travel Request - '.$this->documentCode.'';
             $sendEmail = \Email::sendEmailErp($dataEmail);
             if (!$sendEmail["success"]) {
                 $msg = "Travel request notification not sent for {$val['employee']['empID']} | {$val['employee']['empFullName']} "; 
@@ -73,7 +75,7 @@ class TravelRequestNotificationService
             }else { 
                 $msg = "Travel request notification sent for {$val['employee']['empID']} | {$val['employee']['empFullName']} ";
             }
-            $this->insertToLogTb(['Document Code'=> $this->tripMaster['document_code'] ,'Message'=> $msg],$logType); 
+            $this->insertToLogTb(['Document Code'=> $this->documentCode ,'Message'=> $msg],$logType); 
         }
     }
 
@@ -82,7 +84,7 @@ class TravelRequestNotificationService
         $notificationCompanyScenario = $this->getScenarioEmployees();
         $this->isScenarioActive = (!empty($notificationCompanyScenario)) ? true : false;
         if (!$this->isScenarioActive) {
-            $this->insertToLogTb(['Document Code'=> $this->tripMaster['document_code'] ,'Message'=> 'Notification scenario Does not exist or 
+            $this->insertToLogTb(['Document Code'=> $this->documentCode ,'Message'=> 'Notification scenario Does not exist or 
             does not active'],'error');  
         }
     }
@@ -92,7 +94,7 @@ class TravelRequestNotificationService
         $getNotifyEmployees = $this->getScenarioEmployees(true);
         $this->notifyList = (!empty($getNotifyEmployees) ? $getNotifyEmployees['user'] : []);
         if (empty($this->notifyList)) { 
-            $this->insertToLogTb(['Document Code'=> $this->tripMaster['document_code'] ,'Message'=> 'Employees Does not exists'],'error');  
+            $this->insertToLogTb(['Document Code'=> $this->documentCode ,'Message'=> 'Employees Does not exists'],'error');  
         }
     }
 
@@ -134,11 +136,11 @@ class TravelRequestNotificationService
             File::makeDirectory($path, 0777, true, true);
         }
         $nowTime = time();
-        $documentCode = str_replace("/", "_", $this->tripMaster['document_code']);
+        $documentCode = str_replace("/", "_", $this->documentCode);
         $pdf->loadHTML($html)->setPaper('a4', 'portrait')->save('uploads/emailAttachment/travel_request_' . $documentCode . '_' . $nowTime . '.pdf');
         $this->pdfName = realpath('uploads/emailAttachment/travel_request_' . $documentCode . '_' . $nowTime . '.pdf');
         
-        $this->insertToLogTb([ 'Document Code'=> $this->tripMaster['document_code'] ,'Message'=> 'Email PDF generated']);
+        $this->insertToLogTb([ 'Document Code'=> $this->documentCode ,'Message'=> 'Email PDF generated']);
     }
 
     public function getCompanyData(){ 
