@@ -149,8 +149,8 @@ class GenerateGlPdfReport implements ShouldQueue
 
         $result = Storage::disk('local_public')->put($path, $pdf_content);
 
-
-        if ($count == $outputChunkCount) {
+        $files = File::files(public_path($rootPaths));
+        if (count($files) == $outputChunkCount) {
             $fromDate = new Carbon($request->fromDate);
             $fromDate = $fromDate->format('Y-m-d');
 
@@ -161,7 +161,6 @@ class GenerateGlPdfReport implements ShouldQueue
             $fileName = 'general_ledger_report_('.$fromDate.'_'.$toDate.')_'.strtotime(date("Y-m-d H:i:s")).'.zip';
             if ($zip->open(public_path($fileName), ZipArchive::CREATE) === TRUE)
             {
-                $files = File::files(public_path($rootPaths));
                 foreach($files as $key => $value) {
                     $relativeNameInZipFile = basename($value);
                     $zip->addFile($value, $relativeNameInZipFile);
