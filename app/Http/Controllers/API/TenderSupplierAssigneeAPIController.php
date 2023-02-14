@@ -383,7 +383,7 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
 
                     if (!empty($isExist)) {
                         if($isExist['STATUS'] === 1){
-                            $urlString = implode('/', $urlArray) . '/';
+                            $urlString = implode('//', $urlArray) . '/';
                             TenderSupplierAssignee::find($val['id'])
                                 ->update(['mail_sent' => 1, 'registration_link_id' => $isExist['id']]);
                             $this->sendSupplierEmailInvitation($email, $companyName, $urlString, $tenderId, $companyId, 1, $rfx);
@@ -466,7 +466,7 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
 
             if (!empty($isExist)) {
                 if($isExist['STATUS'] === 1){
-                    $urlString = implode('/', $urlArray) . '/';
+                    $urlString = implode('//', $urlArray) . '/';
                     $this->sendSupplierEmailInvitation($email, $companyName, $urlString, $tenderId, $companySystemId, 1, $rfx);
                     TenderSupplierAssignee::find($getSupplierAssignedData['id'])
                         ->update(['mail_sent' => 1, 'registration_link_id' => $isExist['id']]);
