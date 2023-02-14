@@ -936,7 +936,15 @@ class ReportTemplateDetailsAPIController extends AppBaseController
                                                    })
                                                    ->whereHas('master', function($query) use ($input){
                                                         $query->where('reportID', $input['catogaryBLorPLID'])
-                                                              ->where('isDefault', 1);
+                                                              ->when(!isset($input['currentTemplateDetailID']), function($query) {
+                                                                    $query->where('isDefault', 1);
+                                                              });
+                                                   })
+                                                   ->when(isset($input['currentTemplateDetailID']) && $input['currentTemplateDetailID'] > 0 , function($query) use ($input) {
+                                                        $query->where('detID', '!=', $input['currentTemplateDetailID']);
+                                                   })
+                                                   ->when(isset($input['companyReportTemplateID']) && $input['companyReportTemplateID'] > 0 , function($query) use ($input) {
+                                                        $query->where('companyReportTemplateID', $input['companyReportTemplateID']);
                                                    })
                                                    ->whereNotNull('masterID')
                                                    ->get();
