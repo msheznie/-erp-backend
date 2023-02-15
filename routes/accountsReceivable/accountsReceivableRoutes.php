@@ -29,7 +29,6 @@ Route::group([], function () {
     Route::post('rejectReceiptVoucher', 'CustomerReceivePaymentAPIController@rejectReceiptVoucher')->name("Reject Receipt Voucher");
 });
 
-
 //CI
 Route::group([], function () {
     Route::resource('customer_invoice_directs', 'CustomerInvoiceDirectAPIController');
@@ -77,4 +76,28 @@ Route::group([], function () {
     Route::put('customerInvoiceCurrencyUpdate/{id}', 'CustomerInvoiceDirectAPIController@updateCurrency')->name("Update Currency");
     Route::put('customerInvoiceLocalUpdate/{id}', 'CustomerInvoiceDirectAPIController@customerInvoiceLocalUpdate')->name("Customer Invoice Local Update");
     Route::put('customerInvoiceReportingUpdate/{id}', 'CustomerInvoiceDirectAPIController@customerInvoiceReportingUpdate')->name("Customer Invoice Reporting Update");
+});
+
+//Credit Note
+Route::group([], function () {
+    Route::resource('credit_notes', 'CreditNoteAPIController');
+    Route::resource('credit_note_details', 'CreditNoteDetailsAPIController');
+
+    Route::get('getCreditNoteMasterRecord', 'CreditNoteAPIController@getCreditNoteMasterRecord')->name("Get Credit Note Master Record");
+    Route::get('creditNoteDetails', 'CreditNoteDetailsAPIController@creditNoteDetails')->name("Credit Note Details");
+    Route::get('getAllcontractbyclientbase', 'CreditNoteDetailsAPIController@getAllcontractbyclientbase')->name("Get All Contract By Client Base");
+    Route::get('creditNoteAudit', 'CreditNoteAPIController@creditNoteAudit')->name("Credit Note Audit");
+    Route::get('getFilteredDebitNote', 'CreditNoteAPIController@getFilteredDebitNote')->name("Get Filtered Debit Note");
+    Route::get('creditNoteReceiptStatus', 'CreditNoteAPIController@creditNoteReceiptStatus')->name("Credit Note Receipt Status");
+
+    Route::post('creditNoteMasterDataTable', 'CreditNoteAPIController@creditNoteMasterDataTable')->name("Credit Note Master Data Table");
+    Route::post('addcreditNoteDetails', 'CreditNoteDetailsAPIController@addcreditNoteDetails')->name("Add Credit Note Details");
+    Route::post('updateCreditNote', 'CreditNoteDetailsAPIController@updateCreditNote')->name("Update Credit Note");
+    Route::post('creditNoteReopen', 'CreditNoteAPIController@creditNoteReopen')->name("Credit Note Reopen");
+    Route::post('amendCreditNote', 'CreditNoteAPIController@amendCreditNote')->name("Amend Credit Note");
+    Route::post('amendCreditNoteReview', 'CreditNoteAPIController@amendCreditNoteReview')->name("Amend Credit Note Review");
+
+    Route::put('creditNoteLocalUpdate/{id}', 'CreditNoteAPIController@creditNoteLocalUpdate')->name("Credit Note Local Update");
+    Route::put('creditNoteReportingUpdate/{id}','CreditNoteAPIController@creditNoteReportingUpdate')->name("Credit Note Reporting Update");
+    Route::put('updateCreditNote/{id}', 'CreditNoteAPIController@updateCurrency')->name("Update Currency");
 });
