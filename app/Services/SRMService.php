@@ -1313,15 +1313,19 @@ class SRMService
                 $q->where('purchased_by', '=', $supplierRegId);
             })->where('published_yn', 1);
 
+        }
+
             if($is_rfx)
             {
-                $query->where('document_type','!=',0);
+                $type = [1,2,3];
             }
             else
-            {
-                $query->where('document_type','=',0);
+            {   
+                $type = [0];
             }
-        }
+
+            $query->whereIn('document_type',$type);
+            
         $search = $request->input('search.value');
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
@@ -2653,6 +2657,8 @@ class SRMService
         $assignDocumentTypes = TenderDocumentTypeAssign::where('tender_id',$tenderId)->pluck('document_type_id')->toArray();
         $doucments = (array_merge($assignDocumentTypesDeclared,$assignDocumentTypes));
 
+        $type = TenderMaster::where('id',$tenderId)->select('document_type')->first();
+
         $data['attachments'] = DocumentAttachments::with(['tender_document_types' => function ($q) use ($doucments){
             $q->whereIn('id',$doucments);
             $q->where('srm_action', 1);
@@ -2662,7 +2668,17 @@ class SRMService
         }])->whereHas('tender_document_types', function ($q) use ($doucments){
             $q->whereIn('id',$doucments);
             $q->where('srm_action', 1);
-        })->where('documentSystemCode', $tenderId)->where('documentSystemID', 108)->where('parent_id', null)->where('envelopType', $envelopType)->get();
+        })->where('documentSystemCode', $tenderId)->where(function($query) use($type){
+            if($type->document_type == 0)
+            {
+                $query->where('documentSystemID', 108);
+            }
+            else
+            {
+                $query->where('documentSystemID', 113);
+            }
+
+        })->where('parent_id', null)->where('envelopType', $envelopType)->get();
 
         $data['bidSubmitted'] = $this->getBidMasterData($bidMasterId);
 
