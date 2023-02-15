@@ -189,14 +189,14 @@
                         <td style="text-align: right;">{{number_format($val->openingBalLocal, $decimalPlaceLocal)}}</td>
                         <td style="text-align: right;">{{number_format($val->documentLocalAmountDebit, $decimalPlaceLocal) }}</td>
                         <td style="text-align: right;">{{number_format($val->documentLocalAmountCredit, $decimalPlaceLocal) }}</td>
-                        <td style="text-align: right;">{{number_format(($val->documentLocalAmountDebit)-($val->documentLocalAmountCredit), $decimalPlaceLocal) }}</td>
+                        <td style="text-align: right;">{{number_format(($val->documentLocalAmountDebit + $val->openingBalLocal)-($val->documentLocalAmountCredit), $decimalPlaceLocal) }}</td>
                     @endif
 
                     @if ($currencyId ==2 || $currencyId ==3)
                         <td style="text-align: right;">{{number_format($val->openingBalRpt, $decimalPlaceRpt)}}</td>
                         <td style="text-align: right;">{{number_format($val->documentRptAmountDebit, $decimalPlaceRpt)}}</td>
                         <td style="text-align: right;">{{number_format($val->documentRptAmountCredit, $decimalPlaceRpt)}}</td>
-                        <td style="text-align: right;">{{number_format(($val->documentRptAmountDebit)-($val->documentRptAmountCredit), $decimalPlaceRpt)}}</td>
+                        <td style="text-align: right;">{{number_format(($val->documentRptAmountDebit + $val->openingBalRpt)-($val->documentRptAmountCredit), $decimalPlaceRpt)}}</td>
                     @endif
                 </tr>
             @endforeach

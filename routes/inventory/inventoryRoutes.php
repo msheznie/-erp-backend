@@ -364,6 +364,7 @@ Route::group([], function () {
 });
 
 //Warehouses
+Route::group([], function () {
    Route::resource('warehouse/masters', 'WarehouseMasterAPIController', ['names' => 'Warehouse master']);
    Route::resource('outlet_users', 'OutletUsersAPIController');
 
@@ -374,6 +375,22 @@ Route::group([], function () {
    /** Warehouse master Created by Pasan  */
    Route::post('updateWarehouseMaster', 'WarehouseMasterAPIController@updateWarehouseMaster')->name('Update Warehouse Master');
 
+});
+
 /* INV Master End */
+
+//Good Receipt Voucher Review
+Route::group([], function () {
+
+Route::resource('g_r_v_masters', 'GRVMasterAPIController');
+
+Route::get('getFilteredGRV', 'GRVMasterAPIController@getFilteredGRV')->name('Get Filtered GRV');
+Route::get('cancelGRVPreCheck', 'GRVMasterAPIController@cancelGRVPreCheck')->name('Cancel GRV Pre Check');
+Route::get('reverseGRVPreCheck', 'GRVMasterAPIController@reverseGRVPreCheck')->name('Reverse GRV Pre Check');
+Route::get('getSupplierInvoiceStatusHistoryForGRV', 'GRVMasterAPIController@getSupplierInvoiceStatusHistoryForGRV')->name('Get Supplier Invoice Status History For GRV');
+
+Route::post('cancelGRV', 'GRVMasterAPIController@cancelGRV')->name('Cancel GRV');
+Route::post('reverseGRV', 'GRVMasterAPIController@reverseGRV')->name('Reverse GRV');
+});
 
 
