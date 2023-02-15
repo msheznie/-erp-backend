@@ -373,7 +373,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('reportTemplateGLDrillDown', 'FinancialReportAPIController@reportTemplateGLDrillDown');
             Route::post('reportTemplateGLDrillDownExport', 'FinancialReportAPIController@reportTemplateGLDrillDownExport');
 
-            Route::get('getCurrentUserInfo', 'UserAPIController@getCurrentUserInfo');
+            Route::get('getCurrentUserInfo', 'UserAPIController@getCurrentUserInfo')->name("Get Current User Info");
             Route::get('getNotifications', 'UserAPIController@getNotifications');
             Route::post('updateNotification', 'UserAPIController@updateNotification');
             Route::post('getAllNotifications', 'UserAPIController@getAllNotifications');
@@ -1477,7 +1477,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
 
             Route::post('amendSalesQuotationReview', 'QuotationMasterAPIController@amendSalesQuotationReview');
-            Route::post('getDocumentDetails', 'PurchaseRequestAPIController@getDocumentDetails');
+            Route::post('getDocumentDetails', 'PurchaseRequestAPIController@getDocumentDetails')->name("Get Document Details");
 
             Route::get('getVATFilterFormData', 'VATReportAPIController@getVATFilterFormData');
             Route::post('validateVATReport', 'VATReportAPIController@validateVATReport');
@@ -1494,7 +1494,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('sentCustomerStatement', 'AccountsReceivableReportAPIController@sentCustomerStatement');
             Route::post('sentCustomerLedger', 'AccountsReceivableReportAPIController@sentCustomerLedger');
 
-            Route::post('exportTransactionsRecord', 'TransactionsExportExcel@exportRecord');
+            Route::post('exportTransactionsRecord', 'TransactionsExportExcel@exportRecord')->name("Export Record");
 
             Route::post('getAllCurrencyConversionApproval', 'CurrencyConversionMasterAPIController@getAllCurrencyConversionApproval');
             Route::post('approveCurrencyConversion', 'CurrencyConversionMasterAPIController@approveCurrencyConversion');
