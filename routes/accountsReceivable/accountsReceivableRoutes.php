@@ -28,3 +28,53 @@ Route::group([], function () {
     Route::post('approveReceiptVoucher', 'CustomerReceivePaymentAPIController@approveReceiptVoucher')->name("Approve Receipt Voucher");
     Route::post('rejectReceiptVoucher', 'CustomerReceivePaymentAPIController@rejectReceiptVoucher')->name("Reject Receipt Voucher");
 });
+
+
+//CI
+Route::group([], function () {
+    Route::resource('customer_invoice_directs', 'CustomerInvoiceDirectAPIController');
+    Route::resource('taxdetails', 'TaxdetailAPIController');
+    Route::resource('customer_invoice_direct_details', 'CustomerInvoiceDirectDetailAPIController');
+    Route::resource('customerInvoiceCollectionDetails', 'CustomerInvoiceCollectionDetailAPIController');
+    Route::resource('customer_invoice_logistics', 'CustomerInvoiceLogisticAPIController');
+    Route::resource('customer_invoice_item_details', 'CustomerInvoiceItemDetailsAPIController');
+
+    Route::get('getcreateINVFormData', 'CustomerInvoiceDirectAPIController@getcreateINVFormData')->name("Get Create INV Form Data");
+    Route::get('customerInvoiceDetails', 'CustomerInvoiceDirectAPIController@customerInvoiceDetails')->name("Customer Invoice Details");
+    Route::get('AllDeleteCustomerInvoiceDetails', 'CustomerInvoiceDirectAPIController@AllDeleteCustomerInvoiceDetails')->name("All Delete Customer Invoice Details");
+    Route::get('getAllcontractbyclient', 'CustomerInvoiceDirectAPIController@getAllcontractbyclient')->name("Get All Contract By Client");
+    Route::get('customerInvoiceAudit', 'CustomerInvoiceDirectAPIController@customerInvoiceAudit')->name("Customer Invoice Audit");
+    Route::get('customerInvoiceReceiptStatus', 'CustomerInvoiceDirectAPIController@customerInvoiceReceiptStatus')->name("Customer Invoice Receipt Status");
+    Route::get('getCustomerCollectionItems', 'CustomerInvoiceCollectionDetailAPIController@getCustomerCollectionItems')->name("Get Customer Collection Items");
+    Route::get('getInvoiceLogistic', 'CustomerInvoiceLogisticAPIController@getInvoiceLogistic')->name("Get Invoice Logistic");
+    Route::get('getDeliveryOrderRecord','CustomerInvoiceItemDetailsAPIController@getDeliveryOrderRecord')->name("Get Delivery Order Record");
+    Route::get('deliveryOrderForCustomerInvoice','CustomerInvoiceItemDetailsAPIController@deliveryOrderForCustomerInvoice')->name("Delivery Order For Customer Invoice");
+    Route::get('getDeliveryOrderDetailForInvoice','CustomerInvoiceItemDetailsAPIController@getDeliveryOrderDetailForInvoice')->name("Get Delivery Order Detail For Invoice");
+    Route::get('getItemByCustomerInvoiceItemDetail', 'CustomerInvoiceItemDetailsAPIController@getItemByCustomerInvoiceItemDetail')->name("Get Item By Customer Invoice Item Detail");
+    Route::get('getDeliveryTerms', 'CustomerInvoiceItemDetailsAPIController@getDeliveryTerms')->name("Get Delivery Terms");
+
+    Route::post('getDeliveryTermsFormData', 'CustomerInvoiceItemDetailsAPIController@getDeliveryTermsFormData')->name("Get Delivery Terms Form Data");
+    Route::post('getCustomerCatalogDetailByCustomerItem', 'CustomerCatalogMasterAPIController@getCustomerCatalogDetailByCustomerItem')->name("Get Customer Catalog Detail By Customer Item");
+    Route::post('storeInvoiceDetailFromDeliveryOrder','CustomerInvoiceItemDetailsAPIController@storeInvoiceDetailFromDeliveryOrder')->name("Store Invoice Detail From Delivery Order");
+    Route::post('customerInvoiceTaxDetail', 'TaxdetailAPIController@customerInvoiceTaxDetail')->name("Customer Invoice Tax Detail");
+    Route::post('getCustomerInvoiceMasterView', 'CustomerInvoiceDirectAPIController@getCustomerInvoiceMasterView')->name("Get Customer Invoice Master View");
+    Route::post('getCustomerInvoicePerformaDetails', 'CustomerInvoiceDirectAPIController@getCustomerInvoicePerformaDetails')->name("Get Customer Invoice Perform aDetails");
+    Route::post('saveCustomerinvoicePerforma', 'CustomerInvoiceDirectAPIController@saveCustomerinvoicePerforma')->name("Save Customer Invoice Performa");
+    Route::post('savecustomerInvoiceTaxDetails', 'CustomerInvoiceDirectAPIController@savecustomerInvoiceTaxDetails')->name("Save Customer Invoice Tax Details");
+    Route::post('updateCustomerInvoiceGRV', 'CustomerInvoiceDirectAPIController@updateCustomerInvoiceGRV')->name("Update Customer Invoice GRV");
+    Route::post('customerInvoiceReopen', 'CustomerInvoiceDirectAPIController@customerInvoiceReopen')->name("Customer Invoice Reopen");
+    Route::post('clearCustomerInvoiceNumber', 'CustomerInvoiceDirectAPIController@clearCustomerInvoiceNumber')->name("Clear Customer Invoice Number");
+    Route::post('getCustomerInvoiceAmend', 'CustomerInvoiceDirectAPIController@getCustomerInvoiceAmend')->name("Get Customer Invoice Amend");
+    Route::post('customerInvoiceCancel', 'CustomerInvoiceDirectAPIController@customerInvoiceCancel')->name("Customer Invoice Cancel");
+    Route::post('amendCustomerInvoiceReview', 'CustomerInvoiceDirectAPIController@amendCustomerInvoiceReview')->name("Amend Customer Invoice Review");
+    Route::post('addDirectInvoiceDetails', 'CustomerInvoiceDirectDetailAPIController@addDirectInvoiceDetails')->name("Add Direct Invoice Details");
+    Route::post('updateDirectInvoice', 'CustomerInvoiceDirectDetailAPIController@updateDirectInvoice')->name("Update Direct Invoice");
+    Route::post('addNote', 'CustomerInvoiceLogisticAPIController@addNote')->name("Add Note");
+    Route::post('validateCustomerInvoiceDetails','CustomerInvoiceItemDetailsAPIController@validateCustomerInvoiceDetails')->name("Validate Customer Invoice Details");
+    Route::post('storeInvoiceDetailFromSalesQuotation','CustomerInvoiceItemDetailsAPIController@storeInvoiceDetailFromSalesQuotation')->name("Store Invoice Detail From Sales Quotation");
+
+    Route::put('custItemDetailUpdate/{id}', 'CustomerInvoiceItemDetailsAPIController@custItemDetailUpdate')->name("Cust Item Detail Update");
+    Route::put('customerInvoiceCurrencyUpdate/{id}', 'CustomerInvoiceDirectAPIController@updateCurrency')->name("Update Currency");
+    Route::put('customerInvoiceLocalUpdate/{id}', 'CustomerInvoiceDirectAPIController@customerInvoiceLocalUpdate')->name("Customer Invoice Local Update");
+    Route::put('customerInvoiceReportingUpdate/{id}', 'CustomerInvoiceDirectAPIController@customerInvoiceReportingUpdate')->name("Customer Invoice Reporting Update");
+});
