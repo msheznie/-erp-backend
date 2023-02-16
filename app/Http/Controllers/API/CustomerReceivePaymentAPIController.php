@@ -489,7 +489,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
         if(empty($input['custTransactionCurrencyID'])){
             $message = 'Currency field is required.';
-            return $this->sendError($message, 422);
+            return $this->sendError($message, 500);
         }
 
         $validator = \Validator::make($input, [
