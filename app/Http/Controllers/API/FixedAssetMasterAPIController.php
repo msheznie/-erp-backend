@@ -179,7 +179,7 @@ class FixedAssetMasterAPIController extends AppBaseController
             }
 
                 foreach ($input['assetSerialNo'] as $assetSN) {
-                    if (empty($assetSN->faUnitSerialNo)) {
+                    if (empty($assetSN['faUnitSerialNo'])) {
                         return $this->sendError("Asset Serial No is required");
                     }
                 }
