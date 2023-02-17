@@ -26,5 +26,19 @@ Route::get('getGroupCompany', 'CompanyNavigationMenusAPIController@getGroupCompa
 
 
 Route::get('getAllDocuments', 'DocumentMasterAPIController@getAllDocuments')->name("Get all documents");
-
 Route::get('checkDocumentAttachmentPolicy', 'CompanyDocumentAttachmentAPIController@checkDocumentAttachmentPolicy')->name("Check document attachment policy");
+
+//approval
+Route::post('approvalPreCheckAllDoc', 'DocumentApprovedAPIController@approvalPreCheckAllDoc')->name("Approval pre check");
+Route::post('approveDocument', 'DocumentApprovedAPIController@approveDocument')->name("Approve Document");
+Route::post('rejectPurchaseRequest', 'PurchaseRequestAPIController@rejectPurchaseRequest')->name("Reject Document");
+Route::post('approvePurchaseRequest', 'PurchaseRequestAPIController@approvePurchaseRequest')->name("Approve purchase request");
+Route::post('rejectProcurementOrder', 'ProcumentOrderAPIController@rejectProcurementOrder')->name('Reject procurement order');
+
+Route::get('getDocumentTracingData', 'ProcumentOrderAPIController@getDocumentTracingData')->name('Get document tracing data');
+Route::get('checkBudgetShowPolicy', 'BudgetMasterAPIController@checkBudgetShowPolicy')->name('Check budget show policy');
+
+Route::get('checkUserGroupAccessRights', 'UserGroupAssignAPIController@checkUserGroupAccessRights');
+Route::get('getGRVFormData', 'GRVMasterAPIController@getGRVFormData')->name('Get grv form data');
+Route::get('getAllFinancePeriod', 'CompanyFinancePeriodAPIController@getAllFinancePeriod')->name('Get all finance period');
+Route::get('getSearchSupplierByCompany', 'SupplierMasterAPIController@getSearchSupplierByCompany')->name('Get search supplier by company');

@@ -190,6 +190,19 @@ class SupplierInvoiceItemDetailRepository extends BaseRepository
             }
         }
 
+        foreach ($grvDetails as $key1 => $value1) {
+
+            if(isset($value1->grvDetailsID)){
+                $poDetails = GRVDetails::with(['po_detail'])->where('grvDetailsID', $value1->grvDetailsID)->first();
+                $value1->vatPercentage = isset($poDetails->po_detail->VATPercentage) ? $poDetails->po_detail->VATPercentage: 0;
+            }
+
+            if(isset( $value1->logisticID)){
+                $logisticDetails = PoAdvancePayment::where('poAdvPaymentID', $value1->logisticID)->first();
+                $value1->vatPercentageLogistic = isset($logisticDetails->VATPercentage) ? $logisticDetails->VATPercentage: 0;
+            }
+           ;
+        }
 
         return ['status' => true, 'data' => ['grvDetails' => $grvDetails, 'logisticYN' => $groupMaster->logisticYN]];
     }

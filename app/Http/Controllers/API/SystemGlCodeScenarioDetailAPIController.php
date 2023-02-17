@@ -6,6 +6,8 @@ use App\helper\CompanyService;
 use App\helper\Helper;
 use App\Http\Requests\API\CreateSystemGlCodeScenarioDetailAPIRequest;
 use App\Http\Requests\API\UpdateSystemGlCodeScenarioDetailAPIRequest;
+use App\Models\ChartOfAccountsAssigned;
+use App\Models\Company;
 use App\Models\SystemGlCodeScenarioDetail;
 use App\Repositories\SystemGlCodeScenarioDetailRepository;
 use Carbon\Carbon;
@@ -246,6 +248,18 @@ class SystemGlCodeScenarioDetailAPIController extends AppBaseController
             $hr_scenarios = [7, 8];
             if(in_array($systemGlCodeScenarioDetail->systemGlScenarioID, $hr_scenarios)){
                 $this->update_hr_config($systemGlCodeScenarioDetail);
+            }
+
+            if($systemGlCodeScenarioDetail->systemGlScenarioID == 14){
+
+                $chartOfAccountAssigned = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $systemGlCodeScenarioDetail->chartOfAccountSystemID)->where('companySystemID', $systemGlCodeScenarioDetail->companySystemID)->first();
+                if($chartOfAccountAssigned){
+                    Company::where('companySystemID', $systemGlCodeScenarioDetail->companySystemID)->update(['exchangeGainLossGLCodeSystemID' => $systemGlCodeScenarioDetail->chartOfAccountSystemID, 'exchangeGainLossGLCode' => $chartOfAccountAssigned->AccountCode]);
+                }
+                else {
+                    return $this->sendError('GL Code is not assigned to the company');
+                }
+
             }
 
             DB::commit();

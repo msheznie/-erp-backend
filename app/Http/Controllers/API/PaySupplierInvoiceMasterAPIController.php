@@ -28,6 +28,7 @@ use App\Models\AdvancePaymentDetails;
 use App\Models\AdvancePaymentReferback;
 use App\Models\BankAccount;
 use App\Models\EmployeeLedger;
+use App\Models\PdcLogPrintedHistory;
 use App\Models\BankAssign;
 use App\Models\BookInvSuppMaster;
 use App\Models\ExpenseEmployeeAllocation;
@@ -67,6 +68,9 @@ use App\Models\SegmentMaster;
 use App\Models\SupplierAssigned;
 use App\Models\SupplierCurrency;
 use App\Models\SupplierMaster;
+use App\Models\Taxdetail;
+use App\Models\TaxLedger;
+use App\Models\TaxLedgerDetail;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\PaySupplierInvoiceMasterRepository;
@@ -1545,7 +1549,6 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 $input['supplierDefCurrencyER'] = 1;
             }
 
-
             if ($input['invoiceType'] == 6 || $input['invoiceType'] == 7) {
                 $checkEmployeeControlAccount = SystemGlCodeScenarioDetail::getGlByScenario($input['companySystemID'], $input['documentSystemID'], 12);
 
@@ -1699,14 +1702,22 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
                     $totalAmountForPDC = 0;
                     if ($paySupplierInvoiceMaster->invoiceType == 2 || $paySupplierInvoiceMaster->invoiceType == 6) {
-                        $totalAmountForPDC = PaySupplierInvoiceDetail::where('PayMasterAutoId', $id)
-                                                                        ->sum('supplierPaymentAmount');
+                        $totalAmountForPDCData = PaySupplierInvoiceDetail::where('PayMasterAutoId', $id)
+                                                                        ->selectRaw('SUM(supplierPaymentAmount + retentionVatAmount) as total')
+                                                                        ->first();
+
+                        $totalAmountForPDC = $totalAmountForPDCData ? $totalAmountForPDCData->total : 0;
 
                     } else if ($paySupplierInvoiceMaster->invoiceType == 5 || $paySupplierInvoiceMaster->invoiceType == 7) {
                         $totalAmountForPDC = AdvancePaymentDetails::where('PayMasterAutoId', $id)
                                                                     ->sum('paymentAmount');
+
                     } else if ($paySupplierInvoiceMaster->invoiceType == 3) {
-                        $totalAmountForPDC = DirectPaymentDetails::where('directPaymentAutoID', $id)->sum('DPAmount');
+                        $totalAmountForPDCData = DirectPaymentDetails::where('directPaymentAutoID', $id)
+                                                                        ->selectRaw('SUM(DPAmount + vatAmount) as total')
+                                                                        ->first();
+                                                                        
+                        $totalAmountForPDC = $totalAmountForPDCData ? $totalAmountForPDCData->total : 0;
                     }
 
                     $pdcLog = PdcLog::where('documentSystemID', $paySupplierInvoiceMaster->documentSystemID)
@@ -1733,6 +1744,39 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                         return $this->sendError('Please configure PDC Payable account for payment voucher', 500);
                     } 
                 }
+
+                if ($input['invoiceType'] == 2 || $input['invoiceType'] == 6) {
+                    $si = PaySupplierInvoiceDetail::selectRaw("SUM(paymentLocalAmount) as localAmount, SUM(paymentComRptAmount) as rptAmount,SUM(supplierPaymentAmount) as transAmount,localCurrencyID,comRptCurrencyID as reportingCurrencyID,supplierPaymentCurrencyID as transCurrencyID,comRptER as reportingCurrencyER,localER as localCurrencyER,supplierPaymentER as transCurrencyER")->WHERE('PayMasterAutoId', $paySupplierInvoiceMaster->PayMasterAutoId)->WHERE('matchingDocID', 0)->first();
+                    $convertAmount = \Helper::convertAmountToLocalRpt(203, $paySupplierInvoiceMaster->PayMasterAutoId, $si->transAmount);
+
+                    $masterTransAmountTotal = $si->transAmount;
+                    $masterLocalAmountTotal = $si->localAmount;
+                    $masterRptAmountTotal = $si->rptAmount;
+
+                    $transAmountTotal = $si->transAmount;
+                    $localAmountTotal = $convertAmount["localAmount"];
+                    $rptAmountTotal = $convertAmount["reportingAmount"];
+
+                    $diffTrans = $transAmountTotal - $masterTransAmountTotal;
+                    $diffLocal = $localAmountTotal - $masterLocalAmountTotal;
+                    $diffRpt = $rptAmountTotal - $masterRptAmountTotal;
+
+                    $masterData = PaySupplierInvoiceMaster::with(['localcurrency', 'rptcurrency'])->find($paySupplierInvoiceMaster->PayMasterAutoId);
+
+                    if (ABS(round($diffTrans)) != 0 || ABS(round($diffLocal, $masterData->localcurrency->DecimalPlaces)) != 0 || ABS(round($diffRpt, $masterData->rptcurrency->DecimalPlaces)) != 0) {
+
+                        $checkExchangeGainLossAccount = SystemGlCodeScenarioDetail::getGlByScenario($companySystemID, $documentSystemID, 14);
+                        if (is_null($checkExchangeGainLossAccount)) {
+                            $checkExchangeGainLossAccountCode = SystemGlCodeScenarioDetail::getGlCodeByScenario($companySystemID, $documentSystemID, 14);
+
+                            if ($checkExchangeGainLossAccountCode) {
+                                return $this->sendError('Please assign Exchange Gain/Loss account for this company', 500);
+                            }
+                            return $this->sendError('Please configure Exchange Gain/Loss account for this company', 500);
+                        }
+                    }
+                }
+
 
 
                 $companyFinanceYear = \Helper::companyFinanceYearCheck($input);
@@ -2222,7 +2266,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
                 $paySupplierInvoice = PaySupplierInvoiceMaster::find($id);
                 if ($input['BPVbankCurrency'] == $input['localCurrencyID'] && $input['supplierTransCurrencyID'] == $input['localCurrencyID']) {
-                    if ($input['chequePaymentYN'] == -1) {
+                    if ($input['chequePaymentYN'] == -1 &&  $input['pdcChequeYN'] == 0) {
                         $bankAccount = BankAccount::find($input['BPVAccount']);
                         /*
                          * check 'Get cheque number from cheque register' policy exist
@@ -2691,7 +2735,9 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         $input = $request->all();
 
         $output = PaySupplierInvoiceMaster::where('PayMasterAutoId', $input['PayMasterAutoId'])
-            ->with(['project','supplier', 'bankaccount', 'transactioncurrency', 'paymentmode',
+            ->with(['project','supplier', 'bankaccount'=> function($query){
+                $query->with('currency');
+            }, 'transactioncurrency', 'paymentmode',
                 'supplierdetail' => function ($query) {
                     $query->with(['pomaster']);
                 },
@@ -4519,6 +4565,17 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
                 ->where('documentSystemID', $paymentVoucherData->documentSystemID)
                 ->delete();
 
+            //deleting records from tax ledger
+            $deleteTaxLedgerData = TaxLedger::where('documentMasterAutoID', $PayMasterAutoId)
+                ->where('companySystemID', $paymentVoucherData->companySystemID)
+                ->where('documentSystemID', $paymentVoucherData->documentSystemID)
+                ->delete();
+
+            TaxLedgerDetail::where('documentMasterAutoID', $PayMasterAutoId)
+                ->where('companySystemID', $paymentVoucherData->companySystemID)
+                ->where('documentSystemID', $paymentVoucherData->documentSystemID)
+                ->delete();
+
             if ($paymentVoucherData->invoiceType == 3) {
                 if ($paymentVoucherData->expenseClaimOrPettyCash == 6 || $paymentVoucherData->expenseClaimOrPettyCash == 7) {
 
@@ -4570,6 +4627,47 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
             $paymentVoucherData->chequePrintedYN = 0;
             $paymentVoucherData->save();
 
+            $cheqkPrintedPdcs = PdcLog::where('documentmasterAutoID', $PayMasterAutoId)
+                                      ->where('documentSystemID', $paymentVoucherData->documentSystemID)
+                                      ->where('chequePrinted', 1)
+                                      ->get();
+
+            if (count($cheqkPrintedPdcs) > 0) {
+                foreach ($cheqkPrintedPdcs as $key => $value) {
+                    $printHistory = [
+                        'pdcLogID' => $value->id,
+                        'chequePrintedBy' => $value->chequePrintedBy,
+                        'chequePrintedDate' => $value->chequePrintedDate,
+                        'changedBy' => $employee->employeeSystemID,
+                        'documentSystemID' => $value->documentSystemID,
+                        'documentmasterAutoID' => $value->documentmasterAutoID,
+                        'amount' => $value->amount,
+                        'currencyID' => $value->currencyID,
+                        'chequeNo' => $value->chequeNo,
+                    ];
+
+                    $res = PdcLogPrintedHistory::create($printHistory);
+
+                    PdcLog::where('id', $value->id)->update(['chequePrintedBy' => null, 'chequePrintedDate' => null, 'chequePrinted' => 0]);
+
+                    $is_exist_policy_GCNFCR = CompanyPolicyMaster::where('companySystemID', $value->companySystemID)
+                                                                ->where('companyPolicyCategoryID', 35)
+                                                                ->where('isYesNO', 1)
+                                                                ->first();
+                    if (!empty($is_exist_policy_GCNFCR)) {
+                        $check_registry = [
+                            'isPrinted' => 0,
+                            'cheque_printed_at' => null,
+                            'cheque_print_by' => null
+                        ];
+                        ChequeRegisterDetail::where('cheque_no', $value->chequeNo)
+                            ->where('company_id', $value->companySystemID)
+                            ->where('document_id', $value->documentmasterAutoID)
+                            ->update($check_registry);
+                    }
+                }
+            }
+
             AuditTrial::createAuditTrial($paymentVoucherData->documentSystemID,$PayMasterAutoId,$input['returnComment'],'returned back to amend');
 
             $this->expenseAssetAllocationRepository->deleteExpenseAssetAllocation($PayMasterAutoId, $paymentVoucherData->documentSystemID);
@@ -4614,17 +4712,31 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
             ->where('documentSystemID', $paymentVoucherData->documentSystemID)
             ->first();
 
+
         if ($checkBLDataExist) {
             if ($checkBLDataExist->trsClearedYN == -1 && $checkBLDataExist->bankClearedYN == 0 && $checkBLDataExist->pulledToBankTransferYN == 0) {
-                return $this->sendError('Treasury cleared, You cannot return back to amend.');
+                return $this->sendError('Treasury cleared, You cannot return back to amend.', 404,['type' => 'error']);
             } else if ($checkBLDataExist->trsClearedYN == -1 && $checkBLDataExist->bankClearedYN == -1 && $checkBLDataExist->pulledToBankTransferYN == 0) {
-                return $this->sendError('Bank cleared. You cannot return back to amend.');
+                return $this->sendError('Bank cleared. You cannot return back to amend.', 404,['type' => 'error']);
             } else if ($checkBLDataExist->trsClearedYN == -1 && $checkBLDataExist->bankClearedYN == 0 && $checkBLDataExist->pulledToBankTransferYN == -1) {
-                return $this->sendError('Added to bank transfer. You cannot return back to amend.');
+                return $this->sendError('Added to bank transfer. You cannot return back to amend.', 404,['type' => 'error']);
             } else if ($checkBLDataExist->trsClearedYN == -1 && $checkBLDataExist->bankClearedYN == -1 && $checkBLDataExist->pulledToBankTransferYN == -1) {
-                return $this->sendError('Added to bank transfer and bank cleared. You cannot return back to amend.');
+                return $this->sendError('Added to bank transfer and bank cleared. You cannot return back to amend.', 404, ['type' => 'error']);
             } else if ($checkBLDataExist->trsClearedYN == 0 && $checkBLDataExist->bankClearedYN == 0 && $checkBLDataExist->pulledToBankTransferYN == -1) {
-                return $this->sendError('Added to bank transfer. You cannot return back to amend.');
+                return $this->sendError('Added to bank transfer. You cannot return back to amend.', 404, ['type' => 'error']);
+            }
+        }
+
+        if ($paymentVoucherData->pdcChequeYN) {
+            $cheqkPrintedPdcs = PdcLog::where('documentmasterAutoID', $PayMasterAutoId)
+                                      ->where('documentSystemID', $paymentVoucherData->documentSystemID)
+                                      ->where('chequePrinted', 1)
+                                      ->count();
+
+            if ($cheqkPrintedPdcs == 1) {
+                return $this->sendError('The PDC cheque is already printed.', 404, ['type' => 'warning']);
+            } else if ($cheqkPrintedPdcs > 1) {
+                return $this->sendError('The PDC cheques are already printed.', 404, ['type' => 'warning']);
             }
         }
 

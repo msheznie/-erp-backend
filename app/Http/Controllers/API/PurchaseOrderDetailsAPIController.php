@@ -40,6 +40,7 @@ use App\Repositories\UserRepository;
 use App\Repositories\PurchaseOrderDetailsRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use App\Models\PoDetailExpectedDeliveryDate;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -1140,6 +1141,38 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                         return $this->sendError("You cannot update the order quantity. since quantity has been allocated to segments", 500);
                     }
                 }
+
+                $checkAlreadyAssignedDeliveryDate = PoDetailExpectedDeliveryDate::where('po_detail_auto_id', $purchaseOrderDetailsData->purchaseOrderDetailsID)
+                                                                                ->get();
+                if (sizeof($checkAlreadyAssignedDeliveryDate) == 0) {
+                    $checkAlreadyAssignedDeliveryDate = PoDetailExpectedDeliveryDate::where('po_detail_auto_id', $purchaseOrderDetailsData->purchaseOrderDetailsID)
+                                                                                ->delete();
+                    $deliveryDateData = [
+                        'po_detail_auto_id' => $purchaseOrderDetailsData->purchaseOrderDetailsID,
+                        'allocated_qty' => $input['noQty'],
+                        'expected_delivery_date' => $purchaseOrder->expectedDeliveryDate,
+                    ];
+
+                    $createExpectedDeliveryDate = PoDetailExpectedDeliveryDate::create($deliveryDateData);
+                } elseif (sizeof($checkAlreadyAssignedDeliveryDate) == 1) {
+
+                    $deliveryDateData = [
+                        'allocated_qty' => $input['noQty'],
+                        'expected_delivery_date' => $purchaseOrder->expectedDeliveryDate,
+                    ];
+                    $getAlreadyAssignedDeliveryDate = PoDetailExpectedDeliveryDate::where('po_detail_auto_id', $purchaseOrderDetailsData->purchaseOrderDetailsID)
+                                                                                ->first();
+                    $updateExpectedDeliveryDate = PoDetailExpectedDeliveryDate::where('id', $getAlreadyAssignedDeliveryDate->id)
+                                                                                ->update($deliveryDateData);
+                }  else {
+                    
+                    $allocatedQty = PoDetailExpectedDeliveryDate::where('po_detail_auto_id', $purchaseOrderDetailsData->purchaseOrderDetailsID)
+                                                                ->sum('allocated_qty');
+
+                   if ($allocatedQty > $input['noQty']) {
+                       return $this->sendError("You cannot update the order quantity. since quantity has been allocated to expected delivery dates", 500);
+                   }
+               }
             }
 
             DB::commit();

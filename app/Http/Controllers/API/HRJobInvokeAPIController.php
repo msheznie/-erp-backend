@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Jobs\BirthdayWishInitiate;
 use Exception;
 use Carbon\Carbon;
 use App\Models\CompanyJobs;
@@ -19,6 +20,9 @@ use App\Services\hrms\attendance\ForgotToPunchOutService;
 use App\Services\hrms\attendance\AttendanceDataPullingService;
 use App\Services\hrms\attendance\AttendanceDailySummaryService;
 use App\Services\hrms\attendance\AttendanceWeeklySummaryService;
+use App\helper\BirthdayWishService;
+use App\Models\Company;
+use Illuminate\Support\Facades\Artisan;
 
 
 class HRJobInvokeAPIController extends AppBaseController
@@ -145,5 +149,23 @@ class HRJobInvokeAPIController extends AppBaseController
         $resp = $obj->execute();
 
         return $this->sendResponse($data, 'clock out pulling job added to queue');
+    }
+
+    function birthdayWishesEmailDebug(){
+        Artisan::call('command:birthday_wish_schedule');
+    }
+
+    function birthdayWishesEmailDebug2(Request $request){
+
+        $companyId = $request->input('companyId');
+
+        $company = Company::selectRaw('companySystemID AS id, CompanyID AS code, CompanyName AS name')
+                   ->find($companyId);
+        $company = $company->toArray();
+
+        $job = new BirthdayWishService($company);
+
+        $job->execute();
+
     }
 }

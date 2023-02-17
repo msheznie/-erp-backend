@@ -187,6 +187,7 @@ Route::group([], function() {
     Route::get('assignedCompaniesByItem', 'ItemMasterAPIController@getAssignedCompaniesByItem')->name('Get assigned companies by item');
     Route::resource('item/assigneds', 'ItemAssignedAPIController', ['names' => 'Item assigned']);
     Route::post('getAllAssignedItemsByCompany', 'ItemAssignedAPIController@getAllAssignedItemsByCompany')->name('All assigned item by company');
+    Route::get('getAllMainItemsByCompany', 'ItemMasterAPIController@getAllMainItemsByCompany')->name('All main items by company');
 });
 
 
@@ -303,4 +304,50 @@ Route::group([], function() {
 
 	Route::resource('fixed_asset_categories', 'FixedAssetCategoryAPIController');
 	Route::resource('fixed_asset_category_subs', 'FixedAssetCategorySubAPIController');
+});
+
+//Currency Master
+Route::group([], function() {
+	Route::get('getAllConversionByCurrency', 'CurrencyMasterAPIController@getAllConversionByCurrency')->name("Get all conversion by currency");
+
+	Route::post('updateCrossExchange', 'CurrencyConversionAPIController@updateCrossExchange')->name("Update cross exchange currency conversion");
+	Route::post('getCurrencyConversionHistory', 'CurrencyConversionHistoryAPIController@getCurrencyConversionHistory')->name("Get currency conversion history");
+
+	Route::resource('currency_conversions', 'CurrencyConversionAPIController');
+	Route::resource('currency_masters', 'CurrencyMasterAPIController');
+});
+
+//Currency Conversion
+Route::group([], function() {
+	Route::get('getConversionMaster', 'CurrencyConversionMasterAPIController@getConversionMaster')->name("Get conversion master");
+	Route::get('getAllTempConversionByCurrency', 'CurrencyConversionMasterAPIController@getAllTempConversionByCurrency')->name("Get all temp conversion by currency");
+
+	Route::post('getAllCurrencyConversions', 'CurrencyConversionMasterAPIController@getAllCurrencyConversions')->name("Get all currency conversions");
+	Route::post('currencyConversionReopen', 'CurrencyConversionMasterAPIController@currencyConversionReopen')->name("Currency conversion reopen");
+	Route::post('updateTempCrossExchange', 'CurrencyConversionDetailAPIController@updateTempCrossExchange')->name("Update temp cross exchange");
+
+	Route::resource('currency_conversion_masters', 'CurrencyConversionMasterAPIController');
+	Route::resource('currency_conversion_details', 'CurrencyConversionDetailAPIController');
+});
+
+//Logistic Configuration
+Route::group([], function() {
+	Route::get('getAllcountry', 'CountryMasterAPIController@index')->name("Logistic Configuration get all country");
+
+	Route::post('createDeliveryTerms', 'DeliveryTermsMasterAPIController@store')->name("Logistic Configuration create delivery terms");
+	Route::post('createPort', 'PortMasterAPIController@store')->name("Logistic Configuration create Port");
+	Route::post('getAllPort', 'PortMasterAPIController@getAllPort')->name("Logistic Configuration get all Port");
+	Route::post('getAllDeliveryTerms', 'DeliveryTermsMasterAPIController@getAllDeliveryTerms')->name("Logistic Configuration get all delivery terms");
+	Route::post('deletePort', 'PortMasterAPIController@deletePort')->name("Logistic Configuration delete Port");
+	Route::post('deleteDeliveryTerms', 'DeliveryTermsMasterAPIController@deleteDeliveryTerms')->name("Logistic Configuration delete delivery terms");
+
+});
+
+	//Logistic Categories
+Route::group([], function() {
+	Route::get('getItemsOptionForLogistic', 'AddonCostCategoriesAPIController@getItemsOptionForLogistic')->name("Get items option for logistic");
+
+	Route::post('getLogisticCategories', 'AddonCostCategoriesAPIController@getLogisticCategories')->name("Get logistic categories");
+
+	Route::resource('addon_cost_categories', 'AddonCostCategoriesAPIController');
 });

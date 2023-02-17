@@ -88,3 +88,44 @@ Route::group([], function(){
     Route::post('delete-group', 'SupplierGroupConfigurationController@deleteGroup')->name('Delete supplier group');
 
 });
+
+
+//company settings
+Route::group([], function() {
+    Route::post('getCompanies', 'CompanyAPIController@getCompanies')->name('Get companies');
+    Route::get('getCompanySettingFormData', 'CompanyAPIController@getCompanySettingFormData')->name('Get company setting form data');
+    Route::resource('companies', 'CompanyAPIController');
+    Route::post('getDigitalStamps', 'CompanyAPIController@getDigitalStamps')->name('Get digital stamps');
+    Route::post('uploadDigitalStamp', 'CompanyAPIController@uploadDigitalStamp')->name('Upload digital stamp');
+    Route::post('updateDefaultStamp', 'CompanyAPIController@updateDefaultStamp')->name('Update default stamp');
+    Route::resource('company_digital_stamps', 'CompanyDigitalStampAPIController');
+});
+
+
+//document control check
+Route::group([], function() {
+    Route::get('getDocumentControlFilterFormData', 'DocumentControlAPIController@getDocumentControlFilterFormData')->name('Get document control filter form data');
+    Route::post('generateDocumentControlReport', 'DocumentControlAPIController@generateDocumentControlReport')->name('Generate document control report');
+});
+
+//document configuration
+Route::group([], function() {
+    Route::get('getCompanyDocumentFilterOptions', 'CompanyDocumentAttachmentAPIController@getCompanyDocumentFilterOptions')->name('Get company document filter options');
+    Route::post('getAllCompanyDocumentAttachment', 'CompanyDocumentAttachmentAPIController@getAllCompanyDocumentAttachment')->name('Get all company document attachment');
+    Route::resource('company_document_attachments', 'CompanyDocumentAttachmentAPIController');
+});
+
+
+//widget master
+Route::group([], function() {
+    Route::resource('dashboard_widget_masters', 'DashboardWidgetMasterAPIController');
+    Route::get('getWidgetMasterFormData', 'DashboardWidgetMasterAPIController@getWidgetMasterFormData')->name('Get widget master form data');
+});
+
+//generate work order
+Route::group([], function() {
+    Route::post('generateWorkOrder', 'ProcumentOrderAPIController@generateWorkOrder')->name('Generate work order');
+    Route::post('workOrderLog', 'ProcumentOrderAPIController@workOrderLog')->name('Work order log');
+    Route::post('getProcumentOrderByDocumentType', 'ProcumentOrderAPIController@getProcumentOrderByDocumentType')->name('Get procument order by document type');
+    Route::get('getProcumentOrderFormData', 'ProcumentOrderAPIController@getProcumentOrderFormData')->name('Get procument order from data');
+});

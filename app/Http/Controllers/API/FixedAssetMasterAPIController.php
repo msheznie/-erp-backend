@@ -577,19 +577,16 @@ class FixedAssetMasterAPIController extends AppBaseController
             $input["faCode"] = $documentCode;
             $input["faBarcode"] = $documentCode;
 
-            $companyCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $company->reportingCurrency, $company->reportingCurrency, $input['costUnitRpt']);
-            if ($companyCurrencyConversion) {
-                $input['COSTUNIT'] = $companyCurrencyConversion['localAmount'];
-            }
-
-            $salvageCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $company->reportingCurrency, $company->reportingCurrency, $input['salvage_value_rpt']);
-            if ($salvageCurrencyConversion) {
-                $input['salvage_value'] = $salvageCurrencyConversion['localAmount'];
-            }
-
-            $accumulateCurrencyConversion = \Helper::currencyConversion($input['companySystemID'], $company->reportingCurrency, $company->reportingCurrency, $input['accumulated_depreciation_amount_rpt']);
-            if ($accumulateCurrencyConversion) {
-                $input['accumulated_depreciation_amount_lcl'] = $accumulateCurrencyConversion['localAmount'];
+            if(isset($input['isCurrencySame']) && $input['isCurrencySame'] == true) {
+                if ($input['costUnitRpt']) {
+                    $input['COSTUNIT'] = $input['costUnitRpt'];
+                }
+                if ($input['salvage_value_rpt']) {
+                    $input['salvage_value'] = $input['salvage_value_rpt'];
+                }
+                if ($input['accumulated_depreciation_amount_rpt']) {
+                    $input['accumulated_depreciation_amount_lcl'] = $input['accumulated_depreciation_amount_rpt'];
+                }
             }
 
 
@@ -879,6 +876,24 @@ class FixedAssetMasterAPIController extends AppBaseController
             if (isset($input['documentDate'])) {
                 if ($input['documentDate']) {
                     $input['documentDate'] = new Carbon($input['documentDate']);
+                }
+            }
+
+            if(isset($input['isCurrencySame']) && $input['isCurrencySame'] == true) {
+                if (isset($input['costUnitRpt'])) {
+                    if($input['costUnitRpt']) {
+                        $input['COSTUNIT'] = $input['costUnitRpt'];
+                    }
+                }
+                if (isset($input['salvage_value_rpt'])) {
+                    if($input['salvage_value_rpt']) {
+                        $input['salvage_value'] = $input['salvage_value_rpt'];
+                    }
+                }
+                if (isset($input['accumulated_depreciation_amount_rpt'])) {
+                    if($input['accumulated_depreciation_amount_rpt']){
+                        $input['accumulated_depreciation_amount_lcl'] = $input['accumulated_depreciation_amount_rpt'];
+                    }
                 }
             }
 

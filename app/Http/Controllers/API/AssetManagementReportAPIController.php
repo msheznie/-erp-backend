@@ -992,10 +992,29 @@ class AssetManagementReportAPIController extends AppBaseController
                             $data[$x]['Disposal Cost'] = round($val->disposed, $currencyDecimalPlace);
                             $data[$x]['Closing Cost'] = round($val->costClosing, $currencyDecimalPlace);
                             $data[$x]['Opening Dep'] = round($val->openingDep, $currencyDecimalPlace);
-                            $data[$x]['Charge during the year'] = round($val->additionDep, $currencyDecimalPlace);
-                            $data[$x]['Charge on disposal'] = round($val->disposedDep, $currencyDecimalPlace);
-                            $data[$x]['Closing Dep'] = round($val->closingDep, $currencyDecimalPlace);
-                            $data[$x]['NBV'] = round($val->costClosing - $val->closingDep, $currencyDecimalPlace);
+                            $sumPeriod = 0;
+                            foreach ($output['period'] as $val2) {
+                                $sumPeriod += $val->$val2;
+                            }
+                            $data[$x]['Charge during the year'] = round($sumPeriod, $currencyDecimalPlace);
+                            if($val->disposedDep == 0){
+                                $data[$x]['Charge on disposal'] = round($val->disposedDep, $currencyDecimalPlace);
+                            }
+                            if($val->disposedDep != 0){
+                                $data[$x]['Charge on disposal'] = round($val->disposedDep + $sumPeriod, $currencyDecimalPlace);
+                            }
+                            if($val->disposedDep == 0) {
+                                $data[$x]['Closing Dep'] = round($val->openingDep + $sumPeriod - $val->disposedDep, $currencyDecimalPlace);
+                            }
+                            if($val->disposedDep != 0) {
+                                $data[$x]['Closing Dep'] = round($val->openingDep - $val->disposedDep, $currencyDecimalPlace);
+                            }
+                            if($val->disposedDep == 0) {
+                                $data[$x]['NBV'] = round($val->costClosing - ($val->openingDep + $sumPeriod - $val->disposedDep), $currencyDecimalPlace);
+                            }
+                            if($val->disposedDep != 0) {
+                                $data[$x]['NBV'] = round($val->costClosing - ($val->openingDep - $val->disposedDep), $currencyDecimalPlace);
+                            }
                             foreach ($output['period'] as $val2) {
                                 $data[$x][$val2] = round($val->$val2, $currencyDecimalPlace);
                             }
@@ -2944,7 +2963,7 @@ FROM
 	) t ON erp_fa_asset_master.faID = t.faID
 	INNER JOIN erp_fa_assettype ON erp_fa_assettype.typeID = erp_fa_asset_master.assetType
 	INNER JOIN erp_fa_financecategory ON AUDITCATOGARY = erp_fa_financecategory.faFinanceCatID
-	INNER JOIN serviceline ON serviceline.ServiceLineCode = erp_fa_asset_master.serviceLineCode
+	INNER JOIN serviceline ON serviceline.serviceLineSystemID = erp_fa_asset_master.serviceLineSystemID
 LEFT JOIN (SELECT assetDescription , faID ,faUnitSerialNo,faCode FROM erp_fa_asset_master WHERE erp_fa_asset_master.companySystemID IN (" . join(',', $companyID) . ")) assetGroup ON erp_fa_asset_master.groupTO= assetGroup.faID
 WHERE
 	erp_fa_asset_master.companySystemID IN (" . join(',', $companyID) . ")  AND AUDITCATOGARY IN($assetCategory) AND approved =-1
@@ -3584,7 +3603,7 @@ WHERE
                     dep2.* 
                 FROM
                     erp_fa_asset_master
-                    LEFT JOIN serviceline ON serviceline.serviceLineSystemID  = serviceline.serviceLineSystemID
+                    LEFT JOIN serviceline ON serviceline.serviceLineSystemID  = erp_fa_asset_master.serviceLineSystemID
                     LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem  = erp_fa_asset_master.supplierIDRentedAsset
                     LEFT JOIN erp_fa_asset_master a2 ON a2.faID  = erp_fa_asset_master.groupTo
                     LEFT JOIN erp_fa_category ON erp_fa_category.faCatID  = erp_fa_asset_master.faCatID
@@ -3812,7 +3831,7 @@ WHERE
                         LEFT JOIN erp_fa_asset_disposaldetail ON erp_fa_asset_disposaldetail.faID = erp_fa_asset_master.faID
                         LEFT JOIN erp_fa_asset_disposalmaster ON erp_fa_asset_disposaldetail.assetdisposalMasterAutoID = erp_fa_asset_disposalmaster.assetdisposalMasterAutoID 
                         INNER JOIN erp_fa_financecategory ON AUDITCATOGARY = erp_fa_financecategory.faFinanceCatID
-                        INNER JOIN serviceline ON serviceline.ServiceLineCode = erp_fa_asset_master.serviceLineCode
+                        INNER JOIN serviceline ON serviceline.serviceLineSystemID = erp_fa_asset_master.serviceLineSystemID
                     LEFT JOIN (SELECT assetDescription , faID ,faUnitSerialNo,faCode FROM erp_fa_asset_master WHERE erp_fa_asset_master.companySystemID IN (" . join(',', $companyID) . ")   )  assetGroup ON erp_fa_asset_master.groupTO= assetGroup.faID
                     WHERE
                         erp_fa_asset_master.companySystemID IN (" . join(',', $companyID) . ")  AND AUDITCATOGARY IN($assetCategory) AND erp_fa_asset_master.approved =-1

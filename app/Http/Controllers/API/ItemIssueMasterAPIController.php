@@ -60,6 +60,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use SwaggerFixures\Customer;
 use App\helper\ItemTracking;
+use App\Models\ErpProjectMaster;
 Use App\Models\UserToken;
 use GuzzleHttp\Client;
 /**
@@ -755,7 +756,7 @@ class ItemIssueMasterAPIController extends AppBaseController
 
         $itemIssueMaster = $this->itemIssueMasterRepository->update($input, $id);
 
-        return $this->sendResponse($itemIssueMaster->toArray(), 'Materiel Issue updated successfully');
+        return $this->sendResponse($itemIssueMaster->toArray(), 'Material Issue updated successfully');
     }
 
     /**
@@ -1116,17 +1117,25 @@ class ItemIssueMasterAPIController extends AppBaseController
         }
         $wareHouseLocation = $wareHouseLocation->get();
 
-        $companyPolicy = CompanyPolicyMaster::where('companySystemID', $companyId)
+        $companyPolicyDirect = CompanyPolicyMaster::where('companySystemID', $companyId)
             ->where('companyPolicyCategoryID', 22)
+            ->first();
+
+        $companyPolicyRequest = CompanyPolicyMaster::where('companySystemID', $companyId)
+            ->where('companyPolicyCategoryID', 70)
             ->first();
 
         $typeId = [];
 
-        if (!empty($companyPolicy)) {
-            if ($companyPolicy->isYesNO == 0) {
-                $typeId = [2];
-            } else if ($companyPolicy->isYesNO == 1) {
-                $typeId = [1];
+        if (!empty($companyPolicyDirect)) {
+            if ($companyPolicyDirect->isYesNO == 1) {
+                array_push($typeId,1);
+            }
+        }
+
+        if (!empty($companyPolicyRequest)) {
+            if ($companyPolicyRequest->isYesNO == 1) {
+                array_push($typeId,2);
             }
         }
 
@@ -1157,6 +1166,14 @@ class ItemIssueMasterAPIController extends AppBaseController
 
         $companyCurrency = \Helper::companyCurrency($companyId);
 
+        $isProject_base = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
+        ->where('companySystemID', $companyId)
+        ->where('isYesNO', 1)
+        ->exists();
+        $projects = [];
+        if ($isProject_base) {
+            $projects = ErpProjectMaster::where('companySystemID', $companyId)->get();
+        }
 
         $job = [];
         $output = array(
@@ -1173,6 +1190,8 @@ class ItemIssueMasterAPIController extends AppBaseController
             'companyFinanceYear' => $companyFinanceYear,
             'contracts' => $contracts,
             'units' => $units,
+            'isProjectBase' => $isProject_base,
+            'projects' => $projects,
             'localCurrencyCode' => isset($companyCurrency->localcurrency->CurrencyCode) ? $companyCurrency->localcurrency->CurrencyCode : 'OMR',
             'localCurrencyDecimal' => isset($companyCurrency->localcurrency->DecimalPlaces) ? $companyCurrency->localcurrency->DecimalPlaces : 3
 

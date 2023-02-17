@@ -574,7 +574,7 @@
                 $company = \App\Models\Company::with(['localcurrency'])->find($request->companySystemID);
                 ?>
 
-                @if(!empty($company->localcurrency->currencyID) && !empty($request->currency->currencyID) && $company->localcurrency->currencyID != $request->currency->currencyID && $totalVATAmount > 0)
+                @if(!empty($company->localcurrency->currencyID) && !empty($request->currency->currencyID) && $company->localcurrency->currencyID != $request->currency->currencyID)
                 <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;">
                     <td class="text-center" colspan="6" style="text-align: center"></td>
                     <td class="text-center" colspan="3" style="text-align: center"><B>Grand Total @if(!empty($request->currency->CurrencyCode))({{$request->currency->CurrencyCode}}) @endif</B></td>
@@ -674,7 +674,7 @@
                     $company = \App\Models\Company::with(['localcurrency'])->find($request->companySystemID);
                     ?>
 
-                    @if(!empty($company->localcurrency->currencyID) && !empty($request->currency->currencyID) && $company->localcurrency->currencyID != $request->currency->currencyID && $totalVATAmount > 0)
+                    @if(!empty($company->localcurrency->currencyID) && !empty($request->currency->currencyID) && $company->localcurrency->currencyID != $request->currency->currencyID)
                         <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;">
                             <td class="text-center" colspan="6" style="text-align: center"></td>
                             <td class="text-center" colspan="3" style="text-align: center"><B>Grand Total @if(!empty($request->currency->CurrencyCode))({{$request->currency->CurrencyCode}}) @endif</B></td>
@@ -705,7 +705,7 @@
         $company = \App\Models\Company::with(['localcurrency'])->find($request->companySystemID);
         ?>
 
-    @if(!empty($company->localcurrency->currencyID) && !empty($request->currency->currencyID) && $company->localcurrency->currencyID != $request->currency->currencyID && $totalVATAmount > 0)
+    @if(!empty($company->localcurrency->currencyID) && !empty($request->currency->currencyID) && $company->localcurrency->currencyID != $request->currency->currencyID)
         <p class="normal_font"><B>(Grand Total in @if(!empty($request->currency->CurrencyCode)){{$request->currency->CurrencyCode}} @endif :   {{$request->amount_word}}
                 @if ($request->floatAmt > 0)
                     and
@@ -717,7 +717,7 @@
 
         @php $totalVATAmount = (($request->tax && $request->tax->amount) ? $request->tax->amount : 0) @endphp
 
-        @if(!empty($company->localcurrency->currencyID) && !empty($request->currency->currencyID) && $company->localcurrency->currencyID != $request->currency->currencyID && $totalVATAmount > 0)
+        @if(!empty($company->localcurrency->currencyID) && !empty($request->currency->currencyID) && $company->localcurrency->currencyID != $request->currency->currencyID)
         <table class="table table-bordered table-striped table-sm normal_font" style="width: 100%;">
             <thead>
             <tr class="">
@@ -791,7 +791,7 @@
 
                 @php $totalVATAmount = (($request->tax && $request->tax->amount) ? $request->tax->amount : 0) @endphp
 
-    @if(!empty($company->localcurrency->currencyID) && !empty($request->currency->currencyID) && $company->localcurrency->currencyID != $request->currency->currencyID && $totalVATAmount > 0)
+    @if(!empty($company->localcurrency->currencyID) && !empty($request->currency->currencyID) && $company->localcurrency->currencyID != $request->currency->currencyID)
     <div class="row">
         <br/>
         <table style="width:100%;" class="table table-bordered normal_font">
