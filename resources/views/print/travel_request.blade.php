@@ -253,6 +253,11 @@
                                 <td><strong>:</strong></td>
                                 <td>{{$masterData['comments']}}</td>
                             </tr>
+                            <tr>
+                                <td><strong>Project Name</strong></td>
+                                <td><strong>:</strong></td>
+                                <td>{{$masterData['project_name']}}</td>
+                            </tr>
                         </table>
                     </td>
                 </tr>
