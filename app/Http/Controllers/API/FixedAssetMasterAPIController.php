@@ -169,6 +169,22 @@ class FixedAssetMasterAPIController extends AppBaseController
 
         DB::beginTransaction();
         try {
+
+            if(isset($input['faCatID']) && empty($input['faCatID'])){
+                return $this->sendError("Main Category is required");
+            }
+
+            if(isset($input['faSubCatID']) && empty($input['faSubCatID'])){
+                return $this->sendError("Sub Category is required");
+            }
+
+                foreach ($input['assetSerialNo'] as $assetSN) {
+                    if (empty($assetSN->faUnitSerialNo)) {
+                        return $this->sendError("Asset Serial No is required");
+                    }
+                }
+
+
             $messages = [
                 'dateDEP.after_or_equal' => 'Depreciation Date cannot be less than Date aqquired',
                 'assetSerialNo.*.required' => 'Asset Serial No is required',
