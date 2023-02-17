@@ -2258,7 +2258,36 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
                 }
 
-                $params = array('autoID' => $id, 'company' => $companySystemID, 'document' => $documentSystemID, 'segment' => '', 'category' => '', 'amount' => 0);
+
+                $amountForApproval = 0;
+                if ($paySupplierInvoiceMaster->invoiceType == 2 || $paySupplierInvoiceMaster->invoiceType == 6) {
+                    $totalAmountForApprovalData = PaySupplierInvoiceDetail::where('PayMasterAutoId', $id)
+                                                                    ->selectRaw('SUM(paymentLocalAmount) as total, SUM(retentionVatAmount) as retentionVatAmount, supplierTransCurrencyID, localCurrencyID')
+                                                                    ->first();
+
+                    if ($totalAmountForApprovalData) {
+                        $currencyConversionRetAmount = \Helper::currencyConversion($paySupplierInvoiceMaster->companySystemID, $totalAmountForApprovalData->supplierTransCurrencyID, $totalAmountForApprovalData->supplierTransCurrencyID, $totalAmountForApprovalData->retentionVatAmount);
+
+                        $retLocal = $currencyConversionRetAmount['localAmount'];
+                        
+
+                        $amountForApproval = $totalAmountForApprovalData->total + $retLocal;
+                    }
+
+
+                } else if ($paySupplierInvoiceMaster->invoiceType == 5 || $paySupplierInvoiceMaster->invoiceType == 7) {
+                    $amountForApproval = AdvancePaymentDetails::where('PayMasterAutoId', $id)
+                                                                ->sum('localAmount');
+
+                } else if ($paySupplierInvoiceMaster->invoiceType == 3) {
+                    $totalAmountForApprovalData = DirectPaymentDetails::where('directPaymentAutoID', $id)
+                                                                    ->selectRaw('SUM(localAmount + VATAmountLocal) as total')
+                                                                    ->first();
+                                                                    
+                    $amountForApproval = $totalAmountForApprovalData ? $totalAmountForApprovalData->total : 0;
+                }
+
+                $params = array('autoID' => $id, 'company' => $companySystemID, 'document' => $documentSystemID, 'segment' => '', 'category' => '', 'amount' => $amountForApproval);
                 $confirm = \Helper::confirmDocument($params);
                 if (!$confirm["success"]) {
                     return $this->sendError($confirm["message"], 500, ['type' => 'confirm']);
