@@ -436,4 +436,7 @@ class DocumentAttachments extends Model
         return $this->hasOne('App\Models\BidDocumentVerification', 'attachment_id', 'attachmentID');
     }
     
+    public function tender(){
+        return $this->belongsTo('App\Models\TenderMaster','documentSystemCode','id');
+    }
 }
