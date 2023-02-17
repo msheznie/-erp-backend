@@ -310,6 +310,7 @@
                 @endif
             </tr>
             @endif
+            {{-- start --}}
             @if(isset($header['detail']))
             @foreach ($header['detail'] as $data)
                 <tr>
@@ -397,16 +398,24 @@
                     @if($fourthLevel)
                     <td></td>
                     @endif
-                        @foreach ($companyHeaderData as $company)
-                    @foreach ($columns as $column)
-                    <td>
-                        @if(isset($data2['columnData'][$company['companyCode']][$column]))
-                        {{number_format($data2['columnData'][$company['companyCode']][$column], $decimalPlaces)}}
-                        @else
-                        0
-                        @endif
-                    </td>
-                    @endforeach
+                    @foreach ($companyHeaderData as $company)
+                        @foreach ($columns as $column)
+                        <td style="text-align: right">
+                            @if(isset($data2['columnData']))
+                                @if (isset($data2['columnData'][$company['companyCode']]))
+                                    @if (isset($data2['columnData'][$company['companyCode']][$column]))
+                                        {{number_format($data2['columnData'][$company['companyCode']][$column], $decimalPlaces)}}
+                                    @else
+                                    {{number_format(0, $decimalPlaces)}}
+                                    @endif
+                                @else
+                                {{number_format(0, $decimalPlaces)}}
+                                @endif
+                            @else
+                            {{number_format(0, $decimalPlaces)}}
+                            @endif
+                        </td>
+                        @endforeach
                     @endforeach
                     @if($columnTemplateID == 2)
                         <td>{{number_format(\Helper::rowTotalOfReportTemplate($companyHeaderData, $columns, $data2), $decimalPlaces)}}</td>
@@ -436,26 +445,42 @@
                     @if($fourthLevel)
                     <td></td>
                     @endif
-                        @foreach ($companyHeaderData as $company)
-                    @foreach ($columns as $column)
-                    @if($dataSubTwo['itemType'] == 3)
-                    <td style="font-weight: bold;">
-                        @if(isset($dataSubTwo['columnData'][$company['companyCode']][$column]))
-                        {{number_format($dataSubTwo['columnData'][$company['companyCode']][$column], $decimalPlaces)}}
-                        @else
-                        0
-                        @endif
-                    </td>
-                    @else
-                    <td>
-                        @if(isset($dataSubTwo['columnData'][$company['companyCode']][$column]))
-                        {{number_format($dataSubTwo['columnData'][$company['companyCode']][$column], $decimalPlaces)}}
-                        @else
-                        0
-                        @endif
-                    </td>
-                    @endif
-                    @endforeach
+                    @foreach ($companyHeaderData as $company)
+                        @foreach ($columns as $column)
+                            @if($dataSubTwo['itemType'] == 3)
+                            <td style="font-weight: bold;">
+                                @if(isset($dataSubTwo['columnData']))
+                                    @if (isset($dataSubTwo['columnData'][$company['companyCode']]))
+                                        @if (isset($dataSubTwo['columnData'][$company['companyCode']][$column]))
+                                            {{number_format($dataSubTwo['columnData'][$company['companyCode']][$column], $decimalPlaces)}}
+                                        @else
+                                        {{number_format(0, $decimalPlaces)}}
+                                        @endif
+                                    @else
+                                    {{number_format(0, $decimalPlaces)}}
+                                    @endif
+                                @else
+                                {{number_format(0, $decimalPlaces)}}
+                                @endif
+                            </td>
+                            @else
+                            <td>
+                                @if(isset($dataSubTwo['columnData']))
+                                    @if (isset($dataSubTwo['columnData'][$company['companyCode']]))
+                                        @if (isset($dataSubTwo['columnData'][$company['companyCode']][$column]))
+                                            {{number_format($dataSubTwo['columnData'][$company['companyCode']][$column], $decimalPlaces)}}
+                                        @else
+                                        {{number_format(0, $decimalPlaces)}}
+                                        @endif
+                                    @else
+                                    {{number_format(0, $decimalPlaces)}}
+                                    @endif
+                                @else
+                                {{number_format(0, $decimalPlaces)}}
+                                @endif
+                            </td>
+                            @endif
+                        @endforeach
                     @endforeach
                     @if($columnTemplateID == 2)
                         <td>{{number_format(\Helper::rowTotalOfReportTemplate($companyHeaderData, $columns, $dataSubTwo), $decimalPlaces)}}</td>
@@ -499,10 +524,18 @@
                         @foreach ($companyHeaderData as $company)
                     @foreach ($columns as $column)
                     <td>
-                        @if(isset($data23['columnData'][$company['companyCode']][$column]))
-                        {{number_format($data23['columnData'][$company['companyCode']][$column], $decimalPlaces)}}
+                        @if(isset($data23['columnData']))
+                            @if (isset($data23['columnData'][$company['companyCode']]))
+                                @if (isset($data23['columnData'][$company['companyCode']][$column]))
+                                    {{number_format($data23['columnData'][$company['companyCode']][$column], $decimalPlaces)}}
+                                @else
+                                {{number_format(0, $decimalPlaces)}}
+                                @endif
+                            @else
+                            {{number_format(0, $decimalPlaces)}}
+                            @endif
                         @else
-                        0
+                        {{number_format(0, $decimalPlaces)}}
                         @endif
                     </td>
                     @endforeach
@@ -537,18 +570,34 @@
                     @foreach ($columns as $column)
                     @if($dataSubThree['itemType'] == 3)
                     <td style="font-weight: bold;">
-                        @if(isset($dataSubThree['columnData'][$company['companyCode']][$column]))
-                        {{number_format($dataSubThree['columnData'][$company['companyCode']][$column], $decimalPlaces)}}
+                        @if(isset($dataSubThree['columnData']))
+                            @if (isset($dataSubThree['columnData'][$company['companyCode']]))
+                                @if (isset($dataSubThree['columnData'][$company['companyCode']][$column]))
+                                    {{number_format($dataSubThree['columnData'][$company['companyCode']][$column], $decimalPlaces)}}
+                                @else
+                                {{number_format(0, $decimalPlaces)}}
+                                @endif
+                            @else
+                            {{number_format(0, $decimalPlaces)}}
+                            @endif
                         @else
-                        0
+                        {{number_format(0, $decimalPlaces)}}
                         @endif
                     </td>
                     @else
                     <td>
-                        @if(isset($dataSubThree['columnData'][$company['companyCode']][$column]))
-                        {{number_format($dataSubThree['columnData'][$company['companyCode']][$column], $decimalPlaces)}}
+                        @if(isset($dataSubThree['columnData']))
+                            @if (isset($dataSubThree['columnData'][$company['companyCode']]))
+                                @if (isset($dataSubThree['columnData'][$company['companyCode']][$column]))
+                                    {{number_format($dataSubThree['columnData'][$company['companyCode']][$column], $decimalPlaces)}}
+                                @else
+                                {{number_format(0, $decimalPlaces)}}
+                                @endif
+                            @else
+                            {{number_format(0, $decimalPlaces)}}
+                            @endif
                         @else
-                        0
+                        {{number_format(0, $decimalPlaces)}}
                         @endif
                     </td>
                     @endif
@@ -702,6 +751,7 @@
                 @endif
             @endforeach
             @endif
+            {{-- end --}}
             @if($accountType == 3 && $loop->last)
                 <tr>
                     <td><strong>Opening Balance</strong></td>

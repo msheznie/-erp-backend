@@ -5693,6 +5693,8 @@ AND MASTER .canceledYN = 0';
     public
     function pdfExportReport(Request $request)
     {
+        ini_set('max_execution_time', 1800);
+        ini_set('memory_limit', -1);
         $reportID = $request->reportID;
         switch ($reportID) {
             case 'FGL':
@@ -5862,7 +5864,11 @@ AND MASTER .canceledYN = 0';
                 $pdf = \App::make('dompdf.wrapper');
                 $pdf->loadHTML($html);
 
-                return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream();
+                if (count($input['companySystemID'] ) > 1) {
+                    return $pdf->setPaper('a3', 'landscape')->setWarnings(false)->stream();
+                } else {
+                    return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream();
+                }
                 break;
 
             default:
