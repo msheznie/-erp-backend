@@ -160,12 +160,12 @@ class GRVTaxLedgerService
                 if($value->exempt_vat_portion != 0) {
                     $taxableAmountLocal = (($value->landingCost_LocalCur * $value->noQty) -  ($ledgerDetailsData['VATAmountLocal'] / 100) * $value->exempt_vat_portion);
                     $taxableAmountReporting = (($value->landingCost_RptCur * $value->noQty) -  ($ledgerDetailsData['VATAmountRpt'] / 100) * $value->exempt_vat_portion);
-                    $taxableAmount =  ($value->landingCost_TransCur * $value->noQty) - (($ledgerDetailsData['VATAmountRpt'] / 100) * $value->exempt_vat_portion);
+                    $taxableAmount =  ($value->landingCost_TransCur * $value->noQty) - (($ledgerDetailsData['VATAmount'] / 100) * $value->exempt_vat_portion);
 
                 }else {
-                    $taxableAmountLocal =  ($value->landingCost_LocalCur * $value->noQty) -  $ledgerDetailsData['VATAmountLocal'];
-                    $taxableAmountReporting =  ($value->landingCost_RptCur * $value->noQty)  - $ledgerDetailsData['VATAmountRpt'];
-                    $taxableAmount =  ($value->landingCost_TransCur * $value->noQty)  - $ledgerDetailsData['VATAmount'];
+                    $taxableAmountLocal =  ($subCategory->subCatgeoryType == 3) ? (($value->landingCost_LocalCur * $value->noQty) -  $ledgerDetailsData['VATAmountLocal']) : $value->landingCost_LocalCur * $value->noQty;
+                    $taxableAmountReporting =  ($subCategory->subCatgeoryType == 3) ? (($value->landingCost_RptCur * $value->noQty)  - $ledgerDetailsData['VATAmountRpt']) : $value->landingCost_RptCur * $value->noQty;
+                    $taxableAmount =  ($subCategory->subCatgeoryType == 3) ? (($value->landingCost_TransCur * $value->noQty)  - $ledgerDetailsData['VATAmount']) : $value->landingCost_TransCur * $value->noQty;
 
                 }
             }else {

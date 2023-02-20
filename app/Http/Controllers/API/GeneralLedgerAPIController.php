@@ -431,6 +431,11 @@ class GeneralLedgerAPIController extends AppBaseController
                                              ->get();
 
 
+        $bankLedgerData = BankLedger::with(['local_currency','reporting_currency','bank_account','bank_currency_by'])
+                                    ->where('documentSystemID', $request->documentSystemID)
+                                    ->where('documentSystemCode', $request->autoID)
+                                    ->where('companySystemID', $request->companySystemID)
+                                    ->get();
 
         $companyCurrency = \Helper::companyCurrency($request->companySystemID);
         $generalLedger = [
@@ -440,7 +445,8 @@ class GeneralLedgerAPIController extends AppBaseController
                 'accountReceviableLedgerData' => $accountReceviableLedgerData,
                 'itemLedgerData' => $itemLedgerData,
                 'employeeLedgerData' => $employeeLedgerData,
-                'unbilledLedgerData' => $unbilledLedgerData
+                'unbilledLedgerData' => $unbilledLedgerData,
+                'bankLedgerData' => $bankLedgerData
             ];
 
         return $this->sendResponse($generalLedger, 'General Ledger retrieved successfully');
