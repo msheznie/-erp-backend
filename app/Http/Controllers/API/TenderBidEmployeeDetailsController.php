@@ -45,4 +45,11 @@ class TenderBidEmployeeDetailsController extends AppBaseController
 
     }
 
+    public function getEmployeesTenderAwardinglApproval(Request $request) {
+        
+        $data = SrmTenderBidEmployeeDetails::where('tender_id', $request['tender_id'])->where('tender_award_commite_mem_status', true)->count();
+        return $this->sendResponse($data, 'Employee reterived successfully');
+
+    }
+
 }

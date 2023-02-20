@@ -285,12 +285,17 @@ class TenderDocumentTypesAPIController extends AppBaseController
     {
         $input = $request->all();
         $assignDocumentTypes = TenderDocumentTypeAssign::where('tender_id',$input['tenderMasterId'])->where('company_id',$input['companySystemID'])->pluck('document_type_id')->toArray();
+
         if (in_array(3, $assignDocumentTypes))
         {
             return TenderDocumentTypes::with(['attachments' => function($query) use($input){
                 $query->where('documentSystemCode', $input['tenderMasterId']);
                 $query->where('companySystemID', $input['companySystemID']);
-                $query->where('documentSystemID', '108');
+                if(isset($input['rfx']) && $input['rfx']){
+                    $query->where('documentSystemID', '113');
+                } else{
+                    $query->where('documentSystemID', '108');
+                }
             }])->where('company_id',$input['companySystemID'])->whereIn('id',$assignDocumentTypes)->orWhereIn('id', [1, 2, 3])->get();
         }
         else
@@ -298,7 +303,11 @@ class TenderDocumentTypesAPIController extends AppBaseController
             return TenderDocumentTypes::with(['attachments' => function($query) use($input){
                 $query->where('documentSystemCode', $input['tenderMasterId']);
                 $query->where('companySystemID', $input['companySystemID']);
-                $query->where('documentSystemID', '108');
+                if(isset($input['rfx']) && $input['rfx']){
+                    $query->where('documentSystemID', '113');
+                } else {
+                    $query->where('documentSystemID', '108');
+                }
         }])->where('company_id',$input['companySystemID'])->whereIn('id',$assignDocumentTypes)->orWhereIn('id', [1, 2])->get();
         }
     }

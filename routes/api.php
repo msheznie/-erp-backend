@@ -1769,6 +1769,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('rejectCalanderDelAppointment', 'AppointmentAPIController@rejectCalanderDelAppointment');
             Route::post('getAppointmentById', 'AppointmentAPIController@getAppointmentById');
             Route::post('checkAssetAllocation', 'ExpenseAssetAllocationAPIController@checkAssetAllocation');
+            Route::post('checkDeliveryAppoinrmentApproval', 'AppointmentAPIController@checkDeliveryAppoinrmentApproval');
+            Route::post('createAppointmentGrv', 'AppointmentAPIController@createAppointmentGrv');
+
 
             /**
              * Supplier registration approval routes
@@ -1932,7 +1935,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     Route::post('updateSentCustomerDetail', 'QuotationMasterAPIController@updateSentCustomerDetail');
     Route::get('getBatchSubmissionDetailsPrintPDF', 'CustomerInvoiceTrackingAPIController@getBatchSubmissionDetailsPrintPDF');
     Route::get('BidSummaryReport', 'BidSubmissionMasterAPIController@BidSummaryExportReport');
-    Route::post('SupplierItemWiseExportReport', 'BidSubmissionMasterAPIController@SupplierItemWiseExportReport');
+    Route::get('supplier-item-wise-report', 'BidSubmissionMasterAPIController@SupplierItemWiseExportReport');
+    Route::post('schedule-wise-report', 'BidSubmissionMasterAPIController@SupplierSheduleWiseReport');
+    Route::post('SupplierScheduleWiseExportReport', 'BidSubmissionMasterAPIController@SupplierScheduleWiseExportReport');
 
     Route::get('pvSupplierPrint', 'BankLedgerAPIController@pvSupplierPrint');
     Route::get('loginwithToken', 'UserAPIController@loginwithToken');
@@ -2039,4 +2044,3 @@ Route::get('viewHrDocuments', 'ThirdPartySystemsDocumentUploadAndDownloadAPICont
 /*
  * End external related routes
  */
-
