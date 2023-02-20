@@ -2759,10 +2759,21 @@ class SRMService
             'data' =>  $request->input('extra')
         ];*/
         $tenderMaster = TenderMaster::find($tenderId);
+        $doc_type = $tenderMaster->document_type;
         $parent = DocumentAttachments::find($parentId);
         $companySystemID = $tenderMaster['company_id'];
         $company = Company::where('companySystemID', $companySystemID)->first();
-        $documentCode = DocumentMaster::where('documentSystemID', 108)->first();
+        $documentCode = DocumentMaster::where(function($query) use($doc_type){
+            if($doc_type == 0)
+            {
+               $type = 108;
+            }
+            else
+            {
+               $type = 113;
+            }
+            $query->where('documentSystemID', $type);
+        })->first();
         $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
 
         $extension = $attachment['fileType'];
