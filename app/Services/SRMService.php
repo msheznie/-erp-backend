@@ -3976,7 +3976,6 @@ class SRMService
             }else {
                 $group['technical_bid_submission_status'] =1;
             }
-    
             //$group['technical_bid_submission_status'] = $bidSubmissionData['technicalEvaluationCriteria'];
             $group['bid_submission_status'] = $bidSubmissionData['bidsubmission'];
             return $group;
