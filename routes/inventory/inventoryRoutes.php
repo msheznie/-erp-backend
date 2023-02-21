@@ -128,8 +128,7 @@ Route::group([], function () {
     Route::resource('materiel_request_details', 'MaterielRequestDetailsAPIController');
     Route::resource('item_issue_details', 'ItemIssueDetailsAPIController');
 
-    Route::get('getAllMaterielRequestNotSelectedForIssueByCompany', 'ItemIssueMasterAPIController@getAllMaterielRequestNotSelectedForIssueByCompany')->name("Get All Materiel Request Not Selected For Issue By Company");
-    Route::get('allMaterielRequestNotSelectedForIssue', 'ItemIssueMasterAPIController@allMaterielRequestNotSelectedForIssue')->name("All Materiel Request Not Selected For Issue");
+    Route::get('allMaterielRequestNotSelectedForIssue', 'ItemIssueMasterAPIController@getAllMaterielRequestNotSelectedForIssueByCompany')->name("Get All Materiel Request Not Selected For Issue By Company");
     Route::get('getMaterielIssueAudit', 'ItemIssueMasterAPIController@getMaterielIssueAudit')->name("Get Materiel Issue Audit");
     Route::get('material-issue/update-qnty-by-location', 'ItemIssueMasterAPIController@updateQntyByLocation')->name("Update Qnty By Location");
     Route::get('checkManWareHouse', 'ItemIssueMasterAPIController@checkManWareHouse')->name("Check Man Ware House");
