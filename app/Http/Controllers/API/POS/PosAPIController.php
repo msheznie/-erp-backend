@@ -789,17 +789,39 @@ class PosAPIController extends AppBaseController
                 $per_page = 10;
             }
 
-            $customerMaster = CustomerMaster::selectRaw('customerCodeSystem as customer_id,
-                                                        CustomerName As customer_name,
-                                                        CutomerCode As customer_code,
-                                                        custGLaccount as gl_code,
-                                                        custUnbilledAccount,
-                                                        customerAddress1,
-                                                        customerAddress2,
-                                                        customerCity
+            $customerMaster = CustomerMaster::selectRaw('   customermaster.customerCodeSystem as id,
+                                                            CustomerName,
+                                                            CutomerCode,
+                                                            customerShortCode as secondaryCode,
+                                                            customerCategoryID,
+                                                            customerAddress1,
+                                                            customerAddress2,
+                                                            customerCity,
+                                                            customerCountry as customerCountryID,
+                                                            countrymaster.countryName as customerCountryName,
+                                                            customercontactdetails.contactPersonTelephone as customerTelephone,
+                                                            customercontactdetails.contactPersonEmail as customerEmail,
+
+                                                            custGLaccount as gl_code,
+                                                            custUnbilledAccount,
+
+                                                            currencymaster.currencyID as customerCurrencyID,
+                                                            currencymaster.CurrencyCode as customerCurrencyCode,
+                                                            currencymaster.CurrencyName as customerCurrencyName,
+                                                            currencymaster.DecimalPlaces as customerCurrencyDecimalPlaces,
+
+                                                            creditDays as customerCreditPeriod,
+                                                            creditLimit as customerCreditLimit,
+                                                            isCustomerActive,
+                                                            primaryCompanySystemID,
+                                                            primaryCompanyID 
                                                         ')
-                ->where('customerCodeSystem', '!=', '')
-                ->where('isCustomerActive', '=', 1);
+                                                ->join('countrymaster', 'countrymaster.countryID', '=', 'customermaster.customerCountry')
+                                                ->join('customercontactdetails', 'customercontactdetails.customerID', '=', 'customermaster.customerCodeSystem')
+                                                ->join('customercurrency as custcur', 'custcur.customerCodeSystem', '=', 'customermaster.customerCodeSystem')
+                                                ->join('currencymaster', 'currencymaster.currencyID', '=', 'custcur.currencyID')
+                                                ->where('customermaster.customerCodeSystem', '!=', '')
+                                                ->where('isCustomerActive', '=', 1);
 
             if (isset($input['customer_id'])) {
                 $customer_id = $input['customer_id'];

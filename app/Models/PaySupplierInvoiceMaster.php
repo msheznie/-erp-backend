@@ -643,6 +643,7 @@ class PaySupplierInvoiceMaster extends Model
         'rcmActivated',
         'retentionVatAmount',
         'VATAmount',
+        'VATAmountBank',
         'VATAmountLocal',
         'VATAmountRpt',
         'netAmount',

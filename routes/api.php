@@ -55,8 +55,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             require __DIR__.'/../routes/inventory/inventoryRoutes.php';
             require __DIR__.'/../routes/procurement/procurementRoutes.php';
             require __DIR__.'/../routes/accountsPayable/accountsPayableRoutes.php';
-
-            
+            require __DIR__.'/../routes/accountsReceivable/accountsReceivableRoutes.php';
 
             Route::post('getAllEmployees', 'EmployeeAPIController@getAllEmployees');
 
@@ -220,8 +219,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('getBankAccountsByBankID', 'BankAccountAPIController@getBankAccountsByBankID');
             Route::resource('procument_order_details', 'ProcumentOrderDetailAPIController');
 
-            Route::resource('g_r_v_masters', 'GRVMasterAPIController');
-
             Route::resource('poPaymentTermsRequestCRUD', 'PoAdvancePaymentAPIController');
 
             Route::resource('srp_erp_document_attachments', 'SrpErpDocumentAttachmentsAPIController');
@@ -302,8 +299,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::resource('po_payment_term_types', 'PoPaymentTermTypesAPIController');
 
-            Route::resource('g_r_v_masters', 'GRVMasterAPIController');
-
             Route::resource('purchase_order_process_details', 'PurchaseOrderProcessDetailsAPIController');
 
             Route::resource('tax_types', 'TaxTypeAPIController');
@@ -341,8 +336,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('customer_invoices', 'CustomerInvoiceAPIController');
             Route::resource('accounts_receivable_ledgers', 'AccountsReceivableLedgerAPIController');
       
-            Route::get('getAllFinancePeriodBasedFY', 'CompanyFinancePeriodAPIController@getAllFinancePeriodBasedFY');
-            Route::get('getAllFinancePeriodForYear', 'CompanyFinancePeriodAPIController@getAllFinancePeriodForYear');
+            Route::get('getAllFinancePeriodBasedFY', 'CompanyFinancePeriodAPIController@getAllFinancePeriodBasedFY')->name("Get All Finance Period Based FY");
+            Route::get('getAllFinancePeriodForYear', 'CompanyFinancePeriodAPIController@getAllFinancePeriodForYear')->name("Get All Finance Period For Year");
             
             Route::resource('item_issue_types', 'ItemIssueTypeAPIController');
 
@@ -396,8 +391,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('prDetailsReferedHistories', 'PrDetailsReferedHistoryAPIController');
             Route::resource('contracts', 'ContractAPIController');
             
-            Route::resource('customer_invoice_direct_details', 'CustomerInvoiceDirectDetailAPIController');
-
             Route::post('getAllDocumentApproval', 'DocumentApprovedAPIController@getAllDocumentApproval');
             Route::post('getAllDocumentApprovalTest', 'DocumentApprovedAPIController@getAllDocumentApproval');
             //Route::get('getTotalCountOfApproval', 'DocumentApprovedAPIController@getTotalCountOfApproval');
@@ -458,27 +451,15 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('amendPaymentVoucherReview', 'PaySupplierInvoiceMasterAPIController@amendPaymentVoucherReview');
             Route::get('amendPaymentVoucherPreCheck', 'PaySupplierInvoiceMasterAPIController@amendPaymentVoucherPreCheck');
             Route::get('getAllApprovalDocuments', 'DocumentMasterAPIController@getAllApprovalDocuments');
-            Route::get('customerInvoiceDetails', 'CustomerInvoiceDirectAPIController@customerInvoiceDetails');
-            Route::put('custItemDetailUpdate/{id}', 'CustomerInvoiceItemDetailsAPIController@custItemDetailUpdate');
             Route::post('getAllInvReclassificationByCompany', 'InventoryReclassificationAPIController@getAllInvReclassificationByCompany');
             
-            Route::get('getINVFormData', 'CustomerInvoiceDirectAPIController@getINVFormData');
-            Route::post('getCustomerInvoiceMasterView', 'CustomerInvoiceDirectAPIController@getCustomerInvoiceMasterView');
-            Route::get('getcreateINVFormData', 'CustomerInvoiceDirectAPIController@getcreateINVFormData');
-            Route::post('getCustomerInvoicePerformaDetails', 'CustomerInvoiceDirectAPIController@getCustomerInvoicePerformaDetails');
             Route::get('getJobsByContractAndCustomer', 'CustomerMasterAPIController@getJobsByContractAndCustomer');
-            Route::post('saveCustomerinvoicePerforma', 'CustomerInvoiceDirectAPIController@saveCustomerinvoicePerforma');
-            Route::post('customerInvoiceTaxDetail', 'TaxdetailAPIController@customerInvoiceTaxDetail');
-            Route::post('savecustomerInvoiceTaxDetails', 'CustomerInvoiceDirectAPIController@savecustomerInvoiceTaxDetails');
-            Route::post('updateCustomerInvoiceGRV', 'CustomerInvoiceDirectAPIController@updateCustomerInvoiceGRV');
             Route::post('addADVPaymentDetailNotLinkPo', 'AdvancePaymentDetailsAPIController@addADVPaymentDetailNotLinkPo');
-
 
             Route::resource('performa_details', 'PerformaDetailsAPIController');
             Route::resource('free_billing_master_performas', 'FreeBillingMasterPerformaAPIController');
             Route::resource('ticket_masters', 'TicketMasterAPIController');
             Route::resource('field_masters', 'FieldMasterAPIController');
-            Route::resource('taxdetails', 'TaxdetailAPIController');
             Route::resource('inv_reclassification_details', 'InventoryReclassificationDetailAPIController');
             Route::resource('inv_reclassifications', 'InventoryReclassificationAPIController');
             Route::get('getInvReclassificationAudit', 'InventoryReclassificationAPIController@getInvReclassificationAudit');
@@ -489,8 +470,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('invRecalssificationReopen', 'InventoryReclassificationAPIController@invRecalssificationReopen');
 
             Route::resource('item_client_reference', 'ItemClientReferenceNumberMasterAPIController');
-            Route::resource('customer_invoice_directs', 'CustomerInvoiceDirectAPIController');
-            Route::put('customerInvoiceCurrencyUpdate/{id}', 'CustomerInvoiceDirectAPIController@updateCurrency');
 
             Route::resource('performa_details', 'PerformaDetailsAPIController');
 
@@ -499,9 +478,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('ticket_masters', 'TicketMasterAPIController');
 
             Route::resource('field_masters', 'FieldMasterAPIController');
-
-            Route::resource('taxdetails', 'TaxdetailAPIController');
-
             Route::resource('inv_reclassification_details', 'InventoryReclassificationDetailAPIController');
 
             Route::resource('inv_reclassifications', 'InventoryReclassificationAPIController');
@@ -527,18 +503,11 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('performa_masters', 'PerformaMasterAPIController');
             Route::resource('rig_masters', 'RigMasterAPIController');
 
-            Route::get('AllDeleteCustomerInvoiceDetails', 'CustomerInvoiceDirectAPIController@AllDeleteCustomerInvoiceDetails');
             Route::post('getInvoiceMasterView', 'BookInvSuppMasterAPIController@getInvoiceMasterView');
             Route::get('getInvoiceMasterFormData', 'BookInvSuppMasterAPIController@getInvoiceMasterFormData');
             Route::get('getInvoiceSupplierTypeBase', 'BookInvSuppMasterAPIController@getInvoiceSupplierTypeBase');
-
-            Route::post('customerInvoiceReopen', 'CustomerInvoiceDirectAPIController@customerInvoiceReopen');
-            Route::post('clearCustomerInvoiceNumber', 'CustomerInvoiceDirectAPIController@clearCustomerInvoiceNumber');
             
-            
-            Route::get('getDirectInvoiceGL', 'ChartOfAccountsAssignedAPIController@getDirectInvoiceGL');
-
-
+            Route::get('getDirectInvoiceGL', 'ChartOfAccountsAssignedAPIController@getDirectInvoiceGL')->name("Get Direct Invoice GL");
             Route::get('getGLForJournalVoucherDirect', 'ChartOfAccountsAssignedAPIController@getGLForJournalVoucherDirect');
 
 
@@ -549,21 +518,12 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             //Logistic Configuration Master
             
             Route::resource('port_masters', 'PortMasterAPIController');
-            
-            
-            
             Route::resource('delivery_terms_masters', 'DeliveryTermsMasterAPIController');
             
             Route::get('getPaymentVoucherGL', 'ChartOfAccountsAssignedAPIController@getPaymentVoucherGL');
-            Route::get('getAllcontractbyclient', 'CustomerInvoiceDirectAPIController@getAllcontractbyclient');
-            Route::post('addDirectInvoiceDetails', 'CustomerInvoiceDirectDetailAPIController@addDirectInvoiceDetails');
-            Route::get('customerInvoiceAudit', 'CustomerInvoiceDirectAPIController@customerInvoiceAudit');
 
-            Route::put('customerInvoiceLocalUpdate/{id}', 'CustomerInvoiceDirectAPIController@customerInvoiceLocalUpdate');
-            Route::put('customerInvoiceReportingUpdate/{id}', 'CustomerInvoiceDirectAPIController@customerInvoiceReportingUpdate');
-            Route::post('updateDirectInvoice', 'CustomerInvoiceDirectDetailAPIController@updateDirectInvoice');
             Route::get('getCreditNoteMasterRecord', 'CreditNoteAPIController@getCreditNoteMasterRecord');
-            Route::get('getFilteredGRV', 'GRVMasterAPIController@getFilteredGRV');
+            Route::get('getFilteredGRV', 'GRVMasterAPIController@getFilteredGRV')->name("Get Filtered GRV");
             Route::get('getDirectItems', 'DirectInvoiceDetailsAPIController@getDirectItems');
             
             Route::post('supplierInvoiceReopen', 'BookInvSuppMasterAPIController@supplierInvoiceReopen');
@@ -572,7 +532,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('saveSupplierInvoiceTaxDetails', 'BookInvSuppMasterAPIController@saveSupplierInvoiceTaxDetails');
             Route::get('supplierInvoiceTaxTotal', 'BookInvSuppMasterAPIController@supplierInvoiceTaxTotal');
             Route::post('clearSupplierInvoiceNo', 'BookInvSuppMasterAPIController@clearSupplierInvoiceNo');
-            Route::get('getCreditNoteViewFormData', 'CreditNoteAPIController@getCreditNoteViewFormData');
             Route::post('creditNoteMasterDataTable', 'CreditNoteAPIController@creditNoteMasterDataTable');
             Route::post('addcreditNoteDetails', 'CreditNoteDetailsAPIController@addcreditNoteDetails');
             Route::get('creditNoteDetails', 'CreditNoteDetailsAPIController@creditNoteDetails');
@@ -580,8 +539,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('updateCreditNote', 'CreditNoteDetailsAPIController@updateCreditNote');
             Route::post('creditNoteReopen', 'CreditNoteAPIController@creditNoteReopen');
             Route::get('creditNoteAudit', 'CreditNoteAPIController@creditNoteAudit');
-            Route::post('getCreditNoteApprovedByUser', 'CreditNoteAPIController@getCreditNoteApprovedByUser');
-            Route::post('getCreditNoteApprovalByUser', 'CreditNoteAPIController@getCreditNoteApprovalByUser');
             Route::get('getPurchaseOrderForSI', 'UnbilledGrvGroupByAPIController@getPurchaseOrderForSI');
             Route::post('amendCreditNote', 'CreditNoteAPIController@amendCreditNote');
             Route::post('amendCreditNoteReview', 'CreditNoteAPIController@amendCreditNoteReview');
@@ -638,18 +595,12 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('logistic_shipping_statuses', 'LogisticShippingStatusAPIController');
             Route::resource('logistic_statuses', 'LogisticStatusAPIController');
 
-            Route::get('getRecieptVoucherFormData', 'CustomerReceivePaymentAPIController@getRecieptVoucherFormData');
             Route::post('recieptVoucherDataTable', 'CustomerReceivePaymentAPIController@recieptVoucherDataTable');
             Route::get('getReceiptVoucherMasterRecord', 'CustomerReceivePaymentAPIController@getReceiptVoucherMasterRecord');
             Route::post('receiptVoucherReopen', 'CustomerReceivePaymentAPIController@receiptVoucherReopen');
-            Route::post('getReceiptVoucherApproval', 'CustomerReceivePaymentAPIController@getReceiptVoucherApproval');
-            Route::post('getApprovedRVForCurrentUser', 'CustomerReceivePaymentAPIController@getApprovedRVForCurrentUser');
-            Route::post('approveReceiptVoucher', 'CustomerReceivePaymentAPIController@approveReceiptVoucher');
-            Route::post('rejectReceiptVoucher', 'CustomerReceivePaymentAPIController@rejectReceiptVoucher');
             Route::post('amendReceiptVoucher', 'CustomerReceivePaymentAPIController@amendReceiptVoucher');
             Route::post('amendReceiptVoucherReview', 'CustomerReceivePaymentAPIController@amendReceiptVoucherReview');
             Route::post('receiptVoucherCancel', 'CustomerReceivePaymentAPIController@receiptVoucherCancel');
-            Route::post('approvalPreCheckReceiptVoucher', 'CustomerReceivePaymentAPIController@approvalPreCheckReceiptVoucher');
             Route::put('recieptVoucherLocalUpdate/{id}', 'CustomerReceivePaymentAPIController@recieptVoucherLocalUpdate');
             Route::put('recieptVoucherReportingUpdate/{id}','CustomerReceivePaymentAPIController@recieptVoucherReportingUpdate');
 
@@ -744,7 +695,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('unbilled_g_r_vs', 'UnbilledGRVAPIController');
             Route::resource('performa_temps', 'PerformaTempAPIController');
             Route::resource('free_billings', 'FreeBillingAPIController');
-            Route::get('getSupplierInvoiceStatusHistoryForGRV', 'GRVMasterAPIController@getSupplierInvoiceStatusHistoryForGRV');
 
             Route::resource('asset_capitalizations', 'AssetCapitalizationAPIController');
             Route::post('getAllCapitalizationByCompany', 'AssetCapitalizationAPIController@getAllCapitalizationByCompany');
@@ -835,7 +785,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('amendAssetCostingReview', 'FixedAssetMasterAPIController@amendAssetCostingReview');
 
             Route::get('getAssetCostingByID/{id}', 'FixedAssetMasterAPIController@getAssetCostingByID');
-            Route::get('customerInvoiceReceiptStatus', 'CustomerInvoiceDirectAPIController@customerInvoiceReceiptStatus');
             Route::post('updateCustomerReciept', 'CustomerReceivePaymentDetailAPIController@updateCustomerReciept');
             Route::resource('fixed_asset_depreciation_masters', 'FixedAssetDepreciationMasterAPIController');
             Route::post('getAllDepreciationByCompany', 'FixedAssetDepreciationMasterAPIController@getAllDepreciationByCompany');
@@ -874,7 +823,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('getBudgetDetailHistory', 'BudjetdetailsAPIController@getBudgetDetailHistory');
 
             Route::get('checkPolicyForExchangeRates', 'CommonPoliciesAPIController@checkPolicyForExchangeRates');
-            Route::get('getInvoiceLogistic', 'CustomerInvoiceLogisticAPIController@getInvoiceLogistic');
 
             Route::resource('budjetdetails', 'BudjetdetailsAPIController');
             Route::post('getDetailsByBudget', 'BudjetdetailsAPIController@getDetailsByBudget');
@@ -1007,15 +955,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('getCapitalizationLinkedDocument', 'AssetCapitalizationAPIController@getCapitalizationLinkedDocument');
             Route::get('getCNDetailAmendHistory', 'CreditNoteDetailsRefferdbackAPIController@getCNDetailAmendHistory');
 
-            Route::post('getCustomerInvoiceApproval', 'CustomerInvoiceDirectAPIController@getCustomerInvoiceApproval');
-            Route::post('getApprovedCustomerInvoiceForCurrentUser', 'CustomerInvoiceDirectAPIController@getApprovedCustomerInvoiceForCurrentUser');
-            Route::post('approveCustomerInvoice', 'CustomerInvoiceDirectAPIController@approveCustomerInvoice');
-            Route::post('approvalPreCheckCustomerInvoice', 'CustomerInvoiceDirectAPIController@approvalPreCheckCustomerInvoice');
-            Route::post('rejectCustomerInvoice', 'CustomerInvoiceDirectAPIController@rejectCustomerInvoice');
-            Route::post('getCustomerInvoiceAmend', 'CustomerInvoiceDirectAPIController@getCustomerInvoiceAmend');
-            Route::post('customerInvoiceCancel', 'CustomerInvoiceDirectAPIController@customerInvoiceCancel');
-            Route::post('amendCustomerInvoiceReview', 'CustomerInvoiceDirectAPIController@amendCustomerInvoiceReview');
-
             Route::resource('customerInvoiceRefferedbacksCRUD', 'CustomerInvoiceDirectRefferedbackAPIController');
             Route::resource('customerInvoiceDetRefferedbacks', 'CustomerInvoiceDirectDetRefferedbackAPIController');
             Route::post('getCIMasterAmendHistory', 'CustomerInvoiceDirectRefferedbackAPIController@getCIMasterAmendHistory');
@@ -1072,17 +1011,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('grvDetailsRefferedbacks', 'GrvDetailsRefferedbackAPIController');
             Route::resource('document_restriction_assigns', 'DocumentRestrictionAssignAPIController');
             Route::resource('document_restriction_policies', 'DocumentRestrictionPolicyAPIController');
-            Route::resource('customerInvoiceCollectionDetails', 'CustomerInvoiceCollectionDetailAPIController');
-            
-            Route::get('getCustomerCollectionItems', 'CustomerInvoiceCollectionDetailAPIController@getCustomerCollectionItems');
-
-            Route::resource('customer_invoice_logistics', 'CustomerInvoiceLogisticAPIController');
-            Route::post('addNote', 'CustomerInvoiceLogisticAPIController@addNote');
 
             Route::post('getEmployeeMasterView', 'EmployeeAPIController@getEmployeeMasterView');
             Route::post('confirmEmployeePasswordReset', 'EmployeeAPIController@confirmEmployeePasswordReset');
             Route::get('getEmployeeMasterData', 'EmployeeAPIController@getEmployeeMasterData');
-
             Route::get('getReferBackApprovedDetails', 'DocumentReferedHistoryAPIController@getReferBackApprovedDetails');
 
             Route::post('getBankMasterByCompany', 'BankAssignAPIController@getBankMasterByCompany');
@@ -1324,18 +1256,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('getContractByCustomer', 'AccountsReceivableReportAPIController@getContractByCustomer');
             Route::post('generateInvoiceTrackingReport', 'AccountsReceivableReportAPIController@generateInvoiceTrackingReport');
 
-            Route::get('getItemByCustomerInvoiceItemDetail', 'CustomerInvoiceItemDetailsAPIController@getItemByCustomerInvoiceItemDetail');
-            Route::get('getDeliveryTerms', 'CustomerInvoiceItemDetailsAPIController@getDeliveryTerms');
-            Route::post('getDeliveryTermsFormData', 'CustomerInvoiceItemDetailsAPIController@getDeliveryTermsFormData');
 
             Route::get('getINVTrackingFormData', 'CustomerInvoiceTrackingAPIController@getINVTrackingFormData');
             Route::post('updateAllInvoiceTrackingDetail', 'CustomerInvoiceTrackingAPIController@updateAllInvoiceTrackingDetail');
             Route::post('deleteAllInvoiceTrackingDetail', 'CustomerInvoiceTrackingAPIController@deleteAllInvoiceTrackingDetail');
-
-            Route::get('cancelGRVPreCheck', 'GRVMasterAPIController@cancelGRVPreCheck');
-            Route::get('reverseGRVPreCheck', 'GRVMasterAPIController@reverseGRVPreCheck');
-            Route::post('cancelGRV', 'GRVMasterAPIController@cancelGRV');
-            Route::post('reverseGRV', 'GRVMasterAPIController@reverseGRV');
 
             Route::resource('pre_defined_report_templates', 'PreDefinedReportTemplateAPIController');
             Route::resource('erp_print_template_masters', 'ErpPrintTemplateMasterAPIController');
@@ -1348,14 +1272,11 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('getSegmentRightEmployees', 'SegmentRightsAPIController@getSegmentRightEmployees');
             Route::resource('service_lines', 'ServiceLineAPIController');
             Route::get('getServiceLineByCompany', 'ServiceLineAPIController@getServiceLineByCompany');
-            Route::resource('customer_invoice_item_details', 'CustomerInvoiceItemDetailsAPIController');
             Route::resource('chartOfAccount/allocation/histories', 'ChartOfAccountAllocationDetailHistoryAPIController');
             Route::resource('hrms_department_masters', 'HrmsDepartmentMasterAPIController');
             Route::resource('secondary_companies', 'SecondaryCompanyAPIController');
 
             Route::post('getSupplierCatalogDetailBySupplierItem', 'SupplierCatalogMasterAPIController@getSupplierCatalogDetailBySupplierItem');
-
-            Route::post('getCustomerCatalogDetailByCustomerItem', 'CustomerCatalogMasterAPIController@getCustomerCatalogDetailByCustomerItem');
             
             Route::post('getSupplierCatalogDetailBySupplierItemForPo', 'SupplierCatalogMasterAPIController@getSupplierCatalogDetailBySupplierItemForPo');
             Route::get('getDashboardDepartment', 'DashboardWidgetMasterAPIController@getDashboardDepartment');
@@ -1371,7 +1292,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
 
             Route::post('getAllDeliveryOrder', 'DeliveryOrderAPIController@getAllDeliveryOrder');
-            Route::post('saveDeliveryOrderTaxDetails', 'DeliveryOrderDetailAPIController@saveDeliveryOrderTaxDetail');
+            Route::post('saveDeliveryOrderTaxDetails', 'DeliveryOrderDetailAPIController@saveDeliveryOrderTaxDetail')->name("Save Delivery Order Tax Detail");
             Route::get('getDeliveryOrderFormData', 'DeliveryOrderAPIController@getDeliveryOrderFormData');
             Route::resource('delivery_order_details', 'DeliveryOrderDetailAPIController');
 
@@ -1415,21 +1336,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::resource('service_lines', 'ServiceLineAPIController');
             Route::get('getServiceLineByCompany', 'ServiceLineAPIController@getServiceLineByCompany');
-
-
-            Route::resource('customer_invoice_item_details', 'CustomerInvoiceItemDetailsAPIController');
             //Route::resource('chart_of_account_allocation_detail_histories', 'ChartOfAccountAllocationDetailHistoryAPIController');
 
             Route::resource('hrms_department_masters', 'HrmsDepartmentMasterAPIController');
-
-
             Route::resource('secondary_companies', 'SecondaryCompanyAPIController');
-
-            Route::get('deliveryOrderForCustomerInvoice','CustomerInvoiceItemDetailsAPIController@deliveryOrderForCustomerInvoice');
-            Route::get('getDeliveryOrderDetailForInvoice','CustomerInvoiceItemDetailsAPIController@getDeliveryOrderDetailForInvoice');
-            Route::post('storeInvoiceDetailFromDeliveryOrder','CustomerInvoiceItemDetailsAPIController@storeInvoiceDetailFromDeliveryOrder');
-
-            Route::get('getDeliveryOrderRecord','CustomerInvoiceItemDetailsAPIController@getDeliveryOrderRecord');
 
             Route::post('deliveryOrderReopen', 'DeliveryOrderAPIController@deliveryOrderReopen');
             Route::post('getInvoiceDetailsForDO', 'DeliveryOrderAPIController@getInvoiceDetailsForDO');
@@ -1483,7 +1393,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('getAllEmployeeMobileBill', 'EmployeeMobileBillMasterAPIController@getAllEmployeeMobileBill');
 
             Route::get('creditNoteReceiptStatus', 'CreditNoteAPIController@creditNoteReceiptStatus');
-            Route::post('approvalPreCheckCreditNote', 'CreditNoteAPIController@approvalPreCheckCreditNote');
             Route::post('getMobileBillReport', 'MobileBillMasterAPIController@getMobileBillReport');
             Route::post('validateMobileReport', 'MobileBillMasterAPIController@validateMobileReport');
             Route::get('getMobileReportFormData', 'MobileBillMasterAPIController@getMobileReportFormData');
@@ -1505,13 +1414,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('custom_user_report_summarizes', 'CustomUserReportSummarizeAPIController');
 
 
-            Route::get('salesQuotationForCustomerInvoice','QuotationMasterAPIController@salesQuotationForCustomerInvoice');
-            Route::get('getSalesQuotationDetailForInvoice','QuotationDetailsAPIController@getSalesQuotationDetailForInvoice');
-            Route::post('storeInvoiceDetailFromSalesQuotation','CustomerInvoiceItemDetailsAPIController@storeInvoiceDetailFromSalesQuotation');
-            Route::post('validateCustomerInvoiceDetails','CustomerInvoiceItemDetailsAPIController@validateCustomerInvoiceDetails');
+            Route::get('salesQuotationForCustomerInvoice','QuotationMasterAPIController@salesQuotationForCustomerInvoice')->name("Sales Quotation For Customer Invoice");
+            Route::get('getSalesQuotationDetailForInvoice','QuotationDetailsAPIController@getSalesQuotationDetailForInvoice')->name("Get Sales Quotation Detail For Invoice");
 
-
-            Route::get('getSalesQuotationRecord','QuotationMasterAPIController@getSalesQuotationRecord');
+            Route::get('getSalesQuotationRecord','QuotationMasterAPIController@getSalesQuotationRecord')->name("Get Sales Quotation Record");
             Route::post('getInvoiceDetailsForSQ', 'QuotationMasterAPIController@getInvoiceDetailsForSQ');
             Route::get('salesQuotationForSO', 'QuotationMasterAPIController@salesQuotationForSO');
             Route::get('getSalesQuoatationDetailForSO', 'QuotationMasterAPIController@getSalesQuoatationDetailForSO');
