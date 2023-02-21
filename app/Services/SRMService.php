@@ -3160,9 +3160,7 @@ class SRMService
             {
                 $data['technicalStatus'] = -1;
             }
-    
         }
-
 
         if((count($documentAttachedCountIdsCommercial) == $documentAttachedCountAnswerCommercial)) {
             if((count(array_flip($has_work_ids)) === 1 && end($has_work_ids) === 'true')) {
