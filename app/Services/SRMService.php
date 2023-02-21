@@ -3149,6 +3149,20 @@ class SRMService
             $data['technicalStatus'] =1;
         }
 
+        if($doc_type != 0)
+        {
+            $technicalEvaluationCriteriaExit = EvaluationCriteriaDetails::where('is_final_level', 1)
+                ->where('critera_type_id', 2)
+                ->where('tender_id', $tenderId)
+                ->count();
+
+            if((count($documentAttachedCountIdsTechnical)) == 0 && $technicalEvaluationCriteriaExit == 0)
+            {
+                $data['technicalStatus'] = -1;
+            }
+    
+        }
+
 
         if((count($documentAttachedCountIdsCommercial) == $documentAttachedCountAnswerCommercial)) {
             if((count(array_flip($has_work_ids)) === 1 && end($has_work_ids) === 'true')) {
@@ -3924,7 +3938,49 @@ class SRMService
                 $group['commercial_bid_submission_status'] = "Not Completed";
             }*/
 
-            $group['technical_bid_submission_status'] = $bidSubmissionData['technicalEvaluationCriteria'];
+            $documentAttachedCountIdsTechnical = DocumentAttachments::with(['tender_document_types' => function ($q) use ($doucments){
+                $q->where('srm_action', 1);
+            }, 'document_attachments' => function ($q) use ($bidMasterId) {
+                $q->where('documentSystemCode', $bidMasterId);
+            }])->whereHas('tender_document_types', function ($q) use ($doucments){
+            })->where('documentSystemCode', $tender)->where('parent_id', null)
+            ->where(function($query) use($type){
+                if($type->document_type == 0)
+                {
+                   $type = 108;
+                }
+                else
+                {
+                   $type = 113;
+                }
+                $query->where('documentSystemID', $type);
+            })
+            ->where('envelopType', 2)->where('attachmentType',2)->pluck('attachmentID')->toArray();
+
+
+            $documentAttachedCountAnswerTechnical = DocumentAttachments::whereIn('parent_id', $documentAttachedCountIdsTechnical)
+            ->where(function($query) use($type){
+                if($type->document_type == 0)
+                {
+                   $type = 108;
+                }
+                else
+                {
+                   $type = 113;
+                }
+                $query->where('documentSystemID', $type);
+            })
+            ->where('documentSystemCode', $bidMasterId)->count();
+
+
+
+            if((count($documentAttachedCountIdsTechnical) == $documentAttachedCountAnswerTechnical) && $bidSubmissionData['technicalEvaluationCriteria'] == 0) {
+                $group['technical_bid_submission_status'] = 0;
+            }else {
+                $group['technical_bid_submission_status'] =1;
+            }
+    
+            //$group['technical_bid_submission_status'] = $bidSubmissionData['technicalEvaluationCriteria'];
             $group['bid_submission_status'] = $bidSubmissionData['bidsubmission'];
             return $group;
         });
