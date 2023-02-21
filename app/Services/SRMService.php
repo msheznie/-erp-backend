@@ -3957,7 +3957,6 @@ class SRMService
             })
             ->where('envelopType', 2)->where('attachmentType',2)->pluck('attachmentID')->toArray();
 
-
             $documentAttachedCountAnswerTechnical = DocumentAttachments::whereIn('parent_id', $documentAttachedCountIdsTechnical)
             ->where(function($query) use($type){
                 if($type->document_type == 0)
@@ -3971,8 +3970,6 @@ class SRMService
                 $query->where('documentSystemID', $type);
             })
             ->where('documentSystemCode', $bidMasterId)->count();
-
-
 
             if((count($documentAttachedCountIdsTechnical) == $documentAttachedCountAnswerTechnical) && $bidSubmissionData['technicalEvaluationCriteria'] == 0) {
                 $group['technical_bid_submission_status'] = 0;
