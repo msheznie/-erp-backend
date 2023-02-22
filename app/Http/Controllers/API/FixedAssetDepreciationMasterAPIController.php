@@ -140,8 +140,8 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = $this->convertArrayToValue($input);
-        
- 
+
+        $dataBase = isset($input['db']) ? $input['db'] : "";
         DB::beginTransaction();
         try {
 
@@ -286,6 +286,11 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
                 $input['createdUserID'] = \Helper::getEmployeeID();
                 $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
                 $fixedAssetDepreciationMasters = $this->fixedAssetDepreciationMasterRepository->create($input);
+
+                if ($fixedAssetDepreciationMasters) {
+                    CreateDepreciation::dispatch($fixedAssetDepreciationMasters->depMasterAutoID, $dataBase);
+                }
+
                 DB::commit();
                 return $this->sendResponse($input, 'Fixed Asset Depreciation Master saved successfully');
 
