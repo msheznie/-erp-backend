@@ -171,11 +171,11 @@ class FixedAssetMasterAPIController extends AppBaseController
         try {
 
             if(isset($input['faCatID']) && empty($input['faCatID'])){
-                return $this->sendError("Main Category is required");
+                return $this->sendError("Main Category is required", 500);
             }
 
             if(isset($input['faSubCatID']) && empty($input['faSubCatID'])){
-                return $this->sendError("Sub Category is required");
+                return $this->sendError("Sub Category is required",500);
             }
 
                 foreach ($input['assetSerialNo'] as $assetSN) {
