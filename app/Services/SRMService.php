@@ -2105,9 +2105,20 @@ class SRMService
     {
         $tenderMasterId = $request->input('extra.tenderId');
         $attachmentId = $request->input('extra.attachmentId');
+        $tender = TenderMaster::where('id',$tenderMasterId)->select('id','document_type')->first();
 
         $attachment = DocumentAttachments::where('attachmentID', $attachmentId)
-            ->where('documentSystemID', 108)
+            ->where(function($query) use($tender){
+                if($tender->document_type == 0)
+                {
+                $type = 108;
+                }
+                else
+                {
+                $type = 113;
+                }
+                $query->where('documentSystemID', $type);
+            })
             ->first();
 
         $data['attachmentPath'] = Helper::getFileUrlFromS3($attachment['path']);
