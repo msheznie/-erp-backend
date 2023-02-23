@@ -2634,8 +2634,15 @@ WHERE
             $updated['tech_weightage'] =  $eval_result;
             $output = BidSubmissionMaster::where('id',$ids)->update($updated);
 
-            $temp1['result_percentage'] = round((($result)/$techniqal_wightage->technical_weightage)*100,3);
-            $temp1['eval_result_percentage'] = round( (($eval_result)/$techniqal_wightage->technical_weightage)*100,3);
+            if($techniqal_wightage->technical_weightage == 0)
+            {
+                $temp1['result_percentage'] = 0;
+                $temp1['eval_result_percentage'] = 0;
+            }
+            else{
+                $temp1['result_percentage'] = round((($result)/$techniqal_wightage->technical_weightage)*100,3);
+                $temp1['eval_result_percentage'] = round( (($eval_result)/$techniqal_wightage->technical_weightage)*100,3);
+            }
 
             array_push($wight,$temp);
             array_push($percentage,$temp1);
