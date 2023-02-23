@@ -1848,8 +1848,11 @@ class MatchDocumentMasterAPIController extends AppBaseController
                     ->where('arAutoID', $item['arAutoID'])
                     ->first();
 
-                if ($payDetailMoreBooked->receiveAmountTrans > $item['bookingAmountTrans']) {
+                $a = $payDetailMoreBooked->receiveAmountTrans;
+                $b = $item['bookingAmountTrans'];
+                $epsilon = 0.00001;
 
+                if(abs($a-$b) > $epsilon) {
                     $itemDrt = "Selected invoice " . $item['bookingInvCode'] . " booked more than the invoice amount.";
                     $itemExistArray[] = [$itemDrt];
 
