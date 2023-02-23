@@ -1851,8 +1851,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 $a = $payDetailMoreBooked->receiveAmountTrans;
                 $b = $item['bookingAmountTrans'];
                 $epsilon = 0.00001;
-
-                if(abs($a-$b) > $epsilon) {
+                if(($a-$b) > $epsilon) {
                     $itemDrt = "Selected invoice " . $item['bookingInvCode'] . " booked more than the invoice amount.";
                     $itemExistArray[] = [$itemDrt];
 
