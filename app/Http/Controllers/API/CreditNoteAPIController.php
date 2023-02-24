@@ -629,7 +629,7 @@ class CreditNoteAPIController extends AppBaseController
     public function updateCurrency($id, UpdateCreditNoteAPIRequest $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('companyFinancePeriodID', 'confirmedYN', 'companyFinanceYearID', 'customerID', 'secondaryLogoCompanySystemID', 'customerCurrencyID'));
+        $input = $this->convertArrayToSelectedValue($input, array('companyFinancePeriodID', 'confirmedYN', 'companyFinanceYearID', 'customerID', 'secondaryLogoCompanySystemID', 'customerCurrencyID', 'projectID'));
 
         $input = array_except($input, array('finance_period_by', 'finance_year_by', 'currency', 'createdDateAndTime',
             'confirmedByEmpSystemID', 'confirmedByEmpID', 'confirmedByName', 'confirmedDate','customer'));

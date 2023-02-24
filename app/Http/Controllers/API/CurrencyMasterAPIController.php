@@ -215,6 +215,10 @@ class CurrencyMasterAPIController extends AppBaseController
 
         if ($supplierCurrency) {
             if ($request['isDefault'] == true) {
+
+                if ($request['isDefault'] == -1 && $request['isAssigned'] == false) {
+                    return $this->sendError('Cannot update,At least one currency should be default.', 500);
+                }
                 $supplierCurrencies = SupplierCurrency::where('supplierCodeSystem', $request['supplierCodeSystem'])->get();
                 foreach ($supplierCurrencies as $sc) {
                     $tem_sc = SupplierCurrency::where('supplierCurrencyID', $sc['supplierCurrencyID'])->first();
@@ -222,7 +226,12 @@ class CurrencyMasterAPIController extends AppBaseController
                     $tem_sc->save();
                 }
             } else {
-                return $this->sendError('Cannot updated,At least one currency should be default.',500);
+                $isSupplierCurrency= SupplierCurrency::where('supplierCodeSystem', $request['supplierCodeSystem'])->where('currencyID', $request['currencyID'])->first();
+
+                if ($request['isDefault'] == false && $isSupplierCurrency->isDefault == -1) {
+                    return $this->sendError('Cannot update,At least one currency should be default.', 500);
+                }
+
             }
 
             if ($request['isDefault'] == true || $request['isDefault'] == 1) {

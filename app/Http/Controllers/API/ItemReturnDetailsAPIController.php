@@ -453,43 +453,42 @@ class ItemReturnDetailsAPIController extends AppBaseController
             if (empty($item_issue)) {
                 return $this->sendError('Item Issue not found');
             }
-      
-    
-            $insertData = [
-            'employee_id' => $empID,
-            'token' => $hashKey,
-            'expire_time' => Carbon::now()->addDays(1),
-            'module_id' => 1
-              ];
-    
-            $resData = UserToken::create($insertData);
-            $client = new Client();
-            $res = $client->request('GET', env('MANUFACTURING_URL').'/getAllocatedJobs?companyID='.$item_issue->companySystemID.'&documentID='.$item_issue->documentID.'&documentsystemcode='.$item_issue->itemIssueAutoID.'&itemautoID='.$itemReturnDetails->itemCodeSystem, [
-                'headers' => [
-                'Content-Type'=> 'application/json',
-                'token' => $hashKey,
-                'api_key' => $api_key
-                ]
-            ]);
-    
-            if ($res->getStatusCode() == 200) { 
-                $job = json_decode($res->getBody(), true);
-    
-    
-                if(count($job) > 0)
-                {
+            $isManufacturing = WarehouseMaster::where('wareHouseSystemCode', $item_issue->wareHouseFrom)->where('manufacturingYN', 1)->first();
 
+            if(!empty($isManufacturing)) {
+                $insertData = [
+                    'employee_id' => $empID,
+                    'token' => $hashKey,
+                    'expire_time' => Carbon::now()->addDays(1),
+                    'module_id' => 1
+                ];
+
+                $resData = UserToken::create($insertData);
+                $client = new Client();
+                $res = $client->request('GET', env('MANUFACTURING_URL') . '/getAllocatedJobs?companyID=' . $item_issue->companySystemID . '&documentID=' . $item_issue->documentID . '&documentsystemcode=' . $item_issue->itemIssueAutoID . '&itemautoID=' . $itemReturnDetails->itemCodeSystem, [
+                    'headers' => [
+                        'Content-Type' => 'application/json',
+                        'token' => $hashKey,
+                        'api_key' => $api_key
+                    ]
+                ]);
+
+                if ($res->getStatusCode() == 200) {
+                    $job = json_decode($res->getBody(), true);
+
+
+                    if (count($job) > 0) {
+
+                        $update_item['issueCodeSystem'] = null;
+                        $this->itemReturnDetailsRepository->update($update_item, $id);
+
+                        return $this->sendError('The selected Material Issue has allocated to following jobs', 500, ['type' => 'allocated_job', 'data' => $job]);
+                    }
+                } else {
                     $update_item['issueCodeSystem'] = null;
                     $this->itemReturnDetailsRepository->update($update_item, $id);
-
-                    return $this->sendError('The selected Material Issue has allocated to following jobs', 500, ['type'=>'allocated_job','data' => $job]);
+                    return $this->sendError('Unable to get the response from allocated job for this Material Issue');
                 }
-            }
-            else
-            {
-                    $update_item['issueCodeSystem'] = null;
-                    $this->itemReturnDetailsRepository->update($update_item, $id);
-                return $this->sendError('Unable to get the response from allocated job for this Material Issue');
             }
         }
 

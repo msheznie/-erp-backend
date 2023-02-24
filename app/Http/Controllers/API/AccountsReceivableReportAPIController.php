@@ -4984,6 +4984,8 @@ AND erp_generalledger.documentRptAmount > 0 AND erp_generalledger.glAccountTypeI
                                 erp_generalledger.documentSystemID,
                                 erp_generalledger.documentDate,
                                 erp_generalledger.documentNarration,
+                                erp_generalledger.serviceLineSystemID,
+                                erp_generalledger.chartOfAccountSystemID,
                                 erp_generalledger.glCode,
                                 erp_generalledger.glAccountType,
                                 chartofaccounts.controlAccounts,
@@ -5042,12 +5044,13 @@ AND erp_generalledger.documentRptAmount > 0 AND erp_generalledger.glAccountTypeI
                                 erp_companyreporttemplate.isDefault = 1 AND erp_companyreporttemplate.reportID = 2
                                 ) AS revenueGLCodes ON erp_generalledger.chartOfAccountSystemID = revenueGLCodes.chartOfAccountSystemID
                                 WHERE erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
-                            
+                                AND chartofaccounts.controlAccountsSystemID = 1
                                 AND DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" 
                                 AND "' . $toDate . '"
                                 ) AS revenueCustomerDetail
                                 LEFT JOIN customermaster ON revenueCustomerDetail.mySupplierCode = customermaster.customerCodeSystem
-                                WHERE (revenueCustomerDetail.mySupplierCode IN (' . join(',', $customerSystemID) . ')' . $nullCustomer . ')');
+                                WHERE (revenueCustomerDetail.mySupplierCode IN (' . join(',', $customerSystemID) . ')' . $nullCustomer . ')
+                                GROUP BY customermaster.customerCodeSystem, serviceLineSystemID, chartOfAccountSystemID,documentSystemID,documentSystemCode');
 
         return $output;
     }
