@@ -426,7 +426,11 @@ class TaxAPIController extends AppBaseController
             $companies = [$selectedCompanyId];
         }
         $companiesByGroup = Company::whereIn('companySystemID',$companies)->get();
-        $chartOfAccount = ChartOfAccount::where('isApproved', 1)->whereIn('controlAccountsSystemID', [3,4])->get();
+        $chartOfAccount = ChartOfAccount::where('isApproved', 1)->whereIn('controlAccountsSystemID', [3,4])
+                                        ->whereHas('chartofaccount_assigned', function($query) use ($companies){
+                                            $query->whereIn('companySystemID', $companies)
+                                                  ->where('isAssigned', -1);
+                                        })->get();
 
         $taxType = TaxType::all();
         $taxCategory = array(array('value' => 1, 'label' => 'Other'), array('value' => 2, 'label' => 'VAT'), array('value' => 3, 'label' => 'WHT'));
