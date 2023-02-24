@@ -664,8 +664,11 @@ class AccountsReceivableReportAPIController extends AppBaseController
 
                     $requestCurrency = CurrencyMaster::where('currencyID', $currencyId)->first();
 
-                    $decimalPlace = !empty($requestCurrency) ? $requestCurrency->DecimalPlaces : 2;
-
+                    if(!empty($requestCurrency)) {
+                        $decimalPlace = $requestCurrency->DecimalPlaces;
+                    }else{
+                        $decimalPlace =  2;
+                    }
                     $total = array();
 
                     $total['Jan'] = array_sum(collect($output)->pluck('Jan')->toArray());
