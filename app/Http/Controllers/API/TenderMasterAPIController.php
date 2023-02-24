@@ -3099,7 +3099,7 @@ WHERE
             foreach($result as $key=>$val)
             {
                 $output = 0;
-                if($output != 0)
+                if($highest_val1 != 0)
                 {
                     $output = round(($val->new_val/$highest_val1)*100,3);
                 }
