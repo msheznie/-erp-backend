@@ -48,6 +48,7 @@ use App\Models\GRVDetails;
 use App\Models\PaySupplierInvoiceDetail;
 use App\Models\GRVMaster;
 use App\Models\ProcumentOrder;
+use App\Models\Employee;
 use App\Models\BookInvSuppMaster;
 use App\Models\PurchaseOrderDetails;
 use App\Models\PurchaseRequestDetails;
@@ -7164,8 +7165,13 @@ class Helper
             $payee = Models\CustomerMaster::find($custReceivePayment->customerID);
             if ($payee) {
                 $data['payeeCode'] = $payee->CutomerCode;
+                $data['payeeName'] = $payee->CustomerName;
+            } else {
+                $employeeData = Employee::find($custReceivePayment->PayeeEmpID);
+
+                $data['payeeName'] = $employeeData ? $employeeData->empName: $custReceivePayment->PayeeName;                                    
             }
-            $data['payeeName'] = $custReceivePayment->PayeeName;
+
             $data['payeeGLCodeID'] = $custReceivePayment->customerGLCodeSystemID;
             $data['payeeGLCode'] = $custReceivePayment->customerGLCode;
             $data['supplierTransCurrencyID'] = $custReceivePayment->custTransactionCurrencyID;
