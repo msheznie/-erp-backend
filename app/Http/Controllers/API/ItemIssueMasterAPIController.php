@@ -1282,10 +1282,13 @@ class ItemIssueMasterAPIController extends AppBaseController
         $time = strtotime("now");
         $fileName = 'item_issue_' . $id . '_' . $time . '.pdf';
         $html = view('print.item_issue', $array);
-        $pdf = \App::make('dompdf.wrapper');
-        $pdf->loadHTML($html);
-
-        return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
+        $htmlFooter = view('print.item_issue_footer', $array);
+        $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-L', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+        $mpdf->AddPage('L');
+        $mpdf->setAutoBottomMargin = 'stretch';
+        $mpdf->SetHTMLFooter($htmlFooter);
+        $mpdf->WriteHTML($html);
+        return $mpdf->Output($fileName, 'I');
     }
 
 
@@ -1304,10 +1307,15 @@ class ItemIssueMasterAPIController extends AppBaseController
         $time = strtotime("now");
         $fileName = 'item_issue_delivery' . $id . '_' . $time . '.pdf';
         $html = view('print.item_issue_delivery', $array);
-        $pdf = \App::make('dompdf.wrapper');
-        $pdf->loadHTML($html);
+        $htmlFooter = view('print.item_issue_delivery_footer', $array);
+        $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-L', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+        $mpdf->AddPage('L');
+        $mpdf->setAutoBottomMargin = 'stretch';
+        $mpdf->SetHTMLFooter($htmlFooter);
+        $mpdf->WriteHTML($html);
+        return $mpdf->Output($fileName, 'I');
 
-        return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
+        // return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
     }
 
     public function materielIssueReopen(Request $request)
