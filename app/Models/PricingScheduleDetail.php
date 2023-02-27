@@ -206,10 +206,6 @@ class PricingScheduleDetail extends Model
         return $this->hasOne('App\Models\CommercialBidRankingItems', 'bid_format_detail_id', 'id');
     }
 
-    public function getTestVarAttribute(){
-        return "Hello world!";
-    }
-
     public function getLevelAttribute(){
         return 1;
     }
