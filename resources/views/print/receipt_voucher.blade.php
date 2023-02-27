@@ -190,67 +190,6 @@
     </style>
 </head>
 <body>
-<div class="footer">
-    <table style="width:100%;">
-        <tr>
-            <td width="40%"><span
-                        class="font-weight-bold">Confirmed By :</span> {{ $masterdata->confirmed_by? $masterdata->confirmed_by->empFullName:'' }}
-            </td>
-            <td><span class="font-weight-bold">Review By :</span></td>
-        </tr>
-    </table>
-    <table style="width:100%;">
-        <tr>
-            <td><span class="font-weight-bold">Electronically Approved By :</span></td>
-        </tr>
-        <tr>
-            &nbsp;
-        </tr>
-    </table>
-    <table style="width:100%;">
-        <tr>
-            @if ($masterdata->approved_by)
-                @foreach ($masterdata->approved_by as $det)
-                    <td style="padding-right: 25px;font-size: 9px;">
-                        <div>
-                            @if($det->employee)
-                                {{$det->employee->empFullName }}
-                            @endif
-                        </div>
-                        <div><span>
-                @if(!empty($det->approvedDate))
-                                    {{ \App\helper\Helper::convertDateWithTime($det->approvedDate)}}
-
-                                @endif
-              </span></div>
-                        <div style="width: 3px"></div>
-                    </td>
-                @endforeach
-            @endif
-        </tr>
-    </table>
-    <table style="width:100%;">
-        <tr>
-            <td colspan="3" style="width:100%">
-                <hr style="background-color: black">
-            </td>
-        </tr>
-        <tr>
-            <td style="width:33%;font-size: 10px;vertical-align: top;">
-                <span class="white-space-pre-line font-weight-bold">{!! nl2br($docRef) !!}</span>
-            </td>
-            <td style="width:33%; text-align: center;font-size: 10px;vertical-align: top;">
-                <span style="text-align: center">Page <span class="pagenum"></span></span><br>
-                @if ($masterdata->company)
-                    {{$masterdata->company->CompanyName}}
-                @endif
-            </td>
-            <td style="width:33%;font-size: 10px;vertical-align: top;">
-                <span style="margin-left: 50%;">Printed Date : {{date("d-M-y", strtotime(now()))}}</span>
-            </td>
-        </tr>
-    </table>
-</div>
 <div id="watermark"></div>
 <div class="card-body content" id="print-section">
     <table style="width: 100%" class="table_height">
@@ -271,10 +210,10 @@
                 <table>
                     <tr>
                         <td width="100px">
-                            <span class="font-weight-bold">Doc Code</span>
+                            <span style="font-weight:bold;">Doc Code</span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight:bold;">:</span>
                         </td>
                         <td>
                             <span>{{$masterdata->custPaymentReceiveCode}}</span>
@@ -282,10 +221,10 @@
                     </tr>
                     <tr>
                         <td width="70px">
-                            <span class="font-weight-bold">Doc Date </span>
+                            <span style="font-weight:bold;">Doc Date </span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight:bold;">:</span>
                         </td>
                         <td>
                             <span>
@@ -295,10 +234,10 @@
                     </tr>
                     <tr>
                         <td width="70px">
-                            <span class="font-weight-bold">Payment Mode </span>
+                            <span style="font-weight:bold;">Payment Mode </span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight:bold;">:</span>
                         </td>
                         <td>
                             @if($masterdata->payment_type)
@@ -313,24 +252,26 @@
         </tr>
     </table>
 
-    <hr style="color: #d3d9df">
+    <hr style="color: #d3d9df border-top: 2px solid black; height: 2px; color: black">
 
     <table style="width: 100%" class="table_height">
         <tr style="width: 100%">
- 
-        <div>
-            <span style="font-size: 18px">
-                @if($masterdata->documentType == 13)
-                    Customer Invoice Receipt
-                @endif
-                @if($masterdata->documentType == 14)
-                    Direct Receipt
-                @endif
-                @if($masterdata->documentType == 15)
-                    Advance Receipt
-                @endif
-            </span>
-        </div>
+        <td>
+            <div>
+                <span style="font-size: 18px">
+                    @if($masterdata->documentType == 13)
+                        Customer Invoice Receipt
+                    @endif
+                    @if($masterdata->documentType == 14)
+                        Direct Receipt
+                    @endif
+                    @if($masterdata->documentType == 15)
+                        Advance Receipt
+                    @endif
+                </span>
+            </div>
+        </td>
+
         </tr>
     </table>
     <br>
@@ -343,7 +284,7 @@
                     <table>
                         <tr style="width: 100%">
                             <td valign="bottom" class="text-right">
-                                <span class="font-weight-bold">
+                                <span style="font-weight:bold;">
                                     <h3 class="text-muted">
                                         @if($masterdata->confirmedYN == 0 && $masterdata->approved == 0)
                                             Not Confirmed
@@ -366,10 +307,10 @@
                     <table>
                         <tr>
                             <td width="150px" style="vertical-align: top;">
-                                <span class="font-weight-bold">Customer Name</span>
+                                <span style="font-weight:bold;">Customer Name</span>
                             </td>
                             <td width="10px" style="vertical-align: top;">
-                                <span class="font-weight-bold">:</span>
+                                <span style="font-weight:bold;">:</span>
                             </td>
                             <td colspan="3">
                                 @if ($masterdata->customer)
@@ -379,10 +320,10 @@
                         </tr>
                         <tr>
                             <td width="150px" style="vertical-align: top;">
-                                <span class="font-weight-bold">Customer Code</span>
+                                <span style="font-weight:bold;">Customer Code</span>
                             </td>
                             <td width="10px" style="vertical-align: top;">
-                                <span class="font-weight-bold">:</span>
+                                <span style="font-weight:bold;">:</span>
                             </td>
                             <td colspan="3">
                                 @if ($masterdata->customer)
@@ -392,10 +333,10 @@
                         </tr>
                         <tr>
                             <td width="150px" style="vertical-align: top;">
-                                <span class="font-weight-bold">Customer Address</span>
+                                <span style="font-weight:bold;">Customer Address</span>
                             </td>
                             <td width="10px" style="vertical-align: top;">
-                                <span class="font-weight-bold">:</span>
+                                <span style="font-weight:bold;">:</span>
                             </td>
                             <td colspan="3">
                                 @if ($masterdata->customer)
@@ -405,10 +346,10 @@
                         </tr>
                         <tr>
                             <td width="150px" style="vertical-align: top;">
-                                <span class="font-weight-bold">Comments</span>
+                                <span style="font-weight:bold;">Comments</span>
                             </td>
                             <td width="10px" style="vertical-align: top;">
-                                <span class="font-weight-bold">:</span>
+                                <span style="font-weight:bold;">:</span>
                             </td>
                             <td colspan="3">
                                 @if ($masterdata->narration)
@@ -419,10 +360,10 @@
                         @if($masterdata->isVATApplicable)
                             <tr>
                                 <td width="150px">
-                                    <span class="font-weight-bold">VAT Percentage (%)</span>
+                                    <span style="font-weight:bold;">VAT Percentage (%)</span>
                                 </td>
                                 <td width="10px">
-                                    <span class="font-weight-bold">:</span>
+                                    <span style="font-weight:bold;">:</span>
                                 </td>
                                 <td colspan="3">
                                     @if ($masterdata->VATPercentage)
@@ -437,10 +378,10 @@
                     <table style="width: 100%">
                         <tr>
                             <td width="150px">
-                                <span class="font-weight-bold">Bank Name</span>
+                                <span style="font-weight:bold;">Bank Name</span>
                             </td>
                             <td width="10px">
-                                <span class="font-weight-bold">:</span>
+                                <span style="font-weight:bold;">:</span>
                             </td>
                             <td>
                                 @if($masterdata->bank)
@@ -450,10 +391,10 @@
                         </tr>
                         <tr>
                             <td width="150px">
-                                <span class="font-weight-bold">Account Number</span>
+                                <span style="font-weight:bold;">Account Number</span>
                             </td>
                             <td width="10px">
-                                <span class="font-weight-bold">:</span>
+                                <span style="font-weight:bold;">:</span>
                             </td>
                             <td>
                                 @if($masterdata->bank)
@@ -463,10 +404,10 @@
                         </tr>
                         <tr>
                             <td width="150px">
-                                <span class="font-weight-bold">Bank Currency</span>
+                                <span style="font-weight:bold;">Bank Currency</span>
                             </td>
                             <td width="10px">
-                                <span class="font-weight-bold">:</span>
+                                <span style="font-weight:bold;">:</span>
                             </td>
                             <td>
                                 @if($masterdata->bank_currency)
@@ -479,10 +420,10 @@
                         </tr>
                         <tr>
                             <td width="150px">
-                                <span class="font-weight-bold">Currency</span>
+                                <span style="font-weight:bold;">Currency</span>
                             </td>
                             <td width="10px">
-                                <span class="font-weight-bold">:</span>
+                                <span style="font-weight:bold;">:</span>
                             </td>
                             <td>
                                 @if($masterdata->currency)
@@ -503,7 +444,7 @@
                     <table>
                         <tr style="width: 100%">
                             <td valign="bottom" class="text-right">
-                                <span class="font-weight-bold">
+                                <span style="font-weight:bold;">
                                     <h3 class="text-muted">
                                         @if($masterdata->confirmedYN == 0 && $masterdata->approved == 0)
                                             Not Confirmed
@@ -527,10 +468,10 @@
                         @if($masterdata->payeeTypeID && $masterdata->payeeTypeID != 3)
                         <tr>
                             <td width="150px">
-                                <span class="font-weight-bold">Payee Code</span>
+                                <span style="font-weight:bold;">Payee Code</span>
                             </td>
                             <td width="10px">
-                                <span class="font-weight-bold">:</span>
+                                <span style="font-weight:bold;">:</span>
                             </td>
                             <td>
                                 @if($masterdata->payeeTypeID == 1)
@@ -546,17 +487,17 @@
                                 <tr>
                                     <td width="150px">
                                         @if($masterdata->payeeTypeID == 1)
-                                            <span class="font-weight-bold">Customer Name</span>
+                                            <span style="font-weight:bold;">Customer Name</span>
                                         @endif
                                         @if($masterdata->payeeTypeID == 2)
-                                         <span class="font-weight-bold">Employee Name</span>
+                                         <span style="font-weight:bold;">Employee Name</span>
                                         @endif
                                         @if($masterdata->payeeTypeID == 3)
-                                            <span class="font-weight-bold">Payee Name</span>
+                                            <span style="font-weight:bold;">Payee Name</span>
                                         @endif
                                     </td>
                                     <td width="10px">
-                                        <span class="font-weight-bold">:</span>
+                                        <span style="font-weight:bold;">:</span>
                                     </td>
                                     <td>
                                         @if($masterdata->payeeTypeID == 1)
@@ -574,10 +515,10 @@
                             @if($masterdata->payeeTypeID)
                                 <tr>
                                     <td width="150px">
-                                        <span class="font-weight-bold">Payee Type</span>
+                                        <span style="font-weight:bold;">Payee Type</span>
                                     </td>
                                     <td width="10px">
-                                        <span class="font-weight-bold">:</span>
+                                        <span style="font-weight:bold;">:</span>
                                     </td>
                                     <td>
                                         @if($masterdata->payeeTypeID == 1)
@@ -594,10 +535,10 @@
                             @endif
                         <tr>
                             <td width="50px">
-                                <span class="font-weight-bold">Cheque No</span>
+                                <span style="font-weight:bold;">Cheque No</span>
                             </td>
                             <td width="10px">
-                                <span class="font-weight-bold">:</span>
+                                <span style="font-weight:bold;">:</span>
                             </td>
                             <td>
                                 <span>{{$masterdata->custChequeNo}}</span>
@@ -605,10 +546,10 @@
                         </tr>
                         <tr>
                             <td width="50px">
-                                <span class="font-weight-bold">Cheque Date</span>
+                                <span style="font-weight:bold;">Cheque Date</span>
                             </td>
                             <td width="10px">
-                                <span class="font-weight-bold">:</span>
+                                <span style="font-weight:bold;">:</span>
                             </td>
                             <td>
                                 {{ \App\helper\Helper::dateFormat($masterdata->custChequeDate)}}
@@ -616,10 +557,10 @@
                         </tr>
                         <tr>
                             <td width="70px">
-                                <span class="font-weight-bold">Narration </span>
+                                <span style="font-weight:bold;">Narration </span>
                             </td>
                             <td width="10px">
-                                <span class="font-weight-bold">:</span>
+                                <span style="font-weight:bold;">:</span>
                             </td>
                             <td>
                                 <span>{{$masterdata->narration}}</span>
@@ -628,10 +569,10 @@
                         @if($masterdata->isVATApplicable)
                             <tr>
                                 <td width="70px">
-                                    <span class="font-weight-bold">VAT Percentage (%) </span>
+                                    <span style="font-weight:bold;">VAT Percentage (%) </span>
                                 </td>
                                 <td width="10px">
-                                    <span class="font-weight-bold">:</span>
+                                    <span style="font-weight:bold;">:</span>
                                 </td>
                                 <td>
                                     <span>{{$masterdata->VATPercentage}}</span>
@@ -644,10 +585,10 @@
                     <table style="width: 100%">
                         <tr>
                             <td width="150px">
-                                <span class="font-weight-bold">Bank Name</span>
+                                <span style="font-weight:bold;">Bank Name</span>
                             </td>
                             <td width="10px">
-                                <span class="font-weight-bold">:</span>
+                                <span style="font-weight:bold;">:</span>
                             </td>
                             <td>
                                 @if($masterdata->bank)
@@ -657,10 +598,10 @@
                         </tr>
                         <tr>
                             <td width="150px">
-                                <span class="font-weight-bold">Account Number</span>
+                                <span style="font-weight:bold;">Account Number</span>
                             </td>
                             <td width="10px">
-                                <span class="font-weight-bold">:</span>
+                                <span style="font-weight:bold;">:</span>
                             </td>
                             <td>
                                 @if($masterdata->bank)
@@ -670,10 +611,10 @@
                         </tr>
                         <tr>
                             <td width="150px">
-                                <span class="font-weight-bold">Bank Currency</span>
+                                <span style="font-weight:bold;">Bank Currency</span>
                             </td>
                             <td width="10px">
-                                <span class="font-weight-bold">:</span>
+                                <span style="font-weight:bold;">:</span>
                             </td>
                             <td>
                                 @if($masterdata->bank_currency)
@@ -686,10 +627,10 @@
                         </tr>
                         <tr>
                             <td width="150px">
-                                <span class="font-weight-bold">Currency</span>
+                                <span style="font-weight:bold;">Currency</span>
                             </td>
                             <td width="10px">
-                                <span class="font-weight-bold">:</span>
+                                <span style="font-weight:bold;">:</span>
                             </td>
                             <td>
                                 @if($masterdata->currency)
