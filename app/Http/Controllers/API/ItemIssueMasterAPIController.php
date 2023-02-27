@@ -1315,7 +1315,6 @@ class ItemIssueMasterAPIController extends AppBaseController
         $mpdf->WriteHTML($html);
         return $mpdf->Output($fileName, 'I');
 
-        // return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
     }
 
     public function materielIssueReopen(Request $request)
