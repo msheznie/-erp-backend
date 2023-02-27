@@ -664,8 +664,11 @@ class AccountsReceivableReportAPIController extends AppBaseController
 
                     $requestCurrency = CurrencyMaster::where('currencyID', $currencyId)->first();
 
-                    $decimalPlace = !empty($requestCurrency) ? $requestCurrency->DecimalPlaces : 2;
-
+                    if(!empty($requestCurrency)) {
+                        $decimalPlace = $requestCurrency->DecimalPlaces;
+                    }else{
+                        $decimalPlace =  2;
+                    }
                     $total = array();
 
                     $total['Jan'] = array_sum(collect($output)->pluck('Jan')->toArray());
@@ -4532,7 +4535,7 @@ WHERE
                     DATE(erp_generalledger.documentDate) <= "' . $asOfDate . '"
                     AND YEAR ( erp_generalledger.documentDate ) = "' . $year . '"
                     AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
-
+                    AND chartofaccounts.controlAccountsSystemID = 1
                     ) AS revenueDetailData
                     LEFT JOIN customermaster ON customermaster.customerCodeSystem = revenueDetailData.mySupplierCode
                     WHERE (revenueDetailData.mySupplierCode IN (' . join(',', $customerSystemID) . ')
