@@ -129,7 +129,7 @@ class PricingScheduleDetail extends Model
     const UPDATED_AT = 'updated_at';
 
 
-
+    protected $appends = ['level','active'];
 
     public $fillable = [
         'bid_format_id',
@@ -204,5 +204,13 @@ class PricingScheduleDetail extends Model
     public function ranking_items()
     {
         return $this->hasOne('App\Models\CommercialBidRankingItems', 'bid_format_detail_id', 'id');
+    }
+
+    public function getLevelAttribute(){
+        return 1;
+    }
+
+    public function getActiveAttribute(){
+        return false;
     }
 }
