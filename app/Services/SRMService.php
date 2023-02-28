@@ -3085,7 +3085,7 @@ class SRMService
                     $dataBidBoq = BidBoq::where('boq_id',$boqItem->id)->where('bid_master_id',$bidMasterId)->where('created_by',$supplierData->id)->where('main_works_id',$main_works_id->id)->get();
                     if(count($dataBidBoq) > 0) {
                         foreach($dataBidBoq as $bidBoq){
-                            if($bidBoq->total_amount > 0) {
+                            if($bidBoq->total_amount >= 0) {
                                 $has_work_ids[$i] = "true";
                             }else {
                                 $has_work_ids[$i]  = "false";
@@ -3114,7 +3114,7 @@ class SRMService
                     $dataBidBoq2 = BidMainWork::where('tender_id',$tenderId)->where('main_works_id',$main_works_id->id)->where('bid_master_id',$bidMasterId)->where('created_by',$supplierData->id)->get();
                     if(count($dataBidBoq2) > 0) {
                         foreach($dataBidBoq2 as $bidBoq){
-                            if($bidBoq->total_amount > 0) {
+                            if($bidBoq->total_amount >= 0) {
                                 $has_work_ids[$i] = "true";
                             }else {
                                 $has_work_ids[$i]  = "false";
