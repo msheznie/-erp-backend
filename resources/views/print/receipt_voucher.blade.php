@@ -425,7 +425,7 @@
                     <table>
                         <tr style="width: 100%">
                             <td style="vertical-align: top;">
-                                <span class="font-weight-bold">Comments :</span>
+                                <span style="font-weight:bold;">Comments :</span>
                             </td>
                         </tr>
                         <tr style="width: 100%">
@@ -638,7 +638,7 @@
                     <table>
                         <tr style="width: 100%">
                             <td style="vertical-align: top;">
-                                <span class="font-weight-bold">Narration :</span>
+                                <span style="font-weight:bold;">Narration :</span>
                             </td>
                         </tr>
                         <tr style="width: 100%">
