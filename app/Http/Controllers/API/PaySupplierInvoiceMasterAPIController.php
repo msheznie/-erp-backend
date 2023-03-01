@@ -2288,7 +2288,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                                     return $this->sendError('Output VAT GL Account is not configured for this company', 500, ['type' => 'confirm']);
                                 }
 
-                                $chartOfAccountData = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $taxOutputVATControl->inputVatGLAccountAutoID)
+                                $chartOfAccountData = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $taxOutputVATControl->outputVatGLAccountAutoID)
                                     ->where('companySystemID', $paySupplierInvoiceMaster->companySystemID)
                                     ->where('isAssigned', -1)
                                     ->first();
