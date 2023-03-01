@@ -203,7 +203,6 @@ class CustomerReceivePaymentDetailAPIController extends AppBaseController
                     $inputData[$x]['bookingInvCodeSystem'] = $item['bookingInvSystemCode'];
                     $inputData[$x]['bookingInvCode'] = $item['bookingInvDocCode'];
                     $inputData[$x]['bookingDate'] = $item['bookingInvoiceDate'];
-                    $inputData[$x]['comments'] = $master->narration;
                     $inputData[$x]['custTransactionCurrencyID'] = $item['custTransCurrencyID'];
                     $inputData[$x]['custTransactionCurrencyER'] = $item['custTransER'];
                     $inputData[$x]['companyReportingCurrencyID'] = $item['comRptCurrencyID'];

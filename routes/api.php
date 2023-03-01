@@ -369,7 +369,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('reportTemplateGLDrillDown', 'FinancialReportAPIController@reportTemplateGLDrillDown');
             Route::post('reportTemplateGLDrillDownExport', 'FinancialReportAPIController@reportTemplateGLDrillDownExport');
 
-            Route::get('getCurrentUserInfo', 'UserAPIController@getCurrentUserInfo');
+            Route::get('getCurrentUserInfo', 'UserAPIController@getCurrentUserInfo')->name("Get Current User Info");
             Route::get('getNotifications', 'UserAPIController@getNotifications');
             Route::post('updateNotification', 'UserAPIController@updateNotification');
             Route::post('getAllNotifications', 'UserAPIController@getAllNotifications');
@@ -522,7 +522,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             
             Route::get('getPaymentVoucherGL', 'ChartOfAccountsAssignedAPIController@getPaymentVoucherGL');
 
-            Route::get('getCreditNoteMasterRecord', 'CreditNoteAPIController@getCreditNoteMasterRecord');
             Route::get('getFilteredGRV', 'GRVMasterAPIController@getFilteredGRV')->name("Get Filtered GRV");
             Route::get('getDirectItems', 'DirectInvoiceDetailsAPIController@getDirectItems');
             
@@ -532,16 +531,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('saveSupplierInvoiceTaxDetails', 'BookInvSuppMasterAPIController@saveSupplierInvoiceTaxDetails');
             Route::get('supplierInvoiceTaxTotal', 'BookInvSuppMasterAPIController@supplierInvoiceTaxTotal');
             Route::post('clearSupplierInvoiceNo', 'BookInvSuppMasterAPIController@clearSupplierInvoiceNo');
-            Route::post('creditNoteMasterDataTable', 'CreditNoteAPIController@creditNoteMasterDataTable');
-            Route::post('addcreditNoteDetails', 'CreditNoteDetailsAPIController@addcreditNoteDetails');
-            Route::get('creditNoteDetails', 'CreditNoteDetailsAPIController@creditNoteDetails');
-            Route::get('getAllcontractbyclientbase', 'CreditNoteDetailsAPIController@getAllcontractbyclientbase');
-            Route::post('updateCreditNote', 'CreditNoteDetailsAPIController@updateCreditNote');
-            Route::post('creditNoteReopen', 'CreditNoteAPIController@creditNoteReopen');
-            Route::get('creditNoteAudit', 'CreditNoteAPIController@creditNoteAudit');
             Route::get('getPurchaseOrderForSI', 'UnbilledGrvGroupByAPIController@getPurchaseOrderForSI');
-            Route::post('amendCreditNote', 'CreditNoteAPIController@amendCreditNote');
-            Route::post('amendCreditNoteReview', 'CreditNoteAPIController@amendCreditNoteReview');
 
             Route::get('getUnbilledGRVDetailsForSI', 'UnbilledGrvGroupByAPIController@getUnbilledGRVDetailsForSI');
             Route::post('storePOBaseDetail', 'BookInvSuppDetAPIController@storePOBaseDetail');
@@ -678,9 +668,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('getAllCostingByCompany', 'FixedAssetMasterAPIController@getAllCostingByCompany');
             Route::post('referBackCosting', 'FixedAssetMasterAPIController@referBackCosting');
             Route::post('createFixedAssetCosting', 'FixedAssetMasterAPIController@create');
-            Route::resource('credit_notes', 'CreditNoteAPIController');
-            Route::put('updateCreditNote/{id}', 'CreditNoteAPIController@updateCurrency');
-            Route::resource('credit_note_details', 'CreditNoteDetailsAPIController');
 
             // Receipt Voucher
             Route::resource('customer_receive_payments', 'CustomerReceivePaymentAPIController',['only' => ['store', 'show', 'update']]);
@@ -1231,11 +1218,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('approveHRMSDocument', 'LeaveDocumentApprovedAPIController@approveHRMSDocument');
             Route::post('referBackHRMSDocument', 'LeaveDocumentApprovedAPIController@referBackHRMSDocument');
 
-            Route::get('getFilteredDebitNote', 'CreditNoteAPIController@getFilteredDebitNote');
             Route::get('getFilteredDirectCustomerInvoice', 'BookInvSuppMasterAPIController@getFilteredDirectCustomerInvoice');
-
-            Route::put('creditNoteLocalUpdate/{id}', 'CreditNoteAPIController@creditNoteLocalUpdate');
-            Route::put('creditNoteReportingUpdate/{id}','CreditNoteAPIController@creditNoteReportingUpdate');
 
             Route::post('addBudgetAdjustment', 'BudgetAdjustmentAPIController@addBudgetAdjustment');            
             
@@ -1392,7 +1375,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('getAllMobileBillDetail', 'MobileDetailAPIController@getAllMobileBillDetail');
             Route::post('getAllEmployeeMobileBill', 'EmployeeMobileBillMasterAPIController@getAllEmployeeMobileBill');
 
-            Route::get('creditNoteReceiptStatus', 'CreditNoteAPIController@creditNoteReceiptStatus');
             Route::post('getMobileBillReport', 'MobileBillMasterAPIController@getMobileBillReport');
             Route::post('validateMobileReport', 'MobileBillMasterAPIController@validateMobileReport');
             Route::get('getMobileReportFormData', 'MobileBillMasterAPIController@getMobileReportFormData');
@@ -1485,7 +1467,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
 
             Route::post('amendSalesQuotationReview', 'QuotationMasterAPIController@amendSalesQuotationReview');
-            Route::post('getDocumentDetails', 'PurchaseRequestAPIController@getDocumentDetails');
+            Route::post('getDocumentDetails', 'PurchaseRequestAPIController@getDocumentDetails')->name("Get Document Details");
 
             Route::get('getVATFilterFormData', 'VATReportAPIController@getVATFilterFormData');
             Route::post('validateVATReport', 'VATReportAPIController@validateVATReport');
@@ -1502,7 +1484,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('sentCustomerStatement', 'AccountsReceivableReportAPIController@sentCustomerStatement');
             Route::post('sentCustomerLedger', 'AccountsReceivableReportAPIController@sentCustomerLedger');
 
-            Route::post('exportTransactionsRecord', 'TransactionsExportExcel@exportRecord');
+            Route::post('exportTransactionsRecord', 'TransactionsExportExcel@exportRecord')->name("Export Record");
 
             Route::post('getAllCurrencyConversionApproval', 'CurrencyConversionMasterAPIController@getAllCurrencyConversionApproval');
             Route::post('approveCurrencyConversion', 'CurrencyConversionMasterAPIController@approveCurrencyConversion');

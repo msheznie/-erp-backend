@@ -364,7 +364,7 @@ class PurchaseOrderStatusAPIController extends AppBaseController
         $id = $request->get('id');
         $type = $request->get('type');
         $employee = \Helper::getEmployeeInfo();
-        $errorMessage = "Server Error";
+        $errorMessage = "Something went wrong. Please contact system administrator";
 
         /** @var PurchaseOrderStatus $purchaseOrderStatus */
         $purchaseOrderStatus = $this->purchaseOrderStatusRepository->findWithoutFail($id);
@@ -403,7 +403,7 @@ class PurchaseOrderStatusAPIController extends AppBaseController
         $id = $request->get('POStatusID');
         $type = $request->get('type');
         $employee = \Helper::getEmployeeInfo();
-        $errorMessage = "Server Error";
+        $errorMessage = "Something went wrong. Please contact system administrator";
 
         /** @var PurchaseOrderStatus $purchaseOrderStatus */
         $purchaseOrderStatus = $this->purchaseOrderStatusRepository->findWithoutFail($id);

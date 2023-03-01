@@ -69,9 +69,10 @@ class EmployeeNavigationAPIController extends AppBaseController
         $input = $request->all();
         $employees = collect($input["employeeSystemID"])->pluck("employeeSystemID")->toArray();
 
-        $validate = EmployeeNavigation::where('companyID',$request->companyID)->whereIN('employeeSystemID',$employees)->where('userGroupID', $request->userGroupID)->first();
-        if($validate){
-            return $this->sendError('Selected employee already exists in the selected user group');
+        $validate = EmployeeNavigation::with(['usergroup'])->where('companyID',$request->companyID)->whereIN('employeeSystemID',$employees)->first();
+
+        if($validate && $validate->usergroup){
+            return $this->sendError('Selected employee already exists in the '.$validate->usergroup->description.' user group');
         }else{
             if($employees){
                 foreach ($employees as $val){

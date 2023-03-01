@@ -48,6 +48,7 @@ use App\Models\GRVDetails;
 use App\Models\PaySupplierInvoiceDetail;
 use App\Models\GRVMaster;
 use App\Models\ProcumentOrder;
+use App\Models\Employee;
 use App\Models\BookInvSuppMaster;
 use App\Models\PurchaseOrderDetails;
 use App\Models\PurchaseRequestDetails;
@@ -6386,7 +6387,7 @@ class Helper
             $firstDayNextMonth = Carbon::parse($formattedJvDateR)->addMonth()->firstOfMonth();
             $formattedDate = date("Y-m-d", strtotime($firstDayNextMonth));
 
-            $companyFinanceYear = collect(\DB::select("SELECT companyFinanceYearID,bigginingDate,endingDate FROM companyfinanceyear WHERE companySystemID = " . $jvMasterData->companySystemID . " AND isActive = -1 AND date('" . $formattedDate . "') BETWEEN bigginingDate AND endingDate"))->first();
+            $companyFinanceYear = collect(\DB::select("SELECT companyFinanceYearID,bigginingDate,endingDate FROM companyfinanceyear WHERE companySystemID = " . $jvMasterData->companySystemID . " AND isActive = -1 AND isDeleted = 0 AND date('" . $formattedDate . "') BETWEEN bigginingDate AND endingDate"))->first();
 
             if ($companyFinanceYear) {
                 $startYear = $firstDayNextMonth;
@@ -6469,7 +6470,7 @@ class Helper
             $firstDayNextMonth = Carbon::parse($formattedJvDateR)->addMonth()->firstOfMonth();
             $formattedDate = date("Y-m-d", strtotime($firstDayNextMonth));
 
-            $companyFinanceYear = collect(\DB::select("SELECT companyFinanceYearID,bigginingDate,endingDate FROM companyfinanceyear WHERE companySystemID = " . $jvMasterData->companySystemID . " AND isActive = -1 AND date('" . $formattedDate . "') BETWEEN bigginingDate AND endingDate"))->first();
+            $companyFinanceYear = collect(\DB::select("SELECT companyFinanceYearID,bigginingDate,endingDate FROM companyfinanceyear WHERE companySystemID = " . $jvMasterData->companySystemID . " AND isActive = -1 AND isDeleted = 0 AND date('" . $formattedDate . "') BETWEEN bigginingDate AND endingDate"))->first();
 
             if ($companyFinanceYear) {
                 $startYear = $companyFinanceYear->bigginingDate;
@@ -7197,8 +7198,13 @@ class Helper
             $payee = Models\CustomerMaster::find($custReceivePayment->customerID);
             if ($payee) {
                 $data['payeeCode'] = $payee->CutomerCode;
+                $data['payeeName'] = $payee->CustomerName;
+            } else {
+                $employeeData = Employee::find($custReceivePayment->PayeeEmpID);
+
+                $data['payeeName'] = $employeeData ? $employeeData->empName: $custReceivePayment->PayeeName;                                    
             }
-            $data['payeeName'] = $custReceivePayment->PayeeName;
+
             $data['payeeGLCodeID'] = $custReceivePayment->customerGLCodeSystemID;
             $data['payeeGLCode'] = $custReceivePayment->customerGLCode;
             $data['supplierTransCurrencyID'] = $custReceivePayment->custTransactionCurrencyID;

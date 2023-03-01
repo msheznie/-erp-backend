@@ -3214,11 +3214,11 @@ WHERE
                                 $data[$x]['Account Description'] = $val->AccountDescription;
                                 $data[$x]['Type'] = $val->glAccountType;
                                 if ($checkIsGroup->isGroup == 0 && $currencyId ==1 || $currencyId ==3) {
-                                    $totalOpeningBalanceLocal = round( $totalOpeningBalanceRpt,$decimalPlaceLocal) + round($val->openingBalLocal,$decimalPlaceLocal);
-                                    $totaldocumentLocalAmountDebit = round( $totaldocumentLocalAmountDebit,$decimalPlaceLocal) + round($val->documentLocalAmountDebit,$decimalPlaceLocal);
-                                    $totaldocumentLocalAmountCredit = round( $totaldocumentLocalAmountCredit,$decimalPlaceLocal) + round($val->documentLocalAmountCredit,$decimalPlaceLocal);
+                                    $totalOpeningBalanceLocal = $totalOpeningBalanceLocal + $val->openingBalLocal;
+                                    $totaldocumentLocalAmountDebit = $totaldocumentLocalAmountDebit + $val->documentLocalAmountDebit;
+                                    $totaldocumentLocalAmountCredit = $totaldocumentLocalAmountCredit + $val->documentLocalAmountCredit;
 
-                                    $totalClosingBalanceLocal = round( $totalClosingBalanceLocal,$decimalPlaceLocal) + round($val->openingBalLocal + ($val->documentLocalAmountDebit - $val->documentLocalAmountCredit),$decimalPlaceLocal);
+                                    $totalClosingBalanceLocal = $totalClosingBalanceLocal + $val->openingBalLocal + ($val->documentLocalAmountDebit - $val->documentLocalAmountCredit);
 
                                     $data[$x]['Opening Balance (Local Currency - ' . $currencyLocal . ')'] = round((isset($val->openingBalLocal) ? $val->openingBalLocal : 0), $decimalPlaceLocal);
                                     $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = round($val->documentLocalAmountDebit, $decimalPlaceLocal);
@@ -3226,11 +3226,11 @@ WHERE
                                     $data[$x]['Closing Balance (Local Currency - ' . $currencyLocal . ')'] = round((isset($val->openingBalLocal) ? $val->openingBalLocal : 0) + $val->documentLocalAmountDebit - $val->documentLocalAmountCredit, $decimalPlaceLocal);
                                 }
                                 if($currencyId == 2 || $currencyId == 3) {
-                                    $totalOpeningBalanceRpt = round( $totalOpeningBalanceRpt,$decimalPlaceRpt) + round($val->openingBalRpt,$decimalPlaceRpt);
-                                    $totaldocumentRptAmountDebit = round( $totaldocumentRptAmountDebit,$decimalPlaceRpt) + round($val->documentRptAmountDebit,$decimalPlaceRpt);
-                                    $totalClosingBalanceRpt = round( $totalClosingBalanceRpt,$decimalPlaceRpt) + round($val->openingBalRpt + ($val->documentRptAmountDebit - $val->documentRptAmountCredit),$decimalPlaceRpt);
+                                    $totalOpeningBalanceRpt = $totalOpeningBalanceRpt + $val->openingBalRpt;
+                                    $totaldocumentRptAmountDebit = $totaldocumentRptAmountDebit + $val->documentRptAmountDebit;
+                                    $totalClosingBalanceRpt = $totalClosingBalanceRpt + $val->openingBalRpt + ($val->documentRptAmountDebit - $val->documentRptAmountCredit);
 
-                                    $totaldocumentRptAmountCredit = round( $totaldocumentRptAmountCredit,$decimalPlaceRpt) + round($val->documentRptAmountCredit,$decimalPlaceRpt);
+                                    $totaldocumentRptAmountCredit = $totaldocumentRptAmountCredit + $val->documentRptAmountCredit;
 
                                     $data[$x]['Opening Balance (Reporting Currency - ' . $currencyRpt . ')'] = round(isset($val->openingBalRpt) ? $val->openingBalRpt : 0, $decimalPlaceRpt);
                                     $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = round($val->documentRptAmountDebit, $decimalPlaceRpt);
@@ -3250,16 +3250,16 @@ WHERE
                         $data[$x]['Account Description'] = "Grand Total";
                         $data[$x]['Type'] = "";
                         if ($checkIsGroup->isGroup == 0 && $currencyId ==1 || $currencyId ==3) { 
-                            $data[$x]['Opening Balance (Local Currency - ' . $currencyLocal . ')'] = $totalOpeningBalanceLocal;
-                            $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = $totaldocumentLocalAmountDebit;
-                            $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = $totaldocumentLocalAmountCredit;
-                            $data[$x]['Closing Balance (Local Currency - ' . $currencyLocal . ')'] = $totalClosingBalanceLocal;
+                            $data[$x]['Opening Balance (Local Currency - ' . $currencyLocal . ')'] = round($totalOpeningBalanceLocal, $decimalPlaceLocal);
+                            $data[$x]['Debit (Local Currency - ' . $currencyLocal . ')'] = round($totaldocumentLocalAmountDebit, $decimalPlaceLocal);
+                            $data[$x]['Credit (Local Currency - ' . $currencyLocal . ')'] = round($totaldocumentLocalAmountCredit, $decimalPlaceLocal);
+                            $data[$x]['Closing Balance (Local Currency - ' . $currencyLocal . ')'] = round($totalClosingBalanceLocal, $decimalPlaceLocal);
                         }
                         if($currencyId == 2 || $currencyId == 3) { 
-                            $data[$x]['Opening Balance (Reporting Currency - ' . $currencyRpt . ')'] = $totalOpeningBalanceRpt;
-                            $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = $totaldocumentRptAmountDebit;
-                            $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = $totaldocumentRptAmountCredit;
-                            $data[$x]['Closing Balance (Reporting Currency - ' . $currencyRpt . ')'] = $totalClosingBalanceRpt;
+                            $data[$x]['Opening Balance (Reporting Currency - ' . $currencyRpt . ')'] = round($totalOpeningBalanceRpt, $decimalPlaceRpt);
+                            $data[$x]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = round($totaldocumentRptAmountDebit, $decimalPlaceRpt);
+                            $data[$x]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($totaldocumentRptAmountCredit, $decimalPlaceRpt);
+                            $data[$x]['Closing Balance (Reporting Currency - ' . $currencyRpt . ')'] = round($totalClosingBalanceRpt, $decimalPlaceRpt);
                         }
 
 
@@ -5693,6 +5693,8 @@ AND MASTER .canceledYN = 0';
     public
     function pdfExportReport(Request $request)
     {
+        ini_set('max_execution_time', 1800);
+        ini_set('memory_limit', -1);
         $reportID = $request->reportID;
         switch ($reportID) {
             case 'FGL':
@@ -5747,18 +5749,18 @@ AND MASTER .canceledYN = 0';
                     foreach ($output as $val) {
 
                         if ($checkIsGroup->isGroup == 0 && $currencyId ==1 || $currencyId ==3) {
-                            $totalOpeningBalanceLocal = round( $totalOpeningBalanceRpt,$decimalPlaceLocal) + round($val->openingBalLocal,$decimalPlaceLocal);
-                            $totaldocumentLocalAmountDebit = round( $totaldocumentLocalAmountDebit,$decimalPlaceLocal) + round($val->documentLocalAmountDebit,$decimalPlaceLocal);
-                            $totaldocumentLocalAmountCredit = round( $totaldocumentLocalAmountCredit,$decimalPlaceLocal) + round($val->documentLocalAmountCredit,$decimalPlaceLocal);
+                            $totalOpeningBalanceLocal = $totalOpeningBalanceLocal + $val->openingBalLocal;
+                            $totaldocumentLocalAmountDebit = $totaldocumentLocalAmountDebit + $val->documentLocalAmountDebit;
+                            $totaldocumentLocalAmountCredit = $totaldocumentLocalAmountCredit + $val->documentLocalAmountCredit;
 
-                            $totalClosingBalanceLocal = round( $totalClosingBalanceLocal,$decimalPlaceLocal) + round($val->openingBalLocal + ($val->documentLocalAmountDebit - $val->documentLocalAmountCredit),$decimalPlaceLocal);
+                            $totalClosingBalanceLocal = $totalClosingBalanceLocal + $val->openingBalLocal + ($val->documentLocalAmountDebit - $val->documentLocalAmountCredit);
                         }
                         if($currencyId == 2 || $currencyId == 3) {
-                            $totalOpeningBalanceRpt = round( $totalOpeningBalanceRpt,$decimalPlaceRpt) + round($val->openingBalRpt,$decimalPlaceRpt);
-                            $totaldocumentRptAmountDebit = round( $totaldocumentRptAmountDebit,$decimalPlaceRpt) + round($val->documentRptAmountDebit,$decimalPlaceRpt);
-                            $totalClosingBalanceRpt = round( $totalClosingBalanceRpt,$decimalPlaceRpt) + round($val->openingBalRpt + ($val->documentRptAmountDebit - $val->documentRptAmountCredit),$decimalPlaceRpt);
+                            $totalOpeningBalanceRpt = $totalOpeningBalanceRpt + $val->openingBalRpt;
+                            $totaldocumentRptAmountDebit = $totaldocumentRptAmountDebit + $val->documentRptAmountDebit;
+                            $totalClosingBalanceRpt = $totalClosingBalanceRpt + ($val->openingBalRpt + ($val->documentRptAmountDebit - $val->documentRptAmountCredit));
 
-                            $totaldocumentRptAmountCredit = round( $totaldocumentRptAmountCredit,$decimalPlaceRpt) + round($val->documentRptAmountCredit,$decimalPlaceRpt);
+                            $totaldocumentRptAmountCredit = $totaldocumentRptAmountCredit + $val->documentRptAmountCredit;
                         }
                     }
                 }
@@ -5862,7 +5864,11 @@ AND MASTER .canceledYN = 0';
                 $pdf = \App::make('dompdf.wrapper');
                 $pdf->loadHTML($html);
 
-                return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream();
+                if (count($input['companySystemID'] ) > 1) {
+                    return $pdf->setPaper('a3', 'landscape')->setWarnings(false)->stream();
+                } else {
+                    return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream();
+                }
                 break;
 
             default:

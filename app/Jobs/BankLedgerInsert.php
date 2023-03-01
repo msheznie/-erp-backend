@@ -250,8 +250,14 @@ class BankLedgerInsert implements ShouldQueue
                             $payee = CustomerMaster::find($custReceivePayment->customerID);
                             if ($payee) {
                                 $data['payeeCode'] = $payee->CutomerCode;
+                                $data['payeeName'] = $payee->CustomerName;
+                            } else {
+                                $employeeSystemIDForPV = floatval($custReceivePayment->PayeeEmpID);
+                                $employeeData = Employee::find($employeeSystemIDForPV);
+
+                                $data['payeeName'] = $employeeData ? $employeeData->empName : $custReceivePayment->PayeeName;                                    
                             }
-                            $data['payeeName'] = $custReceivePayment->PayeeName;
+
                             $data['payeeGLCodeID'] = $custReceivePayment->customerGLCodeSystemID;
                             $data['payeeGLCode'] = $custReceivePayment->customerGLCode;
                             $data['supplierTransCurrencyID'] = $custReceivePayment->custTransactionCurrencyID;

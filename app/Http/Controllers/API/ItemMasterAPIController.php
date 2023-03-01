@@ -1325,7 +1325,7 @@ class ItemMasterAPIController extends AppBaseController
 
         $isSubItem = ItemMaster::selectRaw('primaryCode, itemmaster.itemDescription')->where('mainItemID', $itemCodeSystem)->first();
 
-        $subItems = ItemMaster::selectRaw('primaryCode, itemmaster.itemDescription, units.UnitShortCode, units.unitID, SUM(IFNULL(erp_itemledger.inOutQty,0)) as availableQty, itemCodeSystem')->where('mainItemID', $itemCodeSystem)->leftJoin('units', 'UnitID', '=', 'unit')->leftJoin('erp_itemledger', 'itemCodeSystem', '=', 'itemSystemCode')->groupBy('itemCodeSystem')->get();
+        $subItems = ItemMaster::selectRaw('primaryCode, isActive, refferedBackYN, itemConfirmedYN, itemApprovedYN,  itemmaster.itemDescription, units.UnitShortCode, units.unitID, SUM(IFNULL(erp_itemledger.inOutQty,0)) as availableQty, itemCodeSystem')->where('mainItemID', $itemCodeSystem)->leftJoin('units', 'UnitID', '=', 'unit')->leftJoin('erp_itemledger', 'itemCodeSystem', '=', 'itemSystemCode')->groupBy('itemCodeSystem')->get();
 
 
         $mainItemUOM =  ItemMaster::selectRaw('units.UnitShortCode, units.unitID, SUM(IFNULL(erp_itemledger.inOutQty,0)) as availableQty')->where('itemCodeSystem', $itemCodeSystem)->join('units', 'UnitID', '=', 'unit')->leftjoin('erp_itemledger', 'itemCodeSystem', '=', 'itemSystemCode')->groupBy('itemSystemCode')->first();
