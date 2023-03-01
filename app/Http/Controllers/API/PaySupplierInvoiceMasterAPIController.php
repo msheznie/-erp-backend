@@ -2256,6 +2256,50 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                         return $this->sendError('Every item should have a payment amount', 500, ['type' => 'confirm']);
                     }
 
+                    $tax = Taxdetail::selectRaw("SUM(localAmount) as localAmount, SUM(rptAmount) as rptAmount,SUM(amount) as transAmount,localCurrencyID,rptCurrencyID as reportingCurrencyID,currency as supplierTransactionCurrencyID,currencyER as supplierTransactionER,rptCurrencyER as companyReportingER,localCurrencyER,payeeSystemCode")
+                                    ->WHERE('documentSystemCode', $id)
+                                    ->WHERE('documentSystemID', $paySupplierInvoiceMaster->documentSystemID)
+                                    ->groupBy('documentSystemCode')
+                                    ->first();
+
+                    $isVATEligible = TaxService::checkCompanyVATEligible($paySupplierInvoiceMaster->companySystemID);
+
+                    if ($isVATEligible == 1) {
+                        if($tax){
+                            $taxInputVATControl = TaxService::getInputVATGLAccount($paySupplierInvoiceMaster->companySystemID);
+
+                            if (!$taxInputVATControl) {
+                                return $this->sendError('Input VAT GL Account is not configured for this company', 500, ['type' => 'confirm']);
+                            }
+
+                            $chartOfAccountData = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $taxInputVATControl->inputVatGLAccountAutoID)
+                                ->where('companySystemID', $paySupplierInvoiceMaster->companySystemID)
+                                ->where('isAssigned', -1)
+                                ->first();
+
+                            if (!$chartOfAccountData) {
+                                return $this->sendError('Input VAT GL Account is not assigned to this company', 500, ['type' => 'confirm']);
+                            }
+
+                            if($paySupplierInvoiceMaster->rcmActivated == 1) {
+                                $taxOutputVATControl = TaxService::getOutputVATGLAccount($paySupplierInvoiceMaster->companySystemID);
+
+                                if (!$taxOutputVATControl) {
+                                    return $this->sendError('Output VAT GL Account is not configured for this company', 500, ['type' => 'confirm']);
+                                }
+
+                                $chartOfAccountData = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $taxOutputVATControl->inputVatGLAccountAutoID)
+                                    ->where('companySystemID', $paySupplierInvoiceMaster->companySystemID)
+                                    ->where('isAssigned', -1)
+                                    ->first();
+
+                                if (!$chartOfAccountData) {
+                                    return $this->sendError('Output VAT GL Account is not assigned to this company', 500, ['type' => 'confirm']);
+                                }
+                            } 
+                        }
+                    }
+
                 }
 
 
