@@ -403,19 +403,7 @@
                                 @endif
                             </td>
                         </tr>
-                        <tr>
-                            <td width="150px" style="vertical-align: top;">
-                                <span class="font-weight-bold">Comments</span>
-                            </td>
-                            <td width="10px" style="vertical-align: top;">
-                                <span class="font-weight-bold">:</span>
-                            </td>
-                            <td colspan="3">
-                                @if ($masterdata->narration)
-                                    {{$masterdata->narration}}
-                                @endif
-                            </td>
-                        </tr>
+
                         @if($masterdata->isVATApplicable)
                             <tr>
                                 <td width="150px">
@@ -475,9 +463,6 @@
                             </td>
                         </tr>
                         <tr>
-                            <td>&nbsp;</td>
-                        </tr>
-                        <tr>
                             <td width="150px">
                                 <span class="font-weight-bold">Currency</span>
                             </td>
@@ -487,6 +472,26 @@
                             <td>
                                 @if($masterdata->currency)
                                     {{$masterdata->currency->CurrencyCode}}
+                                @endif
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+        <table style="width: 100%">
+            <tr style="width:100%">
+                <td style="width: 100%">
+                    <table>
+                        <tr style="width: 100%">
+                            <td style="vertical-align: top;">
+                                <span class="font-weight-bold">Comments :</span>
+                            </td>
+                        </tr>
+                        <tr style="width: 100%">
+                            <td style="vertical-align: top;">
+                                @if ($masterdata->narration)
+                                    {{$masterdata->narration}}
                                 @endif
                             </td>
                         </tr>
@@ -614,17 +619,6 @@
                                 {{ \App\helper\Helper::dateFormat($masterdata->custChequeDate)}}
                             </td>
                         </tr>
-                        <tr>
-                            <td width="70px">
-                                <span class="font-weight-bold">Narration </span>
-                            </td>
-                            <td width="10px">
-                                <span class="font-weight-bold">:</span>
-                            </td>
-                            <td>
-                                <span>{{$masterdata->narration}}</span>
-                            </td>
-                        </tr>
                         @if($masterdata->isVATApplicable)
                             <tr>
                                 <td width="70px">
@@ -682,9 +676,6 @@
                             </td>
                         </tr>
                         <tr>
-                            <td>&nbsp;</td>
-                        </tr>
-                        <tr>
                             <td width="150px">
                                 <span class="font-weight-bold">Currency</span>
                             </td>
@@ -694,6 +685,26 @@
                             <td>
                                 @if($masterdata->currency)
                                     {{$masterdata->currency->CurrencyCode}}
+                                @endif
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+        <table style="width: 100%">
+            <tr style="width:100%">
+                <td style="width: 100%">
+                    <table>
+                        <tr style="width: 100%">
+                            <td style="vertical-align: top;">
+                                <span class="font-weight-bold">Narration :</span>
+                            </td>
+                        </tr>
+                        <tr style="width: 100%">
+                            <td style="vertical-align: top;">
+                                @if ($masterdata->narration)
+                                    {{$masterdata->narration}}
                                 @endif
                             </td>
                         </tr>
