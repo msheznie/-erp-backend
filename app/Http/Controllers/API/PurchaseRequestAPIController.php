@@ -2451,31 +2451,13 @@ class PurchaseRequestAPIController extends AppBaseController
         $fileName = 'purchase_request_' . $id . '_' . $time . '.pdf';
 
         $html = view('print.purchase_request', $array);
-
-        //return $html;
-        //return $this->sendResponse($html->render(), 'Purchase Request retrieved successfully');
-        //return \PDF::loadHTML($html)->setPaper('a4', 'landscape')->setWarnings(false)->download($fileName);
-
-        // die();
-
-        //  $pdf = \PDF::loadView('print.purchase_request', $array);
-        //  return $pdf->download('purchase_request_'.$id.'.pdf');
-
-        $pdf = \App::make('dompdf.wrapper');
-        //$pdf->setWatermarkText('example', '150px');
-
-        $text = 'watermark';
-        $opacity = 0.9;
-        $size = '100px';
-
-        //$pdf->setWatermarkText($text, $size,$opacity, $rotate = '10deg', $top = '30%');
-        //$pdf->getDomPDF()->set_option("enable_php", true);
-
-        $pdf->loadHTML($html);
-
-        return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
-
-        return $this->sendResponse($purchaseRequest->toArray(), 'Purchase Request retrieved successfully');
+        $htmlFooter = view('print.purchase_request_footer', $array);
+        $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-L', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+        $mpdf->AddPage('L');
+        $mpdf->setAutoBottomMargin = 'stretch';
+        $mpdf->SetHTMLFooter($htmlFooter);
+        $mpdf->WriteHTML($html);
+        return $mpdf->Output($fileName, 'I');
     }
 
     /**
