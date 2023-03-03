@@ -122,15 +122,28 @@ class BudgetAdditionAdjustment implements ShouldQueue
                         $toAddAmountRpt = round(($item['adjustmentAmountRpt']/$TotalCount),$reportingDecimalPlaces);
                         $toAddAmountLocal = round(($item['adjustmentAmountLocal']/$TotalCount),$localDecimalPlaces);
 
+                        $count = 1;
                         foreach ($BudgetDetails as $BudgetDetailVal){
                             Log::info('budjetAmtLocal conversion ' .  ((($BudgetDetailVal['budjetAmtLocal'] * $conversion)  + $toAddAmountLocal) * $conversion));
                             Log::info('To Amount Local ' .  $toAddAmountLocal);
                             $budgetmasterID = $BudgetDetailVal['budgetmasterID'];
+
+                            if (count($BudgetDetails) == $count) {
+                                $diffRpt = $item['adjustmentAmountRpt'] - ($toAddAmountRpt * $TotalCount);
+                                $diffLocal = $item['adjustmentAmountLocal'] - ($toAddAmountLocal * $TotalCount);
+
+                                $toAddAmountLocal = $toAddAmountLocal + $diffLocal;
+                                $toAddAmountRpt = $toAddAmountRpt + $diffRpt;
+                            }
+
                             $budjetdetailsRepo->update([
                                 'budjetAmtLocal' => ((($BudgetDetailVal['budjetAmtLocal'] * $conversion)  + $toAddAmountLocal) * $conversion) ,
                                 'budjetAmtRpt' => ((($BudgetDetailVal['budjetAmtRpt'] * $conversion) + $toAddAmountRpt) * $conversion)
                             ],
                                 $BudgetDetailVal['budjetDetailsID']);
+
+
+                            $count++;
                         }
                     }
                     

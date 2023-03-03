@@ -434,7 +434,6 @@ class DirectReceiptDetailAPIController extends AppBaseController
         $inputData['companyID'] = $company->CompanyID;
         $inputData['companySystemID'] = $companySystemID;
 
-        $inputData['comments'] = $master->narration;
         $inputData['DRAmountCurrency'] = $master->custTransactionCurrencyID;
         $inputData['DDRAmountCurrencyER'] = $master->custTransactionCurrencyER;
         $inputData['DRAmount'] = 0;

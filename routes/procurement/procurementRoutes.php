@@ -39,6 +39,7 @@ Route::group([], function() {
     Route::get('manualClosePurchaseRequestPreCheck', 'PurchaseRequestAPIController@manualClosePurchaseRequestPreCheck')->name('Manual close purchase request precheck');
     Route::get('getWarehouseStockDetails', 'PurchaseRequestDetailsAPIController@getWarehouseStockDetails')->name('Get warehouse stock details');
     Route::get('getWarehouse', 'PurchaseRequestAPIController@getWarehouse')->name('Get purchase request warehouse');
+    Route::get('exportPurchaseHistory', 'PurchaseOrderDetailsAPIController@exportPurchaseHistory')->name('Export Purchase History');
 
     Route::post('pull-mr-details', 'PurchaseRequestAPIController@pullMrDetails')->name('Pull mr details');
     Route::post('remove-pulled-mr-details', 'PulledItemFromMRController@removeMRDetails')->name('Remove pulled mr details');

@@ -332,8 +332,38 @@ class ItemIssueDetailsAPIController extends AppBaseController
 
         $input['trackingType'] = (isset($itemMaster->trackingType)) ? $itemMaster->trackingType : null;
       
-        if(isset($input['type']) && $input["type"] == "MRFROMMI") {  
-           
+        if(isset($input['type']) && $input["type"] == "MRFROMMI") {
+            $data = array('companySystemID' => $companySystemID,
+                'itemCodeSystem' => $input['itemCodeSystem'],
+                'wareHouseId' => $itemIssue->wareHouseFrom);
+
+            $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
+
+
+            $input['currentStockQty'] = $itemCurrentCostAndQty['currentStockQty'];
+            $input['currentWareHouseStockQty'] = $itemCurrentCostAndQty['currentWareHouseStockQty'];
+            $input['currentStockQtyInDamageReturn'] = $itemCurrentCostAndQty['currentStockQtyInDamageReturn'];
+            $input['issueCostLocal'] = $itemCurrentCostAndQty['wacValueLocal'];
+            $input['issueCostRpt'] = $itemCurrentCostAndQty['wacValueReporting'];
+            $input['issueCostLocalTotal'] = $input['issueCostLocal'] * $input['qtyIssuedDefaultMeasure'];
+            $input['issueCostRptTotal'] = $input['issueCostRpt'] * $input['qtyIssuedDefaultMeasure'];
+
+
+            if ($input['currentStockQty'] <= 0) {
+                return $this->sendError("Stock Qty is 0. You cannot issue.", 500);
+            }
+
+            if ($input['currentWareHouseStockQty'] <= 0) {
+                return $this->sendError("Warehouse stock Qty is 0. You cannot issue.", 500);
+            }
+
+            if ($input['issueCostLocal'] == 0 || $input['issueCostRpt'] == 0) {
+                // return $this->sendError("Cost is 0. You cannot issue.", 500);
+            }
+
+            if ($input['issueCostLocal'] < 0 || $input['issueCostRpt'] < 0) {
+                return $this->sendError("Cost is negative. You cannot issue.", 500);
+            }
         }else {
             $data = array('companySystemID' => $companySystemID,
             'itemCodeSystem' => $input['itemCodeSystem'],

@@ -23,8 +23,11 @@ use App\Models\AssetDisposalType;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
+use App\Models\CompanyFinancePeriod;
 use App\Models\CustomerAssigned;
+use App\Models\SupplierCurrency;
 use App\Models\CustomerMaster;
+use App\Models\CompanyFinanceYear;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
 use App\Models\DocumentReferedHistory;
@@ -486,6 +489,42 @@ class AssetDisposalMasterAPIController extends AppBaseController
                 
                     if (is_null($checkRevenueAc)) {
                         return $this->sendError('Please configure income from sales', 500);
+                    }
+
+
+                    $disposalDocumentDate = (new Carbon($assetDisposalMaster->disposalDocumentDate))->format('Y-m-d');
+
+                    $fromCompanyFinanceYear = CompanyFinanceYear::where('companySystemID', $assetDisposalMaster->toCompanySystemID)
+                        ->whereDate('bigginingDate', '<=', $disposalDocumentDate)
+                        ->whereDate('endingDate', '>=', $disposalDocumentDate)
+                        ->first();
+
+                    if (!$fromCompanyFinanceYear) {
+                        return $this->sendError("To company finance year is not found", 500, ['type' => 'confirm']);
+                    }
+
+                    $fromCompanyFinancePeriod = CompanyFinancePeriod::where('companySystemID', $assetDisposalMaster->toCompanySystemID)
+                                                                    ->where('departmentSystemID', 10)
+                                                                    ->where('companyFinanceYearID', $fromCompanyFinanceYear->companyFinanceYearID)
+                                                                    ->whereDate('dateFrom', '<=', $disposalDocumentDate)
+                                                                    ->whereDate('dateTo', '>=', $disposalDocumentDate)
+                                                                    ->first();
+
+                    if (!$fromCompanyFinancePeriod) {
+                        return $this->sendError("To company finance period is not found", 500, ['type' => 'confirm']);
+                    }
+
+                    $fromCompanyData = Company::find($company_id);
+
+                    if ($fromCompanyData) {
+                        $checkSupplierCurrency = SupplierCurrency::where('supplierCodeSystem', $suppliermaster->supplierCodeSystem)
+                                                                 ->where('currencyID', $fromCompanyData->reportingCurrency)
+                                                                 ->where('isAssigned', -1)
+                                                                 ->first();
+
+                        if (!$checkSupplierCurrency) {
+                            return $this->sendError("Reporting currency of from company is not assign to the supplier of To company", 500, ['type' => 'confirm']);
+                        }
                     }
                 }
 
