@@ -27,6 +27,7 @@ use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
 use App\Models\CompanyPolicyMaster;
 use App\Models\Contract;
+use App\Models\ItemAssigned;
 use App\Models\StockTransfer;
 use App\Models\CustomerMaster;
 use App\Models\DocumentApproved;
@@ -1503,6 +1504,17 @@ class ItemIssueMasterAPIController extends AppBaseController
             return $this->sendResponse($data, 'Data not found!');
         }
 
+    }
+
+    public function checkProductExistInItemMaster(Request $request){
+            $reqItems = $request->items;
+        foreach ($reqItems as $item) {
+            $itemAvailable = ItemAssigned::where('itemCodeSystem', $item['itemCode'])->where('companySystemID', $request->companyId)->first();
+            if(empty($itemAvailable)) {
+                return $this->sendError('Few items in this document are not linked with item master. You cannot create material issue for this.');
+            }
+        }
+        return $this->sendResponse([], 'Data retrieved successfully');
     }
 
     public function checkProductExistInIssues($id,$companySystemID) {
