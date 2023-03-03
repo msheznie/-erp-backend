@@ -108,6 +108,8 @@ Route::group([], function(){
     Route::get('purchase_requests/check/product/{itemCode}/{companySystemID}', 'PurchaseRequestAPIController@checkProductExistInIssues')->name("Check Product Exist In Issues");
     Route::get('material-issue-by-refno', 'ItemIssueMasterAPIController@getMaterialIssueByRefNo')->name("Get Material Issue By RefNo");
     Route::get('material-issue/check/product/{id}/{companySystemID}', 'ItemIssueMasterAPIController@checkProductExistInIssues')->name("Check Product Exist In Issues");
+    Route::post('item-master/check/item', 'ItemIssueMasterAPIController@checkProductExistInItemMaster')->name("Check Item Exist In Item Master");
+
     Route::get('getCompanyLocalCurrency', 'CurrencyMasterAPIController@getCompanyLocalCurrency')->name("Get Company Local Currency");
     
     Route::post('returnMaterialRequest', 'MaterielRequestAPIController@returnMaterialRequest')->name("Return Material Request");
