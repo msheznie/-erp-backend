@@ -473,6 +473,14 @@ class email
                         $data['docCode'] = $tender->tender_code;
                     }
                     break;
+                case 113:
+                    $tender = TenderMaster::find($data['docSystemCode']);
+
+                    if (!empty($tender)) {
+                        $data['docApprovedYN'] = $tender->approved;
+                        $data['docCode'] = $tender->tender_code;
+                    }
+                    break;
                  case 69:
                     $journalVoucher = ConsoleJVMaster::where('consoleJvMasterAutoId', $data['docSystemCode'])->first();
                     if (!empty($journalVoucher)) {

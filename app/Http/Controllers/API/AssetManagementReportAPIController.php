@@ -3623,6 +3623,7 @@ WHERE
                     WHERE DATE(erp_fa_asset_master.postedDate) BETWEEN "' . $fromDate . '" 
                     AND "' . $toDate . '" AND erp_fa_asset_master.AUDITCATOGARY IN (' . join(',', $assetCategory) . ') 
                     AND erp_fa_asset_master.approved = -1 
+                    AND erp_fa_asset_master.assetType = "'. $typeID . '"
                     AND erp_fa_asset_master.companySystemID IN (' . join(',', $companyID) . ')
                     GROUP BY erp_fa_asset_master.faID
                     
@@ -3674,6 +3675,7 @@ WHERE
                     AND erp_fa_asset_master.AUDITCATOGARY IN (' . join(',', $assetCategory) . ') 
                     AND erp_fa_asset_master.approved = -1 
                     AND erp_fa_asset_master.DIPOSED = -1 
+                    AND erp_fa_asset_master.assetType = "'. $typeID . '"
                     AND erp_fa_asset_master.companySystemID IN (' . join(',', $companyID) . ')
                     GROUP BY	erp_fa_asset_master.faID
                     
@@ -3720,6 +3722,7 @@ WHERE
                     AND erp_fa_asset_master.AUDITCATOGARY IN (' . join(',', $assetCategory) . ') 
                     AND erp_fa_asset_master.approved = -1 
                     AND erp_fa_asset_master.DIPOSED = 0 
+                    AND erp_fa_asset_master.assetType = "'. $typeID . '"
                     AND erp_fa_asset_master.companySystemID IN (' . join(',', $companyID) . ')
                      GROUP BY	erp_fa_asset_master.faID
                     ) a GROUP BY faID';
@@ -3774,7 +3777,7 @@ WHERE
                         erp_fa_asset_master.serviceLineCode,
                         docOrigin,
                         AUDITCATOGARY,
-                        postedDate,
+                        erp_fa_asset_master.postedDate,
                         erp_fa_asset_master.faCode,
                         erp_fa_asset_master.assetDescription,
                         DEPpercentage,

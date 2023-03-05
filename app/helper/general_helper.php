@@ -48,6 +48,7 @@ use App\Models\GRVDetails;
 use App\Models\PaySupplierInvoiceDetail;
 use App\Models\GRVMaster;
 use App\Models\ProcumentOrder;
+use App\Models\Employee;
 use App\Models\BookInvSuppMaster;
 use App\Models\PurchaseOrderDetails;
 use App\Models\PurchaseRequestDetails;
@@ -2977,6 +2978,17 @@ class Helper
                     $docInforArr["modelName"] = 'TenderMaster';
                     $docInforArr["primarykey"] = 'id';
                     break;
+                case 113: //SRM RFX
+                    $docInforArr["documentCodeColumnName"] = 'tender_code';
+                    $docInforArr["confirmColumnName"] = 'confirmed_yn';
+                    $docInforArr["confirmed_by_name"] = 'confirmed_by_name';
+                    $docInforArr["confirmedByEmpID"] = 'confirmed_by_emp_system_id';
+                    $docInforArr["confirmedBySystemID"] = 'confirmed_by_emp_system_id';
+                    $docInforArr["confirmedDate"] = 'confirmed_date';
+                    $docInforArr["tableName"] = 'srm_tender_master';
+                    $docInforArr["modelName"] = 'TenderMaster';
+                    $docInforArr["primarykey"] = 'id';
+                    break;
                 case 69:
                     $docInforArr["documentCodeColumnName"] = 'consoleJVcode';
                     $docInforArr["confirmColumnName"] = 'confirmedYN';
@@ -4121,6 +4133,18 @@ class Helper
                 $docInforArr["confirmedYN"] = "confirmed_yn";
                 $docInforArr["confirmedEmpSystemID"] = "confirmed_by_emp_system_id";
                 break;
+            case 113: //SRM RFX
+                $docInforArr["tableName"] = 'srm_tender_master';
+                $docInforArr["modelName"] = 'TenderMaster';
+                $docInforArr["primarykey"] = 'id';
+                $docInforArr["approvedColumnName"] = 'approved';
+                $docInforArr["approvedBy"] = 'approved_by_emp_name';
+                $docInforArr["approvedBySystemID"] = 'approved_by_user_system_id';
+                $docInforArr["approvedDate"] = 'approved_date';
+                $docInforArr["approveValue"] = -1;
+                $docInforArr["confirmedYN"] = "confirmed_yn";
+                $docInforArr["confirmedEmpSystemID"] = "confirmed_by_emp_system_id";
+                break;
              case 69: // Console Journal Voucher
                 $docInforArr["tableName"] = 'erp_consolejvmaster';
                 $docInforArr["modelName"] = 'ConsoleJVMaster';
@@ -4664,6 +4688,7 @@ class Helper
                                     $dataEmail['emailAlertMessage'] = $temp;
                                     $sendEmail = \Email::sendEmailErp($dataEmail);
                                 }
+
                             }
 
                             if ($input["documentSystemID"] == 22) {
@@ -4739,7 +4764,7 @@ class Helper
 
                                 if ($approvalLevel->noOfLevels == $input["rollLevelOrder"]) { // if fully approved
                                     $subject = $subjectName . " is fully approved";
-                                    $body = $bodyName . " is fully approved . ";
+                                    $body = "<p>". $bodyName . " is fully approved . ";
                                     $pushNotificationMessage = $subject;
                                     $pushNotificationUserIds[] = $sourceModel[$docInforArr["confirmedEmpSystemID"]];
                                 } else {
@@ -4821,7 +4846,7 @@ class Helper
                                     }
 
                                     $subject = $subjectName . " Level " . $currentApproved->rollLevelOrder . " is approved and sent to next level approval";
-                                    $body = $bodyName . " Level " . $currentApproved->rollLevelOrder . " is approved and sent to next level approval to below employees < br>" . $nextApproveNameList;
+                                    $body = '<p>'.$bodyName . " Level " . $currentApproved->rollLevelOrder . " is approved and sent to next level approval to below employees <br>" . $nextApproveNameList;
                                 }
 
 
@@ -5380,6 +5405,11 @@ class Helper
                     $docInforArr["modelName"] = 'TenderMaster';
                     $docInforArr["primarykey"] = 'id';
                     $docInforArr["referredColumnName"] = 'timesReferred';
+                case 113:
+                    $docInforArr["tableName"] = 'srm_tender_master';
+                    $docInforArr["modelName"] = 'TenderMaster';
+                    $docInforArr["primarykey"] = 'id';
+                    $docInforArr["referredColumnName"] = 'timesReferred';
                     break;
                  case 69: // Console Journal Voucher
                     $docInforArr["tableName"] = 'erp_consolejvmaster';
@@ -5410,7 +5440,7 @@ class Helper
                         // update record in document approved table
                         $approvedeDoc = $docApprove->update(['rejectedYN' => -1, 'rejectedDate' => now(), 'rejectedComments' => $input["rejectedComments"], 'employeeID' => $empInfo->empID, 'employeeSystemID' => $empInfo->employeeSystemID]);
 
-                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19, 13, 10, 15, 8, 12, 17, 9, 63, 41, 64, 62, 3, 57, 56, 58, 59, 66, 7, 67, 68, 71, 86, 87, 24, 96, 97, 99, 100, 103, 102, 65, 104, 106,107,108, 69])) {
+                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19, 13, 10, 15, 8, 12, 17, 9, 63, 41, 64, 62, 3, 57, 56, 58, 59, 66, 7, 67, 68, 71, 86, 87, 24, 96, 97, 99, 100, 103, 102, 65, 104, 106,107,108, 113, 69])) {
                             $timesReferredUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->increment($docInforArr["referredColumnName"]);
                             $refferedBackYNUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->update(['refferedBackYN' => -1]);
                         }
@@ -5434,7 +5464,7 @@ class Helper
                             // }
 
                             $subjectName = $document->documentDescription . ' ' . $currentApproved->documentCode;
-                            $bodyName = $document->documentDescription . ' ' . '<b>' . $currentApproved->documentCode . '</b>';
+                            $bodyName = '<p>'.$document->documentDescription . ' ' . '<b>' . $currentApproved->documentCode . '</b>';
 
                             $subject = $subjectName . " is rejected.";
                             $body = $bodyName . " is rejected for below reason by " . $empInfo->empName . "<br> " . $input["rejectedComments"];
@@ -5689,8 +5719,12 @@ class Helper
 
     public static function getEmployeeID()
     {
+
         $user = Models\User::find(Auth::id());
-        return $user->empID;
+        if (!empty($user)) {
+            return $user->empID;
+        }
+        return 0;
     }
 
 
@@ -6353,7 +6387,7 @@ class Helper
             $firstDayNextMonth = Carbon::parse($formattedJvDateR)->addMonth()->firstOfMonth();
             $formattedDate = date("Y-m-d", strtotime($firstDayNextMonth));
 
-            $companyFinanceYear = collect(\DB::select("SELECT companyFinanceYearID,bigginingDate,endingDate FROM companyfinanceyear WHERE companySystemID = " . $jvMasterData->companySystemID . " AND isActive = -1 AND date('" . $formattedDate . "') BETWEEN bigginingDate AND endingDate"))->first();
+            $companyFinanceYear = collect(\DB::select("SELECT companyFinanceYearID,bigginingDate,endingDate FROM companyfinanceyear WHERE companySystemID = " . $jvMasterData->companySystemID . " AND isActive = -1 AND isDeleted = 0 AND date('" . $formattedDate . "') BETWEEN bigginingDate AND endingDate"))->first();
 
             if ($companyFinanceYear) {
                 $startYear = $firstDayNextMonth;
@@ -6436,7 +6470,7 @@ class Helper
             $firstDayNextMonth = Carbon::parse($formattedJvDateR)->addMonth()->firstOfMonth();
             $formattedDate = date("Y-m-d", strtotime($firstDayNextMonth));
 
-            $companyFinanceYear = collect(\DB::select("SELECT companyFinanceYearID,bigginingDate,endingDate FROM companyfinanceyear WHERE companySystemID = " . $jvMasterData->companySystemID . " AND isActive = -1 AND date('" . $formattedDate . "') BETWEEN bigginingDate AND endingDate"))->first();
+            $companyFinanceYear = collect(\DB::select("SELECT companyFinanceYearID,bigginingDate,endingDate FROM companyfinanceyear WHERE companySystemID = " . $jvMasterData->companySystemID . " AND isActive = -1 AND isDeleted = 0 AND date('" . $formattedDate . "') BETWEEN bigginingDate AND endingDate"))->first();
 
             if ($companyFinanceYear) {
                 $startYear = $companyFinanceYear->bigginingDate;
@@ -7164,8 +7198,13 @@ class Helper
             $payee = Models\CustomerMaster::find($custReceivePayment->customerID);
             if ($payee) {
                 $data['payeeCode'] = $payee->CutomerCode;
+                $data['payeeName'] = $payee->CustomerName;
+            } else {
+                $employeeData = Employee::find($custReceivePayment->PayeeEmpID);
+
+                $data['payeeName'] = $employeeData ? $employeeData->empName: $custReceivePayment->PayeeName;                                    
             }
-            $data['payeeName'] = $custReceivePayment->PayeeName;
+
             $data['payeeGLCodeID'] = $custReceivePayment->customerGLCodeSystemID;
             $data['payeeGLCode'] = $custReceivePayment->customerGLCode;
             $data['supplierTransCurrencyID'] = $custReceivePayment->custTransactionCurrencyID;
