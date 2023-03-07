@@ -383,7 +383,8 @@ class BookInvSuppMasterRefferedBack extends Model
         'netAmount',
         'netAmountLocal',
         'netAmountRpt',
-        'VATPercentage'
+        'VATPercentage',
+        'deliveryAppoinmentID'
     ];
 
     /**
