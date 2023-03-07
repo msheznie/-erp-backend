@@ -80,7 +80,7 @@ class HRMSAPIController extends AppBaseController
 
                     $supplierCurr = SupplierCurrency::where('supplierCodeSystem', $dt['supplierID'])->first();
                     if (empty($supplierCurr)) {
-                        return $this->sendError('Customer currency not found');
+                        return $this->sendError('Supplier currency not found');
                     }
                     if ($supplierCurr) {
                         $myCurr = $supplierCurr->currencyID;
@@ -130,13 +130,8 @@ class HRMSAPIController extends AppBaseController
                         'documentType' => 1
                     );
                 } else if ($dt['documentType'] == 4){
-                    $supplierCurr = SupplierCurrency::where('supplierCodeSystem', $dt['supplierID'])->first();
-                    if (empty($supplierCurr)) {
-                        return $this->sendError('Customer currency not found');
-                    }
-                    if ($supplierCurr) {
-                        $myCurr = $supplierCurr->currencyID;
-                    }
+
+                    $myCurr = $dt['currency'];
 
                     $companyCurrencyConversion = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, 0);
                     $companyCurrencyConversionTrans = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['bookingAmountTrans']);
