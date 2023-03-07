@@ -14,7 +14,10 @@ use Illuminate\Support\Facades\Log;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
-
+use App\Models\CompanyFinanceYear;
+use Carbon\Carbon;
+use App\Models\ApprovalLevel;
+use App\Jobs\DeliveryAppoinmentGRV;
 /**
  * Class AppointmentController
  * @package App\Http\Controllers\API
@@ -415,7 +418,6 @@ class AppointmentAPIController extends AppBaseController
     public function approveCalanderDelAppointment(Request $request)
     {
         $input = $request->all();
-
         $params = array(
             'documentApprovedID' => $input['document_approved']['documentApprovedID'],
             'documentSystemCode' => $input['id'],
@@ -424,6 +426,7 @@ class AppointmentAPIController extends AppBaseController
             'rollLevelOrder' => $input['document_approved']['rollLevelOrder'],
             'approvedComments' => $input['approvedComments']
         );
+
 
         $approve = \Helper::approveDocument($params);
         if (!$approve["success"]) {
@@ -436,7 +439,7 @@ class AppointmentAPIController extends AppBaseController
     public function rejectCalanderDelAppointment(Request $request)
     {
         $input = $request->all();
-
+    
         $params = array(
             'documentApprovedID' => $input['document_approved']['documentApprovedID'],
             'documentSystemCode' => $input['id'],
@@ -462,7 +465,7 @@ class AppointmentAPIController extends AppBaseController
             $q->with(['getPoDetails' => function ($q1) {
                 $q1->with(['productmentOrder', 'unit']);
             }]);
-        }, 'detail.getPoMaster.transactioncurrency'])
+        }, 'detail.getPoMaster.transactioncurrency','detail.getPoMaster.segment'])
             ->where('id', $appointmentId)->first();
 
         return $data;
@@ -502,5 +505,51 @@ class AppointmentAPIController extends AppBaseController
             ->with('orderCondition', $sort)
             ->addColumn('Actions', 'Actions', "Actions")
             ->make(true);
+    }
+
+    public function checkDeliveryAppoinrmentApproval(Request $request)
+    {
+        $input = $request->all();
+
+        $appointments = Appointment::where('appointment.id',$input['id'])->selectRaw('erp_purchaseordermaster.purchaseOrderCode,appointment.id,appointment_details.id,appointment_details.qty as planned_qty,erp_purchaseorderdetails.noQty as total_qty,erp_purchaseorderdetails.receivedQty as receivedQty,(erp_purchaseorderdetails.noQty - erp_purchaseorderdetails.receivedQty) as balance_qty,erp_purchaseorderdetails.itemPrimaryCode')
+        ->join('appointment_details', 'appointment_details.appointment_id', '=', 'appointment.id')
+        ->join('erp_purchaseordermaster', 'erp_purchaseordermaster.purchaseOrderID', '=', 'appointment_details.po_master_id')
+        ->join('erp_purchaseorderdetails', 'erp_purchaseorderdetails.purchaseOrderDetailsID', '=', 'appointment_details.po_detail_id')
+        ->get();
+
+        $is_valid = true;
+        $msg = 'Approval failed,please check the below details.'. "<br>";;
+        foreach($appointments as $detail)
+        {
+          
+
+            if($detail->balance_qty < $detail->planned_qty)
+            {
+                $info =" The item ".$detail->itemPrimaryCode. " from  purchase order ".$detail->purchaseOrderCode." has planned quantity(".$detail->planned_qty.") is greater than balance quantity(".$detail->balance_qty.").";
+                $msg .= $info . "<br>";
+                $is_valid = false;
+            }
+        }
+
+        if(!$is_valid)
+        {
+            return $this->sendError($msg, 500);
+        }
+        else
+        {
+            return $this->sendResponse(true, 'succesfully checked');
+
+        }
+
+    }
+
+    public function createAppointmentGrv(Request $request)
+    {
+        $input = $request->all();
+        $acc_d = DeliveryAppoinmentGRV::dispatch($input);
+
+        return $this->sendResponse($acc_d, 'succesfully created');
+
+
     }
 }

@@ -192,7 +192,8 @@ class GRVMaster extends Model
         'stampDate',
         'approvedByUserID',
         'approvedByUserSystemID',
-        'postedDate'
+        'postedDate',
+        'deliveryAppoinmentID'
     ];
 
     /**

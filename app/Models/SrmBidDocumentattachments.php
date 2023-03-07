@@ -140,7 +140,8 @@ class SrmBidDocumentattachments extends Model
         'originalFileName',
         'myFileName',
         'path',
-        'sizeInKbs'
+        'sizeInKbs',
+        'type'
     ];
 
     /**

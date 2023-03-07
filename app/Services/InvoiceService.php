@@ -26,6 +26,7 @@ class InvoiceService
 
         $query = BookInvSuppMaster::select(
             ['bookingSuppMasInvAutoID',
+                'companySystemID',
                 'bookingInvCode',
                 'documentSystemID',
                 'supplierInvoiceNo',
@@ -107,14 +108,6 @@ class InvoiceService
 
     public function getInvoiceDetailsById($id, $supplierID)
     {
-
-       /* 'grvdetail' => function ($query) {
-                $query->with('grvmaster');
-            }, 'directdetail' => function ($query) {
-                $query->with('segment');
-            }, 'detail' => function ($query) {
-                $query->with('grvmaster');
-            }*/
 
         return BookInvSuppMaster::where('bookingSuppMasInvAutoID', $id)
             ->where('supplierID', $supplierID)

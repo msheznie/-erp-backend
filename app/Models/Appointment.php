@@ -102,7 +102,9 @@ class Appointment extends Model
         'canceledDate',
         'canceledByEmpId',
         'canceledReason',
-        'canceledByName'
+        'canceledByName',
+        'grv_create_yn',
+        'grv'
     ];
 
     /**
@@ -174,5 +176,15 @@ class Appointment extends Model
     public function attachment()
     {
         return $this->hasMany('App\Models\DocumentAttachments',['documentSystemID', 'documentSystemCode'], ['document_system_id', 'id']);
+    }
+
+    public function grv()
+    {
+        return $this->hasOne('App\Models\GRVMaster', 'deliveryAppoinmentID', 'id');
+    }
+
+    public function invoice()
+    {
+        return $this->hasOne('App\Models\BookInvSuppMaster', 'deliveryAppoinmentID', 'id');
     }
 }
