@@ -256,51 +256,40 @@
 
     <table style="width: 100%" class="table_height">
         <tr style="width: 100%">
-        <td>
-            <div>
-                <span style="font-size: 18px">
-                    @if($masterdata->documentType == 13)
-                        Customer Invoice Receipt
-                    @endif
-                    @if($masterdata->documentType == 14)
-                        Direct Receipt
-                    @endif
-                    @if($masterdata->documentType == 15)
-                        Advance Receipt
-                    @endif
+            <td>
+                <div>
+                    <span style="font-size: 18px">
+                        @if($masterdata->documentType == 13)
+                            Customer Invoice Receipt
+                        @endif
+                        @if($masterdata->documentType == 14)
+                            Direct Receipt
+                        @endif
+                        @if($masterdata->documentType == 15)
+                            Advance Receipt
+                        @endif
+                    </span>
+                </div>
+            </td>
+            <td valign="bottom" class="text-right">
+                <span style="font-weight:bold;">
+                    <h3 class="text-muted">
+                        @if($masterdata->confirmedYN == 0 && $masterdata->approved == 0)
+                            Not Confirmed
+                        @elseif($masterdata->confirmedYN == 1 && $masterdata->approved == 0)
+                            Pending Approval
+                        @elseif($masterdata->confirmedYN == 1 && ($masterdata->approved == 1 ||  $masterdata->approved == -1))
+                            Fully Approved
+                        @endif
+                    </h3>
                 </span>
-            </div>
-        </td>
-
+            </td>
         </tr>
     </table>
     <br>
     <br>
+
     @if($masterdata->documentType == 13 || $masterdata->documentType == 15)
-        <table style="width: 100%">
-            <tr style="width:100%">
-                <td style="width: 60%"></td>
-                <td style="width: 40%">
-                    <table>
-                        <tr style="width: 100%">
-                            <td valign="bottom" class="text-right">
-                                <span style="font-weight:bold;">
-                                    <h3 class="text-muted">
-                                        @if($masterdata->confirmedYN == 0 && $masterdata->approved == 0)
-                                            Not Confirmed
-                                        @elseif($masterdata->confirmedYN == 1 && $masterdata->approved == 0)
-                                            Pending Approval
-                                        @elseif($masterdata->confirmedYN == 1 && ($masterdata->approved == 1 ||  $masterdata->approved == -1))
-                                            Fully Approved
-                                        @endif
-                                    </h3>
- `                              </span>
-                            </td>
-                        </tr>
-                    </table>
-                </td>
-            </tr>
-        </table>
         <table style="width: 100%">
             <tr style="width:100%">
                 <td style="width: 60%">
@@ -441,30 +430,6 @@
         </table>
     @endif
     @if($masterdata->documentType == 14)
-        <table style="width: 100%">
-            <tr style="width:100%">
-                <td style="width: 60%"></td>
-                <td style="width: 40%">
-                    <table>
-                        <tr style="width: 100%">
-                            <td valign="bottom" class="text-right">
-                                <span style="font-weight:bold;">
-                                    <h3 class="text-muted">
-                                        @if($masterdata->confirmedYN == 0 && $masterdata->approved == 0)
-                                            Not Confirmed
-                                        @elseif($masterdata->confirmedYN == 1 && $masterdata->approved == 0)
-                                            Pending Approval
-                                        @elseif($masterdata->confirmedYN == 1 && ($masterdata->approved == 1 ||  $masterdata->approved == -1))
-                                            Fully Approved
-                                        @endif
-                                    </h3>
-    `                              </span>
-                            </td>
-                        </tr>
-                    </table>
-                </td>
-            </tr>
-        </table>
         <table style="width: 100%">
             <tr style="width:100%">
                 <td style="width: 60%">
