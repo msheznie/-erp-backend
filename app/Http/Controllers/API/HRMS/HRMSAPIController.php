@@ -6,10 +6,14 @@ use App\helper\SupplierInvoice;
 use App\Http\Controllers\AppBaseController;
 use App\Http\Requests\API\CreateBookInvSuppMasterAPIRequest;
 use App\Models\BookInvSuppMaster;
+use App\Models\ChartOfAccountsAssigned;
 use App\Models\Company;
 use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
+use App\Models\DirectInvoiceDetails;
+use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\SegmentMaster;
 use App\Models\SupplierAssigned;
 use App\Models\SupplierCurrency;
 use App\Models\SystemGlCodeScenarioDetail;
@@ -31,6 +35,9 @@ class HRMSAPIController extends AppBaseController
                     if (empty($company)) {
                         return $this->sendError('Company not found');
                     }
+
+                    $companyCurrency = \Helper::companyCurrency($dt['companySystemID']);
+
 
 
                     $financeYear = CompanyFinanceYear::where('companySystemID', $dt['companySystemID'])->where('bigginingDate', "<=", $dt['bookingDate'])->where('endingDate', ">=", $dt['bookingDate'])->first();
@@ -81,6 +88,8 @@ class HRMSAPIController extends AppBaseController
 
                     $companyCurrencyConversion = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, 0);
                     $companyCurrencyConversionTrans = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['bookingAmountTrans']);
+                    $companyCurrencyConversionVat = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['vatAmount']);
+
                     $suppInvoiceArray = array(
                         'companySystemID' => $dt['companySystemID'],
                         'companyID' => isset($company->CompanyID) ? $company->CompanyID : null,
@@ -103,7 +112,10 @@ class HRMSAPIController extends AppBaseController
                         'supplierGLCode' => $supplierAssignedDetail->liabilityAccount,
                         'UnbilledGRVAccountSystemID' => $supplierAssignedDetail->UnbilledGRVAccountSystemID,
                         'UnbilledGRVAccount' => $supplierAssignedDetail->UnbilledGRVAccount,
-                        'VATPercentage' => $supplierAssignedDetail->VATPercentage,
+                        'VATPercentage' => $dt['vatPercentage'],
+                        'VATAmount' => $dt['vatAmount'],
+                        'VATAmountLocal' => $companyCurrencyConversionVat['localAmount'],
+                        'VATAmountRpt' => $companyCurrencyConversionVat['reportingAmount'],
                         'supplierInvoiceNo' => $dt['supplierInvoiceNo'],
                         'supplierInvoiceDate' => $dt['supplierInvoiceDate'],
                         'supplierTransactionCurrencyID' => $myCurr,
@@ -129,6 +141,8 @@ class HRMSAPIController extends AppBaseController
                     $companyCurrencyConversion = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, 0);
                     $companyCurrencyConversionTrans = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['bookingAmountTrans']);
 
+                    $companyCurrencyConversionVat = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['vatAmount']);
+
                     $checkEmployeeControlAccount = SystemGlCodeScenarioDetail::getGlByScenario($dt['companySystemID'], 11, 12);
 
                     if (is_null($checkEmployeeControlAccount)) {
@@ -151,7 +165,10 @@ class HRMSAPIController extends AppBaseController
                         'bookingDate' => $dt['bookingDate'],
                         'comments' => $dt['comments'],
                         'secondaryRefNo' => $dt['secondaryRefNo'],
-                        'VATPercentage' => 0,
+                        'VATPercentage' => $dt['vatPercentage'],
+                        'VATAmount' => $dt['vatAmount'],
+                        'VATAmountLocal' => $companyCurrencyConversionVat['localAmount'],
+                        'VATAmountRpt' => $companyCurrencyConversionVat['reportingAmount'],
                         'supplierInvoiceNo' => $dt['supplierInvoiceNo'],
                         'supplierInvoiceDate' => $dt['supplierInvoiceDate'],
                         'supplierTransactionCurrencyID' => $myCurr,
@@ -167,17 +184,86 @@ class HRMSAPIController extends AppBaseController
                         'employeeID' => $dt['employeeID'],
                         'employeeControlAcID' => $checkEmployeeControlAccount
 
-                );
+                  );
+                 }
                 }
-
-                }
-                BookInvSuppMaster::insert($suppInvoiceArray);
-
+                 $bookInvSupp = BookInvSuppMaster::create($suppInvoiceArray);
             }
-            DB::commit();
+
+            if (!empty($input[1])) {
+                foreach ($input[1] as $dt) {
+                    $segment = SegmentMaster::find($dt['serviceLineSystemID']);
+                    $glCode = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $dt['glSystemID'])->where('companySystemID', $bookInvSupp->companySystemID)->first();
+                    $supplierCurr = SupplierCurrency::where('supplierCodeSystem', $dt['supplierID'])->first();
+                    if (empty($supplierCurr)) {
+                        return $this->sendError('Customer currency not found');
+                    }
+                    if ($supplierCurr) {
+                        $myCurr = $supplierCurr->currencyID;
+                    }
+                    $companyCurrencyConversion = \Helper::currencyConversion($bookInvSupp->companySystemID, $myCurr, $myCurr, 0);
+                    $companyCurrencyConversionTrans = \Helper::currencyConversion($bookInvSupp->companySystemID, $myCurr, $myCurr, $dt['DIAmount']);
+                    $companyCurrencyConversionVat = \Helper::currencyConversion($bookInvSupp->companySystemID, $myCurr, $myCurr, $dt['vatAmount']);
+                    $companyCurrencyConversionNet = \Helper::currencyConversion($bookInvSupp->companySystemID, $myCurr, $myCurr, $dt['netAmount']);
+
+                    $suppInvoiceDetArray[] = array(
+                        'directInvoiceAutoID' => $bookInvSupp->bookingSuppMasInvAutoID,
+                        'companyID' => $bookInvSupp->companyID,
+                        'companySystemID' => $bookInvSupp->companySystemID,
+                        'serviceLineSystemID' => $dt['serviceLineSystemID'],
+                        'serviceLineCode' => isset($segment->ServiceLineCode) ? $segment->ServiceLineCode : null,
+                        'chartOfAccountSystemID' => $dt['glSystemID'],
+                        'glCode' => isset($glCode->AccountCode) ? $glCode->AccountCode : null,
+                        'glCodeDes' => isset($glCode->AccountDescription) ? $glCode->AccountDescription : null,
+                        'comments' => $dt['comments'],
+                        'DIAmountCurrency' => $myCurr,
+                        'DIAmountCurrencyER' => 1,
+                        'DIAmount' => $dt['DIAmount'],
+                        'localAmount' => $companyCurrencyConversionTrans['localAmount'],
+                        'comRptAmount' => $companyCurrencyConversionTrans['reportingAmount'],
+                        'comRptCurrency' => isset($companyCurrency->reportingcurrency->currencyID) ? $companyCurrency->reportingcurrency->currencyID : null,
+                        'comRptCurrencyER' => $companyCurrencyConversion['trasToRptER'],
+                        'localCurrency' => isset($companyCurrency->localcurrency->currencyID) ? $companyCurrency->localcurrency->currencyID : null,
+                        'localCurrencyER' => $companyCurrencyConversion['trasToLocER'],
+                        'vatMasterCategoryID' => $dt['vatMasterCategoryID'],
+                        'vatSubCategoryID' => $dt['vatSubCategoryID'],
+                        'VATPercentage' => $dt['vatPercentage'],
+                        'VATAmount' => $dt['vatAmount'],
+                        'VATAmountLocal' => $companyCurrencyConversionVat['localAmount'],
+                        'VATAmountRpt' => $companyCurrencyConversionVat['reportingAmount'],
+                        'netAmount' => $dt['netAmount'],
+                        'netAmountLocal' => $companyCurrencyConversionNet['localAmount'],
+                        'netAmountRpt' => $companyCurrencyConversionNet['reportingAmount']
+                    );
+                }
+                DirectInvoiceDetails::insert($suppInvoiceDetArray);
+            }
+
+
+                $params = array('autoID' => $bookInvSupp->bookingSuppMasInvAutoID,
+                    'company' => $bookInvSupp->companySystemID,
+                    'document' => $bookInvSupp->documentSystemID,
+                    'segment' => '',
+                    'category' => '',
+                    'amount' => ''
+                );
+
+
+                $confirm = \Helper::confirmDocumentForApi($params);
+                Log::info($confirm);
+
+                $db = isset($request->db) ? $request->db : "";
+
+                $documentApproveds = DocumentApproved::where('documentSystemCode', $bookInvSupp->bookingSuppMasInvAutoID)->where('documentSystemID', 11)->get();
+                foreach ($documentApproveds as $documentApproved) {
+                    $documentApproved["approvedComments"] = "Generated Supplier Invoice through HRMS system";
+                    $documentApproved["db"] = $db;
+                    \Helper::approveDocumentForApi($documentApproved);
+                }
+
+                DB::commit();
 
             return $this->sendResponse($suppInvoiceArray, 'Supplier Invoice created successfully');
-
 
         }
         catch(\Exception $e){
