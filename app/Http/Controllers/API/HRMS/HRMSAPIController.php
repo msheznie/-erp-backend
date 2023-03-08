@@ -31,6 +31,8 @@ class HRMSAPIController extends AppBaseController
 
             if (!empty($input[0])) {
                 foreach ($input[0] as $dt) {
+                    $dt['companySystemID'] = $request->company_id;
+
                     $company = Company::where('companySystemID', $dt['companySystemID'])->first();
                     if (empty($company)) {
                         return $this->sendError('Company not found');
