@@ -189,47 +189,87 @@ class HRMSAPIController extends AppBaseController
                 foreach ($input[1] as $dt) {
                     $segment = SegmentMaster::find($dt['serviceLineSystemID']);
                     $glCode = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $dt['glSystemID'])->where('companySystemID', $bookInvSupp->companySystemID)->first();
-                    $supplierCurr = SupplierCurrency::where('supplierCodeSystem', $dt['supplierID'])->first();
-                    if (empty($supplierCurr)) {
-                        return $this->sendError('Customer currency not found');
-                    }
-                    if ($supplierCurr) {
-                        $myCurr = $supplierCurr->currencyID;
-                    }
-                    $companyCurrencyConversion = \Helper::currencyConversion($bookInvSupp->companySystemID, $myCurr, $myCurr, 0);
-                    $companyCurrencyConversionTrans = \Helper::currencyConversion($bookInvSupp->companySystemID, $myCurr, $myCurr, $dt['DIAmount']);
-                    $companyCurrencyConversionVat = \Helper::currencyConversion($bookInvSupp->companySystemID, $myCurr, $myCurr, $dt['vatAmount']);
-                    $companyCurrencyConversionNet = \Helper::currencyConversion($bookInvSupp->companySystemID, $myCurr, $myCurr, $dt['netAmount']);
+                    if ($bookInvSupp->documentType == 1) {
+                        $supplierCurr = SupplierCurrency::where('supplierCodeSystem', $dt['supplierID'])->first();
+                        if (empty($supplierCurr)) {
+                            return $this->sendError('Customer currency not found');
+                        }
+                        if ($supplierCurr) {
+                            $myCurr = $supplierCurr->currencyID;
+                        }
+                        $companyCurrencyConversion = \Helper::currencyConversion($bookInvSupp->companySystemID, $myCurr, $myCurr, 0);
+                        $companyCurrencyConversionTrans = \Helper::currencyConversion($bookInvSupp->companySystemID, $myCurr, $myCurr, $dt['DIAmount']);
+                        $companyCurrencyConversionVat = \Helper::currencyConversion($bookInvSupp->companySystemID, $myCurr, $myCurr, $dt['vatAmount']);
+                        $companyCurrencyConversionNet = \Helper::currencyConversion($bookInvSupp->companySystemID, $myCurr, $myCurr, $dt['netAmount']);
 
-                    $suppInvoiceDetArray[] = array(
-                        'directInvoiceAutoID' => $bookInvSupp->bookingSuppMasInvAutoID,
-                        'companyID' => $bookInvSupp->companyID,
-                        'companySystemID' => $bookInvSupp->companySystemID,
-                        'serviceLineSystemID' => $dt['serviceLineSystemID'],
-                        'serviceLineCode' => isset($segment->ServiceLineCode) ? $segment->ServiceLineCode : null,
-                        'chartOfAccountSystemID' => $dt['glSystemID'],
-                        'glCode' => isset($glCode->AccountCode) ? $glCode->AccountCode : null,
-                        'glCodeDes' => isset($glCode->AccountDescription) ? $glCode->AccountDescription : null,
-                        'comments' => $dt['comments'],
-                        'DIAmountCurrency' => $myCurr,
-                        'DIAmountCurrencyER' => 1,
-                        'DIAmount' => $dt['DIAmount'],
-                        'localAmount' => $companyCurrencyConversionTrans['localAmount'],
-                        'comRptAmount' => $companyCurrencyConversionTrans['reportingAmount'],
-                        'comRptCurrency' => isset($companyCurrency->reportingcurrency->currencyID) ? $companyCurrency->reportingcurrency->currencyID : null,
-                        'comRptCurrencyER' => $companyCurrencyConversion['trasToRptER'],
-                        'localCurrency' => isset($companyCurrency->localcurrency->currencyID) ? $companyCurrency->localcurrency->currencyID : null,
-                        'localCurrencyER' => $companyCurrencyConversion['trasToLocER'],
-                        'vatMasterCategoryID' => $dt['vatMasterCategoryID'],
-                        'vatSubCategoryID' => $dt['vatSubCategoryID'],
-                        'VATPercentage' => $dt['vatPercentage'],
-                        'VATAmount' => $dt['vatAmount'],
-                        'VATAmountLocal' => $companyCurrencyConversionVat['localAmount'],
-                        'VATAmountRpt' => $companyCurrencyConversionVat['reportingAmount'],
-                        'netAmount' => $dt['netAmount'],
-                        'netAmountLocal' => $companyCurrencyConversionNet['localAmount'],
-                        'netAmountRpt' => $companyCurrencyConversionNet['reportingAmount']
-                    );
+                        $suppInvoiceDetArray[] = array(
+                            'directInvoiceAutoID' => $bookInvSupp->bookingSuppMasInvAutoID,
+                            'companyID' => $bookInvSupp->companyID,
+                            'companySystemID' => $bookInvSupp->companySystemID,
+                            'serviceLineSystemID' => $dt['serviceLineSystemID'],
+                            'serviceLineCode' => isset($segment->ServiceLineCode) ? $segment->ServiceLineCode : null,
+                            'chartOfAccountSystemID' => $dt['glSystemID'],
+                            'glCode' => isset($glCode->AccountCode) ? $glCode->AccountCode : null,
+                            'glCodeDes' => isset($glCode->AccountDescription) ? $glCode->AccountDescription : null,
+                            'comments' => $dt['comments'],
+                            'DIAmountCurrency' => $myCurr,
+                            'DIAmountCurrencyER' => 1,
+                            'DIAmount' => $dt['DIAmount'],
+                            'localAmount' => $companyCurrencyConversionTrans['localAmount'],
+                            'comRptAmount' => $companyCurrencyConversionTrans['reportingAmount'],
+                            'comRptCurrency' => isset($companyCurrency->reportingcurrency->currencyID) ? $companyCurrency->reportingcurrency->currencyID : null,
+                            'comRptCurrencyER' => $companyCurrencyConversion['trasToRptER'],
+                            'localCurrency' => isset($companyCurrency->localcurrency->currencyID) ? $companyCurrency->localcurrency->currencyID : null,
+                            'localCurrencyER' => $companyCurrencyConversion['trasToLocER'],
+                            'vatMasterCategoryID' => $dt['vatMasterCategoryID'],
+                            'vatSubCategoryID' => $dt['vatSubCategoryID'],
+                            'VATPercentage' => $dt['vatPercentage'],
+                            'VATAmount' => $dt['vatAmount'],
+                            'VATAmountLocal' => $companyCurrencyConversionVat['localAmount'],
+                            'VATAmountRpt' => $companyCurrencyConversionVat['reportingAmount'],
+                            'netAmount' => $dt['netAmount'],
+                            'netAmountLocal' => $companyCurrencyConversionNet['localAmount'],
+                            'netAmountRpt' => $companyCurrencyConversionNet['reportingAmount']
+                        );
+                    }
+                    if ($bookInvSupp->documentType == 4) {
+                        $myCurr = $dt['currency'];
+
+                        $companyCurrencyConversion = \Helper::currencyConversion($bookInvSupp->companySystemID, $myCurr, $myCurr, 0);
+                        $companyCurrencyConversionTrans = \Helper::currencyConversion($bookInvSupp->companySystemID, $myCurr, $myCurr, $dt['DIAmount']);
+                        $companyCurrencyConversionVat = \Helper::currencyConversion($bookInvSupp->companySystemID, $myCurr, $myCurr, $dt['vatAmount']);
+                        $companyCurrencyConversionNet = \Helper::currencyConversion($bookInvSupp->companySystemID, $myCurr, $myCurr, $dt['netAmount']);
+
+                        $suppInvoiceDetArray[] = array(
+                            'directInvoiceAutoID' => $bookInvSupp->bookingSuppMasInvAutoID,
+                            'companyID' => $bookInvSupp->companyID,
+                            'companySystemID' => $bookInvSupp->companySystemID,
+                            'serviceLineSystemID' => $dt['serviceLineSystemID'],
+                            'serviceLineCode' => isset($segment->ServiceLineCode) ? $segment->ServiceLineCode : null,
+                            'chartOfAccountSystemID' => $dt['glSystemID'],
+                            'glCode' => isset($glCode->AccountCode) ? $glCode->AccountCode : null,
+                            'glCodeDes' => isset($glCode->AccountDescription) ? $glCode->AccountDescription : null,
+                            'comments' => $dt['comments'],
+                            'DIAmountCurrency' => $myCurr,
+                            'DIAmountCurrencyER' => 1,
+                            'DIAmount' => $dt['DIAmount'],
+                            'localAmount' => $companyCurrencyConversionTrans['localAmount'],
+                            'comRptAmount' => $companyCurrencyConversionTrans['reportingAmount'],
+                            'comRptCurrency' => isset($companyCurrency->reportingcurrency->currencyID) ? $companyCurrency->reportingcurrency->currencyID : null,
+                            'comRptCurrencyER' => $companyCurrencyConversion['trasToRptER'],
+                            'localCurrency' => isset($companyCurrency->localcurrency->currencyID) ? $companyCurrency->localcurrency->currencyID : null,
+                            'localCurrencyER' => $companyCurrencyConversion['trasToLocER'],
+                            'vatMasterCategoryID' => $dt['vatMasterCategoryID'],
+                            'vatSubCategoryID' => $dt['vatSubCategoryID'],
+                            'VATPercentage' => $dt['vatPercentage'],
+                            'VATAmount' => $dt['vatAmount'],
+                            'VATAmountLocal' => $companyCurrencyConversionVat['localAmount'],
+                            'VATAmountRpt' => $companyCurrencyConversionVat['reportingAmount'],
+                            'netAmount' => $dt['netAmount'],
+                            'netAmountLocal' => $companyCurrencyConversionNet['localAmount'],
+                            'netAmountRpt' => $companyCurrencyConversionNet['reportingAmount']
+                        );
+                    }
                 }
                 DirectInvoiceDetails::insert($suppInvoiceDetArray);
             }
