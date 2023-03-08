@@ -287,20 +287,15 @@
         </tr>
     </table>
     <br>
-    <br>
 
     @if($masterdata->documentType == 13 || $masterdata->documentType == 15)
         <table style="width: 100%">
-            <tr style="width:100%">
-                <td style="width: 60%">
-                    <table>
+            <tr style="width: 100%">
+                <td style="width: 58%; vertical-align:top;">
+                    <table style="width: 100%">
                         <tr>
-                            <td width="150px" style="vertical-align: top;">
-                                <span style="font-weight:bold;">Customer Name</span>
-                            </td>
-                            <td width="10px" style="vertical-align: top;">
-                                <span style="font-weight:bold;">:</span>
-                            </td>
+                            <td width="150px" style="font-weight:bold; vertical-align:top;">Customer Name</td>
+                            <td width="10px" style="font-weight:bold; vertical-align:top;">:</td>
                             <td colspan="3">
                                 @if ($masterdata->customer)
                                     {{$masterdata->customer->CustomerName}}
@@ -308,12 +303,8 @@
                             </td>
                         </tr>
                         <tr>
-                            <td width="150px" style="vertical-align: top;">
-                                <span style="font-weight:bold;">Customer Code</span>
-                            </td>
-                            <td width="10px" style="vertical-align: top;">
-                                <span style="font-weight:bold;">:</span>
-                            </td>
+                            <td width="150px" style="font-weight:bold; vertical-align:top;">Customer Code</td>
+                            <td width="10px" style="font-weight:bold; vertical-align:top;">:</td>
                             <td colspan="3">
                                 @if ($masterdata->customer)
                                     {{$masterdata->customer->CutomerCode}}
@@ -321,26 +312,49 @@
                             </td>
                         </tr>
                         <tr>
-                            <td width="150px" style="vertical-align: top;">
-                                <span style="font-weight:bold;">Customer Address</span>
-                            </td>
-                            <td width="10px" style="vertical-align: top;">
-                                <span style="font-weight:bold;">:</span>
-                            </td>
+                            <td width="150px" style="font-weight:bold; vertical-align:top;">Customer Address</td>
+                            <td width="10px" style="font-weight:bold; vertical-align:top;">:</td>
                             <td colspan="3">
                                 @if ($masterdata->customer)
                                     {{$masterdata->customer->customerAddress1}}
                                 @endif
                             </td>
                         </tr>
+                    </table>
+                </td>
+                <td style="width: 42%;  vertical-align:top;">
+                    <table style="width: 100%">
+                        <tr>
+                            <td width="150px" style="font-weight:bold; vertical-align:top;">Bank Name</td>
+                            <td width="10px" style="font-weight:bold; vertical-align:top;">:</td>
+                            <td colspan="3">
+                                @if($masterdata->bank)
+                                    {{$masterdata->bank->bankName}}
+                                @endif
+                            </td>
+                        </tr>
+                        <tr>
+                            <td width="150px" style="font-weight:bold; vertical-align:top;">Account Number</td>
+                            <td width="10px" style="font-weight:bold; vertical-align:top;">:</td>
+                            <td colspan="3">
+                                @if($masterdata->bank)
+                                    {{$masterdata->bank->AccountNo}}
+                                @endif
+                            </td>
+                        </tr>
+                        <tr>
+                            <td width="150px" style="font-weight:bold; vertical-align:top;">Bank Currency</td>
+                            <td width="10px" style="font-weight:bold; vertical-align:top;">:</td>
+                            <td colspan="3">
+                                @if($masterdata->bank_currency)
+                                    {{$masterdata->bank_currency->CurrencyCode}}
+                                @endif
+                            </td>
+                        </tr>
                         @if($masterdata->isVATApplicable)
                             <tr>
-                                <td width="150px">
-                                    <span style="font-weight:bold;">VAT Percentage (%)</span>
-                                </td>
-                                <td width="10px">
-                                    <span style="font-weight:bold;">:</span>
-                                </td>
+                                <td width="150px" style="font-weight:bold; vertical-align:top;">VAT Percentage (%)</td>
+                                <td width="10px" style="font-weight:bold; vertical-align:top;">:</td>
                                 <td colspan="3">
                                     @if ($masterdata->VATPercentage)
                                         {{$masterdata->VATPercentage}}
@@ -348,57 +362,11 @@
                                 </td>
                             </tr>
                         @endif
-                    </table>
-                </td>
-                <td style="width: 40%">
-                    <table style="width: 100%">
+                        
                         <tr>
-                            <td width="150px">
-                                <span style="font-weight:bold;">Bank Name</span>
-                            </td>
-                            <td width="10px">
-                                <span style="font-weight:bold;">:</span>
-                            </td>
-                            <td>
-                                @if($masterdata->bank)
-                                    {{$masterdata->bank->bankName}}
-                                @endif
-                            </td>
-                        </tr>
-                        <tr>
-                            <td width="150px">
-                                <span style="font-weight:bold;">Account Number</span>
-                            </td>
-                            <td width="10px">
-                                <span style="font-weight:bold;">:</span>
-                            </td>
-                            <td>
-                                @if($masterdata->bank)
-                                    {{$masterdata->bank->AccountNo}}
-                                @endif
-                            </td>
-                        </tr>
-                        <tr>
-                            <td width="150px">
-                                <span style="font-weight:bold;">Bank Currency</span>
-                            </td>
-                            <td width="10px">
-                                <span style="font-weight:bold;">:</span>
-                            </td>
-                            <td>
-                                @if($masterdata->bank_currency)
-                                    {{$masterdata->bank_currency->CurrencyCode}}
-                                @endif
-                            </td>
-                        </tr>
-                        <tr>
-                            <td width="150px">
-                                <span style="font-weight:bold;">Currency</span>
-                            </td>
-                            <td width="10px">
-                                <span style="font-weight:bold;">:</span>
-                            </td>
-                            <td>
+                            <td width="150px" style="font-weight:bold; vertical-align:top;">Currency</td>
+                            <td width="10px" style="font-weight:bold; vertical-align:top;">:</td>
+                            <td colspan="3">
                                 @if($masterdata->currency)
                                     {{$masterdata->currency->CurrencyCode}}
                                 @endif
