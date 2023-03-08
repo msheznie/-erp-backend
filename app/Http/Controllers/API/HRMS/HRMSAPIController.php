@@ -300,7 +300,7 @@ class HRMSAPIController extends AppBaseController
 
                 DB::commit();
 
-            return $this->sendResponse($suppInvoiceArray, 'Supplier Invoice created successfully');
+            return $this->sendResponse($bookInvSupp, 'Supplier Invoice created successfully');
 
         }
         catch(\Exception $e){
