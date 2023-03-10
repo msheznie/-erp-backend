@@ -134,9 +134,6 @@
     .watermarkText {
         color: #dedede !important;
         font-size: 30px;
-        font-weight: 700 !important;
-        text-align: center !important;
-        font-family: fantasy !important;
     }
 
     #watermark {
@@ -162,18 +159,6 @@
 
 </style>
 
-{{-- <div id="watermark">
-         <span class="watermarkText">
-           <h3 class="text-muted">
-               @if($grvData->grvConfirmedYN == 0 && $grvData->approved == 0)
-                   Not Confirmed & Not Approved <br> Draft Copy
-               @endif
-               @if($grvData->grvConfirmedYN == 1 && $grvData->approved == 0)
-                   Confirmed & Not Approved <br> Draft Copy
-               @endif
-           </h3>
-         </span>
-</div> --}}
 <div class="content">
     <div class="row">
         <table style="width: 100%" class="table_height">
