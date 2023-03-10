@@ -136,9 +136,6 @@
     .watermarkText {
         color: #dedede !important;
         font-size: 30px;
-        font-weight: 700 !important;
-        text-align: center !important;
-        font-family: fantasy !important;
     }
 
     #watermark {
@@ -186,24 +183,7 @@
 </style>
 <link href="{{ public_path('assets/css/app.css') }}" rel="stylesheet" type="text/css" />
 
-<div id="watermark">
-         <span class="watermarkText">
-           <h3 class="text-muted">
-               @if($podata->poConfirmedYN == 0 && $podata->approved == 0)
-                   Not Confirmed & Not Approved <br> Draft Copy
-               @endif
-               @if($podata->poConfirmedYN == 1 && $podata->approved == 0)
-                   Confirmed & Not Approved <br> Draft Copy
-               @endif
 
-           </h3>
-                @if($podata->poCancelledYN == -1)
-                    <h1 class="rotate">
-                 CANCELLED
-                    </h1>
-             @endif
-         </span>
-</div>
 <div class="content">
     <div class="row">
         <table style="width:100%" class="table_height">
@@ -429,6 +409,51 @@
     </div>
     <hr style="border-top: 2px solid black; height: 2px; color: black">
     <div class="row">
+
+        @if (($podata->poConfirmedYN == 0 || $podata->poConfirmedYN == 1) && $podata->approved == 0)
+        <table style="  height: 1000px; 
+                    opacity: 0.6; 
+                    left: 0; 
+                    transform-origin: 20% 20%; 
+                    z-index: 1000;
+                    position: fixed;
+                    width: 100%;
+                    height: 100%;
+                    padding-top: 31%; margin-bottom: -10%;">
+                <tr>
+                    <td width="20%">
+
+                    </td>
+                    <td width="60%" style="text-align: center; font-weight: bold !important;">
+                        <span class="watermarkText" style="font-weight: bold; ">
+                            <h3 style=" font-size: 24.5px;
+                                        margin-bottom: 0.1rem;
+                                        font-weight: 500;
+                                        line-height: 1.2;
+                                        color: inherit;">
+                                @if($podata->poConfirmedYN == 0 && $podata->approved == 0)
+                                    Not Confirmed & Not Approved <br> Draft Copy
+                                @endif
+                                @if($podata->poConfirmedYN == 1 && $podata->approved == 0)
+                                    Confirmed & Not Approved <br> Draft Copy
+                                @endif
+                            </h3>
+
+
+                                @if($podata->poCancelledYN == -1)
+                                    <h1 class="rotate">
+                                CANCELLED
+                                    </h1>
+                                @endif
+                        </span>
+                    </td>
+                    <td width="20%">
+
+                    </td>
+                </tr>
+            </table>
+        @endif
+
         <table style="width:100%">
             <tr>
                 <td style="width: 60%">
