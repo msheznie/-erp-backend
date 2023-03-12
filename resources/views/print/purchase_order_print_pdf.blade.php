@@ -175,7 +175,7 @@
         writing-mode: vertical-lr;
         -webkit-transform: rotate(-50deg);
         -moz-transform: rotate(-50deg);
-        font-size: 160px;
+        font-size: 70px;
         color: #ff5454 !important;
     }
 
@@ -410,7 +410,7 @@
     <hr style="border-top: 2px solid black; height: 2px; color: black">
     <div class="row">
 
-        @if (($podata->poConfirmedYN == 0 || $podata->poConfirmedYN == 1) && $podata->approved == 0)
+        @if ((($podata->poConfirmedYN == 0 || $podata->poConfirmedYN == 1) && $podata->approved == 0 || $podata->poCancelledYN == -1))
         <table style="  height: 1000px; 
                     opacity: 0.6; 
                     left: 0; 
