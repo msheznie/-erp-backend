@@ -2256,9 +2256,82 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                         return $this->sendError('Every item should have a payment amount', 500, ['type' => 'confirm']);
                     }
 
+                    $tax = Taxdetail::selectRaw("SUM(localAmount) as localAmount, SUM(rptAmount) as rptAmount,SUM(amount) as transAmount,localCurrencyID,rptCurrencyID as reportingCurrencyID,currency as supplierTransactionCurrencyID,currencyER as supplierTransactionER,rptCurrencyER as companyReportingER,localCurrencyER,payeeSystemCode")
+                                    ->WHERE('documentSystemCode', $id)
+                                    ->WHERE('documentSystemID', $paySupplierInvoiceMaster->documentSystemID)
+                                    ->groupBy('documentSystemCode')
+                                    ->first();
+
+                    $isVATEligible = TaxService::checkCompanyVATEligible($paySupplierInvoiceMaster->companySystemID);
+
+                    if ($isVATEligible == 1) {
+                        if($tax){
+                            $taxInputVATControl = TaxService::getInputVATGLAccount($paySupplierInvoiceMaster->companySystemID);
+
+                            if (!$taxInputVATControl) {
+                                return $this->sendError('Input VAT GL Account is not configured for this company', 500, ['type' => 'confirm']);
+                            }
+
+                            $chartOfAccountData = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $taxInputVATControl->inputVatGLAccountAutoID)
+                                ->where('companySystemID', $paySupplierInvoiceMaster->companySystemID)
+                                ->where('isAssigned', -1)
+                                ->first();
+
+                            if (!$chartOfAccountData) {
+                                return $this->sendError('Input VAT GL Account is not assigned to this company', 500, ['type' => 'confirm']);
+                            }
+
+                            if($paySupplierInvoiceMaster->rcmActivated == 1) {
+                                $taxOutputVATControl = TaxService::getOutputVATGLAccount($paySupplierInvoiceMaster->companySystemID);
+
+                                if (!$taxOutputVATControl) {
+                                    return $this->sendError('Output VAT GL Account is not configured for this company', 500, ['type' => 'confirm']);
+                                }
+
+                                $chartOfAccountData = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $taxOutputVATControl->outputVatGLAccountAutoID)
+                                    ->where('companySystemID', $paySupplierInvoiceMaster->companySystemID)
+                                    ->where('isAssigned', -1)
+                                    ->first();
+
+                                if (!$chartOfAccountData) {
+                                    return $this->sendError('Output VAT GL Account is not assigned to this company', 500, ['type' => 'confirm']);
+                                }
+                            } 
+                        }
+                    }
+
                 }
 
-                $params = array('autoID' => $id, 'company' => $companySystemID, 'document' => $documentSystemID, 'segment' => '', 'category' => '', 'amount' => 0);
+
+                $amountForApproval = 0;
+                if ($paySupplierInvoiceMaster->invoiceType == 2 || $paySupplierInvoiceMaster->invoiceType == 6) {
+                    $totalAmountForApprovalData = PaySupplierInvoiceDetail::where('PayMasterAutoId', $id)
+                                                                    ->selectRaw('SUM(paymentLocalAmount) as total, SUM(retentionVatAmount) as retentionVatAmount, supplierTransCurrencyID, localCurrencyID')
+                                                                    ->first();
+
+                    if ($totalAmountForApprovalData) {
+                        $currencyConversionRetAmount = \Helper::currencyConversion($paySupplierInvoiceMaster->companySystemID, $totalAmountForApprovalData->supplierTransCurrencyID, $totalAmountForApprovalData->supplierTransCurrencyID, $totalAmountForApprovalData->retentionVatAmount);
+
+                        $retLocal = $currencyConversionRetAmount['localAmount'];
+                        
+
+                        $amountForApproval = $totalAmountForApprovalData->total + $retLocal;
+                    }
+
+
+                } else if ($paySupplierInvoiceMaster->invoiceType == 5 || $paySupplierInvoiceMaster->invoiceType == 7) {
+                    $amountForApproval = AdvancePaymentDetails::where('PayMasterAutoId', $id)
+                                                                ->sum('localAmount');
+
+                } else if ($paySupplierInvoiceMaster->invoiceType == 3) {
+                    $totalAmountForApprovalData = DirectPaymentDetails::where('directPaymentAutoID', $id)
+                                                                    ->selectRaw('SUM(localAmount + VATAmountLocal) as total')
+                                                                    ->first();
+                                                                    
+                    $amountForApproval = $totalAmountForApprovalData ? $totalAmountForApprovalData->total : 0;
+                }
+
+                $params = array('autoID' => $id, 'company' => $companySystemID, 'document' => $documentSystemID, 'segment' => '', 'category' => '', 'amount' => $amountForApproval);
                 $confirm = \Helper::confirmDocument($params);
                 if (!$confirm["success"]) {
                     return $this->sendError($confirm["message"], 500, ['type' => 'confirm']);
@@ -2826,17 +2899,11 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         if(empty($input['payment_mode'])){
             unset($input['payment_mode']);
         }
-        if(empty($input['approved'])){
-            unset($input['approved']);
-        }
         if(empty($input['cancelYN'])){
             unset($input['cancelYN']);
         }
         if(empty($input['chequePaymentYN'])){
             unset($input['chequePaymentYN']);
-        }
-        if(empty($input['confirmedYN'])){
-            unset($input['confirmedYN']);
         }
 
         $paymentVoucher = $this->paySupplierInvoiceMasterRepository->paySupplierInvoiceListQuery($request, $input, $search, $supplierID, $projectID, $employeeID);
@@ -4161,12 +4228,18 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
         );
 
         $time = strtotime("now");
+
         $fileName = 'payment_voucher_' . $id . '_' . $time . '.pdf';
         $html = view('print.payment_voucher', $order);
-        $pdf = \App::make('dompdf.wrapper');
-        $pdf->loadHTML($html);
+        $htmlFooter = view('print.payment_voucher_footer', $order);
+        $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+        $mpdf->AddPage('P');
+        $mpdf->setAutoBottomMargin = 'stretch';
 
-        return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream($fileName);
+        $mpdf->SetHTMLFooter($htmlFooter);
+
+        $mpdf->WriteHTML($html);
+        return $mpdf->Output($fileName, 'I');
     }
 
     public

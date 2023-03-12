@@ -698,7 +698,7 @@ class StockTransferAPIController extends AppBaseController
             $checkPlAccount = ($stockTransfer->interCompanyTransferYN == -1) ? SystemGlCodeScenarioDetail::getGlByScenario($stockTransfer->companySystemID, $stockTransfer->documentSystemID, 1) : SystemGlCodeScenarioDetail::getGlByScenario($stockTransfer->companySystemID, $stockTransfer->documentSystemID, 2);
 
             if (is_null($checkPlAccount)) {
-                return $this->sendError('Please configure PL account for stock transfer', 500);
+                return $this->sendError('Transit account for stock transfer is not configured. Please update it in Chart of Account → Chart of Account Configuration', 500);
             }
 
             if ($stockTransfer->interCompanyTransferYN == -1) {
@@ -926,10 +926,13 @@ class StockTransferAPIController extends AppBaseController
         $time = strtotime("now");
         $fileName = 'stock_transfer_' . $id . '_' . $time . '.pdf';
         $html = view('print.stock_transfer', $array);
-        $pdf = \App::make('dompdf.wrapper');
-        $pdf->loadHTML($html);
-
-        return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
+        $htmlFooter = view('print.stock_transfer_footer', $array);
+        $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-L', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+        $mpdf->AddPage('L');
+        $mpdf->setAutoBottomMargin = 'stretch';
+        $mpdf->SetHTMLFooter($htmlFooter);
+        $mpdf->WriteHTML($html);
+        return $mpdf->Output($fileName, 'I');
     }
 
 

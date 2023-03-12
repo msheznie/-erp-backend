@@ -99,6 +99,8 @@ class FixedAssetMasterRepository extends BaseRepository
         'modifiedPc',
         'createdDateTime',
         'selectedYN',
+        'itemPath',
+        'itemPicture',
         'assetType',
         'supplierIDRentedAsset',
         'tempRecord',

@@ -136,9 +136,6 @@
     .watermarkText {
         color: #dedede !important;
         font-size: 30px;
-        font-weight: 700 !important;
-        text-align: center !important;
-        font-family: fantasy !important;
     }
 
     #watermark {
@@ -178,94 +175,15 @@
         writing-mode: vertical-lr;
         -webkit-transform: rotate(-50deg);
         -moz-transform: rotate(-50deg);
-        font-size: 160px;
+        font-size: 70px;
         color: #ff5454 !important;
     }
 
 
 </style>
 <link href="{{ public_path('assets/css/app.css') }}" rel="stylesheet" type="text/css" />
-<div class="footer">
-    <table style="width:100%; margin-top: 2%">
-        <tr>
-            <td><span class="font-weight-bold">Electronically Approved By :</span></td>
-        </tr>
-        <tr>
-            &nbsp;
-        </tr>
-    </table>
-    <table style="width:100%;padding-top: 2%">
-        <tr>
-            @if ($podata->approved_by)
-                @foreach ($podata->approved_by as $det)
-                    <td style="padding-right: 25px;font-size: 9px;">
-                        <div>
-                            @if($det->employee)
-                                {{$det->employee->empFullName }}
-                            @endif
-                        </div>
-                        <div>
-                            @if(isset($det->employee->hr_emp->designation))
-                                {{$det->employee->hr_emp->designation->DesDescription }}
-                            @endif
-                        </div>
-                        <div><span>
-                @if(!empty($det->approvedDate))
-                                    {{ \App\helper\Helper::dateFormat($det->approvedDate)}}
-                                @endif
-              </span></div>
-                        <div style="width: 3px"></div>
-                    </td>
-                @endforeach
-            @endif
-        </tr>
-    </table>
-    <table style="width:100%;">
-        <tr>
-            <td colspan="3" style="width:100%">
-                <hr style="background-color: black">
-            </td>
-        </tr>
-        <tr>
-            <td style="width:33%;font-size: 10px;vertical-align: top;">
-                <p><span class="font-weight-bold"><span [innerHTML]="docRefNumber"
-                                                        class="white-space-pre-line">{!! nl2br($docRef["docRefNumber"]) !!}</span></span>
-                </p>
-            </td>
-            <td style="width:33%; text-align: center;font-size: 10px;vertical-align: top;">
-                <span style="text-align: center">Page <span class="pagenum"></span></span><br>
-                @if($isMergedCompany)
-                    {{$secondaryCompany['name']}}
-                @else
-                    @if ($podata->company)
-                        {{$podata->company->CompanyName}}
-                    @endif
-                @endif
-            </td>
-            <td style="width:33%;font-size: 10px;vertical-align: top;">
-                <span style="margin-left: 38%;">Printed Date : {{date("d-M-y", strtotime(now()))}}</span>
-            </td>
-        </tr>
-    </table>
-</div>
-<div id="watermark">
-         <span class="watermarkText">
-           <h3 class="text-muted">
-               @if($podata->poConfirmedYN == 0 && $podata->approved == 0)
-                   Not Confirmed & Not Approved <br> Draft Copy
-               @endif
-               @if($podata->poConfirmedYN == 1 && $podata->approved == 0)
-                   Confirmed & Not Approved <br> Draft Copy
-               @endif
 
-           </h3>
-                @if($podata->poCancelledYN == -1)
-                    <h1 class="rotate">
-                 CANCELLED
-                    </h1>
-             @endif
-         </span>
-</div>
+
 <div class="content">
     <div class="row">
         <table style="width:100%" class="table_height">
@@ -285,7 +203,7 @@
                     <table>
                         <tr>
                             <td>
-                                <h3 class="font-weight-bold">
+                                <h3  style="font-weight: bold; font-size:20px">
                                     @if($isMergedCompany)
                                         {{$secondaryCompany['name']}}
                                     @else
@@ -300,8 +218,8 @@
                     </table>
                     <table>
                         <tr>
-                            <td><span class="font-weight-bold">{{$title}} Number</span></td>
-                            <td><span class="font-weight-bold">:</span></td>
+                            <td><span  style="font-weight: bold">{{$title}} Number</span></td>
+                            <td><span  style="font-weight: bold">:</span></td>
                             <td>
                                 @if ($podata->purchaseOrderCode)
                                     {{$podata->purchaseOrderCode}}
@@ -309,13 +227,13 @@
                             </td>
                         </tr>
                         <tr>
-                            <td><span class="font-weight-bold">{{$title}} Date </span></td>
-                            <td><span class="font-weight-bold">:</span></td>
+                            <td><span  style="font-weight: bold">{{$title}} Date </span></td>
+                            <td><span  style="font-weight: bold">:</span></td>
                             <td>{{ \App\helper\Helper::dateFormat($podata->createdDateTime)}}</td>
                         </tr>
                         <tr>
-                            <td><span class="font-weight-bold">Reference Number </span></td>
-                            <td><span class="font-weight-bold">:</span></td>
+                            <td><span  style="font-weight: bold">Reference Number </span></td>
+                            <td><span  style="font-weight: bold">:</span></td>
                             <td>
                                 @if ($podata->referenceNumber)
                                     {{$podata->referenceNumber}}
@@ -323,8 +241,8 @@
                             </td>
                         </tr>
                         <tr>
-                            <td><span class="font-weight-bold">VAT No </span></td>
-                            <td><span class="font-weight-bold">:</span></td>
+                            <td><span  style="font-weight: bold">VAT No </span></td>
+                            <td><span  style="font-weight: bold">:</span></td>
                             <td>
                                 @if ($podata->company->vatRegisteredYN == 1)
                                     {{$podata->company->vatRegistratonNumber}}
@@ -332,8 +250,8 @@
                             </td>
                         </tr>
                         <tr>
-                            <td><span class="font-weight-bold">Segment </span></td>
-                            <td><span class="font-weight-bold">:</span></td>
+                            <td><span  style="font-weight: bold">Segment </span></td>
+                            <td><span  style="font-weight: bold">:</span></td>
                             <td>
                                 @if (isset($podata->segment->ServiceLineDes))
                                     {{$podata->segment->ServiceLineDes}}
@@ -345,16 +263,17 @@
             </tr>
         </table>
     </div>
-    <hr style="background-color: black">
+    <hr style="border-top: 2px solid black; height: 2px; color: black">
     
     <table style="width: 100%" class="table_height">
         <tr style="width: 100%">
- 
-            <div>
-                <span style="font-size: 18px">
-                    {{$title}}
-                </span>
-            </div>
+            <td>
+                <div>
+                    <span style="font-size: 18px">
+                        {{$title}}
+                    </span>
+                </div>
+            </td>
         </tr>
     </table>
     <br>
@@ -366,7 +285,7 @@
                 <td style="width: 60%">
                     <table style="width: 100%">
                         <tr>
-                            <td colspan="3"><span class="title">Sold To:</span></td>
+                            <td colspan="3"><span style="font-size: 13px; font-weight: bold;">Sold To:</span></td>
                         </tr>
                         <tr>
                             <td style="width: 100%" colspan="3"><p>
@@ -389,33 +308,33 @@
                             </td>
                         </tr>
                         <tr>
-                            <td style="width: 100%" colspan="3"><span class="title">&nbsp;</span></td>
+                            <td style="width: 100%" colspan="3"><span style="font-size: 13px; font-weight: bold;">&nbsp;</span></td>
                         </tr>
                     </table>
                     <table style="width: 100%">
                         <tr>
-                            <td style="width: 20%"><span class="font-weight-bold">Order Contact</span></td>
-                            <td style="width: 2%"><span class="font-weight-bold">:</span></td>
+                            <td style="width: 20%"><span  style="font-weight: bold">Order Contact</span></td>
+                            <td style="width: 2%"><span  style="font-weight: bold">:</span></td>
                             <td style="width: 78%">{{$podata->soldTocontactPersonID}}</td>
                         </tr>
                         <tr>
-                            <td style="width: 20%"><span class="font-weight-bold">Phone</span></td>
-                            <td style="width: 2%"><span class="font-weight-bold">:</span></td>
+                            <td style="width: 20%"><span  style="font-weight: bold">Phone</span></td>
+                            <td style="width: 2%"><span  style="font-weight: bold">:</span></td>
                             <td style="width: 78%">{{$podata->soldTocontactPersonTelephone}} </td>
                         </tr>
                         <tr>
-                            <td style="width: 20%"><span class="font-weight-bold">Fax</span></td>
-                            <td style="width: 2%"><span class="font-weight-bold">:</span></td>
+                            <td style="width: 20%"><span  style="font-weight: bold">Fax</span></td>
+                            <td style="width: 2%"><span  style="font-weight: bold">:</span></td>
                             <td style="width: 78%">{{$podata->soldTocontactPersonFaxNo}} </td>
                         </tr>
                         <tr>
-                            <td style="width: 20%"><span class="font-weight-bold">Email</span></td>
-                            <td style="width: 2%"><span class="font-weight-bold">:</span></td>
+                            <td style="width: 20%"><span  style="font-weight: bold">Email</span></td>
+                            <td style="width: 2%"><span  style="font-weight: bold">:</span></td>
                             <td style="width: 78%">{{$podata->soldTocontactPersonEmail}} </td>
                         </tr>
                         <tr>
-                            <td style="width: 20%"><span class="font-weight-bold">VAT No</span></td>
-                            <td style="width: 2%"><span class="font-weight-bold">:</span></td>
+                            <td style="width: 20%"><span  style="font-weight: bold">VAT No</span></td>
+                            <td style="width: 2%"><span  style="font-weight: bold">:</span></td>
                             <td style="width: 78%">{{$podata->supplier->vatNumber}} </td>
                         </tr>
                     </table>
@@ -423,7 +342,7 @@
                 <td style="width: 40%">
                     <table style="width:100%">
                         <tr>
-                            <td colspan="3"><span class="title">Supplier:</span></td>
+                            <td colspan="3"><span style="font-size: 13px; font-weight: bold;">Supplier:</span></td>
                         </tr>
                         <tr>
                             <td colspan="3">{{$podata->supplierPrimaryCode}}</td>
@@ -438,8 +357,8 @@
                         </tr>
                         @if($podata->supplierVATEligible)
                         <tr>
-                            <td><span class="font-weight-bold">VAT #</span></td>
-                            <td><span class="font-weight-bold">:</span></td>
+                            <td><span  style="font-weight: bold">VAT #</span></td>
+                            <td><span  style="font-weight: bold">:</span></td>
                             <td>
                                 @if ($podata->supplier)
                                     {{$podata->supplier->vatNumber}}
@@ -448,8 +367,8 @@
                         </tr>
                         @endif
                         <tr>
-                            <td><span class="font-weight-bold">Contact</span></td>
-                            <td><span class="font-weight-bold">:</span></td>
+                            <td><span  style="font-weight: bold">Contact</span></td>
+                            <td><span  style="font-weight: bold">:</span></td>
                             <td>
                                 @if ($podata->suppliercontact)
                                     {{$podata->suppliercontact->contactPersonName}}
@@ -457,8 +376,8 @@
                             </td>
                         </tr>
                         <tr>
-                            <td style="width: 20%"><span class="font-weight-bold">Phone</span></td>
-                            <td style="width: 2%"><span class="font-weight-bold">:</span></td>
+                            <td style="width: 20%"><span  style="font-weight: bold">Phone</span></td>
+                            <td style="width: 2%"><span  style="font-weight: bold">:</span></td>
                             <td style="width: 78%">
                                 @if ($podata->suppliercontact)
                                     {{$podata->suppliercontact->contactPersonTelephone}}
@@ -466,8 +385,8 @@
                             </td>
                         </tr>
                         <tr>
-                            <td style="width: 20%"><span class="font-weight-bold">Fax</span></td>
-                            <td style="width: 2%"><span class="font-weight-bold">:</span></td>
+                            <td style="width: 20%"><span  style="font-weight: bold">Fax</span></td>
+                            <td style="width: 2%"><span  style="font-weight: bold">:</span></td>
                             <td style="width: 78%">
                                 @if ($podata->suppliercontact)
                                     {{$podata->suppliercontact->contactPersonFax}}
@@ -475,8 +394,8 @@
                             </td>
                         </tr>
                         <tr>
-                            <td style="width: 20%"><span class="font-weight-bold">Email</span></td>
-                            <td style="width: 2%"><span class="font-weight-bold">:</span></td>
+                            <td style="width: 20%"><span  style="font-weight: bold">Email</span></td>
+                            <td style="width: 2%"><span  style="font-weight: bold">:</span></td>
                             <td style="width: 78%">
                                 @if ($podata->suppliercontact)
                                     {{$podata->suppliercontact->contactPersonEmail}}
@@ -488,14 +407,59 @@
             </tr>
         </table>
     </div>
-    <hr style="background-color: black">
+    <hr style="border-top: 2px solid black; height: 2px; color: black">
     <div class="row">
+
+        @if ((($podata->poConfirmedYN == 0 || $podata->poConfirmedYN == 1) && $podata->approved == 0 || $podata->poCancelledYN == -1))
+        <table style="  height: 1000px; 
+                    opacity: 0.6; 
+                    left: 0; 
+                    transform-origin: 20% 20%; 
+                    z-index: 1000;
+                    position: fixed;
+                    width: 100%;
+                    height: 100%;
+                    padding-top: 31%; margin-bottom: -10%;">
+                <tr>
+                    <td width="20%">
+
+                    </td>
+                    <td width="60%" style="text-align: center; font-weight: bold !important;">
+                        <span class="watermarkText" style="font-weight: bold; ">
+                            <h3 style=" font-size: 24.5px;
+                                        margin-bottom: 0.1rem;
+                                        font-weight: 500;
+                                        line-height: 1.2;
+                                        color: inherit;">
+                                @if($podata->poConfirmedYN == 0 && $podata->approved == 0)
+                                    Not Confirmed & Not Approved <br> Draft Copy
+                                @endif
+                                @if($podata->poConfirmedYN == 1 && $podata->approved == 0)
+                                    Confirmed & Not Approved <br> Draft Copy
+                                @endif
+                            </h3>
+
+
+                                @if($podata->poCancelledYN == -1)
+                                    <h1 class="rotate">
+                                CANCELLED
+                                    </h1>
+                                @endif
+                        </span>
+                    </td>
+                    <td width="20%">
+
+                    </td>
+                </tr>
+            </table>
+        @endif
+
         <table style="width:100%">
             <tr>
                 <td style="width: 60%">
                     <table>
                         <tr>
-                            <td colspan="3"><span class="title">Ship To:</span></td>
+                            <td colspan="3"><span style="font-size: 13px; font-weight: bold;">Ship To:</span></td>
                         </tr>
                         <tr>
                             <td colspan="3"><p>
@@ -513,28 +477,28 @@
                             <td colspan="3">{!! nl2br($podata->shippingAddressDescriprion) !!}</td>
                         </tr>
                         <tr>
-                            <td colspan="3"><span class="title">&nbsp;</span></td>
+                            <td colspan="3"><span style="font-size: 13px; font-weight: bold;">&nbsp;</span></td>
                         </tr>
                     </table>
                     <table>
                         <tr>
-                            <td style="width: 34%"><span class="font-weight-bold">Ship Contact</span></td>
-                            <td style="width: 2%"><span class="font-weight-bold">:</span></td>
+                            <td style="width: 34%"><span  style="font-weight: bold">Ship Contact</span></td>
+                            <td style="width: 2%"><span  style="font-weight: bold">:</span></td>
                             <td style="width: 64%">{{$podata->shipTocontactPersonID}} </td>
                         </tr>
                         <tr>
-                            <td style="width: 28%"><span class="font-weight-bold">Phone</span></td>
-                            <td style="width: 2%"><span class="font-weight-bold">:</span></td>
+                            <td style="width: 28%"><span  style="font-weight: bold">Phone</span></td>
+                            <td style="width: 2%"><span  style="font-weight: bold">:</span></td>
                             <td style="width: 70%">{{$podata->shipTocontactPersonTelephone}} </td>
                         </tr>
                         <tr>
-                            <td style="width: 28%"><span class="font-weight-bold">Fax</span></td>
-                            <td style="width: 2%"><span class="font-weight-bold">:</span></td>
+                            <td style="width: 28%"><span  style="font-weight: bold">Fax</span></td>
+                            <td style="width: 2%"><span  style="font-weight: bold">:</span></td>
                             <td style="width: 70%">{{$podata->shipTocontactPersonFaxNo}} </td>
                         </tr>
                         <tr>
-                            <td style="width: 28%"><span class="font-weight-bold">Email</span></td>
-                            <td style="width: 2%"><span class="font-weight-bold">:</span></td>
+                            <td style="width: 28%"><span  style="font-weight: bold">Email</span></td>
+                            <td style="width: 2%"><span  style="font-weight: bold">:</span></td>
                             <td style="width: 70%">{{$podata->shipTocontactPersonEmail}} </td>
                         </tr>
                     </table>
@@ -542,7 +506,7 @@
                 <td style="width: 40%">
                     <table>
                         <tr>
-                            <td colspan="3"><span class="title">Invoice To:</span></td>
+                            <td colspan="3"><span style="font-size: 13px; font-weight: bold;">Invoice To:</span></td>
                         </tr>
                         <tr>
                             <td colspan="3"><p>
@@ -560,8 +524,8 @@
                             <td colspan="3">{!! nl2br($podata->invoiceToAddressDescription) !!}</td>
                         </tr>
                         <tr>
-                            <td style="width: 20%"><span class="font-weight-bold">Payment Contact</span></td>
-                            <td style="width: 2%"><span class="font-weight-bold">:</span></td>
+                            <td style="width: 20%"><span  style="font-weight: bold">Payment Contact</span></td>
+                            <td style="width: 2%"><span  style="font-weight: bold">:</span></td>
                             <td style="width: 78%">
                                 @if ($podata->suppliercontact)
                                     {{$podata->invoiceTocontactPersonID}}
@@ -569,8 +533,8 @@
                             </td>
                         </tr>
                         <tr>
-                            <td style="width: 20%"><span class="font-weight-bold">Phone</span></td>
-                            <td style="width: 2%"><span class="font-weight-bold">:</span></td>
+                            <td style="width: 20%"><span  style="font-weight: bold">Phone</span></td>
+                            <td style="width: 2%"><span  style="font-weight: bold">:</span></td>
                             <td style="width: 78%">
                                 @if ($podata->suppliercontact)
                                     {{$podata->invoiceTocontactPersonTelephone}}
@@ -578,8 +542,8 @@
                             </td>
                         </tr>
                         <tr>
-                            <td style="width: 20%"><span class="font-weight-bold">Fax</span></td>
-                            <td style="width: 2%"><span class="font-weight-bold">:</span></td>
+                            <td style="width: 20%"><span  style="font-weight: bold">Fax</span></td>
+                            <td style="width: 2%"><span  style="font-weight: bold">:</span></td>
                             <td style="width: 78%">
                                 @if ($podata->suppliercontact)
                                     {{$podata->invoiceTocontactPersonFaxNo}}
@@ -587,8 +551,8 @@
                             </td>
                         </tr>
                         <tr>
-                            <td style="width: 20%"><span class="font-weight-bold">Email</span></td>
-                            <td style="width: 2%"><span class="font-weight-bold">:</span></td>
+                            <td style="width: 20%"><span  style="font-weight: bold">Email</span></td>
+                            <td style="width: 2%"><span  style="font-weight: bold">:</span></td>
                             <td style="width: 78%">
                                 @if ($podata->suppliercontact)
                                     {{$podata->invoiceTocontactPersonEmail}}
@@ -600,12 +564,12 @@
             </tr>
         </table>
     </div>
-    <hr style="background-color: black">
+    <hr style="border-top: 2px solid black; height: 2px; color: black">
     <div class="row">
         <table style="width:100%">
-            <tr>
-                <td style="width:11%;vertical-align: top;"><span class="font-weight-bold">Narration</span></td>
-                <td style="width:1%;vertical-align: top;"><span class="font-weight-bold">:</span></td>
+            <tr style="width:88%">
+                <td style="width:11%;vertical-align: top;"><span  style="font-weight: bold">Narration</span></td>
+                <td style="width:1%;vertical-align: top;"><span  style="font-weight: bold">:</span></td>
                 <td style="width:88%;vertical-align: top;">{!! nl2br($podata->narration) !!}</td>
             </tr>
         </table>
@@ -616,17 +580,17 @@
                 <td style="width:88%">
                     <table style="padding-bottom: 1%">
                         <tr>
-                            <td style="width: 7%"><span class="font-weight-bold">Expected Date</span></td>
-                            <td style="width: 1%"><span class="font-weight-bold">:</span></td>
-                            <td style="width: 92%">{{ \App\helper\Helper::dateFormat($podata->expectedDeliveryDate)}}</td>
+                            <td style="width: 16%"><span  style="font-weight: bold">Expected Date</span></td>
+                            <td style="width: 1%"><span  style="font-weight: bold">:</span></td>
+                            <td style="width: 83%">{{ \App\helper\Helper::dateFormat($podata->expectedDeliveryDate)}}</td>
                         </tr>
                     </table>
                 </td>
                 <td style="width:12%">
                     <table style="padding-bottom: 2%">
                         <tr>
-                            <td><span class="font-weight-bold">Currency</span></td>
-                            <td><span class="font-weight-bold">:</span></td>
+                            <td><span  style="font-weight: bold">Currency</span></td>
+                            <td><span  style="font-weight: bold">:</span></td>
                             <td>
                                 @if ($podata->transactioncurrency)
                                     {{$podata->transactioncurrency->CurrencyCode}}
@@ -664,7 +628,7 @@
                 <th style="text-align: center">Net Amount</th>
             </tr>
             </thead>
-            <tbody style="width: 100%">
+            <tbody style="width: 100%;">
             {{ $subTotal = 0 }}
             {{ $x = 1 }}
             {{ $subColspan = $podata->isVatEligible ? 1 : 0}}
@@ -676,7 +640,7 @@
                     {{ $netUnitCost = $det->unitCost - $det->discountAmount }}
                 @endif
 
-                <tr style="border-bottom: 1px solid black; width: 100%">
+                <tr style="border-bottom: 1px solid black; width: 100%;  background-color:#f9f9f9">
                     <td>{{ $x  }}</td>
                     <td>{{$det->itemPrimaryCode}}</td>
                     <td nobr="true" >{{$det->itemDescription}} <br> {!! nl2br($det->comment) !!}</td>
@@ -732,97 +696,97 @@
             <tbody>
             <tr>
                 <td style="border-bottom: none !important;border-left: none !important;width: 60%;">&nbsp;</td>
-                <td class="text-right" style="width: 20%;border-left: 1px solid rgb(127, 127, 127)!important;"><span
-                            class="font-weight-bold" style="font-size: 11px">Total Order Amount</span></td>
-                <td class="text-right"
-                    style="font-size: 11px;width: 20%;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;">
-                <span class="font-weight-bold">
-                @if ($podata->detail)
-                        {{number_format($subTotal, $numberFormatting)}}
-                    @endif
-                </span>
+                <td class="text-right" style="width: 20%;border: 1px solid rgb(127, 127, 127)!important;">
+                    <span style="font-weight: bold; font-size: 11px">Total Order Amount</span>
+                </td>
+                <td class="text-right" style="width: 20%;border: 1px solid rgb(127, 127, 127)!important;">
+                    <span  style="font-weight: bold; font-size: 11px">
+                        @if ($podata->detail)
+                            {{number_format($subTotal, $numberFormatting)}}
+                        @endif
+                    </span>
                 </td>
             </tr>
             <tr>
-                <td style="border-bottom: none !important;border-top: none !important;border-left: none !important;">
-                    &nbsp;</td>
-                <td class="text-right"
-                    style="font-size: 11px;border-left: 1px solid rgb(127, 127, 127)!important;"><span
-                            class="font-weight-bold"
-                            style="font-size: 11px">Discount</span>
+                <td style="border-bottom: none !important;border-left: none !important;width: 60%;">&nbsp;</td>
+                <td class="text-right" style="width: 20%;border: 1px solid rgb(127, 127, 127)!important;">
+                    <span style="font-weight: bold; font-size: 11px">Discount</span>
                 </td>
-                <td class="text-right"
-                    style="font-size: 11px;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;"><span
-                            class="font-weight-bold">
-                     {{number_format($podata->poDiscountAmount, $numberFormatting)}}
-                </span>
+                <td class="text-right" style="width: 20%;border: 1px solid rgb(127, 127, 127)!important;">
+                    <span  style="font-weight: bold; font-size: 11px">
+                        {{number_format($podata->poDiscountAmount, $numberFormatting)}}
+                    </span>
                 </td>
             </tr>
             @if ($podata->isVatEligible || $podata->vatRegisteredYN)
                 <tr>
-                    <td style="border-bottom: none !important;border-top: none !important;border-left: none !important;">
-                        &nbsp;</td>
-                    <td class="text-right" style="border-left: 1px solid rgb(127, 127, 127)!important;"><span
-                                class="font-weight-bold"
-                                style="font-size: 11px">VAT{{--({{$podata->VATPercentage .'%'}})--}}
-                        </span></td>
-                    <td class="text-right"
-                        style="font-size: 11px;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;"><span
-                                class="font-weight-bold">@if($podata->rcmActivated){{number_format(0, $numberFormatting)}} @else {{number_format($podata->VATAmount, $numberFormatting)}}@endif</span>
+                    <td style="border-bottom: none !important;border-left: none !important;width: 60%;">&nbsp;</td>
+                    <td class="text-right" style="width: 20%;border: 1px solid rgb(127, 127, 127)!important;">
+                        <span style="font-weight: bold; font-size: 11px">VAT</span>
+                    </td>
+                    <td class="text-right" style="width: 20%;border: 1px solid rgb(127, 127, 127)!important;">
+                        <span  style="font-weight: bold; font-size: 11px">
+                            @if($podata->rcmActivated)
+                                {{number_format(0, $numberFormatting)}} 
+                            @else 
+                                {{number_format($podata->VATAmount, $numberFormatting)}}
+                            @endif
+                        </span>
                     </td>
                 </tr>
             @endif
             <tr>
-                <td style="border-bottom: none !important;border-top: none !important;border-left: none !important;">
-                    &nbsp;</td>
-                <td class="text-right" style="border-left: 1px solid rgb(127, 127, 127)!important;"><span
-                            class="font-weight-bold"
-                            style="font-size: 11px">Net Amount</span>
+                <td style="border-bottom: none !important;border-left: none !important;width: 60%;">&nbsp;</td>
+                <td class="text-right" style="width: 20%;border: 1px solid rgb(127, 127, 127)!important;">
+                    <span style="font-weight: bold; font-size: 11px">Net Amount</span>
                 </td>
-                <td class="text-right"
-                    style="font-size: 11px;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;">
-                <span class="font-weight-bold">
-                @if ($podata->detail)
-                    @if($podata->rcmActivated){{number_format(($podata->poTotalSupplierTransactionCurrency - $podata->VATAmount), $numberFormatting)}} @else {{number_format($podata->poTotalSupplierTransactionCurrency, $numberFormatting)}}@endif
-                @endif
-                </span>
+                <td class="text-right" style="width: 20%;border: 1px solid rgb(127, 127, 127)!important;">
+                    <span  style="font-weight: bold; font-size: 11px">
+                        @if ($podata->detail)
+                            @if($podata->rcmActivated)
+                                {{number_format(($podata->poTotalSupplierTransactionCurrency - $podata->VATAmount), $numberFormatting)}} 
+                            @else
+                                {{number_format($podata->poTotalSupplierTransactionCurrency, $numberFormatting)}}
+                            @endif
+                        @endif
+                    </span>
                 </td>
             </tr>
             </tbody>
         </table>
     </div>
     <div class="row">
-        <table style="width:100%;padding-top: 3%;">
+        <table style="width:100%;padding-top: 10px;">
             <tr>
-                <td style="width:13%;vertical-align: top;"><span class="font-weight-bold">Delivery Terms</span></td>
-                <td style="width:2%;vertical-align: top;"><span class="font-weight-bold">:</span></td>
+                <td style="width:13%;vertical-align: top;"><span  style="font-weight: bold">Delivery Terms</span></td>
+                <td style="width:2%;vertical-align: top;"><span  style="font-weight: bold">:</span></td>
                 <td style="width:85%;vertical-align: top;">{!! nl2br($podata->deliveryTerms) !!}</td>
             </tr>
         </table>
     </div>
     <div class="row">
-        <table style="width:100%;padding-top: 3%;">
+        <table style="width:100%;padding-top: 10px;">
             <tr style="padding-bottom: 2%;">
-                <td style="width:13%;vertical-align: top;"><span class="font-weight-bold">Penalty Terms</span></td>
-                <td style="width:2%;vertical-align: top;"><span class="font-weight-bold">:</span></td>
+                <td style="width:13%;vertical-align: top;"><span  style="font-weight: bold">Penalty Terms</span></td>
+                <td style="width:2%;vertical-align: top;"><span  style="font-weight: bold">:</span></td>
                 <td style="width:85%;vertical-align: top;">{!! nl2br($podata->panaltyTerms) !!}</td>
             </tr>
         </table>
     </div>
     <div class="row">
-        <table style="width:100%;padding-top: 3%;">
+        <table style="width:100%;padding-top: 10px;">
             <tr style="padding-bottom: 2%;">
-                <td style="width:13%;vertical-align: top;"><span class="font-weight-bold">Payment Terms</span></td>
-                <td style="width:2%;vertical-align: top;"><span class="font-weight-bold">:</span></td>
+                <td style="width:13%;vertical-align: top;"><span  style="font-weight: bold">Payment Terms</span></td>
+                <td style="width:2%;vertical-align: top;"><span  style="font-weight: bold">:</span></td>
                 <td style="width:85%;vertical-align: top;">{{$paymentTermsView}}</td>
             </tr>
         </table>
     </div>
     <div class="row">
-        <table style="width:100%;padding-top: 3%;">
+        <table style="width:100%;padding-top: 10px;">
             <tr style="padding-bottom: 2%;">
-                <td style="width:13%;vertical-align: top;"><span class="font-weight-bold">Created By</span></td>
-                <td style="width:2%;vertical-align: top;"><span class="font-weight-bold">:</span></td>
+                <td style="width:13%;vertical-align: top;"><span  style="font-weight: bold">Created By</span></td>
+                <td style="width:2%;vertical-align: top;"><span  style="font-weight: bold">:</span></td>
                 <td style="width:85%;vertical-align: top;">  
                     @if(isset($podata->created_by->empFullName))
                         {{$podata->created_by->empFullName}}
@@ -832,10 +796,10 @@
         </table>
     </div>
     <div class="row">
-        <table style="width:100%;padding-top: 3%;">
+        <table style="width:100%;padding-top: 10px;">
             <tr style="padding-bottom: 2%;">
-                <td style="width:13%;vertical-align: top;"><span class="font-weight-bold">Created Date</span></td>
-                <td style="width:2%;vertical-align: top;"><span class="font-weight-bold">:</span></td>
+                <td style="width:13%;vertical-align: top;"><span  style="font-weight: bold">Created Date</span></td>
+                <td style="width:2%;vertical-align: top;"><span  style="font-weight: bold">:</span></td>
                 <td style="width:85%;vertical-align: top;">
                     @if(isset($podata->createdDateTime))
                         {{\Carbon\Carbon::parse($podata->createdDateTime)->format('d/m/Y g:i A' )}}
@@ -852,7 +816,7 @@
         <div class="page_break"></div>
         <table style="width:100%">
             <tr>
-                <td width="100%" style="text-align: center;font-size: 13px;"><h4 class="font-weight-bold" style=" text-decoration: underline;">Specifications</h4></td>
+                <td width="100%" style="text-align: center;font-size: 13px;"><h4  style="font-weight: bold" style=" text-decoration: underline;">Specifications</h4></td>
             </tr>
         </table>
         <br>
@@ -865,15 +829,14 @@
                    <table style="width:100%;background: #ede7e7;margin-bottom: 20px;">
                         <tr style="height:10px;">
                             <td style="width: 0%;height:10px">
-                            <td width="100%" ><span style="text-align: left;font-size: 14px;" class="font-weight-bold" >{{$det->itemPrimaryCode}} - {{$det->itemDescription}} {!! "&nbsp;" !!}  {{$det->unit->UnitShortCode}}</span></td>
+                            <td width="100%" ><span style="text-align: left;font-size: 14px;"  style="font-weight: bold" >{{$det->itemPrimaryCode}} - {{$det->itemDescription}} {!! "&nbsp;" !!}  {{$det->unit->UnitShortCode}}</span></td>
                             </td>
 
                         
                         </tr>
                     </table>
-                    <table style="width:100% !important" class="table">
+                    <table>
                          <tr>
-                             <td class="ql-container ql-snow">
                              <td class="ql-editor">
                                 <div style="max-width: 700px !important" class="quill-html">
                                     {!!$det->item->specification->html !!}
@@ -895,7 +858,7 @@
         <div class="page_break"></div>
         <table style="width:100%">
             <tr>
-                <td width="100%" style="text-align: center;font-size: 9px;"><h3 class="font-weight-bold" style=" text-decoration: underline;">Master Service
+                <td width="100%" style="text-align: center;font-size: 9px;"><h3  style="font-weight: bold" style=" text-decoration: underline;">Master Service
                         Agreement for Purchase of Goods and
                         Services</h3></td>
             </tr>
@@ -904,7 +867,7 @@
         <table style="width:100%">
             <tr>
                 <td width="50%" style="text-align: justify;font-size: 9px;">
-                    <span class="font-weight-bold">1. DEFINITIONS</span><br>
+                    <span  style="font-weight: bold">1. DEFINITIONS</span><br>
                     In these Conditions:<br>
                     (A) “Affiliate” means in relation to any person, a subsidiary of that person or a holding company of
                     that person or any other subsidiary of that holding company.<br>
@@ -933,7 +896,7 @@
                     the Supplier and which is supplied or paid for by the Company or for which the Company is liable to
                     pay
                     under the terms of the Order.<br><br>
-                    <span class="font-weight-bold">2. APPLICATION</span><br>
+                    <span  style="font-weight: bold">2. APPLICATION</span><br>
                     These Conditions shall apply to and be incorporated in the contract between the Supplier and the
                     Company
                     for the supply of the Goods and/or the Services and shall be in substitution for any oral
@@ -946,7 +909,7 @@
                     of or exclusion or attempted exclusion of the Order and/or these Conditions or any of them shall be
                     binding upon the Company unless specifically agreed to in writing and signed by a duly authorized
                     representative of theCompany.<br><br>
-                    <span class="font-weight-bold">3. ACCEPTANCE OF ORDER</span><br>
+                    <span  style="font-weight: bold">3. ACCEPTANCE OF ORDER</span><br>
                     All the terms of the contract between the Company and the Supplier are contained in or referred to
                     in
                     the Order and in these Conditions. The execution and return of the acknowledgement copy of the Order
@@ -958,7 +921,7 @@
                     conditions of purchase for goods and services. The acceptance of the Order is limited to and
                     conditional
                     upon acceptance by the Supplier of these Conditions.<br><br>
-                    <span class="font-weight-bold">4. PACKING, MARKING AND DOCUMENTATION</span><br>
+                    <span  style="font-weight: bold">4. PACKING, MARKING AND DOCUMENTATION</span><br>
                     (A) The Goods shall be properly packed, marked and delivered at the Supplier's expense in accordance
                     with the Order. The Company shall not accept a charge for packages, containers or freight unless
                     specified in the Order.<br>
@@ -982,7 +945,7 @@
                     shall
                     meet latest version of API6A, API16A and NACEMR0175 standards and CT string shall meet API5ST
                     standard.<br><br>
-                    <span class="font-weight-bold">5. DELIVERY</span><br>
+                    <span  style="font-weight: bold">5. DELIVERY</span><br>
                     (A) Time is of the essence in the performance by the Supplier of the Order. If delivery dates for
                     the
                     Goods or the dates for the provision and/or performance of the Services cannot be met, the Supplier
@@ -1013,7 +976,7 @@
                     prejudice to any other rights the Company may have hereunder. The parties confirm that these
                     liquidated damages are reasonable and proportionate to protect the Company’s legitimate interest in
                     performance.<br><br>
-                    <span class="font-weight-bold">6. WARRANTY</span><br>
+                    <span  style="font-weight: bold">6. WARRANTY</span><br>
                     (A) The Supplier warrants, and it is a condition of the Order, that the Goods supplied to the
                     Company
                     under the Order shall be of first class materials and workmanship throughout, will meet the
@@ -1038,7 +1001,7 @@
                     Company of all or part of the Goods or the Services in respect of which such warranties and remedies
                     are
                     applicable.<br><br>
-                    <span class="font-weight-bold">7. QUANTITY, QUALITY AND DESCRIPTION</span><br>
+                    <span  style="font-weight: bold">7. QUANTITY, QUALITY AND DESCRIPTION</span><br>
                     (A) The Supplier shall not make any changes whatsoever in the color, characteristics,
                     specifications,
                     design or composition of the Goods.<br>
@@ -1057,7 +1020,7 @@
                     fails to implement corrective actions recommended by the Company.<br>
                     (C) The Supplier agrees to allow a representative of the Company to enter the Supplier's premises on reasonable prior notice to inspect the Goods and/or Services.<br>
                     (D) The Company reserves the right at any time to change the relevant Order by written instruction, in which event the Supplier shall notify the Company of any consequent change in price within seven (7) days of receipt of such change order, which the Company shall then accept or reject. No increase in price shall be allowed if the Supplier fails to give timely notification to the Company.<br><br>
-                    <span class="font-weight-bold"> 8. ACCEPTANCE OF GOODS AND SERVICES</span><br>
+                    <span  style="font-weight: bold"> 8. ACCEPTANCE OF GOODS AND SERVICES</span><br>
                     (A) The Goods and the provision of the Services shall be subject to inspection and testing by the
                     Company prior to acceptance. In any case where the Goods, the Services or any part thereof (whether
                     or
@@ -1092,7 +1055,7 @@
                     (12) consecutive months after the same could first reasonably have been discovered) commencing on
                     the
                     date of acceptance.<br><br>
-                    <span class="font-weight-bold"> 9. INDEMNITY</span><br>
+                    <span  style="font-weight: bold"> 9. INDEMNITY</span><br>
                     The Supplier agrees to indemnify and at all times to hold the Company, its agents, employees, officers, subsidiaries, associated companies and assigns harmless from and against any and all liability, damage, loss, cost or expense, including without limitation any liability arising from any injury or loss to any person or persons or any
                     damage to or loss of any property, directly or indirectly arising out of or in
                     connection with:<br>
@@ -1117,7 +1080,7 @@
                     damage, loss, cost or expense incurred was only incurred because the Supplier
                     delivered the Goods or provided the Services solely in accordance with designs, plans
                     or specifications supplied by the Company.<br><br>
-                    <span class="font-weight-bold">10. INSURANCE</span><br>
+                    <span  style="font-weight: bold">10. INSURANCE</span><br>
                     (A) The Supplier will at all times insure and keep itself insured with a reputable
                     insurance company in compliance with local legislation against all insurable liability
                     under the Order and in respect of the Goods or the Services including without
@@ -1163,7 +1126,7 @@
                     insurance will be cancelled or materially changed during the term of the contract
                     without thirty (30) days' prior written notice to the Company at the address shown on
                     the certificate.<br><br>
-                    <span class="font-weight-bold">11. TERMINATION</span><br>
+                    <span  style="font-weight: bold">11. TERMINATION</span><br>
                     (A) Without prejudice to any other rights or remedies to which it may be entitled, the
                     Company may by written notice to the Supplier terminate the Order immediately and
                     without liability in the event that:<br>
@@ -1199,19 +1162,19 @@
                     Supplier shall deliver to the Company all work completed or in progress. In no event
                     shall the amount payable by the Company under this Condition (B) exceed the amount
                     that would have been payable had the Order not been terminated.<br><br>
-                    <span class="font-weight-bold">12. TITLE AND RISK</span><br>
+                    <span  style="font-weight: bold">12. TITLE AND RISK</span><br>
                     The property and risk in the Goods shall pass to the Company on delivery of the
                     Goods in accordance with the Order, without prejudice to any right of rejection which
                     may accrue to the Company under these Conditions or otherwise. The Supplier shall
                     be liable for, and indemnify the Company against, any and all liens, charges,
                     claims and other encumbrances in respect of any and all Goods or Services
                     provided hereunder.<br><br>
-                    <span class="font-weight-bold">13. ASSIGNMENT</span><br>
+                    <span  style="font-weight: bold">13. ASSIGNMENT</span><br>
                     Neither the Order nor any part thereof shall be assigned, sub-contracted or transferred
                     in any other manner to a third party without the Company's prior written
                     consent. Any such consent shall not relieve the Supplier of any obligation to comply
                     with these Conditions or the Order.<br><br>
-                    <span class="font-weight-bold">14. PRICE</span><br>
+                    <span  style="font-weight: bold">14. PRICE</span><br>
                     (A) All prices for the Goods and the Services shall be as stated in the Order, and
                     unless otherwise provided cover the cost of packaging, insurance and freight. Only
                     variations agreed to in writing by the parties as a result of changes in the Order will be
@@ -1224,7 +1187,7 @@
                     a separate item of account on a valid tax invoice and, if required by the Company, the
                     Supplier will produce bona fide evidence of the amount paid or to be paid in respect
                     thereof.<br><br>
-                    <span class="font-weight-bold">15. TERMS OF PAYMENT AND CONTRASUMS</span><br>
+                    <span  style="font-weight: bold">15. TERMS OF PAYMENT AND CONTRASUMS</span><br>
                     (A) Unless otherwise stated in the Order, payment of invoices shall be made by the
                     end of the month following the month in which the Goods are received or the Services
                     are completed in accordance with the Order.<br>
@@ -1236,7 +1199,7 @@
                     (C) The Company reserves the right to deduct from any monies due or becoming due
                     to the Supplier any monies due from the Supplier to the Company in connection with
                     the Order.<br><br>
-                    <span class="font-weight-bold"> 16. INFORMATION</span><br>
+                    <span  style="font-weight: bold"> 16. INFORMATION</span><br>
                     (A) All Information furnished to the Supplier by the Company or on its behalf and all
                     therein shall remain the property of the Company or any holding company of the
                     Company or any subsidiary of such holding company (holding company and subsidiary
@@ -1281,7 +1244,7 @@
                     maintain patent coverage therefor throughout the world, subject to the Company
                     agreeing to reimburse the Supplier for all the Supplier's reasonable costs incurred
                     thereby.<br><br>
-                    <span class="font-weight-bold"> 17. TOOLING</span><br>
+                    <span  style="font-weight: bold"> 17. TOOLING</span><br>
                     All Tooling shall be and remains the property of the Company and the Supplier shall
                     mark the Company’s name on such Tooling. The Supplier shall at the Supplier's
                     expense maintain all Tooling in first class condition and immediately replace any
@@ -1294,7 +1257,7 @@
                     in pursuance neither of the relevant Order nor for larger quantities than those
                     specified. The Company shall accept the invoicing of Tooling only if such Tooling has
                     been specifically ordered and accepted by the Company under the Order.<br><br>
-                    <span class="font-weight-bold"> 18. THE COMPANY'S PROPERTY</span><br>
+                    <span  style="font-weight: bold"> 18. THE COMPANY'S PROPERTY</span><br>
                     The following provisions of this Condition shall apply to any material or property
                     provided by the Company to the Supplier for any purpose in connection with the Order
                     and whenever the Order requires the Supplier to repair or apply a process to goods or
@@ -1318,10 +1281,10 @@
                     enter the Supplier's land and buildings for those purposes;<br>
                     (v) The Supplier shall promptly pay to the Company on demand the full replacement
                     value of any of the Company's Property which is not returned.<br><br>
-                    <span class="font-weight-bold">19. INDEPENDENT CONTRACTOR</span><br>
+                    <span  style="font-weight: bold">19. INDEPENDENT CONTRACTOR</span><br>
                     The Supplier acts solely as an independent contractor in supplying the Goods
                     and/or performing the Services.<br><br>
-                    <span class="font-weight-bold">20. LICENCES</span><br>
+                    <span  style="font-weight: bold">20. LICENCES</span><br>
                     If the performance of the Order requires the Company to have any permit or license
                     from any government or other relevant authority, the Order shall be conditional upon
                     such permit or license being available at the required time.<br><br>
@@ -1329,33 +1292,33 @@
                 </td>
                 <td width="1%">&nbsp;</td>
                 <td width="49%" style="text-align: justify;font-size: 9px;">
-                    <span class="font-weight-bold">21. ADVERTISING</span><br>
+                    <span  style="font-weight: bold">21. ADVERTISING</span><br>
                     The Supplier will not without the prior written consent of the Company advertise or
                     publish in any way whatsoever the fact that the Supplier has contracted to supply the
                     Goods or the Services to the Company.<br><br>
-                    <span class="font-weight-bold">22. SEVERABILITY</span><br>
+                    <span  style="font-weight: bold">22. SEVERABILITY</span><br>
                     Any provision or term of this contract which is or may be void or unenforceable shall to
                     the extent of such invalidity or unenforceability be deemed severable and shall not
                     affect any other provision hereof.<br><br>
-                    <span class="font-weight-bold">23. NOTICES</span><br>
+                    <span  style="font-weight: bold">23. NOTICES</span><br>
                     Any notice hereunder shall be deemed to have been duly given if sent by prepaid first
                     class post, telex, telefax or telegraph to the party concerned at, in the case of the
                     Supplier, its last known address, and, in the case of the Company, the address
                     appearing on the Order. Notices sent by first class post shall be deemed to have been
                     given seven (7) days after dispatch and notices sent by telex, telefax or telegraph shall
                     be deemed to have been given on the date of dispatch.<br><br>
-                    <span class="font-weight-bold">24. WAIVER</span><br>
+                    <span  style="font-weight: bold">24. WAIVER</span><br>
                     Failure by the Company to exercise or enforce any rights under this contract or at law
                     shall not be deemed to be a waiver of any such right nor operate to bar its exercise or
                     enforcement at any future time or times.<br><br>
-                    <span class="font-weight-bold">25. ENGLISH TEXT</span><br>
+                    <span  style="font-weight: bold">25. ENGLISH TEXT</span><br>
                     In the case of conflict between the English text of this contract and translations into
                     other languages, the English text shall prevail.<br><br>
-                    <span class="font-weight-bold">26. GOVERNING LAW</span><br>
+                    <span  style="font-weight: bold">26. GOVERNING LAW</span><br>
                     These Conditions and the Order shall be governed by and construed in accordance
                     with the laws of [JURISDICTION (consult with legal)] and the parties submit to the nonexclusive
                     jurisdiction of the courts of that place.<br><br>
-                    <span class="font-weight-bold">27. HEALTH, SAFETY & ENVIRONMENT</span><br>
+                    <span  style="font-weight: bold">27. HEALTH, SAFETY & ENVIRONMENT</span><br>
                     Supplier shall be responsible for providing a healthy and safe working environment for
                     its employees and sub-contractors during performance on the Company’s premises.
                     Supplier shall protect the environment, health and safety of Supplier's,
@@ -1364,13 +1327,13 @@
                     performed in compliance with the Company’s, Health, Safety, and Environment policy
                     and site specific requirements. Supplier shall report all relevant accidents, injuries
                     and near-misses promptly to the Company.<br><br>
-                    <span class="font-weight-bold">28. FORCE MAJEURE</span><br>
+                    <span  style="font-weight: bold">28. FORCE MAJEURE</span><br>
                     Neither party shall be in breach of the Conditions nor liable for delay in performing, or
                     failure to perform, any of its obligations under the Conditions if such delay or failure
                     result from events, circumstances or causes beyond its reasonable control. If the
                     period of delay or non-performance continues for Eight (8) weeks the Company may
                     terminate the Conditions or Order by giving 30 days written notice to the Supplier.<br><br>
-                    <span class="font-weight-bold">29. VARIATION</span><br>
+                    <span  style="font-weight: bold">29. VARIATION</span><br>
                     Except as set out in these Conditions, no variation, including the introduction of any
                     additional terms and conditions, shall be effective unless it is agreed in writing and
                     signed by the parties or their authorized representatives.

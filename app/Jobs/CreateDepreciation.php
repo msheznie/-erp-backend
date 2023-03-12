@@ -16,19 +16,34 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\helper\CommonJobService;
+use App\Services\JobErrorLogService;
 
 class CreateDepreciation implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
     protected $depAutoID;
-
+    protected $dataBase;
+    private $tag = "asset-depreciation";
+    
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($depAutoID)
+    public function __construct($depAutoID, $dataBase)
     {
+        if(env('QUEUE_DRIVER_CHANGE','database') == 'database'){
+            if(env('IS_MULTI_TENANCY',false)){
+                 self::onConnection('database_main');
+            }else{
+                 self::onConnection('database');
+            }
+        }else{
+            self::onConnection(env('QUEUE_DRIVER_CHANGE','database'));
+        }
+
+        $this->dataBase = $dataBase;
         $this->depAutoID = $depAutoID;
     }
 
@@ -39,48 +54,46 @@ class CreateDepreciation implements ShouldQueue
      */
     public function handle(fixedAssetDepreciationMasterRepository $faDepMaster)
     {
+        CommonJobService::db_switch($this->dataBase);
         Log::useFiles(storage_path() . '/logs/depreciation_jobs.log');
+
         $depMasterAutoID = $this->depAutoID;
         $depMaster = $faDepMaster->find($depMasterAutoID);
-        if($depMaster && !$depMaster->is_acc_dep)
-        {
+        
+        if($depMaster && !$depMaster->is_acc_dep) {
             DB::beginTransaction();
             try {
                 Log::info('Depreciation Started');
+                Log::info('Depreciation ID - '.$depMasterAutoID);
                
                 if($depMaster) {
-                   
-    
-                    
                     $depDate = Carbon::parse($depMaster->FYPeriodDateTo);
                     $faMaster = FixedAssetMaster::with(['depperiod_by' => function ($query) {
-                        $query->selectRaw('SUM(depAmountRpt) as depAmountRpt,SUM(depAmountLocal) as depAmountLocal,faID');
-                        $query->whereHas('master_by', function ($query) {
-                            $query->where('approved', -1);
-                        });
-                        $query->groupBy('faID');
-                    }])
-                    ->where(function($q) use($depDate){
-                        $q->isDisposed()
-                            ->orWhere(function ($q1) use($depDate){
-                                $q1->disposed(-1)
-                                    ->WhereDate('disposedDate','>',$depDate);
-                            });
-                    })
-                    ->ofCompany([$depMaster->companySystemID])
-                    ->isApproved()
-                    ->assetType(1)
-                    ->orderBy('faID', 'desc')
-                    ->get();
+                                                    $query->selectRaw('SUM(depAmountRpt) as depAmountRpt,SUM(depAmountLocal) as depAmountLocal,faID');
+                                                    $query->whereHas('master_by', function ($query) {
+                                                        $query->where('approved', -1);
+                                                    });
+                                                    $query->groupBy('faID');
+                                                }])
+                                                ->where(function($q) use($depDate){
+                                                    $q->isDisposed()
+                                                        ->orWhere(function ($q1) use($depDate){
+                                                            $q1->disposed(-1)
+                                                                ->WhereDate('disposedDate','>',$depDate);
+                                                        });
+                                                })
+                                                ->ofCompany([$depMaster->companySystemID])
+                                                ->isApproved()
+                                                ->assetType(1)
+                                                ->orderBy('faID', 'desc')
+                                                ->get();
     
                     $depAmountRptTotal = 0;
                     $depAmountLocalTotal = 0;
                     if (count($faMaster) > 0) {
                         $finalData = [];
                         foreach ($faMaster as $val) {
-    
                             $amount_local = 0;
-                    
                             $depAmountRpt = count($val->depperiod_by) > 0 ? $val->depperiod_by[0]->depAmountRpt : 0;
                             $depAmountLocal = count($val->depperiod_by) > 0 ? $val->depperiod_by[0]->depAmountLocal : 0;
                             $nbvLocal = $val->COSTUNIT - $depAmountLocal;
@@ -130,14 +143,10 @@ class CreateDepreciation implements ShouldQueue
                                 }
     
                                 if (round($depAmountRpt,2) == 0 && round($depAmountLocal,2) == 0) {
-    
-                                   
                                     $dateDEP = Carbon::parse($val->dateDEP);
                                     $dateDEP1 = Carbon::parse($val->dateDEP);
-    
-                              
+
                                     if ($dateDEP->lessThanOrEqualTo($depDate)) {
-    
     
                                         $life_time_month = ($val->depMonth*12) - 1;
                                   
@@ -221,13 +230,10 @@ class CreateDepreciation implements ShouldQueue
             } catch (\Exception $e) {
                 DB::rollBack();
                 Log::error($this->failed($e));
+                JobErrorLogService::storeError($this->dataBase, $depMaster->documentSystemID, $depMasterAutoID, $this->tag, 2, $this->failed($e), "-****----Line No----:".$e->getLine()."-****----File Name----:".$e->getFile());
             }
         }
-
-
-   
     }
-
 
     public function failed($exception)
     {

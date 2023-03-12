@@ -18,6 +18,8 @@ use App\Http\Requests\API\UpdateChartOfAccountsAssignedAPIRequest;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\ChartOfAccount;
 use App\Models\Company;
+use App\Models\Tax;
+use App\Models\TaxAuthority;
 use App\Models\ProjectGlDetail;
 use App\Repositories\ChartOfAccountsAssignedRepository;
 use Illuminate\Http\Request;
@@ -274,6 +276,26 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
                 return $this->sendError('A sub ledger account is assigned and active to this company, therefore you cannot delete');
             }
         } 
+
+        $checkGlIsSelectedForVAT = Tax::where('companySystemID', $chartOfAccountsAssigned->companySystemID)
+                                      ->where(function($query) use ($chartOfAccountsAssigned) {
+                                         $query->where('inputVatGLAccountAutoID', $chartOfAccountsAssigned->chartOfAccountSystemID)
+                                               ->orWhere('outputVatGLAccountAutoID', $chartOfAccountsAssigned->chartOfAccountSystemID)
+                                               ->orWhere('inputVatTransferGLAccountAutoID', $chartOfAccountsAssigned->chartOfAccountSystemID)
+                                               ->orWhere('GLAutoID', $chartOfAccountsAssigned->chartOfAccountSystemID)
+                                               ->orWhere('outputVatTransferGLAccountAutoID', $chartOfAccountsAssigned->chartOfAccountSystemID);
+                                      })
+                                      ->first();
+
+        $checkGlInTaxAuthority = TaxAuthority::where('companySystemID', $chartOfAccountsAssigned->companySystemID)
+                                             ->where('taxPayableGLAutoID', $chartOfAccountsAssigned->chartOfAccountSystemID)
+                                             ->first();
+
+
+        if ($checkGlIsSelectedForVAT || $checkGlInTaxAuthority) {
+            return $this->sendError('Chart of account is selcted for VAT setup of this company, therefore you cannot delete');
+        }
+
 
         $chartOfAccountsAssigned->delete();
 

@@ -445,7 +445,7 @@ class FixedAssetMaster extends Model
     protected $primaryKey = 'faID';
 
     protected $dates = ['deleted_at'];
-    protected $appends = ['asset_code_concat'];
+    protected $appends = ['asset_code_concat', 'image_url'];
 
     public $fillable = [
         'departmentSystemID',
@@ -755,6 +755,16 @@ class FixedAssetMaster extends Model
      * @param mixed $type
      * @return \Illuminate\Database\Eloquent\Builder
      */
+
+    public function getImageUrlAttribute(){
+        $awsPolicy = \Helper::checkPolicy($this->companySystemID, 50);
+
+        if ($awsPolicy) {
+            return \Helper::getFileUrlFromS3($this->itemPath);    
+        } else {
+            return $this->itemPath;
+        }
+    }
 
     public function scopeAssetType($query,$assetType)
     {

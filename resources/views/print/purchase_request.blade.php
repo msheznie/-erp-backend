@@ -41,6 +41,7 @@
 
         .text-left {
             text-align: left;
+
         }
 
         .text-right {
@@ -141,10 +142,6 @@
     </style>
 </head>
 <body>
-<div class="footer">
-    {{--Footer Page <span class="pagenum"></span>--}}
-    <span class="white-space-pre-line font-weight-bold">{!! nl2br($request->docRefNo) !!}</span>
-</div>
 <div id="watermark"></div>
 <div class="card-body content" id="print-section">
 
@@ -171,10 +168,10 @@
                 <table>
                     <tr>
                         <td width="50px">
-                            <span class="font-weight-bold">Priority </span>
+                            <span style="font-weight:bold;">Priority </span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight:bold;">:</span>
                         </td>
                         <td>
                             @if($request->priority_pdf)
@@ -184,10 +181,10 @@
                     </tr>
                     <tr>
                         <td width="50px">
-                            <span class="font-weight-bold">Requisioner</span>
+                            <span style="font-weight:bold;">Requisioner</span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight:bold;">:</span>
                         </td>
                         <td>
                             @if($request->created_by)
@@ -197,10 +194,10 @@
                     </tr>
                     <tr>
                         <td width="50px">
-                            <span class="font-weight-bold">Location</span>
+                            <span style="font-weight:bold;">Location</span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight:bold;">:</span>
                         </td>
                         <td>
                             @if($request->location_pdf)
@@ -210,10 +207,10 @@
                     </tr>
                     <tr>
                         <td width="70px">
-                            <span class="font-weight-bold">Comments </span>
+                            <span style="font-weight:bold;">Comments </span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight:bold;">:</span>
                         </td>
                         <td>
                             <span>{{$request->comments}}</span>
@@ -236,24 +233,24 @@
                 </h3>
             </td>
             <td style="width: 30%">
-                <table>
+                <table valign="top">
                     <tr>
-                        <td width="70px">
-                            <span class="font-weight-bold">Document No</span>
+                        <td width="90px">
+                            <span style="font-weight:bold;">Document No</span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight:bold;">:</span>
                         </td>
                         <td>
                             <span>{{$request->purchaseRequestCode}}</span>
                         </td>
                     </tr>
                     <tr>
-                        <td width="70px">
-                            <span class="font-weight-bold">Date </span>
+                        <td width="90px">
+                            <span style="font-weight:bold;">Date </span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight:bold;">:</span>
                         </td>
                         <td>
                             <span>
@@ -263,7 +260,7 @@
                     </tr>
                     <tr>
                         <td rowspan="3" colspan="3" style="bottom: 0;position: absolute;">
-                                <span class="font-weight-bold">
+                                <span style="font-weight:bold;">
                                     <h3 class="text-muted">
                                         @if($request->cancelledYN == -1)
                                             Cancelled
@@ -277,7 +274,7 @@
                                             Fully Approved
                                         @endif
                                         </h3>
-`                                </span>
+                                </span>
                         </td>
                     </tr>
                 </table>
@@ -288,7 +285,7 @@
     <div style="margin-top: 30px">
         <table class="table table-bordered" style="width: 100%;">
             <thead>
-            <tr class="theme-tr-head">
+            <tr  style="background-color: #DEDEDE !important; border-color:#000">
                 <th></th>
                 <th class="text-left">Item Code</th>
                 <th class="text-left">Item Description</th>
@@ -309,29 +306,29 @@
             <tbody>
             @foreach ($request->details as $item)
                 <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;">
-                    <td>{{$loop->iteration}}</td>
-                    <td>{{$item->itemPrimaryCode}}</td>
-                    <td>{{$item->itemDescription}}</td>
-                    <td> {{$item->partNumber}}</td>
-                    <td>
+                    <td style="padding-left: 5px;">{{$loop->iteration}}</td>
+                    <td style="padding-left: 5px;">{{$item->itemPrimaryCode}}</td>
+                    <td style="padding-left: 5px;">{{$item->itemDescription}}</td>
+                    <td style="padding-left: 5px;"> {{$item->partNumber}}</td>
+                    <td style="padding-left: 5px;">
                         @if($item->uom)
                             {{$item->uom->UnitShortCode}}
                         @endif
                     </td>
-                    <td class="text-right">{{$item->quantityRequested}}</td>
+                    <td class="text-right" style="padding-right: 5px;">{{$item->quantityRequested}}</td>
                     @if($request->allowAltUom)
-                        <td>
+                        <td style="padding-left: 5px;">
                             @if($item->altUom)
                                 {{$item->altUom->UnitShortCode}}
                             @endif
                         </td>
-                        <td class="text-right">
+                        <td class="text-right" style="padding-right: 5px;">
                                 {{$item->altUnitValue}}
                         </td>
                     @endif    
-                    <td class="text-right">{{$item->quantityOnOrder}}</td>
+                    <td class="text-right" style="padding-right: 5px;">{{$item->quantityOnOrder}}</td>
                     @if($request->approved == -1)
-                        <td class="text-right">
+                        <td class="text-right" style="padding-right: 5px;">
                             <b>{{$item->poQuantity}} </b>
                         </td>
                     @endif
@@ -347,8 +344,8 @@
                 <td width="60%">
                     <table width="100%">
                         <tr>
-                            <td width="70px">
-                                <span class="font-weight-bold">Confirmed By :</span>
+                            <td width="100px">
+                                <span style="font-weight:bold;">Confirmed By :</span>
                             </td>
                             <td width="400px">
                                 @if($request->confirmed_by)
@@ -364,8 +361,8 @@
                 <td width="30%">
                     <table>
                         <tr>
-                            <td width="70px">
-                                <span class="font-weight-bold">Reviewed By :</span>
+                            <td width="100px">
+                                <span style="font-weight:bold;">Reviewed By :</span>
                             </td>
                             <td>
                                 <div style="border-bottom: 1px solid black;width: 200px;margin-top: 7px;"></div>
@@ -377,7 +374,7 @@
         </table>
     </div>
     <div class="row" style="margin-top: 10px">
-        <span class="font-weight-bold">Electronically Approved By :</span>
+        <span style="font-weight:bold;">Electronically Approved By :</span>
     </div>
     <div style="margin-top: 10px">
         <table>

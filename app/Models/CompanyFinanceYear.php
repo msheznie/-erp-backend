@@ -12,6 +12,7 @@
 namespace App\Models;
 use Carbon\Carbon;
 use Eloquent as Model;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
@@ -168,6 +169,14 @@ class CompanyFinanceYear extends Model
      * @return \Illuminate\Database\Eloquent\Builder
      */
 
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::addGlobalScope('isDeleted', function (Builder $builder) {
+            $builder->where('isDeleted', 0);
+        });
+    }
 
     public function created_employee()
     {
