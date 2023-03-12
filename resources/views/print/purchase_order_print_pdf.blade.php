@@ -175,7 +175,7 @@
         writing-mode: vertical-lr;
         -webkit-transform: rotate(-50deg);
         -moz-transform: rotate(-50deg);
-        font-size: 160px;
+        font-size: 70px;
         color: #ff5454 !important;
     }
 
