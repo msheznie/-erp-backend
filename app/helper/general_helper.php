@@ -6559,9 +6559,7 @@ class Helper
                     $documentYear = $documentDate->format('Y');
                     $documentYearMonth = $documentDate->format('Y-m');
 
-                    $companyFinanceYear = Models\CompanyFinanceYear::where('companySystemID', $pvMaster->interCompanyToSystemID)
-                        ->whereRaw('? between bigginingDate and endingDate', $documentDate)
-                        ->first();
+                    $companyFinanceYear = Models\CompanyFinanceYear::checkFinanceYear($pvMaster->interCompanyToSystemID, $documentDate->format('Y-m-d'));
 
                     if (empty($companyFinanceYear)) {
                         return ['success' => false, 'message' => "Inter company financial year not found"];
@@ -6686,7 +6684,7 @@ class Helper
                             $documentYear = $documentDate->format('Y');
                             $documentYearMonth = $documentDate->format('Y-m');
 
-                            $companyFinanceYear = Models\CompanyFinanceYear::where('companySystemID', $pvMaster->companySystemID)->whereRaw('? between bigginingDate and endingDate', $documentDate)->first();
+                            $companyFinanceYear = Models\CompanyFinanceYear::checkFinanceYear($pvMaster->companySystemID, $documentDate->format('Y-m-d'));
 
                             if (empty($companyFinanceYear)) {
                                 return ['success' => false, 'message' => "Financial year not found"];

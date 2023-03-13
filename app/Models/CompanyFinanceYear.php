@@ -236,4 +236,11 @@ class CompanyFinanceYear extends Model
             ->whereRaw("( '{$date}' BETWEEN DATE(bigginingDate) AND  DATE(endingDate) ) ")
             ->first();
     }
+
+    public static function checkFinanceYear($companySystemID, $date)
+    {
+        return CompanyFinanceYear::where('companySystemID', $companySystemID)
+                        ->whereRaw('? between bigginingDate and endingDate', $date)
+                        ->first();
+    }
 }
