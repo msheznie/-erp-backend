@@ -5,7 +5,7 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Support\Facades\Lang;
 
-class DetectFallbackLocale
+class DetectPrintLang
 {
     /**
      * Handle an incoming request.
@@ -16,8 +16,10 @@ class DetectFallbackLocale
      */
     public function handle($request, Closure $next,...$locales)
     {
-        $local = ($request->hasHeader('Accept-Language')) ? $request->header('Accept-Language') : 'en';
-        Lang::setFallback($local);
+        $local = $request->get('lang');
+        if(!empty($local)) {
+            app()->setLocale($local);
+        }
 
         return $next($request);
     }
