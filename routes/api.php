@@ -1177,6 +1177,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('cheque_register_details', 'ChequeRegisterDetailAPIController');
 
             Route::get('getChequeRegisterFormData', 'ChequeRegisterAPIController@getChequeRegisterFormData');
+            Route::post('chequeRegisterStatusChange', 'ChequeRegisterAPIController@chequeRegisterStatusChange');
             Route::get('getChequeRegisterByMasterID', 'ChequeRegisterAPIController@getChequeRegisterByMasterID');
 
             Route::post('getAllChequeRegistersByCompany', 'ChequeRegisterAPIController@getAllChequeRegistersByCompany');
