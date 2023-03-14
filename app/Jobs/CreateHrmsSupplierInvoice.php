@@ -71,7 +71,9 @@ class CreateHrmsSupplierInvoice implements ShouldQueue
             foreach ($documentApproveds as $documentApproved) {
                 $documentApproved["approvedComments"] = "Generated Supplier Invoice through HRMS system";
                 $documentApproved["db"] = $this->dataBase;
-                \Helper::approveDocumentForApi($documentApproved);
+               $approved = \Helper::approveDocumentForApi($documentApproved);
+                Log::info($approved);
+
             }
 
             DB::commit();
