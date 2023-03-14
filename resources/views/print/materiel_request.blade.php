@@ -160,7 +160,7 @@
     <table style="width: 100%">
         <tr style="width: 100%">
             <td colspan="3" style="bottom: 0;position: absolute;text-align: right">
-            <span class="font-weight-bold">
+            <span style="font-weight:bold;">
                 <h3 class="text-muted">
                     @if($entity->ConfirmedYN == 0 && $entity->approved == 0)
                         Not Confirmed
@@ -202,10 +202,10 @@
                 <table>
                     <tr>
                         <td width="50px">
-                            <span class="font-weight-bold">Warehouse</span>
+                            <span style="font-weight:bold;">Warehouse</span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight:bold;">:</span>
                         </td>
                         <td>
                             @if($entity->warehouse_by)
@@ -215,10 +215,10 @@
                     </tr>
                     <tr>
                         <td width="70px">
-                            <span class="font-weight-bold">Comments </span>
+                            <span style="font-weight:bold;">Comments </span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight:bold;">:</span>
                         </td>
                         <td>
                             <span>{{$entity->comments}}</span>
@@ -231,22 +231,22 @@
             <td style="width: 30%">
                 <table>
                     <tr>
-                        <td width="70px">
-                            <span class="font-weight-bold">Document No</span>
+                        <td width="90px">
+                            <span style="font-weight:bold;">Document No</span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight:bold;">:</span>
                         </td>
                         <td>
                             <span>{{$entity->RequestCode}}</span>
                         </td>
                     </tr>
                     <tr>
-                        <td width="70px">
-                            <span class="font-weight-bold">Date </span>
+                        <td width="90px">
+                            <span style="font-weight:bold;">Date </span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight:bold;">:</span>
                         </td>
                         <td>
                             <span>
@@ -262,40 +262,40 @@
     <div style="margin-top: 30px">
         <table class="table table-bordered" style="width: 100%;">
             <thead>
-            <tr class="theme-tr-head">
+            <tr style="background-color: #DEDEDE !important; border-color:#000">
                 <th></th>
-                <th class="text-left">Item Code</th>
-                <th class="text-left">Item Description</th>
-                <th class="text-left">Part No / Ref.Number</th>
-                <th class="text-left">UOM</th>
-                <th class="text-left">Qty Requested</th>
-                <th class="text-left">Comments</th>
+                <th style="text-align: left;">Item Code</th>
+                <th style="text-align: left;">Item Description</th>
+                <th style="text-align: left;">Part No / Ref.Number</th>
+                <th style="text-align: left;">UOM</th>
+                <th style="text-align: left;">Qty Requested</th>
+                <th style="text-align: left;">Comments</th>
             </tr>
             </thead>
             <tbody>
             @foreach ($entity->details as $item)
                 <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;">
-                    <td>{{$loop->iteration}}</td>
-                    <td>
+                    <td style="padding-left:5px;">{{$loop->iteration}}</td>
+                    <td style="padding-left:5px;">
                         @if($item->item_by)
                             {{$item->item_by->primaryCode}}
                         @endif
                     </td>
-                    <td>
+                    <td style="padding-left:5px;">
                         @if($item->item_by)
                             {{$item->item_by->itemDescription}}
                         @endif
                     </td>
-                    <td class="text-left">
+                    <td style="text-align: left; padding-left:5px;">
                         {{$item->partNumber}}
                     </td>
-                    <td>
+                    <td style="padding-left:5px;">
                         @if($item->uom_issuing)
                             {{$item->uom_issuing->UnitShortCode}}
                         @endif
                     </td>
-                    <td class="text-right">{{$item->quantityRequested}}</td>
-                    <td class="text-left">
+                    <td style="text-align: right; padding-right:5px;">{{$item->quantityRequested}}</td>
+                    <td style="text-align: left; padding-left:5px;">
                         {{$item->comments}}
                     </td>
                 </tr>
@@ -310,8 +310,8 @@
                 <td width="60%">
                     <table width="100%">
                         <tr>
-                            <td width="70px">
-                                <span class="font-weight-bold">Requested By :</span>
+                            <td width="100px">
+                                <span style="font-weight:bold;">Requested By :</span>
                             </td>
                             <td width="400px">
                                 @if($entity->confirmed_by)
@@ -327,8 +327,8 @@
                 <td width="30%">
                     <table>
                         <tr>
-                            <td width="70px">
-                                <span class="font-weight-bold">Reviewed By :</span>
+                            <td width="100px">
+                                <span style="font-weight:bold;">Reviewed By :</span>
                             </td>
                             <td>
                                 <div style="border-bottom: 1px solid black;width: 200px;margin-top: 7px;"></div>
@@ -340,7 +340,7 @@
         </table>
     </div>
     <div class="row" style="margin-top: 10px">
-        <span class="font-weight-bold">Electronically Approved By :</span>
+        <span style="font-weight:bold;">Electronically Approved By :</span>
     </div>
     <div style="margin-top: 10px">
         <table>

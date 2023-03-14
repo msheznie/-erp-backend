@@ -32,6 +32,7 @@ use App\Http\Requests\API\CreateGRVMasterAPIRequest;
 use App\Http\Requests\API\UpdateGRVMasterAPIRequest;
 use App\Models\PurchaseOrderDetails;
 use App\Models\BudgetConsumedData;
+use App\Models\TaxVatCategories;
 use App\Models\ErpItemLedger;
 use App\Models\Taxdetail;
 use App\Models\TaxLedger;
@@ -531,7 +532,7 @@ class GRVMasterAPIController extends AppBaseController
             }
 
             //getting total sum of PO detail Amount
-            $grvMasterSum = GRVDetails::select(DB::raw('COALESCE(SUM(netAmount),0) as masterTotalSum'))
+            $grvMasterSum = GRVDetails::select(DB::raw('COALESCE(SUM(netAmount),0) as masterTotalSum, COALESCE(SUM(VATAmount * noQty),0) as masterTotalVAT'))
                 ->where('grvAutoID', $input['grvAutoID'])
                 ->first();
 
@@ -611,14 +612,50 @@ class GRVMasterAPIController extends AppBaseController
             }
 
             //getting transaction amount
-            $grvTotalSupplierTransactionCurrency = GRVDetails::select(DB::raw('COALESCE(SUM(GRVcostPerUnitSupTransCur * noQty),0) as transactionTotalSum, COALESCE(SUM(GRVcostPerUnitComRptCur * noQty),0) as reportingTotalSum, COALESCE(SUM(GRVcostPerUnitLocalCur * noQty),0) as localTotalSum, COALESCE(SUM(GRVcostPerUnitSupDefaultCur * noQty),0) as defaultTotalSum'))
+            if ($gRVMaster->grvTypeID == 1) {
+                $grvTotalSupplierTransactionCurrency = GRVDetails::select(DB::raw('COALESCE(SUM(GRVcostPerUnitSupTransCur * noQty),0) as transactionTotalSum, COALESCE(SUM(GRVcostPerUnitComRptCur * noQty),0) as reportingTotalSum, COALESCE(SUM(GRVcostPerUnitLocalCur * noQty),0) as localTotalSum, COALESCE(SUM(GRVcostPerUnitSupDefaultCur * noQty),0) as defaultTotalSum'))
                 ->where('grvAutoID', $input['grvAutoID'])
                 ->first();
+
+                $grvDetailsData = GRVDetails::where('grvAutoID', $input['grvAutoID'])
+                                            ->get();
+
+                $exemptVATAmount = 0;
+                $lineVATAmountTotal = 0;
+                foreach ($grvDetailsData as $key => $value) {
+                    $checkVATCategory = TaxVatCategories::with(['type'])->find($value->vatSubCategoryID);
+                    if ($checkVATCategory) {
+                        if (isset($checkVATCategory->type->id) && $checkVATCategory->type->id == 1 && $value->exempt_vat_portion > 0 && $value->VATAmount > 0) {
+                           $exemptVAT = $value->VATAmount * ($value->exempt_vat_portion / 100);
+
+                           $exemptVATAmount += ($exemptVAT * $value->noQty);
+                        } else if (isset($checkVATCategory->type->id) && $checkVATCategory->type->id == 3) {
+                            $exemptVATAmount += ($value->VATAmount * $value->noQty);
+                        }
+                    }
+
+                    $lineVATAmountTotal += ($value->VATAmount * $value->noQty);
+                }
+
+                $currency = \Helper::convertAmountToLocalRpt($gRVMaster->documentSystemID,$input['grvAutoID'],$exemptVATAmount);
+                $currencyVAT = \Helper::convertAmountToLocalRpt($gRVMaster->documentSystemID,$input['grvAutoID'],$lineVATAmountTotal);
+
+                $grvTotalSupplierTransactionCurrency['transactionTotalSum'] = $grvTotalSupplierTransactionCurrency['transactionTotalSum'] - $exemptVATAmount + $lineVATAmountTotal;
+                $grvTotalSupplierTransactionCurrency['reportingTotalSum'] = $grvTotalSupplierTransactionCurrency['reportingTotalSum'] - $currency['reportingAmount'] + $currencyVAT['reportingAmount'];
+                $grvTotalSupplierTransactionCurrency['localTotalSum'] = $grvTotalSupplierTransactionCurrency['localTotalSum'] - $currency['localAmount'] + $currencyVAT['localAmount'];
+                $grvTotalSupplierTransactionCurrency['defaultTotalSum'] = $grvTotalSupplierTransactionCurrency['defaultTotalSum'] - $currency['defaultAmount'] + $currencyVAT['defaultAmount'];
+
+            } else {
+                $grvTotalSupplierTransactionCurrency = GRVDetails::select(DB::raw('COALESCE(SUM(GRVcostPerUnitSupTransCur * noQty),0) as transactionTotalSum, COALESCE(SUM(GRVcostPerUnitComRptCur * noQty),0) as reportingTotalSum, COALESCE(SUM(GRVcostPerUnitLocalCur * noQty),0) as localTotalSum, COALESCE(SUM(GRVcostPerUnitSupDefaultCur * noQty),0) as defaultTotalSum'))
+                    ->where('grvAutoID', $input['grvAutoID'])
+                    ->first();
+            }
 
             //getting logistic amount
             $grvTotalLogisticAmount = PoAdvancePayment::select(DB::raw('COALESCE(SUM(reqAmountInPOTransCur),0) as transactionTotalSum, COALESCE(SUM(reqAmountInPORptCur),0) as reportingTotalSum, COALESCE(SUM(reqAmountInPOLocalCur),0) as localTotalSum'))
                 ->where('grvAutoID', $input['grvAutoID'])
                 ->first();
+
 
             $input['grvTotalSupplierTransactionCurrency'] = $grvTotalSupplierTransactionCurrency['transactionTotalSum'];
             $input['grvTotalComRptCurrency'] = $grvTotalSupplierTransactionCurrency['reportingTotalSum'];
@@ -744,6 +781,7 @@ class GRVMasterAPIController extends AppBaseController
             }
 
             $different = abs($input['grvTotalSupplierTransactionCurrency'] - $grvMasterSum['masterTotalSum']);
+            
 
             if ($different < 0.01) {
                 // same
@@ -1314,10 +1352,13 @@ class GRVMasterAPIController extends AppBaseController
         $time = strtotime("now");
         $fileName = 'good_receipt_voucher_' . $id . '_' . $time . '.pdf';
 
-        $pdf = \App::make('dompdf.wrapper');
-        $pdf->loadHTML($html);
-
-        return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream($fileName);
+        $htmlFooter = view('print.good_receipt_voucher_footer', $grv);
+        $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+        $mpdf->AddPage('P');
+        $mpdf->setAutoBottomMargin = 'stretch';
+        $mpdf->SetHTMLFooter($htmlFooter);
+        $mpdf->WriteHTML($html);
+        return $mpdf->Output($fileName, 'I');
     }
 
     public function pullPOAttachment(Request $request)

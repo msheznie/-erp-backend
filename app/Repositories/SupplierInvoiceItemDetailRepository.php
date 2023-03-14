@@ -193,8 +193,13 @@ class SupplierInvoiceItemDetailRepository extends BaseRepository
         foreach ($grvDetails as $key1 => $value1) {
 
             if(isset($value1->grvDetailsID)){
-                $poDetails = GRVDetails::with(['po_detail'])->where('grvDetailsID', $value1->grvDetailsID)->first();
-                $value1->vatPercentage = isset($poDetails->po_detail->VATPercentage) ? $poDetails->po_detail->VATPercentage: 0;
+                $poDetails = GRVDetails::with(['po_detail', 'grv_master'])->where('grvDetailsID', $value1->grvDetailsID)->first();
+
+                if ($poDetails && $poDetails->grv_master && $poDetails->grv_master->grvTypeID == 1) {
+                    $value1->vatPercentage = isset($poDetails->VATPercentage) ? $poDetails->VATPercentage: 0;
+                } else {
+                    $value1->vatPercentage = isset($poDetails->po_detail->VATPercentage) ? $poDetails->po_detail->VATPercentage: 0;
+                }
             }
 
             if(isset( $value1->logisticID)){

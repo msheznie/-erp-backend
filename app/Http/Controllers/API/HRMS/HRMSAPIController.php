@@ -14,6 +14,7 @@ use App\Models\CompanyFinanceYear;
 use App\Models\DirectInvoiceDetails;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\Employee;
 use App\Models\SegmentMaster;
 use App\Models\SupplierAssigned;
 use App\Models\SupplierCurrency;
@@ -69,7 +70,13 @@ class HRMSAPIController extends AppBaseController
                     $finYear = $finYearExp[0];
                     $bookingInvCode = ($company->CompanyID . '\\' . $finYear . '\\' . 'BSI' . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
 
+                    if (empty($dt['comments'])) {
+                        return $this->sendError('Narration field is required');
+                    }
 
+                    if (empty($dt['supplierInvoiceNo'])) {
+                        return $this->sendError('Supplier Invoice No field is required');
+                    }
 
                 if($dt['documentType'] == 1) {
                     $supplierAssignedDetail = SupplierAssigned::select('liabilityAccountSysemID',
@@ -92,6 +99,8 @@ class HRMSAPIController extends AppBaseController
                     $companyCurrencyConversion = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, 0);
                     $companyCurrencyConversionTrans = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['bookingAmountTrans']);
                     $companyCurrencyConversionVat = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['vatAmount']);
+
+
 
                     $suppInvoiceArray = array(
                         'companySystemID' => $dt['companySystemID'],
@@ -140,6 +149,11 @@ class HRMSAPIController extends AppBaseController
                     $companyCurrencyConversionTrans = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['bookingAmountTrans']);
 
                     $companyCurrencyConversionVat = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['vatAmount']);
+
+                    $employee = Employee::where('employeeSystemID', $dt['employeeID'])->first();
+                    if (empty($employee)) {
+                        return $this->sendError('Employee not found', 500);
+                    }
 
                     $checkEmployeeControlAccount = SystemGlCodeScenarioDetail::getGlByScenario($dt['companySystemID'], 11, 12);
 
