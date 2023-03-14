@@ -206,3 +206,7 @@ Route::post('getAwardedFormData', 'TenderMasterAPIController@getAwardedFormData'
 Route::post('getEmployeesTenderAwardinglApproval','TenderBidEmployeeDetailsController@getEmployeesTenderAwardinglApproval');
 Route::post('confirmFinalBidAwardComment', 'TenderMasterAPIController@confirmFinalBidAwardComment');
 Route::post('sendTenderAwardEmail', 'TenderMasterAPIController@sendTenderAwardEmail');
+
+Route::resource('tender_edit_log_masters', 'TenderEditLogMasterAPIController');
+Route::post('createTenderEditRequest', 'TenderEditLogMasterAPIController@createTenderEditRequest');
+

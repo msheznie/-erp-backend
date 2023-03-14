@@ -577,11 +577,16 @@ WHERE
 	and ISNULL(srm_calendar_dates_detail.to_date)";
 
     $current_date_obj = date('Y-m-d H:i:s');
-    $current_date = Carbon::createFromFormat('Y-m-d H:i:s', $current_date_obj);
-    $opening_date_format = Carbon::createFromFormat('Y-m-d H:i:s', $data['master']['bid_submission_opening_date']);
+    $data['edit_valid'] = false;
+    if($data['master']['published_yn'] == 1)
+    {
+        $current_date = Carbon::createFromFormat('Y-m-d H:i:s', $current_date_obj);
+        $opening_date_format = Carbon::createFromFormat('Y-m-d H:i:s', $data['master']['bid_submission_opening_date']);
 
-    $result_obj = $opening_date_format->gt($current_date);
-    $data['edit_valid'] = $result_obj;
+        $result_obj = $opening_date_format->gt($current_date);
+        $data['edit_valid'] = $result_obj;
+    }
+
 
         // $calenderData =  CalendarDates::
         //             join('srm_calendar_dates_detail','srm_calendar_dates_detail.calendar_date_id','=','srm_calendar_dates.id')
@@ -1565,7 +1570,7 @@ WHERE
                 ->where('erp_documentapproved.companySystemID', $companyID);
         }
 
-
+        
         $search = $request->input('search.value');
 
         if ($search) {
