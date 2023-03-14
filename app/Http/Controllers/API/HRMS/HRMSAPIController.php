@@ -292,7 +292,7 @@ class HRMSAPIController extends AppBaseController
             }
 
                 $db = isset($request->db) ? $request->db : "";
-
+                Log::info('Database ' . $db);
                 CreateHrmsSupplierInvoice::dispatch($db, $bookInvSupp);
 
                 DB::commit();
