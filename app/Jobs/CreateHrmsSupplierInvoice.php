@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\helper\CommonJobService;
+use App\Models\BookInvSuppMaster;
 use App\Models\DocumentApproved;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
@@ -17,14 +18,14 @@ class CreateHrmsSupplierInvoice implements ShouldQueue
 {
 
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-    protected $masterModel;
+    protected $bookingSuppMasInvAutoID;
     protected $dataBase;
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($dataBase,$masterModel)
+    public function __construct($dataBase, $bookingSuppMasInvAutoID)
     {
         if(env('QUEUE_DRIVER_CHANGE','database') == 'database'){
             if(env('IS_MULTI_TENANCY',false)){
@@ -37,7 +38,7 @@ class CreateHrmsSupplierInvoice implements ShouldQueue
         }
         $this->dataBase = $dataBase;
 
-        $this->masterModel = $masterModel;
+        $this->bookingSuppMasInvAutoID = $bookingSuppMasInvAutoID;
     }
 
     /**
@@ -52,10 +53,12 @@ class CreateHrmsSupplierInvoice implements ShouldQueue
         CommonJobService::db_switch($this->dataBase);
         DB::beginTransaction();
         try {
+
             Log::useFiles(storage_path() . '/logs/hrms_create_supplier_invoice.log');
-            $params = array('autoID' => $this->masterModel->bookingSuppMasInvAutoID,
-                'company' => $this->masterModel->companySystemID,
-                'document' => $this->masterModel->documentSystemID,
+            $bookInvoiceMaster = BookInvSuppMaster::find($this->bookingSuppMasInvAutoID);
+            $params = array('autoID' => $bookInvoiceMaster->bookingSuppMasInvAutoID,
+                'company' => $bookInvoiceMaster->companySystemID,
+                'document' => $bookInvoiceMaster->documentSystemID,
                 'segment' => '',
                 'category' => '',
                 'amount' => ''
@@ -66,7 +69,7 @@ class CreateHrmsSupplierInvoice implements ShouldQueue
             Log::info($confirm);
 
 
-            $documentApproveds = DocumentApproved::where('documentSystemCode', $this->masterModel->bookingSuppMasInvAutoID)->where('documentSystemID', 11)->get();
+            $documentApproveds = DocumentApproved::where('documentSystemCode', $bookInvoiceMaster->bookingSuppMasInvAutoID)->where('documentSystemID', 11)->get();
 
             foreach ($documentApproveds as $documentApproved) {
                 $documentApproved["approvedComments"] = "Generated Supplier Invoice through HRMS system";
