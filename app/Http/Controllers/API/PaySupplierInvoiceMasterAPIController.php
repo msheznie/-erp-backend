@@ -1250,7 +1250,8 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
                             $unUsedCheque = ChequeRegisterDetail::whereHas('master', function ($q) use ($companySystemID, $bankAccount) {
                                 $q->where('bank_account_id', $bankAccount->bankAccountAutoID)
-                                    ->where('company_id', $companySystemID);
+                                    ->where('company_id', $companySystemID)
+                                    ->where('isActive', 1);
                             })
                                 ->where('status', 0)
                                 ->where(function ($q) use ($usedCheckID) {
@@ -2357,7 +2358,8 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
                             $unUsedCheque = ChequeRegisterDetail::whereHas('master', function ($q) use ($companySystemID, $bankAccount) {
                                 $q->where('bank_account_id', $bankAccount->bankAccountAutoID)
-                                    ->where('company_id', $companySystemID);
+                                    ->where('company_id', $companySystemID)
+                                    ->where('isActive', 1);
                             })
                                 ->where('status', 0)
                                 ->where(function ($q) use ($usedCheckID) {

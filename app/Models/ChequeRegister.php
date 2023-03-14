@@ -125,6 +125,7 @@ class ChequeRegister extends Model
         'document_id',
         'created_by',
         'created_pc',
+        'isActive',
         'updated_by',
         'updated_pc'
     ];
@@ -145,6 +146,7 @@ class ChequeRegister extends Model
         'company_id' => 'integer',
         'document_id' => 'integer',
         'created_by' => 'integer',
+        'isActive' => 'integer',
         'created_pc' => 'string',
         'updated_by' => 'integer',
         'updated_pc' => 'string'
