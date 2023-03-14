@@ -50,7 +50,8 @@ class TenantEnforce
             'api/v1/assignUserGroupNavigation',
             'api/v1/approvePurchaseRequest',
             'api/v1/post_receipt_voucher',
-            'api/v1/post_customer_invoice'
+            'api/v1/post_customer_invoice',
+            'api/v1/post_supplier_invoice'
         ];
 
 

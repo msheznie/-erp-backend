@@ -278,10 +278,10 @@ class HRMSAPIController extends AppBaseController
             }
 
                 $db = isset($request->db) ? $request->db : "";
-                DB::commit();
 
                 CreateHrmsSupplierInvoice::dispatch($db, $bookInvSupp);
 
+                DB::commit();
 
             return $this->sendResponse($bookInvSupp, 'Supplier Invoice created successfully');
         }
