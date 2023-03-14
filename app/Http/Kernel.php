@@ -69,6 +69,7 @@ class Kernel extends HttpKernel
         'max_memory_limit' => \App\Http\Middleware\MaxMemoryLimit::class,
         'max_execution_limit' => \App\Http\Middleware\MaxExecutionLimit::class,
         'access_token' => \App\Http\Middleware\AccessToken::class,
-        'pos_api' => \App\Http\Middleware\PosApi::class
+        'pos_api' => \App\Http\Middleware\PosApi::class,
+        'fallback_locale' => \App\Http\Middleware\DetectFallbackLocale::class
     ];
 }
