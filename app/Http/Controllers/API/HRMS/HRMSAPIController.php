@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API\HRMS;
 use App\helper\SupplierInvoice;
 use App\Http\Controllers\AppBaseController;
 use App\Http\Requests\API\CreateBookInvSuppMasterAPIRequest;
+use App\Jobs\CreateHrmsSupplierInvoice;
 use App\Models\BookInvSuppMaster;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\Company;
@@ -276,32 +277,13 @@ class HRMSAPIController extends AppBaseController
                 DirectInvoiceDetails::insert($suppInvoiceDetArray);
             }
 
-
-                $params = array('autoID' => $bookInvSupp->bookingSuppMasInvAutoID,
-                    'company' => $bookInvSupp->companySystemID,
-                    'document' => $bookInvSupp->documentSystemID,
-                    'segment' => '',
-                    'category' => '',
-                    'amount' => ''
-                );
-
-
-                $confirm = \Helper::confirmDocumentForApi($params);
-                Log::info($confirm);
-
                 $db = isset($request->db) ? $request->db : "";
-
-                $documentApproveds = DocumentApproved::where('documentSystemCode', $bookInvSupp->bookingSuppMasInvAutoID)->where('documentSystemID', 11)->get();
-                foreach ($documentApproveds as $documentApproved) {
-                    $documentApproved["approvedComments"] = "Generated Supplier Invoice through HRMS system";
-                    $documentApproved["db"] = $db;
-                    \Helper::approveDocumentForApi($documentApproved);
-                }
-
                 DB::commit();
 
-            return $this->sendResponse($bookInvSupp, 'Supplier Invoice created successfully');
+                CreateHrmsSupplierInvoice::dispatch($db, $bookInvSupp);
 
+
+            return $this->sendResponse($bookInvSupp, 'Supplier Invoice created successfully');
         }
         catch(\Exception $e){
             DB::rollback();
