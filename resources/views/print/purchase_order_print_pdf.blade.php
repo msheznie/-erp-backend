@@ -218,7 +218,7 @@
                     </table>
                     <table>
                         <tr>
-                            <td><span  style="font-weight: bold">{{$title}} Number</span></td>
+                            <td><span  style="font-weight: bold">{{$title}} {{ __('custom.number') }}</span></td>
                             <td><span  style="font-weight: bold">:</span></td>
                             <td>
                                 @if ($podata->purchaseOrderCode)
@@ -227,12 +227,12 @@
                             </td>
                         </tr>
                         <tr>
-                            <td><span  style="font-weight: bold">{{$title}} Date </span></td>
+                            <td><span  style="font-weight: bold">{{$title}} {{ __('custom.date') }} </span></td>
                             <td><span  style="font-weight: bold">:</span></td>
                             <td>{{ \App\helper\Helper::dateFormat($podata->createdDateTime)}}</td>
                         </tr>
                         <tr>
-                            <td><span  style="font-weight: bold">Reference Number </span></td>
+                            <td><span  style="font-weight: bold">{{ __('custom.reference_number') }}</span></td>
                             <td><span  style="font-weight: bold">:</span></td>
                             <td>
                                 @if ($podata->referenceNumber)
@@ -241,7 +241,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <td><span  style="font-weight: bold">VAT No </span></td>
+                            <td><span  style="font-weight: bold">{{ __('custom.vat_no') }} </span></td>
                             <td><span  style="font-weight: bold">:</span></td>
                             <td>
                                 @if ($podata->company->vatRegisteredYN == 1)
@@ -250,7 +250,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <td><span  style="font-weight: bold">Segment </span></td>
+                            <td><span  style="font-weight: bold">{{ __('custom.segment') }} </span></td>
                             <td><span  style="font-weight: bold">:</span></td>
                             <td>
                                 @if (isset($podata->segment->ServiceLineDes))
@@ -285,7 +285,7 @@
                 <td style="width: 60%">
                     <table style="width: 100%">
                         <tr>
-                            <td colspan="3"><span style="font-size: 13px; font-weight: bold;">Sold To:</span></td>
+                            <td colspan="3"><span style="font-size: 13px; font-weight: bold;">{{ __('custom.sold_to') }}:</span></td>
                         </tr>
                         <tr>
                             <td style="width: 100%" colspan="3"><p>
@@ -313,27 +313,27 @@
                     </table>
                     <table style="width: 100%">
                         <tr>
-                            <td style="width: 20%"><span  style="font-weight: bold">Order Contact</span></td>
+                            <td style="width: 20%"><span  style="font-weight: bold">{{ __('custom.order_contact') }}</span></td>
                             <td style="width: 2%"><span  style="font-weight: bold">:</span></td>
                             <td style="width: 78%">{{$podata->soldTocontactPersonID}}</td>
                         </tr>
                         <tr>
-                            <td style="width: 20%"><span  style="font-weight: bold">Phone</span></td>
+                            <td style="width: 20%"><span  style="font-weight: bold">{{ __('custom.phone') }}</span></td>
                             <td style="width: 2%"><span  style="font-weight: bold">:</span></td>
                             <td style="width: 78%">{{$podata->soldTocontactPersonTelephone}} </td>
                         </tr>
                         <tr>
-                            <td style="width: 20%"><span  style="font-weight: bold">Fax</span></td>
+                            <td style="width: 20%"><span  style="font-weight: bold">{{ __('custom.fax') }}</span></td>
                             <td style="width: 2%"><span  style="font-weight: bold">:</span></td>
                             <td style="width: 78%">{{$podata->soldTocontactPersonFaxNo}} </td>
                         </tr>
                         <tr>
-                            <td style="width: 20%"><span  style="font-weight: bold">Email</span></td>
+                            <td style="width: 20%"><span  style="font-weight: bold">{{ __('custom.email') }}</span></td>
                             <td style="width: 2%"><span  style="font-weight: bold">:</span></td>
                             <td style="width: 78%">{{$podata->soldTocontactPersonEmail}} </td>
                         </tr>
                         <tr>
-                            <td style="width: 20%"><span  style="font-weight: bold">VAT No</span></td>
+                            <td style="width: 20%"><span  style="font-weight: bold">{{ __('custom.vat_no') }}</span></td>
                             <td style="width: 2%"><span  style="font-weight: bold">:</span></td>
                             <td style="width: 78%">{{$podata->supplier->vatNumber}} </td>
                         </tr>
@@ -342,7 +342,7 @@
                 <td style="width: 40%">
                     <table style="width:100%">
                         <tr>
-                            <td colspan="3"><span style="font-size: 13px; font-weight: bold;">Supplier:</span></td>
+                            <td colspan="3"><span style="font-size: 13px; font-weight: bold;">{{ __('custom.supplier') }}:</span></td>
                         </tr>
                         <tr>
                             <td colspan="3">{{$podata->supplierPrimaryCode}}</td>
@@ -357,7 +357,7 @@
                         </tr>
                         @if($podata->supplierVATEligible)
                         <tr>
-                            <td><span  style="font-weight: bold">VAT #</span></td>
+                            <td><span  style="font-weight: bold">{{ __('custom.vat') }} #</span></td>
                             <td><span  style="font-weight: bold">:</span></td>
                             <td>
                                 @if ($podata->supplier)
@@ -367,7 +367,7 @@
                         </tr>
                         @endif
                         <tr>
-                            <td><span  style="font-weight: bold">Contact</span></td>
+                            <td><span  style="font-weight: bold">{{ __('custom.contact') }}</span></td>
                             <td><span  style="font-weight: bold">:</span></td>
                             <td>
                                 @if ($podata->suppliercontact)
@@ -376,7 +376,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <td style="width: 20%"><span  style="font-weight: bold">Phone</span></td>
+                            <td style="width: 20%"><span  style="font-weight: bold">{{ __('custom.phone') }}</span></td>
                             <td style="width: 2%"><span  style="font-weight: bold">:</span></td>
                             <td style="width: 78%">
                                 @if ($podata->suppliercontact)
@@ -385,7 +385,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <td style="width: 20%"><span  style="font-weight: bold">Fax</span></td>
+                            <td style="width: 20%"><span  style="font-weight: bold">{{ __('custom.fax') }}</span></td>
                             <td style="width: 2%"><span  style="font-weight: bold">:</span></td>
                             <td style="width: 78%">
                                 @if ($podata->suppliercontact)
@@ -394,7 +394,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <td style="width: 20%"><span  style="font-weight: bold">Email</span></td>
+                            <td style="width: 20%"><span  style="font-weight: bold">{{ __('custom.email') }}</span></td>
                             <td style="width: 2%"><span  style="font-weight: bold">:</span></td>
                             <td style="width: 78%">
                                 @if ($podata->suppliercontact)
@@ -432,17 +432,17 @@
                                         line-height: 1.2;
                                         color: inherit;">
                                 @if($podata->poConfirmedYN == 0 && $podata->approved == 0)
-                                    Not Confirmed & Not Approved <br> Draft Copy
+                                    {{ __('custom.not_confirmed_&_not_approved') }}<br> {{ __('custom.draft_copy') }}
                                 @endif
                                 @if($podata->poConfirmedYN == 1 && $podata->approved == 0)
-                                    Confirmed & Not Approved <br> Draft Copy
+                                        {{ __('custom.confirmed_&_not_approved') }}<br> {{ __('custom.draft_copy') }}
                                 @endif
                             </h3>
 
 
                                 @if($podata->poCancelledYN == -1)
                                     <h1 class="rotate">
-                                CANCELLED
+                                {{ __('custom.cancelled') }}
                                     </h1>
                                 @endif
                         </span>
@@ -459,7 +459,7 @@
                 <td style="width: 60%">
                     <table>
                         <tr>
-                            <td colspan="3"><span style="font-size: 13px; font-weight: bold;">Ship To:</span></td>
+                            <td colspan="3"><span style="font-size: 13px; font-weight: bold;"> {{ __('custom.ship_to') }}:</span></td>
                         </tr>
                         <tr>
                             <td colspan="3"><p>
@@ -482,22 +482,22 @@
                     </table>
                     <table>
                         <tr>
-                            <td style="width: 34%"><span  style="font-weight: bold">Ship Contact</span></td>
+                            <td style="width: 34%"><span  style="font-weight: bold"> {{ __('custom.ship_contact') }}</span></td>
                             <td style="width: 2%"><span  style="font-weight: bold">:</span></td>
                             <td style="width: 64%">{{$podata->shipTocontactPersonID}} </td>
                         </tr>
                         <tr>
-                            <td style="width: 28%"><span  style="font-weight: bold">Phone</span></td>
+                            <td style="width: 28%"><span  style="font-weight: bold">{{ __('custom.phone') }}</span></td>
                             <td style="width: 2%"><span  style="font-weight: bold">:</span></td>
                             <td style="width: 70%">{{$podata->shipTocontactPersonTelephone}} </td>
                         </tr>
                         <tr>
-                            <td style="width: 28%"><span  style="font-weight: bold">Fax</span></td>
+                            <td style="width: 28%"><span  style="font-weight: bold">{{ __('custom.fax') }}</span></td>
                             <td style="width: 2%"><span  style="font-weight: bold">:</span></td>
                             <td style="width: 70%">{{$podata->shipTocontactPersonFaxNo}} </td>
                         </tr>
                         <tr>
-                            <td style="width: 28%"><span  style="font-weight: bold">Email</span></td>
+                            <td style="width: 28%"><span  style="font-weight: bold">{{ __('custom.email') }}</span></td>
                             <td style="width: 2%"><span  style="font-weight: bold">:</span></td>
                             <td style="width: 70%">{{$podata->shipTocontactPersonEmail}} </td>
                         </tr>
@@ -506,7 +506,7 @@
                 <td style="width: 40%">
                     <table>
                         <tr>
-                            <td colspan="3"><span style="font-size: 13px; font-weight: bold;">Invoice To:</span></td>
+                            <td colspan="3"><span style="font-size: 13px; font-weight: bold;">{{ __('custom.invoice_no') }}:</span></td>
                         </tr>
                         <tr>
                             <td colspan="3"><p>
@@ -524,7 +524,7 @@
                             <td colspan="3">{!! nl2br($podata->invoiceToAddressDescription) !!}</td>
                         </tr>
                         <tr>
-                            <td style="width: 20%"><span  style="font-weight: bold">Payment Contact</span></td>
+                            <td style="width: 20%"><span  style="font-weight: bold">{{ __('custom.payment_contact') }}</span></td>
                             <td style="width: 2%"><span  style="font-weight: bold">:</span></td>
                             <td style="width: 78%">
                                 @if ($podata->suppliercontact)
@@ -533,7 +533,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <td style="width: 20%"><span  style="font-weight: bold">Phone</span></td>
+                            <td style="width: 20%"><span  style="font-weight: bold">{{ __('custom.phone') }}</span></td>
                             <td style="width: 2%"><span  style="font-weight: bold">:</span></td>
                             <td style="width: 78%">
                                 @if ($podata->suppliercontact)
@@ -542,7 +542,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <td style="width: 20%"><span  style="font-weight: bold">Fax</span></td>
+                            <td style="width: 20%"><span  style="font-weight: bold">{{ __('custom.fax') }}</span></td>
                             <td style="width: 2%"><span  style="font-weight: bold">:</span></td>
                             <td style="width: 78%">
                                 @if ($podata->suppliercontact)
@@ -551,7 +551,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <td style="width: 20%"><span  style="font-weight: bold">Email</span></td>
+                            <td style="width: 20%"><span  style="font-weight: bold">{{ __('custom.email') }}</span></td>
                             <td style="width: 2%"><span  style="font-weight: bold">:</span></td>
                             <td style="width: 78%">
                                 @if ($podata->suppliercontact)
@@ -568,7 +568,7 @@
     <div class="row">
         <table style="width:100%">
             <tr style="width:88%">
-                <td style="width:11%;vertical-align: top;"><span  style="font-weight: bold">Narration</span></td>
+                <td style="width:11%;vertical-align: top;"><span  style="font-weight: bold">{{ __('custom.narration') }}</span></td>
                 <td style="width:1%;vertical-align: top;"><span  style="font-weight: bold">:</span></td>
                 <td style="width:88%;vertical-align: top;">{!! nl2br($podata->narration) !!}</td>
             </tr>
@@ -580,7 +580,7 @@
                 <td style="width:88%">
                     <table style="padding-bottom: 1%">
                         <tr>
-                            <td style="width: 16%"><span  style="font-weight: bold">Expected Date</span></td>
+                            <td style="width: 16%"><span  style="font-weight: bold">{{ __('custom.expected_date') }}</span></td>
                             <td style="width: 1%"><span  style="font-weight: bold">:</span></td>
                             <td style="width: 83%">{{ \App\helper\Helper::dateFormat($podata->expectedDeliveryDate)}}</td>
                         </tr>
@@ -589,7 +589,7 @@
                 <td style="width:12%">
                     <table style="padding-bottom: 2%">
                         <tr>
-                            <td><span  style="font-weight: bold">Currency</span></td>
+                            <td><span  style="font-weight: bold">{{ __('custom.currency') }}</span></td>
                             <td><span  style="font-weight: bold">:</span></td>
                             <td>
                                 @if ($podata->transactioncurrency)
@@ -607,20 +607,20 @@
             <thead>
             <tr style="border-top: 1px solid black;">
                 <th style="text-align: center">#</th>
-                <th style="text-align: center">Item Code</th>
-                <th style="text-align: center">Item Description</th>
+                <th style="text-align: center">{{ __('custom.item_code') }}</th>
+                <th style="text-align: center">{{ __('custom.item_description') }}</th>
                 @if ($isProjectBase)
-                    <th colspan="4" style="text-align: center">Project</th>
+                    <th colspan="4" style="text-align: center">{{ __('custom.project') }}</th>
                 @endif
-                <th style="text-align: center">Part No / Ref.Number</th>
-                <th style="text-align: center">UOM</th>
-                <th style="text-align: center">Qty</th>
+                <th style="text-align: center">{{ __('custom.part_no') }} / {{ __('custom.ref_no') }}</th>
+                <th style="text-align: center">{{ __('custom.uom') }}</th>
+                <th style="text-align: center">{{ __('custom.qty') }}</th>
                 @if(isset($allowAltUom))
-                <th style="text-align: center">Alt.UOM</th>
-                <th style="text-align: center">Alt.Qty</th>
+                <th style="text-align: center">{{ __('custom.alt_uom') }}</th>
+                <th style="text-align: center">{{ __('custom.item_qty') }}</th>
                 @endif
-                <th style="text-align: center">Unit Cost</th>
-                <th style="text-align: center">Dis. Per Unit</th>
+                <th style="text-align: center">{{ __('custom.unit_cost') }}</th>
+                <th style="text-align: center">Dis. Per Unit{{ __('custom.dis_per_unit') }}</th>
                 @if ($podata->isVatEligible)
                   <th style="text-align: center">VAT. Per Unit</th>
                 @endif
@@ -697,7 +697,7 @@
             <tr>
                 <td style="border-bottom: none !important;border-left: none !important;width: 60%;">&nbsp;</td>
                 <td class="text-right" style="width: 20%;border: 1px solid rgb(127, 127, 127)!important;">
-                    <span style="font-weight: bold; font-size: 11px">Total Order Amount</span>
+                    <span style="font-weight: bold; font-size: 11px">{{ __('custom.total_order_amount') }}</span>
                 </td>
                 <td class="text-right" style="width: 20%;border: 1px solid rgb(127, 127, 127)!important;">
                     <span  style="font-weight: bold; font-size: 11px">
@@ -710,7 +710,7 @@
             <tr>
                 <td style="border-bottom: none !important;border-left: none !important;width: 60%;">&nbsp;</td>
                 <td class="text-right" style="width: 20%;border: 1px solid rgb(127, 127, 127)!important;">
-                    <span style="font-weight: bold; font-size: 11px">Discount</span>
+                    <span style="font-weight: bold; font-size: 11px">{{ __('custom.discount') }}</span>
                 </td>
                 <td class="text-right" style="width: 20%;border: 1px solid rgb(127, 127, 127)!important;">
                     <span  style="font-weight: bold; font-size: 11px">
@@ -722,7 +722,7 @@
                 <tr>
                     <td style="border-bottom: none !important;border-left: none !important;width: 60%;">&nbsp;</td>
                     <td class="text-right" style="width: 20%;border: 1px solid rgb(127, 127, 127)!important;">
-                        <span style="font-weight: bold; font-size: 11px">VAT</span>
+                        <span style="font-weight: bold; font-size: 11px">{{ __('custom.vat') }}</span>
                     </td>
                     <td class="text-right" style="width: 20%;border: 1px solid rgb(127, 127, 127)!important;">
                         <span  style="font-weight: bold; font-size: 11px">
@@ -738,7 +738,7 @@
             <tr>
                 <td style="border-bottom: none !important;border-left: none !important;width: 60%;">&nbsp;</td>
                 <td class="text-right" style="width: 20%;border: 1px solid rgb(127, 127, 127)!important;">
-                    <span style="font-weight: bold; font-size: 11px">Net Amount</span>
+                    <span style="font-weight: bold; font-size: 11px">{{ __('custom.net_amount') }}</span>
                 </td>
                 <td class="text-right" style="width: 20%;border: 1px solid rgb(127, 127, 127)!important;">
                     <span  style="font-weight: bold; font-size: 11px">
@@ -758,7 +758,7 @@
     <div class="row">
         <table style="width:100%;padding-top: 10px;">
             <tr>
-                <td style="width:13%;vertical-align: top;"><span  style="font-weight: bold">Delivery Terms</span></td>
+                <td style="width:13%;vertical-align: top;"><span  style="font-weight: bold">{{ __('custom.delivery_terms') }}</span></td>
                 <td style="width:2%;vertical-align: top;"><span  style="font-weight: bold">:</span></td>
                 <td style="width:85%;vertical-align: top;">{!! nl2br($podata->deliveryTerms) !!}</td>
             </tr>
@@ -767,7 +767,7 @@
     <div class="row">
         <table style="width:100%;padding-top: 10px;">
             <tr style="padding-bottom: 2%;">
-                <td style="width:13%;vertical-align: top;"><span  style="font-weight: bold">Penalty Terms</span></td>
+                <td style="width:13%;vertical-align: top;"><span  style="font-weight: bold">{{ __('custom.penalty_terms') }}</span></td>
                 <td style="width:2%;vertical-align: top;"><span  style="font-weight: bold">:</span></td>
                 <td style="width:85%;vertical-align: top;">{!! nl2br($podata->panaltyTerms) !!}</td>
             </tr>
@@ -776,7 +776,7 @@
     <div class="row">
         <table style="width:100%;padding-top: 10px;">
             <tr style="padding-bottom: 2%;">
-                <td style="width:13%;vertical-align: top;"><span  style="font-weight: bold">Payment Terms</span></td>
+                <td style="width:13%;vertical-align: top;"><span  style="font-weight: bold">{{ __('custom.payment_terms') }}</span></td>
                 <td style="width:2%;vertical-align: top;"><span  style="font-weight: bold">:</span></td>
                 <td style="width:85%;vertical-align: top;">{{$paymentTermsView}}</td>
             </tr>
@@ -785,7 +785,7 @@
     <div class="row">
         <table style="width:100%;padding-top: 10px;">
             <tr style="padding-bottom: 2%;">
-                <td style="width:13%;vertical-align: top;"><span  style="font-weight: bold">Created By</span></td>
+                <td style="width:13%;vertical-align: top;"><span  style="font-weight: bold">{{ __('custom.created_by') }}</span></td>
                 <td style="width:2%;vertical-align: top;"><span  style="font-weight: bold">:</span></td>
                 <td style="width:85%;vertical-align: top;">  
                     @if(isset($podata->created_by->empFullName))
@@ -798,7 +798,7 @@
     <div class="row">
         <table style="width:100%;padding-top: 10px;">
             <tr style="padding-bottom: 2%;">
-                <td style="width:13%;vertical-align: top;"><span  style="font-weight: bold">Created Date</span></td>
+                <td style="width:13%;vertical-align: top;"><span  style="font-weight: bold">{{ __('custom.created_date') }}</span></td>
                 <td style="width:2%;vertical-align: top;"><span  style="font-weight: bold">:</span></td>
                 <td style="width:85%;vertical-align: top;">
                     @if(isset($podata->createdDateTime))
