@@ -1796,9 +1796,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     Route::post('generateARReportPDF', 'AccountsReceivableReportAPIController@pdfExportReport');
     Route::post('generateAPReportPDF', 'AccountsPayableReportAPIController@pdfExportReport');
     Route::get('printPurchaseRequest', 'PurchaseRequestAPIController@printPurchaseRequest');
-    Route::get('printItemIssue', 'ItemIssueMasterAPIController@printItemIssue');
     Route::get('printItemIssue', 'ItemIssueMasterAPIController@printItemIssue')->middleware(['print_lang']);
     Route::get('deliveryPrintItemIssue', 'ItemIssueMasterAPIController@deliveryPrintItemIssue')->middleware(['print_lang']);
+    Route::get('printItemReturn', 'ItemReturnMasterAPIController@printItemReturn');
     Route::get('printStockReceive', 'StockReceiveAPIController@printStockReceive');
     Route::get('printStockTransfer', 'StockTransferAPIController@printStockTransfer');
     
