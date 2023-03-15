@@ -1804,7 +1804,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     Route::get('printStockTransfer', 'StockTransferAPIController@printStockTransfer');
     
     Route::get('printPurchaseReturn', 'PurchaseReturnAPIController@printPurchaseReturn');
-    Route::get('printCustomerInvoice', 'CustomerInvoiceDirectAPIController@printCustomerInvoice');
+    Route::get('printCustomerInvoice', 'CustomerInvoiceDirectAPIController@printCustomerInvoice')->middleware(['print_lang']);
     Route::get('printExpenseClaim', 'ExpenseClaimAPIController@printExpenseClaim');
     Route::get('printExpenseClaimMaster', 'ExpenseClaimMasterAPIController@printExpenseClaimMaster');
     Route::get('printCreditNote', 'CreditNoteAPIController@printCreditNote');

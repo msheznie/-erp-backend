@@ -211,7 +211,7 @@
                 <td width="100%" style="text-align: center;white-space: nowrap">
                         <h4 class="text-center" style="margin-top: 1px">
                             <br/>
-                            Tax Invoice
+                            {{ __('custom.tax_invoice') }}
                         </h4>
                 </td>
             </tr>
@@ -222,7 +222,7 @@
                 <td style="width: 65%; text-align: left;vertical-align: top;">
                     <table  style="width: 100%">
                         <tr>
-                            <td style="width: 23% !important;"><b>Customer Name </b></td>
+                            <td style="width: 23% !important;"><b>{{ __('custom.customer_name') }} </b></td>
                             <td style="width: 1% !important; vertical-align: top;">:</td>
                             <td>@if($request->line_customerShortCode)
                                     {{$request->customer->CutomerCode}} -
@@ -230,30 +230,30 @@
                                 {{$request->customer->ReportTitle}}</td>
                         </tr>
                         <tr>
-                            <td style="width: 23% !important; vertical-align: top;"><b>Customer Address </b></td>
+                            <td style="width: 23% !important; vertical-align: top;"><b>{{ __('custom.customer_address') }} </b></td>
                             <td style="width: 2% !important; vertical-align: top;">:</td>
                             <td>
                                 {{$request->customer->customerAddress1}}</td>
                         </tr>
                         <tr>
-                            <td style="width: 23% !important;"><b>Contact Person </b></td>
+                            <td style="width: 23% !important;"><b>{{ __('custom.contact_person') }} </b></td>
                             <td style="width: 2% !important; vertical-align: top;">:</td>
                             <td>{{isset($request->CustomerContactDetails->contactPersonName)?$request->CustomerContactDetails->contactPersonName:' '}}</td>
                         </tr>
                         <tr>
-                            <td style="width: 23% !important;"><b>Customer VATIN</b></td>
+                            <td style="width: 23% !important;"><b>{{ __('custom.contact_vatin') }}</b></td>
                             <td style="width: 2% !important; vertical-align: top;">:</td>
                             <td>
                                 {{$request->vatNumber}}</td>
                         </tr>
                         <tr>
-                            <td style="width: 23% !important;"><b>Contact Person Tel</b></td>
+                            <td style="width: 23% !important;"><b>{{ __('custom.contact_person_tel') }}</b></td>
                             <td style="width: 2% !important; vertical-align: top;">:</td>
                             <td>{{isset($request->CustomerContactDetails->contactPersonTelephone)?$request->CustomerContactDetails->contactPersonTelephone:' '}}</td>
                         </tr>
 
                         <tr>
-                            <td style="width: 23% !important;"><b>Invoice Due Date </b></td>
+                            <td style="width: 23% !important;"><b>{{ __('custom.invoice_due_date') }}</b></td>
                             <td style="width: 2% !important; vertical-align: top;">:</td>
 
                             <td> @if(!empty($request->invoiceDueDate))
@@ -262,7 +262,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <td style="width: 23% !important;"><b>Segment </b></td>
+                            <td style="width: 23% !important;"><b>{{ __('custom.segment') }} </b></td>
                             <td style="width: 2% !important; vertical-align: top;">:</td>
 
                             <td>@if(!empty($request->segment->ServiceLineDes))
@@ -271,7 +271,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <td style="width: 23% !important;"><b>Narration </b></td>
+                            <td style="width: 23% !important;"><b>{{ __('custom.narration') }} </b></td>
                             <td style="width: 2% !important; vertical-align: top;">:</td>
 
                             <td>@if(!empty($request->comments))
@@ -285,18 +285,18 @@
                 <td style="width: 35%; text-align: left;vertical-align: top;">
                     <table class="head_font" style="width: 100%">
                         <tr>
-                            <td style="width: 38% !important;"><b>Invoice number </b></td>
+                            <td style="width: 38% !important;"><b>{{ __('custom.invoice_number') }} </b></td>
                             <td>: {{$request->bookingInvCode}}</td>
                         </tr>
                         <tr>
-                            <td style="width: 38% !important;"><b>Document Date </b></td>
+                            <td style="width: 38% !important;"><b>{{ __('custom.document_date') }} </b></td>
                             <td>: @if(!empty($request->bookingDate))
                                     {{\App\helper\Helper::dateFormat($request->bookingDate) }}
                                 @endif
                             </td>
                         </tr>
                         <tr>
-                            <td style="width: 38% !important;"><b>Reference Number </b></td>
+                            <td style="width: 38% !important;"><b>{{ __('custom.reference_number') }} </b></td>
                             <td>: @if(!empty($request->customerInvoiceNo))
                                 {{$request->customerInvoiceNo}}
                                 @endif
@@ -304,21 +304,21 @@
                         </tr>
 
                         <tr>
-                            <td style="width: 38% !important;"><b>Currency </b></td>
+                            <td style="width: 38% !important;"><b>{{ __('custom.currency') }} </b></td>
                             <td>: @if(!empty($request->currency->CurrencyName))
                                     {{$request->currency->CurrencyName}} ({{$request->currency->CurrencyCode}})
                                 @endif
                             </td>
                         </tr>
                         <tr>
-                            <td style="width: 38% !important;"><b>Invoice Date </b></td>
+                            <td style="width: 38% !important;"><b>{{ __('custom.invoice_date') }} </b></td>
                             <td>: @if(!empty($request->customerInvoiceDate))
                                     {{\App\helper\Helper::dateFormat($request->customerInvoiceDate) }}
                                 @endif
                             </td>
                         </tr>
                         <tr>
-                            <td style="width: 38% !important;"><b>Date Of Supply </b></td>
+                            <td style="width: 38% !important;"><b>{{ __('custom.date_of_supply') }} </b></td>
                             <td>: @if(!empty($request->date_of_supply))
                                     {{\App\helper\Helper::dateFormat($request->date_of_supply) }}
                                 @endif
@@ -340,10 +340,10 @@
                 <thead>
                 <tr class="">
 
-                    <th style="text-align: center">Well</th>
-                    <th style="text-align: center">Network</th>
-                    <th style="text-align: center">SE</th>
-                    <th style="text-align: center">Total Amount({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
+                    <th style="text-align: center">{{ __('custom.well') }}</th>
+                    <th style="text-align: center">{{ __('custom.network') }}</th>
+                    <th style="text-align: center">{{ __('custom.se') }}</th>
+                    <th style="text-align: center">{{ __('custom.total_amount') }}({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -373,15 +373,15 @@
                 <thead>
                 <tr class="">
                     <th style="width:1%"></th>
-                    <th style="text-align: center">Client Ref</th>
+                    <th style="text-align: center">{{ __('custom.client_ref') }}</th>
                     @if($request->is_po_in_line)
-                        <th style="text-align: center">PO Line Item</th>
+                        <th style="text-align: center">{{ __('custom.po_line_item') }}</th>
                     @endif
-                    <th style="text-align: center">Details</th>
-                    <th style="text-align: center">UOM</th>
-                    <th style="text-align: center">Qty</th>
-                    <th style="text-align: center">Unit Rate</th>
-                    <th style="text-align: center">Total Amount ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
+                    <th style="text-align: center">{{ __('custom.details') }}</th>
+                    <th style="text-align: center">{{ __('custom.uom') }}</th>
+                    <th style="text-align: center">{{ __('custom.qty') }}</th>
+                    <th style="text-align: center">{{ __('custom.unit_rate') }}</th>
+                    <th style="text-align: center">{{ __('custom.total_amount') }} ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -419,10 +419,10 @@
                 <thead>
                 <tr class="theme-tr-head">
                     <th style="width:1%"></th>
-                    <th style=" text-align: center">Details</th>
+                    <th style=" text-align: center">{{ __('custom.details') }}</th>
 
 
-                    <th style="width:140px;text-align: center">Total Amount ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
+                    <th style="width:140px;text-align: center">{{ __('custom.total_amount') }}({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})</th>
                 </tr>
                 </thead>
 
@@ -456,11 +456,11 @@
                 <thead>
                     <tr class="theme-tr-head">
                         @if($request->isProjectBase && $request->isPerforma == 0)
-                            <th style="text-align: center" colspan="6">Item Details</th>
+                            <th style="text-align: center" colspan="6">{{ __('custom.item_details') }}</th>
                         @else
-                            <th style="text-align: center" colspan="5">Item Details</th>
+                            <th style="text-align: center" colspan="5">{{ __('custom.item_details') }}</th>
                         @endif
-                        <th style="text-align: center" colspan="8">Price 
+                        <th style="text-align: center" colspan="8">{{ __('custom.price') }}
                             @if(!empty($request->currency->CurrencyCode))
                                 ({{$request->currency->CurrencyCode}})
                             @endif
@@ -470,21 +470,21 @@
                 <thead>
                 <tr class="theme-tr-head">
                     <th style="width:3%">#</th>
-                    <th style="text-align: center">GL Code</th>
-                    <th style="text-align: center">Description</th>
+                    <th style="text-align: center">{{ __('custom.gl_code') }}</th>
+                    <th style="text-align: center">{{ __('custom.description') }}</th>
                     @if($request->isProjectBase && $request->isPerforma == 0)
-                        <th style="text-align: center">Project</th>
+                        <th style="text-align: center">{{ __('custom.project') }}</th>
                     @endif
-                    <th style="text-align: center">UOM</th>
-                    <th style="text-align: center">QTY</th>
-                    <th style="text-align: center">Sales Price</th>
-                    <th style="text-align: center">Dis <br/>%</th>
-                    <th style="text-align: center">Discount Amount</th>
-                    <th style="text-align: center">Selling Unit Price</th>
-                    <th style="text-align: center">Taxable Amount</th>
-                    <th style="text-align: center">VAT</th>
-                    <th style="text-align: center">VAT Amount</th>
-                    <th style="text-align: center">Net Amount @if(!empty($request->currency->CurrencyCode))
+                    <th style="text-align: center">{{ __('custom.uom') }}</th>
+                    <th style="text-align: center">{{ __('custom.qty') }}</th>
+                    <th style="text-align: center">{{ __('custom.sales_price') }}</th>
+                    <th style="text-align: center">{{ __('custom.dis') }} <br/>%</th>
+                    <th style="text-align: center">{{ __('custom.discount_amount') }}</th>
+                    <th style="text-align: center">{{ __('custom.selling_unit_price') }}</th>
+                    <th style="text-align: center">{{ __('custom.taxable_amount') }}</th>
+                    <th style="text-align: center">{{ __('custom.vat') }}</th>
+                    <th style="text-align: center">{{ __('custom.vat_amount') }}</th>
+                    <th style="text-align: center">{{ __('custom.net_amount') }} @if(!empty($request->currency->CurrencyCode))
                                                                             ({{$request->currency->CurrencyCode}})
                                                                         @endif
                     </th>
@@ -532,7 +532,7 @@
                 @if(!empty($company->localcurrency->currencyID) && !empty($request->currency->currencyID) && $company->localcurrency->currencyID != $request->currency->currencyID && $totalVATAmount > 0)
                 <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;">
                     <td class="text-center" colspan="6" style="text-align: center"></td>
-                    <td class="text-center" colspan="3" style="text-align: center"><B>Grand Total @if(!empty($request->currency->CurrencyCode))({{$request->currency->CurrencyCode}}) @endif</B></td>
+                    <td class="text-center" colspan="3" style="text-align: center"><B>{{ __('custom.grand_total') }} @if(!empty($request->currency->CurrencyCode))({{$request->currency->CurrencyCode}}) @endif</B></td>
                     <td class="text-center" style="text-align: right"><B>@if ($request->invoicedetails){{number_format($directTraSubTotal, $numberFormatting)}}@endif</B></td>
                     {{$totalVATAmount = (($request->tax && $request->tax->amount) ? $request->tax->amount : 0)}}
                     {{$netAmount = $totalVATAmount + $directTraSubTotal}}
@@ -553,11 +553,11 @@
                 <thead>
                     <tr class="theme-tr-head">
                         @if($request->isProjectBase && $request->isPerforma == 2)
-                            <th style="text-align: center" colspan="6">Item Details</th>
+                            <th style="text-align: center" colspan="6">{{ __('custom.item_details') }}</th>
                         @else
-                            <th style="text-align: center" colspan="5">Item Details</th>
+                            <th style="text-align: center" colspan="5">{{ __('custom.item_details') }}</th>
                         @endif
-                        <th style="text-align: center" colspan="8">Price 
+                        <th style="text-align: center" colspan="8">{{ __('custom.price') }}
                             @if(!empty($request->currency->CurrencyCode))
                                 ({{$request->currency->CurrencyCode}})
                             @endif
@@ -567,21 +567,21 @@
                 <thead>
                 <tr class="theme-tr-head">
                     <th style="width:2%">#</th>
-                    <th style="text-align: center">Description</th>
+                    <th style="text-align: center">{{ __('custom.description') }}</th>
                     @if($request->isProjectBase && $request->isPerforma == 2)
-                        <th style="text-align: center">Project</th>
+                        <th style="text-align: center">{{ __('custom.project') }}</th>
                     @endif
-                    <th style="text-align: center">Ref. No</th>
-                    <th style="text-align: center">UOM</th>
-                    <th style="text-align: center">QTY</th>
-                    <th style="text-align: center">Sales Price</th>
-                    <th style="text-align: center">Dis %</th>
-                    <th style="text-align: center">Discount Amount</th>
-                    <th style="text-align: center">Selling Unit Price</th>
-                    <th style="text-align: center">Taxable Amount</th>
-                    <th style="text-align: center">VAT</th>
-                    <th style="text-align: center">VAT Amount</th>
-                    <th style="text-align: center">Net Amount @if(!empty($request->currency->CurrencyCode))
+                    <th style="text-align: center">{{ __('custom.ref_no') }}</th>
+                    <th style="text-align: center">{{ __('custom.uom') }}</th>
+                    <th style="text-align: center">{{ __('custom.qty') }}</th>
+                    <th style="text-align: center">{{ __('custom.sales_price') }}</th>
+                    <th style="text-align: center">{{ __('custom.dis') }} %</th>
+                    <th style="text-align: center">{{ __('custom.discount_amount') }}</th>
+                    <th style="text-align: center">{{ __('custom.selling_unit_price') }}</th>
+                    <th style="text-align: center">{{ __('custom.taxable_amount') }}</th>
+                    <th style="text-align: center">{{ __('custom.vat') }}</th>
+                    <th style="text-align: center">{{ __('custom.vat_amount') }}</th>
+                    <th style="text-align: center">{{ __('custom.net_amount') }} @if(!empty($request->currency->CurrencyCode))
                                                                             ({{$request->currency->CurrencyCode}})
                                                                         @endif</th>
                 </tr>
@@ -663,10 +663,10 @@
     @if(!empty($company->localcurrency->currencyID) && !empty($request->currency->currencyID) && $company->localcurrency->currencyID != $request->currency->currencyID && $totalVATAmount > 0)
         <p class="normal_font"><B>(Grand Total in @if(!empty($request->currency->CurrencyCode)){{$request->currency->CurrencyCode}} @endif :   {{$request->amount_word}}
                 @if ($request->floatAmt > 0)
-                    and
+                    {{ __('custom.and') }}
                     {{$request->floatAmt}} /@if($request->currency->DecimalPlaces == 3)1000 @else 100 @endif
                 @endif
-                only)</B></p>
+                {{ __('custom.only') }})</B></p>
         @endif
 
 
@@ -676,18 +676,18 @@
         <table class="table table-bordered table-striped table-sm normal_font" style="width: 100%;">
             <thead>
             <tr class="">
-                <th style="text-align: center">Conversion Rate</th>
-                <th style="text-align: center">Currency</th>
-                <th style="text-align: center">Taxable Amount</th>
-                <th style="text-align: center">VAT Amount</th>
-                <th style="text-align: center">Grand Total</th>
+                <th style="text-align: center">{{ __('custom.conversion_rate') }}</th>
+                <th style="text-align: center">{{ __('custom.currency') }}</th>
+                <th style="text-align: center">{{ __('custom.taxable_amount') }}</th>
+                <th style="text-align: center">{{ __('custom.vat_amount') }}</th>
+                <th style="text-align: center">{{ __('custom.grand_total') }}</th>
             </tr>
             </thead>
             <tbody>
                 <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;background-color: white">
 
 
-                    <td style="width: 15%" class="text-left">Conversion Rate
+                    <td style="width: 15%" class="text-left">{{ __('custom.conversion_rate') }}
                         @if(!empty($company->localcurrency->CurrencyCode))
                             ({{ $company->localcurrency->CurrencyCode }}) :
                         @endif
@@ -754,7 +754,7 @@
             <tr>
                 <td class="text-left" style="border:none !important; width: 15%">
                         <span class="font-weight-bold">
-                            Sub Total @if(!empty($company->localcurrency->CurrencyCode))
+                            {{ __('custom.sub_total') }} @if(!empty($company->localcurrency->CurrencyCode))
                                 ({{ $company->localcurrency->CurrencyCode }})
                             @endif
                         </span>
@@ -773,7 +773,7 @@
                 </td>
                 <td class="text-left" style="border:none !important">
                         <span class="font-weight-bold">
-                            Sub Total ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})
+                            {{ __('custom.sub_total') }} ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})
                         </span>
                 </td>
 
@@ -787,7 +787,7 @@
             <tr>
                 <td class="text-left" style="border:none !important;width: 15%">
                         <span class="font-weight-bold">
-                            VAT  @if(!empty($company->localcurrency->CurrencyCode))
+                            {{ __('custom.vat') }}  @if(!empty($company->localcurrency->CurrencyCode))
                                 ({{ $company->localcurrency->CurrencyCode }})
                             @endif
                         </span>
@@ -804,7 +804,7 @@
                 </td>
                 <td class="text-left" style="border:none !important;width: 15%">
                         <span class="font-weight-bold">
-                            VAT ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})
+                            {{ __('custom.vat') }}  ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})
                         </span>
                 </td>
                 <td class="text-left"
@@ -816,7 +816,7 @@
             <tr>
                 <td class="text-left" style="border:none !important;width: 15%">
                         <span class="font-weight-bold">
-                            Total  @if(!empty($company->localcurrency->CurrencyCode))
+                            {{ __('custom.total') }}   @if(!empty($company->localcurrency->CurrencyCode))
                                 ({{ $company->localcurrency->CurrencyCode }})
                             @endif
                         </span>
@@ -834,7 +834,7 @@
                 </td>
                 <td class="text-left" style="border:none !important;width: 15%">
                         <span class="font-weight-bold">
-                            Total ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})
+                            {{ __('custom.total') }}  ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})
                         </span>
                 </td>
                 <td class="text-left"
@@ -852,7 +852,7 @@
                     <tbody>
                     <tr>
                         <td class="font-weight-bold" style="border:none !important; width: 10%">
-                            <B>Bank</B>
+                            <B>{{ __('custom.bank') }} </B>
                         </td>
                         <td style="border:none !important; width: 35%"> : 
                             @if($request->secondaryLogoCompanySystemID)
@@ -865,7 +865,7 @@
                         </td>
                         <td class="text-left" style="border:none !important;width: 25%">
                                 <span class="font-weight-bold">
-                                    <B>Sub Total (Excluding VAT)</B>
+                                    <B>{{ __('custom.sub_total') }}  ({{ __('custom.excluding_vat') }} )</B>
                                 </span>
                         </td>
 
@@ -879,7 +879,7 @@
                     {{$directTraSubTotal+= $totalVATAmount}}
                     <tr>
                         <td class="font-weight-bold" style="border:none !important; width: 10%" >
-                            <B>Branch</B>
+                            <B>{{ __('custom.branch') }}</B>
                         </td>
                         <td style="border:none !important; width: 35%"> : 
                             @if($request->secondaryLogoCompanySystemID)
@@ -892,7 +892,7 @@
                         </td>
                         <td class="text-left" style="border:none !important;width: 25%">
                                 <span class="font-weight-bold">
-                                    <B>Total VAT ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}}) ({{round( ( ($request->tax && $request->tax->taxPercent ) ? $request->tax->taxPercent : 0 ), 2)}} %)</B>
+                                    <B>{{ __('custom.total_vat') }} ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}}) ({{round( ( ($request->tax && $request->tax->taxPercent ) ? $request->tax->taxPercent : 0 ), 2)}} %)</B>
                                 </span>
                         </td>
                         <td class="text-right"
@@ -902,7 +902,7 @@
 
                     <tr>
                         <td class="font-weight-bold" style="border:none !important; width: 10%">
-                            <B>Account No</B>
+                            <B>{{ __('custom.account_no') }}</B>
                         </td>
                         <td style="border:none !important; width: 35%"> : 
                             @if($request->secondaryLogoCompanySystemID)
@@ -915,7 +915,7 @@
                         </td>
                         <td class="text-left" style="border:none !important;width: 25%">
                                 <span class="font-weight-bold">
-                                    <B>Total Amount Payable</B>
+                                    <B>{{ __('custom.total_amount_payable') }}</B>
                                 </span>
                         </td>
                         <td class="text-right"
@@ -932,7 +932,7 @@
                         </td>
                         <td class="text-left" style="border:none !important;width: 25%">
                                 <span class="font-weight-bold">
-                                    <B>Total Amount Payable in word</B>
+                                    <B>{{ __('custom.total_amount_payable_in_word') }}</B>
                                 </span>
                         </td>
                         <td class="text-right"
