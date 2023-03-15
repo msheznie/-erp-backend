@@ -203,7 +203,7 @@
                 <table>
                     <tr>
                         <td width="100px">
-                            <span style="font-weight: bold">Doc Code</span>
+                            <span style="font-weight: bold">{{ __('custom.doc_code') }}</span>
                         </td>
                         <td width="10px">
                             <span style="font-weight: bold">:</span>
@@ -214,7 +214,7 @@
                     </tr>
                     <tr>
                         <td width="70px">
-                            <span style="font-weight: bold">Doc Date </span>
+                            <span style="font-weight: bold">{{ __('custom.doc_date') }}</span>
                         </td>
                         <td width="10px">
                             <span style="font-weight: bold">:</span>
@@ -227,7 +227,7 @@
                     </tr>
                     <tr>
                         <td width="100px">
-                            <span style="font-weight: bold">Payment Mode</span>
+                            <span style="font-weight: bold">{{ __('custom.payment_mode') }}</span>
                         </td>
                         <td width="10px">
                             <span style="font-weight: bold">:</span>
@@ -246,20 +246,20 @@
     <div>
         <span style="font-size: 18px">
             @if($masterdata->invoiceType == 2)
-                Supplier Payment
+                 {{ __('custom.supplier_payment') }}
             @endif
             @if($masterdata->invoiceType == 3)
-                Direct Payment
+                    {{ __('custom.direct_payment') }}
             @endif
             @if($masterdata->invoiceType == 5)
-                Supplier Advance Payment
+                    {{ __('custom.supplier_advance_payment') }}
             @endif
             @if($masterdata->invoiceType == 6)
-                Employee Payment
-            @endif
+                    {{ __('custom.employee_payment') }}
+                @endif
             @if($masterdata->invoiceType == 7)
-                Employee Advance Payment
-            @endif
+                Employee Advance Payment  {{ __('custom.employee_advance_payment') }}
+                @endif
         </span>
     </div>
     <br>
@@ -271,7 +271,7 @@
                     @if($masterdata->invoiceType != 6 && $masterdata->invoiceType != 7)
                         <tr>
                             <td width="150px">
-                                <span style="font-weight: bold">Payee Code</span>
+                                <span style="font-weight: bold"> {{ __('custom.payee_code') }}</span>
                             </td>
                             <td width="10px">
                                 <span style="font-weight: bold">:</span>
@@ -286,10 +286,10 @@
                     <tr>
                         <td width="50px">
                             @if($masterdata->invoiceType == 6 || $masterdata->invoiceType == 7)
-                                <span style="font-weight: bold">Employee Name</span>
+                                <span style="font-weight: bold">{{ __('custom.employee_name') }}</span>
                             @endif
                             @if($masterdata->invoiceType != 6 && $masterdata->invoiceType != 7)
-                                <span style="font-weight: bold">Payee Name</span>
+                                <span style="font-weight: bold">{{ __('custom.payee_name') }}</span>
                             @endif
                         </td>
                         <td width="10px">
@@ -301,7 +301,7 @@
                     </tr>
                     <tr>
                         <td width="50px">
-                            <span style="font-weight: bold">Bank Name</span>
+                            <span style="font-weight: bold">{{ __('custom.bank_name') }}</span>
                         </td>
                         <td width="10px">
                             <span style="font-weight: bold">:</span>
@@ -314,7 +314,7 @@
                     </tr>
                     <tr>
                         <td width="50px">
-                            <span style="font-weight: bold">Bank</span>
+                            <span style="font-weight: bold">{{ __('custom.bank') }}</span>
                         </td>
                         <td width="10px">
                             <span style="font-weight: bold">:</span>
@@ -328,7 +328,7 @@
                     @if($masterdata->payment_mode == 2)
                     <tr>
                         <td width="50px">
-                            <span style="font-weight: bold">Cheque No</span>
+                            <span style="font-weight: bold">{{ __('custom.cheque_no') }}</span>
                         </td>
                         <td width="10px">
                             <span style="font-weight: bold">:</span>
@@ -341,7 +341,7 @@
                     @if($masterdata->payment_mode == 2)
                     <tr>
                         <td width="50px">
-                            <span style="font-weight: bold">Cheque Date</span>
+                            <span style="font-weight: bold">{{ __('custom.cheque_date') }}</span>
                         </td>
                         <td width="10px">
                             <span style="font-weight: bold">:</span>
@@ -353,7 +353,7 @@
                     @endif
                     <tr>
                         <td width="70px">
-                            <span style="font-weight: bold">Narration </span>
+                            <span style="font-weight: bold">{{ __('custom.narration') }} </span>
                         </td>
                         <td width="10px">
                             <span style="font-weight: bold">:</span>
@@ -371,11 +371,11 @@
                                          <span style="font-weight: bold">
                          <h3 class="text-muted">
                              @if($masterdata->confirmedYN == 0 && $masterdata->approved == 0)
-                                 Not Confirmed
+                                 {{ __('custom.not_confirmed') }}
                              @elseif($masterdata->confirmedYN == 1 && $masterdata->approved == 0)
-                                 Pending Approval
+                                 {{ __('custom.pending_approval') }}
                              @elseif($masterdata->confirmedYN == 1 && ($masterdata->approved == 1 ||  $masterdata->approved == -1))
-                                 Fully Approved
+                                 {{ __('custom.fully_approved') }}
                              @endif
                          </h3>
  `             </span>
@@ -386,7 +386,7 @@
                     </tr>
                     <tr>
                         <td valign="bottom" style="text-align: right">
-                            <span style="font-weight: bold"> Currency:</span>
+                            <span style="font-weight: bold"> {{ __('custom.currency') }}:</span>
                             @if($masterdata->transactioncurrency)
                                 {{$masterdata->transactioncurrency->CurrencyCode}}
                             @endif
@@ -402,13 +402,13 @@
                 <thead>
                 <tr class="theme-tr-head">
                     <th>#</th>
-                    <th style="text-align: center">Booking Inv Code</th>
-                    <th style="text-align: center">PO Number</th>
-                    <th style="text-align: center">Supplier Invoice No</th>
-                    <th style="text-align: center">Invoice Date</th>
-                    <th style="text-align: center">Invoice Amount</th>
-                    <th style="text-align: center">Amount Paid</th>
-                    <th style="text-align: center">Balance</th>
+                    <th style="text-align: center">{{ __('custom.booking_inv_code') }}</th>
+                    <th style="text-align: center">{{ __('custom.po_number') }}</th>
+                    <th style="text-align: center">{{ __('custom.supplier_invoice_no') }}</th>
+                    <th style="text-align: center">{{ __('custom.invoice_date') }}</th>
+                    <th style="text-align: center">{{ __('custom.invoice_amount') }}</th>
+                    <th style="text-align: center">{{ __('custom.amount_paid') }}</th>
+                    <th style="text-align: center">{{ __('custom.balance') }}</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -432,7 +432,7 @@
                 @endforeach
                 <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
                     <td colspan="5" style="border-bottom: 1px solid #ffffffff; background-color:#ffffff; border-right: 1px solid #ffffffff">&nbsp;</td>
-                    <td style="text-align: right" style="background-color: rgb(215,215,215)">Total Payment</td>
+                    <td style="text-align: right" style="background-color: rgb(215,215,215)">{{ __('custom.total_payment') }}</td>
                     <td style="text-align: right"
                         style="background-color: rgb(215,215,215)">{{number_format($supplierdetailTotTra, $transDecimal)}}</td>
                     <td style="border-bottom: 1px solid #ffffffff; background-color:#ffffff; border-right: 1px solid #ffffffff"></td>
@@ -447,22 +447,22 @@
                 <thead>
                 <tr class="theme-tr-head">
                     <th>#</th>
-                    <th style="text-align: center">GL Code</th>
-                    <th style="text-align: center">GL Code Description</th>
+                    <th style="text-align: center">{{ __('custom.gl_code') }}</th>
+                    <th style="text-align: center">{{ __('custom.gl_code_description') }}</th>
                     @if($masterdata->invoiceType == 3 && $isProjectBase)
-                        <th colspan="4" style="text-align: center">Project</th>
+                        <th colspan="4" style="text-align: center">{{ __('custom.project') }}</th>
                     @endif
-                    <th style="text-align: center">Segment</th>
-                    <th style="text-align: center">Amount</th>
-                    <th style="text-align: center">VAT</th>
-                    <th style="text-align: center">Payment Amount</th>
-                    <th style="text-align: center">Local Amt (
+                    <th style="text-align: center">{{ __('custom.segment') }}</th>
+                    <th style="text-align: center">{{ __('custom.amount') }}</th>
+                    <th style="text-align: center">{{ __('custom.vat') }}</th>
+                    <th style="text-align: center">{{ __('custom.payment_amount') }}</th>
+                    <th style="text-align: center">{{ __('custom.local_amt') }} (
                         @if($masterdata->localCurrency)
                             {{$masterdata->localCurrency->CurrencyCode}}
                         @endif
                         )
                     </th>
-                    <th style="text-align: center">Rpt Amt (
+                    <th style="text-align: center">{{ __('custom.rpt_amt') }} (
                         @if($masterdata->rptCurrency)
                             {{$masterdata->rptCurrency->CurrencyCode}}
                         @endif
@@ -511,7 +511,7 @@
                         <td colspan="4" style="border-bottom: 1px solid #ffffffff; background-color:#ffffff; border-right: 1px solid #ffffffff">&nbsp;</td>
                     @endif
                     <td colspan="5" style="border-bottom: 1px solid #ffffffff; background-color:#ffffff; border-right: 1px solid #ffffffff">&nbsp;</td>
-                    <td style="text-align: right" style="background-color: rgb(215,215,215)">Total Payment</td>
+                    <td style="text-align: right" style="background-color: rgb(215,215,215)">{{ __('custom.total_payment') }}</td>
                     <td style="text-align: right"
                         style="background-color: rgb(215,215,215)">{{number_format($tot, $transDecimal)}}</td>
                     <td style="text-align: right"
@@ -531,17 +531,17 @@
                 <tr class="theme-tr-head">
                     <th>#</th>
                     @if($masterdata->invoiceType == 5)
-                        <th style="text-align: center">Purchase Order No</th>
+                        <th style="text-align: center">{{ __('custom.purchase_order_no') }}</th>
                     @endif
-                    <th style="text-align: center">Comment</th>
-                    <th style="text-align: center">Payment Amount</th>
-                    <th style="text-align: center">Local Amt (
+                    <th style="text-align: center">{{ __('custom.comment') }}</th>
+                    <th style="text-align: center">{{ __('custom.total_payment') }}/th>
+                    <th style="text-align: center">{{ __('custom.local_amt') }} (
                         @if($masterdata->localCurrency)
                             {{$masterdata->localCurrency->CurrencyCode}}
                         @endif
                         )
                     </th>
-                    <th style="text-align: center">Rpt Amt (
+                    <th style="text-align: center">{{ __('custom.rpt_amt') }} (
                         @if($masterdata->rptCurrency)
                             {{$masterdata->rptCurrency->CurrencyCode}}
                         @endif
@@ -568,7 +568,7 @@
                     @else
                         <td style="border-bottom: 1px solid #ffffffff; background-color:#ffffff; border-right: 1px solid #ffffffff; text-align: right">&nbsp;</td>
                     @endif
-                    <td style="text-align: right" style="background-color: rgb(215,215,215)">Total Payment</td>
+                    <td style="text-align: right" style="background-color: rgb(215,215,215)">{{ __('custom.total_payment') }}</td>
                     <td style="text-align: right"
                         style="background-color: rgb(215,215,215)">{{number_format($advancePayDetailTotTra, $transDecimal)}}</td>
                     <td style="border-bottom: 1px solid #ffffffff; background-color:#ffffff; border-right: 1px solid #ffffffff"></td>
@@ -581,12 +581,12 @@
     <div style="padding-bottom: 20px!important; padding-top: 15px!important; page-break-inside: avoid; !important;">
     <table style="width:100%;">
         <tr>
-            <td width="40%"><span style="font-weight: bold">Confirmed By :</span> {{ $masterdata->confirmed_by? $masterdata->confirmed_by->empFullName:'' }}
+            <td width="40%"><span style="font-weight: bold">{{ __('custom.confirmed_by') }} :</span> {{ $masterdata->confirmed_by? $masterdata->confirmed_by->empFullName:'' }}
             </td>
-            <td><span style="font-weight: bold">Review By :</span></td>
+            <td><span style="font-weight: bold">{{ __('custom.review_by') }} :</span></td>
         </tr>
         <tr>
-            <td><span style="font-weight: bold">Electronically Approved By :</span>
+            <td><span style="font-weight: bold">{{ __('custom.electronically_approved_by') }}:</span>
                 @if ($masterdata->approved_by)
                     @foreach ($masterdata->approved_by as $det)
                         <div style="padding-right: 25px;font-size: 9px;">

@@ -1815,7 +1815,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     Route::get('printSuppliers', 'SupplierMasterAPIController@printSuppliers');
     Route::get('printReceiptVoucher', 'CustomerReceivePaymentAPIController@printReceiptVoucher');
     Route::get('printMaterielRequest', 'MaterielRequestAPIController@printMaterielRequest');
-    Route::get('printPaymentVoucher', 'PaySupplierInvoiceMasterAPIController@printPaymentVoucher');
+    Route::get('printPaymentVoucher', 'PaySupplierInvoiceMasterAPIController@printPaymentVoucher')->middleware(['print_lang']);
     Route::get('exportPaymentBankTransfer', 'PaymentBankTransferAPIController@exportPaymentBankTransfer');
     Route::get('printJournalVoucher', 'JvMasterAPIController@printJournalVoucher');
     Route::get('printPaymentMatching', 'MatchDocumentMasterAPIController@printPaymentMatching');
