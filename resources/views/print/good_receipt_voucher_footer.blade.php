@@ -33,13 +33,13 @@
 <div class="footer" style="height: 100px;">
     <table style="width:100%;">
         <tr>
-            <td width="40%"><span style="font-weight: bold">Confirmed By :</span> {{ $grvData->confirmed_by? $grvData->confirmed_by->empFullName:'' }}</td>
-            <td><span style="font-weight: bold">Review By :</span> </td>
+            <td width="40%"><span style="font-weight: bold">{{ __('custom.confirmed_by') }} :</span> {{ $grvData->confirmed_by? $grvData->confirmed_by->empFullName:'' }}</td>
+            <td><span style="font-weight: bold">{{ __('custom.reviewed_by') }} :</span> </td>
         </tr>
     </table>
     <table style="width:100%;">
         <tr>
-            <td><span style="font-weight: bold">Electronically Approved By :</span></td>
+            <td><span style="font-weight: bold">{{ __('custom.electronically_approved_by') }} :</span></td>
         </tr>
         <tr>
             &nbsp;

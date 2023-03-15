@@ -384,6 +384,23 @@ return [
     'comments_para_material_issue_delivery_print2' => ' 2. يقوم المشرف بالتحقق قبل التوقيع من أن أرقام أوامر شراء المواد',
     'comments_para_material_issue_delivery_print3' => '(بما في ذلك مواد أمر الشراء) قد تم ملؤها بشكل صحيح في بطاقة المواد الاستهلاكية',
     'signature' => 'التوقيع',
-    'checked_by' => 'تمت المراجعة بواسطة'
+    'checked_by' => 'تمت المراجعة بواسطة',
+
+    'doc_code' => 'رمز المستند',
+    'doc_date' => 'تاريخ المستند',
+    'posted_date' => 'تاريح النشر',
+    'good_receipt_voucher' => 'قسيمة المواد المستلمة',
+    'supplier_code' => 'رمز المورد',
+    'supplier_name' => 'اسم المورد',
+    'doc_ref_no' => 'رقم المرجع للمستند',
+    'location' => 'الموقع',
+    'recieved_by' => 'تم الإستلام بواسطة',
+    'currency' => 'العملة',
+    'unit_cost' => 'سعر الوحدة',
+    'discount' => 'خصم',
+    'net_amount' => 'المجموع الإجمالي الكلي',
+    'total' => 'المجموع',
+    'confirmed_by' => 'تم التأكيد بواسطة',
+    'printed_date' => 'تاريخ الطباعة',
 
 ];
