@@ -200,6 +200,26 @@ class TaxService
                 PurchaseOrderDetails::where('purchaseOrderDetailsID', $documentDetailID)->update(['vatMasterCategoryID' => $vatMasterCategoryID, 'vatSubCategoryID' => $vatSubCategoryID]);
 
                 break;
+            case 3:
+                if (!is_null($updateData['vatSubCategoryID']) && $updateData['vatSubCategoryID'] > 0) {
+                    $vatMasterCategoryID = $updateData['vatMasterCategoryID'];
+                    $vatSubCategoryID = $updateData['vatSubCategoryID'];
+                } else {
+                    if ($updateData['VATAmount'] > 0 || $updateData['VATPercentage'] > 0) {
+                        $vatDetails = self::getVATDetailsByItem($companySystemID, $updateData['itemCode']);
+
+                        if (is_null($vatDetails['vatMasterCategoryID']) || is_null($vatDetails['vatSubCategoryID'])) {
+                            return ['status' => false, 'message' => "Please assign a vat category to this item (or) setup a default vat category"];
+                        }
+
+                        $vatMasterCategoryID = $vatDetails['vatMasterCategoryID'];
+                        $vatSubCategoryID = $vatDetails['vatSubCategoryID'];
+
+                    }
+                }      
+                GRVDetails::where('grvDetailsID', $documentDetailID)->update(['vatMasterCategoryID' => $vatMasterCategoryID, 'vatSubCategoryID' => $vatSubCategoryID]);
+
+                break;
             case 68:
                 if (!is_null($updateData['vatSubCategoryID']) && $updateData['vatSubCategoryID'] > 0) {
                     $vatMasterCategoryID = $updateData['vatMasterCategoryID'];

@@ -186,6 +186,11 @@ class PricingScheduleDetail extends Model
         return $this->hasOne('App\Models\BidMainWork', 'main_works_id', 'id');
     }
 
+    public function bid_main_works()
+    {
+        return $this->hasMany('App\Models\BidMainWork', 'main_works_id', 'id');
+    }
+
     public function bid_format_detail()
     {
         return $this->hasOne('App\Models\ScheduleBidFormatDetails', 'bid_format_detail_id', 'id');
@@ -194,5 +199,10 @@ class PricingScheduleDetail extends Model
     public function tender_feild_type()
     {
         return $this->hasOne('App\Models\TenderFieldType', 'id', 'field_type');
+    }
+
+    public function ranking_items()
+    {
+        return $this->hasOne('App\Models\CommercialBidRankingItems', 'bid_format_detail_id', 'id');
     }
 }

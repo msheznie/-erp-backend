@@ -32,6 +32,7 @@ use App\Http\Requests\API\CreateGRVMasterAPIRequest;
 use App\Http\Requests\API\UpdateGRVMasterAPIRequest;
 use App\Models\PurchaseOrderDetails;
 use App\Models\BudgetConsumedData;
+use App\Models\TaxVatCategories;
 use App\Models\ErpItemLedger;
 use App\Models\Taxdetail;
 use App\Models\TaxLedger;
@@ -81,6 +82,8 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use App\helper\CancelDocument;
 use Response;
+use App\Models\Appointment;
+use App\Models\AppointmentDetails;
 
 /**
  * Class GRVMasterController
@@ -342,6 +345,8 @@ class GRVMasterAPIController extends AppBaseController
     {
         $input = $request->all();
 
+        
+
         $userId = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($userId);
 
@@ -351,6 +356,7 @@ class GRVMasterAPIController extends AppBaseController
         /** @var GRVMaster $gRVMaster */
         $gRVMaster = $this->gRVMasterRepository->findWithoutFail($id);
 
+
         if (empty($gRVMaster)) {
             return $this->sendError('Good Receipt Voucher not found');
         }
@@ -358,6 +364,8 @@ class GRVMasterAPIController extends AppBaseController
         if ($gRVMaster->grvCancelledYN == -1) {
             return $this->sendError('Good Receipt Voucher closed. You cannot edit.', 500);
         }
+
+
         $currentDate = Carbon::parse(now())->format('Y-m-d');
         if (isset($input['grvDate'])) {
             if ($input['grvDate']) {
@@ -380,7 +388,7 @@ class GRVMasterAPIController extends AppBaseController
                 }
             }
         }
-
+        
         $grvType = GRVTypes::where('grvTypeID', $input['grvTypeID'])->first();
         if ($grvType) {
             $input['grvType'] = $grvType->idERP_GrvTpes;
@@ -425,7 +433,7 @@ class GRVMasterAPIController extends AppBaseController
                 }
             }
         }
-
+        
         if ($input['grvLocation'] != $gRVMaster->grvLocation) {
             $resWareHouseUpdate = ItemTracking::updateTrackingDetailWareHouse($input['grvLocation'], $id, $gRVMaster->documentSystemID);
 
@@ -438,7 +446,7 @@ class GRVMasterAPIController extends AppBaseController
         if ($segment) {
             $input['serviceLineCode'] = $segment->ServiceLineCode;
         }
-
+        
         // changing supplier related details when supplier changed
         if ($gRVMaster->supplierID != $input['supplierID']) {
             $supplier = SupplierMaster::where('supplierCodeSystem', $input['supplierID'])->first();
@@ -450,7 +458,7 @@ class GRVMasterAPIController extends AppBaseController
                 $input['supplierFax'] = $supplier->fax;
                 $input['supplierEmail'] = $supplier->supEmail;
             }
-
+            
             $supplierCurrency = SupplierCurrency::where('supplierCodeSystem', $input['supplierID'])
                 ->where('isDefault', -1)
                 ->first();
@@ -465,7 +473,7 @@ class GRVMasterAPIController extends AppBaseController
                     $input['supplierDefaultER'] = $erCurrency->ExchangeRate;
                 }
             }
-
+                
             // adding supplier grv details
             $supplierAssignedDetail = SupplierAssigned::where('supplierCodeSytem', $input['supplierID'])
                 ->where('companySystemID', $input['companySystemID'])
@@ -479,7 +487,7 @@ class GRVMasterAPIController extends AppBaseController
             }
 
         }
-
+        
         //getting transaction amount
         $grvTotalSupplierTransactionCurrency = GRVDetails::select(DB::raw('COALESCE(SUM(GRVcostPerUnitSupTransCur * noQty),0) as transactionTotalSum, COALESCE(SUM(GRVcostPerUnitComRptCur * noQty),0) as reportingTotalSum, COALESCE(SUM(GRVcostPerUnitLocalCur * noQty),0) as localTotalSum, COALESCE(SUM(GRVcostPerUnitSupDefaultCur * noQty),0) as defaultTotalSum'))
             ->where('grvAutoID', $input['grvAutoID'])
@@ -511,6 +519,7 @@ class GRVMasterAPIController extends AppBaseController
 
             $inputParam = $input;
             $inputParam["departmentSystemID"] = 10;
+            
             $companyFinancePeriod = \Helper::companyFinancePeriodCheck($inputParam);
             if (!$companyFinancePeriod["success"]) {
                 return $this->sendError($companyFinancePeriod["message"], 500);
@@ -518,7 +527,7 @@ class GRVMasterAPIController extends AppBaseController
                 $input['FYBiggin'] = $companyFinancePeriod["message"]->dateFrom;
                 $input['FYEnd'] = $companyFinancePeriod["message"]->dateTo;
             }
-
+            
             unset($inputParam);
 
             $documentDate = $input['grvDate'];
@@ -531,7 +540,7 @@ class GRVMasterAPIController extends AppBaseController
             }
 
             //getting total sum of PO detail Amount
-            $grvMasterSum = GRVDetails::select(DB::raw('COALESCE(SUM(netAmount),0) as masterTotalSum'))
+            $grvMasterSum = GRVDetails::select(DB::raw('COALESCE(SUM(netAmount),0) as masterTotalSum, COALESCE(SUM(VATAmount * noQty),0) as masterTotalVAT'))
                 ->where('grvAutoID', $input['grvAutoID'])
                 ->first();
 
@@ -611,14 +620,50 @@ class GRVMasterAPIController extends AppBaseController
             }
 
             //getting transaction amount
-            $grvTotalSupplierTransactionCurrency = GRVDetails::select(DB::raw('COALESCE(SUM(GRVcostPerUnitSupTransCur * noQty),0) as transactionTotalSum, COALESCE(SUM(GRVcostPerUnitComRptCur * noQty),0) as reportingTotalSum, COALESCE(SUM(GRVcostPerUnitLocalCur * noQty),0) as localTotalSum, COALESCE(SUM(GRVcostPerUnitSupDefaultCur * noQty),0) as defaultTotalSum'))
+            if ($gRVMaster->grvTypeID == 1) {
+                $grvTotalSupplierTransactionCurrency = GRVDetails::select(DB::raw('COALESCE(SUM(GRVcostPerUnitSupTransCur * noQty),0) as transactionTotalSum, COALESCE(SUM(GRVcostPerUnitComRptCur * noQty),0) as reportingTotalSum, COALESCE(SUM(GRVcostPerUnitLocalCur * noQty),0) as localTotalSum, COALESCE(SUM(GRVcostPerUnitSupDefaultCur * noQty),0) as defaultTotalSum'))
                 ->where('grvAutoID', $input['grvAutoID'])
                 ->first();
+
+                $grvDetailsData = GRVDetails::where('grvAutoID', $input['grvAutoID'])
+                                            ->get();
+
+                $exemptVATAmount = 0;
+                $lineVATAmountTotal = 0;
+                foreach ($grvDetailsData as $key => $value) {
+                    $checkVATCategory = TaxVatCategories::with(['type'])->find($value->vatSubCategoryID);
+                    if ($checkVATCategory) {
+                        if (isset($checkVATCategory->type->id) && $checkVATCategory->type->id == 1 && $value->exempt_vat_portion > 0 && $value->VATAmount > 0) {
+                           $exemptVAT = $value->VATAmount * ($value->exempt_vat_portion / 100);
+
+                           $exemptVATAmount += ($exemptVAT * $value->noQty);
+                        } else if (isset($checkVATCategory->type->id) && $checkVATCategory->type->id == 3) {
+                            $exemptVATAmount += ($value->VATAmount * $value->noQty);
+                        }
+                    }
+
+                    $lineVATAmountTotal += ($value->VATAmount * $value->noQty);
+                }
+
+                $currency = \Helper::convertAmountToLocalRpt($gRVMaster->documentSystemID,$input['grvAutoID'],$exemptVATAmount);
+                $currencyVAT = \Helper::convertAmountToLocalRpt($gRVMaster->documentSystemID,$input['grvAutoID'],$lineVATAmountTotal);
+
+                $grvTotalSupplierTransactionCurrency['transactionTotalSum'] = $grvTotalSupplierTransactionCurrency['transactionTotalSum'] - $exemptVATAmount + $lineVATAmountTotal;
+                $grvTotalSupplierTransactionCurrency['reportingTotalSum'] = $grvTotalSupplierTransactionCurrency['reportingTotalSum'] - $currency['reportingAmount'] + $currencyVAT['reportingAmount'];
+                $grvTotalSupplierTransactionCurrency['localTotalSum'] = $grvTotalSupplierTransactionCurrency['localTotalSum'] - $currency['localAmount'] + $currencyVAT['localAmount'];
+                $grvTotalSupplierTransactionCurrency['defaultTotalSum'] = $grvTotalSupplierTransactionCurrency['defaultTotalSum'] - $currency['defaultAmount'] + $currencyVAT['defaultAmount'];
+
+            } else {
+                $grvTotalSupplierTransactionCurrency = GRVDetails::select(DB::raw('COALESCE(SUM(GRVcostPerUnitSupTransCur * noQty),0) as transactionTotalSum, COALESCE(SUM(GRVcostPerUnitComRptCur * noQty),0) as reportingTotalSum, COALESCE(SUM(GRVcostPerUnitLocalCur * noQty),0) as localTotalSum, COALESCE(SUM(GRVcostPerUnitSupDefaultCur * noQty),0) as defaultTotalSum'))
+                    ->where('grvAutoID', $input['grvAutoID'])
+                    ->first();
+            }
 
             //getting logistic amount
             $grvTotalLogisticAmount = PoAdvancePayment::select(DB::raw('COALESCE(SUM(reqAmountInPOTransCur),0) as transactionTotalSum, COALESCE(SUM(reqAmountInPORptCur),0) as reportingTotalSum, COALESCE(SUM(reqAmountInPOLocalCur),0) as localTotalSum'))
                 ->where('grvAutoID', $input['grvAutoID'])
                 ->first();
+
 
             $input['grvTotalSupplierTransactionCurrency'] = $grvTotalSupplierTransactionCurrency['transactionTotalSum'];
             $input['grvTotalComRptCurrency'] = $grvTotalSupplierTransactionCurrency['reportingTotalSum'];
@@ -744,6 +789,7 @@ class GRVMasterAPIController extends AppBaseController
             }
 
             $different = abs($input['grvTotalSupplierTransactionCurrency'] - $grvMasterSum['masterTotalSum']);
+            
 
             if ($different < 0.01) {
                 // same
@@ -794,7 +840,200 @@ class GRVMasterAPIController extends AppBaseController
         $input['modifiedUser'] = $user->employee['empID'];
         $input['modifiedUserSystemID'] = $user->employee['employeeSystemID'];
 
+      
+     
         $gRVMaster = $this->gRVMasterRepository->update($input, $id);
+
+
+        if(isset($gRVMaster->deliveryAppoinmentID))
+        {
+           $selected_segment = $gRVMaster->serviceLineSystemID;
+           $appoinmnet_po_ids =  AppointmentDetails::whereHas('po_master',function($q) use($selected_segment){
+            $q->where('serviceLineSystemID',$selected_segment);
+                })->where('appointment_id',$gRVMaster->deliveryAppoinmentID)->pluck('po_detail_id')->toArray();
+
+           $grv_purchase =  GRVDetails::where('grvAutoID',$id)->pluck('purchaseOrderDetailsID')->toArray();
+
+
+           $appoinmnet_details =  AppointmentDetails::whereHas('po_master',function($q) use($selected_segment){
+            $q->where('serviceLineSystemID',$selected_segment);
+             })->where('appointment_id',$gRVMaster->deliveryAppoinmentID)->get();
+
+
+            $extra_po =  array_values(array_diff($grv_purchase,$appoinmnet_po_ids));
+
+            $ignore_po =  array_values(array_diff($appoinmnet_po_ids,$grv_purchase));
+
+
+           $total_msg = '';
+           $extra_po_msg = [];
+
+           if(count($extra_po) > 0)
+           {
+             foreach($extra_po as $extra)
+             {
+
+               $extra_po_msg_info =  GRVDetails::where('grvAutoID',$id)->where('purchaseOrderDetailsID',$extra)->with(['po_master'=>function($q){
+                $q->select('purchaseOrderID','purchaseOrderCode');
+               }])->select('grvDetailsID','itemPrimaryCode','itemDescription','noQty','purchaseOrderMastertID')->get();
+
+               foreach($extra_po_msg_info as $info)
+               {
+                array_push($extra_po_msg,$info);
+
+               }
+
+             }
+           
+           }
+           else
+           {
+            $extra_po_msg = [];
+           }
+
+           $ignore_po_msg = [];
+           if(count($ignore_po) > 0)
+           {
+             foreach($ignore_po as $extra)
+             {
+
+                $ignore_po_msg_info =  AppointmentDetails::where('po_detail_id',$extra)->where('appointment_id',$gRVMaster->deliveryAppoinmentID)->with(['po_master'=>function($q){
+                    $q->select('purchaseOrderID','purchaseOrderCode');
+                   },'item'=>function($q){
+                    $q->select('itemCodeSystem','primaryCode','itemDescription');
+                   }])->select('id','qty','po_master_id','item_id')->get();
+
+                   foreach($ignore_po_msg_info as $info)
+                   {
+                    array_push($ignore_po_msg,$info);
+    
+                   }
+
+             }
+           }
+           else
+           {
+            $ignore_po_msg = [];
+        
+           }
+           
+         
+           $appointment_info = Appointment::where('id',$gRVMaster->deliveryAppoinmentID)->select('id','primary_code')->first();
+
+      
+
+           $changes_item = [];
+           foreach($appoinmnet_details as $po)
+           {
+                
+              $planeed_qty =  $po->qty;
+              $po_detail_id = $po->po_detail_id;
+              $grv_Details = GRVDetails::where('grvAutoID',$id)->where('purchaseOrderMastertID',$po->po_master_id)->where('purchaseOrderDetailsID',$po_detail_id)
+                            ->with(['po_master'=>function($q){
+                                $q->select('purchaseOrderID','purchaseOrderCode');
+                            }])->first();
+              if(isset($grv_Details))
+              {
+
+                $grv_changes['po_code'] = $po->po_master->purchaseOrderCode;
+                $grv_changes['item'] = $grv_Details->itemPrimaryCode;
+                $grv_changes['description'] = $grv_Details->itemDescription;
+                $grv_changes['appoinment_qty'] = $po->qty;
+                $grv_changes['grv_qty'] = $grv_Details->noQty;
+                $changes_item[]=$grv_changes;
+
+           
+              }
+
+              
+           }
+         
+       
+            $body = "Dear Supplier, <br><br> Please be informed GRV <b>$gRVMaster->grvPrimaryCode</b> created for delivery appointment <b>$appointment_info->primary_code</b>  is confirmed. 
+            <br><br>Please note below changes.<br><br> <b>Extra purchase order documents added to GRV</b><br><br>";
+            $body .= '<table style="width:100%;border: 1px solid black;border-collapse: collapse;">
+            <thead>
+                <tr>
+                    <th style="text-align: center;border: 1px solid black;">PO Code</th> 
+                    <th style="text-align: center;border: 1px solid black;">Item Code</th>
+                    <th style="text-align: center;border: 1px solid black;">Item Description </th> 
+                    <th style="text-align: center;border: 1px solid black;">Qty </th> 
+                </tr>
+            </thead>';
+            $body .= '<tbody>';
+            foreach ($extra_po_msg as $val) {
+                $body .= '<tr>
+                    <td style="text-align:center;border: 1px solid black;">' . $val->po_master->purchaseOrderCode . '</td>  
+                    <td style="text-align:center;border: 1px solid black;">' . $val->itemPrimaryCode . '</td>  
+                    <td style="text-align:center;border: 1px solid black;">' . $val->itemDescription . '</td>   
+                    <td style="text-align:center;border: 1px solid black;">' . $val->noQty . '</td>  
+                </tr>';
+            
+            }
+            $body .= '</tbody>
+            </table>';
+            $body .= "<br><br>";
+            $body .= "<b>Purchase order documents removed from GRV</b> <br<br>";
+            $body .= "<br><br>";
+            $body .= '<table style="width:100%;border: 1px solid black;border-collapse: collapse;">
+            <thead>
+                <tr>
+                    <th style="text-center: center;border: 1px solid black;">PO Code</th> 
+                    <th style="text-center: center;border: 1px solid black;">Item Code</th>
+                    <th style="text-center: center;border: 1px solid black;">Item Description </th> 
+                    <th style="text-center: center;border: 1px solid black;">Qty </th> 
+                </tr>
+            </thead>';
+            $body .= '<tbody>';
+            foreach ($ignore_po_msg as $val) {
+                $body .= '<tr>
+                    <td style="text-align:center;border: 1px solid black;">' . $val->po_master->purchaseOrderCode . '</td>  
+                    <td style="text-align:center;border: 1px solid black;">' . $val->item->primaryCode . '</td>  
+                    <td style="text-align:center;border: 1px solid black;">' . $val->item->itemDescription . '</td>   
+                    <td style="text-align:center;border: 1px solid black;">' . $val->qty . '</td>  
+                </tr>';
+            
+                }
+            $body .= '</tbody>
+            </table>';
+            $body .= "<br><br>";
+            $body .= "<b>Quantity changes from delivery appointment</b> <br<br>";
+            $body .= "<br><br>";
+            $body .= '<table style="width:100%;border: 1px solid black;border-collapse: collapse;">
+            <thead>
+                <tr>
+                    <th style="text-align: center;border: 1px solid black;">PO Code</th> 
+                    <th style="text-align: center;border: 1px solid black;">Item Code</th>
+                    <th style="text-align: center;border: 1px solid black;">Item Description </th> 
+                    <th style="text-align: center;border: 1px solid black;">Appointment Qty </th> 
+                    <th style="text-align: center;border: 1px solid black;">GRV Qty </th> 
+                </tr>
+            </thead>';
+            $body .= '<tbody>';
+            foreach ($changes_item as $val) {
+                $body .= '<tr>
+                    <td style="text-align:center;border: 1px solid black;">' . $val['po_code'] . '</td>  
+                    <td style="text-align:center;border: 1px solid black;">' . $val['item'] . '</td>  
+                    <td style="text-align:center;border: 1px solid black;">' . $val['description'] . '</td>   
+                    <td style="text-align:center;border: 1px solid black;">' . $val['appoinment_qty'] . '</td>  
+                    <td style="text-align:center;border: 1px solid black;">' . $val['grv_qty'] . '</td>  
+                </tr>';
+            
+                }
+            $body .= '</tbody>
+            </table>';
+            $body .= "<br><br>";
+            $body .= "Thank You.";
+            $dataEmail['empEmail'] = 'hello@example.com';
+            $dataEmail['companySystemID'] = $input['companySystemID'];
+            $dataEmail['alertMessage'] = "GRV  Confirmed";
+            $dataEmail['emailAlertMessage'] = $body;
+            $sendEmail = \Email::sendEmailErp($dataEmail);
+
+
+         
+        }
+
 
         return $this->sendResponse($gRVMaster->toArray(), 'GRV updated successfully');
     }

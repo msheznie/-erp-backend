@@ -192,3 +192,17 @@ Route::post('getVerifieddBids', 'BidSubmissionMasterAPIController@getVerifieddBi
 Route::post('saveTechnicalEvalBidSubmissionLine', 'BidSubmissionMasterAPIController@saveTechnicalEvalBidSubmissionLine');
 Route::post('removeBid', 'BidEvaluationSelectionAPIController@removeBid');
 Route::post('addBid', 'BidEvaluationSelectionAPIController@addBid');
+Route::post('getEvalCompletedTenderList', 'TenderMasterAPIController@getEvalCompletedTenderList');
+Route::post('getTechnicalRanking', 'TenderMasterAPIController@getTechnicalRanking');
+Route::post('getCommercialRanking', 'TenderMasterAPIController@getCommercialRanking');
+Route::post('getBidItemSelection', 'TenderMasterAPIController@getBidItemSelection');
+Route::post('updateBidLineItem', 'TenderMasterAPIController@updateBidLineItem');
+Route::post('confirmCommBidLineItem', 'TenderMasterAPIController@confirmCommBidLineItem');
+Route::post('confirmFinalCommercial', 'TenderMasterAPIController@confirmFinalCommercial');
+Route::post('getFinalBids', 'TenderFinalBidsAPIController@getFinalBids');
+Route::post('confirmFinalBid', 'TenderFinalBidsAPIController@confirmFinalBid');
+Route::post('getRankingCompletedTenderList', 'TenderMasterAPIController@getRankingCompletedTenderList');
+Route::post('getAwardedFormData', 'TenderMasterAPIController@getAwardedFormData');
+Route::post('getEmployeesTenderAwardinglApproval','TenderBidEmployeeDetailsController@getEmployeesTenderAwardinglApproval');
+Route::post('confirmFinalBidAwardComment', 'TenderMasterAPIController@confirmFinalBidAwardComment');
+Route::post('sendTenderAwardEmail', 'TenderMasterAPIController@sendTenderAwardEmail');

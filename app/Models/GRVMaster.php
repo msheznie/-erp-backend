@@ -132,6 +132,7 @@ class GRVMaster extends Model
         'grvDOpersonName',
         'grvDOpersonResID',
         'grvDOpersonTelNo',
+        'vatRegisteredYN',
         'grvDOpersonVehicleNo',
         'supplierID',
         'supplierPrimaryCode',
@@ -191,7 +192,8 @@ class GRVMaster extends Model
         'stampDate',
         'approvedByUserID',
         'approvedByUserSystemID',
-        'postedDate'
+        'postedDate',
+        'deliveryAppoinmentID'
     ];
 
     /**
@@ -205,6 +207,7 @@ class GRVMaster extends Model
         'pullType' => 'integer',
         'grvType' => 'string',
         'companySystemID' => 'integer',
+        'vatRegisteredYN' => 'integer',
         'companyID' => 'string',
         'serviceLineSystemID' => 'integer',
         'serviceLineCode' => 'string',

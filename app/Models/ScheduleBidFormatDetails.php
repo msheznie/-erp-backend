@@ -108,5 +108,5 @@ class ScheduleBidFormatDetails extends Model
         
     ];
 
-    
+
 }

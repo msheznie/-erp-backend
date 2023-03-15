@@ -12,10 +12,31 @@
  */
 namespace App\Http\Controllers\API;
 
+use App\helper\SupplierInvoice;
 use App\Http\Requests\API\CreateCompanyFinanceYearAPIRequest;
 use App\Http\Requests\API\UpdateCompanyFinanceYearAPIRequest;
 use App\Jobs\CreateFinancePeriod;
+use App\Models\AssetCapitalization;
+use App\Models\AssetDisposalMaster;
+use App\Models\BookInvSuppMaster;
 use App\Models\Company;
+use App\Models\CreditNote;
+use App\Models\CustomerInvoice;
+use App\Models\CustomerReceivePayment;
+use App\Models\DebitNote;
+use App\Models\DeliveryOrder;
+use App\Models\GRVMaster;
+use App\Models\InventoryReclassification;
+use App\Models\ItemIssueMaster;
+use App\Models\ItemReturnMaster;
+use App\Models\JvMaster;
+use App\Models\PaySupplierInvoiceMaster;
+use App\Models\PurchaseReturn;
+use App\Models\SalesReturn;
+use App\Models\StockAdjustment;
+use App\Models\StockCount;
+use App\Models\StockReceive;
+use App\Models\StockTransfer;
 use App\Models\Year;
 use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
@@ -413,6 +434,32 @@ class CompanyFinanceYearAPIController extends AppBaseController
         if (empty($companyFinanceYear)) {
             return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.company_finance_years')]));
         }
+
+        $grv = GRVMaster::where('companyFinanceYearID', $id)->first();
+        $itemIssue = ItemIssueMaster::where('companyFinanceYearID', $id)->first();
+        $itemReturn = ItemReturnMaster::where('companyFinanceYearID', $id)->first();
+        $stockTransfer = StockTransfer::where('companyFinanceYearID', $id)->first();
+        $stockReceive = StockReceive::where('companyFinanceYearID', $id)->first();
+        $stockAdjustment = StockAdjustment::where('companyFinanceYearID', $id)->first();
+        $purchaseReturn = PurchaseReturn::where('companyFinanceYearID', $id)->first();
+        $stockCount = StockCount::where('companyFinanceYearID', $id)->first();
+        $inventoryClassification = InventoryReclassification::where('companyFinanceYearID', $id)->first();
+        $supplierInvoice = BookInvSuppMaster::where('companyFinanceYearID', $id)->first();
+        $debitNote = DebitNote::where('companyFinanceYearID', $id)->first();
+        $paymentVoucher = PaySupplierInvoiceMaster::where('companyFinanceYearID', $id)->first();
+        $customerInvoice = CustomerInvoice::where('companyFinanceYearID', $id)->first();
+        $creditNote = CreditNote::where('companyFinanceYearID', $id)->first();
+        $receiptVoucher = CustomerReceivePayment::where('companyFinanceYearID', $id)->first();
+        $deliveryOrder = DeliveryOrder::where('companyFinanceYearID', $id)->first();
+        $salesReturn = SalesReturn::where('companyFinanceYearID', $id)->first();
+        $journal = JvMaster::where('companyFinanceYearID', $id)->first();
+        $assetDisposal = AssetDisposalMaster::where('companyFinanceYearID', $id)->first();
+        $assetCapitalization = AssetCapitalization::where('companyFinanceYearID', $id)->first();
+
+        if (!empty($grv) || !empty($itemIssue) || !empty($itemReturn) || !empty($stockTransfer) || !empty($stockReceive) || !empty($stockAdjustment) || !empty($purchaseReturn) || !empty($stockCount) || !empty($inventoryClassification) || !empty($supplierInvoice) || !empty($debitNote) || !empty($paymentVoucher) || !empty($customerInvoice) || !empty($creditNote) || !empty($receiptVoucher) || !empty($deliveryOrder) || !empty($salesReturn) || !empty($journal) || !empty($assetDisposal) || !empty($assetCapitalization)) {
+            return $this->sendError('Finance Year cannot be deleted as transactions are available');
+        }
+
         $companyFinanceYear->update(['isActive' => 0,'isCurrent' => 0,'isClosed' => 0, 'deleted_at'=>date("Y-m-d H:i:s"), 'isDeleted'=>1,'deletedBy'=>$employee->empName]);
 
         return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.company_finance_years')]));
