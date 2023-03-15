@@ -416,6 +416,7 @@ return [
     'excluding_vat' => 'Excluding VAT',
     'total_amount_payable' => 'Total Amount Payable',
     'total_amount_payable_in_word' => 'Total Amount Payable in word',
+    'electronically_approved_date' => 'Electronically Approved Date',
 
 
     'material_issue_no' => 'Material Issue No',
