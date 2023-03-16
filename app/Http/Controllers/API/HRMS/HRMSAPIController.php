@@ -339,11 +339,12 @@ class HRMSAPIController extends AppBaseController
                 'document' => $bookInvSupp->documentSystemID,
                 'segment' => '',
                 'category' => '',
-                'amount' => ''
+                'amount' => '',
+                'employee_id' => $employee->employeeSystemID
             );
 
 
-            $confirm = \Helper::confirmDocumentForApi($params);
+            $confirm = \Helper::confirmDocumentForApiHRMS($params);
 
             if($status == 2) {
                 $documentApproveds = DocumentApproved::where('documentSystemCode', $bookInvSupp->bookingSuppMasInvAutoID)->where('documentSystemID', 11)->get();
