@@ -469,6 +469,9 @@ return [
     'payment_terms' => 'Payment Terms',
     'created_by' => 'Created By',
     'created_date' => 'Created Date',
+    'part_no' => 'Part No',
+    'supplier' => 'Supplier',
+    'expected_date' => 'Expected Date',
 
     'material_issue_no' => 'Material Issue No',
     'network_no' => 'Network No',
