@@ -11,6 +11,7 @@ use App\Models\ChartOfAccountsAssigned;
 use App\Models\Company;
 use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
+use App\Models\CompanyPolicyMaster;
 use App\Models\DirectInvoiceDetails;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
@@ -19,6 +20,7 @@ use App\Models\SegmentMaster;
 use App\Models\SupplierAssigned;
 use App\Models\SupplierCurrency;
 use App\Models\SystemGlCodeScenarioDetail;
+use App\Models\UserToken;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -34,6 +36,13 @@ class HRMSAPIController extends AppBaseController
             if (!empty($input[0])) {
                 foreach ($input[0] as $dt) {
                     $dt['companySystemID'] = $request->company_id;
+                    $dt['employee_id'] = $request->employee_id;
+                    $status = $dt['status'];
+                    $employee = Employee::where('employeeSystemID', $dt['employee_id'])->first();
+                    if (empty($employee)) {
+                        return $this->sendError('Employee not found');
+                    }
+                    UserToken::where('token', $request->user_token)->delete();
 
                     $company = Company::where('companySystemID', $dt['companySystemID'])->first();
                     if (empty($company)) {
@@ -42,9 +51,27 @@ class HRMSAPIController extends AppBaseController
 
                     $companyCurrency = \Helper::companyCurrency($dt['companySystemID']);
 
+                    if (empty($dt['comments'])) {
+                        return $this->sendError('Narration field is required');
+                    }
 
+                    if (empty($dt['supplierInvoiceNo'])) {
+                        return $this->sendError('Supplier Invoice No field is required');
+                    }
 
-                    $financeYear = CompanyFinanceYear::where('companySystemID', $dt['companySystemID'])->where('bigginingDate', "<=", $dt['bookingDate'])->where('endingDate', ">=", $dt['bookingDate'])->first();
+                    if (empty($dt['supplierInvoiceDate'])) {
+                        return $this->sendError('Supplier Invoice Date field is required');
+                    }
+
+                    if (empty($dt['documentType'])) {
+                        return $this->sendError('Document Type field is required');
+                    }
+
+                    if (empty($dt['bookingDate'])) {
+                        return $this->sendError('Booking Date field is required');
+                    }
+
+                    $financeYear = CompanyFinanceYear::where('companySystemID', $dt['companySystemID'])->where('isActive', -1)->where('bigginingDate', "<=", $dt['bookingDate'])->where('endingDate', ">=", $dt['bookingDate'])->first();
                     if (empty($financeYear)) {
                         return $this->sendError('Finance Year not found');
                     }
@@ -60,7 +87,7 @@ class HRMSAPIController extends AppBaseController
                     }
 
 
-                    $financePeriod = CompanyFinancePeriod::where('companySystemID', $dt['companySystemID'])->where('departmentSystemID', 4)->where('dateFrom', "<=", $dt['bookingDate'])->where('dateTo', ">=", $dt['bookingDate'])->first();
+                    $financePeriod = CompanyFinancePeriod::where('companySystemID', $dt['companySystemID'])->where('departmentSystemID', 4)->where('dateFrom', "<=", $dt['bookingDate'])->where('dateTo', ">=", $dt['bookingDate'])->where('isActive', -1)->first();
                     if (empty($financePeriod)) {
                         return $this->sendError('Finance Period not found');
                     }
@@ -70,15 +97,10 @@ class HRMSAPIController extends AppBaseController
                     $finYear = $finYearExp[0];
                     $bookingInvCode = ($company->CompanyID . '\\' . $finYear . '\\' . 'BSI' . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
 
-                    if (empty($dt['comments'])) {
-                        return $this->sendError('Narration field is required');
-                    }
-
-                    if (empty($dt['supplierInvoiceNo'])) {
-                        return $this->sendError('Supplier Invoice No field is required');
-                    }
-
-                if($dt['documentType'] == 1) {
+                    if($dt['documentType'] == 1) {
+                        if (empty($dt['supplierID'])) {
+                            return $this->sendError('Supplier ID field is required');
+                        }
                     $supplierAssignedDetail = SupplierAssigned::select('liabilityAccountSysemID',
                         'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount', 'VATPercentage')
                         ->where('supplierCodeSytem', $dt['supplierID'])
@@ -139,11 +161,28 @@ class HRMSAPIController extends AppBaseController
                         'bookingAmountTrans' => \Helper::roundValue($dt['bookingAmountTrans']),
                         'bookingAmountLocal' => \Helper::roundValue($companyCurrencyConversionTrans['localAmount']),
                         'bookingAmountRpt' => \Helper::roundValue($companyCurrencyConversionTrans['reportingAmount']),
-                        'documentType' => 1
+                        'documentType' => 1,
+                        'createdPcID' => gethostname(),
+                        'createdUserID' => $employee->empID,
+                        'createdUserSystemID' =>  $dt['employee_id']
                     );
                 } else if ($dt['documentType'] == 4){
-
+                        if (empty($dt['currency'])) {
+                            return $this->sendError('Currency field is required');
+                        }
                     $myCurr = $dt['currency'];
+
+                    $employeeInvoice = CompanyPolicyMaster::where('companyPolicyCategoryID', 68)
+                        ->where('companySystemID', $dt['companySystemID'])
+                        ->first();
+
+                    if($employeeInvoice->isYesNO != 1){
+                        return $this->sendError('Unable to create Employee Direct Invoice as policy is disabled');
+                    }
+
+                    if (empty($dt['employeeID'])) {
+                            return $this->sendError('Employee field is required');
+                    }
 
                     $companyCurrencyConversion = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, 0);
                     $companyCurrencyConversionTrans = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['bookingAmountTrans']);
@@ -194,8 +233,10 @@ class HRMSAPIController extends AppBaseController
                         'bookingAmountRpt' => \Helper::roundValue($companyCurrencyConversionTrans['reportingAmount']),
                         'documentType' => 4,
                         'employeeID' => $dt['employeeID'],
-                        'employeeControlAcID' => $checkEmployeeControlAccount
-
+                        'employeeControlAcID' => $checkEmployeeControlAccount,
+                        'createdPcID' => gethostname(),
+                        'createdUserID' => $employee->empID,
+                        'createdUserSystemID' =>  $dt['employee_id']
                   );
                  }
                 }
@@ -291,12 +332,38 @@ class HRMSAPIController extends AppBaseController
                 DirectInvoiceDetails::insert($suppInvoiceDetArray);
             }
 
-                $db = isset($request->db) ? $request->db : "";
-                CreateHrmsSupplierInvoice::dispatch($db, $bookInvSupp->bookingSuppMasInvAutoID);
+            $db = isset($request->db) ? $request->db : "";
 
+            $params = array('autoID' => $bookInvSupp->bookingSuppMasInvAutoID,
+                'company' => $bookInvSupp->companySystemID,
+                'document' => $bookInvSupp->documentSystemID,
+                'segment' => '',
+                'category' => '',
+                'amount' => ''
+            );
+
+
+            $confirm = \Helper::confirmDocumentForApi($params);
+
+            if($status == 2) {
+                $documentApproveds = DocumentApproved::where('documentSystemCode', $bookInvSupp->bookingSuppMasInvAutoID)->where('documentSystemID', 11)->get();
+
+                foreach ($documentApproveds as $documentApproved) {
+                    $documentApproved["approvedComments"] = "Generated Supplier Invoice through HRMS system";
+                    $documentApproved["db"] = $db;
+                    \Helper::approveDocumentForApi($documentApproved);
+
+                }
+            }
                 DB::commit();
 
-            return $this->sendResponse($bookInvSupp, 'Supplier Invoice created successfully');
+            if($status == 1){
+                return $this->sendResponse($confirm, 'Supplier Invoice created successfully');
+            }
+
+            if($status == 2) {
+                return $this->sendResponse($bookInvSupp, 'Supplier Invoice created successfully');
+            }
         }
         catch(\Exception $e){
             DB::rollback();
