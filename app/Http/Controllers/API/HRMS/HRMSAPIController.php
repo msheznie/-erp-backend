@@ -1,0 +1,310 @@
+<?php
+
+namespace App\Http\Controllers\API\HRMS;
+
+use App\helper\SupplierInvoice;
+use App\Http\Controllers\AppBaseController;
+use App\Http\Requests\API\CreateBookInvSuppMasterAPIRequest;
+use App\Jobs\CreateHrmsSupplierInvoice;
+use App\Models\BookInvSuppMaster;
+use App\Models\ChartOfAccountsAssigned;
+use App\Models\Company;
+use App\Models\CompanyFinancePeriod;
+use App\Models\CompanyFinanceYear;
+use App\Models\DirectInvoiceDetails;
+use App\Models\DocumentApproved;
+use App\Models\DocumentMaster;
+use App\Models\Employee;
+use App\Models\SegmentMaster;
+use App\Models\SupplierAssigned;
+use App\Models\SupplierCurrency;
+use App\Models\SystemGlCodeScenarioDetail;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+
+class HRMSAPIController extends AppBaseController
+{
+    public function createSupplierInvoice(CreateBookInvSuppMasterAPIRequest $request)
+    {
+        DB::beginTransaction();
+        try {
+            $input = $request->all();
+            $suppInvoiceArray = array();
+
+            if (!empty($input[0])) {
+                foreach ($input[0] as $dt) {
+                    $dt['companySystemID'] = $request->company_id;
+
+                    $company = Company::where('companySystemID', $dt['companySystemID'])->first();
+                    if (empty($company)) {
+                        return $this->sendError('Company not found');
+                    }
+
+                    $companyCurrency = \Helper::companyCurrency($dt['companySystemID']);
+
+
+
+                    $financeYear = CompanyFinanceYear::where('companySystemID', $dt['companySystemID'])->where('bigginingDate', "<=", $dt['bookingDate'])->where('endingDate', ">=", $dt['bookingDate'])->first();
+                    if (empty($financeYear)) {
+                        return $this->sendError('Finance Year not found');
+                    }
+
+                    $lastSerial = BookInvSuppMaster::where('companySystemID', $dt['companySystemID'])
+                        ->where('companyFinanceYearID', $financeYear->companyFinanceYearID)
+                        ->orderBy('serialNo', 'desc')
+                        ->first();
+
+                    $lastSerialNumber = 1;
+                    if ($lastSerial) {
+                        $lastSerialNumber = intval($lastSerial->serialNo) + 1;
+                    }
+
+
+                    $financePeriod = CompanyFinancePeriod::where('companySystemID', $dt['companySystemID'])->where('departmentSystemID', 4)->where('dateFrom', "<=", $dt['bookingDate'])->where('dateTo', ">=", $dt['bookingDate'])->first();
+                    if (empty($financePeriod)) {
+                        return $this->sendError('Finance Period not found');
+                    }
+
+                    $startYear = $financeYear->bigginingDate;
+                    $finYearExp = explode('-', $startYear);
+                    $finYear = $finYearExp[0];
+                    $bookingInvCode = ($company->CompanyID . '\\' . $finYear . '\\' . 'BSI' . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
+
+                    if (empty($dt['comments'])) {
+                        return $this->sendError('Narration field is required');
+                    }
+
+                    if (empty($dt['supplierInvoiceNo'])) {
+                        return $this->sendError('Supplier Invoice No field is required');
+                    }
+
+                if($dt['documentType'] == 1) {
+                    $supplierAssignedDetail = SupplierAssigned::select('liabilityAccountSysemID',
+                        'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount', 'VATPercentage')
+                        ->where('supplierCodeSytem', $dt['supplierID'])
+                        ->where('companySystemID', $dt['companySystemID'])
+                        ->first();
+                    if (empty($supplierAssignedDetail)) {
+                        return $this->sendError('Supplier not found');
+                    }
+
+                    $supplierCurr = SupplierCurrency::where('supplierCodeSystem', $dt['supplierID'])->first();
+                    if (empty($supplierCurr)) {
+                        return $this->sendError('Supplier currency not found');
+                    }
+                    if ($supplierCurr) {
+                        $myCurr = $supplierCurr->currencyID;
+                    }
+
+                    $companyCurrencyConversion = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, 0);
+                    $companyCurrencyConversionTrans = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['bookingAmountTrans']);
+                    $companyCurrencyConversionVat = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['vatAmount']);
+
+
+
+                    $suppInvoiceArray = array(
+                        'companySystemID' => $dt['companySystemID'],
+                        'companyID' => isset($company->CompanyID) ? $company->CompanyID : null,
+                        'documentSystemID' => 11,
+                        'documentID' => "SI",
+                        'serialNo' => $lastSerialNumber,
+                        'companyFinanceYearID' => isset($financeYear->companyFinanceYearID) ? $financeYear->companyFinanceYearID : null,
+                        'FYBiggin' => isset($financeYear->bigginingDate) ? $financeYear->bigginingDate : null,
+                        'FYEnd' => isset($financeYear->endingDate) ? $financeYear->endingDate : null,
+                        'companyFinancePeriodID' => isset($financePeriod->companyFinancePeriodID) ? $financePeriod->companyFinancePeriodID : null,
+                        'FYPeriodDateFrom' => isset($financePeriod->dateFrom) ? $financePeriod->dateFrom : null,
+                        'FYPeriodDateTo' => isset($financePeriod->dateTo) ? $financePeriod->dateTo : null,
+                        'bookingInvCode' => $bookingInvCode,
+                        'bookingDate' => $dt['bookingDate'],
+                        'comments' => $dt['comments'],
+                        'secondaryRefNo' => $dt['secondaryRefNo'],
+                        'supplierID' => $dt['supplierID'],
+                        'supplierVATEligible' => $supplierAssignedDetail->vatEligible,
+                        'supplierGLCodeSystemID' => $supplierAssignedDetail->liabilityAccountSysemID,
+                        'supplierGLCode' => $supplierAssignedDetail->liabilityAccount,
+                        'UnbilledGRVAccountSystemID' => $supplierAssignedDetail->UnbilledGRVAccountSystemID,
+                        'UnbilledGRVAccount' => $supplierAssignedDetail->UnbilledGRVAccount,
+                        'VATPercentage' => $dt['vatPercentage'],
+                        'VATAmount' => $dt['vatAmount'],
+                        'VATAmountLocal' => $companyCurrencyConversionVat['localAmount'],
+                        'VATAmountRpt' => $companyCurrencyConversionVat['reportingAmount'],
+                        'supplierInvoiceNo' => $dt['supplierInvoiceNo'],
+                        'supplierInvoiceDate' => $dt['supplierInvoiceDate'],
+                        'supplierTransactionCurrencyID' => $myCurr,
+                        'supplierTransactionCurrencyER' => 1,
+                        'companyReportingCurrencyID' => isset($companyCurrency->reportingcurrency->currencyID) ? $companyCurrency->reportingcurrency->currencyID : null,
+                        'companyReportingER' => $companyCurrencyConversion['trasToRptER'],
+                        'localCurrencyID' => isset($companyCurrency->localcurrency->currencyID) ? $companyCurrency->localcurrency->currencyID : null,
+                        'localCurrencyER' => $companyCurrencyConversion['trasToLocER'],
+                        'bookingAmountTrans' => \Helper::roundValue($dt['bookingAmountTrans']),
+                        'bookingAmountLocal' => \Helper::roundValue($companyCurrencyConversionTrans['localAmount']),
+                        'bookingAmountRpt' => \Helper::roundValue($companyCurrencyConversionTrans['reportingAmount']),
+                        'documentType' => 1
+                    );
+                } else if ($dt['documentType'] == 4){
+
+                    $myCurr = $dt['currency'];
+
+                    $companyCurrencyConversion = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, 0);
+                    $companyCurrencyConversionTrans = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['bookingAmountTrans']);
+
+                    $companyCurrencyConversionVat = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, $dt['vatAmount']);
+
+                    $employee = Employee::where('employeeSystemID', $dt['employeeID'])->first();
+                    if (empty($employee)) {
+                        return $this->sendError('Employee not found', 500);
+                    }
+
+                    $checkEmployeeControlAccount = SystemGlCodeScenarioDetail::getGlByScenario($dt['companySystemID'], 11, 12);
+
+                    if (is_null($checkEmployeeControlAccount)) {
+                        return $this->sendError('Please configure Employee control account for this company', 500);
+                    }
+
+                    $suppInvoiceArray = array(
+                        'companySystemID' => $dt['companySystemID'],
+                        'companyID' => isset($company->CompanyID) ? $company->CompanyID : null,
+                        'documentSystemID' => 11,
+                        'documentID' => "SI",
+                        'serialNo' => $lastSerialNumber,
+                        'companyFinanceYearID' => isset($financeYear->companyFinanceYearID) ? $financeYear->companyFinanceYearID : null,
+                        'FYBiggin' => isset($financeYear->bigginingDate) ? $financeYear->bigginingDate : null,
+                        'FYEnd' => isset($financeYear->endingDate) ? $financeYear->endingDate : null,
+                        'companyFinancePeriodID' => isset($financePeriod->companyFinancePeriodID) ? $financePeriod->companyFinancePeriodID : null,
+                        'FYPeriodDateFrom' => isset($financePeriod->dateFrom) ? $financePeriod->dateFrom : null,
+                        'FYPeriodDateTo' => isset($financePeriod->dateTo) ? $financePeriod->dateTo : null,
+                        'bookingInvCode' => $bookingInvCode,
+                        'bookingDate' => $dt['bookingDate'],
+                        'comments' => $dt['comments'],
+                        'secondaryRefNo' => $dt['secondaryRefNo'],
+                        'VATPercentage' => $dt['vatPercentage'],
+                        'VATAmount' => $dt['vatAmount'],
+                        'VATAmountLocal' => $companyCurrencyConversionVat['localAmount'],
+                        'VATAmountRpt' => $companyCurrencyConversionVat['reportingAmount'],
+                        'supplierInvoiceNo' => $dt['supplierInvoiceNo'],
+                        'supplierInvoiceDate' => $dt['supplierInvoiceDate'],
+                        'supplierTransactionCurrencyID' => $myCurr,
+                        'supplierTransactionCurrencyER' => 1,
+                        'companyReportingCurrencyID' => isset($companyCurrency->reportingcurrency->currencyID) ? $companyCurrency->reportingcurrency->currencyID : null,
+                        'companyReportingER' => $companyCurrencyConversion['trasToRptER'],
+                        'localCurrencyID' => isset($companyCurrency->localcurrency->currencyID) ? $companyCurrency->localcurrency->currencyID : null,
+                        'localCurrencyER' => $companyCurrencyConversion['trasToLocER'],
+                        'bookingAmountTrans' => \Helper::roundValue($dt['bookingAmountTrans']),
+                        'bookingAmountLocal' => \Helper::roundValue($companyCurrencyConversionTrans['localAmount']),
+                        'bookingAmountRpt' => \Helper::roundValue($companyCurrencyConversionTrans['reportingAmount']),
+                        'documentType' => 4,
+                        'employeeID' => $dt['employeeID'],
+                        'employeeControlAcID' => $checkEmployeeControlAccount
+
+                  );
+                 }
+                }
+                 $bookInvSupp = BookInvSuppMaster::create($suppInvoiceArray);
+            }
+
+            if (!empty($input[1])) {
+                foreach ($input[1] as $dt) {
+                    $segment = SegmentMaster::find($dt['serviceLineSystemID']);
+                    $glCode = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $dt['glSystemID'])->where('companySystemID', $bookInvSupp->companySystemID)->first();
+                    if ($bookInvSupp->documentType == 1) {
+                        $supplierCurr = SupplierCurrency::where('supplierCodeSystem', $dt['supplierID'])->first();
+                        if (empty($supplierCurr)) {
+                            return $this->sendError('Customer currency not found');
+                        }
+                        if ($supplierCurr) {
+                            $myCurr = $supplierCurr->currencyID;
+                        }
+                        $companyCurrencyConversion = \Helper::currencyConversion($bookInvSupp->companySystemID, $myCurr, $myCurr, 0);
+                        $companyCurrencyConversionTrans = \Helper::currencyConversion($bookInvSupp->companySystemID, $myCurr, $myCurr, $dt['DIAmount']);
+                        $companyCurrencyConversionVat = \Helper::currencyConversion($bookInvSupp->companySystemID, $myCurr, $myCurr, $dt['vatAmount']);
+                        $companyCurrencyConversionNet = \Helper::currencyConversion($bookInvSupp->companySystemID, $myCurr, $myCurr, $dt['netAmount']);
+
+                        $suppInvoiceDetArray[] = array(
+                            'directInvoiceAutoID' => $bookInvSupp->bookingSuppMasInvAutoID,
+                            'companyID' => $bookInvSupp->companyID,
+                            'companySystemID' => $bookInvSupp->companySystemID,
+                            'serviceLineSystemID' => $dt['serviceLineSystemID'],
+                            'serviceLineCode' => isset($segment->ServiceLineCode) ? $segment->ServiceLineCode : null,
+                            'chartOfAccountSystemID' => $dt['glSystemID'],
+                            'glCode' => isset($glCode->AccountCode) ? $glCode->AccountCode : null,
+                            'glCodeDes' => isset($glCode->AccountDescription) ? $glCode->AccountDescription : null,
+                            'comments' => $dt['comments'],
+                            'DIAmountCurrency' => $myCurr,
+                            'DIAmountCurrencyER' => 1,
+                            'DIAmount' => $dt['DIAmount'],
+                            'localAmount' => $companyCurrencyConversionTrans['localAmount'],
+                            'comRptAmount' => $companyCurrencyConversionTrans['reportingAmount'],
+                            'comRptCurrency' => isset($companyCurrency->reportingcurrency->currencyID) ? $companyCurrency->reportingcurrency->currencyID : null,
+                            'comRptCurrencyER' => $companyCurrencyConversion['trasToRptER'],
+                            'localCurrency' => isset($companyCurrency->localcurrency->currencyID) ? $companyCurrency->localcurrency->currencyID : null,
+                            'localCurrencyER' => $companyCurrencyConversion['trasToLocER'],
+                            'vatMasterCategoryID' => $dt['vatMasterCategoryID'],
+                            'vatSubCategoryID' => $dt['vatSubCategoryID'],
+                            'VATPercentage' => $dt['vatPercentage'],
+                            'VATAmount' => $dt['vatAmount'],
+                            'VATAmountLocal' => $companyCurrencyConversionVat['localAmount'],
+                            'VATAmountRpt' => $companyCurrencyConversionVat['reportingAmount'],
+                            'netAmount' => $dt['netAmount'],
+                            'netAmountLocal' => $companyCurrencyConversionNet['localAmount'],
+                            'netAmountRpt' => $companyCurrencyConversionNet['reportingAmount']
+                        );
+                    }
+                    if ($bookInvSupp->documentType == 4) {
+                        $myCurr = $dt['currency'];
+
+                        $companyCurrencyConversion = \Helper::currencyConversion($bookInvSupp->companySystemID, $myCurr, $myCurr, 0);
+                        $companyCurrencyConversionTrans = \Helper::currencyConversion($bookInvSupp->companySystemID, $myCurr, $myCurr, $dt['DIAmount']);
+                        $companyCurrencyConversionVat = \Helper::currencyConversion($bookInvSupp->companySystemID, $myCurr, $myCurr, $dt['vatAmount']);
+                        $companyCurrencyConversionNet = \Helper::currencyConversion($bookInvSupp->companySystemID, $myCurr, $myCurr, $dt['netAmount']);
+
+                        $suppInvoiceDetArray[] = array(
+                            'directInvoiceAutoID' => $bookInvSupp->bookingSuppMasInvAutoID,
+                            'companyID' => $bookInvSupp->companyID,
+                            'companySystemID' => $bookInvSupp->companySystemID,
+                            'serviceLineSystemID' => $dt['serviceLineSystemID'],
+                            'serviceLineCode' => isset($segment->ServiceLineCode) ? $segment->ServiceLineCode : null,
+                            'chartOfAccountSystemID' => $dt['glSystemID'],
+                            'glCode' => isset($glCode->AccountCode) ? $glCode->AccountCode : null,
+                            'glCodeDes' => isset($glCode->AccountDescription) ? $glCode->AccountDescription : null,
+                            'comments' => $dt['comments'],
+                            'DIAmountCurrency' => $myCurr,
+                            'DIAmountCurrencyER' => 1,
+                            'DIAmount' => $dt['DIAmount'],
+                            'localAmount' => $companyCurrencyConversionTrans['localAmount'],
+                            'comRptAmount' => $companyCurrencyConversionTrans['reportingAmount'],
+                            'comRptCurrency' => isset($companyCurrency->reportingcurrency->currencyID) ? $companyCurrency->reportingcurrency->currencyID : null,
+                            'comRptCurrencyER' => $companyCurrencyConversion['trasToRptER'],
+                            'localCurrency' => isset($companyCurrency->localcurrency->currencyID) ? $companyCurrency->localcurrency->currencyID : null,
+                            'localCurrencyER' => $companyCurrencyConversion['trasToLocER'],
+                            'vatMasterCategoryID' => $dt['vatMasterCategoryID'],
+                            'vatSubCategoryID' => $dt['vatSubCategoryID'],
+                            'VATPercentage' => $dt['vatPercentage'],
+                            'VATAmount' => $dt['vatAmount'],
+                            'VATAmountLocal' => $companyCurrencyConversionVat['localAmount'],
+                            'VATAmountRpt' => $companyCurrencyConversionVat['reportingAmount'],
+                            'netAmount' => $dt['netAmount'],
+                            'netAmountLocal' => $companyCurrencyConversionNet['localAmount'],
+                            'netAmountRpt' => $companyCurrencyConversionNet['reportingAmount']
+                        );
+                    }
+                }
+                DirectInvoiceDetails::insert($suppInvoiceDetArray);
+            }
+
+                $db = isset($request->db) ? $request->db : "";
+                CreateHrmsSupplierInvoice::dispatch($db, $bookInvSupp->bookingSuppMasInvAutoID);
+
+                DB::commit();
+
+            return $this->sendResponse($bookInvSupp, 'Supplier Invoice created successfully');
+        }
+        catch(\Exception $e){
+            DB::rollback();
+            Log::info('Error Line No: ' . $e->getLine());
+            Log::info('Error File: ' . $e->getFile());
+            Log::info($e->getMessage());
+            Log::info('---- GL  End with Error-----' . date('H:i:s'));
+            return $this->sendError($e->getMessage(),500);
+        }
+}
+}

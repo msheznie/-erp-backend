@@ -522,7 +522,8 @@ class ChequeRegisterDetailAPIController extends AppBaseController
         $output['usedChequeWithDocument'] = ChequeRegisterDetail::
             whereHas('master',function ($query) use ($master){
                 $query->where('company_id',$master->company_id)
-                    ->where('bank_account_id',$master->bank_account_id);
+                    ->where('bank_account_id',$master->bank_account_id)
+                    ->where('isActive',1);
             })
             ->where('erp_cheque_register_detail.status',1)  // used cheque
             ->join('erp_paysupplierinvoicemaster','erp_cheque_register_detail.document_id','=','erp_paysupplierinvoicemaster.PayMasterAutoId')
@@ -570,9 +571,37 @@ class ChequeRegisterDetailAPIController extends AppBaseController
 
         DB::beginTransaction();
         try {
+            $fromPdcID = 0;
+            if ($from_cheque_details->document->pdcChequeYN == 0) {
+                PaySupplierInvoiceMaster::find($from_cheque_details->document_id)->update(['BPVchequeNo'=>$to_cheque_details->cheque_no]);
+            } else {
+                $fromPdcData = PdcLog::where('documentSystemID', $from_cheque_details->document_master_id)
+                          ->where('documentmasterAutoID', $from_cheque_details->document_id)
+                          ->where('chequeNo', $from_cheque_details->cheque_no)
+                          ->first();
 
-            PaySupplierInvoiceMaster::find($from_cheque_details->document_id)->update(['BPVchequeNo'=>$to_cheque_details->cheque_no]);
-            PaySupplierInvoiceMaster::find($to_cheque_details->document_id)->update(['BPVchequeNo'=>$from_cheque_details->cheque_no]);
+                if ($fromPdcData) {
+                    $fromPdcID = $fromPdcData->id;
+                }
+
+                PdcLog::where('documentSystemID', $from_cheque_details->document_master_id)
+                          ->where('documentmasterAutoID', $from_cheque_details->document_id)
+                          ->where('chequeNo', $from_cheque_details->cheque_no)
+                          ->update(['chequeNo' => $to_cheque_details->cheque_no]);
+            }
+            
+            if ($to_cheque_details->document->pdcChequeYN == 0) {
+                PaySupplierInvoiceMaster::find($to_cheque_details->document_id)->update(['BPVchequeNo'=>$from_cheque_details->cheque_no]);
+            } else {
+                 PdcLog::where('documentSystemID', $to_cheque_details->document_master_id)
+                          ->where('documentmasterAutoID', $to_cheque_details->document_id)
+                          ->where('chequeNo', $to_cheque_details->cheque_no)
+                          ->when($fromPdcID > 0, function($query) use ($fromPdcID) {
+                                $query->where('id', '!=', $fromPdcID);
+                          })
+                          ->update(['chequeNo' => $from_cheque_details->cheque_no]);
+            }
+
 
             $from_to_temp_document_id = $from_cheque_details->document_id;
             $from_to_temp_document_master_id = $from_cheque_details->document_master_id;
