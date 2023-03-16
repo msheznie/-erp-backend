@@ -2634,8 +2634,15 @@ WHERE
             $updated['tech_weightage'] =  $eval_result;
             $output = BidSubmissionMaster::where('id',$ids)->update($updated);
 
-            $temp1['result_percentage'] = round((($result)/$techniqal_wightage->technical_weightage)*100,3);
-            $temp1['eval_result_percentage'] = round( (($eval_result)/$techniqal_wightage->technical_weightage)*100,3);
+            if($techniqal_wightage->technical_weightage == 0)
+            {
+                $temp1['result_percentage'] = 0;
+                $temp1['eval_result_percentage'] = 0;
+            }
+            else{
+                $temp1['result_percentage'] = round((($result)/$techniqal_wightage->technical_weightage)*100,3);
+                $temp1['eval_result_percentage'] = round( (($eval_result)/$techniqal_wightage->technical_weightage)*100,3);
+            }
 
             array_push($wight,$temp);
             array_push($percentage,$temp1);
@@ -2872,7 +2879,7 @@ WHERE
         ->join('srm_bid_submission_master', 'srm_bid_submission_master.id', '=', 'srm_tender_final_bids.bid_id')
         ->join('srm_supplier_registration_link', 'srm_supplier_registration_link.id', '=', 'srm_bid_submission_master.supplier_registration_id')
         ->where('srm_tender_final_bids.tender_id', $tenderId)
-        ->orderBy('srm_tender_final_bids.com_weightage','asc');
+        ->orderBy('srm_tender_final_bids.com_weightage','desc');
 
       
 
@@ -2927,30 +2934,10 @@ WHERE
 
     
         $data['bids'] = $bidMasterId;
-        $items = PricingScheduleMaster::with(['tender_bid_format_master','pricing_shedule_details' => function ($q) use ($bidMasterId) {
-            $q->with(['bid_main_works' => function ($q) use ($bidMasterId) {
-                $q->whereIn('bid_master_id', $bidMasterId);
-            },'bid_format_detail' =>function ($q) use ($bidMasterId) {
-                $q->whereIn('bid_master_id', $bidMasterId);
-                $q->orWhere('bid_master_id', null);
-            },'tender_boq_items'=>function($q){
-                $q->with(['bid_boqs','ranking_items']);
-            },'ranking_items'])->whereNotIn('field_type', [4]);;
-        }])->where('tender_id', $tenderId)->get();
-
-
-       
-
-
-
+        $items = $this->getPricingItems($bidMasterId,$tenderId);
+        
        foreach($items[0]->pricing_shedule_details as $key=>$val) 
        {
-       
-        
-        $items[0]->pricing_shedule_details[$key]['active'] = false;
-        $items[0]->pricing_shedule_details[$key]['level'] = 1;
-
-       
         
         if($val->is_disabled == 1)
         {
@@ -3001,10 +2988,25 @@ WHERE
         $this->updateLineItem($bidMasterId,$line_item_values,$tenderId);
 
         $data['bid_submissions'] = BidSubmissionMaster::with('SupplierRegistrationLink')->whereIn('id',$bidMasterId)->where('tender_id',$tenderId)->get();
-
+        $items = $this->getPricingItems($bidMasterId,$tenderId);
         $data['items']  = $items;
         return $this->sendResponse($data, 'data retrieved successfully');
     }
+
+     public function getPricingItems($bidMasterId,$tenderId)
+     {
+       return PricingScheduleMaster::with(['tender_bid_format_master','pricing_shedule_details' => function ($q) use ($bidMasterId) {
+            $q->with(['bid_main_works' => function ($q) use ($bidMasterId) {
+                $q->whereIn('bid_master_id', $bidMasterId);
+            },'bid_format_detail' =>function ($q) use ($bidMasterId) {
+                $q->whereIn('bid_master_id', $bidMasterId);
+                $q->orWhere('bid_master_id', null);
+            },'tender_boq_items'=>function($q){
+                $q->with(['bid_boqs','ranking_items']);
+            },'ranking_items'])->whereNotIn('field_type', [4]);;
+        }])->where('tender_id', $tenderId)->get();
+     }
+
 
     public function updateBidLineItem(Request $request)
     {
@@ -3092,7 +3094,7 @@ WHERE
             foreach($result as $key=>$val)
             {
                 $output = 0;
-                if($output != 0)
+                if($highest_val1 != 0)
                 {
                     $output = round(($val->new_val/$highest_val1)*100,3);
                 }

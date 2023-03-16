@@ -2092,6 +2092,7 @@ class SRMService
             ->where('status', 1)
 
             ->get();
+        $data['tenders'] = TenderMaster::where('id',$tenderMasterId)->select('id','document_type')->first();
 
         return [
             'success' => true,
@@ -2104,9 +2105,20 @@ class SRMService
     {
         $tenderMasterId = $request->input('extra.tenderId');
         $attachmentId = $request->input('extra.attachmentId');
+        $tender = TenderMaster::where('id',$tenderMasterId)->select('id','document_type')->first();
 
         $attachment = DocumentAttachments::where('attachmentID', $attachmentId)
-            ->where('documentSystemID', 108)
+            ->where(function($query) use($tender){
+                if($tender->document_type == 0)
+                {
+                $type = 108;
+                }
+                else
+                {
+                $type = 113;
+                }
+                $query->where('documentSystemID', $type);
+            })
             ->first();
 
         $data['attachmentPath'] = Helper::getFileUrlFromS3($attachment['path']);
@@ -2758,10 +2770,21 @@ class SRMService
             'data' =>  $request->input('extra')
         ];*/
         $tenderMaster = TenderMaster::find($tenderId);
+        $doc_type = $tenderMaster->document_type;
         $parent = DocumentAttachments::find($parentId);
         $companySystemID = $tenderMaster['company_id'];
         $company = Company::where('companySystemID', $companySystemID)->first();
-        $documentCode = DocumentMaster::where('documentSystemID', 108)->first();
+        $documentCode = DocumentMaster::where(function($query) use($doc_type){
+            if($doc_type == 0)
+            {
+               $type = 108;
+            }
+            else
+            {
+               $type = 113;
+            }
+            $query->where('documentSystemID', $type);
+        })->first();
         $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
 
         $extension = $attachment['fileType'];
@@ -3062,7 +3085,7 @@ class SRMService
                     $dataBidBoq = BidBoq::where('boq_id',$boqItem->id)->where('bid_master_id',$bidMasterId)->where('created_by',$supplierData->id)->where('main_works_id',$main_works_id->id)->get();
                     if(count($dataBidBoq) > 0) {
                         foreach($dataBidBoq as $bidBoq){
-                            if($bidBoq->total_amount > 0) {
+                            if($bidBoq->total_amount >= 0 && isset($bidBoq->unit_amount) && isset($bidBoq->qty)) {
                                 $has_work_ids[$i] = "true";
                             }else {
                                 $has_work_ids[$i]  = "false";
@@ -3091,7 +3114,7 @@ class SRMService
                     $dataBidBoq2 = BidMainWork::where('tender_id',$tenderId)->where('main_works_id',$main_works_id->id)->where('bid_master_id',$bidMasterId)->where('created_by',$supplierData->id)->get();
                     if(count($dataBidBoq2) > 0) {
                         foreach($dataBidBoq2 as $bidBoq){
-                            if($bidBoq->total_amount > 0) {
+                            if($bidBoq->total_amount >= 0 && isset($bidBoq->amount) && isset($bidBoq->qty)) {
                                 $has_work_ids[$i] = "true";
                             }else {
                                 $has_work_ids[$i]  = "false";
@@ -3137,6 +3160,18 @@ class SRMService
             $data['technicalStatus'] =1;
         }
 
+        if($doc_type != 0)
+        {
+            $technicalEvaluationCriteriaExit = EvaluationCriteriaDetails::where('is_final_level', 1)
+                ->where('critera_type_id', 2)
+                ->where('tender_id', $tenderId)
+                ->count();
+
+            if((count($documentAttachedCountIdsTechnical)) == 0 && $technicalEvaluationCriteriaExit == 0)
+            {
+                $data['technicalStatus'] = -1;
+            }
+        }
 
         if((count($documentAttachedCountIdsCommercial) == $documentAttachedCountAnswerCommercial)) {
             if((count(array_flip($has_work_ids)) === 1 && end($has_work_ids) === 'true')) {
@@ -3739,10 +3774,34 @@ class SRMService
             }, 'document_attachments' => function ($q) use ($bidMasterId) {
                 $q->where('documentSystemCode', $bidMasterId);
             }])->whereHas('tender_document_types', function ($q) use ($documents){
-            })->where('documentSystemCode', $group['tender_id'])->where('parent_id', null)->where('documentSystemID', 108)->where('envelopType', 3)->where('attachmentType',2)->pluck('attachmentID')->toArray();
+            })->where('documentSystemCode', $group['tender_id'])->where('parent_id', null)
+            ->where(function($query) use($type){
+                if($type->document_type == 0)
+                {
+                    $type = 108;
+                }
+                else
+                {
+                    $type = 113;
+                }
+                $query->where('documentSystemID', $type);
+    
+            })
+            ->where('envelopType', 3)->where('attachmentType',2)->pluck('attachmentID')->toArray();
 
             $documentAttachedCountAnswer = DocumentAttachments::whereIn('parent_id', $documentAttachedCountIds)
-                ->where('documentSystemID', 108)
+                ->where(function($query) use($type){
+                    if($type->document_type == 0)
+                    {
+                        $type = 108;
+                    }
+                    else
+                    {
+                        $type = 113;
+                    }
+                    $query->where('documentSystemID', $type);
+        
+                })
                 ->where('documentSystemCode', $bidMasterId)
                 ->count();
 
@@ -3773,9 +3832,35 @@ class SRMService
             }, 'document_attachments' => function ($q) use ($bidMasterId) {
                 $q->where('documentSystemCode', $bidMasterId);
             }])->whereHas('tender_document_types', function ($q) {
-            })->where('documentSystemCode', $group['tender_id'])->where('parent_id', null)->where('documentSystemID', 108)->where('envelopType', 1)->where('attachmentType',2)->pluck('attachmentID')->toArray();
+            })->where('documentSystemCode', $group['tender_id'])->where('parent_id', null)
+            ->where(function($query) use($type){
+                if($type->document_type == 0)
+                {
+                    $type = 108;
+                }
+                else
+                {
+                    $type = 113;
+                }
+                $query->where('documentSystemID', $type);
+    
+            })
+            ->where('envelopType', 1)->where('attachmentType',2)->pluck('attachmentID')->toArray();
 
-            $documentAttachedCountAnswerCommercial = DocumentAttachments::whereIn('parent_id', $documentAttachedCountIdsCommercial)->where('documentSystemID', 108)->where('documentSystemCode', $bidMasterId)->count();
+            $documentAttachedCountAnswerCommercial = DocumentAttachments::whereIn('parent_id', $documentAttachedCountIdsCommercial)
+            ->where(function($query) use($type){
+                if($type->document_type == 0)
+                {
+                    $type = 108;
+                }
+                else
+                {
+                    $type = 113;
+                }
+                $query->where('documentSystemID', $type);
+    
+            })
+            ->where('documentSystemCode', $bidMasterId)->count();
 
             $pring_schedul_master_ids =  PricingScheduleMaster::with(['tender_main_works' => function ($q1) use ($tender, $bidMasterId) {
                 $q1->where('tender_id', $tender);
@@ -3862,7 +3947,45 @@ class SRMService
                 $group['commercial_bid_submission_status'] = "Not Completed";
             }*/
 
-            $group['technical_bid_submission_status'] = $bidSubmissionData['technicalEvaluationCriteria'];
+            $documentAttachedCountIdsTechnical = DocumentAttachments::with(['tender_document_types' => function ($q) use ($doucments){
+                $q->where('srm_action', 1);
+            }, 'document_attachments' => function ($q) use ($bidMasterId) {
+                $q->where('documentSystemCode', $bidMasterId);
+            }])->whereHas('tender_document_types', function ($q) use ($doucments){
+            })->where('documentSystemCode', $tender)->where('parent_id', null)
+            ->where(function($query) use($type){
+                if($type->document_type == 0)
+                {
+                   $type = 108;
+                }
+                else
+                {
+                   $type = 113;
+                }
+                $query->where('documentSystemID', $type);
+            })
+            ->where('envelopType', 2)->where('attachmentType',2)->pluck('attachmentID')->toArray();
+
+            $documentAttachedCountAnswerTechnical = DocumentAttachments::whereIn('parent_id', $documentAttachedCountIdsTechnical)
+            ->where(function($query) use($type){
+                if($type->document_type == 0)
+                {
+                   $type = 108;
+                }
+                else
+                {
+                   $type = 113;
+                }
+                $query->where('documentSystemID', $type);
+            })
+            ->where('documentSystemCode', $bidMasterId)->count();
+
+            if((count($documentAttachedCountIdsTechnical) == $documentAttachedCountAnswerTechnical) && $bidSubmissionData['technicalEvaluationCriteria'] == 0) {
+                $group['technical_bid_submission_status'] = 0;
+            }else {
+                $group['technical_bid_submission_status'] =1;
+            }
+            //$group['technical_bid_submission_status'] = $bidSubmissionData['technicalEvaluationCriteria'];
             $group['bid_submission_status'] = $bidSubmissionData['bidsubmission'];
             return $group;
         });
