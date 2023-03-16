@@ -57,6 +57,8 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
 use Response;
 use App\Models\ChequeTemplateBank;
+use App\Jobs\DocumentAttachments\PaymentReleasedToSupplierJob;
+
 /**
  * Class BankLedgerController
  * @package App\Http\Controllers\API
@@ -481,9 +483,10 @@ class BankLedgerAPIController extends AppBaseController
 
                         }
 
+
                         if ($supplierEmail && $confirmedPersonEmail) {
 
-                            $pdfName = 'emailAttachment\PV_REMIT_'.$bankLedger->companyID.'_'.$bankLedger->documentSystemCode.'.pdf';
+                            $pdfName = 'emailAttachment/PV_REMIT_'.$bankLedger->companyID.'_'.$bankLedger->documentSystemCode.'.pdf';
 
                             $refernaceDoc = \Helper::getCompanyDocRefNo($paySupplierInvoice->companySystemID, $paySupplierInvoice->documentSystemID);
 
@@ -524,19 +527,6 @@ class BankLedgerAPIController extends AppBaseController
                                 'advancePayDetailTotTra' => $advancePayDetailTotTra
                             );
 
-                            $html = view('print.payment_remittance_report_treasury_email', $order);
-                            $pdf = \App::make('dompdf.wrapper');
-                            //$pdf->loadHTML($html);
-                            //return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
-
-                            $path = 'uploads\\'.$pdfName;
-
-                            if (Storage::disk('local_public')->exists($path)) {
-                                 Storage::disk('local_public')->delete($path);
-                            }
-
-                            $pdf->loadHTML($html)->save($path);
-
                             $footer = "<font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!" . "<br>This is an auto generated email. Please do not reply to this email because we are not" . "monitoring this inbox.</font>";
 
                             $dataEmail = array();
@@ -569,14 +559,11 @@ class BankLedgerAPIController extends AppBaseController
 
                             //$location = \DB::table('systemmanualfolder')->first();
                             $dataEmail['isEmailSend'] = 0;
-                            $dataEmail['attachmentFileName'] = realpath($path);
+                            
                             $dataEmail['alertMessage'] = "Payment Released";
                             $dataEmail['emailAlertMessage'] = $temp;
 
-                            $sendEmail = \Email::sendEmailErp($dataEmail);
-                            if (!$sendEmail["success"]) {
-                                return $this->sendError($sendEmail["message"], 500);
-                            }
+                           PaymentReleasedToSupplierJob::dispatch($request->db, $order, $dataEmail, $pdfName);
                         }
                     }
 

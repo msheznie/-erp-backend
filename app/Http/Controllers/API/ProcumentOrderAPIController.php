@@ -154,6 +154,7 @@ use App\Jobs\GeneralLedgerInsert;
 use App\Models\GeneralLedger;
 use App\helper\CreateExcel;
 use App\helper\BudgetConsumptionService;
+use App\Jobs\DocumentAttachments\PoSentToSupplierJob;
 /**
  * Class ProcumentOrderController
  * @package App\Http\Controllers\API
@@ -4833,142 +4834,18 @@ ORDER BY
 
         $purchaseOrderID = $input['purchaseOrderID'];
 
-        $typeID = 1; //$request->get('typeID');
-
-        $employee = \Helper::getEmployeeInfo();
-
         $emailSentTo = 0;
-
         $procumentOrderUpdate = ProcumentOrder::where('purchaseOrderID', '=', $purchaseOrderID)->first();
-
-        $company = Company::where('companySystemID', $procumentOrderUpdate->companySystemID)->first();
-
-        $outputRecord = ProcumentOrder::where('purchaseOrderID', $procumentOrderUpdate->purchaseOrderID)->with(['segment','created_by','detail' => function ($query) {
-            $query->with('unit');
-        }, 'approved_by' => function ($query) {
-            $query->with(['employee'=>function($query2){
-                $query2->with(['hr_emp'=>function($query3){
-                    $query3->with(['designation']);
-                }]);
-            }]);
-            $query->whereIN('documentSystemID', [2, 5, 52]);
-        }, 'suppliercontact' => function ($query) {
-            $query->where('isDefault', -1);
-        }, 'company', 'transactioncurrency', 'companydocumentattachment', 'paymentTerms_by'])->get();
-
-        $refernaceDoc = CompanyDocumentAttachment::where('companySystemID', $procumentOrderUpdate->companySystemID)
-            ->where('documentSystemID', $procumentOrderUpdate->documentSystemID)
-            ->first();
-
-        $currencyDecimal = CurrencyMaster::select('DecimalPlaces')->where('currencyID', $procumentOrderUpdate->supplierTransactionCurrencyID)
-            ->first();
-
-        $decimal = 2;
-        if (!empty($currencyDecimal)) {
-            $decimal = $currencyDecimal['DecimalPlaces'];
-        }
-
-        $documentTitle = 'Purchase Order';
-        if ($procumentOrderUpdate->documentSystemID == 2) {
-            $documentTitle = 'Purchase Order';
-        } else if ($procumentOrderUpdate->documentSystemID == 5 && $procumentOrderUpdate->poType_N == 5) {
-            $documentTitle = 'Work Order';
-        } else if ($procumentOrderUpdate->documentSystemID == 5 && $procumentOrderUpdate->poType_N == 6) {
-            $documentTitle = 'Sub Work Order';
-        } else if ($procumentOrderUpdate->documentSystemID == 52) {
-            $documentTitle = 'Direct Order';
-        }
-
-        $poPaymentTerms = PoPaymentTerms::where('poID', $procumentOrderUpdate->purchaseOrderID)
-            ->get();
-
-        $paymentTermsView = '';
-
-        if ($poPaymentTerms) {
-            foreach ($poPaymentTerms as $val) {
-                $paymentTermsView .= $val['paymentTemDes'] . ', ';
-            }
-        }
-
-        $nowTime = time();
-
-        $orderAddons = PoAddons::where('poId', $procumentOrderUpdate->purchaseOrderID)
-            ->with(['category'])
-            ->orderBy('idpoAddons', 'DESC')
-            ->get();
-
-        $checkCompanyIsMerged = SecondaryCompany::where('companySystemID', $procumentOrderUpdate->companySystemID)
-            ->whereDate('cutOffDate', '<=', Carbon::parse($procumentOrderUpdate->createdDateTime))
-            ->first();
-
-        $isMergedCompany = false;
-        if ($checkCompanyIsMerged) {
-            $isMergedCompany = true;
-        }
-
-        $order = array(
-            'podata' => $outputRecord[0],
-            'docRef' => $refernaceDoc,
-            'isMergedCompany' => $isMergedCompany,
-            'secondaryCompany' => $checkCompanyIsMerged,
-            'termsCond' => $typeID,
-            'numberFormatting' => $decimal,
-            'title' => $documentTitle,
-            'paymentTermsView' => $paymentTermsView,
-            'addons' => $orderAddons
-
-        );
-        $html = view('print.purchase_order_print_pdf', $order);
-        $pdf = \App::make('dompdf.wrapper');
-
-        $path = public_path() . '/uploads/emailAttachment';
-
-        if (!file_exists($path)) {
-            File::makeDirectory($path, 0777, true, true);
-        }
-
-
-        $pdf->loadHTML($html)->save('uploads/emailAttachment/po_print_' . $nowTime . '.pdf');
 
         $fetchSupEmail = SupplierContactDetails::where('supplierID', $procumentOrderUpdate->supplierID)
             ->get();
 
         $supplierMaster = SupplierMaster::find($procumentOrderUpdate->supplierID);
 
-        $footer = "<font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!" .
-            "<br>This is an auto generated email. Please do not reply to this email because we are not " .
-            "monitoring this inbox.</font>";
         if ($fetchSupEmail) {
             foreach ($fetchSupEmail as $row) {
                 if (!empty($row->contactPersonEmail)) {
                     $emailSentTo = 1;
-                    $dataEmail['empName'] = $procumentOrderUpdate->supplierName;
-                    $dataEmail['empEmail'] = $row->contactPersonEmail;
-
-                    $dataEmail['companySystemID'] = $procumentOrderUpdate->companySystemID;
-                    $dataEmail['companyID'] = $procumentOrderUpdate->companyID;
-
-                    $dataEmail['docID'] = $procumentOrderUpdate->documentID;
-                    $dataEmail['docSystemID'] = $procumentOrderUpdate->documentSystemID;
-                    $dataEmail['docSystemCode'] = $procumentOrderUpdate->purchaseOrderID;
-
-                    $dataEmail['docApprovedYN'] = $procumentOrderUpdate->approved;
-                    $dataEmail['docCode'] = $procumentOrderUpdate->purchaseOrderCode;
-                    $dataEmail['ccEmailID'] = $employee->empEmail;
-
-                    $temp = "Dear " . $procumentOrderUpdate->supplierName . ',<p> New Order has been released from ' . $company->CompanyName . $footer;
-
-                    //$location = \DB::table('systemmanualfolder')->first();
-                    $pdfName = realpath("uploads/emailAttachment/po_print_" . $nowTime . ".pdf");
-
-                    $dataEmail['isEmailSend'] = 0;
-                    $dataEmail['attachmentFileName'] = $pdfName;
-                    $dataEmail['alertMessage'] = "New order from " . $company->CompanyName . " " . $procumentOrderUpdate->purchaseOrderCode;
-                    $dataEmail['emailAlertMessage'] = $temp;
-                    $sendEmail = \Email::sendEmailErp($dataEmail);
-                    if (!$sendEmail["success"]) {
-                        return $this->sendError($sendEmail["message"], 500);
-                    }
                 }
             }
         }
@@ -4977,36 +4854,14 @@ ORDER BY
             if ($supplierMaster) {
                 if (!empty($supplierMaster->supEmail)) {
                     $emailSentTo = 1;
-                    $dataEmail['empName'] = $procumentOrderUpdate->supplierName;
-                    $dataEmail['empEmail'] = $supplierMaster->supEmail;
-
-                    $dataEmail['companySystemID'] = $procumentOrderUpdate->companySystemID;
-                    $dataEmail['companyID'] = $procumentOrderUpdate->companyID;
-
-                    $dataEmail['docID'] = $procumentOrderUpdate->documentID;
-                    $dataEmail['docSystemID'] = $procumentOrderUpdate->documentSystemID;
-                    $dataEmail['docSystemCode'] = $procumentOrderUpdate->purchaseOrderID;
-
-                    $dataEmail['docApprovedYN'] = $procumentOrderUpdate->approved;
-                    $dataEmail['docCode'] = $procumentOrderUpdate->purchaseOrderCode;
-                    $dataEmail['ccEmailID'] = $employee->empEmail;
-
-                    $temp = "Dear " . $procumentOrderUpdate->supplierName . ',<p> New Order has been released from ' . $company->CompanyName . $footer;
-
-                    //$location = \DB::table('systemmanualfolder')->first();
-                    $pdfName = realpath("uploads/emailAttachment/po_print_" . $nowTime . ".pdf");
-
-                    $dataEmail['isEmailSend'] = 0;
-                    $dataEmail['attachmentFileName'] = $pdfName;
-                    $dataEmail['alertMessage'] = "New order from " . $company->CompanyName . " " . $procumentOrderUpdate->purchaseOrderCode;
-                    $dataEmail['emailAlertMessage'] = $temp;
-                    $sendEmail = \Email::sendEmailErp($dataEmail);
-                    if (!$sendEmail["success"]) {
-                        return $this->sendError($sendEmail["message"], 500);
-                    }
                 }
             }
         }
+
+        $employee = \Helper::getEmployeeInfo();
+        $empEmail = $employee ? $employee->empEmail : "";
+
+        PoSentToSupplierJob::dispatch($input['db'], $purchaseOrderID, $empEmail);
 
         if ($emailSentTo == 1) {
             $procumentOrderUpdate->sentToSupplier = -1;
