@@ -175,7 +175,7 @@
                     <table>
                         <tr>
                             <td width="100px">
-                                <span style="font-weight: bold">Doc Code</span>
+                                <span style="font-weight: bold">{{ __('custom.doc_code') }}</span>
                             </td>
                             <td width="10px">
                                 <span style="font-weight: bold">:</span>
@@ -186,7 +186,7 @@
                         </tr>
                         <tr>
                             <td width="70px">
-                                <span style="font-weight: bold">Doc Date </span>
+                                <span style="font-weight: bold"> {{ __('custom.doc_date') }}</span>
                             </td>
                             <td width="10px">
                                 <span style="font-weight: bold">:</span>
@@ -199,7 +199,7 @@
                         </tr>
                         <tr>
                             <td width="70px">
-                                <span style="font-weight: bold">Posted Date</span>
+                                <span style="font-weight: bold">{{ __('custom.posted_date') }}</span>
                             </td>
                             <td width="10px">
                                 <span style="font-weight: bold">:</span>
@@ -221,7 +221,7 @@
             <td>
                 <div>
                     <span style="font-size: 18px">
-                        Good Receipt Voucher
+                        {{ __('custom.good_receipt_voucher') }}
                     </span>
                 </div>
             </td>
@@ -236,17 +236,17 @@
                 <td style="width: 60%">
                     <table style="width: 100%">
                         <tr>
-                            <td width="120px"><span style="font-weight: bold">Supplier Code</span></td>
+                            <td width="120px"><span style="font-weight: bold">{{ __('custom.supplier_code') }}</span></td>
                             <td width="40px"><span style="font-weight: bold">:</span></td>
                             <td><span>{{$grvData->supplierPrimaryCode}}</span></td>
                         </tr>
                         <tr>
-                            <td><span style="font-weight: bold">Supplier Name </span></td>
+                            <td><span style="font-weight: bold">{{ __('custom.supplier_name') }}</span></td>
                             <td><span style="font-weight: bold">:</span></td>
                             <td><span>{{$grvData->supplierName}}</span></td>
                         </tr>
                         <tr>
-                            <td><span style="font-weight: bold">Doc Ref No </span></td>
+                            <td><span style="font-weight: bold">{{ __('custom.doc_ref_no') }}</span></td>
                             <td><span style="font-weight: bold">:</span></td>
                             <td><span>{{$grvData->grvDoRefNo}}</span></td>
                         </tr>
@@ -262,17 +262,17 @@
                 <td style="width: 60%">
                     <table style="width:100%">
                         <tr>
-                            <td width="120px"><span style="font-weight: bold">Location</span></td>
+                            <td width="120px"><span style="font-weight: bold">{{ __('custom.location') }}</span></td>
                             <td width="40px"><span style="font-weight: bold">:</span></td>
                             <td><span>{{$grvData->location_by?$grvData->location_by->wareHouseDescription:''}}</span></td>
                         </tr>
                         <tr>
-                            <td><span style="font-weight: bold">Recieved By </span></td>
+                            <td><span style="font-weight: bold"> {{ __('custom.recieved_by') }}</span></td>
                             <td><span style="font-weight: bold">:</span></td>
                             <td><span>{{$grvData->created_by?$grvData->created_by->empFullName:''}}</span></td>
                         </tr>
                         <tr>
-                            <td><span style="font-weight: bold">Comments </span></td>
+                            <td><span style="font-weight: bold"> {{ __('custom.comments') }}</span></td>
                             <td><span style="font-weight: bold">:</span></td>
                             <td><span>{{ $grvData->grvNarration }}</span></td>
                         </tr>
@@ -288,7 +288,7 @@
                                 <td colspan="3">&nbsp;</td>
                             </tr>
                             <tr>
-                                <td><span style="font-weight: bold">Currency</span></td>
+                                <td><span style="font-weight: bold">{{ __('custom.currency') }}</span></td>
                                 <td><span style="font-weight: bold">:</span></td>
                                 <td valign="bottom">{{$grvData->currency_by?$grvData->currency_by->CurrencyCode:'' }}
                                 </td>
@@ -305,13 +305,13 @@
             <thead>
             <tr style="border-top: 1px solid black;">
                 <th>#</th>
-                <th>Item Code</th>
-                <th>Item Description</th>
-                <th>Part No / Ref.Number</th>
-                <th>Qty</th>
-                <th>Unit Cost</th>
-                <th>Discount</th>
-                <th>Net Amount</th>
+                <th>{{ __('custom.item_code') }}</th>
+                <th>{{ __('custom.item_description') }}</th>
+                <th>{{ __('custom.manufacture_part_no') }}</th>
+                <th>{{ __('custom.qty') }}</th>
+                <th>{{ __('custom.unit_cost') }}</th>
+                <th>{{ __('custom.discount') }}</th>
+                <th>{{ __('custom.net_amount') }}</th>
             </tr>
             </thead>
             <tbody>
@@ -336,7 +336,7 @@
             </tbody>
             <tfoot>
             <tr>
-                <td colspan="6" class="text-right" style="border-bottom-color:white !important;border-left-color:white !important"><span style="font-weight: bold">Total</span></td>
+                <td colspan="6" class="text-right" style="border-bottom-color:white !important;border-left-color:white !important"><span style="font-weight: bold">{{ __('custom.total') }}</span></td>
                 <td class="text-right" style="border: 1px solid black;"><span *ngIf="grvData.details" style="font-weight: bold">{{ number_format($discountAmount, $grvData->currency_by->DecimalPlaces) }}</span></td>
                 <td class="text-right" style="border: 1px solid black;"><span *ngIf="grvData.details" style="font-weight: bold">{{number_format($netAmount, $grvData->currency_by->DecimalPlaces) }}</span></td>
             </tr>

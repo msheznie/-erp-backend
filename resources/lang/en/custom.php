@@ -465,7 +465,24 @@ return [
     'comments_para_material_issue_delivery_print2' => '2. Supervisor to verify prior to signature that material purchase order nos',
     'comments_para_material_issue_delivery_print3' => '(including PO line items) are filled out correctly in the consumables ticket.',
     'signature' => 'Signature',
-    'checked_by' => 'Checked By'
+    'checked_by' => 'Checked By',
+
+    'doc_code' => 'Doc Code',
+    'doc_date' => 'Doc Date',
+    'posted_date' => 'Posted Date',
+    'good_receipt_voucher' => 'Good Receipt Voucher',
+    'supplier_code' => 'Supplier Code',
+    'supplier_name' => 'Supplier Name',
+    'doc_ref_no' => 'Doc Ref No',
+    'location' => 'Location',
+    'recieved_by' => 'Recieved By',
+    'currency' => 'Currency',
+    'unit_cost' => 'Unit Cost',
+    'discount' => 'Discount',
+    'net_amount' => 'Net Amount',
+    'total' => 'Total',
+    'confirmed_by' => 'Confirmed By',
+    'printed_date' => 'Printed Date ',
 
 
 ];
