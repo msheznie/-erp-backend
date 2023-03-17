@@ -534,7 +534,7 @@
                         <th style="text-align: center">{{ __('custom.purchase_order_no') }}</th>
                     @endif
                     <th style="text-align: center">{{ __('custom.comment') }}</th>
-                    <th style="text-align: center">{{ __('custom.total_payment') }}/th>
+                    <th style="text-align: center">{{ __('custom.total_payment') }}</th>
                     <th style="text-align: center">{{ __('custom.local_amt') }} (
                         @if($masterdata->localCurrency)
                             {{$masterdata->localCurrency->CurrencyCode}}
