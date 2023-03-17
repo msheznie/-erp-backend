@@ -195,7 +195,7 @@
             	<th>Description</th>
             @endif
             @foreach ($columnHeader as $column)
-            <th>{{$column['description']}}</th>
+            <th style="text-align:right">{{$column['description']}}</th>
             @endforeach
         </tr>
     </thead>
