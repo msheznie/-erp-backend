@@ -2262,7 +2262,6 @@ class SRMService
     
                 if(isset($lastSerialNo->serialNumber) && $lastSerialNo->serialNumber != null)
                 {
-                    
     
                     $lastSerialValue = 1;
                     if ($lastSerialNo) {
@@ -2273,9 +2272,11 @@ class SRMService
                     $att['bidSubmissionCode'] = 'Bid_'.str_pad($lastSerialValue, 10, '0', STR_PAD_LEFT);
     
                 }
-
-
-
+                else
+                {
+                    $att['serialNumber'] = 1;
+                    $att['bidSubmissionCode'] = 'Bid_'.str_pad(1, 10, '0', STR_PAD_LEFT);
+                }
 
                 $att['tender_id'] = $tender_id;
                 $att['supplier_registration_id'] = $supplierRegId;
@@ -3567,7 +3568,6 @@ class SRMService
             if(isset($lastSerialNo->serialNumber) && $lastSerialNo->serialNumber != null)
             {
                 
-
                 $lastSerialValue = 1;
                 if ($lastSerialNo) {
                     $lastSerialValue = intval($lastSerialNo->serialNumber) + 1;
@@ -3576,6 +3576,11 @@ class SRMService
                 $att['serialNumber'] = $lastSerialValue;
                 $att['bidSubmissionCode'] = 'Bid_'.str_pad($lastSerialValue, 10, '0', STR_PAD_LEFT);
 
+            }
+            else
+            {
+                $att['serialNumber'] = 1;
+                $att['bidSubmissionCode'] = 'Bid_'.str_pad(1, 10, '0', STR_PAD_LEFT);
             }
          
             

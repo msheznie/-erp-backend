@@ -146,7 +146,8 @@ class PricingScheduleDetail extends Model
         'description',
         'deleted_by',
         'company_id',
-        'remarks'
+        'remarks',
+        'tender_ranking_line_item'
     ];
 
     /**
@@ -203,7 +204,7 @@ class PricingScheduleDetail extends Model
 
     public function ranking_items()
     {
-        return $this->hasOne('App\Models\CommercialBidRankingItems', 'bid_format_detail_id', 'id');
+        return $this->hasOne('App\Models\CommercialBidRankingItems', 'id', 'tender_ranking_line_item');
     }
 
     public function getLevelAttribute(){
