@@ -163,16 +163,17 @@ class TenderEditLogMaster extends Model
         'approved_date',
         'companyID',
         'companySystemID',
-        'departmentID',
-        'departmentSystemID',
         'description',
-        'documentCode',
         'documentSystemCode',
         'employeeID',
         'employeeSystemID',
         'status',
         'type',
-        'version'
+        'version',
+        'requestcurrellevelNo',
+        'versionApprovedYn',
+        'versioncurrentLevelNo',
+        'currency_id'
     ];
 
     /**
@@ -186,10 +187,7 @@ class TenderEditLogMaster extends Model
         'approved_date' => 'datetime',
         'companyID' => 'string',
         'companySystemID' => 'integer',
-        'departmentID' => 'string',
-        'departmentSystemID' => 'integer',
         'description' => 'string',
-        'documentCode' => 'string',
         'documentSystemCode' => 'integer',
         'employeeID' => 'string',
         'employeeSystemID' => 'integer',
@@ -207,7 +205,6 @@ class TenderEditLogMaster extends Model
     public static $rules = [
         'approved' => 'required',
         'companySystemID' => 'required',
-        'departmentSystemID' => 'required',
         'documentSystemCode' => 'required',
         'status' => 'required',
         'type' => 'required'

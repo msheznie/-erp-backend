@@ -209,4 +209,5 @@ Route::post('sendTenderAwardEmail', 'TenderMasterAPIController@sendTenderAwardEm
 
 Route::resource('tender_edit_log_masters', 'TenderEditLogMasterAPIController');
 Route::post('createTenderEditRequest', 'TenderEditLogMasterAPIController@createTenderEditRequest');
-
+Route::post('getTenderEditMasterApproval', 'TenderMasterAPIController@getTenderEditMasterApproval');
+Route::post('approveTenderEdit', 'TenderEditLogMasterAPIController@approveTenderEdit');
