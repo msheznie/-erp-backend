@@ -258,7 +258,7 @@
                     {{ __('custom.employee_payment') }}
                 @endif
             @if($masterdata->invoiceType == 7)
-                Employee Advance Payment  {{ __('custom.employee_advance_payment') }}
+                 {{ __('custom.employee_advance_payment') }}
                 @endif
         </span>
     </div>
