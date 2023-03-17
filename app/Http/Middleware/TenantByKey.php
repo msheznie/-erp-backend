@@ -19,7 +19,15 @@ class TenantByKey
     public function handle(Request $request, Closure $next)
     {
         if (env('IS_MULTI_TENANCY', false)) {
-            $api_key = $request->input('api_key');
+
+            if($request->hasHeader('api_key')) {
+                $api_key = $request->header('api_key');
+            }
+            else if(!empty($request->input('api_key'))){
+                $api_key = $request->input('api_key');
+            } else {
+                return errorMsgs("Unauthorized Access", 401);
+            }
 
             // get tenant details by api key in request
             $tenant = Tenant::whereApiKey($api_key)->first();

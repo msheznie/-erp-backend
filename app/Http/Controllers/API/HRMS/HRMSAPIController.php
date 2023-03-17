@@ -344,7 +344,7 @@ class HRMSAPIController extends AppBaseController
             );
 
 
-            $confirm = \Helper::confirmDocumentForApiHRMS($params);
+            $confirm = \Helper::confirmDocument($params);
 
             if($status == 2) {
                 $documentApproveds = DocumentApproved::where('documentSystemCode', $bookInvSupp->bookingSuppMasInvAutoID)->where('documentSystemID', 11)->get();
