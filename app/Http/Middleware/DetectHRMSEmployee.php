@@ -17,8 +17,8 @@ class DetectHRMSEmployee
      */
     public function handle($request, Closure $next)
     {
-        if($request->hasHeader('user_token')) {
-            $token = $request->header('user_token');
+        if($request->hasHeader('user-token')) {
+            $token = $request->header('user-token');
             $userToken = UserToken::where('token', $token)->first();
             if ($userToken) {
                 if (date('Y-m-d H:i:s') <= $userToken->expire_time) {
