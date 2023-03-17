@@ -342,6 +342,8 @@ return [
     'no_bank' => 'لا يوجد بنك محدد',
     'company_has_default_user_group' => 'لدى الشركة بالفعل مجموعة مستخدمين افتراضية',
     'currency_not_configured' => 'العملة غير منصبة',
+    'employee_payment' => 'دفع للموظف',
+    'employee_advance_payment' => 'دفع مقدم الموظف',
 
     //Print PDF
     'item_code' => 'رمز المادة',
