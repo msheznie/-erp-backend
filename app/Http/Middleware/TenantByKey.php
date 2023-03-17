@@ -26,8 +26,9 @@ class TenantByKey
             else if(!empty($request->input('api_key'))){
                 $api_key = $request->input('api_key');
             } else {
-                return "Unauthorized Access";
+                echo "Unauthorized Access from Tenant Key";
             }
+            dd($request->header());
 
             // get tenant details by api key in request
             $tenant = Tenant::whereApiKey($api_key)->first();
