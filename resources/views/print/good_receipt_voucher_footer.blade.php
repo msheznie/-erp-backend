@@ -81,13 +81,13 @@
                 @endif
             </td>
             <td style="width:33%; text-align: center;font-size: 10px;vertical-align: top;">
-                <span style="text-align: center">Page <span class="pagenum"></span></span><br>
+                <span style="text-align: center">{{ __('custom.Page') }}<span class="pagenum"></span></span><br>
                 @if ($grvData->company)
                     {{$grvData->company->CompanyName}}
                 @endif
             </td>
             <td style="width:33%;font-size: 10px;vertical-align: top;">
-                <span style="margin-left: 55%;">Printed Date : {{date("d-M-y", strtotime(now()))}}</span>
+                <span style="margin-left: 55%;">{{ __('custom.printed_date') }} : {{date("d-M-y", strtotime(now()))}}</span>
             </td>
         </tr>
     </table>
