@@ -443,6 +443,7 @@ return [
     'comment' => 'Comment',
     'confirmed_by' => 'Confirmed By',
     'review_by' => 'Review By',
+    'purchase_order_no' => 'Purchase Order No',
 
     'number' => 'Number',
     'vat_no' => 'VAT No',
@@ -513,6 +514,6 @@ return [
     'total' => 'Total',
     'confirmed_by' => 'Confirmed By',
     'printed_date' => 'Printed Date ',
-
+    'Page' => 'Page',
 
 ];

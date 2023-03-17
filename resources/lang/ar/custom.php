@@ -342,6 +342,8 @@ return [
     'no_bank' => 'لا يوجد بنك محدد',
     'company_has_default_user_group' => 'لدى الشركة بالفعل مجموعة مستخدمين افتراضية',
     'currency_not_configured' => 'العملة غير منصبة',
+    'employee_payment' => 'دفع للموظف',
+    'employee_advance_payment' => 'دفع مقدم الموظف',
 
     //Print PDF
     'item_code' => 'رمز المادة',
@@ -434,6 +436,7 @@ return [
     'comment' => 'تعليق',
     'confirmed_by' => 'تم التأكيد بواسطة',
     'review_by' => 'تمت المراجعة بواسطة',
+    'purchase_order_no' => 'رقم أمر الشراء',
 
     'number' => 'الرقم',
     'vat_no' => 'رقم ضريبة القيمة المضافة',
@@ -504,5 +507,6 @@ return [
     'total' => 'المجموع',
     'confirmed_by' => 'تم التأكيد بواسطة',
     'printed_date' => 'تاريخ الطباعة',
+    'Page' => 'Page',
 
 ];

@@ -35,7 +35,7 @@ class DetectHRMSEmployee
                 return errorMsgs("Unauthorized Access", 401);
             }
         }else {
-            $request->request->add(['employee_id' => 11]);
+            return errorMsgs("Unauthorized Access", 401);
         }
         return $next($request);
     }

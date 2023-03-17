@@ -258,7 +258,7 @@
                     {{ __('custom.employee_payment') }}
                 @endif
             @if($masterdata->invoiceType == 7)
-                Employee Advance Payment  {{ __('custom.employee_advance_payment') }}
+                 {{ __('custom.employee_advance_payment') }}
                 @endif
         </span>
     </div>
@@ -534,7 +534,7 @@
                         <th style="text-align: center">{{ __('custom.purchase_order_no') }}</th>
                     @endif
                     <th style="text-align: center">{{ __('custom.comment') }}</th>
-                    <th style="text-align: center">{{ __('custom.total_payment') }}/th>
+                    <th style="text-align: center">{{ __('custom.total_payment') }}</th>
                     <th style="text-align: center">{{ __('custom.local_amt') }} (
                         @if($masterdata->localCurrency)
                             {{$masterdata->localCurrency->CurrencyCode}}
