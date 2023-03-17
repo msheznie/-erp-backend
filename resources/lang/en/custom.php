@@ -513,6 +513,6 @@ return [
     'total' => 'Total',
     'confirmed_by' => 'Confirmed By',
     'printed_date' => 'Printed Date ',
-
+    'Page' => 'Page',
 
 ];

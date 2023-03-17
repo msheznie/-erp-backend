@@ -504,5 +504,6 @@ return [
     'total' => 'المجموع',
     'confirmed_by' => 'تم التأكيد بواسطة',
     'printed_date' => 'تاريخ الطباعة',
+    'Page' => 'Page',
 
 ];
