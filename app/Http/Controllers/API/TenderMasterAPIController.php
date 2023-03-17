@@ -2953,20 +2953,18 @@ WHERE
             $count = count($val->tender_boq_items);
             if($count > 0)
             {
-                $val2 = CommercialBidRankingItems::updateOrCreate(
-                    ['bid_format_detail_id' => $val->id,'tender_id' => $tenderId,'filed_type' => $val->field_type,'is_main'=>1,'is_child_exist'=>1],
-                    ['bid_format_detail_id' => $val->id,'tender_id' => $tenderId,'filed_type' => $val->field_type,'is_main'=>1,'is_child_exist'=>1]
-                   );
+                $child_exist = 1;
             }
             else
             {
-                $val2 = CommercialBidRankingItems::updateOrCreate(
-                    ['bid_format_detail_id' => $val->id,'tender_id' => $tenderId,'filed_type' => $val->field_type,'is_main'=>1],
-                    ['bid_format_detail_id' => $val->id,'tender_id' => $tenderId,'filed_type' => $val->field_type,'is_main'=>1]
-                   );
+                $child_exist = 0;
             }
+                $val2 = CommercialBidRankingItems::updateOrCreate(
+                    ['bid_format_detail_id' => $val->id,'tender_id' => $tenderId,'filed_type' => $val->field_type,'is_main'=>1,'is_child_exist'=>$child_exist],
+                    ['bid_format_detail_id' => $val->id,'tender_id' => $tenderId,'filed_type' => $val->field_type,'is_main'=>1,'is_child_exist'=>$child_exist]
+                );
 
-            PricingScheduleDetail::where('id',$val2->bid_format_detail_id)->where('tender_id',$tenderId)->update(['tender_ranking_line_item'=>$val2->id]);
+                PricingScheduleDetail::where('id',$val2->bid_format_detail_id)->where('tender_id',$tenderId)->update(['tender_ranking_line_item'=>$val2->id]);
 
             foreach($val->tender_boq_items as $bid_works)
             {
