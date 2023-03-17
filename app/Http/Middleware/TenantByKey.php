@@ -26,7 +26,7 @@ class TenantByKey
             else if(!empty($request->input('api_key'))){
                 $api_key = $request->input('api_key');
             } else {
-                return errorMsgs("Unauthorized Access", 401);
+                return "Unauthorized Access";
             }
 
             // get tenant details by api key in request
