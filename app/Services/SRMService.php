@@ -2273,6 +2273,11 @@ class SRMService
                     $att['bidSubmissionCode'] = 'Bid_'.str_pad($lastSerialValue, 10, '0', STR_PAD_LEFT);
     
                 }
+                else
+                {
+                    $att['serialNumber'] = 1;
+                    $att['bidSubmissionCode'] = 'Bid_'.str_pad(1, 10, '0', STR_PAD_LEFT);
+                }
 
 
 
@@ -3576,6 +3581,11 @@ class SRMService
                 $att['serialNumber'] = $lastSerialValue;
                 $att['bidSubmissionCode'] = 'Bid_'.str_pad($lastSerialValue, 10, '0', STR_PAD_LEFT);
 
+            }
+            else
+            {
+                $att['serialNumber'] = 1;
+                $att['bidSubmissionCode'] = 'Bid_'.str_pad(1, 10, '0', STR_PAD_LEFT);
             }
          
             

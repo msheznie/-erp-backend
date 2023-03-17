@@ -2931,21 +2931,23 @@ WHERE
         $tenderId = $request['tenderMasterId'];
 
         $bidMasterId = $this->getCommercialBids($tenderId);
-
-    
         $data['bids'] = $bidMasterId;
         $items = $this->getPricingItems($bidMasterId,$tenderId);
-        
+ 
+
        foreach($items[0]->pricing_shedule_details as $key=>$val) 
        {
         
         if($val->is_disabled == 1)
         {
-                CommercialBidRankingItems::updateOrCreate(
+               $val1 =  CommercialBidRankingItems::updateOrCreate(
                 ['bid_format_detail_id' => $val->id,'tender_id' => $tenderId,'value' => (double)$val->bid_format_detail->value,'filed_type' => $val->field_type,'is_disable'=>1],
                 ['bid_format_detail_id' => $val->id,'tender_id' => $tenderId,'value' => (double)$val->bid_format_detail->value,'filed_type' => $val->field_type,'is_disable'=>1]
                );
-           
+               
+               
+                PricingScheduleDetail::where('id',$val1->bid_format_detail_id)->where('tender_id',$tenderId)->update(['tender_ranking_line_item'=>$val1->id]);
+              
 
         }
         else if($val->is_disabled == 0 && ($val->boq_applicable == 0 || $val->boq_applicable == 1))
@@ -2956,26 +2958,31 @@ WHERE
             $count = count($val->tender_boq_items);
             if($count > 0)
             {
-                CommercialBidRankingItems::updateOrCreate(
+                $val2 = CommercialBidRankingItems::updateOrCreate(
                     ['bid_format_detail_id' => $val->id,'tender_id' => $tenderId,'filed_type' => $val->field_type,'is_main'=>1,'is_child_exist'=>1],
                     ['bid_format_detail_id' => $val->id,'tender_id' => $tenderId,'filed_type' => $val->field_type,'is_main'=>1,'is_child_exist'=>1]
                    );
             }
             else
             {
-                CommercialBidRankingItems::updateOrCreate(
+                $val2 = CommercialBidRankingItems::updateOrCreate(
                     ['bid_format_detail_id' => $val->id,'tender_id' => $tenderId,'filed_type' => $val->field_type,'is_main'=>1],
                     ['bid_format_detail_id' => $val->id,'tender_id' => $tenderId,'filed_type' => $val->field_type,'is_main'=>1]
                    );
             }
+
+            PricingScheduleDetail::where('id',$val2->bid_format_detail_id)->where('tender_id',$tenderId)->update(['tender_ranking_line_item'=>$val2->id]);
+
             foreach($val->tender_boq_items as $bid_works)
             {
              
 
-                 CommercialBidRankingItems::updateOrCreate(
+                $val3 = CommercialBidRankingItems::updateOrCreate(
                     ['bid_format_detail_id' => $bid_works->id,'tender_id' => $tenderId,'filed_type' => $val->field_type,'is_main'=>0,'is_child_exist'=>1,'parent_id'=>$val->id],
                     ['bid_format_detail_id' => $bid_works->id,'tender_id' => $tenderId,'filed_type' => $val->field_type,'is_main'=>0,'is_child_exist'=>1,'parent_id'=>$val->id]
                    );
+
+                   TenderBoqItems::where('id',$val3->bid_format_detail_id)->update(['tender_ranking_line_item'=>$val3->id]);
             }
      
          
@@ -3010,7 +3017,7 @@ WHERE
 
     public function updateBidLineItem(Request $request)
     {
-        DB::beginTransaction();
+       DB::beginTransaction();
         try {
             
            
@@ -3030,15 +3037,27 @@ WHERE
             {
                 $ranging =  CommercialBidRankingItems::find($rang_id);
 
+
+
                 if($ranging->is_child_exist == 1 && $ranging->is_main == 1)
                 {
                   $update =  CommercialBidRankingItems::where('parent_id',$id)->update(['status'=>$checked]);
                 }
-     
                 CommercialBidRankingItems::updateOrCreate(
                     ['id'=>$rang_id,'bid_format_detail_id' => $id,'tender_id' => $tenderId],
                     ['bid_format_detail_id' => $id,'tender_id' => $tenderId,'status'=>$checked]
                 );
+
+                if($ranging->is_main == 0)
+                {
+                    $count =  CommercialBidRankingItems::where('parent_id',$ranging->parent_id)->where('status',1)->count();
+                    if($checked || $count == 0)
+                    {
+                        $update =  CommercialBidRankingItems::where('bid_format_detail_id',$ranging->parent_id)->where('is_main',1)->update(['status'=>$checked]);
+
+                    }
+                 
+                }
             }
 
             $bidMasterId = $this->getCommercialBids($tenderId);
@@ -3048,10 +3067,10 @@ WHERE
     
 
     
-            DB::commit();
-            return ['success' => true, 'message' => 'Successfully updated', 'data' => true];
+          DB::commit();
+            return ['success' => true, 'message' => 'Successfully updated', 'data' => $count];
         } catch (\Exception $e) {
-            DB::rollback();
+          DB::rollback();
             Log::error($this->failed($e));
             return ['success' => false, 'message' => $e];
         }
