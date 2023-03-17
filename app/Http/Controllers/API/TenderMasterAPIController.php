@@ -3053,7 +3053,7 @@ WHERE
             $this->updateLineItem($bidMasterId,$line_item_values,$tenderId);
     
             DB::commit();
-            return ['success' => true, 'message' => 'Successfully updated', 'data' => $count];
+            return ['success' => true, 'message' => 'Successfully updated', 'data' => true];
         } catch (\Exception $e) {
             DB::rollback();
             Log::error($this->failed($e));
