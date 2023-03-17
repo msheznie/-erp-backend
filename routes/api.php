@@ -17,7 +17,6 @@ Route::get('getConfigurationInfo', 'ConfigurationAPIController@getConfigurationI
 Route::group(['middleware' => ['tenant','locale']], function () {
 
     Route::group(['middleware' => ['pos_api']], function (){
-        Route::post('post_supplier_invoice', 'HRMS\HRMSAPIController@createSupplierInvoice')->middleware(['hrms_employee']);
         Route::get('pull_tax_details', 'ClubManagement\ClubManagementAPIController@pullTaxDetails');
         Route::get('pull_bank_accounts', 'ClubManagement\ClubManagementAPIController@pullBankAccounts');
         Route::post('post_customer_category', 'ClubManagement\ClubManagementAPIController@createCustomerCategory');
@@ -1874,6 +1873,15 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     Route::post('genearetBarcode', 'BarcodeConfigurationAPIController@genearetBarcode');
 
 });
+
+
+Route::group(['middleware' => ['tenantById']], function (){
+    Route::group(['middleware' => ['pos_api','hrms_employee']], function () {
+        Route::post('post_supplier_invoice', 'HRMS\HRMSAPIController@createSupplierInvoice');
+    });
+});
+
+// Route::get('updateNotPostedGLEntries', 'GeneralLedgerAPIController@updateNotPostedGLEntries');
 
 Route::post('sendEmail', 'Email\SendEmailAPIController@sendEmail');
 Route::get('updateRoutes', 'RouteAPIController@updateRoutes');

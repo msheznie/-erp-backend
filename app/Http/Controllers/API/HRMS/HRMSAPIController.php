@@ -339,12 +339,15 @@ class HRMSAPIController extends AppBaseController
                 'document' => $bookInvSupp->documentSystemID,
                 'segment' => '',
                 'category' => '',
-                'amount' => ''
+                'amount' => '',
+                'employee_id' => $employee->employeeSystemID
             );
 
 
-            $confirm = \Helper::confirmDocumentForApi($params);
-
+            $confirm = \Helper::confirmDocument($params);
+            if (!$confirm["success"]) {
+                return $this->sendError($confirm["message"], 500, ['type' => 'confirm']);
+            }
             if($status == 2) {
                 $documentApproveds = DocumentApproved::where('documentSystemCode', $bookInvSupp->bookingSuppMasInvAutoID)->where('documentSystemID', 11)->get();
 
@@ -358,7 +361,7 @@ class HRMSAPIController extends AppBaseController
                 DB::commit();
 
             if($status == 1){
-                return $this->sendResponse($confirm, 'Supplier Invoice created successfully');
+                return $this->sendResponse($bookInvSupp, 'Supplier Invoice created successfully');
             }
 
             if($status == 2) {
