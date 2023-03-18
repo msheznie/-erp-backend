@@ -613,6 +613,8 @@ class ShiftDetailsAPIController extends AppBaseController
 
         $shiftId = $request->shiftId;
         $isPostGroupBy = $request->isPostGroupBy;
+        $db = isset($request->db) ? $request->db : "";
+
 
         $isInsufficient = 0;
 
@@ -1629,15 +1631,15 @@ class ShiftDetailsAPIController extends AppBaseController
 
             if(!$hasItemsSR->isEmpty()) {
 
-                GeneralLedgerInsert::dispatch($masterData);
+                GeneralLedgerInsert::dispatch($masterData, $db);
             }
 
             if(!$hasSales->isEmpty()) {
-                GeneralLedgerInsert::dispatch($masterData);
+                GeneralLedgerInsert::dispatch($masterData, $db);
                 POSItemLedgerInsert::dispatch($masterData);
                 BankLedgerInsert::dispatch($masterData);
                 $taxLedgerData = null;
-                TaxLedgerInsert::dispatch($masterData, $taxLedgerData);
+                TaxLedgerInsert::dispatch($masterData, $taxLedgerData, $db);
             }
 
 
@@ -2259,11 +2261,11 @@ class ShiftDetailsAPIController extends AppBaseController
 
             $hasSales = POSSourceMenuSalesMaster::where('shiftId', $shiftId)->where('isCreditSales', 0)->get();
             if(!$hasSales->isEmpty()) {
-                GeneralLedgerInsert::dispatch($masterData);
+                GeneralLedgerInsert::dispatch($masterData, $db);
                 POSItemLedgerInsert::dispatch($masterData);
                 BankLedgerInsert::dispatch($masterData);
                 $taxLedgerData = null;
-                TaxLedgerInsert::dispatch($masterData, $taxLedgerData);
+                TaxLedgerInsert::dispatch($masterData, $taxLedgerData, $db);
             }
         }
 

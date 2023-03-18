@@ -56,7 +56,8 @@ class TenantEnforce
             'api/v1/bank_ledgers/{bank_ledger}',
             'api/v1/updateSentCustomerDetail',
             'api/v1/post_supplier_invoice',
-            'api/v1/fixed_asset_depreciation_masters'
+            'api/v1/fixed_asset_depreciation_masters',
+            'api/v1/postPosEntries'
         ];
 
 
