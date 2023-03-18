@@ -399,7 +399,19 @@ class ChequeRegisterAPIController extends AppBaseController
             return $this->sendError('Cheque Register not found');
         }
 
+        $checkChequeRegisterDetail = ChequeRegisterDetail::where('cheque_register_master_id', $id)
+                                                         ->whereNotNull('document_id')
+                                                         ->first();
+
+        if ($checkChequeRegisterDetail) {
+            return $this->sendError('You cannot delete this cheque register. cheques are selected for documents from this cheque register');
+        }
+
+
         $chequeRegister->delete();
+
+        ChequeRegisterDetail::where('cheque_register_master_id', $id)
+                            ->delete();
 
         return $this->sendResponse($id, 'Cheque Register deleted successfully');
     }
@@ -673,4 +685,21 @@ class ChequeRegisterAPIController extends AppBaseController
 
     }
 
+
+    public function chequeRegisterStatusChange(Request $request)
+    {
+        $input = $request->all();
+
+        $chequeRegister = ChequeRegister::find($input['registerID']);
+
+        if (empty($chequeRegister)) {
+            return $this->sendError('Cheque Register not found');
+        }
+
+        $chequeRegister->isActive = ($chequeRegister->isActive == 1) ? 0 : 1;
+        $chequeRegister->save();
+
+
+         return $this->sendResponse([], "Status updated successfully");
+    }
 }

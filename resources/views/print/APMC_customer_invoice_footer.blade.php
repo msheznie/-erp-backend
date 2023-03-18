@@ -6,7 +6,7 @@
                     <td width="10%" style="vertical-align: top;">
                     </td>
                     <td width="20%" style="vertical-align: top;">
-                        <span class="font-weight-bold"><B>Electronically Approved By :</B></span>
+                        <span class="font-weight-bold"><B>{{ __('custom.electronically_approved_by') }} :</B></span>
                     </td>
                     <td width="20%" style="vertical-align: top;">
                         <span class="font-weight-bold">
@@ -19,7 +19,7 @@
                         </span>
                     </td>
                     <td width="20%" style="vertical-align: top;">
-                        <span class="font-weight-bold"><B>Electronically Approved Date :</B></span>
+                        <span class="font-weight-bold"><B>{{ __('custom.electronically_approved_date') }} :</B></span>
                     </td>
                     <td width="25%" style="vertical-align: top;">
                         <span class="font-weight-bold">
