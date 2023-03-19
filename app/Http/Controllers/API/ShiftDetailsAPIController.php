@@ -2106,8 +2106,8 @@ class ShiftDetailsAPIController extends AppBaseController
                     $input['customerInvoiceDate'] = $input['bookingDate'];
                     $input['companySystemID'] = $input['companyID'];
                     $input['companyID'] = $company['CompanyID'];
-                    $input['customerGLCode'] = isset($customer->custGLaccount) ? $customer->custGLaccount : null;
-                    $input['customerGLSystemID'] = isset($customer->custGLAccountSystemID) ? $customer->custGLAccountSystemID : null;
+                    $input['customerGLCode'] = $customer->custGLaccount;
+                    $input['customerGLSystemID'] = $customer->custGLAccountSystemID;
                     $input['documentType'] = 11;
                     $input['createdUserID'] = \Helper::getEmployeeID();
                     $input['createdPcID'] = getenv('COMPUTERNAME');
