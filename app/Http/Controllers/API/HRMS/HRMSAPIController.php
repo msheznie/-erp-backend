@@ -87,7 +87,7 @@ class HRMSAPIController extends AppBaseController
                     }
 
 
-                    $financePeriod = CompanyFinancePeriod::where('companySystemID', $dt['companySystemID'])->where('departmentSystemID', 4)->where('dateFrom', "<=", $dt['bookingDate'])->where('dateTo', ">=", $dt['bookingDate'])->where('isActive', -1)->first();
+                    $financePeriod = CompanyFinancePeriod::where('companySystemID', $dt['companySystemID'])->where('departmentSystemID', 1)->where('dateFrom', "<=", $dt['bookingDate'])->where('dateTo', ">=", $dt['bookingDate'])->where('isActive', -1)->first();
                     if (empty($financePeriod)) {
                         return $this->sendError('Finance Period not found');
                     }
