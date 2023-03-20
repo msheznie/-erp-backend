@@ -503,16 +503,31 @@ class ShiftDetailsAPIController extends AppBaseController
 
         $shiftID = $request->shiftID;
         $companySystemID = $request->companyId;
-        $shiftDetailLabels = POSSOURCEShiftDetails::selectRaw('startTime ,endTime, createdUserName')->where('shiftID', $shiftID)->first();
+        $shiftDetailLabels = POSSOURCEShiftDetails::selectRaw('startTime ,endTime, createdUserName, posType')->where('shiftID', $shiftID)->first();
 
-        $posCustomers = DB::table('pos_source_invoice')
-            ->selectRaw('customerSystemCode, customerName, customerAutoID')
-            ->join('pos_source_customermaster', 'pos_source_customermaster.customerAutoID', '=', 'pos_source_invoice.customerID')
-            ->where('pos_source_invoice.shiftID', $shiftID)
-            ->where('pos_source_invoice.isCreditSales', 1)
-            ->where('pos_source_customermaster.erp_customer_master_id', 0)
-            ->where('pos_source_customermaster.companyID', $companySystemID)
-            ->get();
+        if(empty($shiftDetailLabels)){
+            return $this->sendError('Shift Details not found',500);
+        }
+
+        if($shiftDetailLabels->posType == 1) {
+            $posCustomers = DB::table('pos_source_invoice')
+                ->selectRaw('pos_source_customermaster.customerSystemCode, pos_source_customermaster.customerName, pos_source_customermaster.customerAutoID')
+                ->join('pos_source_customermaster', 'pos_source_customermaster.customerAutoID', '=', 'pos_source_invoice.customerID')
+                ->where('pos_source_invoice.shiftID', $shiftID)
+                ->where('pos_source_invoice.isCreditSales', 1)
+                ->where('pos_source_customermaster.erp_customer_master_id', 0)
+                ->where('pos_source_customermaster.companyID', $companySystemID)
+                ->get();
+        } else{
+            $posCustomers = DB::table('pos_source_menusalesmaster')
+                ->selectRaw('pos_source_customermaster.customerSystemCode, pos_source_customermaster.customerName, pos_source_customermaster.customerAutoID')
+                ->join('pos_source_customermaster', 'pos_source_customermaster.customerAutoID', '=', 'pos_source_menusalesmaster.customerID')
+                ->where('pos_source_menusalesmaster.shiftID', $shiftID)
+                ->where('pos_source_menusalesmaster.isCreditSales', 1)
+                ->where('pos_source_customermaster.erp_customer_master_id', 0)
+                ->where('pos_source_customermaster.companyID', $companySystemID)
+                ->get();
+        }
 
         $customers = CustomerAssigned::selectRaw('customerCodeSystem as value,CONCAT(CutomerCode, " | " ,CustomerName) as label')->where('companySystemID', $companySystemID)->get();
 
@@ -1176,6 +1191,9 @@ class ShiftDetailsAPIController extends AppBaseController
                         $FYPeriodDateFrom = $companyfinanceperiod->dateFrom;
                         $FYPeriodDateTo = $companyfinanceperiod->dateTo;
                         $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
+                        if(empty($customer)){
+                          return $this->sendError('Customer not found', 500);
+                        }
                         $myCurr = $input['custTransactionCurrencyID'];
 
                         $companyCurrency = \Helper::companyCurrency($company['companySystemID']);
@@ -2029,6 +2047,11 @@ class ShiftDetailsAPIController extends AppBaseController
                     $FYPeriodDateFrom = $companyfinanceperiod->dateFrom;
                     $FYPeriodDateTo = $companyfinanceperiod->dateTo;
                     $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
+
+                    if(empty($customer)){
+                        return $this->sendError('Customer not found', 500);
+
+                    }
                     $myCurr = $input['custTransactionCurrencyID'];
 
                     $companyCurrency = \Helper::companyCurrency($company['companySystemID']);
