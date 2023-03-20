@@ -62,13 +62,14 @@ class SupplierStatementJob implements ShouldQueue
         $pdf = \App::make('dompdf.wrapper');
         $path = public_path().'/uploads/emailAttachment';
 
+        Log::info('path - '.$path);
         if (!file_exists($path)) {
             File::makeDirectory($path, 0777, true, true);
         }
         $nowTime = time();
 
         $supplierID = $input['suppliers'][0]['supplierCodeSytem'];
-        $pdf->loadHTML($html)->setPaper('a4', 'landscape')->save('uploads/emailAttachment/supplier_statement_' . $nowTime.$supplierID. '.pdf');
+        $pdf->loadHTML($html)->setPaper('a4', 'landscape')->save($path.'/supplier_statement_' . $nowTime.$supplierID. '.pdf');
 
 
         $fetchSupEmail = SupplierContactDetails::where('supplierID', $supplierID)
@@ -93,7 +94,7 @@ class SupplierStatementJob implements ShouldQueue
 
                     $temp = "Dear " . $supplierMaster->supplierName . ',<p> Supplier statement report has been sent from ' . $company->CompanyName . $footer;
 
-                    $pdfName = realpath("uploads/emailAttachment/supplier_statement_" . $nowTime.$supplierID. ".pdf");
+                    $pdfName = realpath("public/uploads/emailAttachment/supplier_statement_" . $nowTime.$supplierID. ".pdf");
 
                     $dataEmail['isEmailSend'] = 0;
                     $dataEmail['attachmentFileName'] = $pdfName;
@@ -118,7 +119,7 @@ class SupplierStatementJob implements ShouldQueue
 
                     $temp = "Dear " . $supplierMaster->supplierName . ',<p> Supplier statement report has been sent from ' . $company->CompanyName . $footer;
 
-                    $pdfName = realpath("uploads/emailAttachment/supplier_statement_" . $nowTime.$supplierID . ".pdf");
+                    $pdfName = realpath("public/uploads/emailAttachment/supplier_statement_" . $nowTime.$supplierID . ".pdf");
 
                     $dataEmail['isEmailSend'] = 0;
                     $dataEmail['attachmentFileName'] = $pdfName;
