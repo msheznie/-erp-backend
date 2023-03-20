@@ -94,7 +94,7 @@ class SupplierStatementJob implements ShouldQueue
 
                     $temp = "Dear " . $supplierMaster->supplierName . ',<p> Supplier statement report has been sent from ' . $company->CompanyName . $footer;
 
-                    $pdfName = realpath("public/uploads/emailAttachment/supplier_statement_" . $nowTime.$supplierID. ".pdf");
+                    $pdfName = realpath($path."/supplier_statement_" . $nowTime.$supplierID. ".pdf");
 
                     $dataEmail['isEmailSend'] = 0;
                     $dataEmail['attachmentFileName'] = $pdfName;
@@ -119,7 +119,7 @@ class SupplierStatementJob implements ShouldQueue
 
                     $temp = "Dear " . $supplierMaster->supplierName . ',<p> Supplier statement report has been sent from ' . $company->CompanyName . $footer;
 
-                    $pdfName = realpath("public/uploads/emailAttachment/supplier_statement_" . $nowTime.$supplierID . ".pdf");
+                    $pdfName = realpath($path."/supplier_statement_" . $nowTime.$supplierID . ".pdf");
 
                     $dataEmail['isEmailSend'] = 0;
                     $dataEmail['attachmentFileName'] = $pdfName;
