@@ -21,7 +21,9 @@ use App\Services\hrms\attendance\AttendanceDataPullingService;
 use App\Services\hrms\attendance\AttendanceDailySummaryService;
 use App\Services\hrms\attendance\AttendanceWeeklySummaryService;
 use App\helper\BirthdayWishService;
+use App\Jobs\TravelRequestNotificationJob;
 use App\Models\Company;
+use App\Models\NotificationCompanyScenario;
 use Illuminate\Support\Facades\Artisan;
 
 
@@ -167,5 +169,17 @@ class HRJobInvokeAPIController extends AppBaseController
 
         $job->execute();
 
+    }
+
+    function sendTravelRequestNotifications(Request $request)
+    { 
+        $input = $request->all();  
+        $tenantId = $input['tenantId'];
+        $companyId = $input['companyId'];
+        $id = $input['id'];
+        $tripMaster = $input['tripMaster'];
+        $tripRequestBookings = $input['tripRequestBookings'];
+        TravelRequestNotificationJob::dispatch($tenantId, $companyId, $id,$tripMaster,$tripRequestBookings); 
+        return $this->sendResponse([], 'Travel request notification scenario added to queue');
     }
 }

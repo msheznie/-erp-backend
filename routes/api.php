@@ -1907,13 +1907,8 @@ Route::group(['prefix' => 'external'], function (){
     });
 });
 
-/* Below two request must be always separated from tenant, auth middlewares */
-Route::get('attendance-clock-out', 'HRJobInvokeAPIController@clockOutDebug');
-Route::get('attendance-clock-in', 'HRJobInvokeAPIController@attendanceClockIn');
-Route::get('attendance-notification-debug', 'HRJobInvokeAPIController@attendance_notification_debug');
-Route::get('birthdayWishesEmailDebug', 'HRJobInvokeAPIController@birthdayWishesEmailDebug');
-/* end of separated from tenant, auth middlewares */
 
+require __DIR__.'/../routes/hrms/jobRoutes.php';
 
 
 Route::post('documentUpload', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@documentUpload');
