@@ -486,7 +486,7 @@ class BankLedgerAPIController extends AppBaseController
 
                         if ($supplierEmail && $confirmedPersonEmail) {
 
-                            $pdfName = 'emailAttachment/PV_REMIT_'.$bankLedger->companyID.'_'.$bankLedger->documentSystemCode.'.pdf';
+                            $pdfName = '/PV_REMIT_'.$bankLedger->companyID.'_'.$bankLedger->documentSystemCode.'.pdf';
 
                             $refernaceDoc = \Helper::getCompanyDocRefNo($paySupplierInvoice->companySystemID, $paySupplierInvoice->documentSystemID);
 

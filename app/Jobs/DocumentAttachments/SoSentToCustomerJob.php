@@ -114,7 +114,7 @@ class SoSentToCustomerJob implements ShouldQueue
 
             $pdf = \App::make('dompdf.wrapper');
             $nowTime = time();
-            $pdf->loadHTML($html)->setPaper('a4', 'landscape')->save('public/uploads/emailAttachment/customer_' .$documentTypeTitle . $nowTime.$customerCodeSystem . '.pdf');
+            $pdf->loadHTML($html)->setPaper('a4', 'landscape')->save($path.'/customer_' .$documentTypeTitle . $nowTime.$customerCodeSystem . '.pdf');
 
 
             $fetchCusEmail = CustomerContactDetails::where('customerID', $customerCodeSystem)
@@ -140,7 +140,7 @@ class SoSentToCustomerJob implements ShouldQueue
 
                         $temp = "Dear " . $customerMaster->CustomerName .',<p> ' .$documentTypeTitle. ' '  .$quotationCode. ' is attached from ' . $company->CompanyName. '. Please view attachment for further details. ' . $footer;
 
-                        $pdfName = realpath("public/uploads/emailAttachment/customer_" .$documentTypeTitle . $nowTime.$customerCodeSystem . ".pdf");
+                        $pdfName = realpath($path."/customer_" .$documentTypeTitle . $nowTime.$customerCodeSystem . ".pdf");
 
                         $dataEmail['isEmailSend'] = 0;
                         $dataEmail['attachmentFileName'] = $pdfName;

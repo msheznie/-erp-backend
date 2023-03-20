@@ -163,7 +163,7 @@ class PoSentToSupplierJob implements ShouldQueue
                 File::makeDirectory($path, 0777, true, true);
             }
 
-            $pdf->loadHTML($html)->save('public/uploads/emailAttachment/po_print_' . $nowTime . '.pdf');
+            $pdf->loadHTML($html)->save($path.'/po_print_' . $nowTime . '.pdf');
 
             $fetchSupEmail = SupplierContactDetails::where('supplierID', $procumentOrderUpdate->supplierID)
                 ->get();
@@ -194,7 +194,7 @@ class PoSentToSupplierJob implements ShouldQueue
                         $temp = "Dear " . $procumentOrderUpdate->supplierName . ',<p> New Order has been released from ' . $company->CompanyName . $footer;
 
                         //$location = \DB::table('systemmanualfolder')->first();
-                        $pdfName = realpath("public/uploads/emailAttachment/po_print_" . $nowTime . ".pdf");
+                        $pdfName = realpath($path."/po_print_" . $nowTime . ".pdf");
 
                         $dataEmail['isEmailSend'] = 0;
                         $dataEmail['attachmentFileName'] = $pdfName;
@@ -233,7 +233,7 @@ class PoSentToSupplierJob implements ShouldQueue
                         $temp = "Dear " . $procumentOrderUpdate->supplierName . ',<p> New Order has been released from ' . $company->CompanyName . $footer;
 
                         //$location = \DB::table('systemmanualfolder')->first();
-                        $pdfName = realpath("public/uploads/emailAttachment/po_print_" . $nowTime . ".pdf");
+                        $pdfName = realpath($path."/po_print_" . $nowTime . ".pdf");
 
                         $dataEmail['isEmailSend'] = 0;
                         $dataEmail['attachmentFileName'] = $pdfName;

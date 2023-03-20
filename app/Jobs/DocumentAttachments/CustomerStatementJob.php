@@ -79,7 +79,7 @@ class CustomerStatementJob implements ShouldQueue
         }
         $nowTime = time();
 
-        $pdf->loadHTML($html)->setPaper('a4', 'landscape')->save('public/uploads/emailAttachment/customer_statement_' . $nowTime.$customerCodeSystem . '.pdf');
+        $pdf->loadHTML($html)->setPaper('a4', 'landscape')->save($path.'/customer_statement_' . $nowTime.$customerCodeSystem . '.pdf');
 
 
         $fetchCusEmail = CustomerContactDetails::where('customerID', $customerCodeSystem)
@@ -104,7 +104,7 @@ class CustomerStatementJob implements ShouldQueue
 
                     $temp = "Dear " . $customerMaster->CustomerName . ',<p> Customer statement report has been sent from ' . $company->CompanyName . $footer;
 
-                    $pdfName = realpath("public/uploads/emailAttachment/customer_statement_" . $nowTime.$customerCodeSystem . ".pdf");
+                    $pdfName = realpath($path."/customer_statement_" . $nowTime.$customerCodeSystem . ".pdf");
 
                     $dataEmail['isEmailSend'] = 0;
                     $dataEmail['attachmentFileName'] = $pdfName;

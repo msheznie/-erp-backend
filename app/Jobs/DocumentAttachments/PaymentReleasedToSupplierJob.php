@@ -64,19 +64,16 @@ class PaymentReleasedToSupplierJob implements ShouldQueue
 
         $html = view('print.payment_remittance_report_treasury_email', $order);
         $pdf = \App::make('dompdf.wrapper');
-        //$pdf->loadHTML($html);
-        //return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
 
-        $path = 'uploads/'.$this->pdfName;
-
-        if (Storage::disk('local_public')->exists($path)) {
-             Storage::disk('local_public')->delete($path);
+        $path = public_path() . '/uploads/emailAttachment';
+        if (!file_exists($path)) {
+            File::makeDirectory($path, 0777, true, true);
         }
 
-        $pdf->loadHTML($html)->save("public/".$path);
+        $pdf->loadHTML($html)->save($path.$this->pdfName);
 
 
-        $dataEmail['attachmentFileName'] = realpath('public/'.$path);
+        $dataEmail['attachmentFileName'] = realpath($path.$this->pdfName);
 
         $sendEmail = \Email::sendEmailErp($dataEmail);
         if (!$sendEmail["success"]) {
