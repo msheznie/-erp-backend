@@ -349,15 +349,20 @@ class ItemIssueDetailsAPIController extends AppBaseController
             $input['issueCostRptTotal'] = $input['issueCostRpt'] * $input['qtyIssuedDefaultMeasure'];
 
             if($input['qtyRequested'] > $input['currentStockQty']){
+                ItemIssueMaster::where('itemIssueAutoID', $input['itemIssueAutoID'])->delete();
                 return $this->sendError("Requested stock qty is greater than the current stock qty.", 500);
             }
 
             if ($input['currentStockQty'] <= 0) {
+                ItemIssueMaster::where('itemIssueAutoID', $input['itemIssueAutoID'])->delete();
                 return $this->sendError("Stock Qty is 0. You cannot issue.", 500);
+
             }
 
             if ($input['currentWareHouseStockQty'] <= 0) {
+                ItemIssueMaster::where('itemIssueAutoID', $input['itemIssueAutoID'])->delete();
                 return $this->sendError("Warehouse stock Qty is 0. You cannot issue.", 500);
+
             }
 
             if ($input['issueCostLocal'] == 0 || $input['issueCostRpt'] == 0) {
@@ -365,6 +370,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
             }
 
             if ($input['issueCostLocal'] < 0 || $input['issueCostRpt'] < 0) {
+                ItemIssueMaster::where('itemIssueAutoID', $input['itemIssueAutoID'])->delete();
                 return $this->sendError("Cost is negative. You cannot issue.", 500);
             }
         }else {
