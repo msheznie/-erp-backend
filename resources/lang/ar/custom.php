@@ -510,6 +510,24 @@ return [
     'total' => 'المجموع',
     'confirmed_by' => 'تم التأكيد بواسطة',
     'printed_date' => 'تاريخ الطباعة',
-    'Page' => 'Page',
+    'page' => 'Page',
+
+    'advance_receipt' => 'الإيصال المسبق',
+    'bank_currency' => 'عملة البنك',
+    'customer_code' => 'رمز العميل',
+    'vat_percentage' => 'نسبة ضريبة القيمة المضافة',
+    'payee_type' => 'نوع المستفيد',
+    'employee' => 'الموظف',
+    'other' => 'أخرى',
+    'account_code' => 'رمز الحساب',
+    'account_description' => 'وصف الحساب',
+    'department' => 'القسم',
+    'sales_order_no' => 'رقم طلب المبيعات',
+    'invoice_code' => 'رمز الفاتورة',
+    'net_total' => 'صافي الإجمالي',
+
+    'account_number' => 'Account Number',    
+    'customer_invoice_receipt' => 'Customer Invoice Receipt',
+    'direct_receipt' => 'Direct Receipt',
 
 ];

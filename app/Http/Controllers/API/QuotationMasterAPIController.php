@@ -653,28 +653,14 @@ class QuotationMasterAPIController extends AppBaseController
                 //return $soMasterSumDeducted.'-'.$paymentTotalSum['paymentTotalSum'];
 
                 if ($paymentTotalSum['paymentTotalSum'] > 0) {
-                    if (abs(($soMasterSumDeducted - $paymentTotalSum['paymentTotalSum']) / $paymentTotalSum['paymentTotalSum']) < 0.00001) {
+                    $soMasterSumDeductedCheckAmount = floatval(sprintf("%.".$input['transactionCurrencyDecimalPlaces']."f", $soMasterSumDeducted));
+                    $paymentTotalSumCheckAmount = floatval(sprintf("%.".$input['transactionCurrencyDecimalPlaces']."f", $paymentTotalSum['paymentTotalSum']));
 
-                    } else {
+                    $epsilon = 0.00001;
+                    if(abs($soMasterSumDeductedCheckAmount - $paymentTotalSumCheckAmount) > $epsilon) {
                         return $this->sendError('Payment terms total is not matching with the SO total');
                     }
                 } 
-
-                $poAdvancePaymentType = SoPaymentTerms::where("soID", $id)
-                    ->get();
-
-
-                if (!empty($poAdvancePaymentType)) {
-                    foreach ($poAdvancePaymentType as $payment) {
-                        $paymentPercentageAmount = ($payment['comPercentage'] / 100) * ($soMasterSumDeducted);
-
-                        if (abs(($payment['comAmount'] - $paymentPercentageAmount) / $paymentPercentageAmount) < 0.00001) {
-
-                        } else {
-                            return $this->sendError('Payment terms is not matching with the SO total');
-                        }
-                    }
-                }
             }
 
             $input['RollLevForApp_curr'] = 1;

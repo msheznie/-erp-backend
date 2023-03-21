@@ -335,7 +335,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
         if(isset($input['type']) && $input["type"] == "MRFROMMI") {
             $data = array('companySystemID' => $companySystemID,
                 'itemCodeSystem' => $input['itemCodeSystem'],
-                'wareHouseId' => $itemIssue->wareHouseFrom);
+                'wareHouseId' => $input['wareHouseFrom']);
 
             $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
 
@@ -348,6 +348,9 @@ class ItemIssueDetailsAPIController extends AppBaseController
             $input['issueCostLocalTotal'] = $input['issueCostLocal'] * $input['qtyIssuedDefaultMeasure'];
             $input['issueCostRptTotal'] = $input['issueCostRpt'] * $input['qtyIssuedDefaultMeasure'];
 
+            if($input['qtyRequested'] > $input['currentStockQty']){
+                return $this->sendError("Requested stock qty is greater than the current stock qty.", 500);
+            }
 
             if ($input['currentStockQty'] <= 0) {
                 return $this->sendError("Stock Qty is 0. You cannot issue.", 500);
