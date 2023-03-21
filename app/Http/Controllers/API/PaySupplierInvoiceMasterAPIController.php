@@ -23,11 +23,11 @@ use App\helper\Helper;
 use App\helper\TaxService;
 use App\Http\Requests\API\CreatePaySupplierInvoiceMasterAPIRequest;
 use App\Http\Requests\API\UpdatePaySupplierInvoiceMasterAPIRequest;
+use App\Models\EmployeeLedger;
 use App\Models\AccountsPayableLedger;
 use App\Models\AdvancePaymentDetails;
 use App\Models\AdvancePaymentReferback;
 use App\Models\BankAccount;
-use App\Models\EmployeeLedger;
 use App\Models\PdcLogPrintedHistory;
 use App\Models\BankAssign;
 use App\Models\BookInvSuppMaster;
@@ -4639,6 +4639,13 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
                 ->where('companySystemID', $paymentVoucherData->companySystemID)
                 ->where('documentSystemID', $paymentVoucherData->documentSystemID)
                 ->delete();
+
+            //deleting records from employee ledger
+            $deleteELData = EmployeeLedger::where('documentSystemCode', $PayMasterAutoId)
+                ->where('companySystemID', $paymentVoucherData->companySystemID)
+                ->where('documentSystemID', $paymentVoucherData->documentSystemID)
+                ->delete();
+
 
             //deleting records from tax ledger
             $deleteTaxLedgerData = TaxLedger::where('documentMasterAutoID', $PayMasterAutoId)

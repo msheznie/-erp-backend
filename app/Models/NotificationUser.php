@@ -117,5 +117,9 @@ class NotificationUser extends Model
     public function employee(){
         return $this->belongsTo('App\Models\Employee','empID','employeeSystemID');
     }
+    
+    public function notificationUserDayCheck(){ 
+        return $this->hasOne('App\Models\NotificationUserDayCheck', 'notificationUserID', 'id');
+    }
 
 }
