@@ -510,7 +510,7 @@ return [
     'total' => 'المجموع',
     'confirmed_by' => 'تم التأكيد بواسطة',
     'printed_date' => 'تاريخ الطباعة',
-    'page' => 'Page',
+    'page' => 'الصفحة',
 
     'advance_receipt' => 'الإيصال المسبق',
     'bank_currency' => 'عملة البنك',
