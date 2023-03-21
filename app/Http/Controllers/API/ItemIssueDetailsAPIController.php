@@ -335,7 +335,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
         if(isset($input['type']) && $input["type"] == "MRFROMMI") {
             $data = array('companySystemID' => $companySystemID,
                 'itemCodeSystem' => $input['itemCodeSystem'],
-                'wareHouseId' => $itemIssue->wareHouseFrom);
+                'wareHouseId' => $input['wareHouseFrom']);
 
             $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
 
