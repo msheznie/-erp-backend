@@ -632,7 +632,7 @@
                     @if(!empty($company->localcurrency->currencyID) && !empty($request->currency->currencyID) && $company->localcurrency->currencyID != $request->currency->currencyID && $totalVATAmount > 0)
                         <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;">
                             <td class="text-center" colspan="6" style="text-align: center"></td>
-                            <td class="text-center" colspan="3" style="text-align: center"><B>Grand Total @if(!empty($request->currency->CurrencyCode))({{$request->currency->CurrencyCode}}) @endif</B></td>
+                            <td class="text-center" colspan="3" style="text-align: center"><B>{{ __('custom.grand_total') }} @if(!empty($request->currency->CurrencyCode))({{$request->currency->CurrencyCode}}) @endif</B></td>
                             <td class="text-center" style="text-align: right"><B>@if ($request->invoicedetails){{number_format($directTraSubTotal, $numberFormatting)}}@endif</B></td>
                             {{$totalVATAmount = (($request->tax && $request->tax->amount) ? $request->tax->amount : 0)}}
                             {{$netAmount = $totalVATAmount + $directTraSubTotal}}
@@ -661,7 +661,7 @@
         ?>
 
     @if(!empty($company->localcurrency->currencyID) && !empty($request->currency->currencyID) && $company->localcurrency->currencyID != $request->currency->currencyID && $totalVATAmount > 0)
-        <p class="normal_font"><B>(Grand Total in @if(!empty($request->currency->CurrencyCode)){{$request->currency->CurrencyCode}} @endif :   {{$request->amount_word}}
+        <p class="normal_font"><B>({{ __('custom.grand_total_in') }} @if(!empty($request->currency->CurrencyCode)){{$request->currency->CurrencyCode}} @endif :   {{$request->amount_word}}
                 @if ($request->floatAmt > 0)
                     {{ __('custom.and') }}
                     {{$request->floatAmt}} /@if($request->currency->DecimalPlaces == 3)1000 @else 100 @endif
