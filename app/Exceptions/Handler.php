@@ -5,6 +5,7 @@ namespace App\Exceptions;
 use Exception;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class Handler extends ExceptionHandler
 {
@@ -55,15 +56,11 @@ class Handler extends ExceptionHandler
      */
     public function render($request, Exception $exception)
     {
-        /*if ($exception instanceof \Illuminate\Auth\AuthenticationException) {
-            if($request->ajax()){
-                return response()->json(['error' => 'Unauthorized'], 401);
-            } else {
-                return '<h2>'.$exception->getMessage().'</h2>';
+        if (!($exception instanceof HttpException)) {
+            if (!config('app.debug')) {
+                return response()->json(['message' => 'Something went wrong. Please contact system administrator'], 500);
             }
-        }else {*/
-
-       // }
+        }
 
         return parent::render($request, $exception);
     }
@@ -80,19 +77,20 @@ class Handler extends ExceptionHandler
         );
     }
 
-    /*public function render($request, Exception $e)
-    {
-        $error = $this->convertExceptionToResponse($e);
-        $response = [];
-        if ($error->getStatusCode() == 500) {
-            $response['error'] = $e->getMessage();
-            if (env('APP_DEBUG', true)) {
-                $response['trace'] = $e->getTraceAsString();
-                $response['code'] = $e->getCode();
-            }
-        }
-        return response()->json($response, $error->getStatusCode());
-    }*/
+    // public function render($request, Exception $e)
+    // {
+    //     $error = $this->convertExceptionToResponse($e);
+    //     $response = [];
+    //     if ($error->getStatusCode() == 500) {
+    //         $response['error'] = $e->getMessage();
+    //         if (env('APP_DEBUG', true)) {
+    //             $response['trace'] = $e->getTraceAsString();
+    //             $response['code'] = $e->getCode();
+    //         }
+    //     }
+    //     return response()->json($response, $error->getStatusCode());
+    // }
+
     /**
      * Convert an authentication exception into an unauthenticated response.
      *

@@ -2,6 +2,7 @@
 
 namespace App\Jobs\Report;
 
+use App\Jobs\Report\GenerateGlPdfReport;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
@@ -14,6 +15,8 @@ use Carbon\Carbon;
 use App\Services\WebPushNotificationService;
 use App\helper\CommonJobService;
 use Illuminate\Support\Facades\Log;
+use ZipArchive;
+use File;
 
 class GeneralLedgerPdfJob implements ShouldQueue
 {
@@ -46,107 +49,24 @@ class GeneralLedgerPdfJob implements ShouldQueue
     public function handle()
     {
         ini_set('max_execution_time', config('app.report_max_execution_limit'));
-        ini_set('memory_limit', config('app.report_max_memory_limit'));
+        ini_set('memory_limit', -1);
         Log::useFiles(storage_path() . '/logs/geenral-ledger-pdf.log'); 
         $request = $this->requestData;
         $db = $this->dispatch_db;
         CommonJobService::db_switch($db);
 
-        $reportID = $request->reportID;
-        $reportTypeID = $request->reportTypeID;
-        $type = $request->type;
-        $companyCurrency = \Helper::companyCurrency($request->companySystemID);
-        $checkIsGroup = Company::find($request->companySystemID);
-        $data = array();
+        $currentDate = strtotime(date("Y-m-d H:i:s"));
+        $root = "general-ledger-pdf/".$currentDate;
+
         $output = $this->getGeneralLedgerQryForPDF($request);
-        $decimalPlace = array();
-        $currencyIdLocal = 1;
-        $currencyIdRpt = 2;
+        $outputChunkData = collect($output)->chunk(300);
 
-        $decimalPlaceCollectLocal = collect($output)->pluck('documentLocalCurrencyID')->toArray();
-        $decimalPlaceUniqueLocal = array_unique($decimalPlaceCollectLocal);
+        $reportCount = 1;
 
-        $decimalPlaceCollectRpt = collect($output)->pluck('documentRptCurrencyID')->toArray();
-        $decimalPlaceUniqueRpt = array_unique($decimalPlaceCollectRpt);
-
-
-        if (!empty($decimalPlaceUniqueLocal)) {
-            $currencyIdLocal = $decimalPlaceUniqueLocal[0];
+        foreach ($outputChunkData as $key1 => $output1) {
+            GenerateGlPdfReport::dispatch($db, $request, $reportCount, $this->userIds, $output1, count($outputChunkData), $root);
+            $reportCount++;
         }
-
-        if (!empty($decimalPlaceUniqueRpt)) {
-            $currencyIdRpt = $decimalPlaceUniqueRpt[0];
-        }
-
-        $extraColumns = [];
-        if (isset($request->extraColoumns) && count($request->extraColoumns) > 0) {
-            $extraColumns = collect($request->extraColoumns)->pluck('id')->toArray();
-        }
-
-        $requestCurrencyLocal = CurrencyMaster::where('currencyID', $currencyIdLocal)->first();
-        $requestCurrencyRpt = CurrencyMaster::where('currencyID', $currencyIdRpt)->first();
-
-        $decimalPlaceLocal = !empty($requestCurrencyLocal) ? $requestCurrencyLocal->DecimalPlaces : 3;
-        $decimalPlaceRpt = !empty($requestCurrencyRpt) ? $requestCurrencyRpt->DecimalPlaces : 2;
-
-        $currencyLocal = $requestCurrencyLocal->CurrencyCode;
-        $currencyRpt = $requestCurrencyRpt->CurrencyCode;
-
-        $totaldocumentLocalAmountDebit = array_sum(collect($output)->pluck('localDebit')->toArray());
-        $totaldocumentLocalAmountCredit = array_sum(collect($output)->pluck('localCredit')->toArray());
-        $totaldocumentRptAmountDebit = array_sum(collect($output)->pluck('rptDebit')->toArray());
-        $totaldocumentRptAmountCredit = array_sum(collect($output)->pluck('rptCredit')->toArray());
-
-        $finalData = array();
-        foreach ($output as $val) {
-            $finalData[$val->glCode . ' - ' . $val->AccountDescription][] = $val;
-        }
-
-        $dataArr = array(
-            'reportData' => $finalData,
-            'extraColumns' => $extraColumns,
-            'companyName' => $checkIsGroup->CompanyName,
-            'isGroup' => $checkIsGroup->isGroup,
-            'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2,
-            'currencyLocal' => $currencyLocal,
-            'decimalPlaceLocal' => $decimalPlaceLocal,
-            'decimalPlaceRpt' => $decimalPlaceRpt,
-            'currencyRpt' => $currencyRpt,
-            'reportDate' => date('d/m/Y H:i:s A'),
-            'fromDate' => \Helper::dateFormat($request->fromDate),
-            'toDate' => \Helper::dateFormat($request->toDate),
-            'totaldocumentLocalAmountDebit' =>  round((isset($totaldocumentLocalAmountDebit) ? $totaldocumentLocalAmountDebit : 0), 3),
-            'totaldocumentLocalAmountCredit' => round((isset($totaldocumentLocalAmountCredit) ? $totaldocumentLocalAmountCredit : 0), 3),
-            'totaldocumentRptAmountDebit' => round((isset($totaldocumentRptAmountDebit) ? $totaldocumentRptAmountDebit : 0), 3),
-            'totaldocumentRptAmountCredit' => round((isset($totaldocumentRptAmountCredit) ? $totaldocumentRptAmountCredit : 0), 3),
-        );
-
-        $html = view('print.report_general_ledger', $dataArr);
-
-        $pdf = \App::make('dompdf.wrapper');
-        $pdf->loadHTML($html);
-
-        $pdf_content =  $pdf->setPaper('a4', 'landscape')->setWarnings(false)->output();
-
-        $fileName = 'general_ledger_'.strtotime(date("Y-m-d H:i:s")).'.pdf';
-        $path = "general-ledger/repots/".$fileName;
-        $disk = 's3';
-        $result = Storage::disk($disk)->put($path, $pdf_content);
-        
-        $fromDate = new Carbon($request->fromDate);
-        $fromDate = $fromDate->format('Y-m-d');
-
-        $toDate = new Carbon($request->toDate);
-        $toDate = $toDate->format('Y-m-d');
-
-        $webPushData = [
-            'title' => "Financial General Ledger Report PDF has been generated",
-            'body' => 'Period : '.$fromDate.' - '.$toDate,
-            'url' => "",
-            'path' => $path,
-        ];
-
-        WebPushNotificationService::sendNotification($webPushData, 3, $this->userIds);
     }
 
     function getGeneralLedgerQryForPDF($request)
@@ -303,7 +223,7 @@ class GeneralLedgerPdfJob implements ShouldQueue
                         ) AS erp_qry_gl_bf 
                         ) AS GL_final 
                     ORDER BY
-                        documentDate ASC';
+                        documentDate, glCode ASC';
         $output = \DB::select($query);
         //dd(DB::getQueryLog());
         return $output;

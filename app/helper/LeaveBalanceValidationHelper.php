@@ -53,7 +53,7 @@ class LeaveBalanceValidationHelper
 
             $data = DB::table('companyfinanceyear')
                 ->selectRaw('companyFinanceYearID as id,DATE( bigginingDate ) as  startDate, DATE(endingDate) as endDate')
-                ->whereRaw(" '$filterDate' BETWEEN DATE(bigginingDate) AND  DATE(endingDate) ")->where('isActive', -1)->where('companySystemID', $companyId)
+                ->whereRaw(" '$filterDate' BETWEEN DATE(bigginingDate) AND  DATE(endingDate) ")->where('isActive', -1)->where('isDeleted', 0)->where('companySystemID', $companyId)
                 ->first();
             if(empty($data)){
 
