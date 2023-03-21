@@ -1788,22 +1788,26 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     Route::get('getSupplierRegisterFormData', 'SupplierMasterAPIController@getSupplierRegisterFormData');
     Route::post('registerSupplier', 'SupplierMasterAPIController@registerSupplier');
 
+    Route::group(['middleware' => 'print_lang'], function () {
+        Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF')->name('Get procurement order print pdf');
+        Route::get('goodReceiptVoucherPrintPDF', 'GRVMasterAPIController@goodReceiptVoucherPrintPDF');
+        Route::get('printItemIssue', 'ItemIssueMasterAPIController@printItemIssue');
+        Route::get('deliveryPrintItemIssue', 'ItemIssueMasterAPIController@deliveryPrintItemIssue');
+        Route::get('printCustomerInvoice', 'CustomerInvoiceDirectAPIController@printCustomerInvoice');
+        Route::get('printReceiptVoucher', 'CustomerReceivePaymentAPIController@printReceiptVoucher');
+        Route::get('printPaymentVoucher', 'PaySupplierInvoiceMasterAPIController@printPaymentVoucher');
+    });
+
     Route::get('getPoLogisticPrintPDF', 'PoAdvancePaymentAPIController@getPoLogisticPrintPDF')->name('Get procurement order logistic print pdf');
-    Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF')->name('Get procurement order print pdf')->middleware(['print_lang']);
-    
-    Route::get('goodReceiptVoucherPrintPDF', 'GRVMasterAPIController@goodReceiptVoucherPrintPDF')->middleware(['print_lang']);
     Route::post('getReportPDF', 'ReportAPIController@pdfExportReport');
     Route::post('generateARReportPDF', 'AccountsReceivableReportAPIController@pdfExportReport');
     Route::post('generateAPReportPDF', 'AccountsPayableReportAPIController@pdfExportReport');
     Route::get('printPurchaseRequest', 'PurchaseRequestAPIController@printPurchaseRequest');
-    Route::get('printItemIssue', 'ItemIssueMasterAPIController@printItemIssue')->middleware(['print_lang']);
-    Route::get('deliveryPrintItemIssue', 'ItemIssueMasterAPIController@deliveryPrintItemIssue')->middleware(['print_lang']);
     Route::get('printItemReturn', 'ItemReturnMasterAPIController@printItemReturn');
     Route::get('printStockReceive', 'StockReceiveAPIController@printStockReceive');
     Route::get('printStockTransfer', 'StockTransferAPIController@printStockTransfer');
     
     Route::get('printPurchaseReturn', 'PurchaseReturnAPIController@printPurchaseReturn');
-    Route::get('printCustomerInvoice', 'CustomerInvoiceDirectAPIController@printCustomerInvoice')->middleware(['print_lang']);
     Route::get('printExpenseClaim', 'ExpenseClaimAPIController@printExpenseClaim');
     Route::get('printExpenseClaimMaster', 'ExpenseClaimMasterAPIController@printExpenseClaimMaster');
     Route::get('printCreditNote', 'CreditNoteAPIController@printCreditNote');
@@ -1812,9 +1816,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     Route::get('printBankReconciliation', 'BankReconciliationAPIController@printBankReconciliation');
     Route::get('printChequeItems', 'BankLedgerAPIController@printChequeItems');
     Route::get('printSuppliers', 'SupplierMasterAPIController@printSuppliers');
-    Route::get('printReceiptVoucher', 'CustomerReceivePaymentAPIController@printReceiptVoucher')->middleware(['print_lang']);
     Route::get('printMaterielRequest', 'MaterielRequestAPIController@printMaterielRequest');
-    Route::get('printPaymentVoucher', 'PaySupplierInvoiceMasterAPIController@printPaymentVoucher')->middleware(['print_lang']);
     Route::get('exportPaymentBankTransfer', 'PaymentBankTransferAPIController@exportPaymentBankTransfer');
     Route::get('printJournalVoucher', 'JvMasterAPIController@printJournalVoucher');
     Route::get('printPaymentMatching', 'MatchDocumentMasterAPIController@printPaymentMatching');
