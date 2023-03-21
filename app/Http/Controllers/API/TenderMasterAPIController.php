@@ -1400,6 +1400,8 @@ WHERE
 
     public function validateTenderHeader($input)
     {
+
+
         $messages = [
             'title.required' => 'Title is required.',
             'currency_id.required' => 'Currency is required.',
@@ -1411,7 +1413,7 @@ WHERE
             'no_of_alternative_solutions.required' => 'Number of Alternative solutions is required.',
             'commercial_weightage.required' => 'Commercial Criteria Weightage is required.',
             'technical_weightage.required' => 'Technical Criteria Weightage is required.',
-        ];
+                ];
 
         $validator = \Validator::make($input, [
             'title' => 'required',
@@ -1422,14 +1424,13 @@ WHERE
             'stage' => 'required',
             'no_of_alternative_solutions' => 'required',
             'commercial_weightage' => 'required',
-            'technical_weightage' => 'required'
+            'technical_weightage' => 'required',
+
         ], $messages);
 
         if(!isset($input['rfq'])){
             $messages = [
                 'estimated_value.required' => 'Estimated Value is required.',
-                'allocated_budget.required' => 'Allocated Budget is required.',
-                'tender_document_fee.required' => 'Tender Document Fee is required.',
                 'bank_id.required' => 'Bank is required.',
                 'bank_account_id.required' => 'Bank Account is required.',
                 'document_sales_start_date.required' => 'Document Sales From Date is required.',
@@ -1444,10 +1445,8 @@ WHERE
             ];
             $validator = \Validator::make($input, [
                 'estimated_value' => 'required',
-                'allocated_budget' => 'required',
-                'tender_document_fee' => 'required',
-                'bank_id' => 'required',
-                'bank_account_id' => 'required',
+                'bank_id' =>  'required_with:tender_document_fee',
+                'bank_account_id' => 'required_with:tender_document_fee',
                 'document_sales_start_date' => 'required',
                 'document_sales_end_date' => 'required',
                 'pre_bid_clarification_start_date' => 'required',
