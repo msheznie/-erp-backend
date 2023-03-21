@@ -1812,7 +1812,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     Route::get('printBankReconciliation', 'BankReconciliationAPIController@printBankReconciliation');
     Route::get('printChequeItems', 'BankLedgerAPIController@printChequeItems');
     Route::get('printSuppliers', 'SupplierMasterAPIController@printSuppliers');
-    Route::get('printReceiptVoucher', 'CustomerReceivePaymentAPIController@printReceiptVoucher');
+    Route::get('printReceiptVoucher', 'CustomerReceivePaymentAPIController@printReceiptVoucher')->middleware(['print_lang']);
     Route::get('printMaterielRequest', 'MaterielRequestAPIController@printMaterielRequest');
     Route::get('printPaymentVoucher', 'PaySupplierInvoiceMasterAPIController@printPaymentVoucher')->middleware(['print_lang']);
     Route::get('exportPaymentBankTransfer', 'PaymentBankTransferAPIController@exportPaymentBankTransfer');
