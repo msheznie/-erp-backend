@@ -2,25 +2,26 @@
 
 /** @var \Illuminate\Database\Eloquent\Factory $factory */
 
-use App\Models\TenderEditLogMaster;
+use App\Models\DocumentModifyRequest;
 use Faker\Generator as Faker;
 
-$factory->define(TenderEditLogMaster::class, function (Faker $faker) {
+$factory->define(DocumentModifyRequest::class, function (Faker $faker) {
 
     return [
         'approved' => $faker->word,
         'approved_by_user_system_id' => $faker->randomDigitNotNull,
         'approved_date' => $faker->date('Y-m-d H:i:s'),
-        'companyID' => $faker->word,
         'companySystemID' => $faker->randomDigitNotNull,
         'created_at' => $faker->date('Y-m-d H:i:s'),
-        'departmentID' => $faker->word,
-        'departmentSystemID' => $faker->randomDigitNotNull,
-        'description' => $faker->word,
-        'documentCode' => $faker->word,
+        'document_master_id' => $faker->randomDigitNotNull,
         'documentSystemCode' => $faker->randomDigitNotNull,
-        'employeeID' => $faker->word,
-        'employeeSystemID' => $faker->randomDigitNotNull,
+        'rejected' => $faker->word,
+        'rejected_by_user_system_id' => $faker->randomDigitNotNull,
+        'rejected_date' => $faker->date('Y-m-d H:i:s'),
+        'requested_date' => $faker->date('Y-m-d H:i:s'),
+        'requested_document_master_id' => $faker->randomDigitNotNull,
+        'requested_employeeSystemID' => $faker->randomDigitNotNull,
+        'RollLevForApp_curr' => $faker->randomDigitNotNull,
         'status' => $faker->word,
         'type' => $faker->word,
         'updated_at' => $faker->date('Y-m-d H:i:s'),

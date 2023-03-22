@@ -2,10 +2,10 @@
 
 namespace App\Http\Requests\API;
 
-use App\Models\TenderEditLogMaster;
+use App\Models\DocumentModifyRequest;
 use InfyOm\Generator\Request\APIRequest;
 
-class UpdateTenderEditLogMasterAPIRequest extends APIRequest
+class UpdateDocumentModifyRequestAPIRequest extends APIRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -24,7 +24,7 @@ class UpdateTenderEditLogMasterAPIRequest extends APIRequest
      */
     public function rules()
     {
-        $rules = TenderEditLogMaster::$rules;
+        $rules = DocumentModifyRequest::$rules;
         
         return $rules;
     }

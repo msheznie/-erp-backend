@@ -207,7 +207,11 @@ Route::post('getEmployeesTenderAwardinglApproval','TenderBidEmployeeDetailsContr
 Route::post('confirmFinalBidAwardComment', 'TenderMasterAPIController@confirmFinalBidAwardComment');
 Route::post('sendTenderAwardEmail', 'TenderMasterAPIController@sendTenderAwardEmail');
 
-Route::resource('tender_edit_log_masters', 'TenderEditLogMasterAPIController');
-Route::post('createTenderEditRequest', 'TenderEditLogMasterAPIController@createTenderEditRequest');
+
+Route::resource('document_modify_requests', 'DocumentModifyRequestAPIController');
+
+Route::post('createEditRequest', 'DocumentModifyRequestAPIController@createEditRequest');
 Route::post('getTenderEditMasterApproval', 'TenderMasterAPIController@getTenderEditMasterApproval');
 Route::post('approveTenderEdit', 'TenderEditLogMasterAPIController@approveTenderEdit');
+Route::post('getTenderEditMasterFullApproved', 'TenderMasterAPIController@getTenderEditMasterFullApproved');
+Route::post('rejectTenderEditDocument', 'TenderEditLogMasterAPIController@rejectTenderEditDocument');

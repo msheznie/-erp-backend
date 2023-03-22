@@ -6,7 +6,7 @@ use Eloquent as Model;
 
 /**
  * @OA\Schema(
- *      schema="TenderEditLogMaster",
+ *      schema="DocumentModifyRequest",
  *      required={""},
  *      @OA\Property(
  *          property="approved",
@@ -32,13 +32,6 @@ use Eloquent as Model;
  *          format="date-time"
  *      ),
  *      @OA\Property(
- *          property="companyID",
- *          description="companyID",
- *          readOnly=$FIELD_READ_ONLY$,
- *          nullable=$FIELD_NULLABLE$,
- *          type="string"
- *      ),
- *      @OA\Property(
  *          property="companySystemID",
  *          description="companySystemID",
  *          readOnly=$FIELD_READ_ONLY$,
@@ -55,33 +48,12 @@ use Eloquent as Model;
  *          format="date-time"
  *      ),
  *      @OA\Property(
- *          property="departmentID",
- *          description="departmentID",
- *          readOnly=$FIELD_READ_ONLY$,
- *          nullable=$FIELD_NULLABLE$,
- *          type="string"
- *      ),
- *      @OA\Property(
- *          property="departmentSystemID",
- *          description="departmentSystemID",
+ *          property="document_master_id",
+ *          description="document_master_id",
  *          readOnly=$FIELD_READ_ONLY$,
  *          nullable=$FIELD_NULLABLE$,
  *          type="integer",
  *          format="int32"
- *      ),
- *      @OA\Property(
- *          property="description",
- *          description="description",
- *          readOnly=$FIELD_READ_ONLY$,
- *          nullable=$FIELD_NULLABLE$,
- *          type="string"
- *      ),
- *      @OA\Property(
- *          property="documentCode",
- *          description="documentCode",
- *          readOnly=$FIELD_READ_ONLY$,
- *          nullable=$FIELD_NULLABLE$,
- *          type="string"
  *      ),
  *      @OA\Property(
  *          property="documentSystemCode",
@@ -92,23 +64,63 @@ use Eloquent as Model;
  *          format="int32"
  *      ),
  *      @OA\Property(
- *          property="employeeID",
- *          description="employeeID",
- *          readOnly=$FIELD_READ_ONLY$,
- *          nullable=$FIELD_NULLABLE$,
- *          type="string"
- *      ),
- *      @OA\Property(
- *          property="employeeSystemID",
- *          description="employeeSystemID",
+ *          property="id",
+ *          description="id",
  *          readOnly=$FIELD_READ_ONLY$,
  *          nullable=$FIELD_NULLABLE$,
  *          type="integer",
  *          format="int32"
  *      ),
  *      @OA\Property(
- *          property="id",
- *          description="id",
+ *          property="rejected",
+ *          description="rejected",
+ *          readOnly=$FIELD_READ_ONLY$,
+ *          nullable=$FIELD_NULLABLE$,
+ *          type="boolean"
+ *      ),
+ *      @OA\Property(
+ *          property="rejected_by_user_system_id",
+ *          description="rejected_by_user_system_id",
+ *          readOnly=$FIELD_READ_ONLY$,
+ *          nullable=$FIELD_NULLABLE$,
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @OA\Property(
+ *          property="rejected_date",
+ *          description="rejected_date",
+ *          readOnly=$FIELD_READ_ONLY$,
+ *          nullable=$FIELD_NULLABLE$,
+ *          type="string",
+ *          format="date-time"
+ *      ),
+ *      @OA\Property(
+ *          property="requested_date",
+ *          description="requested_date",
+ *          readOnly=$FIELD_READ_ONLY$,
+ *          nullable=$FIELD_NULLABLE$,
+ *          type="string",
+ *          format="date-time"
+ *      ),
+ *      @OA\Property(
+ *          property="requested_document_master_id",
+ *          description="requested_document_master_id",
+ *          readOnly=$FIELD_READ_ONLY$,
+ *          nullable=$FIELD_NULLABLE$,
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @OA\Property(
+ *          property="requested_employeeSystemID",
+ *          description="requested_employeeSystemID",
+ *          readOnly=$FIELD_READ_ONLY$,
+ *          nullable=$FIELD_NULLABLE$,
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @OA\Property(
+ *          property="RollLevForApp_curr",
+ *          description="RollLevForApp_curr",
  *          readOnly=$FIELD_READ_ONLY$,
  *          nullable=$FIELD_NULLABLE$,
  *          type="integer",
@@ -146,10 +158,10 @@ use Eloquent as Model;
  *      )
  * )
  */
-class TenderEditLogMaster extends Model
+class DocumentModifyRequest extends Model
 {
 
-    public $table = 'tender_edit_log_master';
+    public $table = 'document_modify_request';
     
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
@@ -161,19 +173,23 @@ class TenderEditLogMaster extends Model
         'approved',
         'approved_by_user_system_id',
         'approved_date',
-        'companyID',
         'companySystemID',
-        'description',
+        'document_master_id',
         'documentSystemCode',
-        'employeeID',
-        'employeeSystemID',
+        'rejected',
+        'rejected_by_user_system_id',
+        'rejected_date',
+        'requested_date',
+        'requested_document_master_id',
+        'requested_employeeSystemID',
+        'RollLevForApp_curr',
         'status',
         'type',
         'version',
-        'requestcurrellevelNo',
-        'versionApprovedYn',
-        'versioncurrentLevelNo',
-        'currency_id'
+        'description',
+        'requested_by_name',
+        'code',
+        'requested'
     ];
 
     /**
@@ -185,13 +201,17 @@ class TenderEditLogMaster extends Model
         'approved' => 'boolean',
         'approved_by_user_system_id' => 'integer',
         'approved_date' => 'datetime',
-        'companyID' => 'string',
         'companySystemID' => 'integer',
-        'description' => 'string',
+        'document_master_id' => 'integer',
         'documentSystemCode' => 'integer',
-        'employeeID' => 'string',
-        'employeeSystemID' => 'integer',
         'id' => 'integer',
+        'rejected' => 'boolean',
+        'rejected_by_user_system_id' => 'integer',
+        'rejected_date' => 'datetime',
+        'requested_date' => 'datetime',
+        'requested_document_master_id' => 'integer',
+        'requested_employeeSystemID' => 'integer',
+        'RollLevForApp_curr' => 'integer',
         'status' => 'boolean',
         'type' => 'boolean',
         'version' => 'integer'
@@ -206,6 +226,7 @@ class TenderEditLogMaster extends Model
         'approved' => 'required',
         'companySystemID' => 'required',
         'documentSystemCode' => 'required',
+        'rejected' => 'required',
         'status' => 'required',
         'type' => 'required'
     ];

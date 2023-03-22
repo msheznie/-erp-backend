@@ -3,7 +3,7 @@
 @section('content')
     <section class="content-header">
         <h1>
-            Tender Edit Log Master
+            Document Modify Request
         </h1>
     </section>
     <div class="content">
@@ -11,9 +11,9 @@
         <div class="box box-primary">
             <div class="box-body">
                 <div class="row">
-                    {!! Form::open(['route' => 'tenderEditLogMasters.store']) !!}
+                    {!! Form::open(['route' => 'documentModifyRequests.store']) !!}
 
-                        @include('tender_edit_log_masters.fields')
+                        @include('document_modify_requests.fields')
 
                     {!! Form::close() !!}
                 </div>

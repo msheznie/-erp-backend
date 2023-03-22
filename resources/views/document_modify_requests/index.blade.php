@@ -2,9 +2,9 @@
 
 @section('content')
     <section class="content-header">
-        <h1 class="pull-left">Tender Edit Log Masters</h1>
+        <h1 class="pull-left">Document Modify Requests</h1>
         <h1 class="pull-right">
-           <a class="btn btn-primary pull-right" style="margin-top: -10px;margin-bottom: 5px" href="{{ route('tenderEditLogMasters.create') }}">Add New</a>
+           <a class="btn btn-primary pull-right" style="margin-top: -10px;margin-bottom: 5px" href="{{ route('documentModifyRequests.create') }}">Add New</a>
         </h1>
     </section>
     <div class="content">
@@ -15,7 +15,7 @@
         <div class="clearfix"></div>
         <div class="box box-primary">
             <div class="box-body">
-                    @include('tender_edit_log_masters.table')
+                    @include('document_modify_requests.table')
             </div>
         </div>
         <div class="text-center">

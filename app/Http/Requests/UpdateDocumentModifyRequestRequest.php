@@ -3,9 +3,9 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-use App\Models\TenderEditLogMaster;
+use App\Models\DocumentModifyRequest;
 
-class CreateTenderEditLogMasterRequest extends FormRequest
+class UpdateDocumentModifyRequestRequest extends FormRequest
 {
 
     /**
@@ -25,6 +25,8 @@ class CreateTenderEditLogMasterRequest extends FormRequest
      */
     public function rules()
     {
-        return TenderEditLogMaster::$rules;
+        $rules = DocumentModifyRequest::$rules;
+        
+        return $rules;
     }
 }

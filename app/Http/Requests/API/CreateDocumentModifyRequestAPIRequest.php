@@ -1,13 +1,12 @@
 <?php
 
-namespace App\Http\Requests;
+namespace App\Http\Requests\API;
 
-use Illuminate\Foundation\Http\FormRequest;
-use App\Models\TenderEditLogMaster;
+use App\Models\DocumentModifyRequest;
+use InfyOm\Generator\Request\APIRequest;
 
-class UpdateTenderEditLogMasterRequest extends FormRequest
+class CreateDocumentModifyRequestAPIRequest extends APIRequest
 {
-
     /**
      * Determine if the user is authorized to make this request.
      *
@@ -25,8 +24,6 @@ class UpdateTenderEditLogMasterRequest extends FormRequest
      */
     public function rules()
     {
-        $rules = TenderEditLogMaster::$rules;
-        
-        return $rules;
+        return DocumentModifyRequest::$rules;
     }
 }
