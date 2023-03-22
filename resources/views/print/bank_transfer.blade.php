@@ -171,7 +171,7 @@
         }
     </style>
 </head>
-<body onload="window.print();window.close()">
+<body onload="window.print();">
 
 <div class="footer">
 </div>
@@ -226,17 +226,17 @@
                     our above mentioned account under advice to us.<br>
 
                     <br><br>
-                    <b>Beneficiary Name         :  </b> <b>@if($entity->nameOnCheque){{$entity->nameOnCheque}}@endif</b> <br>
+                    <b>Beneficiary Name         :  </b> <b>@if($entity->memos){{isset($entity->memos[0]->memoDetail)?$entity->memos[0]->memoDetail:''}}@endif</b> <br>
                     <b>Beneficiary Address      :  </b> <b>@if($entity->company){{$entity->company->CompanyAddress}}@endif</b>
                     <br><br>
 
-                    <b>Beneficiary Bank         :  </b> <b>@if($entity->bankaccount){{$entity->bankaccount->bankName}}@endif</b> <br>
-                    <b>Branch and Address       :  </b> <b>@if($entity->bankaccount){{$entity->bankaccount->bankBranch}}@endif- @if($entity->bankaccount){{$entity->bankaccount->BranchAddress}}@endif</b>
+                    <b>Beneficiary Bank         :  </b> <b>@if($entity->memos){{isset($entity->memos[1]->memoDetail)?$entity->memos[1]->memoDetail:''}}@endif</b> <br>
+                    <b>Branch and Address       :  </b> <b>@if($entity->bankaccount){{$entity->bankaccount->bankBranch}}@endif- @if($entity->memos){{isset($entity->memos[2]->memoDetail)?$entity->memos[2]->memoDetail:''}}@endif</b>
                     <br><br>
 
-                    <b>Beneficiary Account No   :  </b> <b>@if($entity->bankaccount){{$entity->bankaccount->AccountNo}}@endif</b> <br>
-                    <b>Swift Code               :  </b> <b>@if($entity->bankaccount){{$entity->bankaccount->accountSwiftCode}}@endif</b> <br>
-                    <b>IBAN No                  :  </b> <b>@if($entity->bankaccount){{$entity->bankaccount->accountIBAN}}@endif</b>
+                    <b>Beneficiary Account No   :  </b> <b>@if($entity->memos){{isset($entity->memos[3]->memoDetail)?$entity->memos[3]->memoDetail:''}}@endif</b> <br>
+                    <b>Swift Code               :  </b> <b>@if($entity->memos){{isset($entity->memos[9]->memoDetail)?$entity->memos[9]->memoDetail:''}}@endif</b> <br>
+                    <b>IBAN No                  :  </b> <b>@if($entity->memos){{isset($entity->memos[8]->memoDetail)?$entity->memos[8]->memoDetail:''}}@endif</b>
                     <br><br>
                     <b>Purpose of Remittance    :  </b> <b>@if($entity->BPVNarration){{$entity->BPVNarration}}@endif</b>
                     <br><br>
