@@ -253,7 +253,7 @@ return [
     'console_j_v_details' => 'Console JV Detail',
     'console_j_v_masters' => 'Console J V Masters',
     'you_cannot_confirm_this_document' => 'لا يمكنك تأكيد هذا المستند',
-    'contract' => 'Contract',
+    'contract' => 'العقد',
     'control_accounts' => 'حسابات التحكم',
     'counters' => 'صنديق المحاسبة',
     'counter_code_already_exists_in_selected_outlet' => 'رمز صندوق المحاسبة موجود بالفعل في المنفذ المحدد',
@@ -405,11 +405,14 @@ return [
     'branch' => 'الفرع',
     'and' => 'و',
     'only' => 'فقط',
+    'grand_total_in' => 'المجموع الإجمالي',
     'project' => 'المشروع',
     'excluding_vat' => 'إستثناء ضريبة القيمة المضافة',
     'total_amount_payable' => 'إجمالي المبلغ الواجب دفعه',
     'total_amount_payable_in_word' => 'إجمالي المبلغ الواجب دفعه بالكلمة',
     'electronically_approved_date' => 'تاريخ الموافقة الإلكترونية',
+
+
 
     'doc_code' => 'رمز المستند',
     'doc_date' => 'تاريخ المستند',
@@ -440,6 +443,7 @@ return [
     'purchase_order' => 'أمر الشراء',
     'vat_per_unit' => 'ضريبة القيمة المضافة لكل وحدة',
     'net_cost_per_unit' => 'صافي التكلفة لكل وحدة',
+
 
     'number' => 'الرقم',
     'vat_no' => 'رقم ضريبة القيمة المضافة',
@@ -526,8 +530,8 @@ return [
     'invoice_code' => 'رمز الفاتورة',
     'net_total' => 'صافي الإجمالي',
 
-    'account_number' => 'Account Number',    
-    'customer_invoice_receipt' => 'Customer Invoice Receipt',
-    'direct_receipt' => 'Direct Receipt',
+    'account_number' => 'رقم الحساب',
+    'customer_invoice_receipt' => 'سند قبض بناءا على فاتورة العميل',
+    'direct_receipt' => 'سند قبض مباشر',
 
 ];
