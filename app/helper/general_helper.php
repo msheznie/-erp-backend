@@ -3232,7 +3232,7 @@ class Helper
                                             ->whereHas('employee', function ($q) {
                                                 $q->where('discharegedYN', 0);
                                             })
-                                            ->where('companySystemID', $reference_document_id)
+                                            ->where('companySystemID', $documentApproved->companySystemID)
                                             ->where('documentSystemID', $reference_document_id)
                                             ->where('isActive', 1)
                                             ->where('removedYN', 0);
