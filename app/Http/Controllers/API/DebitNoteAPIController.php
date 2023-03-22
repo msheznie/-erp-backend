@@ -25,6 +25,7 @@ use App\helper\TaxService;
 use App\Http\Requests\API\CreateDebitNoteAPIRequest;
 use App\Http\Requests\API\UpdateDebitNoteAPIRequest;
 use App\Models\AccountsPayableLedger;
+use App\Models\EmployeeLedger;
 use App\Models\Company;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\CompanyDocumentAttachment;
@@ -2243,6 +2244,12 @@ UNION ALL
 
             //deleting records from accounts payable
             $deleteAPData = AccountsPayableLedger::where('documentSystemCode', $debitNoteAutoID)
+                ->where('companySystemID', $debitNoteMasterData->companySystemID)
+                ->where('documentSystemID', $debitNoteMasterData->documentSystemID)
+                ->delete();
+
+            //deleting records from employee ledger
+            $deleteELData = EmployeeLedger::where('documentSystemCode', $debitNoteAutoID)
                 ->where('companySystemID', $debitNoteMasterData->companySystemID)
                 ->where('documentSystemID', $debitNoteMasterData->documentSystemID)
                 ->delete();
