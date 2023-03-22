@@ -208,9 +208,12 @@ class ChartOfAccountAPIController extends AppBaseController
 
 
                     DocumentCodeGenerate::updateChartOfAccountSerailNumber($input['reportTemplateCategory']);
+                    
+                    $input['AccountCode'] = $accountCode;
+                } else {
+                    $input['AccountCode'] = $chartOfAccount->AccountCode;
                 }
 
-                $input['AccountCode'] = $accountCode;
 
                 $isActiveAc = ($input['isActive'] == TRUE || $input['isActive'] == 1) ? 1 : 0;
 

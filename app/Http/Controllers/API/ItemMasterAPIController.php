@@ -1663,6 +1663,7 @@ class ItemMasterAPIController extends AppBaseController
             $itemMasters = $itemMasters->where(function ($query) use ($search) {
                 $query->where('primaryCode', 'LIKE', "%{$search}%")
                     ->orWhere('secondaryItemCode', 'LIKE', "%{$search}%")
+                    ->orWhere('barcode', 'LIKE', "%{$search}%")
                     ->orWhere('itemDescription', 'LIKE', "%{$search}%");
             });
         }

@@ -21,7 +21,6 @@ class TenantEnforce
 
     public function handle($request, Closure $next)
     {
-
         $apiKeyRoutes = [
             'api/v1/srmRegistrationLink',
             'api/v1/srm/fetch',
@@ -50,8 +49,14 @@ class TenantEnforce
             'api/v1/assignUserGroupNavigation',
             'api/v1/approvePurchaseRequest',
             'api/v1/post_receipt_voucher',
-            'api/v1/fixed_asset_depreciation_masters',
             'api/v1/post_customer_invoice',
+            'api/v1/updateSentSupplierDetail',
+            'api/v1/sentCustomerStatement',
+            'api/v1/sentSupplierStatement',
+            'api/v1/bank_ledgers/{bank_ledger}',
+            'api/v1/updateSentCustomerDetail',
+            'api/v1/post_supplier_invoice',
+            'api/v1/fixed_asset_depreciation_masters',
             'api/v1/postPosEntries'
         ];
 
