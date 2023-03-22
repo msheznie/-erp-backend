@@ -218,7 +218,7 @@
                     </table>
                     <table>
                         <tr>
-                            <td><span  style="font-weight: bold">{{$title}} {{ __('custom.number') }}</span></td>
+                            <td><span  style="font-weight: bold">{{ __('custom.purchase_order') }} {{ __('custom.number') }}</span></td>
                             <td><span  style="font-weight: bold">:</span></td>
                             <td>
                                 @if ($podata->purchaseOrderCode)
@@ -227,7 +227,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <td><span  style="font-weight: bold">{{$title}} {{ __('custom.date') }} </span></td>
+                            <td><span  style="font-weight: bold">{{ __('custom.purchase_order') }} {{ __('custom.date') }} </span></td>
                             <td><span  style="font-weight: bold">:</span></td>
                             <td>{{ \App\helper\Helper::dateFormat($podata->createdDateTime)}}</td>
                         </tr>
@@ -270,7 +270,7 @@
             <td>
                 <div>
                     <span style="font-size: 18px">
-                        {{$title}}
+                        {{ __('custom.purchase_order') }}
                     </span>
                 </div>
             </td>
@@ -620,12 +620,12 @@
                 <th style="text-align: center">{{ __('custom.item_qty') }}</th>
                 @endif
                 <th style="text-align: center">{{ __('custom.unit_cost') }}</th>
-                <th style="text-align: center">Dis. Per Unit{{ __('custom.dis_per_unit') }}</th>
+                <th style="text-align: center">{{ __('custom.dis_per_unit') }}</th>
                 @if ($podata->isVatEligible)
-                  <th style="text-align: center">VAT. Per Unit</th>
+                  <th style="text-align: center">{{ __('custom.vat_per_unit') }}</th>
                 @endif
-                <th style="text-align: center">Net Cost Per Unit</th>
-                <th style="text-align: center">Net Amount</th>
+                <th style="text-align: center">{{ __('custom.net_cost_per_unit') }}</th>
+                <th style="text-align: center">{{ __('custom.net_amount') }}</th>
             </tr>
             </thead>
             <tbody style="width: 100%;">

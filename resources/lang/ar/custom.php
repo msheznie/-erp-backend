@@ -369,7 +369,7 @@ return [
     'customer_address' => 'عنوان العميل',
     'invoice_number' => 'رقم الفاتورة',
     'contact_person' => 'الشخص الذي يمكن الاتصال به',
-    'contact_vatin' => 'Contact VATIN',
+    'contact_vatin' => 'ضريبة القيمة المضافة',
     'contact_person_tel' => 'رقم التواصل',
     'invoice_due_date' => 'تاريخ إستحقاق الفاتورة',
     'segment' => 'القسم المالي',
@@ -437,6 +437,9 @@ return [
     'confirmed_by' => 'تم التأكيد بواسطة',
     'review_by' => 'تمت المراجعة بواسطة',
     'purchase_order_no' => 'رقم أمر الشراء',
+    'purchase_order' => 'أمر الشراء',
+    'vat_per_unit' => 'ضريبة القيمة المضافة لكل وحدة',
+    'net_cost_per_unit' => 'صافي التكلفة لكل وحدة',
 
     'number' => 'الرقم',
     'vat_no' => 'رقم ضريبة القيمة المضافة',
@@ -507,7 +510,7 @@ return [
     'total' => 'المجموع',
     'confirmed_by' => 'تم التأكيد بواسطة',
     'printed_date' => 'تاريخ الطباعة',
-    'page' => 'Page',
+    'page' => 'الصفحة',
 
     'advance_receipt' => 'الإيصال المسبق',
     'bank_currency' => 'عملة البنك',

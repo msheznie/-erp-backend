@@ -444,6 +444,10 @@ return [
     'confirmed_by' => 'Confirmed By',
     'review_by' => 'Review By',
     'purchase_order_no' => 'Purchase Order No',
+    'purchase_order' => 'Purchase Order',
+    'vat_per_unit' => 'VAT. Per Unit',
+    'net_cost_per_unit' => 'Net Cost Per Unit',
+    'grand_total_in' => 'Grand Total in',
 
     'number' => 'Number',
     'vat_no' => 'VAT No',
