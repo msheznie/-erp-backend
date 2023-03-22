@@ -774,6 +774,8 @@ WHERE
             $site_visit_end_date = ($input['site_visit_end_time']) ? $site_visit_end_date->format('Y-m-d').' '.$site_visit_end_time->format('H:i:s') : $site_visit_end_date->format('Y-m-d');
         }
 
+
+
         
 
         $currenctDate = Carbon::now();
@@ -1063,6 +1065,11 @@ WHERE
         $employee = \Helper::getEmployeeInfo();
         $exist = TenderMaster::where('id', $input['id'])->first();
         
+        if(!isset($input['tender_document_fee'])) {
+            $bankId= 0;
+            $input['bank_account_id'] = null;
+        }
+
         DB::beginTransaction();
 
         try {
