@@ -1855,7 +1855,7 @@ class BankLedgerAPIController extends AppBaseController
                     } else {
                         $item['details'] = [];
                     }
-                    $totalAmount = $totalAmount+$item->payAmountSuppTrans;
+                    $totalAmount = $totalAmount+$item->payAmountSuppTrans + $item->VATAmount;
                 }
                 $entities = $bankLedger;
                 if(count($entities) && isset($entities[0])){
