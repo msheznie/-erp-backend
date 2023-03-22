@@ -1711,7 +1711,6 @@ WHERE
         })->join('srm_tender_master', function ($query) use ($companyID, $empID, $rfx) {
             $query->on('erp_documentapproved.documentSystemCode', '=', 'id')
                 ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
-                ->on('erp_documentapproved.documentApprovedID', '=', 'srm_tender_master.doc_approve_id')
                 ->where('srm_tender_master.company_id', $companyID)
                 ->where('srm_tender_master.approved', -1)
                 ->where('srm_tender_master.confirmed_yn', 1);
