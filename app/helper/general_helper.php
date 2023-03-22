@@ -3056,7 +3056,7 @@ class Helper
                 }
 
                 //checking whether document approved table has a data for the same document
-                $docExist = Models\DocumentApproved::where('documentSystemID',$params["document"])->where('documentSystemCode', $params["autoID"])->first();
+                $docExist = Models\DocumentApproved::where('documentSystemID', $params["document"])->where('documentSystemCode', $params["autoID"])->first();
                 if (!$docExist) {
                     // check document is available in document master table
                     $document = Models\DocumentMaster::where('documentSystemID', $params["document"])->first();
