@@ -47,7 +47,8 @@ use Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Repositories\SegmentAllocatedItemRepository;
-
+use App\Models\GRVMaster;
+use App\Models\AppointmentDetails;
 
 /**
  * Class PurchaseOrderDetailsController
@@ -1507,6 +1508,9 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
             ->where('goodsRecievedYN', '<>', 2)
             ->where('manuallyClosed', 0)
             ->get();
+
+
+
 
         return $this->sendResponse($detail, 'Purchase Order Details retrieved successfully');
 

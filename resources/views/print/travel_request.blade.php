@@ -1,7 +1,7 @@
 <html>
 
 <head>
-    <title>Quotation</title>
+    <title>Travel Request</title>
     <style>
         @page {
             margin-left: 30px;
@@ -237,6 +237,11 @@
                                 <td>{{$masterData['ECode']}}</td>
                             </tr>
                             <tr>
+                                <td><strong>Requested Emp Grade</strong></td>
+                                <td><strong>:</strong></td>
+                                <td>{{$masterData['gradeDescription']}}</td>
+                            </tr>
+                            <tr>
                                 <td><strong>Travel Request Number</strong></td>
                                 <td><strong>:</strong></td>
                                 <td>{{$masterData['document_code']}}</td>
@@ -276,6 +281,9 @@
                     <th class="text-center">Distance (KM)</th>
                     @endif
                     <th class="text-center">Travel type</th>
+                    @if($masterData['ticket_type'])
+                    <th class="text-center">Ticket type</th>
+                    @endif
                     <th class="text-center">Destination</th>
                     <th class="text-center">Duration (Days)</th>
                     <th class="text-center">Date of Travel</th>
@@ -299,7 +307,11 @@
                     <td>
                         <span>{{$masterData['travel_type_desc']}}</span>
                     </td>
-
+                    @if($masterData['ticket_type'])
+                    <td>
+                        {{$masterData['ticket_type_description']}}
+                    </td>
+                    @endif
                     <td>
                         <span>{{$masterData['destination']}}</span>
                     </td>
