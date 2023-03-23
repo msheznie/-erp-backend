@@ -3084,7 +3084,7 @@ class Helper
                                 $isAttachment = $policy->isAttachmentYN;
                                 //check for attachment is uploaded if attachment policy is set to must
                                 if ($isAttachment == -1) {
-                                    $docAttachment = Models\DocumentAttachments::where('companySystemID', $params["company"])->where('documentSystemID', $reference_document_id)->where('documentSystemCode', $params["autoID"])->first();
+                                    $docAttachment = Models\DocumentAttachments::where('companySystemID', $params["company"])->where('documentSystemID', $params['document'])->where('documentSystemCode', $params["autoID"])->first();
                                     if (!$docAttachment) {
                                         return ['success' => false, 'message' => 'There is no attachments attached. Please attach an attachment before you confirm the document'];
                                     }
