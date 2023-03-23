@@ -69,6 +69,7 @@ use App\Models\ContingencyBudgetPlan;
 use App\Models\Appointment;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use App\Models\DocumentModifyRequest;
 use Response;
 
 class email
@@ -486,6 +487,14 @@ class email
                     if (!empty($journalVoucher)) {
                         $data['docApprovedYN'] = $journalVoucher->approved;
                         $data['docCode'] = $journalVoucher->consoleJVcode;
+                    }
+                    break;
+                case 117:
+                    $editRequedt = DocumentModifyRequest::find($data['docSystemCode']);
+
+                    if (!empty($editRequedt)) {
+                        $data['docApprovedYN'] = $editRequedt->approved;
+                        $data['docCode'] = $editRequedt->code;
                     }
                     break;
                 default:

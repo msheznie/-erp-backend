@@ -189,7 +189,8 @@ class DocumentModifyRequest extends Model
         'description',
         'requested_by_name',
         'code',
-        'requested'
+        'requested',
+        'serial_number'
     ];
 
     /**

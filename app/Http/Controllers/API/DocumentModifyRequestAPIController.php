@@ -13,7 +13,8 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-
+use App\Models\DocumentMaster;
+use App\Models\Company;
 
 /**
  * Class DocumentModifyRequestController
@@ -310,22 +311,40 @@ class DocumentModifyRequestAPIController extends AppBaseController
                 {
                     $version = $is_vsersion_exit->version + 1;
                 }
+
+                $company = Company::where('companySystemID', $input['companySystemID'])->first();
+                $documentMaster = DocumentMaster::where('documentSystemID', 117)->first();
+                $lastSerial = DocumentModifyRequest::where('companySystemID', $input['companySystemID'])
+                ->orderBy('id', 'desc')
+                ->first();
+                $lastSerialNumber = 1;
+                if ($lastSerial) {
+                    $lastSerialNumber = intval($lastSerial->serial_number) + 1;
+                }
+        
+                $code = ($company->CompanyID . '/' . $documentMaster['documentID'] . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
+
+              
+
                 $input['version'] = $version;
                 $input['requested_employeeSystemID'] =\Helper::getEmployeeSystemID();
                 $input['requested_date'] = now();
                 $input['RollLevForApp_curr'] = 1;
+                $input['code'] = $code;
+                $input['serial_number'] = $lastSerialNumber;
                 $documentModifyRequest = $this->documentModifyRequestRepository->create($input);
-
+                
                 $params = array('autoID' => $documentModifyRequest['id'], 'company' => $input["companySystemID"], 'document' => $input["document_master_id"],'reference_document_id' => $input["requested_document_master_id"]);
                 $confirm = \Helper::confirmDocument($params);
+           
+
+                DB::commit();
                 if (!$confirm["success"]) {
                     return ['success' => false, 'message' => $confirm["message"]];
                 } else {
-                    return ['success' => true, 'message' => 'succefully'];
+                    return ['success' => true, 'message' => 'Document Modify Request saved successfully'];
                 }
 
-                DB::commit();
-                return $this->sendSuccess('Document Edit request successfully');
 
             } catch (\Exception $e) {
                 DB::rollback();
