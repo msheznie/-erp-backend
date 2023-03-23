@@ -56,6 +56,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             require __DIR__.'/../routes/procurement/procurementRoutes.php';
             require __DIR__.'/../routes/accountsPayable/accountsPayableRoutes.php';
             require __DIR__.'/../routes/accountsReceivable/accountsReceivableRoutes.php';
+            require __DIR__.'/../routes/salesAndMarketing/salesAndMarketingRoutes.php';
 
             Route::post('getAllEmployees', 'EmployeeAPIController@getAllEmployees');
 
@@ -1064,11 +1065,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('getAllSalesQuotation', 'QuotationMasterAPIController@getAllSalesQuotation');
             Route::post('checkItemExists','QuotationMasterAPIController@checkItemExists');
             Route::post('salesQuotationDetailsDeleteAll', 'QuotationDetailsAPIController@salesQuotationDetailsDeleteAll');
-            Route::post('getSalesQuotationApprovals', 'QuotationMasterAPIController@getSalesQuotationApprovals');
-            Route::post('getApprovedSalesQuotationForUser', 'QuotationMasterAPIController@getApprovedSalesQuotationForUser');
-            Route::post('approveSalesQuotation', 'QuotationMasterAPIController@approveSalesQuotation');
-            Route::post('rejectSalesQuotation', 'QuotationMasterAPIController@rejectSalesQuotation');
-            Route::get('getSalesQuotationMasterRecord', 'QuotationMasterAPIController@getSalesQuotationMasterRecord');
             Route::post('salesQuotationReopen', 'QuotationMasterAPIController@salesQuotationReopen');
             Route::post('salesQuotationVersionCreate', 'QuotationMasterAPIController@salesQuotationVersionCreate');
             Route::post('salesQuotationAmend', 'QuotationMasterAPIController@salesQuotationAmend');
@@ -1285,10 +1281,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('cancelQuatation', 'QuotationMasterAPIController@cancelQuatation');
             Route::post('closeQuatation', 'QuotationMasterAPIController@closeQuatation');
 
-            Route::post('getDeliveryOrderApprovals', 'DeliveryOrderAPIController@getDeliveryOrderApprovals');
-            Route::post('getApprovedDeliveryOrderForUser', 'DeliveryOrderAPIController@getApprovedDeliveryOrderForUser');
-            Route::post('approveDeliveryOrder', 'DeliveryOrderAPIController@approveDeliveryOrder');
-            Route::post('rejectDeliveryOrder', 'DeliveryOrderAPIController@rejectDeliveryOrder');
 
             Route::post('storeDeliveryDetailFromSalesQuotation', 'DeliveryOrderDetailAPIController@storeDeliveryDetailFromSalesQuotation');
             Route::get('deliveryOrderAudit', 'DeliveryOrderAPIController@deliveryOrderAudit');
@@ -1438,18 +1430,14 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('storeReturnDetailFromSIDO', 'SalesReturnAPIController@storeReturnDetailFromSIDO');
             Route::get('deliveryNoteForForSR', 'SalesReturnAPIController@deliveryNoteForForSR');
             Route::get('getSalesInvoiceDeliveryOrderDetail', 'SalesReturnAPIController@getSalesInvoiceDeliveryOrderDetail');
-            Route::get('getSalesReturnRecord', 'SalesReturnAPIController@getSalesReturnRecord');
             Route::get('salesReturnAudit', 'SalesReturnAPIController@salesReturnAudit');
             Route::resource('sales_return_details', 'SalesReturnDetailAPIController');
 
-            Route::post('getSalesReturnApprovals', 'SalesReturnAPIController@getSalesReturnApprovals');
             Route::post('salesReturnReopen', 'SalesReturnAPIController@salesReturnReopen');
             Route::post('getSalesReturnAmend', 'SalesReturnAPIController@getSalesReturnAmend');
             Route::post('approveSalesReturn', 'SalesReturnAPIController@approveSalesReturn');
-            Route::post('rejectSalesReturn', 'SalesReturnAPIController@rejectSalesReturn');
             Route::post('getSalesReturnDetailsForDO', 'SalesReturnAPIController@getSalesReturnDetailsForDO');
             Route::post('getSalesReturnDetailsForSI', 'SalesReturnAPIController@getSalesReturnDetailsForSI');
-            Route::post('getApprovedSalesReturnForUser', 'SalesReturnAPIController@getApprovedSalesReturnForUser');
 
             Route::resource('grv_details_prns', 'GrvDetailsPrnAPIController');
             Route::resource('so_payment_terms', 'SoPaymentTermsAPIController');
