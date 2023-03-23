@@ -1554,10 +1554,10 @@ WHERE
             'srm_tender_master.confirmed_date',
             'erp_documentapproved.documentApprovedID',
             'erp_documentapproved.rollLevelOrder',
-            // 'currencymaster.CurrencyCode',
-            'erp_documentapproved.approvalLevelID',
-            'erp_documentapproved.documentSystemCode',
-            // 'employees.empName As created_user'
+            'currencymaster.CurrencyCode',
+            'approvalLevelID',
+            'documentSystemCode',
+            'employees.empName As created_user'
         )->join('employeesdepartments', function ($query) use ($companyID, $empID, $rfx) {
             $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
                 ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
@@ -1581,15 +1581,6 @@ WHERE
             if($rfx){
                 $query->where('srm_tender_master.document_type', '!=',0);
             }
-        })->join('document_modify_request', function ($query) use ($companyID, $empID, $rfx) {
-            $query->on('erp_documentapproved.documentSystemCode', '=', 'document_modify_request.id')
-                ->on('erp_documentapproved.rollLevelOrder', '=', 'document_modify_request.RollLevForApp_curr')
-                ->where('document_modify_request.companySystemID', $companyID)
-                ->where('document_modify_request.approved', 0)
-                ->where('document_modify_request.requested', 1);
-            if($rfx){
-                $query->where('srm_tender_master.document_type', '!=',0);
-            }
         });
 
         if($rfx){
@@ -1601,8 +1592,8 @@ WHERE
                 ->where('erp_documentapproved.companySystemID', $companyID);
         } else {
             $poMasters = $poMasters->where('erp_documentapproved.approvedYN', 0)
-                // ->join('currencymaster', 'currency_id', '=', 'currencyID')
-                // ->join('employees', 'created_by', 'employees.employeeSystemID')
+                ->join('currencymaster', 'currency_id', '=', 'currencyID')
+                ->join('employees', 'created_by', 'employees.employeeSystemID')
                 ->where('erp_documentapproved.rejectedYN', 0)
                 ->where('erp_documentapproved.documentSystemID', 108)
                 ->where('erp_documentapproved.companySystemID', $companyID);
