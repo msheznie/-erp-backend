@@ -3,9 +3,9 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-use App\Models\DocumentModifyRequest;
+use App\Models\DocumentReferedHistory;
 
-class UpdateDocumentModifyRequestRequest extends FormRequest
+class UpdateDocumentReferedHistoryRequest extends FormRequest
 {
 
     /**
@@ -25,8 +25,6 @@ class UpdateDocumentModifyRequestRequest extends FormRequest
      */
     public function rules()
     {
-        $rules = DocumentModifyRequest::$rules;
-        
-        return $rules;
+        return DocumentReferedHistory::$rules;
     }
 }
