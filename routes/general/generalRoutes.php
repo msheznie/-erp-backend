@@ -50,3 +50,7 @@ Route::get('getGeneralLedgerReview', 'GeneralLedgerAPIController@getGeneralLedge
 Route::post('updateGLEntries', 'GeneralLedgerAPIController@updateGLEntries')->name('Update GL Entries');
 Route::post('generateSegmentGlReport', 'GeneralLedgerAPIController@generateSegmentGlReport');
 Route::post('generateSegmentGlReportExcel', 'GeneralLedgerAPIController@generateSegmentGlReportExcel');
+
+Route::get('getVatCategoryFormData', 'TaxVatCategoriesAPIController@getVatCategoryFormData')->name('Get vat category form data');
+Route::post('updateItemVatCategories', 'TaxVatCategoriesAPIController@updateItemVatCategories')->name('Update item vat categories');
+Route::get('getInvoiceDetailsForDeliveryOrderPrintView', 'DeliveryOrderAPIController@getInvoiceDetailsForDeliveryOrderPrintView')->name('Get invoice details for delivery order print view');
