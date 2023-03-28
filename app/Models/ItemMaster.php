@@ -265,5 +265,10 @@ class ItemMaster extends Model
     public function purchase_request_details()
     {
         return $this->belongsTo('App\Models\PurchaseRequestDetails', 'itemCodeSystem', 'itemCode');
+    } 
+
+    public function purchase_order_details()
+    {
+        return $this->belongsTo('App\Models\PurchaseOrderDetails', 'itemCodeSystem', 'itemCode');
     }
 }
