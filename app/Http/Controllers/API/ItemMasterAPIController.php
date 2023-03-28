@@ -1628,6 +1628,10 @@ class ItemMasterAPIController extends AppBaseController
             $query->whereDoesntHave('purchase_request_details', function($query) use ($input) {
                 $query->where('purchaseRequestID', $input['PurchaseRequestID']);
             });
+        })->when((isset($input['purchaseOrderID']) && $input['purchaseOrderID'] > 0), function($query) use ($input) {
+            $query->whereDoesntHave('purchase_order_details', function($query) use ($input) {
+                $query->where('purchaseOrderMasterID', $input['purchaseOrderID']);
+            });
         });
 
         if (array_key_exists('financeCategoryMaster', $input)) {
