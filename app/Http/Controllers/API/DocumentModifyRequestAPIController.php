@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Models\DocumentMaster;
 use App\Models\Company;
+use App\Models\TenderMaster;
 
 /**
  * Class DocumentModifyRequestController
@@ -333,6 +334,9 @@ class DocumentModifyRequestAPIController extends AppBaseController
                 $input['code'] = $code;
                 $input['serial_number'] = $lastSerialNumber;
                 $documentModifyRequest = $this->documentModifyRequestRepository->create($input);
+
+                $tender_data['tender_edit_version_id'] = $documentModifyRequest['id'];
+                $result = TenderMaster::where('id', $input['documentSystemCode'])->update($tender_data);
                 
                 $params = array('autoID' => $documentModifyRequest['id'], 'company' => $input["companySystemID"], 'document' => $input["document_master_id"],'reference_document_id' => $input["requested_document_master_id"]);
                 $confirm = \Helper::confirmDocument($params);
@@ -357,5 +361,18 @@ class DocumentModifyRequestAPIController extends AppBaseController
     public function failed($exception)
     {
         return $exception->getMessage();
+    }
+
+    public function approveEditDocument(Request $request)
+    {
+        $approve = \Helper::approveDocument($request);
+
+        if (!$approve["success"]) {
+
+            return $this->sendError($approve["message"]);
+        } else {
+
+            return $this->sendResponse(array(), $approve["message"]);
+        }
     }
 }

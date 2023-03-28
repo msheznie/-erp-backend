@@ -212,6 +212,6 @@ Route::resource('document_modify_requests', 'DocumentModifyRequestAPIController'
 
 Route::post('createEditRequest', 'DocumentModifyRequestAPIController@createEditRequest');
 Route::post('getTenderEditMasterApproval', 'TenderMasterAPIController@getTenderEditMasterApproval');
-Route::post('approveTenderEdit', 'TenderEditLogMasterAPIController@approveTenderEdit');
+Route::post('approveEditDocument', 'DocumentModifyRequestAPIController@approveEditDocument');
 Route::post('getTenderEditMasterFullApproved', 'TenderMasterAPIController@getTenderEditMasterFullApproved');
 Route::post('rejectTenderEditDocument', 'TenderEditLogMasterAPIController@rejectTenderEditDocument');

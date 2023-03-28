@@ -4175,6 +4175,18 @@ class Helper
                 $docInforArr["confirmedYN"] = "confirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
                 break;
+            case 117: // Edit request
+                $docInforArr["tableName"] = 'document_modify_request';
+                $docInforArr["modelName"] = 'DocumentModifyRequest';
+                $docInforArr["primarykey"] = 'id';
+                $docInforArr["approvedColumnName"] = 'approved';
+                $docInforArr["approvedBy"] = 'approved_by_user_system_id';
+                $docInforArr["approvedBySystemID"] = 'approved_by_user_system_id';
+                $docInforArr["approvedDate"] = 'approved_date';
+                $docInforArr["approveValue"] = -1;
+                $docInforArr["confirmedYN"] = "requested";
+                $docInforArr["confirmedEmpSystemID"] = "requested_employeeSystemID";
+                break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
         }
@@ -4189,6 +4201,13 @@ class Helper
             $docApproved = Models\DocumentApproved::find($input["documentApprovedID"]);
             if ($docApproved) {
 
+                $reference_document_id = $input['documentSystemID'];
+                if(isset($input['reference_document_id']) && $input['reference_document_id'])
+                {
+                    $reference_document_id = $input['reference_document_id'];
+                }
+
+                
                 // get current employee detail
                 $empInfo = self::getEmployeeInfo();
                 $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
@@ -4211,7 +4230,7 @@ class Helper
 
 
                 $companyDocument = Models\CompanyDocumentAttachment::where('companySystemID', $docApproved->companySystemID)
-                    ->where('documentSystemID', $input["documentSystemID"])
+                    ->where('documentSystemID', $reference_document_id)
                     ->first();
                 if (empty($companyDocument)) {
                     return ['success' => false, 'message' => 'Policy not found.'];
@@ -4220,7 +4239,7 @@ class Helper
                 $checkUserHasApprovalAccess = Models\EmployeesDepartment::where('employeeGroupID', $docApproved->approvalGroupID)
                     ->where('companySystemID', $docApproved->companySystemID)
                     ->where('employeeSystemID', $empInfo->employeeSystemID)
-                    ->where('documentSystemID', $input["documentSystemID"])
+                    ->where('documentSystemID', $reference_document_id)
                     ->where('isActive', 1)
                     ->where('removedYN', 0);
 
@@ -4788,7 +4807,7 @@ class Helper
                                 } else {
 
                                     $companyDocument = Models\CompanyDocumentAttachment::where('companySystemID', $currentApproved->companySystemID)
-                                        ->where('documentSystemID', $currentApproved->documentSystemID)
+                                        ->where('documentSystemID', $reference_document_id)
                                         ->first();
 
                                     if (empty($companyDocument)) {
@@ -4808,7 +4827,7 @@ class Helper
                                             $q->where('discharegedYN', 0);
                                         })
                                         ->where('companySystemID', $currentApproved->companySystemID)
-                                        ->where('documentSystemID', $currentApproved->documentSystemID)
+                                        ->where('documentSystemID', $reference_document_id)
                                         ->where('isActive', 1)
                                         ->where('removedYN', 0);
 
