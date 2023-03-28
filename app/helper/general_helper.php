@@ -5454,6 +5454,12 @@ class Helper
                     $docInforArr["primarykey"] = 'consoleJvMasterAutoId';
                     $docInforArr["referredColumnName"] = 'timesReferred';
                     break;
+                case 117: // Edit Request
+                    $docInforArr["tableName"] = 'document_modify_request';
+                    $docInforArr["modelName"] = 'DocumentModifyRequest';
+                    $docInforArr["primarykey"] = 'id';
+                    $docInforArr["referredColumnName"] = 'timesReferred';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not set'];
             }
@@ -5477,7 +5483,7 @@ class Helper
                         // update record in document approved table
                         $approvedeDoc = $docApprove->update(['rejectedYN' => -1, 'rejectedDate' => now(), 'rejectedComments' => $input["rejectedComments"], 'employeeID' => $empInfo->empID, 'employeeSystemID' => $empInfo->employeeSystemID]);
 
-                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19, 13, 10, 15, 8, 12, 17, 9, 63, 41, 64, 62, 3, 57, 56, 58, 59, 66, 7, 67, 68, 71, 86, 87, 24, 96, 97, 99, 100, 103, 102, 65, 104, 106,107,108, 113, 69])) {
+                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19, 13, 10, 15, 8, 12, 17, 9, 63, 41, 64, 62, 3, 57, 56, 58, 59, 66, 7, 67, 68, 71, 86, 87, 24, 96, 97, 99, 100, 103, 102, 65, 104, 106,107,108, 113, 69,117])) {
                             $timesReferredUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->increment($docInforArr["referredColumnName"]);
                             $refferedBackYNUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->update(['refferedBackYN' => -1]);
                         }
@@ -5540,6 +5546,12 @@ class Helper
                                     'emailAlertMessage' => $body,
                                     'docSystemCode' => $input["documentSystemCode"]
                                 );
+                            }
+
+                            if($input["documentSystemID"] == 117)
+                            {
+                                $refferedBackYNUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->update(['status' => 0,'rejected_date' => now(),'rejected_by_user_system_id' => $empInfo->employeeSystemID]);
+
                             }
 
                             if($input["documentSystemID"] == 107 || $input["documentSystemID"] == 106)

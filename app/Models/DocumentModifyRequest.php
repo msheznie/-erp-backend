@@ -176,7 +176,7 @@ class DocumentModifyRequest extends Model
         'companySystemID',
         'document_master_id',
         'documentSystemCode',
-        'rejected',
+        'refferedBackYN',
         'rejected_by_user_system_id',
         'rejected_date',
         'requested_date',
@@ -190,7 +190,8 @@ class DocumentModifyRequest extends Model
         'requested_by_name',
         'code',
         'requested',
-        'serial_number'
+        'serial_number',
+        'timesReferred'
     ];
 
     /**

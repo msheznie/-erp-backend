@@ -3508,6 +3508,7 @@ WHERE
             // ->join('currencymaster', 'currency_id', '=', 'currencyID')
             ->join('employees', 'document_modify_request.requested_employeeSystemID', 'employees.employeeSystemID')
             ->where('erp_documentapproved.documentSystemID', 117)
+            ->where('erp_documentapproved.rejectedYN', 0)
             ->where('erp_documentapproved.companySystemID', $companyID);
 
         
