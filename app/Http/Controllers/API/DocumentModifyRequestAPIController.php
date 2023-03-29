@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Log;
 use App\Models\DocumentMaster;
 use App\Models\Company;
 use App\Models\TenderMaster;
-
+use Carbon\Carbon;
 /**
  * Class DocumentModifyRequestController
  * @package App\Http\Controllers\API
@@ -312,9 +312,10 @@ class DocumentModifyRequestAPIController extends AppBaseController
                 {
                     $version = $is_vsersion_exit->version + 1;
                 }
-
+                $document_master_id = $input['document_master_id'];
+                $namespacedModel = 'App\Models\\' . $input["modelName"]; 
                 $company = Company::where('companySystemID', $input['companySystemID'])->first();
-                $documentMaster = DocumentMaster::where('documentSystemID', 117)->first();
+                $documentMaster = DocumentMaster::where('documentSystemID', $document_master_id)->first();
                 $lastSerial = DocumentModifyRequest::where('companySystemID', $input['companySystemID'])
                 ->orderBy('id', 'desc')
                 ->first();
@@ -325,8 +326,6 @@ class DocumentModifyRequestAPIController extends AppBaseController
         
                 $code = ($company->CompanyID . '/' . $documentMaster['documentID'] . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
 
-              
-
                 $input['version'] = $version;
                 $input['requested_employeeSystemID'] =\Helper::getEmployeeSystemID();
                 $input['requested_date'] = now();
@@ -336,7 +335,7 @@ class DocumentModifyRequestAPIController extends AppBaseController
                 $documentModifyRequest = $this->documentModifyRequestRepository->create($input);
 
                 $tender_data['tender_edit_version_id'] = $documentModifyRequest['id'];
-                $result = TenderMaster::where('id', $input['documentSystemCode'])->update($tender_data);
+                $result = $namespacedModel::where('id', $input['documentSystemCode'])->update($tender_data);
                 
                 $params = array('autoID' => $documentModifyRequest['id'], 'company' => $input["companySystemID"], 'document' => $input["document_master_id"],'reference_document_id' => $input["requested_document_master_id"]);
                 $confirm = \Helper::confirmDocument($params);
@@ -365,6 +364,21 @@ class DocumentModifyRequestAPIController extends AppBaseController
 
     public function approveEditDocument(Request $request)
     {
+        $input = $request->all();
+        if(isset($input['reference_document_id']) && $input['reference_document_id'])
+        {
+            $isConfirmed = TenderMaster::find($input["documentSystemCode"]);
+
+            $current_date_obj = date('Y-m-d H:i:s');
+            $current_date = Carbon::createFromFormat('Y-m-d H:i:s', $current_date_obj);
+            $opening_date_format = Carbon::createFromFormat('Y-m-d H:i:s', $isConfirmed->bid_submission_opening_date);
+            $result_obj = $opening_date_format->gt($current_date);
+    
+            if(!$result_obj)
+            {
+                return $this->sendError('Unable to approve this document. Bid submission opening date has already passed');
+            }
+        }
         $approve = \Helper::approveDocument($request);
 
         if (!$approve["success"]) {
