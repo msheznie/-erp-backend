@@ -1007,6 +1007,11 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::post('getBankMasterByCompany', 'BankAssignAPIController@getBankMasterByCompany');
             Route::post('getAccountsByBank', 'BankAccountAPIController@getAccountsByBank');
+            Route::get('getBankLedgerFilterFormData', 'BankLedgerAPIController@getBankLedgerFilterFormData');
+            Route::post('validateBankLedgerReport', 'BankLedgerAPIController@validateBankLedgerReport');
+            Route::post('generateBankLedgerReport', 'BankLedgerAPIController@generateBankLedgerReport');
+            Route::post('exportBankLedgerReport', 'BankLedgerAPIController@exportBankLedgerReport');
+            Route::post('generateBankLedgerReportPDF', 'BankLedgerAPIController@generateBankLedgerReportPDF');
             
             
             Route::get('getBankAccountFormData', 'BankAccountAPIController@getBankAccountFormData');
