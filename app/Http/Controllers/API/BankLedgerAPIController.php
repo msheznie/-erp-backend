@@ -23,6 +23,7 @@ use App\Models\AdvancePaymentDetails;
 use App\Models\Alert;
 use App\Models\BankAccount;
 use App\Models\BankLedger;
+use App\Models\CurrencyMaster;
 use App\Models\BankMaster;
 use App\Models\BankMemoSupplier;
 use App\Models\BankReconciliation;
@@ -58,6 +59,9 @@ use Illuminate\Support\Facades\DB;
 use Response;
 use App\Models\ChequeTemplateBank;
 use App\Jobs\DocumentAttachments\PaymentReleasedToSupplierJob;
+use App\helper\CreateExcel;
+use App\Services\BankLedger\BankLedgerService;
+use App\Jobs\Report\BankLedgerPdfJob;
 
 /**
  * Class BankLedgerController
@@ -2372,5 +2376,293 @@ class BankLedgerAPIController extends AppBaseController
         $masterData->save();
 
         return $this->sendResponse($masterData->toArray(), trans('custom.update', ['attribute' => trans('custom.bank_transfer')]));
+    }
+
+    public function getBankLedgerFilterFormData(Request $request)
+    {
+        $input = $request->all();
+
+        $bankAccounts = DB::table('erp_bankaccount')
+                          ->selectRaw('AccountNo, erp_bankmaster.bankName, AccountCode, AccountDescription, bankAccountAutoID')
+                          ->join('erp_bankmaster', 'erp_bankaccount.bankmasterAutoID', '=', 'erp_bankmaster.bankmasterAutoID')
+                          ->join('chartofaccounts', 'erp_bankaccount.chartOfAccountSystemID', '=', 'chartofaccounts.chartOfAccountSystemID')
+                          ->where('companySystemID', $input['selectedCompanyId'])
+                          ->get();
+
+        return $this->sendResponse(['accounts' => $bankAccounts], "bank ledger form data retrived successfully");
+    } 
+
+    public function validateBankLedgerReport(Request $request)
+    {
+        $input = $request->all();
+
+        $validator = \Validator::make($request->all(), [
+            'fromDate' => 'required',
+            'toDate' => 'required|date|after_or_equal:fromDate',
+            'accounts' => 'required',
+            'currencyID' => 'required'
+        ]);
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+        return $this->sendResponse([], "bank ledger report filter validated successfully");
+    } 
+
+    public function generateBankLedgerReport(Request $request)
+    {
+        $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+        $checkIsGroup = Company::find($request->companySystemID);
+
+        $output = BankLedgerService::getBankLedgerData($request);
+
+        $requestCurrencyRpt = CurrencyMaster::where('currencyID', $checkIsGroup->reportingCurrency)->first();
+        $requestCurrencyLocal = CurrencyMaster::where('currencyID', $checkIsGroup->localCurrencyID)->first();
+
+        if ($request->currencyID == 2) {
+            $decimalPlace = $requestCurrencyRpt ? $requestCurrencyRpt->DecimalPlaces : 2;
+            $currencyCode = $requestCurrencyRpt ? $requestCurrencyRpt->CurrencyCode : "";
+        } else if ($request->currencyID == 3) {
+            $decimalPlace = $requestCurrencyLocal ? $requestCurrencyLocal->DecimalPlaces : 2;
+            $currencyCode = $requestCurrencyLocal ? $requestCurrencyLocal->CurrencyCode : "";
+        } else {
+            $decimalPlace = 2;
+            $currencyCode = "";
+        }
+
+        
+        $total = array();
+        $total['documentLocalAmountDebit'] = array_sum(collect($output)->pluck('localDebit')->toArray());
+        $total['documentLocalAmountCredit'] = array_sum(collect($output)->pluck('localCredit')->toArray());
+        $total['documentRptAmountDebit'] = array_sum(collect($output)->pluck('rptDebit')->toArray());
+        $total['documentRptAmountCredit'] = array_sum(collect($output)->pluck('rptCredit')->toArray());
+        $total['documentBankAmountDebit'] = array_sum(collect($output)->pluck('bankDebit')->toArray());
+        $total['documentBankAmountCredit'] = array_sum(collect($output)->pluck('bankCredit')->toArray());
+
+
+        return \DataTables::of($output)
+                        ->addIndexColumn()
+                        ->with('companyName', $checkIsGroup->CompanyName)
+                        ->with('isGroup', $checkIsGroup->isGroup)
+                        ->with('currencyID', $request->currencyID)
+                        ->with('total', $total)
+                        ->with('decimalPlace', $decimalPlace)
+                        ->with('currencyCode', $currencyCode)
+                        ->addIndexColumn()
+                        ->make(true);
+    }
+
+    public function exportBankLedgerReport(Request $request)
+    {
+        $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+        $checkIsGroup = Company::find($request->companySystemID);
+
+        $output = BankLedgerService::getBankLedgerData($request);
+
+        $requestCurrencyRpt = CurrencyMaster::where('currencyID', $checkIsGroup->reportingCurrency)->first();
+        $requestCurrencyLocal = CurrencyMaster::where('currencyID', $checkIsGroup->localCurrencyID)->first();
+
+        if ($request->currencyID == 2) {
+            $decimalPlace = $requestCurrencyRpt ? $requestCurrencyRpt->DecimalPlaces : 2;
+            $currencyCode = $requestCurrencyRpt ? $requestCurrencyRpt->CurrencyCode : "";
+        } else if ($request->currencyID == 3) {
+            $decimalPlace = $requestCurrencyLocal ? $requestCurrencyLocal->DecimalPlaces : 2;
+            $currencyCode = $requestCurrencyLocal ? $requestCurrencyLocal->CurrencyCode : "";
+        } else {
+            $decimalPlace = 2;
+            $currencyCode = "";
+        }
+
+        $extraColumns = [];
+        if (isset($request->extraColoumns) && count($request->extraColoumns) > 0) {
+            $extraColumns = collect($request->extraColoumns)->pluck('id')->toArray();
+        }
+
+        
+        $total = array();
+        $total['documentLocalAmountDebit'] = array_sum(collect($output)->pluck('localDebit')->toArray());
+        $total['documentLocalAmountCredit'] = array_sum(collect($output)->pluck('localCredit')->toArray());
+        $total['documentRptAmountDebit'] = array_sum(collect($output)->pluck('rptDebit')->toArray());
+        $total['documentRptAmountCredit'] = array_sum(collect($output)->pluck('rptCredit')->toArray());
+        $total['documentBankAmountDebit'] = array_sum(collect($output)->pluck('bankDebit')->toArray());
+        $total['documentBankAmountCredit'] = array_sum(collect($output)->pluck('bankCredit')->toArray());
+
+
+        if ($output) {
+            $x = 0;
+            $subTotalDebitRpt = 0;
+            $subTotalCreditRpt = 0;
+            $subTotalDebitLocal = 0;
+            $subTotalCreditRptLocal = 0;
+
+            $dataArrayNew = array();
+
+            foreach ($output as $val) {
+                $data[$x]['Company ID'] = $val->companyID;
+                $data[$x]['Company Name'] = $val->CompanyName;
+                $data[$x]['Bank'] = $val->bankName;
+                $data[$x]['Account No'] = $val->AccountNo;
+                $data[$x]['Account Description'] = $val->AccountDescription;
+                $data[$x]['Document Number'] = $val->documentCode;
+                $data[$x]['Document Type'] = $val->documentID;
+                $data[$x]['Date'] = \Helper::dateFormat($val->documentDate);
+                $data[$x]['Document Narration'] = $val->documentNarration;
+                $data[$x]['Supplier/Customer'] = $val->partyName;
+                if (in_array('confi_name', $extraColumns)) {
+                    $data[$x]['Confirmed By'] = $val->confirmBy;
+                }
+
+                if (in_array('confi_date', $extraColumns)) {
+                    $data[$x]['Confirmed Date'] = \Helper::dateFormat($val->confirmDate);
+                }
+
+                if (in_array('app_name', $extraColumns)) {
+                    $data[$x]['Approved By'] = $val->approvedBy;
+                }
+
+                if (in_array('app_date', $extraColumns)) {
+                    $data[$x]['Approved Date'] = \Helper::dateFormat($val->approvedDate);
+                }
+
+                if ($request->currencyID == 1) {
+                    $data[$x]['Currency'] = $val->bankCurrency;
+                    $data[$x]['Debit (Bank Currency)'] = round($val->bankDebit, $val->bankCurrencyDecimal);
+                    $data[$x]['Credit (Bank Currency)'] = round($val->bankCredit, $val->bankCurrencyDecimal);
+                }
+
+                if ($checkIsGroup->isGroup == 0 && $request->currencyID == 3) {
+                    $data[$x]['Debit (Local Currency - ' . $currencyCode . ')'] = round($val->localDebit, $decimalPlace);
+                    $data[$x]['Credit (Local Currency - ' . $currencyCode . ')'] = round($val->localCredit, $decimalPlace);
+                }
+
+                if($request->currencyID == 2) {
+                    $data[$x]['Debit (Reporting Currency - ' . $currencyCode . ')'] = round($val->rptDebit, $decimalPlace);
+                    $data[$x]['Credit (Reporting Currency - ' . $currencyCode . ')'] = round($val->rptCredit, $decimalPlace);
+                }
+
+
+                $subTotalDebitRpt += round($val->rptDebit, $decimalPlace);
+                $subTotalCreditRpt += round($val->rptCredit, $decimalPlace);
+
+                $subTotalDebitLocal += round($val->localDebit, $decimalPlace);
+                $subTotalCreditRptLocal += round($val->localCredit, $decimalPlace);
+                $x++;
+            }
+        }
+        $data[$x]['Company ID'] = "";
+        $data[$x]['Company Name'] = "";
+        $data[$x]['Bank'] = "";
+        $data[$x]['Account No'] = "";
+        $data[$x]['Account Description'] = "";
+        $data[$x]['Document Number'] = "";
+        $data[$x]['Document Type'] = "";
+        $data[$x]['Date'] = "";
+        $data[$x]['Document Narration'] = "";
+
+        if (in_array('confi_name', $extraColumns)) {
+            $data[$x]['Confirmed By'] = "";
+        }
+
+        if (in_array('confi_date', $extraColumns)) {
+            $data[$x]['Confirmed Date'] = "";
+        }
+
+        if (in_array('app_name', $extraColumns)) {
+            $data[$x]['Approved By'] = "";
+        }
+
+        if (in_array('app_date', $extraColumns)) {
+            $data[$x]['Approved Date'] = "";
+        }
+
+        if ($request->currencyID != 1) {
+            $data[$x]['Supplier/Customer'] = "Grand Total";
+        }
+
+        if ($checkIsGroup->isGroup == 0 && $request->currencyID == 3) {
+            $data[$x]['Debit (Local Currency - ' . $currencyCode . ')'] = round($subTotalDebitLocal, $decimalPlace);
+            $data[$x]['Credit (Local Currency - ' . $currencyCode . ')'] = round($subTotalCreditRptLocal, $decimalPlace);
+        }
+
+        if($request->currencyID == 2) {
+            $data[$x]['Debit (Reporting Currency - ' . $currencyCode . ')'] = round($subTotalDebitRpt, $decimalPlace);
+            $data[$x]['Credit (Reporting Currency - ' . $currencyCode . ')'] = round($subTotalCreditRpt, $decimalPlace);
+        }
+
+        $x++;
+        $data[$x]['Company ID'] = "";
+        $data[$x]['Company Name'] = "";
+        $data[$x]['Bank'] = "";
+        $data[$x]['Account No'] = "";
+        $data[$x]['Account Description'] = "";
+        $data[$x]['Document Number'] = "";
+        $data[$x]['Document Type'] = "";
+        $data[$x]['Date'] = "";
+        $data[$x]['Document Narration'] = "";
+
+        $data[$x]['Supplier/Customer'] = "";
+        if (in_array('confi_name', $extraColumns)) {
+            $data[$x]['Confirmed By'] = "";
+        }
+
+        if (in_array('confi_date', $extraColumns)) {
+            $data[$x]['Confirmed Date'] = "";
+        }
+
+        if (in_array('app_name', $extraColumns)) {
+            $data[$x]['Approved By'] = "";
+        }
+
+        if (in_array('app_date', $extraColumns)) {
+            $data[$x]['Approved Date'] = "";
+        }
+        if ($checkIsGroup->isGroup == 0 && $request->currencyID == 3) {
+            $data[$x]['Debit (Local Currency - ' . $currencyCode . ')'] = "";
+            $data[$x]['Credit (Local Currency - ' . $currencyCode . ')'] = round($subTotalDebitLocal - $subTotalCreditRptLocal, $decimalPlace);
+        }
+
+        if($request->currencyID == 2) {
+            $data[$x]['Debit (Reporting Currency - ' . $currencyCode . ')'] = "";
+            $data[$x]['Credit (Reporting Currency - ' . $currencyCode . ')'] = round($subTotalDebitRpt - $subTotalCreditRpt, $decimalPlace);
+        }
+
+        $type = $request->type;
+        $company_name = $checkIsGroup->CompanyName;
+        $to_date = \Helper::dateFormat($request->toDate);
+        $from_date = \Helper::dateFormat($request->fromDate);
+        $cur = null;
+        $title = "Bank Ledeger Details";
+        $detail_array = array(  'type' => 1,
+                                'from_date'=>$from_date,
+                                'to_date'=>$to_date,
+                                'company_name'=>$company_name,
+                                'cur'=>$cur,
+                                'title'=>$title);
+
+        $fileName = 'bank_ledger';
+        $path = 'bank-ledger/report/bank_ledger/excel/';
+        $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
+
+
+        if($basePath == '') {
+             return $this->sendError('Unable to export excel');
+        } else {
+             return $this->sendResponse($basePath, trans('custom.success_export'));
+        }
+    }
+
+    public function generateBankLedgerReportPDF(Request $request)
+    {
+        ini_set('max_execution_time', 1800);
+        ini_set('memory_limit', -1);
+        $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
+
+        $db = isset($request->db) ? $request->db : ""; 
+
+        $employeeID = \Helper::getEmployeeSystemID();
+        BankLedgerPdfJob::dispatch($db, $request, [$employeeID]);
+
+        return $this->sendResponse([], "Bank Ledger PDF report has been sent to queue");
     }
 }
