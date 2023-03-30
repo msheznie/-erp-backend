@@ -61,6 +61,7 @@ use App\Models\BidBoq;
 use App\Models\BidMainWork;
 use App\Repositories\TenderFinalBidsRepository;
 use App\Models\TenderFinalBids;
+use App\Models\DocumentModifyRequest;
 /**
  * Class TenderMasterController
  * @package App\Http\Controllers\API
@@ -575,6 +576,46 @@ WHERE
 	srm_calendar_dates.company_id = $companySystemID
 	and ISNULL(srm_calendar_dates_detail.from_date)
 	and ISNULL(srm_calendar_dates_detail.to_date)";
+
+    $current_date_obj = date('Y-m-d H:i:s');
+    $data['edit_valid'] = false;
+    $data['is_request_process'] = false;
+    $data['request_type'] = '';
+    $data['is_request_process_complete'] = false;
+    if($data['master']['published_yn'] == 1)
+    {
+        $current_date = Carbon::createFromFormat('Y-m-d H:i:s', $current_date_obj);
+        $opening_date_format = Carbon::createFromFormat('Y-m-d H:i:s', $data['master']['bid_submission_opening_date']);
+
+        $result_obj = $opening_date_format->gt($current_date);
+        $data['edit_valid'] = $result_obj;
+
+
+        $tende_edit_log = DocumentModifyRequest::where('documentSystemCode',$tenderMasterId)->first();
+  
+        if(isset($tende_edit_log) && $result_obj)
+        {   
+            if($tende_edit_log->type == 1)
+            {
+                $data['request_type'] = 'Edit';
+            }
+            else
+            {
+                $data['request_type'] = 'Amend';
+            }
+
+            if($tende_edit_log->status == 1 && $tende_edit_log->approved == 0)
+            {
+                $data['is_request_process'] = true;
+                $data['edit_valid'] = false;
+            }
+            else if($tende_edit_log->status == 1 && $tende_edit_log->approved == -1)
+            {
+                $data['is_request_process_complete'] = true;
+                $data['edit_valid'] = false;
+            }
+        }
+    }
 
 
         // $calenderData =  CalendarDates::
@@ -1521,8 +1562,8 @@ WHERE
             'erp_documentapproved.documentApprovedID',
             'erp_documentapproved.rollLevelOrder',
             'currencymaster.CurrencyCode',
-            'approvalLevelID',
-            'documentSystemCode',
+            'erp_documentapproved.approvalLevelID',
+            'erp_documentapproved.documentSystemCode',
             'employees.empName As created_user'
         )->join('employeesdepartments', function ($query) use ($companyID, $empID, $rfx) {
             $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
@@ -1565,7 +1606,7 @@ WHERE
                 ->where('erp_documentapproved.companySystemID', $companyID);
         }
 
-
+        
         $search = $request->input('search.value');
 
         if ($search) {
@@ -1600,7 +1641,7 @@ WHERE
 
     public function approveTender(Request $request)
     {
-
+      
         $approve = \Helper::approveDocument($request);
 
         if (!$approve["success"]) {
@@ -3414,5 +3455,198 @@ WHERE
             DB::rollback();
             return $this->sendError($e->getMessage());
         }
+    }
+
+
+    public function getTenderEditMasterApproval(Request $request)
+    {
+        $input = $request->all();
+        $rfx = false;
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyID = $request->companyId;
+        $empID = \Helper::getEmployeeSystemID();
+        if(isset($input['rfx'])){
+            $rfx = $input['rfx'];
+        }
+
+        $poMasters = DB::table('erp_documentapproved')->select(
+            'srm_tender_master.id',
+            'srm_tender_master.tender_code',
+            'document_modify_request.document_master_id as document_system_id',
+            'srm_tender_master.title',
+            'srm_tender_master.description',
+            'srm_tender_master.estimated_value',
+            'srm_tender_master.bid_submission_opening_date',
+            'srm_tender_master.bid_submission_closing_date',
+            'srm_tender_master.created_at',
+            'srm_tender_master.confirmed_date',
+            'erp_documentapproved.documentApprovedID',
+            'erp_documentapproved.rollLevelOrder',
+            // 'currencymaster.CurrencyCode',
+            'approvalLevelID',
+            'erp_documentapproved.documentSystemCode',
+            'employees.empName As created_user',
+            'document_modify_request.type'
+        )->join('employeesdepartments', function ($query) use ($companyID, $empID, $rfx) {
+            $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
+                /*->on('erp_documentapproved.departmentSystemID', '=', 'employeesdepartments.departmentSystemID')*/
+                ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
+            if($rfx){
+                $query->where('employeesdepartments.documentSystemID', 113);
+            } else{
+                $query->where('employeesdepartments.documentSystemID', 108);
+            }
+            $query->where('employeesdepartments.companySystemID', $companyID)
+                ->where('employeesdepartments.employeeSystemID', $empID)
+                ->where('employeesdepartments.isActive', 1)
+                ->where('employeesdepartments.removedYN', 0);
+        })->join('document_modify_request', function ($query) use ($companyID, $empID, $rfx) {
+            $query->on('erp_documentapproved.documentSystemCode', '=', 'id')
+                ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
+                ->where('document_modify_request.companySystemID', $companyID)
+                ->where('document_modify_request.approved', 0);
+        })->leftJoin('srm_tender_master', 'srm_tender_master.tender_edit_version_id', '=', 'document_modify_request.id');
+
+
+            $poMasters = $poMasters->where('erp_documentapproved.approvedYN', 0)
+            // ->join('currencymaster', 'currency_id', '=', 'currencyID')
+            ->join('employees', 'document_modify_request.requested_employeeSystemID', 'employees.employeeSystemID')
+            ->where('erp_documentapproved.documentSystemID', 117)
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->where('erp_documentapproved.companySystemID', $companyID);
+
+        
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $poMasters = $poMasters->where(function ($query) use ($search) {
+                $query->where('tender_code', 'LIKE', "%{$search}%")
+                    ->orWhere('description', 'LIKE', "%{$search}%")
+                    ->orWhere('title', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+
+        if ($isEmployeeDischarched == 'true') {
+            $purchaseRequests = [];
+        }
+
+        return \DataTables::of($poMasters)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('documentApprovedID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            //->addColumn('Index', 'Index', "Index")
+            ->make(true);
+    }
+
+    public function getTenderEditMasterFullApproved(Request $request)
+    {
+        $input = $request->all();
+        $rfx = false;
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyID = $request->companyId;
+        $empID = \Helper::getEmployeeSystemID();
+        if(isset($input['rfx'])){
+            $rfx = $input['rfx'];
+        }
+
+        $poMasters = DB::table('erp_documentapproved')->select(
+            'srm_tender_master.id',
+            'srm_tender_master.tender_code',
+            'document_modify_request.document_master_id as document_system_id',
+            'srm_tender_master.title',
+            'srm_tender_master.description',
+            'srm_tender_master.estimated_value',
+            'srm_tender_master.bid_submission_opening_date',
+            'srm_tender_master.bid_submission_closing_date',
+            'srm_tender_master.created_at',
+            'srm_tender_master.confirmed_date',
+            'erp_documentapproved.documentApprovedID',
+            'erp_documentapproved.rollLevelOrder',
+            // 'currencymaster.CurrencyCode',
+            'approvalLevelID',
+            'erp_documentapproved.documentSystemCode',
+            'employees.empName As created_user',
+            'document_modify_request.type'
+        )->join('employeesdepartments', function ($query) use ($companyID, $empID, $rfx) {
+            $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
+                /*->on('erp_documentapproved.departmentSystemID', '=', 'employeesdepartments.departmentSystemID')*/
+                ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
+
+            if($rfx){
+                $query->where('employeesdepartments.documentSystemID', 113);
+            } else{
+                $query->where('employeesdepartments.documentSystemID', 108);
+            }
+
+            $query->where('employeesdepartments.companySystemID', $companyID)
+                ->where('employeesdepartments.employeeSystemID', $empID)
+                ->where('employeesdepartments.isActive', 1)
+                ->where('employeesdepartments.removedYN', 0);
+        })->join('document_modify_request', function ($query) use ($companyID, $empID, $rfx) {
+            $query->on('erp_documentapproved.documentSystemCode', '=', 'id')
+                ->where('document_modify_request.companySystemID', $companyID)
+                ->where('document_modify_request.approved', -1);
+        })->leftJoin('srm_tender_master', 'srm_tender_master.tender_edit_version_id', '=', 'document_modify_request.id');
+
+
+        $poMasters = $poMasters->where('erp_documentapproved.approvedYN', -1)
+        // ->join('currencymaster', 'currency_id', '=', 'currencyID')
+                ->join('employees', 'document_modify_request.requested_employeeSystemID', 'employees.employeeSystemID')
+                ->where('erp_documentapproved.documentSystemID', 117)
+                ->where('erp_documentapproved.companySystemID', $companyID);
+
+        
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $poMasters = $poMasters->where(function ($query) use ($search) {
+                $query->where('tender_code', 'LIKE', "%{$search}%")
+                    ->orWhere('description', 'LIKE', "%{$search}%")
+                    ->orWhere('title', 'LIKE', "%{$search}%");
+            });
+        }
+
+        $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
+
+        if ($isEmployeeDischarched == 'true') {
+            $purchaseRequests = [];
+        }
+
+        return \DataTables::of($poMasters)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('documentApprovedID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            //->addColumn('Index', 'Index', "Index")
+            ->make(true);
     }
 }
