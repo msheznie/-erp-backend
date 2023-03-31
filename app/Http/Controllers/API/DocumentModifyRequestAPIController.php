@@ -345,7 +345,7 @@ class DocumentModifyRequestAPIController extends AppBaseController
                 if (!$confirm["success"]) {
                     return ['success' => false, 'message' => $confirm["message"]];
                 } else {
-                    return ['success' => true, 'message' => 'Document Modify Request saved successfully'];
+                    return ['success' => true, 'message' => 'Tender modify request sent successfully'];
                 }
 
 
@@ -367,11 +367,10 @@ class DocumentModifyRequestAPIController extends AppBaseController
         $input = $request->all();
         if(isset($input['reference_document_id']) && $input['reference_document_id'])
         {
-            $isConfirmed = TenderMaster::find($input["documentSystemCode"]);
-
             $current_date_obj = date('Y-m-d H:i:s');
             $current_date = Carbon::createFromFormat('Y-m-d H:i:s', $current_date_obj);
-            $opening_date_format = Carbon::createFromFormat('Y-m-d H:i:s', $isConfirmed->bid_submission_opening_date);
+            $opening_date_format = Carbon::createFromFormat('Y-m-d H:i:s', $input['bid_submission_opening_date']);
+
             $result_obj = $opening_date_format->gt($current_date);
     
             if(!$result_obj)

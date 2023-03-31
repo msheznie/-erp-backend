@@ -3251,6 +3251,19 @@ class Helper
                                         $pushNotificationArray = [];
                                         $document = Models\DocumentMaster::where('documentSystemID', $documentApproved->documentSystemID)->first();
 
+
+                                        if($params["document"] == 117)
+                                        {
+                                            if($sorceDocument->type == 1)
+                                            {
+                                                $document->documentDescription = 'Edit Request';
+                                            }
+                                            else
+                                            {
+                                                $document->documentDescription = 'Amend Request';
+                                            }
+                                        }
+
                                         $approvedDocNameBody = $document->documentDescription . ' <b>' . $documentApproved->documentCode . '</b>';
 
                                         // if (in_array($params["document"], self::documentListForClickHere())) {
@@ -4794,6 +4807,19 @@ class Helper
                         $pushNotificationArray = [];
                         if (!empty($sourceModel)) {
                             $document = Models\DocumentMaster::where('documentSystemID', $currentApproved->documentSystemID)->first();
+                           
+
+                            if($input["documentSystemID"] == 117)
+                            {
+                                if($sourceModel->type == 1)
+                                {
+                                    $document->documentDescription = 'Edit Request';
+                                }
+                                else
+                                {
+                                    $document->documentDescription = 'Amend Request';
+                                }
+                            }
                             $subjectName = $document->documentDescription . ' ' . $currentApproved->documentCode;
                             $bodyName = $document->documentDescription . ' ' . '<b>' . $currentApproved->documentCode . '</b>';
 
@@ -5505,6 +5531,18 @@ class Helper
                             // if (empty($companyDocument)) {
                             //     return ['success' => false, 'message' => 'Policy not found for this document'];
                             // }
+
+                            if($input["documentSystemID"] == 117)
+                            {
+                                if($sourceModel->type == 1)
+                                {
+                                    $document->documentDescription = 'Edit Request';
+                                }
+                                else
+                                {
+                                    $document->documentDescription = 'Amend Request';
+                                }
+                            }
 
                             $subjectName = $document->documentDescription . ' ' . $currentApproved->documentCode;
                             $bodyName = '<p>'.$document->documentDescription . ' ' . '<b>' . $currentApproved->documentCode . '</b>';
