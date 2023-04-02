@@ -215,7 +215,7 @@ class DocumentModifyRequest extends Model
         'requested_employeeSystemID' => 'integer',
         'RollLevForApp_curr' => 'integer',
         'status' => 'boolean',
-        'type' => 'boolean',
+        'type' => 'integer',
         'version' => 'integer'
     ];
 
