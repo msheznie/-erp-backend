@@ -4897,8 +4897,8 @@ class Helper
                 $msg = $e->getMessage();
             }
 
-            return ['success' => false, 'message' => $msg];
-            // return ['success' => false, 'message' => $e->getMessage()." Line:".$e->getLine()];
+            // return ['success' => false, 'message' => $msg];
+            return ['success' => false, 'message' => $e->getMessage()." Line:".$e->getLine()];
 
         }
     }

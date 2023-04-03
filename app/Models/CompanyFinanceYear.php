@@ -243,4 +243,17 @@ class CompanyFinanceYear extends Model
                         ->whereRaw('? between bigginingDate and endingDate', $date)
                         ->first();
     }
+
+
+    public static function budgetYearByFinanceYearID($companyFinanceYearID)
+    {
+        $companyFinanceYear = CompanyFinanceYear::find($companyFinanceYearID);
+
+        if ($companyFinanceYear) {
+            return Carbon::parse($companyFinanceYear->bigginingDate)->format('Y');
+        } else {
+            return null;
+        }
+    }
+
 }
