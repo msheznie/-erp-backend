@@ -591,7 +591,7 @@ WHERE
         $data['edit_valid'] = $result_obj;
 
 
-        $tende_edit_log = DocumentModifyRequest::where('documentSystemCode',$tenderMasterId)->first();
+        $tende_edit_log = DocumentModifyRequest::where('documentSystemCode',$tenderMasterId)->orderBy('id','desc')->first();
   
         if(isset($tende_edit_log) && $result_obj)
         {   
