@@ -383,7 +383,7 @@ class LeaveCarryForwardComputationService
             'approvedEmpID' => 11,
             'approvedYN' => 1,
             'approvedDate' => $this->currentDate,
-            'approvedComments' => 'Approve by Admin',
+            'approvedComments' => 'Approved by Admin',
             'approvedPC' =>  gethostname(),
             'companyID' =>  $this->companyId,
             'companyCode' => $this->companyCode,
