@@ -213,7 +213,11 @@ class TaxAuthorityAPIController extends AppBaseController
 
         $currency = CurrencyMaster::all();
 
-        $chartOfAccount = ChartOfAccount::where('isApproved', 1)->where('controllAccountYN', 1)->get();
+        $chartOfAccount = ChartOfAccount::where('isApproved', 1)->where('controllAccountYN', 1)
+                                        ->whereHas('chartofaccount_assigned', function($query) use ($companies){
+                                            $query->whereIn('companySystemID', $companies)
+                                                  ->where('isAssigned', -1);
+                                        })->get();
 
         $output = array('companies' => $companiesByGroup,
             'currency' => $currency,

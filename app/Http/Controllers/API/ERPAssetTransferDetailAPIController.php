@@ -350,6 +350,15 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
         }
         return $this->sendResponse($data, 'Asset Request Detail');
     }
+    public function typeAheadAssetDrop(Request $request){
+        $input = $request->all();
+        $companyID = $input['companyID'];
+        $search = $input['search'];
+        $data['assetMaster_drop'] = FixedAssetMaster::where('companySystemID', $companyID)->where('faCode', 'like', "%{$search}%")->orWhere('assetDescription', 'like', "%{$search}%")->get();
+
+        return $this->sendResponse($data, 'Asset request drop down data retrieved successfully');
+    }
+
     public function assetTransferDrop(Request $request)
     {
         $input = $request->all();

@@ -154,13 +154,13 @@ class SupplierInvoiceTaxLedgerService
                 $ledgerDetailsData['itemCode'] = null;
                 $ledgerDetailsData['itemDescription'] = null;
                 $ledgerDetailsData['VATPercentage'] = $value->VATPercentage;
-                $ledgerDetailsData['taxableAmount'] = ($value->netAmount - $value->VATAmount);
+                $ledgerDetailsData['taxableAmount'] = $value->netAmount;
                 $ledgerDetailsData['VATAmount'] = $value->VATAmount;
                 $ledgerDetailsData['recoverabilityAmount'] = $value->VATAmount;
                 $ledgerDetailsData['localER'] = $value->localCurrencyER;
                 $ledgerDetailsData['reportingER'] = $value->comRptCurrencyER;
-                $ledgerDetailsData['taxableAmountLocal'] = $value->netAmountLocal - $value->VATAmountLocal;
-                $ledgerDetailsData['taxableAmountReporting'] = $value->netAmountRpt - $value->VATAmountRpt;
+                $ledgerDetailsData['taxableAmountLocal'] = $value->netAmountLocal;
+                $ledgerDetailsData['taxableAmountReporting'] = $value->netAmountRpt;
                 $ledgerDetailsData['VATAmountLocal'] = $value->VATAmountLocal;
                 $ledgerDetailsData['VATAmountRpt'] = $value->VATAmountRpt;
                 $ledgerDetailsData['localCurrencyID'] = $value->localCurrency;

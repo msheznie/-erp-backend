@@ -664,8 +664,11 @@ class AccountsReceivableReportAPIController extends AppBaseController
 
                     $requestCurrency = CurrencyMaster::where('currencyID', $currencyId)->first();
 
-                    $decimalPlace = !empty($requestCurrency) ? $requestCurrency->DecimalPlaces : 2;
-
+                    if(!empty($requestCurrency)) {
+                        $decimalPlace = $requestCurrency->DecimalPlaces;
+                    }else{
+                        $decimalPlace =  2;
+                    }
                     $total = array();
 
                     $total['Jan'] = array_sum(collect($output)->pluck('Jan')->toArray());
@@ -4482,8 +4485,6 @@ WHERE
                     erp_generalledger.glCode,
                     erp_generalledger.glAccountType,
                     chartofaccounts.controlAccounts,
-                    IF(ISNULL(tax_ledger_details.VATAmountRpt), 0, tax_ledger_details.VATAmountRpt) as VATAmountRPT,
-                    IF(ISNULL(tax_ledger_details.VATAmountLocal), 0, tax_ledger_details.VATAmountLocal) as VATAmountLocal,
                     revenueGLCodes.controlAccountID,
                     erp_generalledger.supplierCodeSystem,
                 IF
@@ -4510,7 +4511,6 @@ WHERE
                     erp_generalledger
                     INNER JOIN chartofaccounts ON erp_generalledger.chartOfAccountSystemID = chartofaccounts.chartOfAccountSystemID
                     LEFT JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID
-                    LEFT JOIN tax_ledger_details ON erp_generalledger.chartOfAccountSystemID = tax_ledger_details.chartOfAccountSystemID AND erp_generalledger.documentSystemID = tax_ledger_details.documentSystemID AND  erp_generalledger.documentSystemCode = tax_ledger_details.documentMasterAutoID
                     LEFT JOIN contractmaster ON erp_generalledger.clientContractID = contractmaster.ContractNumber
                     AND erp_generalledger.companyID = contractmaster.CompanyID
                     INNER JOIN (
@@ -4532,7 +4532,7 @@ WHERE
                     DATE(erp_generalledger.documentDate) <= "' . $asOfDate . '"
                     AND YEAR ( erp_generalledger.documentDate ) = "' . $year . '"
                     AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
-
+                    AND chartofaccounts.controlAccountsSystemID = 1
                     ) AS revenueDetailData
                     LEFT JOIN customermaster ON customermaster.customerCodeSystem = revenueDetailData.mySupplierCode
                     WHERE (revenueDetailData.mySupplierCode IN (' . join(',', $customerSystemID) . ')
