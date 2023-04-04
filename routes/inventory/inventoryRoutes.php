@@ -119,6 +119,8 @@ Route::group([], function () {
     Route::post('requestReopen', 'MaterielRequestAPIController@requestReopen')->name("Material Request Reopen");
     Route::post('requestReferBack', 'MaterielRequestAPIController@requestReferBack')->name("Material Request ReferBack");
     Route::post('getAllRequestByCompany', 'MaterielRequestAPIController@getAllRequestByCompany')->name("Get All Material Request By Company");
+    Route::post('requestDetailsAddAllItems', 'MaterielRequestDetailsAPIController@requestDetailsAddAllItems')->name('Material request add all item');
+    Route::post('materialRequestValidateItem', 'MaterielRequestDetailsAPIController@materialRequestValidateItem')->name('Material request validate item');
 });
 
 //Material Issue Trans

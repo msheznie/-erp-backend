@@ -28,6 +28,11 @@ use App\Models\UnitConversion;
 use App\Repositories\MaterielRequestDetailsRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use App\Jobs\AddBulkItem\MaterialRequestAddBulkItemJob;
+use App\Repositories\UserRepository;
+use App\Services\MaterialRequestService;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -41,9 +46,11 @@ class MaterielRequestDetailsAPIController extends AppBaseController
 {
     /** @var  MaterielRequestDetailsRepository */
     private $materielRequestDetailsRepository;
+    private $userRepository;
 
-    public function __construct(MaterielRequestDetailsRepository $materielRequestDetailsRepo)
+    public function __construct(MaterielRequestDetailsRepository $materielRequestDetailsRepo,UserRepository $userRepo)
     {
+        $this->userRepository = $userRepo;
         $this->materielRequestDetailsRepository = $materielRequestDetailsRepo;
     }
 
@@ -299,6 +306,80 @@ class MaterielRequestDetailsAPIController extends AppBaseController
         return $this->sendResponse($materielRequestDetails->toArray(), 'Materiel Request Details saved successfully');
     }
 
+    public function requestDetailsAddAllItems(Request $request)
+    {
+        $input = $request->all();
+        $id = Auth::id();
+        $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
+
+        $input['employeeSystemID'] = $user ? $user->employee['employeeSystemID'] : null;
+        $input['empID'] = $user ? $user->employee['empID'] : null;
+
+        if (isset($input['addAllItems']) && $input['addAllItems']) {
+            $db = isset($input['db']) ? $input['db'] : "";    
+
+            $materielRequest = MaterielRequest::where('RequestID', $input['RequestID'])->first();
+
+
+            if (empty($materielRequest)) {
+                return $this->sendError('Materiel Request Details not found');
+            }
+    
+            if($materielRequest->ClosedYN == -1){
+                return $this->sendError('This Materiel Request already closed. You can not add.',500);
+            }
+    
+            if($materielRequest->approved == -1){
+                return $this->sendError('This Materiel Request fully approved. You can not add.',500);
+            }
+
+            $companySystemID = $input['companySystemID'];
+
+            $allowItemToTypePolicy = false;
+            $itemNotound = false;
+            $allowItemToType = CompanyPolicyMaster::where('companyPolicyCategoryID', 54)
+                                                ->where('companySystemID', $companySystemID)
+                                                ->first();
+    
+            if ($allowItemToType) {
+                $allowItemToTypePolicy = true;
+            }
+
+            $data['isBulkItemJobRun'] = 1;
+
+            $materielRequest = MaterielRequest::where('RequestID', $input['RequestID'])->update($data);
+            MaterialRequestAddBulkItemJob::dispatch($db, $input);
+
+            return $this->sendResponse('', 'Items Added to Queue Please wait some minutes to process');
+        } else {
+            DB::beginTransaction();
+            try {
+                $invalidItems = [];
+                foreach ($input['itemArray'] as $key => $value) {
+                    $res = MaterialRequestService::validateMaterialRequestItem($value['itemCodeSystem'], $input['companySystemID'], $input['RequestID']);
+                    
+                    if ($res['status']) {
+                        MaterialRequestService::saveMaterialRequestItem($value['itemCodeSystem'], $input['companySystemID'], $input['RequestID'], $input['empID'], $input['employeeSystemID']);
+                    } else {
+                        $invalidItems[] = ['itemCodeSystem' => $value['itemCodeSystem'], 'message' => $res['message']];
+                    }
+                }
+                DB::commit();
+                return $this->sendResponse('', 'Material Request Items saved successfully');
+            } catch (\Exception $exception) {
+                DB::rollBack();
+                return $this->sendError($exception->getMessage(), 500);
+            }
+        }
+    }
+
+
+    public function materialRequestValidateItem(Request $request)
+    {
+        $input = $request->all();
+
+        return MaterialRequestService::validateMaterialRequestItem($input['itemCodeSystem'], $input['companySystemID'], $input['RequestID']);
+    }
     /**
      * @param int $id
      * @return Response
