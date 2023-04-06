@@ -11,7 +11,7 @@
                 <span style="white-space: pre; word-wrap: normal; font-weight: bold">{!! nl2br($docRef) !!}</span>
             </td>
             <td style="width:33%; text-align: center;font-size: 10px;vertical-align: top;">
-                <span style="text-align: center">Page <span style="content: counter(page);">{nbpg}</span>
+                <span style="text-align: center">{{ __('custom.page') }} <span style="content: counter(page);">{nbpg}</span>
 
                 </span><br>
                 @if ($masterdata->company)
@@ -19,7 +19,7 @@
                 @endif
             </td>
             <td style="width:33%;font-size: 10px;vertical-align: top; text-align: right">
-                <span style="margin-left: 50%;text-align: right">Printed Date : {{date("d-M-y", strtotime(now()))}}</span>
+                <span style="margin-left: 50%;text-align: right">{{ __('custom.printed_date') }} : {{date("d-M-y", strtotime(now()))}}</span>
             </td>
         </tr>
     </table>
