@@ -230,6 +230,7 @@ class Helper
      * $param 6-amount : amount
      * no return values
      */
+
     public static function confirmDocumentForApi($params)
     {
         //Skip Employee Info when Confirming;
@@ -3040,7 +3041,14 @@ class Helper
                         if (!$isConfirm) {
                             // get current employee detail.
                             if (!in_array($params['document'], $empInfoSkip)) {
-                                $empInfo = self::getEmployeeInfo();
+
+                                if(!empty(isset($params["employee_id"]))) {
+                                    $empInfo = Models\Employee::with(['profilepic', 'user_data' => function($query) {
+                                        $query->select('uuid', 'employee_id');
+                                    }])->find($params["employee_id"]);
+                                } else {
+                                    $empInfo = self::getEmployeeInfo();
+                                }
                             } else {
                                 $empInfo  =  (object) ['empName' => null, 'empID' => null, 'employeeSystemID' => null];
                             }
