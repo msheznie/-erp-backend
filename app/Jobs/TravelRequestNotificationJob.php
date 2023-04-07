@@ -66,7 +66,7 @@ class TravelRequestNotificationJob implements ShouldQueue
             ];
             DB::table('job_logs')->insert($data);
         } else {
-            //CommonJobService::db_switch($db_name);
+            CommonJobService::db_switch($db_name);
             $obj = new TravelRequestNotificationService($this->companyId, $this->tenantId, $this->id,$this->tripMaster,$this->tripRequestBookings);
             $obj->execute();
         }
