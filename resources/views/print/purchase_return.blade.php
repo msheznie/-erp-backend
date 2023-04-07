@@ -150,17 +150,13 @@
     </style>
 </head>
 <body>
-<div class="footer">
-    {{--Footer Page <span class="pagenum"></span>--}}
-    <span class="white-space-pre-line font-weight-bold">{!! nl2br($entity->docRefNo) !!}</span>
-</div>
 <div id="watermark"></div>
 <div class="card-body content" id="print-section">
 
     <table style="width: 100%">
         <tr style="width: 100%">
             <td colspan="3" style="bottom: 0;position: absolute;text-align: right">
-            <span class="font-weight-bold">
+            <span style="font-weight: bold">
                 <h3 class="text-muted">
                     @if($entity->confirmedYN == 0 && $entity->approved == 0)
                         Not Confirmed
@@ -170,7 +166,7 @@
                         Fully Approved
                     @endif
                     </h3>
-`             </span>
+            </span>
             </td>
         </tr>
         <tr style="width: 100%">
@@ -198,14 +194,14 @@
 
     <table style="width: 100%">
         <tr style="width:100%">
-            <td style="width: 30%">
+            <td style="width: 30%; vertical-align: top;">
                 <table>
                     <tr>
-                        <td width="50px">
-                            <span class="font-weight-bold">Warehouse</span>
+                        <td width="70px">
+                            <span style="font-weight: bold">Warehouse</span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold">:</span>
                         </td>
                         <td>
                             @if($entity->location_by)
@@ -214,11 +210,11 @@
                         </td>
                     </tr>
                     <tr>
-                        <td width="50px">
-                            <span class="font-weight-bold">Ref No</span>
+                        <td width="70px">
+                            <span style="font-weight: bold">Ref No</span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold">:</span>
                         </td>
                         <td>
                             {{$entity->purchaseReturnRefNo}}
@@ -226,10 +222,10 @@
                     </tr>
                     <tr>
                         <td width="70px">
-                            <span class="font-weight-bold">Comments </span>
+                            <span style="font-weight: bold">Comments </span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold">:</span>
                         </td>
                         <td>
                             <span>{{$entity->narration}}</span>
@@ -237,27 +233,27 @@
                     </tr>
                 </table>
             </td>
-            <td style="width: 40%;text-align: center">
+            <td style="width: 40%;text-align: center; vertical-align: top;">
             </td>
-            <td style="width: 30%">
+            <td style="width: 30%; vertical-align: top;">
                 <table>
                     <tr>
-                        <td width="70px">
-                            <span class="font-weight-bold">Document No</span>
+                        <td width="100px">
+                            <span style="font-weight: bold">Document No</span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold">:</span>
                         </td>
                         <td>
                             <span>{{$entity->purchaseReturnCode}}</span>
                         </td>
                     </tr>
                     <tr>
-                        <td width="70px">
-                            <span class="font-weight-bold">Date </span>
+                        <td width="100px">
+                            <span style="font-weight: bold">Date </span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold">:</span>
                         </td>
                         <td>
                             <span>
@@ -273,7 +269,7 @@
     <div style="margin-top: 30px">
         <table class="table table-bordered" style="width: 100%;">
             <thead>
-            <tr class="theme-tr-head">
+            <tr style="background-color: #DEDEDE !important; border-color:#000">
                 <th></th>
                 <th class="text-left">Item Code</th>
                 <th class="text-left">Item Description</th>
@@ -286,17 +282,17 @@
             <tbody>
             @foreach ($entity->details as $item)
                 <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;">
-                    <td>{{$loop->iteration}}</td>
-                    <td>{{$item->itemPrimaryCode}}</td>
-                    <td>{{$item->itemDescription}}</td>
-                    <td>{{$item->supplierPartNumber}}</td>
-                    <td>
+                    <td style="padding-left: 5px">{{$loop->iteration}}</td>
+                    <td style="padding-left: 5px">{{$item->itemPrimaryCode}}</td>
+                    <td style="padding-left: 5px">{{$item->itemDescription}}</td>
+                    <td style="padding-left: 5px">{{$item->supplierPartNumber}}</td>
+                    <td style="padding-left: 5px">
                         @if($item->unit)
                             {{$item->unit->UnitShortCode}}
                         @endif
                     </td>
-                    <td class="text-right">{{$item->noQty}}</td>
-                    <td class="text-left">
+                    <td style="padding-right: 5px" class="text-right">{{$item->noQty}}</td>
+                    <td style="padding-left: 5px" class="text-left">
                         {{$item->comment}}
                     </td>
                 </tr>
@@ -311,8 +307,8 @@
                 <td width="60%">
                     <table width="100%">
                         <tr>
-                            <td width="70px">
-                                <span class="font-weight-bold">Return By :</span>
+                            <td width="100px">
+                                <span style="font-weight: bold">Return By :</span>
                             </td>
                             <td width="400px">
                                 @if($entity->confirmed_by)
@@ -328,8 +324,8 @@
                 <td width="30%">
                     <table>
                         <tr>
-                            <td width="70px">
-                                <span class="font-weight-bold">Reviewed By :</span>
+                            <td width="100px">
+                                <span style="font-weight: bold">Reviewed By :</span>
                             </td>
                             <td>
                                 <div style="border-bottom: 1px solid black;width: 200px;margin-top: 7px;"></div>
@@ -341,7 +337,7 @@
         </table>
     </div>
     <div class="row" style="margin-top: 10px">
-        <span class="font-weight-bold">Electronically Approved By :</span>
+        <span style="font-weight: bold">Electronically Approved By :</span>
     </div>
     <div style="margin-top: 10px">
         <table>

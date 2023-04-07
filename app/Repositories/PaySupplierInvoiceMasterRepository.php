@@ -148,7 +148,8 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
     public function getLastUsedChequeID($company_system_id, $bank_account_id) {
         $usedCheque = ChequeRegisterDetail::whereHas('master', function ($q) use($company_system_id,$bank_account_id) {
             $q->where('bank_account_id', $bank_account_id)
-                ->where('company_id', $company_system_id);
+                ->where('company_id', $company_system_id)
+                ->where('isActive', 1);
         })
             ->where(function ($q) {
             $q->where('status', 1)  // status = 1 => used
@@ -387,7 +388,8 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
 
             $unUsedCheque = ChequeRegisterDetail::whereHas('master', function ($q) use ($companySystemID, $bankAccount) {
                                                     $q->where('bank_account_id', $bankAccount->bankAccountAutoID)
-                                                        ->where('company_id', $companySystemID);
+                                                        ->where('company_id', $companySystemID)
+                                                        ->where('isActive', 1);
                                                 })
                                                 ->where('status', 0)
                                                 ->where(function ($q) use ($usedCheckID) {

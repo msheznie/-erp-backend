@@ -45,6 +45,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use App\helper\CreateExcel;
+use App\Jobs\DocumentAttachments\SupplierStatementJob;
 
 class AccountsPayableReportAPIController extends AppBaseController
 {
@@ -5323,7 +5324,7 @@ ORDER BY
 
         $html = view('print.supplier_statement', $dataArr);
 
-        return ['html' => $html, 'output' => $output];
+        return ['html' => $html, 'output' => $output, 'dataArr' => $dataArr];
     }
 
     public function sentSupplierStatement(Request $request)
@@ -5343,51 +5344,18 @@ ORDER BY
             $resHtml = $this->supplierStatementPdf($input, true);
 
             if (count($resHtml['output']) > 0) {
-                $html = $resHtml['html'];
-                $pdf = \App::make('dompdf.wrapper');
-                $path = public_path().'/uploads/emailAttachment';
-
-                if (!file_exists($path)) {
-                    File::makeDirectory($path, 0777, true, true);
-                }
-                $nowTime = time();
-
                 $supplierID = $input['suppliers'][0]['supplierCodeSytem'];
-                $pdf->loadHTML($html)->setPaper('a4', 'landscape')->save('uploads/emailAttachment/supplier_statement_' . $nowTime.$supplierID. '.pdf');
-
-
                 $fetchSupEmail = SupplierContactDetails::where('supplierID', $supplierID)
                     ->get();
 
                 $supplierMaster = SupplierMaster::find($supplierID);
 
-                $company = Company::where('companySystemID', $input['companySystemID'])->first();
                 $emailSentTo = 0;
-
-                $footer = "<font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!" .
-                    "<br>This is an auto generated email. Please do not reply to this email because we are not " .
-                    "monitoring this inbox.</font>";
                 
                 if ($fetchSupEmail) {
                     foreach ($fetchSupEmail as $row) {
                         if (!empty($row->contactPersonEmail)) {
                             $emailSentTo = 1;
-                            $dataEmail['empEmail'] = $row->contactPersonEmail;
-
-                            $dataEmail['companySystemID'] = $input['companySystemID'];
-
-                            $temp = "Dear " . $supplierMaster->supplierName . ',<p> Supplier statement report has been sent from ' . $company->CompanyName . $footer;
-
-                            $pdfName = realpath("uploads/emailAttachment/supplier_statement_" . $nowTime.$supplierID. ".pdf");
-
-                            $dataEmail['isEmailSend'] = 0;
-                            $dataEmail['attachmentFileName'] = $pdfName;
-                            $dataEmail['alertMessage'] = "Supplier statement report from " . $company->CompanyName;
-                            $dataEmail['emailAlertMessage'] = $temp;
-                            $sendEmail = \Email::sendEmailErp($dataEmail);
-                            if (!$sendEmail["success"]) {
-                                $errorMessage[] = $sendEmail["message"];
-                            }
                         }
                     }
                 }
@@ -5396,22 +5364,6 @@ ORDER BY
                     if ($supplierMaster) {
                         if (!empty($supplierMaster->supEmail)) {
                             $emailSentTo = 1;
-                            $dataEmail['empEmail'] = $supplierMaster->supEmail;
-
-                            $dataEmail['companySystemID'] = $input['companySystemID'];
-
-                            $temp = "Dear " . $supplierMaster->supplierName . ',<p> Supplier statement report has been sent from ' . $company->CompanyName . $footer;
-
-                            $pdfName = realpath("uploads/emailAttachment/supplier_statement_" . $nowTime.$supplierID . ".pdf");
-
-                            $dataEmail['isEmailSend'] = 0;
-                            $dataEmail['attachmentFileName'] = $pdfName;
-                            $dataEmail['alertMessage'] = "Supplier statement report " . $company->CompanyName;
-                            $dataEmail['emailAlertMessage'] = $temp;
-                            $sendEmail = \Email::sendEmailErp($dataEmail);
-                            if (!$sendEmail["success"]) {
-                                $errorMessage[] = $sendEmail["message"];
-                            }
                         }
                     }
 
@@ -5420,6 +5372,8 @@ ORDER BY
                 if ($emailSentTo == 0) {
                     $errorMessage[] = "Supplier email is not updated for ".$supplierMaster->supplierName.". report is not sent";
                 } 
+
+                SupplierStatementJob::dispatch($request->db, $resHtml['dataArr'], $input);
             }
         }
 

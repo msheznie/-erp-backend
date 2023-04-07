@@ -7,6 +7,8 @@ use App\Http\Requests\API\CreateFixedAssetCategoryAPIRequest;
 use App\Http\Requests\API\UpdateFixedAssetCategoryAPIRequest;
 use App\Models\Company;
 use App\Models\FixedAssetCategory;
+use App\Models\ItemMaster;
+use App\Models\FixedAssetMaster;
 use App\Models\FixedAssetCategorySub;
 use App\Models\YesNoSelection;
 use App\Repositories\FixedAssetCategoryRepository;
@@ -354,6 +356,20 @@ class FixedAssetCategoryAPIController extends AppBaseController
         if (empty($fixedAssetCategory)) {
             return $this->sendError('Asset Category not found');
         }
+
+
+        $checkInItems = ItemMaster::where('faCatID', $id)->first();
+
+        if ($checkInItems) {
+            return $this->sendError('This Asset category is already assigned to assets. you cannot delete this record');
+        }
+
+        $checkInCostings = FixedAssetMaster::where('faCatID', $id)->first();
+
+        if ($checkInCostings) {
+            return $this->sendError('This Asset category is already assigned to assets. you cannot delete this record');
+        }
+
 
         FixedAssetCategorySub::byFaCatID($id)->withoutGlobalScope(ActiveScope::class)->delete();
 

@@ -210,7 +210,7 @@
                 <table>
                     <tr>
                         <td width="100px">
-                            <span style="font-weight:bold;">Doc Code</span>
+                            <span style="font-weight:bold;">{{ __('custom.doc_code') }}</span>
                         </td>
                         <td width="10px">
                             <span style="font-weight:bold;">:</span>
@@ -221,7 +221,7 @@
                     </tr>
                     <tr>
                         <td width="70px">
-                            <span style="font-weight:bold;">Doc Date </span>
+                            <span style="font-weight:bold;">{{ __('custom.doc_date') }}</span>
                         </td>
                         <td width="10px">
                             <span style="font-weight:bold;">:</span>
@@ -234,7 +234,7 @@
                     </tr>
                     <tr>
                         <td width="70px">
-                            <span style="font-weight:bold;">Payment Mode </span>
+                            <span style="font-weight:bold;">{{ __('custom.payment_mode') }}</span>
                         </td>
                         <td width="10px">
                             <span style="font-weight:bold;">:</span>
@@ -260,13 +260,13 @@
                 <div>
                     <span style="font-size: 18px">
                         @if($masterdata->documentType == 13)
-                            Customer Invoice Receipt
+                            {{ __('custom.doc_code') }}
                         @endif
                         @if($masterdata->documentType == 14)
-                            Direct Receipt
+                            {{ __('custom.doc_code') }}
                         @endif
                         @if($masterdata->documentType == 15)
-                            Advance Receipt
+                            {{ __('custom.advance_receipt') }}
                         @endif
                     </span>
                 </div>
@@ -275,11 +275,11 @@
                 <span style="font-weight:bold;">
                     <h3 class="text-muted">
                         @if($masterdata->confirmedYN == 0 && $masterdata->approved == 0)
-                            Not Confirmed
+                            {{ __('custom.not_confirmed') }}
                         @elseif($masterdata->confirmedYN == 1 && $masterdata->approved == 0)
-                            Pending Approval
+                            {{ __('custom.pending_approval') }}
                         @elseif($masterdata->confirmedYN == 1 && ($masterdata->approved == 1 ||  $masterdata->approved == -1))
-                            Fully Approved
+                            {{ __('custom.fully_approved') }}
                         @endif
                     </h3>
                 </span>
@@ -294,7 +294,7 @@
                 <td style="width: 58%; vertical-align:top;">
                     <table style="width: 100%">
                         <tr>
-                            <td width="150px" style="font-weight:bold; vertical-align:top;">Customer Name</td>
+                            <td width="150px" style="font-weight:bold; vertical-align:top;">{{ __('custom.customer_name') }}</td>
                             <td width="10px" style="font-weight:bold; vertical-align:top;">:</td>
                             <td colspan="3">
                                 @if ($masterdata->customer)
@@ -303,7 +303,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <td width="150px" style="font-weight:bold; vertical-align:top;">Customer Code</td>
+                            <td width="150px" style="font-weight:bold; vertical-align:top;">{{ __('custom.customer_code') }}</td>
                             <td width="10px" style="font-weight:bold; vertical-align:top;">:</td>
                             <td colspan="3">
                                 @if ($masterdata->customer)
@@ -312,7 +312,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <td width="150px" style="font-weight:bold; vertical-align:top;">Customer Address</td>
+                            <td width="150px" style="font-weight:bold; vertical-align:top;">{{ __('custom.customer_address') }}</td>
                             <td width="10px" style="font-weight:bold; vertical-align:top;">:</td>
                             <td colspan="3">
                                 @if ($masterdata->customer)
@@ -325,7 +325,7 @@
                 <td style="width: 42%;  vertical-align:top;">
                     <table style="width: 100%">
                         <tr>
-                            <td width="150px" style="font-weight:bold; vertical-align:top;">Bank Name</td>
+                            <td width="150px" style="font-weight:bold; vertical-align:top;">{{ __('custom.bank_name') }}</td>
                             <td width="10px" style="font-weight:bold; vertical-align:top;">:</td>
                             <td colspan="3">
                                 @if($masterdata->bank)
@@ -334,7 +334,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <td width="150px" style="font-weight:bold; vertical-align:top;">Account Number</td>
+                            <td width="150px" style="font-weight:bold; vertical-align:top;">{{ __('custom.account_number') }}</td>
                             <td width="10px" style="font-weight:bold; vertical-align:top;">:</td>
                             <td colspan="3">
                                 @if($masterdata->bank)
@@ -343,7 +343,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <td width="150px" style="font-weight:bold; vertical-align:top;">Bank Currency</td>
+                            <td width="150px" style="font-weight:bold; vertical-align:top;">{{ __('custom.bank_currency') }}</td>
                             <td width="10px" style="font-weight:bold; vertical-align:top;">:</td>
                             <td colspan="3">
                                 @if($masterdata->bank_currency)
@@ -353,7 +353,7 @@
                         </tr>
                         @if($masterdata->isVATApplicable)
                             <tr>
-                                <td width="150px" style="font-weight:bold; vertical-align:top;">VAT Percentage (%)</td>
+                                <td width="150px" style="font-weight:bold; vertical-align:top;">{{ __('custom.vat_percentage') }} (%)</td>
                                 <td width="10px" style="font-weight:bold; vertical-align:top;">:</td>
                                 <td colspan="3">
                                     @if ($masterdata->VATPercentage)
@@ -364,7 +364,7 @@
                         @endif
                         
                         <tr>
-                            <td width="150px" style="font-weight:bold; vertical-align:top;">Currency</td>
+                            <td width="150px" style="font-weight:bold; vertical-align:top;">{{ __('custom.currency') }}</td>
                             <td width="10px" style="font-weight:bold; vertical-align:top;">:</td>
                             <td colspan="3">
                                 @if($masterdata->currency)
@@ -382,7 +382,7 @@
                     <table>
                         <tr style="width: 100%">
                             <td style="vertical-align: top;">
-                                <span style="font-weight:bold;">Comments :</span>
+                                <span style="font-weight:bold;">{{ __('custom.comments') }} :</span>
                             </td>
                         </tr>
                         <tr style="width: 100%">
@@ -405,7 +405,7 @@
                         @if($masterdata->payeeTypeID && $masterdata->payeeTypeID != 3)
                         <tr>
                             <td width="150px">
-                                <span style="font-weight:bold;">Payee Code</span>
+                                <span style="font-weight:bold;">{{ __('custom.payee_code') }}</span>
                             </td>
                             <td width="10px">
                                 <span style="font-weight:bold;">:</span>
@@ -424,13 +424,13 @@
                                 <tr>
                                     <td width="150px">
                                         @if($masterdata->payeeTypeID == 1)
-                                            <span style="font-weight:bold;">Customer Name</span>
+                                            <span style="font-weight:bold;">{{ __('custom.customer_name') }}</span>
                                         @endif
                                         @if($masterdata->payeeTypeID == 2)
-                                         <span style="font-weight:bold;">Employee Name</span>
+                                         <span style="font-weight:bold;">{{ __('custom.employee_name') }}</span>
                                         @endif
                                         @if($masterdata->payeeTypeID == 3)
-                                            <span style="font-weight:bold;">Payee Name</span>
+                                            <span style="font-weight:bold;">{{ __('custom.payee_name') }}</span>
                                         @endif
                                     </td>
                                     <td width="10px">
@@ -452,27 +452,27 @@
                             @if($masterdata->payeeTypeID)
                                 <tr>
                                     <td width="150px">
-                                        <span style="font-weight:bold;">Payee Type</span>
+                                        <span style="font-weight:bold;">{{ __('custom.doc_code') }}</span>
                                     </td>
                                     <td width="10px">
                                         <span style="font-weight:bold;">:</span>
                                     </td>
                                     <td>
                                         @if($masterdata->payeeTypeID == 1)
-                                            Customer
+                                            {{ __('custom.customer') }}
                                         @endif
                                         @if($masterdata->payeeTypeID == 2)
-                                            Employee
+                                            {{ __('custom.employee') }}
                                         @endif
                                         @if($masterdata->payeeTypeID == 3)
-                                            Other
+                                            {{ __('custom.other') }}
                                         @endif
                                     </td>
                                 </tr>
                             @endif
                         <tr>
                             <td width="50px">
-                                <span style="font-weight:bold;">Cheque No</span>
+                                <span style="font-weight:bold;">{{ __('custom.cheque_no') }}</span>
                             </td>
                             <td width="10px">
                                 <span style="font-weight:bold;">:</span>
@@ -483,7 +483,7 @@
                         </tr>
                         <tr>
                             <td width="50px">
-                                <span style="font-weight:bold;">Cheque Date</span>
+                                <span style="font-weight:bold;">{{ __('custom.cheque_date') }}</span>
                             </td>
                             <td width="10px">
                                 <span style="font-weight:bold;">:</span>
@@ -495,7 +495,7 @@
                         @if($masterdata->isVATApplicable)
                             <tr>
                                 <td width="70px">
-                                    <span style="font-weight:bold;">VAT Percentage (%) </span>
+                                    <span style="font-weight:bold;">{{ __('custom.vat_percentage') }} (%) </span>
                                 </td>
                                 <td width="10px">
                                     <span style="font-weight:bold;">:</span>
@@ -511,7 +511,7 @@
                     <table style="width: 100%">
                         <tr>
                             <td width="150px">
-                                <span style="font-weight:bold;">Bank Name</span>
+                                <span style="font-weight:bold;">{{ __('custom.bank_name') }}</span>
                             </td>
                             <td width="10px">
                                 <span style="font-weight:bold;">:</span>
@@ -524,7 +524,7 @@
                         </tr>
                         <tr>
                             <td width="150px">
-                                <span style="font-weight:bold;">Account Number</span>
+                                <span style="font-weight:bold;">{{ __('custom.account_number') }}</span>
                             </td>
                             <td width="10px">
                                 <span style="font-weight:bold;">:</span>
@@ -537,7 +537,7 @@
                         </tr>
                         <tr>
                             <td width="150px">
-                                <span style="font-weight:bold;">Bank Currency</span>
+                                <span style="font-weight:bold;">{{ __('custom.bank_currency') }}</span>
                             </td>
                             <td width="10px">
                                 <span style="font-weight:bold;">:</span>
@@ -550,7 +550,7 @@
                         </tr>
                         <tr>
                             <td width="150px">
-                                <span style="font-weight:bold;">Currency</span>
+                                <span style="font-weight:bold;">{{ __('custom.currency') }}</span>
                             </td>
                             <td width="10px">
                                 <span style="font-weight:bold;">:</span>
@@ -571,7 +571,7 @@
                     <table>
                         <tr style="width: 100%">
                             <td style="vertical-align: top;">
-                                <span style="font-weight:bold;">Narration :</span>
+                                <span style="font-weight:bold;">{{ __('custom.narration') }} :</span>
                             </td>
                         </tr>
                         <tr style="width: 100%">
@@ -593,21 +593,21 @@
                 <tr class="theme-tr-head">
                     <th>#</th>
                     @if($masterdata->documentType == 14)
-                        <th class="text-center">Account Code</th>
-                        <th class="text-center">Account Description</th>
+                        <th class="text-center">{{ __('custom.account_code') }}</th>
+                        <th class="text-center">{{ __('custom.account_description') }}</th>
                     @endif
                     @if($masterdata->documentType == 14 && $isProjectBase)
-                        <th colspan="3" class="text-center">Project</th>
+                        <th colspan="3" class="text-center">{{ __('custom.project') }}</th>
                     @endif
-                    <th class="text-center">Department</th>
+                    <th class="text-center">{{ __('custom.department') }}</th>
                     @if($masterdata->documentType == 14)
-                        <th class="text-center">Contract</th>
+                        <th class="text-center">{{ __('custom.contract') }}</th>
                     @endif
-                    <th colspan="2" class="text-center">Comments</th>
-                    <th class="text-center">Amount</th>
+                    <th colspan="2" class="text-center">{{ __('custom.comments') }}</th>
+                    <th class="text-center">{{ __('custom.amount') }}</th>
                     @if($masterdata->isVATApplicable)
-                        <th class="text-center">VAT Amount</th>
-                        <th class="text-center">Net Amount</th>
+                        <th class="text-center">{{ __('custom.vat_amount') }}</th>
+                        <th class="text-center">{{ __('custom.net_amount') }}</th>
                     @endif
                     {{--<th class="text-center">Local Amt (
                         @if($masterdata->localCurrency)
@@ -665,7 +665,7 @@
                     @if($masterdata->documentType == 15)
                         <td colspan="2" class="text-right border-bottom-remov">&nbsp;</td>
                     @endif
-                    <td colspan="2" class="text-right" style="background-color: rgb(215,215,215)">Total Payment</td>
+                    <td colspan="2" class="text-right" style="background-color: rgb(215,215,215)">{{ __('custom.total_payment') }}</td>
                     <td class="text-right"
                         style="background-color: rgb(215,215,215)">{{number_format($directTotTra, $transDecimal)}}</td>
                     @if($masterdata->isVATApplicable)
@@ -688,12 +688,12 @@
                 <thead>
                 <tr class="theme-tr-head">
                     <th>#</th>
-                    <th class="text-center">Sales Order No</th>
-                    <th class="text-center">Comments</th>
+                    <th class="text-center">{{ __('custom.sales_order_no') }}</th>
+                    <th class="text-center">{{ __('custom.comments') }}</th>
                     @if($masterdata->isVATApplicable)
-                        <th class="text-center">VAT Amount</th>
+                        <th class="text-center">{{ __('custom.vat_amount') }}</th>
                     @endif
-                    <th class="text-center">Payment Amount</th>
+                    <th class="text-center">{{ __('custom.payment_amount') }}</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -710,10 +710,10 @@
                 @endforeach
                 <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
                     @if($masterdata->isVATApplicable)
-                        <td class="text-right" colspan="4" style="background-color: rgb(215,215,215)">Total Payment</td>
+                        <td class="text-right" colspan="4" style="background-color: rgb(215,215,215)">{{ __('custom.total_payment') }}</td>
                     @endif
                     @if(!$masterdata->isVATApplicable)
-                        <td class="text-right" colspan="3" style="background-color: rgb(215,215,215)">Total Payment</td>
+                        <td class="text-right" colspan="3" style="background-color: rgb(215,215,215)">{{ __('custom.total_payment') }}</td>
                     @endif
                     @if($masterdata->isVATApplicable)
                         <td class="text-right"
@@ -732,10 +732,10 @@
                 <thead>
                 <tr class="theme-tr-head">
                     <th>#</th>
-                    <th class="text-center">Invoice Code</th>
-                    <th class="text-center">Invoice Date</th>
-                    <th class="text-center">Comments</th>
-                    <th class="text-center">Amount</th>
+                    <th class="text-center">{{ __('custom.invoice_code') }}</th>
+                    <th class="text-center">{{ __('custom.invoice_date') }}</th>
+                    <th class="text-center">{{ __('custom.comments') }}</th>
+                    <th class="text-center">{{ __('custom.amount') }}</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -750,7 +750,7 @@
                 @endforeach
                 <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
                     <td colspan="3" class="text-right border-bottom-remov">&nbsp;</td>
-                    <td class="text-right" style="background-color: rgb(215,215,215)">Total</td>
+                    <td class="text-right" style="background-color: rgb(215,215,215)">total{{ __('custom.doc_code') }}</td>
                     <td class="text-right"
                         style="background-color: rgb(215,215,215)">{{number_format($ciDetailTotTra, $transDecimal)}}</td>
                 </tr>
@@ -764,17 +764,17 @@
                 <thead>
                 <tr class="theme-tr-head">
                     <th>#</th>
-                    <th class="text-center">Account Code</th>
-                    <th class="text-center">Account Description</th>
-                    <th class="text-center">Department</th>
-                    <th class="text-center">Amount</th>
-                    <th class="text-center">Local Amt (
+                    <th class="text-center">{{ __('custom.account_code') }}</th>
+                    <th class="text-center">{{ __('custom.account_description') }}</th>
+                    <th class="text-center">{{ __('custom.department') }}</th>
+                    <th class="text-center">{{ __('custom.amount') }}</th>
+                    <th class="text-center">{{ __('custom.local_amt') }} (
                         @if($masterdata->localCurrency)
                             {{$masterdata->localCurrency->CurrencyCode}}
                         @endif
                         )
                     </th>
-                    <th class="text-center">Rpt Amt (
+                    <th class="text-center">{{ __('custom.rpt_amt') }} (
                         @if($masterdata->rptCurrency)
                             {{$masterdata->rptCurrency->CurrencyCode}}
                         @endif
@@ -799,7 +799,7 @@
                 @endforeach
                 <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
                     <td colspan="3" class="text-right border-bottom-remov">&nbsp;</td>
-                    <td class="text-right" style="background-color: rgb(215,215,215)">Total Payment</td>
+                    <td class="text-right" style="background-color: rgb(215,215,215)">{{ __('custom.total_payment') }}</td>
                     <td class="text-right"
                         style="background-color: rgb(215,215,215)">{{number_format($directTotTra, $transDecimal)}}</td>
                     <td class="text-right border-bottom-remov"></td>
@@ -812,7 +812,7 @@
                     </tr>
                     <tr>
                         <td colspan="5" class="text-right border-bottom-remov border-top-remov">&nbsp;</td>
-                        <td class="text-right border-bottom-remov border-top-remov" style="font-size: 13px;" >Net Total</td>
+                        <td class="text-right border-bottom-remov border-top-remov" style="font-size: 13px;" >{{ __('custom.net_total') }}</td>
                         <td class="text-right border-bottom-remov border-top-remov" style="font-size: 13px;" >{{number_format(($directTotTra + $ciDetailTotTra), $transDecimal)}}</td>
                         <td class="text-right border-bottom-remov border-top-remov"></td>
                         <td class="text-right border-bottom-remov border-top-remov"></td>

@@ -1352,10 +1352,13 @@ class GRVMasterAPIController extends AppBaseController
         $time = strtotime("now");
         $fileName = 'good_receipt_voucher_' . $id . '_' . $time . '.pdf';
 
-        $pdf = \App::make('dompdf.wrapper');
-        $pdf->loadHTML($html);
-
-        return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream($fileName);
+        $htmlFooter = view('print.good_receipt_voucher_footer', $grv);
+        $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+        $mpdf->AddPage('P');
+        $mpdf->setAutoBottomMargin = 'stretch';
+        $mpdf->SetHTMLFooter($htmlFooter);
+        $mpdf->WriteHTML($html);
+        return $mpdf->Output($fileName, 'I');
     }
 
     public function pullPOAttachment(Request $request)
