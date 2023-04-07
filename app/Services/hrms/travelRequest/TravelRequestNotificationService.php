@@ -61,6 +61,8 @@ class TravelRequestNotificationService
         $this->generateTravelRequestPdf(); 
         $dataEmail['attachmentFileName'] = $this->pdfName; 
 
+        sleep(5);
+
         foreach ($this->notifyList as $val) {
             $dataEmail['empEmail'] = $val['employee']['empEmail'];
             $dataEmail['companySystemID'] = $this->companyId;
