@@ -139,6 +139,8 @@ Route::group([], function () {
     Route::get('getItemsByMaterielIssue', 'ItemIssueDetailsAPIController@getItemsByMaterielIssue')->name("Get Items By Materiel Issue");
     Route::get('getItemsOptionsMaterielIssue', 'ItemIssueDetailsAPIController@getItemsOptionsMaterielIssue')->name("Get Items Options Materiel Issue");
     Route::get('getItemIssueDetailsReferBack', 'ItemIssueDetailsRefferedBackAPIController@getItemIssueDetailsReferBack')->name("Get Item Issue Details ReferBack");
+    Route::post('materialIssuetDetailsAddAllItems', 'ItemIssueDetailsAPIController@materialIssuetDetailsAddAllItems')->name('Material issue add all item');
+    Route::post('materialIssueValidateItem', 'ItemIssueDetailsAPIController@materialIssueValidateItem')->name('Material issue validate item');
 
     Route::post('materielIssueReopen', 'ItemIssueMasterAPIController@materielIssueReopen')->name("Material Issue Reopen");
     Route::post('materielIssueReferBack', 'ItemIssueMasterAPIController@materielIssueReferBack')->name("Material Issue Refer Back");

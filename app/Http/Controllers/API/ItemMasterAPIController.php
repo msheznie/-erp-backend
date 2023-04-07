@@ -1636,6 +1636,10 @@ class ItemMasterAPIController extends AppBaseController
             $query->whereDoesntHave('erp_requestdetails', function($query) use ($input) {
                 $query->where('requestDetailsID', $input['materialReqeuestID']);
             });
+        })->when((isset($input['itemIssueAutoID']) && $input['itemIssueAutoID'] > 0), function($query) use ($input) {
+            $query->whereDoesntHave('material_issue_details', function($query) use ($input) {
+                $query->where('itemIssueAutoID', $input['itemIssueAutoID']);
+            });
         });
 
         if (array_key_exists('financeCategoryMaster', $input)) {
