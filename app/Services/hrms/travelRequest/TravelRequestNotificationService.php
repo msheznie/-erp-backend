@@ -60,8 +60,7 @@ class TravelRequestNotificationService
         $logType = 'info';
         $this->generateTravelRequestPdf(); 
         $dataEmail['attachmentFileName'] = $this->pdfName; 
-
-        //sleep(5);
+    
 
         foreach ($this->notifyList as $val) {
             $dataEmail['empEmail'] = $val['employee']['empEmail'];
@@ -143,10 +142,7 @@ class TravelRequestNotificationService
         
         $nowTime = time();
         $documentCode = str_replace("/", "_", $this->documentCode);
-        $fileName = "{$path}/travel_request_{$documentCode}_{$nowTime}.pdf";
-        
-        /* $pdf->loadHTML($html)->setPaper('a4', 'portrait')->save('uploads/emailAttachment/travel_request_' . $documentCode . '_' . $nowTime . '.pdf');
-        $this->pdfName = realpath('uploads/emailAttachment/travel_request_' . $documentCode . '_' . $nowTime . '.pdf'); */
+        $fileName = "{$path}/travel_request_{$documentCode}_{$nowTime}.pdf";        
 
         $pdf->loadHTML($html)->setPaper('a4', 'portrait')->save($fileName);
         $this->pdfName = realpath($fileName);
