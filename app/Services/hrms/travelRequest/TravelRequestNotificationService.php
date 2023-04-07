@@ -131,7 +131,7 @@ class TravelRequestNotificationService
             'masterData' => $this->tripMaster,
             'tripRequestBookings'=> $this->tripRequestBookings
         ];
-        $html = view('print.travel_request',$data);
+        $html = view('print.travel_request_dummy',$data);
         $pdf = \App::make('dompdf.wrapper');
         $path = public_path() . '/uploads/emailAttachment2';
         if (!file_exists($path)) {
