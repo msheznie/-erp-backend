@@ -59,7 +59,7 @@ class TravelRequestNotificationService
         $msg = '';
         $logType = 'info';
         $this->generateTravelRequestPdf(); 
-        //$dataEmail['attachmentFileName'] = $this->pdfName; 
+        $dataEmail['attachmentFileName'] = $this->pdfName; 
 
         //sleep(5);
 
