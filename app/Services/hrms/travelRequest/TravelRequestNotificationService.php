@@ -59,7 +59,7 @@ class TravelRequestNotificationService
         $msg = '';
         $logType = 'info';
         $this->generateTravelRequestPdf(); 
-        $dataEmail['attachmentFileName'] = $this->pdfName; 
+        //$dataEmail['attachmentFileName'] = $this->pdfName; 
 
         //sleep(5);
 
@@ -133,14 +133,14 @@ class TravelRequestNotificationService
         ];
         $html = view('print.travel_request',$data);
         $pdf = \App::make('dompdf.wrapper');
-        $path = public_path() . '/uploads/emailAttachment';
+        $path = public_path() . '/uploads/emailAttachment2';
         if (!file_exists($path)) {
             File::makeDirectory($path, 0777, true, true);
         }
         $nowTime = time();
         $documentCode = str_replace("/", "_", $this->documentCode);
-        $pdf->loadHTML($html)->setPaper('a4', 'portrait')->save('uploads/emailAttachment/travel_request_' . $documentCode . '_' . $nowTime . '.pdf');
-        $this->pdfName = realpath('uploads/emailAttachment/travel_request_' . $documentCode . '_' . $nowTime . '.pdf');
+        //$pdf->loadHTML($html)->setPaper('a4', 'portrait')->save('uploads/emailAttachment/travel_request_' . $documentCode . '_' . $nowTime . '.pdf');
+        //$this->pdfName = realpath('uploads/emailAttachment/travel_request_' . $documentCode . '_' . $nowTime . '.pdf');
         
         
         $this->insertToLogTb([ 'Document Code'=> $this->documentCode ,'Message'=> 'Email PDF generated']);
