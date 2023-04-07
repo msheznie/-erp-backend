@@ -135,7 +135,7 @@ class TravelRequestNotificationService
         $html = view('print.travel_request_dummy');
         $pdf = \App::make('dompdf.wrapper');
 
-        $path = public_path() . '/uploads2/emailAttachment2';
+        $path = public_path() . '/uploads/emailAttachment';
 
         if (!file_exists($path)) {
             File::makeDirectory($path, 0777, true, true);
