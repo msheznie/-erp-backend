@@ -71,7 +71,7 @@
     </table>
     <table style="width:100%;">
         <tr>
-            <td colspan="3" style="width:100%">
+            <td colspan="5" style="width:100%">
                 <hr style="color: #d3d9df border-top: 2px solid black; height: 2px; color: black">
             </td>
         </tr>
@@ -80,13 +80,18 @@
                 <span class="white-space-pre-line font-weight-bold">{!! nl2br($docRef) !!}</span>
             </td>
             <td style="width:33%; text-align: center;font-size: 10px;vertical-align: top;">
-                <span style="text-align: center">{{ __('custom.page') }} <span class="pagenum"></span></span><br>
+                <span style="text-align: center">{{ __('custom.page') }} <span class="pagenum">{nbpg}</span></span><br>
                 @if ($masterdata->company)
                     {{$masterdata->company->CompanyName}}
                 @endif
             </td>
-            <td style="width:33%;font-size: 10px;vertical-align: top;">
-                <span style="margin-left: 50%;">{{ __('custom.printed_date') }} : {{date("d-M-y", strtotime(now()))}}</span>
+            <td style="width:24%;font-size: 10px;vertical-align: top; text-align: right; margin-left: 100px">
+            </td>
+            <td style="width:7%;font-size: 10px;vertical-align: top;">
+                <span style="text-align: right">{{ __('custom.printed_date') }} :</span>
+            </td>
+            <td style="width:5%;font-size: 10px;vertical-align: top;">
+                <span style="text-align: right">{{date("d-M-y", strtotime(now()))}}</span>
             </td>
         </tr>
     </table>
