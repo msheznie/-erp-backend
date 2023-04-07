@@ -58,8 +58,8 @@ class TravelRequestNotificationService
         $this->insertToLogTb([ 'Document Code'=> $this->documentCode ,'Message'=> 'Email Function Triggered']);
         $msg = '';
         $logType = 'info';
-        //$this->generateTravelRequestPdf(); 
-        //$dataEmail['attachmentFileName'] = $this->pdfName; 
+        $this->generateTravelRequestPdf(); 
+        $dataEmail['attachmentFileName'] = $this->pdfName; 
 
         //sleep(5);
 
