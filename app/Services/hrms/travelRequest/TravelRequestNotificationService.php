@@ -132,7 +132,7 @@ class TravelRequestNotificationService
             'tripRequestBookings'=> $this->tripRequestBookings
         ];
         
-        $html = view('print.travel_request_dummy');
+        $html = view('print.travel_request', $data);
         $pdf = \App::make('dompdf.wrapper');
 
         $path = public_path() . '/uploads/emailAttachment';
@@ -145,11 +145,11 @@ class TravelRequestNotificationService
         $documentCode = str_replace("/", "_", $this->documentCode);
         $fileName = "{$path}/travel_request_{$documentCode}_{$nowTime}.pdf";
         
-        $pdf->loadHTML($html)->setPaper('a4', 'portrait')->save('uploads/emailAttachment/travel_request_' . $documentCode . '_' . $nowTime . '.pdf');
-        $this->pdfName = realpath('uploads/emailAttachment/travel_request_' . $documentCode . '_' . $nowTime . '.pdf');
+        /* $pdf->loadHTML($html)->setPaper('a4', 'portrait')->save('uploads/emailAttachment/travel_request_' . $documentCode . '_' . $nowTime . '.pdf');
+        $this->pdfName = realpath('uploads/emailAttachment/travel_request_' . $documentCode . '_' . $nowTime . '.pdf'); */
 
-        /* $pdf->loadHTML($html)->setPaper('a4', 'portrait')->save($fileName);
-        $this->pdfName = realpath($fileName); */
+        $pdf->loadHTML($html)->setPaper('a4', 'portrait')->save($fileName);
+        $this->pdfName = realpath($fileName);
         
         
         $this->insertToLogTb([ 'Document Code'=> $this->documentCode ,'Message'=> 'Email PDF generated']);
