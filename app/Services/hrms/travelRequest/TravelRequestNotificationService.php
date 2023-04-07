@@ -58,8 +58,10 @@ class TravelRequestNotificationService
         $this->insertToLogTb([ 'Document Code'=> $this->documentCode ,'Message'=> 'Email Function Triggered']);
         $msg = '';
         $logType = 'info';
-        $this->generateTravelRequestPdf(); 
-        $dataEmail['attachmentFileName'] = $this->pdfName; 
+        //$this->generateTravelRequestPdf(); 
+        //$dataEmail['attachmentFileName'] = $this->pdfName; 
+
+        //sleep(5);
 
         foreach ($this->notifyList as $val) {
             $dataEmail['empEmail'] = $val['employee']['empEmail'];
@@ -139,8 +141,7 @@ class TravelRequestNotificationService
         $documentCode = str_replace("/", "_", $this->documentCode);
         $pdf->loadHTML($html)->setPaper('a4', 'portrait')->save('uploads/emailAttachment/travel_request_' . $documentCode . '_' . $nowTime . '.pdf');
         $this->pdfName = realpath('uploads/emailAttachment/travel_request_' . $documentCode . '_' . $nowTime . '.pdf');
-        $this->pdfName = 'travel_request_test.pdf';
-        $this->pdfName = 'travel_request_BG_TR000039_1680856840.pdf';
+        
         
         $this->insertToLogTb([ 'Document Code'=> $this->documentCode ,'Message'=> 'Email PDF generated']);
     }
