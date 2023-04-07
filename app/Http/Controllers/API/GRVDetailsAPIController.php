@@ -980,8 +980,8 @@ class GRVDetailsAPIController extends AppBaseController
                         }
                     }
 
-
-                    if ($new['noQty'] > ($new['poQty'] - $new['receivedQty'])) {
+                    $epsilon = 0.0001;
+                    if ($new['noQty'] - ($new['poQty'] - $new['receivedQty']) > $epsilon) {
                         return $this->sendError('Number of quantity should not be greater than received qty', 422);
                     }
 
