@@ -131,16 +131,21 @@ class TravelRequestNotificationService
             'masterData' => $this->tripMaster,
             'tripRequestBookings'=> $this->tripRequestBookings
         ];
+        
         $html = view('print.travel_request_dummy');
         $pdf = \App::make('dompdf.wrapper');
-        $path = public_path() . '/uploads/emailAttachment2';
+
+        $path = public_path() . '/uploads2/emailAttachment2';
+
         if (!file_exists($path)) {
             File::makeDirectory($path, 0777, true, true);
         }
+        
         $nowTime = time();
         $documentCode = str_replace("/", "_", $this->documentCode);
-        $pdf->loadHTML($html)->setPaper('a4', 'portrait')->save('uploads/emailAttachment2/travel_request_' . $documentCode . '_' . $nowTime . '.pdf');
-        $this->pdfName = realpath('uploads/emailAttachment2/travel_request_' . $documentCode . '_' . $nowTime . '.pdf');
+        $fileName = "{$path}/travel_request_{$documentCode}_{$nowTime}.pdf";
+        $pdf->loadHTML($html)->setPaper('a4', 'portrait')->save($fileName);
+        $this->pdfName = realpath($fileName);
         
         
         $this->insertToLogTb([ 'Document Code'=> $this->documentCode ,'Message'=> 'Email PDF generated']);
