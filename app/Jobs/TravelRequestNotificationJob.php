@@ -31,12 +31,6 @@ class TravelRequestNotificationJob implements ShouldQueue
 
     public function __construct($tenantId, $companyId, $id,$tripMaster,$tripRequestBookings)
     {
-        if(env('IS_MULTI_TENANCY',false)){
-            self::onConnection('database_main');
-        }else{
-            self::onConnection('database');
-        }
-        
         $this->tenantId = $tenantId;
         $this->companyId = $companyId;
         $this->id = $id; 
