@@ -2455,7 +2455,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
             ->orderby('year', 'desc')
             ->get(['year']);
 
-        $customerCategories = CustomerMasterCategory::all();
+        $customerCategories = CustomerMasterCategory::whereIN('companySystemID', $companiesByGroup)->get();
 
         $output = array(
             'controlAccount' => $controlAccount,
@@ -6516,7 +6516,7 @@ AND erp_generalledger.documentTransAmount > 0 AND erp_generalledger.supplierCode
             ->orderby('year', 'desc')
             ->get();
 
-        $output['customerCategories'] = CustomerMasterCategory::all();
+        $output['customerCategories'] = CustomerMasterCategory::whereIN('companySystemID', $childCompanies)->get();
 
         return $this->sendResponse($output, trans('custom.retrieve', ['attribute' => trans('custom.record')]));
     }
