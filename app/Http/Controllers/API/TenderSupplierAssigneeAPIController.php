@@ -544,4 +544,16 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
 
         return $this->sendResponse(0, 'File Deleted');
     }
+
+    public function deleteSelectedSuppliers(Request $request)
+    {
+        $input = $request->all();
+        $tenderSupplierAssignee = $this->tenderSupplierAssigneeRepository->deleteAllSelectedSuppliers($input);
+
+        if (empty($tenderSupplierAssignee)) {
+            return $this->sendError('Not Found');
+        }
+
+        return $this->sendResponse(0, 'File Deleted');
+    }
 }
