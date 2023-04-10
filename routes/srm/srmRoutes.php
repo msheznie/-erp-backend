@@ -108,6 +108,8 @@ Route::post('supplierAssignCRUD', 'TenderSupplierAssigneeAPIController@supplierA
 Route::post('sendSupplierInvitation', 'TenderSupplierAssigneeAPIController@sendSupplierInvitation');
 Route::post('reSendInvitaitonLink', 'TenderSupplierAssigneeAPIController@reSendInvitaitonLink');
 Route::post('deleteAllSupplierAssign', 'TenderSupplierAssigneeAPIController@deleteAllSupplierAssign');
+Route::post('deleteSelectedSuppliers', 'TenderSupplierAssigneeAPIController@deleteSelectedSuppliers');
+
 
 Route::post('getSupplierCategoryList', 'TenderMasterAPIController@getSupplierCategoryList');
 Route::post('removeCalenderDate', 'TenderMasterAPIController@removeCalenderDate');

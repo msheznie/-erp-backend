@@ -47,4 +47,15 @@ class TenderSupplierAssigneeRepository extends BaseRepository
 
         return false;
     }
+
+    
+    public function deleteAllSelectedSuppliers($input) {
+
+        $data = TenderSupplierAssignee::where('tender_master_id',$input['tenderId'])->where('company_id',$input['companySystemId'])->whereIn('supplier_assigned_id',$input['deleteList'])->delete();
+
+        if($data) 
+            return true;
+
+        return false;
+    }
 }
