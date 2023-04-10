@@ -276,4 +276,9 @@ class ItemMaster extends Model
     {
         return $this->belongsTo('App\Models\MaterielRequestDetails', 'itemCodeSystem', 'itemCode');
     }
+
+    public function material_issue_details()
+    {
+        return $this->belongsTo('App\Models\ItemIssueDetails', 'itemCodeSystem', 'itemCodeSystem');
+    }
 }

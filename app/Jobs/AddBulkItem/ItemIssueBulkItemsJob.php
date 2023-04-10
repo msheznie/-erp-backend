@@ -1,0 +1,106 @@
+<?php
+
+namespace App\Jobs\AddBulkItem;
+
+use Illuminate\Bus\Queueable;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Bus\Dispatchable;
+use App\helper\CommonJobService;
+use App\Models\ItemIssueMaster;
+use App\Models\ItemMaster;
+use App\Models\ProcumentOrder;
+use App\Services\MaterialRequestService;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
+
+class ItemIssueBulkItemsJob implements ShouldQueue
+{
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    public $data;
+    public $dispatch_db;
+
+    /**
+     * Create a new job instance.
+     *
+     * @return void
+     */
+    public function __construct($dispatch_db, $input)
+    {
+        if(env('QUEUE_DRIVER_CHANGE','database') == 'database'){
+            if(env('IS_MULTI_TENANCY',false)){
+                 self::onConnection('database_main');
+            }else{
+                 self::onConnection('database');
+            }
+        }else{
+            self::onConnection(env('QUEUE_DRIVER_CHANGE','database'));
+        }
+
+
+        $this->data = $input;
+        $this->dispatch_db = $dispatch_db;
+    }
+
+    /**
+     * Execute the job.
+     *
+     * @return void
+     */
+    public function handle()
+    {
+        $db = $this->dispatch_db;
+
+        Log::useFiles(storage_path() . '/logs/item_issue_bulk_items.log');
+        Log::info('---- Job  Start-----' . date('H:i:s'));
+
+        CommonJobService::db_switch($db);
+        $input = $this->data;
+
+        DB::beginTransaction();
+        try {
+
+            $companyId = $input['companySystemID'];
+            $itemMasters = ItemMaster::whereHas('itemAssigned', function ($query) use ($companyId) {
+                                        return $query->where('companySystemID', '=', $companyId);
+                                     })->where('isActive',1)
+                                     ->where('itemApprovedYN',1)
+                                     ->when((isset($input['financeCategoryMaster']) && $input['financeCategoryMaster']), function($query) use ($input){
+                                        $query->where('financeCategoryMaster', $input['financeCategoryMaster']);
+                                     })
+                                     ->when((isset($input['financeCategorySub']) && $input['financeCategorySub']), function($query) use ($input){
+                                        $query->where('financeCategorySub', $input['financeCategorySub']);
+                                     })
+                                     ->whereDoesntHave('material_issue_details', function($query) use ($input) {
+                                        $query->where('itemIssueAutoID', $input['itemIssueAutoID']);
+                                     })
+                                     ->with(['unit', 'unit_by', 'financeMainCategory', 'financeSubCategory'])
+                                     ->get();
+                        
+            $invalidItems = [];
+            foreach ($itemMasters as $key => $value) {
+                $res = MaterialRequestService::validateMaterialIssueItem($value->itemCodeSystem, $input['companySystemID'], $input['itemIssueAutoID']);
+                        
+                if ($res['status']) {
+                    MaterialRequestService::saveMaterialIssueItem($value->itemCodeSystem, $input['companySystemID'], $input['itemIssueAutoID'], $input['empID'], $input['employeeSystemID']);
+                } else {
+                    $invalidItems[] = ['itemCodeSystem' => $value->itemCodeSystem, 'message' => $res['message']];
+                    Log::error('Invalid Items');
+                    Log::error($value->primaryCode. " - " .$res['message']);
+                }
+            }
+
+
+            ItemIssueMaster::where('itemIssueAutoID', $input['itemIssueAutoID'])->update(['isBulkItemJobRun' => 0]);
+            
+            Log::info('Successfully completed');
+
+            DB::commit();
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            Log::error('Error');
+            Log::error($exception->getMessage());
+        }
+    }
+}
