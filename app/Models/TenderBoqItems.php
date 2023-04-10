@@ -123,9 +123,19 @@ class TenderBoqItems extends Model
         return $this->hasOne('App\Models\BidBoq', 'boq_id', 'id');
     }
 
+    public function bid_boqs()
+    {
+        return $this->hasMany('App\Models\BidBoq', 'boq_id', 'id');
+    }
+
     public function unit()
     {
         return $this->belongsTo('App\Models\Unit','uom','UnitID');
+    }
+
+    public function ranking_items()
+    {
+        return $this->hasOne('App\Models\CommercialBidRankingItems', 'bid_format_detail_id', 'id');
     }
 
     
