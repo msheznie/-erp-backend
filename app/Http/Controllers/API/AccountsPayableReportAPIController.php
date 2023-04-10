@@ -959,16 +959,17 @@ class AccountsPayableReportAPIController extends AppBaseController
                 
                 $path = 'accounts-payable/report/payment_suppliers_by_year/excel/';
 
-                    
+                $companyCode = isset($company->CompanyID)?$company->CompanyID:'common';
+
 
                 if($typ_re == 1)
                 {   
-                    $detail_array = array('type' => 3,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$requestCurrency,'title'=>$title);
+                    $detail_array = array('type' => 3,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$requestCurrency,'title'=>$title, 'company_code'=>$companyCode);
                     $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
                 }
                 else
                 {   
-                    $detail_array = array('type' => 1,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$requestCurrency,'title'=>$title);
+                    $detail_array = array('type' => 1,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$requestCurrency,'title'=>$title, 'company_code'=>$companyCode);
                     $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
                 }
                 
@@ -1069,9 +1070,11 @@ class AccountsPayableReportAPIController extends AppBaseController
 
                 $path = 'accounts-payable/report/supplier-statement/excel/';
                 $cur = NULL;
-      
 
-                $detail_array = array('type' => 2,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$cur,'title'=>$title);
+                $companyCode = isset($company->CompanyID)?$company->CompanyID:'common';
+
+
+                $detail_array = array('type' => 2,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$cur,'title'=>$title, 'company_code'=>$companyCode);
        
 
                 $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
@@ -1157,11 +1160,12 @@ class AccountsPayableReportAPIController extends AppBaseController
                 } else {
                     $data = array();
                 }
+                $companyCode = isset($company->CompanyID)?$company->CompanyID:'common';
                 $cur = NULL;
                 $fileName = 'Supplier Balance Summary';
                 $title = 'Supplier Balance Summary';
                 $path = 'accounts-payable/report/supplier_balance_summary/excel/';
-                $detail_array = array('type' => 2,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$cur,'title'=>$title);
+                $detail_array = array('type' => 2,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$cur,'title'=>$title, 'company_code'=>$companyCode);
                 $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
                 if($basePath == '')
                 {
@@ -1302,10 +1306,10 @@ class AccountsPayableReportAPIController extends AppBaseController
                         $data = array();
                     }
                 }
-
+                $companyCode = isset($company->CompanyID)?$company->CompanyID:'common';
                 $cur = NULL;
                 $path = 'accounts-payable/report/supplier_aging/excel/';
-                $detail_array = array('type' => 2,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$cur,'title'=>$title);
+                $detail_array = array('type' => 2,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$cur,'title'=>$title, 'company_code'=>$companyCode);
                 $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
 
                 if($basePath == '')
@@ -1542,8 +1546,9 @@ class AccountsPayableReportAPIController extends AppBaseController
                 $requestCurrency = NULL;
                 $path = $name.'/'; 
                 $path = 'accounts-payable/report/unbilled_grv_/'.$path.'excel/';
+                $companyCode = isset($company->CompanyID)?$company->CompanyID:'common';
 
-                $detail_array = array('type' => 2,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$requestCurrency,'title'=>$title);
+                $detail_array = array('type' => 2,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$requestCurrency,'title'=>$title, 'company_code' => $companyCode);
 
                 $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
 
