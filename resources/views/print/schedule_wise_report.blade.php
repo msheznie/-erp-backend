@@ -23,10 +23,14 @@
             border-bottom: 2px solid #c2cfd6;
         }
 
+        .sup-item-summary-report-head {
+            border: 0px solid black !important; 
+        }
+
     </style>
 </head>
-
-<table style="width:100%;" style="border: none" class="sup-item-summary-report-head">
+<h1><center>Commercial Bid Schedule Wise Evaluation Report</center></h1>
+<table style="width:100%;" class="sup-item-summary-report-head">
     <tr>
         <td style="border: hidden"><strong>Tender ID:</strong> {{ $data[0]['tender']['tender_code'] }} </td>
         <td style="border: hidden"></td>
@@ -36,7 +40,7 @@
         <td style="border: hidden"></td>
     </tr>
     <tr>
-        <td style="border: hidden"><strong>Tender Description:</strong> {{ $data[0]['tender']['description'] }}</td>
+        <td style="border: hidden"><strong>Tender Title:</strong> {{ $data[0]['tender']['title'] }}</td>
         <td style="border: hidden"></td>
     </tr>
     <tr>
