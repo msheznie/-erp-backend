@@ -3419,19 +3419,19 @@ WHERE
                     $cur = null;
                 }
 
-                $companyMaster = Company::find($request->companySystemID);
-                $companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
+                $companyCode = isset($companyCurrency->CompanyID)?$companyCurrency->CompanyID:'common';
 
 
                 $detail_array = array(  'type' => 4,
                                         'from_date'=>$from_date,
                                         'to_date'=>$to_date,
                                         'company_name'=>$company_name,
+                                        'company_code'=>$companyCode,
                                         'cur'=>$cur,
                                         'title'=>$title);
                
-                $fileName = $companyCode.'_financial_trial_balance';
-                $path = $companyCode.'/general-ledger/report/trial_balance/excel/';
+                $fileName = 'financial_trial_balance';
+                $path = 'general-ledger/report/trial_balance/excel/';
                 $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
 
                 if($basePath == '')
@@ -3987,18 +3987,18 @@ WHERE
                 $cur = null;
                 $title = "Financial General Ledeger Details";
 
-                $companyMaster = Company::find($request->companySystemID);
-                $companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
+                $companyCode = isset($companyCurrency->CompanyID)?$companyCurrency->CompanyID:'common';
 
                 $detail_array = array(  'type' => 1,
                                         'from_date'=>$from_date,
                                         'to_date'=>$to_date,
                                         'company_name'=>$company_name,
+                                        'company_code'=>$companyCode,
                                         'cur'=>$cur,
                                         'title'=>$title);
 
-                $fileName = $companyCode.'_financial_general_ledger';
-                $path = $companyCode.'/general-ledger/report/general_ledger/excel/';
+                $fileName = 'financial_general_ledger';
+                $path = 'general-ledger/report/general_ledger/excel/';
                 $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
 
 
