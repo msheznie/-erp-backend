@@ -915,11 +915,15 @@ class CustomerMasterAPIController extends AppBaseController
         } else {
             $data = array();
         }
-
+        $companyMaster = Company::find(isset($request->companyId)?$request->companyId:null);
+        $companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
+        $detail_array = array(
+            'company_code'=>$companyCode,
+        );
         $fileName = 'customer_master';
         $path = 'system/customer_master/excel/';
         $type = 'xls';
-        $basePath = CreateExcel::process($data,$type,$fileName,$path);
+        $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
 
         if($basePath == '')
         {

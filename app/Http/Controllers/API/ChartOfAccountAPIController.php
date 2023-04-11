@@ -1033,11 +1033,15 @@ class ChartOfAccountAPIController extends AppBaseController
             $data = array();
         }
 
-
+        $companyMaster = Company::find($companyId);
+        $companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
+        $detail_array = array(
+            'company_code'=>$companyCode,
+        );
 
         $fileName = 'chart_of_accounts_';
         $path = 'system/chart_of_accounts_/excel/';
-        $basePath = CreateExcel::process($data,$request->exte_type,$fileName,$path);
+        $basePath = CreateExcel::process($data,$request->exte_type,$fileName,$path,$detail_array);
 
         if($basePath == '')
         {
