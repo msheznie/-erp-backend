@@ -96,7 +96,7 @@ class BudgetConsumptionService
 				return ['status' => true, 'message' => $userMessageE];
 			} else {
 				if (isset($budgetData['budgetCheckPolicy']) && $budgetData['budgetCheckPolicy'] && (isset($budgetData['glCodes']) && count($budgetData['glCodes']) > 0)) {
-					return ['status' => true, 'message' => "Budget not configured for this document"];
+					return ['status' => true, 'message' => "Some GL codes are not assigned for budget with relevant segment and finance period"];
 				} else {
 					return ['status' => true, 'message' => ""];
 				}
