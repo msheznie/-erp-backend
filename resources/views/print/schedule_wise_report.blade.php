@@ -23,19 +23,36 @@
             border-bottom: 2px solid #c2cfd6;
         }
 
+        .sup-item-summary-report-head {
+            border: 0px solid black !important; 
+        }
+
     </style>
 </head>
-
-<table style="min-width:30%;" class="sup-item-summary-report">
-   <tr>
-    <td>Tender ID</td>
-    <td>{{ $data[0]['tender']['tender_code'] }}</td>
-   </tr>
-   <tr>
-    <td>Tender Title</td>
-    <td>{{ $data[0]['tender']['title'] }}</td>
-   </tr>
+<h1><center>Commercial Bid Schedule Wise Evaluation Report</center></h1>
+<table style="width:100%;" class="sup-item-summary-report-head">
+    <tr>
+        <td style="border: hidden"><strong>Tender ID:</strong> {{ $data[0]['tender']['tender_code'] }} </td>
+        <td style="border: hidden"></td>
+    </tr>
+    <tr>
+        <td style="border: hidden"></td>
+        <td style="border: hidden"></td>
+    </tr>
+    <tr>
+        <td style="border: hidden"><strong>Tender Title:</strong> {{ $data[0]['tender']['title'] }}</td>
+        <td style="border: hidden"></td>
+    </tr>
+    <tr>
+        <td style="border: hidden"></td>
+        <td style="border: hidden"></td>
+    </tr>
+    <tr>
+        <td style="border: hidden"><strong>Commercial Bid Opening Date: </strong>{{\Carbon\Carbon::parse($data[0]['tender']['commerical_bid_opening_date'])->format('d/m/Y')}}</td>
+        <td style="border: hidden"></td>
+    </tr>
 </table>
+<br>
 
 <table style="width:100%; margin-top:5%;" class="sup-item-summary-report">
    <tr>
@@ -59,4 +76,3 @@
 
 
 </html>
-
