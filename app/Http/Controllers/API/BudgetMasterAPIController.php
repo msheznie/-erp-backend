@@ -551,6 +551,10 @@ class BudgetMasterAPIController extends AppBaseController
             });
         }
 
+        if(isset($input['checkApprovedYN']) && $input['checkApprovedYN'] == 1){
+            $budgets = $budgets->where('approvedYN', -1);
+        }
+
         $budgets = $budgets->groupBy(['Year', 'serviceLineSystemID', 'templateMasterID']);
 
         return \DataTables::of($budgets)
