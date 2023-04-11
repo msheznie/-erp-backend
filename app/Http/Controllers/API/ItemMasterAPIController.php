@@ -1622,7 +1622,7 @@ class ItemMasterAPIController extends AppBaseController
 
 
         $itemMasters = ItemMaster::whereHas('itemAssigned', function ($query) use ($companyId) {
-            return $query->where('companySystemID', '=', $companyId);
+            return $query->where('companySystemID', '=', $companyId)->where('isAssigned', '=', -1);
         })->with(['unit', 'unit_by', 'financeMainCategory', 'financeSubCategory'])
         ->when((isset($input['PurchaseRequestID']) && $input['PurchaseRequestID'] > 0), function($query) use ($input) {
             $query->whereDoesntHave('purchase_request_details', function($query) use ($input) {
