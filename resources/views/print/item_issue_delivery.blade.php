@@ -164,6 +164,14 @@
         thead .vertical-align {
             vertical-align : middle !important;
         }
+        .container
+            {
+                display: block;
+                max-width:230px;
+                max-height:95px;
+                width: auto;
+                height: auto;
+            }
     </style>
 </head>
 <body>
@@ -173,22 +181,22 @@
 </div>--}}
 {{--<div id="watermark"></div>--}}
 
-<div class="header">
+<div >
     <table style="width: 100%">
         <tr style="width:100%">
-            <td style="width: 25%;">
+            <td valign="top" style="width: 10%;">
                 @if($entity->company)
-                    <img src="{{$entity->company->logo_url}}" width="180px" height="60px">
+                    <img src="{{$entity->company->logo_url}}" width="180px" height="60px" class="container">
                 @endif
             </td>
-            <td style="width: 35%" valign="top">
+            <td style="width: 45%" valign="top">
                 <table>
                     <tr>
-                        <td width="100px">
-                            <span class="font-weight-bold">Material Issue No</span>
+                        <td width="150px">
+                            <span style="font-weight: bold;">{{__('custom.material_issue_no')}}</span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold;">:</span>
                         </td>
                         <td>
                             {{$entity->itemIssueCode}}
@@ -196,10 +204,10 @@
                     </tr>
                     <tr>
                         <td width="70px">
-                            <span class="font-weight-bold">Network No</span>
+                            <span style="font-weight: bold;">{{__('custom.network_no')}}</span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold;">:</span>
                         </td>
                         <td>
                             {{$entity->networkNo}}
@@ -207,10 +215,10 @@
                     </tr>
                     <tr>
                         <td width="70px">
-                            <span class="font-weight-bold">Contract No</span>
+                            <span style="font-weight: bold;">{{__('custom.contract_no')}}</span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold;">:</span>
                         </td>
                         <td>
                             <span>{{$entity->contractID}}</span>
@@ -218,25 +226,25 @@
                     </tr>
                 </table>
             </td>
-            <td style="width: 40%">
+            <td style="width: 45%">
                 <table>
                     <tr>
                         <td width="100px">
-                            <span class="font-weight-bold">Work Order No</span>
+                            <span style="font-weight: bold;">{{__('custom.work_order_no')}}</span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold;">:</span>
                         </td>
                         <td>
                             <span>{{$entity->workOrderNo}}</span>
                         </td>
                     </tr>
                     <tr>
-                        <td width="70px">
-                            <span class="font-weight-bold">Well No </span>
+                        <td width="100px">
+                            <span style="font-weight: bold;">{{__('custom.well_no')}}</span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold;">:</span>
                         </td>
                         <td>
                             <span>
@@ -245,11 +253,11 @@
                         </td>
                     </tr>
                     <tr>
-                        <td width="70px">
-                            <span class="font-weight-bold">Rig No </span>
+                        <td width="100px">
+                            <span style="font-weight: bold;">{{__('custom.rig_no')}}</span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold;">:</span>
                         </td>
                         <td>
                             <span>
@@ -258,11 +266,11 @@
                         </td>
                     </tr>
                     <tr>
-                        <td width="70px">
-                            <span class="font-weight-bold">Customer Name </span>
+                        <td width="100px">
+                            <span style="font-weight: bold;">{{__('custom.customer_name')}}</span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold;">:</span>
                         </td>
                         <td>
                             <span>
@@ -273,11 +281,11 @@
                         </td>
                     </tr>
                     <tr>
-                        <td width="70px">
-                            <span class="font-weight-bold">Item delivered on site date </span>
+                        <td width="150px">
+                            <span style="font-weight: bold;">{{__('custom.item_delivered_on_site_date')}}</span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold;">:</span>
                         </td>
                         <td>
                             <span>
@@ -286,11 +294,11 @@
                         </td>
                     </tr>
                     <tr>
-                        <td width="70px">
-                            <span class="font-weight-bold">Purchase Order #</span>
+                        <td width="100px">
+                            <span style="font-weight: bold;">{{__('custom.purchase_order_no_#')}}</span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold;">:</span>
                         </td>
                         <td>
                             <span>
@@ -304,30 +312,29 @@
     </table>
     <table style="width: 100%">
         <tr style="width: 100%">
-            <td colspan="3" class="text-center">
-                <h4 style="text-decoration: underline;">Delivery Ticket</h4>
+            <td colspan="3" class="text-center" style="text-align: center;">
+                <h4 style="text-decoration: underline;">{{__('custom.delivery_ticket')}}</h4>
             </td>
         </tr>
     </table>
 </div>
 <div class="content">
     <div class="row">
-        <table class="table table-bordered table-striped" style="width: 100%;">
+        <table class="table table-bordered table-striped" style="width: 100%; border-style: solid; border-width: 0.5px; border-color:#f4f4f4;">
             <thead>
-            <tr class="theme-tr-head">
-                <th class="text-center vertical-align"  style="width: 2%">Item</th>
-                <th class="text-center vertical-align"  style="width: 3%">Quantity Delivered</th>
-                <th class="text-center vertical-align"  style="width: 4%">Quantity Back Load</th>
-                <th class="text-center vertical-align"  style="width: 5%">{{$entity->companyID}} Item Code</th>
-                <th class="text-center vertical-align"  style="width: 5%">Part No / Ref.Number</th>
-                <th class="text-center vertical-align"  style="width: 5%">Client Product Code</th>
-                <th class="text-center vertical-align"  style="width: 14%">Item Description</th>
-                <th class="text-center vertical-align"   colspan="2" style="width: 5%">"Material PO no(enter 13 digits) including PO line
-                    Item"
+            <tr style="background-color: #ffffff !important; border-color:#000">
+                <th  style="width: 2%; vertical-align : middle !important; text-align:center;">{{__('custom.item')}}</th>
+                <th  style="width: 3%; vertical-align : middle !important; text-align:center;">{{__('custom.delivered_quantity')}}</th>
+                <th  style="width: 4%; vertical-align : middle !important; text-align:center;">{{__('custom.back_load_quantity')}}</th>
+                <th  style="width: 5%; vertical-align : middle !important; text-align:center;">{{$entity->companyID}} {{__('custom.item_code')}}</th>
+                <th  style="width: 5%; vertical-align : middle !important; text-align:center;">{{__('custom.manufacture_part_no')}}</th>
+                <th  style="width: 5%; vertical-align : middle !important; text-align:center;">{{__('custom.client_product_code')}}</th>
+                <th  style="width: 14%; vertical-align : middle !important; text-align:center;">{{__('custom.item_description')}}</th>
+                <th   colspan="2" style="width: 5%; vertical-align : middle !important; text-align:center;"> "{{__('custom.material_po_no_enter_13_digits_including_po_line_item')}}"
                 </th>
-                <th class="text-center vertical-align"  style="width: 4%">Work Order Number</th>
-                <th class="text-center vertical-align"  style="width: 6%">Batch / Serial Number</th>
-                <th class="text-center vertical-align"  style="width: 7%">Comments</th>
+                <th  style="width: 4%; vertical-align : middle !important; text-align:center;">{{__('custom.work_order_number')}}</th>
+                <th  style="width: 6%; vertical-align : middle !important; text-align:center;">{{__('custom.batch_serial_number')}}</th>
+                <th  style="width: 7%; vertical-align : middle !important; text-align:center;">{{__('custom.comments')}}</th>
             </tr>
             {{--<tr class="theme-tr-head">
                 <th class="text-center" style="width: 1%"></th>
@@ -337,42 +344,42 @@
             <tbody>
             @foreach ($entity->details as $item)
                 <tr style="border-top: 1px solid #ffffff !important;border-bottom: 1px solid #ffffff !important;">
-                    <td>{{$loop->iteration}}</td>
-                    <td>{{round($item->qtyIssued,2)}}</td>
-                    <td>
+                    <td style="padding-left: 5px;">{{$loop->iteration}}</td>
+                    <td style="padding-left: 5px;">{{round($item->qtyIssued,2)}}</td>
+                    <td style="padding-left: 5px;">
                         {{$item->backLoad}}
                     </td>
                     {{--<td>
                         {{$item->used}}
                     </td>--}}
-                    <td>
+                    <td style="padding-left: 5px;">
                         {{$item->itemPrimaryCode}}
                     </td>
-                    <td>
+                    <td style="padding-left: 5px;">
                         @if($item->item_by)
                             {{$item->item_by->secondaryItemCode}}
                         @endif
                     </td>
-                    <td>
+                    <td style="padding-left: 5px;">
                         {{$item->clientReferenceNumber}}
                     </td>
-                    <td>
+                    <td style="padding-left: 5px;">
                         {{$item->itemDescription}}
                     </td>
-                    <td style="width: 5%">
+                    <td style="width: 5%; padding-left: 5px;">
                         {{--{{$entity->purchaseOrderNo}}--}}
                         {{$item->p1}}
                     </td>
-                    <td style="width: 2%">
+                    <td style="width: 2%; padding-left: 5px;">
                         {{$item->pl10}}
                     </td>
-                    <td>
+                    <td style="padding-left: 5px;">
                         {{$item->pl3}}
                     </td>
-                    <td>
+                    <td style="padding-left: 5px;">
                         {{$item->grvDocumentNO}}
                     </td>
-                    <td>
+                    <td style="padding-left: 5px;">
                         {{$item->deliveryComments}}
                     </td>
                 </tr>
@@ -380,7 +387,7 @@
             </tbody>
         </table>
     </div>
-    <div class="row">
+    <div class="row"  style="padding-top:30px">
         <table width="100%">
             <tr width="100%">
                 <td width="40%">
@@ -392,22 +399,22 @@
                     <table width="100%">
                         <tr>
                             <td width="100px" valign="top">
-                                <span class="font-weight-bold">Ticket issued by :</span>
+                                <span style="font-weight: bold;">{{__('custom.ticket_issued_by')}} :</span>
                             </td>
-                            <td valign="top">
+                            <td valign="top" style="border-style: solid; border-width: 0.5px; border-color:#f4f4f4;">
                                 <div class="input-box"></div>
                             </td>
                         </tr>
                     </table>
                 </td>
                 <td width="20%" valign="top">
-                       <span style="padding-top:20px"> "Comments: 1. Customer Rep.provide stamp signature with details needed.
+                       <span> "{{__('custom.comments_para_material_issue_delivery_print1')}}
                        </span>
                 </td>
             </tr>
         </table>
     </div>
-    <div class="row">
+    <div class="row"  style="padding-top:30px">
         <table width="100%" style="margin-top: -3%">
             <tr width="100%">
                 <td width="40%">
@@ -417,26 +424,25 @@
                     <table width="100%">
                         <tr>
                             <td width="100px" valign="top">
-                                <span class="font-weight-bold">Signature :</span>
+                                <span style="font-weight: bold;">{{__('custom.signature')}} :</span>
                             </td>
-                            <td valign="top">
+                            <td valign="top"  style="border-style: solid; border-width: 0.5px; border-color:#f4f4f4;">
                                 <div class="input-box"></div>
                             </td>
                         </tr>
                     </table>
                 </td>
                 <td width="20%" valign="top">
-                       <span style="padding-top:20px">
-                        2. Supervisor to verify prior to signature that material purchase
-                        order nos
+                       <span>
+                        {{__('custom.comments_para_material_issue_delivery_print2')}}
                        </span>
                 </td>
             </tr>
         </table>
     </div>
-    <div class="row">
+    <div class="row"  style="padding-top:30px">
         <table width="100%" style="margin-top: -3%">
-            <tr width="100%">
+            <tr width="100%" >
                 <td width="40%">
                     <table width="100%">
                         <tr>  &nbsp;</tr>
@@ -446,24 +452,23 @@
                     <table width="100%">
                         <tr>
                             <td width="100px">
-                                <span class="font-weight-bold">Date :</span>
+                                <span style="font-weight: bold;">{{__('custom.date')}} :</span>
                             </td>
-                            <td>
+                            <td  style="border-style: solid; border-width: 0.5px; border-color:#f4f4f4;">
                                 <div class="input-box"></div>
                             </td>
                         </tr>
                     </table>
                 </td>
                 <td width="20%" valign="top">
-                    <span style="padding-top:20px">
-                        (including PO line items) are filled out correctly in the
-                        consumables ticket."
+                    <span>
+                        {{__('custom.comments_para_material_issue_delivery_print3')}}"
                        </span>
                 </td>
             </tr>
         </table>
     </div>
-    <div class="row">
+    <div class="row"  style="padding-top:30px">
         <table width="100%" style="margin-top: -3%">
             <tr width="100%">
                 <td width="40%">
@@ -475,9 +480,9 @@
                     <table width="100%">
                         <tr>
                             <td width="100px">
-                                <span class="font-weight-bold">Checked By :</span>
+                                <span style="font-weight: bold;">{{__('custom.checked_by')}} :</span>
                             </td>
-                            <td>
+                            <td  style="border-style: solid; border-width: 0.5px; border-color:#f4f4f4;">
                                 <div class="input-box"></div>
                             </td>
                         </tr>
@@ -488,7 +493,7 @@
             </tr>
         </table>
     </div>
-    <div class="row">
+    <div class="row"  style="padding-top:30px">
         <table width="100%" style="margin-top: -3%">
             <tr width="100%">
                 <td width="40%">
@@ -500,9 +505,9 @@
                     <table width="100%">
                         <tr>
                             <td width="100px">
-                                <span class="font-weight-bold">Date :</span>
+                                <span style="font-weight: bold;">{{__('custom.date')}} :</span>
                             </td>
-                            <td>
+                            <td  style="border-style: solid; border-width: 0.5px; border-color:#f4f4f4;">
                                 <div class="input-box"></div>
                             </td>
                         </tr>

@@ -15,7 +15,7 @@ class DepreciationObserver
      */
     public function created(FixedAssetDepreciationMaster $fixedAssetDepreciationMaster)
     {
-        CreateDepreciation::dispatch($fixedAssetDepreciationMaster->depMasterAutoID);
+        // CreateDepreciation::dispatch($fixedAssetDepreciationMaster->depMasterAutoID);
     }
 
     /**

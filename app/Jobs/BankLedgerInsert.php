@@ -122,7 +122,7 @@ class BankLedgerInsert implements ShouldQueue
                             $data['payAmountCompLocal'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ? ($masterData->payAmountCompLocal) * -1 : $masterData->payAmountCompLocal;
                             $data['payAmountCompRpt'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ? ($masterData->payAmountCompRpt) * -1 : $masterData->payAmountCompRpt;
                         } else {
-                            $data['payAmountBank'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ? ($masterData->payAmountBank + $retationVATAmount + ($masterData->rcmActivated ? 0 : $masterData->VATAmount)) * -1 : $masterData->payAmountBank + $retationVATAmount + ($masterData->rcmActivated ? 0 : $masterData->VATAmount);
+                            $data['payAmountBank'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ? ($masterData->payAmountBank + $retationVATAmount + ($masterData->rcmActivated ? 0 : $masterData->VATAmountBank)) * -1 : $masterData->payAmountBank + $retationVATAmount + ($masterData->rcmActivated ? 0 : $masterData->VATAmountBank);
                             $data['payAmountSuppTrans'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ?($masterData->payAmountSuppTrans + $retationVATAmount + ($masterData->rcmActivated ? 0 : $masterData->VATAmount)) * -1 : $masterData->payAmountSuppTrans + $retationVATAmount + ($masterData->rcmActivated ? 0 : $masterData->VATAmount);
                             $data['payAmountCompLocal'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ? ($masterData->payAmountCompLocal + $retentionLocalVatAmount + ($masterData->rcmActivated ? 0 : $masterData->VATAmountLocal)) * -1 : $masterData->payAmountCompLocal + $retentionLocalVatAmount + ($masterData->rcmActivated ? 0 : $masterData->VATAmountLocal);
                             $data['payAmountCompRpt'] = (isset($masterModel['reversePdc']) && $masterModel['reversePdc']) ? ($masterData->payAmountCompRpt + $retentionRptVatAmount + ($masterData->rcmActivated ? 0 : $masterData->VATAmountRpt)) * -1 : $masterData->payAmountCompRpt + $retentionRptVatAmount + ($masterData->rcmActivated ? 0 : $masterData->VATAmountRpt);
@@ -250,8 +250,14 @@ class BankLedgerInsert implements ShouldQueue
                             $payee = CustomerMaster::find($custReceivePayment->customerID);
                             if ($payee) {
                                 $data['payeeCode'] = $payee->CutomerCode;
+                                $data['payeeName'] = $payee->CustomerName;
+                            } else {
+                                $employeeSystemIDForPV = floatval($custReceivePayment->PayeeEmpID);
+                                $employeeData = Employee::find($employeeSystemIDForPV);
+
+                                $data['payeeName'] = $employeeData ? $employeeData->empName : $custReceivePayment->PayeeName;                                    
                             }
-                            $data['payeeName'] = $custReceivePayment->PayeeName;
+
                             $data['payeeGLCodeID'] = $custReceivePayment->customerGLCodeSystemID;
                             $data['payeeGLCode'] = $custReceivePayment->customerGLCode;
                             $data['supplierTransCurrencyID'] = $custReceivePayment->custTransactionCurrencyID;

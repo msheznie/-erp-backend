@@ -75,6 +75,8 @@ use App\Jobs\AddMultipleItemsToQuotation;
 use Carbon\Carbon;
 use Response;
 use Auth;
+use App\Jobs\DocumentAttachments\SoSentToCustomerJob;
+
 /**
  * Class QuotationMasterController
  * @package App\Http\Controllers\API
@@ -651,28 +653,14 @@ class QuotationMasterAPIController extends AppBaseController
                 //return $soMasterSumDeducted.'-'.$paymentTotalSum['paymentTotalSum'];
 
                 if ($paymentTotalSum['paymentTotalSum'] > 0) {
-                    if (abs(($soMasterSumDeducted - $paymentTotalSum['paymentTotalSum']) / $paymentTotalSum['paymentTotalSum']) < 0.00001) {
+                    $soMasterSumDeductedCheckAmount = floatval(sprintf("%.".$input['transactionCurrencyDecimalPlaces']."f", $soMasterSumDeducted));
+                    $paymentTotalSumCheckAmount = floatval(sprintf("%.".$input['transactionCurrencyDecimalPlaces']."f", $paymentTotalSum['paymentTotalSum']));
 
-                    } else {
+                    $epsilon = 0.00001;
+                    if(abs($soMasterSumDeductedCheckAmount - $paymentTotalSumCheckAmount) > $epsilon) {
                         return $this->sendError('Payment terms total is not matching with the SO total');
                     }
                 } 
-
-                $poAdvancePaymentType = SoPaymentTerms::where("soID", $id)
-                    ->get();
-
-
-                if (!empty($poAdvancePaymentType)) {
-                    foreach ($poAdvancePaymentType as $payment) {
-                        $paymentPercentageAmount = ($payment['comPercentage'] / 100) * ($soMasterSumDeducted);
-
-                        if (abs(($payment['comAmount'] - $paymentPercentageAmount) / $paymentPercentageAmount) < 0.00001) {
-
-                        } else {
-                            return $this->sendError('Payment terms is not matching with the SO total');
-                        }
-                    }
-                }
             }
 
             $input['RollLevForApp_curr'] = 1;
@@ -1128,110 +1116,35 @@ class QuotationMasterAPIController extends AppBaseController
     public function updateSentCustomerDetail(Request $request){
         $input = $request->quomaster;
         $id = $input['quotationMasterID'];
-        $documentTypeTitle = $input['documentTypeTitle'];
-
-        if($documentTypeTitle == 'sales_order'){
-            $documentTypeTitle = 'Sales Order';
-        }
-
-        if($documentTypeTitle == 'quotation'){
-            $documentTypeTitle = 'Quotation';
-        }
-
-        $customerCodeSystem = $input['customer']['customerCodeSystem'];
-
-        $path = public_path().'/uploads/emailAttachment';
-
-        if (!file_exists($path)) {
-            File::makeDirectory($path, 0777, true, true);
-        }
-
-        $quotationMasterData = $this->quotationMasterRepository->findWithoutFail($id);
+        $quotationMasterData = QuotationMaster::find($id);
 
         if (empty($quotationMasterData)) {
             return $this->sendError('Quotation Master not found');
         }
 
-        $output = QuotationMaster::where('quotationMasterID', $id)->with(['approved_by' => function ($query) {
-            $query->with('employee');
-            $query->whereIn('documentSystemID', [67,68]);
-        }, 'company', 'detail', 'confirmed_by', 'created_by', 'modified_by', 'sales_person'])->first();
-
-        $quotationCode = $output->quotationCode;
-
-        $netTotal = QuotationDetails::where('quotationMasterID', $id)
-            ->sum('transactionAmount');
-
-        $soPaymentTerms = SoPaymentTerms::where('soID', $id)
-                                        ->with(['term_description'])
-                                        ->get();
-
-        $paymentTermsView = '';
-
-        if ($soPaymentTerms) {
-            foreach ($soPaymentTerms as $val) {
-                $paymentTermsView .= $val['term_description']['categoryDescription'] .' '.$val['comAmount'].' '.$output['transactionCurrency'].' '.$val['paymentTemDes'].' '.$val['inDays'] . ' in days, ';
-            }
-        }
-
-        $order = array(
-            'masterdata' => $output,
-            'paymentTermsView' => $paymentTermsView,
-            'netTotal' => $netTotal
-        );
-
-        $html = view('print.sales_quotation', $order);
-
-        $pdf = \App::make('dompdf.wrapper');
-        $nowTime = time();
-        $pdf->loadHTML($html)->setPaper('a4', 'landscape')->save('uploads/emailAttachment/customer_' .$documentTypeTitle . $nowTime.$customerCodeSystem . '.pdf');
-
+        $emailSentTo = 0;
+        $customerCodeSystem = $input['customer']['customerCodeSystem'];
 
         $fetchCusEmail = CustomerContactDetails::where('customerID', $customerCodeSystem)
                                                 ->where('isDefault' , -1)
                                                 ->get();
 
-        $customerMaster = CustomerMaster::find($customerCodeSystem);
 
-        $company = Company::where('companySystemID', $input['companySystemID'])->first();
-        $emailSentTo = 0;
-
-        $footer = "<font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!" .
-            "<br>This is an auto generated email. Please do not reply to this email because we are not" .
-            "monitoring this inbox. To get in touch with us, email us to systems@gulfenergy-int.com.</font>";
-
-            if (count($fetchCusEmail) > 0) {
-                foreach ($fetchCusEmail as $row) {
-                    if ($row->contactPersonEmail) {
-                        $emailSentTo = 1;
-                        $dataEmail['empEmail'] = $row->contactPersonEmail;
-    
-                        $dataEmail['companySystemID'] = $input['companySystemID'];
-    
-                        $temp = "Dear " . $customerMaster->CustomerName .',<p> ' .$documentTypeTitle. ' '  .$quotationCode. ' is attached from ' . $company->CompanyName. '. Please view attachment for further details. ' . $footer;
-    
-                        $pdfName = realpath("uploads/emailAttachment/customer_" .$documentTypeTitle . $nowTime.$customerCodeSystem . ".pdf");
-    
-                        $dataEmail['isEmailSend'] = 0;
-                        $dataEmail['attachmentFileName'] = $pdfName;
-                        $dataEmail['alertMessage'] = $documentTypeTitle. " " .$quotationCode. " from " . $company->CompanyName;
-                        $dataEmail['emailAlertMessage'] = $temp;
-                        $sendEmail = \Email::sendEmailErp($dataEmail);
-                        if (!$sendEmail["success"]) {
-                            return $this->sendError($sendEmail["message"], 500);
-                        }
-                    }
+        if (count($fetchCusEmail) > 0) {
+            foreach ($fetchCusEmail as $row) {
+                if ($row->contactPersonEmail) {
+                    $emailSentTo = 1;
                 }
             }
-    
-            if ($emailSentTo == 0) {
-                return $this->sendResponse($emailSentTo, 'Customer email is not updated. report is not sent');
-            } else {
-                return $this->sendResponse($emailSentTo, 'Customer sales quotation report sent');
-            }
+        }
 
-            
 
+        if ($emailSentTo == 0) {
+            return $this->sendResponse($emailSentTo, 'Customer email is not updated. report is not sent');
+        } else {
+            SoSentToCustomerJob::dispatch($request->db, $input);
+            return $this->sendResponse($emailSentTo, 'Customer sales quotation report sent');
+        }
     }
 
 

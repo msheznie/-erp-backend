@@ -54,6 +54,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use App\helper\CreateExcel;
+use App\Jobs\DocumentAttachments\CustomerStatementJob;
+
 class AccountsReceivableReportAPIController extends AppBaseController
 {
     /*validate each report*/
@@ -664,8 +666,11 @@ class AccountsReceivableReportAPIController extends AppBaseController
 
                     $requestCurrency = CurrencyMaster::where('currencyID', $currencyId)->first();
 
-                    $decimalPlace = !empty($requestCurrency) ? $requestCurrency->DecimalPlaces : 2;
-
+                    if(!empty($requestCurrency)) {
+                        $decimalPlace = $requestCurrency->DecimalPlaces;
+                    }else{
+                        $decimalPlace =  2;
+                    }
                     $total = array();
 
                     $total['Jan'] = array_sum(collect($output)->pluck('Jan')->toArray());
@@ -2181,12 +2186,13 @@ class AccountsReceivableReportAPIController extends AppBaseController
 
             $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'balanceAmount' => $balanceTotal, 'receiptAmount' => $receiptAmount, 'invoiceAmount' => $invoiceAmount, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'customerName' => $customerName->customerShortCode . ' - ' . $customerName->CustomerName, 'reportDate' => date('d/m/Y H:i:s A'), 'currency' => 'Currency: ' . $currencyCode, 'fromDate' => \Helper::dateFormat($request->fromDate), 'toDate' => \Helper::dateFormat($request->toDate), 'currencyID' => $request->currencyID);
 
-            $html = view('print.customer_statement_of_account_pdf', $dataArr);
 
             if ($sentTo) {
-                return $html;
+                return $dataArr;
             }
 
+            $html = view('print.customer_statement_of_account_pdf', $dataArr);
+            
             $pdf = \App::make('dompdf.wrapper');
             $pdf->loadHTML($html);
 
@@ -2214,12 +2220,12 @@ class AccountsReceivableReportAPIController extends AppBaseController
 
             $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'grandTotal' => $grandTotal, 'currencyDecimalPlace' => !empty($decimalPlace) ? $decimalPlace[0] : 2, 'fromDate' => \Helper::dateFormat($request->fromDate));
 
-            $html = view('print.customer_balance_statement', $dataArr);
 
             if ($sentTo) {
-                return $html;
+                return $dataArr;
             }
 
+            $html = view('print.customer_balance_statement', $dataArr);
             $pdf = \App::make('dompdf.wrapper');
             $pdf->loadHTML($html);
 
@@ -2298,50 +2304,19 @@ class AccountsReceivableReportAPIController extends AppBaseController
 
         $html = $this->customerStatementExportPdf($request, true);
 
-        $pdf = \App::make('dompdf.wrapper');
-        $path = public_path().'/uploads/emailAttachment';
-
-        if (!file_exists($path)) {
-            File::makeDirectory($path, 0777, true, true);
-        }
-        $nowTime = time();
-
         $customerCodeSystem = ($request->reportTypeID == 'CSA') ? $request->singleCustomer : $input['customers'][0]['customerCodeSystem'];
-        $pdf->loadHTML($html)->setPaper('a4', 'landscape')->save('uploads/emailAttachment/customer_statement_' . $nowTime.$customerCodeSystem . '.pdf');
-
 
         $fetchCusEmail = CustomerContactDetails::where('customerID', $customerCodeSystem)
                                                ->get();
 
         $customerMaster = CustomerMaster::find($customerCodeSystem);
 
-        $company = Company::where('companySystemID', $input['companySystemID'])->first();
         $emailSentTo = 0;
 
-        $footer = "<font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!" .
-            "<br>This is an auto generated email. Please do not reply to this email because we are not " .
-            "monitoring this inbox.</font>";
-        
         if ($fetchCusEmail) {
             foreach ($fetchCusEmail as $row) {
                 if (!empty($row->contactPersonEmail)) {
                     $emailSentTo = 1;
-                    $dataEmail['empEmail'] = $row->contactPersonEmail;
-
-                    $dataEmail['companySystemID'] = $input['companySystemID'];
-
-                    $temp = "Dear " . $customerMaster->CustomerName . ',<p> Customer statement report has been sent from ' . $company->CompanyName . $footer;
-
-                    $pdfName = realpath("uploads/emailAttachment/customer_statement_" . $nowTime.$customerCodeSystem . ".pdf");
-
-                    $dataEmail['isEmailSend'] = 0;
-                    $dataEmail['attachmentFileName'] = $pdfName;
-                    $dataEmail['alertMessage'] = "Customer statement report from " . $company->CompanyName;
-                    $dataEmail['emailAlertMessage'] = $temp;
-                    $sendEmail = \Email::sendEmailErp($dataEmail);
-                    if (!$sendEmail["success"]) {
-                        return $this->sendError($sendEmail["message"], 500);
-                    }
                 }
             }
         }
@@ -2349,6 +2324,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
         if ($emailSentTo == 0) {
             return $this->sendResponse($emailSentTo, 'Customer email is not updated. report is not sent');
         } else {
+            CustomerStatementJob::dispatch($request->db, $html, $customerCodeSystem, $input['companySystemID'], $request->reportTypeID);
             return $this->sendResponse($emailSentTo, 'Customer statement report sent');
         }
     }
@@ -4482,8 +4458,6 @@ WHERE
                     erp_generalledger.glCode,
                     erp_generalledger.glAccountType,
                     chartofaccounts.controlAccounts,
-                    IF(ISNULL(tax_ledger_details.VATAmountRpt), 0, tax_ledger_details.VATAmountRpt) as VATAmountRPT,
-                    IF(ISNULL(tax_ledger_details.VATAmountLocal), 0, tax_ledger_details.VATAmountLocal) as VATAmountLocal,
                     revenueGLCodes.controlAccountID,
                     erp_generalledger.supplierCodeSystem,
                 IF
@@ -4510,7 +4484,6 @@ WHERE
                     erp_generalledger
                     INNER JOIN chartofaccounts ON erp_generalledger.chartOfAccountSystemID = chartofaccounts.chartOfAccountSystemID
                     LEFT JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID
-                    LEFT JOIN tax_ledger_details ON erp_generalledger.chartOfAccountSystemID = tax_ledger_details.chartOfAccountSystemID AND erp_generalledger.documentSystemID = tax_ledger_details.documentSystemID AND  erp_generalledger.documentSystemCode = tax_ledger_details.documentMasterAutoID
                     LEFT JOIN contractmaster ON erp_generalledger.clientContractID = contractmaster.ContractNumber
                     AND erp_generalledger.companyID = contractmaster.CompanyID
                     INNER JOIN (
@@ -4532,7 +4505,7 @@ WHERE
                     DATE(erp_generalledger.documentDate) <= "' . $asOfDate . '"
                     AND YEAR ( erp_generalledger.documentDate ) = "' . $year . '"
                     AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
-
+                    AND chartofaccounts.controlAccountsSystemID = 1
                     ) AS revenueDetailData
                     LEFT JOIN customermaster ON customermaster.customerCodeSystem = revenueDetailData.mySupplierCode
                     WHERE (revenueDetailData.mySupplierCode IN (' . join(',', $customerSystemID) . ')

@@ -190,67 +190,6 @@
     </style>
 </head>
 <body>
-<div class="footer">
-    <table style="width:100%;">
-        <tr>
-            <td width="40%"><span
-                        class="font-weight-bold">Confirmed By :</span> {{ $masterdata->confirmed_by? $masterdata->confirmed_by->empFullName:'' }}
-            </td>
-            <td><span class="font-weight-bold">Review By :</span></td>
-        </tr>
-    </table>
-    <table style="width:100%;">
-        <tr>
-            <td><span class="font-weight-bold">Electronically Approved By :</span></td>
-        </tr>
-        <tr>
-            &nbsp;
-        </tr>
-    </table>
-    <table style="width:100%;">
-        <tr>
-            @if ($masterdata->approved_by)
-                @foreach ($masterdata->approved_by as $det)
-                    <td style="padding-right: 25px;font-size: 9px;">
-                        <div>
-                            @if($det->employee)
-                                {{$det->employee->empFullName }}
-                            @endif
-                        </div>
-                        <div><span>
-                @if(!empty($det->approvedDate))
-                                    {{ \App\helper\Helper::convertDateWithTime($det->approvedDate)}}
-
-                                @endif
-              </span></div>
-                        <div style="width: 3px"></div>
-                    </td>
-                @endforeach
-            @endif
-        </tr>
-    </table>
-    <table style="width:100%;">
-        <tr>
-            <td colspan="3" style="width:100%">
-                <hr style="background-color: black">
-            </td>
-        </tr>
-        <tr>
-            <td style="width:33%;font-size: 10px;vertical-align: top;">
-                <span class="white-space-pre-line font-weight-bold">{!! nl2br($docRef) !!}</span>
-            </td>
-            <td style="width:33%; text-align: center;font-size: 10px;vertical-align: top;">
-                <span style="text-align: center">Page <span class="pagenum"></span></span><br>
-                @if ($masterdata->company)
-                    {{$masterdata->company->CompanyName}}
-                @endif
-            </td>
-            <td style="width:33%;font-size: 10px;vertical-align: top;">
-                <span style="margin-left: 50%;">Printed Date : {{date("d-M-y", strtotime(now()))}}</span>
-            </td>
-        </tr>
-    </table>
-</div>
 <div id="watermark"></div>
 <div class="card-body content" id="print-section">
     <table style="width: 100%" class="table_height">
@@ -271,10 +210,10 @@
                 <table>
                     <tr>
                         <td width="100px">
-                            <span class="font-weight-bold">Doc Code</span>
+                            <span style="font-weight:bold;">{{ __('custom.doc_code') }}</span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight:bold;">:</span>
                         </td>
                         <td>
                             <span>{{$masterdata->custPaymentReceiveCode}}</span>
@@ -282,10 +221,10 @@
                     </tr>
                     <tr>
                         <td width="70px">
-                            <span class="font-weight-bold">Doc Date </span>
+                            <span style="font-weight:bold;">{{ __('custom.doc_date') }}</span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight:bold;">:</span>
                         </td>
                         <td>
                             <span>
@@ -295,10 +234,10 @@
                     </tr>
                     <tr>
                         <td width="70px">
-                            <span class="font-weight-bold">Payment Mode </span>
+                            <span style="font-weight:bold;">{{ __('custom.payment_mode') }}</span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight:bold;">:</span>
                         </td>
                         <td>
                             @if($masterdata->payment_type)
@@ -313,47 +252,124 @@
         </tr>
     </table>
 
-    <hr style="color: #d3d9df">
+    <hr style="color: #d3d9df border-top: 2px solid black; height: 2px; color: black">
 
     <table style="width: 100%" class="table_height">
         <tr style="width: 100%">
- 
-        <div>
-            <span style="font-size: 18px">
-                @if($masterdata->documentType == 13)
-                    Customer Invoice Receipt
-                @endif
-                @if($masterdata->documentType == 14)
-                    Direct Receipt
-                @endif
-                @if($masterdata->documentType == 15)
-                    Advance Receipt
-                @endif
-            </span>
-        </div>
+            <td>
+                <div>
+                    <span style="font-size: 18px">
+                        @if($masterdata->documentType == 13)
+                            {{ __('custom.doc_code') }}
+                        @endif
+                        @if($masterdata->documentType == 14)
+                            {{ __('custom.doc_code') }}
+                        @endif
+                        @if($masterdata->documentType == 15)
+                            {{ __('custom.advance_receipt') }}
+                        @endif
+                    </span>
+                </div>
+            </td>
+            <td valign="bottom" class="text-right">
+                <span style="font-weight:bold;">
+                    <h3 class="text-muted">
+                        @if($masterdata->confirmedYN == 0 && $masterdata->approved == 0)
+                            {{ __('custom.not_confirmed') }}
+                        @elseif($masterdata->confirmedYN == 1 && $masterdata->approved == 0)
+                            {{ __('custom.pending_approval') }}
+                        @elseif($masterdata->confirmedYN == 1 && ($masterdata->approved == 1 ||  $masterdata->approved == -1))
+                            {{ __('custom.fully_approved') }}
+                        @endif
+                    </h3>
+                </span>
+            </td>
         </tr>
     </table>
     <br>
-    <br>
+
     @if($masterdata->documentType == 13 || $masterdata->documentType == 15)
         <table style="width: 100%">
-            <tr style="width:100%">
-                <td style="width: 60%"></td>
-                <td style="width: 40%">
-                    <table>
-                        <tr style="width: 100%">
-                            <td valign="bottom" class="text-right">
-                                <span class="font-weight-bold">
-                                    <h3 class="text-muted">
-                                        @if($masterdata->confirmedYN == 0 && $masterdata->approved == 0)
-                                            Not Confirmed
-                                        @elseif($masterdata->confirmedYN == 1 && $masterdata->approved == 0)
-                                            Pending Approval
-                                        @elseif($masterdata->confirmedYN == 1 && ($masterdata->approved == 1 ||  $masterdata->approved == -1))
-                                            Fully Approved
-                                        @endif
-                                    </h3>
- `                              </span>
+            <tr style="width: 100%">
+                <td style="width: 58%; vertical-align:top;">
+                    <table style="width: 100%">
+                        <tr>
+                            <td width="150px" style="font-weight:bold; vertical-align:top;">{{ __('custom.customer_name') }}</td>
+                            <td width="10px" style="font-weight:bold; vertical-align:top;">:</td>
+                            <td colspan="3">
+                                @if ($masterdata->customer)
+                                    {{$masterdata->customer->CustomerName}}
+                                @endif
+                            </td>
+                        </tr>
+                        <tr>
+                            <td width="150px" style="font-weight:bold; vertical-align:top;">{{ __('custom.customer_code') }}</td>
+                            <td width="10px" style="font-weight:bold; vertical-align:top;">:</td>
+                            <td colspan="3">
+                                @if ($masterdata->customer)
+                                    {{$masterdata->customer->CutomerCode}}
+                                @endif
+                            </td>
+                        </tr>
+                        <tr>
+                            <td width="150px" style="font-weight:bold; vertical-align:top;">{{ __('custom.customer_address') }}</td>
+                            <td width="10px" style="font-weight:bold; vertical-align:top;">:</td>
+                            <td colspan="3">
+                                @if ($masterdata->customer)
+                                    {{$masterdata->customer->customerAddress1}}
+                                @endif
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+                <td style="width: 42%;  vertical-align:top;">
+                    <table style="width: 100%">
+                        <tr>
+                            <td width="150px" style="font-weight:bold; vertical-align:top;">{{ __('custom.bank_name') }}</td>
+                            <td width="10px" style="font-weight:bold; vertical-align:top;">:</td>
+                            <td colspan="3">
+                                @if($masterdata->bank)
+                                    {{$masterdata->bank->bankName}}
+                                @endif
+                            </td>
+                        </tr>
+                        <tr>
+                            <td width="150px" style="font-weight:bold; vertical-align:top;">{{ __('custom.account_number') }}</td>
+                            <td width="10px" style="font-weight:bold; vertical-align:top;">:</td>
+                            <td colspan="3">
+                                @if($masterdata->bank)
+                                    {{$masterdata->bank->AccountNo}}
+                                @endif
+                            </td>
+                        </tr>
+                        <tr>
+                            <td width="150px" style="font-weight:bold; vertical-align:top;">{{ __('custom.bank_currency') }}</td>
+                            <td width="10px" style="font-weight:bold; vertical-align:top;">:</td>
+                            <td colspan="3">
+                                @if($masterdata->bank_currency)
+                                    {{$masterdata->bank_currency->CurrencyCode}}
+                                @endif
+                            </td>
+                        </tr>
+                        @if($masterdata->isVATApplicable)
+                            <tr>
+                                <td width="150px" style="font-weight:bold; vertical-align:top;">{{ __('custom.vat_percentage') }} (%)</td>
+                                <td width="10px" style="font-weight:bold; vertical-align:top;">:</td>
+                                <td colspan="3">
+                                    @if ($masterdata->VATPercentage)
+                                        {{$masterdata->VATPercentage}}
+                                    @endif
+                                </td>
+                            </tr>
+                        @endif
+                        
+                        <tr>
+                            <td width="150px" style="font-weight:bold; vertical-align:top;">{{ __('custom.currency') }}</td>
+                            <td width="10px" style="font-weight:bold; vertical-align:top;">:</td>
+                            <td colspan="3">
+                                @if($masterdata->currency)
+                                    {{$masterdata->currency->CurrencyCode}}
+                                @endif
                             </td>
                         </tr>
                     </table>
@@ -362,131 +378,17 @@
         </table>
         <table style="width: 100%">
             <tr style="width:100%">
-                <td style="width: 60%">
+                <td style="width: 100%">
                     <table>
-                        <tr>
-                            <td width="150px" style="vertical-align: top;">
-                                <span class="font-weight-bold">Customer Name</span>
-                            </td>
-                            <td width="10px" style="vertical-align: top;">
-                                <span class="font-weight-bold">:</span>
-                            </td>
-                            <td colspan="3">
-                                @if ($masterdata->customer)
-                                    {{$masterdata->customer->CustomerName}}
-                                @endif
+                        <tr style="width: 100%">
+                            <td style="vertical-align: top;">
+                                <span style="font-weight:bold;">{{ __('custom.comments') }} :</span>
                             </td>
                         </tr>
-                        <tr>
-                            <td width="150px" style="vertical-align: top;">
-                                <span class="font-weight-bold">Customer Code</span>
-                            </td>
-                            <td width="10px" style="vertical-align: top;">
-                                <span class="font-weight-bold">:</span>
-                            </td>
-                            <td colspan="3">
-                                @if ($masterdata->customer)
-                                    {{$masterdata->customer->CutomerCode}}
-                                @endif
-                            </td>
-                        </tr>
-                        <tr>
-                            <td width="150px" style="vertical-align: top;">
-                                <span class="font-weight-bold">Customer Address</span>
-                            </td>
-                            <td width="10px" style="vertical-align: top;">
-                                <span class="font-weight-bold">:</span>
-                            </td>
-                            <td colspan="3">
-                                @if ($masterdata->customer)
-                                    {{$masterdata->customer->customerAddress1}}
-                                @endif
-                            </td>
-                        </tr>
-                        <tr>
-                            <td width="150px" style="vertical-align: top;">
-                                <span class="font-weight-bold">Comments</span>
-                            </td>
-                            <td width="10px" style="vertical-align: top;">
-                                <span class="font-weight-bold">:</span>
-                            </td>
-                            <td colspan="3">
+                        <tr style="width: 100%">
+                            <td style="vertical-align: top;">
                                 @if ($masterdata->narration)
                                     {{$masterdata->narration}}
-                                @endif
-                            </td>
-                        </tr>
-                        @if($masterdata->isVATApplicable)
-                            <tr>
-                                <td width="150px">
-                                    <span class="font-weight-bold">VAT Percentage (%)</span>
-                                </td>
-                                <td width="10px">
-                                    <span class="font-weight-bold">:</span>
-                                </td>
-                                <td colspan="3">
-                                    @if ($masterdata->VATPercentage)
-                                        {{$masterdata->VATPercentage}}
-                                    @endif
-                                </td>
-                            </tr>
-                        @endif
-                    </table>
-                </td>
-                <td style="width: 40%">
-                    <table style="width: 100%">
-                        <tr>
-                            <td width="150px">
-                                <span class="font-weight-bold">Bank Name</span>
-                            </td>
-                            <td width="10px">
-                                <span class="font-weight-bold">:</span>
-                            </td>
-                            <td>
-                                @if($masterdata->bank)
-                                    {{$masterdata->bank->bankName}}
-                                @endif
-                            </td>
-                        </tr>
-                        <tr>
-                            <td width="150px">
-                                <span class="font-weight-bold">Account Number</span>
-                            </td>
-                            <td width="10px">
-                                <span class="font-weight-bold">:</span>
-                            </td>
-                            <td>
-                                @if($masterdata->bank)
-                                    {{$masterdata->bank->AccountNo}}
-                                @endif
-                            </td>
-                        </tr>
-                        <tr>
-                            <td width="150px">
-                                <span class="font-weight-bold">Bank Currency</span>
-                            </td>
-                            <td width="10px">
-                                <span class="font-weight-bold">:</span>
-                            </td>
-                            <td>
-                                @if($masterdata->bank_currency)
-                                    {{$masterdata->bank_currency->CurrencyCode}}
-                                @endif
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>&nbsp;</td>
-                        </tr>
-                        <tr>
-                            <td width="150px">
-                                <span class="font-weight-bold">Currency</span>
-                            </td>
-                            <td width="10px">
-                                <span class="font-weight-bold">:</span>
-                            </td>
-                            <td>
-                                @if($masterdata->currency)
-                                    {{$masterdata->currency->CurrencyCode}}
                                 @endif
                             </td>
                         </tr>
@@ -498,39 +400,15 @@
     @if($masterdata->documentType == 14)
         <table style="width: 100%">
             <tr style="width:100%">
-                <td style="width: 60%"></td>
-                <td style="width: 40%">
-                    <table>
-                        <tr style="width: 100%">
-                            <td valign="bottom" class="text-right">
-                                <span class="font-weight-bold">
-                                    <h3 class="text-muted">
-                                        @if($masterdata->confirmedYN == 0 && $masterdata->approved == 0)
-                                            Not Confirmed
-                                        @elseif($masterdata->confirmedYN == 1 && $masterdata->approved == 0)
-                                            Pending Approval
-                                        @elseif($masterdata->confirmedYN == 1 && ($masterdata->approved == 1 ||  $masterdata->approved == -1))
-                                            Fully Approved
-                                        @endif
-                                    </h3>
-    `                              </span>
-                            </td>
-                        </tr>
-                    </table>
-                </td>
-            </tr>
-        </table>
-        <table style="width: 100%">
-            <tr style="width:100%">
                 <td style="width: 60%">
                     <table>
                         @if($masterdata->payeeTypeID && $masterdata->payeeTypeID != 3)
                         <tr>
                             <td width="150px">
-                                <span class="font-weight-bold">Payee Code</span>
+                                <span style="font-weight:bold;">{{ __('custom.payee_code') }}</span>
                             </td>
                             <td width="10px">
-                                <span class="font-weight-bold">:</span>
+                                <span style="font-weight:bold;">:</span>
                             </td>
                             <td>
                                 @if($masterdata->payeeTypeID == 1)
@@ -546,17 +424,17 @@
                                 <tr>
                                     <td width="150px">
                                         @if($masterdata->payeeTypeID == 1)
-                                            <span class="font-weight-bold">Customer Name</span>
+                                            <span style="font-weight:bold;">{{ __('custom.customer_name') }}</span>
                                         @endif
                                         @if($masterdata->payeeTypeID == 2)
-                                         <span class="font-weight-bold">Employee Name</span>
+                                         <span style="font-weight:bold;">{{ __('custom.employee_name') }}</span>
                                         @endif
                                         @if($masterdata->payeeTypeID == 3)
-                                            <span class="font-weight-bold">Payee Name</span>
+                                            <span style="font-weight:bold;">{{ __('custom.payee_name') }}</span>
                                         @endif
                                     </td>
                                     <td width="10px">
-                                        <span class="font-weight-bold">:</span>
+                                        <span style="font-weight:bold;">:</span>
                                     </td>
                                     <td>
                                         @if($masterdata->payeeTypeID == 1)
@@ -574,30 +452,30 @@
                             @if($masterdata->payeeTypeID)
                                 <tr>
                                     <td width="150px">
-                                        <span class="font-weight-bold">Payee Type</span>
+                                        <span style="font-weight:bold;">{{ __('custom.doc_code') }}</span>
                                     </td>
                                     <td width="10px">
-                                        <span class="font-weight-bold">:</span>
+                                        <span style="font-weight:bold;">:</span>
                                     </td>
                                     <td>
                                         @if($masterdata->payeeTypeID == 1)
-                                            Customer
+                                            {{ __('custom.customer') }}
                                         @endif
                                         @if($masterdata->payeeTypeID == 2)
-                                            Employee
+                                            {{ __('custom.employee') }}
                                         @endif
                                         @if($masterdata->payeeTypeID == 3)
-                                            Other
+                                            {{ __('custom.other') }}
                                         @endif
                                     </td>
                                 </tr>
                             @endif
                         <tr>
                             <td width="50px">
-                                <span class="font-weight-bold">Cheque No</span>
+                                <span style="font-weight:bold;">{{ __('custom.cheque_no') }}</span>
                             </td>
                             <td width="10px">
-                                <span class="font-weight-bold">:</span>
+                                <span style="font-weight:bold;">:</span>
                             </td>
                             <td>
                                 <span>{{$masterdata->custChequeNo}}</span>
@@ -605,33 +483,22 @@
                         </tr>
                         <tr>
                             <td width="50px">
-                                <span class="font-weight-bold">Cheque Date</span>
+                                <span style="font-weight:bold;">{{ __('custom.cheque_date') }}</span>
                             </td>
                             <td width="10px">
-                                <span class="font-weight-bold">:</span>
+                                <span style="font-weight:bold;">:</span>
                             </td>
                             <td>
                                 {{ \App\helper\Helper::dateFormat($masterdata->custChequeDate)}}
                             </td>
                         </tr>
-                        <tr>
-                            <td width="70px">
-                                <span class="font-weight-bold">Narration </span>
-                            </td>
-                            <td width="10px">
-                                <span class="font-weight-bold">:</span>
-                            </td>
-                            <td>
-                                <span>{{$masterdata->narration}}</span>
-                            </td>
-                        </tr>
                         @if($masterdata->isVATApplicable)
                             <tr>
                                 <td width="70px">
-                                    <span class="font-weight-bold">VAT Percentage (%) </span>
+                                    <span style="font-weight:bold;">{{ __('custom.vat_percentage') }} (%) </span>
                                 </td>
                                 <td width="10px">
-                                    <span class="font-weight-bold">:</span>
+                                    <span style="font-weight:bold;">:</span>
                                 </td>
                                 <td>
                                     <span>{{$masterdata->VATPercentage}}</span>
@@ -644,10 +511,10 @@
                     <table style="width: 100%">
                         <tr>
                             <td width="150px">
-                                <span class="font-weight-bold">Bank Name</span>
+                                <span style="font-weight:bold;">{{ __('custom.bank_name') }}</span>
                             </td>
                             <td width="10px">
-                                <span class="font-weight-bold">:</span>
+                                <span style="font-weight:bold;">:</span>
                             </td>
                             <td>
                                 @if($masterdata->bank)
@@ -657,10 +524,10 @@
                         </tr>
                         <tr>
                             <td width="150px">
-                                <span class="font-weight-bold">Account Number</span>
+                                <span style="font-weight:bold;">{{ __('custom.account_number') }}</span>
                             </td>
                             <td width="10px">
-                                <span class="font-weight-bold">:</span>
+                                <span style="font-weight:bold;">:</span>
                             </td>
                             <td>
                                 @if($masterdata->bank)
@@ -670,10 +537,10 @@
                         </tr>
                         <tr>
                             <td width="150px">
-                                <span class="font-weight-bold">Bank Currency</span>
+                                <span style="font-weight:bold;">{{ __('custom.bank_currency') }}</span>
                             </td>
                             <td width="10px">
-                                <span class="font-weight-bold">:</span>
+                                <span style="font-weight:bold;">:</span>
                             </td>
                             <td>
                                 @if($masterdata->bank_currency)
@@ -682,18 +549,35 @@
                             </td>
                         </tr>
                         <tr>
-                            <td>&nbsp;</td>
-                        </tr>
-                        <tr>
                             <td width="150px">
-                                <span class="font-weight-bold">Currency</span>
+                                <span style="font-weight:bold;">{{ __('custom.currency') }}</span>
                             </td>
                             <td width="10px">
-                                <span class="font-weight-bold">:</span>
+                                <span style="font-weight:bold;">:</span>
                             </td>
                             <td>
                                 @if($masterdata->currency)
                                     {{$masterdata->currency->CurrencyCode}}
+                                @endif
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+        <table style="width: 100%">
+            <tr style="width:100%">
+                <td style="width: 100%">
+                    <table>
+                        <tr style="width: 100%">
+                            <td style="vertical-align: top;">
+                                <span style="font-weight:bold;">{{ __('custom.narration') }} :</span>
+                            </td>
+                        </tr>
+                        <tr style="width: 100%">
+                            <td style="vertical-align: top;">
+                                @if ($masterdata->narration)
+                                    {{$masterdata->narration}}
                                 @endif
                             </td>
                         </tr>
@@ -709,21 +593,21 @@
                 <tr class="theme-tr-head">
                     <th>#</th>
                     @if($masterdata->documentType == 14)
-                        <th class="text-center">Account Code</th>
-                        <th class="text-center">Account Description</th>
+                        <th class="text-center">{{ __('custom.account_code') }}</th>
+                        <th class="text-center">{{ __('custom.account_description') }}</th>
                     @endif
                     @if($masterdata->documentType == 14 && $isProjectBase)
-                        <th colspan="3" class="text-center">Project</th>
+                        <th colspan="3" class="text-center">{{ __('custom.project') }}</th>
                     @endif
-                    <th class="text-center">Department</th>
+                    <th class="text-center">{{ __('custom.department') }}</th>
                     @if($masterdata->documentType == 14)
-                        <th class="text-center">Contract</th>
+                        <th class="text-center">{{ __('custom.contract') }}</th>
                     @endif
-                    <th colspan="2" class="text-center">Comments</th>
-                    <th class="text-center">Amount</th>
+                    <th colspan="2" class="text-center">{{ __('custom.comments') }}</th>
+                    <th class="text-center">{{ __('custom.amount') }}</th>
                     @if($masterdata->isVATApplicable)
-                        <th class="text-center">VAT Amount</th>
-                        <th class="text-center">Net Amount</th>
+                        <th class="text-center">{{ __('custom.vat_amount') }}</th>
+                        <th class="text-center">{{ __('custom.net_amount') }}</th>
                     @endif
                     {{--<th class="text-center">Local Amt (
                         @if($masterdata->localCurrency)
@@ -781,7 +665,7 @@
                     @if($masterdata->documentType == 15)
                         <td colspan="2" class="text-right border-bottom-remov">&nbsp;</td>
                     @endif
-                    <td colspan="2" class="text-right" style="background-color: rgb(215,215,215)">Total Payment</td>
+                    <td colspan="2" class="text-right" style="background-color: rgb(215,215,215)">{{ __('custom.total_payment') }}</td>
                     <td class="text-right"
                         style="background-color: rgb(215,215,215)">{{number_format($directTotTra, $transDecimal)}}</td>
                     @if($masterdata->isVATApplicable)
@@ -804,12 +688,12 @@
                 <thead>
                 <tr class="theme-tr-head">
                     <th>#</th>
-                    <th class="text-center">Sales Order No</th>
-                    <th class="text-center">Comments</th>
+                    <th class="text-center">{{ __('custom.sales_order_no') }}</th>
+                    <th class="text-center">{{ __('custom.comments') }}</th>
                     @if($masterdata->isVATApplicable)
-                        <th class="text-center">VAT Amount</th>
+                        <th class="text-center">{{ __('custom.vat_amount') }}</th>
                     @endif
-                    <th class="text-center">Payment Amount</th>
+                    <th class="text-center">{{ __('custom.payment_amount') }}</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -826,10 +710,10 @@
                 @endforeach
                 <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
                     @if($masterdata->isVATApplicable)
-                        <td class="text-right" colspan="4" style="background-color: rgb(215,215,215)">Total Payment</td>
+                        <td class="text-right" colspan="4" style="background-color: rgb(215,215,215)">{{ __('custom.total_payment') }}</td>
                     @endif
                     @if(!$masterdata->isVATApplicable)
-                        <td class="text-right" colspan="3" style="background-color: rgb(215,215,215)">Total Payment</td>
+                        <td class="text-right" colspan="3" style="background-color: rgb(215,215,215)">{{ __('custom.total_payment') }}</td>
                     @endif
                     @if($masterdata->isVATApplicable)
                         <td class="text-right"
@@ -848,10 +732,10 @@
                 <thead>
                 <tr class="theme-tr-head">
                     <th>#</th>
-                    <th class="text-center">Invoice Code</th>
-                    <th class="text-center">Invoice Date</th>
-                    <th class="text-center">Comments</th>
-                    <th class="text-center">Amount</th>
+                    <th class="text-center">{{ __('custom.invoice_code') }}</th>
+                    <th class="text-center">{{ __('custom.invoice_date') }}</th>
+                    <th class="text-center">{{ __('custom.comments') }}</th>
+                    <th class="text-center">{{ __('custom.amount') }}</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -866,7 +750,7 @@
                 @endforeach
                 <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
                     <td colspan="3" class="text-right border-bottom-remov">&nbsp;</td>
-                    <td class="text-right" style="background-color: rgb(215,215,215)">Total</td>
+                    <td class="text-right" style="background-color: rgb(215,215,215)">total{{ __('custom.doc_code') }}</td>
                     <td class="text-right"
                         style="background-color: rgb(215,215,215)">{{number_format($ciDetailTotTra, $transDecimal)}}</td>
                 </tr>
@@ -880,17 +764,17 @@
                 <thead>
                 <tr class="theme-tr-head">
                     <th>#</th>
-                    <th class="text-center">Account Code</th>
-                    <th class="text-center">Account Description</th>
-                    <th class="text-center">Department</th>
-                    <th class="text-center">Amount</th>
-                    <th class="text-center">Local Amt (
+                    <th class="text-center">{{ __('custom.account_code') }}</th>
+                    <th class="text-center">{{ __('custom.account_description') }}</th>
+                    <th class="text-center">{{ __('custom.department') }}</th>
+                    <th class="text-center">{{ __('custom.amount') }}</th>
+                    <th class="text-center">{{ __('custom.local_amt') }} (
                         @if($masterdata->localCurrency)
                             {{$masterdata->localCurrency->CurrencyCode}}
                         @endif
                         )
                     </th>
-                    <th class="text-center">Rpt Amt (
+                    <th class="text-center">{{ __('custom.rpt_amt') }} (
                         @if($masterdata->rptCurrency)
                             {{$masterdata->rptCurrency->CurrencyCode}}
                         @endif
@@ -915,7 +799,7 @@
                 @endforeach
                 <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
                     <td colspan="3" class="text-right border-bottom-remov">&nbsp;</td>
-                    <td class="text-right" style="background-color: rgb(215,215,215)">Total Payment</td>
+                    <td class="text-right" style="background-color: rgb(215,215,215)">{{ __('custom.total_payment') }}</td>
                     <td class="text-right"
                         style="background-color: rgb(215,215,215)">{{number_format($directTotTra, $transDecimal)}}</td>
                     <td class="text-right border-bottom-remov"></td>
@@ -928,7 +812,7 @@
                     </tr>
                     <tr>
                         <td colspan="5" class="text-right border-bottom-remov border-top-remov">&nbsp;</td>
-                        <td class="text-right border-bottom-remov border-top-remov" style="font-size: 13px;" >Net Total</td>
+                        <td class="text-right border-bottom-remov border-top-remov" style="font-size: 13px;" >{{ __('custom.net_total') }}</td>
                         <td class="text-right border-bottom-remov border-top-remov" style="font-size: 13px;" >{{number_format(($directTotTra + $ciDetailTotTra), $transDecimal)}}</td>
                         <td class="text-right border-bottom-remov border-top-remov"></td>
                         <td class="text-right border-bottom-remov border-top-remov"></td>

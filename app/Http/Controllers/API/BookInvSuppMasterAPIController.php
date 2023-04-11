@@ -36,6 +36,7 @@ use App\helper\TaxService;
 use App\Http\Requests\API\CreateBookInvSuppMasterAPIRequest;
 use App\Http\Requests\API\UpdateBookInvSuppMasterAPIRequest;
 use App\Models\AccountsPayableLedger;
+use App\Models\EmployeeLedger;
 use App\Models\SupplierInvoiceDirectItem;
 use App\Models\BookInvSuppDet;
 use App\Models\BookInvSuppDetRefferedBack;
@@ -3074,6 +3075,12 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
 
             //deleting records from accounts payable
             AccountsPayableLedger::where('documentSystemCode', $bookingSuppMasInvAutoID)
+                ->where('companySystemID', $bookInvSuppMasterData->companySystemID)
+                ->where('documentSystemID', $bookInvSuppMasterData->documentSystemID)
+                ->delete();
+
+             //deleting records from employee ledger
+            EmployeeLedger::where('documentSystemCode', $bookingSuppMasInvAutoID)
                 ->where('companySystemID', $bookInvSuppMasterData->companySystemID)
                 ->where('documentSystemID', $bookInvSuppMasterData->documentSystemID)
                 ->delete();

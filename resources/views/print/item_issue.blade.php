@@ -1,6 +1,6 @@
 <html>
 <head>
-    <title>Item Issue Voucher</title>
+    <title>{{ __('custom.item_issue_voucher') }}</title>
     <style>
         @page {
             margin-left: 30px;
@@ -52,7 +52,7 @@
         }
 
         .font-weight-bold {
-            font-weight: 700 !important;
+            font-weight: bold
         }
 
         tr td {
@@ -73,9 +73,6 @@
             color: #dedede !important;
         }
 
-        .font-weight-bold {
-            font-weight: 700 !important;
-        }
 
         .table thead th {
             vertical-align: bottom;
@@ -150,31 +147,27 @@
     </style>
 </head>
 <body>
-<div class="footer">
-    {{--Footer Page <span class="pagenum"></span>--}}
-    <span class="white-space-pre-line font-weight-bold">{!! nl2br($entity->docRefNo) !!}</span>
-</div>
 <div id="watermark"></div>
-<div class="card-body content" id="print-section">
+<div class="card-body content" style="margin-bottom: 45px;" id="print-section">
 
     <table style="width: 100%">
         <tr style="width: 100%">
             <td colspan="3" style="bottom: 0;position: absolute;text-align: right">
-            <span class="font-weight-bold">
+            <span style="font-weight: bold">
                 <h3 class="text-muted">
                     @if($entity->confirmedYN == 0 && $entity->approved == 0)
-                        Not Confirmed
+                        {{__('custom.not_confirmed')}}
                     @elseif($entity->confirmedYN == 1 && $entity->approved == 0)
-                        Pending Approval
+                        {{__('custom.pending_approval')}}
                     @elseif($entity->confirmedYN == 1 && ($entity->approved == 1 ||  $entity->approved == -1))
-                        Fully Approved
+                        {{__('custom.fully_approved')}}
                     @endif
                     </h3>
-`             </span>
+             </span>
             </td>
         </tr>
         <tr style="width: 100%">
-            <td colspan="3" class="text-center">
+            <td colspan="3" style="text-align: center;">
                 @if($entity->company)
                     <h3> {{$entity->company->CompanyName}}</h3>
                 @endif
@@ -188,9 +181,9 @@
              </td>
          </tr>--}}
         <tr style="width: 100%">
-            <td colspan="3" class="text-center">
+            <td colspan="3" style="text-align: center;">
                 <h3>
-                    Item Issue Voucher
+                    {{ __('custom.item_issue_voucher') }}
                 </h3>
             </td>
         </tr>
@@ -198,14 +191,14 @@
 
     <table style="width: 100%">
         <tr style="width:100%">
-            <td style="width: 30%">
+            <td style="width: 50%">
                 <table>
                     <tr>
                         <td width="50px">
-                            <span class="font-weight-bold">Warehouse</span>
+                            <span style="font-weight: bold;">{{ __('custom.warehouse') }}</span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold">:</span>
                         </td>
                         <td>
                             @if($entity->warehouse_by)
@@ -215,10 +208,10 @@
                     </tr>
                     <tr>
                         <td width="50px">
-                            <span class="font-weight-bold">Ref No</span>
+                            <span style="font-weight: bold">{{ __('custom.ref_no') }}</span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold">:</span>
                         </td>
                         <td>
                             {{$entity->issueRefNo}}
@@ -226,10 +219,10 @@
                     </tr>
                     <tr>
                         <td width="70px">
-                            <span class="font-weight-bold">Comments </span>
+                            <span style="font-weight: bold">{{ __('custom.comments') }}</span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold">:</span>
                         </td>
                         <td>
                             <span>{{$entity->comment}}</span>
@@ -237,27 +230,27 @@
                     </tr>
                 </table>
             </td>
-            <td style="width: 40%;text-align: center">
-            </td>
-            <td style="width: 30%">
+            {{-- <td style="width: 40%;text-align: center">
+            </td> --}}
+            <td style="width: 50%">
                 <table>
                     <tr>
-                        <td width="70px">
-                            <span class="font-weight-bold">Document No</span>
+                        <td width="90px">
+                            <span style="font-weight: bold">{{ __('custom.document_no') }}</span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold">:</span>
                         </td>
                         <td>
                             <span>{{$entity->itemIssueCode}}</span>
                         </td>
                     </tr>
                     <tr>
-                        <td width="70px">
-                            <span class="font-weight-bold">Date </span>
+                        <td width="90px">
+                            <span style="font-weight: bold">{{ __('custom.date') }} </span>
                         </td>
                         <td width="10px">
-                            <span class="font-weight-bold">:</span>
+                            <span style="font-weight: bold">:</span>
                         </td>
                         <td>
                             <span>
@@ -273,36 +266,36 @@
     <div style="margin-top: 30px">
         <table class="table table-bordered" style="width: 100%;">
             <thead>
-            <tr class="theme-tr-head">
+            <tr  style="background-color: #DEDEDE !important; border-color:#000">
                 <th></th>
-                <th class="text-left">Item Code</th>
-                <th class="text-left">Item Description</th>
-                <th class="text-left">Part No / Ref.Number</th>
-                <th class="text-left">UOM</th>
-                <th class="text-left">QTY</th>
-                <th class="text-left">Cost(USD)</th>
-                <th class="text-left">Comments</th>
+                <th style="text-align: left;">{{ __('custom.item_code') }}</th>
+                <th style="text-align: left;">{{ __('custom.item_description') }}</th>
+                <th style="text-align: left;">{{ __('custom.manufacture_part_no') }}</th>
+                <th style="text-align: left;">{{ __('custom.uom') }}</th>
+                <th style="text-align: left;">{{ __('custom.qty') }}</th>
+                <th style="text-align: left;">{{ __('custom.cost') }}(USD)</th>
+                <th style="text-align: left;">{{ __('custom.comments') }}</th>
             </tr>
             </thead>
             <tbody>
             @foreach ($entity->details as $item)
                 <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;">
-                    <td>{{$loop->iteration}}</td>
-                    <td>{{$item->itemPrimaryCode}}</td>
-                    <td>{{$item->itemDescription}}</td>
-                    <td class="text-left">
+                    <td style="padding-left: 5px">{{$loop->iteration}}</td>
+                    <td style="padding-left: 5px">{{$item->itemPrimaryCode}}</td>
+                    <td style="padding-left: 5px">{{$item->itemDescription}}</td>
+                    <td style="text-align: left; padding-left: 5px;">
                         @if($item->item_by)
                             {{$item->item_by->secondaryItemCode}}
                         @endif
                     </td>
-                    <td>
+                    <td style="padding-left: 5px">
                         @if($item->uom_issuing)
                             {{$item->uom_issuing->UnitShortCode}}
                         @endif
                     </td>
-                    <td class="text-right">{{$item->qtyIssued}}</td>
-                    <td class="text-right">{{round($item->issueCostRpt,2)}}</td>
-                    <td class="text-left">
+                    <td style="text-align: right; padding-right: 5px;">{{$item->qtyIssued}}</td>
+                    <td style="text-align: right; padding-right: 5px;">{{round($item->issueCostRpt,2)}}</td>
+                    <td style="text-align: left; padding-left: 5px;">
                         {{$item->comments}}
                     </td>
                 </tr>
@@ -318,7 +311,7 @@
                     <table width="100%">
                         <tr>
                             <td width="70px">
-                                <span class="font-weight-bold">Issued By :</span>
+                                <span style="font-weight: bold">{{ __('custom.issued_by') }} :</span>
                             </td>
                             <td width="400px">
                                 @if($entity->confirmed_by)
@@ -328,14 +321,12 @@
                         </tr>
                     </table>
                 </td>
-                <td width="10%">
 
-                </td>
-                <td width="30%">
+                <td width="40%">
                     <table>
                         <tr>
-                            <td width="70px">
-                                <span class="font-weight-bold">Reviewed By :</span>
+                            <td width="90px">
+                                <span style="font-weight: bold">{{ __('custom.reviewed_by') }} :</span>
                             </td>
                             <td>
                                 <div style="border-bottom: 1px solid black;width: 200px;margin-top: 7px;"></div>
@@ -347,7 +338,7 @@
         </table>
     </div>
     <div class="row" style="margin-top: 10px">
-        <span class="font-weight-bold">Electronically Approved By :</span>
+        <span style="font-weight: bold">{{ __('custom.electronically_approved_by') }} :</span>
     </div>
     <div style="margin-top: 10px">
         <table>

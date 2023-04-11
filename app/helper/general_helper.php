@@ -48,6 +48,7 @@ use App\Models\GRVDetails;
 use App\Models\PaySupplierInvoiceDetail;
 use App\Models\GRVMaster;
 use App\Models\ProcumentOrder;
+use App\Models\Employee;
 use App\Models\BookInvSuppMaster;
 use App\Models\PurchaseOrderDetails;
 use App\Models\PurchaseRequestDetails;
@@ -229,6 +230,7 @@ class Helper
      * $param 6-amount : amount
      * no return values
      */
+
     public static function confirmDocumentForApi($params)
     {
         //Skip Employee Info when Confirming;
@@ -3067,7 +3069,14 @@ class Helper
                         if (!$isConfirm) {
                             // get current employee detail.
                             if (!in_array($params['document'], $empInfoSkip)) {
-                                $empInfo = self::getEmployeeInfo();
+
+                                if(!empty(isset($params["employee_id"]))) {
+                                    $empInfo = Models\Employee::with(['profilepic', 'user_data' => function($query) {
+                                        $query->select('uuid', 'employee_id');
+                                    }])->find($params["employee_id"]);
+                                } else {
+                                    $empInfo = self::getEmployeeInfo();
+                                }
                             } else {
                                 $empInfo  =  (object) ['empName' => null, 'empID' => null, 'employeeSystemID' => null];
                             }
@@ -6474,7 +6483,7 @@ class Helper
             $firstDayNextMonth = Carbon::parse($formattedJvDateR)->addMonth()->firstOfMonth();
             $formattedDate = date("Y-m-d", strtotime($firstDayNextMonth));
 
-            $companyFinanceYear = collect(\DB::select("SELECT companyFinanceYearID,bigginingDate,endingDate FROM companyfinanceyear WHERE companySystemID = " . $jvMasterData->companySystemID . " AND isActive = -1 AND date('" . $formattedDate . "') BETWEEN bigginingDate AND endingDate"))->first();
+            $companyFinanceYear = collect(\DB::select("SELECT companyFinanceYearID,bigginingDate,endingDate FROM companyfinanceyear WHERE companySystemID = " . $jvMasterData->companySystemID . " AND isActive = -1 AND isDeleted = 0 AND date('" . $formattedDate . "') BETWEEN bigginingDate AND endingDate"))->first();
 
             if ($companyFinanceYear) {
                 $startYear = $firstDayNextMonth;
@@ -6557,7 +6566,7 @@ class Helper
             $firstDayNextMonth = Carbon::parse($formattedJvDateR)->addMonth()->firstOfMonth();
             $formattedDate = date("Y-m-d", strtotime($firstDayNextMonth));
 
-            $companyFinanceYear = collect(\DB::select("SELECT companyFinanceYearID,bigginingDate,endingDate FROM companyfinanceyear WHERE companySystemID = " . $jvMasterData->companySystemID . " AND isActive = -1 AND date('" . $formattedDate . "') BETWEEN bigginingDate AND endingDate"))->first();
+            $companyFinanceYear = collect(\DB::select("SELECT companyFinanceYearID,bigginingDate,endingDate FROM companyfinanceyear WHERE companySystemID = " . $jvMasterData->companySystemID . " AND isActive = -1 AND isDeleted = 0 AND date('" . $formattedDate . "') BETWEEN bigginingDate AND endingDate"))->first();
 
             if ($companyFinanceYear) {
                 $startYear = $companyFinanceYear->bigginingDate;
@@ -6646,9 +6655,7 @@ class Helper
                     $documentYear = $documentDate->format('Y');
                     $documentYearMonth = $documentDate->format('Y-m');
 
-                    $companyFinanceYear = Models\CompanyFinanceYear::where('companySystemID', $pvMaster->interCompanyToSystemID)
-                        ->whereRaw('? between bigginingDate and endingDate', $documentDate)
-                        ->first();
+                    $companyFinanceYear = Models\CompanyFinanceYear::checkFinanceYear($pvMaster->interCompanyToSystemID, $documentDate->format('Y-m-d'));
 
                     if (empty($companyFinanceYear)) {
                         return ['success' => false, 'message' => "Inter company financial year not found"];
@@ -6773,7 +6780,7 @@ class Helper
                             $documentYear = $documentDate->format('Y');
                             $documentYearMonth = $documentDate->format('Y-m');
 
-                            $companyFinanceYear = Models\CompanyFinanceYear::where('companySystemID', $pvMaster->companySystemID)->whereRaw('? between bigginingDate and endingDate', $documentDate)->first();
+                            $companyFinanceYear = Models\CompanyFinanceYear::checkFinanceYear($pvMaster->companySystemID, $documentDate->format('Y-m-d'));
 
                             if (empty($companyFinanceYear)) {
                                 return ['success' => false, 'message' => "Financial year not found"];
@@ -7285,8 +7292,13 @@ class Helper
             $payee = Models\CustomerMaster::find($custReceivePayment->customerID);
             if ($payee) {
                 $data['payeeCode'] = $payee->CutomerCode;
+                $data['payeeName'] = $payee->CustomerName;
+            } else {
+                $employeeData = Employee::find($custReceivePayment->PayeeEmpID);
+
+                $data['payeeName'] = $employeeData ? $employeeData->empName: $custReceivePayment->PayeeName;                                    
             }
-            $data['payeeName'] = $custReceivePayment->PayeeName;
+
             $data['payeeGLCodeID'] = $custReceivePayment->customerGLCodeSystemID;
             $data['payeeGLCode'] = $custReceivePayment->customerGLCode;
             $data['supplierTransCurrencyID'] = $custReceivePayment->custTransactionCurrencyID;

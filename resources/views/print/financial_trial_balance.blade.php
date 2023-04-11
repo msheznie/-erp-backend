@@ -77,7 +77,7 @@
     }
 
     .table th {
-        background-color: #D7E4BD !important;
+        background-color: #EBEBEB  !important;
     }
 
     tfoot > tr > td {
@@ -146,7 +146,7 @@
     <table style="width:100%;">
         <tr>
             <td style="width:50%;font-size: 10px;vertical-align: bottom;">
-                <span>Printer Date & Time : {{date("d-M-y, h:i:s A")}}</span><br>
+                <span>Printed Date & Time : {{date("d-M-y, h:i:s A")}}</span><br>
                 <span>Printed By : {{$employeeData->empName}}</span>
             </td>
             <td style="width:50%; text-align: center;font-size: 10px;vertical-align: bottom;">
@@ -189,14 +189,14 @@
                         <td style="text-align: right;">{{number_format($val->openingBalLocal, $decimalPlaceLocal)}}</td>
                         <td style="text-align: right;">{{number_format($val->documentLocalAmountDebit, $decimalPlaceLocal) }}</td>
                         <td style="text-align: right;">{{number_format($val->documentLocalAmountCredit, $decimalPlaceLocal) }}</td>
-                        <td style="text-align: right;">{{number_format(($val->documentLocalAmountDebit)-($val->documentLocalAmountCredit), $decimalPlaceLocal) }}</td>
+                        <td style="text-align: right;">{{number_format(($val->documentLocalAmountDebit + $val->openingBalLocal)-($val->documentLocalAmountCredit), $decimalPlaceLocal) }}</td>
                     @endif
 
                     @if ($currencyId ==2 || $currencyId ==3)
                         <td style="text-align: right;">{{number_format($val->openingBalRpt, $decimalPlaceRpt)}}</td>
                         <td style="text-align: right;">{{number_format($val->documentRptAmountDebit, $decimalPlaceRpt)}}</td>
                         <td style="text-align: right;">{{number_format($val->documentRptAmountCredit, $decimalPlaceRpt)}}</td>
-                        <td style="text-align: right;">{{number_format(($val->documentRptAmountDebit)-($val->documentRptAmountCredit), $decimalPlaceRpt)}}</td>
+                        <td style="text-align: right;">{{number_format(($val->documentRptAmountDebit + $val->openingBalRpt)-($val->documentRptAmountCredit), $decimalPlaceRpt)}}</td>
                     @endif
                 </tr>
             @endforeach

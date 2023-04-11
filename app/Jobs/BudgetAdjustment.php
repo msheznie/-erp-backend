@@ -178,12 +178,24 @@ class BudgetAdjustment implements ShouldQueue
                         $fromMinusAmountRpt = round(($item['adjustmentAmountRpt']/$fromTotalCount),$reportingDecimalPlaces);
                         $fromMinusAmountLocal = round(($item['adjustmentAmountLocal']/$fromTotalCount),$localDecimalPlaces);
 
+                        $countFrom = 1;
                         foreach ($fromBudgetDetails as $fromBudgetDetail){
+
+                            if (count($fromBudgetDetails) == $countFrom) {
+                                $diffRpt = $item['adjustmentAmountRpt'] - ($fromMinusAmountRpt * $fromTotalCount);
+                                $diffLocal = $item['adjustmentAmountLocal'] - ($fromMinusAmountLocal * $fromTotalCount);
+
+                                $fromMinusAmountLocal = $fromMinusAmountLocal + $diffLocal;
+                                $fromMinusAmountRpt = $fromMinusAmountRpt + $diffRpt;
+                            }
+                            
                             $budjetdetailsRepo->update([
                                 'budjetAmtLocal' => ((($fromBudgetDetail['budjetAmtLocal'] * $conversionFrom) - $fromMinusAmountLocal)* $conversionFrom),
                                 'budjetAmtRpt' => ((($fromBudgetDetail['budjetAmtRpt']* $conversionFrom) - $fromMinusAmountRpt) * $conversionFrom)
                             ],
                                 $fromBudgetDetail['budjetDetailsID']);
+
+                            $countFrom++;
                         }
                     }
 
@@ -207,13 +219,25 @@ class BudgetAdjustment implements ShouldQueue
                     if($toTotalCount > 0){
                         $toAddAmountRpt = round(($item['adjustmentAmountRpt']/$toTotalCount),$reportingDecimalPlaces);
                         $toAddAmountLocal = round(($item['adjustmentAmountLocal']/$toTotalCount),$localDecimalPlaces);
-
+                        $count = 1;
                         foreach ($toTotalBudgetDetails as $toBudgetDetail){
+
+                            if (count($toTotalBudgetDetails) == $count) {
+                                $diffRpt = $item['adjustmentAmountRpt'] - ($toAddAmountRpt * $toTotalCount);
+                                $diffLocal = $item['adjustmentAmountLocal'] - ($toAddAmountLocal * $toTotalCount);
+
+                                $toAddAmountLocal = $toAddAmountLocal + $diffLocal;
+                                $toAddAmountRpt = $toAddAmountRpt + $diffRpt;
+                            }
+
                             $budjetdetailsRepo->update([
                                 'budjetAmtLocal' => ((($toBudgetDetail['budjetAmtLocal'] * $conversionTo)  + $toAddAmountLocal) * $conversionTo) ,
                                 'budjetAmtRpt' => ((($toBudgetDetail['budjetAmtRpt'] * $conversionTo) + $toAddAmountRpt) * $conversionTo)
                             ],
                             $toBudgetDetail['budjetDetailsID']);
+
+
+                            $count++;
                         }
                     }
 
