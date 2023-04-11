@@ -1007,18 +1007,19 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     }
                 }
 
-          
-               
+
+                $companyCode = isset($company->CompanyID)?$company->CompanyID:'common';
+
                 $path = 'accounts-receivable/report/customer_balance_statement/excel/';
                 if($typ_re == 1)
                 {
-                    $detail_array = array('type' => 2,'from_date'=>$from_date,'to_date'=>$toDate,'company_name'=>$company_name,'cur'=>$requestCurrency,'title'=>$title);
+                    $detail_array = array('type' => 2,'from_date'=>$from_date,'to_date'=>$toDate,'company_name'=>$company_name, 'company_code'=>$companyCode,'cur'=>$requestCurrency,'title'=>$title);
 
                     $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
                 }
                 else
                 {
-                    $detail_array = array('type' => 4,'from_date'=>$from_date,'to_date'=>$toDate,'company_name'=>$company_name,'cur'=>$requestCurrency,'title'=>$title);
+                    $detail_array = array('type' => 4,'from_date'=>$from_date,'to_date'=>$toDate,'company_name'=>$company_name, 'company_code'=>$companyCode,'cur'=>$requestCurrency,'title'=>$title);
 
                     $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
                 }
@@ -1117,9 +1118,10 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 }
 
                 $requestCurrency = NULL;
-               
+                $companyCode = isset($company->CompanyID)?$company->CompanyID:'common';
+
                 $path = 'accounts-receivable/report/customer_aging/excel/';
-                $detail_array = array('type' => 2,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$requestCurrency,'title'=>$title);
+                $detail_array = array('type' => 2,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name, 'company_code'=>$companyCode, 'cur'=>$requestCurrency,'title'=>$title);
 
                 $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
 
@@ -1282,12 +1284,13 @@ class AccountsReceivableReportAPIController extends AppBaseController
                         $data = array();
                     }
 
- 
+                    $companyCode = isset($company->CompanyID)?$company->CompanyID:'common';
+
                     $fileName = 'Customer Balance Summary';
                     $title = 'Customer Balance Summary';
                     $path = 'accounts-receivable/report/customer_balance_summary/excel/';
                     $requestCurrency = NULL;
-                    $detail_array = array('type' => 2,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$requestCurrency,'title'=>$title);
+                    $detail_array = array('type' => 2,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'company_code'=>$companyCode, 'cur'=>$requestCurrency, 'title'=>$title);
     
                     $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
     
@@ -1473,7 +1476,9 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 $title = 'Sales Register';
                 $path = 'accounts-receivable/report/customer_sales_register/excel/';
                 $requestCurrency = NULL;
-                $detail_array = array('type' => 1,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$requestCurrency,'title'=>$title);
+                $companyCode = isset($company->CompanyID)?$company->CompanyID:'common';
+
+                $detail_array = array('type' => 1,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$requestCurrency,'company_code'=>$companyCode,'title'=>$title);
                 $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
 
                 if($basePath == '')
@@ -1590,17 +1595,18 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     }
                 }
 
-                
+                $companyCode = isset($company->CompanyID)?$company->CompanyID:'common';
+
                 $path = 'accounts-receivable/report/customer_collection/excel/';
                 if($typ_re == 1)
                 {
-                    $detail_array = array('type' => 4,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$requestCurrency,'title'=>$title);
+                    $detail_array = array('type' => 4,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'comapny_code'=>$companyCode,'cur'=>$requestCurrency,'title'=>$title);
 
                     $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
                 }
                 else
                 {
-                    $detail_array = array('type' => 5,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$requestCurrency,'title'=>$title);
+                    $detail_array = array('type' => 5,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name, 'company_code'=>$companyCode,'cur'=>$requestCurrency,'title'=>$title);
 
                     $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
                 }
@@ -1698,11 +1704,11 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     } else {
                         $data = array();
                     }
-
+                    $companyCode = isset($company->CompanyID)?$company->CompanyID:'common';
                     $requestCurrency = NULL;
                     $fileName = 'Revenue Detail';
                     $path = 'accounts-receivable/report/revenue_by_customer/excel/';
-                    $detail_array = array('type' => 1,'from_date'=>$from_date,'to_date'=>$toDate,'company_name'=>$company_name,'cur'=>$requestCurrency,'title'=>$title);
+                    $detail_array = array('type' => 1,'from_date'=>$from_date,'to_date'=>$toDate,'company_name'=>$company_name,'company_code'=>$companyCode,'cur'=>$requestCurrency,'title'=>$title);
 
                     $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
     
@@ -1777,9 +1783,10 @@ class AccountsReceivableReportAPIController extends AppBaseController
                         $data = array();
                     }
 
+                    $companyCode = isset($company->CompanyID)?$company->CompanyID:'common';
                     $fileName = 'Revenue Report '.$year;
                     $path = 'accounts-receivable/report/revenue_by_customer/excel/';
-                    $detail_array = array('type' => 5,'from_date'=>$from_date,'to_date'=>$from_date,'company_name'=>$company_name,'cur'=>$cure,'title'=>$title);
+                    $detail_array = array('type' => 5,'from_date'=>$from_date,'to_date'=>$from_date,'company_name'=>$company_name,'company_code'=>$companyCode,'cur'=>$cure,'title'=>$title);
 
                     $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
     
@@ -1859,7 +1866,8 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 $title = 'Credit Note Register';
                 $path = 'accounts-receivable/report/credit_note_register/excel/';
                 $requestCurrency = NULL;
-                $detail_array = array('type' => 1,'from_date'=>$from_date,'to_date'=>$toDate,'company_name'=>$company_name,'cur'=>$requestCurrency,'title'=>$title);
+                $companyCode = isset($company->CompanyID)?$company->CompanyID:'common';
+                $detail_array = array('type' => 1,'from_date'=>$from_date,'to_date'=>$toDate,'company_name'=>$company_name,'company_code'=>$companyCode,'cur'=>$requestCurrency,'title'=>$title);
 
                 $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
 
@@ -1915,10 +1923,14 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 } else {
                     $data = [];
                 }
-
+                $companyMaster = Company::find(isset($request->companySystemID)?$request->companySystemID: null);
+                $companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
+                $detail_array = array(
+                    'company_code'=>$companyCode,
+                );
                 $fileName = 'invoice_tracker_';
                 $path = 'accounts-receivable/report/invoice_tracker_/excel/';
-                $basePath = CreateExcel::process($data,$type,$fileName,$path);
+                $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
 
                 if($basePath == '')
                 {

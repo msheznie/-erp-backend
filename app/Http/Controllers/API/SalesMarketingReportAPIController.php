@@ -941,11 +941,15 @@ class SalesMarketingReportAPIController extends AppBaseController
 
 
                 }
-
+                $companyMaster = Company::find(isset($request->companySystemID)?$request->companySystemID:null);
+                $companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
+                $detail_array = array(
+                    'company_code'=>$companyCode,
+                );
 
                 $fileName = 'quotation_so_report';
                 $path = 'sales/report/quotation_so_report/excel/';
-                $basePath = CreateExcel::process($data,$type,$fileName,$path);
+                $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
 
                 if($basePath == '')
                 {
@@ -2360,12 +2364,16 @@ class SalesMarketingReportAPIController extends AppBaseController
             }
         }
 
-
+        $companyMaster = Company::find(isset($request->companyId)?$request->companyId:null);
+        $companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
+        $detail_array = array(
+            'company_code'=>$companyCode,
+        );
 
 
         $fileName = 'so_to_receipt';
         $path = 'sales/report/so_to_receipt/excel/';
-        $basePath = CreateExcel::process($data,$type,$fileName,$path);
+        $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
 
         if($basePath == '')
         {

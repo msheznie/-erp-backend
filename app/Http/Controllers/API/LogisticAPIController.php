@@ -678,11 +678,15 @@ class LogisticAPIController extends AppBaseController
         }
 
 
-
+        $companyMaster = Company::find(isset($request->companyId)?$request->companyId:null);
+        $companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
+        $detail_array = array(
+            'company_code'=>$companyCode,
+        );
                     
         $fileName = 'logistic_by_company';
         $path = 'logistic/logistic_by_company/excel/';
-        $basePath = CreateExcel::process($data,$type,$fileName,$path);
+        $basePath = CreateExcel::process($data,$type,$fileName,$path, $detail_array);
 
         if($basePath == '')
         {

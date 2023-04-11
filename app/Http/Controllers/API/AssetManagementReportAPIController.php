@@ -835,11 +835,15 @@ class AssetManagementReportAPIController extends AppBaseController
                         $data[$x]['Rpt Amount acc net value'] = round($Totalrptnbv, $rptDecimalPlace);
                     }
 
-     
-              
+
+                    $companyMaster = Company::find(isset($request->companySystemID)?$request->companySystemID: null);
+                    $companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
+                    $detail_array = array(
+                        'company_code'=>$companyCode,
+                    );
                     $fileName = 'asset_register_detail';
                     $path = 'asset_register/report/excel/';
-                    $basePath = CreateExcel::process($data,$type,$fileName,$path);
+                    $basePath = CreateExcel::process($data,$type,$fileName,$path, $detail_array);
 
                     if($basePath == '')
                     {
@@ -943,11 +947,14 @@ class AssetManagementReportAPIController extends AppBaseController
                         $data[$x][23] = 0;
                     }
 
-     
-              
+                    $companyCode = isset($companyData->CompanyID)?$companyData->CompanyID:'common';
+                    $detail_array = array(
+                        'company_code'=>$companyCode,
+                    );
+
                     $fileName = 'asset_register_detail_3';
                     $path = 'asset_register/report/excel/';
-                    $basePath = CreateExcel::process($data,$type,$fileName,$path);
+                    $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
 
                     if($basePath == '')
                     {
@@ -1398,10 +1405,14 @@ class AssetManagementReportAPIController extends AppBaseController
                 } else {
                     $data = array();
                 }
-      
+                $companyMaster = Company::find(isset($request->companySystemID)?$request->companySystemID: null);
+                $companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
+                $detail_array = array(
+                    'company_code'=>$companyCode,
+                );
                 $fileName = 'asset-addition';
                 $path = 'asset/report/asset-addition/excel/';
-                $basePath = CreateExcel::process($data,$type,$fileName,$path);
+                $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
 
                 if($basePath == '')
                 {
@@ -1460,10 +1471,14 @@ class AssetManagementReportAPIController extends AppBaseController
 
                     $x++;
                 }
- 
+                $companyMaster = Company::find(isset($request->companySystemID)?$request->companySystemID: null);
+                $companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
+                $detail_array = array(
+                    'company_code'=>$companyCode,
+                );
                 $fileName = 'asset_disposal';
                 $path = 'asset/report/asset_disposal/excel/';
-                $basePath = CreateExcel::process($data,$type,$fileName,$path);
+                $basePath = CreateExcel::process($data,$type,$fileName,$path, $detail_array);
 
                 if($basePath == '')
                 {
@@ -1570,11 +1585,15 @@ class AssetManagementReportAPIController extends AppBaseController
                         }
                     }
                 }
-   
 
+                $companyMaster = Company::find(isset($request->companySystemID)?$request->companySystemID:null);
+                $companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
+                $detail_array = array(
+                    'company_code'=>$companyCode,
+                );
                 $fileName = 'asset_depreciation_register';
                 $path = 'asset/report/asset_depreciation_register/excel/';
-                $basePath = CreateExcel::process($data,$type,$fileName,$path);
+                $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
 
                 if($basePath == '')
                 {
@@ -1607,10 +1626,13 @@ class AssetManagementReportAPIController extends AppBaseController
                         $x++;
                     }
                 }
-
+                $companyCode = isset($companyCurrency->CompanyID)?$companyCurrency->CompanyID:'common';
+                $detail_array = array(
+                    'company_code'=>$companyCode,
+                );
                 $fileName = 'asset_cwip';
                 $path = 'asset/report/asset_cwip/excel/';
-                $basePath = CreateExcel::process($data,$type,$fileName,$path);
+                $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
 
                 if($basePath == '')
                 {

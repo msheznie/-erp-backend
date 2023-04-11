@@ -4091,12 +4091,14 @@ WHERE
                 $cur = null;
                 $title = 'Tax Details';
                 $company_name = $companyCurrency->CompanyName;
+                $companyID = isset($companyCurrency->CompanyID)?$companyCurrency->CompanyID: null;
                 $to_date = \Helper::dateFormat($request->toDate);
                 $from_date = \Helper::dateFormat($request->fromDate);
                 $detail_array = array(  'type' => 1,
                                         'from_date'=>$from_date,
                                         'to_date'=>$to_date,
                                         'company_name'=>$company_name,
+                                        'company_code'=>$companyID,
                                         'cur'=>$cur,
                                         'title'=>$title);
 

@@ -24,6 +24,7 @@ use App\Models\BankAssign;
 use App\Models\BankMaster;
 use App\Models\ChequeRegister;
 use App\Models\ChequeRegisterDetail;
+use App\Models\Company;
 use App\Repositories\ChequeRegisterDetailRepository;
 use App\Repositories\ChequeRegisterRepository;
 use Carbon\Carbon;
@@ -667,10 +668,15 @@ class ChequeRegisterAPIController extends AppBaseController
             }
 
         }
+        $companyMaster = Company::find(isset($input['company_id'])?$input['company_id']: null);
+        $companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
+        $detail_array = array(
+            'company_code'=>$companyCode,
+        );
 
         $fileName = 'cheque_registry';
         $path = 'treasury/transaction/cheque_registry/excel/';
-        $basePath = CreateExcel::process($data,$type,$fileName,$path);
+        $basePath = CreateExcel::process($data,$type,$fileName,$path, $detail_array);
 
         if($basePath == '')
         {

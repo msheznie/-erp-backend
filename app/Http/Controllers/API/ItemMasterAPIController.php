@@ -296,12 +296,17 @@ class ItemMasterAPIController extends AppBaseController
         } else {
             $data = array();
         }
+        $companyMaster = Company::find(isset($input['companyId'])?$input['companyId']: null);
+        $companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
+        $detail_array = array(
+            'company_code'=>$companyCode,
+        );
 
 
         $fileName = 'item_master';
         $path = 'system/item_master/excel/';
         $type = 'xls';
-        $basePath = CreateExcel::process($data,$type,$fileName,$path);
+        $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
 
         if($basePath == '')
         {
