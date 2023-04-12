@@ -2025,7 +2025,7 @@ WHERE
             if ($selectAll == true) {
                 $pullList = [];
                 TenderSupplierAssignee::where('tender_master_id', $tenderId)
-                    ->whereNotNull('supplier_assigned_id')
+                    ->whereNotNull('supplier_assigned_id')->where('mail_sent',0)
                     ->delete();
                 $suppilerAssigned = SupplierAssigned::whereDoesntHave('tenderSupplierAssigned', function ($query) use ($tenderId) {
                     $query->where('tender_master_id', '=', $tenderId);
