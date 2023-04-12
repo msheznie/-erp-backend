@@ -11,8 +11,6 @@ class SrmTenderBidEmployeeDetails extends Model
     const CREATED_AT = 'created_at';
 
 
-
-
     public $fillable = [
         'tender_id',
         'emp_id',
@@ -20,7 +18,9 @@ class SrmTenderBidEmployeeDetails extends Model
         'remarks',
         'created_at',
         'commercial_eval_status',
-        'commercial_eval_remarks'
+        'commercial_eval_remarks',
+        'tender_award_commite_mem_status',
+        'tender_award_commite_mem_comment'
 
     ];
 

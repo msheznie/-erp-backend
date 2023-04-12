@@ -317,9 +317,7 @@ class BidEvaluationSelectionAPIController extends AppBaseController
                 'technical_eval_remarks'=>$input['remarks']]
             );
 
-           
-
-            $query = BidSubmissionMaster::where('tender_id', $tender_id)->where('technical_verify_status','!=', 1)->where('bidSubmittedYN',1)->where('status',1)->count();
+            $query = BidSubmissionMaster::where('tender_id', $tender_id)->where('technical_verify_status','!=', 1)->where('bidSubmittedYN',1)->where('doc_verifiy_status',1)->where('status',1)->count();
             if($query == 0)
             {
                     $tenderMaster = $this->tenderMasterRepository->findWithoutFail($tender_id);

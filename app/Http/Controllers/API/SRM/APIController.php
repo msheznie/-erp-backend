@@ -78,6 +78,13 @@ define('BID_SUBMISSION_CREATE', 'BID_SUBMISSION_CREATE');
 define('GET_BID_SUBMITTED_DATA', 'GET_BID_SUBMITTED_DATA');
 define('BID_SUBMISSION_DELETE', 'BID_SUBMISSION_DELETE');
 define('FAQ_CLARIFICATIONS', 'FAQ_CLARIFICATIONS');
+define('ADD_INVOICE_ATTACHMENT', 'ADD_INVOICE_ATTACHMENT');
+define('GET_INVOICE_ATTACHMENT', 'GET_INVOICE_ATTACHMENT');
+define('REMOVE_INVOICE_ATTACHMENT', 'REMOVE_INVOICE_ATTACHMENT');
+define('SAVE_INVOICE', 'SAVE_INVOICE');
+define('GET_PAYMENTVOUCHERS', 'GET_PAYMENTVOUCHERS');
+define('GET_PAYMENT_VOUCHER_DETAILS', 'GET_PAYMENT_VOUCHER_DETAILS');
+define('CHECK_GRV_CREATION', 'CHECK_GRV_CREATION');
 
 
 class APIController extends Controller
@@ -223,6 +230,21 @@ class APIController extends Controller
                 return $this->SRMService->deleteBidData($request);
             case FAQ_CLARIFICATIONS :
                 return $this->SRMService->exportReport($request);
+            case ADD_INVOICE_ATTACHMENT:
+                return $this->SRMService->addInvoiceAttachment($request);
+            case GET_INVOICE_ATTACHMENT:
+                return $this->SRMService->getInvoiceAttachment($request);
+            case REMOVE_INVOICE_ATTACHMENT:
+                return $this->SRMService->removeInvoiceAttachment($request);
+            case SAVE_INVOICE:
+                return $this->SRMService->createInvoice($request);
+            case GET_PAYMENTVOUCHERS:
+                return $this->SRMService->getPaymentVouchers($request);   
+            case GET_PAYMENT_VOUCHER_DETAILS:
+                return $this->SRMService->getPaymentVouchersDetails($request);  
+            case CHECK_GRV_CREATION:
+                return $this->SRMService->checkGrvCreation($request);  
+                     
             default:
                 return [
                     'success'   => false,
