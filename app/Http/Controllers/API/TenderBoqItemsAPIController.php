@@ -419,14 +419,16 @@ class TenderBoqItemsAPIController extends AppBaseController
 
         DB::beginTransaction();
         try {
+
+            $model = TenderBoqItems::find($input['id']);
             $data['item_name']=$input['item_name'];
             $data['description']=$input['description'];
             $data['uom']=$input['uom'];
             $data['qty']=$input['qty'];
             $data['updated_by'] = $employee->employeeSystemID;
 
-            $result = TenderBoqItems::where('id',$input['id'])->update($data);
-
+            //$result = TenderBoqItems::where('id',$input['id'])->update($data);
+            $result = $model->update($data);
             if($result){
                 DB::commit();
                 return ['success' => true, 'message' => 'Successfully updated'];
@@ -444,7 +446,9 @@ class TenderBoqItemsAPIController extends AppBaseController
         $input = $request->all();
         DB::beginTransaction();
         try {
-            $result = TenderBoqItems::where('id',$input['id'])->delete();
+            $model = TenderBoqItems::find($input['id']);
+            $result = $model->delete();
+            //$result = TenderBoqItems::where('id',$input['id'])->delete();
             if($result){
                 DB::commit();
                 return ['success' => true, 'message' => 'Successfully deleted', 'data' => $result];

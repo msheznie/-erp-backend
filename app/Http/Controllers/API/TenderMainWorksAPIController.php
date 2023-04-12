@@ -511,9 +511,10 @@ class TenderMainWorksAPIController extends AppBaseController
         $employee = \Helper::getEmployeeInfo();
         DB::beginTransaction();
         try {
+            $model = PricingScheduleDetail::find($input['id']);
             $data['description']=$input['description'];
             $data['updated_by'] = $employee->employeeSystemID;
-            $result = PricingScheduleDetail::where('id',$input['id'])->update($data);
+            $result = $model->update($data);
             if($result){
                 DB::commit();
                 return ['success' => true, 'message' => 'Successfully updated', 'data' => $result];

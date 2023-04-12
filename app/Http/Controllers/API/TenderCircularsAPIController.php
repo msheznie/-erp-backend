@@ -444,7 +444,9 @@ class TenderCircularsAPIController extends AppBaseController
             if(isset($input['id'])){
                 $data['updated_by'] = $employee->employeeSystemID;
                 $data['updated_at'] = Carbon::now();
-                $result = TenderCirculars::where('id',$input['id'])->update($data);
+                $model = TenderCirculars::find($input['id']);
+                $result = $model->update($data);
+                //$result = TenderCirculars::where('id',$input['id'])->update($data);
                 if($result){
                     DB::commit();
                     return ['success' => true, 'message' => 'Successfully updated', 'data' => $result];
@@ -498,10 +500,20 @@ class TenderCircularsAPIController extends AppBaseController
         $input = $request->all();
         DB::beginTransaction();
         try {
-            $result = TenderCirculars::where('id',$input['id'])->delete();
-
+            $model =  TenderCirculars::find($input['id']);
+            $result = $model->delete();
+            //$result = TenderCirculars::where('id',$input['id'])->delete();
+            
             if($result){
-                CircularAmendments::where('circular_id', $input['id'])->delete();
+       
+                $circular = CircularAmendments::where('circular_id', $input['id'])->first();
+                if(isset($circular))
+                {
+                    $model1 = CircularAmendments::find($circular->id);
+                    $result1 = $model1->delete();
+                }
+           
+
                 DB::commit();
                 return ['success' => true, 'message' => 'Successfully deleted', 'data' => $result];
             }
@@ -624,10 +636,13 @@ class TenderCircularsAPIController extends AppBaseController
         $input = $request->all();
         DB::beginTransaction();
         try {
-            $result = CircularAmendments::where('amendment_id',$input['attachmentID'])
+            $output = CircularAmendments::where('amendment_id',$input['attachmentID'])
                 ->where('tender_id', $input['tenderMasterId'])
                 ->where('circular_id', $input['circularId'])
-                ->delete();
+                ->first();
+
+            $model = CircularAmendments::find($output->id);
+            $result = $model->delete();
             if($result){
                 DB::commit();
                 return ['success' => true, 'message' => 'Successfully deleted', 'data' => $result];

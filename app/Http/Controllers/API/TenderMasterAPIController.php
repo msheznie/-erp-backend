@@ -1114,6 +1114,7 @@ WHERE
         DB::beginTransaction();
 
         try {
+            $model = TenderMaster::find($input['id']);
             $data['title'] = $input['title'];
             $data['title_sec_lang'] = $input['title_sec_lang'];
             $data['description'] = $input['description'];
@@ -1144,10 +1145,9 @@ WHERE
             $data['technical_bid_closing_date'] = ($technical_bid_closing_date) ? $technical_bid_closing_date : null;
             $data['commerical_bid_opening_date'] = ($commerical_bid_opening_date) ? $commerical_bid_opening_date: null;
             $data['commerical_bid_closing_date'] = ($commerical_bid_closing_date) ? $commerical_bid_closing_date: null;
-
             $data['updated_by'] = $employee->employeeSystemID;
-    
-            $result = TenderMaster::where('id', $input['id'])->update($data);
+           
+            $result =  $model->update($data);
 
             if ($result) {
                 if (isset($input['procument_activity'])) {
@@ -1205,7 +1205,9 @@ WHERE
                         Storage::disk(Helper::policyWiseDisk($input['company_id'], 'public'))->put($path, $decodeFile);
 
                         $att['budget_document'] = $path;
-                        TenderMaster::where('id', $input['id'])->update($att);
+                        $model1 = TenderMaster::find($input['id']);
+                        $model1->update($att);
+                        //TenderMaster::where('id', $input['id'])->update($att);
                     }
                 }
 
@@ -2140,6 +2142,7 @@ WHERE
 
         DB::beginTransaction();
         try {
+            $model = TenderMaster::find($input['id']);
             $data['tender_type_id'] = $input['tender_type_id'];
             $data['envelop_type_id'] = (empty($input['envelop_type_id'])) ? 0 : $input['envelop_type_id'];
             $data['evaluation_type_id'] = $input['evaluation_type_id'];
@@ -2151,8 +2154,8 @@ WHERE
             $data['technical_passing_weightage'] = $input['technical_passing_weightage'];
             $data['commercial_passing_weightage'] = $input['commercial_passing_weightage'];
             $data['min_approval_bid_opening'] = $input['min_approval_bid_opening'];
-            $result = TenderMaster::where('id', $input['id'])->update($data);
-            if ($result) {
+            $model->update($data);
+            if ($model) {
                 if (isset($input['document_types'])) {
                     if (count($input['document_types']) > 0) {
                         TenderDocumentTypeAssign::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();

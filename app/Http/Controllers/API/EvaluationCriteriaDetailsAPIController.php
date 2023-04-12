@@ -447,7 +447,9 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
         $input = $request->all();
         DB::beginTransaction();
         try {
-            $result = EvaluationCriteriaDetails::where('id',$input['id'])->delete();
+            $model1 = EvaluationCriteriaDetails::find($input['id']);
+            $result = $model1->delete();
+            //$result = EvaluationCriteriaDetails::where('id',$input['id'])->delete();
             EvaluationCriteriaScoreConfig::where('criteria_detail_id',$input['id'])->delete();
             $levelTwo = EvaluationCriteriaDetails::where('parent_id',$input['id'])->get();
             if(!empty($levelTwo)){
@@ -535,7 +537,9 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
             }
             $data['updated_by'] = $employee->employeeSystemID;
 
-            $result = EvaluationCriteriaDetails::where('id',$input['id'])->update($data);
+            $model = EvaluationCriteriaDetails::find($input['id']);
+            $result = $model->update($data);
+           // $result = EvaluationCriteriaDetails::where('id',$input['id'])->update($data);
 
             if($result){
 
