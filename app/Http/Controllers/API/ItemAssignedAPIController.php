@@ -342,7 +342,7 @@ class ItemAssignedAPIController extends AppBaseController
 
         // return $this->sendResponse(array(), 'successfully export');
 
-        $companyMaster = Company::find($request->companyId);
+        $companyMaster = Company::find(isset($request->companyId)?$request->companyId: null);
         $companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
         $detail_array = array(
             'company_code'=>$companyCode,
