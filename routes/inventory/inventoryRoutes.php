@@ -105,6 +105,7 @@ Route::group([], function () {
     Route::get('materiel_request/details/{id}', 'MaterielRequestAPIController@getMaterielRequestDetails')->name("Get Materiel Request Details");
     Route::get('returnMaterialRequestPreCheck', 'MaterielRequestAPIController@returnMaterialRequestPreCheck')->name("Return Material Request Pre Check");
     Route::get('getItemsByMaterielRequest', 'MaterielRequestDetailsAPIController@getItemsByMaterielRequest')->name("Get Items By Materiel Request");
+    Route::get('getItemsByMaterielRequestByLimit', 'MaterielRequestDetailsAPIController@getItemsByMaterielRequestByLimit')->name("Get Items By Materiel Request By Limit");
     Route::get('getItemsOptionForMaterielRequest', 'MaterielRequestDetailsAPIController@getItemsOptionForMaterielRequest')->name("Get Items Option For Materiel Request");
     Route::get('materiel_requests/{id}/purchase-requests', 'MaterielRequestAPIController@checkPurcahseRequestExist')->name("Check Purcahse Request Exist");
     Route::get('purchase_requests/check/product/{itemCode}/{companySystemID}', 'PurchaseRequestAPIController@checkProductExistInIssues')->name("Check Product Exist In Issues");

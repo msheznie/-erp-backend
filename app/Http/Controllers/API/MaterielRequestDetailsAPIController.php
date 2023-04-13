@@ -616,6 +616,36 @@ class MaterielRequestDetailsAPIController extends AppBaseController
         return $this->sendResponse($items->toArray(), 'Request Details retrieved successfully');
     }
 
+    public function getItemsByMaterielRequestByLimit(Request $request)
+    {
+        $input = $request->all();
+        $rId = $input['RequestID'];
+
+        $items = MaterielRequestDetails::where('RequestID', $rId)
+            ->with(['uom_default','uom_issuing','item_by'])
+            ->skip($input['skip'])->take($input['limit'])->get();
+
+        $index = $input['skip'] + 1;
+
+        foreach ($items as $item){
+            $item['index'] = $index;
+            $index++;
+            $issueUnit = Unit::all();
+            $issueUnits = array();
+
+            if ($issueUnit) {
+                foreach ($issueUnit as $unit){
+                    $temArray = array('value' => $unit->UnitID, 'label' => $unit->UnitShortCode);
+                    array_push($issueUnits,$temArray);
+                }
+            }
+
+            $item->issueUnits = $issueUnits;
+        }
+
+        return $this->sendResponse($items->toArray(), 'Request Details retrieved successfully');
+    }
+
     /**
      * get Items Option For Materiel Request
      * get /getItemsOptionForMaterielRequest
