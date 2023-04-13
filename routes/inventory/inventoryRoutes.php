@@ -137,6 +137,7 @@ Route::group([], function () {
     Route::get('material-issue/update-qnty-by-location', 'ItemIssueMasterAPIController@updateQntyByLocation')->name("Update Qnty By Location");
     Route::get('checkManWareHouse', 'ItemIssueMasterAPIController@checkManWareHouse')->name("Check Man Ware House");
     Route::get('getItemsByMaterielIssue', 'ItemIssueDetailsAPIController@getItemsByMaterielIssue')->name("Get Items By Materiel Issue");
+    Route::get('getItemsByMaterielIssueByLimit', 'ItemIssueDetailsAPIController@getItemsByMaterielIssueByLimit')->name("Get Items By Materiel Issue By Limit");
     Route::get('getItemsOptionsMaterielIssue', 'ItemIssueDetailsAPIController@getItemsOptionsMaterielIssue')->name("Get Items Options Materiel Issue");
     Route::get('getItemIssueDetailsReferBack', 'ItemIssueDetailsRefferedBackAPIController@getItemIssueDetailsReferBack')->name("Get Item Issue Details ReferBack");
     Route::post('materialIssuetDetailsAddAllItems', 'ItemIssueDetailsAPIController@materialIssuetDetailsAddAllItems')->name('Material issue add all item');
