@@ -18,6 +18,7 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Models\PricingScheduleDetail;
+use App\Models\TenderBoqItems;
 
 /**
  * Class PricingScheduleMasterController
@@ -594,6 +595,17 @@ class PricingScheduleMasterAPIController extends AppBaseController
                     $result = false;
                     $is_complete = true;
                     foreach ($input['priceBidFormat'] as $val){
+
+                        if($val['boq_applicable'] == 1 && $val['typeId'] != 4)
+                        {
+                            $id = $val['id'];
+                            $result = TenderBoqItems::where('main_work_id',$id)->first();
+                            if(!isset($result))
+                            {
+                                $is_complete = false;
+                            }
+                        }
+
 
                         if($val['is_disabled'] == 1 && $val['typeId'] != 4)
                         {

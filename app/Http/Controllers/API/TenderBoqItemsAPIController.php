@@ -20,6 +20,8 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Models\PricingScheduleDetail;
 use App\Models\PricingScheduleMaster;
+use App\Models\ScheduleBidFormatDetails;
+
 /**
  * Class TenderBoqItemsController
  * @package App\Http\Controllers\API
@@ -329,9 +331,9 @@ class TenderBoqItemsAPIController extends AppBaseController
         $exist = TenderBoqItems::where('item_name',$input['item_name'])
             ->where('main_work_id',$input['main_work_id'])->first();
 
-        if(!empty($exist)){
-            return ['success' => false, 'message' => 'Item already exist'];
-        }
+        // if(!empty($exist)){
+        //     return ['success' => false, 'message' => 'Item already exist'];
+        // }
 
 
 
@@ -350,11 +352,14 @@ class TenderBoqItemsAPIController extends AppBaseController
             $data['created_by'] = $employee->employeeSystemID;
 
             $result = TenderBoqItems::create($data);
-
+         
             if($result){
 
                 $mainwork = PricingScheduleDetail::where('id', $input['main_work_id'])->first();
 
+                $erp_enable_item = PricingScheduleDetail::where('tender_id', $mainwork->tender_id)->where('deleted_at',null)->where('is_disabled', true)->where('pricing_schedule_master_id', $mainwork->pricing_schedule_master_id);
+
+           
                 $mainwork_items = PricingScheduleDetail::with(['tender_boq_items'])->where('tender_id', $mainwork->tender_id)->where('deleted_at',null)->where('boq_applicable', true)->where('pricing_schedule_master_id', $mainwork->pricing_schedule_master_id);
                 $is_main_works_complete = true;
                 if($mainwork_items->count() > 0)
@@ -371,6 +376,28 @@ class TenderBoqItemsAPIController extends AppBaseController
                     }
                    
                 }
+
+          
+                if($erp_enable_item->count() > 0)
+                {
+                    $detailss = $erp_enable_item->get();
+                    foreach($detailss as $main)
+                    {
+                     
+                        $values = ScheduleBidFormatDetails::where('bid_format_detail_id',$main['id'])->first();
+                        if(isset($values))
+                        {
+                            if(empty($values->value) || $values->value == null)
+                            {
+                                $is_main_works_complete = false;
+                            }
+                        }
+                  
+                       
+                    }
+                   
+                }
+            
         
                 if($is_main_works_complete)
                 {
