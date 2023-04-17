@@ -595,8 +595,8 @@ class PricingScheduleMasterAPIController extends AppBaseController
             if(isset($input['priceBidFormat'])){
                 if(count($input['priceBidFormat'])>0){
                     $result = false;
-                    $IsComplete = true;
-                    $IsBoqComplete = true;
+                    $isComplete = true;
+                    $isBoqComplete = true;
                     foreach ($input['priceBidFormat'] as $val){
 
                         if($val['boq_applicable'] == 1 && $val['typeId'] != 4)
@@ -605,7 +605,7 @@ class PricingScheduleMasterAPIController extends AppBaseController
                             $result1 = TenderBoqItems::where('main_work_id',$id)->count();
                             if(($result1) == 0)
                             {
-                                $IsBoqComplete = false;
+                                $isBoqComplete = false;
                             }
                         }
 
@@ -614,7 +614,7 @@ class PricingScheduleMasterAPIController extends AppBaseController
                         {
                             if(empty($val['value']) || $val['value'] == null)
                             {
-                                $IsComplete = false;
+                                $isComplete = false;
                             }
                         }
                      
@@ -642,10 +642,10 @@ class PricingScheduleMasterAPIController extends AppBaseController
                         
                     if($result){
 
-                        ($IsComplete) ? $master['status']=1 : $master['status']=0;
+                        ($isComplete) ? $master['status']=1 : $master['status']=0;
                   
 
-                        ($IsBoqComplete) ? $master['boq_status']=1 : $master['boq_status']=0;
+                        ($isBoqComplete) ? $master['boq_status']=1 : $master['boq_status']=0;
                    
 
                         PricingScheduleMaster::where('id',$masterData['schedule_id'])->update($master);
