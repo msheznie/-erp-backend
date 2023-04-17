@@ -27,7 +27,8 @@ class TenderSupplierAssigneeRepository extends BaseRepository
         'supplier_email',
         'supplier_name',
         'tender_master_id',
-        'updated_by'
+        'updated_by',
+        'mail_sent'
     ];
 
     /**
@@ -36,5 +37,26 @@ class TenderSupplierAssigneeRepository extends BaseRepository
     public function model()
     {
         return TenderSupplierAssignee::class;
+    }
+
+    public function deleteAllAssignedSuppliers($input) {
+
+        $data = TenderSupplierAssignee::where('tender_master_id',$input['tenderId'])->where('company_id',$input['companySystemId'])->where('mail_sent',0)->delete();
+
+        if($data) 
+            return true;
+
+        return false;
+    }
+
+    
+    public function deleteAllSelectedSuppliers($input) {
+
+        $data = TenderSupplierAssignee::where('tender_master_id',$input['tenderId'])->where('company_id',$input['companySystemId'])->whereIn('supplier_assigned_id',$input['deleteList'])->delete();
+
+        if($data) 
+            return true;
+
+        return false;
     }
 }

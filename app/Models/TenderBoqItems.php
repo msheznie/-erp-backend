@@ -89,7 +89,8 @@ class TenderBoqItems extends Model
         'qty',
         'created_by',
         'updated_by',
-        'company_id'
+        'company_id',
+        'tender_ranking_line_item'
     ];
 
     /**
@@ -135,7 +136,7 @@ class TenderBoqItems extends Model
 
     public function ranking_items()
     {
-        return $this->hasOne('App\Models\CommercialBidRankingItems', 'bid_format_detail_id', 'id');
+        return $this->hasOne('App\Models\CommercialBidRankingItems', 'id', 'tender_ranking_line_item');
     }
 
     
