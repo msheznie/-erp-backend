@@ -20,6 +20,8 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Models\PricingScheduleDetail;
 use App\Models\PricingScheduleMaster;
+use App\Models\ScheduleBidFormatDetails;
+
 /**
  * Class TenderBoqItemsController
  * @package App\Http\Controllers\API
@@ -335,9 +337,7 @@ class TenderBoqItemsAPIController extends AppBaseController
 
 
 
-
-    
-
+            
         DB::beginTransaction();
         try {
             $data['main_work_id']=$input['main_work_id'];
@@ -350,7 +350,7 @@ class TenderBoqItemsAPIController extends AppBaseController
             $data['created_by'] = $employee->employeeSystemID;
 
             $result = TenderBoqItems::create($data);
-
+         
             if($result){
 
                 $mainwork = PricingScheduleDetail::where('id', $input['main_work_id'])->first();
@@ -371,10 +371,10 @@ class TenderBoqItemsAPIController extends AppBaseController
                     }
                    
                 }
-        
+          
                 if($is_main_works_complete)
                 {
-                    $master['status']= 1;
+                    $master['boq_status']= 1;
                     PricingScheduleMaster::where('id',$mainwork->pricing_schedule_master_id)->update($master);
                 }
 
