@@ -287,9 +287,10 @@ class CreateExcel
 
 
         $disk = 's3';
+        $companyCode = isset($data['companyCode'])?$data['companyCode']:'common';
 
-        $full_name = $fileName.'_'.strtotime(date("Y-m-d H:i:s")).'.'.$type;
-        $path = $path_dir.$full_name;
+        $full_name = $companyCode.'_'.$fileName.'_'.strtotime(date("Y-m-d H:i:s")).'.'.$type;
+        $path = $companyCode.'/'.$path_dir.$full_name;
         $result = Storage::disk($disk)->put($path, $excel_content);
         $basePath = '';
         if($result)
