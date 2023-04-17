@@ -1180,6 +1180,34 @@ class ItemIssueDetailsAPIController extends AppBaseController
         return $this->sendResponse($items->toArray(), 'Request Details retrieved successfully');
     }
 
+    public function getItemsByMaterielIssueByLimit(Request $request)
+    {
+        $input = $request->all();
+        $rId = $input['itemIssueAutoID'];
+
+        $items = ItemIssueDetails::where('itemIssueAutoID', $rId)
+            ->with(['uom_default', 'uom_issuing','item_by'])
+            ->skip($input['skip'])->take($input['limit'])->get();
+
+        $index = $input['skip'] + 1;
+
+        foreach ($items as $item) {
+            $item['index'] = $index;
+            $index++;
+            $issueUnit = Unit::all();
+
+            $issueUnits = array();
+            foreach ($issueUnit as $unit) {
+                $temArray = array('value' => $unit->UnitID, 'label' => $unit->UnitShortCode);
+                array_push($issueUnits, $temArray);
+            }
+
+            $item->issueUnits = $issueUnits;
+        }
+
+        return $this->sendResponse($items->toArray(), 'Request Details retrieved successfully');
+    }
+
     /**
      * get Items Options Materiel Issue
      * GET|HEAD /getItemsOptionsMaterielIssue
