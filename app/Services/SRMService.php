@@ -3892,7 +3892,7 @@ class SRMService
 
                         if(count($dataBidBoq) > 0) {
                             foreach($dataBidBoq as $bidBoq){
-                                if($bidBoq->total_amount >= 0) {
+                                if($bidBoq->total_amount >= 0 && isset($bidBoq->unit_amount) && isset($bidBoq->qty)) {
                                     $has_work_ids[$i] = "true";
                                 } else {
                                     $has_work_ids[$i]  = "false";
@@ -3921,7 +3921,7 @@ class SRMService
 
                         if(count($dataBidBoq) > 0) {
                             foreach($dataBidBoq as $bidBoq){
-                                if($bidBoq->total_amount >= 0) {
+                                if($bidBoq->total_amount >= 0 && isset($bidBoq->amount) && isset($bidBoq->qty)) {
                                     $has_work_ids[$i] = "true";
                                 }else {
                                     $has_work_ids[$i]  = "false";
