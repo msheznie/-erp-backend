@@ -1189,9 +1189,10 @@ FROM
                 $toDate = $request->toDate;
 
                 $templateName = "export_report.scrap_inventory_report";
-                
 
-                $reportData = ['scrapDetails' => $items, 'Title'=>'Scrap Inventory Report', 'companyName' => $company->CompanyName, 'fromDate' => $fromDate, 'toDate' => $toDate, 'suppliers' => $suppliers, 'companySystemID' => $companySystemID, 'currency_id' => $currency_id, 'company'=> $company];
+                $companyCode = isset($company->CompanyID) ? $company->CompanyID: null;
+
+                $reportData = ['scrapDetails' => $items, 'Title'=>'Scrap Inventory Report', 'companyName' => $company->CompanyName, 'companyCode' => $companyCode, 'fromDate' => $fromDate, 'toDate' => $toDate, 'suppliers' => $suppliers, 'companySystemID' => $companySystemID, 'currency_id' => $currency_id, 'company'=> $company];
 
                 $file_type = $request->type;  
                 $fileName = 'scrap_inventory_report';

@@ -1394,8 +1394,9 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $serviceLineTotal['Nov'] = array_sum(collect($outputServiceLine)->pluck('Nov')->toArray());
                     $serviceLineTotal['Dece'] = array_sum(collect($outputServiceLine)->pluck('Dece')->toArray());
                     $serviceLineTotal['Total'] = array_sum(collect($outputServiceLine)->pluck('Total')->toArray());
-    
-    
+                    $companyCode = isset($checkIsGroup->CompanyID) ? $checkIsGroup->CompanyID: null;
+
+
                     $reportData = array(
                         'fromDate' =>$request->fromDate,
                         'year' =>$request->year,
@@ -1409,7 +1410,8 @@ class AccountsReceivableReportAPIController extends AppBaseController
                         'collectionTotal' => $collectionTotal,
                         'outstandingTotal' => $outstandingTotal,
                         'serviceLineTotal' => $serviceLineTotal,
-                        'currency' => $requestCurrency->CurrencyCode
+                        'currency' => $requestCurrency->CurrencyCode,
+                        'companyCode'=>$companyCode
                     );
                     $templateName = "export_report.customer-summary-report";
                     $fileName = 'customer_summary_report';
@@ -1600,7 +1602,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                 $path = 'accounts-receivable/report/customer_collection/excel/';
                 if($typ_re == 1)
                 {
-                    $detail_array = array('type' => 4,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'comapny_code'=>$companyCode,'cur'=>$requestCurrency,'title'=>$title);
+                    $detail_array = array('type' => 4,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'company_code'=>$companyCode,'cur'=>$requestCurrency,'title'=>$title);
 
                     $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
                 }
