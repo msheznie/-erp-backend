@@ -101,7 +101,8 @@ class PricingScheduleMaster extends Model
         'status',
         'created_by',
         'updated_by',
-        'company_id'
+        'company_id',
+        'boq_status'
     ];
 
     /**
