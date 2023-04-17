@@ -2687,11 +2687,6 @@ class CustomerMasterAPIController extends AppBaseController
                                 }
                           
                             } 
-                             else
-                            {
-                                $nullValue = true;
-                                array_push($item_error['Part No / Ref.Number'], 'line number '.$count.' null value');
-                            }
 
 
                                //check item description
