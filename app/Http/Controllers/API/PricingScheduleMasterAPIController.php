@@ -440,7 +440,7 @@ class PricingScheduleMasterAPIController extends AppBaseController
 
                     // }
                
-                    $priceBidShe = TenderBidFormatDetail::where('tender_id',$input['price_bid_format_id'])->get();
+                    $priceBidShe = TenderBidFormatDetail::where('tender_id',$input['price_bid_format_id'])->select('id','field_type','tender_id','label','is_disabled','boq_applicable','formula_string')->get();
 
                     $status_updated['status'] = true;
                     $status_updated['boq_status'] = true;
@@ -595,17 +595,17 @@ class PricingScheduleMasterAPIController extends AppBaseController
             if(isset($input['priceBidFormat'])){
                 if(count($input['priceBidFormat'])>0){
                     $result = false;
-                    $is_complete = true;
-                    $is_boq_complete = true;
+                    $IsComplete = true;
+                    $IsBoqComplete = true;
                     foreach ($input['priceBidFormat'] as $val){
 
                         if($val['boq_applicable'] == 1 && $val['typeId'] != 4)
                         {
                             $id = $val['id'];
-                            $result1 = TenderBoqItems::where('main_work_id',$id)->first();
-                            if(!isset($result1))
+                            $result1 = TenderBoqItems::where('main_work_id',$id)->count();
+                            if(($result1) == 0)
                             {
-                                $is_boq_complete = false;
+                                $IsBoqComplete = false;
                             }
                         }
 
@@ -614,7 +614,7 @@ class PricingScheduleMasterAPIController extends AppBaseController
                         {
                             if(empty($val['value']) || $val['value'] == null)
                             {
-                                $is_complete = false;
+                                $IsComplete = false;
                             }
                         }
                      
@@ -637,24 +637,16 @@ class PricingScheduleMasterAPIController extends AppBaseController
                         
                     }
                     
-                    $exist = ScheduleBidFormatDetails::where('schedule_id',$masterData['schedule_id'])->first();
+                    $exist = ScheduleBidFormatDetails::where('schedule_id',$masterData['schedule_id'])->select('id')->first();
 
                         
                     if($result){
-                        if($is_complete){
-                            $master['status']=1;
-                        }
-                        else
-                        {
-                            $master['status']=0;
-                        }
-                        if($is_boq_complete){
-                            $master['boq_status']=1;
-                        }
-                        else
-                        {
-                            $master['boq_status']=0;
-                        }
+
+                        ($IsComplete) ? $master['status']=1 : $master['status']=0;
+                  
+
+                        ($IsBoqComplete) ? $master['boq_status']=1 : $master['boq_status']=0;
+                   
 
                         PricingScheduleMaster::where('id',$masterData['schedule_id'])->update($master);
                         DB::commit();
