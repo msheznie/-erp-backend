@@ -642,11 +642,10 @@ class PricingScheduleMasterAPIController extends AppBaseController
                         
                     if($result){
 
-                        ($isComplete) ? $master['status']=1 : $master['status']=0;
+                       
+                        $master['status'] = ($isComplete) ? 1 : 0;
                   
-
-                        ($isBoqComplete) ? $master['boq_status']=1 : $master['boq_status']=0;
-                   
+                        $master['boq_status'] = ($isBoqComplete) ? 1 : 0;
 
                         PricingScheduleMaster::where('id',$masterData['schedule_id'])->update($master);
                         DB::commit();
