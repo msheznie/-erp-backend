@@ -449,11 +449,11 @@ class TenderBoqItemsAPIController extends AppBaseController
             $result = TenderBoqItems::where('id',$input['id'])->delete();
             if($result){
                 $mainwork = PricingScheduleDetail::where('id', $input['main_work_id'])->select('id','tender_id','pricing_schedule_master_id')->first();
-                $mainwork_items = PricingScheduleDetail::with(['tender_boq_items'])->where('tender_id', $mainwork->tender_id)->where('deleted_at',null)->where('boq_applicable', true)->where('pricing_schedule_master_id', $mainwork->pricing_schedule_master_id);
+                $mainworkItems = PricingScheduleDetail::with(['tender_boq_items'])->where('tender_id', $mainwork->tender_id)->where('deleted_at',null)->where('boq_applicable', true)->where('pricing_schedule_master_id', $mainwork->pricing_schedule_master_id);
                 $isMainWorksComplete = true;
-                if($mainwork_items->count() > 0)
+                if($mainworkItems->count() > 0)
                 {
-                    $details = $mainwork_items->get();
+                    $details = $mainworkItems->get();
                     foreach($details as $main)
                     {
                         if(count($main->tender_boq_items) == 0)
