@@ -23,9 +23,10 @@ class TenderCircularsObserver
     {
    
 
-        $tender_obj = TenderMaster::where('id',$tender->getAttribute('tender_id'))->select('bid_submission_opening_date','tender_edit_version_id')->first();
-        $date = $tender_obj->getOriginal('bid_submission_opening_date');
+        $tenderObj = TenderMaster::where('id',$tender->getAttribute('tender_id'))->select('bid_submission_opening_date','tender_edit_version_id')->first();
+        $date = $tenderObj->getOriginal('bid_submission_opening_date');
         $employee = \Helper::getEmployeeInfo();
+        $empId = $employee->employeeSystemID;
 
         $obj = DocumentEditValidate::process($date,$tender->getAttribute('tender_id'));
 
@@ -37,8 +38,8 @@ class TenderCircularsObserver
             $data['attachment_id']=$tender->getAttribute('attachment_id');
             $data['master_id']=$tender->getAttribute('id');
             $data['modify_type']=2;
-            $data['created_by'] = $employee->employeeSystemID;
-            $data['vesion_id']=$tender_obj->getAttribute('tender_edit_version_id');
+            $data['created_by'] = $empId;
+            $data['vesion_id']=$tenderObj->getAttribute('tender_edit_version_id');
             $data['company_id']=$tender->getAttribute('company_id');
             $result = TenderCircularsEditLog::create($data);
 
@@ -56,9 +57,8 @@ class TenderCircularsObserver
     {
    
         
-        $tender_obj = TenderMaster::where('id',$tender->getAttribute('tender_id'))->select('bid_submission_opening_date','tender_edit_version_id')->first();
-        $date = $tender_obj->getOriginal('bid_submission_opening_date');
-        $employee = \Helper::getEmployeeInfo();
+        $tenderObj = TenderMaster::where('id',$tender->getAttribute('tender_id'))->select('bid_submission_opening_date','tender_edit_version_id')->first();
+        $date = $tenderObj->getOriginal('bid_submission_opening_date');
 
         $obj = DocumentEditValidate::process($date,$tender->getAttribute('tender_id'));
 
@@ -80,11 +80,11 @@ class TenderCircularsObserver
 
     public function deleted(TenderCirculars $tender)
     {
-        Log::info(print_r($tender, true));
-        $tender_obj = TenderMaster::where('id',$tender->getAttribute('tender_id'))->select('bid_submission_opening_date','tender_edit_version_id')->first();
-        $date = $tender_obj->getOriginal('bid_submission_opening_date');
+       
+        $tenderObj = TenderMaster::where('id',$tender->getAttribute('tender_id'))->select('bid_submission_opening_date','tender_edit_version_id')->first();
+        $date = $tenderObj->getOriginal('bid_submission_opening_date');
         $employee = \Helper::getEmployeeInfo();
-
+        $empId = $employee->employeeSystemID;
         $obj = DocumentEditValidate::process($date,$tender->getAttribute('tender_id'));
 
         if($obj)
@@ -95,8 +95,8 @@ class TenderCircularsObserver
             $data['attachment_id']=$tender->getAttribute('attachment_id');
             $data['master_id']=$tender->getAttribute('id');
             $data['modify_type']=1;
-            $data['created_by'] = $employee->employeeSystemID;
-            $data['vesion_id']=$tender_obj->getAttribute('tender_edit_version_id');
+            $data['created_by'] = $empId;
+            $data['vesion_id']=$tenderObj->getAttribute('tender_edit_version_id');
             $data['company_id']=$tender->getAttribute('company_id');
             $data['ref_log_id']=$tender->getAttribute('id');
             $result = TenderCircularsEditLog::create($data);

@@ -29,21 +29,3 @@ Route::resource('tenderFinalBids', 'TenderFinalBidsController');
 Route::resource('documentModifyRequests', 'DocumentModifyRequestController');
 
 Route::resource('documentModifyRequestDetails', 'DocumentModifyRequestDetailController');
-
-Route::resource('srmTenderBidEmployeeDetailsEditLogs', 'SrmTenderBidEmployeeDetailsEditLogController');
-
-Route::resource('pricingScheduleMasterEditLogs', 'PricingScheduleMasterEditLogController');
-
-Route::resource('pricingScheduleDetailEditLogs', 'PricingScheduleDetailEditLogController');
-
-Route::resource('scheduleBidFormatDetailsLogs', 'ScheduleBidFormatDetailsLogController');
-
-Route::resource('tenderBoqItemsEditLogs', 'TenderBoqItemsEditLogController');
-
-Route::resource('evaluationCriteriaDetailsEditLogs', 'EvaluationCriteriaDetailsEditLogController');
-
-Route::resource('documentAttachmentsEditLogs', 'DocumentAttachmentsEditLogController');
-
-Route::resource('tenderCircularsEditLogs', 'TenderCircularsEditLogController');
-
-Route::resource('circularAmendmentsEditLogs', 'CircularAmendmentsEditLogController');

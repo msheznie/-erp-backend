@@ -25,20 +25,19 @@ class CircularAmendmentsObserver
     {
    
 
-        $tender_obj = TenderMaster::where('id',$tender->getAttribute('tender_id'))->select('bid_submission_opening_date','tender_edit_version_id')->first();
-        $date = $tender_obj->getOriginal('bid_submission_opening_date');
-        $employee = \Helper::getEmployeeInfo();
+        $tenderObj = TenderMaster::where('id',$tender->getAttribute('tender_id'))->select('bid_submission_opening_date','tender_edit_version_id')->first();
+        $date = $tenderObj->getOriginal('bid_submission_opening_date');
 
         $obj = DocumentEditValidate::process($date,$tender->getAttribute('tender_id'));
 
         if($obj)
         {
 
-            $circular_id = $tender->getAttribute('circular_id');
+            $circularId = $tender->getAttribute('circular_id');
 
-            $cirular_obj = TenderCircularsEditLog::where('master_id',$circular_id)->first();
+            $cirularObj = TenderCircularsEditLog::where('master_id',$circularId)->first();
 
-            $result = $this->process($tender,$cirular_obj,2,$tender_obj,null);
+            $result = $this->process($tender,$cirularObj,2,$tenderObj,null);
         
 
             if($result)
@@ -54,9 +53,8 @@ class CircularAmendmentsObserver
     public function deleted(CircularAmendments $tender)
     {
        
-        $tender_obj = TenderMaster::where('id',$tender->getAttribute('tender_id'))->select('bid_submission_opening_date','tender_edit_version_id')->first();
-        $date = $tender_obj->getOriginal('bid_submission_opening_date');
-        $employee = \Helper::getEmployeeInfo();
+        $tenderObj = TenderMaster::where('id',$tender->getAttribute('tender_id'))->select('bid_submission_opening_date','tender_edit_version_id')->first();
+        $date = $tenderObj->getOriginal('bid_submission_opening_date');
 
         $obj = DocumentEditValidate::process($date,$tender->getAttribute('tender_id'));
       
@@ -66,7 +64,7 @@ class CircularAmendmentsObserver
 
             if($amend)
             {
-                $result = $this->process($tender,$amend,1,$tender_obj,$amend->getAttribute('id'));
+                $result = $this->process($tender,$amend,1,$tenderObj,$amend->getAttribute('id'));
 
                 
                 if($result)
@@ -80,7 +78,7 @@ class CircularAmendmentsObserver
     }
 
 
-    public function process($tender,$obj,$type,$tender_obj,$reflog)
+    public function process($tender,$obj,$type,$tenderObj,$reflog)
     {
 
         $data['tender_id']=$tender->getAttribute('tender_id');
@@ -90,7 +88,7 @@ class CircularAmendmentsObserver
         $data['master_id']=$tender->getAttribute('id');
         $data['modify_type']=$type;
         $data['ref_log_id']= $reflog;
-        $data['vesion_id']=$tender_obj->getAttribute('tender_edit_version_id');
+        $data['vesion_id']=$tenderObj->getAttribute('tender_edit_version_id');
         $result = CircularAmendmentsEditLog::create($data);
 
         return $result;

@@ -449,7 +449,6 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
         try {
             $evaluationDetails = EvaluationCriteriaDetails::find($input['id']);
             $result = $evaluationDetails->delete();
-            //$result = EvaluationCriteriaDetails::where('id',$input['id'])->delete();
             EvaluationCriteriaScoreConfig::where('criteria_detail_id',$input['id'])->delete();
             $levelTwo = EvaluationCriteriaDetails::where('parent_id',$input['id'])->get();
             if(!empty($levelTwo)){
@@ -537,14 +536,10 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
             }
             $data['updated_by'] = $employee->employeeSystemID;
 
-            $model = EvaluationCriteriaDetails::find($input['id']);
-            $result = $model->update($data);
-           // $result = EvaluationCriteriaDetails::where('id',$input['id'])->update($data);
+            $evaluationDetails = EvaluationCriteriaDetails::find($input['id']);
+            $result = $evaluationDetails->update($data);
 
             if($result){
-
-
-
 
                 if($input['is_final_level'] == 1 && $input['critera_type_id'] == 2 && ($input['answer_type_id'] == 4 || $input['answer_type_id'] == 5) ){
                     $config = EvaluationCriteriaScoreConfig::where('criteria_detail_id',$input['id'])->first();

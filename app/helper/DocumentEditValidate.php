@@ -12,16 +12,14 @@ class DocumentEditValidate
     public static function process($date,$tender_id)
     {
 
-        $current_date_obj = date('Y-m-d H:i:s');
-        $current_date = Carbon::createFromFormat('Y-m-d H:i:s', $current_date_obj);
+        $currentDate =  Carbon::now()->format('Y-m-d H:i:s');
+        $openingDateFormat = Carbon::createFromFormat('Y-m-d H:i:s', $date);
+        $result = $openingDateFormat->gt($currentDate);
 
-        $opening_date_format = Carbon::createFromFormat('Y-m-d H:i:s', $date);
-        $result_obj = $opening_date_format->gt($current_date);
-
-        if($result_obj)
+        if($result)
         {   
-            $tende_edit_log = DocumentModifyRequest::where('documentSystemCode',$tender_id)->where('status',1)->where('approved',-1)->orderBy('id','desc')->first();
-            if(isset($tende_edit_log))
+            $tendeEditLog = DocumentModifyRequest::where('documentSystemCode',$tender_id)->where('status',1)->where('approved',-1)->orderBy('id','desc')->first();
+            if(isset($tendeEditLog))
             {
                 return true;
             }

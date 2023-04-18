@@ -22,9 +22,9 @@ class DocumentAttachmentsObserver
     public function created(DocumentAttachments $tender)
     {
        
-        $tender_obj = TenderMaster::where('id',$tender->getAttribute('documentSystemCode'))->select('bid_submission_opening_date','tender_edit_version_id')->first();
+        $tenderObj = TenderMaster::where('id',$tender->getAttribute('documentSystemCode'))->select('bid_submission_opening_date','tender_edit_version_id')->first();
    
-        $obj = DocumentEditValidate::process($tender_obj->getOriginal('bid_submission_opening_date'),$tender->getAttribute('documentSystemCode'));
+        $obj = DocumentEditValidate::process($tenderObj->getOriginal('bid_submission_opening_date'),$tender->getAttribute('documentSystemCode'));
 
      
         if($obj)
@@ -70,13 +70,13 @@ class DocumentAttachmentsObserver
 
     public function deleted(DocumentAttachments $tender)
     {
-        Log::info(print_r($tender, true));
+      
 
-        $reflog_id = null;
+        $reflogId = null;
         $document =  DocumentAttachmentsEditLog::where('master_id',$tender->getAttribute('attachmentID'))->first();
         if(isset($document))
         {
-            $reflog_id = $document->getAttribute('id');
+            $reflogId = $document->getAttribute('id');
         }
 
         $data['companySystemID'] =$tender->getAttribute('companySystemID');
@@ -97,7 +97,7 @@ class DocumentAttachmentsObserver
         $data['envelopType'] = $tender->getAttribute('envelopType');
         $data['modify_type'] = 1;
         $data['master_id'] = $tender->getAttribute('attachmentID');
-        $data['ref_log_id'] = $reflog_id;
+        $data['ref_log_id'] = $reflogId;
 
         $result = DocumentAttachmentsEditLog::create($data);
         if($result)

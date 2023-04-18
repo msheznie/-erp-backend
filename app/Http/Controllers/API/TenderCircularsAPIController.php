@@ -444,9 +444,8 @@ class TenderCircularsAPIController extends AppBaseController
             if(isset($input['id'])){
                 $data['updated_by'] = $employee->employeeSystemID;
                 $data['updated_at'] = Carbon::now();
-                $model = TenderCirculars::find($input['id']);
-                $result = $model->update($data);
-                //$result = TenderCirculars::where('id',$input['id'])->update($data);
+                $tenderCircular = TenderCirculars::find($input['id']);
+                $result = $tenderCircular->update($data);
                 if($result){
                     DB::commit();
                     return ['success' => true, 'message' => 'Successfully updated', 'data' => $result];
@@ -500,17 +499,16 @@ class TenderCircularsAPIController extends AppBaseController
         $input = $request->all();
         DB::beginTransaction();
         try {
-            $model =  TenderCirculars::find($input['id']);
-            $result = $model->delete();
-            //$result = TenderCirculars::where('id',$input['id'])->delete();
+            $tenderCircular =  TenderCirculars::find($input['id']);
+            $result = $tenderCircular->delete();
             
             if($result){
        
                 $circular = CircularAmendments::where('circular_id', $input['id'])->first();
                 if(isset($circular))
                 {
-                    $model1 = CircularAmendments::find($circular->id);
-                    $result1 = $model1->delete();
+                    $circularAmends = CircularAmendments::find($circular->id);
+                    $result1 = $circularAmends->delete();
                 }
            
 
