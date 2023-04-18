@@ -447,8 +447,8 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
         $input = $request->all();
         DB::beginTransaction();
         try {
-            $model1 = EvaluationCriteriaDetails::find($input['id']);
-            $result = $model1->delete();
+            $evaluationDetails = EvaluationCriteriaDetails::find($input['id']);
+            $result = $evaluationDetails->delete();
             //$result = EvaluationCriteriaDetails::where('id',$input['id'])->delete();
             EvaluationCriteriaScoreConfig::where('criteria_detail_id',$input['id'])->delete();
             $levelTwo = EvaluationCriteriaDetails::where('parent_id',$input['id'])->get();
