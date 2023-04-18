@@ -1024,14 +1024,13 @@ class GRVMasterAPIController extends AppBaseController
             </table>';
             $body .= "<br><br>";
             $body .= "Thank You.";
-            $dataEmail['empEmail'] = 'hello@example.com';
+
+            $supplier = $this->getSupplierDetails($input['supplierID']);
+            $dataEmail['empEmail'] = $supplier->supEmail;
             $dataEmail['companySystemID'] = $input['companySystemID'];
             $dataEmail['alertMessage'] = "GRV  Confirmed";
             $dataEmail['emailAlertMessage'] = $body;
             $sendEmail = \Email::sendEmailErp($dataEmail);
-
-
-         
         }
 
 
@@ -2303,6 +2302,12 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
         $grv = $this->gRVMasterRepository->update(['isMarkupUpdated'=>1], $input['grvAutoID']);
 
         return $this->sendResponse($grv, 'GRV markup updated successfully');
+    }
+
+    public function getSupplierDetails($supplierId){
+        return SupplierMaster::select('supEmail')
+            ->where('supplierCodeSystem', $supplierId)
+            ->first();
     }
 
 
