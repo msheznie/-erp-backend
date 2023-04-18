@@ -597,7 +597,7 @@ class MaterielRequestDetailsAPIController extends AppBaseController
 
            MaterielRequestDetails::where('RequestID', $id)->delete();
 
-            return $this->sendResponse([], 'Item Deleted Successfully');
+            return $this->sendResponse([], 'Items Deleted Successfully');
 
         } else {
             return $this->sendError('Material Request not found');
