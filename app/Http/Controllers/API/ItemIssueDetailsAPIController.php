@@ -1180,6 +1180,22 @@ class ItemIssueDetailsAPIController extends AppBaseController
         return $this->sendResponse($items->toArray(), 'Request Details retrieved successfully');
     }
 
+    public function removeAllItems($id)
+    {
+        $material_request = ItemIssueMaster::find($id);
+        if($material_request){
+
+            ItemIssueDetails::where('itemIssueAutoID', $id)->delete();
+
+            return $this->sendResponse([], 'Items Deleted Successfully');
+
+        } else {
+            return $this->sendError('Material Issue not found');
+
+        }
+
+    }
+
     public function getItemsByMaterielIssueByLimit(Request $request)
     {
         $input = $request->all();
