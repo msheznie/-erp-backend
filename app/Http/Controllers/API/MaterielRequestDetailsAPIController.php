@@ -589,7 +589,24 @@ class MaterielRequestDetailsAPIController extends AppBaseController
      * @param Request $request
      * @return Response
      */
-    public function getItemsByMaterielRequest(Request $request)
+
+    public function removeAllItems($id)
+    {
+        $material_request = MaterielRequest::find($id);
+        if($material_request){
+
+           MaterielRequestDetails::where('RequestID', $id)->delete();
+
+            return $this->sendResponse([], 'Item Deleted Successfully');
+
+        } else {
+            return $this->sendError('Material Request not found');
+
+        }
+
+    }
+
+        public function getItemsByMaterielRequest(Request $request)
     {
         $input = $request->all();
         $rId = $input['RequestID'];

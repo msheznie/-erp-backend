@@ -122,6 +122,8 @@ Route::group([], function () {
     Route::post('getAllRequestByCompany', 'MaterielRequestAPIController@getAllRequestByCompany')->name("Get All Material Request By Company");
     Route::post('requestDetailsAddAllItems', 'MaterielRequestDetailsAPIController@requestDetailsAddAllItems')->name('Material request add all item');
     Route::post('materialRequestValidateItem', 'MaterielRequestDetailsAPIController@materialRequestValidateItem')->name('Material request validate item');
+    Route::post('material_requests/remove_all_items/{id}', 'MaterielRequestDetailsAPIController@removeAllItems')->name('Material request remove all items');
+
 });
 
 //Material Issue Trans
