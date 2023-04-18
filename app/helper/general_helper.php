@@ -7297,7 +7297,7 @@ class Helper
                                 }
                             }
                         }
-                        $budgetConsume = BudgetConsumedData::insert($budgetConsumeData);
+                        $budgetConsume = Models\BudgetConsumedData::insert($budgetConsumeData);
                     }
                 }
                 break;
