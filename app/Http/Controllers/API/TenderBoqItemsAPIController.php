@@ -441,11 +441,34 @@ class TenderBoqItemsAPIController extends AppBaseController
 
     public function deleteTenderBoqItem(Request $request)
     {
+
+        
         $input = $request->all();
         DB::beginTransaction();
         try {
             $result = TenderBoqItems::where('id',$input['id'])->delete();
             if($result){
+                $mainwork = PricingScheduleDetail::where('id', $input['main_work_id'])->select('id','tender_id','pricing_schedule_master_id')->first();
+                $mainwork_items = PricingScheduleDetail::with(['tender_boq_items'])->where('tender_id', $mainwork->tender_id)->where('deleted_at',null)->where('boq_applicable', true)->where('pricing_schedule_master_id', $mainwork->pricing_schedule_master_id);
+                $isMainWorksComplete = true;
+                if($mainwork_items->count() > 0)
+                {
+                    $details = $mainwork_items->get();
+                    foreach($details as $main)
+                    {
+                        if(count($main->tender_boq_items) == 0)
+                        {   
+                            $isMainWorksComplete = false;
+                            break;
+                        }
+                       
+                    }
+                   
+                }
+                
+                $master['boq_status'] = ($isMainWorksComplete) ? 1 : 0;
+                PricingScheduleMaster::where('id',$mainwork->pricing_schedule_master_id)->update($master);
+            
                 DB::commit();
                 return ['success' => true, 'message' => 'Successfully deleted', 'data' => $result];
             }
