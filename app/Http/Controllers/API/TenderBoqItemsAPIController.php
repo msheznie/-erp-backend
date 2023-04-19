@@ -448,8 +448,8 @@ class TenderBoqItemsAPIController extends AppBaseController
         try {
             $result = TenderBoqItems::where('id',$input['id'])->delete();
             if($result){
-                $mainwork = PricingScheduleDetail::where('id', $input['main_work_id'])->select('id','tender_id','pricing_schedule_master_id')->first();
-                $mainworkItems = PricingScheduleDetail::with(['tender_boq_items'])->where('tender_id', $mainwork->tender_id)->where('deleted_at',null)->where('boq_applicable', true)->where('pricing_schedule_master_id', $mainwork->pricing_schedule_master_id);
+                $mainwork = $this->getMainwork($input['main_work_id']); 
+                $mainworkItems = $this->getMainworkItems($mainwork); 
                 $isMainWorksComplete = true;
                 if($mainworkItems->count() > 0)
                 {
@@ -632,5 +632,24 @@ class TenderBoqItemsAPIController extends AppBaseController
             DB::rollBack();
             return $this->sendError($exception->getMessage());
         }
+    }
+
+
+    public function getMainwork($id)
+    {
+        $output =  PricingScheduleDetail::where('id', $id)
+                                ->select('id','tender_id','pricing_schedule_master_id')
+                                ->first();
+        return $output;
+    }
+
+    public function getMainworkItems($mainwork)
+    {
+        $output = PricingScheduleDetail::with(['tender_boq_items'])->where('tender_id', $mainwork->tender_id)
+                                        ->where('deleted_at',null)
+                                        ->where('boq_applicable', true)
+                                        ->where('pricing_schedule_master_id', $mainwork->pricing_schedule_master_id);
+
+         return $output;                               
     }
 }
