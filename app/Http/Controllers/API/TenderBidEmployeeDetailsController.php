@@ -13,7 +13,7 @@ class TenderBidEmployeeDetailsController extends AppBaseController
 {
     public function store(Request $request) {
 
-        SrmTenderBidEmployeeDetails::insert($request['data']);
+        SrmTenderBidEmployeeDetails::create($request['data']);
         return $this->sendResponse([], 'Employee saved successfully');
 
     }
@@ -27,7 +27,10 @@ class TenderBidEmployeeDetailsController extends AppBaseController
     }
 
     public function deleteEmp(Request $request) {
-        $data = SrmTenderBidEmployeeDetails::where('tender_id',$request['tender_id'])->where('emp_id',$request['emp_id'])->delete();
+        $data = SrmTenderBidEmployeeDetails::where('tender_id',$request['tender_id'])->where('emp_id',$request['emp_id'])->first();
+        $model = SrmTenderBidEmployeeDetails::find($data->id);
+        $model->delete();
+
         return $this->sendResponse($data, 'Employee deleted successfully');
     }
 
