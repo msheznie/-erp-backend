@@ -59,7 +59,7 @@ class TenderBoqItemsObserver
             }
             else
             {
-               $result =  $this->process($tender,);
+               $result =  $this->process($tender);
                 if($result)
                 {
                     Log::info('boq items created succsfully');
@@ -176,7 +176,7 @@ class TenderBoqItemsObserver
             }
             else
             {
-               $result =  $this->process($tender,);
+               $result =  $this->process($tender);
                 if($result)
                 {
                     Log::info('boq items updated succsfully');
