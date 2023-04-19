@@ -770,12 +770,11 @@ class BookInvSuppMasterAPIController extends AppBaseController
             }
 
             }
-
             if ($input['documentType'] != 4 && $input['retentionAmount'] > 0) {
 
                 $isConfigured = SystemGlCodeScenario::find(13);
-                $isDetailConfigured = SystemGlCodeScenarioDetail::where('systemGLScenarioID', 13)->first();
-
+                $companyID = isset($bookInvSuppMaster->companySystemID) ? $bookInvSuppMaster->companySystemID: null;
+                $isDetailConfigured = SystemGlCodeScenarioDetail::where('systemGLScenarioID', 13)->where('companySystemID', $companyID)->first();
                 if($isConfigured && $isDetailConfigured) {
                     if ($isConfigured->isActive != 1 || $isDetailConfigured->chartOfAccountSystemID == null || $isDetailConfigured->chartOfAccountSystemID == 0) {
                         return $this->sendError('Chart of account is not configured for retention control account', 500);
