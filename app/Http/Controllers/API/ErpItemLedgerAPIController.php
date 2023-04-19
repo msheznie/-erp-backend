@@ -1061,8 +1061,9 @@ WHERE
         $fileName = 'stock_ledger_report';
         $title = 'Stock Ledger Report';
         $path = 'inventory/report/stock_ledger_report/excel/';
+        $companyCode = isset($company->CompanyID)?$company->CompanyID:'common';
 
-        $detail_array = array('type' => 1,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$requestCurrency,'title'=>$title);
+        $detail_array = array('type' => 1,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'company_code'=>$companyCode, 'cur'=>$requestCurrency,'title'=>$title);
 
         $basePath = CreateExcel::process($data,$request->type,$fileName,$path,$detail_array);
 
@@ -1442,7 +1443,9 @@ WHERE
         $title = 'Stock Valuation Report';
         $path = 'inventory/report/stock_valuation_report/excel/';
         $cur = NULL;
-        $detail_array = array('type' => 2,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$cur,'title'=>$title);
+        $companyCode = isset($company->CompanyID)?$company->CompanyID:'common';
+
+        $detail_array = array('type' => 2,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name, 'company_code'=>$companyCode, 'cur'=>$cur,'title'=>$title);
         $basePath = CreateExcel::process($data,$request->type,$fileName,$path,$detail_array);
 
         if($basePath == '')

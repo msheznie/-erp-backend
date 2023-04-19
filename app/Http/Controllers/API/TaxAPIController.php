@@ -124,7 +124,6 @@ class TaxAPIController extends AppBaseController
                 'companySystemID' => 'required|numeric|min:1',
                 'taxDescription' => 'required',
                 //'taxShortCode' => 'required',
-                'taxType' => 'required',
                 'authorityAutoID' => 'required|numeric|min:1',
                 'GLAutoID' => 'required|numeric|min:1'
             ], $messages);
@@ -289,7 +288,6 @@ class TaxAPIController extends AppBaseController
                 'companySystemID' => 'required|numeric|min:1',
                 'taxDescription' => 'required',
                 //'taxShortCode' => 'required',
-                'taxType' => 'required',
                 'authorityAutoID' => 'required|numeric|min:1',
                 'GLAutoID' => 'required|numeric|min:1'
             ], $messages);

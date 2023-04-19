@@ -342,10 +342,15 @@ class ItemAssignedAPIController extends AppBaseController
 
         // return $this->sendResponse(array(), 'successfully export');
 
+        $companyMaster = Company::find(isset($request->companyId)?$request->companyId: null);
+        $companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
+        $detail_array = array(
+            'company_code'=>$companyCode,
+            );
 
         $fileName = 'items_by_company';
         $path = 'inventory/master/items_by_company/excel/';
-        $basePath = CreateExcel::process($data,$type,$fileName,$path);
+        $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
 
         if($basePath == '')
         {
