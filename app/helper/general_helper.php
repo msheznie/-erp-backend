@@ -7231,8 +7231,8 @@ class Helper
                 $budgetConsumeData = array();
                 $masterRec = Models\BookInvSuppMaster::find($params["autoID"]);
                 if ($masterRec) {
-                    if ($masterRec->documentType == 1) {
-                        $directDetail = \DB::select('SELECT directInvoiceDetailsID,directInvoiceAutoID,serviceLineSystemID,serviceLineCode,chartOfAccountSystemID,glCode,budgetYear,SUM(localAmount) as localAmountTot, sum(comRptAmount) as comRptAmountTot FROM erp_directinvoicedetails WHERE directInvoiceAutoID = ' . $params["autoID"] . ' GROUP BY serviceLineSystemID,chartOfAccountSystemID ');
+                    if ($masterRec->documentType == 1 || $masterRec->documentType == 4) {
+                        $directDetail = \DB::select('SELECT directInvoiceDetailsID,directInvoiceAutoID,serviceLineSystemID,serviceLineCode,chartOfAccountSystemID,glCode,budgetYear,SUM(localAmount) as localAmountTot, sum(comRptAmount) as comRptAmountTot, detail_project_id FROM erp_directinvoicedetails WHERE directInvoiceAutoID = ' . $params["autoID"] . ' GROUP BY serviceLineSystemID,chartOfAccountSystemID,detail_project_id ');
 
                         if (!empty($directDetail)) {
                             foreach ($directDetail as $value) {
@@ -7259,7 +7259,7 @@ class Helper
                                         "consumedRptCurrencyID" => $masterRec->companyReportingCurrencyID,
                                         "consumedRptAmount" => abs($value->comRptAmountTot),
                                         "timestamp" => date('d/m/Y H:i:s A'),
-                                        "projectID" => $masterRec->projectID
+                                        "projectID" => $value->detail_project_id
 
                                     );
                                 }
@@ -7298,7 +7298,7 @@ class Helper
                             }
                         }
                         $budgetConsume = Models\BudgetConsumedData::insert($budgetConsumeData);
-                    }
+                    } 
                 }
                 break;
             case 4:

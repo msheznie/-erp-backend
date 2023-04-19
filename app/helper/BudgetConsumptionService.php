@@ -178,14 +178,14 @@ class BudgetConsumptionService
 			case 11:
 				$masterData = BookInvSuppMaster::find($documentSystemCode);
 
-				if (($masterData->documentType != 1 && $masterData->documentType != 3) && $checkBudgetWhileApprove) {
+				if (($masterData->documentType != 1 && $masterData->documentType != 3 && $masterData->documentType != 4) && $checkBudgetWhileApprove) {
 					return ['status' => true, 'data' => []];
 				}
 
 				$budgetFormData['companySystemID'] = $masterData->companySystemID;
 				$documentLevelCheckBudget = true;
 				$budgetFormData['financeCategory'] = 0;
-				if ($masterData->documentType == 1) {
+				if ($masterData->documentType == 1 || $masterData->documentType == 4) {
 					$budgetFormData['projectID'] = null;
 
 	                $budgetFormData['currency'] = $masterData->supplierTransactionCurrencyID;
@@ -1260,7 +1260,7 @@ class BudgetConsumptionService
 	 										 ->whereHas('supplier_invoice_master', function($query) use ($budgetFormData) {
 	 										 	$query->where('approved', 0)
 	 										 		  ->where('cancelYN', 0)
-	 										 		  ->where('documentType', 1)
+	 										 		  ->whereIn('documentType', [1,4])
 	 										 		  ->where('companySystemID', $budgetFormData['companySystemID']);
 	 										 })
 	 										 ->when(in_array($budgetFormData['documentSystemID'], [11]), function($query) use ($budgetFormData) {
