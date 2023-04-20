@@ -95,48 +95,55 @@ class EvaluationCriteriaDetailsObserver
     public function deleted(EvaluationCriteriaDetails $tender)
     {
 
-        Log::info(print_r($tender, true));
 
         $employee = \Helper::getEmployeeInfo();
         $empId = $employee->employeeSystemID;
         $tenderObj = TenderMaster::where('id',$tender->getAttribute('tender_id'))->select('bid_submission_opening_date','tender_edit_version_id')->first();
 
-        $obj1 = EvaluationCriteriaDetailsEditLog::where('master_id',$tender->getAttribute('id'))->orderBy('id','desc')->first(); //1
-        $parentId = $tender->getAttribute('parent_id');
-        $result1 = $this->process($tenderObj,$tender,$empId,1,$obj1->getAttribute('id'),$parentId);
-        if($result1)
-        {
-            $obj2 = EvaluationCriteriaDetailsEditLog::where('parent_id',$obj1->getAttribute('id'))->orderBy('id','desc')->first(); //2
-            if(isset($obj2))
-            {
-                $parent2Id = $obj2->getAttribute('parent_id');
-                $result2 = $this->process($tenderObj,$obj2,$empId,1,$obj2->getAttribute('id'),$parent2Id);
-    
-                if($result2)
-                {
-                    $obj3 = EvaluationCriteriaDetailsEditLog::where('parent_id',$obj2->getAttribute('id'))->orderBy('id','desc')->first(); //3
+        $date = $tenderObj->getOriginal('bid_submission_opening_date');
+        $obj = DocumentEditValidate::process($date,$tender->getAttribute('tender_id'));
 
-                    if(isset($obj3))
-                    {   
-                        $parent3Id = $obj3->getAttribute('parent_id');
-                        $result3 = $this->process($tenderObj,$obj3,$empId,1,$obj3->getAttribute('id'),$parent3Id);
+        if($obj)
+        {   
+            $obj1 = EvaluationCriteriaDetailsEditLog::where('master_id',$tender->getAttribute('id'))->orderBy('id','desc')->first(); //1
+            $parentId = $tender->getAttribute('parent_id');
+            $result1 = $this->process($tenderObj,$tender,$empId,1,$obj1->getAttribute('id'),$parentId);
+            if($result1)
+            {
+                $obj2 = EvaluationCriteriaDetailsEditLog::where('parent_id',$obj1->getAttribute('id'))->orderBy('id','desc')->first(); //2
+                if(isset($obj2))
+                {
+                    $parent2Id = $obj2->getAttribute('parent_id');
+                    $result2 = $this->process($tenderObj,$obj2,$empId,1,$obj2->getAttribute('id'),$parent2Id);
         
-                        if($result3)
-                        {
-                            $obj4 = EvaluationCriteriaDetailsEditLog::where('parent_id',$obj3->getAttribute('id'))->orderBy('id','desc')->first(); //3
-                            if(isset($obj4))
-                            {
-                                $parent4Id = $obj4->getAttribute('parent_id');
-                                $result3 = $this->process($tenderObj,$obj4,$empId,1,$obj4->getAttribute('id'),$parent4Id);
-                            }
-               
-                        }
-                    }
+                    if($result2)
+                    {
+                        $obj3 = EvaluationCriteriaDetailsEditLog::where('parent_id',$obj2->getAttribute('id'))->orderBy('id','desc')->first(); //3
+    
+                        if(isset($obj3))
+                        {   
+                            $parent3Id = $obj3->getAttribute('parent_id');
+                            $result3 = $this->process($tenderObj,$obj3,$empId,1,$obj3->getAttribute('id'),$parent3Id);
             
+                            if($result3)
+                            {
+                                $obj4 = EvaluationCriteriaDetailsEditLog::where('parent_id',$obj3->getAttribute('id'))->orderBy('id','desc')->first(); //3
+                                if(isset($obj4))
+                                {
+                                    $parent4Id = $obj4->getAttribute('parent_id');
+                                    $result3 = $this->process($tenderObj,$obj4,$empId,1,$obj4->getAttribute('id'),$parent4Id);
+                                }
+                   
+                            }
+                        }
+                
+                    }
                 }
+         
             }
-     
         }
+
+
 
 
     }

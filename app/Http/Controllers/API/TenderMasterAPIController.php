@@ -582,39 +582,47 @@ WHERE
     $data['is_request_process'] = false;
     $data['request_type'] = '';
     $data['is_request_process_complete'] = false;
+
+
+
+
     if($data['master']['published_yn'] == 1)
     {
-        $current_date = Carbon::createFromFormat('Y-m-d H:i:s', $current_date_obj);
-        $opening_date_format = Carbon::createFromFormat('Y-m-d H:i:s', $data['master']['bid_submission_opening_date']);
-
-        $result_obj = $opening_date_format->gt($current_date);
-        $data['edit_valid'] = $result_obj;
-
-
-        $tende_edit_log = DocumentModifyRequest::where('documentSystemCode',$tenderMasterId)->orderBy('id','desc')->first();
-  
-        if(isset($tende_edit_log) && $result_obj)
-        {   
-            if($tende_edit_log->type == 1)
-            {
-                $data['request_type'] = 'Edit';
-            }
-            else
-            {
-                $data['request_type'] = 'Amend';
-            }
-
-            if($tende_edit_log->status == 1 && $tende_edit_log->approved == 0)
-            {
-                $data['is_request_process'] = true;
-                $data['edit_valid'] = false;
-            }
-            else if($tende_edit_log->status == 1 && $tende_edit_log->approved == -1)
-            {
-                $data['is_request_process_complete'] = true;
-                $data['edit_valid'] = false;
+        if($data['master']['tender_edit_version_id'] != null)
+        {
+            $current_date = Carbon::createFromFormat('Y-m-d H:i:s', $current_date_obj);
+            $opening_date_format = Carbon::createFromFormat('Y-m-d H:i:s', $data['master']['bid_submission_opening_date']);
+    
+            $result_obj = $opening_date_format->gt($current_date);
+            $data['edit_valid'] = $result_obj;
+    
+    
+            $tende_edit_log = DocumentModifyRequest::where('documentSystemCode',$tenderMasterId)->orderBy('id','desc')->first();
+      
+            if(isset($tende_edit_log) && $result_obj)
+            {   
+                if($tende_edit_log->type == 1)
+                {
+                    $data['request_type'] = 'Edit';
+                }
+                else
+                {
+                    $data['request_type'] = 'Amend';
+                }
+    
+                if($tende_edit_log->status == 1 && $tende_edit_log->approved == 0)
+                {
+                    $data['is_request_process'] = true;
+                    $data['edit_valid'] = false;
+                }
+                else if($tende_edit_log->status == 1 && $tende_edit_log->approved == -1)
+                {
+                    $data['is_request_process_complete'] = true;
+                    $data['edit_valid'] = false;
+                }
             }
         }
+
     }
 
 
