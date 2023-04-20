@@ -588,8 +588,7 @@ WHERE
 
     if($data['master']['published_yn'] == 1)
     {
-        if($data['master']['tender_edit_version_id'] != null)
-        {
+    
             $current_date = Carbon::createFromFormat('Y-m-d H:i:s', $current_date_obj);
             $opening_date_format = Carbon::createFromFormat('Y-m-d H:i:s', $data['master']['bid_submission_opening_date']);
     
@@ -621,7 +620,7 @@ WHERE
                     $data['edit_valid'] = false;
                 }
             }
-        }
+
 
     }
 
