@@ -62,6 +62,10 @@ use App\Models\BidMainWork;
 use App\Repositories\TenderFinalBidsRepository;
 use App\Models\TenderFinalBids;
 use App\Models\DocumentModifyRequest;
+use App\Models\TenderCirculars;
+use App\Models\CircularAmendments;
+
+
 /**
  * Class TenderMasterController
  * @package App\Http\Controllers\API
@@ -1108,6 +1112,19 @@ WHERE
                 return ['success' => false, 'message' => 'RFX title cannot be duplicated'];
             } else {
                 return ['success' => false, 'message' => 'Tender title cannot be duplicated'];
+            }
+        }
+
+        if($input['isRequestProcessComplete']){
+            if($input['requestType'] == 'Edit')
+            {   
+                $circulars = TenderCirculars::where('tender_id',$input['id'])->pluck('id');
+                $ammendemms = CircularAmendments::whereIn('circular_id',$circulars)->count();
+                if($ammendemms == 0)
+                {
+                    return ['success' => false, 'message' => 'Please attached the amendments'];
+                }
+
             }
         }
 
