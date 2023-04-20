@@ -1940,6 +1940,3 @@ Route::get('viewHrDocuments', 'ThirdPartySystemsDocumentUploadAndDownloadAPICont
 /*
  * End external related routes
  */
-
-
-Route::resource('circular_amendments_edit_logs', 'CircularAmendmentsEditLogAPIController');

@@ -401,9 +401,8 @@ class PricingScheduleMasterAPIController extends AppBaseController
 
             if(isset($input['id'])){
                 $data['updated_by'] = $employee->employeeSystemID;
-                $model = PricingScheduleMaster::find($input['id']);
-                $result = $model->update($data);
-                // $result = PricingScheduleMaster::where('id',$input['id'])->update($data);
+                $pricingSheduleMaster = PricingScheduleMaster::find($input['id']);
+                $result = $pricingSheduleMaster->update($data);
                 if($result){
                     if($schedule['price_bid_format_id'] != $input['price_bid_format_id']){
                         $master['status']=0;
@@ -501,8 +500,8 @@ class PricingScheduleMasterAPIController extends AppBaseController
         $input = $request->all();
         DB::beginTransaction();
         try {
-            $model = PricingScheduleMaster::find($input['id']);
-            $result = $model->delete();
+            $sheduleMaster = PricingScheduleMaster::find($input['id']);
+            $result = $sheduleMaster->delete();
             if($result){
                 //TenderMainWorks::where('schedule_id',$input['id'])->delete();
                 ScheduleBidFormatDetails::where('schedule_id',$input['id'])->delete();

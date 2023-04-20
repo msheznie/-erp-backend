@@ -582,39 +582,47 @@ WHERE
     $data['is_request_process'] = false;
     $data['request_type'] = '';
     $data['is_request_process_complete'] = false;
+
+
+
+
     if($data['master']['published_yn'] == 1)
     {
-        $current_date = Carbon::createFromFormat('Y-m-d H:i:s', $current_date_obj);
-        $opening_date_format = Carbon::createFromFormat('Y-m-d H:i:s', $data['master']['bid_submission_opening_date']);
-
-        $result_obj = $opening_date_format->gt($current_date);
-        $data['edit_valid'] = $result_obj;
-
-
-        $tende_edit_log = DocumentModifyRequest::where('documentSystemCode',$tenderMasterId)->orderBy('id','desc')->first();
-  
-        if(isset($tende_edit_log) && $result_obj)
-        {   
-            if($tende_edit_log->type == 1)
-            {
-                $data['request_type'] = 'Edit';
-            }
-            else
-            {
-                $data['request_type'] = 'Amend';
-            }
-
-            if($tende_edit_log->status == 1 && $tende_edit_log->approved == 0)
-            {
-                $data['is_request_process'] = true;
-                $data['edit_valid'] = false;
-            }
-            else if($tende_edit_log->status == 1 && $tende_edit_log->approved == -1)
-            {
-                $data['is_request_process_complete'] = true;
-                $data['edit_valid'] = false;
+        if($data['master']['tender_edit_version_id'] != null)
+        {
+            $current_date = Carbon::createFromFormat('Y-m-d H:i:s', $current_date_obj);
+            $opening_date_format = Carbon::createFromFormat('Y-m-d H:i:s', $data['master']['bid_submission_opening_date']);
+    
+            $result_obj = $opening_date_format->gt($current_date);
+            $data['edit_valid'] = $result_obj;
+    
+    
+            $tende_edit_log = DocumentModifyRequest::where('documentSystemCode',$tenderMasterId)->orderBy('id','desc')->first();
+      
+            if(isset($tende_edit_log) && $result_obj)
+            {   
+                if($tende_edit_log->type == 1)
+                {
+                    $data['request_type'] = 'Edit';
+                }
+                else
+                {
+                    $data['request_type'] = 'Amend';
+                }
+    
+                if($tende_edit_log->status == 1 && $tende_edit_log->approved == 0)
+                {
+                    $data['is_request_process'] = true;
+                    $data['edit_valid'] = false;
+                }
+                else if($tende_edit_log->status == 1 && $tende_edit_log->approved == -1)
+                {
+                    $data['is_request_process_complete'] = true;
+                    $data['edit_valid'] = false;
+                }
             }
         }
+
     }
 
 
@@ -1114,7 +1122,7 @@ WHERE
         DB::beginTransaction();
 
         try {
-            $model = TenderMaster::find($input['id']);
+            $tenderMaster = TenderMaster::find($input['id']);
             $data['title'] = $input['title'];
             $data['title_sec_lang'] = $input['title_sec_lang'];
             $data['description'] = $input['description'];
@@ -1147,7 +1155,7 @@ WHERE
             $data['commerical_bid_closing_date'] = ($commerical_bid_closing_date) ? $commerical_bid_closing_date: null;
             $data['updated_by'] = $employee->employeeSystemID;
            
-            $result =  $model->update($data);
+            $result =  $tenderMaster->update($data);
 
             if ($result) {
                 if (isset($input['procument_activity'])) {
@@ -1205,9 +1213,8 @@ WHERE
                         Storage::disk(Helper::policyWiseDisk($input['company_id'], 'public'))->put($path, $decodeFile);
 
                         $att['budget_document'] = $path;
-                        $model1 = TenderMaster::find($input['id']);
-                        $model1->update($att);
-                        //TenderMaster::where('id', $input['id'])->update($att);
+                        $tenderUpdated = TenderMaster::find($input['id']);
+                        $tenderUpdated->update($att);
                     }
                 }
 
@@ -2142,7 +2149,7 @@ WHERE
 
         DB::beginTransaction();
         try {
-            $model = TenderMaster::find($input['id']);
+            $tenderMaster = TenderMaster::find($input['id']);
             $data['tender_type_id'] = $input['tender_type_id'];
             $data['envelop_type_id'] = (empty($input['envelop_type_id'])) ? 0 : $input['envelop_type_id'];
             $data['evaluation_type_id'] = $input['evaluation_type_id'];
@@ -2154,8 +2161,8 @@ WHERE
             $data['technical_passing_weightage'] = $input['technical_passing_weightage'];
             $data['commercial_passing_weightage'] = $input['commercial_passing_weightage'];
             $data['min_approval_bid_opening'] = $input['min_approval_bid_opening'];
-            $model->update($data);
-            if ($model) {
+            $tenderMaster->update($data);
+            if ($tenderMaster) {
                 if (isset($input['document_types'])) {
                     if (count($input['document_types']) > 0) {
                         TenderDocumentTypeAssign::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();

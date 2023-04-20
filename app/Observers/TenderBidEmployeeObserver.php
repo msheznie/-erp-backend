@@ -22,14 +22,14 @@ class TenderBidEmployeeObserver
     public function deleted(SrmTenderBidEmployeeDetails $tender)
     {
 
-        $tender_obj = TenderMaster::where('id',$tender->getOriginal('tender_id'))->select('bid_submission_opening_date','tender_edit_version_id')->first();
-        $date = $tender_obj->getOriginal('bid_submission_opening_date');
+        $tenderObj = TenderMaster::where('id',$tender->getOriginal('tender_id'))->select('bid_submission_opening_date','tender_edit_version_id')->first();
+        $date = $tenderObj->getOriginal('bid_submission_opening_date');
      
         $obj = DocumentEditValidate::process($date,$tender->getOriginal('tender_id'));
 
             if($obj)
             {
-                $result = $this->eveluate($tender->getOriginal('emp_id'),$tender->getOriginal('status'),$tender->getOriginal('commercial_eval_remarks'),$tender->getOriginal('remarks'),$tender->getOriginal('commercial_eval_status'),$tender->getOriginal('tender_id'),$tender_obj->getOriginal('tender_edit_version_id'),1);
+                $result = $this->eveluate($tender->getOriginal('emp_id'),$tender->getOriginal('status'),$tender->getOriginal('commercial_eval_remarks'),$tender->getOriginal('remarks'),$tender->getOriginal('commercial_eval_status'),$tender->getOriginal('tender_id'),$tenderObj->getOriginal('tender_edit_version_id'),1);
                 if($result)
                 {
                     Log::info('deleted succesfully');
@@ -41,13 +41,13 @@ class TenderBidEmployeeObserver
     public function created(SrmTenderBidEmployeeDetails $tender)
     {
     
-        $tender_obj = TenderMaster::where('id',$tender->getAttribute('tender_id'))->select('bid_submission_opening_date','tender_edit_version_id')->first();
-        $date = $tender_obj->getOriginal('bid_submission_opening_date');
+        $tenderObj = TenderMaster::where('id',$tender->getAttribute('tender_id'))->select('bid_submission_opening_date','tender_edit_version_id')->first();
+        $date = $tenderObj->getOriginal('bid_submission_opening_date');
      
         $obj = DocumentEditValidate::process($date,$tender->getAttribute('tender_id'));
             if($obj)
             {
-                $result = $this->eveluate($tender->getAttribute('emp_id'),0,null,null,0,$tender->getAttribute('tender_id'),$tender_obj->getOriginal('tender_edit_version_id'),2);
+                $result = $this->eveluate($tender->getAttribute('emp_id'),0,null,null,0,$tender->getAttribute('tender_id'),$tenderObj->getOriginal('tender_edit_version_id'),2);
                 if($result)
                 {
                     Log::info('created succesfully');
