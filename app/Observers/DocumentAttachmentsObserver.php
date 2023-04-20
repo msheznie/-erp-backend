@@ -113,7 +113,7 @@ class DocumentAttachmentsObserver
             $result = DocumentAttachmentsEditLog::create($data);
             if($result)
             {
-             Log::info('created successfullu');
+             Log::info('deleted successfully');
             }
         }
 
