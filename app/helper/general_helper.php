@@ -3012,6 +3012,17 @@ class Helper
                     $docInforArr["modelName"] = 'DocumentModifyRequest';
                     $docInforArr["primarykey"] = 'id';
                     break;
+                case 118:
+                    $docInforArr["documentCodeColumnName"] = 'code';
+                    $docInforArr["confirmColumnName"] = 'confirm';
+                    $docInforArr["confirmedBy"] = 'requested_by_name';
+                    $docInforArr["confirmedByEmpID"] = 'requested_employeeSystemID';
+                    $docInforArr["confirmedBySystemID"] = 'requested_employeeSystemID';
+                    $docInforArr["confirmedDate"] = 'confirmation_date';
+                    $docInforArr["tableName"] = 'document_modify_request';
+                    $docInforArr["modelName"] = 'DocumentModifyRequest';
+                    $docInforArr["primarykey"] = 'id';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
             }
@@ -3033,7 +3044,7 @@ class Helper
                         }
                     }
                 }
-
+             
                 //validate currency
                 if (in_array($params["document"], self::documentListForValidateCurrency())) {
                     $currencyValidate = CurrencyValidation::validateCurrency($params["document"], $masterRec);
@@ -3056,7 +3067,7 @@ class Helper
                 {
                     $reference_document_id = $params['reference_document_id'];
                 }
-
+                
                 //checking whether document approved table has a data for the same document
                 $docExist = Models\DocumentApproved::where('documentSystemID', $params["document"])->where('documentSystemCode', $params["autoID"])->first();
                 if (!$docExist) {
@@ -3102,7 +3113,7 @@ class Helper
                                 return ['success' => false, 'message' => 'Policy not available for this document.'];
                             }
                         
-                            
+                                
 
                             // get approval rolls
                             $approvalLevel = Models\ApprovalLevel::with('approvalrole')->where('companySystemID', $params["company"])->where('documentSystemID', $reference_document_id)->where('departmentSystemID', $document["departmentSystemID"])->where('isActive', -1);
@@ -3152,7 +3163,7 @@ class Helper
                             }
 
                             $output = $approvalLevel->first();
-
+                            
                             //when iscategorywiseapproval true and output is empty again check for isCategoryWiseApproval = 0
                             if (empty($output)) {
 
@@ -3192,7 +3203,7 @@ class Helper
                                     $output = $approvalLevel->first();
                                 }
                             }
-
+                            
 
                             if ($output) {
                                 /** get source document master record*/
@@ -3221,7 +3232,7 @@ class Helper
                                 }
                                 // insert rolls to document approved table
                                 Models\DocumentApproved::insert($documentApproved);
-
+                                
                                 $documentApproved = Models\DocumentApproved::where("documentSystemID", $params["document"])
                                     ->where("documentSystemCode", $sorceDocument[$docInforArr["primarykey"]])
                                     ->where("rollLevelOrder", 1)
@@ -3272,7 +3283,7 @@ class Helper
                                                 $document->documentDescription = 'Amend Request';
                                             }
                                         }
-
+                                        
                                         $approvedDocNameBody = $document->documentDescription . ' <b>' . $documentApproved->documentCode . '</b>';
 
                                         // if (in_array($params["document"], self::documentListForClickHere())) {
@@ -3331,13 +3342,13 @@ class Helper
                                                 }
                                             }
                                         }
-
+                                        
                                         $sendEmail = \Email::sendEmail($emails);
                                         if (!$sendEmail["success"]) {
                                             return ['success' => false, 'message' => $sendEmail["message"]];
                                         }
 
-
+                                        
 
                                         $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, 1);
 

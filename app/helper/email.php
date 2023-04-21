@@ -497,6 +497,14 @@ class email
                         $data['docCode'] = $editRequedt->code;
                     }
                     break;
+                case 118:
+                    $editRequedt = DocumentModifyRequest::find($data['docSystemCode']);
+
+                    if (!empty($editRequedt)) {
+                        $data['docApprovedYN'] = $editRequedt->confirmation_approved;
+                        $data['docCode'] = $editRequedt->code;
+                    }
+                    break;   
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
             }

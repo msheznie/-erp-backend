@@ -375,6 +375,12 @@ class TenderCircularsAPIController extends AppBaseController
     {
         $input = $request->all();
 
+        if($input['isRequestProcessComplete'] && $input['requestType'] == 'Amend' && !isset($input['attachment_id' ]))
+        {        
+             return ['success' => false, 'message' => 'Amendment is required'];
+               
+        }
+   
         if(isset($input['attachment_id' ])){
             $attachmentList = $input['attachment_id'];
         }
