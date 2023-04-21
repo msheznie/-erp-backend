@@ -64,7 +64,7 @@ use App\Models\TenderFinalBids;
 use App\Models\DocumentModifyRequest;
 use App\Models\TenderCirculars;
 use App\Models\CircularAmendments;
-
+use App\Repositories\DocumentModifyRequestRepository;
 
 /**
  * Class TenderMasterController
@@ -78,12 +78,14 @@ class TenderMasterAPIController extends AppBaseController
     private $registrationLinkRepository;
     private $commercialBidRankingItemsRepository;
     private $tenderFinalBidsRepository;
-    public function __construct(TenderFinalBidsRepository $tenderFinalBidsRepo,CommercialBidRankingItemsRepository $commercialBidRankingItemsRepo,TenderMasterRepository $tenderMasterRepo, SupplierRegistrationLinkRepository $registrationLinkRepository)
+    private $documentModifyRequestRepository;
+    public function __construct(DocumentModifyRequestRepository $documentModifyRequestRepo,TenderFinalBidsRepository $tenderFinalBidsRepo,CommercialBidRankingItemsRepository $commercialBidRankingItemsRepo,TenderMasterRepository $tenderMasterRepo, SupplierRegistrationLinkRepository $registrationLinkRepository)
     {
         $this->tenderMasterRepository = $tenderMasterRepo;
         $this->registrationLinkRepository = $registrationLinkRepository;
         $this->commercialBidRankingItemsRepository = $commercialBidRankingItemsRepo;
         $this->tenderFinalBidsRepository = $tenderFinalBidsRepo;
+        $this->documentModifyRequestRepository = $documentModifyRequestRepo;
     }
 
     /**
@@ -586,7 +588,7 @@ WHERE
     $data['is_request_process'] = false;
     $data['request_type'] = '';
     $data['is_request_process_complete'] = false;
-
+    $data['is_confirm_process'] = false;
 
 
 
@@ -604,25 +606,32 @@ WHERE
       
             if(isset($tende_edit_log) && $result_obj)
             {   
-                if($tende_edit_log->type == 1)
+               
+                 $data['request_type'] = ($tende_edit_log->type == 1) ? 'Edit' : 'Amend';
+
+                if($tende_edit_log->modify_type == 2)
                 {
-                    $data['request_type'] = 'Edit';
+                    if($tende_edit_log->status == 1 && $tende_edit_log->confirmation_approved == 0)
+                    {
+                        $data['is_confirm_process'] = true;
+                        $data['edit_valid'] = false;
+                    }
                 }
                 else
-                {
-                    $data['request_type'] = 'Amend';
+                {   
+                    if($tende_edit_log->status == 1 && $tende_edit_log->approved == 0)
+                    {
+                        $data['is_request_process'] = true;
+                        $data['edit_valid'] = false;
+                    }
+                    else if($tende_edit_log->status == 1 && $tende_edit_log->approved == -1)
+                    {
+                        $data['is_request_process_complete'] = true;
+                        $data['edit_valid'] = false;
+                    }
                 }
-    
-                if($tende_edit_log->status == 1 && $tende_edit_log->approved == 0)
-                {
-                    $data['is_request_process'] = true;
-                    $data['edit_valid'] = false;
-                }
-                else if($tende_edit_log->status == 1 && $tende_edit_log->approved == -1)
-                {
-                    $data['is_request_process_complete'] = true;
-                    $data['edit_valid'] = false;
-                }
+
+         
             }
 
 
@@ -924,6 +933,16 @@ WHERE
         }
 
 
+
+        if($input['isRequestProcessComplete'] && $input['requestType'] == 'Amend')
+        {
+           $circulatAmends =  CircularAmendments::where('tender_id',$input['id'])->count();
+           if($circulatAmends == 0)
+           {
+            return ['success' => false, 'message' => 'Please select atleast one amendment for circular'];
+           }
+        }
+
         if(!is_null($input['stage']) || $input['stage'] != 0) {
           
             if($input['stage'][0] == 1) {
@@ -1114,18 +1133,6 @@ WHERE
             }
         }
 
-        if($input['isRequestProcessComplete']){
-            if($input['requestType'] == 'Edit')
-            {   
-                $circulars = TenderCirculars::where('tender_id',$input['id'])->pluck('id');
-                $ammendemms = CircularAmendments::whereIn('circular_id',$circulars)->count();
-                if($ammendemms == 0)
-                {
-                    return ['success' => false, 'message' => 'Please attached the amendments'];
-                }
-
-            }
-        }
 
         $employee = \Helper::getEmployeeInfo();
         $exist = TenderMaster::where('id', $input['id'])->first();
@@ -1296,7 +1303,57 @@ WHERE
                             }
                         }
 
-                        $params = array('autoID' => $input['id'], 'company' => $input["company_id"], 'document' => $input["document_system_id"]);
+                        if($input['isRequestProcessComplete'] )
+                        {   
+                            $version = null;
+                            $is_vsersion_exit = DocumentModifyRequest::where('documentSystemCode',$input['id'])->latest('id')->first();
+                    
+                            $company = Company::where('companySystemID', $input['company_id'])->first();
+                            $documentMaster = DocumentMaster::where('documentSystemID', 118)->first();
+                            $lastSerial = DocumentModifyRequest::where('companySystemID', $input['company_id'])
+                            ->orderBy('id', 'desc')
+                            ->first();
+                            $lastSerialNumber = 1;
+                            if ($lastSerial) {
+                                $lastSerialNumber = intval($lastSerial->serial_number) + 1;
+                            }
+
+                            $code = ($company->CompanyID . '/' . $documentMaster['documentID'] . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
+
+
+                            $modifyData['companySystemID'] = $input['company_id'];
+                            $modifyData['documentSystemCode'] = $input['id'];
+                            $modifyData['version'] = $is_vsersion_exit->version;
+                            $modifyData['document_master_id'] = 118;
+                            $modifyData['requested_document_master_id'] = 108;
+                            $modifyData['type'] = $is_vsersion_exit->type;
+                            $modifyData['status'] = 1;
+                            $modifyData['serial_number'] = $lastSerialNumber;
+                            $modifyData['requested_employeeSystemID'] = $is_vsersion_exit->requested_employeeSystemID;
+                            $modifyData['requested_date'] = $is_vsersion_exit->requested_date;
+                            $modifyData['RollLevForApp_curr'] = $is_vsersion_exit->RollLevForApp_curr;
+                            $modifyData['approved'] = $is_vsersion_exit->approved;
+                            $modifyData['requested'] = $is_vsersion_exit->requested;
+                            $modifyData['approved_date'] = $is_vsersion_exit->approved_date;
+                            $modifyData['approved_by_user_system_id'] = $is_vsersion_exit->approved_by_user_system_id;
+                            $modifyData['requested_by_name'] = $is_vsersion_exit->requested_by_name;
+                            $modifyData['description'] = $is_vsersion_exit->description;
+                            $modifyData['code'] = $code;
+                            $modifyData['serial_number'] = $lastSerialNumber;
+                            $modifyData['confirmation_date'] = now();
+                            $input['modify_type'] = 2;
+                            $documentModifyRequest = $this->documentModifyRequestRepository->create($modifyData);
+
+                            $params = array('autoID' => $documentModifyRequest['id'], 'company' => $input["company_id"], 'document' => 118,'reference_document_id' => 108);
+
+                        }
+                        else
+                        {
+                            $params = array('autoID' => $input['id'], 'company' => $input["company_id"], 'document' => $input["document_system_id"]);
+
+                        }
+
+
                         $confirm = \Helper::confirmDocument($params);
                         if (!$confirm["success"]) {
                             return ['success' => false, 'message' => $confirm["message"]];

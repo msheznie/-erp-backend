@@ -332,6 +332,8 @@ class DocumentModifyRequestAPIController extends AppBaseController
                 $input['RollLevForApp_curr'] = 1;
                 $input['code'] = $code;
                 $input['serial_number'] = $lastSerialNumber;
+                $input['modify_type'] = 1;
+                
                 $documentModifyRequest = $this->documentModifyRequestRepository->create($input);
 
                 $tender_data['tender_edit_version_id'] = $documentModifyRequest['id'];
