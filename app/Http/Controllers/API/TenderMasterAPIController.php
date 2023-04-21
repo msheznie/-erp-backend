@@ -609,13 +609,10 @@ WHERE
                
                  $data['request_type'] = ($tende_edit_log->type == 1) ? 'Edit' : 'Amend';
 
-                if($tende_edit_log->modify_type == 2)
+                if($tende_edit_log->modify_type == 2 && $tende_edit_log->status == 1 && $tende_edit_log->confirmation_approved == 0)
                 {
-                    if($tende_edit_log->status == 1 && $tende_edit_log->confirmation_approved == 0)
-                    {
-                        $data['is_confirm_process'] = true;
-                        $data['edit_valid'] = false;
-                    }
+                    $data['is_confirm_process'] = true;
+                    $data['edit_valid'] = false;
                 }
                 else
                 {   
@@ -1308,10 +1305,11 @@ WHERE
                             $version = null;
                             $is_vsersion_exit = DocumentModifyRequest::where('documentSystemCode',$input['id'])->latest('id')->first();
                     
-                            $company = Company::where('companySystemID', $input['company_id'])->first();
-                            $documentMaster = DocumentMaster::where('documentSystemID', 118)->first();
+                            $company = Company::where('companySystemID', $input['company_id'])->select('id','CompanyID')->first();
+                            $documentMaster = DocumentMaster::where('documentSystemID', 118)->select('documentSystemID','documentID')->first();
                             $lastSerial = DocumentModifyRequest::where('companySystemID', $input['company_id'])
                             ->orderBy('id', 'desc')
+                            ->select('id','serial_number')
                             ->first();
                             $lastSerialNumber = 1;
                             if ($lastSerial) {
