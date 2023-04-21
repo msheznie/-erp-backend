@@ -5142,7 +5142,8 @@ class BudgetConsumptionService
 
 	public static function pendingPrnQryValuesForDirectDocsDepartmentWise($budgetFormData, $templateCategoryIDs, $glCodes)
 	{
-		$pendingPoQry = PurchaseReturnDetails::selectRaw('(GRVcostPerUnitLocalCur * noQty *-1) AS localAmt, (GRVcostPerUnitComRptCur * noQty * -1) AS rptAmt, financeGLcodePLSystemID, financeGLcodebBSSystemID, companySystemID, purhasereturnDetailID')
+		$pendingPoQry = PurchaseReturnDetails::selectRaw('(GRVcostPerUnitLocalCur * noQty *-1) AS localAmt, (GRVcostPerUnitComRptCur * noQty * -1) AS rptAmt, financeGLcodePLSystemID, financeGLcodebBSSystemID, erp_purchasereturnmaster.companySystemID, purhasereturnDetailID')
+											 ->join('erp_purchasereturnmaster', 'erp_purchasereturnmaster.purhaseReturnAutoID', '=', 'erp_purchasereturndetails.purhaseReturnAutoID')
 								 		     ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
 											 	$query->whereHas('master', function($query) use ($budgetFormData) {
 											 				$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID']);
@@ -5244,7 +5245,7 @@ class BudgetConsumptionService
 	 										 		  });
 	 										 })
 	 										 ->when(in_array($budgetFormData['documentSystemID'], [24]), function($query) use ($budgetFormData) {
-	 										 	$query->where('purhaseReturnAutoID', '!=' ,$budgetFormData['documentSystemCode']);
+	 										 	$query->where('erp_purchasereturnmaster.purhaseReturnAutoID', '!=' ,$budgetFormData['documentSystemCode']);
 	 										 })
 											 ->get();
 
