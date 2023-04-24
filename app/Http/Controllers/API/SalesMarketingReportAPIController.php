@@ -1321,6 +1321,7 @@ class SalesMarketingReportAPIController extends AppBaseController
 
                 $company = Company::find($input['companySystemID']);
                 $output = $this->getSalesDetailQry($input, $search);
+                $companyCode = isset($company->CompanyID) ? $company->CompanyID: null;
 
                 $locaCurrencyID = $company->localCurrencyID;
                 $reportingCurrencyID = $company->reportingCurrency;
@@ -1329,6 +1330,7 @@ class SalesMarketingReportAPIController extends AppBaseController
 
                 $currency = CurrencyMaster::find($currencyID);
                 $data = [];
+                $reportData = array('company_code' => $companyCode);
                 if ($output) {
                     foreach ($output as $key => $value) {
                         $profit = (isset($input['currencyID']) && $input['currencyID'] == 1) ? floatval($value->localAmount) - floatval($value->localCost) : floatval($value->rptAmount) - floatval($value->rptCost);
@@ -1369,7 +1371,7 @@ class SalesMarketingReportAPIController extends AppBaseController
 
                 $fileName = 'sales_detail_report_';
                 $path = 'sales/report/sales_detail_report_/excel/';
-                $basePath = CreateExcel::process($data,$type,$fileName,$path);
+                $basePath = CreateExcel::process($data,$type,$fileName,$path,$reportData);
 
                 if($basePath == '')
                 {
