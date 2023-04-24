@@ -182,4 +182,8 @@ class HRJobInvokeAPIController extends AppBaseController
         TravelRequestNotificationJob::dispatch($tenantId, $companyId, $id,$tripMaster,$tripRequestBookings); 
         return $this->sendResponse([], 'Travel request notification scenario added to queue');
     }
+ 
+    function maximumLeaveCarryForwardDebug(){  
+        Artisan::call('command:leaveCarryForwardComputationSchedule');
+    }
 }

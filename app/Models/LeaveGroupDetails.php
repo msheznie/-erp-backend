@@ -227,5 +227,7 @@ class LeaveGroupDetails extends Model
         
     ];
 
-    
+    public function master(){
+        return $this->belongsTo(SMELaveGroup::class, 'leaveGroupID', 'leaveGroupID');
+    }
 }
