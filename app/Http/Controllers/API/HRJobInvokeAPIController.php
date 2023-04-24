@@ -185,5 +185,7 @@ class HRJobInvokeAPIController extends AppBaseController
  
     function maximumLeaveCarryForwardDebug(){  
         Artisan::call('command:leaveCarryForwardComputationSchedule');
+
+        return $this->sendResponse([], 'Job triggered successfully');
     }
 }
