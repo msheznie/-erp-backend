@@ -47,7 +47,7 @@ class TenderDetails
     public static function getDocumentModifyRequest($id)
     {
 
-        return DocumentModifyRequest::select('*')
+        return DocumentModifyRequest::select('id')
             ->where('documentSystemCode', $id)
             ->where('status', 1)
             ->where('approved', -1)
