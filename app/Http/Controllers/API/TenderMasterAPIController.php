@@ -930,16 +930,6 @@ WHERE
         }
 
 
-
-        if($input['isRequestProcessComplete'] && $input['requestType'] == 'Amend')
-        {
-           $circulatAmends =  CircularAmendments::where('tender_id',$input['id'])->count();
-           if($circulatAmends == 0)
-           {
-            return ['success' => false, 'message' => 'Please select atleast one amendment for circular'];
-           }
-        }
-
         if(!is_null($input['stage']) || $input['stage'] != 0) {
           
             if($input['stage'][0] == 1) {
@@ -1140,7 +1130,7 @@ WHERE
         }
 
         DB::beginTransaction();
-
+        
         try {
             $tenderMaster = TenderMaster::find($input['id']);
             $data['title'] = $input['title'];
@@ -1180,7 +1170,14 @@ WHERE
             if ($result) {
                 if (isset($input['procument_activity'])) {
                     if (count($input['procument_activity']) > 0) {
-                        ProcumentActivity::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
+                        $proActivity = ProcumentActivity::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->get();
+
+                        foreach($proActivity as $val)
+                        {
+                            $procument = ProcumentActivity::find($val->id);
+                            $procument->delete();
+                        }
+
                         foreach ($input['procument_activity'] as $vl) {
                             $activity['tender_id'] = $input['id'];
                             $activity['category_id'] = $vl['id'];
@@ -1190,10 +1187,20 @@ WHERE
                             ProcumentActivity::create($activity);
                         }
                     } else {
-                        ProcumentActivity::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
+                        $proActivity = ProcumentActivity::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->get();
+                        foreach($proActivity as $val)
+                        {
+                            $procument = ProcumentActivity::find($val->id);
+                            $procument->delete();
+                        }
                     }
                 } else {
-                    ProcumentActivity::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
+                    $proActivity = ProcumentActivity::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->get();
+                    foreach($proActivity as $val)
+                    {
+                        $procument = ProcumentActivity::find($val->id);
+                        $procument->delete();
+                    }
                 }
 
 
@@ -1254,6 +1261,14 @@ WHERE
                             return ['success' => false, 'message' => 'Stage is required'];
                         }
 
+                        if($input['isRequestProcessComplete'] && $input['requestType'] == 'Amend')
+                        {
+                           $circulatAmends =  CircularAmendments::where('tender_id',$input['id'])->count();
+                           if($circulatAmends == 0)
+                           {
+                            return ['success' => false, 'message' => 'Please select atleast one amendment for circular'];
+                           }
+                        }
 
                         $technical = EvaluationCriteriaDetails::where('tender_id', $input['id'])->where('critera_type_id', 2)->first();
                         if (empty($technical) && !$rfq) {
@@ -2318,7 +2333,10 @@ WHERE
 
             $calendarDatesDetail = CalendarDatesDetail::where('calendar_date_id', $request['calenderDateTypeId'])
                 ->where('tender_id', $request['tenderMasterId'])
-                ->delete();
+                ->first();
+
+            $result = CalendarDatesDetail::find($calendarDatesDetail->id);
+            $result->delete();
             DB::commit();
             return ['success' => true, 'message' => 'Successfully deleted', 'data' => $calendarDatesDetail];
         } catch (\Exception $e) {

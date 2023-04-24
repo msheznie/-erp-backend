@@ -23,7 +23,8 @@ class PricingScheduleMasterObserver
      * @return void
      */
     public function created(PricingScheduleMaster $tender)
-    {
+    {   
+        Log::info('calling 4');
         $tenderObj = TenderMaster::where('id',$tender->getAttribute('tender_id'))->select('bid_submission_opening_date','tender_edit_version_id')->first();
         $date = $tenderObj->getOriginal('bid_submission_opening_date');
         $obj = DocumentEditValidate::process($date,$tender->getAttribute('tender_id'));
@@ -31,10 +32,10 @@ class PricingScheduleMasterObserver
             {
                         $reflog_id = null;
                         $modify_type_val = 2;
-                        $output = $this->process($tender,$reflog_id,$modify_type_val,$tenderObj->getOriginal('tender_edit_version_id'));
+                        $output = $this->process($tender,$reflog_id,$modify_type_val,$tenderObj->getOriginal('tender_edit_version_id'),1);
                         if($output)
                         {
-                            Log::info('created succesfully');
+                            Log::info('created succesfully 2');
                         }
                     
             }
@@ -113,29 +114,33 @@ class PricingScheduleMasterObserver
 
     public function updated(PricingScheduleMaster $tender)
     {
+        
         $tenderObj = TenderMaster::where('id',$tender->getAttribute('tender_id'))->select('bid_submission_opening_date','tender_edit_version_id')->first();
         $date = $tenderObj->getOriginal('bid_submission_opening_date');
         $obj = DocumentEditValidate::process($date,$tender->getAttribute('tender_id'));
         if($obj)
         {
-            foreach($tender->fillable as $key=>$val)
-            {
-                $oldValue = $tender->getOriginal($val);
-                $newValue = $tender->getAttribute($val);
+            //Log::info(print_r($tender->fillable, true));
 
-                if($oldValue != $newValue)
-                {
-                    $data['attribute'] = $val;
-                    $data['new_value'] = $newValue;
-                    $data['old_value'] = $oldValue;
-                    $data['tender_id'] = $tender->getAttribute('tender_id');
-                    $data['version_id'] = $tenderObj->getOriginal('tender_edit_version_id');
-                    $data['table'] = 'PricingScheduleMaster';
-                    $data['master_id'] = $tender->getAttribute('id');
-                    $data['created_at'] = now();
-                    $result = DocumentModifyRequestDetail::insert($data);
-                    if($result)
-                    {//start
+            // foreach($tender->fillable as $key=>$val)
+            // {   
+            //     Log::info('calling 3');
+            //     $oldValue = $tender->getOriginal($val);
+            //     $newValue = $tender->getAttribute($val);
+
+                // if($oldValue != $newValue)
+                // {
+                //     $data['attribute'] = $val;
+                //     $data['new_value'] = $newValue;
+                //     $data['old_value'] = $oldValue;
+                //     $data['tender_id'] = $tender->getAttribute('tender_id');
+                //     $data['version_id'] = $tenderObj->getOriginal('tender_edit_version_id');
+                //     $data['table'] = 'PricingScheduleMaster';
+                //     $data['master_id'] = $tender->getAttribute('id');
+                //     $data['created_at'] = now();
+                //     $result = DocumentModifyRequestDetail::insert($data);
+                //     if($result)
+                   // {//start
                         $reflog_id = null;
                         $output = PricingScheduleMasterEditLog::where('master_id',$tender->getAttribute('id'))->orderBy('id','desc')->first();
                         if(isset($output))
@@ -150,27 +155,27 @@ class PricingScheduleMasterObserver
                             $modify_type_val = 4;
                         }
 
-                        $output = $this->process($tender,$reflog_id,$modify_type_val,$tenderObj->getOriginal('tender_edit_version_id'));
+                        $output = $this->process($tender,$reflog_id,$modify_type_val,$tenderObj->getOriginal('tender_edit_version_id'),2);
                         if($output)
                         {
                             Log::info('updated succesfully');
                         }
 
 
-                    }//end
-                }
+                   // }//end
+               // }
 
                 
 
 
-            }
+           // }
         }
        
 
     }
 
 
-    public function process($tender,$reflog_id,$modify_type_val,$version_id)
+    public function process($tender,$reflog_id,$modify_type_val,$version_id,$type)
     {
         $employee = \Helper::getEmployeeInfo();
         $empId = $employee->employeeSystemID;
@@ -189,45 +194,46 @@ class PricingScheduleMasterObserver
         
         if($result)
         {
-
-            $is_complete = true;
-            $modifyType = 2;
-            $priceBidShe = TenderBidFormatDetail::where('tender_id',$tender->getAttribute('price_bid_format_id'))->get();
-
-            foreach ($priceBidShe as $bid){
-
-                if(($bid->getOriginal('is_disabled') == 1 || $bid->getOriginal('boq_applicable') == 1) && $bid->getOriginal('field_type') != 4)
-                {
-                    $is_complete = false;
+            if($type == 2)
+            {
+                $is_complete = true;
+                $modifyType = 2;
+                $priceBidShe = TenderBidFormatDetail::where('tender_id',$tender->getAttribute('price_bid_format_id'))->get();
+    
+                foreach ($priceBidShe as $bid){
+    
+                    if(($bid->getOriginal('is_disabled') == 1 || $bid->getOriginal('boq_applicable') == 1) && $bid->getOriginal('field_type') != 4)
+                    {
+                        $is_complete = false;
+                    }
+                    
+                    $shedule_detail = PricingScheduleDetail::where('tender_id',$tender->getAttribute('tender_id'))->where('bid_format_detail_id',$bid->getOriginal('id'))->first();
+    
+                    $dataBidShed['tender_id']=$tender->getAttribute('tender_id');
+                    $dataBidShed['bid_format_id']=$bid->getOriginal('tender_id');
+                    $dataBidShed['bid_format_detail_id']=$bid->getOriginal('id');
+                    $dataBidShed['label']=$bid->getOriginal('label');
+                    $dataBidShed['field_type']=$bid->getOriginal('field_type');
+                    $dataBidShed['is_disabled']=$bid->getOriginal('is_disabled');
+                    $dataBidShed['boq_applicable']=$bid->getOriginal('boq_applicable');
+                    $dataBidShed['pricing_schedule_master_id']=$result['id'];
+                    $dataBidShed['company_id']=$tender->getAttribute('company_id');
+                    $dataBidShed['formula_string']=$bid->getOriginal('formula_string');
+                    $dataBidShed['created_by']=$empId;
+                    $dataBidShed['tender_edit_version_id'] = $version_id;
+                    $dataBidShed['modify_type'] = $modifyType;
+                    $dataBidShed['description'] = $shedule_detail->getAttribute('description');
+                    $dataBidShed['master_id'] = $shedule_detail->getAttribute('id');
+                    $result1 = PricingScheduleDetailEditLog::create($dataBidShed);
+    
+                    if($result1)
+                    {
+                       
+                        Log::info('deleted ccccccccccccccc');
+                    }
+    
                 }
-                
-                $shedule_detail = PricingScheduleDetail::where('tender_id',$tender->getAttribute('tender_id'))->where('bid_format_detail_id',$bid->getOriginal('id'))->first();
-
-                $dataBidShed['tender_id']=$tender->getAttribute('tender_id');
-                $dataBidShed['bid_format_id']=$bid->getOriginal('tender_id');
-                $dataBidShed['bid_format_detail_id']=$bid->getOriginal('id');
-                $dataBidShed['label']=$bid->getOriginal('label');
-                $dataBidShed['field_type']=$bid->getOriginal('field_type');
-                $dataBidShed['is_disabled']=$bid->getOriginal('is_disabled');
-                $dataBidShed['boq_applicable']=$bid->getOriginal('boq_applicable');
-                $dataBidShed['pricing_schedule_master_id']=$result['id'];
-                $dataBidShed['company_id']=$tender->getAttribute('company_id');
-                $dataBidShed['formula_string']=$bid->getOriginal('formula_string');
-                $dataBidShed['created_by']=$empId;
-                $dataBidShed['tender_edit_version_id'] = $version_id;
-                $dataBidShed['modify_type'] = $modifyType;
-                $dataBidShed['description'] = $shedule_detail->getAttribute('description');
-                $dataBidShed['master_id'] = $shedule_detail->getAttribute('id');
-                $result1 = PricingScheduleDetailEditLog::create($dataBidShed);
-
-                if($result1)
-                {
-                   
-
-                }
-
             }
-
             return true;
         }
     }

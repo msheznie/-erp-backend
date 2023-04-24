@@ -122,7 +122,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class PricingScheduleDetail extends Model
 {
-    use SoftDeletes;
+   
     public $table = 'srm_pricing_schedule_detail';
     
     const CREATED_AT = 'created_at';

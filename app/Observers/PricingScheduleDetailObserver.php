@@ -27,7 +27,7 @@ class PricingScheduleDetailObserver
         $date = $tenderObj->getOriginal('bid_submission_opening_date');
         $employee = \Helper::getEmployeeInfo();
         $empId = $employee->employeeSystemID;
-
+        Log::info('calling 1');
         $modifyType = 2;
         $obj = DocumentEditValidate::process($date,$tender->getAttribute('tender_id'));
         $bidFormatDetailId = $tender->getAttribute('bid_format_detail_id');
@@ -122,5 +122,53 @@ class PricingScheduleDetailObserver
 
     
     }
+
+
+    public function created(PricingScheduleDetail $tender)
+    {
+        $is_complete = true;
+        Log::info('calling 2');
+
+        $tenderObj = TenderMaster::where('id',$tender->getAttribute('tender_id'))->select('bid_submission_opening_date','tender_edit_version_id')->first();
+        $date = $tenderObj->getOriginal('bid_submission_opening_date');
+        $employee = \Helper::getEmployeeInfo();
+        $empId = $employee->employeeSystemID;
+        $version_id = $tenderObj->getOriginal('tender_edit_version_id');
+        $modifyType = 2;
+        $editLog = PricingScheduleMasterEditLog::where('master_id',$tender->getAttribute('pricing_schedule_master_id'))->first();
+        $obj = DocumentEditValidate::process($date,$tender->getAttribute('tender_id'));
+        if($obj)
+        {
+          
+                
+    
+                $dataBidShed['tender_id']=$tender->getAttribute('tender_id');
+                $dataBidShed['bid_format_id']=$tender->getAttribute('bid_format_id');
+                $dataBidShed['bid_format_detail_id']=$tender->getAttribute('bid_format_detail_id');
+                $dataBidShed['label']=$tender->getAttribute('label');
+                $dataBidShed['field_type']=$tender->getAttribute('field_type');
+                $dataBidShed['is_disabled']=$tender->getAttribute('is_disabled');
+                $dataBidShed['boq_applicable']=$tender->getAttribute('boq_applicable');
+                $dataBidShed['pricing_schedule_master_id']= $editLog->getAttribute('id');
+                $dataBidShed['company_id']=$tender->getAttribute('company_id');
+                $dataBidShed['formula_string']=$tender->getAttribute('formula_string');
+                $dataBidShed['created_by']=$empId;
+                $dataBidShed['tender_edit_version_id'] = $version_id;
+                $dataBidShed['modify_type'] = $modifyType;
+                $dataBidShed['master_id'] = $tender->getAttribute('id');
+                $result1 = PricingScheduleDetailEditLog::create($dataBidShed);
+    
+                if($result1)
+                {
+                   
+                    Log::info('creted succesfully');
+                }
+    
+         
+        }
+  
+
+    }
+
 
 }
