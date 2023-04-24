@@ -27,6 +27,7 @@ class LeaveCarryForwardComputationService
     public $accrualMasterID = null;
     public $documentId = 'LAM';
     public $documentCode = null;
+
     public function __construct($companyData)
     {
         $this->companyId = $companyData['id'];
@@ -40,15 +41,16 @@ class LeaveCarryForwardComputationService
         $this->leaveComputationBasedOn =  empty($leaveComputationBasedPolicy) ? 1 : $leaveComputationBasedPolicy;
         $this->getPeriodEndDatePolicyWise();
 
-        $jobStartDate = Carbon::parse($this->periodData['endDate'])->addDays(1)->format('Y-m-d');
+        $jobStartDate = Carbon::parse($this->periodData['endDate'])->subDay()->format('Y-m-d');
 
-        if($jobStartDate!=$this->currentDate){ 
+        if($jobStartDate != $this->currentDate){ 
             return false;
         }
 
         $this->insertToLogTb('Period data function triggered for ' . $this->companyCode . '');
         
-        $this->getMonthwiseDate();
+        $this->getMonthWiseDate();
+
         if (empty($this->periodData['endDate'])) {
             $msg = 'Period End date not exists!';
             $this->insertToLogTb($msg, 'error');
@@ -62,6 +64,7 @@ class LeaveCarryForwardComputationService
             $this->insertToLogTb($msg, 'error');
             return;
         }
+        
         $this->getLeaveToAdjustData();
 
         if (empty($this->leaveToAdjust)) {
@@ -106,7 +109,8 @@ class LeaveCarryForwardComputationService
 
     function financialYearBased()
     {
-        $this->financialYearBasedData = CompanyFinanceYear::selectRaw('companyFinanceYearID as id,DATE( bigginingDate ) as  startDate, DATE(endingDate) as endDate')
+        $this->financialYearBasedData = CompanyFinanceYear::selectRaw('companyFinanceYearID as id,
+            DATE( bigginingDate ) as  startDate, DATE(endingDate) as endDate')
             ->whereRaw("'$this->currentDate' BETWEEN DATE(bigginingDate) AND  DATE(endingDate) ")
             ->where('isActive', -1)
             ->where('isDeleted', 0)
@@ -139,13 +143,13 @@ class LeaveCarryForwardComputationService
     {
         $companyId = $this->companyId;
         $this->leaveGroups = LeaveGroupDetails::select(
-            'leaveGroupDetailID',
-            'leaveGroupID',
-            'leaveTypeID',
-            'isCarryForward',
-            'maxCarryForward',
-            'policyMasterID'
-        )
+                'leaveGroupDetailID',
+                'leaveGroupID',
+                'leaveTypeID',
+                'isCarryForward',
+                'maxCarryForward',
+                'policyMasterID'
+            )
             ->with(['master' => function ($q) use ($companyId) {
                 $q->select('leaveGroupID', 'description')
                     ->where('companyID', $companyId);
@@ -189,7 +193,7 @@ class LeaveCarryForwardComputationService
     }
 
 
-    public function getMonthwiseDate()
+    public function getMonthWiseDate()
     {
         $this->insertToLogTb('Month wise data function triggered for ' . $this->companyCode . '');
         $this->monthDet = LeaveBalanceValidationHelper::validate_month($this->companyId, $this->currentDate)['details'];
