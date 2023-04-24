@@ -1255,7 +1255,7 @@ WHERE
 
                         if($input['isRequestProcessComplete'] && $input['requestType'] == 'Amend')
                         {
-                           $circulatAmends =  CircularAmendments::where('tender_id',$input['id'])->count();
+                           $circulatAmends =  CircularAmendments::where('tender_id',$input['id'])->select('id')->count();
                            if($circulatAmends == 0)
                            {
                             return ['success' => false, 'message' => 'Please select atleast one amendment for circular'];
