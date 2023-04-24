@@ -9,47 +9,50 @@ use App\Models\DocumentModifyRequest;
 class TenderDetails
 {
 
-    public static function getTenderMasterData($id)
-    {
-
-        return TenderMaster::where('id',$id)->select('id','bid_submission_opening_date','tender_edit_version_id')->first();
-      
-
-    }
-
-    public static function validateTenderEdit($tender_id)
-    {
-        $tenderObj = TenderMaster::where('id',$tender_id)->select('id','bid_submission_opening_date','tender_edit_version_id')->first();
-        $date = $tenderObj->getOriginal('bid_submission_opening_date');
-        $id = $tenderObj->getOriginal('tender_edit_version_id');
-
-      
-        if(isset($date) && isset($id))
+    public static function validateTenderEdit($id)
         {
-            $currentDate =  Carbon::now()->format('Y-m-d H:i:s');
+
+            $tenderObj = self::getTenderMasterData($id);
+            $date = $tenderObj->getOriginal('bid_submission_opening_date');
+            $version_id = $tenderObj->getOriginal('tender_edit_version_id');
+            $currentDate = Carbon::now()->format('Y-m-d H:i:s');
             $openingDateFormat = Carbon::createFromFormat('Y-m-d H:i:s', $date);
             $result = $openingDateFormat->gt($currentDate);
-      
-            if($result)
-            {      
-                $tendeEditLog = DocumentModifyRequest::where('documentSystemCode',$tender_id)->where('status',1)->where('approved',-1)->orderBy('id','desc')->first();
-                if(isset($tendeEditLog))
-                {
-                    return true;
-                }
-    
-                return false;
-    
+
+            if(!isset($date) && !isset($version_id))
+            {
+                 return false;
             }
+
+            if(!$result){
                 return false;
+            }
+
+            $tendeEditLog = self::getDocumentModifyRequest($id);
+
+            if(!isset($tendeEditLog))
+            {
+                 return false;
+            }
+
+                 return true;
+
         }
-        else
+
+        public static function getTenderMasterData($id)
         {
-            return false;
-            Log::info('not valid');
+            return TenderMaster::select('id','bid_submission_opening_date','tender_edit_version_id')
+                                ->where('id',$id)
+                                ->first();
         }
-    }
 
+        public static function getDocumentModifyRequest($id){
 
+            return DocumentModifyRequest::select('*')
+                    ->where('documentSystemCode',$id)
+                    ->where('status',1)
+                    ->where('approved',-1)
+                    ->orderBy('id','desc')->first();
+            }
 
 }
