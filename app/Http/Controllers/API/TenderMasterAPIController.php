@@ -583,38 +583,37 @@ WHERE
 	and ISNULL(srm_calendar_dates_detail.from_date)
 	and ISNULL(srm_calendar_dates_detail.to_date)";
 
-        $current_date_obj = date('Y-m-d H:i:s');
         $data['edit_valid'] = false;
         $data['is_request_process'] = false;
         $data['request_type'] = '';
         $data['is_request_process_complete'] = false;
         $data['is_confirm_process'] = false;
 
-
-
         if ($data['master']['published_yn'] == 1) {
 
-            $current_date = Carbon::createFromFormat('Y-m-d H:i:s', $current_date_obj);
-            $opening_date_format = Carbon::createFromFormat('Y-m-d H:i:s', $data['master']['bid_submission_opening_date']);
+            $currentDate = Carbon::now()->format('Y-m-d H:i:s');
+            $openingDate= Carbon::createFromFormat('Y-m-d H:i:s', $data['master']['bid_submission_opening_date']);
 
-            $result_obj = $opening_date_format->gt($current_date);
-            $data['edit_valid'] = $result_obj;
+            $resultObj = $openingDate->gt($currentDate);
+            $data['edit_valid'] = $resultObj;
 
 
-            $tende_edit_log = DocumentModifyRequest::where('documentSystemCode', $tenderMasterId)->orderBy('id', 'desc')->first();
+            $tendeEditLog = DocumentModifyRequest::where('documentSystemCode', $tenderMasterId)
+                                                ->select('id','type','modify_type','status','confirmation_approved','approved')
+                                                ->orderBy('id', 'desc')->first();
 
-            if (isset($tende_edit_log) && $result_obj) {
+            if (isset($tendeEditLog) && $resultObj) {
 
-                $data['request_type'] = ($tende_edit_log->type == 1) ? 'Edit' : 'Amend';
+                $data['request_type'] = ($tendeEditLog->type == 1) ? 'Edit' : 'Amend';
 
-                if ($tende_edit_log->modify_type == 2 && $tende_edit_log->status == 1 && $tende_edit_log->confirmation_approved == 0) {
+                if ($tendeEditLog->modify_type == 2 && $tendeEditLog->status == 1 && $tendeEditLog->confirmation_approved == 0) {
                     $data['is_confirm_process'] = true;
                     $data['edit_valid'] = false;
                 } else {
-                    if ($tende_edit_log->status == 1 && $tende_edit_log->approved == 0) {
+                    if ($tendeEditLog->status == 1 && $tendeEditLog->approved == 0) {
                         $data['is_request_process'] = true;
                         $data['edit_valid'] = false;
-                    } else if ($tende_edit_log->status == 1 && $tende_edit_log->approved == -1) {
+                    } else if ($tendeEditLog->status == 1 && $tendeEditLog->approved == -1) {
                         $data['is_request_process_complete'] = true;
                         $data['edit_valid'] = false;
                     }
