@@ -9,6 +9,7 @@ use App\Models\CalendarDatesDetail;
 use App\Models\DocumentModifyRequestDetail;
 use App\helper\DocumentEditValidate;
 use App\Models\CalendarDatesDetailEditLog;
+use App\helper\TenderDetails;
 
 class CalendarDatesDetailObserver
 {
@@ -20,9 +21,9 @@ class CalendarDatesDetailObserver
      */
     public function created(CalendarDatesDetail $tender)
     {
-        $tenderObj = TenderMaster::where('id',$tender->getAttribute('tender_id'))->select('bid_submission_opening_date','tender_edit_version_id')->first();
+        $tenderObj = TenderDetails::process($tender->getAttribute('tender_id'));
         $date = $tenderObj->getOriginal('bid_submission_opening_date');
-        $obj = DocumentEditValidate::process($date,$tender->getAttribute('tender_id'));
+        $obj = DocumentEditValidate::process($tender->getAttribute('tender_id'));
 
             if($obj)
             {
@@ -36,9 +37,8 @@ class CalendarDatesDetailObserver
 
     public function deleted(CalendarDatesDetail $tender)
     {
-        $tenderObj = TenderMaster::where('id',$tender->getAttribute('tender_id'))->select('bid_submission_opening_date','tender_edit_version_id')->first();
-        $date = $tenderObj->getOriginal('bid_submission_opening_date');
-        $obj = DocumentEditValidate::process($date,$tender->getAttribute('tender_id'));
+        $tenderObj = TenderDetails::process($tender->getAttribute('tender_id'));
+        $obj = DocumentEditValidate::process($tender->getAttribute('tender_id'));
 
             if($obj)
             {

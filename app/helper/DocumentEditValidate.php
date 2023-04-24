@@ -10,10 +10,11 @@ use App\Models\TenderMaster;
 class DocumentEditValidate
 {
 
-    public static function process($date,$tender_id)
+    public static function process($tender_id)
     {
 
-        $tenderObj = TenderMaster::where('id',$tender_id)->select('id','tender_edit_version_id')->first();
+        $tenderObj = TenderMaster::where('id',$tender_id)->select('id','bid_submission_opening_date','tender_edit_version_id')->first();
+        $date = $tenderObj->getOriginal('bid_submission_opening_date');
         $id = $tenderObj->getOriginal('tender_edit_version_id');
 
         if(isset($date) && isset($id))

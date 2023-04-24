@@ -1236,7 +1236,7 @@ WHERE
                         $tenderUpdated->update($att);
                     }
                 }
-
+                
                 if (isset($input['confirmed_yn'])) {
                     if ($input['confirmed_yn'] == 1) {
 
@@ -1311,8 +1311,8 @@ WHERE
                         {   
                             $version = null;
                             $is_vsersion_exit = DocumentModifyRequest::where('documentSystemCode',$input['id'])->latest('id')->first();
-                    
-                            $company = Company::where('companySystemID', $input['company_id'])->select('id','CompanyID')->first();
+                            
+                            $company = Company::where('companySystemID', $input['company_id'])->select('companySystemID','CompanyID')->first();
                             $documentMaster = DocumentMaster::where('documentSystemID', 118)->select('documentSystemID','documentID')->first();
                             $lastSerial = DocumentModifyRequest::where('companySystemID', $input['company_id'])
                             ->orderBy('id', 'desc')
@@ -1325,7 +1325,7 @@ WHERE
 
                             $code = ($company->CompanyID . '/' . $documentMaster['documentID'] . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
 
-
+                            
                             $modifyData['companySystemID'] = $input['company_id'];
                             $modifyData['documentSystemCode'] = $input['id'];
                             $modifyData['version'] = $is_vsersion_exit->version;
@@ -1357,7 +1357,7 @@ WHERE
                             $params = array('autoID' => $input['id'], 'company' => $input["company_id"], 'document' => $input["document_system_id"]);
 
                         }
-
+                        
 
                         $confirm = \Helper::confirmDocument($params);
                         if (!$confirm["success"]) {

@@ -12,7 +12,7 @@ use App\Models\TenderCirculars;
 use App\Models\TenderCircularsEditLog;
 use App\Models\CircularAmendments;
 use App\Models\CircularAmendmentsEditLog;
-
+use App\helper\TenderDetails;
 class CircularAmendmentsObserver
 {
     /**
@@ -23,18 +23,12 @@ class CircularAmendmentsObserver
      */
     public function created(CircularAmendments $tender)
     {
-   
-
-        $tenderObj = TenderMaster::where('id',$tender->getAttribute('tender_id'))->select('bid_submission_opening_date','tender_edit_version_id')->first();
-        $date = $tenderObj->getOriginal('bid_submission_opening_date');
-
-        $obj = DocumentEditValidate::process($date,$tender->getAttribute('tender_id'));
+        $tenderObj = TenderDetails::process($tender->getAttribute('tender_id'));
+        $obj = DocumentEditValidate::process($tender->getAttribute('tender_id'));
 
         if($obj)
         {
-
             $circularId = $tender->getAttribute('circular_id');
-
             $cirularObj = TenderCircularsEditLog::where('master_id',$circularId)->first();
 
             $result = $this->process($tender,$cirularObj,2,$tenderObj,null);
@@ -53,10 +47,8 @@ class CircularAmendmentsObserver
     public function deleted(CircularAmendments $tender)
     {
        
-        $tenderObj = TenderMaster::where('id',$tender->getAttribute('tender_id'))->select('bid_submission_opening_date','tender_edit_version_id')->first();
-        $date = $tenderObj->getOriginal('bid_submission_opening_date');
-
-        $obj = DocumentEditValidate::process($date,$tender->getAttribute('tender_id'));
+        $tenderObj = TenderDetails::process($tender->getAttribute('tender_id'));
+        $obj = DocumentEditValidate::process($tender->getAttribute('tender_id'));
       
         if($obj)
         {
@@ -80,7 +72,6 @@ class CircularAmendmentsObserver
 
     public function process($tender,$obj,$type,$tenderObj,$reflog)
     {
-
         $data['tender_id']=$tender->getAttribute('tender_id');
         $data['circular_id']=$obj->getAttribute('circular_id');
         $data['amendment_id']=$tender->getAttribute('amendment_id');

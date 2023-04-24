@@ -10,6 +10,7 @@ use App\Models\DocumentModifyRequestDetail;
 use App\helper\DocumentEditValidate;
 use App\Models\DocumentAttachments;
 use App\Models\DocumentAttachmentsEditLog;
+use App\helper\TenderDetails;
 
 class DocumentAttachmentsObserver
 {
@@ -22,11 +23,10 @@ class DocumentAttachmentsObserver
     public function created(DocumentAttachments $tender)
     {
         
-        $tenderObj = TenderMaster::where('id',$tender->getAttribute('documentSystemCode'))->select('bid_submission_opening_date','tender_edit_version_id')->first();
-   
-        $obj = DocumentEditValidate::process($tenderObj->getOriginal('bid_submission_opening_date'),$tender->getAttribute('documentSystemCode'));
+        $tenderObj = TenderDetails::process($tender->getAttribute('documentSystemCode'));
+        $obj = DocumentEditValidate::process($tender->getAttribute('documentSystemCode'));
 
-        $type = 99;
+        $type = 1;
         if($obj)
         {
          
@@ -56,10 +56,8 @@ class DocumentAttachmentsObserver
 
     public function updated(DocumentAttachments $tender)
     {
-   
-        $tenderObj = TenderMaster::where('id',$tender->getAttribute('documentSystemCode'))->select('bid_submission_opening_date','tender_edit_version_id')->first();
-   
-        $obj = DocumentEditValidate::process($tenderObj->getOriginal('bid_submission_opening_date'),$tender->getAttribute('documentSystemCode'));
+        $tenderObj = TenderDetails::process($tender->getAttribute('documentSystemCode'));
+        $obj = DocumentEditValidate::process($tender->getAttribute('documentSystemCode'));
         if($obj)
         {
             $outputExist = DocumentAttachmentsEditLog::where('master_id',$tender->getAttribute('attachmentID'))->where('modify_type',2)->where('path',null)->orderBy('id','desc')->first();
@@ -104,11 +102,9 @@ class DocumentAttachmentsObserver
     }
 
     public function deleted(DocumentAttachments $tender)
-    {
-      
-        $tenderObj = TenderMaster::where('id',$tender->getAttribute('documentSystemCode'))->select('bid_submission_opening_date','tender_edit_version_id')->first();
-   
-        $obj = DocumentEditValidate::process($tenderObj->getOriginal('bid_submission_opening_date'),$tender->getAttribute('documentSystemCode'));
+    {      
+        $tenderObj = TenderDetails::process($tender->getAttribute('documentSystemCode'));
+        $obj = DocumentEditValidate::process($tender->getAttribute('documentSystemCode'));
 
         if($obj)
         {

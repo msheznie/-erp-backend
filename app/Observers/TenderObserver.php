@@ -19,7 +19,7 @@ class TenderObserver
      */
     public function updated(TenderMaster $tender)
     {
-        $obj = DocumentEditValidate::process($tender->getOriginal('bid_submission_opening_date'),$tender->getOriginal('id'));
+        $obj = DocumentEditValidate::process($tender->getOriginal('id'));
 
             if($obj)
             {

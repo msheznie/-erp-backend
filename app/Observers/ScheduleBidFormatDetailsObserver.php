@@ -15,7 +15,7 @@ use App\Models\PricingScheduleMasterEditLog;
 use App\Models\TenderBidFormatDetail;
 use App\Models\PricingScheduleDetail;
 use App\Models\PricingScheduleDetailEditLog;
-
+use App\helper\TenderDetails;
 
 class ScheduleBidFormatDetailsObserver
 {
@@ -28,12 +28,12 @@ class ScheduleBidFormatDetailsObserver
     public function created(ScheduleBidFormatDetails $tender)
     {
 
-        $shedule_master = PricingScheduleMaster::where('id',$tender->getAttribute('schedule_id'))->first();
-        $tenderObj = TenderMaster::where('id',$shedule_master->getAttribute('tender_id'))->select('bid_submission_opening_date','tender_edit_version_id')->first();
-        $date = $tenderObj->getOriginal('bid_submission_opening_date');
+        $shedule_master = PricingScheduleMaster::where('id',$tender->getAttribute('schedule_id'))->select('tender_id')->first();
+        $tenderObj = TenderDetails::process($shedule_master->getAttribute('tender_id'));
         $employee = \Helper::getEmployeeInfo();
         $empId = $employee->employeeSystemID;
-        $obj = DocumentEditValidate::process($date,$shedule_master->getAttribute('tender_id'));
+    
+        $obj = DocumentEditValidate::process($shedule_master->getAttribute('tender_id'));
 
         if($obj)
         {
@@ -41,24 +41,24 @@ class ScheduleBidFormatDetailsObserver
 
             if(isset($master))
             {
-                $ref_log_id = null;
-                $format_details = ScheduleBidFormatDetailsLog::where('bid_format_detail_id',$tender->getAttribute('bid_format_detail_id'))->where('schedule_id',$master->getAttribute('id'))->orderBy('id','desc')->first();
+                $refLogId = null;
+                $formatDetails = ScheduleBidFormatDetailsLog::where('bid_format_detail_id',$tender->getAttribute('bid_format_detail_id'))->where('schedule_id',$master->getAttribute('id'))->select('id')->orderBy('id','desc')->first();
 
-                if(isset($format_details))
+                if(isset($formatDetails))
                 {
-                    $ref_log_id = $format_details->getAttribute('id');
+                    $refLogId = $formatDetails->getAttribute('id');
                 }
 
-                $modify_type_val = 3;
-                $modify_type = ScheduleBidFormatDetailsLog::where('bid_format_detail_id',$tender->getAttribute('bid_format_detail_id'))->where('schedule_id',$master->getAttribute('id'))
+                $modifyType = 3;
+                $sheduleLog = ScheduleBidFormatDetailsLog::where('bid_format_detail_id',$tender->getAttribute('bid_format_detail_id'))->where('schedule_id',$master->getAttribute('id'))
                                                             ->where('tender_edit_version_id',$tenderObj->getOriginal('tender_edit_version_id'))->first();
-                if(isset($modify_type))
+                if(isset($sheduleLog))
                 {
-                    $modify_type_val = 4;
+                    $modifyType = 4;
                 }
 
 
-                $output = $this->createFormatDetails($tender,$master->getAttribute('id'),$empId,$tenderObj,$modify_type_val,$ref_log_id);
+                $output = $this->createFormatDetails($tender,$master->getAttribute('id'),$empId,$tenderObj,$modifyType,$refLogId);
 
                 if($output)
                 {
@@ -81,7 +81,7 @@ class ScheduleBidFormatDetailsObserver
     {
 
         $result = PricingScheduleMaster::where('id',$tender->getAttribute('schedule_id'))->first();
-        $tenderObj = TenderMaster::where('id',$result->getAttribute('tender_id'))->first();
+        $tenderObj = TenderMaster::where('id',$result->getAttribute('tender_id'))->select('tender_edit_version_id')->first();
 
         $employee = \Helper::getEmployeeInfo();
         $empId = $employee->employeeSystemID;
@@ -100,17 +100,15 @@ class ScheduleBidFormatDetailsObserver
 
         if($shedule_master)
         {
-            $main_work_id = null;
-            $is_complete = true;
             $priceBidShe = TenderBidFormatDetail::where('tender_id',$result->getAttribute('price_bid_format_id'))->get();
 
             foreach ($priceBidShe as $bid){
 
-                if(($bid->getOriginal('is_disabled') == 1 || $bid->getOriginal('boq_applicable') == 1) && $bid->getOriginal('field_type') != 4)
-                {
-                    $is_complete = false;
-                }
-                $shedule_detail_master = PricingScheduleDetail::where('tender_id',$result->getAttribute('tender_id'))->where('bid_format_detail_id',$bid->getOriginal('id'))->first();
+         
+                $sheduleDetailMaster = PricingScheduleDetail::where('tender_id',$result->getAttribute('tender_id'))
+                        ->where('bid_format_detail_id',$bid->getOriginal('id'))
+                        ->select('id','company_id','description')
+                        ->first();
 
                 $dataBidShed['tender_id']=$result->getAttribute('tender_id');
                 $dataBidShed['bid_format_id']=$bid->getOriginal('tender_id');
@@ -120,14 +118,14 @@ class ScheduleBidFormatDetailsObserver
                 $dataBidShed['is_disabled']=$bid->getOriginal('is_disabled');
                 $dataBidShed['boq_applicable']=$bid->getOriginal('boq_applicable');
                 $dataBidShed['pricing_schedule_master_id']=$shedule_master['id'];
-                $dataBidShed['company_id']=$shedule_detail_master->getAttribute('company_id');
+                $dataBidShed['company_id']=$sheduleDetailMaster->getAttribute('company_id');
                 $dataBidShed['formula_string']=$bid->getOriginal('formula_string');
                 $dataBidShed['created_by']=$empId;
                 $dataBidShed['tender_edit_version_id'] = $tenderObj->getAttribute('tender_edit_version_id');
                 $dataBidShed['modify_type'] = 2;
                 $dataBidShed['description'] = null;
-                $dataBidShed['master_id'] = $shedule_detail_master->getAttribute('id');
-                $dataBidShed['description'] = $shedule_detail_master->getAttribute('description');
+                $dataBidShed['master_id'] = $sheduleDetailMaster->getAttribute('id');
+                $dataBidShed['description'] = $sheduleDetailMaster->getAttribute('description');
                 $result1 = PricingScheduleDetailEditLog::create($dataBidShed);
 
 

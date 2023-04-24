@@ -13,6 +13,7 @@ use App\Models\PricingScheduleMasterEditLog;
 use App\Models\PricingScheduleDetailEditLog;
 use App\Models\PricingScheduleMaster;
 use App\Models\TenderBidFormatDetail;
+use App\helper\TenderDetails;
 class PricingScheduleDetailObserver
 {
     /**
@@ -23,13 +24,11 @@ class PricingScheduleDetailObserver
      */
     public function updated(PricingScheduleDetail $tender)
     {   
-        $tenderObj = TenderMaster::where('id',$tender->getAttribute('tender_id'))->select('bid_submission_opening_date','tender_edit_version_id')->first();
-        $date = $tenderObj->getOriginal('bid_submission_opening_date');
+        $tenderObj = TenderDetails::process($tender->getAttribute('tender_id'));
         $employee = \Helper::getEmployeeInfo();
         $empId = $employee->employeeSystemID;
-        Log::info('calling 1');
         $modifyType = 2;
-        $obj = DocumentEditValidate::process($date,$tender->getAttribute('tender_id'));
+        $obj = DocumentEditValidate::process($tender->getAttribute('tender_id'));
         $bidFormatDetailId = $tender->getAttribute('bid_format_detail_id');
         if($obj)
         {
@@ -126,17 +125,15 @@ class PricingScheduleDetailObserver
 
     public function created(PricingScheduleDetail $tender)
     {
-        $is_complete = true;
-        Log::info('calling 2');
 
-        $tenderObj = TenderMaster::where('id',$tender->getAttribute('tender_id'))->select('bid_submission_opening_date','tender_edit_version_id')->first();
-        $date = $tenderObj->getOriginal('bid_submission_opening_date');
+        $tenderObj = TenderDetails::process($tender->getAttribute('tender_id'));
+        $obj = DocumentEditValidate::process($tender->getAttribute('tender_id'));
+
         $employee = \Helper::getEmployeeInfo();
         $empId = $employee->employeeSystemID;
-        $version_id = $tenderObj->getOriginal('tender_edit_version_id');
+        $versionId = $tenderObj->getOriginal('tender_edit_version_id');
         $modifyType = 2;
         $editLog = PricingScheduleMasterEditLog::where('master_id',$tender->getAttribute('pricing_schedule_master_id'))->first();
-        $obj = DocumentEditValidate::process($date,$tender->getAttribute('tender_id'));
         if($obj)
         {
           
@@ -153,7 +150,7 @@ class PricingScheduleDetailObserver
                 $dataBidShed['company_id']=$tender->getAttribute('company_id');
                 $dataBidShed['formula_string']=$tender->getAttribute('formula_string');
                 $dataBidShed['created_by']=$empId;
-                $dataBidShed['tender_edit_version_id'] = $version_id;
+                $dataBidShed['tender_edit_version_id'] = $versionId;
                 $dataBidShed['modify_type'] = $modifyType;
                 $dataBidShed['master_id'] = $tender->getAttribute('id');
                 $result1 = PricingScheduleDetailEditLog::create($dataBidShed);

@@ -10,7 +10,7 @@ use App\Models\DocumentModifyRequestDetail;
 use App\helper\DocumentEditValidate;
 use App\Models\ProcumentActivityEditLog;
 use App\Models\ProcumentActivity;
-
+use App\helper\TenderDetails;
 
 class ProcumentActivityObserver
 {
@@ -22,9 +22,8 @@ class ProcumentActivityObserver
      */
     public function created(ProcumentActivity $tender)
     {
-        $tenderObj = TenderMaster::where('id',$tender->getAttribute('tender_id'))->select('bid_submission_opening_date','tender_edit_version_id')->first();
-        $date = $tenderObj->getOriginal('bid_submission_opening_date');
-        $obj = DocumentEditValidate::process($date,$tender->getAttribute('tender_id'));
+        $tenderObj = TenderDetails::process($tender->getAttribute('tender_id'));
+        $obj = DocumentEditValidate::process($tender->getAttribute('tender_id'));
 
             if($obj)
             {
@@ -44,14 +43,13 @@ class ProcumentActivityObserver
     public function deleted(ProcumentActivity $tender)
     {
        
-        $tenderObj = TenderMaster::where('id',$tender->getAttribute('tender_id'))->select('bid_submission_opening_date','tender_edit_version_id')->first();
-        $date = $tenderObj->getOriginal('bid_submission_opening_date');
-        $obj = DocumentEditValidate::process($date,$tender->getAttribute('tender_id'));
+        $tenderObj = TenderDetails::process($tender->getAttribute('tender_id'));
+        $obj = DocumentEditValidate::process($tender->getAttribute('tender_id'));
 
             if($obj)
             {
                 $reflogId = null;
-                $activity = ProcumentActivityEditLog::where('master_id',$tender->getAttribute('id'))->where('modify_type',2)->first();
+                $activity = ProcumentActivityEditLog::where('master_id',$tender->getAttribute('id'))->where('modify_type',2)->select('id')->first();
                 if(isset($activity))
                 {
                    $reflogId = $activity->getAttribute('id');

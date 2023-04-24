@@ -10,6 +10,8 @@ use App\Models\DocumentModifyRequestDetail;
 use App\helper\DocumentEditValidate;
 use App\Models\TenderMaster;
 use App\Models\SrmTenderBidEmployeeDetailsEditLog;
+use App\helper\TenderDetails;
+
 
 class TenderBidEmployeeObserver
 {
@@ -21,11 +23,7 @@ class TenderBidEmployeeObserver
      */
     public function deleted(SrmTenderBidEmployeeDetails $tender)
     {
-
-        $tenderObj = TenderMaster::where('id',$tender->getOriginal('tender_id'))->select('bid_submission_opening_date','tender_edit_version_id')->first();
-        $date = $tenderObj->getOriginal('bid_submission_opening_date');
-     
-        $obj = DocumentEditValidate::process($date,$tender->getOriginal('tender_id'));
+        $obj = DocumentEditValidate::process($tender->getAttribute('tender_id'));
 
             if($obj)
             {
@@ -40,11 +38,8 @@ class TenderBidEmployeeObserver
 
     public function created(SrmTenderBidEmployeeDetails $tender)
     {
-    
-        $tenderObj = TenderMaster::where('id',$tender->getAttribute('tender_id'))->select('bid_submission_opening_date','tender_edit_version_id')->first();
-        $date = $tenderObj->getOriginal('bid_submission_opening_date');
-     
-        $obj = DocumentEditValidate::process($date,$tender->getAttribute('tender_id'));
+        $tenderObj = TenderDetails::process($tender->getAttribute('tender_id'));
+        $obj = DocumentEditValidate::process($tender->getAttribute('tender_id'));
             if($obj)
             {
                 $result = $this->eveluate($tender->getAttribute('emp_id'),0,null,null,0,$tender->getAttribute('tender_id'),$tenderObj->getOriginal('tender_edit_version_id'),2);
