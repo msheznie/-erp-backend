@@ -29,3 +29,8 @@ Route::resource('tenderFinalBids', 'TenderFinalBidsController');
 Route::resource('documentModifyRequests', 'DocumentModifyRequestController');
 
 Route::resource('documentModifyRequestDetails', 'DocumentModifyRequestDetailController');
+
+
+Route::resource('calendarDatesDetailEditLogs', 'CalendarDatesDetailEditLogController');
+
+Route::resource('procumentActivityEditLogs', 'ProcumentActivityEditLogController');

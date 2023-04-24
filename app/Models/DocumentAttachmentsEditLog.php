@@ -211,7 +211,8 @@ class DocumentAttachmentsEditLog extends Model
         'path',
         'pullFromAnotherDocument',
         'ref_log_id',
-        'sizeInKbs'
+        'sizeInKbs',
+        'version_id'
     ];
 
     /**

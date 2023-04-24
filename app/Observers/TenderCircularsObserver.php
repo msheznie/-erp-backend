@@ -7,10 +7,9 @@ use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use App\Models\DocumentModifyRequest;
 use App\Models\DocumentModifyRequestDetail;
-use App\helper\DocumentEditValidate;
 use App\Models\TenderCirculars;
 use App\Models\TenderCircularsEditLog;
-
+use App\helper\TenderDetails;
 class TenderCircularsObserver
 {
     /**
@@ -21,27 +20,15 @@ class TenderCircularsObserver
      */
     public function created(TenderCirculars $tender)
     {
-   
-
-        $tenderObj = TenderMaster::where('id',$tender->getAttribute('tender_id'))->select('bid_submission_opening_date','tender_edit_version_id')->first();
-        $date = $tenderObj->getOriginal('bid_submission_opening_date');
+ 
         $employee = \Helper::getEmployeeInfo();
         $empId = $employee->employeeSystemID;
-
-        $obj = DocumentEditValidate::process($date,$tender->getAttribute('tender_id'));
+        $tenderObj = TenderDetails::getTenderMasterData($tender->getAttribute('tender_id'));
+        $obj = TenderDetails::validateTenderEdit($tender->getAttribute('tender_id'));
 
         if($obj)
         {
-            $data['tender_id']=$tender->getAttribute('tender_id');
-            $data['circular_name']=$tender->getAttribute('circular_name');
-            $data['description']=$tender->getAttribute('description');
-            $data['attachment_id']=$tender->getAttribute('attachment_id');
-            $data['master_id']=$tender->getAttribute('id');
-            $data['modify_type']=2;
-            $data['created_by'] = $empId;
-            $data['vesion_id']=$tenderObj->getAttribute('tender_edit_version_id');
-            $data['company_id']=$tender->getAttribute('company_id');
-            $result = TenderCircularsEditLog::create($data);
+            $result = $this->process($tender,$empId,$tenderObj,2,null);
 
             if($result)
             {
@@ -55,20 +42,29 @@ class TenderCircularsObserver
 
     public function updated(TenderCirculars $tender)
     {
-   
-        
-        $tenderObj = TenderMaster::where('id',$tender->getAttribute('tender_id'))->select('bid_submission_opening_date','tender_edit_version_id')->first();
-        $date = $tenderObj->getOriginal('bid_submission_opening_date');
-
-        $obj = DocumentEditValidate::process($date,$tender->getAttribute('tender_id'));
+        $tenderObj = TenderDetails::getTenderMasterData($tender->getAttribute('tender_id'));
+        $obj = TenderDetails::validateTenderEdit($tender->getAttribute('tender_id'));
+        $employee = \Helper::getEmployeeInfo();
+        $empId = $employee->employeeSystemID;
 
         if($obj)
         {
-           $circular =  TenderCircularsEditLog::where('master_id',$tender->getAttribute('id'))->first();
+  
+           $modifyType = 3;
+           $boqItems = TenderCircularsEditLog::where('master_id',$tender->getAttribute('id'))->where('vesion_id',$tenderObj->getOriginal('tender_edit_version_id'))->first();
+           if(isset($boqItems))
+           {
+               $modifyType = 4;
+           }
 
-           $data['circular_name'] = $tender->getAttribute('circular_name');
-           $data['description'] = $tender->getAttribute('description');
-           $result = TenderCircularsEditLog::where('id',$circular->getAttribute('id'))->update($data);
+           $reflogId = null;
+           $output = TenderCircularsEditLog::where('master_id',$tender->getAttribute('id'))->orderBy('id','desc')->first();
+           if(isset($output))
+           {
+              $reflogId = $output->getAttribute('id');
+           }
+
+           $result = $this->process($tender,$empId,$tenderObj,$modifyType,$reflogId);
 
            if($result)
            {    
@@ -81,33 +77,45 @@ class TenderCircularsObserver
     public function deleted(TenderCirculars $tender)
     {
        
-        $tenderObj = TenderMaster::where('id',$tender->getAttribute('tender_id'))->select('bid_submission_opening_date','tender_edit_version_id')->first();
-        $date = $tenderObj->getOriginal('bid_submission_opening_date');
         $employee = \Helper::getEmployeeInfo();
         $empId = $employee->employeeSystemID;
-        $obj = DocumentEditValidate::process($date,$tender->getAttribute('tender_id'));
-
+        $tenderObj = TenderDetails::getTenderMasterData($tender->getAttribute('tender_id'));
+        $obj = TenderDetails::validateTenderEdit($tender->getAttribute('tender_id'));
         if($obj)
         {
-            $data['tender_id']=$tender->getAttribute('tender_id');
-            $data['circular_name']=$tender->getAttribute('circular_name');
-            $data['description']=$tender->getAttribute('description');
-            $data['attachment_id']=$tender->getAttribute('attachment_id');
-            $data['master_id']=$tender->getAttribute('id');
-            $data['modify_type']=1;
-            $data['created_by'] = $empId;
-            $data['vesion_id']=$tenderObj->getAttribute('tender_edit_version_id');
-            $data['company_id']=$tender->getAttribute('company_id');
-            $data['ref_log_id']=$tender->getAttribute('id');
-            $result = TenderCircularsEditLog::create($data);
+            $reflogId = null;
+            $output = TenderCircularsEditLog::where('master_id',$tender->getAttribute('id'))->orderBy('id','desc')->first();
+            if(isset($output))
+            {
+               $reflogId = $output->getAttribute('id');
+            }
+            $result = $this->process($tender,$empId,$tenderObj,1,$reflogId);
 
             if($result)
             {
                 Log::info('tender circular deleted successfully');
             }
         }
+    }
 
+    public function process($tender,$empId,$tenderObj,$type,$ref)
+    {
+        $data['tender_id']=$tender->getAttribute('tender_id');
+        $data['circular_name']=$tender->getAttribute('circular_name');
+        $data['description']=$tender->getAttribute('description');
+        $data['attachment_id']=$tender->getAttribute('attachment_id');
+        $data['master_id']=$tender->getAttribute('id');
+        $data['modify_type']= $type;
+        $data['created_by'] = $empId;
+        $data['vesion_id']=$tenderObj->getAttribute('tender_edit_version_id');
+        $data['company_id']=$tender->getAttribute('company_id');
+        $data['ref_log_id']=$ref;
+        $result = TenderCircularsEditLog::create($data);
 
+        if($result)
+        {
+            return true;
+        }
     }
 
 }

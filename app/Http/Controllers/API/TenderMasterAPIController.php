@@ -930,16 +930,6 @@ WHERE
         }
 
 
-
-        if($input['isRequestProcessComplete'] && $input['requestType'] == 'Amend')
-        {
-           $circulatAmends =  CircularAmendments::where('tender_id',$input['id'])->count();
-           if($circulatAmends == 0)
-           {
-            return ['success' => false, 'message' => 'Please select atleast one amendment for circular'];
-           }
-        }
-
         if(!is_null($input['stage']) || $input['stage'] != 0) {
           
             if($input['stage'][0] == 1) {
@@ -1138,9 +1128,9 @@ WHERE
             $bankId= 0;
             $input['bank_account_id'] = null;
         }
-
+        
         DB::beginTransaction();
-
+        
         try {
             $tenderMaster = TenderMaster::find($input['id']);
             $data['title'] = $input['title'];
@@ -1176,11 +1166,18 @@ WHERE
             $data['updated_by'] = $employee->employeeSystemID;
            
             $result =  $tenderMaster->update($data);
-
+            
             if ($result) {
                 if (isset($input['procument_activity'])) {
                     if (count($input['procument_activity']) > 0) {
-                        ProcumentActivity::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
+                    
+                        $proActivity = $this->deleteProcumentActivity($input['id'],$input['company_id']);
+                        
+                        if(!$proActivity['success'])
+                        {
+                            return $this->sendError($proActivity['message'], 500);
+                        }
+                   
                         foreach ($input['procument_activity'] as $vl) {
                             $activity['tender_id'] = $input['id'];
                             $activity['category_id'] = $vl['id'];
@@ -1189,14 +1186,29 @@ WHERE
 
                             ProcumentActivity::create($activity);
                         }
+                     
+               
                     } else {
-                        ProcumentActivity::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
+                        
+                        $proActivity = $this->deleteProcumentActivity($input['id'],$input['company_id']);
+                            
+                        if(!$proActivity['success'])
+                        {
+                            return $this->sendError($proActivity['message'], 500);
+                        }
+                        
                     }
                 } else {
-                    ProcumentActivity::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
+                    
+                    $proActivity = $this->deleteProcumentActivity($input['id'],$input['company_id']);
+                    if(!$proActivity['success'])
+                    {
+                        return $this->sendError($proActivity['message'], 500);
+                    }
+
                 }
-
-
+                
+                
                 if ($exist['site_visit_date'] != $site_visit_date) {
                     $site['tender_id'] = $input['id'];
                     $site['date'] = $site_visit_date;
@@ -1237,7 +1249,7 @@ WHERE
                         $tenderUpdated->update($att);
                     }
                 }
-
+                
                 if (isset($input['confirmed_yn'])) {
                     if ($input['confirmed_yn'] == 1) {
 
@@ -1254,6 +1266,14 @@ WHERE
                             return ['success' => false, 'message' => 'Stage is required'];
                         }
 
+                        if($input['isRequestProcessComplete'] && $input['requestType'] == 'Amend')
+                        {
+                           $circulatAmends =  CircularAmendments::where('tender_id',$input['id'])->select('id')->count();
+                           if($circulatAmends == 0)
+                           {
+                            return ['success' => false, 'message' => 'Please select atleast one amendment for circular'];
+                           }
+                        }
 
                         $technical = EvaluationCriteriaDetails::where('tender_id', $input['id'])->where('critera_type_id', 2)->first();
                         if (empty($technical) && !$rfq) {
@@ -1266,7 +1286,7 @@ WHERE
                                 return ['success' => false, 'message' => 'At least one Go/No Go criteria should be added'];
                             }
                         }
-
+                        
                         $schedule = PricingScheduleMaster::where('tender_id', $input['id'])->first();
                         if (empty($schedule)) {
                             return ['success' => false, 'message' => 'At least one work schedule should be added'];
@@ -1299,13 +1319,13 @@ WHERE
                                 }
                             }
                         }
-
+                        
                         if($input['isRequestProcessComplete'] )
                         {   
                             $version = null;
                             $is_vsersion_exit = DocumentModifyRequest::where('documentSystemCode',$input['id'])->latest('id')->first();
-                    
-                            $company = Company::where('companySystemID', $input['company_id'])->select('id','CompanyID')->first();
+                                
+                            $company = Company::where('companySystemID', $input['company_id'])->select('companySystemID','CompanyID')->first();
                             $documentMaster = DocumentMaster::where('documentSystemID', 118)->select('documentSystemID','documentID')->first();
                             $lastSerial = DocumentModifyRequest::where('companySystemID', $input['company_id'])
                             ->orderBy('id', 'desc')
@@ -1317,8 +1337,8 @@ WHERE
                             }
 
                             $code = ($company->CompanyID . '/' . $documentMaster['documentID'] . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
-
-
+                            
+                            
                             $modifyData['companySystemID'] = $input['company_id'];
                             $modifyData['documentSystemCode'] = $input['id'];
                             $modifyData['version'] = $is_vsersion_exit->version;
@@ -1350,8 +1370,8 @@ WHERE
                             $params = array('autoID' => $input['id'], 'company' => $input["company_id"], 'document' => $input["document_system_id"]);
 
                         }
-
-
+                        
+                        
                         $confirm = \Helper::confirmDocument($params);
                         if (!$confirm["success"]) {
                             return ['success' => false, 'message' => $confirm["message"]];
@@ -2318,7 +2338,10 @@ WHERE
 
             $calendarDatesDetail = CalendarDatesDetail::where('calendar_date_id', $request['calenderDateTypeId'])
                 ->where('tender_id', $request['tenderMasterId'])
-                ->delete();
+                ->first();
+
+            $result = CalendarDatesDetail::find($calendarDatesDetail->id);
+            $result->delete();
             DB::commit();
             return ['success' => true, 'message' => 'Successfully deleted', 'data' => $calendarDatesDetail];
         } catch (\Exception $e) {
@@ -3729,5 +3752,27 @@ WHERE
             ->addColumn('Actions', 'Actions', "Actions")
             //->addColumn('Index', 'Index', "Index")
             ->make(true);
+    }
+
+    public function deleteProcumentActivity($id,$company_id)
+    {
+   
+        DB::beginTransaction();
+        try {
+            $proActivity = ProcumentActivity::where('tender_id', $id)->where('company_id', $company_id)->select('id')->get();
+
+            foreach($proActivity as $val)
+            {
+                $procument = ProcumentActivity::find($val->id);
+                $procument->delete();
+            }
+
+            DB::commit();
+            return ['success' => true, 'message' => 'Successfully Deleted'];
+           
+        } catch (\Exception $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
+
     }
 }

@@ -218,3 +218,5 @@ Route::post('getTenderEditMasterApproval', 'TenderMasterAPIController@getTenderE
 Route::post('approveEditDocument', 'DocumentModifyRequestAPIController@approveEditDocument');
 Route::post('getTenderEditMasterFullApproved', 'TenderMasterAPIController@getTenderEditMasterFullApproved');
 Route::post('rejectTenderEditDocument', 'TenderEditLogMasterAPIController@rejectTenderEditDocument');
+Route::resource('calendar_dates_detail_edit_logs', 'CalendarDatesDetailEditLogAPIController');
+Route::resource('procument_activity_edit_logs', 'ProcumentActivityEditLogAPIController');
