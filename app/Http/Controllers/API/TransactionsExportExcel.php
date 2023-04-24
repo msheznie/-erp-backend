@@ -503,7 +503,14 @@ class TransactionsExportExcel extends AppBaseController
                 return $this->sendResponse(array(), 'export failed');
         }
 
-        $companyID = $input['companyID'];
+        $companyID = isset($input['companyId']) ? $input['companyId']: null;
+        if($companyID == null){
+            $companyID = isset($input['companyID']) ? $input['companyID']: null;
+            if($companyID == null){
+                $companyID = isset($input['companySystemID']) ? $input['companySystemID']: null;
+            }
+        }
+
         $companyMaster = Company::find($companyID);
         $companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
         $detail_array = array(
