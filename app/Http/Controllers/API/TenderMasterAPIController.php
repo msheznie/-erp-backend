@@ -1170,37 +1170,29 @@ WHERE
             if ($result) {
                 if (isset($input['procument_activity'])) {
                     if (count($input['procument_activity']) > 0) {
-                        $proActivity = ProcumentActivity::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->get();
 
-                        foreach($proActivity as $val)
+                        $proActivity = $this->deleteProcumentActivity($input['id'],$input['company_id']);
+                        if($proActivity)
                         {
-                            $procument = ProcumentActivity::find($val->id);
-                            $procument->delete();
+                            foreach ($input['procument_activity'] as $vl) {
+                                $activity['tender_id'] = $input['id'];
+                                $activity['category_id'] = $vl['id'];
+                                $activity['company_id'] = $input['company_id'];
+                                $activity['created_by'] = $employee->employeeSystemID;
+    
+                                ProcumentActivity::create($activity);
+                            }
                         }
-
-                        foreach ($input['procument_activity'] as $vl) {
-                            $activity['tender_id'] = $input['id'];
-                            $activity['category_id'] = $vl['id'];
-                            $activity['company_id'] = $input['company_id'];
-                            $activity['created_by'] = $employee->employeeSystemID;
-
-                            ProcumentActivity::create($activity);
-                        }
+               
                     } else {
-                        $proActivity = ProcumentActivity::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->get();
-                        foreach($proActivity as $val)
-                        {
-                            $procument = ProcumentActivity::find($val->id);
-                            $procument->delete();
-                        }
+
+                        $proActivity = $this->deleteProcumentActivity($input['id'],$input['company_id']);
+              
                     }
                 } else {
-                    $proActivity = ProcumentActivity::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->get();
-                    foreach($proActivity as $val)
-                    {
-                        $procument = ProcumentActivity::find($val->id);
-                        $procument->delete();
-                    }
+
+                    $proActivity = $this->deleteProcumentActivity($input['id'],$input['company_id']);
+
                 }
 
 
@@ -3747,5 +3739,18 @@ WHERE
             ->addColumn('Actions', 'Actions', "Actions")
             //->addColumn('Index', 'Index', "Index")
             ->make(true);
+    }
+
+    public function deleteProcumentActivity($id,$company_id)
+    {
+        $proActivity = ProcumentActivity::where('tender_id', $id)->where('company_id', $company_id)->select('id')->get();
+
+        foreach($proActivity as $val)
+        {
+            $procument = ProcumentActivity::find($val->id);
+            $procument->delete();
+        }
+
+        return true;
     }
 }
