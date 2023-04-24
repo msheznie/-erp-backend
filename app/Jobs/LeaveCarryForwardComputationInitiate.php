@@ -15,16 +15,15 @@ use Illuminate\Support\Facades\Log;
 class LeaveCarryForwardComputationInitiate implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-    public $dispatch_db;
-    protected $company_code = '';
-    protected $company_name = '';
-
+    
+    public $dispatchDb;
+    
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($dispatch_db)
+    public function __construct($dispatchDb)
     {
         if(env('IS_MULTI_TENANCY',false)){
             self::onConnection('database_main');
@@ -32,7 +31,7 @@ class LeaveCarryForwardComputationInitiate implements ShouldQueue
             self::onConnection('database');
         }
 
-        $this->dispatch_db = $dispatch_db;
+        $this->dispatchDb = $dispatchDb;
     }
 
     /**
@@ -45,23 +44,23 @@ class LeaveCarryForwardComputationInitiate implements ShouldQueue
 
         $path = CommonJobService::get_specific_log_file('leave-carry-forward');
         Log::useFiles($path); 
-        $db = $this->dispatch_db;
+        $db = $this->dispatchDb;
         
         Log::info('DB switched'.$db); 
         CommonJobService::db_switch($db);
 
-        $company_list = CommonJobService::company_list();
+        $companyList = CommonJobService::company_list();
 
-        if ($company_list->count() == 0) {
+        if ($companyList->count() == 0) {
             Log::error("Company details not found on $db ( DB ) \t on file: " . __CLASS__ . " \tline no :" . __LINE__);
             return;
         }
 
-        $company_list = $company_list->toArray();
+        $companyList = $companyList->toArray();
 
         Log::info("Leave carry forward computation initiated on {$db} \t on file: " . __CLASS__ . " \tline no :" . __LINE__);
 
-        foreach ($company_list as $company) {
+        foreach ($companyList as $company) {
             $ser = new LeaveCarryForwardComputationService($company);
             $ser->execute();
         }
