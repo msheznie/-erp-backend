@@ -21,7 +21,7 @@ class EvaluationCriteriaDetailsObserver
      */
     public function created(EvaluationCriteriaDetails $tender)
     {   
-        $tenderObj = TenderDetails::getTenderObj($tender->getAttribute('tender_id'));
+        $tenderObj = TenderDetails::getTenderMasterData($tender->getAttribute('tender_id'));
         $obj = TenderDetails::validateTenderEdit($tender->getAttribute('tender_id'));
         $employee = \Helper::getEmployeeInfo();
         $empId = $employee->employeeSystemID;
@@ -46,7 +46,7 @@ class EvaluationCriteriaDetailsObserver
     public function updated(EvaluationCriteriaDetails $tender)
     {
         
-        $tenderObj = TenderDetails::getTenderObj($tender->getAttribute('tender_id'));
+        $tenderObj = TenderDetails::getTenderMasterData($tender->getAttribute('tender_id'));
         $obj = TenderDetails::validateTenderEdit($tender->getAttribute('tender_id'));
         $employee = \Helper::getEmployeeInfo();
         $empId = $employee->employeeSystemID;
@@ -88,7 +88,7 @@ class EvaluationCriteriaDetailsObserver
 
         $employee = \Helper::getEmployeeInfo();
         $empId = $employee->employeeSystemID;
-        $tenderObj = TenderDetails::getTenderObj($tender->getAttribute('tender_id'));
+        $tenderObj = TenderDetails::getTenderMasterData($tender->getAttribute('tender_id'));
         $obj = TenderDetails::validateTenderEdit($tender->getAttribute('tender_id'));
 
         if($obj)

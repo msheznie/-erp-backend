@@ -1128,7 +1128,7 @@ WHERE
             $bankId= 0;
             $input['bank_account_id'] = null;
         }
-
+        
         DB::beginTransaction();
         
         try {
@@ -1166,36 +1166,49 @@ WHERE
             $data['updated_by'] = $employee->employeeSystemID;
            
             $result =  $tenderMaster->update($data);
-
+            
             if ($result) {
                 if (isset($input['procument_activity'])) {
                     if (count($input['procument_activity']) > 0) {
-
+                    
                         $proActivity = $this->deleteProcumentActivity($input['id'],$input['company_id']);
-                        if($proActivity)
+                        
+                        if(!$proActivity['success'])
                         {
-                            foreach ($input['procument_activity'] as $vl) {
-                                $activity['tender_id'] = $input['id'];
-                                $activity['category_id'] = $vl['id'];
-                                $activity['company_id'] = $input['company_id'];
-                                $activity['created_by'] = $employee->employeeSystemID;
-    
-                                ProcumentActivity::create($activity);
-                            }
+                            return $this->sendError($proActivity['message'], 500);
                         }
+                   
+                        foreach ($input['procument_activity'] as $vl) {
+                            $activity['tender_id'] = $input['id'];
+                            $activity['category_id'] = $vl['id'];
+                            $activity['company_id'] = $input['company_id'];
+                            $activity['created_by'] = $employee->employeeSystemID;
+
+                            ProcumentActivity::create($activity);
+                        }
+                     
                
                     } else {
-
+                        
                         $proActivity = $this->deleteProcumentActivity($input['id'],$input['company_id']);
-              
+                            
+                        if(!$proActivity['success'])
+                        {
+                            return $this->sendError($proActivity['message'], 500);
+                        }
+                        
                     }
                 } else {
-
+                    
                     $proActivity = $this->deleteProcumentActivity($input['id'],$input['company_id']);
+                    if(!$proActivity['success'])
+                    {
+                        return $this->sendError($proActivity['message'], 500);
+                    }
 
                 }
-
-
+                
+                
                 if ($exist['site_visit_date'] != $site_visit_date) {
                     $site['tender_id'] = $input['id'];
                     $site['date'] = $site_visit_date;
@@ -1273,7 +1286,7 @@ WHERE
                                 return ['success' => false, 'message' => 'At least one Go/No Go criteria should be added'];
                             }
                         }
-
+                        
                         $schedule = PricingScheduleMaster::where('tender_id', $input['id'])->first();
                         if (empty($schedule)) {
                             return ['success' => false, 'message' => 'At least one work schedule should be added'];
@@ -1306,12 +1319,12 @@ WHERE
                                 }
                             }
                         }
-
+                        
                         if($input['isRequestProcessComplete'] )
                         {   
                             $version = null;
                             $is_vsersion_exit = DocumentModifyRequest::where('documentSystemCode',$input['id'])->latest('id')->first();
-                            
+                                
                             $company = Company::where('companySystemID', $input['company_id'])->select('companySystemID','CompanyID')->first();
                             $documentMaster = DocumentMaster::where('documentSystemID', 118)->select('documentSystemID','documentID')->first();
                             $lastSerial = DocumentModifyRequest::where('companySystemID', $input['company_id'])
@@ -1324,7 +1337,7 @@ WHERE
                             }
 
                             $code = ($company->CompanyID . '/' . $documentMaster['documentID'] . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
-
+                            
                             
                             $modifyData['companySystemID'] = $input['company_id'];
                             $modifyData['documentSystemCode'] = $input['id'];
@@ -1358,7 +1371,7 @@ WHERE
 
                         }
                         
-
+                        
                         $confirm = \Helper::confirmDocument($params);
                         if (!$confirm["success"]) {
                             return ['success' => false, 'message' => $confirm["message"]];
@@ -3743,14 +3756,23 @@ WHERE
 
     public function deleteProcumentActivity($id,$company_id)
     {
-        $proActivity = ProcumentActivity::where('tender_id', $id)->where('company_id', $company_id)->select('id')->get();
+   
+        DB::beginTransaction();
+        try {
+            $proActivity = ProcumentActivity::where('tender_id', $id)->where('company_id', $company_id)->select('id')->get();
 
-        foreach($proActivity as $val)
-        {
-            $procument = ProcumentActivity::find($val->id);
-            $procument->delete();
+            foreach($proActivity as $val)
+            {
+                $procument = ProcumentActivity::find($val->id);
+                $procument->delete();
+            }
+
+            DB::commit();
+            return ['success' => true, 'message' => 'Successfully Deleted'];
+           
+        } catch (\Exception $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
         }
 
-        return true;
     }
 }

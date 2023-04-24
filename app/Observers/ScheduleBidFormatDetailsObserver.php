@@ -28,7 +28,7 @@ class ScheduleBidFormatDetailsObserver
     {
 
         $shedule_master = PricingScheduleMaster::where('id',$tender->getAttribute('schedule_id'))->select('tender_id')->first();
-        $tenderObj = TenderDetails::getTenderObj($shedule_master->getAttribute('tender_id'));
+        $tenderObj = TenderDetails::getTenderMasterData($shedule_master->getAttribute('tender_id'));
         $employee = \Helper::getEmployeeInfo();
         $empId = $employee->employeeSystemID;
     

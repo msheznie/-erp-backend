@@ -25,7 +25,7 @@ class PricingScheduleMasterObserver
     public function created(PricingScheduleMaster $tender)
     {   
    
-        $tenderObj = TenderDetails::getTenderObj($tender->getAttribute('tender_id'));
+        $tenderObj = TenderDetails::getTenderMasterData($tender->getAttribute('tender_id'));
         $obj = TenderDetails::validateTenderEdit($tender->getAttribute('tender_id'));
             if($obj)
             {
@@ -45,7 +45,7 @@ class PricingScheduleMasterObserver
     {
        
       
-        $tenderObj = TenderDetails::getTenderObj($tender->getAttribute('tender_id'));
+        $tenderObj = TenderDetails::getTenderMasterData($tender->getAttribute('tender_id'));
         $obj = TenderDetails::validateTenderEdit($tender->getAttribute('tender_id'));
         if($obj)
         {
@@ -112,7 +112,7 @@ class PricingScheduleMasterObserver
     public function updated(PricingScheduleMaster $tender)
     {
         
-        $tenderObj = TenderDetails::getTenderObj($tender->getAttribute('tender_id'));
+        $tenderObj = TenderDetails::getTenderMasterData($tender->getAttribute('tender_id'));
         $obj = TenderDetails::validateTenderEdit($tender->getAttribute('tender_id'));
         if($obj)
         {

@@ -23,7 +23,7 @@ class TenderCircularsObserver
  
         $employee = \Helper::getEmployeeInfo();
         $empId = $employee->employeeSystemID;
-        $tenderObj = TenderDetails::getTenderObj($tender->getAttribute('tender_id'));
+        $tenderObj = TenderDetails::getTenderMasterData($tender->getAttribute('tender_id'));
         $obj = TenderDetails::validateTenderEdit($tender->getAttribute('tender_id'));
 
         if($obj)
@@ -42,7 +42,7 @@ class TenderCircularsObserver
 
     public function updated(TenderCirculars $tender)
     {
-        $tenderObj = TenderDetails::getTenderObj($tender->getAttribute('tender_id'));
+        $tenderObj = TenderDetails::getTenderMasterData($tender->getAttribute('tender_id'));
         $obj = TenderDetails::validateTenderEdit($tender->getAttribute('tender_id'));
         $employee = \Helper::getEmployeeInfo();
         $empId = $employee->employeeSystemID;
@@ -79,7 +79,7 @@ class TenderCircularsObserver
        
         $employee = \Helper::getEmployeeInfo();
         $empId = $employee->employeeSystemID;
-        $tenderObj = TenderDetails::getTenderObj($tender->getAttribute('tender_id'));
+        $tenderObj = TenderDetails::getTenderMasterData($tender->getAttribute('tender_id'));
         $obj = TenderDetails::validateTenderEdit($tender->getAttribute('tender_id'));
         if($obj)
         {

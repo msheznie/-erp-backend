@@ -22,7 +22,7 @@ class DocumentAttachmentsObserver
     public function created(DocumentAttachments $tender)
     {
         
-        $tenderObj = TenderDetails::getTenderObj($tender->getAttribute('documentSystemCode'));
+        $tenderObj = TenderDetails::getTenderMasterData($tender->getAttribute('documentSystemCode'));
         $obj = TenderDetails::validateTenderEdit($tender->getAttribute('documentSystemCode'));
 
         $type = 1;
@@ -55,7 +55,7 @@ class DocumentAttachmentsObserver
 
     public function updated(DocumentAttachments $tender)
     {
-        $tenderObj = TenderDetails::getTenderObj($tender->getAttribute('documentSystemCode'));
+        $tenderObj = TenderDetails::getTenderMasterData($tender->getAttribute('documentSystemCode'));
         $obj = TenderDetails::validateTenderEdit($tender->getAttribute('documentSystemCode'));
         if($obj)
         {
@@ -102,7 +102,7 @@ class DocumentAttachmentsObserver
 
     public function deleted(DocumentAttachments $tender)
     {      
-        $tenderObj = TenderDetails::getTenderObj($tender->getAttribute('documentSystemCode'));
+        $tenderObj = TenderDetails::getTenderMasterData($tender->getAttribute('documentSystemCode'));
         $obj = TenderDetails::validateTenderEdit($tender->getAttribute('documentSystemCode'));
 
         if($obj)

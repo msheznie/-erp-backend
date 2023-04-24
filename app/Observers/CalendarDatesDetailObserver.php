@@ -19,7 +19,7 @@ class CalendarDatesDetailObserver
      */
     public function created(CalendarDatesDetail $tender)
     {
-        $tenderObj = TenderDetails::getTenderObj($tender->getAttribute('tender_id'));
+        $tenderObj = TenderDetails::getTenderMasterData($tender->getAttribute('tender_id'));
         $date = $tenderObj->getOriginal('bid_submission_opening_date');
         $obj = TenderDetails::validateTenderEdit($tender->getAttribute('tender_id'));
 
@@ -35,7 +35,7 @@ class CalendarDatesDetailObserver
 
     public function deleted(CalendarDatesDetail $tender)
     {
-        $tenderObj = TenderDetails::getTenderObj($tender->getAttribute('tender_id'));
+        $tenderObj = TenderDetails::getTenderMasterData($tender->getAttribute('tender_id'));
         $obj = TenderDetails::validateTenderEdit($tender->getAttribute('tender_id'));
 
             if($obj)

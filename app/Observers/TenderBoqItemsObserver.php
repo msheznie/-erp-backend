@@ -29,7 +29,7 @@ class TenderBoqItemsObserver
 
 
         $pricingDetails = PricingScheduleDetail::where('id',$tender->getAttribute('main_work_id'))->select('tender_id')->first();
-        $obj = TenderDetails::getTenderObj($pricingDetails->getAttribute('tender_id'));
+        $obj = TenderDetails::getTenderMasterData($pricingDetails->getAttribute('tender_id'));
 
         if($obj)
         {
@@ -71,7 +71,7 @@ class TenderBoqItemsObserver
     public function deleted(TenderBoqItems $tender)
     {
         $pricingDetails = PricingScheduleDetail::where('id',$tender->getAttribute('main_work_id'))->select('tender_id')->first();
-        $tenderObj = TenderDetails::getTenderObj($pricingDetails->getAttribute('tender_id'));
+        $tenderObj = TenderDetails::getTenderMasterData($pricingDetails->getAttribute('tender_id'));
         $obj = TenderDetails::validateTenderEdit($pricingDetails->getAttribute('tender_id'));
 
         if($obj)
@@ -112,7 +112,7 @@ class TenderBoqItemsObserver
     {
 
         $pricingDetails = PricingScheduleDetail::where('id',$tender->getAttribute('main_work_id'))->select('tender_id')->first();
-        $tenderObj = TenderDetails::getTenderObj($pricingDetails->getAttribute('tender_id'));
+        $tenderObj = TenderDetails::getTenderMasterData($pricingDetails->getAttribute('tender_id'));
         $obj = TenderDetails::validateTenderEdit($pricingDetails->getAttribute('tender_id'));
         if($obj)
         {   

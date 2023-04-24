@@ -22,7 +22,7 @@ class CircularAmendmentsObserver
      */
     public function created(CircularAmendments $tender)
     {
-        $tenderObj = TenderDetails::getTenderObj($tender->getAttribute('tender_id'));
+        $tenderObj = TenderDetails::getTenderMasterData($tender->getAttribute('tender_id'));
         $obj = TenderDetails::validateTenderEdit($tender->getAttribute('tender_id'));
 
         if($obj)
@@ -46,7 +46,7 @@ class CircularAmendmentsObserver
     public function deleted(CircularAmendments $tender)
     {
        
-        $tenderObj = TenderDetails::getTenderObj($tender->getAttribute('tender_id'));
+        $tenderObj = TenderDetails::getTenderMasterData($tender->getAttribute('tender_id'));
         $obj = TenderDetails::validateTenderEdit($tender->getAttribute('tender_id'));
       
         if($obj)

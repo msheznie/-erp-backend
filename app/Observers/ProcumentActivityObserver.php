@@ -21,9 +21,10 @@ class ProcumentActivityObserver
      */
     public function created(ProcumentActivity $tender)
     {
-        $tenderObj = TenderDetails::getTenderObj($tender->getAttribute('tender_id'));
+       
+        $tenderObj = TenderDetails::getTenderMasterData($tender->getAttribute('tender_id'));
         $obj = TenderDetails::validateTenderEdit($tender->getAttribute('tender_id'));
-
+     
             if($obj)
             {
                 $reflogId = null;
@@ -42,7 +43,7 @@ class ProcumentActivityObserver
     public function deleted(ProcumentActivity $tender)
     {
        
-        $tenderObj = TenderDetails::getTenderObj($tender->getAttribute('tender_id'));
+        $tenderObj = TenderDetails::getTenderMasterData($tender->getAttribute('tender_id'));
         $obj = TenderDetails::validateTenderEdit($tender->getAttribute('tender_id'));
 
             if($obj)
