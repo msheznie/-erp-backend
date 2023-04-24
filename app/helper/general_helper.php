@@ -4220,6 +4220,18 @@ class Helper
                 $docInforArr["confirmedYN"] = "requested";
                 $docInforArr["confirmedEmpSystemID"] = "requested_employeeSystemID";
                 break;
+            case 118: // Edit Approve request
+                $docInforArr["tableName"] = 'document_modify_request';
+                $docInforArr["modelName"] = 'DocumentModifyRequest';
+                $docInforArr["primarykey"] = 'id';
+                $docInforArr["approvedColumnName"] = 'confirmation_approved';
+                $docInforArr["approvedBy"] = 'approved_by_user_system_id';
+                $docInforArr["approvedBySystemID"] = 'confirmation_approved_by_user_system_id';
+                $docInforArr["approvedDate"] = 'confirmation_approved_date';
+                $docInforArr["approveValue"] = -1;
+                $docInforArr["confirmedYN"] = "requested";
+                $docInforArr["confirmedEmpSystemID"] = "requested_employeeSystemID";
+                break;       
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
         }
@@ -4240,7 +4252,7 @@ class Helper
                     $reference_document_id = $input['reference_document_id'];
                 }
 
-                
+                    
                 // get current employee detail
                 $empInfo = self::getEmployeeInfo();
                 $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
@@ -4308,7 +4320,7 @@ class Helper
                 if ($docApproved->rejectedYN == -1) {
                     return ['success' => false, 'message' => 'Level is already rejected'];
                 }
-
+              
                 //check document is already approved
                 $isApproved = Models\DocumentApproved::where('documentApprovedID', $input["documentApprovedID"])->where('approvedYN', -1)->first();
                 if (!$isApproved) {
@@ -4814,9 +4826,18 @@ class Helper
 
                         } else {
                             // update roll level in master table
-                            $rollLevelUpdate = $namespacedModel::find($input["documentSystemCode"])->update(['RollLevForApp_curr' => $input["rollLevelOrder"] + 1]);
-                        }
+                            if($input['documentSystemID'] == 118)
+                            {
+                                $rollLevelUpdate = $namespacedModel::find($input["documentSystemCode"])->update(['confirmation_RollLevForApp_curr' => $input["rollLevelOrder"] + 1]);
 
+                            }
+                            else
+                            {
+                                $rollLevelUpdate = $namespacedModel::find($input["documentSystemCode"])->update(['RollLevForApp_curr' => $input["rollLevelOrder"] + 1]);
+
+                            }
+                        }
+                     
                         // update record in document approved table
                         $approvedeDoc = $docApproved::find($input["documentApprovedID"])->update(['approvedYN' => -1, 'approvedDate' => now(), 'approvedComments' => $input["approvedComments"], 'employeeID' => $empInfo->empID, 'employeeSystemID' => $empInfo->employeeSystemID]);
 
@@ -4829,17 +4850,16 @@ class Helper
                             $document = Models\DocumentMaster::where('documentSystemID', $currentApproved->documentSystemID)->first();
                            
 
-                            if($input["documentSystemID"] == 117)
+                            if($input["documentSystemID"] == 117 )
                             {
-                                if($sourceModel->type == 1)
-                                {
-                                    $document->documentDescription = 'Edit Request';
-                                }
-                                else
-                                {
-                                    $document->documentDescription = 'Amend Request';
-                                }
+                                $document->documentDescription = $sourceModel->type == 1?'Edit Request':'Amend Request';
                             }
+
+                            if($input["documentSystemID"] == 118)
+                            {
+                                $document->documentDescription = $sourceModel->type == 1?'Edit Approve Request':'Amend Approve Request';
+                            }
+
                             $subjectName = $document->documentDescription . ' ' . $currentApproved->documentCode;
                             $bodyName = $document->documentDescription . ' ' . '<b>' . $currentApproved->documentCode . '</b>';
 
@@ -4958,13 +4978,13 @@ class Helper
                         
                         $sendEmail = \Email::sendEmail($emails);
 
-
+                      
                         if (!$sendEmail["success"]) {
                             return ['success' => false, 'message' => $sendEmail["message"]];
                         }
 
                         $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, 1);
-
+                        
                         $webPushData = [
                             'title' => $pushNotificationMessage,
                             'body' => '',
