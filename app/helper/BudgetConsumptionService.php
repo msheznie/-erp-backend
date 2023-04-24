@@ -3442,7 +3442,7 @@ class BudgetConsumptionService
 	{
 		$jvMaster = JvMaster::selectRaw('MONTH(createdDateTime) as month, JVcode,documentID,documentSystemID, jvType')->find($documentSystemCode);
 
-		if ($jvMaster->jvType == 1) {
+		if ($jvMaster->jvType == 3) {
 			$budgetConsumeData = array();
 	        $grvDetail = \DB::select('SELECT SUM(erp_jvdetail.debitAmount + (erp_jvdetail.creditAmount * -1)) as amount,erp_jvdetail.currencyID,erp_jvdetail.chartOfAccountSystemID,erp_jvdetail.glAccount,erp_jvdetail.companyID,erp_jvdetail.companySystemID, erp_jvmaster.companyFinanceYearID, erp_jvdetail.serviceLineSystemID, erp_jvdetail.serviceLineCode, detail_project_id FROM erp_jvdetail INNER JOIN erp_jvmaster ON erp_jvmaster.jvMasterAutoId = erp_jvdetail.jvMasterAutoId  WHERE erp_jvdetail.jvMasterAutoId = ' . $documentSystemCode . ' GROUP BY erp_jvdetail.companySystemID,erp_jvdetail.chartOfAccountSystemID, erp_jvdetail.serviceLineSystemID, erp_jvdetail.detail_project_id');
 	        if (!empty($grvDetail)) {
