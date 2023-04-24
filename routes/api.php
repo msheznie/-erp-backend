@@ -1940,7 +1940,3 @@ Route::get('viewHrDocuments', 'ThirdPartySystemsDocumentUploadAndDownloadAPICont
 /*
  * End external related routes
  */
-
-Route::resource('calendar_dates_detail_edit_logs', 'CalendarDatesDetailEditLogAPIController');
-
-Route::resource('procument_activity_edit_logs', 'ProcumentActivityEditLogAPIController');
