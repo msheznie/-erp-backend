@@ -7,8 +7,7 @@ use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use App\Models\DocumentModifyRequest;
 use App\Models\DocumentModifyRequestDetail;
-use App\helper\DocumentEditValidate;
-
+use App\helper\TenderDetails;
 class TenderObserver
 {
     /**
@@ -19,7 +18,7 @@ class TenderObserver
      */
     public function updated(TenderMaster $tender)
     {
-        $obj = DocumentEditValidate::process($tender->getOriginal('id'));
+        $obj = TenderDetails::validateTenderEdit($tender->getOriginal('id'));
 
             if($obj)
             {

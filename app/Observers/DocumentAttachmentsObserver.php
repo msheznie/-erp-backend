@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use App\Models\DocumentModifyRequest;
 use App\Models\DocumentModifyRequestDetail;
-use App\helper\DocumentEditValidate;
 use App\Models\DocumentAttachments;
 use App\Models\DocumentAttachmentsEditLog;
 use App\helper\TenderDetails;
@@ -23,8 +22,8 @@ class DocumentAttachmentsObserver
     public function created(DocumentAttachments $tender)
     {
         
-        $tenderObj = TenderDetails::process($tender->getAttribute('documentSystemCode'));
-        $obj = DocumentEditValidate::process($tender->getAttribute('documentSystemCode'));
+        $tenderObj = TenderDetails::getTenderObj($tender->getAttribute('documentSystemCode'));
+        $obj = TenderDetails::validateTenderEdit($tender->getAttribute('documentSystemCode'));
 
         $type = 1;
         if($obj)
@@ -56,8 +55,8 @@ class DocumentAttachmentsObserver
 
     public function updated(DocumentAttachments $tender)
     {
-        $tenderObj = TenderDetails::process($tender->getAttribute('documentSystemCode'));
-        $obj = DocumentEditValidate::process($tender->getAttribute('documentSystemCode'));
+        $tenderObj = TenderDetails::getTenderObj($tender->getAttribute('documentSystemCode'));
+        $obj = TenderDetails::validateTenderEdit($tender->getAttribute('documentSystemCode'));
         if($obj)
         {
             $outputExist = DocumentAttachmentsEditLog::where('master_id',$tender->getAttribute('attachmentID'))->where('modify_type',2)->where('path',null)->orderBy('id','desc')->first();
@@ -103,8 +102,8 @@ class DocumentAttachmentsObserver
 
     public function deleted(DocumentAttachments $tender)
     {      
-        $tenderObj = TenderDetails::process($tender->getAttribute('documentSystemCode'));
-        $obj = DocumentEditValidate::process($tender->getAttribute('documentSystemCode'));
+        $tenderObj = TenderDetails::getTenderObj($tender->getAttribute('documentSystemCode'));
+        $obj = TenderDetails::validateTenderEdit($tender->getAttribute('documentSystemCode'));
 
         if($obj)
         {

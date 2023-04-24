@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use App\Models\DocumentModifyRequest;
 use App\Models\DocumentModifyRequestDetail;
-use App\helper\DocumentEditValidate;
 use App\Models\TenderBoqItems;
 use App\Models\TenderBoqItemsEditLog;
 use App\Models\PricingScheduleDetailEditLog;
@@ -30,7 +29,7 @@ class TenderBoqItemsObserver
 
 
         $pricingDetails = PricingScheduleDetail::where('id',$tender->getAttribute('main_work_id'))->select('tender_id')->first();
-        $obj = DocumentEditValidate::process($pricingDetails->getAttribute('tender_id'));
+        $obj = TenderDetails::getTenderObj($pricingDetails->getAttribute('tender_id'));
 
         if($obj)
         {
@@ -72,8 +71,8 @@ class TenderBoqItemsObserver
     public function deleted(TenderBoqItems $tender)
     {
         $pricingDetails = PricingScheduleDetail::where('id',$tender->getAttribute('main_work_id'))->select('tender_id')->first();
-        $tenderObj = TenderDetails::process($pricingDetails->getAttribute('tender_id'));
-        $obj = DocumentEditValidate::process($pricingDetails->getAttribute('tender_id'));
+        $tenderObj = TenderDetails::getTenderObj($pricingDetails->getAttribute('tender_id'));
+        $obj = TenderDetails::validateTenderEdit($pricingDetails->getAttribute('tender_id'));
 
         if($obj)
         {
@@ -113,8 +112,8 @@ class TenderBoqItemsObserver
     {
 
         $pricingDetails = PricingScheduleDetail::where('id',$tender->getAttribute('main_work_id'))->select('tender_id')->first();
-        $tenderObj = TenderDetails::process($pricingDetails->getAttribute('tender_id'));
-        $obj = DocumentEditValidate::process($pricingDetails->getAttribute('tender_id'));
+        $tenderObj = TenderDetails::getTenderObj($pricingDetails->getAttribute('tender_id'));
+        $obj = TenderDetails::validateTenderEdit($pricingDetails->getAttribute('tender_id'));
         if($obj)
         {   
             $sheduleDetail = PricingScheduleDetailEditLog::where('master_id',$tender->getAttribute('main_work_id'))->orderBy('id','desc')->first();

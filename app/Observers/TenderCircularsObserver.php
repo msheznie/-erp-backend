@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use App\Models\DocumentModifyRequest;
 use App\Models\DocumentModifyRequestDetail;
-use App\helper\DocumentEditValidate;
 use App\Models\TenderCirculars;
 use App\Models\TenderCircularsEditLog;
 use App\helper\TenderDetails;
@@ -24,8 +23,8 @@ class TenderCircularsObserver
  
         $employee = \Helper::getEmployeeInfo();
         $empId = $employee->employeeSystemID;
-        $tenderObj = TenderDetails::process($tender->getAttribute('tender_id'));
-        $obj = DocumentEditValidate::process($tender->getAttribute('tender_id'));
+        $tenderObj = TenderDetails::getTenderObj($tender->getAttribute('tender_id'));
+        $obj = TenderDetails::validateTenderEdit($tender->getAttribute('tender_id'));
 
         if($obj)
         {
@@ -43,8 +42,8 @@ class TenderCircularsObserver
 
     public function updated(TenderCirculars $tender)
     {
-        $tenderObj = TenderDetails::process($tender->getAttribute('tender_id'));
-        $obj = DocumentEditValidate::process($tender->getAttribute('tender_id'));
+        $tenderObj = TenderDetails::getTenderObj($tender->getAttribute('tender_id'));
+        $obj = TenderDetails::validateTenderEdit($tender->getAttribute('tender_id'));
         $employee = \Helper::getEmployeeInfo();
         $empId = $employee->employeeSystemID;
 
@@ -80,8 +79,8 @@ class TenderCircularsObserver
        
         $employee = \Helper::getEmployeeInfo();
         $empId = $employee->employeeSystemID;
-        $tenderObj = TenderDetails::process($tender->getAttribute('tender_id'));
-        $obj = DocumentEditValidate::process($tender->getAttribute('tender_id'));
+        $tenderObj = TenderDetails::getTenderObj($tender->getAttribute('tender_id'));
+        $obj = TenderDetails::validateTenderEdit($tender->getAttribute('tender_id'));
         if($obj)
         {
             $reflogId = null;

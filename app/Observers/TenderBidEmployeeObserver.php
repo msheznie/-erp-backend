@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use App\Models\DocumentModifyRequest;
 use App\Models\DocumentModifyRequestDetail;
-use App\helper\DocumentEditValidate;
 use App\Models\TenderMaster;
 use App\Models\SrmTenderBidEmployeeDetailsEditLog;
 use App\helper\TenderDetails;
@@ -23,7 +22,7 @@ class TenderBidEmployeeObserver
      */
     public function deleted(SrmTenderBidEmployeeDetails $tender)
     {
-        $obj = DocumentEditValidate::process($tender->getAttribute('tender_id'));
+        $obj = TenderDetails::validateTenderEdit($tender->getAttribute('tender_id'));
 
             if($obj)
             {
@@ -38,8 +37,8 @@ class TenderBidEmployeeObserver
 
     public function created(SrmTenderBidEmployeeDetails $tender)
     {
-        $tenderObj = TenderDetails::process($tender->getAttribute('tender_id'));
-        $obj = DocumentEditValidate::process($tender->getAttribute('tender_id'));
+        $tenderObj = TenderDetails::getTenderObj($tender->getAttribute('tender_id'));
+        $obj = TenderDetails::validateTenderEdit($tender->getAttribute('tender_id'));
             if($obj)
             {
                 $result = $this->eveluate($tender->getAttribute('emp_id'),0,null,null,0,$tender->getAttribute('tender_id'),$tenderObj->getOriginal('tender_edit_version_id'),2);

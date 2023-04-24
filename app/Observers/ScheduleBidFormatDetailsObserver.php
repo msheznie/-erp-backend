@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use App\Models\DocumentModifyRequest;
 use App\Models\DocumentModifyRequestDetail;
-use App\helper\DocumentEditValidate;
 use App\Models\ScheduleBidFormatDetails;
 use App\Models\PricingScheduleMaster;
 use App\Models\ScheduleBidFormatDetailsLog;
@@ -29,11 +28,11 @@ class ScheduleBidFormatDetailsObserver
     {
 
         $shedule_master = PricingScheduleMaster::where('id',$tender->getAttribute('schedule_id'))->select('tender_id')->first();
-        $tenderObj = TenderDetails::process($shedule_master->getAttribute('tender_id'));
+        $tenderObj = TenderDetails::getTenderObj($shedule_master->getAttribute('tender_id'));
         $employee = \Helper::getEmployeeInfo();
         $empId = $employee->employeeSystemID;
     
-        $obj = DocumentEditValidate::process($shedule_master->getAttribute('tender_id'));
+        $obj = TenderDetails::validateTenderEdit($shedule_master->getAttribute('tender_id'));
 
         if($obj)
         {

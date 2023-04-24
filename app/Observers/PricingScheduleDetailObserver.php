@@ -7,7 +7,6 @@ use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use App\Models\DocumentModifyRequest;
 use App\Models\DocumentModifyRequestDetail;
-use App\helper\DocumentEditValidate;
 use App\Models\PricingScheduleDetail;
 use App\Models\PricingScheduleMasterEditLog;
 use App\Models\PricingScheduleDetailEditLog;
@@ -24,11 +23,11 @@ class PricingScheduleDetailObserver
      */
     public function updated(PricingScheduleDetail $tender)
     {   
-        $tenderObj = TenderDetails::process($tender->getAttribute('tender_id'));
+        $tenderObj = TenderDetails::getTenderObj($tender->getAttribute('tender_id'));
         $employee = \Helper::getEmployeeInfo();
         $empId = $employee->employeeSystemID;
         $modifyType = 2;
-        $obj = DocumentEditValidate::process($tender->getAttribute('tender_id'));
+        $obj = TenderDetails::validateTenderEdit($tender->getAttribute('tender_id'));
         $bidFormatDetailId = $tender->getAttribute('bid_format_detail_id');
         if($obj)
         {
@@ -126,8 +125,8 @@ class PricingScheduleDetailObserver
     public function created(PricingScheduleDetail $tender)
     {
 
-        $tenderObj = TenderDetails::process($tender->getAttribute('tender_id'));
-        $obj = DocumentEditValidate::process($tender->getAttribute('tender_id'));
+        $tenderObj = TenderDetails::getTenderObj($tender->getAttribute('tender_id'));
+        $obj = TenderDetails::validateTenderEdit($tender->getAttribute('tender_id'));
 
         $employee = \Helper::getEmployeeInfo();
         $empId = $employee->employeeSystemID;
