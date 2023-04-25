@@ -29,7 +29,8 @@ class TenderBoqItemsObserver
 
 
         $pricingDetails = PricingScheduleDetail::where('id',$tender->getAttribute('main_work_id'))->select('tender_id')->first();
-        $obj = TenderDetails::getTenderMasterData($pricingDetails->getAttribute('tender_id'));
+        $obj = TenderDetails::validateTenderEdit($pricingDetails->getAttribute('tender_id'));
+        $tenderObj = TenderDetails::getTenderMasterData($pricingDetails->getAttribute('tender_id'));
 
         if($obj)
         {
@@ -46,7 +47,7 @@ class TenderBoqItemsObserver
                 }
                 $data['uom']=$tender->getAttribute('uom');
                 $data['qty']=$tender->getAttribute('qty');
-                $data['tender_edit_version_id']=$sheduleDetail->getAttribute('tender_edit_version_id');
+                $data['tender_edit_version_id']=$tenderObj->getAttribute('tender_edit_version_id');
                 $data['tender_id']=$sheduleDetail->getAttribute('tender_id');
                 $data['master_id']=$tender->getAttribute('id');
                 $data['modify_type']=2;
@@ -77,10 +78,14 @@ class TenderBoqItemsObserver
         if($obj)
         {
        
-            $result = PricingScheduleMaster::where('id',$details->getAttribute('pricing_schedule_master_id'))->first();
             $detailLog = PricingScheduleDetailEditLog::where('master_id',$tender->getAttribute('main_work_id'))->where('tender_id',$tenderObj->getAttribute('id'))->first();
-    
-    
+            
+            $reflogId = null;
+            $activity = TenderBoqItemsEditLog::where('master_id',$tender->getAttribute('id'))->where('modify_type',2)->select('id')->first();
+            if(isset($activity))
+            {
+               $reflogId = $activity->getAttribute('id');
+            }
             $employee = \Helper::getEmployeeInfo();
             $empId = $employee->employeeSystemID;
             $data['main_work_id']=$detailLog->getAttribute('id');
@@ -94,6 +99,7 @@ class TenderBoqItemsObserver
             $data['tender_id']=$tenderObj->getAttribute('id');
             $data['master_id']=$tender->getAttribute('id');
             $data['modify_type']=1;
+            $data['ref_log_id']=$reflogId;
             $data['created_by'] = $empId;
     
             $result = TenderBoqItemsEditLog::create($data);
