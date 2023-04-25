@@ -5440,11 +5440,16 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         {
             $doc_name = 'purchase_work_order';
             $doc_name_path = 'purchase_work_order/';
-        }    
-      
+        }
+        $companyID = isset($input['companyId']) ? $input['companyId']: null;
+        $companyMaster = Company::find($companyID);
+        $companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
+        $detail_array = array(
+            'company_code'=>$companyCode
+        );
         
         $path = 'procurement/'.$doc_name_path.'excel/';
-        $basePath = CreateExcel::process($data,$type,$doc_name,$path);
+        $basePath = CreateExcel::process($data,$type,$doc_name,$path,$detail_array);
 
         if($basePath == '')
         {
