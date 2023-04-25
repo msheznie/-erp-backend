@@ -83,10 +83,6 @@ class PoAddBulkItemJob implements ShouldQueue
                         
                 if ($res['status']) {
                     ProcurementOrderService::savePoItem($value->itemCodeSystem, $input['companySystemID'], $input['purchaseOrderID'], $input['empID'], $input['employeeSystemID']);
-                } else {
-                    $invalidItems[] = ['itemCodeSystem' => $value->itemCodeSystem, 'message' => $res['message']];
-                    Log::error('Invalid Items');
-                    Log::error($value->primaryCode. " - " .$res['message']);
                 }
             }
 
