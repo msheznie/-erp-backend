@@ -597,6 +597,7 @@ WHERE
             $resultObj = $openingDate->gt($currentDate);
             $data['edit_valid'] = $resultObj;
 
+          
 
             $tendeEditLog = DocumentModifyRequest::where('documentSystemCode', $tenderMasterId)
                                                 ->select('id','type','modify_type','status','confirmation_approved','approved')
@@ -605,18 +606,14 @@ WHERE
             if (isset($tendeEditLog) && $resultObj) {
 
                 $data['request_type'] = ($tendeEditLog->type == 1) ? 'Edit' : 'Amend';
-
+               
                 if ($tendeEditLog->modify_type == 2 && $tendeEditLog->status == 1 && $tendeEditLog->confirmation_approved == 0) {
                     $data['is_confirm_process'] = true;
                     $data['edit_valid'] = false;
-                } else {
-                    if ($tendeEditLog->status == 1 && $tendeEditLog->approved == 0) {
-                        $data['is_request_process'] = true;
-                        $data['edit_valid'] = false;
-                    } else if ($tendeEditLog->status == 1 && $tendeEditLog->approved == -1) {
-                        $data['is_request_process_complete'] = true;
-                        $data['edit_valid'] = false;
-                    }
+                } else if($tendeEditLog->modify_type == 1 && $tendeEditLog->status == 1){
+                    $data['edit_valid'] = false;
+                    $data['is_request_process'] = $tendeEditLog->approved == 0?true:false;
+                    $data['is_request_process_complete'] = $tendeEditLog->approved == -1?true:false;
                 }
             }
         }

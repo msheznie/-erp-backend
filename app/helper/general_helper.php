@@ -5526,6 +5526,12 @@ class Helper
                     $docInforArr["primarykey"] = 'id';
                     $docInforArr["referredColumnName"] = 'timesReferred';
                     break;
+                case 118: // Edit Request
+                    $docInforArr["tableName"] = 'document_modify_request';
+                    $docInforArr["modelName"] = 'DocumentModifyRequest';
+                    $docInforArr["primarykey"] = 'id';
+                    $docInforArr["referredColumnName"] = 'timesReferred';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not set'];
             }
@@ -5553,6 +5559,10 @@ class Helper
                             $timesReferredUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->increment($docInforArr["referredColumnName"]);
                             $refferedBackYNUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->update(['refferedBackYN' => -1]);
                         }
+                        else if($input["documentSystemID"] == 118)
+                        {
+                            $refferedBackYNUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->update(['confirmation_rejected' => -1,'confirmation_rejected_date' => now(),'confirmation_rejected_by_user_system_id' => $empInfo->employeeSystemID]);
+                        }
 
                         /*send Email*/
                         $confirmedUser = 0;
@@ -5572,16 +5582,14 @@ class Helper
                             //     return ['success' => false, 'message' => 'Policy not found for this document'];
                             // }
 
-                            if($input["documentSystemID"] == 117)
+                            if($input["documentSystemID"] == 117 )
                             {
-                                if($sourceModel->type == 1)
-                                {
-                                    $document->documentDescription = 'Edit Request';
-                                }
-                                else
-                                {
-                                    $document->documentDescription = 'Amend Request';
-                                }
+                                $document->documentDescription = $sourceModel->type == 1?'Edit Request':'Amend Request';
+                            }
+
+                            if($input["documentSystemID"] == 118)
+                            {
+                                $document->documentDescription = $sourceModel->type == 1?'Edit Approve Request':'Amend Approve Request';
                             }
 
                             $subjectName = $document->documentDescription . ' ' . $currentApproved->documentCode;
@@ -5629,6 +5637,11 @@ class Helper
                             if($input["documentSystemID"] == 117)
                             {
                                 $refferedBackYNUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->update(['status' => 0,'rejected_date' => now(),'rejected_by_user_system_id' => $empInfo->employeeSystemID]);
+
+                            }
+                            if($input["documentSystemID"] == 118)
+                            {
+                                $refferedBackYNUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->update(['status' => 0,'confirmation_rejected_date' => now(),'confirmation_rejected_by_user_system_id' => $empInfo->employeeSystemID]);
 
                             }
 
