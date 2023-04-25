@@ -31,6 +31,8 @@ use App\Models\JvDetail;
 use App\Models\JvMaster;
 use App\Models\PurchaseReturn;
 use App\Models\PurchaseReturnDetails;
+use App\Models\DebitNoteDetails;
+use Illuminate\Support\Facades\DB;
 
 class BudgetConsumptionService
 {
@@ -5540,37 +5542,559 @@ class BudgetConsumptionService
 
         $actuallConsumptionAmount = $detail->consumed_amount - $committedAmount;
 
-        $pendingSupplierInvoiceAmount = DirectInvoiceDetails::where('companySystemID', $detail->companySystemID)
-                                                            ->when(($DLBCPolicy || $departmentsWiseCheck), function($query) use ($detail) {
-				                                            	$query->where('serviceLineSystemID', $detail->serviceLineSystemID);
-				                                            })
-                                                            ->where('chartOfAccountSystemID', $detail->chartOfAccountID)
-                                                            ->whereHas('supplier_invoice_master', function($query) use ($detail) {
-                                                                $query->where('approved', 0)
-                                                                      ->where('cancelYN', 0)
-                                                                      ->where('documentType', 1)
-                                                                      ->where('companySystemID', $detail->companySystemID);
-                                                             })
-                                                            ->sum('netAmountRpt');
 
-        $pendingPvAmount = DirectPaymentDetails::where('companySystemID', $detail->companySystemID)
-                                                ->when(($DLBCPolicy || $departmentsWiseCheck), function($query) use ($detail) {
-	                                            	$query->where('serviceLineSystemID', $detail->serviceLineSystemID);
-	                                            })
-                                                ->where('chartOfAccountSystemID', $detail->chartOfAccountID)
-                                                ->whereHas('master', function($query) use ($detail) {
-                                                    $query->where('approved', 0)
-                                                          ->where('cancelYN', 0)
-                                                          ->where('invoiceType', 3)
-                                                          ->where('companySystemID', $detail->companySystemID);
-                                                 })
-                                                ->sum('comRptAmount');
-        
-        $pendingDocumentAmount = $detail->pending_po_amount + $pendingSupplierInvoiceAmount + $pendingPvAmount;
+        $pendingDocumentAmount = self::pendingAmountForSummaryReport($detail->toArray(), [$detail->chartOfAccountID]);
 
-        return ['pendingDocumentAmount' => $pendingDocumentAmount, 'actuallConsumptionAmount' => $actuallConsumptionAmount, 'committedAmount' => $committedAmount];
+        return ['pendingDocumentAmount' => $pendingDocumentAmount['pendingAmount'], 'actuallConsumptionAmount' => $actuallConsumptionAmount, 'committedAmount' => $committedAmount];
 
     }
+
+    public static function pendingAmountForSummaryReport($dataParam, $glIds)
+    {
+
+    	
+
+    	$data1 = PurchaseOrderDetails::whereHas('order', function ($q) use ($dataParam) {
+                                            $q->where('companySystemID', $dataParam['companySystemID'])
+                                            ->where('serviceLineSystemID', $dataParam['serviceLineSystemID'])
+                                            ->where('approved', 0)
+                                            ->where('poCancelledYN', 0)
+                                            ->where(function($query) {
+                                                $query->where('projectID', 0)
+                                                      ->orWhereNull('projectID');
+                                            });
+                                    })
+                                    ->where('budgetYear', $dataParam['Year'])
+                                    ->where('itemFinanceCategoryID', '!=', 3)
+                                    ->whereIn('financeGLcodePLSystemID', $glIds)
+                                    // ->join(DB::raw('(SELECT
+                                    //                 erp_companyreporttemplatelinks.templateDetailID as templatesDetailsAutoID,
+                                    //                 erp_companyreporttemplatelinks.templateMasterID,
+                                    //                 erp_companyreporttemplatelinks.glAutoID as chartOfAccountSystemID,
+                                    //                 erp_companyreporttemplatelinks.glCode 
+                                    //                 FROM
+                                    //                 erp_companyreporttemplatelinks
+                                    //                 WHERE erp_companyreporttemplatelinks.templateMasterID =' . $dataParam['templatesMasterAutoID'] . ' AND erp_companyreporttemplatelinks.templateDetailID = ' . $dataParam['templateDetailID'] . ' AND erp_companyreporttemplatelinks.glAutoID is not null) as tem_gl'),
+                                    // function ($join) {
+                                    //     $join->on('erp_purchaseorderdetails.financeGLcodePLSystemID', '=', 'tem_gl.chartOfAccountSystemID');
+                                    // })
+                                    ->whereNotNull('financeGLcodePLSystemID')
+                                    ->with(['order'])
+                                    ->get();
+
+
+        $data2 = PurchaseOrderDetails::whereHas('order', function ($q) use ($dataParam) {
+                                            $q->where('companySystemID', $dataParam['companySystemID'])
+                                            ->where('serviceLineSystemID', $dataParam['serviceLineSystemID'])
+                                            ->where('approved', 0)
+                                            ->where('poCancelledYN', 0)
+                                            ->where(function($query) {
+                                                $query->where('projectID', 0)
+                                                      ->orWhereNull('projectID');
+                                            });
+                                    })
+                                    ->where('budgetYear', $dataParam['Year'])
+                                    ->where('itemFinanceCategoryID', 3)
+                                    ->whereIn('financeGLcodebBSSystemID', $glIds)
+                                    ->whereNotNull('financeGLcodebBSSystemID')
+                                    // ->join(DB::raw('(SELECT
+                                    //                 erp_companyreporttemplatelinks.templateDetailID as templatesDetailsAutoID,
+                                    //                 erp_companyreporttemplatelinks.templateMasterID,
+                                    //                 erp_companyreporttemplatelinks.glAutoID as chartOfAccountSystemID,
+                                    //                 erp_companyreporttemplatelinks.glCode 
+                                    //                 FROM
+                                    //                 erp_companyreporttemplatelinks
+                                    //                 WHERE erp_companyreporttemplatelinks.templateMasterID =' . $dataParam['templatesMasterAutoID'] . ' AND erp_companyreporttemplatelinks.templateDetailID = ' . $dataParam['templateDetailID'] . ' AND erp_companyreporttemplatelinks.glAutoID is not null) as tem_gl'),
+                                    // function ($join) {
+                                    //     $join->on('erp_purchaseorderdetails.financeGLcodebBSSystemID', '=', 'tem_gl.chartOfAccountSystemID');
+                                    // })
+                                    ->with(['order'])
+                                    ->get();
+
+
+        $pendingDirectGRV1 = GRVDetails::whereHas('grv_master', function ($q) use ($dataParam) {
+                                            $q->where('companySystemID', $dataParam['companySystemID'])
+                                            ->where('approved', 0)
+                                            ->where('grvCancelledYN', 0)
+                                            ->where('serviceLineSystemID', $dataParam['serviceLineSystemID'])
+                                            ->whereHas('financeyear_by', function($query) use ($dataParam) {
+                                                $query->whereYear('bigginingDate', $dataParam['Year']);
+                                            })
+                                            ->where(function($query) {
+                                                $query->where('projectID', 0)
+                                                      ->orWhereNull('projectID');
+                                            });
+                                    })
+                                    ->where('itemFinanceCategoryID', '!=', 3)
+                                    ->whereIn('financeGLcodePLSystemID', $glIds)
+                                    ->whereNotNull('financeGLcodePLSystemID')
+                                    //  ->join(DB::raw('(SELECT
+                                    //                 erp_companyreporttemplatelinks.templateDetailID as templatesDetailsAutoID,
+                                    //                 erp_companyreporttemplatelinks.templateMasterID,
+                                    //                 erp_companyreporttemplatelinks.glAutoID as chartOfAccountSystemID,
+                                    //                 erp_companyreporttemplatelinks.glCode 
+                                    //                 FROM
+                                    //                 erp_companyreporttemplatelinks
+                                    //                 WHERE erp_companyreporttemplatelinks.templateMasterID =' . $dataParam['templatesMasterAutoID'] . ' AND erp_companyreporttemplatelinks.templateDetailID = ' . $dataParam['templateDetailID'] . ' AND erp_companyreporttemplatelinks.glAutoID is not null) as tem_gl'),
+                                    // function ($join) {
+                                    //     $join->on('erp_grvdetails.financeGLcodePLSystemID', '=', 'tem_gl.chartOfAccountSystemID');
+                                    // })
+                                    ->whereNull('detail_project_id')
+                                    ->with(['grv_master' => function($query) {
+                                        $query->with(['financeyear_by']);
+                                    }])
+                                    ->get();
+
+        $pendingDirectGRV2 = GRVDetails::whereHas('grv_master', function ($q) use ($dataParam) {
+                                            $q->where('companySystemID', $dataParam['companySystemID'])
+                                            ->where('approved', 0)
+                                            ->where('grvCancelledYN', 0)
+                                            ->where('serviceLineSystemID', $dataParam['serviceLineSystemID'])
+                                            ->whereHas('financeyear_by', function($query) use ($dataParam) {
+                                                $query->whereYear('bigginingDate', $dataParam['Year']);
+                                            })
+                                            ->where(function($query) {
+                                                $query->where('projectID', 0)
+                                                      ->orWhereNull('projectID');
+                                            });
+                                    })
+                                    ->where('itemFinanceCategoryID', 3)
+                                    ->whereIn('financeGLcodebBSSystemID', $glIds)
+                                    ->whereNotNull('financeGLcodebBSSystemID')
+                                    // ->join(DB::raw('(SELECT
+                                    //                 erp_companyreporttemplatelinks.templateDetailID as templatesDetailsAutoID,
+                                    //                 erp_companyreporttemplatelinks.templateMasterID,
+                                    //                 erp_companyreporttemplatelinks.glAutoID as chartOfAccountSystemID,
+                                    //                 erp_companyreporttemplatelinks.glCode 
+                                    //                 FROM
+                                    //                 erp_companyreporttemplatelinks
+                                    //                 WHERE erp_companyreporttemplatelinks.templateMasterID =' . $dataParam['templatesMasterAutoID'] . ' AND erp_companyreporttemplatelinks.templateDetailID = ' . $dataParam['templateDetailID'] . ' AND erp_companyreporttemplatelinks.glAutoID is not null) as tem_gl'),
+                                    // function ($join) {
+                                    //     $join->on('erp_grvdetails.financeGLcodebBSSystemID', '=', 'tem_gl.chartOfAccountSystemID');
+                                    // })
+                                    ->whereNull('detail_project_id')
+                                    ->with(['grv_master' => function($query) {
+                                        $query->with(['financeyear_by']);
+                                    }])
+                                    ->get();
+
+        $pendingSupplierInvoiceAmount = DirectInvoiceDetails::where('companySystemID', $dataParam['companySystemID'])
+                                                        ->whereIn('erp_directinvoicedetails.chartOfAccountSystemID', $glIds)
+                                                        ->where('serviceLineSystemID', $dataParam['serviceLineSystemID'])
+                                                        ->whereHas('supplier_invoice_master', function($query) use ($dataParam) {
+                                                            $query->where('approved', 0)
+                                                                  ->where('cancelYN', 0)
+                                                                  ->whereIn('documentType', [1, 4])
+                                                                  ->where('companySystemID', $dataParam['companySystemID'])
+                                                                   ->whereHas('financeyear_by', function($query) use ($dataParam) {
+                                                                    $query->whereYear('bigginingDate', $dataParam['Year']);
+                                                                  })
+                                                                  ->where(function($query) {
+                                                                    $query->whereNull('projectID')
+                                                                          ->orWhere('projectID', 0);
+                                                                  });
+                                                         })
+                                                        // ->join(DB::raw('(SELECT
+                                                        //                 erp_companyreporttemplatelinks.templateDetailID as templatesDetailsAutoID,
+                                                        //                 erp_companyreporttemplatelinks.templateMasterID,
+                                                        //                 erp_companyreporttemplatelinks.glAutoID as chartOfAccountSystemID,
+                                                        //                 erp_companyreporttemplatelinks.glCode 
+                                                        //                 FROM
+                                                        //                 erp_companyreporttemplatelinks
+                                                        //                 WHERE erp_companyreporttemplatelinks.templateMasterID =' . $dataParam['templatesMasterAutoID'] . ' AND erp_companyreporttemplatelinks.templateDetailID = ' . $dataParam['templateDetailID'] . ' AND erp_companyreporttemplatelinks.glAutoID is not null) as tem_gl'),
+                                                        // function ($join) {
+                                                        //     $join->on('erp_directinvoicedetails.chartOfAccountSystemID', '=', 'tem_gl.chartOfAccountSystemID');
+                                                        // })
+                                                        ->with(['supplier_invoice_master'])
+                                                        ->get();
+        
+        $pendingSupplierItemInvoiceAmount1 = SupplierInvoiceDirectItem::whereHas('master', function($query) use ($dataParam) {
+                                                            $query->where('approved', 0)
+                                                                  ->where('cancelYN', 0)
+                                                                  ->where('documentType', 3)
+                                                                  ->where('serviceLineSystemID', $dataParam['serviceLineSystemID'])
+                                                                  ->where('companySystemID', $dataParam['companySystemID'])
+                                                                  ->whereHas('financeyear_by', function($query) use ($dataParam) {
+                                                                    $query->whereYear('bigginingDate', $dataParam['Year']);
+                                                                  })
+                                                                  ->where(function($query) {
+                                                                    $query->whereNull('projectID')
+                                                                          ->orWhere('projectID', 0);
+                                                                  });
+                                                         })
+                                                        ->where('itemFinanceCategoryID', '!=', 3)
+                                                        ->whereIn('financeGLcodePLSystemID', $glIds)
+                                                        ->whereNotNull('financeGLcodePLSystemID')
+                                                        // ->join(DB::raw('(SELECT
+                                                        //                 erp_companyreporttemplatelinks.templateDetailID as templatesDetailsAutoID,
+                                                        //                 erp_companyreporttemplatelinks.templateMasterID,
+                                                        //                 erp_companyreporttemplatelinks.glAutoID as chartOfAccountSystemID,
+                                                        //                 erp_companyreporttemplatelinks.glCode 
+                                                        //                 FROM
+                                                        //                 erp_companyreporttemplatelinks
+                                                        //                 WHERE erp_companyreporttemplatelinks.templateMasterID =' . $dataParam['templatesMasterAutoID'] . ' AND erp_companyreporttemplatelinks.templateDetailID = ' . $dataParam['templateDetailID'] . ' AND erp_companyreporttemplatelinks.glAutoID is not null) as tem_gl'),
+                                                        // function ($join) {
+                                                        //     $join->on('supplier_invoice_items.financeGLcodePLSystemID', '=', 'tem_gl.chartOfAccountSystemID');
+                                                        // })
+                                                        ->with(['master' => function($query) {
+                                                            $query->with(['financeyear_by']);
+                                                        }])
+                                                        ->get();
+
+        $pendingSupplierItemInvoiceAmount2 = SupplierInvoiceDirectItem::whereHas('master', function($query) use ($dataParam) {
+                                                            $query->where('approved', 0)
+                                                                  ->where('cancelYN', 0)
+                                                                  ->where('documentType', 3)
+                                                                  ->where('serviceLineSystemID', $dataParam['serviceLineSystemID'])
+                                                                  ->where('companySystemID', $dataParam['companySystemID'])
+                                                                  ->whereHas('financeyear_by', function($query) use ($dataParam) {
+                                                                    $query->whereYear('bigginingDate', $dataParam['Year']);
+                                                                  })
+                                                                  ->where(function($query) {
+                                                                    $query->whereNull('projectID')
+                                                                          ->orWhere('projectID', 0);
+                                                                  });
+                                                         })
+                                                        ->where('itemFinanceCategoryID', 3)
+                                                        ->whereIn('financeGLcodebBSSystemID', $glIds)
+                                                        ->whereNotNull('financeGLcodebBSSystemID')
+                                                        //  ->join(DB::raw('(SELECT
+                                                        //                 erp_companyreporttemplatelinks.templateDetailID as templatesDetailsAutoID,
+                                                        //                 erp_companyreporttemplatelinks.templateMasterID,
+                                                        //                 erp_companyreporttemplatelinks.glAutoID as chartOfAccountSystemID,
+                                                        //                 erp_companyreporttemplatelinks.glCode 
+                                                        //                 FROM
+                                                        //                 erp_companyreporttemplatelinks
+                                                        //                 WHERE erp_companyreporttemplatelinks.templateMasterID =' . $dataParam['templatesMasterAutoID'] . ' AND erp_companyreporttemplatelinks.templateDetailID = ' . $dataParam['templateDetailID'] . ' AND erp_companyreporttemplatelinks.glAutoID is not null) as tem_gl'),
+                                                        // function ($join) {
+                                                        //     $join->on('supplier_invoice_items.financeGLcodebBSSystemID', '=', 'tem_gl.chartOfAccountSystemID');
+                                                        // })
+                                                        ->with(['master' => function($query) {
+                                                            $query->with(['financeyear_by']);
+                                                        }])
+                                                        ->get();
+
+        $pendingPvAmount = DirectPaymentDetails::where('companySystemID', $dataParam['companySystemID'])
+                                            ->with(['master'])
+                                            ->whereIn('erp_directpaymentdetails.chartOfAccountSystemID', $glIds)
+                                            ->where('serviceLineSystemID', $dataParam['serviceLineSystemID'])
+                                            ->whereHas('master', function($query) use ($dataParam) {
+                                                $query->where('approved', 0)
+                                                      ->where('cancelYN', 0)
+                                                      ->where('invoiceType', 3)
+                                                      ->whereHas('financeyear_by', function($query) use ($dataParam) {
+                                                        $query->whereYear('bigginingDate', $dataParam['Year']);
+                                                      })
+                                                      ->where('companySystemID', $dataParam['companySystemID']);
+                                             })
+                                            //  ->join(DB::raw('(SELECT
+                                            //                 erp_companyreporttemplatelinks.templateDetailID as templatesDetailsAutoID,
+                                            //                 erp_companyreporttemplatelinks.templateMasterID,
+                                            //                 erp_companyreporttemplatelinks.glAutoID as chartOfAccountSystemID,
+                                            //                 erp_companyreporttemplatelinks.glCode 
+                                            //                 FROM
+                                            //                 erp_companyreporttemplatelinks
+                                            //                 WHERE erp_companyreporttemplatelinks.templateMasterID =' . $dataParam['templatesMasterAutoID'] . ' AND erp_companyreporttemplatelinks.templateDetailID = ' . $dataParam['templateDetailID'] . ' AND erp_companyreporttemplatelinks.glAutoID is not null) as tem_gl'),
+                                            // function ($join) {
+                                            //     $join->on('erp_directpaymentdetails.chartOfAccountSystemID', '=', 'tem_gl.chartOfAccountSystemID');
+                                            // })
+                                            ->get();
+
+
+        $pendingPurchaseRetuenAmount1 = PurchaseReturnDetails::whereHas('master', function($query) use ($dataParam) {
+                                                                 $query->where('approved', 0)
+                                                                      ->where('serviceLineSystemID', $dataParam['serviceLineSystemID'])
+                                                                      ->where('companySystemID', $dataParam['companySystemID'])
+                                                                      ->whereHas('finance_year_by', function($query) use ($dataParam) {
+                                                                            $query->whereYear('bigginingDate', $dataParam['Year']);
+                                                                      });
+                                                            })
+                                                        ->where('itemFinanceCategoryID', '!=', 3)
+                                                        ->whereIn('financeGLcodePLSystemID', $glIds)
+                                                        ->whereNotNull('financeGLcodePLSystemID')
+                                                        //  ->join(DB::raw('(SELECT
+                                                        //                 erp_companyreporttemplatelinks.templateDetailID as templatesDetailsAutoID,
+                                                        //                 erp_companyreporttemplatelinks.templateMasterID,
+                                                        //                 erp_companyreporttemplatelinks.glAutoID as chartOfAccountSystemID,
+                                                        //                 erp_companyreporttemplatelinks.glCode 
+                                                        //                 FROM
+                                                        //                 erp_companyreporttemplatelinks
+                                                        //                 WHERE erp_companyreporttemplatelinks.templateMasterID =' . $dataParam['templatesMasterAutoID'] . ' AND erp_companyreporttemplatelinks.templateDetailID = ' . $dataParam['templateDetailID'] . ' AND erp_companyreporttemplatelinks.glAutoID is not null) as tem_gl'),
+                                                        // function ($join) {
+                                                        //     $join->on('erp_purchasereturndetails.financeGLcodePLSystemID', '=', 'tem_gl.chartOfAccountSystemID');
+                                                        // })
+                                                        ->with(['master' => function($query) {
+                                                            $query->with(['finance_year_by']);
+                                                        }])
+                                                        ->get();
+
+        $pendingPurchaseRetuenAmount2 = PurchaseReturnDetails::whereHas('master', function($query) use ($dataParam) {
+                                                                 $query->where('approved', 0)
+                                                                        ->where('serviceLineSystemID', $dataParam['serviceLineSystemID'])
+                                                                        ->where('companySystemID', $dataParam['companySystemID'])
+                                                                        ->whereHas('finance_year_by', function($query) use ($dataParam) {
+                                                                            $query->whereYear('bigginingDate', $dataParam['Year']);
+                                                                        });
+                                                            })
+                                                            ->where('itemFinanceCategoryID', 3)
+                                                            ->whereIn('financeGLcodebBSSystemID', $glIds)
+                                                            ->whereNotNull('financeGLcodebBSSystemID')
+                                                            //  ->join(DB::raw('(SELECT
+                                                            //             erp_companyreporttemplatelinks.templateDetailID as templatesDetailsAutoID,
+                                                            //             erp_companyreporttemplatelinks.templateMasterID,
+                                                            //             erp_companyreporttemplatelinks.glAutoID as chartOfAccountSystemID,
+                                                            //             erp_companyreporttemplatelinks.glCode 
+                                                            //             FROM
+                                                            //             erp_companyreporttemplatelinks
+                                                            //                 WHERE erp_companyreporttemplatelinks.templateMasterID =' . $dataParam['templatesMasterAutoID'] . ' AND erp_companyreporttemplatelinks.templateDetailID = ' . $dataParam['templateDetailID'] . ' AND erp_companyreporttemplatelinks.glAutoID is not null) as tem_gl'),
+                                                            // function ($join) {
+                                                            //     $join->on('erp_purchasereturndetails.financeGLcodebBSSystemID', '=', 'tem_gl.chartOfAccountSystemID');
+                                                            // })
+                                                            ->with(['master' => function($query) {
+                                                                $query->with(['finance_year_by']);
+                                                            }])
+                                                            ->get();
+
+
+        $pendingJVAmount = JvDetail::whereHas('master', function($query) use ($dataParam) {
+                                                    $query->where('approved', 0)
+                                                          ->where('jvType', 3)
+                                                          ->where('companySystemID', $dataParam['companySystemID'])
+                                                          ->whereHas('financeyear_by', function($query) use ($dataParam) {
+                                                                $query->whereYear('bigginingDate', $dataParam['Year']);
+                                                          });
+                                                 })
+                                                ->where('serviceLineSystemID', $dataParam['serviceLineSystemID'])
+                                                ->whereIn('erp_jvdetail.chartOfAccountSystemID', $glIds)
+                                                ->whereNotNull('erp_jvdetail.chartOfAccountSystemID')
+                                                //  ->join(DB::raw('(SELECT
+                                                //             erp_companyreporttemplatelinks.templateDetailID as templatesDetailsAutoID,
+                                                //             erp_companyreporttemplatelinks.templateMasterID,
+                                                //             erp_companyreporttemplatelinks.glAutoID as chartOfAccountSystemID,
+                                                //             erp_companyreporttemplatelinks.glCode 
+                                                //             FROM
+                                                //             erp_companyreporttemplatelinks
+                                                //                 WHERE erp_companyreporttemplatelinks.templateMasterID =' . $dataParam['templatesMasterAutoID'] . ' AND erp_companyreporttemplatelinks.templateDetailID = ' . $dataParam['templateDetailID'] . ' AND erp_companyreporttemplatelinks.glAutoID is not null) as tem_gl'),
+                                                // function ($join) {
+                                                //     $join->on('erp_jvdetail.chartOfAccountSystemID', '=', 'tem_gl.chartOfAccountSystemID');
+                                                // })
+                                                ->with(['master' => function($query) {
+                                                    $query->with(['financeyear_by']);
+                                                }])
+                                                ->get();
+
+
+        $pendingDebitNoteAmount = DebitNoteDetails::whereHas('master', function($query) use ($dataParam) {
+                                                    $query->where('approved', 0)
+                                                          ->where('companySystemID', $dataParam['companySystemID'])
+                                                          ->whereHas('finance_year_by', function($query) use ($dataParam) {
+                                                                $query->whereYear('bigginingDate', $dataParam['Year']);
+                                                          });
+                                                 })
+                                                ->where('serviceLineSystemID', $dataParam['serviceLineSystemID'])
+                                                ->where('budgetYear', $dataParam['Year'])
+                                                ->whereIn('erp_debitnotedetails.chartOfAccountSystemID', $glIds)
+                                                ->whereNotNull('erp_debitnotedetails.chartOfAccountSystemID')
+                                                //  ->join(DB::raw('(SELECT
+                                                //             erp_companyreporttemplatelinks.templateDetailID as templatesDetailsAutoID,
+                                                //             erp_companyreporttemplatelinks.templateMasterID,
+                                                //             erp_companyreporttemplatelinks.glAutoID as chartOfAccountSystemID,
+                                                //             erp_companyreporttemplatelinks.glCode 
+                                                //             FROM
+                                                //             erp_companyreporttemplatelinks
+                                                //                 WHERE erp_companyreporttemplatelinks.templateMasterID =' . $dataParam['templatesMasterAutoID'] . ' AND erp_companyreporttemplatelinks.templateDetailID = ' . $dataParam['templateDetailID'] . ' AND erp_companyreporttemplatelinks.glAutoID is not null) as tem_gl'),
+                                                // function ($join) {
+                                                //     $join->on('erp_debitnotedetails.chartOfAccountSystemID', '=', 'tem_gl.chartOfAccountSystemID');
+                                                // })
+                                                ->with(['master' => function($query) {
+                                                    $query->with(['finance_year_by']);
+                                                }])
+                                                ->get();
+
+
+        $data = [];
+
+
+        foreach ($pendingDebitNoteAmount as $key => $value) {
+            $temp = [];
+            $temp['companyID'] = $value->master->companyID;
+            $temp['serviceLine'] = $value->serviceLineCode;
+            $temp['financeGLcodePL'] = $value->glCode;
+            $temp['budgetYear'] = Carbon::parse($value->master->finance_year_by->bigginingDate)->format('Y');
+            $temp['documentCode'] = $value->master->debitNoteCode;
+            $temp['documentSystemCode'] = $value->master->debitNoteAutoID;
+            $temp['documentSystemID'] = $value->master->documentSystemID;
+            $temp['lineTotal'] = $value->comRptAmount * -1;
+
+            $data[] = $temp;
+        }
+
+
+        foreach ($pendingJVAmount as $key => $value) {
+            $temp = [];
+            $temp['companyID'] = $value->master->companyID;
+            $temp['serviceLine'] = $value->serviceLineCode;
+            $temp['financeGLcodePL'] = ChartOfAccount::getAccountCode($value->chartOfAccountSystemID);
+            $temp['budgetYear'] = Carbon::parse($value->master->financeyear_by->bigginingDate)->format('Y');
+            $temp['documentCode'] = $value->master->JVcode;
+            $temp['documentSystemCode'] = $value->master->jvMasterAutoId;
+            $temp['documentSystemID'] = $value->master->documentSystemID;
+
+            $amount = $value->debitAmount + $value->creditAmount * -1;
+
+            $currencyConversionRptAmount = \Helper::currencyConversion($value->companySystemID, $value->currencyID, $value->currencyID, $amount);
+
+            $temp['lineTotal'] = $currencyConversionRptAmount['reportingAmount'];
+
+            $data[] = $temp;
+        }
+
+         foreach ($pendingPurchaseRetuenAmount1 as $key => $value) {
+            $temp = [];
+            $temp['companyID'] = $value->master->companyID;
+            $temp['serviceLine'] = $value->master->serviceLineCode;
+            $temp['financeGLcodePL'] = $value->financeGLcodePL;
+            $temp['budgetYear'] = Carbon::parse($value->master->finance_year_by->bigginingDate)->format('Y');
+            $temp['documentCode'] = $value->master->purchaseReturnCode;
+            $temp['documentSystemCode'] = $value->master->purhaseReturnAutoID;
+            $temp['documentSystemID'] = $value->master->documentSystemID;
+            $temp['lineTotal'] = $value->GRVcostPerUnitComRptCur * $value->noQty * -1;
+
+            $data[] = $temp;
+        }
+
+         foreach ($pendingPurchaseRetuenAmount2 as $key => $value) {
+            $temp = [];
+            $temp['companyID'] = $value->master->companyID;
+            $temp['serviceLine'] = $value->master->serviceLineCode;
+            $temp['financeGLcodePL'] = $value->financeGLcodebBS;
+            $temp['budgetYear'] = Carbon::parse($value->master->finance_year_by->bigginingDate)->format('Y');
+            $temp['documentCode'] = $value->master->purchaseReturnCode;
+            $temp['documentSystemCode'] = $value->master->purhaseReturnAutoID;
+            $temp['documentSystemID'] = $value->master->documentSystemID;
+            $temp['lineTotal'] = $value->GRVcostPerUnitComRptCur * $value->noQty * -1;
+
+            $data[] = $temp;
+        }
+
+        foreach ($data1 as $key => $value) {
+            $temp = [];
+            $temp['companyID'] = $value->order->companyID;
+            $temp['serviceLine'] = $value->order->serviceLine;
+            $temp['financeGLcodePL'] = $value->financeGLcodePL;
+            $temp['budgetYear'] = $value->budgetYear;
+            $temp['documentCode'] = $value->order->purchaseOrderCode;
+            $temp['documentSystemCode'] = $value->order->purchaseOrderID;
+            $temp['documentSystemID'] = $value->order->documentSystemID;
+            $temp['lineTotal'] = $value->GRVcostPerUnitComRptCur * $value->noQty;
+
+            $data[] = $temp;
+        }
+
+         foreach ($data2 as $key => $value) {
+            $temp = [];
+            $temp['companyID'] = $value->order->companyID;
+            $temp['serviceLine'] = $value->order->serviceLine;
+            $temp['financeGLcodePL'] = $value->financeGLcodebBS;
+            $temp['budgetYear'] = $value->budgetYear;
+            $temp['documentCode'] = $value->order->purchaseOrderCode;
+            $temp['documentSystemCode'] = $value->order->purchaseOrderID;
+            $temp['documentSystemID'] = $value->order->documentSystemID;
+            $temp['lineTotal'] = $value->GRVcostPerUnitComRptCur * $value->noQty;
+
+            $data[] = $temp;
+        }
+
+        foreach ($pendingDirectGRV1 as $key => $value) {
+            $temp = [];
+            $temp['companyID'] = $value->grv_master->companyID;
+            $temp['serviceLine'] = $value->grv_master->serviceLineCode;
+            $temp['financeGLcodePL'] = $value->financeGLcodePL;
+            $temp['budgetYear'] = Carbon::parse($value->grv_master->financeyear_by->bigginingDate)->format('Y');
+            $temp['documentCode'] = $value->grv_master->grvPrimaryCode;
+            $temp['documentSystemCode'] = $value->grv_master->grvAutoID;
+            $temp['documentSystemID'] = $value->grv_master->documentSystemID;
+            $temp['lineTotal'] = $value->GRVcostPerUnitComRptCur * $value->noQty;
+
+            $data[] = $temp;
+        }
+
+         foreach ($pendingDirectGRV2 as $key => $value) {
+            $temp = [];
+            $temp['companyID'] = $value->grv_master->companyID;
+            $temp['serviceLine'] = $value->grv_master->serviceLineCode;
+            $temp['financeGLcodePL'] = $value->financeGLcodebBS;
+            $temp['budgetYear'] = Carbon::parse($value->grv_master->financeyear_by->bigginingDate)->format('Y');
+            $temp['documentCode'] = $value->grv_master->grvPrimaryCode;
+            $temp['documentSystemCode'] = $value->grv_master->grvAutoID;
+            $temp['documentSystemID'] = $value->grv_master->documentSystemID;
+            $temp['lineTotal'] = $value->GRVcostPerUnitComRptCur * $value->noQty;
+
+            $data[] = $temp;
+        }
+
+        foreach ($pendingSupplierItemInvoiceAmount1 as $key => $value) {
+            $temp = [];
+            $temp['companyID'] = $value->master->companyID;
+            $temp['serviceLine'] = $value->master->serviceLine;
+            $temp['financeGLcodePL'] = ChartOfAccount::getAccountCode($value->financeGLcodePLSystemID);
+            $temp['budgetYear'] = Carbon::parse($value->master->financeyear_by->bigginingDate)->format('Y');
+            $temp['documentCode'] = $value->master->bookingInvCode;
+            $temp['documentSystemCode'] = $value->master->bookingSuppMasInvAutoID;
+            $temp['documentSystemID'] = $value->master->documentSystemID;
+            $temp['lineTotal'] = $value->costPerUnitComRptCur * $value->noQty;
+
+            $data[] = $temp;
+        }
+
+        foreach ($pendingSupplierItemInvoiceAmount2 as $key => $value) {
+            $temp = [];
+            $temp['companyID'] = $value->master->companyID;
+            $temp['serviceLine'] = SegmentMaster::getSegmentCode($value->master->serviceLineSystemID);
+            $temp['financeGLcodePL'] = ChartOfAccount::getAccountCode($value->financeGLcodebBSSystemID);
+            $temp['budgetYear'] = Carbon::parse($value->master->financeyear_by->bigginingDate)->format('Y');
+            $temp['documentCode'] = $value->master->bookingInvCode;
+            $temp['documentSystemCode'] = $value->master->bookingSuppMasInvAutoID;
+            $temp['documentSystemID'] = $value->master->documentSystemID;
+            $temp['lineTotal'] = $value->costPerUnitComRptCur * $value->noQty;
+
+            $data[] = $temp;
+        }
+
+        foreach ($pendingSupplierInvoiceAmount as $key => $value) {
+            $temp = [];
+            $temp['companyID'] = $value->supplier_invoice_master->companyID;
+            $temp['serviceLine'] = $value->serviceLineCode;
+            $temp['financeGLcodePL'] = $value->glCode;
+            $temp['budgetYear'] = $value->budgetYear;
+            $temp['documentCode'] = $value->supplier_invoice_master->bookingInvCode;
+            $temp['documentSystemCode'] = $value->supplier_invoice_master->bookingSuppMasInvAutoID;
+            $temp['documentSystemID'] = $value->supplier_invoice_master->documentSystemID;
+            $temp['lineTotal'] = $value->netAmountRpt;
+
+            $data[] = $temp;
+        }
+
+        foreach ($pendingPvAmount as $key => $value) {
+            $temp = [];
+            $temp['lineTotal'] = $value->comRptAmount;
+            $temp['companyID'] = $value->master->companyID;
+            $temp['serviceLine'] = $value->serviceLineCode;
+            $temp['financeGLcodePL'] = $value->glCode;
+            $temp['budgetYear'] = $value->budgetYear;
+            $temp['documentCode'] = $value->master->BPVcode;
+            $temp['documentSystemCode'] = $value->master->PayMasterAutoId;
+            $temp['documentSystemID'] = $value->master->documentSystemID;
+
+            $data[] = $temp;
+        }
+
+
+        $pendingAmount = array_sum(collect($data)->pluck('lineTotal')->toArray());
+
+        return ['data' => $data, 'pendingAmount' => $pendingAmount];
+    }
+
 
     public static function getBudgetIdsByConsumption($documentSystemID, $documentSystemCode)
     {
