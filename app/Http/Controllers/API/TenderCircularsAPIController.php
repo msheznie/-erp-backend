@@ -744,7 +744,7 @@ class TenderCircularsAPIController extends AppBaseController
 
         DB::beginTransaction();
         try {
-            $circularObj = CircularAmendments::where('circular_id', $id)->get();
+            $circularObj = CircularAmendments::select('id')->where('circular_id', $id)->get();
 
             foreach ($circularObj as $val) {
                 $circular = CircularAmendments::find($val->id);
