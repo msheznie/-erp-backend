@@ -377,11 +377,11 @@ class TenderCircularsAPIController extends AppBaseController
 
         if($input['isRequestProcessComplete'] && $input['requestType'] == 'Amend')
         {        
-            if(isset($input['attachment_id'])){
-                if(sizeof($input['attachment_id' ]) == 0){
-                    return ['success' => false, 'message' => 'Amendment is required'];
-                }
-            } else {
+            if(!isset($input['attachment_id'])){
+                return ['success' => false, 'message' => 'Amendment is required'];
+            } 
+            
+            if(sizeof($input['attachment_id' ]) == 0){
                 return ['success' => false, 'message' => 'Amendment is required'];
             }
                
