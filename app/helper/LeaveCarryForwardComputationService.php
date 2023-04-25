@@ -43,7 +43,8 @@ class LeaveCarryForwardComputationService
 
         $jobStartDate = Carbon::parse($this->periodData['endDate'])->subDay()->format('Y-m-d');
 
-        if($jobStartDate != $this->currentDate){ 
+        if($jobStartDate != $this->currentDate){
+            $this->insertToLogTb('Service execution stopped due to date validation failed'); 
             return false;
         }
 
@@ -201,7 +202,8 @@ class LeaveCarryForwardComputationService
 
     function leaveDetails($leaveGroupID, $policyBasedOn, $typeID, $leaveTypePolicy)
     {
-        $select = '' . $typeID . ' as leaveTypeId,' . $leaveTypePolicy . ' as leaveTypePolicy, emp.EIdNo as emp_id,ECode, Ename2, emp.leaveGroupID as emp_leave_group_id ';
+        $select = '' . $typeID . ' as leaveTypeId,' . $leaveTypePolicy . ' as leaveTypePolicy, emp.EIdNo as emp_id, ECode, 
+        Ename2, emp.leaveGroupID as emp_leave_group_id ';
         $monthlyFirstDate =  $this->monthDet['dateFrom'];
         $yearFirstDate =  $this->periodData['startDate'];
         $yearEndDate =  $this->periodData['endDate'];
@@ -416,13 +418,15 @@ class LeaveCarryForwardComputationService
     function insertToLogTb($logData, $logType = 'info')
     {
         $logData = json_encode($logData);
+        $logAt = Carbon::now()->format('Y-m-d H:m:s');
+
         $data = [
             'company_id' => $this->companyId,
             'module' => 'HRMS',
             'description' => 'Leave Maximum Carry Forward Adjustment',
             'scenario_id' => 0,
             'processed_for' => $this->currentDate,
-            'logged_at' => $this->currentDate,
+            'logged_at' => $logAt,
             'log_type' => $logType,
             'log_data' => $logData
         ];
