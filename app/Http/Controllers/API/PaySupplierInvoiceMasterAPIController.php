@@ -23,6 +23,7 @@ use App\helper\Helper;
 use App\helper\TaxService;
 use App\Http\Requests\API\CreatePaySupplierInvoiceMasterAPIRequest;
 use App\Http\Requests\API\UpdatePaySupplierInvoiceMasterAPIRequest;
+use App\Models\BudgetConsumedData;
 use App\Models\EmployeeLedger;
 use App\Models\AccountsPayableLedger;
 use App\Models\AdvancePaymentDetails;
@@ -4654,6 +4655,11 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
                 ->delete();
 
             TaxLedgerDetail::where('documentMasterAutoID', $PayMasterAutoId)
+                ->where('companySystemID', $paymentVoucherData->companySystemID)
+                ->where('documentSystemID', $paymentVoucherData->documentSystemID)
+                ->delete();
+
+            BudgetConsumedData::where('documentSystemCode', $PayMasterAutoId)
                 ->where('companySystemID', $paymentVoucherData->companySystemID)
                 ->where('documentSystemID', $paymentVoucherData->documentSystemID)
                 ->delete();
