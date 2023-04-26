@@ -133,7 +133,8 @@ class TenderCircularsEditLog extends Model
         'ref_log_id',
         'status',
         'tender_id',
-        'vesion_id'
+        'vesion_id',
+        'updated_by'
     ];
 
     /**

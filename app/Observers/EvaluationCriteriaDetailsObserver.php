@@ -53,8 +53,13 @@ class EvaluationCriteriaDetailsObserver
         if($obj)
         {
             
+        $parentId = null;
         $result = EvaluationCriteriaDetailsEditLog::where('master_id',$tender->getAttribute('id'))->first();
-        $parentId = $result->getAttribute('parent_id');
+        if(isset($result))
+        {
+            $parentId = $result->getAttribute('parent_id');
+        }
+      
         $masterId = $tender->getAttribute('id');
    
 
@@ -167,7 +172,7 @@ class EvaluationCriteriaDetailsObserver
                     {
                         $parent = $obj1->getAttribute('parent_id');
                         $masterId = $obj1->getAttribute('id');
-                        $result1 = $this->process($tenderObj,$tender,$empId,1,null,$parent,$masterId);
+                        $result1 = $this->process($tenderObj,$obj1,$empId,1,null,$parent,$masterId);
                         if($result1)
                         {
                             $obj2 = EvaluationCriteriaDetails::where('parent_id',$obj1->getAttribute('id'))->orderBy('id','desc')->first(); 
@@ -175,7 +180,7 @@ class EvaluationCriteriaDetailsObserver
                             {
                                 $parent = $obj2->getAttribute('parent_id');
                                 $masterId = $obj2->getAttribute('id');
-                                $result2 = $this->process($tenderObj,$tender,$empId,1,null,$parent,$masterId);
+                                $result2 = $this->process($tenderObj,$obj2,$empId,1,null,$parent,$masterId);
 
                                 if($result2)
                                 {
@@ -184,7 +189,7 @@ class EvaluationCriteriaDetailsObserver
                                     {
                                         $parent = $obj3->getAttribute('parent_id');
                                         $masterId = $obj3->getAttribute('id');
-                                        $result3 = $this->process($tenderObj,$tender,$empId,1,null,$parent,$masterId);
+                                        $result3 = $this->process($tenderObj,$obj3,$empId,1,null,$parent,$masterId);
         
                                     }
                                 }
@@ -215,14 +220,13 @@ class EvaluationCriteriaDetailsObserver
         $data['passing_weightage'] = $tender->getOriginal('passing_weightage');
         $data['is_final_level'] = $tender->getOriginal('is_final_level');
         $data['sort_order'] = $tender->getOriginal('sort_order');
-        $data['created_by'] = $emp_id;
+        $data['updated_by'] = $emp_id;
         $data['max_value'] = $tender->getOriginal('max_value');
         $data['min_value'] = $tender->getOriginal('min_value');
         $data['modify_type'] = $type;
         $data['ref_log_id'] = $reflog_id;
         $data['master_id'] = $master_id;
         $data['tender_version_id'] = $tenderObj->getOriginal('tender_edit_version_id');
-
         $result = EvaluationCriteriaDetailsEditLog::create($data);
 
         if($result)
@@ -244,14 +248,13 @@ class EvaluationCriteriaDetailsObserver
         $data['passing_weightage'] = $tender->getAttribute('passing_weightage');
         $data['is_final_level'] = $tender->getAttribute('is_final_level');
         $data['sort_order'] = $tender->getAttribute('sort_order');
-        $data['created_by'] = $emp_id;
+        $data['updated_by'] = $emp_id;
         $data['max_value'] = $tender->getAttribute('max_value');
         $data['min_value'] = $tender->getAttribute('min_value');
         $data['modify_type'] = $type;
         $data['ref_log_id'] = $reflog_id;
         $data['master_id'] = $master_id;
         $data['tender_version_id'] = $tenderObj->getAttribute('tender_edit_version_id');
-
         $result = EvaluationCriteriaDetailsEditLog::create($data);
 
         if($result)

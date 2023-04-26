@@ -66,6 +66,7 @@ class TenderBidEmployeeObserver
             $data['tender_edit_version_id'] = $version_id;
             $data['modify_type'] = $type;
             $data['created_at'] = now();
+            $data['updated_by'] = $emp_id;
             $result = SrmTenderBidEmployeeDetailsEditLog::insert($data);
             return $result;
         

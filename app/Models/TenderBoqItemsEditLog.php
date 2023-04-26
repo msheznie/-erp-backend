@@ -143,7 +143,8 @@ class TenderBoqItemsEditLog extends Model
         'tender_id',
         'tender_ranking_line_item',
         'uom',
-        'ref_log_id'
+        'ref_log_id',
+        'updated_by'
     ];
 
     /**

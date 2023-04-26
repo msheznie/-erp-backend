@@ -129,7 +129,8 @@ class SrmTenderBidEmployeeDetailsEditLog extends Model
         'tender_award_commite_mem_comment',
         'tender_award_commite_mem_status',
         'tender_edit_version_id',
-        'tender_id'
+        'tender_id',
+        'updated_by',
     ];
 
     /**

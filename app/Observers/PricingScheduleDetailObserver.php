@@ -64,6 +64,7 @@ class PricingScheduleDetailObserver
                                 $data1['master_id'] = $tender->getAttribute('pricing_schedule_master_id');
                                 $data1['red_log_id'] = null;
                                 $data1['created_at'] = now();
+                                $data1['updated_by'] = $empId;
                                 $sheduleMaster = PricingScheduleMasterEditLog::create($data1);
 
                                 if($sheduleMaster)
@@ -95,6 +96,7 @@ class PricingScheduleDetailObserver
                                         $dataBidShed['modify_type'] = $modifyType;
                                         $dataBidShed['description'] = null;
                                         $dataBidShed['master_id'] = $sheduleDetail->getAttribute('id');
+                                        $dataBidShed['updated_by'] = $empId;
                                         if($bid->getOriginal('id') == $bidFormatDetailId)
                                         {
                                             $dataBidShed['description'] = $tender->getAttribute('description');
@@ -135,8 +137,11 @@ class PricingScheduleDetailObserver
         $editLog = PricingScheduleMasterEditLog::where('master_id',$tender->getAttribute('pricing_schedule_master_id'))->first();
         if($obj)
         {
-          
-                
+                $masterId = null;
+                if(isset($editLog))
+                {
+                    $masterId = $editLog->getAttribute('id');
+                }
     
                 $dataBidShed['tender_id']=$tender->getAttribute('tender_id');
                 $dataBidShed['bid_format_id']=$tender->getAttribute('bid_format_id');
@@ -145,10 +150,10 @@ class PricingScheduleDetailObserver
                 $dataBidShed['field_type']=$tender->getAttribute('field_type');
                 $dataBidShed['is_disabled']=$tender->getAttribute('is_disabled');
                 $dataBidShed['boq_applicable']=$tender->getAttribute('boq_applicable');
-                $dataBidShed['pricing_schedule_master_id']= $editLog->getAttribute('id');
+                $dataBidShed['pricing_schedule_master_id']= $masterId;
                 $dataBidShed['company_id']=$tender->getAttribute('company_id');
                 $dataBidShed['formula_string']=$tender->getAttribute('formula_string');
-                $dataBidShed['created_by']=$empId;
+                $dataBidShed['updated_by']=$empId;
                 $dataBidShed['tender_edit_version_id'] = $versionId;
                 $dataBidShed['modify_type'] = $modifyType;
                 $dataBidShed['master_id'] = $tender->getAttribute('id');

@@ -71,6 +71,10 @@ class CircularAmendmentsObserver
 
     public function process($tender,$obj,$type,$tenderObj,$reflog)
     {
+        
+        $employee = \Helper::getEmployeeInfo();
+        $empId = $employee->employeeSystemID;
+
         $data['tender_id']=$tender->getAttribute('tender_id');
         $data['circular_id']=$obj->getAttribute('circular_id');
         $data['amendment_id']=$tender->getAttribute('amendment_id');
@@ -79,6 +83,7 @@ class CircularAmendmentsObserver
         $data['modify_type']=$type;
         $data['ref_log_id']= $reflog;
         $data['vesion_id']=$tenderObj->getAttribute('tender_edit_version_id');
+        $data['updated_by'] = $empId;
         $result = CircularAmendmentsEditLog::create($data);
 
         return $result;

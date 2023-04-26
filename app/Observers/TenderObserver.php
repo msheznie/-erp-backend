@@ -19,7 +19,8 @@ class TenderObserver
     public function updated(TenderMaster $tender)
     {
         $obj = TenderDetails::validateTenderEdit($tender->getOriginal('id'));
-
+        $employee = \Helper::getEmployeeInfo();
+        $empId = $employee->employeeSystemID;
             if($obj)
             {
                 foreach($tender->fillable as $key=>$val)
@@ -37,6 +38,9 @@ class TenderObserver
                         $data['table'] = 'Tender Master';
                         $data['master_id'] = $tender->getOriginal('id');
                         $data['created_at'] = now();
+                        $data['updated_at'] = now();
+                        $data['updated_by'] = $empId;
+                        
                         $result = DocumentModifyRequestDetail::insert($data);
                         if($result)
                         {

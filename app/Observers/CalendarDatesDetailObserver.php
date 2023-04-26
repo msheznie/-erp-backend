@@ -63,7 +63,7 @@ class CalendarDatesDetailObserver
         {   
             Log::info('updates');
             $modifyType = 3;
-            $calender = CalendarDatesDetailEditLog::select('id')->where('master_id',$tender->getAttribute('id'))->where('tender_edit_version_id',$tenderObj->getOriginal('tender_edit_version_id'))->first();
+            $calender = CalendarDatesDetailEditLog::select('id')->where('master_id',$tender->getAttribute('id'))->where('version_id',$tenderObj->getOriginal('tender_edit_version_id'))->first();
             if(isset($calender))
             {
                 $modifyType = 4;
@@ -85,6 +85,8 @@ class CalendarDatesDetailObserver
 
     public function process($tender,$type,$tenderObj,$reflog_id)
     {
+        $employee = \Helper::getEmployeeInfo();
+        $empId = $employee->employeeSystemID;
         $data['tender_id'] = $tender->getAttribute('tender_id');
         $data['version_id'] = $tenderObj->getAttribute('tender_edit_version_id');;
         $data['calendar_date_id'] =$tender->getAttribute('calendar_date_id');
@@ -94,7 +96,7 @@ class CalendarDatesDetailObserver
         $data['modify_type'] =$type;
         $data['ref_log_id'] =$reflog_id;
         $data['master_id'] = $tender->getAttribute('id');
-
+        $data['updated_by'] = $empId;
         $result = CalendarDatesDetailEditLog::create($data);
     }
 

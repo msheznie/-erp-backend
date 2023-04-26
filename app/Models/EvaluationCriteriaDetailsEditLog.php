@@ -180,7 +180,8 @@ class EvaluationCriteriaDetailsEditLog extends Model
         'sort_order',
         'tender_id',
         'weightage',
-        'tender_version_id'
+        'tender_version_id',
+        'updated_by'
     ];
 
     /**

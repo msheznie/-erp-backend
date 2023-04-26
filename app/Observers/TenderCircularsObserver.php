@@ -106,7 +106,7 @@ class TenderCircularsObserver
         $data['attachment_id']=$tender->getAttribute('attachment_id');
         $data['master_id']=$tender->getAttribute('id');
         $data['modify_type']= $type;
-        $data['created_by'] = $empId;
+        $data['updated_by'] = $empId;
         $data['vesion_id']=$tenderObj->getAttribute('tender_edit_version_id');
         $data['company_id']=$tender->getAttribute('company_id');
         $data['ref_log_id']=$ref;
