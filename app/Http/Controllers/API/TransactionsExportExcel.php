@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\Models\Company;
 use Response;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -502,10 +503,23 @@ class TransactionsExportExcel extends AppBaseController
                 return $this->sendResponse(array(), 'export failed');
         }
 
+        $companyID = isset($input['companyId']) ? $input['companyId']: null;
+        if($companyID == null){
+            $companyID = isset($input['companyID']) ? $input['companyID']: null;
+            if($companyID == null){
+                $companyID = isset($input['companySystemID']) ? $input['companySystemID']: null;
+            }
+        }
+
+        $companyMaster = Company::find($companyID);
+        $companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
+        $detail_array = array(
+            'company_code'=>$companyCode
+        );
 
         $doc_name = $input['docName'].'/';
         $path = 'procurement/'.$doc_name.'excel/';
-        $basePath = CreateExcel::process($data,$type,$input['docName'],$path);
+        $basePath = CreateExcel::process($data,$type,$input['docName'],$path, $detail_array);
 
         if($basePath == '')
         {

@@ -1623,7 +1623,12 @@ class FixedAssetMasterAPIController extends AppBaseController
 
         $fileName = 'asset_insurance_report';
         $path = 'asset/report/asset_insurance_report/excel/';
-        $basePath = CreateExcel::process($data,$type,$fileName,$path);
+        $companyMaster = Company::find(isset($request->companyId)?$request->companyId: null);
+        $companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
+        $detail_array = array(
+            'company_code'=>$companyCode,
+        );
+        $basePath = CreateExcel::process($data,$type,$fileName,$path, $detail_array);
 
         if($basePath == '')
         {
