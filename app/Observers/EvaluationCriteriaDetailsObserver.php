@@ -54,7 +54,7 @@ class EvaluationCriteriaDetailsObserver
         {
             
         $result = EvaluationCriteriaDetailsEditLog::where('master_id',$tender->getAttribute('id'))->first();
-        $parentId = $tender->getAttribute('parent_id');
+        $parentId = $result->getAttribute('parent_id');
         $masterId = $tender->getAttribute('id');
    
 
@@ -96,42 +96,59 @@ class EvaluationCriteriaDetailsObserver
             $obj1 = EvaluationCriteriaDetailsEditLog::where('master_id',$tender->getAttribute('id'))->orderBy('id','desc')->first(); 
             if(isset($obj1))
             {
-                $parentId = $tender->getAttribute('parent_id');
+                $parentId = $obj1->getAttribute('parent_id');
                 $masterId = $tender->getAttribute('id');
-                $result1 = $this->process($tenderObj,$tender,$empId,1,$obj1->getAttribute('id'),$parentId,$masterId);
+                $result1 = $this->process($tenderObj,$tender,$empId,1,$obj1->getAttribute('id'),$parentId,$masterId);//level 1
                 if($result1)
                 {
-                    $obj2 = EvaluationCriteriaDetailsEditLog::where('parent_id',$obj1->getAttribute('id'))->orderBy('id','desc')->first(); 
+                    $obj2 = EvaluationCriteriaDetailsEditLog::where('parent_id',$obj1->getAttribute('id'))->orderBy('id','desc')->where('modify_type',2)->get(); //level 2
                     if(isset($obj2))
-                    {
-                        $parent2Id = $obj2->getAttribute('parent_id');
-                        $masterId = $obj2->getAttribute('master_id');
-                        $result2 = $this->process($tenderObj,$obj2,$empId,1,$obj2->getAttribute('id'),$parent2Id,$masterId);
-            
-                        if($result2)
-                        {
-                            $obj3 = EvaluationCriteriaDetailsEditLog::where('parent_id',$obj2->getAttribute('id'))->orderBy('id','desc')->first(); 
-        
-                            if(isset($obj3))
-                            {   
-                                $parent3Id = $obj3->getAttribute('parent_id');
-                                $masterId = $obj3->getAttribute('master_id');
-                                $result3 = $this->process($tenderObj,$obj3,$empId,1,$obj3->getAttribute('id'),$parent3Id,$masterId);
-                
-                                if($result3)
-                                {
-                                    $obj4 = EvaluationCriteriaDetailsEditLog::where('parent_id',$obj3->getAttribute('id'))->orderBy('id','desc')->first(); 
-                                    if(isset($obj4))
-                                    {
-                                        $parent4Id = $obj4->getAttribute('parent_id');
-                                        $masterId = $obj4->getAttribute('master_id');
-                                        $result3 = $this->process($tenderObj,$obj4,$empId,1,$obj4->getAttribute('id'),$parent4Id,$masterId);
-                                    }
-                              
-                                }
-                            }
+                    {   
+                        foreach ($obj2 as $ob2){
                            
-                    
+                            $previuosId = $ob2->getOriginal('id');
+                            $deletedRecords = EvaluationCriteriaDetailsEditLog::where('modify_type',1)->where('ref_log_id',$previuosId)->select('id')->first();
+
+                            if(!isset($deletedRecords))
+                            {
+                                $parentLevel2 = $ob2->getOriginal('parent_id');
+                                $masterIdLevel2 = $ob2->getOriginal('master_id');
+                                $obj3 = EvaluationCriteriaDetailsEditLog::where('parent_id',$ob2->getOriginal('id'))->orderBy('id','desc')->where('modify_type',2)->get(); //level 3
+                                if(isset($obj3))
+                                {
+                                    foreach ($obj3 as $ob3){
+
+                                        $previuosId = $ob3->getOriginal('id');
+                                        $deletedRecords = EvaluationCriteriaDetailsEditLog::where('modify_type',1)->where('ref_log_id',$previuosId)->select('id')->first();
+
+                                        if(!isset($deletedRecords))
+                                        {
+                                            $parentLevel3 = $ob3->getOriginal('parent_id');
+                                            $masterIdLevel3 = $ob3->getOriginal('master_id');
+                                            $obj4 = EvaluationCriteriaDetailsEditLog::where('parent_id',$ob3->getOriginal('id'))->orderBy('id','desc')->where('modify_type',2)->get(); //level 4
+                                            if(isset($obj4))
+                                            {
+                                                foreach ($obj4 as $ob4){
+
+                                                    $previuosId = $ob4->getOriginal('id');
+                                                    $deletedRecords = EvaluationCriteriaDetailsEditLog::where('modify_type',1)->where('ref_log_id',$previuosId)->select('id')->first();
+                                                    if(!isset($deletedRecords))
+                                                    {                      
+                                                        $parentLevel4 = $ob4->getOriginal('parent_id');
+                                                        $masterIdLevel4 = $ob4->getOriginal('master_id');
+                                                        $result3 = $this->process1($tenderObj,$ob4,$empId,1,$ob4->getOriginal('id'),$parentLevel4,$masterIdLevel4);
+                                                    }
+
+                                                }
+                                            }
+                                            $result3 = $this->process1($tenderObj,$ob3,$empId,1,$ob3->getOriginal('id'),$parentLevel3,$masterIdLevel3);
+                                        }
+                                
+                                    }
+                                }
+    
+                                 $result2 = $this->process1($tenderObj,$ob2,$empId,1,$ob2->getOriginal('id'),$parentLevel2,$masterIdLevel2);
+                            }
                         }
                     }
  
@@ -142,8 +159,8 @@ class EvaluationCriteriaDetailsObserver
             {   
                 $parent = $tender->getAttribute('parent_id');
                 $masterId = $tender->getAttribute('id');
-                $result = $this->process($tenderObj,$tender,$empId,1,null,$parent,$masterId);
-                if($result)
+                $result1 = $this->process($tenderObj,$tender,$empId,1,null,$parent,$masterId);//level 1
+                if($result1)
                 {
                     $obj1 = EvaluationCriteriaDetails::where('parent_id',$tender->getAttribute('id'))->orderBy('id','desc')->first(); 
                     if($obj1)
@@ -185,6 +202,35 @@ class EvaluationCriteriaDetailsObserver
 
     }
     
+
+    public function process1($tenderObj,$tender,$emp_id,$type,$reflog_id,$parentId,$master_id)
+    {
+        $data['description'] =$tender->getOriginal('description');
+        $data['tender_id'] = $tender->getOriginal('tender_id');
+        $data['parent_id'] = $parentId;
+        $data['level'] =$tender->getOriginal('level');
+        $data['critera_type_id'] = $tender->getOriginal('critera_type_id');
+        $data['answer_type_id'] = $tender->getOriginal('answer_type_id');
+        $data['weightage'] = $tender->getOriginal('weightage');
+        $data['passing_weightage'] = $tender->getOriginal('passing_weightage');
+        $data['is_final_level'] = $tender->getOriginal('is_final_level');
+        $data['sort_order'] = $tender->getOriginal('sort_order');
+        $data['created_by'] = $emp_id;
+        $data['max_value'] = $tender->getOriginal('max_value');
+        $data['min_value'] = $tender->getOriginal('min_value');
+        $data['modify_type'] = $type;
+        $data['ref_log_id'] = $reflog_id;
+        $data['master_id'] = $master_id;
+        $data['tender_version_id'] = $tenderObj->getOriginal('tender_edit_version_id');
+
+        $result = EvaluationCriteriaDetailsEditLog::create($data);
+
+        if($result)
+        {
+            return true;
+        }
+
+    }
 
     public function process($tenderObj,$tender,$emp_id,$type,$reflog_id,$parentId,$master_id)
     {

@@ -23,10 +23,13 @@ class TenderBidEmployeeObserver
     public function deleted(SrmTenderBidEmployeeDetails $tender)
     {
         $obj = TenderDetails::validateTenderEdit($tender->getAttribute('tender_id'));
+        $tenderObj = TenderDetails::getTenderMasterData($tender->getAttribute('tender_id'));
+        $employee = \Helper::getEmployeeInfo();
+        $empId = $employee->employeeSystemID;
 
             if($obj)
             {
-                $result = $this->eveluate($tender->getOriginal('emp_id'),$tender->getOriginal('status'),$tender->getOriginal('commercial_eval_remarks'),$tender->getOriginal('remarks'),$tender->getOriginal('commercial_eval_status'),$tender->getOriginal('tender_id'),$tenderObj->getOriginal('tender_edit_version_id'),1);
+                $result = $this->eveluate($empId,$tender->getOriginal('status'),$tender->getOriginal('commercial_eval_remarks'),$tender->getOriginal('remarks'),$tender->getOriginal('commercial_eval_status'),$tender->getOriginal('tender_id'),$tenderObj->getOriginal('tender_edit_version_id'),1);
                 if($result)
                 {
                     Log::info('deleted succesfully');
@@ -38,10 +41,12 @@ class TenderBidEmployeeObserver
     public function created(SrmTenderBidEmployeeDetails $tender)
     {
         $tenderObj = TenderDetails::getTenderMasterData($tender->getAttribute('tender_id'));
+        $employee = \Helper::getEmployeeInfo();
+        $empId = $employee->employeeSystemID;
         $obj = TenderDetails::validateTenderEdit($tender->getAttribute('tender_id'));
             if($obj)
             {
-                $result = $this->eveluate($tender->getAttribute('emp_id'),0,null,null,0,$tender->getAttribute('tender_id'),$tenderObj->getOriginal('tender_edit_version_id'),2);
+                $result = $this->eveluate($empId,0,null,null,0,$tender->getAttribute('tender_id'),$tenderObj->getOriginal('tender_edit_version_id'),2);
                 if($result)
                 {
                     Log::info('created succesfully');
