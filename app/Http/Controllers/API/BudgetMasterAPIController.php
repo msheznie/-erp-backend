@@ -839,14 +839,21 @@ class BudgetMasterAPIController extends AppBaseController
     public function budgetGLCodeWiseDetails(Request $request)
     {
         $input = $request->all();
-        $total = 0;
+        
+        $result = $this->budgetGLCodeWiseDetailsData($input);
+
+        return $this->sendResponse($result, 'details retrieved successfully');
+    }
+
+
+    public function budgetGLCodeWiseDetailsData($input)
+    {
+         $total = 0;
         // policy check -> Department wise budget check
         $DLBCPolicy = true; // new requiremnt no need to conider the policy
         if ($input['type'] == 1) {
             $data = BudgetConsumedData::where('companySystemID', $input['companySystemID'])
-                                    ->when($DLBCPolicy, function ($q) use($input){
-                                        return $q->where('serviceLineSystemID', $input['serviceLineSystemID']);
-                                    })
+                                    ->where('serviceLineSystemID', $input['serviceLineSystemID'])
                                     ->where(function($query) {
                                         $query->where(function($query) {
                                                 $query->where('documentSystemID', 2)
@@ -872,19 +879,13 @@ class BudgetMasterAPIController extends AppBaseController
             foreach ($data as $key => $value) {
                 $actualConsumption = 0;
                 if ($value->documentSystemID == 2 && isset($value->purchase_order->grvRecieved) && $value->purchase_order->grvRecieved == 1) {
-                    if (isset($value->purchase_order->financeCategory) && $value->purchase_order->financeCategory != 3) {
-                        $glColumnName = 'financeGLcodePLSystemID';
-                    } else {
-                        $glColumnName = 'financeGLcodebBSSystemID';
-                    }
 
-                    $notRecivedPo = PurchaseOrderDetails::selectRaw('SUM((GRVcostPerUnitSupTransCur * segment_allocated_items.allocatedQty) - (GRVcostPerUnitSupTransCur * receivedQty)) as remainingAmount, SUM(GRVcostPerUnitSupTransCur * receivedQty) as receivedAmount')
-                                                        ->where($glColumnName, $input['chartOfAccountID'])
+                    $notRecivedPoFixedAsset = PurchaseOrderDetails::selectRaw('SUM((GRVcostPerUnitSupTransCur * segment_allocated_items.allocatedQty) - (GRVcostPerUnitSupTransCur * receivedQty)) as remainingAmount, SUM(GRVcostPerUnitSupTransCur * receivedQty) as receivedAmount')
+                                                        ->where('financeGLcodebBSSystemID', $input['chartOfAccountID'])
                                                         ->where('purchaseOrderMasterID', $value->documentSystemCode)
+                                                        ->where('itemFinanceCategoryID', 3)
                                                         ->join('segment_allocated_items', 'documentDetailAutoID', '=', 'purchaseOrderDetailsID')
-                                                        ->when($DLBCPolicy, function($query) use ($input) {
-                                                            $query->where('segment_allocated_items.serviceLineSystemID', $input['serviceLineSystemID']);
-                                                        })
+                                                        ->where('segment_allocated_items.serviceLineSystemID', $input['serviceLineSystemID'])
                                                         ->whereHas('order', function($query) {
                                                             $query->where(function($query) {
                                                                     $query->where('projectID', 0)
@@ -895,10 +896,34 @@ class BudgetMasterAPIController extends AppBaseController
                                                         ->groupBy('purchaseOrderMasterID')
                                                         ->first();
 
-                    if ($notRecivedPo) {
-                        $currencyConversionRptAmount = \Helper::currencyConversion($input['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPo->remainingAmount);
-                        $actualConsumption = $value->consumedRptAmount - $currencyConversionRptAmount['reportingAmount'];
+                    if ($notRecivedPoFixedAsset) {
+                        $currencyConversionRptAmount = \Helper::currencyConversion($input['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPoFixedAsset->remainingAmount);
+                        $actualConsumption += $value->consumedRptAmount - $currencyConversionRptAmount['reportingAmount'];
                     }
+
+                    $notRecivedPoNonFixedAsset = PurchaseOrderDetails::selectRaw('SUM((GRVcostPerUnitSupTransCur * segment_allocated_items.allocatedQty) - (GRVcostPerUnitSupTransCur * receivedQty)) as remainingAmount, SUM(GRVcostPerUnitSupTransCur * receivedQty) as receivedAmount')
+                                                        ->where('financeGLcodePLSystemID', $input['chartOfAccountID'])
+                                                        ->where('purchaseOrderMasterID', $value->documentSystemCode)
+                                                        ->where('itemFinanceCategoryID','!=', 3)
+                                                        ->join('segment_allocated_items', 'documentDetailAutoID', '=', 'purchaseOrderDetailsID')
+                                                        ->where('segment_allocated_items.serviceLineSystemID', $input['serviceLineSystemID'])
+                                                        ->whereHas('order', function($query) {
+                                                            $query->where(function($query) {
+                                                                    $query->where('projectID', 0)
+                                                                          ->orWhereNull('projectID');
+                                                                });
+                                                        })
+                                                        ->where('segment_allocated_items.documentSystemID', $value->documentSystemID)
+                                                        ->groupBy('purchaseOrderMasterID')
+                                                        ->first();
+
+                    if ($notRecivedPoNonFixedAsset) {
+                        $currencyConversionRptAmount = \Helper::currencyConversion($input['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPoNonFixedAsset->remainingAmount);
+                        $actualConsumption += $value->consumedRptAmount - $currencyConversionRptAmount['reportingAmount'];
+                    }
+
+
+
                 } else {
                     $actualConsumption = $value->consumedRptAmount;
                 }
@@ -1314,9 +1339,7 @@ class BudgetMasterAPIController extends AppBaseController
                 $total = array_sum(collect($data)->pluck('lineTotal')->toArray());
         } else if ($input['type'] == 3) {
             $data = BudgetConsumedData::where('companySystemID', $input['companySystemID'])
-                                    ->when($DLBCPolicy, function ($q) use($input){
-                                        return $q->where('serviceLineSystemID', $input['serviceLineSystemID']);
-                                    })
+                                    ->where('serviceLineSystemID', $input['serviceLineSystemID'])
                                     ->where('companyFinanceYearID', $input['companyFinanceYearID'])
                                     ->where('consumeYN', -1)
                                     ->with(['purchase_order' => function ($query) {
@@ -1348,13 +1371,7 @@ class BudgetMasterAPIController extends AppBaseController
                 if (isset($value->purchase_order->grvRecieved) && $value->purchase_order->grvRecieved == 0) {
                     $committedAmount += $value->consumedRptAmount;
                 } else {
-                    if (isset($value->purchase_order->financeCategory) && $value->purchase_order->financeCategory != 3) {
-                        $glColumnName = 'financeGLcodePLSystemID';
-                    } else {
-                        $glColumnName = 'financeGLcodebBSSystemID';
-                    }
-
-                    $notRecivedPo = PurchaseOrderDetails::selectRaw('SUM((GRVcostPerUnitSupTransCur * segment_allocated_items.allocatedQty) - (GRVcostPerUnitSupTransCur * receivedQty)) as remainingAmount, SUM(GRVcostPerUnitSupTransCur * receivedQty) as receivedAmount')
+                    $notRecivedPoFixedAsset = PurchaseOrderDetails::selectRaw('SUM((GRVcostPerUnitSupTransCur * segment_allocated_items.allocatedQty) - (GRVcostPerUnitSupTransCur * receivedQty)) as remainingAmount, SUM(GRVcostPerUnitSupTransCur * receivedQty) as receivedAmount')
                                                         ->join(DB::raw('(SELECT
                                                                         erp_companyreporttemplatelinks.templateDetailID as templatesDetailsAutoID,
                                                                         erp_companyreporttemplatelinks.templateMasterID,
@@ -1363,14 +1380,13 @@ class BudgetMasterAPIController extends AppBaseController
                                                                         FROM
                                                                         erp_companyreporttemplatelinks
                                                                         WHERE erp_companyreporttemplatelinks.templateMasterID =' . $input['templatesMasterAutoID'] . ' AND erp_companyreporttemplatelinks.templateDetailID = ' . $input['templateDetailID'] . ' AND erp_companyreporttemplatelinks.glAutoID is not null) as tem_gl'),
-                                                        function ($join) use ($glColumnName){
-                                                            $join->on('erp_purchaseorderdetails.'.$glColumnName, '=', 'tem_gl.chartOfAccountSystemID');
+                                                        function ($join) {
+                                                            $join->on('erp_purchaseorderdetails.financeGLcodebBSSystemID', '=', 'tem_gl.chartOfAccountSystemID');
                                                         })
                                                         ->where('purchaseOrderMasterID', $value->documentSystemCode)
+                                                        ->where('itemFinanceCategoryID', 3)
                                                         ->join('segment_allocated_items', 'documentDetailAutoID', '=', 'purchaseOrderDetailsID')
-                                                        ->when($DLBCPolicy, function($query) use ($input) {
-                                                            $query->where('segment_allocated_items.serviceLineSystemID', $input['serviceLineSystemID']);
-                                                        })
+                                                        ->where('segment_allocated_items.serviceLineSystemID', $input['serviceLineSystemID'])
                                                         ->whereHas('order', function($query) {
                                                             $query->where(function($query) {
                                                                     $query->where('projectID', 0)
@@ -1381,8 +1397,39 @@ class BudgetMasterAPIController extends AppBaseController
                                                         ->groupBy('purchaseOrderMasterID')
                                                         ->first();
 
-                    if ($notRecivedPo) {
-                        $currencyConversionRptAmount = \Helper::currencyConversion($input['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPo->remainingAmount);
+                    if ($notRecivedPoFixedAsset) {
+                        $currencyConversionRptAmount = \Helper::currencyConversion($input['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPoFixedAsset->remainingAmount);
+                        $committedAmount += $currencyConversionRptAmount['reportingAmount'];
+                    }
+
+                    $notRecivedPoNonFixedAsset = PurchaseOrderDetails::selectRaw('SUM((GRVcostPerUnitSupTransCur * segment_allocated_items.allocatedQty) - (GRVcostPerUnitSupTransCur * receivedQty)) as remainingAmount, SUM(GRVcostPerUnitSupTransCur * receivedQty) as receivedAmount')
+                                                        ->join(DB::raw('(SELECT
+                                                                        erp_companyreporttemplatelinks.templateDetailID as templatesDetailsAutoID,
+                                                                        erp_companyreporttemplatelinks.templateMasterID,
+                                                                        erp_companyreporttemplatelinks.glAutoID as chartOfAccountSystemID,
+                                                                        erp_companyreporttemplatelinks.glCode 
+                                                                        FROM
+                                                                        erp_companyreporttemplatelinks
+                                                                        WHERE erp_companyreporttemplatelinks.templateMasterID =' . $input['templatesMasterAutoID'] . ' AND erp_companyreporttemplatelinks.templateDetailID = ' . $input['templateDetailID'] . ' AND erp_companyreporttemplatelinks.glAutoID is not null) as tem_gl'),
+                                                        function ($join) {
+                                                            $join->on('erp_purchaseorderdetails.financeGLcodePLSystemID', '=', 'tem_gl.chartOfAccountSystemID');
+                                                        })
+                                                        ->where('purchaseOrderMasterID', $value->documentSystemCode)
+                                                        ->where('itemFinanceCategoryID', '!=',3)
+                                                        ->join('segment_allocated_items', 'documentDetailAutoID', '=', 'purchaseOrderDetailsID')
+                                                        ->where('segment_allocated_items.serviceLineSystemID', $input['serviceLineSystemID'])
+                                                        ->whereHas('order', function($query) {
+                                                            $query->where(function($query) {
+                                                                    $query->where('projectID', 0)
+                                                                          ->orWhereNull('projectID');
+                                                                });
+                                                        })
+                                                        ->where('segment_allocated_items.documentSystemID', $value->documentSystemID)
+                                                        ->groupBy('purchaseOrderMasterID')
+                                                        ->first();
+
+                    if ($notRecivedPoNonFixedAsset) {
+                        $currencyConversionRptAmount = \Helper::currencyConversion($input['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPoNonFixedAsset->remainingAmount);
                         $committedAmount += $currencyConversionRptAmount['reportingAmount'];
                     }
                 }
@@ -1932,9 +1979,7 @@ class BudgetMasterAPIController extends AppBaseController
                                     }])
                                     ->where('consumeYN', -1)
                                     ->where('companySystemID', $input['companySystemID'])
-                                    ->when($DLBCPolicy, function($query) use ($input){
-                                        $query->where('serviceLineSystemID', $input['serviceLineSystemID']);
-                                    })
+                                    ->where('serviceLineSystemID', $input['serviceLineSystemID'])
                                     ->where('chartOfAccountID', $input['chartOfAccountID'])
                                     ->where('companyFinanceYearID', $input['companyFinanceYearID'])
                                     ->where('documentSystemID', 2)
@@ -1952,19 +1997,12 @@ class BudgetMasterAPIController extends AppBaseController
                 if (isset($value->purchase_order->grvRecieved) && $value->purchase_order->grvRecieved == 0) {
                     $committedAmount += $value->consumedRptAmount;
                 } else {
-                    if (isset($value->purchase_order->financeCategory) && $value->purchase_order->financeCategory != 3) {
-                        $glColumnName = 'financeGLcodePLSystemID';
-                    } else {
-                        $glColumnName = 'financeGLcodebBSSystemID';
-                    }
-
-                    $notRecivedPo = PurchaseOrderDetails::selectRaw('SUM((GRVcostPerUnitSupTransCur * segment_allocated_items.allocatedQty) - (GRVcostPerUnitSupTransCur * receivedQty)) as remainingAmount, SUM(GRVcostPerUnitSupTransCur * receivedQty) as receivedAmount')
-                                                        ->where($glColumnName, $input['chartOfAccountID'])
+                    $notRecivedPoFixedAsset = PurchaseOrderDetails::selectRaw('SUM((GRVcostPerUnitSupTransCur * segment_allocated_items.allocatedQty) - (GRVcostPerUnitSupTransCur * receivedQty)) as remainingAmount, SUM(GRVcostPerUnitSupTransCur * receivedQty) as receivedAmount')
+                                                        ->where('financeGLcodebBSSystemID', $input['chartOfAccountID'])
                                                         ->where('purchaseOrderMasterID', $value->documentSystemCode)
+                                                        ->where('itemFinanceCategoryID', 3)
                                                         ->join('segment_allocated_items', 'documentDetailAutoID', '=', 'purchaseOrderDetailsID')
-                                                        ->when($DLBCPolicy, function($query) use ($input) {
-                                                            $query->where('segment_allocated_items.serviceLineSystemID', $input['serviceLineSystemID']);
-                                                        })
+                                                        ->where('segment_allocated_items.serviceLineSystemID', $input['serviceLineSystemID'])
                                                         ->where('segment_allocated_items.documentSystemID', $value->documentSystemID)
                                                         ->groupBy('purchaseOrderMasterID')
                                                         ->whereHas('order', function($query) {
@@ -1975,8 +2013,29 @@ class BudgetMasterAPIController extends AppBaseController
                                                         })
                                                         ->first();
 
-                    if ($notRecivedPo) {
-                        $currencyConversionRptAmount = \Helper::currencyConversion($input['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPo->remainingAmount);
+                    if ($notRecivedPoFixedAsset) {
+                        $currencyConversionRptAmount = \Helper::currencyConversion($input['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPoFixedAsset->remainingAmount);
+                        $committedAmount += $currencyConversionRptAmount['reportingAmount'];
+                    }
+
+                    $notRecivedPoNonFixedAsset = PurchaseOrderDetails::selectRaw('SUM((GRVcostPerUnitSupTransCur * segment_allocated_items.allocatedQty) - (GRVcostPerUnitSupTransCur * receivedQty)) as remainingAmount, SUM(GRVcostPerUnitSupTransCur * receivedQty) as receivedAmount')
+                                                        ->where('financeGLcodePLSystemID', $input['chartOfAccountID'])
+                                                        ->where('purchaseOrderMasterID', $value->documentSystemCode)
+                                                        ->where('itemFinanceCategoryID', '!=',3)
+                                                        ->join('segment_allocated_items', 'documentDetailAutoID', '=', 'purchaseOrderDetailsID')
+                                                        ->where('segment_allocated_items.serviceLineSystemID', $input['serviceLineSystemID'])
+                                                        ->where('segment_allocated_items.documentSystemID', $value->documentSystemID)
+                                                        ->groupBy('purchaseOrderMasterID')
+                                                        ->whereHas('order', function($query) {
+                                                            $query->where(function($query) {
+                                                                    $query->where('projectID', 0)
+                                                                          ->orWhereNull('projectID');
+                                                                });
+                                                        })
+                                                        ->first();
+
+                    if ($notRecivedPoNonFixedAsset) {
+                        $currencyConversionRptAmount = \Helper::currencyConversion($input['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPoNonFixedAsset->remainingAmount);
                         $committedAmount += $currencyConversionRptAmount['reportingAmount'];
                     }
                 }
@@ -1987,9 +2046,7 @@ class BudgetMasterAPIController extends AppBaseController
             $total = array_sum(collect($data)->pluck('committedAmount')->toArray());
         } else if ($input['type'] == 6) {
             $data = BudgetConsumedData::where('companySystemID', $input['companySystemID'])
-                                    ->when($DLBCPolicy, function ($q) use($input){
-                                        return $q->where('serviceLineSystemID', $input['serviceLineSystemID']);
-                                    })
+                                    ->where('serviceLineSystemID', $input['serviceLineSystemID'])
                                     ->where('companyFinanceYearID', $input['companyFinanceYearID'])
                                     ->where('consumeYN', -1)
                                     ->where(function($query) {
@@ -2024,13 +2081,7 @@ class BudgetMasterAPIController extends AppBaseController
             foreach ($data as $key => $value) {
                 $actualConsumption = 0;
                 if ($value->documentSystemID == 2 && isset($value->purchase_order->grvRecieved) && $value->purchase_order->grvRecieved == 1) {
-                    if (isset($value->purchase_order->financeCategory) && $value->purchase_order->financeCategory != 3) {
-                        $glColumnName = 'financeGLcodePLSystemID';
-                    } else {
-                        $glColumnName = 'financeGLcodebBSSystemID';
-                    }
-
-                    $notRecivedPo = PurchaseOrderDetails::selectRaw('SUM((GRVcostPerUnitSupTransCur * segment_allocated_items.allocatedQty) - (GRVcostPerUnitSupTransCur * receivedQty)) as remainingAmount, SUM(GRVcostPerUnitSupTransCur * receivedQty) as receivedAmount')
+                    $notRecivedPoFixedAsset = PurchaseOrderDetails::selectRaw('SUM((GRVcostPerUnitSupTransCur * segment_allocated_items.allocatedQty) - (GRVcostPerUnitSupTransCur * receivedQty)) as remainingAmount, SUM(GRVcostPerUnitSupTransCur * receivedQty) as receivedAmount')
                                                         ->join(DB::raw('(SELECT
                                                                         erp_companyreporttemplatelinks.templateDetailID as templatesDetailsAutoID,
                                                                         erp_companyreporttemplatelinks.templateMasterID,
@@ -2040,13 +2091,12 @@ class BudgetMasterAPIController extends AppBaseController
                                                                         erp_companyreporttemplatelinks
                                                                         WHERE erp_companyreporttemplatelinks.templateMasterID =' . $input['templatesMasterAutoID'] . ' AND erp_companyreporttemplatelinks.templateDetailID = ' . $input['templateDetailID'] . ' AND erp_companyreporttemplatelinks.glAutoID is not null) as tem_gl'),
                                                         function ($join) use ($glColumnName){
-                                                            $join->on('erp_purchaseorderdetails.'.$glColumnName, '=', 'tem_gl.chartOfAccountSystemID');
+                                                            $join->on('erp_purchaseorderdetails.financeGLcodebBSSystemID', '=', 'tem_gl.chartOfAccountSystemID');
                                                         })
+                                                        ->where('itemFinanceCategoryID', 3)
                                                         ->where('purchaseOrderMasterID', $value->documentSystemCode)
                                                         ->join('segment_allocated_items', 'documentDetailAutoID', '=', 'purchaseOrderDetailsID')
-                                                        ->when($DLBCPolicy, function($query) use ($input) {
-                                                            $query->where('segment_allocated_items.serviceLineSystemID', $input['serviceLineSystemID']);
-                                                        })
+                                                        ->where('segment_allocated_items.serviceLineSystemID', $input['serviceLineSystemID'])
                                                         ->where('segment_allocated_items.documentSystemID', $value->documentSystemID)
                                                         ->whereHas('order', function($query) {
                                                             $query->where(function($query) {
@@ -2057,9 +2107,40 @@ class BudgetMasterAPIController extends AppBaseController
                                                         ->groupBy('purchaseOrderMasterID')
                                                         ->first();
 
-                    if ($notRecivedPo) {
-                        $currencyConversionRptAmount = \Helper::currencyConversion($input['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPo->remainingAmount);
-                        $actualConsumption = $value->consumedRptAmount - $currencyConversionRptAmount['reportingAmount'];
+                    if ($notRecivedPoFixedAsset) {
+                        $currencyConversionRptAmount = \Helper::currencyConversion($input['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPoFixedAsset->remainingAmount);
+                        $actualConsumption += $value->consumedRptAmount - $currencyConversionRptAmount['reportingAmount'];
+                    }
+
+                    $notRecivedPoNonFixedAsset = PurchaseOrderDetails::selectRaw('SUM((GRVcostPerUnitSupTransCur * segment_allocated_items.allocatedQty) - (GRVcostPerUnitSupTransCur * receivedQty)) as remainingAmount, SUM(GRVcostPerUnitSupTransCur * receivedQty) as receivedAmount')
+                                                        ->join(DB::raw('(SELECT
+                                                                        erp_companyreporttemplatelinks.templateDetailID as templatesDetailsAutoID,
+                                                                        erp_companyreporttemplatelinks.templateMasterID,
+                                                                        erp_companyreporttemplatelinks.glAutoID as chartOfAccountSystemID,
+                                                                        erp_companyreporttemplatelinks.glCode 
+                                                                        FROM
+                                                                        erp_companyreporttemplatelinks
+                                                                        WHERE erp_companyreporttemplatelinks.templateMasterID =' . $input['templatesMasterAutoID'] . ' AND erp_companyreporttemplatelinks.templateDetailID = ' . $input['templateDetailID'] . ' AND erp_companyreporttemplatelinks.glAutoID is not null) as tem_gl'),
+                                                        function ($join) use ($glColumnName){
+                                                            $join->on('erp_purchaseorderdetails.financeGLcodePLSystemID', '=', 'tem_gl.chartOfAccountSystemID');
+                                                        })
+                                                        ->where('itemFinanceCategoryID','!=', 3)
+                                                        ->where('purchaseOrderMasterID', $value->documentSystemCode)
+                                                        ->join('segment_allocated_items', 'documentDetailAutoID', '=', 'purchaseOrderDetailsID')
+                                                        ->where('segment_allocated_items.serviceLineSystemID', $input['serviceLineSystemID'])
+                                                        ->where('segment_allocated_items.documentSystemID', $value->documentSystemID)
+                                                        ->whereHas('order', function($query) {
+                                                            $query->where(function($query) {
+                                                                    $query->where('projectID', 0)
+                                                                          ->orWhereNull('projectID');
+                                                                });
+                                                        })
+                                                        ->groupBy('purchaseOrderMasterID')
+                                                        ->first();
+
+                    if ($notRecivedPoNonFixedAsset) {
+                        $currencyConversionRptAmount = \Helper::currencyConversion($input['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPoNonFixedAsset->remainingAmount);
+                        $actualConsumption += $value->consumedRptAmount - $currencyConversionRptAmount['reportingAmount'];
                     }
                 } else {
                     $actualConsumption = $value->consumedRptAmount;
@@ -2089,540 +2170,14 @@ class BudgetMasterAPIController extends AppBaseController
 
         $result = array('reportData' => $data, 'total' => $total, 'decimalPlaceLocal' => $decimalPlaceLocal, 'decimalPlaceRpt' => $decimalPlaceRpt);
 
-        return $this->sendResponse($result, 'details retrieved successfully');
+        return $result;
     }
 
 
     public function exportBudgetGLCodeWiseDetails(Request $request)
     {
         $input = $request->all();
-        $total = 0;
-        // policy check -> Department wise budget check
-        $DLBCPolicy = true;
-        if ($input['type'] == 1) {
-            $data = BudgetConsumedData::where('companySystemID', $input['companySystemID'])
-                ->when($DLBCPolicy, function ($q) use($input){
-                    return $q->where('serviceLineSystemID', $input['serviceLineSystemID']);
-                })
-                ->where(function($query) {
-                    $query->where(function($query) {
-                        $query->where('documentSystemID', 2)
-                            ->whereHas('purchase_order', function ($query) {
-                                $query->whereIn('grvRecieved', [2, 1]);
-                            })
-                            ->with(['purchase_order' => function ($query) {
-                                $query->whereIn('grvRecieved', [2, 1]);
-                            }]);
-                    })
-                        ->orWhere('documentSystemID', '!=', 2);
-                })
-                ->where(function($query) {
-                    $query->whereNull('projectID')
-                        ->orWhere('projectID', 0);
-                })
-                ->where('companyFinanceYearID', $input['companyFinanceYearID'])
-                ->where('chartOfAccountID', $input['chartOfAccountID'])
-                ->where('consumeYN', -1)
-                ->get();
-
-
-            foreach ($data as $key => $value) {
-                $actualConsumption = 0;
-                if ($value->documentSystemID == 2 && isset($value->purchase_order->grvRecieved) && $value->purchase_order->grvRecieved == 1) {
-                    if (isset($value->purchase_order->financeCategory) && $value->purchase_order->financeCategory != 3) {
-                        $glColumnName = 'financeGLcodePLSystemID';
-                    } else {
-                        $glColumnName = 'financeGLcodebBSSystemID';
-                    }
-
-                    $notRecivedPo = PurchaseOrderDetails::selectRaw('SUM((GRVcostPerUnitSupTransCur * segment_allocated_items.allocatedQty) - (GRVcostPerUnitSupTransCur * receivedQty)) as remainingAmount, SUM(GRVcostPerUnitSupTransCur * receivedQty) as receivedAmount')
-                        ->where($glColumnName, $input['chartOfAccountID'])
-                        ->where('purchaseOrderMasterID', $value->documentSystemCode)
-                        ->join('segment_allocated_items', 'documentDetailAutoID', '=', 'purchaseOrderDetailsID')
-                        ->when($DLBCPolicy, function($query) use ($input) {
-                            $query->where('segment_allocated_items.serviceLineSystemID', $input['serviceLineSystemID']);
-                        })
-                        ->whereHas('order', function($query) {
-                            $query->where(function($query) {
-                                $query->where('projectID', 0)
-                                    ->orWhereNull('projectID');
-                            });
-                        })
-                        ->where('segment_allocated_items.documentSystemID', $value->documentSystemID)
-                        ->groupBy('purchaseOrderMasterID')
-                        ->first();
-
-                    if ($notRecivedPo) {
-                        $currencyConversionRptAmount = \Helper::currencyConversion($input['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPo->remainingAmount);
-                        $actualConsumption = $value->consumedRptAmount - $currencyConversionRptAmount['reportingAmount'];
-                    }
-                } else {
-                    $actualConsumption = $value->consumedRptAmount;
-                }
-
-                $value->actualConsumption = $actualConsumption;
-            }
-
-            $total = array_sum(collect($data)->pluck('actualConsumption')->toArray());
-        } else if ($input['type'] == 2) {
-
-            $data1 = PurchaseOrderDetails::whereHas('order', function ($q) use ($input,$DLBCPolicy) {
-                $q->where('companySystemID', $input['companySystemID'])
-                    ->when($DLBCPolicy, function ($q) use($input){
-                        return $q->where('serviceLineSystemID', $input['serviceLineSystemID']);
-                    })
-                    ->where('approved', 0)
-                    ->where('poCancelledYN', 0)
-                    ->where(function($query) {
-                        $query->where('projectID', 0)
-                            ->orWhereNull('projectID');
-                    });
-            })
-                ->where('budgetYear', $input['Year'])
-                ->where('financeGLcodePLSystemID', $input['chartOfAccountID'])
-                ->whereNotNull('financeGLcodePLSystemID')
-                ->with(['order'])
-                ->get();
-
-            $pendingSupplierInvoiceAmount = DirectInvoiceDetails::where('companySystemID', $input['companySystemID'])
-                ->when($DLBCPolicy, function($query) use ($input) {
-                    $query->where('serviceLineSystemID', $input['serviceLineSystemID']);
-                })
-                ->where('chartOfAccountSystemID', $input['chartOfAccountID'])
-                ->whereHas('supplier_invoice_master', function($query) use ($input) {
-                    $query->where('approved', 0)
-                        ->where('cancelYN', 0)
-                        ->where('documentType', 1)
-                        ->where('companySystemID', $input['companySystemID']);
-                })
-                ->with(['supplier_invoice_master'])
-                ->get();
-
-            $pendingPvAmount = DirectPaymentDetails::where('companySystemID', $input['companySystemID'])
-                ->when($DLBCPolicy, function($query) use ($input) {
-                    $query->where('serviceLineSystemID', $input['serviceLineSystemID']);
-                })
-                ->with(['master'])
-                ->where('chartOfAccountSystemID', $input['chartOfAccountID'])
-                ->whereHas('master', function($query) use ($input) {
-                    $query->where('approved', 0)
-                        ->where('cancelYN', 0)
-                        ->where('invoiceType', 3)
-                        ->where('companySystemID', $input['companySystemID']);
-                })
-                ->get();
-
-
-            $data = [];
-
-            foreach ($data1 as $key => $value) {
-                $temp = [];
-                $temp['companyID'] = $value->order->companyID;
-                $temp['serviceLine'] = $value->order->serviceLine;
-                $temp['financeGLcodePL'] = $value->financeGLcodePL;
-                $temp['budgetYear'] = $value->budgetYear;
-                $temp['documentCode'] = $value->order->purchaseOrderCode;
-                $temp['documentSystemCode'] = $value->order->purchaseOrderID;
-                $temp['documentSystemID'] = $value->order->documentSystemID;
-                $temp['lineTotal'] = $value->GRVcostPerUnitComRptCur * $value->noQty;
-
-                $data[] = $temp;
-            }
-
-            foreach ($pendingSupplierInvoiceAmount as $key => $value) {
-                $temp = [];
-                $temp['companyID'] = $value->supplier_invoice_master->companyID;
-                $temp['serviceLine'] = $value->serviceLineCode;
-                $temp['financeGLcodePL'] = $value->glCode;
-                $temp['budgetYear'] = $value->budgetYear;
-                $temp['documentCode'] = $value->supplier_invoice_master->bookingInvCode;
-                $temp['documentSystemCode'] = $value->supplier_invoice_master->bookingSuppMasInvAutoID;
-                $temp['documentSystemID'] = $value->supplier_invoice_master->documentSystemID;
-                $temp['lineTotal'] = $value->netAmountRpt;
-
-                $data[] = $temp;
-            }
-
-            foreach ($pendingPvAmount as $key => $value) {
-                $temp = [];
-                $temp['lineTotal'] = $value->comRptAmount;
-                $temp['companyID'] = $value->master->companyID;
-                $temp['serviceLine'] = $value->serviceLineCode;
-                $temp['financeGLcodePL'] = $value->glCode;
-                $temp['budgetYear'] = $value->budgetYear;
-                $temp['documentCode'] = $value->master->BPVcode;
-                $temp['documentSystemCode'] = $value->master->PayMasterAutoId;
-                $temp['documentSystemID'] = $value->master->documentSystemID;
-
-                $data[] = $temp;
-            }
-
-            $total = array_sum(collect($data)->pluck('lineTotal')->toArray());
-        } else if ($input['type'] == 3) {
-            $data = BudgetConsumedData::where('companySystemID', $input['companySystemID'])
-                ->when($DLBCPolicy, function ($q) use($input){
-                    return $q->where('serviceLineSystemID', $input['serviceLineSystemID']);
-                })
-                ->where('companyFinanceYearID', $input['companyFinanceYearID'])
-                ->where('consumeYN', -1)
-                ->with(['purchase_order' => function ($query) {
-                    $query->where('grvRecieved', '!=', 2);
-                }])
-                ->where('documentSystemID', 2)
-                ->whereHas('purchase_order', function ($query) {
-                    $query->where('grvRecieved', '!=', 2);
-                })
-                ->where(function($query) {
-                    $query->whereNull('projectID')
-                        ->orWhere('projectID', 0);
-                })
-                ->join(DB::raw('(SELECT
-                                                        erp_companyreporttemplatelinks.templateDetailID as templatesDetailsAutoID,
-                                                        erp_companyreporttemplatelinks.templateMasterID,
-                                                        erp_companyreporttemplatelinks.glAutoID as chartOfAccountSystemID,
-                                                        erp_companyreporttemplatelinks.glCode 
-                                                        FROM
-                                                        erp_companyreporttemplatelinks
-                                                        WHERE erp_companyreporttemplatelinks.templateMasterID =' . $input['templatesMasterAutoID'] . ' AND erp_companyreporttemplatelinks.templateDetailID = ' . $input['templateDetailID'] . ' AND erp_companyreporttemplatelinks.glAutoID is not null) as tem_gl'),
-                    function ($join) {
-                        $join->on('erp_budgetconsumeddata.chartOfAccountID', '=', 'tem_gl.chartOfAccountSystemID');
-                    })
-                ->get();
-
-            foreach ($data as $key => $value) {
-                $committedAmount = 0;
-                if (isset($value->purchase_order->grvRecieved) && $value->purchase_order->grvRecieved == 0) {
-                    $committedAmount += $value->consumedRptAmount;
-                } else {
-                    if (isset($value->purchase_order->financeCategory) && $value->purchase_order->financeCategory != 3) {
-                        $glColumnName = 'financeGLcodePLSystemID';
-                    } else {
-                        $glColumnName = 'financeGLcodebBSSystemID';
-                    }
-
-                    $notRecivedPo = PurchaseOrderDetails::selectRaw('SUM((GRVcostPerUnitSupTransCur * segment_allocated_items.allocatedQty) - (GRVcostPerUnitSupTransCur * receivedQty)) as remainingAmount, SUM(GRVcostPerUnitSupTransCur * receivedQty) as receivedAmount')
-                        ->join(DB::raw('(SELECT
-                                                                        erp_companyreporttemplatelinks.templateDetailID as templatesDetailsAutoID,
-                                                                        erp_companyreporttemplatelinks.templateMasterID,
-                                                                        erp_companyreporttemplatelinks.glAutoID as chartOfAccountSystemID,
-                                                                        erp_companyreporttemplatelinks.glCode 
-                                                                        FROM
-                                                                        erp_companyreporttemplatelinks
-                                                                        WHERE erp_companyreporttemplatelinks.templateMasterID =' . $input['templatesMasterAutoID'] . ' AND erp_companyreporttemplatelinks.templateDetailID = ' . $input['templateDetailID'] . ' AND erp_companyreporttemplatelinks.glAutoID is not null) as tem_gl'),
-                            function ($join) use ($glColumnName){
-                                $join->on('erp_purchaseorderdetails.'.$glColumnName, '=', 'tem_gl.chartOfAccountSystemID');
-                            })
-                        ->where('purchaseOrderMasterID', $value->documentSystemCode)
-                        ->join('segment_allocated_items', 'documentDetailAutoID', '=', 'purchaseOrderDetailsID')
-                        ->when($DLBCPolicy, function($query) use ($input) {
-                            $query->where('segment_allocated_items.serviceLineSystemID', $input['serviceLineSystemID']);
-                        })
-                        ->whereHas('order', function($query) {
-                            $query->where(function($query) {
-                                $query->where('projectID', 0)
-                                    ->orWhereNull('projectID');
-                            });
-                        })
-                        ->where('segment_allocated_items.documentSystemID', $value->documentSystemID)
-                        ->groupBy('purchaseOrderMasterID')
-                        ->first();
-
-                    if ($notRecivedPo) {
-                        $currencyConversionRptAmount = \Helper::currencyConversion($input['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPo->remainingAmount);
-                        $committedAmount += $currencyConversionRptAmount['reportingAmount'];
-                    }
-                }
-
-                $value->committedAmount = $committedAmount;
-            }
-
-            $total = array_sum(collect($data)->pluck('committedAmount')->toArray());
-        } else if ($input['type'] == 4) {
-            $data1 = PurchaseOrderDetails::whereHas('order', function ($q) use ($input,$DLBCPolicy) {
-                $q->where('companySystemID', $input['companySystemID'])
-                    ->when($DLBCPolicy, function ($q) use($input){
-                        return $q->where('serviceLineSystemID', $input['serviceLineSystemID']);
-                    })
-                    ->where('approved', 0)
-                    ->where('poCancelledYN', 0)
-                    ->where(function($query) {
-                        $query->where('projectID', 0)
-                            ->orWhereNull('projectID');
-                    });
-            })
-                ->where('budgetYear', $input['Year'])
-                // ->where('financeGLcodePLSystemID', $input['chartOfAccountID'])
-                ->whereNotNull('financeGLcodePLSystemID')
-                ->join(DB::raw('(SELECT
-                                                        erp_companyreporttemplatelinks.templateDetailID as templatesDetailsAutoID,
-                                                        erp_companyreporttemplatelinks.templateMasterID,
-                                                        erp_companyreporttemplatelinks.glAutoID as chartOfAccountSystemID,
-                                                        erp_companyreporttemplatelinks.glCode 
-                                                        FROM
-                                                        erp_companyreporttemplatelinks
-                                                        WHERE erp_companyreporttemplatelinks.templateMasterID =' . $input['templatesMasterAutoID'] . ' AND erp_companyreporttemplatelinks.templateDetailID = ' . $input['templateDetailID'] . ' AND erp_companyreporttemplatelinks.glAutoID is not null) as tem_gl'),
-                    function ($join) {
-                        $join->on('erp_purchaseorderdetails.financeGLcodePLSystemID', '=', 'tem_gl.chartOfAccountSystemID');
-                    })
-                ->with(['order'])
-                ->get();
-
-            $pendingSupplierInvoiceAmount = DirectInvoiceDetails::where('companySystemID', $input['companySystemID'])
-                ->when($DLBCPolicy, function($query) use ($input) {
-                    $query->where('serviceLineSystemID', $input['serviceLineSystemID']);
-                })
-                ->join(DB::raw('(SELECT
-                                                                            erp_companyreporttemplatelinks.templateDetailID as templatesDetailsAutoID,
-                                                                            erp_companyreporttemplatelinks.templateMasterID,
-                                                                            erp_companyreporttemplatelinks.glAutoID as chartOfAccountSystemID,
-                                                                            erp_companyreporttemplatelinks.glCode 
-                                                                            FROM
-                                                                            erp_companyreporttemplatelinks
-                                                                            WHERE erp_companyreporttemplatelinks.templateMasterID =' . $input['templatesMasterAutoID'] . ' AND erp_companyreporttemplatelinks.templateDetailID = ' . $input['templateDetailID'] . ' AND erp_companyreporttemplatelinks.glAutoID is not null) as tem_gl'),
-                    function ($join) {
-                        $join->on('erp_directinvoicedetails.chartOfAccountSystemID', '=', 'tem_gl.chartOfAccountSystemID');
-                    })
-                ->whereHas('supplier_invoice_master', function($query) use ($input) {
-                    $query->where('approved', 0)
-                        ->where('cancelYN', 0)
-                        ->where('documentType', 1)
-                        ->where('companySystemID', $input['companySystemID']);
-                })
-                ->with(['supplier_invoice_master'])
-                ->get();
-
-            $pendingPvAmount = DirectPaymentDetails::where('companySystemID', $input['companySystemID'])
-                ->when($DLBCPolicy, function($query) use ($input) {
-                    $query->where('serviceLineSystemID', $input['serviceLineSystemID']);
-                })
-                ->with(['master'])
-                ->join(DB::raw('(SELECT
-                                                                erp_companyreporttemplatelinks.templateDetailID as templatesDetailsAutoID,
-                                                                erp_companyreporttemplatelinks.templateMasterID,
-                                                                erp_companyreporttemplatelinks.glAutoID as chartOfAccountSystemID,
-                                                                erp_companyreporttemplatelinks.glCode 
-                                                                FROM
-                                                                erp_companyreporttemplatelinks
-                                                                WHERE erp_companyreporttemplatelinks.templateMasterID =' . $input['templatesMasterAutoID'] . ' AND erp_companyreporttemplatelinks.templateDetailID = ' . $input['templateDetailID'] . ' AND erp_companyreporttemplatelinks.glAutoID is not null) as tem_gl'),
-                    function ($join) {
-                        $join->on('erp_directpaymentdetails.chartOfAccountSystemID', '=', 'tem_gl.chartOfAccountSystemID');
-                    })
-                ->whereHas('master', function($query) use ($input) {
-                    $query->where('approved', 0)
-                        ->where('cancelYN', 0)
-                        ->where('invoiceType', 3)
-                        ->where('companySystemID', $input['companySystemID']);
-                })
-                ->get();
-
-
-            $data = [];
-
-            foreach ($data1 as $key => $value) {
-                $temp = [];
-                $temp['companyID'] = $value->order->companyID;
-                $temp['serviceLine'] = $value->order->serviceLine;
-                $temp['financeGLcodePL'] = $value->financeGLcodePL;
-                $temp['budgetYear'] = $value->budgetYear;
-                $temp['documentCode'] = $value->order->purchaseOrderCode;
-                $temp['documentSystemCode'] = $value->order->purchaseOrderID;
-                $temp['documentSystemID'] = $value->order->documentSystemID;
-                $temp['lineTotal'] = $value->GRVcostPerUnitComRptCur * $value->noQty;
-
-                $data[] = $temp;
-            }
-
-            foreach ($pendingSupplierInvoiceAmount as $key => $value) {
-                $temp = [];
-                $temp['companyID'] = $value->supplier_invoice_master->companyID;
-                $temp['serviceLine'] = $value->serviceLineCode;
-                $temp['financeGLcodePL'] = $value->glCode;
-                $temp['budgetYear'] = $value->budgetYear;
-                $temp['documentCode'] = $value->supplier_invoice_master->bookingInvCode;
-                $temp['documentSystemCode'] = $value->supplier_invoice_master->bookingSuppMasInvAutoID;
-                $temp['documentSystemID'] = $value->supplier_invoice_master->documentSystemID;
-                $temp['lineTotal'] = $value->netAmountRpt;
-
-                $data[] = $temp;
-            }
-
-            foreach ($pendingPvAmount as $key => $value) {
-                $temp = [];
-                $temp['lineTotal'] = $value->comRptAmount;
-                $temp['companyID'] = $value->master->companyID;
-                $temp['serviceLine'] = $value->serviceLineCode;
-                $temp['financeGLcodePL'] = $value->glCode;
-                $temp['budgetYear'] = $value->budgetYear;
-                $temp['documentCode'] = $value->master->BPVcode;
-                $temp['documentSystemCode'] = $value->master->PayMasterAutoId;
-                $temp['documentSystemID'] = $value->master->documentSystemID;
-
-                $data[] = $temp;
-            }
-
-            $total = array_sum(collect($data)->pluck('lineTotal')->toArray());
-        } else if ($input['type'] == 5) {
-            $data =BudgetConsumedData::with(['purchase_order' => function ($query) {
-                $query->where('grvRecieved', '!=', 2);
-            }])
-                ->where('consumeYN', -1)
-                ->where('companySystemID', $input['companySystemID'])
-                ->when($DLBCPolicy, function($query) use ($input){
-                    $query->where('serviceLineSystemID', $input['serviceLineSystemID']);
-                })
-                ->where('chartOfAccountID', $input['chartOfAccountID'])
-                ->where('companyFinanceYearID', $input['companyFinanceYearID'])
-                ->where('documentSystemID', 2)
-                ->whereHas('purchase_order', function ($query) {
-                    $query->where('grvRecieved', '!=', 2);
-                })
-                ->where(function($query) {
-                    $query->whereNull('projectID')
-                        ->orWhere('projectID', 0);
-                })
-                ->get();
-
-            foreach ($data as $key => $value) {
-                $committedAmount = 0;
-                if (isset($value->purchase_order->grvRecieved) && $value->purchase_order->grvRecieved == 0) {
-                    $committedAmount += $value->consumedRptAmount;
-                } else {
-                    if (isset($value->purchase_order->financeCategory) && $value->purchase_order->financeCategory != 3) {
-                        $glColumnName = 'financeGLcodePLSystemID';
-                    } else {
-                        $glColumnName = 'financeGLcodebBSSystemID';
-                    }
-
-                    $notRecivedPo = PurchaseOrderDetails::selectRaw('SUM((GRVcostPerUnitSupTransCur * segment_allocated_items.allocatedQty) - (GRVcostPerUnitSupTransCur * receivedQty)) as remainingAmount, SUM(GRVcostPerUnitSupTransCur * receivedQty) as receivedAmount')
-                        ->where($glColumnName, $input['chartOfAccountID'])
-                        ->where('purchaseOrderMasterID', $value->documentSystemCode)
-                        ->join('segment_allocated_items', 'documentDetailAutoID', '=', 'purchaseOrderDetailsID')
-                        ->when($DLBCPolicy, function($query) use ($input) {
-                            $query->where('segment_allocated_items.serviceLineSystemID', $input['serviceLineSystemID']);
-                        })
-                        ->where('segment_allocated_items.documentSystemID', $value->documentSystemID)
-                        ->groupBy('purchaseOrderMasterID')
-                        ->whereHas('order', function($query) {
-                            $query->where(function($query) {
-                                $query->where('projectID', 0)
-                                    ->orWhereNull('projectID');
-                            });
-                        })
-                        ->first();
-
-                    if ($notRecivedPo) {
-                        $currencyConversionRptAmount = \Helper::currencyConversion($input['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPo->remainingAmount);
-                        $committedAmount += $currencyConversionRptAmount['reportingAmount'];
-                    }
-                }
-
-                $value->committedAmount = $committedAmount;
-            }
-
-            $total = array_sum(collect($data)->pluck('committedAmount')->toArray());
-        } else if ($input['type'] == 6) {
-            $data = BudgetConsumedData::where('companySystemID', $input['companySystemID'])
-                ->when($DLBCPolicy, function ($q) use($input){
-                    return $q->where('serviceLineSystemID', $input['serviceLineSystemID']);
-                })
-                ->where('companyFinanceYearID', $input['companyFinanceYearID'])
-                ->where('consumeYN', -1)
-                ->where(function($query) {
-                    $query->where(function($query) {
-                        $query->where('documentSystemID', 2)
-                            ->whereHas('purchase_order', function ($query) {
-                                $query->whereIn('grvRecieved', [2, 1]);
-                            })
-                            ->with(['purchase_order' => function ($query) {
-                                $query->whereIn('grvRecieved', [2, 1]);
-                            }]);
-                    })
-                        ->orWhere('documentSystemID', '!=', 2);
-                })
-                ->where(function($query) {
-                    $query->whereNull('projectID')
-                        ->orWhere('projectID', 0);
-                })
-                ->join(DB::raw('(SELECT
-                                                        erp_companyreporttemplatelinks.templateDetailID as templatesDetailsAutoID,
-                                                        erp_companyreporttemplatelinks.templateMasterID,
-                                                        erp_companyreporttemplatelinks.glAutoID as chartOfAccountSystemID,
-                                                        erp_companyreporttemplatelinks.glCode 
-                                                        FROM
-                                                        erp_companyreporttemplatelinks
-                                                        WHERE erp_companyreporttemplatelinks.templateMasterID =' . $input['templatesMasterAutoID'] . ' AND erp_companyreporttemplatelinks.templateDetailID = ' . $input['templateDetailID'] . ' AND erp_companyreporttemplatelinks.glAutoID is not null) as tem_gl'),
-                    function ($join) {
-                        $join->on('erp_budgetconsumeddata.chartOfAccountID', '=', 'tem_gl.chartOfAccountSystemID');
-                    })
-                ->get();
-
-            foreach ($data as $key => $value) {
-                $actualConsumption = 0;
-                if ($value->documentSystemID == 2 && isset($value->purchase_order->grvRecieved) && $value->purchase_order->grvRecieved == 1) {
-                    if (isset($value->purchase_order->financeCategory) && $value->purchase_order->financeCategory != 3) {
-                        $glColumnName = 'financeGLcodePLSystemID';
-                    } else {
-                        $glColumnName = 'financeGLcodebBSSystemID';
-                    }
-
-                    $notRecivedPo = PurchaseOrderDetails::selectRaw('SUM((GRVcostPerUnitSupTransCur * segment_allocated_items.allocatedQty) - (GRVcostPerUnitSupTransCur * receivedQty)) as remainingAmount, SUM(GRVcostPerUnitSupTransCur * receivedQty) as receivedAmount')
-                        ->join(DB::raw('(SELECT
-                                                                        erp_companyreporttemplatelinks.templateDetailID as templatesDetailsAutoID,
-                                                                        erp_companyreporttemplatelinks.templateMasterID,
-                                                                        erp_companyreporttemplatelinks.glAutoID as chartOfAccountSystemID,
-                                                                        erp_companyreporttemplatelinks.glCode 
-                                                                        FROM
-                                                                        erp_companyreporttemplatelinks
-                                                                        WHERE erp_companyreporttemplatelinks.templateMasterID =' . $input['templatesMasterAutoID'] . ' AND erp_companyreporttemplatelinks.templateDetailID = ' . $input['templateDetailID'] . ' AND erp_companyreporttemplatelinks.glAutoID is not null) as tem_gl'),
-                            function ($join) use ($glColumnName){
-                                $join->on('erp_purchaseorderdetails.'.$glColumnName, '=', 'tem_gl.chartOfAccountSystemID');
-                            })
-                        ->where('purchaseOrderMasterID', $value->documentSystemCode)
-                        ->join('segment_allocated_items', 'documentDetailAutoID', '=', 'purchaseOrderDetailsID')
-                        ->when($DLBCPolicy, function($query) use ($input) {
-                            $query->where('segment_allocated_items.serviceLineSystemID', $input['serviceLineSystemID']);
-                        })
-                        ->where('segment_allocated_items.documentSystemID', $value->documentSystemID)
-                        ->whereHas('order', function($query) {
-                            $query->where(function($query) {
-                                $query->where('projectID', 0)
-                                    ->orWhereNull('projectID');
-                            });
-                        })
-                        ->groupBy('purchaseOrderMasterID')
-                        ->first();
-
-                    if ($notRecivedPo) {
-                        $currencyConversionRptAmount = \Helper::currencyConversion($input['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPo->remainingAmount);
-                        $actualConsumption = $value->consumedRptAmount - $currencyConversionRptAmount['reportingAmount'];
-                    }
-                } else {
-                    $actualConsumption = $value->consumedRptAmount;
-                }
-
-                $value->actualConsumption = $actualConsumption;
-            }
-
-            $total = array_sum(collect($data)->pluck('actualConsumption')->toArray());
-        }
-
-
-        $companyId = $input['companySystemID'];
-
-        if ($companyId) {
-            $company = Company::where('companySystemID', $companyId)->first();
-            $localCurrency = CurrencyMaster::where('currencyID', $company->localCurrencyID)->first();
-            $rptCurrency = CurrencyMaster::where('currencyID', $company->reportingCurrency)->first();
-        } else {
-            $localCurrency = [];
-            $rptCurrency = [];
-        }
-
-
-        $decimalPlaceLocal = !empty($localCurrency) ? $localCurrency->DecimalPlaces : 3;
-        $decimalPlaceRpt = !empty($rptCurrency) ? $rptCurrency->DecimalPlaces : 2;
-
-        $result = array('reportData' => $data, 'total' => $total, 'decimalPlaceLocal' => $decimalPlaceLocal, 'decimalPlaceRpt' => $decimalPlaceRpt);
+        $result = $this->budgetGLCodeWiseDetailsData($input);
         $templateName = "export_report.budget_summary_details";
 
         \Excel::create('finance', function ($excel) use ($result, $templateName) {
@@ -2686,10 +2241,8 @@ class BudgetMasterAPIController extends AppBaseController
             $data->pendingDocumentAmount = $this->getGlCodeWisePendingDocAmount($data, $glIds, $DLBCPolicy);
 
             $pos = PurchaseOrderDetails::whereHas('order', function ($q) use ($data, $glIds, $DLBCPolicy, $budgetMaster) {
-                                                    if($DLBCPolicy){
-                                                        $q->where('serviceLineSystemID', $data['serviceLineSystemID']);
-                                                    }
-                                                    $q->where('companySystemID', $data['companySystemID'])
+                                                    $q->where('serviceLineSystemID', $data['serviceLineSystemID'])
+                                                        ->where('companySystemID', $data['companySystemID'])
                                                         ->where('approved', 0)
                                                         ->where('poCancelledYN', 0)
                                                         ->where('budgetYear', $budgetMaster->Year);
@@ -2833,9 +2386,7 @@ class BudgetMasterAPIController extends AppBaseController
     public function getGlCodeWiseCommitedBudgetAmount($data, $glIds, $DLBCPolicy)
     {
         $consumedData = BudgetConsumedData::where('companySystemID', $data['companySystemID'])
-                                    ->when($DLBCPolicy, function ($q) use($data){
-                                        return $q->where('serviceLineSystemID', $data['serviceLineSystemID']);
-                                    })
+                                    ->where('serviceLineSystemID', $data['serviceLineSystemID'])
                                     ->with(['purchase_order' => function ($query) {
                                         $query->where('grvRecieved', '!=', 2);
                                     }])
@@ -2857,19 +2408,12 @@ class BudgetMasterAPIController extends AppBaseController
             if (isset($value->purchase_order->grvRecieved) && $value->purchase_order->grvRecieved == 0) {
                 $committedAmount += $value->consumedRptAmount;
             } else {
-                if (isset($value->purchase_order->financeCategory) && $value->purchase_order->financeCategory != 3) {
-                    $glColumnName = 'financeGLcodePLSystemID';
-                } else {
-                    $glColumnName = 'financeGLcodebBSSystemID';
-                }
-
-                $notRecivedPo = PurchaseOrderDetails::selectRaw('SUM((GRVcostPerUnitSupTransCur * segment_allocated_items.allocatedQty) - (GRVcostPerUnitSupTransCur * receivedQty)) as remainingAmount, SUM(GRVcostPerUnitSupTransCur * receivedQty) as receivedAmount')
-                                                    ->whereIn($glColumnName, $glIds)
+                $notRecivedPoFixedAsset = PurchaseOrderDetails::selectRaw('SUM((GRVcostPerUnitSupTransCur * segment_allocated_items.allocatedQty) - (GRVcostPerUnitSupTransCur * receivedQty)) as remainingAmount, SUM(GRVcostPerUnitSupTransCur * receivedQty) as receivedAmount')
+                                                    ->whereIn('financeGLcodebBSSystemID', $glIds)
                                                     ->where('purchaseOrderMasterID', $value->documentSystemCode)
+                                                    ->where('itemFinanceCategoryID', 3)
                                                     ->join('segment_allocated_items', 'documentDetailAutoID', '=', 'purchaseOrderDetailsID')
-                                                    ->when($DLBCPolicy, function($query) use ($data) {
-                                                        $query->where('segment_allocated_items.serviceLineSystemID', $data['serviceLineSystemID']);
-                                                    })
+                                                    ->where('segment_allocated_items.serviceLineSystemID', $data['serviceLineSystemID'])
                                                     ->where('segment_allocated_items.documentSystemID', $value->documentSystemID)
                                                     ->whereHas('order', function($query) {
                                                         $query->where(function($query) {
@@ -2880,8 +2424,30 @@ class BudgetMasterAPIController extends AppBaseController
                                                     ->groupBy('purchaseOrderMasterID')
                                                     ->first();
 
-                if ($notRecivedPo) {
-                    $currencyConversionRptAmount = \Helper::currencyConversion($data['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPo->remainingAmount);
+                if ($notRecivedPoFixedAsset) {
+                    $currencyConversionRptAmount = \Helper::currencyConversion($data['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPoFixedAsset->remainingAmount);
+                    $committedAmount += $currencyConversionRptAmount['reportingAmount'];
+                }
+
+
+                $notRecivedPoNonFixedAsset = PurchaseOrderDetails::selectRaw('SUM((GRVcostPerUnitSupTransCur * segment_allocated_items.allocatedQty) - (GRVcostPerUnitSupTransCur * receivedQty)) as remainingAmount, SUM(GRVcostPerUnitSupTransCur * receivedQty) as receivedAmount')
+                                                    ->whereIn('financeGLcodePLSystemID', $glIds)
+                                                    ->where('purchaseOrderMasterID', $value->documentSystemCode)
+                                                    ->where('itemFinanceCategoryID', '!=',3)
+                                                    ->join('segment_allocated_items', 'documentDetailAutoID', '=', 'purchaseOrderDetailsID')
+                                                    ->where('segment_allocated_items.serviceLineSystemID', $data['serviceLineSystemID'])
+                                                    ->where('segment_allocated_items.documentSystemID', $value->documentSystemID)
+                                                    ->whereHas('order', function($query) {
+                                                        $query->where(function($query) {
+                                                                $query->where('projectID', 0)
+                                                                      ->orWhereNull('projectID');
+                                                            });
+                                                    })
+                                                    ->groupBy('purchaseOrderMasterID')
+                                                    ->first();
+
+                if ($notRecivedPoNonFixedAsset) {
+                    $currencyConversionRptAmount = \Helper::currencyConversion($data['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPoNonFixedAsset->remainingAmount);
                     $committedAmount += $currencyConversionRptAmount['reportingAmount'];
                 }
             }
@@ -2893,9 +2459,7 @@ class BudgetMasterAPIController extends AppBaseController
     public function getGlCodeWiseActualConsumption($dataParam, $glIds, $DLBCPolicy)
     {
         $data = BudgetConsumedData::where('companySystemID', $dataParam['companySystemID'])
-                                    ->when($DLBCPolicy, function ($q) use($dataParam){
-                                        return $q->where('serviceLineSystemID', $dataParam['serviceLineSystemID']);
-                                    })
+                                    ->where('serviceLineSystemID', $dataParam['serviceLineSystemID'])
                                     ->where(function($query) {
                                         $query->where(function($query) {
                                                 $query->where('documentSystemID', 2)
@@ -2921,19 +2485,34 @@ class BudgetMasterAPIController extends AppBaseController
         foreach ($data as $key => $value) {
             $actualConsumption = 0;
             if ($value->documentSystemID == 2 && isset($value->purchase_order->grvRecieved) && $value->purchase_order->grvRecieved == 1) {
-                if (isset($value->purchase_order->financeCategory) && $value->purchase_order->financeCategory != 3) {
-                    $glColumnName = 'financeGLcodePLSystemID';
-                } else {
-                    $glColumnName = 'financeGLcodebBSSystemID';
+                $notRecivedPoFixedAsset = PurchaseOrderDetails::selectRaw('SUM((GRVcostPerUnitSupTransCur * segment_allocated_items.allocatedQty) - (GRVcostPerUnitSupTransCur * receivedQty)) as remainingAmount, SUM(GRVcostPerUnitSupTransCur * receivedQty) as receivedAmount')
+                                                    ->whereIn('financeGLcodebBSSystemID', $glIds)
+                                                    ->where('purchaseOrderMasterID', $value->documentSystemCode)
+                                                    ->where('itemFinanceCategoryID', 3)
+                                                    ->join('segment_allocated_items', 'documentDetailAutoID', '=', 'purchaseOrderDetailsID')
+                                                    ->where('segment_allocated_items.serviceLineSystemID', $dataParam['serviceLineSystemID'])
+                                                    ->where('segment_allocated_items.documentSystemID', $value->documentSystemID)
+                                                     ->whereHas('order', function($query) {
+                                                        $query->where(function($query) {
+                                                                $query->where('projectID', 0)
+                                                                      ->orWhereNull('projectID');
+                                                            });
+                                                    })
+                                                    ->groupBy('purchaseOrderMasterID')
+                                                    ->first();
+
+                if ($notRecivedPoFixedAsset) {
+                    $currencyConversionRptAmount = \Helper::currencyConversion($dataParam['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPoFixedAsset->remainingAmount);
+                    $actualConsumption += $value->consumedRptAmount - $currencyConversionRptAmount['reportingAmount'];
                 }
 
+
                 $notRecivedPo = PurchaseOrderDetails::selectRaw('SUM((GRVcostPerUnitSupTransCur * segment_allocated_items.allocatedQty) - (GRVcostPerUnitSupTransCur * receivedQty)) as remainingAmount, SUM(GRVcostPerUnitSupTransCur * receivedQty) as receivedAmount')
-                                                    ->whereIn($glColumnName, $glIds)
+                                                    ->whereIn('financeGLcodePLSystemID', $glIds)
                                                     ->where('purchaseOrderMasterID', $value->documentSystemCode)
+                                                    ->where('itemFinanceCategoryID', '!=',3)
                                                     ->join('segment_allocated_items', 'documentDetailAutoID', '=', 'purchaseOrderDetailsID')
-                                                    ->when($DLBCPolicy, function($query) use ($dataParam) {
-                                                        $query->where('segment_allocated_items.serviceLineSystemID', $dataParam['serviceLineSystemID']);
-                                                    })
+                                                    ->where('segment_allocated_items.serviceLineSystemID', $dataParam['serviceLineSystemID'])
                                                     ->where('segment_allocated_items.documentSystemID', $value->documentSystemID)
                                                      ->whereHas('order', function($query) {
                                                         $query->where(function($query) {
@@ -2946,7 +2525,7 @@ class BudgetMasterAPIController extends AppBaseController
 
                 if ($notRecivedPo) {
                     $currencyConversionRptAmount = \Helper::currencyConversion($dataParam['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPo->remainingAmount);
-                    $actualConsumption = $value->consumedRptAmount - $currencyConversionRptAmount['reportingAmount'];
+                    $actualConsumption += $value->consumedRptAmount - $currencyConversionRptAmount['reportingAmount'];
                 }
             } else {
                 $actualConsumption = $value->consumedRptAmount;
