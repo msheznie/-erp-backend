@@ -54,6 +54,34 @@ class CalendarDatesDetailObserver
     
     }
 
+    public function updated(CalendarDatesDetail $tender)
+    {
+        $tenderObj = TenderDetails::getTenderMasterData($tender->getAttribute('tender_id'));
+        $obj = TenderDetails::validateTenderEdit($tender->getAttribute('tender_id'));
+
+        if($obj)
+        {   
+            Log::info('updates');
+            $modifyType = 3;
+            $calender = CalendarDatesDetailEditLog::select('id')->where('master_id',$tender->getAttribute('id'))->where('tender_edit_version_id',$tenderObj->getOriginal('tender_edit_version_id'))->first();
+            if(isset($calender))
+            {
+                $modifyType = 4;
+            }
+
+            $reflogId = null;
+            $output = CalendarDatesDetailEditLog::select('id')->where('master_id',$tender->getAttribute('id'))->orderBy('id','desc')->first();
+            if(isset($output))
+            {
+               $reflogId = $output->getAttribute('id');
+            }
+
+            $this->process($tender,$modifyType,$tenderObj,$reflogId);
+
+        }
+
+    }
+
 
     public function process($tender,$type,$tenderObj,$reflog_id)
     {

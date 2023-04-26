@@ -16,14 +16,15 @@ class TenderDetails
         $tenderObj = self::getTenderMasterData($id);
         $date = $tenderObj->getOriginal('bid_submission_opening_date');
         $version_id = $tenderObj->getOriginal('tender_edit_version_id');
+        if (!isset($date) && !isset($version_id)) {
+            return false;
+        }
+
         $currentDate = Carbon::now()->format('Y-m-d H:i:s');
         $openingDateFormat = Carbon::createFromFormat('Y-m-d H:i:s', $date);
         $result = $openingDateFormat->gt($currentDate);
 
-        if (!isset($date) && !isset($id)) {
-            return false;
-        }
-
+   
         if (!$result) {
             return false;
         }

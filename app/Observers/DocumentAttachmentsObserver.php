@@ -25,7 +25,7 @@ class DocumentAttachmentsObserver
         $tenderObj = TenderDetails::getTenderMasterData($tender->getAttribute('documentSystemCode'));
         $obj = TenderDetails::validateTenderEdit($tender->getAttribute('documentSystemCode'));
 
-        $type = 1;
+        $type = 2;
         if($obj)
         {
          

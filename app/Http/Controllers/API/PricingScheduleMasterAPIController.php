@@ -504,7 +504,12 @@ class PricingScheduleMasterAPIController extends AppBaseController
             $result = $sheduleMaster->delete();
             if($result){
                 //TenderMainWorks::where('schedule_id',$input['id'])->delete();
-                ScheduleBidFormatDetails::where('schedule_id',$input['id'])->delete();
+        
+                $sheduleDetails = $this->deleteSheduleDetails($input['id']);
+                if (!$sheduleDetails['success']) {
+                    return $this->sendError($sheduleDetails['message'], 500);
+                }
+
                 PricingScheduleDetail::where('pricing_schedule_master_id',$input['id'])->delete();
                 DB::commit();
                 return ['success' => true, 'message' => 'Successfully deleted', 'data' => $result];
@@ -689,5 +694,24 @@ class PricingScheduleMasterAPIController extends AppBaseController
         // $bidDetailId = $mainWorks->pluck('bid_format_detail_id');
 
         // return TenderBidFormatDetail::where('tender_id',$priceSchedule['price_bid_format_id'])->where('is_disabled',0)->whereNotIn('id', $bidDetailId)->get();
+    }
+
+    public function deleteSheduleDetails($id)
+    {
+
+        DB::beginTransaction();
+        try {
+            $details = ScheduleBidFormatDetails::where('schedule_id',$id)->get();
+
+            foreach ($details as $val) {
+                $shedule = ScheduleBidFormatDetails::find($val->id);
+                $shedule->delete();
+            }
+
+            DB::commit();
+            return ['success' => true, 'message' => 'Successfully Deleted'];
+        } catch (\Exception $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
     }
 }

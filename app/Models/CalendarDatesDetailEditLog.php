@@ -126,7 +126,8 @@ class CalendarDatesDetailEditLog extends Model
         'ref_log_id',
         'tender_id',
         'to_date',
-        'version_id'
+        'version_id',
+        'tender_edit_version_id'
     ];
 
     /**

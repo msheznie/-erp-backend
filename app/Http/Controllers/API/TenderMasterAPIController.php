@@ -1238,7 +1238,7 @@ WHERE
                         if ($input['isRequestProcessComplete'] && $input['requestType'] == 'Amend') {
                             $circulatAmends =  CircularAmendments::where('tender_id', $input['id'])->select('id')->count();
                             if ($circulatAmends == 0) {
-                                return ['success' => false, 'message' => 'Please select atleast one amendment for circular'];
+                                return ['success' => false, 'message' => 'Please add at least one circular for the amendment'];
                             }
                         }
 
@@ -1475,7 +1475,12 @@ WHERE
                     }
                 }
 
-                CalendarDatesDetail::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
+               
+                $calenderDetails = $this->deleteCalenderDetails($input['id'], $input['company_id']);
+                if (!$calenderDetails['success']) {
+                    return $this->sendError($calenderDetails['message'], 500);
+                }
+
                 foreach ($input['calendarDates'] as $calDate) {
                     $fromTime = new Carbon($calDate['from_time']);
                     $frm_date = new Carbon($calDate['from_date']);
@@ -2380,14 +2385,18 @@ WHERE
 
                     $calendarDatesDetail = CalendarDatesDetail::where('calendar_date_id', $request['calenderDateTypeId'])
                         ->where('tender_id', $request['tenderMasterId'])
-                        ->update($data);
+                        ->first();
+                     $calenderDates =  CalendarDatesDetail::find($calendarDatesDetail->id);  
+                     $calenderDates->update($data);
                     DB::commit();
                     return ['success' => true, 'message' => 'updated', 'data' => $calendarDatesDetail];
                 }
             } else {
                 $calendarDatesDetail = CalendarDatesDetail::where('calendar_date_id', $request['calenderDateTypeId'])
                     ->where('tender_id', $request['tenderMasterId'])
-                    ->update($data);
+                    ->first();
+                $calenderDates =  CalendarDatesDetail::find($calendarDatesDetail->id);  
+                $calenderDates->update($data);
                 DB::commit();
                 return ['success' => true, 'message' => 'Successfully updated', 'data' => $calendarDatesDetail];
             }
@@ -3625,6 +3634,26 @@ WHERE
             foreach ($proActivity as $val) {
                 $procument = ProcumentActivity::find($val->id);
                 $procument->delete();
+            }
+
+            DB::commit();
+            return ['success' => true, 'message' => 'Successfully Deleted'];
+        } catch (\Exception $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
+    }
+
+
+    public function deleteCalenderDetails($id, $company_id)
+    {
+
+        DB::beginTransaction();
+        try {
+            $details = CalendarDatesDetail::where('tender_id', $id)->where('company_id', $company_id)->select('id')->get();  
+
+            foreach ($details as $val) {
+                $calender = CalendarDatesDetail::find($val->id);
+                $calender->delete();
             }
 
             DB::commit();
