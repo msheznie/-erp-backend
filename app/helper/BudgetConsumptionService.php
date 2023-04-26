@@ -5618,15 +5618,10 @@ class BudgetConsumptionService
             if (isset($value->purchase_order->grvRecieved) && $value->purchase_order->grvRecieved == 0) {
                 $committedAmount += $value->consumedRptAmount;
             } else {
-                if (isset($value->purchase_order->financeCategory) && $value->purchase_order->financeCategory != 3) {
-                    $glColumnName = 'financeGLcodePLSystemID';
-                } else {
-                    $glColumnName = 'financeGLcodebBSSystemID';
-                }
-
-                $notRecivedPo = PurchaseOrderDetails::selectRaw('SUM((GRVcostPerUnitSupTransCur * segment_allocated_items.allocatedQty) - (GRVcostPerUnitSupTransCur * receivedQty)) as remainingAmount, SUM(GRVcostPerUnitSupTransCur * receivedQty) as receivedAmount')
-                                                    ->where($glColumnName, $detail->chartOfAccountID)
+                $notRecivedPoFixedAsset = PurchaseOrderDetails::selectRaw('SUM((GRVcostPerUnitSupTransCur * segment_allocated_items.allocatedQty) - (GRVcostPerUnitSupTransCur * receivedQty)) as remainingAmount, SUM(GRVcostPerUnitSupTransCur * receivedQty) as receivedAmount')
+                                                    ->where('financeGLcodebBSSystemID', $detail->chartOfAccountID)
                                                     ->where('purchaseOrderMasterID', $value->documentSystemCode)
+                                                    ->where('itemFinanceCategoryID', 3)
                                                     ->join('segment_allocated_items', 'documentDetailAutoID', '=', 'purchaseOrderDetailsID')
                                                     ->when(($DLBCPolicy || $departmentsWiseCheck), function($query) use ($detail) {
 		                                            	$query->where('segment_allocated_items.serviceLineSystemID', $detail->serviceLineSystemID);
@@ -5641,12 +5636,40 @@ class BudgetConsumptionService
                                                     ->groupBy('purchaseOrderMasterID')
                                                     ->first();
 
-                if ($notRecivedPo) {
-                    $currencyConversionRptAmount = \Helper::currencyConversion($detail->companySystemID, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPo->remainingAmount);
+                if ($notRecivedPoFixedAsset) {
+                    $currencyConversionRptAmount = \Helper::currencyConversion($detail->companySystemID, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPoFixedAsset->remainingAmount);
                     $committedAmount += $currencyConversionRptAmount['reportingAmount'];
 
 
-                    $currencyConversionRptAmountRec = \Helper::currencyConversion($detail->companySystemID, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPo->receivedAmount);
+                    $currencyConversionRptAmountRec = \Helper::currencyConversion($detail->companySystemID, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPoFixedAsset->receivedAmount);
+                    $partiallyReceivedAmount += $currencyConversionRptAmountRec['reportingAmount'];
+                }
+
+
+                $notRecivedPoNonFixedAsset = PurchaseOrderDetails::selectRaw('SUM((GRVcostPerUnitSupTransCur * segment_allocated_items.allocatedQty) - (GRVcostPerUnitSupTransCur * receivedQty)) as remainingAmount, SUM(GRVcostPerUnitSupTransCur * receivedQty) as receivedAmount')
+                                                    ->where('financeGLcodePLSystemID', $detail->chartOfAccountID)
+                                                    ->where('purchaseOrderMasterID', $value->documentSystemCode)
+                                                    ->where('itemFinanceCategoryID', '!=',3)
+                                                    ->join('segment_allocated_items', 'documentDetailAutoID', '=', 'purchaseOrderDetailsID')
+                                                    ->when(($DLBCPolicy || $departmentsWiseCheck), function($query) use ($detail) {
+		                                            	$query->where('segment_allocated_items.serviceLineSystemID', $detail->serviceLineSystemID);
+		                                            })
+		                                            ->whereHas('order', function($query) {
+		                                            	$query->where(function($query) {
+				                                            	$query->where('projectID', 0)
+				                                            		  ->orWhereNull('projectID');
+				                                            });
+		                                            })
+                                                    ->where('segment_allocated_items.documentSystemID', $value->documentSystemID)
+                                                    ->groupBy('purchaseOrderMasterID')
+                                                    ->first();
+
+                if ($notRecivedPoNonFixedAsset) {
+                    $currencyConversionRptAmount = \Helper::currencyConversion($detail->companySystemID, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPoNonFixedAsset->remainingAmount);
+                    $committedAmount += $currencyConversionRptAmount['reportingAmount'];
+
+
+                    $currencyConversionRptAmountRec = \Helper::currencyConversion($detail->companySystemID, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPoNonFixedAsset->receivedAmount);
                     $partiallyReceivedAmount += $currencyConversionRptAmountRec['reportingAmount'];
                 }
             }
