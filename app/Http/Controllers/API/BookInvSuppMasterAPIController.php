@@ -36,6 +36,7 @@ use App\helper\TaxService;
 use App\Http\Requests\API\CreateBookInvSuppMasterAPIRequest;
 use App\Http\Requests\API\UpdateBookInvSuppMasterAPIRequest;
 use App\Models\AccountsPayableLedger;
+use App\Models\BudgetConsumedData;
 use App\Models\EmployeeLedger;
 use App\Models\SupplierInvoiceDirectItem;
 use App\Models\BookInvSuppDet;
@@ -3091,6 +3092,11 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
                 ->delete();
 
             TaxLedgerDetail::where('documentMasterAutoID', $bookingSuppMasInvAutoID)
+                ->where('companySystemID', $bookInvSuppMasterData->companySystemID)
+                ->where('documentSystemID', $bookInvSuppMasterData->documentSystemID)
+                ->delete();
+
+            BudgetConsumedData::where('documentSystemCode', $bookingSuppMasInvAutoID)
                 ->where('companySystemID', $bookInvSuppMasterData->companySystemID)
                 ->where('documentSystemID', $bookInvSuppMasterData->documentSystemID)
                 ->delete();

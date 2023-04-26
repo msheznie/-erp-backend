@@ -25,6 +25,7 @@ use App\helper\TaxService;
 use App\Http\Requests\API\CreateDebitNoteAPIRequest;
 use App\Http\Requests\API\UpdateDebitNoteAPIRequest;
 use App\Models\AccountsPayableLedger;
+use App\Models\BudgetConsumedData;
 use App\Models\EmployeeLedger;
 use App\Models\Company;
 use App\Models\ChartOfAccountsAssigned;
@@ -2261,6 +2262,11 @@ UNION ALL
                 ->delete();
 
             TaxLedgerDetail::where('documentMasterAutoID', $debitNoteAutoID)
+                ->where('companySystemID', $debitNoteMasterData->companySystemID)
+                ->where('documentSystemID', $debitNoteMasterData->documentSystemID)
+                ->delete();
+
+            BudgetConsumedData::where('documentSystemCode', $debitNoteAutoID)
                 ->where('companySystemID', $debitNoteMasterData->companySystemID)
                 ->where('documentSystemID', $debitNoteMasterData->documentSystemID)
                 ->delete();
