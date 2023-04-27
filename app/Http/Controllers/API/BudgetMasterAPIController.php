@@ -986,7 +986,10 @@ class BudgetMasterAPIController extends AppBaseController
                                         ->where('itemFinanceCategoryID', '!=', 3)
                                         ->whereIn('financeGLcodePLSystemID', $glIds)
                                         ->whereNotNull('financeGLcodePLSystemID')
-                                        ->whereNull('detail_project_id')
+                                        ->where(function($query) {
+                                            $query->where('detail_project_id', 0)
+                                                  ->orWhereNull('detail_project_id');
+                                        })
                                         ->with(['grv_master' => function($query) {
                                             $query->with(['financeyear_by']);
                                         }])
@@ -1008,7 +1011,10 @@ class BudgetMasterAPIController extends AppBaseController
                                         ->where('itemFinanceCategoryID', 3)
                                         ->whereIn('financeGLcodebBSSystemID', $glIds)
                                         ->whereNotNull('financeGLcodebBSSystemID')
-                                        ->whereNull('detail_project_id')
+                                        ->where(function($query) {
+                                            $query->where('detail_project_id', 0)
+                                                  ->orWhereNull('detail_project_id');
+                                        })
                                         ->with(['grv_master' => function($query) {
                                             $query->with(['financeyear_by']);
                                         }])
@@ -1523,7 +1529,10 @@ class BudgetMasterAPIController extends AppBaseController
                                         function ($join) {
                                             $join->on('erp_grvdetails.financeGLcodePLSystemID', '=', 'tem_gl.chartOfAccountSystemID');
                                         })
-                                        ->whereNull('detail_project_id')
+                                        ->where(function($query) {
+                                            $query->where('detail_project_id', 0)
+                                                  ->orWhereNull('detail_project_id');
+                                        })
                                         ->with(['grv_master' => function($query) {
                                             $query->with(['financeyear_by']);
                                         }])
@@ -1556,7 +1565,10 @@ class BudgetMasterAPIController extends AppBaseController
                                         function ($join) {
                                             $join->on('erp_grvdetails.financeGLcodebBSSystemID', '=', 'tem_gl.chartOfAccountSystemID');
                                         })
-                                        ->whereNull('detail_project_id')
+                                        ->where(function($query) {
+                                            $query->where('detail_project_id', 0)
+                                                  ->orWhereNull('detail_project_id');
+                                        })
                                         ->with(['grv_master' => function($query) {
                                             $query->with(['financeyear_by']);
                                         }])
@@ -2623,7 +2635,10 @@ class BudgetMasterAPIController extends AppBaseController
                                     function ($join) {
                                         $join->on('erp_grvdetails.financeGLcodePLSystemID', '=', 'tem_gl.chartOfAccountSystemID');
                                     })
-                                    ->whereNull('detail_project_id')
+                                    ->where(function($query) {
+                                        $query->where('detail_project_id', 0)
+                                              ->orWhereNull('detail_project_id');
+                                    })
                                     ->with(['grv_master' => function($query) {
                                         $query->with(['financeyear_by']);
                                     }])
@@ -2656,7 +2671,10 @@ class BudgetMasterAPIController extends AppBaseController
                                     function ($join) {
                                         $join->on('erp_grvdetails.financeGLcodebBSSystemID', '=', 'tem_gl.chartOfAccountSystemID');
                                     })
-                                    ->whereNull('detail_project_id')
+                                    ->where(function($query) {
+                                        $query->where('detail_project_id', 0)
+                                              ->orWhereNull('detail_project_id');
+                                    })
                                     ->with(['grv_master' => function($query) {
                                         $query->with(['financeyear_by']);
                                     }])
