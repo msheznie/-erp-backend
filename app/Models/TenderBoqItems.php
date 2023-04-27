@@ -89,7 +89,8 @@ class TenderBoqItems extends Model
         'qty',
         'created_by',
         'updated_by',
-        'company_id'
+        'company_id',
+        'tender_ranking_line_item'
     ];
 
     /**
@@ -123,9 +124,19 @@ class TenderBoqItems extends Model
         return $this->hasOne('App\Models\BidBoq', 'boq_id', 'id');
     }
 
+    public function bid_boqs()
+    {
+        return $this->hasMany('App\Models\BidBoq', 'boq_id', 'id');
+    }
+
     public function unit()
     {
         return $this->belongsTo('App\Models\Unit','uom','UnitID');
+    }
+
+    public function ranking_items()
+    {
+        return $this->hasOne('App\Models\CommercialBidRankingItems', 'id', 'tender_ranking_line_item');
     }
 
     

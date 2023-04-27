@@ -118,6 +118,12 @@ class AppointmentDetails extends Model
     public function appointment(){
         return $this->belongsTo('App\Models\Appointment', 'appointment_id', 'id');
     }
+    public function item(){
+        return $this->belongsTo('App\Models\ItemMaster', 'item_id', 'itemCodeSystem');
+    }
 
+    public function po_master(){ 
+        return $this->belongsTo('App\Models\ProcumentOrder', 'po_master_id', 'purchaseOrderID');
+    }
     
 }

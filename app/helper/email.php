@@ -69,6 +69,7 @@ use App\Models\ContingencyBudgetPlan;
 use App\Models\Appointment;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use App\Models\DocumentModifyRequest;
 use Response;
 
 class email
@@ -473,11 +474,27 @@ class email
                         $data['docCode'] = $tender->tender_code;
                     }
                     break;
+                case 113:
+                    $tender = TenderMaster::find($data['docSystemCode']);
+
+                    if (!empty($tender)) {
+                        $data['docApprovedYN'] = $tender->approved;
+                        $data['docCode'] = $tender->tender_code;
+                    }
+                    break;
                  case 69:
                     $journalVoucher = ConsoleJVMaster::where('consoleJvMasterAutoId', $data['docSystemCode'])->first();
                     if (!empty($journalVoucher)) {
                         $data['docApprovedYN'] = $journalVoucher->approved;
                         $data['docCode'] = $journalVoucher->consoleJVcode;
+                    }
+                    break;
+                case 117:
+                    $editRequedt = DocumentModifyRequest::find($data['docSystemCode']);
+
+                    if (!empty($editRequedt)) {
+                        $data['docApprovedYN'] = $editRequedt->approved;
+                        $data['docCode'] = $editRequedt->code;
                     }
                     break;
                 default:

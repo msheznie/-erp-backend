@@ -2979,6 +2979,17 @@ class Helper
                     $docInforArr["modelName"] = 'TenderMaster';
                     $docInforArr["primarykey"] = 'id';
                     break;
+                case 113: //SRM RFX
+                    $docInforArr["documentCodeColumnName"] = 'tender_code';
+                    $docInforArr["confirmColumnName"] = 'confirmed_yn';
+                    $docInforArr["confirmed_by_name"] = 'confirmed_by_name';
+                    $docInforArr["confirmedByEmpID"] = 'confirmed_by_emp_system_id';
+                    $docInforArr["confirmedBySystemID"] = 'confirmed_by_emp_system_id';
+                    $docInforArr["confirmedDate"] = 'confirmed_date';
+                    $docInforArr["tableName"] = 'srm_tender_master';
+                    $docInforArr["modelName"] = 'TenderMaster';
+                    $docInforArr["primarykey"] = 'id';
+                    break;
                 case 69:
                     $docInforArr["documentCodeColumnName"] = 'consoleJVcode';
                     $docInforArr["confirmColumnName"] = 'confirmedYN';
@@ -2989,6 +3000,17 @@ class Helper
                     $docInforArr["tableName"] = 'erp_consolejvmaster';
                     $docInforArr["modelName"] = 'ConsoleJVMaster';
                     $docInforArr["primarykey"] = 'consoleJvMasterAutoId';
+                    break;
+                case 117:
+                    $docInforArr["documentCodeColumnName"] = 'code';
+                    $docInforArr["confirmColumnName"] = 'requested';
+                    $docInforArr["confirmedBy"] = 'requested_by_name';
+                    $docInforArr["confirmedByEmpID"] = 'requested_employeeSystemID';
+                    $docInforArr["confirmedBySystemID"] = 'requested_employeeSystemID';
+                    $docInforArr["confirmedDate"] = 'requested_date';
+                    $docInforArr["tableName"] = 'document_modify_request';
+                    $docInforArr["modelName"] = 'DocumentModifyRequest';
+                    $docInforArr["primarykey"] = 'id';
                     break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
@@ -3029,6 +3051,12 @@ class Helper
                     }
                 }
 
+                $reference_document_id = $params['document'];
+                if(isset($params['reference_document_id']) && $params['reference_document_id'])
+                {
+                    $reference_document_id = $params['reference_document_id'];
+                }
+
                 //checking whether document approved table has a data for the same document
                 $docExist = Models\DocumentApproved::where('documentSystemID', $params["document"])->where('documentSystemCode', $params["autoID"])->first();
                 if (!$docExist) {
@@ -3057,7 +3085,7 @@ class Helper
                             $masterRec->update([$docInforArr["confirmColumnName"] => 1, $docInforArr["confirmedBy"] => $empInfo->empName, $docInforArr["confirmedByEmpID"] => $empInfo->empID, $docInforArr["confirmedBySystemID"] => $empInfo->employeeSystemID, $docInforArr["confirmedDate"] => now(), 'RollLevForApp_curr' => 1]);
 
                             //get the policy
-                            $policy = Models\CompanyDocumentAttachment::where('companySystemID', $params["company"])->where('documentSystemID', $params["document"])->first();
+                            $policy = Models\CompanyDocumentAttachment::where('companySystemID', $params["company"])->where('documentSystemID', $reference_document_id)->first();
                             if ($policy) {
                                 $isSegmentWise = $policy->isServiceLineApproval;
                                 $isCategoryWise = $policy->isCategoryApproval;
@@ -3065,7 +3093,7 @@ class Helper
                                 $isAttachment = $policy->isAttachmentYN;
                                 //check for attachment is uploaded if attachment policy is set to must
                                 if ($isAttachment == -1) {
-                                    $docAttachment = Models\DocumentAttachments::where('companySystemID', $params["company"])->where('documentSystemID', $params["document"])->where('documentSystemCode', $params["autoID"])->first();
+                                    $docAttachment = Models\DocumentAttachments::where('companySystemID', $params["company"])->where('documentSystemID', $params['document'])->where('documentSystemCode', $params["autoID"])->first();
                                     if (!$docAttachment) {
                                         return ['success' => false, 'message' => 'There is no attachments attached. Please attach an attachment before you confirm the document'];
                                     }
@@ -3073,9 +3101,11 @@ class Helper
                             } else {
                                 return ['success' => false, 'message' => 'Policy not available for this document.'];
                             }
+                        
+                            
 
                             // get approval rolls
-                            $approvalLevel = Models\ApprovalLevel::with('approvalrole')->where('companySystemID', $params["company"])->where('documentSystemID', $params["document"])->where('departmentSystemID', $document["departmentSystemID"])->where('isActive', -1);
+                            $approvalLevel = Models\ApprovalLevel::with('approvalrole')->where('companySystemID', $params["company"])->where('documentSystemID', $reference_document_id)->where('departmentSystemID', $document["departmentSystemID"])->where('isActive', -1);
 
                             if ($isSegmentWise) {
                                 if (array_key_exists('segment', $params)) {
@@ -3180,7 +3210,7 @@ class Helper
                                     if ($output->approvalrole) {
                                         foreach ($output->approvalrole as $val) {
                                             if ($val->approvalGroupID) {
-                                                $documentApproved[] = array('companySystemID' => $val->companySystemID, 'companyID' => $val->companyID, 'departmentSystemID' => $val->departmentSystemID, 'departmentID' => $val->departmentID, 'serviceLineSystemID' => $val->serviceLineSystemID, 'serviceLineCode' => $val->serviceLineID, 'documentSystemID' => $val->documentSystemID, 'documentID' => $val->documentID, 'documentSystemCode' => $params["autoID"], 'documentCode' => $sorceDocument[$docInforArr["documentCodeColumnName"]], 'approvalLevelID' => $val->approvalLevelID, 'rollID' => $val->rollMasterID, 'approvalGroupID' => $val->approvalGroupID, 'rollLevelOrder' => $val->rollLevel, 'docConfirmedDate' => now(), 'docConfirmedByEmpSystemID' => $empInfo->employeeSystemID, 'docConfirmedByEmpID' => $empInfo->empID, 'timeStamp' => NOW(), 'reference_email' => $email_in);
+                                                $documentApproved[] = array('companySystemID' => $val->companySystemID, 'companyID' => $val->companyID, 'departmentSystemID' => $val->departmentSystemID, 'departmentID' => $val->departmentID, 'serviceLineSystemID' => $val->serviceLineSystemID, 'serviceLineCode' => $val->serviceLineID, 'documentSystemID' => $params['document'], 'documentID' => $val->documentID, 'documentSystemCode' => $params["autoID"], 'documentCode' => $sorceDocument[$docInforArr["documentCodeColumnName"]], 'approvalLevelID' => $val->approvalLevelID, 'rollID' => $val->rollMasterID, 'approvalGroupID' => $val->approvalGroupID, 'rollLevelOrder' => $val->rollLevel, 'docConfirmedDate' => now(), 'docConfirmedByEmpSystemID' => $empInfo->employeeSystemID, 'docConfirmedByEmpID' => $empInfo->empID, 'timeStamp' => NOW(), 'reference_email' => $email_in);
                                             } else {
                                                 return ['success' => false, 'message' => 'Please set the approval group'];
                                             }
@@ -3200,7 +3230,7 @@ class Helper
 
                                     if ($documentApproved->approvedYN == 0) {
                                         $companyDocument = Models\CompanyDocumentAttachment::where('companySystemID', $documentApproved->companySystemID)
-                                            ->where('documentSystemID', $documentApproved->documentSystemID)
+                                            ->where('documentSystemID', $reference_document_id)
                                             ->first();
 
                                         if (empty($companyDocument)) {
@@ -3212,7 +3242,7 @@ class Helper
                                                 $q->where('discharegedYN', 0);
                                             })
                                             ->where('companySystemID', $documentApproved->companySystemID)
-                                            ->where('documentSystemID', $documentApproved->documentSystemID)
+                                            ->where('documentSystemID', $reference_document_id)
                                             ->where('isActive', 1)
                                             ->where('removedYN', 0);
 
@@ -3229,6 +3259,19 @@ class Helper
                                         $pushNotificationUserIds = [];
                                         $pushNotificationArray = [];
                                         $document = Models\DocumentMaster::where('documentSystemID', $documentApproved->documentSystemID)->first();
+
+
+                                        if($params["document"] == 117)
+                                        {
+                                            if($sorceDocument->type == 1)
+                                            {
+                                                $document->documentDescription = 'Edit Request';
+                                            }
+                                            else
+                                            {
+                                                $document->documentDescription = 'Amend Request';
+                                            }
+                                        }
 
                                         $approvedDocNameBody = $document->documentDescription . ' <b>' . $documentApproved->documentCode . '</b>';
 
@@ -4130,6 +4173,18 @@ class Helper
                 $docInforArr["confirmedYN"] = "confirmed_yn";
                 $docInforArr["confirmedEmpSystemID"] = "confirmed_by_emp_system_id";
                 break;
+            case 113: //SRM RFX
+                $docInforArr["tableName"] = 'srm_tender_master';
+                $docInforArr["modelName"] = 'TenderMaster';
+                $docInforArr["primarykey"] = 'id';
+                $docInforArr["approvedColumnName"] = 'approved';
+                $docInforArr["approvedBy"] = 'approved_by_emp_name';
+                $docInforArr["approvedBySystemID"] = 'approved_by_user_system_id';
+                $docInforArr["approvedDate"] = 'approved_date';
+                $docInforArr["approveValue"] = -1;
+                $docInforArr["confirmedYN"] = "confirmed_yn";
+                $docInforArr["confirmedEmpSystemID"] = "confirmed_by_emp_system_id";
+                break;
              case 69: // Console Journal Voucher
                 $docInforArr["tableName"] = 'erp_consolejvmaster';
                 $docInforArr["modelName"] = 'ConsoleJVMaster';
@@ -4141,6 +4196,18 @@ class Helper
                 $docInforArr["approveValue"] = -1;
                 $docInforArr["confirmedYN"] = "confirmedYN";
                 $docInforArr["confirmedEmpSystemID"] = "confirmedByEmpSystemID";
+                break;
+            case 117: // Edit request
+                $docInforArr["tableName"] = 'document_modify_request';
+                $docInforArr["modelName"] = 'DocumentModifyRequest';
+                $docInforArr["primarykey"] = 'id';
+                $docInforArr["approvedColumnName"] = 'approved';
+                $docInforArr["approvedBy"] = 'approved_by_user_system_id';
+                $docInforArr["approvedBySystemID"] = 'approved_by_user_system_id';
+                $docInforArr["approvedDate"] = 'approved_date';
+                $docInforArr["approveValue"] = -1;
+                $docInforArr["confirmedYN"] = "requested";
+                $docInforArr["confirmedEmpSystemID"] = "requested_employeeSystemID";
                 break;
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
@@ -4156,6 +4223,13 @@ class Helper
             $docApproved = Models\DocumentApproved::find($input["documentApprovedID"]);
             if ($docApproved) {
 
+                $reference_document_id = $input['documentSystemID'];
+                if(isset($input['reference_document_id']) && $input['reference_document_id'])
+                {
+                    $reference_document_id = $input['reference_document_id'];
+                }
+
+                
                 // get current employee detail
                 $empInfo = self::getEmployeeInfo();
                 $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
@@ -4178,7 +4252,7 @@ class Helper
 
 
                 $companyDocument = Models\CompanyDocumentAttachment::where('companySystemID', $docApproved->companySystemID)
-                    ->where('documentSystemID', $input["documentSystemID"])
+                    ->where('documentSystemID', $reference_document_id)
                     ->first();
                 if (empty($companyDocument)) {
                     return ['success' => false, 'message' => 'Policy not found.'];
@@ -4187,7 +4261,7 @@ class Helper
                 $checkUserHasApprovalAccess = Models\EmployeesDepartment::where('employeeGroupID', $docApproved->approvalGroupID)
                     ->where('companySystemID', $docApproved->companySystemID)
                     ->where('employeeSystemID', $empInfo->employeeSystemID)
-                    ->where('documentSystemID', $input["documentSystemID"])
+                    ->where('documentSystemID', $reference_document_id)
                     ->where('isActive', 1)
                     ->where('removedYN', 0);
 
@@ -4673,6 +4747,7 @@ class Helper
                                     $dataEmail['emailAlertMessage'] = $temp;
                                     $sendEmail = \Email::sendEmailErp($dataEmail);
                                 }
+
                             }
 
                             if ($input["documentSystemID"] == 22) {
@@ -4741,6 +4816,19 @@ class Helper
                         $pushNotificationArray = [];
                         if (!empty($sourceModel)) {
                             $document = Models\DocumentMaster::where('documentSystemID', $currentApproved->documentSystemID)->first();
+                           
+
+                            if($input["documentSystemID"] == 117)
+                            {
+                                if($sourceModel->type == 1)
+                                {
+                                    $document->documentDescription = 'Edit Request';
+                                }
+                                else
+                                {
+                                    $document->documentDescription = 'Amend Request';
+                                }
+                            }
                             $subjectName = $document->documentDescription . ' ' . $currentApproved->documentCode;
                             $bodyName = $document->documentDescription . ' ' . '<b>' . $currentApproved->documentCode . '</b>';
 
@@ -4748,13 +4836,13 @@ class Helper
 
                                 if ($approvalLevel->noOfLevels == $input["rollLevelOrder"]) { // if fully approved
                                     $subject = $subjectName . " is fully approved";
-                                    $body = $bodyName . " is fully approved . ";
+                                    $body = "<p>". $bodyName . " is fully approved . ";
                                     $pushNotificationMessage = $subject;
                                     $pushNotificationUserIds[] = $sourceModel[$docInforArr["confirmedEmpSystemID"]];
                                 } else {
 
                                     $companyDocument = Models\CompanyDocumentAttachment::where('companySystemID', $currentApproved->companySystemID)
-                                        ->where('documentSystemID', $currentApproved->documentSystemID)
+                                        ->where('documentSystemID', $reference_document_id)
                                         ->first();
 
                                     if (empty($companyDocument)) {
@@ -4774,7 +4862,7 @@ class Helper
                                             $q->where('discharegedYN', 0);
                                         })
                                         ->where('companySystemID', $currentApproved->companySystemID)
-                                        ->where('documentSystemID', $currentApproved->documentSystemID)
+                                        ->where('documentSystemID', $reference_document_id)
                                         ->where('isActive', 1)
                                         ->where('removedYN', 0);
 
@@ -4830,7 +4918,7 @@ class Helper
                                     }
 
                                     $subject = $subjectName . " Level " . $currentApproved->rollLevelOrder . " is approved and sent to next level approval";
-                                    $body = $bodyName . " Level " . $currentApproved->rollLevelOrder . " is approved and sent to next level approval to below employees < br>" . $nextApproveNameList;
+                                    $body = '<p>'.$bodyName . " Level " . $currentApproved->rollLevelOrder . " is approved and sent to next level approval to below employees <br>" . $nextApproveNameList;
                                 }
 
 
@@ -5389,11 +5477,22 @@ class Helper
                     $docInforArr["modelName"] = 'TenderMaster';
                     $docInforArr["primarykey"] = 'id';
                     $docInforArr["referredColumnName"] = 'timesReferred';
+                case 113:
+                    $docInforArr["tableName"] = 'srm_tender_master';
+                    $docInforArr["modelName"] = 'TenderMaster';
+                    $docInforArr["primarykey"] = 'id';
+                    $docInforArr["referredColumnName"] = 'timesReferred';
                     break;
                  case 69: // Console Journal Voucher
                     $docInforArr["tableName"] = 'erp_consolejvmaster';
                     $docInforArr["modelName"] = 'ConsoleJVMaster';
                     $docInforArr["primarykey"] = 'consoleJvMasterAutoId';
+                    $docInforArr["referredColumnName"] = 'timesReferred';
+                    break;
+                case 117: // Edit Request
+                    $docInforArr["tableName"] = 'document_modify_request';
+                    $docInforArr["modelName"] = 'DocumentModifyRequest';
+                    $docInforArr["primarykey"] = 'id';
                     $docInforArr["referredColumnName"] = 'timesReferred';
                     break;
                 default:
@@ -5419,7 +5518,7 @@ class Helper
                         // update record in document approved table
                         $approvedeDoc = $docApprove->update(['rejectedYN' => -1, 'rejectedDate' => now(), 'rejectedComments' => $input["rejectedComments"], 'employeeID' => $empInfo->empID, 'employeeSystemID' => $empInfo->employeeSystemID]);
 
-                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19, 13, 10, 15, 8, 12, 17, 9, 63, 41, 64, 62, 3, 57, 56, 58, 59, 66, 7, 67, 68, 71, 86, 87, 24, 96, 97, 99, 100, 103, 102, 65, 104, 106,107,108, 69])) {
+                        if (in_array($input["documentSystemID"], [2, 5, 52, 1, 50, 51, 20, 11, 46, 22, 23, 21, 4, 19, 13, 10, 15, 8, 12, 17, 9, 63, 41, 64, 62, 3, 57, 56, 58, 59, 66, 7, 67, 68, 71, 86, 87, 24, 96, 97, 99, 100, 103, 102, 65, 104, 106,107,108, 113, 69,117])) {
                             $timesReferredUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->increment($docInforArr["referredColumnName"]);
                             $refferedBackYNUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->update(['refferedBackYN' => -1]);
                         }
@@ -5442,8 +5541,20 @@ class Helper
                             //     return ['success' => false, 'message' => 'Policy not found for this document'];
                             // }
 
+                            if($input["documentSystemID"] == 117)
+                            {
+                                if($sourceModel->type == 1)
+                                {
+                                    $document->documentDescription = 'Edit Request';
+                                }
+                                else
+                                {
+                                    $document->documentDescription = 'Amend Request';
+                                }
+                            }
+
                             $subjectName = $document->documentDescription . ' ' . $currentApproved->documentCode;
-                            $bodyName = $document->documentDescription . ' ' . '<b>' . $currentApproved->documentCode . '</b>';
+                            $bodyName = '<p>'.$document->documentDescription . ' ' . '<b>' . $currentApproved->documentCode . '</b>';
 
                             $subject = $subjectName . " is rejected.";
                             $body = $bodyName . " is rejected for below reason by " . $empInfo->empName . "<br> " . $input["rejectedComments"];
@@ -5482,6 +5593,12 @@ class Helper
                                     'emailAlertMessage' => $body,
                                     'docSystemCode' => $input["documentSystemCode"]
                                 );
+                            }
+
+                            if($input["documentSystemID"] == 117)
+                            {
+                                $refferedBackYNUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->update(['status' => 0,'rejected_date' => now(),'rejected_by_user_system_id' => $empInfo->employeeSystemID]);
+
                             }
 
                             if($input["documentSystemID"] == 107 || $input["documentSystemID"] == 106)
@@ -5698,8 +5815,12 @@ class Helper
 
     public static function getEmployeeID()
     {
+
         $user = Models\User::find(Auth::id());
-        return $user->empID;
+        if (!empty($user)) {
+            return $user->empID;
+        }
+        return 0;
     }
 
 

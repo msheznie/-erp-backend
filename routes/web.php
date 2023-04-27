@@ -21,3 +21,9 @@ Route::resource('bidDocumentVerifications', 'BidDocumentVerificationController')
 Route::resource('srmBidDocumentattachments', 'SrmBidDocumentattachmentsController');
 
 Route::resource('bidEvaluationSelections', 'BidEvaluationSelectionController');
+
+Route::resource('commercialBidRankingItems', 'CommercialBidRankingItemsController');
+
+Route::resource('tenderFinalBids', 'TenderFinalBidsController');
+
+Route::resource('documentModifyRequests', 'DocumentModifyRequestController');

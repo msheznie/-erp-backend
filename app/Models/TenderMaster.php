@@ -300,9 +300,21 @@ class TenderMaster extends Model
         'go_no_go_status',
         'commercial_verify_status',
         'commercial_verify_at',
-        'commercial_verify_by'
+        'commercial_verify_by',
+        'commercial_ranking_line_item_status',
+        'combined_ranking_status',
+        'is_awarded',
+        'award_comment',
+        'commercial_line_item_status',
+        'commercial_ranking_comment',
+        'document_type',
+        'final_tender_award_comment',
+        'final_tender_awarded',
+        'final_tender_award_email',
+        'award_commite_mem_status',
+        'final_tender_comment_status',
+        'tender_edit_version_id'
     ];
-
     /**
      * The attributes that should be casted to native types.
      *
@@ -372,6 +384,7 @@ class TenderMaster extends Model
         'commerical_bid_closing_date'  => 'datetime',
         'doc_verifiy_status' => 'integer',
         'published_at' => 'datetime',
+        'document_type' => 'integer',
     ];
 
     /**
@@ -438,6 +451,15 @@ class TenderMaster extends Model
     public function evaluation_type()
     {
         return $this->hasOne('App\Models\EvaluationType', 'id', 'evaluation_type_id');
+    }
+
+    public function ranking_supplier()
+    {
+        return $this->hasOne('App\Models\TenderFinalBids', 'tender_id', 'id');
+    }
+
+    public function company(){
+        return $this->belongsTo('App\Models\Company','company_id','companySystemID');
     }
     
     public function getDocumentSalesStartTimeAttribute() {

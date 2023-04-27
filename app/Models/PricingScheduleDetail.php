@@ -129,7 +129,7 @@ class PricingScheduleDetail extends Model
     const UPDATED_AT = 'updated_at';
 
 
-
+    protected $appends = ['level','active'];
 
     public $fillable = [
         'bid_format_id',
@@ -146,7 +146,8 @@ class PricingScheduleDetail extends Model
         'description',
         'deleted_by',
         'company_id',
-        'remarks'
+        'remarks',
+        'tender_ranking_line_item'
     ];
 
     /**
@@ -186,6 +187,11 @@ class PricingScheduleDetail extends Model
         return $this->hasOne('App\Models\BidMainWork', 'main_works_id', 'id');
     }
 
+    public function bid_main_works()
+    {
+        return $this->hasMany('App\Models\BidMainWork', 'main_works_id', 'id');
+    }
+
     public function bid_format_detail()
     {
         return $this->hasOne('App\Models\ScheduleBidFormatDetails', 'bid_format_detail_id', 'id');
@@ -194,5 +200,18 @@ class PricingScheduleDetail extends Model
     public function tender_feild_type()
     {
         return $this->hasOne('App\Models\TenderFieldType', 'id', 'field_type');
+    }
+
+    public function ranking_items()
+    {
+        return $this->hasOne('App\Models\CommercialBidRankingItems', 'id', 'tender_ranking_line_item');
+    }
+
+    public function getLevelAttribute(){
+        return 1;
+    }
+
+    public function getActiveAttribute(){
+        return false;
     }
 }

@@ -367,7 +367,8 @@ class BookInvSuppMaster extends Model
         'supplierVATEligible',
         'employeeID',
         'employeeControlAcID',
-        'VATPercentage'
+        'VATPercentage',
+        'deliveryAppoinmentID'
 
     ];
 
