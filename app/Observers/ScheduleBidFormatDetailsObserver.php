@@ -35,8 +35,8 @@ class ScheduleBidFormatDetailsObserver
         $obj = TenderDetails::validateTenderEdit($shedule_master->getAttribute('tender_id'));
 
         if($obj)
-        {    Log::info(print_r($tender, true));
-
+        {    
+            $master = null;
             $sheduleID = $tender->getAttribute('schedule_id');
             $sheduleMasterID = PricingScheduleMasterEditLog::select('id')->where('master_id',$sheduleID)->orderBy('id','desc')->first();
             if(isset($sheduleMasterID))
@@ -157,6 +157,7 @@ class ScheduleBidFormatDetailsObserver
         $data1['master_id'] = $tender->getAttribute('schedule_id');
         $data1['red_log_id'] = null;
         $data1['created_at'] = now();
+        $data1['updated_by'] = $empId;
         $shedule_master = PricingScheduleMasterEditLog::create($data1);
 
         if($shedule_master)
@@ -181,7 +182,7 @@ class ScheduleBidFormatDetailsObserver
                 $dataBidShed['pricing_schedule_master_id']=$shedule_master['id'];
                 $dataBidShed['company_id']=$sheduleDetailMaster->getAttribute('company_id');
                 $dataBidShed['formula_string']=$bid->getOriginal('formula_string');
-                $dataBidShed['created_by']=$empId;
+                $dataBidShed['updated_by']=$empId;
                 $dataBidShed['tender_edit_version_id'] = $tenderObj->getAttribute('tender_edit_version_id');
                 $dataBidShed['modify_type'] = 2;
                 $dataBidShed['description'] = null;
@@ -211,7 +212,7 @@ class ScheduleBidFormatDetailsObserver
         $data['bid_format_detail_id'] = $tender->getAttribute('bid_format_detail_id');
         $data['schedule_id'] = $master_id;
         $data['value'] =  $tender->getAttribute('value');
-        $data['created_by'] = $emp_id;
+        $data['updated_by'] = $emp_id;
         $data['company_id'] = $tender->getAttribute('company_id');
         $data['tender_edit_version_id'] = $tenderObj->getAttribute('tender_edit_version_id');
         $data['master_id'] = $tender->getAttribute('id');

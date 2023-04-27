@@ -127,7 +127,8 @@ class CalendarDatesDetailEditLog extends Model
         'tender_id',
         'to_date',
         'version_id',
-        'tender_edit_version_id'
+        'tender_edit_version_id',
+        'updated_by'
     ];
 
     /**

@@ -205,7 +205,7 @@ class PricingScheduleDetailEditLog extends Model
         'tender_ranking_line_item',
         'updated_by',
         'master_id',
-        'ref_log_id'
+        'ref_log_id',
     ];
 
     /**

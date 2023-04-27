@@ -125,7 +125,8 @@ class ScheduleBidFormatDetailsLog extends Model
         'red_log_id',
         'schedule_id',
         'tender_edit_version_id',
-        'value'
+        'value',
+        'updated_by'
     ];
 
     /**

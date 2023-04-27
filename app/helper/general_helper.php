@@ -95,6 +95,13 @@ use App\Models\CompanyFinanceYear;
 use App\Jobs\CreateAccumulatedDepreciation;
 use App\Services\WebPushNotificationService;
 use App\Services\GeneralLedger\GlPostedDateService;
+use App\Models\TenderCirculars;
+use App\Models\CircularAmendments;
+use App\Models\CircularSuppliers;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\EmailForQueuing;
+use App\Models\DocumentModifyRequest;
+use App\helper\TenderDetails;
 
 class Helper
 {
@@ -4240,6 +4247,7 @@ class Helper
         //return ['success' => true , 'message' => $docInforArr];
         DB::beginTransaction();
         try {
+            
             $userMessage = 'Successfully approved the document';
             $more_data = [];
             $userMessageE = '';
@@ -4778,7 +4786,70 @@ class Helper
                                
                                 $acc_d = CreateAccumulatedDepreciation::dispatch($input["faID"]);
                             }
-                            //
+                            
+                        
+                            if ($input["documentSystemID"] == 118) {
+                           
+                                $tenderObj = TenderDetails::getTenderMasterData($input['id']);
+                                $documentModify = DocumentModifyRequest::select('id','type')->where('id',$tenderObj->tender_edit_version_id)->first();
+                           
+
+                                if(isset($documentModify) && $documentModify->type == 2)
+                                {   
+                                 
+                                        $circulars = TenderCirculars::select('id','description','status','circular_name')->where('tender_id', $input['id'])->get();
+                                        $companyName = "";
+                                        $company = Company::find($docApproved->companySystemID);
+                                        if(isset($company->CompanyName)){
+                                            $companyName =  $company->CompanyName;
+                                        }
+                                       
+                                        foreach($circulars as $circular)
+                                        {
+                                          
+                                            $att['updated_by'] = $empInfo->employeeSystemID;
+                                            $att['status'] = 1;
+                                            $result = TenderCirculars::where('id', $circular['id'])->update($att);
+                                            $supplierList = CircularSuppliers::select('id','supplier_id','circular_id','status')
+                                                                                ->with([ 'supplier_registration_link', 'srm_circular_amendments.document_attachments'])
+                                                                                ->where('circular_id', $circular['id'])
+                                                                                ->get();
+                                            $amendmentsList = CircularAmendments::select('id','amendment_id')
+                                                                                ->with('document_attachments')
+                                                                                ->where('circular_id', $circular['id'])
+                                                                                ->get();
+                                                                      
+                                            $file = array();
+                                            foreach ($amendmentsList as $amendments){
+                                                $file[$amendments->document_attachments->originalFileName] = Helper::getFileUrlFromS3($amendments->document_attachments->path);
+                                            }
+                                          
+                                            $dataEmail['attachmentList'] = $file; 
+                                            if ($result) {
+                                                foreach ($supplierList as $supplier){
+        
+                                                    $description = "";
+                                                    if(isset($circular['description'])){
+                                                        $description = "<b>Circular Description : </b>" . $description. "<br /><br />";
+                                                    }
+                                                
+                                                    $dataEmail['empEmail'] = $supplier->supplier_registration_link->email;
+                                                    $dataEmail['companySystemID'] = $docApproved->companySystemID;
+                                                    $temp =  "Dear Supplier,"."<br /><br />"." Please find published tender circular details below."."<br /><br /><b>". "Circular Name : ". "</b>".$circular['circular_name'] ." "."<br /><br />". $description .$companyName."</b><br /><br />"."Thank You"."<br /><br /><b>";
+                                                    $dataEmail['emailAlertMessage'] = $temp;
+                                                    $dataEmail['alertMessage'] = 'Tender Circular';
+                                                    $sendEmail = \Email::sendEmailErp($dataEmail);
+                                                }
+        
+                                              
+                                            } else {
+                                                return ['success' => false, 'message' => 'Published failed'];
+                                            }
+        
+                                        }
+                                }
+
+                            }
 
                             // insert the record to general ledger
                             if (in_array($input["documentSystemID"], [3, 8, 12, 13, 10, 20, 61, 24, 7, 19, 15, 11, 4, 21, 22, 17, 23, 41, 71, 87, 97])) {

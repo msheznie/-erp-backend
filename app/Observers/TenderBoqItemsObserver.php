@@ -51,7 +51,7 @@ class TenderBoqItemsObserver
                 $data['tender_id']=$sheduleDetail->getAttribute('tender_id');
                 $data['master_id']=$tender->getAttribute('id');
                 $data['modify_type']=2;
-                $data['created_by'] = $empId;
+                $data['updated_by'] = $empId;
     
                 $result = TenderBoqItemsEditLog::create($data);
             }
@@ -79,7 +79,11 @@ class TenderBoqItemsObserver
         {
        
             $detailLog = PricingScheduleDetailEditLog::where('master_id',$tender->getAttribute('main_work_id'))->where('tender_id',$tenderObj->getAttribute('id'))->first();
-            
+            $mainWorkId = null;
+            if(isset($detailLog))
+            {
+                $mainWorkId = $detailLog->getAttribute('id');
+            }
             $reflogId = null;
             $activity = TenderBoqItemsEditLog::where('master_id',$tender->getAttribute('id'))->where('modify_type',2)->select('id')->first();
             if(isset($activity))
@@ -88,7 +92,7 @@ class TenderBoqItemsObserver
             }
             $employee = \Helper::getEmployeeInfo();
             $empId = $employee->employeeSystemID;
-            $data['main_work_id']=$detailLog->getAttribute('id');
+            $data['main_work_id']=$mainWorkId;
             $data['item_name']=$tender->getAttribute('item_name');
             if(($tender->getAttribute('description'))){
                 $data['description']=$tender->getAttribute('description');
@@ -100,7 +104,7 @@ class TenderBoqItemsObserver
             $data['master_id']=$tender->getAttribute('id');
             $data['modify_type']=1;
             $data['ref_log_id']=$reflogId;
-            $data['created_by'] = $empId;
+            $data['updated_by'] = $empId;
     
             $result = TenderBoqItemsEditLog::create($data);
     
@@ -155,7 +159,7 @@ class TenderBoqItemsObserver
                 $data['master_id']=$tender->getAttribute('id');
                 $data['modify_type']=$modifyType;
                 $data['ref_log_id']=$reflogId;
-                $data['created_by'] = $empId;
+                $data['updated_by'] = $empId;
     
                 $result = TenderBoqItemsEditLog::create($data);
                 if($result)
@@ -200,6 +204,7 @@ class TenderBoqItemsObserver
         $data1['master_id'] = $result->getAttribute('id');
         $data1['red_log_id'] = null;
         $data1['created_at'] = now();
+        $data1['updated_by'] = $empId;
         $sheduleMaster = PricingScheduleMasterEditLog::create($data1);
 
         if($sheduleMaster)
@@ -222,12 +227,12 @@ class TenderBoqItemsObserver
                 $dataBidShed['pricing_schedule_master_id']=$sheduleMaster['id'];
                 $dataBidShed['company_id']=$sheduleDetailMaster->getAttribute('company_id');
                 $dataBidShed['formula_string']=$bid->getOriginal('formula_string');
-                $dataBidShed['created_by']=$empId;
                 $dataBidShed['tender_edit_version_id'] = $tenderObj->getAttribute('tender_edit_version_id');
                 $dataBidShed['modify_type'] = 2;
                 $dataBidShed['description'] = null;
                 $dataBidShed['master_id'] = $sheduleDetailMaster->getAttribute('id');
                 $dataBidShed['description'] = $sheduleDetailMaster->getAttribute('description');
+                $dataBidShed['updated_by'] = $empId;
                 $result1 = PricingScheduleDetailEditLog::create($dataBidShed);
 
                 if($sheduleDetailId == $sheduleDetailMaster->getAttribute('id'))
@@ -250,7 +255,7 @@ class TenderBoqItemsObserver
                 $data['tender_id']=$details->getAttribute('tender_id');
                 $data['master_id']=$tender->getAttribute('id');
                 $data['modify_type']=2;
-                $data['created_by'] = $empId;
+                $data['updated_by'] = $empId;
     
                 $boq_items = TenderBoqItemsEditLog::create($data);
 

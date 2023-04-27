@@ -108,7 +108,8 @@ class ProcumentActivityEditLog extends Model
         'version_id',
         'modify_type',
         'master_id',
-        'ref_log_id'
+        'ref_log_id',
+        'updated_by'
     ];
 
     /**

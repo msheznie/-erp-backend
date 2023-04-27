@@ -89,7 +89,8 @@ class DocumentModifyRequestDetail extends Model
         'tender_id',
         'version_id',
         'table',
-        'master_id'
+        'master_id',
+        'updated_by'
     ];
 
     /**

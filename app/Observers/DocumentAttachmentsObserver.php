@@ -24,7 +24,8 @@ class DocumentAttachmentsObserver
         
         $tenderObj = TenderDetails::getTenderMasterData($tender->getAttribute('documentSystemCode'));
         $obj = TenderDetails::validateTenderEdit($tender->getAttribute('documentSystemCode'));
-
+        $employee = \Helper::getEmployeeInfo();
+        $empId = $employee->employeeSystemID;
         $type = 2;
         if($obj)
         {
@@ -40,7 +41,7 @@ class DocumentAttachmentsObserver
            $data['modify_type'] = $type;
            $data['version_id'] = $tenderObj->getOriginal('tender_edit_version_id');
            $data['master_id'] = $tender->getAttribute('attachmentID');
-
+           $data['updated_by'] = $empId;
            $result = DocumentAttachmentsEditLog::create($data);
            
            if($result)
@@ -57,6 +58,8 @@ class DocumentAttachmentsObserver
     {
         $tenderObj = TenderDetails::getTenderMasterData($tender->getAttribute('documentSystemCode'));
         $obj = TenderDetails::validateTenderEdit($tender->getAttribute('documentSystemCode'));
+        $employee = \Helper::getEmployeeInfo();
+        $empId = $employee->employeeSystemID;
         if($obj)
         {
             $outputExist = DocumentAttachmentsEditLog::where('master_id',$tender->getAttribute('attachmentID'))->where('modify_type',2)->where('path',null)->orderBy('id','desc')->first();
@@ -69,6 +72,7 @@ class DocumentAttachmentsObserver
                 $data1['pullFromAnotherDocument'] = $tender->getAttribute('pullFromAnotherDocument');
                 $data['parent_id'] = $tender->getAttribute('parent_id');
                 $data['envelopType'] = $tender->getAttribute('envelopType');
+                $data['updated_by'] = $empId;
                 $result = $outputExist->update($data1);
             }
             else
@@ -127,7 +131,8 @@ class DocumentAttachmentsObserver
 
     public function process($tender,$tenderObj,$reflogId,$type)
     {
-
+        $employee = \Helper::getEmployeeInfo();
+        $empId = $employee->employeeSystemID;
         $data['companySystemID'] =$tender->getAttribute('companySystemID');
         $data['documentSystemID'] = $tender->getAttribute('documentSystemID');
         $data['documentID'] = $tender->getAttribute('documentID');
@@ -148,6 +153,7 @@ class DocumentAttachmentsObserver
         $data['master_id'] = $tender->getAttribute('attachmentID');
         $data['ref_log_id'] = $reflogId;
         $data['version_id'] = $tenderObj->getOriginal('tender_edit_version_id');
+        $data['updated_by'] = $empId;
         $result = DocumentAttachmentsEditLog::create($data);
         if($result)
         {

@@ -44,7 +44,8 @@ class PricingScheduleMasterObserver
     public function deleted(PricingScheduleMaster $tender)
     {
        
-      
+        $employee = \Helper::getEmployeeInfo();
+        $empId = $employee->employeeSystemID;
         $tenderObj = TenderDetails::getTenderMasterData($tender->getAttribute('tender_id'));
         $obj = TenderDetails::validateTenderEdit($tender->getAttribute('tender_id'));
         if($obj)
@@ -72,6 +73,7 @@ class PricingScheduleMasterObserver
             $data1['master_id'] = $tender->getAttribute('id');
             $data1['red_log_id'] = $reflogId;
             $data1['created_at'] = now();
+            $data1['updated_by'] = $emp_id;
             $result = PricingScheduleMasterEditLog::create($data1);
             if($result)
             {
@@ -95,6 +97,7 @@ class PricingScheduleMasterObserver
                     $dataBidShed['description'] = $bid->getAttribute('description');
                     $dataBidShed['master_id'] = $bid->getAttribute('master_id');
                     $dataBidShed['ref_log_id'] = $bid->getAttribute('id');
+                    $dataBidShed['updated_by'] = $empId;
                     $result1 = PricingScheduleDetailEditLog::create($dataBidShed);
     
                     if($result1)
@@ -158,6 +161,7 @@ class PricingScheduleMasterObserver
         $data1['master_id'] = $tender->getAttribute('id');
         $data1['red_log_id'] = $reflog_id;
         $data1['created_at'] = now();
+        $data1['updated_by'] = $empId;
         $result = PricingScheduleMasterEditLog::create($data1);
         
         if($result)
@@ -188,6 +192,7 @@ class PricingScheduleMasterObserver
                     $dataBidShed['modify_type'] = $modifyType;
                     $dataBidShed['description'] = $shedule_detail->getAttribute('description');
                     $dataBidShed['master_id'] = $shedule_detail->getAttribute('id');
+                    $dataBidShed['updated_by'] = $empId;
                     $result1 = PricingScheduleDetailEditLog::create($dataBidShed);
     
                     if($result1)
