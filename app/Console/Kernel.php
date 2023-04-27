@@ -65,7 +65,7 @@ class Kernel extends ConsoleKernel
 
         $schedule->command('command:leaveCarryForwardComputationSchedule')
             ->timezone('Asia/Muscat')
-            ->dailyAt('01:00')
+            ->dailyAt('21:00')
             ->withoutOverlapping();
     }
 

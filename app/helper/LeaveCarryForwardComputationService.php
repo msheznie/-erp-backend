@@ -37,13 +37,14 @@ class LeaveCarryForwardComputationService
 
     function execute()
     {
+        
         $leaveComputationBasedPolicy = SME::policy($this->companyId, 'LC', 'All');
         $this->leaveComputationBasedOn =  empty($leaveComputationBasedPolicy) ? 1 : $leaveComputationBasedPolicy;
         $this->getPeriodEndDatePolicyWise();
 
-        $jobStartDate = Carbon::parse($this->periodData['endDate'])->subDay()->format('Y-m-d');
+        $yearEndDate = Carbon::parse($this->periodData['endDate'])->format('Y-m-d');
 
-        if($jobStartDate != $this->currentDate){
+        if($yearEndDate != $this->currentDate){
             $this->insertToLogTb('Service execution stopped due to date validation failed'); 
             return false;
         }
