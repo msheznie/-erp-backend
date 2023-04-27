@@ -880,26 +880,26 @@ class BudgetMasterAPIController extends AppBaseController
                 $actualConsumption = 0;
                 if ($value->documentSystemID == 2 && isset($value->purchase_order->grvRecieved) && $value->purchase_order->grvRecieved == 1) {
 
-                    $notRecivedPoFixedAsset = PurchaseOrderDetails::selectRaw('SUM((GRVcostPerUnitSupTransCur * segment_allocated_items.allocatedQty) - (GRVcostPerUnitSupTransCur * receivedQty)) as remainingAmount, SUM(GRVcostPerUnitSupTransCur * receivedQty) as receivedAmount')
-                                                        ->where('financeGLcodebBSSystemID', $input['chartOfAccountID'])
-                                                        ->where('purchaseOrderMasterID', $value->documentSystemCode)
-                                                        ->where('itemFinanceCategoryID', 3)
-                                                        ->join('segment_allocated_items', 'documentDetailAutoID', '=', 'purchaseOrderDetailsID')
-                                                        ->where('segment_allocated_items.serviceLineSystemID', $input['serviceLineSystemID'])
-                                                        ->whereHas('order', function($query) {
-                                                            $query->where(function($query) {
-                                                                    $query->where('projectID', 0)
-                                                                          ->orWhereNull('projectID');
-                                                                });
-                                                        })
-                                                        ->where('segment_allocated_items.documentSystemID', $value->documentSystemID)
-                                                        ->groupBy('purchaseOrderMasterID')
-                                                        ->first();
+                    // $notRecivedPoFixedAsset = PurchaseOrderDetails::selectRaw('SUM((GRVcostPerUnitSupTransCur * segment_allocated_items.allocatedQty) - (GRVcostPerUnitSupTransCur * receivedQty)) as remainingAmount, SUM(GRVcostPerUnitSupTransCur * receivedQty) as receivedAmount')
+                    //                                     ->where('financeGLcodebBSSystemID', $input['chartOfAccountID'])
+                    //                                     ->where('purchaseOrderMasterID', $value->documentSystemCode)
+                    //                                     ->where('itemFinanceCategoryID', 3)
+                    //                                     ->join('segment_allocated_items', 'documentDetailAutoID', '=', 'purchaseOrderDetailsID')
+                    //                                     ->where('segment_allocated_items.serviceLineSystemID', $input['serviceLineSystemID'])
+                    //                                     ->whereHas('order', function($query) {
+                    //                                         $query->where(function($query) {
+                    //                                                 $query->where('projectID', 0)
+                    //                                                       ->orWhereNull('projectID');
+                    //                                             });
+                    //                                     })
+                    //                                     ->where('segment_allocated_items.documentSystemID', $value->documentSystemID)
+                    //                                     ->groupBy('purchaseOrderMasterID')
+                    //                                     ->first();
 
-                    if ($notRecivedPoFixedAsset) {
-                        $currencyConversionRptAmount = \Helper::currencyConversion($input['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPoFixedAsset->remainingAmount);
-                        $actualConsumption += $value->consumedRptAmount - $currencyConversionRptAmount['reportingAmount'];
-                    }
+                    // if ($notRecivedPoFixedAsset) {
+                    //     $currencyConversionRptAmount = \Helper::currencyConversion($input['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPoFixedAsset->remainingAmount);
+                    //     $actualConsumption += $value->consumedRptAmount - $currencyConversionRptAmount['reportingAmount'];
+                    // }
 
                     $notRecivedPoNonFixedAsset = PurchaseOrderDetails::selectRaw('SUM((GRVcostPerUnitSupTransCur * segment_allocated_items.allocatedQty) - (GRVcostPerUnitSupTransCur * receivedQty)) as remainingAmount, SUM(GRVcostPerUnitSupTransCur * receivedQty) as receivedAmount')
                                                         ->where('financeGLcodePLSystemID', $input['chartOfAccountID'])
@@ -1216,19 +1216,19 @@ class BudgetMasterAPIController extends AppBaseController
                     $data[] = $temp;
                 }
 
-                 foreach ($pendingPurchaseRetuenAmount2 as $key => $value) {
-                    $temp = [];
-                    $temp['companyID'] = $value->master->companyID;
-                    $temp['serviceLine'] = $value->master->serviceLineCode;
-                    $temp['financeGLcodePL'] = $value->financeGLcodebBS;
-                    $temp['budgetYear'] = Carbon::parse($value->master->finance_year_by->bigginingDate)->format('Y');
-                    $temp['documentCode'] = $value->master->purchaseReturnCode;
-                    $temp['documentSystemCode'] = $value->master->purhaseReturnAutoID;
-                    $temp['documentSystemID'] = $value->master->documentSystemID;
-                    $temp['lineTotal'] = $value->GRVcostPerUnitComRptCur * $value->noQty * -1;
+                //  foreach ($pendingPurchaseRetuenAmount2 as $key => $value) {
+                //     $temp = [];
+                //     $temp['companyID'] = $value->master->companyID;
+                //     $temp['serviceLine'] = $value->master->serviceLineCode;
+                //     $temp['financeGLcodePL'] = $value->financeGLcodebBS;
+                //     $temp['budgetYear'] = Carbon::parse($value->master->finance_year_by->bigginingDate)->format('Y');
+                //     $temp['documentCode'] = $value->master->purchaseReturnCode;
+                //     $temp['documentSystemCode'] = $value->master->purhaseReturnAutoID;
+                //     $temp['documentSystemID'] = $value->master->documentSystemID;
+                //     $temp['lineTotal'] = $value->GRVcostPerUnitComRptCur * $value->noQty * -1;
 
-                    $data[] = $temp;
-                }
+                //     $data[] = $temp;
+                // }
 
                 foreach ($data1 as $key => $value) {
                     $temp = [];
@@ -1244,19 +1244,19 @@ class BudgetMasterAPIController extends AppBaseController
                     $data[] = $temp;
                 }
 
-                 foreach ($data2 as $key => $value) {
-                    $temp = [];
-                    $temp['companyID'] = $value->order->companyID;
-                    $temp['serviceLine'] = $value->order->serviceLine;
-                    $temp['financeGLcodePL'] = $value->financeGLcodebBS;
-                    $temp['budgetYear'] = $value->budgetYear;
-                    $temp['documentCode'] = $value->order->purchaseOrderCode;
-                    $temp['documentSystemCode'] = $value->order->purchaseOrderID;
-                    $temp['documentSystemID'] = $value->order->documentSystemID;
-                    $temp['lineTotal'] = $value->GRVcostPerUnitComRptCur * $value->noQty;
+                //  foreach ($data2 as $key => $value) {
+                //     $temp = [];
+                //     $temp['companyID'] = $value->order->companyID;
+                //     $temp['serviceLine'] = $value->order->serviceLine;
+                //     $temp['financeGLcodePL'] = $value->financeGLcodebBS;
+                //     $temp['budgetYear'] = $value->budgetYear;
+                //     $temp['documentCode'] = $value->order->purchaseOrderCode;
+                //     $temp['documentSystemCode'] = $value->order->purchaseOrderID;
+                //     $temp['documentSystemID'] = $value->order->documentSystemID;
+                //     $temp['lineTotal'] = $value->GRVcostPerUnitComRptCur * $value->noQty;
 
-                    $data[] = $temp;
-                }
+                //     $data[] = $temp;
+                // }
 
                 foreach ($pendingDirectGRV1 as $key => $value) {
                     $temp = [];
@@ -1272,19 +1272,19 @@ class BudgetMasterAPIController extends AppBaseController
                     $data[] = $temp;
                 }
 
-                 foreach ($pendingDirectGRV2 as $key => $value) {
-                    $temp = [];
-                    $temp['companyID'] = $value->grv_master->companyID;
-                    $temp['serviceLine'] = $value->grv_master->serviceLineCode;
-                    $temp['financeGLcodePL'] = $value->financeGLcodebBS;
-                    $temp['budgetYear'] = Carbon::parse($value->grv_master->financeyear_by->bigginingDate)->format('Y');
-                    $temp['documentCode'] = $value->grv_master->grvPrimaryCode;
-                    $temp['documentSystemCode'] = $value->grv_master->grvAutoID;
-                    $temp['documentSystemID'] = $value->grv_master->documentSystemID;
-                    $temp['lineTotal'] = $value->GRVcostPerUnitComRptCur * $value->noQty;
+                //  foreach ($pendingDirectGRV2 as $key => $value) {
+                //     $temp = [];
+                //     $temp['companyID'] = $value->grv_master->companyID;
+                //     $temp['serviceLine'] = $value->grv_master->serviceLineCode;
+                //     $temp['financeGLcodePL'] = $value->financeGLcodebBS;
+                //     $temp['budgetYear'] = Carbon::parse($value->grv_master->financeyear_by->bigginingDate)->format('Y');
+                //     $temp['documentCode'] = $value->grv_master->grvPrimaryCode;
+                //     $temp['documentSystemCode'] = $value->grv_master->grvAutoID;
+                //     $temp['documentSystemID'] = $value->grv_master->documentSystemID;
+                //     $temp['lineTotal'] = $value->GRVcostPerUnitComRptCur * $value->noQty;
 
-                    $data[] = $temp;
-                }
+                //     $data[] = $temp;
+                // }
 
                 foreach ($pendingSupplierItemInvoiceAmount1 as $key => $value) {
                     $temp = [];
@@ -1300,19 +1300,19 @@ class BudgetMasterAPIController extends AppBaseController
                     $data[] = $temp;
                 }
 
-                foreach ($pendingSupplierItemInvoiceAmount2 as $key => $value) {
-                    $temp = [];
-                    $temp['companyID'] = $value->master->companyID;
-                    $temp['serviceLine'] = SegmentMaster::getSegmentCode($value->master->serviceLineSystemID);
-                    $temp['financeGLcodePL'] = ChartOfAccount::getAccountCode($value->financeGLcodebBSSystemID);
-                    $temp['budgetYear'] = Carbon::parse($value->master->financeyear_by->bigginingDate)->format('Y');
-                    $temp['documentCode'] = $value->master->bookingInvCode;
-                    $temp['documentSystemCode'] = $value->master->bookingSuppMasInvAutoID;
-                    $temp['documentSystemID'] = $value->master->documentSystemID;
-                    $temp['lineTotal'] = $value->costPerUnitComRptCur * $value->noQty;
+                // foreach ($pendingSupplierItemInvoiceAmount2 as $key => $value) {
+                //     $temp = [];
+                //     $temp['companyID'] = $value->master->companyID;
+                //     $temp['serviceLine'] = SegmentMaster::getSegmentCode($value->master->serviceLineSystemID);
+                //     $temp['financeGLcodePL'] = ChartOfAccount::getAccountCode($value->financeGLcodebBSSystemID);
+                //     $temp['budgetYear'] = Carbon::parse($value->master->financeyear_by->bigginingDate)->format('Y');
+                //     $temp['documentCode'] = $value->master->bookingInvCode;
+                //     $temp['documentSystemCode'] = $value->master->bookingSuppMasInvAutoID;
+                //     $temp['documentSystemID'] = $value->master->documentSystemID;
+                //     $temp['lineTotal'] = $value->costPerUnitComRptCur * $value->noQty;
 
-                    $data[] = $temp;
-                }
+                //     $data[] = $temp;
+                // }
 
                 foreach ($pendingSupplierInvoiceAmount as $key => $value) {
                     $temp = [];
@@ -1377,36 +1377,36 @@ class BudgetMasterAPIController extends AppBaseController
                 if (isset($value->purchase_order->grvRecieved) && $value->purchase_order->grvRecieved == 0) {
                     $committedAmount += $value->consumedRptAmount;
                 } else {
-                    $notRecivedPoFixedAsset = PurchaseOrderDetails::selectRaw('SUM((GRVcostPerUnitSupTransCur * segment_allocated_items.allocatedQty) - (GRVcostPerUnitSupTransCur * receivedQty)) as remainingAmount, SUM(GRVcostPerUnitSupTransCur * receivedQty) as receivedAmount')
-                                                        ->join(DB::raw('(SELECT
-                                                                        erp_companyreporttemplatelinks.templateDetailID as templatesDetailsAutoID,
-                                                                        erp_companyreporttemplatelinks.templateMasterID,
-                                                                        erp_companyreporttemplatelinks.glAutoID as chartOfAccountSystemID,
-                                                                        erp_companyreporttemplatelinks.glCode 
-                                                                        FROM
-                                                                        erp_companyreporttemplatelinks
-                                                                        WHERE erp_companyreporttemplatelinks.templateMasterID =' . $input['templatesMasterAutoID'] . ' AND erp_companyreporttemplatelinks.templateDetailID = ' . $input['templateDetailID'] . ' AND erp_companyreporttemplatelinks.glAutoID is not null) as tem_gl'),
-                                                        function ($join) {
-                                                            $join->on('erp_purchaseorderdetails.financeGLcodebBSSystemID', '=', 'tem_gl.chartOfAccountSystemID');
-                                                        })
-                                                        ->where('purchaseOrderMasterID', $value->documentSystemCode)
-                                                        ->where('itemFinanceCategoryID', 3)
-                                                        ->join('segment_allocated_items', 'documentDetailAutoID', '=', 'purchaseOrderDetailsID')
-                                                        ->where('segment_allocated_items.serviceLineSystemID', $input['serviceLineSystemID'])
-                                                        ->whereHas('order', function($query) {
-                                                            $query->where(function($query) {
-                                                                    $query->where('projectID', 0)
-                                                                          ->orWhereNull('projectID');
-                                                                });
-                                                        })
-                                                        ->where('segment_allocated_items.documentSystemID', $value->documentSystemID)
-                                                        ->groupBy('purchaseOrderMasterID')
-                                                        ->first();
+                    // $notRecivedPoFixedAsset = PurchaseOrderDetails::selectRaw('SUM((GRVcostPerUnitSupTransCur * segment_allocated_items.allocatedQty) - (GRVcostPerUnitSupTransCur * receivedQty)) as remainingAmount, SUM(GRVcostPerUnitSupTransCur * receivedQty) as receivedAmount')
+                    //                                     ->join(DB::raw('(SELECT
+                    //                                                     erp_companyreporttemplatelinks.templateDetailID as templatesDetailsAutoID,
+                    //                                                     erp_companyreporttemplatelinks.templateMasterID,
+                    //                                                     erp_companyreporttemplatelinks.glAutoID as chartOfAccountSystemID,
+                    //                                                     erp_companyreporttemplatelinks.glCode 
+                    //                                                     FROM
+                    //                                                     erp_companyreporttemplatelinks
+                    //                                                     WHERE erp_companyreporttemplatelinks.templateMasterID =' . $input['templatesMasterAutoID'] . ' AND erp_companyreporttemplatelinks.templateDetailID = ' . $input['templateDetailID'] . ' AND erp_companyreporttemplatelinks.glAutoID is not null) as tem_gl'),
+                    //                                     function ($join) {
+                    //                                         $join->on('erp_purchaseorderdetails.financeGLcodebBSSystemID', '=', 'tem_gl.chartOfAccountSystemID');
+                    //                                     })
+                    //                                     ->where('purchaseOrderMasterID', $value->documentSystemCode)
+                    //                                     ->where('itemFinanceCategoryID', 3)
+                    //                                     ->join('segment_allocated_items', 'documentDetailAutoID', '=', 'purchaseOrderDetailsID')
+                    //                                     ->where('segment_allocated_items.serviceLineSystemID', $input['serviceLineSystemID'])
+                    //                                     ->whereHas('order', function($query) {
+                    //                                         $query->where(function($query) {
+                    //                                                 $query->where('projectID', 0)
+                    //                                                       ->orWhereNull('projectID');
+                    //                                             });
+                    //                                     })
+                    //                                     ->where('segment_allocated_items.documentSystemID', $value->documentSystemID)
+                    //                                     ->groupBy('purchaseOrderMasterID')
+                    //                                     ->first();
 
-                    if ($notRecivedPoFixedAsset) {
-                        $currencyConversionRptAmount = \Helper::currencyConversion($input['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPoFixedAsset->remainingAmount);
-                        $committedAmount += $currencyConversionRptAmount['reportingAmount'];
-                    }
+                    // if ($notRecivedPoFixedAsset) {
+                    //     $currencyConversionRptAmount = \Helper::currencyConversion($input['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPoFixedAsset->remainingAmount);
+                    //     $committedAmount += $currencyConversionRptAmount['reportingAmount'];
+                    // }
 
                     $notRecivedPoNonFixedAsset = PurchaseOrderDetails::selectRaw('SUM((GRVcostPerUnitSupTransCur * segment_allocated_items.allocatedQty) - (GRVcostPerUnitSupTransCur * receivedQty)) as remainingAmount, SUM(GRVcostPerUnitSupTransCur * receivedQty) as receivedAmount')
                                                         ->join(DB::raw('(SELECT
@@ -1858,19 +1858,19 @@ class BudgetMasterAPIController extends AppBaseController
                 $data[] = $temp;
             }
 
-             foreach ($pendingPurchaseRetuenAmount2 as $key => $value) {
-                $temp = [];
-                $temp['companyID'] = $value->master->companyID;
-                $temp['serviceLine'] = $value->master->serviceLineCode;
-                $temp['financeGLcodePL'] = $value->financeGLcodebBS;
-                $temp['budgetYear'] = Carbon::parse($value->master->finance_year_by->bigginingDate)->format('Y');
-                $temp['documentCode'] = $value->master->purchaseReturnCode;
-                $temp['documentSystemCode'] = $value->master->purhaseReturnAutoID;
-                $temp['documentSystemID'] = $value->master->documentSystemID;
-                $temp['lineTotal'] = $value->GRVcostPerUnitComRptCur * $value->noQty * -1;
+            //  foreach ($pendingPurchaseRetuenAmount2 as $key => $value) {
+            //     $temp = [];
+            //     $temp['companyID'] = $value->master->companyID;
+            //     $temp['serviceLine'] = $value->master->serviceLineCode;
+            //     $temp['financeGLcodePL'] = $value->financeGLcodebBS;
+            //     $temp['budgetYear'] = Carbon::parse($value->master->finance_year_by->bigginingDate)->format('Y');
+            //     $temp['documentCode'] = $value->master->purchaseReturnCode;
+            //     $temp['documentSystemCode'] = $value->master->purhaseReturnAutoID;
+            //     $temp['documentSystemID'] = $value->master->documentSystemID;
+            //     $temp['lineTotal'] = $value->GRVcostPerUnitComRptCur * $value->noQty * -1;
 
-                $data[] = $temp;
-            }
+            //     $data[] = $temp;
+            // }
 
             foreach ($data1 as $key => $value) {
                 $temp = [];
@@ -1886,19 +1886,19 @@ class BudgetMasterAPIController extends AppBaseController
                 $data[] = $temp;
             }
 
-             foreach ($data2 as $key => $value) {
-                $temp = [];
-                $temp['companyID'] = $value->order->companyID;
-                $temp['serviceLine'] = $value->order->serviceLine;
-                $temp['financeGLcodePL'] = $value->financeGLcodebBS;
-                $temp['budgetYear'] = $value->budgetYear;
-                $temp['documentCode'] = $value->order->purchaseOrderCode;
-                $temp['documentSystemCode'] = $value->order->purchaseOrderID;
-                $temp['documentSystemID'] = $value->order->documentSystemID;
-                $temp['lineTotal'] = $value->GRVcostPerUnitComRptCur * $value->noQty;
+            //  foreach ($data2 as $key => $value) {
+            //     $temp = [];
+            //     $temp['companyID'] = $value->order->companyID;
+            //     $temp['serviceLine'] = $value->order->serviceLine;
+            //     $temp['financeGLcodePL'] = $value->financeGLcodebBS;
+            //     $temp['budgetYear'] = $value->budgetYear;
+            //     $temp['documentCode'] = $value->order->purchaseOrderCode;
+            //     $temp['documentSystemCode'] = $value->order->purchaseOrderID;
+            //     $temp['documentSystemID'] = $value->order->documentSystemID;
+            //     $temp['lineTotal'] = $value->GRVcostPerUnitComRptCur * $value->noQty;
 
-                $data[] = $temp;
-            }
+            //     $data[] = $temp;
+            // }
 
             foreach ($pendingDirectGRV1 as $key => $value) {
                 $temp = [];
@@ -1914,19 +1914,19 @@ class BudgetMasterAPIController extends AppBaseController
                 $data[] = $temp;
             }
 
-             foreach ($pendingDirectGRV2 as $key => $value) {
-                $temp = [];
-                $temp['companyID'] = $value->grv_master->companyID;
-                $temp['serviceLine'] = $value->grv_master->serviceLineCode;
-                $temp['financeGLcodePL'] = $value->financeGLcodebBS;
-                $temp['budgetYear'] = Carbon::parse($value->grv_master->financeyear_by->bigginingDate)->format('Y');
-                $temp['documentCode'] = $value->grv_master->grvPrimaryCode;
-                $temp['documentSystemCode'] = $value->grv_master->grvAutoID;
-                $temp['documentSystemID'] = $value->grv_master->documentSystemID;
-                $temp['lineTotal'] = $value->GRVcostPerUnitComRptCur * $value->noQty;
+            //  foreach ($pendingDirectGRV2 as $key => $value) {
+            //     $temp = [];
+            //     $temp['companyID'] = $value->grv_master->companyID;
+            //     $temp['serviceLine'] = $value->grv_master->serviceLineCode;
+            //     $temp['financeGLcodePL'] = $value->financeGLcodebBS;
+            //     $temp['budgetYear'] = Carbon::parse($value->grv_master->financeyear_by->bigginingDate)->format('Y');
+            //     $temp['documentCode'] = $value->grv_master->grvPrimaryCode;
+            //     $temp['documentSystemCode'] = $value->grv_master->grvAutoID;
+            //     $temp['documentSystemID'] = $value->grv_master->documentSystemID;
+            //     $temp['lineTotal'] = $value->GRVcostPerUnitComRptCur * $value->noQty;
 
-                $data[] = $temp;
-            }
+            //     $data[] = $temp;
+            // }
 
             foreach ($pendingSupplierItemInvoiceAmount1 as $key => $value) {
                 $temp = [];
@@ -1942,19 +1942,19 @@ class BudgetMasterAPIController extends AppBaseController
                 $data[] = $temp;
             }
 
-            foreach ($pendingSupplierItemInvoiceAmount2 as $key => $value) {
-                $temp = [];
-                $temp['companyID'] = $value->master->companyID;
-                $temp['serviceLine'] = SegmentMaster::getSegmentCode($value->master->serviceLineSystemID);
-                $temp['financeGLcodePL'] = ChartOfAccount::getAccountCode($value->financeGLcodebBSSystemID);
-                $temp['budgetYear'] = Carbon::parse($value->master->financeyear_by->bigginingDate)->format('Y');
-                $temp['documentCode'] = $value->master->bookingInvCode;
-                $temp['documentSystemCode'] = $value->master->bookingSuppMasInvAutoID;
-                $temp['documentSystemID'] = $value->master->documentSystemID;
-                $temp['lineTotal'] = $value->costPerUnitComRptCur * $value->noQty;
+            // foreach ($pendingSupplierItemInvoiceAmount2 as $key => $value) {
+            //     $temp = [];
+            //     $temp['companyID'] = $value->master->companyID;
+            //     $temp['serviceLine'] = SegmentMaster::getSegmentCode($value->master->serviceLineSystemID);
+            //     $temp['financeGLcodePL'] = ChartOfAccount::getAccountCode($value->financeGLcodebBSSystemID);
+            //     $temp['budgetYear'] = Carbon::parse($value->master->financeyear_by->bigginingDate)->format('Y');
+            //     $temp['documentCode'] = $value->master->bookingInvCode;
+            //     $temp['documentSystemCode'] = $value->master->bookingSuppMasInvAutoID;
+            //     $temp['documentSystemID'] = $value->master->documentSystemID;
+            //     $temp['lineTotal'] = $value->costPerUnitComRptCur * $value->noQty;
 
-                $data[] = $temp;
-            }
+            //     $data[] = $temp;
+            // }
 
             foreach ($pendingSupplierInvoiceAmount as $key => $value) {
                 $temp = [];
@@ -2009,26 +2009,26 @@ class BudgetMasterAPIController extends AppBaseController
                 if (isset($value->purchase_order->grvRecieved) && $value->purchase_order->grvRecieved == 0) {
                     $committedAmount += $value->consumedRptAmount;
                 } else {
-                    $notRecivedPoFixedAsset = PurchaseOrderDetails::selectRaw('SUM((GRVcostPerUnitSupTransCur * segment_allocated_items.allocatedQty) - (GRVcostPerUnitSupTransCur * receivedQty)) as remainingAmount, SUM(GRVcostPerUnitSupTransCur * receivedQty) as receivedAmount')
-                                                        ->where('financeGLcodebBSSystemID', $input['chartOfAccountID'])
-                                                        ->where('purchaseOrderMasterID', $value->documentSystemCode)
-                                                        ->where('itemFinanceCategoryID', 3)
-                                                        ->join('segment_allocated_items', 'documentDetailAutoID', '=', 'purchaseOrderDetailsID')
-                                                        ->where('segment_allocated_items.serviceLineSystemID', $input['serviceLineSystemID'])
-                                                        ->where('segment_allocated_items.documentSystemID', $value->documentSystemID)
-                                                        ->groupBy('purchaseOrderMasterID')
-                                                        ->whereHas('order', function($query) {
-                                                            $query->where(function($query) {
-                                                                    $query->where('projectID', 0)
-                                                                          ->orWhereNull('projectID');
-                                                                });
-                                                        })
-                                                        ->first();
+                    // $notRecivedPoFixedAsset = PurchaseOrderDetails::selectRaw('SUM((GRVcostPerUnitSupTransCur * segment_allocated_items.allocatedQty) - (GRVcostPerUnitSupTransCur * receivedQty)) as remainingAmount, SUM(GRVcostPerUnitSupTransCur * receivedQty) as receivedAmount')
+                    //                                     ->where('financeGLcodebBSSystemID', $input['chartOfAccountID'])
+                    //                                     ->where('purchaseOrderMasterID', $value->documentSystemCode)
+                    //                                     ->where('itemFinanceCategoryID', 3)
+                    //                                     ->join('segment_allocated_items', 'documentDetailAutoID', '=', 'purchaseOrderDetailsID')
+                    //                                     ->where('segment_allocated_items.serviceLineSystemID', $input['serviceLineSystemID'])
+                    //                                     ->where('segment_allocated_items.documentSystemID', $value->documentSystemID)
+                    //                                     ->groupBy('purchaseOrderMasterID')
+                    //                                     ->whereHas('order', function($query) {
+                    //                                         $query->where(function($query) {
+                    //                                                 $query->where('projectID', 0)
+                    //                                                       ->orWhereNull('projectID');
+                    //                                             });
+                    //                                     })
+                    //                                     ->first();
 
-                    if ($notRecivedPoFixedAsset) {
-                        $currencyConversionRptAmount = \Helper::currencyConversion($input['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPoFixedAsset->remainingAmount);
-                        $committedAmount += $currencyConversionRptAmount['reportingAmount'];
-                    }
+                    // if ($notRecivedPoFixedAsset) {
+                    //     $currencyConversionRptAmount = \Helper::currencyConversion($input['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPoFixedAsset->remainingAmount);
+                    //     $committedAmount += $currencyConversionRptAmount['reportingAmount'];
+                    // }
 
                     $notRecivedPoNonFixedAsset = PurchaseOrderDetails::selectRaw('SUM((GRVcostPerUnitSupTransCur * segment_allocated_items.allocatedQty) - (GRVcostPerUnitSupTransCur * receivedQty)) as remainingAmount, SUM(GRVcostPerUnitSupTransCur * receivedQty) as receivedAmount')
                                                         ->where('financeGLcodePLSystemID', $input['chartOfAccountID'])
@@ -2093,36 +2093,36 @@ class BudgetMasterAPIController extends AppBaseController
             foreach ($data as $key => $value) {
                 $actualConsumption = 0;
                 if ($value->documentSystemID == 2 && isset($value->purchase_order->grvRecieved) && $value->purchase_order->grvRecieved == 1) {
-                    $notRecivedPoFixedAsset = PurchaseOrderDetails::selectRaw('SUM((GRVcostPerUnitSupTransCur * segment_allocated_items.allocatedQty) - (GRVcostPerUnitSupTransCur * receivedQty)) as remainingAmount, SUM(GRVcostPerUnitSupTransCur * receivedQty) as receivedAmount')
-                                                        ->join(DB::raw('(SELECT
-                                                                        erp_companyreporttemplatelinks.templateDetailID as templatesDetailsAutoID,
-                                                                        erp_companyreporttemplatelinks.templateMasterID,
-                                                                        erp_companyreporttemplatelinks.glAutoID as chartOfAccountSystemID,
-                                                                        erp_companyreporttemplatelinks.glCode 
-                                                                        FROM
-                                                                        erp_companyreporttemplatelinks
-                                                                        WHERE erp_companyreporttemplatelinks.templateMasterID =' . $input['templatesMasterAutoID'] . ' AND erp_companyreporttemplatelinks.templateDetailID = ' . $input['templateDetailID'] . ' AND erp_companyreporttemplatelinks.glAutoID is not null) as tem_gl'),
-                                                        function ($join) use ($glColumnName){
-                                                            $join->on('erp_purchaseorderdetails.financeGLcodebBSSystemID', '=', 'tem_gl.chartOfAccountSystemID');
-                                                        })
-                                                        ->where('itemFinanceCategoryID', 3)
-                                                        ->where('purchaseOrderMasterID', $value->documentSystemCode)
-                                                        ->join('segment_allocated_items', 'documentDetailAutoID', '=', 'purchaseOrderDetailsID')
-                                                        ->where('segment_allocated_items.serviceLineSystemID', $input['serviceLineSystemID'])
-                                                        ->where('segment_allocated_items.documentSystemID', $value->documentSystemID)
-                                                        ->whereHas('order', function($query) {
-                                                            $query->where(function($query) {
-                                                                    $query->where('projectID', 0)
-                                                                          ->orWhereNull('projectID');
-                                                                });
-                                                        })
-                                                        ->groupBy('purchaseOrderMasterID')
-                                                        ->first();
+                    // $notRecivedPoFixedAsset = PurchaseOrderDetails::selectRaw('SUM((GRVcostPerUnitSupTransCur * segment_allocated_items.allocatedQty) - (GRVcostPerUnitSupTransCur * receivedQty)) as remainingAmount, SUM(GRVcostPerUnitSupTransCur * receivedQty) as receivedAmount')
+                    //                                     ->join(DB::raw('(SELECT
+                    //                                                     erp_companyreporttemplatelinks.templateDetailID as templatesDetailsAutoID,
+                    //                                                     erp_companyreporttemplatelinks.templateMasterID,
+                    //                                                     erp_companyreporttemplatelinks.glAutoID as chartOfAccountSystemID,
+                    //                                                     erp_companyreporttemplatelinks.glCode 
+                    //                                                     FROM
+                    //                                                     erp_companyreporttemplatelinks
+                    //                                                     WHERE erp_companyreporttemplatelinks.templateMasterID =' . $input['templatesMasterAutoID'] . ' AND erp_companyreporttemplatelinks.templateDetailID = ' . $input['templateDetailID'] . ' AND erp_companyreporttemplatelinks.glAutoID is not null) as tem_gl'),
+                    //                                     function ($join) use ($glColumnName){
+                    //                                         $join->on('erp_purchaseorderdetails.financeGLcodebBSSystemID', '=', 'tem_gl.chartOfAccountSystemID');
+                    //                                     })
+                    //                                     ->where('itemFinanceCategoryID', 3)
+                    //                                     ->where('purchaseOrderMasterID', $value->documentSystemCode)
+                    //                                     ->join('segment_allocated_items', 'documentDetailAutoID', '=', 'purchaseOrderDetailsID')
+                    //                                     ->where('segment_allocated_items.serviceLineSystemID', $input['serviceLineSystemID'])
+                    //                                     ->where('segment_allocated_items.documentSystemID', $value->documentSystemID)
+                    //                                     ->whereHas('order', function($query) {
+                    //                                         $query->where(function($query) {
+                    //                                                 $query->where('projectID', 0)
+                    //                                                       ->orWhereNull('projectID');
+                    //                                             });
+                    //                                     })
+                    //                                     ->groupBy('purchaseOrderMasterID')
+                    //                                     ->first();
 
-                    if ($notRecivedPoFixedAsset) {
-                        $currencyConversionRptAmount = \Helper::currencyConversion($input['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPoFixedAsset->remainingAmount);
-                        $actualConsumption += $value->consumedRptAmount - $currencyConversionRptAmount['reportingAmount'];
-                    }
+                    // if ($notRecivedPoFixedAsset) {
+                    //     $currencyConversionRptAmount = \Helper::currencyConversion($input['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPoFixedAsset->remainingAmount);
+                    //     $actualConsumption += $value->consumedRptAmount - $currencyConversionRptAmount['reportingAmount'];
+                    // }
 
                     $notRecivedPoNonFixedAsset = PurchaseOrderDetails::selectRaw('SUM((GRVcostPerUnitSupTransCur * segment_allocated_items.allocatedQty) - (GRVcostPerUnitSupTransCur * receivedQty)) as remainingAmount, SUM(GRVcostPerUnitSupTransCur * receivedQty) as receivedAmount')
                                                         ->join(DB::raw('(SELECT
@@ -2420,26 +2420,26 @@ class BudgetMasterAPIController extends AppBaseController
             if (isset($value->purchase_order->grvRecieved) && $value->purchase_order->grvRecieved == 0) {
                 $committedAmount += $value->consumedRptAmount;
             } else {
-                $notRecivedPoFixedAsset = PurchaseOrderDetails::selectRaw('SUM((GRVcostPerUnitSupTransCur * segment_allocated_items.allocatedQty) - (GRVcostPerUnitSupTransCur * receivedQty)) as remainingAmount, SUM(GRVcostPerUnitSupTransCur * receivedQty) as receivedAmount')
-                                                    ->whereIn('financeGLcodebBSSystemID', $glIds)
-                                                    ->where('purchaseOrderMasterID', $value->documentSystemCode)
-                                                    ->where('itemFinanceCategoryID', 3)
-                                                    ->join('segment_allocated_items', 'documentDetailAutoID', '=', 'purchaseOrderDetailsID')
-                                                    ->where('segment_allocated_items.serviceLineSystemID', $data['serviceLineSystemID'])
-                                                    ->where('segment_allocated_items.documentSystemID', $value->documentSystemID)
-                                                    ->whereHas('order', function($query) {
-                                                        $query->where(function($query) {
-                                                                $query->where('projectID', 0)
-                                                                      ->orWhereNull('projectID');
-                                                            });
-                                                    })
-                                                    ->groupBy('purchaseOrderMasterID')
-                                                    ->first();
+                // $notRecivedPoFixedAsset = PurchaseOrderDetails::selectRaw('SUM((GRVcostPerUnitSupTransCur * segment_allocated_items.allocatedQty) - (GRVcostPerUnitSupTransCur * receivedQty)) as remainingAmount, SUM(GRVcostPerUnitSupTransCur * receivedQty) as receivedAmount')
+                //                                     ->whereIn('financeGLcodebBSSystemID', $glIds)
+                //                                     ->where('purchaseOrderMasterID', $value->documentSystemCode)
+                //                                     ->where('itemFinanceCategoryID', 3)
+                //                                     ->join('segment_allocated_items', 'documentDetailAutoID', '=', 'purchaseOrderDetailsID')
+                //                                     ->where('segment_allocated_items.serviceLineSystemID', $data['serviceLineSystemID'])
+                //                                     ->where('segment_allocated_items.documentSystemID', $value->documentSystemID)
+                //                                     ->whereHas('order', function($query) {
+                //                                         $query->where(function($query) {
+                //                                                 $query->where('projectID', 0)
+                //                                                       ->orWhereNull('projectID');
+                //                                             });
+                //                                     })
+                //                                     ->groupBy('purchaseOrderMasterID')
+                //                                     ->first();
 
-                if ($notRecivedPoFixedAsset) {
-                    $currencyConversionRptAmount = \Helper::currencyConversion($data['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPoFixedAsset->remainingAmount);
-                    $committedAmount += $currencyConversionRptAmount['reportingAmount'];
-                }
+                // if ($notRecivedPoFixedAsset) {
+                //     $currencyConversionRptAmount = \Helper::currencyConversion($data['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPoFixedAsset->remainingAmount);
+                //     $committedAmount += $currencyConversionRptAmount['reportingAmount'];
+                // }
 
 
                 $notRecivedPoNonFixedAsset = PurchaseOrderDetails::selectRaw('SUM((GRVcostPerUnitSupTransCur * segment_allocated_items.allocatedQty) - (GRVcostPerUnitSupTransCur * receivedQty)) as remainingAmount, SUM(GRVcostPerUnitSupTransCur * receivedQty) as receivedAmount')
@@ -2497,26 +2497,26 @@ class BudgetMasterAPIController extends AppBaseController
         foreach ($data as $key => $value) {
             $actualConsumption = 0;
             if ($value->documentSystemID == 2 && isset($value->purchase_order->grvRecieved) && $value->purchase_order->grvRecieved == 1) {
-                $notRecivedPoFixedAsset = PurchaseOrderDetails::selectRaw('SUM((GRVcostPerUnitSupTransCur * segment_allocated_items.allocatedQty) - (GRVcostPerUnitSupTransCur * receivedQty)) as remainingAmount, SUM(GRVcostPerUnitSupTransCur * receivedQty) as receivedAmount')
-                                                    ->whereIn('financeGLcodebBSSystemID', $glIds)
-                                                    ->where('purchaseOrderMasterID', $value->documentSystemCode)
-                                                    ->where('itemFinanceCategoryID', 3)
-                                                    ->join('segment_allocated_items', 'documentDetailAutoID', '=', 'purchaseOrderDetailsID')
-                                                    ->where('segment_allocated_items.serviceLineSystemID', $dataParam['serviceLineSystemID'])
-                                                    ->where('segment_allocated_items.documentSystemID', $value->documentSystemID)
-                                                     ->whereHas('order', function($query) {
-                                                        $query->where(function($query) {
-                                                                $query->where('projectID', 0)
-                                                                      ->orWhereNull('projectID');
-                                                            });
-                                                    })
-                                                    ->groupBy('purchaseOrderMasterID')
-                                                    ->first();
+                // $notRecivedPoFixedAsset = PurchaseOrderDetails::selectRaw('SUM((GRVcostPerUnitSupTransCur * segment_allocated_items.allocatedQty) - (GRVcostPerUnitSupTransCur * receivedQty)) as remainingAmount, SUM(GRVcostPerUnitSupTransCur * receivedQty) as receivedAmount')
+                //                                     ->whereIn('financeGLcodebBSSystemID', $glIds)
+                //                                     ->where('purchaseOrderMasterID', $value->documentSystemCode)
+                //                                     ->where('itemFinanceCategoryID', 3)
+                //                                     ->join('segment_allocated_items', 'documentDetailAutoID', '=', 'purchaseOrderDetailsID')
+                //                                     ->where('segment_allocated_items.serviceLineSystemID', $dataParam['serviceLineSystemID'])
+                //                                     ->where('segment_allocated_items.documentSystemID', $value->documentSystemID)
+                //                                      ->whereHas('order', function($query) {
+                //                                         $query->where(function($query) {
+                //                                                 $query->where('projectID', 0)
+                //                                                       ->orWhereNull('projectID');
+                //                                             });
+                //                                     })
+                //                                     ->groupBy('purchaseOrderMasterID')
+                //                                     ->first();
 
-                if ($notRecivedPoFixedAsset) {
-                    $currencyConversionRptAmount = \Helper::currencyConversion($dataParam['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPoFixedAsset->remainingAmount);
-                    $actualConsumption += $value->consumedRptAmount - $currencyConversionRptAmount['reportingAmount'];
-                }
+                // if ($notRecivedPoFixedAsset) {
+                //     $currencyConversionRptAmount = \Helper::currencyConversion($dataParam['companySystemID'], $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $notRecivedPoFixedAsset->remainingAmount);
+                //     $actualConsumption += $value->consumedRptAmount - $currencyConversionRptAmount['reportingAmount'];
+                // }
 
 
                 $notRecivedPo = PurchaseOrderDetails::selectRaw('SUM((GRVcostPerUnitSupTransCur * segment_allocated_items.allocatedQty) - (GRVcostPerUnitSupTransCur * receivedQty)) as remainingAmount, SUM(GRVcostPerUnitSupTransCur * receivedQty) as receivedAmount')
@@ -2965,19 +2965,19 @@ class BudgetMasterAPIController extends AppBaseController
             $data[] = $temp;
         }
 
-         foreach ($pendingPurchaseRetuenAmount2 as $key => $value) {
-            $temp = [];
-            $temp['companyID'] = $value->master->companyID;
-            $temp['serviceLine'] = $value->master->serviceLineCode;
-            $temp['financeGLcodePL'] = $value->financeGLcodebBS;
-            $temp['budgetYear'] = Carbon::parse($value->master->finance_year_by->bigginingDate)->format('Y');
-            $temp['documentCode'] = $value->master->purchaseReturnCode;
-            $temp['documentSystemCode'] = $value->master->purhaseReturnAutoID;
-            $temp['documentSystemID'] = $value->master->documentSystemID;
-            $temp['lineTotal'] = $value->GRVcostPerUnitComRptCur * $value->noQty * -1;
+        //  foreach ($pendingPurchaseRetuenAmount2 as $key => $value) {
+        //     $temp = [];
+        //     $temp['companyID'] = $value->master->companyID;
+        //     $temp['serviceLine'] = $value->master->serviceLineCode;
+        //     $temp['financeGLcodePL'] = $value->financeGLcodebBS;
+        //     $temp['budgetYear'] = Carbon::parse($value->master->finance_year_by->bigginingDate)->format('Y');
+        //     $temp['documentCode'] = $value->master->purchaseReturnCode;
+        //     $temp['documentSystemCode'] = $value->master->purhaseReturnAutoID;
+        //     $temp['documentSystemID'] = $value->master->documentSystemID;
+        //     $temp['lineTotal'] = $value->GRVcostPerUnitComRptCur * $value->noQty * -1;
 
-            $data[] = $temp;
-        }
+        //     $data[] = $temp;
+        // }
 
         foreach ($data1 as $key => $value) {
             $temp = [];
@@ -2993,19 +2993,19 @@ class BudgetMasterAPIController extends AppBaseController
             $data[] = $temp;
         }
 
-         foreach ($data2 as $key => $value) {
-            $temp = [];
-            $temp['companyID'] = $value->order->companyID;
-            $temp['serviceLine'] = $value->order->serviceLine;
-            $temp['financeGLcodePL'] = $value->financeGLcodebBS;
-            $temp['budgetYear'] = $value->budgetYear;
-            $temp['documentCode'] = $value->order->purchaseOrderCode;
-            $temp['documentSystemCode'] = $value->order->purchaseOrderID;
-            $temp['documentSystemID'] = $value->order->documentSystemID;
-            $temp['lineTotal'] = $value->GRVcostPerUnitComRptCur * $value->noQty;
+        //  foreach ($data2 as $key => $value) {
+        //     $temp = [];
+        //     $temp['companyID'] = $value->order->companyID;
+        //     $temp['serviceLine'] = $value->order->serviceLine;
+        //     $temp['financeGLcodePL'] = $value->financeGLcodebBS;
+        //     $temp['budgetYear'] = $value->budgetYear;
+        //     $temp['documentCode'] = $value->order->purchaseOrderCode;
+        //     $temp['documentSystemCode'] = $value->order->purchaseOrderID;
+        //     $temp['documentSystemID'] = $value->order->documentSystemID;
+        //     $temp['lineTotal'] = $value->GRVcostPerUnitComRptCur * $value->noQty;
 
-            $data[] = $temp;
-        }
+        //     $data[] = $temp;
+        // }
 
         foreach ($pendingDirectGRV1 as $key => $value) {
             $temp = [];
@@ -3021,19 +3021,19 @@ class BudgetMasterAPIController extends AppBaseController
             $data[] = $temp;
         }
 
-         foreach ($pendingDirectGRV2 as $key => $value) {
-            $temp = [];
-            $temp['companyID'] = $value->grv_master->companyID;
-            $temp['serviceLine'] = $value->grv_master->serviceLineCode;
-            $temp['financeGLcodePL'] = $value->financeGLcodebBS;
-            $temp['budgetYear'] = Carbon::parse($value->grv_master->financeyear_by->bigginingDate)->format('Y');
-            $temp['documentCode'] = $value->grv_master->grvPrimaryCode;
-            $temp['documentSystemCode'] = $value->grv_master->grvAutoID;
-            $temp['documentSystemID'] = $value->grv_master->documentSystemID;
-            $temp['lineTotal'] = $value->GRVcostPerUnitComRptCur * $value->noQty;
+        //  foreach ($pendingDirectGRV2 as $key => $value) {
+        //     $temp = [];
+        //     $temp['companyID'] = $value->grv_master->companyID;
+        //     $temp['serviceLine'] = $value->grv_master->serviceLineCode;
+        //     $temp['financeGLcodePL'] = $value->financeGLcodebBS;
+        //     $temp['budgetYear'] = Carbon::parse($value->grv_master->financeyear_by->bigginingDate)->format('Y');
+        //     $temp['documentCode'] = $value->grv_master->grvPrimaryCode;
+        //     $temp['documentSystemCode'] = $value->grv_master->grvAutoID;
+        //     $temp['documentSystemID'] = $value->grv_master->documentSystemID;
+        //     $temp['lineTotal'] = $value->GRVcostPerUnitComRptCur * $value->noQty;
 
-            $data[] = $temp;
-        }
+        //     $data[] = $temp;
+        // }
 
         foreach ($pendingSupplierItemInvoiceAmount1 as $key => $value) {
             $temp = [];
@@ -3049,19 +3049,19 @@ class BudgetMasterAPIController extends AppBaseController
             $data[] = $temp;
         }
 
-        foreach ($pendingSupplierItemInvoiceAmount2 as $key => $value) {
-            $temp = [];
-            $temp['companyID'] = $value->master->companyID;
-            $temp['serviceLine'] = SegmentMaster::getSegmentCode($value->master->serviceLineSystemID);
-            $temp['financeGLcodePL'] = ChartOfAccount::getAccountCode($value->financeGLcodebBSSystemID);
-            $temp['budgetYear'] = Carbon::parse($value->master->financeyear_by->bigginingDate)->format('Y');
-            $temp['documentCode'] = $value->master->bookingInvCode;
-            $temp['documentSystemCode'] = $value->master->bookingSuppMasInvAutoID;
-            $temp['documentSystemID'] = $value->master->documentSystemID;
-            $temp['lineTotal'] = $value->costPerUnitComRptCur * $value->noQty;
+        // foreach ($pendingSupplierItemInvoiceAmount2 as $key => $value) {
+        //     $temp = [];
+        //     $temp['companyID'] = $value->master->companyID;
+        //     $temp['serviceLine'] = SegmentMaster::getSegmentCode($value->master->serviceLineSystemID);
+        //     $temp['financeGLcodePL'] = ChartOfAccount::getAccountCode($value->financeGLcodebBSSystemID);
+        //     $temp['budgetYear'] = Carbon::parse($value->master->financeyear_by->bigginingDate)->format('Y');
+        //     $temp['documentCode'] = $value->master->bookingInvCode;
+        //     $temp['documentSystemCode'] = $value->master->bookingSuppMasInvAutoID;
+        //     $temp['documentSystemID'] = $value->master->documentSystemID;
+        //     $temp['lineTotal'] = $value->costPerUnitComRptCur * $value->noQty;
 
-            $data[] = $temp;
-        }
+        //     $data[] = $temp;
+        // }
 
         foreach ($pendingSupplierInvoiceAmount as $key => $value) {
             $temp = [];
