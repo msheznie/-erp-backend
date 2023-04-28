@@ -61,6 +61,11 @@ class Kernel extends ConsoleKernel
         $schedule->command('command:birthday_wish_schedule')
             ->timezone('Asia/Muscat')
             ->dailyAt('02:00')
+            ->withoutOverlapping(); 
+
+        $schedule->command('command:leaveCarryForwardComputationSchedule')
+            ->timezone('Asia/Muscat')
+            ->dailyAt('21:00')
             ->withoutOverlapping();
     }
 
