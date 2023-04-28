@@ -78,7 +78,7 @@ class ProcumentActivityObserver
         $data1['master_id'] = $tender->getAttribute('id');
         $data1['ref_log_id'] = $reflog_id;
         $data1['created_at'] = now();
-        $data1['updated_by'] = $emp_id;
+        $data1['updated_by'] = $empId;
         $result = ProcumentActivityEditLog::create($data1);
 
         if($result)

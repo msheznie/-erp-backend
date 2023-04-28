@@ -3278,17 +3278,15 @@ class Helper
                                         $pushNotificationArray = [];
                                         $document = Models\DocumentMaster::where('documentSystemID', $documentApproved->documentSystemID)->first();
 
-
-                                        if($params["document"] == 117)
+                                        
+                                        if($params["document"] == 117 )
                                         {
-                                            if($sorceDocument->type == 1)
-                                            {
-                                                $document->documentDescription = 'Edit Request';
-                                            }
-                                            else
-                                            {
-                                                $document->documentDescription = 'Amend Request';
-                                            }
+                                            $document->documentDescription = $sorceDocument->type == 1?'Edit confirm request':'Amend confirm request';
+                                        }
+
+                                        if($params["document"] == 118 )
+                                        {
+                                            $document->documentDescription = $sorceDocument->type == 1?'Edit confirm request':'Amend confirm request';
                                         }
                                         
                                         $approvedDocNameBody = $document->documentDescription . ' <b>' . $documentApproved->documentCode . '</b>';
