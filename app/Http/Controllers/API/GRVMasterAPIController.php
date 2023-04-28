@@ -1026,11 +1026,13 @@ class GRVMasterAPIController extends AppBaseController
             $body .= "Thank You.";
 
             $supplier = $this->getSupplierDetails($input['supplierID']);
-            $dataEmail['empEmail'] = $supplier->supEmail;
-            $dataEmail['companySystemID'] = $input['companySystemID'];
-            $dataEmail['alertMessage'] = "GRV  Confirmed";
-            $dataEmail['emailAlertMessage'] = $body;
-            $sendEmail = \Email::sendEmailErp($dataEmail);
+            if(isset($supplier) && !empty($supplier)){ 
+                $dataEmail['empEmail'] = $supplier->supEmail;
+                $dataEmail['companySystemID'] = $input['companySystemID'];
+                $dataEmail['alertMessage'] = "GRV  Confirmed";
+                $dataEmail['emailAlertMessage'] = $body;
+                $sendEmail = \Email::sendEmailErp($dataEmail); 
+            } 
         }
 
 
