@@ -523,7 +523,6 @@ class BudgetConsumptionService
 
 		if (count($checkBudgetConfiguration) > 0) {
 			$templateCategoryIDs = $checkBudgetConfiguration->pluck('templateDetailID')->toArray();
-
 			$budgetAmount = self::budgetAmountQry($budgetFormData, $templateCategoryIDs, $glCodes);
 			$budgetmasterIDs = collect($budgetAmount)->pluck('budgetmasterID')->toArray();
 
@@ -5107,7 +5106,7 @@ class BudgetConsumptionService
 
 	public static function pendingGrvQryValuesForDirectDocsDepartmentWise($budgetFormData, $templateCategoryIDs, $glCodes)
 	{
-		$pendingPoQry = GRVDetails::selectRaw('(GRVcostPerUnitLocalCur * noQty) AS localAmt, (GRVcostPerUnitComRptCur * noQty) AS rptAmt, financeGLcodePLSystemID, financeGLcodebBSSystemID, companySystemID, grvDetailsID')
+		$pendingPoQry = GRVDetails::selectRaw('(GRVcostPerUnitLocalCur * noQty) AS localAmt, (GRVcostPerUnitComRptCur * noQty) AS rptAmt, financeGLcodePLSystemID, financeGLcodebBSSystemID, companySystemID, grvDetailsID, grvAutoID')
 								 		     ->where('companySystemID', $budgetFormData['companySystemID'])
 								 		     ->where('itemFinanceCategoryID', '!=',3)
 								 		     ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
@@ -5445,7 +5444,7 @@ class BudgetConsumptionService
 
 	public static function pendingDISIQryValuesForDirectDocsDepartmentWise($budgetFormData, $templateCategoryIDs, $glCodes)
 	{
-		$pendingPoQry = SupplierInvoiceDirectItem::selectRaw('(costPerUnitLocalCur * noQty) AS localAmt, (costPerUnitComRptCur * noQty) AS rptAmt, financeGLcodePLSystemID, financeGLcodebBSSystemID, companySystemID, id as siItemDetailID')
+		$pendingPoQry = SupplierInvoiceDirectItem::selectRaw('(costPerUnitLocalCur * noQty) AS localAmt, (costPerUnitComRptCur * noQty) AS rptAmt, financeGLcodePLSystemID, financeGLcodebBSSystemID, companySystemID, id as siItemDetailID, bookingSuppMasInvAutoID')
 								 		     ->where('companySystemID', $budgetFormData['companySystemID'])
 								 		     ->where('itemFinanceCategoryID', '!=',3)
 								 		     ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
