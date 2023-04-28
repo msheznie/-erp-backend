@@ -337,7 +337,7 @@ class LeaveCarryForwardComputationService
             'leaveaccrualMasterCode' => $documentCode,
             'effective_date' => $effective_date,
             'documentID' => $this->documentId,
-            'description' => "Maxium carry forward system automated adjustment",
+            'description' => "Maximum carry forward system automated adjustment",
             'year' => Carbon::parse($effective_date)->format('Y'),
             'month' => Carbon::parse($effective_date)->format('m'),
             'leaveGroupID' => $leaveGroupId,
