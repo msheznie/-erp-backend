@@ -375,6 +375,18 @@ class TenderCircularsAPIController extends AppBaseController
     {
         $input = $request->all();
 
+        if($input['isRequestProcessComplete'] && $input['requestType'] == 'Amend')
+        {        
+            if(!isset($input['attachment_id'])){
+                return ['success' => false, 'message' => 'Amendment is required'];
+            } 
+            
+            if(sizeof($input['attachment_id' ]) == 0){
+                return ['success' => false, 'message' => 'Amendment is required'];
+            }
+               
+        }
+   
         if(isset($input['attachment_id' ])){
             $attachmentList = $input['attachment_id'];
         }
@@ -442,9 +454,16 @@ class TenderCircularsAPIController extends AppBaseController
             $data['company_id']=$input['companySystemID'];
 
             if(isset($input['id'])){
+                $circulatAmends =  CircularAmendments::where('tender_id', $input['tender_id'])->select('id')->count();
+                if ($circulatAmends == 0) {
+                    return ['success' => false, 'message' => 'Amendment is required'];
+                }
+
+
                 $data['updated_by'] = $employee->employeeSystemID;
                 $data['updated_at'] = Carbon::now();
-                $result = TenderCirculars::where('id',$input['id'])->update($data);
+                $tenderCircular = TenderCirculars::find($input['id']);
+                $result = $tenderCircular->update($data);
                 if($result){
                     DB::commit();
                     return ['success' => true, 'message' => 'Successfully updated', 'data' => $result];
@@ -498,10 +517,17 @@ class TenderCircularsAPIController extends AppBaseController
         $input = $request->all();
         DB::beginTransaction();
         try {
-            $result = TenderCirculars::where('id',$input['id'])->delete();
-
+            $tenderCircular =  TenderCirculars::find($input['id']);
+            $result = $tenderCircular->delete();
+            
             if($result){
-                CircularAmendments::where('circular_id', $input['id'])->delete();
+                
+                $circular = $this->deleteCircularAmend($input['id']);
+
+                if (!$circular['success']) {
+                    return $this->sendError($circular['message'], 500);
+                }       
+
                 DB::commit();
                 return ['success' => true, 'message' => 'Successfully deleted', 'data' => $result];
             }
@@ -624,10 +650,13 @@ class TenderCircularsAPIController extends AppBaseController
         $input = $request->all();
         DB::beginTransaction();
         try {
-            $result = CircularAmendments::where('amendment_id',$input['attachmentID'])
+            $output = CircularAmendments::where('amendment_id',$input['attachmentID'])
                 ->where('tender_id', $input['tenderMasterId'])
                 ->where('circular_id', $input['circularId'])
-                ->delete();
+                ->first();
+
+            $model = CircularAmendments::find($output->id);
+            $result = $model->delete();
             if($result){
                 DB::commit();
                 return ['success' => true, 'message' => 'Successfully deleted', 'data' => $result];
@@ -708,5 +737,24 @@ class TenderCircularsAPIController extends AppBaseController
             return ['success' => false, 'message' => $e];
         }
 
+    }
+
+    public function deleteCircularAmend($id)
+    {
+
+        DB::beginTransaction();
+        try {
+            $circularObj = CircularAmendments::select('id')->where('circular_id', $id)->get();
+
+            foreach ($circularObj as $val) {
+                $circular = CircularAmendments::find($val->id);
+                $circular->delete();
+            }
+
+            DB::commit();
+            return ['success' => true, 'message' => 'Successfully Deleted'];
+        } catch (\Exception $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
     }
 }
