@@ -16,6 +16,7 @@ class LeaveCarryForwardComputationService
     public $companyCode;
     public $leaveComputationBasedOn = null;
     public $currentDate;
+    public $currentDateTime;
     public $periodEndDate = null;
     public $payRollBasedData = [];
     public $financialYearBasedData = [];
@@ -33,6 +34,7 @@ class LeaveCarryForwardComputationService
         $this->companyId = $companyData['id'];
         $this->companyCode = $companyData['code'];
         $this->currentDate  = Carbon::now()->format('Y-m-d');
+        $this->currentDateTime = Carbon::now()->format('Y-m-d H:m:s');
     }
 
     function execute()
@@ -363,7 +365,7 @@ class LeaveCarryForwardComputationService
             'leaveType' => $data['leaveTypeId'],
             'daysEntitled' => $data['adustment'],
             'description' =>  '-',
-            'createDate' => $this->currentDate,
+            'createDate' => $this->currentDateTime,
             'createdPCid' => gethostname(),
         ];
 
@@ -383,13 +385,13 @@ class LeaveCarryForwardComputationService
             'approvalLevelID' => 1,
             'isReverseApplicableYN' => 1,
             'approvalGroupID' => 0,
-            'docConfirmedDate' => $this->currentDate,
+            'docConfirmedDate' => $this->currentDateTime,
             'docConfirmedByEmpID' => 11,
             'table_name' => 'srp_erp_leaveaccrualmaster',
             'table_unique_field_name' => 'leaveaccrualMasterID',
             'approvedEmpID' => 11,
             'approvedYN' => 1,
-            'approvedDate' => $this->currentDate,
+            'approvedDate' => $this->currentDateTime,
             'approvedComments' => 'Approved by Admin',
             'approvedPC' =>  gethostname(),
             'companyID' =>  $this->companyId,
@@ -401,13 +403,13 @@ class LeaveCarryForwardComputationService
         $dataUpdate = [
             'submitYN' => 1,
             'submittedBy' => 11,
-            'submittedDate' => $this->currentDate,
+            'submittedDate' => $this->currentDateTime,
             'confirmedYN' => 1,
             'confirmedby' => 11,
-            'confirmedDate' => $this->currentDate,
+            'confirmedDate' => $this->currentDateTime,
             'approvedYN' => 1,
             'approvedby' => 11,
-            'approvedDate' => $this->currentDate
+            'approvedDate' => $this->currentDateTime
         ];
 
         LeaveAccrualMaster::find($this->accrualMasterID)
@@ -418,8 +420,7 @@ class LeaveCarryForwardComputationService
 
     function insertToLogTb($logData, $logType = 'info')
     {
-        $logData = json_encode($logData);
-        $logAt = Carbon::now()->format('Y-m-d H:m:s');
+        $logData = json_encode($logData);        
 
         $data = [
             'company_id' => $this->companyId,
@@ -427,7 +428,7 @@ class LeaveCarryForwardComputationService
             'description' => 'Leave Maximum Carry Forward Adjustment',
             'scenario_id' => 0,
             'processed_for' => $this->currentDate,
-            'logged_at' => $logAt,
+            'logged_at' => $this->currentDateTime,
             'log_type' => $logType,
             'log_data' => $logData
         ];
