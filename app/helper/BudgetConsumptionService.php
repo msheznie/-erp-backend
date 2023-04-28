@@ -1685,7 +1685,7 @@ class BudgetConsumptionService
 	
 	public static function pendingDebiteNoteQry($budgetFormData, $templateCategoryIDs, $glCodes, $fixedAssetFlag, $directDocument)
 	{
-		$pendingSupInvQry = DebitNoteDetails::selectRaw('SUM(localAmount) AS localAmt, SUM(comRptAmount) AS rptAmt, chartOfAccountSystemID, companySystemID, serviceLineSystemID, chartOfAccountSystemID as chartOfAccountID')
+		$pendingSupInvQry = DebitNoteDetails::selectRaw('SUM(localAmount) * -1 AS localAmt, SUM(comRptAmount) * -1 AS rptAmt, chartOfAccountSystemID, companySystemID, serviceLineSystemID, chartOfAccountSystemID as chartOfAccountID')
 								 		     ->where('companySystemID', $budgetFormData['companySystemID'])
 								 		     ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
 											 	$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID']);
@@ -1770,8 +1770,8 @@ class BudgetConsumptionService
 			        'companySystemID' => $group->first()['companySystemID'],
 			        'serviceLineSystemID' => $group->first()['serviceLineSystemID'],
 			        'templateDetailID' => $group->first()['templateDetailID'],
-			        'localAmt' => $group->sum('localAmt') * -1,
-			        'rptAmt' => $group->sum('rptAmt') * -1,
+			        'localAmt' => $group->sum('localAmt'),
+			        'rptAmt' => $group->sum('rptAmt'),
 			    ];
 			});
 
