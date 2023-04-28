@@ -691,6 +691,30 @@ class ChequeRegisterAPIController extends AppBaseController
 
     }
 
+    public function checkChequeRegisterStatus(Request $request){
+        $input = $request->all();
+
+        $chequeRegister = ChequeRegister::find($input['registerID']);
+
+        if (empty($chequeRegister)) {
+            return $this->sendError('Cheque Register not found');
+        }
+
+        if($chequeRegister->isActive == 0) {
+
+            $sameAccounts = ChequeRegister::where('bank_id', $chequeRegister->bank_id)->where('bank_account_id', $chequeRegister->bank_account_id)->where('isActive', 1)->where('id', '!=', $input['registerID'])->get();
+            if ($sameAccounts->isEmpty()) {
+                $sameAccounts = null;
+            }
+        }
+        else{
+            $sameAccounts = null;
+        }
+
+        return $this->sendResponse($sameAccounts, "Status updated successfully");
+
+    }
+
 
     public function chequeRegisterStatusChange(Request $request)
     {
