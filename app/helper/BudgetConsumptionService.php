@@ -5278,7 +5278,7 @@ class BudgetConsumptionService
 
 	public static function pendingPrnQryValuesForDirectDocsDepartmentWise($budgetFormData, $templateCategoryIDs, $glCodes)
 	{
-		$pendingPoQry = PurchaseReturnDetails::selectRaw('(GRVcostPerUnitLocalCur * noQty *-1) AS localAmt, (GRVcostPerUnitComRptCur * noQty * -1) AS rptAmt, financeGLcodePLSystemID, financeGLcodebBSSystemID, erp_purchasereturnmaster.companySystemID, purhasereturnDetailID')
+		$pendingPoQry = PurchaseReturnDetails::selectRaw('(GRVcostPerUnitLocalCur * noQty *-1) AS localAmt, (GRVcostPerUnitComRptCur * noQty * -1) AS rptAmt, financeGLcodePLSystemID, financeGLcodebBSSystemID, erp_purchasereturnmaster.companySystemID, purhasereturnDetailID, erp_purchasereturnmaster.purhaseReturnAutoID')
 											 ->join('erp_purchasereturnmaster', 'erp_purchasereturnmaster.purhaseReturnAutoID', '=', 'erp_purchasereturndetails.purhaseReturnAutoID')
 											 ->where('itemFinanceCategoryID', '!=',3)
 								 		     ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
