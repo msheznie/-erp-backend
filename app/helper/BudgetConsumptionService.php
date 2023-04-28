@@ -2810,7 +2810,7 @@ class BudgetConsumptionService
 		}
 
 		$budgetRelationName = ($fixedAssetFlag) ? 'budget_detail_bs' : 'budget_detail_pl';
-		$docAmountQry = SupplierInvoiceDirectItem::selectRaw('SUM(costPerUnitLocalCur * noQty) AS totalCost, erp_bookinvsuppmaster.bookingSuppMasInvAutoID, erp_bookinvsuppmaster.companySystemID, erp_bookinvsuppmaster.bookingDate,'.$budgetFormData['glColumnName'].','.$budgetFormData['glColumnName'].' as chartOfAccountID')
+		$docAmountQry = SupplierInvoiceDirectItem::selectRaw('SUM(costPerUnitSupTransCur * noQty) AS totalCost, erp_bookinvsuppmaster.bookingSuppMasInvAutoID, erp_bookinvsuppmaster.companySystemID, erp_bookinvsuppmaster.bookingDate,'.$budgetFormData['glColumnName'].','.$budgetFormData['glColumnName'].' as chartOfAccountID')
 											 ->join('erp_bookinvsuppmaster', 'erp_bookinvsuppmaster.bookingSuppMasInvAutoID', '=', 'supplier_invoice_items.bookingSuppMasInvAutoID')
 											 ->where('itemFinanceCategoryID', '!=',3)
 											 ->whereHas($budgetRelationName,function($query) use ($budgetFormData, $templateCategoryIDs, $glCodes) {
@@ -4707,7 +4707,7 @@ class BudgetConsumptionService
 	public static function diSIDocumentAmountByTemplateDepartmentWise($budgetFormData, $templateCategoryIDs, $glCodes = [], $fixedAssetFlag)
 	{
 		$budgetRelationName = ($fixedAssetFlag) ? 'budget_detail_bs' : 'budget_detail_pl';
-		$docAmountQry = SupplierInvoiceDirectItem::selectRaw('costPerUnitLocalCur, supplier_invoice_items.VATAmountLocal, erp_bookinvsuppmaster.bookingSuppMasInvAutoID, erp_bookinvsuppmaster.companySystemID, erp_bookinvsuppmaster.bookingDate,'.$budgetFormData['glColumnName'].','.$budgetFormData['glColumnName'].' as chartOfAccountID, id as siItemDetailID, noQty, erp_bookinvsuppmaster.serviceLineSystemID')
+		$docAmountQry = SupplierInvoiceDirectItem::selectRaw('costPerUnitSupTransCur, supplier_invoice_items.VATAmountLocal, erp_bookinvsuppmaster.bookingSuppMasInvAutoID, erp_bookinvsuppmaster.companySystemID, erp_bookinvsuppmaster.bookingDate,'.$budgetFormData['glColumnName'].','.$budgetFormData['glColumnName'].' as chartOfAccountID, id as siItemDetailID, noQty, erp_bookinvsuppmaster.serviceLineSystemID')
 											 ->join('erp_bookinvsuppmaster', 'erp_bookinvsuppmaster.bookingSuppMasInvAutoID', '=', 'supplier_invoice_items.bookingSuppMasInvAutoID')
 											 ->where('itemFinanceCategoryID', '!=',3)
 											 ->whereHas($budgetRelationName,function($query) use ($budgetFormData, $templateCategoryIDs, $glCodes) {
@@ -4780,7 +4780,7 @@ class BudgetConsumptionService
 			$pendingData = [];
 			foreach ($docAmountQry as $key => $value) {
 				$temp = [];
-				$temp['totalCost'] = ($value->costPerUnitLocalCur) * $value->noQty;
+				$temp['totalCost'] = ($value->costPerUnitSupTransCur) * $value->noQty;
 				$temp['chartOfAccountID'] = $value->chartOfAccountID;
 				$temp['companySystemID'] = $value->companySystemID;
 				$temp['serviceLineSystemID'] = $value->serviceLineSystemID;
@@ -4817,7 +4817,7 @@ class BudgetConsumptionService
 			$pendingData = [];
 			foreach ($docAmountQry as $key => $value) {
 				$temp = [];
-				$temp['totalCost'] = ($value->costPerUnitLocalCur) * $value->noQty;
+				$temp['totalCost'] = ($value->costPerUnitSupTransCur) * $value->noQty;
 				$temp['chartOfAccountID'] = $value->chartOfAccountID;
 				$temp['companySystemID'] = $value->companySystemID;
 				$temp['serviceLineSystemID'] = $value->serviceLineSystemID;
