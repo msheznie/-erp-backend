@@ -1928,26 +1928,6 @@ class BudgetConsumptionService
 	 																 	$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID']);
 	 																 });
 	 													 });
-	 										 }, 'budget_detail_bs' => function($query) use ($budgetFormData, $templateCategoryIDs, $glCodes) {
-	 										 	$query->where('companySystemID', $budgetFormData['companySystemID'])
-	 										 		   ->where('Year', $budgetFormData['budgetYear'])
-	 										 		    ->when(count($glCodes) == 0, function($query) use ($templateCategoryIDs) {
-														 	$query->whereIn('templateDetailID', $templateCategoryIDs);
-														 })
-														 ->when(count($glCodes) > 0, function($query) use ($glCodes) {
-														 	$query->whereIn('chartOfAccountID', $glCodes);
-														 })
-	 										 		   ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
-	 													 	$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID']);
-	 													 })
-	 										 		    ->whereHas('budget_master',function($query) use ($budgetFormData) {
-	 													 	$query->where('companySystemID', $budgetFormData['companySystemID'])
-	 													 		  ->where('approvedYN', -1)
-	 													 		   ->where('Year', $budgetFormData['budgetYear'])
-	 													 		   ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
-	 																 	$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID']);
-	 																 });
-	 													 });
 	 										 }])
 											 ->where(function($query) use ($budgetFormData, $templateCategoryIDs, $glCodes) {
 												 $query->whereHas('budget_detail_pl',function($query) use ($budgetFormData, $templateCategoryIDs, $glCodes) {
@@ -1970,28 +1950,28 @@ class BudgetConsumptionService
 																			 	$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID']);
 																			 });
 																 });
-													 })
-												 	 ->orWhereHas('budget_detail_bs',function($query) use ($budgetFormData, $templateCategoryIDs, $glCodes) {
-													 	$query->where('companySystemID', $budgetFormData['companySystemID'])
-													 		   ->where('Year', $budgetFormData['budgetYear'])
-													 		    ->when(count($glCodes) == 0, function($query) use ($templateCategoryIDs) {
-																 	$query->whereIn('templateDetailID', $templateCategoryIDs);
-																 })
-																 ->when(count($glCodes) > 0, function($query) use ($glCodes) {
-																 	$query->whereIn('chartOfAccountID', $glCodes);
-																 })
-													 		   ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
-																 	$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID']);
-																 })
-													 		    ->whereHas('budget_master',function($query) use ($budgetFormData) {
-																 	$query->where('companySystemID', $budgetFormData['companySystemID'])
-																 		  ->where('approvedYN', -1)
-																 		   ->where('Year', $budgetFormData['budgetYear'])
-																 		   ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
-																			 	$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID']);
-																			 });
-																 });
 													 });
+												 	 // ->orWhereHas('budget_detail_bs',function($query) use ($budgetFormData, $templateCategoryIDs, $glCodes) {
+													 // 	$query->where('companySystemID', $budgetFormData['companySystemID'])
+													 // 		   ->where('Year', $budgetFormData['budgetYear'])
+													 // 		    ->when(count($glCodes) == 0, function($query) use ($templateCategoryIDs) {
+													// 			 	$query->whereIn('templateDetailID', $templateCategoryIDs);
+													// 			 })
+													// 			 ->when(count($glCodes) > 0, function($query) use ($glCodes) {
+													// 			 	$query->whereIn('chartOfAccountID', $glCodes);
+													// 			 })
+													 // 		   ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
+													// 			 	$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID']);
+													// 			 })
+													 // 		    ->whereHas('budget_master',function($query) use ($budgetFormData) {
+													// 			 	$query->where('companySystemID', $budgetFormData['companySystemID'])
+													// 			 		  ->where('approvedYN', -1)
+													// 			 		   ->where('Year', $budgetFormData['budgetYear'])
+													// 			 		   ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
+													// 						 	$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID']);
+													// 						 });
+													// 			 });
+													 // });
 											 })
 	 										 ->whereHas('order', function($query) use ($budgetFormData) {
 	 										 	$query->where('approved', 0)
@@ -2078,26 +2058,6 @@ class BudgetConsumptionService
 	 																 	$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID']);
 	 																 });
 	 													 });
-	 										 }, 'budget_detail_bs' => function($query) use ($budgetFormData, $templateCategoryIDs, $glCodes) {
-	 										 	$query->where('companySystemID', $budgetFormData['companySystemID'])
-	 										 		   ->where('Year', $budgetFormData['budgetYear'])
-	 										 		    ->when(count($glCodes) == 0, function($query) use ($templateCategoryIDs) {
-														 	$query->whereIn('templateDetailID', $templateCategoryIDs);
-														 })
-														 ->when(count($glCodes) > 0, function($query) use ($glCodes) {
-														 	$query->whereIn('chartOfAccountID', $glCodes);
-														 })
-	 										 		   ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
-	 													 	$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID']);
-	 													 })
-	 										 		    ->whereHas('budget_master',function($query) use ($budgetFormData) {
-	 													 	$query->where('companySystemID', $budgetFormData['companySystemID'])
-	 													 		  ->where('approvedYN', -1)
-	 													 		   ->where('Year', $budgetFormData['budgetYear'])
-	 													 		   ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
-	 																 	$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID']);
-	 																 });
-	 													 });
 	 										 }])
 											 ->where(function($query) use ($budgetFormData, $templateCategoryIDs, $glCodes) {
 												 $query->whereHas('budget_detail_pl',function($query) use ($budgetFormData, $templateCategoryIDs, $glCodes) {
@@ -2120,28 +2080,28 @@ class BudgetConsumptionService
 																			 	$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID']);
 																			 });
 																 });
-													 })
-												 	 ->orWhereHas('budget_detail_bs',function($query) use ($budgetFormData, $templateCategoryIDs, $glCodes) {
-													 	$query->where('companySystemID', $budgetFormData['companySystemID'])
-													 		   ->where('Year', $budgetFormData['budgetYear'])
-													 		    ->when(count($glCodes) == 0, function($query) use ($templateCategoryIDs) {
-																 	$query->whereIn('templateDetailID', $templateCategoryIDs);
-																 })
-																 ->when(count($glCodes) > 0, function($query) use ($glCodes) {
-																 	$query->whereIn('chartOfAccountID', $glCodes);
-																 })
-													 		   ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
-																 	$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID']);
-																 })
-													 		    ->whereHas('budget_master',function($query) use ($budgetFormData) {
-																 	$query->where('companySystemID', $budgetFormData['companySystemID'])
-																 		  ->where('approvedYN', -1)
-																 		   ->where('Year', $budgetFormData['budgetYear'])
-																 		   ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
-																			 	$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID']);
-																			 });
-																 });
 													 });
+												 	 // ->orWhereHas('budget_detail_bs',function($query) use ($budgetFormData, $templateCategoryIDs, $glCodes) {
+													 // 	$query->where('companySystemID', $budgetFormData['companySystemID'])
+													 // 		   ->where('Year', $budgetFormData['budgetYear'])
+													 // 		    ->when(count($glCodes) == 0, function($query) use ($templateCategoryIDs) {
+													// 			 	$query->whereIn('templateDetailID', $templateCategoryIDs);
+													// 			 })
+													// 			 ->when(count($glCodes) > 0, function($query) use ($glCodes) {
+													// 			 	$query->whereIn('chartOfAccountID', $glCodes);
+													// 			 })
+													 // 		   ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
+													// 			 	$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID']);
+													// 			 })
+													 // 		    ->whereHas('budget_master',function($query) use ($budgetFormData) {
+													// 			 	$query->where('companySystemID', $budgetFormData['companySystemID'])
+													// 			 		  ->where('approvedYN', -1)
+													// 			 		   ->where('Year', $budgetFormData['budgetYear'])
+													// 			 		   ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
+													// 						 	$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID']);
+													// 						 });
+													// 			 });
+													 // });
 											 })
 	 										 ->whereHas('grv_master', function($query) use ($budgetFormData) {
 	 										 	$query->where('approved', 0)
@@ -2230,26 +2190,6 @@ class BudgetConsumptionService
 	 																 	$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID']);
 	 																 });
 	 													 });
-	 										 }, 'budget_detail_bs' => function($query) use ($budgetFormData, $templateCategoryIDs, $glCodes) {
-	 										 	$query->where('companySystemID', $budgetFormData['companySystemID'])
-	 										 		   ->where('Year', $budgetFormData['budgetYear'])
-	 										 		    ->when(count($glCodes) == 0, function($query) use ($templateCategoryIDs) {
-														 	$query->whereIn('templateDetailID', $templateCategoryIDs);
-														 })
-														 ->when(count($glCodes) > 0, function($query) use ($glCodes) {
-														 	$query->whereIn('chartOfAccountID', $glCodes);
-														 })
-	 										 		   ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
-	 													 	$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID']);
-	 													 })
-	 										 		    ->whereHas('budget_master',function($query) use ($budgetFormData) {
-	 													 	$query->where('companySystemID', $budgetFormData['companySystemID'])
-	 													 		  ->where('approvedYN', -1)
-	 													 		   ->where('Year', $budgetFormData['budgetYear'])
-	 													 		   ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
-	 																 	$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID']);
-	 																 });
-	 													 });
 	 										 }])
 											 ->where(function($query) use ($budgetFormData, $templateCategoryIDs, $glCodes) {
 												 $query->whereHas('budget_detail_pl',function($query) use ($budgetFormData, $templateCategoryIDs, $glCodes) {
@@ -2272,28 +2212,28 @@ class BudgetConsumptionService
 																			 	$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID']);
 																			 });
 																 });
-													 })
-												 	 ->orWhereHas('budget_detail_bs',function($query) use ($budgetFormData, $templateCategoryIDs, $glCodes) {
-													 	$query->where('companySystemID', $budgetFormData['companySystemID'])
-													 		   ->where('Year', $budgetFormData['budgetYear'])
-													 		    ->when(count($glCodes) == 0, function($query) use ($templateCategoryIDs) {
-																 	$query->whereIn('templateDetailID', $templateCategoryIDs);
-																 })
-																 ->when(count($glCodes) > 0, function($query) use ($glCodes) {
-																 	$query->whereIn('chartOfAccountID', $glCodes);
-																 })
-													 		   ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
-																 	$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID']);
-																 })
-													 		    ->whereHas('budget_master',function($query) use ($budgetFormData) {
-																 	$query->where('companySystemID', $budgetFormData['companySystemID'])
-																 		  ->where('approvedYN', -1)
-																 		   ->where('Year', $budgetFormData['budgetYear'])
-																 		   ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
-																			 	$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID']);
-																			 });
-																 });
 													 });
+												 	 // ->orWhereHas('budget_detail_bs',function($query) use ($budgetFormData, $templateCategoryIDs, $glCodes) {
+													 // 	$query->where('companySystemID', $budgetFormData['companySystemID'])
+													 // 		   ->where('Year', $budgetFormData['budgetYear'])
+													 // 		    ->when(count($glCodes) == 0, function($query) use ($templateCategoryIDs) {
+													// 			 	$query->whereIn('templateDetailID', $templateCategoryIDs);
+													// 			 })
+													// 			 ->when(count($glCodes) > 0, function($query) use ($glCodes) {
+													// 			 	$query->whereIn('chartOfAccountID', $glCodes);
+													// 			 })
+													 // 		   ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
+													// 			 	$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID']);
+													// 			 })
+													 // 		    ->whereHas('budget_master',function($query) use ($budgetFormData) {
+													// 			 	$query->where('companySystemID', $budgetFormData['companySystemID'])
+													// 			 		  ->where('approvedYN', -1)
+													// 			 		   ->where('Year', $budgetFormData['budgetYear'])
+													// 			 		   ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
+													// 						 	$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID']);
+													// 						 });
+													// 			 });
+													 // });
 											 })
 	 										 ->whereHas('master', function($query) use ($budgetFormData) {
 	 										 	$query->where('approved', 0)
@@ -2376,26 +2316,6 @@ class BudgetConsumptionService
 	 																 	$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID']);
 	 																 });
 	 													 });
-	 										 }, 'budget_detail_bs' => function($query) use ($budgetFormData, $templateCategoryIDs, $glCodes) {
-	 										 	$query->where('companySystemID', $budgetFormData['companySystemID'])
-	 										 		   ->where('Year', $budgetFormData['budgetYear'])
-	 										 		    ->when(count($glCodes) == 0, function($query) use ($templateCategoryIDs) {
-														 	$query->whereIn('templateDetailID', $templateCategoryIDs);
-														 })
-														 ->when(count($glCodes) > 0, function($query) use ($glCodes) {
-														 	$query->whereIn('chartOfAccountID', $glCodes);
-														 })
-	 										 		   ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
-	 													 	$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID']);
-	 													 })
-	 										 		    ->whereHas('budget_master',function($query) use ($budgetFormData) {
-	 													 	$query->where('companySystemID', $budgetFormData['companySystemID'])
-	 													 		  ->where('approvedYN', -1)
-	 													 		   ->where('Year', $budgetFormData['budgetYear'])
-	 													 		   ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
-	 																 	$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID']);
-	 																 });
-	 													 });
 	 										 }])
 											 ->where(function($query) use ($budgetFormData, $templateCategoryIDs, $glCodes) {
 												 $query->whereHas('budget_detail_pl',function($query) use ($budgetFormData, $templateCategoryIDs, $glCodes) {
@@ -2418,28 +2338,28 @@ class BudgetConsumptionService
 																			 	$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID']);
 																			 });
 																 });
-													 })
-												 	 ->orWhereHas('budget_detail_bs',function($query) use ($budgetFormData, $templateCategoryIDs, $glCodes) {
-													 	$query->where('companySystemID', $budgetFormData['companySystemID'])
-													 		   ->where('Year', $budgetFormData['budgetYear'])
-													 		    ->when(count($glCodes) == 0, function($query) use ($templateCategoryIDs) {
-																 	$query->whereIn('templateDetailID', $templateCategoryIDs);
-																 })
-																 ->when(count($glCodes) > 0, function($query) use ($glCodes) {
-																 	$query->whereIn('chartOfAccountID', $glCodes);
-																 })
-													 		   ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
-																 	$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID']);
-																 })
-													 		    ->whereHas('budget_master',function($query) use ($budgetFormData) {
-																 	$query->where('companySystemID', $budgetFormData['companySystemID'])
-																 		  ->where('approvedYN', -1)
-																 		   ->where('Year', $budgetFormData['budgetYear'])
-																 		   ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
-																			 	$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID']);
-																			 });
-																 });
 													 });
+												 	 // ->orWhereHas('budget_detail_bs',function($query) use ($budgetFormData, $templateCategoryIDs, $glCodes) {
+													 // 	$query->where('companySystemID', $budgetFormData['companySystemID'])
+													 // 		   ->where('Year', $budgetFormData['budgetYear'])
+													 // 		    ->when(count($glCodes) == 0, function($query) use ($templateCategoryIDs) {
+													// 			 	$query->whereIn('templateDetailID', $templateCategoryIDs);
+													// 			 })
+													// 			 ->when(count($glCodes) > 0, function($query) use ($glCodes) {
+													// 			 	$query->whereIn('chartOfAccountID', $glCodes);
+													// 			 })
+													 // 		   ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
+													// 			 	$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID']);
+													// 			 })
+													 // 		    ->whereHas('budget_master',function($query) use ($budgetFormData) {
+													// 			 	$query->where('companySystemID', $budgetFormData['companySystemID'])
+													// 			 		  ->where('approvedYN', -1)
+													// 			 		   ->where('Year', $budgetFormData['budgetYear'])
+													// 			 		   ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
+													// 						 	$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID']);
+													// 						 });
+													// 			 });
+													 // });
 											 })
 	 										 ->whereHas('master', function($query) use ($budgetFormData) {
 	 										 	$query->where('approved', 0)
