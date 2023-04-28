@@ -926,7 +926,12 @@ class PurchaseRequestAPIController extends AppBaseController
         $doc_name = 'pr_to_grv';
         $doc_name_path = 'pr_to_grv/';
         $path = 'procurement/report/'.$doc_name_path.'excel/';
-        $basePath = CreateExcel::process($data,$type,$doc_name,$path);
+        $companyMaster = Company::find(isset($request->companyId)?$request->companyId: null);
+        $companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
+        $detail_array = array(
+            'company_code'=>$companyCode,
+        );
+        $basePath = CreateExcel::process($data,$type,$doc_name,$path,$detail_array);
 
         if($basePath == '')
         {
@@ -2740,10 +2745,14 @@ class PurchaseRequestAPIController extends AppBaseController
         // return $this->sendResponse(array(), 'successfully export');
 
 
-
+        $companyMaster = Company::find(isset($request['companySystemID'][0])?$request['companySystemID'][0]:null);
+        $companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
+        $detail_array = array(
+            'company_code'=>$companyCode,
+        );
         $doc_name = 'open_requests';
         $path = 'procurement/open_requests/excel/';
-        $basePath = CreateExcel::process($data,$type,$doc_name,$path);
+        $basePath = CreateExcel::process($data,$type,$doc_name,$path,$detail_array);
 
         if($basePath == '')
         {

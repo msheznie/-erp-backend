@@ -1267,8 +1267,9 @@ class GeneralLedgerAPIController extends AppBaseController
         $reportData['currency'] = ($type[0] == 1) ? $reportData['localcurrency']['CurrencyCode'] : $reportData['reportingcurrency']['CurrencyCode'];
         $reportData['company'] = $checkIsGroup->CompanyName;
         $reportData['Title'] = 'Segment Wise GL Report';
-   
-        
+        $companyCode = isset($checkIsGroup->CompanyID) ? $checkIsGroup->CompanyID: null;
+        $reportData['companyCode'] = $companyCode;
+
         $templateName = "export_report.segment-wise-gL-report";
         $fileName = 'gl_segment_report';
         $path = 'general-ledger/report/segment-wise-gL-report/excel/';

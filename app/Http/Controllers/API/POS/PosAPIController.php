@@ -381,7 +381,7 @@ class PosAPIController extends AppBaseController
                 ->where('itemmaster.itemDescription', '!=', '')
                 ->where('financeitemcategorymaster.categoryDescription', '!=', '')
                 ->where('units.UnitShortCode', '!=', '')
-                ->where('itemmaster.financeCategoryMaster', '!=', 3)
+                // ->where('itemmaster.financeCategoryMaster', '!=', 3)
                 ->get();
 
             DB::commit();
@@ -442,7 +442,7 @@ class PosAPIController extends AppBaseController
                 ->where('itemmaster.itemDescription', '!=', '')
                 ->where('financeitemcategorymaster.categoryDescription', '!=', '')
                 ->where('units.UnitShortCode', '!=', '')
-                ->where('itemmaster.financeCategoryMaster', '!=', 3)
+                // ->where('itemmaster.financeCategoryMaster', '!=', 3)
                 ->where('financeitemcategorysub.itemCategorySubID', '=', $sub_category_id);
                 
 

@@ -5085,8 +5085,8 @@ class Helper
                 $msg = $e->getMessage();
             }
 
-            return ['success' => false, 'message' => $msg];
-            // return ['success' => false, 'message' => $e->getMessage()." Line:".$e->getLine()];
+            // return ['success' => false, 'message' => $msg];
+            return ['success' => false, 'message' => $e->getMessage()." Line:".$e->getLine()];
 
         }
     }
@@ -7500,6 +7500,38 @@ class Helper
                             }
                             $budgetConsumeStore = Models\BudgetConsumedData::insert($budgetConsumeData);
                         }
+                    } else if ($masterRec->documentType == 3) {
+                        $budgetConsumeData = array();
+                        $directDetail = \DB::select('SELECT SUM((supplier_invoice_items.costPerUnitLocalCur) *supplier_invoice_items.noQty) as costPerUnitLocalCur,SUM((supplier_invoice_items.costPerUnitComRptCur)*supplier_invoice_items.noQty) as costPerUnitComRptCur,supplier_invoice_items.companyReportingCurrencyID,supplier_invoice_items.financeGLcodePLSystemID,supplier_invoice_items.companySystemID,erp_bookinvsuppmaster.serviceLineSystemID,supplier_invoice_items.localCurrencyID, erp_bookinvsuppmaster.projectID, erp_bookinvsuppmaster.companyFinanceYearID, MONTH(createdDateAndTime) as month FROM supplier_invoice_items INNER JOIN erp_bookinvsuppmaster ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = supplier_invoice_items.bookingSuppMasInvAutoID  WHERE supplier_invoice_items.bookingSuppMasInvAutoID = ' . $params["autoID"] . ' GROUP BY supplier_invoice_items.companySystemID,erp_bookinvsuppmaster.serviceLineSystemID,supplier_invoice_items.financeGLcodePLSystemID,erp_bookinvsuppmaster.projectID');
+
+                        if (!empty($directDetail)) {
+                            foreach ($directDetail as $value) {
+                                if ($value->financeGLcodePLSystemID != "") {
+                                    $budgetConsumeData[] = array(
+                                        "companySystemID" => $value->companySystemID,
+                                        "companyID" => Models\Company::getComanyCode($value->companySystemID),
+                                        "serviceLineSystemID" => $value->serviceLineSystemID,
+                                        "serviceLineCode" => Models\SegmentMaster::getSegmentCode($value->serviceLineSystemID),
+                                        "documentSystemID" => $masterRec["documentSystemID"],
+                                        "documentID" => $masterRec["documentID"],
+                                        "documentSystemCode" => $params["autoID"],
+                                        "documentCode" => $masterRec["bookingInvCode"],
+                                        "chartOfAccountID" => $value->financeGLcodePLSystemID,
+                                        "GLCode" => Models\ChartOfAccount::getAccountCode($value->financeGLcodePLSystemID),
+                                        "year" => Models\CompanyFinanceYear::budgetYearByFinanceYearID($value->companyFinanceYearID),
+                                        "companyFinanceYearID" => $value->companyFinanceYearID,
+                                        "month" => $value->month,
+                                        "consumedLocalCurrencyID" => $value->localCurrencyID,
+                                        "consumedLocalAmount" => $value->costPerUnitLocalCur,
+                                        "consumedRptCurrencyID" => $value->companyReportingCurrencyID,
+                                        "consumedRptAmount" => $value->costPerUnitComRptCur,
+                                        "projectID" => $value->projectID,
+                                        "timestamp" => date('d/m/Y H:i:s A')
+                                    );
+                                }
+                            }
+                        }
+                        $budgetConsume = Models\BudgetConsumedData::insert($budgetConsumeData);
                     }
                 }
                 break;

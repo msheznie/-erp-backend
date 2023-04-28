@@ -3622,8 +3622,8 @@ WHERE
             ->addColumn('Actions', 'Actions', "Actions")
             //->addColumn('Index', 'Index', "Index")
             ->make(true);
-    }
-
+    } 
+    
     public function deleteProcumentActivity($id, $company_id)
     {
 
@@ -3643,7 +3643,6 @@ WHERE
         }
     }
 
-
     public function deleteCalenderDetails($id, $company_id)
     {
 
@@ -3662,4 +3661,4 @@ WHERE
             return ['success' => false, 'message' => $e->getMessage()];
         }
     }
-}
+} 
