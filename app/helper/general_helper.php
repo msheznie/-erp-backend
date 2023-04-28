@@ -3281,7 +3281,7 @@ class Helper
                                         
                                         if($params["document"] == 117 )
                                         {
-                                            $document->documentDescription = $sorceDocument->type == 1?'Edit confirm request':'Amend confirm request';
+                                            $document->documentDescription = $sorceDocument->type == 1?'Edit request':'Amend request';
                                         }
 
                                         if($params["document"] == 118 )
