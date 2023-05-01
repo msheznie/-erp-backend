@@ -1282,7 +1282,7 @@ WHERE
                             }
                         }
 
-                        if ($input['isRequestProcessComplete']) {
+                        if (isset($input['isRequestProcessComplete'])) {
                             $version = null;
                             $is_vsersion_exit = DocumentModifyRequest::where('documentSystemCode', $input['id'])->latest('id')->first();
 
