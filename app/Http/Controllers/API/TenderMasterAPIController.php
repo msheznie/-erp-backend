@@ -1235,7 +1235,7 @@ WHERE
                             return ['success' => false, 'message' => 'Stage is required'];
                         }
 
-                        if ($input['isRequestProcessComplete'] && $input['requestType'] == 'Amend') {
+                        if ((isset($input['isRequestProcessComplete']) && isset($input['requestType'])) && $input['requestType'] == 'Amend') {
                             $circulatAmends =  CircularAmendments::where('tender_id', $input['id'])->select('id')->count();
                             if ($circulatAmends == 0) {
                                 return ['success' => false, 'message' => 'Please attach a circular to confirm amended changes'];
