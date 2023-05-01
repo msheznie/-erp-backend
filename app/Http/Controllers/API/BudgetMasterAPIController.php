@@ -1134,7 +1134,6 @@ class BudgetMasterAPIController extends AppBaseController
 
             $pendingJVAmount = JvDetail::whereHas('master', function($query) use ($input) {
                                                         $query->where('approved', 0)
-                                                              ->where('jvType', 3)
                                                               ->where('companySystemID', $input['companySystemID'])
                                                               ->whereHas('financeyear_by', function($query) use ($input) {
                                                                     $query->whereYear('bigginingDate', $input['Year']);
@@ -1754,7 +1753,6 @@ class BudgetMasterAPIController extends AppBaseController
 
             $pendingJVAmount = JvDetail::whereHas('master', function($query) use ($input) {
                                                         $query->where('approved', 0)
-                                                              ->where('jvType', 3)
                                                               ->where('companySystemID', $input['companySystemID'])
                                                               ->whereHas('financeyear_by', function($query) use ($input) {
                                                                     $query->whereYear('bigginingDate', $input['Year']);
@@ -2860,7 +2858,6 @@ class BudgetMasterAPIController extends AppBaseController
 
         $pendingJVAmount = JvDetail::whereHas('master', function($query) use ($dataParam) {
                                                     $query->where('approved', 0)
-                                                          ->where('jvType', 3)
                                                           ->where('companySystemID', $dataParam['companySystemID'])
                                                           ->whereHas('financeyear_by', function($query) use ($dataParam) {
                                                                 $query->whereYear('bigginingDate', $dataParam['Year']);

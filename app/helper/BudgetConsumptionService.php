@@ -246,10 +246,6 @@ class BudgetConsumptionService
 			case 17:
 				$masterData = JvMaster::find($documentSystemCode);
 
-				if ($masterData->jvType != 3 && $checkBudgetWhileApprove) {
-					return ['status' => true, 'data' => []];
-				}
-
 				$budgetFormData['companySystemID'] = $masterData->companySystemID;
 				$documentLevelCheckBudget = true;
 				$budgetFormData['financeCategory'] = 0;
@@ -1839,7 +1835,6 @@ class BudgetConsumptionService
 	 										 }])
 	 										 ->whereHas('master', function($query) use ($budgetFormData) {
 	 										 	$query->where('approved', 0)
-	 										 		  ->where('jvType', 3)
 	 										 		  ->where('companySystemID', $budgetFormData['companySystemID']);
 	 										 })
 	 										 ->when(in_array($budgetFormData['documentSystemID'], [17]), function($query) use ($budgetFormData) {
@@ -3488,44 +3483,42 @@ class BudgetConsumptionService
 	{
 		$jvMaster = JvMaster::selectRaw('MONTH(createdDateTime) as month, JVcode,documentID,documentSystemID, jvType')->find($documentSystemCode);
 
-		if ($jvMaster->jvType == 3) {
-			$budgetConsumeData = array();
-	        $grvDetail = \DB::select('SELECT SUM(erp_jvdetail.debitAmount + (erp_jvdetail.creditAmount * -1)) as amount,erp_jvdetail.currencyID,erp_jvdetail.chartOfAccountSystemID,erp_jvdetail.glAccount,erp_jvdetail.companyID,erp_jvdetail.companySystemID, erp_jvmaster.companyFinanceYearID, erp_jvdetail.serviceLineSystemID, erp_jvdetail.serviceLineCode, detail_project_id FROM erp_jvdetail INNER JOIN erp_jvmaster ON erp_jvmaster.jvMasterAutoId = erp_jvdetail.jvMasterAutoId  WHERE erp_jvdetail.jvMasterAutoId = ' . $documentSystemCode . ' GROUP BY erp_jvdetail.companySystemID,erp_jvdetail.chartOfAccountSystemID, erp_jvdetail.serviceLineSystemID, erp_jvdetail.detail_project_id');
-	        if (!empty($grvDetail)) {
-	            foreach ($grvDetail as $value) {
-	                if ($value->chartOfAccountSystemID != "") {
+		$budgetConsumeData = array();
+        $grvDetail = \DB::select('SELECT SUM(erp_jvdetail.debitAmount + (erp_jvdetail.creditAmount * -1)) as amount,erp_jvdetail.currencyID,erp_jvdetail.chartOfAccountSystemID,erp_jvdetail.glAccount,erp_jvdetail.companyID,erp_jvdetail.companySystemID, erp_jvmaster.companyFinanceYearID, erp_jvdetail.serviceLineSystemID, erp_jvdetail.serviceLineCode, detail_project_id FROM erp_jvdetail INNER JOIN erp_jvmaster ON erp_jvmaster.jvMasterAutoId = erp_jvdetail.jvMasterAutoId  WHERE erp_jvdetail.jvMasterAutoId = ' . $documentSystemCode . ' GROUP BY erp_jvdetail.companySystemID,erp_jvdetail.chartOfAccountSystemID, erp_jvdetail.serviceLineSystemID, erp_jvdetail.detail_project_id');
+        if (!empty($grvDetail)) {
+            foreach ($grvDetail as $value) {
+                if ($value->chartOfAccountSystemID != "") {
 
-	                	$companyData = Company::find($value->companySystemID);
+                	$companyData = Company::find($value->companySystemID);
 
-	                	$currencyConversionRptAmount = \Helper::currencyConversion($value->companySystemID, $value->currencyID, $value->currencyID, $value->amount);
+                	$currencyConversionRptAmount = \Helper::currencyConversion($value->companySystemID, $value->currencyID, $value->currencyID, $value->amount);
 
 
-	                    $budgetConsumeData[] = array(
-		                    "companySystemID" => $value->companySystemID,
-		                    "companyID" => $value->companyID,
-		                    "serviceLineSystemID" => $value->serviceLineSystemID,
-		                    "serviceLineCode" => $value->serviceLineCode,
-		                    "documentSystemID" => $jvMaster["documentSystemID"],
-		                    "documentID" => $jvMaster["documentID"],
-		                    "documentSystemCode" => $documentSystemCode,
-		                    "documentCode" => $jvMaster["JVcode"],
-		                    "chartOfAccountID" => $value->chartOfAccountSystemID,
-		                    "GLCode" => $value->glAccount,
-		                    "year" => CompanyFinanceYear::budgetYearByFinanceYearID($value->companyFinanceYearID),
-		                    "companyFinanceYearID" => $value->companyFinanceYearID,
-		                    "month" => $jvMaster["month"],
-		                    "consumedLocalCurrencyID" => $companyData ? $companyData->localCurrencyID : null,
-		                    "consumedLocalAmount" => $currencyConversionRptAmount['localAmount'],
-		                    "consumedRptCurrencyID" => $companyData ? $companyData->reportingCurrency : null,
-		                    "consumedRptAmount" => $currencyConversionRptAmount['reportingAmount'],
-		                    "projectID" => $value->detail_project_id,
-		                    "timestamp" => date('d/m/Y H:i:s A')
-		                );
-		            }
-		        }
+                    $budgetConsumeData[] = array(
+	                    "companySystemID" => $value->companySystemID,
+	                    "companyID" => $value->companyID,
+	                    "serviceLineSystemID" => $value->serviceLineSystemID,
+	                    "serviceLineCode" => $value->serviceLineCode,
+	                    "documentSystemID" => $jvMaster["documentSystemID"],
+	                    "documentID" => $jvMaster["documentID"],
+	                    "documentSystemCode" => $documentSystemCode,
+	                    "documentCode" => $jvMaster["JVcode"],
+	                    "chartOfAccountID" => $value->chartOfAccountSystemID,
+	                    "GLCode" => $value->glAccount,
+	                    "year" => CompanyFinanceYear::budgetYearByFinanceYearID($value->companyFinanceYearID),
+	                    "companyFinanceYearID" => $value->companyFinanceYearID,
+	                    "month" => $jvMaster["month"],
+	                    "consumedLocalCurrencyID" => $companyData ? $companyData->localCurrencyID : null,
+	                    "consumedLocalAmount" => $currencyConversionRptAmount['localAmount'],
+	                    "consumedRptCurrencyID" => $companyData ? $companyData->reportingCurrency : null,
+	                    "consumedRptAmount" => $currencyConversionRptAmount['reportingAmount'],
+	                    "projectID" => $value->detail_project_id,
+	                    "timestamp" => date('d/m/Y H:i:s A')
+	                );
+	            }
 	        }
-	        $budgetConsume = BudgetConsumedData::insert($budgetConsumeData);
-		}
+        }
+        $budgetConsume = BudgetConsumedData::insert($budgetConsumeData);
 
         return ['status' => true];
 	}
@@ -5943,7 +5936,6 @@ class BudgetConsumptionService
 
         $pendingJVAmount = JvDetail::whereHas('master', function($query) use ($dataParam) {
                                                     $query->where('approved', 0)
-                                                          ->where('jvType', 3)
                                                           ->where('companySystemID', $dataParam['companySystemID'])
                                                           ->whereHas('financeyear_by', function($query) use ($dataParam) {
                                                                 $query->whereYear('bigginingDate', $dataParam['Year']);
