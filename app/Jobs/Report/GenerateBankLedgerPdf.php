@@ -136,8 +136,11 @@ class GenerateBankLedgerPdf implements ShouldQueue
             $toDate = new Carbon($request->toDate);
             $toDate = $toDate->format('Y-m-d');
 
+            $companyCode = isset($checkIsGroup->companyCode)?$checkIsGroup->companyCode:'common';
+
+
             $zip = new ZipArchive;
-            $fileName = 'bank_ledger_report_('.$fromDate.'_'.$toDate.')_'.strtotime(date("Y-m-d H:i:s")).'.zip';
+            $fileName = $companyCode.'_'.'bank_ledger_report_('.$fromDate.'_'.$toDate.')_'.strtotime(date("Y-m-d H:i:s")).'.zip';
             if ($zip->open(public_path($fileName), ZipArchive::CREATE) === TRUE)
             {
                 foreach($files as $key => $value) {
@@ -148,7 +151,7 @@ class GenerateBankLedgerPdf implements ShouldQueue
             }
 
             $contents = Storage::disk('local_public')->get($fileName);
-            $zipPath = "general-ledger/repots/".$fileName;
+            $zipPath = $companyCode."/general-ledger/repots/".$fileName;
             $fileMoved = Storage::disk('s3')->put($zipPath, $contents);
 
             if ($fileMoved) {
