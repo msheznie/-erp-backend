@@ -6534,7 +6534,10 @@ AND erp_generalledger.documentTransAmount > 0 AND erp_generalledger.supplierCode
             ->orderby('year', 'desc')
             ->get();
 
-        $output['customerCategories'] = CustomerMasterCategory::whereIN('companySystemID', $childCompanies)->get();
+        $output['customerCategories'] = CustomerMasterCategoryAssigned::whereIN('companySystemID', $childCompanies)
+                                                                        ->where('isAssigned',1)
+                                                                        ->where('isActive',1)
+                                                                        ->get();
 
         return $this->sendResponse($output, trans('custom.retrieve', ['attribute' => trans('custom.record')]));
     }
