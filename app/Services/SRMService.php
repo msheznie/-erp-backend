@@ -2813,7 +2813,7 @@ class SRMService
             $att['companyID'] = $company->CompanyID;
             $att['documentSystemID'] = $documentCode->documentSystemID;
             $att['documentID'] = $documentCode->documentID;
-            $att['documentSystemCode'] = $bidMasterId;
+            $att['documentSystemCode'] = $tenderId;
             $att['attachmentDescription'] = 'Bid Submission ' . time();
             $att['path'] = $path;
             $att['parent_id'] = $parentId;
