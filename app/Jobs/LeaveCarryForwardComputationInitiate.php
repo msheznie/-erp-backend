@@ -64,7 +64,7 @@ class LeaveCarryForwardComputationInitiate implements ShouldQueue
         Log::info("Leave carry forward computation initiated on {$db} \t on file: " . __CLASS__ . " \tline no :" . __LINE__);
 
         
-        /* Switch to back to main DB */
+        /* Switch back to main DB */
         CommonJobService::db_switch($mainDb);
 
         foreach ($companyList as $company) {
