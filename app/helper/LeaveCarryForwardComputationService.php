@@ -28,6 +28,7 @@ class LeaveCarryForwardComputationService
     public $accrualMasterID = null;
     public $documentId = 'LAM';
     public $documentCode = null;
+    public $periodStatus = true;
 
     public function __construct($companyData)
     {
@@ -43,6 +44,12 @@ class LeaveCarryForwardComputationService
         $leaveComputationBasedPolicy = SME::policy($this->companyId, 'LC', 'All');
         $this->leaveComputationBasedOn =  empty($leaveComputationBasedPolicy) ? 1 : $leaveComputationBasedPolicy;
         $this->getPeriodEndDatePolicyWise();
+
+
+        if(!$this->periodStatus){
+            return false;
+        }
+
 
         $yearEndDate = Carbon::parse($this->periodData['endDate'])->format('Y-m-d');
 
@@ -99,6 +106,7 @@ class LeaveCarryForwardComputationService
             ->first();
 
         if (empty($this->payRollBasedData)) {
+            $this->periodStatus = false;
             $msg = 'Can not find the payroll period for current date!';
             $this->insertToLogTb($msg, 'error');
             return;
@@ -122,6 +130,7 @@ class LeaveCarryForwardComputationService
             ->first();
 
         if (empty($this->financialYearBasedData)) {
+            $this->periodStatus = false;
             $msg = 'Company finance year not found for the current year!';
             $this->insertToLogTb($msg, 'error');
             return;
