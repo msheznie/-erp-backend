@@ -61,9 +61,12 @@ class LeaveCarryForwardComputationInitiate implements ShouldQueue
         Log::info("Leave carry forward computation initiated on {$db} \t on file: " . __CLASS__ . " \tline no :" . __LINE__);
 
         foreach ($companyList as $company) {
-            $ser = new LeaveCarryForwardComputationService($company);
-            $ser->execute();
+            
+            LeaveCarryForwardCompany::dispatch($db, $company);
+
         }
+
+        
     }
 
 }

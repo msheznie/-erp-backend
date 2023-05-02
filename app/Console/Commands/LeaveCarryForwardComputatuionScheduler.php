@@ -23,7 +23,7 @@ class LeaveCarryForwardComputatuionScheduler extends Command
      *
      * @var string
      */
-    protected $description = 'Leave Carry Forward Computatuion Scheduler';
+    protected $description = 'Leave Carry Forward Computation Year End Scheduler';
 
     /**
      * Create a new command instance.
