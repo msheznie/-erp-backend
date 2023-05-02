@@ -69,23 +69,27 @@ class ProcumentActivityObserver
     public function process($tender,$reflog_id,$modify_type_val,$version_id,$type)
     {
         $employee = \Helper::getEmployeeInfo();
-        $empId = $employee->employeeSystemID;
-        $data1['tender_id'] = $tender->getAttribute('tender_id');
-        $data1['category_id'] = $tender->getAttribute('category_id');
-        $data1['company_id'] = $tender->getAttribute('company_id');
-        $data1['version_id'] = $version_id;
-        $data1['modify_type'] = $modify_type_val;
-        $data1['master_id'] = $tender->getAttribute('id');
-        $data1['ref_log_id'] = $reflog_id;
-        $data1['created_at'] = now();
-        $data1['updated_by'] = $empId;
-        $result = ProcumentActivityEditLog::create($data1);
-
-        if($result)
+        if(isset($employee))
         {
-            return true;
+            $empId = $employee->employeeSystemID;
+            $data1['tender_id'] = $tender->getAttribute('tender_id');
+            $data1['category_id'] = $tender->getAttribute('category_id');
+            $data1['company_id'] = $tender->getAttribute('company_id');
+            $data1['version_id'] = $version_id;
+            $data1['modify_type'] = $modify_type_val;
+            $data1['master_id'] = $tender->getAttribute('id');
+            $data1['ref_log_id'] = $reflog_id;
+            $data1['created_at'] = now();
+            $data1['updated_by'] = $empId;
+            $result = ProcumentActivityEditLog::create($data1);
+    
+            if($result)
+            {
+                return true;
+            }
         }
 
+          return false;
     }
 
 

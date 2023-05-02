@@ -30,12 +30,13 @@ class ScheduleBidFormatDetailsObserver
         $shedule_master = PricingScheduleMaster::where('id',$tender->getAttribute('schedule_id'))->select('tender_id')->first();
         $tenderObj = TenderDetails::getTenderMasterData($shedule_master->getAttribute('tender_id'));
         $employee = \Helper::getEmployeeInfo();
-        $empId = $employee->employeeSystemID;
+      
         $versionId = $tenderObj->getOriginal('tender_edit_version_id');
         $obj = TenderDetails::validateTenderEdit($shedule_master->getAttribute('tender_id'));
 
-        if($obj)
+        if($obj && isset($employee))
         {    
+            $empId = $employee->employeeSystemID;
             $master = null;
             $sheduleID = $tender->getAttribute('schedule_id');
             $sheduleMasterID = PricingScheduleMasterEditLog::select('id')->where('master_id',$sheduleID)->orderBy('id','desc')->first();
@@ -106,39 +107,43 @@ class ScheduleBidFormatDetailsObserver
     public function deleted(ScheduleBidFormatDetails $tender)
     {   
         $employee = \Helper::getEmployeeInfo();
-        $empId = $employee->employeeSystemID;
+
+        if(isset($employee))
+        {
+            $empId = $employee->employeeSystemID;
       
-        $versionId = null;
-        $shedule_master = PricingScheduleMasterEditLog::where('master_id',$tender->getAttribute('schedule_id'))->select('tender_id')->first();
-        if(isset($shedule_master))
-        {   
-            $tenderObj = TenderDetails::getTenderMasterData($shedule_master->getAttribute('tender_id'));
-            $versionId = $tenderObj->getOriginal('tender_edit_version_id');
-        }
-   
+            $versionId = null;
+            $shedule_master = PricingScheduleMasterEditLog::where('master_id',$tender->getAttribute('schedule_id'))->select('tender_id')->first();
+            if(isset($shedule_master))
+            {   
+                $tenderObj = TenderDetails::getTenderMasterData($shedule_master->getAttribute('tender_id'));
+                $versionId = $tenderObj->getOriginal('tender_edit_version_id');
+            }
        
-     
-        $formatDetails = ScheduleBidFormatDetailsLog::where('master_id',$tender->getAttribute('id'))->select('id')->orderBy('id','desc')->first();
-     
-        $refLogId = null;
-        if(isset($formatDetails))
-        {
-            $refLogId = $formatDetails->getOriginal('id');
-        }
-
-        $shedule_id = null;
-        $master = PricingScheduleMasterEditLog::where('master_id',$tender->getAttribute('schedule_id'))->orderBy('id','desc')->first();
-        if(isset($master))
-        {
-            $shedule_id = $master->getOriginal('id');
-        }
-      
-        $output = $this->createFormatDetails($tender,$shedule_id,$empId,$versionId,1,$refLogId);
-
-        if($output)
-        {
-            return true;
-
+           
+         
+            $formatDetails = ScheduleBidFormatDetailsLog::where('master_id',$tender->getAttribute('id'))->select('id')->orderBy('id','desc')->first();
+         
+            $refLogId = null;
+            if(isset($formatDetails))
+            {
+                $refLogId = $formatDetails->getOriginal('id');
+            }
+    
+            $shedule_id = null;
+            $master = PricingScheduleMasterEditLog::where('master_id',$tender->getAttribute('schedule_id'))->orderBy('id','desc')->first();
+            if(isset($master))
+            {
+                $shedule_id = $master->getOriginal('id');
+            }
+          
+            $output = $this->createFormatDetails($tender,$shedule_id,$empId,$versionId,1,$refLogId);
+    
+            if($output)
+            {
+                return true;
+    
+            }
         }
 
     }

@@ -22,12 +22,13 @@ class TenderCircularsObserver
     {
  
         $employee = \Helper::getEmployeeInfo();
-        $empId = $employee->employeeSystemID;
+    
         $tenderObj = TenderDetails::getTenderMasterData($tender->getAttribute('tender_id'));
         $obj = TenderDetails::validateTenderEdit($tender->getAttribute('tender_id'));
 
-        if($obj)
+        if($obj && isset($employee))
         {
+            $empId = $employee->employeeSystemID;
             $result = $this->process($tender,$empId,$tenderObj,2,null);
 
             if($result)
@@ -45,11 +46,11 @@ class TenderCircularsObserver
         $tenderObj = TenderDetails::getTenderMasterData($tender->getAttribute('tender_id'));
         $obj = TenderDetails::validateTenderEdit($tender->getAttribute('tender_id'));
         $employee = \Helper::getEmployeeInfo();
-        $empId = $employee->employeeSystemID;
+      
 
-        if($obj)
+        if($obj && isset($employee))
         {
-  
+           $empId = $employee->employeeSystemID;
            $modifyType = 3;
            $boqItems = TenderCircularsEditLog::where('master_id',$tender->getAttribute('id'))->where('vesion_id',$tenderObj->getOriginal('tender_edit_version_id'))->first();
            if(isset($boqItems))
@@ -78,11 +79,12 @@ class TenderCircularsObserver
     {
        
         $employee = \Helper::getEmployeeInfo();
-        $empId = $employee->employeeSystemID;
+       
         $tenderObj = TenderDetails::getTenderMasterData($tender->getAttribute('tender_id'));
         $obj = TenderDetails::validateTenderEdit($tender->getAttribute('tender_id'));
-        if($obj)
+        if($obj && isset($employee))
         {
+            $empId = $employee->employeeSystemID;
             $reflogId = null;
             $output = TenderCircularsEditLog::where('master_id',$tender->getAttribute('id'))->orderBy('id','desc')->first();
             if(isset($output))

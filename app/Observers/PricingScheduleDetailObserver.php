@@ -25,12 +25,13 @@ class PricingScheduleDetailObserver
     {   
         $tenderObj = TenderDetails::getTenderMasterData($tender->getAttribute('tender_id'));
         $employee = \Helper::getEmployeeInfo();
-        $empId = $employee->employeeSystemID;
+       
         $modifyType = 2;
         $obj = TenderDetails::validateTenderEdit($tender->getAttribute('tender_id'));
         $bidFormatDetailId = $tender->getAttribute('bid_format_detail_id');
-        if($obj)
+        if($obj && isset($employee))
         {
+                $empId = $employee->employeeSystemID;
                 $tenderId = $tender->getAttribute('tender_id');
                 $bidId = $tender->getAttribute('bid_format_id');
                 $versionId = $tenderObj->getAttribute('tender_edit_version_id');
@@ -131,12 +132,13 @@ class PricingScheduleDetailObserver
         $obj = TenderDetails::validateTenderEdit($tender->getAttribute('tender_id'));
 
         $employee = \Helper::getEmployeeInfo();
-        $empId = $employee->employeeSystemID;
+       
         $versionId = $tenderObj->getOriginal('tender_edit_version_id');
         $modifyType = 2;
         $editLog = PricingScheduleMasterEditLog::where('master_id',$tender->getAttribute('pricing_schedule_master_id'))->first();
-        if($obj)
+        if($obj && isset($employee))
         {
+                $empId = $employee->employeeSystemID;
                 $masterId = null;
                 if(isset($editLog))
                 {
