@@ -5778,10 +5778,18 @@ class Helper
     public static function getEmployeeInfo()
     {
         $user = Models\User::find(Auth::id());
-        $employee = Models\Employee::with(['profilepic', 'user_data' => function($query) {
-            $query->select('uuid', 'employee_id');
-        }])->find($user->employee_id);
-        return $employee;
+        $employeeInfo = new \stdClass();
+
+        if(isset($user))
+        {
+            $employee = Models\Employee::with(['profilepic', 'user_data' => function($query) {
+                $query->select('uuid', 'employee_id');
+            }])->find($user->employee_id);
+            $employeeInfo =  $employee;
+        }
+
+        return $employeeInfo;
+   
     }
 
     public static function getEmployeeInfoByURL($input)
