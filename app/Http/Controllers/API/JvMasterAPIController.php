@@ -1992,6 +1992,11 @@ HAVING
                 ->where('documentSystemID', $jvMaster->documentSystemID)
                 ->delete();
 
+            BudgetConsumedData::where('documentSystemCode', $id)
+                ->where('companySystemID', $jvMaster->companySystemID)
+                ->where('documentSystemID', $jvMaster->documentSystemID)
+                ->delete();
+
             // updating fields
             $jvMaster->confirmedYN = 0;
             $jvMaster->confirmedByEmpSystemID = null;
