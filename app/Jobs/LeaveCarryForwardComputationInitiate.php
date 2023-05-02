@@ -2,15 +2,15 @@
 
 namespace App\Jobs;
 
-use App\helper\CommonJobService;
-use App\helper\BirthdayWishService;
-use App\helper\LeaveCarryForwardComputationService;
 use Illuminate\Bus\Queueable;
+use App\helper\CommonJobService;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Support\Facades\Log;
+use App\helper\LeaveCarryForwardComputationService;
 
 class LeaveCarryForwardComputationInitiate implements ShouldQueue
 {
@@ -44,9 +44,12 @@ class LeaveCarryForwardComputationInitiate implements ShouldQueue
 
         $path = CommonJobService::get_specific_log_file('leave-carry-forward');
         Log::useFiles($path); 
-        $db = $this->dispatchDb;
         
-        Log::info('DB switched'.$db); 
+        $db = $this->dispatchDb;
+        $mainDb = DB::connection()->getDatabaseName();
+
+        
+        /* Switch to client DB */
         CommonJobService::db_switch($db);
 
         $companyList = CommonJobService::company_list();
@@ -60,10 +63,17 @@ class LeaveCarryForwardComputationInitiate implements ShouldQueue
 
         Log::info("Leave carry forward computation initiated on {$db} \t on file: " . __CLASS__ . " \tline no :" . __LINE__);
 
+        
+        /* Switch back to main DB */
+        CommonJobService::db_switch($mainDb);
+
         foreach ($companyList as $company) {
-            $ser = new LeaveCarryForwardComputationService($company);
-            $ser->execute();
+            
+            LeaveCarryForwardCompany::dispatch($db, $company);
+
         }
+
+        
     }
 
 }
