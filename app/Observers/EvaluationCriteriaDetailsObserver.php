@@ -24,9 +24,10 @@ class EvaluationCriteriaDetailsObserver
         $tenderObj = TenderDetails::getTenderMasterData($tender->getAttribute('tender_id'));
         $obj = TenderDetails::validateTenderEdit($tender->getAttribute('tender_id'));
         $employee = \Helper::getEmployeeInfo();
-        $empId = $employee->employeeSystemID;
+       
 
-        if ($obj) {
+        if ($obj && isset($employee)) {
+            $empId = $employee->employeeSystemID;
             $parentId = null;
             $parentObj = EvaluationCriteriaDetailsEditLog::where('master_id', $tender->getAttribute('parent_id'))->orderBy('id', 'desc')->first();
             if (isset($parentObj)) {
@@ -46,9 +47,9 @@ class EvaluationCriteriaDetailsObserver
         $tenderObj = TenderDetails::getTenderMasterData($tender->getAttribute('tender_id'));
         $obj = TenderDetails::validateTenderEdit($tender->getAttribute('tender_id'));
         $employee = \Helper::getEmployeeInfo();
-        $empId = $employee->employeeSystemID;
-        if ($obj) {
-
+     
+        if ($obj && isset($employee)) {
+            $empId = $employee->employeeSystemID;
             $parentId = null;
             $result = EvaluationCriteriaDetailsEditLog::where('master_id', $tender->getAttribute('id'))->first();
             if (isset($result)) {
@@ -82,11 +83,12 @@ class EvaluationCriteriaDetailsObserver
     {
 
         $employee = \Helper::getEmployeeInfo();
-        $empId = $employee->employeeSystemID;
+       
         $tenderObj = TenderDetails::getTenderMasterData($tender->getAttribute('tender_id'));
         $obj = TenderDetails::validateTenderEdit($tender->getAttribute('tender_id'));
 
-        if ($obj) {
+        if ($obj && isset($employee)) {
+            $empId = $employee->employeeSystemID;
             $obj1 = EvaluationCriteriaDetailsEditLog::where('master_id', $tender->getAttribute('id'))->orderBy('id', 'desc')->first();
             if (isset($obj1)) {
                 $parentId = $obj1->getAttribute('parent_id');

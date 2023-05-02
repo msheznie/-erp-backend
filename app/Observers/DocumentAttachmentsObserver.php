@@ -25,11 +25,11 @@ class DocumentAttachmentsObserver
         $tenderObj = TenderDetails::getTenderMasterData($tender->getAttribute('documentSystemCode'));
         $obj = TenderDetails::validateTenderEdit($tender->getAttribute('documentSystemCode'));
         $employee = \Helper::getEmployeeInfo();
-        $empId = $employee->employeeSystemID;
+       
         $type = 2;
-        if($obj)
+        if($obj && isset($employee))
         {
-         
+           $empId = $employee->employeeSystemID;
            $data['companySystemID'] =$tender->getAttribute('companySystemID');
            $data['documentSystemID'] = $tender->getAttribute('documentSystemID');
            $data['documentID'] = $tender->getAttribute('documentID');
@@ -59,9 +59,10 @@ class DocumentAttachmentsObserver
         $tenderObj = TenderDetails::getTenderMasterData($tender->getAttribute('documentSystemCode'));
         $obj = TenderDetails::validateTenderEdit($tender->getAttribute('documentSystemCode'));
         $employee = \Helper::getEmployeeInfo();
-        $empId = $employee->employeeSystemID;
-        if($obj)
+     
+        if($obj && isset($employee))
         {
+            $empId = $employee->employeeSystemID;
             $outputExist = DocumentAttachmentsEditLog::where('master_id',$tender->getAttribute('attachmentID'))->where('modify_type',2)->where('path',null)->orderBy('id','desc')->first();
            
             if($outputExist)
@@ -132,33 +133,37 @@ class DocumentAttachmentsObserver
     public function process($tender,$tenderObj,$reflogId,$type)
     {
         $employee = \Helper::getEmployeeInfo();
-        $empId = $employee->employeeSystemID;
-        $data['companySystemID'] =$tender->getAttribute('companySystemID');
-        $data['documentSystemID'] = $tender->getAttribute('documentSystemID');
-        $data['documentID'] = $tender->getAttribute('documentID');
-        $data['documentSystemCode'] =$tender->getAttribute('documentSystemCode');
-        $data['approvalLevelOrder'] = $tender->getAttribute('approvalLevelOrder');
-        $data['attachmentDescription'] = $tender->getAttribute('attachmentDescription');
-        $data['path'] = $tender->getAttribute('path');
-        $data['originalFileName'] = $tender->getAttribute('originalFileName');
-        $data['myFileName'] = $tender->getAttribute('myFileName');
-        $data['docExpirtyDate'] = $tender->getAttribute('docExpirtyDate');
-        $data['attachmentType'] = $tender->getAttribute('attachmentType');
-        $data['sizeInKbs'] = $tender->getAttribute('sizeInKbs');
-        $data['isUploaded'] = $tender->getAttribute('isUploaded');
-        $data['pullFromAnotherDocument'] = $tender->getAttribute('pullFromAnotherDocument');
-        $data['parent_id'] = $tender->getAttribute('parent_id');
-        $data['envelopType'] = $tender->getAttribute('envelopType');
-        $data['modify_type'] = $type;
-        $data['master_id'] = $tender->getAttribute('attachmentID');
-        $data['ref_log_id'] = $reflogId;
-        $data['version_id'] = $tenderObj->getOriginal('tender_edit_version_id');
-        $data['updated_by'] = $empId;
-        $result = DocumentAttachmentsEditLog::create($data);
-        if($result)
+        if(isset($employee))
         {
-            return true;
+            $empId = $employee->employeeSystemID;
+            $data['companySystemID'] =$tender->getAttribute('companySystemID');
+            $data['documentSystemID'] = $tender->getAttribute('documentSystemID');
+            $data['documentID'] = $tender->getAttribute('documentID');
+            $data['documentSystemCode'] =$tender->getAttribute('documentSystemCode');
+            $data['approvalLevelOrder'] = $tender->getAttribute('approvalLevelOrder');
+            $data['attachmentDescription'] = $tender->getAttribute('attachmentDescription');
+            $data['path'] = $tender->getAttribute('path');
+            $data['originalFileName'] = $tender->getAttribute('originalFileName');
+            $data['myFileName'] = $tender->getAttribute('myFileName');
+            $data['docExpirtyDate'] = $tender->getAttribute('docExpirtyDate');
+            $data['attachmentType'] = $tender->getAttribute('attachmentType');
+            $data['sizeInKbs'] = $tender->getAttribute('sizeInKbs');
+            $data['isUploaded'] = $tender->getAttribute('isUploaded');
+            $data['pullFromAnotherDocument'] = $tender->getAttribute('pullFromAnotherDocument');
+            $data['parent_id'] = $tender->getAttribute('parent_id');
+            $data['envelopType'] = $tender->getAttribute('envelopType');
+            $data['modify_type'] = $type;
+            $data['master_id'] = $tender->getAttribute('attachmentID');
+            $data['ref_log_id'] = $reflogId;
+            $data['version_id'] = $tenderObj->getOriginal('tender_edit_version_id');
+            $data['updated_by'] = $empId;
+            $result = DocumentAttachmentsEditLog::create($data);
+            if($result)
+            {
+                return true;
+            }
         }
+ 
     }
 
 }

@@ -14,6 +14,12 @@ class TenderDetails
     {
 
         $tenderObj = self::getTenderMasterData($id);
+
+        if(!isset($tenderObj))
+        {
+            return false;
+        }
+
         $date = $tenderObj->getOriginal('bid_submission_opening_date');
         $version_id = $tenderObj->getOriginal('tender_edit_version_id');
         if (!isset($date) && !isset($version_id)) {

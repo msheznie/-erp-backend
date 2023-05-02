@@ -20,9 +20,10 @@ class TenderObserver
     {
         $obj = TenderDetails::validateTenderEdit($tender->getOriginal('id'));
         $employee = \Helper::getEmployeeInfo();
-        $empId = $employee->employeeSystemID;
-            if($obj)
+       
+          if($obj && isset($employee))
             {
+                $empId = $employee->employeeSystemID;
                 foreach($tender->fillable as $key=>$val)
                 {
                     $oldValue = $tender->getOriginal($val);

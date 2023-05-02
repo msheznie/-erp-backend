@@ -973,7 +973,7 @@ class GRVMasterAPIController extends AppBaseController
             $body .= '</tbody>
             </table>';
             $body .= "<br><br>";
-            $body .= "<b>Purchase order documents removed from GRV</b> <br<br>";
+            $body .= "<b>Purchase order documents removed from GRV</b> <br><br>";
             $body .= "<br><br>";
             $body .= '<table style="width:100%;border: 1px solid black;border-collapse: collapse;">
             <thead>
@@ -997,7 +997,7 @@ class GRVMasterAPIController extends AppBaseController
             $body .= '</tbody>
             </table>';
             $body .= "<br><br>";
-            $body .= "<b>Quantity changes from delivery appointment</b> <br<br>";
+            $body .= "<b>Quantity changes from delivery appointment</b> <br><br>";
             $body .= "<br><br>";
             $body .= '<table style="width:100%;border: 1px solid black;border-collapse: collapse;">
             <thead>
