@@ -31,11 +31,11 @@ class TenderBoqItemsObserver
         $pricingDetails = PricingScheduleDetail::where('id',$tender->getAttribute('main_work_id'))->select('tender_id')->first();
         $obj = TenderDetails::validateTenderEdit($pricingDetails->getAttribute('tender_id'));
         $tenderObj = TenderDetails::getTenderMasterData($pricingDetails->getAttribute('tender_id'));
-
-        if($obj)
+        $employee = \Helper::getEmployeeInfo();
+        if($obj && isset($employee))
         {
             $sheduleDetail = PricingScheduleDetailEditLog::where('master_id',$tender->getAttribute('main_work_id'))->orderBy('id','desc')->first();
-            $employee = \Helper::getEmployeeInfo();
+          
             $empId = $employee->employeeSystemID;
             if(isset($sheduleDetail))
             {
@@ -74,10 +74,10 @@ class TenderBoqItemsObserver
         $pricingDetails = PricingScheduleDetail::where('id',$tender->getAttribute('main_work_id'))->select('tender_id')->first();
         $tenderObj = TenderDetails::getTenderMasterData($pricingDetails->getAttribute('tender_id'));
         $obj = TenderDetails::validateTenderEdit($pricingDetails->getAttribute('tender_id'));
-
-        if($obj)
+        $employee = \Helper::getEmployeeInfo();
+        if($obj && isset($employee))
         {
-       
+            $empId = $employee->employeeSystemID;
             $detailLog = PricingScheduleDetailEditLog::where('master_id',$tender->getAttribute('main_work_id'))->where('tender_id',$tenderObj->getAttribute('id'))->first();
             $mainWorkId = null;
             if(isset($detailLog))
@@ -90,8 +90,8 @@ class TenderBoqItemsObserver
             {
                $reflogId = $activity->getAttribute('id');
             }
-            $employee = \Helper::getEmployeeInfo();
-            $empId = $employee->employeeSystemID;
+           
+           
             $data['main_work_id']=$mainWorkId;
             $data['item_name']=$tender->getAttribute('item_name');
             if(($tender->getAttribute('description'))){
@@ -124,10 +124,11 @@ class TenderBoqItemsObserver
         $pricingDetails = PricingScheduleDetail::where('id',$tender->getAttribute('main_work_id'))->select('tender_id')->first();
         $tenderObj = TenderDetails::getTenderMasterData($pricingDetails->getAttribute('tender_id'));
         $obj = TenderDetails::validateTenderEdit($pricingDetails->getAttribute('tender_id'));
-        if($obj)
+        $employee = \Helper::getEmployeeInfo();
+        if($obj && isset($employee))
         {   
             $sheduleDetail = PricingScheduleDetailEditLog::where('master_id',$tender->getAttribute('main_work_id'))->orderBy('id','desc')->first();
-            $employee = \Helper::getEmployeeInfo();
+           
             $empId = $employee->employeeSystemID;
             if(isset($sheduleDetail))
             {

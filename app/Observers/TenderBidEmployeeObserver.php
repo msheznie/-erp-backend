@@ -25,10 +25,11 @@ class TenderBidEmployeeObserver
         $obj = TenderDetails::validateTenderEdit($tender->getAttribute('tender_id'));
         $tenderObj = TenderDetails::getTenderMasterData($tender->getAttribute('tender_id'));
         $employee = \Helper::getEmployeeInfo();
-        $empId = $employee->employeeSystemID;
+       
 
-            if($obj)
+           if($obj && isset($employee))
             {
+                $empId = $employee->employeeSystemID;
                 $result = $this->eveluate($empId,$tender->getOriginal('status'),$tender->getOriginal('commercial_eval_remarks'),$tender->getOriginal('remarks'),$tender->getOriginal('commercial_eval_status'),$tender->getOriginal('tender_id'),$tenderObj->getOriginal('tender_edit_version_id'),1);
                 if($result)
                 {
@@ -42,10 +43,11 @@ class TenderBidEmployeeObserver
     {
         $tenderObj = TenderDetails::getTenderMasterData($tender->getAttribute('tender_id'));
         $employee = \Helper::getEmployeeInfo();
-        $empId = $employee->employeeSystemID;
+       
         $obj = TenderDetails::validateTenderEdit($tender->getAttribute('tender_id'));
-            if($obj)
+           if($obj && isset($employee))
             {
+                $empId = $employee->employeeSystemID;
                 $result = $this->eveluate($empId,0,null,null,0,$tender->getAttribute('tender_id'),$tenderObj->getOriginal('tender_edit_version_id'),2);
                 if($result)
                 {
