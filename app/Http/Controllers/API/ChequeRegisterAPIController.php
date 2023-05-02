@@ -726,8 +726,14 @@ class ChequeRegisterAPIController extends AppBaseController
             return $this->sendError('Cheque Register not found');
         }
 
+        if($chequeRegister->isActive == 0) {
+            ChequeRegister::where('bank_id', $chequeRegister->bank_id)->where('bank_account_id', $chequeRegister->bank_account_id)->where('isActive', 1)->where('id', '!=', $input['registerID'])->update(['isActive' => 0]);
+        }
+
         $chequeRegister->isActive = ($chequeRegister->isActive == 1) ? 0 : 1;
         $chequeRegister->save();
+
+
 
 
          return $this->sendResponse([], "Status updated successfully");
