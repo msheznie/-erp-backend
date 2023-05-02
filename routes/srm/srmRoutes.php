@@ -209,12 +209,33 @@ Route::post('getAwardedFormData', 'TenderMasterAPIController@getAwardedFormData'
 Route::post('getEmployeesTenderAwardinglApproval','TenderBidEmployeeDetailsController@getEmployeesTenderAwardinglApproval');
 Route::post('confirmFinalBidAwardComment', 'TenderMasterAPIController@confirmFinalBidAwardComment');
 Route::post('sendTenderAwardEmail', 'TenderMasterAPIController@sendTenderAwardEmail');
+Route::post('getNegotiationStartedTenderList', 'TenderMasterAPIController@getNegotiationStartedTenderList');
 
 
 Route::resource('document_modify_requests', 'DocumentModifyRequestAPIController');
+
+
+
 
 Route::post('createEditRequest', 'DocumentModifyRequestAPIController@createEditRequest');
 Route::post('getTenderEditMasterApproval', 'TenderMasterAPIController@getTenderEditMasterApproval');
 Route::post('approveEditDocument', 'DocumentModifyRequestAPIController@approveEditDocument');
 Route::post('getTenderEditMasterFullApproved', 'TenderMasterAPIController@getTenderEditMasterFullApproved');
 Route::post('rejectTenderEditDocument', 'TenderEditLogMasterAPIController@rejectTenderEditDocument');
+
+Route::post('startTenderNegotiation', 'TenderMasterAPIController@startTenderNegotiation');
+// Route::post('startTenderNegotiation', 'TenderNegotiationController@getFormData');
+
+Route::resource('tender_negotiation', 'TenderNegotiationController');
+
+Route::resource('supplierTenderNegotiations', 'SupplierTenderNegotiationController');
+
+Route::post('getFinalBidsForTenderNegotiation', 'TenderNegotiationController@getFinalBidsForTenderNegotiation');
+
+Route::post('getTenderNegotiatedSupplierIds','SupplierTenderNegotiationController@getTenderNegotiatedSupplierIds');
+
+Route::resource('tenderNegotiationAreas', 'TenderNegotiationAreaController');
+Route::post('getSelectedAreas', 'TenderNegotiationAreaController@getSelectedAreas');
+
+
+

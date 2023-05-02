@@ -1,0 +1,165 @@
+<?php
+
+namespace App\Http\Controllers\API;
+
+use App\Http\Requests\CreateTenderNegotiationAreaRequest;
+use App\Http\Requests\UpdateTenderNegotiationAreaRequest;
+use App\Repositories\TenderNegotiationAreaRepository;
+use App\Http\Controllers\AppBaseController;
+use App\Models\SupplierTenderNegotiation;
+use Illuminate\Http\Request;
+use Flash;
+use Prettus\Repository\Criteria\RequestCriteria;
+use Response;
+
+class TenderNegotiationAreaController extends AppBaseController
+{
+    /** @var  TenderNegotiationAreaRepository */
+    private $tenderNegotiationAreaRepository;
+
+    public function __construct(TenderNegotiationAreaRepository $tenderNegotiationAreaRepo)
+    {
+        $this->tenderNegotiationAreaRepository = $tenderNegotiationAreaRepo;
+    }
+
+    /**
+     * Display a listing of the TenderNegotiationArea.
+     *
+     * @param Request $request
+     * @return Response
+     */
+    public function index(Request $request)
+    {
+        $this->tenderNegotiationAreaRepository->pushCriteria(new RequestCriteria($request));
+        $tenderNegotiationAreas = $this->tenderNegotiationAreaRepository->all();
+
+        return view('tender_negotiation_areas.index')
+            ->with('tenderNegotiationAreas', $tenderNegotiationAreas);
+    }
+
+
+    /**
+     * Store a newly created TenderNegotiationArea in storage.
+     *
+     * @param CreateTenderNegotiationAreaRequest $request
+     *
+     * @return Response
+     */
+    public function store(CreateTenderNegotiationAreaRequest $request)
+    {
+        $input = $request->all();
+
+        $tenderNegotiationArea = $this->tenderNegotiationAreaRepository->create($input);
+
+        return $this->sendResponse($tenderNegotiationArea->toArray(), 'Tender Negotiation Area added successfully');
+
+    }
+
+    /**
+     * Display the specified TenderNegotiationArea.
+     *
+     * @param  int $id
+     *
+     * @return Response
+     */
+    public function show($id)
+    {
+        $tenderNegotiationArea = $this->tenderNegotiationAreaRepository->findWithoutFail($id);
+
+        if (empty($tenderNegotiationArea)) {
+            Flash::error('Tender Negotiation Area not found');
+
+            return redirect(route('tenderNegotiationAreas.index'));
+        }
+
+        return view('tender_negotiation_areas.show')->with('tenderNegotiationArea', $tenderNegotiationArea);
+    }
+
+    /**
+     * Show the form for editing the specified TenderNegotiationArea.
+     *
+     * @param  int $id
+     *
+     * @return Response
+     */
+    public function edit($id)
+    {
+        $tenderNegotiationArea = $this->tenderNegotiationAreaRepository->findWithoutFail($id);
+
+        if (empty($tenderNegotiationArea)) {
+            Flash::error('Tender Negotiation Area not found');
+
+            return redirect(route('tenderNegotiationAreas.index'));
+        }
+
+        return view('tender_negotiation_areas.edit')->with('tenderNegotiationArea', $tenderNegotiationArea);
+    }
+
+    /**
+     * Update the specified TenderNegotiationArea in storage.
+     *
+     * @param  int              $id
+     * @param UpdateTenderNegotiationAreaRequest $request
+     *
+     * @return Response
+     */
+    public function update($id, UpdateTenderNegotiationAreaRequest $request)
+    {
+        dd($id);
+        $tenderNegotiationArea = $this->tenderNegotiationAreaRepository->findWithoutFail($id);
+
+        if (empty($tenderNegotiationArea)) {
+            Flash::error('Tender Negotiation Area not found');
+
+            return redirect(route('tenderNegotiationAreas.index'));
+        }
+
+        $tenderNegotiationArea = $this->tenderNegotiationAreaRepository->update($request->all(), $id);
+
+        Flash::success('Tender Negotiation Area updated successfully.');
+
+        return redirect(route('tenderNegotiationAreas.index'));
+    }
+
+    /**
+     * Remove the specified TenderNegotiationArea from storage.
+     *
+     * @param  int $id
+     *
+     * @return Response
+     */
+    public function destroy($id)
+    {
+        $tenderNegotiationArea = $this->tenderNegotiationAreaRepository->findWithoutFail($id);
+
+        if (empty($tenderNegotiationArea)) {
+            Flash::error('Tender Negotiation Area not found');
+
+            return redirect(route('tenderNegotiationAreas.index'));
+        }
+
+        $this->tenderNegotiationAreaRepository->delete($id);
+
+        Flash::success('Tender Negotiation Area deleted successfully.');
+
+        return redirect(route('tenderNegotiationAreas.index'));
+    }
+
+    public function getSelectedAreas(Request $request) {
+        
+        $input = $request->input();
+
+        $supplierTenderNegotiationId = $this->findSupplierTenderNegotiationId($input);
+
+        $tenderNegotiationArea = $this->tenderNegotiationAreaRepository->getTenderNegotiationAreaBySupplierNegotiationID($supplierTenderNegotiationId->id);
+
+        return $this->sendResponse($tenderNegotiationArea, 'Tender Negotiation Area retereived successfully');
+
+    }
+
+    public function findSupplierTenderNegotiationId($input) {
+
+        return SupplierTenderNegotiation::where('tender_negotiation_id',$input['tender_negotiation_id'])->where('suppliermaster_id',$input['supplier_id'])->first();
+
+    }
+}
