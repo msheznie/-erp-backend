@@ -849,6 +849,7 @@ class BudgetMasterAPIController extends AppBaseController
     public function budgetGLCodeWiseDetailsData($input)
     {
          $total = 0;
+        $glColumnName = "";
         // policy check -> Department wise budget check
         $DLBCPolicy = true; // new requiremnt no need to conider the policy
         if ($input['type'] == 1) {
