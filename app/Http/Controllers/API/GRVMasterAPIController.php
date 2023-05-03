@@ -973,7 +973,7 @@ class GRVMasterAPIController extends AppBaseController
             $body .= '</tbody>
             </table>';
             $body .= "<br><br>";
-            $body .= "<b>Purchase order documents removed from GRV</b> <br<br>";
+            $body .= "<b>Purchase order documents removed from GRV</b> <br><br>";
             $body .= "<br><br>";
             $body .= '<table style="width:100%;border: 1px solid black;border-collapse: collapse;">
             <thead>
@@ -997,7 +997,7 @@ class GRVMasterAPIController extends AppBaseController
             $body .= '</tbody>
             </table>';
             $body .= "<br><br>";
-            $body .= "<b>Quantity changes from delivery appointment</b> <br<br>";
+            $body .= "<b>Quantity changes from delivery appointment</b> <br><br>";
             $body .= "<br><br>";
             $body .= '<table style="width:100%;border: 1px solid black;border-collapse: collapse;">
             <thead>
@@ -1024,14 +1024,15 @@ class GRVMasterAPIController extends AppBaseController
             </table>';
             $body .= "<br><br>";
             $body .= "Thank You.";
-            $dataEmail['empEmail'] = 'hello@example.com';
-            $dataEmail['companySystemID'] = $input['companySystemID'];
-            $dataEmail['alertMessage'] = "GRV  Confirmed";
-            $dataEmail['emailAlertMessage'] = $body;
-            $sendEmail = \Email::sendEmailErp($dataEmail);
 
-
-         
+            $supplier = $this->getSupplierDetails($input['supplierID']);
+            if(isset($supplier) && !empty($supplier)){ 
+                $dataEmail['empEmail'] = $supplier->supEmail;
+                $dataEmail['companySystemID'] = $input['companySystemID'];
+                $dataEmail['alertMessage'] = "GRV  Confirmed";
+                $dataEmail['emailAlertMessage'] = $body;
+                $sendEmail = \Email::sendEmailErp($dataEmail); 
+            } 
         }
 
 
@@ -2307,6 +2308,12 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
         $grv = $this->gRVMasterRepository->update(['isMarkupUpdated'=>1], $input['grvAutoID']);
 
         return $this->sendResponse($grv, 'GRV markup updated successfully');
+    }
+
+    public function getSupplierDetails($supplierId){
+        return SupplierMaster::select('supEmail')
+            ->where('supplierCodeSystem', $supplierId)
+            ->first();
     }
 
 

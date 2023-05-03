@@ -101,7 +101,8 @@ class PricingScheduleMaster extends Model
         'status',
         'created_by',
         'updated_by',
-        'company_id'
+        'company_id',
+        'boq_status'
     ];
 
     /**
@@ -119,7 +120,8 @@ class PricingScheduleMaster extends Model
         'status' => 'integer',
         'created_by' => 'integer',
         'updated_by' => 'integer',
-        'company_id' => 'integer'
+        'company_id' => 'integer',
+        'boq_status' => 'integer'
     ];
 
     /**
