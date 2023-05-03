@@ -134,6 +134,7 @@ class BudgetConsumptionService
                 $budgetFormData['currency'] = $masterData->currency;
 
                 $detailData = PurchaseRequestDetails::where('purchaseRequestID', $documentSystemCode)
+                									->where('itemFinanceCategoryID', '!=',3)
                 								   ->get();
 
 
@@ -166,6 +167,7 @@ class BudgetConsumptionService
                 $budgetFormData['currency'] = $masterData->supplierTransactionCurrencyID;
 
                 $detailData = PurchaseOrderDetails::where('purchaseOrderMasterID', $documentSystemCode)
+                								   ->where('itemFinanceCategoryID', '!=',3)
                 								   ->get();
 
                 $segmentAllocationData = SegmentAllocatedItem::where('documentMasterAutoID', $documentSystemCode)
@@ -212,6 +214,7 @@ class BudgetConsumptionService
 	                $budgetFormData['currency'] = $masterData->supplierTransactionCurrencyID;
 
 	                $detailData = SupplierInvoiceDirectItem::where('bookingSuppMasInvAutoID', $documentSystemCode)
+	                									->where('itemFinanceCategoryID', '!=',3)
 	                								   ->get();
 
 	                $budgetFormData['financeGLcodePLSystemIDs'] = $detailData->pluck('financeGLcodePLSystemID')->toArray();
@@ -281,6 +284,7 @@ class BudgetConsumptionService
                 $budgetFormData['currency'] = $masterData->supplierTransactionCurrencyID;
 
                 $detailData = GRVDetails::where('grvAutoID', $documentSystemCode)
+                						->where('itemFinanceCategoryID', '!=',3)
                 								   ->get();
 
                 $budgetFormData['financeGLcodePLSystemIDs'] = $detailData->pluck('financeGLcodePLSystemID')->toArray();
