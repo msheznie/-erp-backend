@@ -157,8 +157,11 @@ class GenerateGlPdfReport implements ShouldQueue
             $toDate = new Carbon($request->toDate);
             $toDate = $toDate->format('Y-m-d');
 
+            $companyCode = isset($checkIsGroup->CompanyID)?$checkIsGroup->CompanyID:'common';
+
+
             $zip = new ZipArchive;
-            $fileName = 'general_ledger_report_('.$fromDate.'_'.$toDate.')_'.strtotime(date("Y-m-d H:i:s")).'.zip';
+            $fileName = $companyCode.'_'.'general_ledger_report_('.$fromDate.'_'.$toDate.')_'.strtotime(date("Y-m-d H:i:s")).'.zip';
             if ($zip->open(public_path($fileName), ZipArchive::CREATE) === TRUE)
             {
                 foreach($files as $key => $value) {
@@ -169,7 +172,7 @@ class GenerateGlPdfReport implements ShouldQueue
             }
 
             $contents = Storage::disk('local_public')->get($fileName);
-            $zipPath = "general-ledger/repots/".$fileName;
+            $zipPath = $companyCode."/general-ledger/repots/".$fileName;
             $fileMoved = Storage::disk('s3')->put($zipPath, $contents);
 
             if ($fileMoved) {

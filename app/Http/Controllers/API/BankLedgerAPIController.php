@@ -2629,6 +2629,8 @@ class BankLedgerAPIController extends AppBaseController
 
         $type = $request->type;
         $company_name = $checkIsGroup->CompanyName;
+        $companyCode = isset($checkIsGroup->CompanyID)?$checkIsGroup->CompanyID:'common';
+
         $to_date = \Helper::dateFormat($request->toDate);
         $from_date = \Helper::dateFormat($request->fromDate);
         $cur = null;
@@ -2638,7 +2640,7 @@ class BankLedgerAPIController extends AppBaseController
                                 'to_date'=>$to_date,
                                 'company_name'=>$company_name,
                                 'cur'=>$cur,
-                                'title'=>$title);
+                                'title'=>$title,'company_code'=>$companyCode);
 
         $fileName = 'bank_ledger';
         $path = 'bank-ledger/report/bank_ledger/excel/';
