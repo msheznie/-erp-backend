@@ -157,7 +157,7 @@ class GenerateGlPdfReport implements ShouldQueue
             $toDate = new Carbon($request->toDate);
             $toDate = $toDate->format('Y-m-d');
 
-            $companyCode = isset($checkIsGroup->companyCode)?$checkIsGroup->companyCode:'common';
+            $companyCode = isset($checkIsGroup->CompanyID)?$checkIsGroup->CompanyID:'common';
 
 
             $zip = new ZipArchive;
