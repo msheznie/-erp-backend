@@ -224,7 +224,7 @@ Route::post('getTenderEditMasterFullApproved', 'TenderMasterAPIController@getTen
 Route::post('rejectTenderEditDocument', 'TenderEditLogMasterAPIController@rejectTenderEditDocument');
 
 Route::post('startTenderNegotiation', 'TenderMasterAPIController@startTenderNegotiation');
-// Route::post('startTenderNegotiation', 'TenderNegotiationController@getFormData');
+Route::post('getFormDataTenderNegotiation', 'TenderNegotiationController@getFormData');
 
 Route::resource('tender_negotiation', 'TenderNegotiationController');
 

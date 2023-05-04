@@ -9,7 +9,11 @@ use App\Http\Requests\StorePostTenderNegotiation;
 use App\Http\Controllers\AppBaseController;
 use App\Models\TenderMaster;
 use App\Models\TenderFinalBids;
+use App\Models\TenderNegotiation;
 use App\Models\SupplierTenderNegotiation;
+use App\Models\YesNoSelection;
+use App\Models\CurrencyMaster;
+use Carbon\Carbon;
 use Auth;
 
 class TenderNegotiationController extends AppBaseController
@@ -63,7 +67,8 @@ class TenderNegotiationController extends AppBaseController
      */
     public function show($id)
     {
-        //
+        $tenderNeotiation = $this->tenderNegotiationRepository->withRelations($id,['confirmed_by']);
+        return $this->sendResponse($tenderNeotiation->toArray(), 'Data reterived successfully');
     }
 
 
@@ -77,7 +82,12 @@ class TenderNegotiationController extends AppBaseController
      */
     public function update(Request $request, $id)
     {
-        //
+  
+        $input = $request->input();
+        $input['confirmed_by'] =  Auth::user()->employee_id;
+        $input['confirmed_at'] =  Carbon::now();
+        $tenderNeotiation = $this->tenderNegotiationRepository->update($input, $id);
+        return $this->sendResponse($tenderNeotiation->toArray(), "Tender Negotiation Updated successfully");
     }
 
     /**
@@ -144,6 +154,32 @@ class TenderNegotiationController extends AppBaseController
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->make(true);
+    }
+
+    public function getFormData(Request $request) {
+        $currencyIds = [];
+
+        $tenderNegotiations = TenderNegotiation::with(['tenderMaster' => function ($q){ 
+            $q->with(['currency','tender_type','envelop_type']);
+        }])->get();
+
+        foreach($tenderNegotiations as $tendderNegotiation) {
+            array_push($currencyIds,$tendderNegotiation->tenderMaster->currency_id);
+        }
+        
+
+        $yesNoSelection = YesNoSelection::all();
+
+        $currencies = CurrencyMaster::whereIn('currencyID',$currencyIds)->select(['currencyID as value','CurrencyName as label'])->get();
+
+
+        $data = [
+            'yesNoSelection' => $yesNoSelection,
+            'currencies' => $currencies
+        ];
+
+        return $this->sendResponse($data, 'Tender Negotiation started successfully');
+ 
     }
 
 
