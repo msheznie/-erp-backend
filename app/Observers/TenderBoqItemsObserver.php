@@ -71,10 +71,32 @@ class TenderBoqItemsObserver
 
     public function deleted(TenderBoqItems $tender)
     {
-        $pricingDetails = PricingScheduleDetail::where('id',$tender->getAttribute('main_work_id'))->select('tender_id')->first();
-        $tenderObj = TenderDetails::getTenderMasterData($pricingDetails->getAttribute('tender_id'));
-        $obj = TenderDetails::validateTenderEdit($pricingDetails->getAttribute('tender_id'));
+        $tender_id = null;
+        if(($tender->getAttribute('tender_id')))
+        {
+            $tender_id = $tender->getAttribute('tender_id');
+        }
+   
+        if(($tender_id == null || empty($tender_id)))
+        {   
+            $pricingDetails = PricingScheduleDetail::select('tender_id')->where('id',$tender->getAttribute('main_work_id'))->first();
+            if(isset($pricingDetails))
+            {
+                $tender_id = $pricingDetails->getAttribute('tender_id');
+            }
+           
+        }
+       
+        if(!isset($tender_id) || $tender_id == null || empty($tender_id))
+        {
+            return false;
+        }
+        
+        $tenderObj = TenderDetails::getTenderMasterData($tender_id);
+        $obj = TenderDetails::validateTenderEdit($tender_id);
         $employee = \Helper::getEmployeeInfo();
+
+       
         if($obj && isset($employee))
         {
             $empId = $employee->employeeSystemID;

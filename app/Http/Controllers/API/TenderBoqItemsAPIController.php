@@ -347,6 +347,7 @@ class TenderBoqItemsAPIController extends AppBaseController
             }
             $data['uom']=$input['uom'];
             $data['qty']=$input['qty'];
+            $data['tender_id']=$input['tender_id'];
             $data['created_by'] = $employee->employeeSystemID;
 
             $result = TenderBoqItems::create($data);
