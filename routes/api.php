@@ -1414,7 +1414,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('getSalesReturnDetailsForSI', 'SalesReturnAPIController@getSalesReturnDetailsForSI');
 
             Route::resource('grv_details_prns', 'GrvDetailsPrnAPIController');
-
+            Route::post('appearanceSubmit', 'CompanyAPIController@appearanceSubmit');
+            Route::get('getAppearance', 'CompanyAPIController@getAppearance');
 
             Route::post('checkBRVDocumentActive', 'CustomerReceivePaymentAPIController@checkBRVDocumentActive');
             Route::get('getADVPaymentForBRV', 'CustomerReceivePaymentAPIController@getADVPaymentForBRV');
