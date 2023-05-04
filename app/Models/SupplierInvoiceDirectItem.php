@@ -339,4 +339,17 @@ class SupplierInvoiceDirectItem extends Model
         return $this->belongsTo('App\Models\TaxVatCategories','vatSubCategoryID','taxVatSubCategoriesAutoID');
     }
 
+    public function master(){
+        return $this->belongsTo('App\Models\BookInvSuppMaster','bookingSuppMasInvAutoID','bookingSuppMasInvAutoID');
+    }
+
+    public function budget_detail_pl()
+    {
+        return $this->belongsTo('App\Models\Budjetdetails', 'financeGLcodePLSystemID','chartOfAccountID');
+    }
+
+    public function budget_detail_bs()
+    {
+        return $this->belongsTo('App\Models\Budjetdetails', 'financeGLcodebBSSystemID','chartOfAccountID');
+    }
 }

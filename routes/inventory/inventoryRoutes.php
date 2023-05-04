@@ -105,6 +105,7 @@ Route::group([], function () {
     Route::get('materiel_request/details/{id}', 'MaterielRequestAPIController@getMaterielRequestDetails')->name("Get Materiel Request Details");
     Route::get('returnMaterialRequestPreCheck', 'MaterielRequestAPIController@returnMaterialRequestPreCheck')->name("Return Material Request Pre Check");
     Route::get('getItemsByMaterielRequest', 'MaterielRequestDetailsAPIController@getItemsByMaterielRequest')->name("Get Items By Materiel Request");
+    Route::get('getItemsByMaterielRequestByLimit', 'MaterielRequestDetailsAPIController@getItemsByMaterielRequestByLimit')->name("Get Items By Materiel Request By Limit");
     Route::get('getItemsOptionForMaterielRequest', 'MaterielRequestDetailsAPIController@getItemsOptionForMaterielRequest')->name("Get Items Option For Materiel Request");
     Route::get('materiel_requests/{id}/purchase-requests', 'MaterielRequestAPIController@checkPurcahseRequestExist')->name("Check Purcahse Request Exist");
     Route::get('purchase_requests/check/product/{itemCode}/{companySystemID}', 'PurchaseRequestAPIController@checkProductExistInIssues')->name("Check Product Exist In Issues");
@@ -119,6 +120,10 @@ Route::group([], function () {
     Route::post('requestReopen', 'MaterielRequestAPIController@requestReopen')->name("Material Request Reopen");
     Route::post('requestReferBack', 'MaterielRequestAPIController@requestReferBack')->name("Material Request ReferBack");
     Route::post('getAllRequestByCompany', 'MaterielRequestAPIController@getAllRequestByCompany')->name("Get All Material Request By Company");
+    Route::post('requestDetailsAddAllItems', 'MaterielRequestDetailsAPIController@requestDetailsAddAllItems')->name('Material request add all item');
+    Route::post('materialRequestValidateItem', 'MaterielRequestDetailsAPIController@materialRequestValidateItem')->name('Material request validate item');
+    Route::post('material_requests/remove_all_items/{id}', 'MaterielRequestDetailsAPIController@removeAllItems')->name('Material request remove all items');
+
 });
 
 //Material Issue Trans
@@ -135,8 +140,12 @@ Route::group([], function () {
     Route::get('material-issue/update-qnty-by-location', 'ItemIssueMasterAPIController@updateQntyByLocation')->name("Update Qnty By Location");
     Route::get('checkManWareHouse', 'ItemIssueMasterAPIController@checkManWareHouse')->name("Check Man Ware House");
     Route::get('getItemsByMaterielIssue', 'ItemIssueDetailsAPIController@getItemsByMaterielIssue')->name("Get Items By Materiel Issue");
+    Route::get('getItemsByMaterielIssueByLimit', 'ItemIssueDetailsAPIController@getItemsByMaterielIssueByLimit')->name("Get Items By Materiel Issue By Limit");
     Route::get('getItemsOptionsMaterielIssue', 'ItemIssueDetailsAPIController@getItemsOptionsMaterielIssue')->name("Get Items Options Materiel Issue");
     Route::get('getItemIssueDetailsReferBack', 'ItemIssueDetailsRefferedBackAPIController@getItemIssueDetailsReferBack')->name("Get Item Issue Details ReferBack");
+    Route::post('materialIssuetDetailsAddAllItems', 'ItemIssueDetailsAPIController@materialIssuetDetailsAddAllItems')->name('Material issue add all item');
+    Route::post('materialIssueValidateItem', 'ItemIssueDetailsAPIController@materialIssueValidateItem')->name('Material issue validate item');
+    Route::post('material_issue/remove_all_items/{id}', 'ItemIssueDetailsAPIController@removeAllItems')->name('Material Issue remove all items');
 
     Route::post('materielIssueReopen', 'ItemIssueMasterAPIController@materielIssueReopen')->name("Material Issue Reopen");
     Route::post('materielIssueReferBack', 'ItemIssueMasterAPIController@materielIssueReferBack')->name("Material Issue Refer Back");

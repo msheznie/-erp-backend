@@ -1627,11 +1627,23 @@ class ItemMasterAPIController extends AppBaseController
 
 
         $itemMasters = ItemMaster::whereHas('itemAssigned', function ($query) use ($companyId) {
-            return $query->where('companySystemID', '=', $companyId);
+            return $query->where('companySystemID', '=', $companyId)->where('isAssigned', '=', -1);
         })->with(['unit', 'unit_by', 'financeMainCategory', 'financeSubCategory'])
         ->when((isset($input['PurchaseRequestID']) && $input['PurchaseRequestID'] > 0), function($query) use ($input) {
             $query->whereDoesntHave('purchase_request_details', function($query) use ($input) {
                 $query->where('purchaseRequestID', $input['PurchaseRequestID']);
+            });
+        })->when((isset($input['purchaseOrderID']) && $input['purchaseOrderID'] > 0), function($query) use ($input) {
+            $query->whereDoesntHave('purchase_order_details', function($query) use ($input) {
+                $query->where('purchaseOrderMasterID', $input['purchaseOrderID']);
+            });
+        })->when((isset($input['materialReqeuestID']) && $input['materialReqeuestID'] > 0), function($query) use ($input) {
+            $query->whereDoesntHave('erp_requestdetails', function($query) use ($input) {
+                $query->where('requestDetailsID', $input['materialReqeuestID']);
+            });
+        })->when((isset($input['itemIssueAutoID']) && $input['itemIssueAutoID'] > 0), function($query) use ($input) {
+            $query->whereDoesntHave('material_issue_details', function($query) use ($input) {
+                $query->where('itemIssueAutoID', $input['itemIssueAutoID']);
             });
         });
 

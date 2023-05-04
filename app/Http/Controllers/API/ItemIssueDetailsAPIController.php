@@ -45,6 +45,11 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\helper\ItemTracking;
+use App\Jobs\AddBulkItem\ItemIssueBulkItemsJob;
+use App\Services\MaterialRequestService;
+use App\Repositories\UserRepository;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Class ItemIssueDetailsController
@@ -54,9 +59,11 @@ class ItemIssueDetailsAPIController extends AppBaseController
 {
     /** @var  ItemIssueDetailsRepository */
     private $itemIssueDetailsRepository;
+    private $userRepository;
 
-    public function __construct(ItemIssueDetailsRepository $itemIssueDetailsRepo)
+    public function __construct(ItemIssueDetailsRepository $itemIssueDetailsRepo,UserRepository $userRepo)
     {
+        $this->userRepository = $userRepo;
         $this->itemIssueDetailsRepository = $itemIssueDetailsRepo;
     }
 
@@ -1173,6 +1180,50 @@ class ItemIssueDetailsAPIController extends AppBaseController
         return $this->sendResponse($items->toArray(), 'Request Details retrieved successfully');
     }
 
+    public function removeAllItems($id)
+    {
+        $material_request = ItemIssueMaster::find($id);
+        if($material_request){
+
+            ItemIssueDetails::where('itemIssueAutoID', $id)->delete();
+
+            return $this->sendResponse([], 'Items Deleted Successfully');
+
+        } else {
+            return $this->sendError('Material Issue not found');
+
+        }
+
+    }
+
+    public function getItemsByMaterielIssueByLimit(Request $request)
+    {
+        $input = $request->all();
+        $rId = $input['itemIssueAutoID'];
+
+        $items = ItemIssueDetails::where('itemIssueAutoID', $rId)
+            ->with(['uom_default', 'uom_issuing','item_by'])
+            ->skip($input['skip'])->take($input['limit'])->get();
+
+        $index = $input['skip'] + 1;
+
+        foreach ($items as $item) {
+            $item['index'] = $index;
+            $index++;
+            $issueUnit = Unit::all();
+
+            $issueUnits = array();
+            foreach ($issueUnit as $unit) {
+                $temArray = array('value' => $unit->UnitID, 'label' => $unit->UnitShortCode);
+                array_push($issueUnits, $temArray);
+            }
+
+            $item->issueUnits = $issueUnits;
+        }
+
+        return $this->sendResponse($items->toArray(), 'Request Details retrieved successfully');
+    }
+
     /**
      * get Items Options Materiel Issue
      * GET|HEAD /getItemsOptionsMaterielIssue
@@ -1256,6 +1307,130 @@ class ItemIssueDetailsAPIController extends AppBaseController
         } else {
             return $this->sendError('Please select Issues Type', 500);
         }
+    }
+
+    public function materialIssuetDetailsAddAllItems(Request $request)
+    {
+        $input = $request->all();
+        $id = Auth::id();
+        $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
+
+        $input['employeeSystemID'] = $user ? $user->employee['employeeSystemID'] : null;
+        $input['empID'] = $user ? $user->employee['empID'] : null;
+
+        if (isset($input['addAllItems']) && $input['addAllItems']) {
+            $db = isset($input['db']) ? $input['db'] : "";    
+
+            $companySystemID = $input['companySystemID'];
+
+            $itemIssue = ItemIssueMaster::where('itemIssueAutoID', $input['itemIssueAutoID'])->first();
+    
+    
+            if (empty($itemIssue)) {
+                return $this->sendError('Materiel Issue not found', 500);
+            }
+    
+            if(isset($input['type']) && $input["type"] == "MRFROMMI") {  
+                $validator = \Validator::make($itemIssue->toArray(), [
+                    'serviceLineSystemID' => 'required|numeric|min:1',
+                    'issueType' => 'required|numeric|min:1',
+                ]);
+            }else {
+                $validator = \Validator::make($itemIssue->toArray(), [
+                    'serviceLineSystemID' => 'required|numeric|min:1',
+                    'wareHouseFrom' => 'required|numeric|min:1',
+                    'issueType' => 'required|numeric|min:1',
+                ]);
+            }
+    
+    
+            if ($validator->fails()) {
+                return $this->sendError($validator->messages(), 422);
+            }
+    
+            if(isset($input['type']) && $input["type"] != "MRFROMMI") {  
+                if ($itemIssue->wareHouseFrom) {
+                    $wareHouse = WarehouseMaster::where("wareHouseSystemCode", $itemIssue->wareHouseFrom)->first();
+        
+                    if (empty($wareHouse)) {
+                        return $this->sendError('Warehouse not found', 500);
+                    }
+                    if ($wareHouse->isActive == 0) {
+                        return $this->sendError('Please select an active warehouse.', 500);
+                    }
+                } else {
+                    return $this->sendError('Please select a warehouse.', 500);
+                }
+            }
+    
+    
+            if ($itemIssue->serviceLineSystemID) {
+                $checkDepartmentActive = SegmentMaster::find($itemIssue->serviceLineSystemID);
+                if (empty($checkDepartmentActive)) {
+                    return $this->sendError('Department not found');
+                }
+                if ($checkDepartmentActive->isActive == 0) {
+                    return $this->sendError('Please select an active department', 500);
+                }
+            } else {
+                return $this->sendError('Please select a department.', 500);
+            }
+    
+            if (isset($input['itemIssueAutoID'])) {
+                if ($input['itemIssueAutoID'] > 0) {
+                    $itemIssueMaster = ItemIssueMaster::where('itemIssueAutoID', $input['itemIssueAutoID'])->first();
+    
+                    if (empty($itemIssueMaster)) {
+                        return $this->sendError('Materiel Issue not found');
+                    }
+                } else {
+                    return $this->sendError('Materiel Issue not found');
+                }
+            } else {
+                return $this->sendError('Materiel Issue not found');
+            }
+    
+            $company = Company::where('companySystemID', $companySystemID)->first();
+
+            if (empty($company)) {
+                return $this->sendError('Company not found');
+            }
+
+
+            $data['isBulkItemJobRun'] = 1;
+
+            $itemIssueMaster = ItemIssueMaster::where('itemIssueAutoID', $input['itemIssueAutoID'])->update($data);
+            ItemIssueBulkItemsJob::dispatch($db, $input);
+
+            return $this->sendResponse('', 'Items Added to Queue Please wait some minutes to process');
+        } else {
+            DB::beginTransaction();
+            try {
+                $invalidItems = [];
+                foreach ($input['itemArray'] as $key => $value) {
+            
+                    $res = MaterialRequestService::validateMaterialIssueItem($value['itemCodeSystem'], $input['companySystemID'], $input['itemIssueAutoID']);
+                    
+                    if ($res['status']) {
+                        MaterialRequestService::saveMaterialIssueItem($value['itemCodeSystem'], $input['companySystemID'], $input['itemIssueAutoID'], $input['empID'], $input['employeeSystemID']);
+                    } else {
+                        $invalidItems[] = ['itemCodeSystem' => $value['itemCodeSystem'], 'message' => $res['message']];
+                    }
+                }
+                DB::commit();
+                return $this->sendResponse('', 'Material Issue Items saved successfully');
+            } catch (\Exception $exception) {
+                DB::rollBack();
+                return $this->sendError($exception->getMessage(), 500);
+            }
+        }
+    }
+
+    public function materialIssueValidateItem(Request $request)
+    {
+        $input = $request->all();
+
+        return MaterialRequestService::validateMaterialIssueItem($input['itemCodeSystem'], $input['companySystemID'], $input['itemIssueAutoID']);
     }
 
 }

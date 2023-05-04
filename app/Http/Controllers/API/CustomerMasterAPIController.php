@@ -1020,13 +1020,31 @@ class CustomerMasterAPIController extends AppBaseController
     {
         $input = $request->all();
         $document_id = $input['document_id'];
+
+        $isPosIntegrated = CompanyPolicyMaster::where('companySystemID', $input['companySystemID'])
+            ->where('companyPolicyCategoryID', 69)
+            ->where('isYesNO', 1)
+            ->exists();
+
         $disk = Helper::policyWiseDisk($input['companySystemID'], 'public');
 
-        if ($exists = Storage::disk($disk)->exists('Master_Template/'.$document_id.'/template.xlsx')) {
-            return Storage::disk($disk)->download('Master_Template/'.$document_id.'/template.xlsx', 'template.xlsx');
+        if($input['document_id'] == 57 && $isPosIntegrated){
+
+            if ($exists = Storage::disk($disk)->exists('Master_Template/'.$document_id.'/item_pos_template.xlsx')) {
+                return Storage::disk($disk)->download('Master_Template/'.$document_id.'/item_pos_template.xlsx', 'item_pos_template.xlsx');
+            } else {
+                return $this->sendError('Attachments not found', 500);
+            }
         } else {
-            return $this->sendError('Attachments not found', 500);
+
+            if ($exists = Storage::disk($disk)->exists('Master_Template/'.$document_id.'/template.xlsx')) {
+                return Storage::disk($disk)->download('Master_Template/'.$document_id.'/template.xlsx', 'template.xlsx');
+            } else {
+                return $this->sendError('Attachments not found', 500);
+            }
+
         }
+
     }
 
     public function masterBulkUpload(request $request)
@@ -1125,7 +1143,8 @@ class CustomerMasterAPIController extends AppBaseController
                 'Finance Sub Category' => array(),
                 'Part No / Ref.Number' => array(),
                 'Item Description'=> array(),
-                'Unit of Measure'=>array()
+                'Unit of Measure'=>array(),
+                'POS type'=>array()
             );
     
           
@@ -2668,11 +2687,6 @@ class CustomerMasterAPIController extends AppBaseController
                                 }
                           
                             } 
-                             else
-                            {
-                                $nullValue = true;
-                                array_push($item_error['Part No / Ref.Number'], 'line number '.$count.' null value');
-                            }
 
 
                                //check item description
@@ -2716,8 +2730,22 @@ class CustomerMasterAPIController extends AppBaseController
 
 
                        
-
-
+                            //check pos type
+                            
+                            if ( (isset($value['pos_type']) && !is_null($value['pos_type'])) )
+                            {
+                             
+                                if($value['pos_type'] == 'General POS'){
+                                    $item_data['pos_type'] = 1;
+                                } elseif ($value['pos_type'] == 'Restaurant POS') {
+                                    $item_data['pos_type'] = 2;
+                                } elseif ($value['pos_type'] == 'Both') {
+                                    $item_data['pos_type'] = 3;
+                                } else{
+                                        $valueNotExit = true;
+                                        array_push($item_error['POS type'], 'line number '.$count.' pos value not valid');
+                                }
+                            }
 
 
                          

@@ -21,6 +21,8 @@ namespace App\Http\Controllers\API;
 
 use App\helper\Helper;
 use App\helper\TaxService;
+use App\Jobs\AddBulkItem\PoAddBulkItemJob;
+use App\Services\ProcurementOrder\ProcurementOrderService;
 use App\Http\Requests\API\CreatePurchaseOrderDetailsAPIRequest;
 use App\Http\Requests\API\UpdatePurchaseOrderDetailsAPIRequest;
 use App\Models\ProcumentOrderDetail;
@@ -478,7 +480,6 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         $input['markupTransactionAmount'] = $markupArray['markupTransactionAmount'];
         $input['markupLocalAmount'] = $markupArray['markupLocalAmount'];
         $input['markupReportingAmount'] = $markupArray['markupReportingAmount'];
-
 
         $purchaseOrderDetails = $this->purchaseOrderDetailsRepository->create($input);
 
@@ -1627,5 +1628,82 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         }
 
         return $this->sendResponse(['allocationMappingArray' => $finalArray, 'validated' => $validated], "Allocation validated successfully");
+    }
+
+    public function purchaseOrderValidateItem(Request $request)
+    {
+        $input = $request->all();
+
+        return ProcurementOrderService::validatePoItem($input['itemCodeSystem'], $input['companySystemID'], $input['purchaseOrderID']);
+    }
+
+    public function purchaseOrderDetailsAddAllItems(Request $request)
+    {
+        $input = $request->all();
+        $id = Auth::id();
+        $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
+
+        $input['employeeSystemID'] = $user ? $user->employee['employeeSystemID'] : null;
+        $input['empID'] = $user ? $user->employee['empID'] : null;
+
+        if (isset($input['addAllItems']) && $input['addAllItems']) {
+            $db = isset($input['db']) ? $input['db'] : "";    
+
+            $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $input['purchaseOrderID'])
+                                            ->first();
+
+            if (empty($purchaseOrder)) {
+                return $this->sendError('Purchase Order not found', 500);
+            }
+
+            $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
+                ->where('companySystemID', $purchaseOrder->companySystemID)
+                ->first();
+            if ($allowFinanceCategory) {
+                $policy = $allowFinanceCategory->isYesNO;
+                if ($policy == 0) {
+                    if ($purchaseOrder->financeCategory == null || $purchaseOrder->financeCategory == 0) {
+                        return $this->sendError('Category is not found', 500);
+                    }
+
+                    //checking if item category is same or not
+                    $pRDetailExistSameItem = ProcumentOrderDetail::select(DB::raw('DISTINCT(itemFinanceCategoryID) as itemFinanceCategoryID'))
+                        ->where('purchaseOrderMasterID', $input['purchaseOrderID'])
+                        ->first();
+
+                    if ($pRDetailExistSameItem) {
+                        if ($item->financeCategoryMaster != $pRDetailExistSameItem["itemFinanceCategoryID"]) {
+                            return $this->sendError('You cannot add different category item', 500);
+                        }
+                    }
+                }
+            }
+
+            $data['isBulkItemJobRun'] = 1;
+
+            $purchaseRequest = ProcumentOrder::where('purchaseOrderID', $input['purchaseOrderID'])->update($data);
+            PoAddBulkItemJob::dispatch($db, $input);
+
+            return $this->sendResponse('', 'Items Added to Queue Please wait some minutes to process');
+        } else {
+            DB::beginTransaction();
+            try {
+                $invalidItems = [];
+                foreach ($input['itemArray'] as $key => $value) {
+                    $res = ProcurementOrderService::validatePoItem($value['itemCodeSystem'], $input['companySystemID'], $input['purchaseOrderID']);
+                    
+                    if ($res['status']) {
+                        ProcurementOrderService::savePoItem($value['itemCodeSystem'], $input['companySystemID'], $input['purchaseOrderID'], $input['empID'], $input['employeeSystemID']);
+                    } else {
+                        $invalidItems[] = ['itemCodeSystem' => $value['itemCodeSystem'], 'message' => $res['message']];
+                    }
+                }
+                DB::commit();
+                return $this->sendResponse('', 'Purchase Order Items saved successfully');
+            } catch (\Exception $exception) {
+                DB::rollBack();
+                return $this->sendError($exception->getMessage(), 500);
+            }
+        }
     }
 }

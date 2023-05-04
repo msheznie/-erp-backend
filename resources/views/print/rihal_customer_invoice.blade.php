@@ -744,13 +744,23 @@
                             {{$request->currency->CurrencyCode}}
                         @endif
                     </td>
-                    <td style="width: 10%" class="text-right">@if ($request->invoicedetails){{number_format($directTraSubTotal, $numberFormatting)}}@endif</td>
+                    @if ($request->isPerforma == 1)
+                        <td style="width: 10%" class="text-right">@if ($request->invoicedetails){{number_format($directTraSubTotal-$totalVATAmount, $numberFormatting)}}@endif</td>
+                    @else
+                        <td style="width: 10%" class="text-right">@if ($request->invoicedetails){{number_format($directTraSubTotal, $numberFormatting)}}@endif</td>
+                    @endif
 
                     {{$totalVATAmountCurrency = (($request->tax && $request->tax->amount) ? $request->tax->amount : 0)}}
                     {{$directTraSubTotalCurrency = $directTraSubTotal}}
                     {{$directTraSubTotalCurrency += $totalVATAmountCurrency}}
                     <td style="width: 10%" class="text-right">{{ number_format($totalVATAmountCurrency, $numberFormatting) }}</td>
-                    <td style="width: 10%" class="text-right">{{ number_format($directTraSubTotalCurrency, $numberFormatting) }}</td>
+
+                    @if ($request->isPerforma == 1)
+                        <td style="width: 10%" class="text-right">@if ($request->invoicedetails){{number_format($directTraSubTotal, $numberFormatting)}}@endif</td>
+                    @else
+                        <td style="width: 10%" class="text-right">@if ($request->invoicedetails){{number_format($directTraSubTotalCurrency, $numberFormatting)}}@endif</td>
+                    @endif
+
                 </tr>
                 <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;background-color: white">
 
@@ -763,7 +773,11 @@
                     </td>
                     <td style="width: 10%" class="text-right">@if ($request->invoicedetails)
                             @if(!empty($request->localCurrencyER) && !empty($company->localcurrency->DecimalPlaces))
-                            {{number_format($directTraSubTotal / $request->localCurrencyER, $company->localcurrency->DecimalPlaces)}}
+                                @if ($request->isPerforma == 1)
+                                    {{number_format(($directTraSubTotal-$totalVATAmount) / $request->localCurrencyER, $company->localcurrency->DecimalPlaces)}}
+                                @else
+                                    {{number_format($directTraSubTotal / $request->localCurrencyER, $company->localcurrency->DecimalPlaces)}}
+                                @endif
                             @endif
                         @endif
                     </td>
@@ -777,7 +791,11 @@
                     </td>
                     <td style="width: 10%" class="text-right">
                         @if(!empty($request->localCurrencyER) && !empty($company->localcurrency->DecimalPlaces))
-                        {{ number_format($directTraSubTotalLocal / $request->localCurrencyER, $company->localcurrency->DecimalPlaces) }}
+                            @if ($request->isPerforma == 1)
+                                {{ number_format($directTraSubTotal / $request->localCurrencyER, $company->localcurrency->DecimalPlaces) }}
+                            @else
+                                {{ number_format($directTraSubTotalLocal / $request->localCurrencyER, $company->localcurrency->DecimalPlaces) }}
+                            @endif
                         @endif
                     </td>
                 </tr>
@@ -808,7 +826,11 @@
                 <td class="text-left" style="border:none !important">
                     <span class="font-weight-bold">: @if ($request->invoicedetails)
                             @if(!empty($request->localCurrencyER) && !empty($company->localcurrency->DecimalPlaces))
-                            {{number_format($directTraSubTotal / $request->localCurrencyER, $company->localcurrency->DecimalPlaces)}}
+                                @if ($request->isPerforma == 1)
+                                    {{number_format(($directTraSubTotal-$totalVATAmount) / $request->localCurrencyER, $company->localcurrency->DecimalPlaces)}}
+                                @else
+                                    {{number_format($directTraSubTotal / $request->localCurrencyER, $company->localcurrency->DecimalPlaces)}}
+                                @endif
                             @endif
                         @endif
                     </span>
@@ -823,7 +845,11 @@
                 </td>
 
                 <td class="text-left" style="border:none !important">
-                    <span class="font-weight-bold">: @if ($request->invoicedetails){{number_format($directTraSubTotal, $numberFormatting)}}@endif</span>
+                    @if ($request->isPerforma == 1)
+                        <span class="font-weight-bold">: @if ($request->invoicedetails){{number_format($directTraSubTotal-$totalVATAmount, $numberFormatting)}}@endif</span>
+                    @else
+                        <span class="font-weight-bold">: @if ($request->invoicedetails){{number_format($directTraSubTotal, $numberFormatting)}}@endif</span>
+                    @endif
                 </td>
             </tr>
 
@@ -870,7 +896,11 @@
                     style="border:none !important"><span
                             class="font-weight-bold">:
                           @if(!empty($request->localCurrencyER) && !empty($company->localcurrency->DecimalPlaces))
-                        {{number_format($directTraSubTotal / $request->localCurrencyER, $company->localcurrency->DecimalPlaces)}}
+                            @if ($request->isPerforma == 1)
+                                {{number_format(($directTraSubTotal - $totalVATAmount) / $request->localCurrencyER, $company->localcurrency->DecimalPlaces)}}
+                            @else
+                                {{number_format($directTraSubTotal / $request->localCurrencyER, $company->localcurrency->DecimalPlaces)}}
+                            @endif
                            @endif
                     </span>
                 </td>
@@ -882,9 +912,12 @@
                             Total ({{empty($request->currency) ? '' : $request->currency->CurrencyCode}})
                         </span>
                 </td>
-                <td class="text-left"
-                    style="border:none !important"><span
-                            class="font-weight-bold">: {{number_format($directTraSubTotal, $numberFormatting)}}</span>
+                <td class="text-left" style="border:none !important">
+                    @if ($request->isPerforma == 1)
+                        <span class="font-weight-bold">: {{number_format($directTraSubTotal - $totalVATAmount, $numberFormatting)}}</span>
+                    @else
+                        <span class="font-weight-bold">: {{number_format($directTraSubTotal, $numberFormatting)}}</span>
+                    @endif
                 </td>
             </tr>
             </tbody>

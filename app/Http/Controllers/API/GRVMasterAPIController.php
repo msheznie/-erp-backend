@@ -2031,6 +2031,10 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
             $approvers = DocumentApproved::where(['companySystemID' => $grv->companySystemID, 'documentSystemID' => 3, 'documentSystemCode' => $input['grvAutoID']])->delete();
             $taxLedger = TaxLedgerDetail::where(['companySystemID' => $grv->companySystemID, 'documentSystemID' => 3, 'documentMasterAutoID' => $input['grvAutoID']])->delete();
 
+            BudgetConsumedData::where('documentSystemCode',  $input['grvAutoID'])
+                ->where('companySystemID', $grv->companySystemID)
+                ->where('documentSystemID', 3)
+                ->delete();
             //deleting records from tax ledger
             $deleteTaxLedgerData = TaxLedger::where('documentMasterAutoID', $input['grvAutoID'])
                 ->where('companySystemID', $grv->companySystemID)

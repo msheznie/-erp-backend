@@ -2492,6 +2492,11 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
             ->where('documentSystemID', $input['documentSystemID'])
             ->delete();
 
+        BudgetConsumedData::where('documentSystemCode', $purchaseOrderID)
+            ->where('companySystemID', $purchaseOrder->companySystemID)
+            ->where('documentSystemID', $input['documentSystemID'])
+            ->delete();
+
         if ($deleteApproval) {
             $update = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)
                 ->update([

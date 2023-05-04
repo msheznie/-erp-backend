@@ -55,6 +55,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use App\helper\CreateExcel;
 use App\Jobs\DocumentAttachments\CustomerStatementJob;
+use App\Models\CustomerMasterCategoryAssigned;
 
 class AccountsReceivableReportAPIController extends AppBaseController
 {
@@ -2469,7 +2470,10 @@ class AccountsReceivableReportAPIController extends AppBaseController
             ->orderby('year', 'desc')
             ->get(['year']);
 
-        $customerCategories = CustomerMasterCategory::all();
+        $customerCategories = CustomerMasterCategoryAssigned::whereIN('companySystemID', $companiesByGroup)
+                                                                ->where('isAssigned',1)
+                                                                ->where('isActive',1)
+                                                                ->get();
 
         $output = array(
             'controlAccount' => $controlAccount,
@@ -6530,7 +6534,10 @@ AND erp_generalledger.documentTransAmount > 0 AND erp_generalledger.supplierCode
             ->orderby('year', 'desc')
             ->get();
 
-        $output['customerCategories'] = CustomerMasterCategory::all();
+        $output['customerCategories'] = CustomerMasterCategoryAssigned::whereIN('companySystemID', $childCompanies)
+                                                                        ->where('isAssigned',1)
+                                                                        ->where('isActive',1)
+                                                                        ->get();
 
         return $this->sendResponse($output, trans('custom.retrieve', ['attribute' => trans('custom.record')]));
     }
