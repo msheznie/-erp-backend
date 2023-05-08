@@ -92,6 +92,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::get('getCompanyReportingCurrency', 'CurrencyMasterAPIController@getCompanyReportingCurrency');
             Route::get('getCompanyReportingCurrencyCode', 'CurrencyMasterAPIController@getCompanyReportingCurrencyCode');
+            Route::get('getCompanyLocalCurrencyCode', 'CurrencyMasterAPIController@getCompanyLocalCurrencyCode');
             Route::get('checkSelectedSupplierIsActive', 'SupplierAssignedAPIController@checkSelectedSupplierIsActive');
             Route::resource('users', 'UserAPIController');
             Route::resource('supplier_category_masters', 'SupplierCategoryMasterAPIController');
