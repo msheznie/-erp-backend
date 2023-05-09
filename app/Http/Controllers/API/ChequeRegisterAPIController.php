@@ -158,6 +158,8 @@ class ChequeRegisterAPIController extends AppBaseController
             $input['created_at'] = Helper::currentDateTime();
             $input['created_by'] = Helper::getEmployeeSystemID();
             $input['created_pc'] = gethostname();
+            $input['isActive'] = 0;
+
 
             $chequeRegister = $this->chequeRegisterRepository->create($input);
 
