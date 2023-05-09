@@ -198,7 +198,7 @@ class CreateAccumulatedDepreciation implements ShouldQueue
                             $monthlyLocal = (($faMaster->COSTUNIT - $faMaster->salvage_value) * ($faMaster->DEPpercentage / 100)) / 12;
                             $monthlyRpt = (($faMaster->costUnitRpt - $faMaster->salvage_value_rpt) * ($faMaster->DEPpercentage / 100)) / 12;
 
-                            if (round($nbvLocal,2) > $faMaster->salvage_value || round($nbvRpt,2) > $faMaster->salvage_value_rpt) {
+                            if (round($nbvLocal,2) >= $faMaster->salvage_value || round($nbvRpt,2) >= $faMaster->salvage_value_rpt) {
                                 $data['depMasterAutoID'] = $depMaster->depMasterAutoID;
                                 $data['companySystemID'] = $depMaster->companySystemID;
                                 $data['companyID'] = $depMaster->companyID;
