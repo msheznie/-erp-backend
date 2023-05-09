@@ -1891,6 +1891,13 @@ class BudgetConsumptionService
 
 			return $finalData;
 		} else {
+			foreach ($pendingSupInvQry as $key => $value) {
+				$currencyConversionRptAmount = \Helper::currencyConversion($value->companySystemID, $value->currencyID, $value->currencyID, $value->amount);
+
+				$value->localAmt = $currencyConversionRptAmount['localAmount'];
+				$value->rptAmt = $currencyConversionRptAmount['reportingAmount'];
+			}
+
 			return $pendingSupInvQry;
 		}
 
