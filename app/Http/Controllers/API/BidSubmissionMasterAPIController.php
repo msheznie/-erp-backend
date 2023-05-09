@@ -284,9 +284,10 @@ class BidSubmissionMasterAPIController extends AppBaseController
             {
                 $input['commercial_verify_by'] = \Helper::getEmployeeSystemID();
                 $input['commercial_verify_at'] = Carbon::now();
-        
+                
+
                 $bidSubmissionMaster = $this->bidSubmissionMasterRepository->update($input, $id);
-                $techniqal_wightage = TenderMaster::where('id', $tenderId)->select('id', 'technical_weightage', 'commercial_weightage','document_type')->first();
+                $techniqal_wightage = TenderMaster::where('id', $tender_id)->select('id', 'technical_weightage', 'commercial_weightage','document_type')->first();
                 
                 if($techniqal_wightage->document_type == 0)
                 {
@@ -312,10 +313,6 @@ class BidSubmissionMasterAPIController extends AppBaseController
                 //$query = BidSubmissionMaster::where('tender_id', $tender_id)->where('commercial_verify_status','!=', 1)->where('bidSubmittedYN',1)->where('status',1)->count();
 
      
-
-
-
-
 
                 $count = count($query);
 
