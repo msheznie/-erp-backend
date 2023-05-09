@@ -2905,7 +2905,7 @@ WHERE
         }
         else
         {
-            $query = BidSubmissionMaster::selectRaw("srm_bid_submission_master.id,srm_bid_submission_master.bidSubmittedDatetime,srm_bid_submission_master.tender_id,srm_supplier_registration_link.name,'' as bid_id,srm_bid_submission_master.commercial_verify_status,srm_bid_submission_master.bidSubmissionCode,srm_tender_master.technical_passing_weightage as passing_weightage")
+            $query = BidSubmissionMaster::selectRaw("'' as weightage,srm_bid_submission_master.id,srm_bid_submission_master.bidSubmittedDatetime,srm_bid_submission_master.tender_id,srm_supplier_registration_link.name,'' as bid_id,srm_bid_submission_master.commercial_verify_status,srm_bid_submission_master.bidSubmissionCode,srm_tender_master.technical_passing_weightage as passing_weightage")
             ->join('srm_supplier_registration_link', 'srm_supplier_registration_link.id', '=', 'srm_bid_submission_master.supplier_registration_id')
             ->join('srm_tender_master', 'srm_tender_master.id', '=', 'srm_bid_submission_master.tender_id')
             ->groupBy('srm_bid_submission_master.id')
