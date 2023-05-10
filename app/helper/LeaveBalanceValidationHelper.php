@@ -72,9 +72,9 @@ class LeaveBalanceValidationHelper
         }
     }  
     
-    public static function validate_month($companyId,$asOfDate=null)
+    public static function validate_month($companyId, $asOfDate=null)
     {        
-        $date =$asOfDate == '' ? date('Y-m-d'): date('Y-m-d',strtotime($asOfDate));        
+        $date = $asOfDate == '' ? date('Y-m-d'): date('Y-m-d',strtotime($asOfDate));        
             
         $leaveBalanceBasedOn = SME::leaveBalanceBasedOn($companyId);
 
@@ -84,21 +84,22 @@ class LeaveBalanceValidationHelper
                 ->whereRaw(" '{$date}' BETWEEN dateFrom AND dateTo ")->where('companyID', $companyId)
                 ->first();
 
-            $data=array(
+            $data = [
                 'id' => $data->id,
                 'dateFrom' => date('Y-m-d', strtotime($data->dateFrom)),
                 'dateTo' =>  date('Y-m-d', strtotime($data->dateTo))
-                );
+            ];
+
             return ['status'=> true, 'details'=> $data];
 
         }
 
         /* financial_month_based_validation */
-        $data=array(
+        $data = [
             'id' => null,
             'dateFrom' => date('Y-m-01', strtotime($date)),
             'dateTo' => date('Y-m-t',strtotime($date))
-            );
+        ];
     
         return ['status'=> true, 'details'=> $data];
     }
