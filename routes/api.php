@@ -92,6 +92,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::get('getCompanyReportingCurrency', 'CurrencyMasterAPIController@getCompanyReportingCurrency');
             Route::get('getCompanyReportingCurrencyCode', 'CurrencyMasterAPIController@getCompanyReportingCurrencyCode');
+            Route::get('getCompanyLocalCurrencyCode', 'CurrencyMasterAPIController@getCompanyLocalCurrencyCode');
             Route::get('checkSelectedSupplierIsActive', 'SupplierAssignedAPIController@checkSelectedSupplierIsActive');
             Route::resource('users', 'UserAPIController');
             Route::resource('supplier_category_masters', 'SupplierCategoryMasterAPIController');
@@ -1161,6 +1162,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::get('getChequeRegisterFormData', 'ChequeRegisterAPIController@getChequeRegisterFormData');
             Route::post('chequeRegisterStatusChange', 'ChequeRegisterAPIController@chequeRegisterStatusChange');
+            Route::post('checkChequeRegisterStatus', 'ChequeRegisterAPIController@checkChequeRegisterStatus');
             Route::get('getChequeRegisterByMasterID', 'ChequeRegisterAPIController@getChequeRegisterByMasterID');
 
             Route::post('getAllChequeRegistersByCompany', 'ChequeRegisterAPIController@getAllChequeRegistersByCompany');
@@ -1413,7 +1415,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('getSalesReturnDetailsForSI', 'SalesReturnAPIController@getSalesReturnDetailsForSI');
 
             Route::resource('grv_details_prns', 'GrvDetailsPrnAPIController');
-
+            Route::post('appearanceSubmit', 'CompanyAPIController@appearanceSubmit');
+            Route::get('getAppearance', 'CompanyAPIController@getAppearance');
 
             Route::post('checkBRVDocumentActive', 'CustomerReceivePaymentAPIController@checkBRVDocumentActive');
             Route::get('getADVPaymentForBRV', 'CustomerReceivePaymentAPIController@getADVPaymentForBRV');

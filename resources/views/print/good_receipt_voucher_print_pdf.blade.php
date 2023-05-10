@@ -305,6 +305,9 @@
             <thead>
             <tr style="border-top: 1px solid black;">
                 <th>#</th>
+                @if ($grvData->grvTypeID == 2)
+                    <th>{{ __('custom.order_code') }}</th>
+                @endif
                 <th>{{ __('custom.item_code') }}</th>
                 <th>{{ __('custom.item_description') }}</th>
                 <th>{{ __('custom.manufacture_part_no') }}</th>
@@ -323,6 +326,9 @@
                 {{ $netAmount += $det->netAmount }}
                 <tr style="border-bottom: 1px solid black; background-color: rgb(251, 251, 251);">
                     <td>{{ $x  }}</td>
+                    @if ($grvData->grvTypeID == 2)
+                        <td>{{$det->po_master->purchaseOrderCode ? $det->po_master->purchaseOrderCode : ""}}</td>
+                    @endif
                     <td>{{$det->itemPrimaryCode}}</td>
                     <td>{{$det->itemDescription}}</td>
                     <td>{{$det->supplierPartNumber}}</td>
@@ -336,6 +342,9 @@
             </tbody>
             <tfoot>
             <tr>
+                @if ($grvData->grvTypeID == 2)
+                    <td style="border-bottom-color:white !important;border-left-color:white !important; border-right-color:white !important"></td>
+                @endif
                 <td colspan="6" class="text-right" style="border-bottom-color:white !important;border-left-color:white !important"><span style="font-weight: bold">{{ __('custom.total') }}</span></td>
                 <td class="text-right" style="border: 1px solid black;"><span *ngIf="grvData.details" style="font-weight: bold">{{ number_format($discountAmount, $grvData->currency_by->DecimalPlaces) }}</span></td>
                 <td class="text-right" style="border: 1px solid black;"><span *ngIf="grvData.details" style="font-weight: bold">{{number_format($netAmount, $grvData->currency_by->DecimalPlaces) }}</span></td>
