@@ -7471,8 +7471,8 @@ class Helper
                 $budgetConsumeData = array();
                 $masterRec = Models\BookInvSuppMaster::find($params["autoID"]);
                 if ($masterRec) {
-                    if ($masterRec->documentType == 1) {
-                        $directDetail = \DB::select('SELECT directInvoiceDetailsID,directInvoiceAutoID,serviceLineSystemID,serviceLineCode,chartOfAccountSystemID,glCode,budgetYear,SUM(localAmount) as localAmountTot, sum(comRptAmount) as comRptAmountTot FROM erp_directinvoicedetails WHERE directInvoiceAutoID = ' . $params["autoID"] . ' GROUP BY serviceLineSystemID,chartOfAccountSystemID ');
+                    if ($masterRec->documentType == 1 || $masterRec->documentType == 4) {
+                        $directDetail = \DB::select('SELECT directInvoiceDetailsID,directInvoiceAutoID,serviceLineSystemID,serviceLineCode,chartOfAccountSystemID,glCode,budgetYear,SUM(localAmount) as localAmountTot, sum(comRptAmount) as comRptAmountTot, detail_project_id FROM erp_directinvoicedetails WHERE directInvoiceAutoID = ' . $params["autoID"] . ' GROUP BY serviceLineSystemID,chartOfAccountSystemID,detail_project_id ');
 
                         if (!empty($directDetail)) {
                             foreach ($directDetail as $value) {
@@ -7499,7 +7499,7 @@ class Helper
                                         "consumedRptCurrencyID" => $masterRec->companyReportingCurrencyID,
                                         "consumedRptAmount" => abs($value->comRptAmountTot),
                                         "timestamp" => date('d/m/Y H:i:s A'),
-                                        "projectID" => $masterRec->projectID
+                                        "projectID" => $value->detail_project_id
 
                                     );
                                 }
@@ -7508,7 +7508,7 @@ class Helper
                         }
                     } else if ($masterRec->documentType == 3) {
                         $budgetConsumeData = array();
-                        $directDetail = \DB::select('SELECT SUM((supplier_invoice_items.costPerUnitLocalCur) *supplier_invoice_items.noQty) as costPerUnitLocalCur,SUM((supplier_invoice_items.costPerUnitComRptCur)*supplier_invoice_items.noQty) as costPerUnitComRptCur,supplier_invoice_items.companyReportingCurrencyID,supplier_invoice_items.financeGLcodePLSystemID,supplier_invoice_items.companySystemID,erp_bookinvsuppmaster.serviceLineSystemID,supplier_invoice_items.localCurrencyID, erp_bookinvsuppmaster.projectID, erp_bookinvsuppmaster.companyFinanceYearID, MONTH(createdDateAndTime) as month FROM supplier_invoice_items INNER JOIN erp_bookinvsuppmaster ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = supplier_invoice_items.bookingSuppMasInvAutoID  WHERE supplier_invoice_items.bookingSuppMasInvAutoID = ' . $params["autoID"] . ' GROUP BY supplier_invoice_items.companySystemID,erp_bookinvsuppmaster.serviceLineSystemID,supplier_invoice_items.financeGLcodePLSystemID,erp_bookinvsuppmaster.projectID');
+                        $directDetail = \DB::select('SELECT SUM((supplier_invoice_items.costPerUnitLocalCur) *supplier_invoice_items.noQty) as costPerUnitLocalCur,SUM((supplier_invoice_items.costPerUnitComRptCur)*supplier_invoice_items.noQty) as costPerUnitComRptCur,supplier_invoice_items.companyReportingCurrencyID,supplier_invoice_items.financeGLcodePLSystemID,supplier_invoice_items.companySystemID,erp_bookinvsuppmaster.serviceLineSystemID,supplier_invoice_items.localCurrencyID, erp_bookinvsuppmaster.projectID, erp_bookinvsuppmaster.companyFinanceYearID, MONTH(createdDateAndTime) as month FROM supplier_invoice_items INNER JOIN erp_bookinvsuppmaster ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = supplier_invoice_items.bookingSuppMasInvAutoID  WHERE supplier_invoice_items.itemFinanceCategoryID != 3 AND supplier_invoice_items.bookingSuppMasInvAutoID = ' . $params["autoID"] . ' GROUP BY supplier_invoice_items.companySystemID,erp_bookinvsuppmaster.serviceLineSystemID,supplier_invoice_items.financeGLcodePLSystemID,erp_bookinvsuppmaster.projectID');
 
                         if (!empty($directDetail)) {
                             foreach ($directDetail as $value) {
@@ -7538,7 +7538,7 @@ class Helper
                             }
                         }
                         $budgetConsume = Models\BudgetConsumedData::insert($budgetConsumeData);
-                    }
+                    } 
                 }
                 break;
             case 4:

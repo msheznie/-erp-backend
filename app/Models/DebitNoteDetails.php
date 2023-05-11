@@ -243,4 +243,9 @@ class DebitNoteDetails extends Model
     {
         return $this->belongsTo('App\Models\DebitNote', 'debitNoteAutoID', 'debitNoteAutoID');
     }
+
+    public function budget_detail()
+    {
+        return $this->belongsTo('App\Models\Budjetdetails', 'chartOfAccountSystemID','chartOfAccountID');
+    }
 }

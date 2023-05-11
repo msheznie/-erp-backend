@@ -59,7 +59,10 @@ class TenantEnforce
             'api/v1/fixed_asset_depreciation_masters',
             'api/v1/purchaseOrderDetailsAddAllItems',
             'api/v1/generateBankLedgerReportPDF',
-            'api/v1/postPosEntries'
+            'api/v1/postPosEntries',
+            'api/v1/requestDetailsAddAllItems',
+            'api/v1/materialIssuetDetailsAddAllItems'
+
         ];
 
 

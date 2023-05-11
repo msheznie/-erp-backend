@@ -4,7 +4,6 @@ namespace App\Console\Commands;
 
 use App\helper\CommonJobService;
 use Illuminate\Console\Command;
-use App\Jobs\BirthdayWishInitiate;
 use App\Jobs\LeaveCarryForwardComputationInitiate;
 use Illuminate\Support\Facades\Log;
 
@@ -23,7 +22,7 @@ class LeaveCarryForwardComputatuionScheduler extends Command
      *
      * @var string
      */
-    protected $description = 'Leave Carry Forward Computatuion Scheduler';
+    protected $description = 'Leave Carry Forward Computation Year End Scheduler';
 
     /**
      * Create a new command instance.
