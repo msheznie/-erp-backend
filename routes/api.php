@@ -15,6 +15,7 @@ Route::get('getConfigurationInfo', 'ConfigurationAPIController@getConfigurationI
 
 
 Route::group(['middleware' => ['tenant','locale']], function () {
+    Route::get('getAppearance', 'CompanyAPIController@getAppearance');
 
     Route::group(['middleware' => ['pos_api']], function (){
         Route::get('pull_tax_details', 'ClubManagement\ClubManagementAPIController@pullTaxDetails');
@@ -1416,7 +1417,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::resource('grv_details_prns', 'GrvDetailsPrnAPIController');
             Route::post('appearanceSubmit', 'CompanyAPIController@appearanceSubmit');
-            Route::get('getAppearance', 'CompanyAPIController@getAppearance');
 
             Route::post('checkBRVDocumentActive', 'CustomerReceivePaymentAPIController@checkBRVDocumentActive');
             Route::get('getADVPaymentForBRV', 'CustomerReceivePaymentAPIController@getADVPaymentForBRV');
