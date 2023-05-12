@@ -420,7 +420,7 @@ class TenderCircularsAPIController extends AppBaseController
             }
         }
 
-        if(isset($input['attachment_id'])){
+        if(isset($input['attachment_id']) && sizeof($input['attachment_id' ]) != 0){
             if(isset($input['id'])) {
                 $exist = TenderCirculars::where('id','!=',$input['id'])->where('tender_id', $input['tenderMasterId'])->where('attachment_id', $input['attachment_id'])->where('company_id', $input['companySystemID'])->first();
 
