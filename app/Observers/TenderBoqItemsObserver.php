@@ -80,7 +80,7 @@ class TenderBoqItemsObserver
         if(($tender_id == null || empty($tender_id)))
         {   
             $pricingDetails = PricingScheduleDetail::select('tender_id')->where('id',$tender->getAttribute('main_work_id'))->first();
-            if(isset($pricingDetails))
+            if(isset($pricingDetails) && !empty($pricingDetails))
             {
                 $tender_id = $pricingDetails->getAttribute('tender_id');
             }
@@ -97,7 +97,7 @@ class TenderBoqItemsObserver
         $employee = \Helper::getEmployeeInfo();
 
        
-        if($obj && isset($employee))
+        if($obj && isset($employee) && !empty($employee))
         {
             $empId = $employee->employeeSystemID;
             $detailLog = PricingScheduleDetailEditLog::where('master_id',$tender->getAttribute('main_work_id'))->where('tender_id',$tenderObj->getAttribute('id'))->first();
