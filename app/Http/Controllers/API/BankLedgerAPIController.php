@@ -429,155 +429,175 @@ class BankLedgerAPIController extends AppBaseController
                 }
 
 
-                if ($updateArray['trsClearedYN']) {
-                    $updateArray['trsClearedAmount'] = $bankLedger->payAmountBank;
-                    $updateArray['trsClearedByEmpName'] = $employee->empName;
-                    $updateArray['trsClearedByEmpID'] = $employee->empID;
-                    $updateArray['trsClearedByEmpSystemID'] = $employee->employeeSystemID;
-                    $updateArray['trsClearedDate'] = now();
 
-
-                    // email sent to supplier
-                    if ($bankLedger->payAmountBank > 0 && ($bankLedger->invoiceType == 2 || $bankLedger->invoiceType == 5)) {
-
-                        $supplierDefaultDetail = SupplierContactDetails::where('supplierID', $bankLedger->payeeID)
-                            ->where('isDefault', -1)
-                            ->first();
-
-                        $supplierMaster = SupplierMaster::find($bankLedger->payeeID);
-                        $supplierEmail = "";
-
-                        $company = Company::where('companySystemID', $bankLedger->companySystemID)->first();
-
-                        if (!empty($supplierDefaultDetail)) {
-                            $supplierEmail = $supplierDefaultDetail->contactPersonEmail;
-                        } else {
-                            if (!empty($supplierMaster)) {
-                                $supplierEmail = $supplierMaster->supEmail;
-                            }
-                        }
-
-                        $paySupplierInvoice = PaySupplierInvoiceMaster::with(['supplier', 'transactioncurrency',
-                                                    'supplierdetail','company', 'localcurrency', 'rptcurrency', 'advancedetail', 'confirmed_by'])
-                                                    ->find($bankLedger->documentSystemCode);
-
-                        $confirmedPersonEmail = "";
-                        $invoiceNumbers = "";
-
-                        if (!empty($paySupplierInvoice)) {
-
-                            if ($paySupplierInvoice->confirmed_by) {
-                                $confirmedPersonEmail = $paySupplierInvoice->confirmed_by->empEmail;
-                                if ($supplierEmail == "") {
-                                    $supplierEmail = $confirmedPersonEmail;
-                                }
-                            }
-
-                            if ($bankLedger->invoiceType == 2) {
-                                $details = $paySupplierInvoice->supplierdetail;
-                                foreach ($details as $detail) {
-                                    $invoiceNumbers = $invoiceNumbers . '<br>' . $detail['supplierInvoiceNo'];
-                                }
-                            } else if ($bankLedger->invoiceType == 5) {
-                                $details = $paySupplierInvoice->advancedetail;
-                                foreach ($details as $detail) {
-                                    $invoiceNumbers = $invoiceNumbers . '<br>' . $detail['purchaseOrderCode'];
-                                }
-                            }
-
-                        }
-
-
-                        if ($supplierEmail && $confirmedPersonEmail) {
-
-                            $pdfName = '/PV_REMIT_'.$bankLedger->companyID.'_'.$bankLedger->documentSystemCode.'.pdf';
-
-                            $refernaceDoc = \Helper::getCompanyDocRefNo($paySupplierInvoice->companySystemID, $paySupplierInvoice->documentSystemID);
-
-                            $transDecimal = 2;
-                            $localDecimal = 3;
-                            $rptDecimal = 2;
-
-                            if ($paySupplierInvoice->transactioncurrency) {
-                                $transDecimal = $paySupplierInvoice->transactioncurrency->DecimalPlaces;
-                            }
-
-                            if ($paySupplierInvoice->localcurrency) {
-                                $localDecimal = $paySupplierInvoice->localcurrency->DecimalPlaces;
-                            }
-
-                            if ($paySupplierInvoice->rptcurrency) {
-                                $rptDecimal = $paySupplierInvoice->rptcurrency->DecimalPlaces;
-                            }
-
-                            $supplierdetailTotTra = PaySupplierInvoiceDetail::where('PayMasterAutoId', $bankLedger->documentSystemCode)
-                                ->sum('supplierPaymentAmount');
-
-                            $directDetailTotTra = DirectPaymentDetails::where('directPaymentAutoID', $bankLedger->documentSystemCode)
-                                ->sum('DPAmount');
-
-                            $advancePayDetailTotTra = AdvancePaymentDetails::where('PayMasterAutoId', $bankLedger->documentSystemCode)
-                                ->sum('paymentAmount');
-
-
-                            $order = array(
-                                'masterdata' => $paySupplierInvoice,
-                                'docRef' => $refernaceDoc,
-                                'transDecimal' => $transDecimal,
-                                'localDecimal' => $localDecimal,
-                                'rptDecimal' => $rptDecimal,
-                                'supplierdetailTotTra' => $supplierdetailTotTra,
-                                'directDetailTotTra' => $directDetailTotTra,
-                                'advancePayDetailTotTra' => $advancePayDetailTotTra
-                            );
-
-                            $footer = "<font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!" . "<br>This is an auto generated email. Please do not reply to this email because we are not" . "monitoring this inbox.</font>";
-
-                            $dataEmail = array();
-                            $dataEmail['empName'] = $supplierMaster->nameOnPaymentCheque;
-                            $dataEmail['empEmail'] = $supplierEmail;
-
-
-                            $dataEmail['empSystemID'] = $employee->employeeSystemID;
-                            $dataEmail['empID']       = $employee->empID;
-
-                            $dataEmail['companySystemID'] = $bankLedger->companySystemID;
-                            $dataEmail['companyID'] = $bankLedger->companyID;
-
-                            $dataEmail['docID'] = 'SUPPLIEREMAIL';
-                            $dataEmail['docSystemID'] = null;
-                            $dataEmail['docSystemCode'] = $bankLedger->documentSystemCode;
-
-                            $dataEmail['docApprovedYN'] = $paySupplierInvoice->approved;
-                            $dataEmail['docCode'] = $bankLedger->documentCode;
-                            $dataEmail['ccEmailID'] = $confirmedPersonEmail;
-
-                            $emailTitle = "";
-                            if ($bankLedger->invoiceType == 2) {
-                                $emailTitle = 'Payment has been released for the below invoices';
-                            } else if ($bankLedger->invoiceType == 5) {
-                                $emailTitle = 'Advance Payment has been released for the below orders';
-                            }
-
-                            $temp = "Dear " . $supplierMaster->nameOnPaymentCheque . ",<p> " .$emailTitle. " from <b>" . $company->CompanyName . "<b/>.<p>" . $invoiceNumbers . "<p><p>" . $footer;
-
-                            //$location = \DB::table('systemmanualfolder')->first();
-                            $dataEmail['isEmailSend'] = 0;
-                            
-                            $dataEmail['alertMessage'] = "Payment Released";
-                            $dataEmail['emailAlertMessage'] = $temp;
-
-                           PaymentReleasedToSupplierJob::dispatch($request->db, $order, $dataEmail, $pdfName);
-                        }
+                if (isset($input['dateChange']) && $input['dateChange']) {
+                    if (Carbon::parse($input['trsClearedDate']) > Carbon::now()) {
+                        return $this->sendError("Clear date cannot be a future date", 500);
                     }
 
+
+                    $bankReconciliation = BankReconciliation::where('companySystemID', $bankLedger->companySystemID)
+                                                           ->orderBy('bankRecAutoID', 'desc')
+                                                           ->first();
+
+                    if ($bankReconciliation && Carbon::parse($bankReconciliation->bankRecAsOf) > Carbon::parse($input['trsClearedDate'])) {
+                        return $this->sendError("Clear date cannot be a less than last reconciliation date. Last reconciliation date - ".Carbon::parse($bankReconciliation->bankRecAsOf)->format('d/m/Y'), 500);
+                    }
+
+
+                    $updateArray['trsClearedDate'] = Carbon::parse($input['trsClearedDate']);
                 } else {
-                    $updateArray['trsClearedAmount'] = 0;
-                    $updateArray['trsClearedByEmpName'] = null;
-                    $updateArray['trsClearedByEmpID'] = null;
-                    $updateArray['trsClearedByEmpSystemID'] = null;
-                    $updateArray['trsClearedDate'] = null;
+                    if ($updateArray['trsClearedYN']) {
+                        $updateArray['trsClearedAmount'] = $bankLedger->payAmountBank;
+                        $updateArray['trsClearedByEmpName'] = $employee->empName;
+                        $updateArray['trsClearedByEmpID'] = $employee->empID;
+                        $updateArray['trsClearedByEmpSystemID'] = $employee->employeeSystemID;
+                        $updateArray['trsClearedDate'] = now();
+
+
+                        // email sent to supplier
+                        if ($bankLedger->payAmountBank > 0 && ($bankLedger->invoiceType == 2 || $bankLedger->invoiceType == 5)) {
+
+                            $supplierDefaultDetail = SupplierContactDetails::where('supplierID', $bankLedger->payeeID)
+                                ->where('isDefault', -1)
+                                ->first();
+
+                            $supplierMaster = SupplierMaster::find($bankLedger->payeeID);
+                            $supplierEmail = "";
+
+                            $company = Company::where('companySystemID', $bankLedger->companySystemID)->first();
+
+                            if (!empty($supplierDefaultDetail)) {
+                                $supplierEmail = $supplierDefaultDetail->contactPersonEmail;
+                            } else {
+                                if (!empty($supplierMaster)) {
+                                    $supplierEmail = $supplierMaster->supEmail;
+                                }
+                            }
+
+                            $paySupplierInvoice = PaySupplierInvoiceMaster::with(['supplier', 'transactioncurrency',
+                                                        'supplierdetail','company', 'localcurrency', 'rptcurrency', 'advancedetail', 'confirmed_by'])
+                                                        ->find($bankLedger->documentSystemCode);
+
+                            $confirmedPersonEmail = "";
+                            $invoiceNumbers = "";
+
+                            if (!empty($paySupplierInvoice)) {
+
+                                if ($paySupplierInvoice->confirmed_by) {
+                                    $confirmedPersonEmail = $paySupplierInvoice->confirmed_by->empEmail;
+                                    if ($supplierEmail == "") {
+                                        $supplierEmail = $confirmedPersonEmail;
+                                    }
+                                }
+
+                                if ($bankLedger->invoiceType == 2) {
+                                    $details = $paySupplierInvoice->supplierdetail;
+                                    foreach ($details as $detail) {
+                                        $invoiceNumbers = $invoiceNumbers . '<br>' . $detail['supplierInvoiceNo'];
+                                    }
+                                } else if ($bankLedger->invoiceType == 5) {
+                                    $details = $paySupplierInvoice->advancedetail;
+                                    foreach ($details as $detail) {
+                                        $invoiceNumbers = $invoiceNumbers . '<br>' . $detail['purchaseOrderCode'];
+                                    }
+                                }
+
+                            }
+
+
+                            if ($supplierEmail && $confirmedPersonEmail) {
+
+                                $pdfName = '/PV_REMIT_'.$bankLedger->companyID.'_'.$bankLedger->documentSystemCode.'.pdf';
+
+                                $refernaceDoc = \Helper::getCompanyDocRefNo($paySupplierInvoice->companySystemID, $paySupplierInvoice->documentSystemID);
+
+                                $transDecimal = 2;
+                                $localDecimal = 3;
+                                $rptDecimal = 2;
+
+                                if ($paySupplierInvoice->transactioncurrency) {
+                                    $transDecimal = $paySupplierInvoice->transactioncurrency->DecimalPlaces;
+                                }
+
+                                if ($paySupplierInvoice->localcurrency) {
+                                    $localDecimal = $paySupplierInvoice->localcurrency->DecimalPlaces;
+                                }
+
+                                if ($paySupplierInvoice->rptcurrency) {
+                                    $rptDecimal = $paySupplierInvoice->rptcurrency->DecimalPlaces;
+                                }
+
+                                $supplierdetailTotTra = PaySupplierInvoiceDetail::where('PayMasterAutoId', $bankLedger->documentSystemCode)
+                                    ->sum('supplierPaymentAmount');
+
+                                $directDetailTotTra = DirectPaymentDetails::where('directPaymentAutoID', $bankLedger->documentSystemCode)
+                                    ->sum('DPAmount');
+
+                                $advancePayDetailTotTra = AdvancePaymentDetails::where('PayMasterAutoId', $bankLedger->documentSystemCode)
+                                    ->sum('paymentAmount');
+
+
+                                $order = array(
+                                    'masterdata' => $paySupplierInvoice,
+                                    'docRef' => $refernaceDoc,
+                                    'transDecimal' => $transDecimal,
+                                    'localDecimal' => $localDecimal,
+                                    'rptDecimal' => $rptDecimal,
+                                    'supplierdetailTotTra' => $supplierdetailTotTra,
+                                    'directDetailTotTra' => $directDetailTotTra,
+                                    'advancePayDetailTotTra' => $advancePayDetailTotTra
+                                );
+
+                                $footer = "<font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!" . "<br>This is an auto generated email. Please do not reply to this email because we are not" . "monitoring this inbox.</font>";
+
+                                $dataEmail = array();
+                                $dataEmail['empName'] = $supplierMaster->nameOnPaymentCheque;
+                                $dataEmail['empEmail'] = $supplierEmail;
+
+
+                                $dataEmail['empSystemID'] = $employee->employeeSystemID;
+                                $dataEmail['empID']       = $employee->empID;
+
+                                $dataEmail['companySystemID'] = $bankLedger->companySystemID;
+                                $dataEmail['companyID'] = $bankLedger->companyID;
+
+                                $dataEmail['docID'] = 'SUPPLIEREMAIL';
+                                $dataEmail['docSystemID'] = null;
+                                $dataEmail['docSystemCode'] = $bankLedger->documentSystemCode;
+
+                                $dataEmail['docApprovedYN'] = $paySupplierInvoice->approved;
+                                $dataEmail['docCode'] = $bankLedger->documentCode;
+                                $dataEmail['ccEmailID'] = $confirmedPersonEmail;
+
+                                $emailTitle = "";
+                                if ($bankLedger->invoiceType == 2) {
+                                    $emailTitle = 'Payment has been released for the below invoices';
+                                } else if ($bankLedger->invoiceType == 5) {
+                                    $emailTitle = 'Advance Payment has been released for the below orders';
+                                }
+
+                                $temp = "Dear " . $supplierMaster->nameOnPaymentCheque . ",<p> " .$emailTitle. " from <b>" . $company->CompanyName . "<b/>.<p>" . $invoiceNumbers . "<p><p>" . $footer;
+
+                                //$location = \DB::table('systemmanualfolder')->first();
+                                $dataEmail['isEmailSend'] = 0;
+                                
+                                $dataEmail['alertMessage'] = "Payment Released";
+                                $dataEmail['emailAlertMessage'] = $temp;
+
+                               PaymentReleasedToSupplierJob::dispatch($request->db, $order, $dataEmail, $pdfName);
+                            }
+                        }
+
+                    } else {
+                        $updateArray['trsClearedAmount'] = 0;
+                        $updateArray['trsClearedByEmpName'] = null;
+                        $updateArray['trsClearedByEmpID'] = null;
+                        $updateArray['trsClearedByEmpSystemID'] = null;
+                        $updateArray['trsClearedDate'] = null;
+                    }
                 }
+
 
                 $bankLedger = $this->bankLedgerRepository->update($updateArray, $id);
             } else if ($input['editType'] == 4) {
@@ -760,17 +780,36 @@ class BankLedgerAPIController extends AppBaseController
                 $updateArray['trsCollectedYN'] = 0;
             }
 
-            if ($updateArray['trsCollectedYN']) {
-                $updateArray['trsCollectedByEmpName'] = $employee->empName;
-                $updateArray['trsCollectedByEmpID'] = $employee->empID;
-                $updateArray['trsCollectedByEmpSystemID'] = $employee->employeeSystemID;
-                $updateArray['trsCollectedDate'] = now();
+             if (isset($input['dateChange']) && $input['dateChange']) {
+                if (Carbon::parse($input['trsCollectedDate']) > Carbon::now()) {
+                    return $this->sendError("Collected date cannot be a future date", 500);
+                }
+
+
+                $bankReconciliation = BankReconciliation::where('companySystemID', $entity->companySystemID)
+                                                       ->orderBy('bankRecAutoID', 'desc')
+                                                       ->first();
+
+                if ($bankReconciliation && Carbon::parse($bankReconciliation->bankRecAsOf) > Carbon::parse($input['trsCollectedDate'])) {
+                    return $this->sendError("Collected date cannot be a less than last reconciliation date. Last reconciliation date - ".Carbon::parse($bankReconciliation->bankRecAsOf)->format('d/m/Y'), 500);
+                }
+
+
+                $updateArray['trsCollectedDate'] = Carbon::parse($input['trsCollectedDate']);
             } else {
-                $updateArray['trsCollectedByEmpName'] = null;
-                $updateArray['trsCollectedByEmpID'] = null;
-                $updateArray['trsCollectedByEmpSystemID'] = null;
-                $updateArray['trsCollectedDate'] = null;
+                if ($updateArray['trsCollectedYN']) {
+                    $updateArray['trsCollectedByEmpName'] = $employee->empName;
+                    $updateArray['trsCollectedByEmpID'] = $employee->empID;
+                    $updateArray['trsCollectedByEmpSystemID'] = $employee->employeeSystemID;
+                    $updateArray['trsCollectedDate'] = now();
+                } else {
+                    $updateArray['trsCollectedByEmpName'] = null;
+                    $updateArray['trsCollectedByEmpID'] = null;
+                    $updateArray['trsCollectedByEmpSystemID'] = null;
+                    $updateArray['trsCollectedDate'] = null;
+                }
             }
+
 
             if ($input['editType'] == 1) {
                 $id = $input['custReceivePaymentAutoID'];
