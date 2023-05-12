@@ -509,8 +509,13 @@ class PricingScheduleMasterAPIController extends AppBaseController
                 if (!$sheduleDetails['success']) {
                     return $this->sendError($sheduleDetails['message'], 500);
                 }
-
+                $boqItems = PricingScheduleDetail::select('id')->where('pricing_schedule_master_id',$input['id'])->where('boq_applicable',1)->get();
                 PricingScheduleDetail::where('pricing_schedule_master_id',$input['id'])->delete();
+
+                $boqDetails = $this->deleteBoqItems($boqItems);
+                if (!$boqDetails['success']) {
+                    return $this->sendError($boqDetails['message'], 500);
+                }
                 DB::commit();
                 return ['success' => true, 'message' => 'Successfully deleted', 'data' => $result];
             }
@@ -714,4 +719,30 @@ class PricingScheduleMasterAPIController extends AppBaseController
             return ['success' => false, 'message' => $e->getMessage()];
         }
     }
+
+    public function deleteBoqItems($items)
+    {
+
+        DB::beginTransaction();
+        try {
+
+            foreach($items as $item)
+            {   
+               $boqItems =  TenderBoqItems::select('id')->where('main_work_id',$item->id)->get();
+               foreach($boqItems as $boqItem)
+               {
+                $boqItem = TenderBoqItems::find($boqItem->id);
+                $boqItem->delete();
+               }
+
+      
+
+            }
+            DB::commit();
+            return ['success' => true, 'message' => 'Successfully Deleted'];
+        } catch (\Exception $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
+    }
+    
 }
