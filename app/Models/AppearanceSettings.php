@@ -9,10 +9,8 @@ class AppearanceSettings extends Model
 {
     public $table = 'appearance_settings';
 
-    const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
-    protected $appends = ['image_url'];
 
 
 
@@ -29,9 +27,9 @@ class AppearanceSettings extends Model
         'value' => 'string'
     ];
 
-    public function getImageUrlAttribute(){
 
-        return Helper::getFileUrlFromS3($this->value);
-
+    public function elements()
+    {
+        return $this->belongsTo('App\Models\AppearanceElements', 'appearance_element_id');
     }
 }
