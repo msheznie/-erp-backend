@@ -4795,7 +4795,7 @@ class Helper
                                 if(isset($documentModify) && $documentModify->type == 2)
                                 {   
                                  
-                                        $circulars = TenderCirculars::select('id','description','status','circular_name')->where('tender_id', $input['id'])->get();
+                                        $circulars = TenderCirculars::select('id','description','status','circular_name')->where('tender_id', $input['id'])->where('status',0)->get();
                                         $companyName = "";
                                         $company = Company::find($docApproved->companySystemID);
                                         if(isset($company->CompanyName)){

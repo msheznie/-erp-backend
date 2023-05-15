@@ -1234,11 +1234,20 @@ WHERE
                         if (is_null($input['stage']) || $input['stage'] == 0) {
                             return ['success' => false, 'message' => 'Stage is required'];
                         }
-
+                        
                         if ((isset($input['isRequestProcessComplete']) && isset($input['requestType'])) && (($input['isRequestProcessComplete']) && $input['requestType'] == 'Amend')) {
-                            $circulatAmends =  CircularAmendments::where('tender_id', $input['id'])->select('id')->count();
-                            if ($circulatAmends == 0) {
+                          
+                            $tenderCircular = TenderCirculars::select('id')->where('tender_id',$input['id'])->where('status',0);
+                            if($tenderCircular->count() == 0)
+                            {
                                 return ['success' => false, 'message' => 'Please attach a circular to confirm amended changes'];
+                            }
+
+                            $circulatIds = $tenderCircular->pluck('id');
+                            $circulatAmends =  CircularAmendments::whereIn('circular_id', $circulatIds)->select('id')->count();
+                            
+                            if ($circulatAmends == 0) {
+                                return ['success' => false, 'message' => 'Please attach a amend document to circular'];
                             }
                         }
 
