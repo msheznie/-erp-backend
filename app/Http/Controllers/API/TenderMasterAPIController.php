@@ -1332,7 +1332,7 @@ WHERE
                             $modifyData['modify_type'] = 2;
                             $documentModifyRequest = $this->documentModifyRequestRepository->create($modifyData);
 
-                            $versionUpdate['tender_edit_version_id'] = $documentModifyRequest['id'];
+                            $versionUpdate['tender_edit_confirm_id'] = $documentModifyRequest['id'];
                             TenderMaster::where('id', $input['id'])->update($versionUpdate);
 
                             $params = array('autoID' => $documentModifyRequest['id'], 'company' => $input["company_id"], 'document' => 118, 'reference_document_id' => 108);
@@ -3450,6 +3450,7 @@ WHERE
         $documentID = $request->documentID;
         $rollOver = $documentID == 117?'RollLevForApp_curr':'confirmation_RollLevForApp_curr';
         $approved = $documentID == 117?'document_modify_request.approved':'document_modify_request.confirmation_approved';
+        $versionId = $documentID == 117?'srm_tender_master.tender_edit_version_id':'srm_tender_master.tender_edit_confirm_id';
         $empID = \Helper::getEmployeeSystemID();
         if (isset($input['rfx'])) {
             $rfx = $input['rfx'];
@@ -3491,7 +3492,7 @@ WHERE
                 ->on('erp_documentapproved.rollLevelOrder', '=', $rollOver)
                 ->where('document_modify_request.companySystemID', $companyID)
                 ->where($approved, 0);
-        })->leftJoin('srm_tender_master', 'srm_tender_master.tender_edit_version_id', '=', 'document_modify_request.id');
+        })->leftJoin('srm_tender_master', $versionId, '=', 'document_modify_request.id');
 
 
         $poMasters = $poMasters->where('erp_documentapproved.approvedYN', 0)
@@ -3549,6 +3550,7 @@ WHERE
         $documentID = $request->documentID;
         $rollOver = $documentID == 117?'RollLevForApp_curr':'confirmation_RollLevForApp_curr';
         $approved = $documentID == 117?'document_modify_request.approved':'document_modify_request.confirmation_approved';
+        $versionId = $documentID == 117?'srm_tender_master.tender_edit_version_id':'srm_tender_master.tender_edit_confirm_id';
         $empID = \Helper::getEmployeeSystemID();
         if (isset($input['rfx'])) {
             $rfx = $input['rfx'];
@@ -3591,7 +3593,7 @@ WHERE
             $query->on('erp_documentapproved.documentSystemCode', '=', 'id')
                 ->where('document_modify_request.companySystemID', $companyID)
                 ->where($approved, -1);
-        })->leftJoin('srm_tender_master', 'srm_tender_master.tender_edit_version_id', '=', 'document_modify_request.id');
+        })->leftJoin('srm_tender_master', $versionId, '=', 'document_modify_request.id');
 
 
         $poMasters = $poMasters->where('erp_documentapproved.approvedYN', -1)
