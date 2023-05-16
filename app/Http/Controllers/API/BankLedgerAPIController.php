@@ -435,8 +435,8 @@ class BankLedgerAPIController extends AppBaseController
                         return $this->sendError("Clear date cannot be a future date", 500);
                     }
 
-
                     $bankReconciliation = BankReconciliation::where('companySystemID', $bankLedger->companySystemID)
+                                                           ->where('bankAccountAutoID', $bankLedger->bankAccountID)
                                                            ->orderBy('bankRecAutoID', 'desc')
                                                            ->first();
 
@@ -745,6 +745,7 @@ class BankLedgerAPIController extends AppBaseController
         if (array_key_exists('editType', $input)) {
 
             $entity = null;
+            $bankAccountAutoID = 0;
             if ($input['editType'] == 1) {
                 $id = $input['custReceivePaymentAutoID'];
                 $entity = $this->customerReceivePaymentRepository->find($id);
@@ -752,6 +753,7 @@ class BankLedgerAPIController extends AppBaseController
                 if (empty($entity)) {
                     return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.payment')]));
                 }
+                $bankAccountAutoID = $entity->bankAccount;
             } else if ($input['editType'] == 2) {
                 $id = $input['PayMasterAutoId'];
                 $entity = $this->paySupplierInvoiceMasterRepository->find($id);
@@ -759,6 +761,8 @@ class BankLedgerAPIController extends AppBaseController
                 if (empty($entity)) {
                     return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.receipt')]));
                 }
+
+                $bankAccountAutoID = $entity->BPVAccount;
             } else {
                 return $this->sendError('Error', 500);
             }
@@ -787,6 +791,7 @@ class BankLedgerAPIController extends AppBaseController
 
 
                 $bankReconciliation = BankReconciliation::where('companySystemID', $entity->companySystemID)
+                                                       ->where('bankAccountAutoID', $bankAccountAutoID)
                                                        ->orderBy('bankRecAutoID', 'desc')
                                                        ->first();
 
