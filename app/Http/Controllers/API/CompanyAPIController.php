@@ -228,78 +228,19 @@ class CompanyAPIController extends AppBaseController
 
     }
 
-    public function getAppearance(){
-        $bgColor = AppearanceSettings::where('appearance_system_id', 1)->where('appearance_element_id', 1)->first();
-        $logo= AppearanceSettings::where('appearance_system_id', 1)->where('appearance_element_id', 2)->first();
+    public function getAppearance(Request $request){
 
-        $data = array('logo' => $logo, 'bgColor' => $bgColor);
+        $appearanceSystemID = $request->get('appearance_system_id');
 
-        return $this->sendResponse($data, 'Record retrieved successfully');
-    }
-
-    public function appearanceSubmit(Request $request){
-
-        $input = $request->all();
-        $path_dir = null;
-        $imageData = $input['item_path'];
-        $companySystemID = $input['companySystemID'];
-        unset($input['item_path']);
-        $companyMaster = Company::find($companySystemID);
-        $path_dir['path'] = '';
-
-        $disk = Helper::policyWiseDisk($companySystemID, 'public');
-
-        $data1 = [
-            'appearance_system_id' => $request->appearanceSystemID,
-            'appearance_element_id' => 1,
-            'value' => $request->value
-        ];
-
-        AppearanceSettings::where('appearance_system_id', $request->appearanceSystemID)->where('appearance_element_id', 1)->delete();
-
-        AppearanceSettings::create($data1);
-
-        if($imageData != null || !empty($imageData))
-        {
-            foreach($imageData as $key=>$val)
-            {
-                // $path_dir['path'] = '';
-                if (preg_match('/^https/', $val['path']))
-                {
-                    $path_dir['path'] = $val['db_path'];
-                } else
-                {
-                    $t=time();
-                    $tem = substr($t,5);
-                    $valtt = $this->quickRandom();
-                    $random_words = $valtt.'_'.$tem;
-
-                    $companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
-
-                    $base_path = $companyCode.'/administration/appearance-designer/';
-
-
-                    $path_dir = $this->storeImage($val['path'], $random_words, $base_path,$disk);
-
-                    $data2 = [
-                        'appearance_system_id' => $request->appearanceSystemID,
-                        'appearance_element_id' => 2,
-                        'value' => $path_dir
-                    ];
-                    AppearanceSettings::where('appearance_system_id', $request->appearanceSystemID)->where('appearance_element_id', 2)->delete();
-
-                    AppearanceSettings::create($data2);
-
-                }
+        $data= AppearanceSettings::with(['elements'])->where('appearance_system_id', $appearanceSystemID)->get();
+        foreach ($data as $dt){
+            if($dt->appearance_element_id == 2){
+                $dt->value = Helper::getFileUrlFromS3($dt->value);
             }
 
         }
 
-
-
-
-        return $this->sendResponse([], 'Record inserted successfully');
-
+        return $this->sendResponse($data,'Record retrieved successfully');
     }
 
     public function getAdvanceAccount(Request $request)
