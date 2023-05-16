@@ -380,11 +380,6 @@ class TenderCircularsAPIController extends AppBaseController
             if(!isset($input['attachment_id'])){
                 return ['success' => false, 'message' => 'Amendment is required'];
             } 
-            
-            if(sizeof($input['attachment_id' ]) == 0){
-                return ['success' => false, 'message' => 'Amendment is required'];
-            }
-               
         }
    
         if(isset($input['attachment_id' ])){
@@ -420,7 +415,7 @@ class TenderCircularsAPIController extends AppBaseController
             }
         }
 
-        if(isset($input['attachment_id']) && sizeof($input['attachment_id' ]) != 0){
+        if(isset($input['attachment_id'])){
             if(isset($input['id'])) {
                 $exist = TenderCirculars::where('id','!=',$input['id'])->where('tender_id', $input['tenderMasterId'])->where('attachment_id', $input['attachment_id'])->where('company_id', $input['companySystemID'])->first();
 
@@ -456,7 +451,11 @@ class TenderCircularsAPIController extends AppBaseController
             if(isset($input['id'])){
                 $circulatAmends =  CircularAmendments::where('tender_id', $input['tender_id'])->select('id')->count();
                 if ($circulatAmends == 0) {
-                    return ['success' => false, 'message' => 'Amendment is required'];
+                    if($input['isRequestProcessComplete'] && $input['requestType'] == 'Amend')
+                    {
+                        return ['success' => false, 'message' => 'Amendment is required'];
+                    }
+                    
                 }
 
 
