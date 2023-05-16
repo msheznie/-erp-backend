@@ -449,7 +449,7 @@ class TenderCircularsAPIController extends AppBaseController
             $data['company_id']=$input['companySystemID'];
 
             if(isset($input['id'])){
-                $circulatAmends =  CircularAmendments::where('tender_id', $input['tender_id'])->select('id')->count();
+                $circulatAmends =  CircularAmendments::where('circular_id', $input['id'])->select('id')->count();
                 if ($circulatAmends == 0) {
                     if($input['isRequestProcessComplete'] && $input['requestType'] == 'Amend')
                     {
