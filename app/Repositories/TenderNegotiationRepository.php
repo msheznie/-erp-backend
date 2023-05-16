@@ -23,7 +23,8 @@ class TenderNegotiationRepository extends BaseRepository
         'confirmed_yn',
         'confirmed_by',
         'confirmed_at',
-        'started_by'
+        'started_by',
+        'comments'
     ];
 
     /**

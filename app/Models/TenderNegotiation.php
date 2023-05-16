@@ -20,7 +20,9 @@ class TenderNegotiation extends Model
         'confirmed_yn',
         'confirmed_by',
         'confirmed_at',
-        'started_by'
+        'comments',
+        'started_by',
+        'no_to_approve'
     ];
 
         /**
@@ -32,11 +34,13 @@ class TenderNegotiation extends Model
         'id' => 'integer',
         'srm_tender_master_id' => 'integer',
         'status' => 'integer',
-        'approved_yn' => 'integer',
-        'confirmed_yn' => 'integer',
+        'approved_yn' => 'boolean',
+        'confirmed_yn' => 'boolean',
         'started_by' => 'integer',
         'confirmed_by' => 'integer',
-        'confirmed_at' => 'date'
+        'comments' => 'string',
+        'confirmed_at' => 'date',
+        'no_to_approve' => 'integer'
     ];
 
         /**

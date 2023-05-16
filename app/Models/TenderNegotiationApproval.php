@@ -6,11 +6,19 @@ use Eloquent as Model;
 
 /**
  * @OA\Schema(
- *      schema="SupplierTenderNegotiation",
+ *      schema="TenderNegotiationApproval",
  *      required={""},
  *      @OA\Property(
  *          property="id",
  *          description="id",
+ *          readOnly=$FIELD_READ_ONLY$,
+ *          nullable=$FIELD_NULLABLE$,
+ *          type="integer",
+ *          format="int32"
+ *      ),
+ *      @OA\Property(
+ *          property="emp_id",
+ *          description="emp_id",
  *          readOnly=$FIELD_READ_ONLY$,
  *          nullable=$FIELD_NULLABLE$,
  *          type="integer",
@@ -25,11 +33,12 @@ use Eloquent as Model;
  *          format="int32"
  *      ),
  *      @OA\Property(
- *          property="suppliermaster_id",
- *          description="suppliermaster_id",
+ *          property="status",
+ *          description="status",
  *          readOnly=$FIELD_READ_ONLY$,
  *          nullable=$FIELD_NULLABLE$,
- *          type="boolean"
+ *          type="integer",
+ *          format="int32"
  *      ),
  *      @OA\Property(
  *          property="created_at",
@@ -49,10 +58,10 @@ use Eloquent as Model;
  *      )
  * )
  */
-class SupplierTenderNegotiation extends Model
+class TenderNegotiationApproval extends Model
 {
 
-    public $table = 'suppliers_tender_negotiations';
+    public $table = 'approvals_tender_negotiation';
     
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
@@ -61,10 +70,9 @@ class SupplierTenderNegotiation extends Model
 
 
     public $fillable = [
+        'emp_id',
         'tender_negotiation_id',
-        'suppliermaster_id',
-        'srm_bid_submission_master_id',
-        'bidSubmissionCode'
+        'status'
     ];
 
     /**
@@ -74,10 +82,9 @@ class SupplierTenderNegotiation extends Model
      */
     protected $casts = [
         'id' => 'integer',
+        'emp_id' => 'integer',
         'tender_negotiation_id' => 'integer',
-        'suppliermaster_id' => 'integer',
-        'srm_bid_submission_master_id' => 'integer',
-        'bidSubmissionCode' => 'string',
+        'status' => 'integer'
     ];
 
     /**
@@ -86,7 +93,8 @@ class SupplierTenderNegotiation extends Model
      * @var array
      */
     public static $rules = [
-        'tender_negotiation_id'=> 'required',
+        'tender_negotiation_id' => 'required',
+        'status' => 'required'
     ];
 
     

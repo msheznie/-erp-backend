@@ -55,7 +55,9 @@ class SupplierTenderNegotiationController extends AppBaseController
         foreach($supplierList as $supplier) {
             $data = [
                 'tender_negotiation_id' => $input['tender_negotiation_id'],
-                'suppliermaster_id' =>  $supplier
+                'suppliermaster_id' =>  $supplier,
+                'srm_bid_submission_master_id' => $input['srm_bid_submission_master_id'],
+                'bidSubmissionCode' => $input['bidSubmissionCode']
             ];
 
             $checkSupplierExist = $this->checkSupplierExist($data);

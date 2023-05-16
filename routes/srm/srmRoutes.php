@@ -235,7 +235,7 @@ Route::post('getFinalBidsForTenderNegotiation', 'TenderNegotiationController@get
 Route::post('getTenderNegotiatedSupplierIds','SupplierTenderNegotiationController@getTenderNegotiatedSupplierIds');
 
 Route::resource('tenderNegotiationAreas', 'TenderNegotiationAreaController');
+
 Route::post('getSelectedAreas', 'TenderNegotiationAreaController@getSelectedAreas');
 
-
-
+Route::resource('tenderNegotiationApprovals', 'TenderNegotiationApprovalController');

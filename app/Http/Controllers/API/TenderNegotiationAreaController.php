@@ -105,20 +105,16 @@ class TenderNegotiationAreaController extends AppBaseController
      */
     public function update($id, UpdateTenderNegotiationAreaRequest $request)
     {
-        dd($id);
         $tenderNegotiationArea = $this->tenderNegotiationAreaRepository->findWithoutFail($id);
 
         if (empty($tenderNegotiationArea)) {
-            Flash::error('Tender Negotiation Area not found');
-
-            return redirect(route('tenderNegotiationAreas.index'));
+            return $this->sendError('Tender Negotiation data not found', 404);
         }
 
         $tenderNegotiationArea = $this->tenderNegotiationAreaRepository->update($request->all(), $id);
 
-        Flash::success('Tender Negotiation Area updated successfully.');
-
-        return redirect(route('tenderNegotiationAreas.index'));
+        return $this->sendResponse($tenderNegotiationArea->toArray(), 'Tender Negotiation Area updated successfully');
+        
     }
 
     /**
@@ -149,9 +145,7 @@ class TenderNegotiationAreaController extends AppBaseController
         
         $input = $request->input();
 
-        $supplierTenderNegotiationId = $this->findSupplierTenderNegotiationId($input);
-
-        $tenderNegotiationArea = $this->tenderNegotiationAreaRepository->getTenderNegotiationAreaBySupplierNegotiationID($supplierTenderNegotiationId->id);
+        $tenderNegotiationArea = $this->tenderNegotiationAreaRepository->getTenderNegotiationAreaBySupplierNegotiationID($input['tender_negotiation_id']);
 
         return $this->sendResponse($tenderNegotiationArea, 'Tender Negotiation Area retereived successfully');
 

@@ -21,7 +21,9 @@ class SupplierTenderNegotiationRepository extends BaseRepository
      */
     protected $fieldSearchable = [
         'tender_negotiation_id',
-        'suppliermaster_id'
+        'suppliermaster_id',
+        'srm_bid_submission_master_id',
+        'bidSubmissionCode'
     ];
 
     /**
