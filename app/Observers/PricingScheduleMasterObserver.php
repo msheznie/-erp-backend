@@ -89,7 +89,7 @@ class PricingScheduleMasterObserver
                     $dataBidShed['pricing_schedule_master_id']=$result['id'];
                     $dataBidShed['company_id']=$bid->getAttribute('company_id');
                     $dataBidShed['formula_string']=$bid->getAttribute('formula_string');
-                    $dataBidShed['created_by']=$empId;
+                    $dataBidShed['created_by']=$emp_id;
                     $dataBidShed['tender_edit_version_id'] = $bid->getAttribute('tender_edit_version_id');
                     $dataBidShed['modify_type'] = 1;
                     $dataBidShed['description'] = $bid->getAttribute('description');

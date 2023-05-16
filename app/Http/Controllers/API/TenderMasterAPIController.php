@@ -1244,13 +1244,16 @@ WHERE
                             }
 
                             $circulatIds = $tenderCircular->pluck('id');
-                            $circulatAmends =  CircularAmendments::whereIn('circular_id', $circulatIds)->select('id')->count();
-                            
-                            if ($circulatAmends == 0) {
-                                return ['success' => false, 'message' => 'Please attach a amend document to circular'];
-                            }
-                        }
 
+                            foreach($circulatIds as $id)
+                            {
+                                $circulatAmends =  CircularAmendments::where('circular_id', $id)->count();
+                                if ($circulatAmends == 0) {
+                                    return ['success' => false, 'message' => 'Please attach at least one amendment to a circular'];
+                                }
+                            }
+                           
+                        }
                         $technical = EvaluationCriteriaDetails::where('tender_id', $input['id'])->where('critera_type_id', 2)->first();
                         if (empty($technical) && !$rfq) {
                             return ['success' => false, 'message' => 'At least one technical criteria should be added'];

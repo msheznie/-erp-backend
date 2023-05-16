@@ -28,9 +28,14 @@ class CircularAmendmentsObserver
         if($obj)
         {
             $circularId = $tender->getAttribute('circular_id');
-            $cirularObj = TenderCircularsEditLog::where('master_id',$circularId)->first();
+            $cirularObj = TenderCircularsEditLog::select('id')->where('master_id',$circularId)->first();
+            $editCircularID = null;
+            if(isset($cirularObj) && !empty($cirularObj))
+            {
+                $editCircularID = $cirularObj->getAttribute('id');
+            }
 
-            $result = $this->process($tender,$cirularObj,2,$tenderObj,null);
+            $result = $this->process($tender,$editCircularID,2,$tenderObj,null);
         
 
             if($result)
@@ -51,17 +56,21 @@ class CircularAmendmentsObserver
       
         if($obj)
         {
-            $amend = CircularAmendmentsEditLog::where('master_id',$tender->getAttribute('id'))->first();
-
-            if($amend)
+            $amend = CircularAmendmentsEditLog::select('circular_id','id')->where('master_id',$tender->getAttribute('id'))->first();
+            $editCircularID = null;
+            $reflogId = null;
+            if(isset($amend) && !empty($amend))
             {
-                $result = $this->process($tender,$amend,1,$tenderObj,$amend->getAttribute('id'));
+                $editCircularID = $amend->getAttribute('circular_id');
+                $reflogId = $amend->getAttribute('id');
+            }
 
-                
-                if($result)
-                {
-                    Log::info('tender circular deleted successfully');
-                }
+            $result = $this->process($tender,$editCircularID,1,$tenderObj,$reflogId);
+
+            
+            if($result)
+            {
+                Log::info('tender circular deleted successfully');
             }
         }
 
@@ -78,7 +87,7 @@ class CircularAmendmentsObserver
             $empId = $employee->employeeSystemID;
 
             $data['tender_id']=$tender->getAttribute('tender_id');
-            $data['circular_id']=$obj->getAttribute('circular_id');
+            $data['circular_id']=$obj;
             $data['amendment_id']=$tender->getAttribute('amendment_id');
             $data['attachment_id']=$tender->getAttribute('attachment_id');
             $data['master_id']=$tender->getAttribute('id');
