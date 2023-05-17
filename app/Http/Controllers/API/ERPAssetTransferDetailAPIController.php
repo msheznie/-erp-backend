@@ -370,7 +370,7 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
     {
         $input = $request->all();
         $companyID = $input['companyID'];
-        $data['assetMaster_drop'] = FixedAssetMaster::where('companySystemID', $companyID)->get();
+        $data['assetMaster_drop'] = [];
         $data['location_drop'] = ErpLocation::select('locationID', 'locationName')->get();
         return $this->sendResponse($data, 'Asset request drop down data retrieved successfully');
     }
