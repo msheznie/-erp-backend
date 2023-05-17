@@ -342,7 +342,10 @@ class TenderDocumentTypesAPIController extends AppBaseController
         $input = $request->all();
         try {
             if (isset($input['doc_type_id'])) {
-                $result = TenderDocumentTypeAssign::where('tender_id', $input['tender_id'])->where('document_type_id', $input['doc_type_id'])->where('company_id', $input['company_id'])->delete();
+                $docType = TenderDocumentTypeAssign::where('tender_id', $input['tender_id'])->where('document_type_id', $input['doc_type_id'])->where('company_id', $input['company_id'])->first();
+                $result = TenderDocumentTypeAssign::find($docType->id);
+                $result->delete();
+
                 if($result){
                     return ['success' => true, 'message' => 'Successfully deleted'];
                 } else {
