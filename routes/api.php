@@ -1894,6 +1894,3 @@ Route::get('viewHrDocuments', 'ThirdPartySystemsDocumentUploadAndDownloadAPICont
 /*
  * End external related routes
  */
-
-
-Route::resource('tender_document_type_assign_logs', 'TenderDocumentTypeAssignLogAPIController');
