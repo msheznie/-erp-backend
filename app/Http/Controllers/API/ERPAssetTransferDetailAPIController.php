@@ -354,7 +354,14 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
         $input = $request->all();
         $companyID = $input['companyID'];
         $search = $input['search'];
-        $data['assetMaster_drop'] = FixedAssetMaster::where('companySystemID', $companyID)->where('faCode', 'like', "%{$search}%")->orWhere('assetDescription', 'like', "%{$search}%")->get();
+        $data['assetMaster_drop'] = FixedAssetMaster::where('companySystemID', $companyID)
+                                                    ->where(function($query) use ($search) {
+                                                        $query->where('faCode', 'like', "%{$search}%")
+                                                              ->orWhere('assetDescription', 'like', "%{$search}%");
+                                                    })
+                                                    ->where('approved', -1)
+                                                    ->where('DIPOSED', 0)
+                                                    ->get();
 
         return $this->sendResponse($data, 'Asset request drop down data retrieved successfully');
     }
