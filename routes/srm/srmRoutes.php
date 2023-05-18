@@ -239,3 +239,6 @@ Route::resource('tenderNegotiationAreas', 'TenderNegotiationAreaController');
 Route::post('getSelectedAreas', 'TenderNegotiationAreaController@getSelectedAreas');
 
 Route::resource('tenderNegotiationApprovals', 'TenderNegotiationApprovalController');
+
+Route::post('tender-negotiation-approvals-get-employees', 'TenderNegotiationApprovalController@getEmployees');
+

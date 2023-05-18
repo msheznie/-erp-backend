@@ -3680,7 +3680,7 @@ WHERE
 
         $companyId = $request['companyId'];
 
-        $query = TenderNegotiation::with(['tenderMaster' => function ($q){ 
+        $query = TenderNegotiation::with(['area','tenderMaster' => function ($q){ 
             $q->with(['currency','tender_type','envelop_type']);
         }]);
 

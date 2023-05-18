@@ -9,8 +9,8 @@ class TenderNegotiation extends Model
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
-    // 1 - not started
-    // 2 -pending
+    // 0/1 - not started
+    // 2 -started
     // 3 - completed
     
     public $fillable = [
@@ -65,6 +65,11 @@ class TenderNegotiation extends Model
     public function confirmed_by()
     {
         return $this->belongsTo('App\Models\Employee', 'confirmed_by', 'employeeSystemID');
+    }
+
+    public function area() {
+        return $this->hasOne('App\Models\TenderNegotiationArea', 'tender_negotiation_id', 'id');
+        
     }
 
 }

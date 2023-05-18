@@ -196,9 +196,8 @@ class TenderNegotiationController extends AppBaseController
                     $redirectUrl =  env("SRM_TENDER_URL");
                     $companyName = (Auth::user()->employee && Auth::user()->employee->company) ? Auth::user()->employee->company->CompanyName : null ;
                     // $temp = "<p>Dear " . $employee->empName . ',</p><p>We are pleased to inform you that we have selected your bid for negotiation. We appreciate the time and effort you put into preparing your proposal, and we were impressed by the quality and value it provides</p><br/><p>We believe that your proposal aligns with our business needs, and we look forward to discussing it in more detail during the negotiation process.</p><p>Please let us know if you have any questions or concerns regarding the negotiation process. We are committed to working collaboratively with you to ensure that we arrive at a mutually beneficial agreement that meets both our needs.</p><p>Thank you again for your bid and your interest in working with us. We look forward to a successful negotiation and a long and productive business relationship.</p><p>Please find the link below.</p><p><a href="' . $redirectUrl . '">Click here to view</a></p><br/><br/><p>Best Regards</p><p>' . $companyName . '</p>';
-                    // $dataEmail['alertMessage'] = $supplierTenderNegotiation->bidSubmissionCode." - Tender Bid For Negotiation";
+                    $dataEmail['alertMessage'] = $supplierTenderNegotiation->bidSubmissionCode." - Tender Negotiation For Approval";
                     $temp = "";
-                    $dataEmail['alertMessage'] = "Pending For Approval";
                     $dataEmail['emailAlertMessage'] = $temp;
                     $sendEmail = \Email::sendEmailErp($dataEmail);
                 }
