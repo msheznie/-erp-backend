@@ -355,6 +355,57 @@ class TenderMasterAPIController extends AppBaseController
 
 
         $tenderMaster = TenderMaster::with(['tender_type', 'envelop_type', 'currency'])->where('company_id', $companyId);
+        
+        $filters = $this->getFilterData($input); 
+        
+        if ($filters['currencyId'] && count($filters['currencyId']) > 0) {
+            $tenderMaster->whereIn('currency_id', $filters['currencyId']);
+        }
+
+        if ($filters['selection']) {
+            $tenderMaster->where('tender_type_id', $filters['selection']);
+        }
+
+        if ($filters['envelope']) {
+            $tenderMaster->where('envelop_type_id', $filters['envelope']);
+        }
+
+        if ($filters['published']) {
+            $publish =  ($filters['published'] == 1 ) ? 0 :1;
+            $tenderMaster->where('published_yn', $publish);
+        }
+
+        if ($filters['rfxType']) { 
+            $tenderMaster->where('document_type', $filters['rfxType']); 
+        }
+
+        if ($filters['status']) { 
+            switch ($filters['status']) {
+                case 1:
+                    $tenderMaster->where('confirmed_yn', 0)
+                                ->where('approved', 0)
+                                ->where('refferedBackYN', 0);
+                    break;
+        
+                case 2:
+                    $tenderMaster->where('confirmed_yn', 1)
+                                ->where('approved', 0)
+                                ->where('refferedBackYN', 0);
+                    break;
+        
+                case 3:
+                    $tenderMaster->where('confirmed_yn', 1)
+                                ->where('approved', -1)
+                                ->where('refferedBackYN', 0);
+                    break;
+                    
+                case 4:
+                        $tenderMaster->where('confirmed_yn', 1)
+                                    ->where('approved', 0)
+                                    ->where('refferedBackYN', -1);
+                    break;
+                } 
+        }
 
         if (isset($input['rfx']) && $input['rfx']) {
             $tenderMaster = $tenderMaster->where('document_type', '!=', 0);
@@ -2432,13 +2483,40 @@ WHERE
 
         $companyId = $request['companyId'];
 
-
+        $filters = $this->getFilterData($input); 
 
         // $tenderMaster = TenderMasterSupplier::with(['tender_master'=>function($q){
         //     $q->with(['tender_type', 'envelop_type', 'currency']);
         // }])->get();
 
         $query = TenderMaster::with(['currency', 'srm_bid_submission_master', 'tender_type', 'envelop_type', 'srmTenderMasterSupplier'])->whereHas('srmTenderMasterSupplier')->where('published_yn', 1);
+
+
+        if ($filters['currencyId'] && count($filters['currencyId']) > 0) {
+            $query->whereIn('currency_id', $filters['currencyId']);
+        }
+
+        if ($filters['selection']) {
+            $query->where('tender_type_id', $filters['selection']);
+        }
+
+        if ($filters['envelope']) {
+            $query->where('envelop_type_id', $filters['envelope']);
+        }
+
+        if ($filters['gonogo']) {
+            $gonogo =  ($filters['gonogo'] == 1 ) ? 0 :1;
+            $query->where('go_no_go_status', $gonogo);
+        }
+
+        if ($filters['technical']) {
+            $technical =  ($filters['technical'] == 1 ) ? 0 :1;
+            $query->where('technical_eval_status', $technical);
+        }
+
+        if ($filters['stage']) { 
+            $query->where('stage', $filters['stage']);
+        }
 
         // return $this->sendResponse($query, 'Tender Masters retrieved successfully');
 
@@ -2764,13 +2842,35 @@ WHERE
 
         $companyId = $request['companyId'];
 
-
+        $filters = $this->getFilterData($input); 
 
         // $tenderMaster = TenderMasterSupplier::with(['tender_master'=>function($q){
         //     $q->with(['tender_type', 'envelop_type', 'currency']);
         // }])->get();
 
         $query = TenderMaster::with(['currency', 'srm_bid_submission_master', 'tender_type', 'envelop_type', 'srmTenderMasterSupplier'])->whereHas('srmTenderMasterSupplier')->where('published_yn', 1)->where('technical_eval_status', 1)->where('go_no_go_status', 1);
+
+
+        if ($filters['currencyId'] && count($filters['currencyId']) > 0) {
+            $query->whereIn('currency_id', $filters['currencyId']);
+        }
+
+        if ($filters['selection']) {
+            $query->where('tender_type_id', $filters['selection']);
+        }
+
+        if ($filters['envelope']) {
+            $query->where('envelop_type_id', $filters['envelope']);
+        }
+
+        if ($filters['stage']) { 
+            $query->where('stage', $filters['stage']);
+        }
+
+        if ($filters['commercial']) {
+            $commercial =  ($filters['commercial'] == 1 ) ? 0 :1;
+            $query->where('commercial_verify_status', $commercial);
+        }
 
         // return $this->sendResponse($query, 'Tender Masters retrieved successfully');
 
@@ -3674,5 +3774,41 @@ WHERE
         } catch (\Exception $e) {
             return ['success' => false, 'message' => $e->getMessage()];
         }
+    }
+
+    public function getTenderFilterData(Request $request){ 
+        return $this->tenderMasterRepository->getTenderFilterData($request);
+    }
+
+    public function getFilterData($input)
+    {  
+        $currencyId = !empty($input['filters']['currencyId']) ? $input['filters']['currencyId'] : null;
+        $currencyId = (array)$currencyId;
+        $currencyId = collect($currencyId)->pluck('id');
+
+        $selection = !empty($input['filters']['selection']) ? $input['filters']['selection'] : null;
+        $envelope = !empty($input['filters']['envelope']) ? $input['filters']['envelope'] : null;
+        $published = !empty($input['filters']['publish']) ? $input['filters']['publish']: null;
+        $status = !empty($input['filters']['status']) ? $input['filters']['status']: null; 
+        $rfxType = !empty($input['filters']['type']) ? $input['filters']['type']: null; 
+        $gonogo = !empty($input['filters']['gonogo']) ? $input['filters']['gonogo']: null; 
+        $technical = !empty($input['filters']['technical']) ? $input['filters']['technical']: null; 
+        $stage = !empty($input['filters']['stage']) ? $input['filters']['stage']: null; 
+        $commercial = !empty($input['filters']['commercial']) ? $input['filters']['commercial']: null; 
+
+        $filters = [
+            'currencyId' => $currencyId,
+            'selection' => $selection,
+            'envelope' => $envelope,
+            'published' => $published,
+            'status' => $status,
+            'rfxType' => $rfxType,
+            'gonogo' => $gonogo,
+            'technical' => $technical,
+            'stage' => $stage,
+            'commercial' => $commercial,
+        ];
+
+        return $filters;
     }
 } 
