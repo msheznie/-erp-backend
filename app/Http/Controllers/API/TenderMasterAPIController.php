@@ -2958,10 +2958,28 @@ WHERE
         }
 
         $companyId = $request['companyId'];
+        $filters = $this->getFilterData($input); 
 
         $query = TenderMaster::with(['currency', 'srm_bid_submission_master', 'tender_type', 'envelop_type', 'srmTenderMasterSupplier'])->whereHas('srmTenderMasterSupplier')->where('published_yn', 1)
             ->where('commercial_verify_status', 1)
             ->where('technical_eval_status', 1);
+
+        if ($filters['currencyId'] && count($filters['currencyId']) > 0) {
+                $query->whereIn('currency_id', $filters['currencyId']);
+        }
+
+        if ($filters['selection']) {
+            $query->where('tender_type_id', $filters['selection']);
+        }
+
+        if ($filters['envelope']) {
+            $query->where('envelop_type_id', $filters['envelope']);
+        }
+
+        if ($filters['stage']) { 
+            $query->where('stage', $filters['stage']);
+        }
+        
 
         $search = $request->input('search.value');
         if ($search) {
