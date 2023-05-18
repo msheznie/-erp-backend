@@ -220,3 +220,4 @@ Route::post('getTenderEditMasterFullApproved', 'TenderMasterAPIController@getTen
 Route::post('rejectTenderEditDocument', 'TenderEditLogMasterAPIController@rejectTenderEditDocument');
 Route::resource('calendar_dates_detail_edit_logs', 'CalendarDatesDetailEditLogAPIController');
 Route::resource('procument_activity_edit_logs', 'ProcumentActivityEditLogAPIController');
+Route::post('getTenderFilterData', 'TenderMasterAPIController@getTenderFilterData');
