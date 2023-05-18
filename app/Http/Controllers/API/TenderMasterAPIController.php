@@ -3613,7 +3613,7 @@ WHERE
                 ->on('erp_documentapproved.rollLevelOrder', '=', $rollOver)
                 ->where('document_modify_request.companySystemID', $companyID)
                 ->where($approved, 0);
-        })->leftJoin('srm_tender_master', $versionId, '=', 'document_modify_request.id');
+            })->leftJoin('srm_tender_master', 'srm_tender_master.id', '=', 'document_modify_request.documentSystemCode');
 
 
         $poMasters = $poMasters->where('erp_documentapproved.approvedYN', 0)
@@ -3714,7 +3714,7 @@ WHERE
             $query->on('erp_documentapproved.documentSystemCode', '=', 'id')
                 ->where('document_modify_request.companySystemID', $companyID)
                 ->where($approved, -1);
-        })->leftJoin('srm_tender_master', $versionId, '=', 'document_modify_request.id');
+        })->leftJoin('srm_tender_master', 'srm_tender_master.id', '=', 'document_modify_request.documentSystemCode');
 
 
         $poMasters = $poMasters->where('erp_documentapproved.approvedYN', -1)
