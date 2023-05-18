@@ -99,7 +99,28 @@ class TenderMasterRepository extends BaseRepository
             array('value'=> 1 , 'label'=> 'RFQ'),
             array('value'=> 2 , 'label'=> 'RFI'), 
             array('value'=> 3 , 'label'=> 'RFP'), 
-        ); 
+        );
+
+        $gonogo = array(
+            array('value'=> 1 , 'label'=> 'Not Completed'),
+            array('value'=> 2 , 'label'=> 'Completed'),  
+        );  
+
+        $technical = array(
+            array('value'=> 1 , 'label'=> 'Not Completed'),
+            array('value'=> 2 , 'label'=> 'Completed'),  
+        );  
+
+        $stage = array(
+            array('value'=> 1 , 'label'=> 'Single Stage'),
+            array('value'=> 2 , 'label'=> 'Two Stage'),  
+        );  
+
+        $commercial = array(
+            array('value'=> 1 , 'label'=> 'Not Completed'),
+            array('value'=> 2 , 'label'=> 'Completed'),  
+        );
+        
         
         $data = array(
             'currency' => $currency,
@@ -108,6 +129,10 @@ class TenderMasterRepository extends BaseRepository
             'published' => $published,
             'status' => $status,
             'rfxTypes' => $rfxTypes,
+            'technical' => $technical,
+            'gonogo' => $gonogo,
+            'stage' => $stage,
+            'commercial' => $commercial,
         ); 
  
         return $data;
