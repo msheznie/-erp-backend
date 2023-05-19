@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\hrms\travelRequest;
+namespace App\Services\hrms\hrDocument;
 
 use Collator;
 use Exception;
@@ -33,7 +33,6 @@ class HrDocNotificationService
         $this->visibility = $visibility;
         $this->employees = $employees;
         $this->notifyList = [];
-        // $this->documentCode = $this->master['documentDescription'];
         $this->documentCode = $id;
     }
 
@@ -48,7 +47,7 @@ class HrDocNotificationService
         }
 
         $this->validateNotifyEmpDataExists();
-        $this->insertToLogTb(['Document Code'=> $this->id ,'Message'=> 'Employees data does not exists'.$this->notifyList],'error');  
+        $this->insertToLogTb(['Document Code'=> $this->id ,'Message'=> 'Employees data does not exists'],'error');  
 
         if (empty($this->notifyList)) {
             $this->insertToLogTb(['Document Code'=> $this->id ,'Message'=> 'Employees data does not exists'],'error');  

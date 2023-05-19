@@ -4,7 +4,7 @@ namespace App\Jobs;
 
 use Illuminate\Bus\Queueable;
 use App\helper\CommonJobService;
-use App\Services\hrms\travelRequest\HrDocNotificationService;
+use App\Services\hrms\hrDocument\HrDocNotificationService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
@@ -67,10 +67,10 @@ class HrDocNotificationJob implements ShouldQueue
                 'log_data' => json_encode($message)
             ];
             DB::table('job_logs')->insert($data);
-        } else {
-           
+        } else {            
             CommonJobService::db_switch($db_name);
-            $obj = new HrDocNotificationService($this->companyId, $this->tenantId, $this->id ,$this->visibility ,$this->emlpoyees);
+            $emp = [11,12];
+            $obj = new HrDocNotificationService($this->companyId, $this->tenantId, $this->id ,$this->visibility,$emp);
             $obj->execute();
         }
     }
