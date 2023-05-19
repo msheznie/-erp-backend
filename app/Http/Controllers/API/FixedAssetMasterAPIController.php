@@ -466,7 +466,10 @@ class FixedAssetMasterAPIController extends AppBaseController
         $itemImgaeArr = $input['itemImage'];
         $itemPicture = $input['itemPicture'];
         $input = array_except($request->all(), 'itemImage');
+
         $input = $this->convertArrayToValue($input);
+
+        $input['COSTUNIT'] = floatval($input['COSTUNIT']);
 
         if(doubleval($input['salvage_value_rpt']) >  (doubleval($input['costUnitRpt']))) {
             return $this->sendError("Salvage Value Cannot be greater than Unit Price", 500);

@@ -973,7 +973,7 @@ class GRVMasterAPIController extends AppBaseController
             $body .= '</tbody>
             </table>';
             $body .= "<br><br>";
-            $body .= "<b>Purchase order documents removed from GRV</b> <br<br>";
+            $body .= "<b>Purchase order documents removed from GRV</b> <br><br>";
             $body .= "<br><br>";
             $body .= '<table style="width:100%;border: 1px solid black;border-collapse: collapse;">
             <thead>
@@ -997,7 +997,7 @@ class GRVMasterAPIController extends AppBaseController
             $body .= '</tbody>
             </table>';
             $body .= "<br><br>";
-            $body .= "<b>Quantity changes from delivery appointment</b> <br<br>";
+            $body .= "<b>Quantity changes from delivery appointment</b> <br><br>";
             $body .= "<br><br>";
             $body .= '<table style="width:100%;border: 1px solid black;border-collapse: collapse;">
             <thead>
@@ -1024,14 +1024,15 @@ class GRVMasterAPIController extends AppBaseController
             </table>';
             $body .= "<br><br>";
             $body .= "Thank You.";
-            $dataEmail['empEmail'] = 'hello@example.com';
-            $dataEmail['companySystemID'] = $input['companySystemID'];
-            $dataEmail['alertMessage'] = "GRV  Confirmed";
-            $dataEmail['emailAlertMessage'] = $body;
-            $sendEmail = \Email::sendEmailErp($dataEmail);
 
-
-         
+            $supplier = $this->getSupplierDetails($input['supplierID']);
+            if(isset($supplier) && !empty($supplier)){ 
+                $dataEmail['empEmail'] = $supplier->supEmail;
+                $dataEmail['companySystemID'] = $input['companySystemID'];
+                $dataEmail['alertMessage'] = "GRV  Confirmed";
+                $dataEmail['emailAlertMessage'] = $body;
+                $sendEmail = \Email::sendEmailErp($dataEmail); 
+            } 
         }
 
 
@@ -1321,7 +1322,9 @@ class GRVMasterAPIController extends AppBaseController
             'cancelled_by', 'modified_by', 'approved_by' => function ($query) {
                 $query->with('employee')
                     ->where('documentSystemID', 3);
-            }, 'details', 'company_by', 'currency_by', 'companydocumentattachment_by' => function ($query) {
+            }, 'details'=> function ($query) {
+                $query->with('po_master');
+            }, 'company_by', 'currency_by', 'companydocumentattachment_by' => function ($query) {
                 $query->where('documentSystemID', 3);
             }, 'location_by', 'audit_trial.modified_by'])->findWithoutFail($id);
 
@@ -1541,7 +1544,9 @@ class GRVMasterAPIController extends AppBaseController
             'cancelled_by', 'modified_by', 'approved_by' => function ($query) {
                 $query->with('employee')
                     ->where('documentSystemID', 3);
-            }, 'details', 'company_by', 'currency_by', 'companydocumentattachment_by' => function ($query) {
+            }, 'details'=> function ($query) {
+                $query->with('po_master');
+            }, 'company_by', 'currency_by', 'companydocumentattachment_by' => function ($query) {
                 $query->where('documentSystemID', 3);
             }])->findWithoutFail($id);
 
@@ -2307,6 +2312,12 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
         $grv = $this->gRVMasterRepository->update(['isMarkupUpdated'=>1], $input['grvAutoID']);
 
         return $this->sendResponse($grv, 'GRV markup updated successfully');
+    }
+
+    public function getSupplierDetails($supplierId){
+        return SupplierMaster::select('supEmail')
+            ->where('supplierCodeSystem', $supplierId)
+            ->first();
     }
 
 

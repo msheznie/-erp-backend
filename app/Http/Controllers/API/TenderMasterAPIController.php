@@ -62,6 +62,10 @@ use App\Models\BidMainWork;
 use App\Repositories\TenderFinalBidsRepository;
 use App\Models\TenderFinalBids;
 use App\Models\DocumentModifyRequest;
+use App\Models\TenderCirculars;
+use App\Models\CircularAmendments;
+use App\Repositories\DocumentModifyRequestRepository;
+
 /**
  * Class TenderMasterController
  * @package App\Http\Controllers\API
@@ -74,12 +78,14 @@ class TenderMasterAPIController extends AppBaseController
     private $registrationLinkRepository;
     private $commercialBidRankingItemsRepository;
     private $tenderFinalBidsRepository;
-    public function __construct(TenderFinalBidsRepository $tenderFinalBidsRepo,CommercialBidRankingItemsRepository $commercialBidRankingItemsRepo,TenderMasterRepository $tenderMasterRepo, SupplierRegistrationLinkRepository $registrationLinkRepository)
+    private $documentModifyRequestRepository;
+    public function __construct(DocumentModifyRequestRepository $documentModifyRequestRepo, TenderFinalBidsRepository $tenderFinalBidsRepo, CommercialBidRankingItemsRepository $commercialBidRankingItemsRepo, TenderMasterRepository $tenderMasterRepo, SupplierRegistrationLinkRepository $registrationLinkRepository)
     {
         $this->tenderMasterRepository = $tenderMasterRepo;
         $this->registrationLinkRepository = $registrationLinkRepository;
         $this->commercialBidRankingItemsRepository = $commercialBidRankingItemsRepo;
         $this->tenderFinalBidsRepository = $tenderFinalBidsRepo;
+        $this->documentModifyRequestRepository = $documentModifyRequestRepo;
     }
 
     /**
@@ -350,7 +356,7 @@ class TenderMasterAPIController extends AppBaseController
 
         $tenderMaster = TenderMaster::with(['tender_type', 'envelop_type', 'currency'])->where('company_id', $companyId);
 
-        if(isset($input['rfx']) && $input['rfx']){
+        if (isset($input['rfx']) && $input['rfx']) {
             $tenderMaster = $tenderMaster->where('document_type', '!=', 0);
         } else {
             $tenderMaster = $tenderMaster->where('document_type', 0);
@@ -416,13 +422,13 @@ class TenderMasterAPIController extends AppBaseController
         $data['currentDate'] = now();
         $data['defaultCurrency'] = $company;
         $data['procurementCategory'] = TenderProcurementCategory::where('level', 0)->where('is_active', 1)->get();
-        if(isset($input['tenderMasterId'])){
+        if (isset($input['tenderMasterId'])) {
             $assignedDocsArray = TenderDocumentTypeAssign::select('document_type_id')->where('tender_id', $input['tenderMasterId'])->get()->toArray();
             $notInArray = [1, 2];
-            foreach ($assignedDocsArray as $assignedDocs){
+            foreach ($assignedDocsArray as $assignedDocs) {
                 $notInArray[] = $assignedDocs['document_type_id'];
             }
-            if($tenderMaster['published_yn'] === 1){
+            if ($tenderMaster['published_yn'] === 1) {
                 $data['documentTypes'] = TenderDocumentTypes::where('id', 3)->whereNotIn('id', $notInArray)->get();
             } else {
                 $data['documentTypes'] = TenderDocumentTypes::where('company_id', $employee->empCompanySystemID)->whereNotIn('id', $notInArray)->get();
@@ -443,14 +449,14 @@ class TenderMasterAPIController extends AppBaseController
         $input = $request->all();
         $input = $this->convertArrayToSelectedValue($request->all(), array('currency_id'));
         $employee = \Helper::getEmployeeInfo();
-        if(isset($input['rfx']) && $input['rfx']){
+        if (isset($input['rfx']) && $input['rfx']) {
             $exist = TenderMaster::where('title', $input['title'])->where('company_id', $input['companySystemID'])->where('document_type', '!=', 0)->first();
         } else {
             $exist = TenderMaster::where('title', $input['title'])->where('company_id', $input['companySystemID'])->where('document_type', 0)->first();
         }
 
         if (!empty($exist)) {
-            if(isset($input['rfx']) && $input['rfx']){
+            if (isset($input['rfx']) && $input['rfx']) {
                 return ['success' => false, 'message' => 'RFX title cannot be duplicated'];
             } else {
                 return ['success' => false, 'message' => 'Tender title cannot be duplicated'];
@@ -470,7 +476,7 @@ class TenderMasterAPIController extends AppBaseController
         $tenderCode = ($company->CompanyID . '/' . $documentMaster['documentID'] . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
         $document_system_id = 108;
 
-        if(isset($input['rfx']) && $input['rfx']){
+        if (isset($input['rfx']) && $input['rfx']) {
             $lastSerialNumber = 1;
             $documentMaster = DocumentMaster::where('documentSystemID', 113)->first();
             $lastSerial = TenderMaster::where('company_id', $input['companySystemID'])
@@ -577,45 +583,40 @@ WHERE
 	and ISNULL(srm_calendar_dates_detail.from_date)
 	and ISNULL(srm_calendar_dates_detail.to_date)";
 
-    $current_date_obj = date('Y-m-d H:i:s');
-    $data['edit_valid'] = false;
-    $data['is_request_process'] = false;
-    $data['request_type'] = '';
-    $data['is_request_process_complete'] = false;
-    if($data['master']['published_yn'] == 1)
-    {
-        $current_date = Carbon::createFromFormat('Y-m-d H:i:s', $current_date_obj);
-        $opening_date_format = Carbon::createFromFormat('Y-m-d H:i:s', $data['master']['bid_submission_opening_date']);
+        $data['edit_valid'] = false;
+        $data['is_request_process'] = false;
+        $data['request_type'] = '';
+        $data['is_request_process_complete'] = false;
+        $data['is_confirm_process'] = false;
 
-        $result_obj = $opening_date_format->gt($current_date);
-        $data['edit_valid'] = $result_obj;
+        if ($data['master']['published_yn'] == 1) {
 
+            $currentDate = Carbon::now()->format('Y-m-d H:i:s');
+            $openingDate= Carbon::createFromFormat('Y-m-d H:i:s', $data['master']['bid_submission_opening_date']);
 
-        $tende_edit_log = DocumentModifyRequest::where('documentSystemCode',$tenderMasterId)->orderBy('id','desc')->first();
-  
-        if(isset($tende_edit_log) && $result_obj)
-        {   
-            if($tende_edit_log->type == 1)
-            {
-                $data['request_type'] = 'Edit';
-            }
-            else
-            {
-                $data['request_type'] = 'Amend';
-            }
+            $resultObj = $openingDate->gt($currentDate);
+            $data['edit_valid'] = $resultObj;
 
-            if($tende_edit_log->status == 1 && $tende_edit_log->approved == 0)
-            {
-                $data['is_request_process'] = true;
-                $data['edit_valid'] = false;
-            }
-            else if($tende_edit_log->status == 1 && $tende_edit_log->approved == -1)
-            {
-                $data['is_request_process_complete'] = true;
-                $data['edit_valid'] = false;
+          
+
+            $tendeEditLog = DocumentModifyRequest::where('documentSystemCode', $tenderMasterId)
+                                                ->select('id','type','modify_type','status','confirmation_approved','approved')
+                                                ->orderBy('id', 'desc')->first();
+
+            if (isset($tendeEditLog) && $resultObj) {
+
+                $data['request_type'] = ($tendeEditLog->type == 1) ? 'Edit' : 'Amend';
+               
+                if ($tendeEditLog->modify_type == 2 && $tendeEditLog->status == 1 && $tendeEditLog->confirmation_approved == 0) {
+                    $data['is_confirm_process'] = true;
+                    $data['edit_valid'] = false;
+                } else if($tendeEditLog->modify_type == 1 && $tendeEditLog->status == 1){
+                    $data['edit_valid'] = false;
+                    $data['is_request_process'] = $tendeEditLog->approved == 0?true:false;
+                    $data['is_request_process_complete'] = $tendeEditLog->approved == -1?true:false;
+                }
             }
         }
-    }
 
 
         // $calenderData =  CalendarDates::
@@ -624,14 +625,14 @@ WHERE
         //             ->where('srm_calendar_dates.company_id',$companySystemID)
         //             ->select('srm_calendar_dates_detail.calendar_date_id as id','srm_calendar_dates.calendar_date as calendar_date','srm_calendar_dates.company_id as company_id','srm_calendar_dates_detail.*')
         //             ->get();
-       
-        
-        $calenderDataDetails = CalendarDatesDetail::where('company_id',$companySystemID)->where('tender_id',$tenderMasterId)->get();
+
+
+        $calenderDataDetails = CalendarDatesDetail::where('company_id', $companySystemID)->where('tender_id', $tenderMasterId)->get();
 
         $dataArray = array();
         $i = 0;
 
-        foreach($calenderDataDetails as $calenderDataDetail) {
+        foreach ($calenderDataDetails as $calenderDataDetail) {
 
             $fromDate = $calenderDataDetail->from_date;
             $toDate = $calenderDataDetail->to_date;
@@ -648,16 +649,15 @@ WHERE
             $i++;
         }
 
-        $data['calendarDates'] =collect($dataArray);
+        $data['calendarDates'] = collect($dataArray);
 
-        $calenderDataAll =  CalendarDates::
-        select('srm_calendar_dates_detail.calendar_date_id as id','srm_calendar_dates.calendar_date as calendar_date','srm_calendar_dates.company_id as company_id','srm_calendar_dates_detail.*')
-        ->join('srm_calendar_dates_detail','srm_calendar_dates_detail.calendar_date_id','=','srm_calendar_dates.id')
-        ->where('srm_calendar_dates_detail.tender_id',$tenderMasterId)
-        ->where('srm_calendar_dates.company_id',$companySystemID)
-        ->whereNull('srm_calendar_dates_detail.from_date')
-        ->whereNull('srm_calendar_dates_detail.to_date')
-        ->get();
+        $calenderDataAll =  CalendarDates::select('srm_calendar_dates_detail.calendar_date_id as id', 'srm_calendar_dates.calendar_date as calendar_date', 'srm_calendar_dates.company_id as company_id', 'srm_calendar_dates_detail.*')
+            ->join('srm_calendar_dates_detail', 'srm_calendar_dates_detail.calendar_date_id', '=', 'srm_calendar_dates.id')
+            ->where('srm_calendar_dates_detail.tender_id', $tenderMasterId)
+            ->where('srm_calendar_dates.company_id', $companySystemID)
+            ->whereNull('srm_calendar_dates_detail.from_date')
+            ->whereNull('srm_calendar_dates_detail.to_date')
+            ->get();
 
         $data['calendarDatesAll'] =  DB::select($qryAll);
 
@@ -720,14 +720,14 @@ WHERE
         ));
 
         $tenderMaster = TenderMaster::find($input['id']);
-        $tenderbidEmployee = SrmTenderBidEmployeeDetails::where('tender_id',$input['id'])->count();
-        
-        if($tenderbidEmployee < $tenderMaster->min_approval_bid_opening) {
-            return ['status' => false, 'message' => "Atleast ".$tenderMaster->min_approval_bid_opening." employee should selected"];
+        $tenderbidEmployee = SrmTenderBidEmployeeDetails::where('tender_id', $input['id'])->count();
+
+        if ($tenderbidEmployee < $tenderMaster->min_approval_bid_opening) {
+            return ['status' => false, 'message' => "Atleast " . $tenderMaster->min_approval_bid_opening . " employee should selected"];
         }
 
 
-        if($input['addCalendarDates'] === 0){
+        if ($input['addCalendarDates'] === 0) {
             $resValidate = $this->validateTenderHeader($input);
             if (!$resValidate['status']) {
                 return $this->sendError($resValidate['message'], 422);
@@ -738,7 +738,7 @@ WHERE
 
         $rfq = false;
 
-        if(isset($input['rfq'])){
+        if (isset($input['rfq'])) {
             $rfq = ($input['rfq'] == true) ? true : false;
         }
 
@@ -753,7 +753,7 @@ WHERE
         $technical_bid_closing_time = null;
         $commerical_bid_closing_date = null;
         $commerical_bid_closing_time = null;
-        $bid_opeing_end_date= null;
+        $bid_opeing_end_date = null;
         $bid_opeing_end_time = null;
         $site_visit_time = null;
         $site_visit_end_date = null;
@@ -767,93 +767,93 @@ WHERE
         $pre_bid_clarification_end_date = null;
         $bankId = (empty($input['bank_id'])) ? 0 : $input['bank_id'];
 
-        if(isset($input['document_sales_start_date'])){
+        if (isset($input['document_sales_start_date'])) {
             $document_sales_start_time = ($input['document_sales_start_time']) ? new Carbon($input['document_sales_start_time']) : null;
             $document_sales_start_date = new Carbon($input['document_sales_start_date']);
-            $document_sales_start_date = ($input['document_sales_start_time']) ? $document_sales_start_date->format('Y-m-d').' '.$document_sales_start_time->format('H:i:s') : $document_sales_start_date->format('Y-m-d');
+            $document_sales_start_date = ($input['document_sales_start_time']) ? $document_sales_start_date->format('Y-m-d') . ' ' . $document_sales_start_time->format('H:i:s') : $document_sales_start_date->format('Y-m-d');
         }
 
-        if(isset($input['document_sales_end_time'])){
+        if (isset($input['document_sales_end_time'])) {
             $document_sales_end_time =  ($input['document_sales_end_time']) ?  new Carbon($input['document_sales_end_time']) : null;
             $document_sales_end_date = new Carbon($input['document_sales_end_date']);
-            $document_sales_end_date = ($input['document_sales_end_time']) ? $document_sales_end_date->format('Y-m-d').' '.$document_sales_end_time->format('H:i:s') : $document_sales_end_date->format('Y-m-d') ;
+            $document_sales_end_date = ($input['document_sales_end_time']) ? $document_sales_end_date->format('Y-m-d') . ' ' . $document_sales_end_time->format('H:i:s') : $document_sales_end_date->format('Y-m-d');
         }
 
-        if(isset($input['bid_submission_opening_time'])){
+        if (isset($input['bid_submission_opening_time'])) {
             $bid_submission_opening_time =  ($input['bid_submission_opening_time']) ? new Carbon($input['bid_submission_opening_time']) : null;
             $bid_submission_opening_date = new Carbon($input['bid_submission_opening_date']);
-            $bid_submission_opening_date = ($input['bid_submission_opening_time']) ? $bid_submission_opening_date->format('Y-m-d').' '.$bid_submission_opening_time->format('H:i:s'): $bid_submission_opening_date->format('Y-m-d');
+            $bid_submission_opening_date = ($input['bid_submission_opening_time']) ? $bid_submission_opening_date->format('Y-m-d') . ' ' . $bid_submission_opening_time->format('H:i:s') : $bid_submission_opening_date->format('Y-m-d');
         }
 
-        if(isset($input['bid_submission_closing_time'])){
+        if (isset($input['bid_submission_closing_time'])) {
             $bid_submission_closing_time =  ($input['bid_submission_closing_time']) ? new Carbon($input['bid_submission_closing_time']) : null;
             $bid_submission_closing_date = new Carbon($input['bid_submission_closing_date']);
-            $bid_submission_closing_date = ($input['bid_submission_closing_time']) ? $bid_submission_closing_date->format('Y-m-d').' '.$bid_submission_closing_time->format('H:i:s'):$bid_submission_closing_date->format('Y-m-d');
+            $bid_submission_closing_date = ($input['bid_submission_closing_time']) ? $bid_submission_closing_date->format('Y-m-d') . ' ' . $bid_submission_closing_time->format('H:i:s') : $bid_submission_closing_date->format('Y-m-d');
         }
 
-        if(isset($input['pre_bid_clarification_start_time'])){
+        if (isset($input['pre_bid_clarification_start_time'])) {
             $pre_bid_clarification_start_time =  ($input['pre_bid_clarification_start_time']) ? new Carbon($input['pre_bid_clarification_start_time']) : null;
             $pre_bid_clarification_start_date = new Carbon($input['pre_bid_clarification_start_date']);
-            $pre_bid_clarification_start_date = ($input['pre_bid_clarification_start_time']) ?$pre_bid_clarification_start_date->format('Y-m-d').' '.$pre_bid_clarification_start_time->format('H:i:s'):$pre_bid_clarification_start_date->format('Y-m-d');
+            $pre_bid_clarification_start_date = ($input['pre_bid_clarification_start_time']) ? $pre_bid_clarification_start_date->format('Y-m-d') . ' ' . $pre_bid_clarification_start_time->format('H:i:s') : $pre_bid_clarification_start_date->format('Y-m-d');
         }
 
-        if(isset($input['pre_bid_clarification_end_time'])){
+        if (isset($input['pre_bid_clarification_end_time'])) {
             $pre_bid_clarification_end_time =  ($input['pre_bid_clarification_end_time']) ?  new Carbon($input['pre_bid_clarification_end_time']) : null;
             $pre_bid_clarification_end_date = new Carbon($input['pre_bid_clarification_end_date']);
-            $pre_bid_clarification_end_date =($input['pre_bid_clarification_end_time']) ?  $pre_bid_clarification_end_date->format('Y-m-d').' '.$pre_bid_clarification_end_time->format('H:i:s'): $pre_bid_clarification_end_date->format('Y-m-d');
+            $pre_bid_clarification_end_date = ($input['pre_bid_clarification_end_time']) ?  $pre_bid_clarification_end_date->format('Y-m-d') . ' ' . $pre_bid_clarification_end_time->format('H:i:s') : $pre_bid_clarification_end_date->format('Y-m-d');
         }
 
         if ($input['site_visit_date']) {
             $site_visit_time = ($input['site_visit_start_time']) ?  new Carbon($input['site_visit_start_time']) : null;
             $site_visit_date = new Carbon($input['site_visit_date']);
-            $site_visit_date =  ($input['site_visit_start_time']) ?  $site_visit_date->format('Y-m-d').' '.$site_visit_time->format('H:i:s') : $site_visit_date->format('Y-m-d');
+            $site_visit_date =  ($input['site_visit_start_time']) ?  $site_visit_date->format('Y-m-d') . ' ' . $site_visit_time->format('H:i:s') : $site_visit_date->format('Y-m-d');
         }
 
         if ($input['site_visit_end_date']) {
             $site_visit_end_time = ($input['site_visit_end_time']) ? new Carbon($input['site_visit_end_time']) : null;
             $site_visit_end_date = new Carbon($input['site_visit_end_date']);
-            $site_visit_end_date = ($input['site_visit_end_time']) ? $site_visit_end_date->format('Y-m-d').' '.$site_visit_end_time->format('H:i:s') : $site_visit_end_date->format('Y-m-d');
+            $site_visit_end_date = ($input['site_visit_end_time']) ? $site_visit_end_date->format('Y-m-d') . ' ' . $site_visit_end_time->format('H:i:s') : $site_visit_end_date->format('Y-m-d');
         }
 
 
 
-        
+
 
         $currenctDate = Carbon::now();
 
         // vaidation lists
 
-        if(!isset($input['document_sales_start_time'])) {
-            if(isset($input['document_sales_start_date']) && $rfq){
+        if (!isset($input['document_sales_start_time'])) {
+            if (isset($input['document_sales_start_date']) && $rfq) {
                 return ['success' => false, 'message' => 'Document sales from time is required'];
-            } elseif(!$rfq){
+            } elseif (!$rfq) {
                 return ['success' => false, 'message' => 'Document sales from time is required'];
             }
         }
 
-        if(!isset($input['document_sales_end_time'])) {
-            if(isset($input['document_sales_end_date']) && $rfq){
+        if (!isset($input['document_sales_end_time'])) {
+            if (isset($input['document_sales_end_date']) && $rfq) {
                 return ['success' => false, 'message' => 'Document sales to time is required'];
-            } elseif(!$rfq) {
+            } elseif (!$rfq) {
                 return ['success' => false, 'message' => 'Document sales to time is required'];
             }
         }
-        
+
         if ((isset($document_sales_start_date) && isset($document_sales_end_date)) && (($document_sales_start_date > $document_sales_end_date))) {
             return ['success' => false, 'message' => 'From date and time cannot be greater than the To date and time  for Document Sales'];
         }
 
-        if(!isset($input['pre_bid_clarification_start_time'])) {
-            if(isset($input['pre_bid_clarification_start_date']) && $rfq){
+        if (!isset($input['pre_bid_clarification_start_time'])) {
+            if (isset($input['pre_bid_clarification_start_date']) && $rfq) {
                 return ['success' => false, 'message' => 'Pre bid clarification from time is required'];
-            } else if(!$rfq) {
+            } else if (!$rfq) {
                 return ['success' => false, 'message' => 'Pre bid clarification from time is required'];
             }
         }
-        if(!isset($input['pre_bid_clarification_end_time'])) {
-            if(isset($input['pre_bid_clarification_end_date']) && $rfq){
+        if (!isset($input['pre_bid_clarification_end_time'])) {
+            if (isset($input['pre_bid_clarification_end_date']) && $rfq) {
                 return ['success' => false, 'message' => 'Pre bid clarification to time is required'];
-            } elseif(!$rfq) {
+            } elseif (!$rfq) {
                 return ['success' => false, 'message' => 'Pre bid clarification to time is required'];
             }
         }
@@ -863,225 +863,219 @@ WHERE
         }
 
 
-        if(!isset($input['site_visit_start_time'])) {
-            if(isset($input['site_visit_date']) && $rfq) {
+        if (!isset($input['site_visit_start_time'])) {
+            if (isset($input['site_visit_date']) && $rfq) {
                 return ['success' => false, 'message' => 'Site visit from time is required'];
-            } elseif(!$rfq) {
+            } elseif (!$rfq) {
                 return ['success' => false, 'message' => 'Site visit from time is required'];
             }
         }
 
-        if(!isset($input['site_visit_end_time'])) {
-            if(isset($input['site_visit_end_date']) && $rfq) {
+        if (!isset($input['site_visit_end_time'])) {
+            if (isset($input['site_visit_end_date']) && $rfq) {
                 return ['success' => false, 'message' => 'Site visit to time is required'];
-            } elseif(!$rfq) {
+            } elseif (!$rfq) {
                 return ['success' => false, 'message' => 'Site visit to time is required'];
             }
         }
 
         if (($site_visit_date > $site_visit_end_date)) {
-            if(isset($input['site_visit_date']) && isset($input['site_visit_end_date'])){
+            if (isset($input['site_visit_date']) && isset($input['site_visit_end_date'])) {
                 return ['success' => false, 'message' => 'From date and time cannot be greater than the To date and time  for Site Visit'];
             } elseif (!$rfq) {
                 return ['success' => false, 'message' => 'From date and time cannot be greater than the To date and time  for Site Visit'];
             }
         }
 
-        if(!isset(($input['bid_submission_opening_time']))) {
+        if (!isset(($input['bid_submission_opening_time']))) {
             return ['success' => false, 'message' => 'Bid submission from time is required'];
-
         }
 
-        if(!isset(($input['bid_submission_closing_time']))) {
+        if (!isset(($input['bid_submission_closing_time']))) {
             return ['success' => false, 'message' => 'Bid submission to time is required'];
-
         }
 
         if ($bid_submission_opening_date > $bid_submission_closing_date) {
             return ['success' => false, 'message' => 'From date and time cannot be greater than the To date and time  for Bid Submission'];
         }
 
-        if(isset($document_sales_start_date) && $document_sales_start_date < $currenctDate || isset($bid_submission_opening_date) && $bid_submission_opening_date < $currenctDate ||isset($pre_bid_clarification_start_date) && $pre_bid_clarification_start_date < $currenctDate ||isset($site_visit_date) && $site_visit_date < $currenctDate) {
+        if (isset($document_sales_start_date) && $document_sales_start_date < $currenctDate || isset($bid_submission_opening_date) && $bid_submission_opening_date < $currenctDate || isset($pre_bid_clarification_start_date) && $pre_bid_clarification_start_date < $currenctDate || isset($site_visit_date) && $site_visit_date < $currenctDate) {
             return ['success' => false, 'message' => 'All the date and time should greater than current date and time'];
         }
 
-        if(is_null($bid_submission_closing_date)) {
+        if (is_null($bid_submission_closing_date)) {
             $bid_sub_date = $bid_submission_opening_date;
-
-        }else {
+        } else {
             $bid_sub_date = $bid_submission_closing_date;
         }
 
 
-        if(!is_null($input['stage']) || $input['stage'] != 0) {
-          
-            if($input['stage'][0] == 1) {
+        if (!is_null($input['stage']) || $input['stage'] != 0) {
 
-                if(isset($input['bid_opening_date_time'])){
+            if ($input['stage'][0] == 1) {
+
+                if (isset($input['bid_opening_date_time'])) {
                     $bid_opening_time =  ($input['bid_opening_date_time']) ?  new Carbon($input['bid_opening_date_time']) : null;
                     $bid_opening_date = new Carbon($input['bid_opening_date']);
-                    $bid_opening_date = ($input['bid_opening_date_time']) ? $bid_opening_date->format('Y-m-d').' '.$bid_opening_time->format('H:i:s'):$bid_opening_date->format('Y-m-d');
+                    $bid_opening_date = ($input['bid_opening_date_time']) ? $bid_opening_date->format('Y-m-d') . ' ' . $bid_opening_time->format('H:i:s') : $bid_opening_date->format('Y-m-d');
                 }
 
-                if((isset($input['bid_opening_end_date']))) {
+                if ((isset($input['bid_opening_end_date']))) {
                     $bid_opeing_end_time = (isset($input['bid_opening_end_date_time'])) ? new Carbon($input['bid_opening_end_date_time']) : null;
                     $bid_opeing_end_date = (isset($input['bid_opening_end_date'])) ? new Carbon($input['bid_opening_end_date']) : null;
-                    $bid_opeing_end_date = (isset($input['bid_opening_end_date_time'])) ? $bid_opeing_end_date->format('Y-m-d').' '.$bid_opeing_end_time->format('H:i:s') : $bid_opeing_end_date->format('Y-m-d');
-                }else {
+                    $bid_opeing_end_date = (isset($input['bid_opening_end_date_time'])) ? $bid_opeing_end_date->format('Y-m-d') . ' ' . $bid_opeing_end_time->format('H:i:s') : $bid_opeing_end_date->format('Y-m-d');
+                } else {
                     $bid_opeing_end_date = null;
                     $bid_opeing_end_time = null;
                 }
 
 
-                if(is_null($input['bid_submission_opening_date'])) {
+                if (is_null($input['bid_submission_opening_date'])) {
                     return ['success' => false, 'message' => 'Bid Submission date cannot be empty'];
                 }
 
-                if(is_null($input['bid_opening_date_time'])) {
-                    if($input['bid_opening_date'] && $rfq){
+                if (is_null($input['bid_opening_date_time'])) {
+                    if ($input['bid_opening_date'] && $rfq) {
                         return ['success' => false, 'message' => 'Bid Opening Time cannot be empty'];
-                    } elseif(!$rfq){
+                    } elseif (!$rfq) {
                         return ['success' => false, 'message' => 'Bid Opening Time cannot be empty'];
                     }
                 }
 
 
-                if(is_null($bid_submission_closing_date)) {
-                    if($bid_sub_date > $bid_opening_date) {
+                if (is_null($bid_submission_closing_date)) {
+                    if ($bid_sub_date > $bid_opening_date) {
                         return ['success' => false, 'message' => 'Bid Opening from date and time should greater than bid submission from date and time'];
                     }
-                }else {
+                } else {
 
-                    if($bid_sub_date > $bid_opening_date ) {
-                        if(isset($bid_opening_date) && $rfq){
+                    if ($bid_sub_date > $bid_opening_date) {
+                        if (isset($bid_opening_date) && $rfq) {
                             return ['success' => false, 'message' => 'Bid Opening from date and time should greater than bid submission to date and time'];
-                        } elseif (!$rfq){
+                        } elseif (!$rfq) {
                             return ['success' => false, 'message' => 'Bid Opening from date and time should greater than bid submission to date and time'];
                         }
-
                     }
                 }
 
 
-                if(isset($bid_opeing_end_date)) {
-                    if(is_null($input['bid_opening_end_date_time'])) {
+                if (isset($bid_opeing_end_date)) {
+                    if (is_null($input['bid_opening_end_date_time'])) {
                         return ['success' => false, 'message' => 'Bid Opening to time cannot be empty'];
                     }
 
-                    if($bid_opening_date > $bid_opeing_end_date) {
+                    if ($bid_opening_date > $bid_opeing_end_date) {
                         return ['success' => false, 'message' => 'Bid Opening to date and time should greater than bid opening from date and time'];
                     }
                 }
             }
 
 
-            if(($input['stage'][0] == 2)) {
+            if (($input['stage'][0] == 2)) {
 
-                if(is_null($input['technical_bid_opening_date']) && !$rfq) {
+                if (is_null($input['technical_bid_opening_date']) && !$rfq) {
                     return ['success' => false, 'message' => 'Technical Bid Opening from date cannot be empty'];
                 }
 
-                if(is_null($input['technical_bid_opening_date_time']) && isset($input['technical_bid_opening_date'])) {
-                    if($rfq && isset($input['technical_bid_opening_date'])){
+                if (is_null($input['technical_bid_opening_date_time']) && isset($input['technical_bid_opening_date'])) {
+                    if ($rfq && isset($input['technical_bid_opening_date'])) {
                         return ['success' => false, 'message' => 'Technical Bid Opening from time cannot be empty'];
-                    } elseif (!$rfq){
+                    } elseif (!$rfq) {
                         return ['success' => false, 'message' => 'Technical Bid Opening from time cannot be empty'];
                     }
                 }
 
-            if(isset($input['technical_bid_opening_date'])){
-                $technical_bid_opening_time = ($input['technical_bid_opening_date_time']) ? new Carbon($input['technical_bid_opening_date_time']) : null;
-                $technical_bid_opening_date = new Carbon($input['technical_bid_opening_date']);
-                $technical_bid_opening_date = ($input['technical_bid_opening_date_time']) ? $technical_bid_opening_date->format('Y-m-d').' '.$technical_bid_opening_time->format('H:i:s') : $technical_bid_opening_date->format('Y-m-d');
-            }
-
-            if(isset($input['technical_bid_closing_date'])) {
-                if(is_null($input['technical_bid_closing_date_time'])) {
-                    return ['success' => false, 'message' => 'Technical bid opening to time cannot be empty'];
-                }
-                
-                $technical_bid_closing_time = (isset($input['technical_bid_closing_date_time'])) ? new Carbon($input['technical_bid_closing_date_time']) : null;
-                $technical_bid_closing_date = (isset($input['technical_bid_closing_date'])) ? new Carbon($input['technical_bid_closing_date']) : null;
-                $technical_bid_closing_date = (isset($input['technical_bid_closing_date_time'])) ? $technical_bid_closing_date->format('Y-m-d').' '.$technical_bid_closing_time->format('H:i:s') : $technical_bid_closing_date->format('Y-m-d');
-            }else {
-                $technical_bid_closing_date = null;
-                $technical_bid_closing_time = null;
-            }
-
-            if(isset($input['commerical_bid_opening_date'])){
-                $commerical_bid_opening_time = ($input['commerical_bid_opening_date_time']) ? new Carbon($input['commerical_bid_opening_date_time']) : null;
-                $commerical_bid_opening_date = new Carbon($input['commerical_bid_opening_date']);
-                $commerical_bid_opening_date = ($input['commerical_bid_opening_date_time']) ? $commerical_bid_opening_date->format('Y-m-d').' '.$commerical_bid_opening_time->format('H:i:s') : $commerical_bid_opening_date->format('Y-m-d');
-
-                if(is_null($input['commerical_bid_opening_date_time']) && $rfq) {
-                    return ['success' => false, 'message' => 'Commercial Bid Opening from time cannot be empty'];
-                }
-            }
-
-            if(isset($input['commerical_bid_closing_date'])) {
-                if(!(isset($input['commerical_bid_closing_date_time']))) {
-                    return ['success' => false, 'message' => 'Commercial Bid Opening to time cannot be empty'];
+                if (isset($input['technical_bid_opening_date'])) {
+                    $technical_bid_opening_time = ($input['technical_bid_opening_date_time']) ? new Carbon($input['technical_bid_opening_date_time']) : null;
+                    $technical_bid_opening_date = new Carbon($input['technical_bid_opening_date']);
+                    $technical_bid_opening_date = ($input['technical_bid_opening_date_time']) ? $technical_bid_opening_date->format('Y-m-d') . ' ' . $technical_bid_opening_time->format('H:i:s') : $technical_bid_opening_date->format('Y-m-d');
                 }
 
-                $commerical_bid_closing_time = (isset($input['commerical_bid_closing_date_time'])) ? new Carbon($input['commerical_bid_closing_date_time']) : null;
-                $commerical_bid_closing_date = (isset($input['commerical_bid_closing_date'])) ? new Carbon($input['commerical_bid_closing_date']) : null;
-                $commerical_bid_closing_date = (isset($input['commerical_bid_closing_date_time'])) ? $commerical_bid_closing_date->format('Y-m-d').' '.$commerical_bid_closing_time->format('H:i:s') : $commerical_bid_closing_date->format('Y-m-d');
-            }else {
-                $commerical_bid_closing_date = null;
-                $commerical_bid_closing_time = null;
-            }
+                if (isset($input['technical_bid_closing_date'])) {
+                    if (is_null($input['technical_bid_closing_date_time'])) {
+                        return ['success' => false, 'message' => 'Technical bid opening to time cannot be empty'];
+                    }
 
-                if(!is_null($commerical_bid_closing_date)) {
-                    if($commerical_bid_opening_date > $commerical_bid_closing_date) {
+                    $technical_bid_closing_time = (isset($input['technical_bid_closing_date_time'])) ? new Carbon($input['technical_bid_closing_date_time']) : null;
+                    $technical_bid_closing_date = (isset($input['technical_bid_closing_date'])) ? new Carbon($input['technical_bid_closing_date']) : null;
+                    $technical_bid_closing_date = (isset($input['technical_bid_closing_date_time'])) ? $technical_bid_closing_date->format('Y-m-d') . ' ' . $technical_bid_closing_time->format('H:i:s') : $technical_bid_closing_date->format('Y-m-d');
+                } else {
+                    $technical_bid_closing_date = null;
+                    $technical_bid_closing_time = null;
+                }
+
+                if (isset($input['commerical_bid_opening_date'])) {
+                    $commerical_bid_opening_time = ($input['commerical_bid_opening_date_time']) ? new Carbon($input['commerical_bid_opening_date_time']) : null;
+                    $commerical_bid_opening_date = new Carbon($input['commerical_bid_opening_date']);
+                    $commerical_bid_opening_date = ($input['commerical_bid_opening_date_time']) ? $commerical_bid_opening_date->format('Y-m-d') . ' ' . $commerical_bid_opening_time->format('H:i:s') : $commerical_bid_opening_date->format('Y-m-d');
+
+                    if (is_null($input['commerical_bid_opening_date_time']) && $rfq) {
+                        return ['success' => false, 'message' => 'Commercial Bid Opening from time cannot be empty'];
+                    }
+                }
+
+                if (isset($input['commerical_bid_closing_date'])) {
+                    if (!(isset($input['commerical_bid_closing_date_time']))) {
+                        return ['success' => false, 'message' => 'Commercial Bid Opening to time cannot be empty'];
+                    }
+
+                    $commerical_bid_closing_time = (isset($input['commerical_bid_closing_date_time'])) ? new Carbon($input['commerical_bid_closing_date_time']) : null;
+                    $commerical_bid_closing_date = (isset($input['commerical_bid_closing_date'])) ? new Carbon($input['commerical_bid_closing_date']) : null;
+                    $commerical_bid_closing_date = (isset($input['commerical_bid_closing_date_time'])) ? $commerical_bid_closing_date->format('Y-m-d') . ' ' . $commerical_bid_closing_time->format('H:i:s') : $commerical_bid_closing_date->format('Y-m-d');
+                } else {
+                    $commerical_bid_closing_date = null;
+                    $commerical_bid_closing_time = null;
+                }
+
+                if (!is_null($commerical_bid_closing_date)) {
+                    if ($commerical_bid_opening_date > $commerical_bid_closing_date) {
                         return ['success' => false, 'message' => 'Commercial Bid Opening to date and time should greater than commercial bid opening from date and time'];
-                    } 
+                    }
                 }
 
-                if(is_null($input['technical_bid_opening_date_time'])) {
-                    if($rfq && isset($input['technical_bid_opening_date'])){
+                if (is_null($input['technical_bid_opening_date_time'])) {
+                    if ($rfq && isset($input['technical_bid_opening_date'])) {
                         return ['success' => false, 'message' => 'Technical Bid Opening Time cannot be empty'];
-                    } elseif (!$rfq){
+                    } elseif (!$rfq) {
                         return ['success' => false, 'message' => 'Technical Bid Opening Time cannot be empty'];
                     }
-                }else {
+                } else {
 
 
-                    if(is_null($bid_submission_closing_date)) {
-                        if($bid_sub_date > $technical_bid_opening_date) {
+                    if (is_null($bid_submission_closing_date)) {
+                        if ($bid_sub_date > $technical_bid_opening_date) {
                             return ['success' => false, 'message' => 'Technical Bid Opening from date and time should greater than bid submission from date and time'];
                         }
-                    }else {
-    
-                        if($bid_sub_date > $technical_bid_opening_date) {
+                    } else {
+
+                        if ($bid_sub_date > $technical_bid_opening_date) {
                             return ['success' => false, 'message' => 'Technical Bid Opening from date and time should greater than bid submission to date and time'];
                         }
                     }
 
 
-                    if(is_null($input['commerical_bid_opening_date_time']) && !$rfq) {
+                    if (is_null($input['commerical_bid_opening_date_time']) && !$rfq) {
                         return ['success' => false, 'message' => 'Commercial Bid Opening Time cannot be empty'];
                     }
 
-                    if(is_null($technical_bid_closing_date)) {
-                        if($technical_bid_opening_date > $commerical_bid_opening_date && !$rfq) {
+                    if (is_null($technical_bid_closing_date)) {
+                        if ($technical_bid_opening_date > $commerical_bid_opening_date && !$rfq) {
                             return ['success' => false, 'message' => 'Commercial Bid Opening from date and time should be greater than technical bid from date and time'];
                         } elseif (!is_null($input['commerical_bid_opening_date_time']) && ($technical_bid_opening_date > $commerical_bid_opening_date) && $rfq) {
                             return ['success' => false, 'message' => 'Commercial Bid Opening from date and time should be greater than technical bid from date and time'];
                         }
-                    }else {
-                        if(!$rfq && ($technical_bid_closing_date > $commerical_bid_opening_date)) {
+                    } else {
+                        if (!$rfq && ($technical_bid_closing_date > $commerical_bid_opening_date)) {
                             return ['success' => false, 'message' => 'Commercial Bid Opening from date and time should be greater than technical bid to date and time'];
-                        }  elseif ($rfq && !is_null($input['commerical_bid_opening_date_time']) && !is_null($input['technical_bid_opening_date_time']) && ($technical_bid_closing_date > $commerical_bid_opening_date)) {
+                        } elseif ($rfq && !is_null($input['commerical_bid_opening_date_time']) && !is_null($input['technical_bid_opening_date_time']) && ($technical_bid_closing_date > $commerical_bid_opening_date)) {
                             return ['success' => false, 'message' => 'Commercial Bid Opening from date and time should be greater than technical bid to date and time'];
                         }
-
                     }
-
                 }
 
 
-                if(!empty($technical_bid_opening_date) && !empty($technical_bid_closing_date)) {
-                    if($technical_bid_opening_date > $technical_bid_closing_date) {
+                if (!empty($technical_bid_opening_date) && !empty($technical_bid_closing_date)) {
+                    if ($technical_bid_opening_date > $technical_bid_closing_date) {
                         return ['success' => false, 'message' => 'Technical Bid Opening to date and time should greater than Technical Bid Opening from date and time'];
                     }
                 }
@@ -1089,31 +1083,33 @@ WHERE
         }
 
 
-        if($rfq){
+        if ($rfq) {
             $existTndr = TenderMaster::where('title', $input['title'])->where('id', '!=', $input['id'])->where('company_id', $input['companySystemID'])->where('document_type', '!=', 0)->first();
         } else {
             $existTndr = TenderMaster::where('title', $input['title'])->where('id', '!=', $input['id'])->where('company_id', $input['companySystemID'])->where('document_type', 0)->first();
         }
 
         if (!empty($existTndr)) {
-            if($rfq){
+            if ($rfq) {
                 return ['success' => false, 'message' => 'RFX title cannot be duplicated'];
             } else {
                 return ['success' => false, 'message' => 'Tender title cannot be duplicated'];
             }
         }
 
+
         $employee = \Helper::getEmployeeInfo();
         $exist = TenderMaster::where('id', $input['id'])->first();
-        
-        if(!isset($input['tender_document_fee'])) {
-            $bankId= 0;
+
+        if (!isset($input['tender_document_fee'])) {
+            $bankId = 0;
             $input['bank_account_id'] = null;
         }
 
         DB::beginTransaction();
 
         try {
+            $tenderMaster = TenderMaster::find($input['id']);
             $data['title'] = $input['title'];
             $data['title_sec_lang'] = $input['title_sec_lang'];
             $data['description'] = $input['description'];
@@ -1142,17 +1138,21 @@ WHERE
             $data['bid_opening_end_date'] = $bid_opeing_end_date;
             $data['technical_bid_opening_date'] = ($technical_bid_opening_date) ? $technical_bid_opening_date : null;
             $data['technical_bid_closing_date'] = ($technical_bid_closing_date) ? $technical_bid_closing_date : null;
-            $data['commerical_bid_opening_date'] = ($commerical_bid_opening_date) ? $commerical_bid_opening_date: null;
-            $data['commerical_bid_closing_date'] = ($commerical_bid_closing_date) ? $commerical_bid_closing_date: null;
-
+            $data['commerical_bid_opening_date'] = ($commerical_bid_opening_date) ? $commerical_bid_opening_date : null;
+            $data['commerical_bid_closing_date'] = ($commerical_bid_closing_date) ? $commerical_bid_closing_date : null;
             $data['updated_by'] = $employee->employeeSystemID;
-    
-            $result = TenderMaster::where('id', $input['id'])->update($data);
+            $result =  $tenderMaster->update($data);
 
             if ($result) {
                 if (isset($input['procument_activity'])) {
                     if (count($input['procument_activity']) > 0) {
-                        ProcumentActivity::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
+
+                        $proActivity = $this->deleteProcumentActivity($input['id'], $input['company_id']);
+
+                        if (!$proActivity['success']) {
+                            return $this->sendError($proActivity['message'], 500);
+                        }
+
                         foreach ($input['procument_activity'] as $vl) {
                             $activity['tender_id'] = $input['id'];
                             $activity['category_id'] = $vl['id'];
@@ -1162,10 +1162,19 @@ WHERE
                             ProcumentActivity::create($activity);
                         }
                     } else {
-                        ProcumentActivity::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
+
+                        $proActivity = $this->deleteProcumentActivity($input['id'], $input['company_id']);
+
+                        if (!$proActivity['success']) {
+                            return $this->sendError($proActivity['message'], 500);
+                        }
                     }
                 } else {
-                    ProcumentActivity::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
+
+                    $proActivity = $this->deleteProcumentActivity($input['id'], $input['company_id']);
+                    if (!$proActivity['success']) {
+                        return $this->sendError($proActivity['message'], 500);
+                    }
                 }
 
 
@@ -1205,7 +1214,8 @@ WHERE
                         Storage::disk(Helper::policyWiseDisk($input['company_id'], 'public'))->put($path, $decodeFile);
 
                         $att['budget_document'] = $path;
-                        TenderMaster::where('id', $input['id'])->update($att);
+                        $tenderUpdated = TenderMaster::find($input['id']);
+                        $tenderUpdated->update($att);
                     }
                 }
 
@@ -1225,6 +1235,12 @@ WHERE
                             return ['success' => false, 'message' => 'Stage is required'];
                         }
 
+                        if ((isset($input['isRequestProcessComplete']) && isset($input['requestType'])) && (($input['isRequestProcessComplete']) && $input['requestType'] == 'Amend')) {
+                            $circulatAmends =  CircularAmendments::where('tender_id', $input['id'])->select('id')->count();
+                            if ($circulatAmends == 0) {
+                                return ['success' => false, 'message' => 'Please attach a circular to confirm amended changes'];
+                            }
+                        }
 
                         $technical = EvaluationCriteriaDetails::where('tender_id', $input['id'])->where('critera_type_id', 2)->first();
                         if (empty($technical) && !$rfq) {
@@ -1243,35 +1259,79 @@ WHERE
                             return ['success' => false, 'message' => 'At least one work schedule should be added'];
                         }
                         $scheduleAll = PricingScheduleMaster::where('tender_id', $input['id'])->get();
-                
+
                         foreach ($scheduleAll as $val) {
                             $scheduleDetail = PricingScheduleDetail::where('tender_id', $input['id'])->where('pricing_schedule_master_id', $val['id'])->where('is_disabled', true);
-                            if($scheduleDetail->count() > 0)
-                            {
+                            if ($scheduleDetail->count() > 0) {
                                 $scheduleDetails = $scheduleDetail->get();
-                                foreach($scheduleDetails as $shed)
-                                {
+                                foreach ($scheduleDetails as $shed) {
                                     $scheduleDetailInfo = ScheduleBidFormatDetails::where('schedule_id', $val['id'])->where('bid_format_detail_id', $shed['id'])->first();
                                     if (empty($scheduleDetailInfo)) {
                                         return ['success' => false, 'message' => 'All work schedules should be completed'];
                                     }
                                 }
                             }
-                            $mainwork = PricingScheduleDetail::with(['tender_boq_items'])->where('tender_id', $input['id'])->where('deleted_at',null)->where('boq_applicable', true)->where('pricing_schedule_master_id', $val['id']);
-                            if($mainwork->count() > 0)
-                            {
+                            $mainwork = PricingScheduleDetail::with(['tender_boq_items'])->where('tender_id', $input['id'])->where('deleted_at', null)->where('boq_applicable', true)->where('pricing_schedule_master_id', $val['id']);
+                            if ($mainwork->count() > 0) {
                                 $mainworks = $mainwork->get();
-                                foreach($mainworks as $main)
-                                {
-                                    if(count($main->tender_boq_items) == 0)
-                                    {
+                                foreach ($mainworks as $main) {
+                                    if (count($main->tender_boq_items) == 0) {
                                         return ['success' => false, 'message' => 'BOQ enabled main works should have at least one BOQ item'];
                                     }
                                 }
                             }
                         }
 
-                        $params = array('autoID' => $input['id'], 'company' => $input["company_id"], 'document' => $input["document_system_id"]);
+                        if (isset($input['isRequestProcessComplete']) && $input['isRequestProcessComplete']) {
+                            $version = null;
+                            $is_vsersion_exit = DocumentModifyRequest::where('documentSystemCode', $input['id'])->latest('id')->first();
+
+                            $company = Company::where('companySystemID', $input['company_id'])->select('companySystemID', 'CompanyID')->first();
+                            $documentMaster = DocumentMaster::where('documentSystemID', 118)->select('documentSystemID', 'documentID')->first();
+                            $lastSerial = DocumentModifyRequest::where('companySystemID', $input['company_id'])
+                                ->orderBy('id', 'desc')
+                                ->select('id', 'serial_number')
+                                ->first();
+                            $lastSerialNumber = 1;
+                            if ($lastSerial) {
+                                $lastSerialNumber = intval($lastSerial->serial_number) + 1;
+                            }
+
+                            $code = ($company->CompanyID . '/' . $documentMaster['documentID'] . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
+
+
+                            $modifyData['companySystemID'] = $input['company_id'];
+                            $modifyData['documentSystemCode'] = $input['id'];
+                            $modifyData['version'] = $is_vsersion_exit->version;
+                            $modifyData['document_master_id'] = 118;
+                            $modifyData['requested_document_master_id'] = 108;
+                            $modifyData['type'] = $is_vsersion_exit->type;
+                            $modifyData['status'] = 1;
+                            $modifyData['serial_number'] = $lastSerialNumber;
+                            $modifyData['requested_employeeSystemID'] = $is_vsersion_exit->requested_employeeSystemID;
+                            $modifyData['requested_date'] = $is_vsersion_exit->requested_date;
+                            $modifyData['RollLevForApp_curr'] = $is_vsersion_exit->RollLevForApp_curr;
+                            $modifyData['approved'] = $is_vsersion_exit->approved;
+                            $modifyData['requested'] = $is_vsersion_exit->requested;
+                            $modifyData['approved_date'] = $is_vsersion_exit->approved_date;
+                            $modifyData['approved_by_user_system_id'] = $is_vsersion_exit->approved_by_user_system_id;
+                            $modifyData['requested_by_name'] = $is_vsersion_exit->requested_by_name;
+                            $modifyData['description'] = $is_vsersion_exit->description;
+                            $modifyData['code'] = $code;
+                            $modifyData['serial_number'] = $lastSerialNumber;
+                            $modifyData['confirmation_date'] = now();
+                            $modifyData['modify_type'] = 2;
+                            $documentModifyRequest = $this->documentModifyRequestRepository->create($modifyData);
+
+                            $versionUpdate['tender_edit_version_id'] = $documentModifyRequest['id'];
+                            TenderMaster::where('id', $input['id'])->update($versionUpdate);
+
+                            $params = array('autoID' => $documentModifyRequest['id'], 'company' => $input["company_id"], 'document' => 118, 'reference_document_id' => 108);
+                        } else {
+                            $params = array('autoID' => $input['id'], 'company' => $input["company_id"], 'document' => $input["document_system_id"]);
+                        }
+
+
                         $confirm = \Helper::confirmDocument($params);
                         if (!$confirm["success"]) {
                             return ['success' => false, 'message' => $confirm["message"]];
@@ -1283,41 +1343,41 @@ WHERE
                             TenderMaster::where('id', $input['id'])->update($dataC);
                         }
 
-                        $techCriteria = EvaluationCriteriaDetails::with(['child'=> function($q){
-                            $q->with(['child' => function($q){
-                                $q->with(['child' => function($q){
-                                    $q->with(['evaluation_criteria_type','tender_criteria_answer_type']);
+                        $techCriteria = EvaluationCriteriaDetails::with(['child' => function ($q) {
+                            $q->with(['child' => function ($q) {
+                                $q->with(['child' => function ($q) {
+                                    $q->with(['evaluation_criteria_type', 'tender_criteria_answer_type']);
                                 }]);
                             }]);
-                        }])->where('tender_id',$input['id'])->where('level',1)->where('critera_type_id',2)->get();
+                        }])->where('tender_id', $input['id'])->where('level', 1)->where('critera_type_id', 2)->get();
 
-                        if(!empty($techCriteria)){
-                            foreach ($techCriteria as $level1){
-                                if(count($level1['child'])>0){
+                        if (!empty($techCriteria)) {
+                            foreach ($techCriteria as $level1) {
+                                if (count($level1['child']) > 0) {
                                     $weightage2 = 0;
-                                    foreach ($level1['child'] as $level2){
+                                    foreach ($level1['child'] as $level2) {
                                         $weightage2 += $level2['weightage'];
-                                        if(count($level2['child'])>0){
+                                        if (count($level2['child']) > 0) {
                                             $weightage3 = 0;
-                                            foreach ($level2['child'] as $level3){
+                                            foreach ($level2['child'] as $level3) {
                                                 $weightage3 += $level3['weightage'];
-                                                if(count($level3['child'])>0){
+                                                if (count($level3['child']) > 0) {
                                                     $weightage4 = 0;
-                                                    foreach ($level3['child'] as $level4){
+                                                    foreach ($level3['child'] as $level4) {
                                                         $weightage4 += $level4['weightage'];
                                                     }
-                                                    if($level3['weightage'] != $weightage4){
-                                                        return ['success' => false, 'message' => 'Total child criteria weightage of '.$level3['description'] .' is not equal to the parent criteria weightage'];
+                                                    if ($level3['weightage'] != $weightage4) {
+                                                        return ['success' => false, 'message' => 'Total child criteria weightage of ' . $level3['description'] . ' is not equal to the parent criteria weightage'];
                                                     }
                                                 }
                                             }
-                                            if($level2['weightage'] != $weightage3){
-                                                return ['success' => false, 'message' => 'Total child criteria weightage of '.$level2['description'] .' is not equal to the parent criteria weightage'];
+                                            if ($level2['weightage'] != $weightage3) {
+                                                return ['success' => false, 'message' => 'Total child criteria weightage of ' . $level2['description'] . ' is not equal to the parent criteria weightage'];
                                             }
                                         }
                                     }
-                                    if($level1['weightage'] != $weightage2){
-                                        return ['success' => false, 'message' => 'Total child criteria weightage of '.$level1['description'] .' is not equal to the parent criteria weightage'];
+                                    if ($level1['weightage'] != $weightage2) {
+                                        return ['success' => false, 'message' => 'Total child criteria weightage of ' . $level1['description'] . ' is not equal to the parent criteria weightage'];
                                     }
                                 }
                             }
@@ -1327,7 +1387,7 @@ WHERE
 
 
                 DB::commit();
-                return ['success' => true, 'message' => 'Successfully updated','data' => $input['addCalendarDates']];
+                return ['success' => true, 'message' => 'Successfully updated', 'data' => $input['addCalendarDates']];
             }
         } catch (\Exception $e) {
             DB::rollback();
@@ -1339,7 +1399,7 @@ WHERE
     public function updateCalenderDates($input)
     {
         $rfq = false;
-        if(isset($input['rfq'])){
+        if (isset($input['rfq'])) {
             $rfq = ($input['rfq'] == true) ? true : false;
         }
 
@@ -1347,8 +1407,8 @@ WHERE
         $currenctDate = Carbon::now();
         if (isset($input['calendarDates'])) {
             if (count($input['calendarDates']) > 0) {
-                foreach ($input['calendarDates'] as $calDate) { 
-                    $fromTime =($calDate['from_time']) ? new Carbon($calDate['from_time']) : null;
+                foreach ($input['calendarDates'] as $calDate) {
+                    $fromTime = ($calDate['from_time']) ? new Carbon($calDate['from_time']) : null;
                     $toTime = ($calDate['to_time']) ? new Carbon($calDate['to_time']) : null;
 
                     if (empty($fromTime)) {
@@ -1356,23 +1416,22 @@ WHERE
                     }
 
                     if (empty($toTime)) {
-                        if(!empty($calDate['to_date']) && $rfq){
+                        if (!empty($calDate['to_date']) && $rfq) {
                             return ['success' => false, 'message' => 'To time cannot be empty'];
-                        } elseif (!$rfq){
+                        } elseif (!$rfq) {
                             return ['success' => false, 'message' => 'To time cannot be empty'];
                         }
-
                     }
 
                     if (!empty($calDate['from_date'])) {
                         $frm_date = new Carbon($calDate['from_date']);
-                         $frm_date = ($calDate['from_time']) ? $frm_date->format('Y-m-d').' '.$fromTime->format('H:i:s') : $frm_date->format('Y-m-d');
+                        $frm_date = ($calDate['from_time']) ? $frm_date->format('Y-m-d') . ' ' . $fromTime->format('H:i:s') : $frm_date->format('Y-m-d');
                     } else {
                         $frm_date = null;
                     }
                     if (!empty($calDate['to_date'])) {
                         $to_date = new Carbon($calDate['to_date']);
-                        $to_date = ($calDate['to_time']) ? $to_date->format('Y-m-d').' '.$toTime->format('H:i:s') : $to_date->format('Y-m-d') ;
+                        $to_date = ($calDate['to_time']) ? $to_date->format('Y-m-d') . ' ' . $toTime->format('H:i:s') : $to_date->format('Y-m-d');
                     } else {
                         $to_date = null;
                     }
@@ -1381,9 +1440,9 @@ WHERE
                     }
 
                     if (!empty($frm_date) && empty($to_date)) {
-                        if(!empty($toTime) && $rfq){
+                        if (!empty($toTime) && $rfq) {
                             return ['success' => false, 'message' => 'To date cannot be empty'];
-                        } elseif (!$rfq){
+                        } elseif (!$rfq) {
                             return ['success' => false, 'message' => 'To date cannot be empty'];
                         }
                     }
@@ -1394,50 +1453,55 @@ WHERE
                         }
                     }
 
-                    if(!empty($frm_date)) {
-                        if($frm_date < $currenctDate) {
+                    if (!empty($frm_date)) {
+                        if ($frm_date < $currenctDate) {
                             return ['success' => false, 'message' => 'From date and time should greater than current date and time'];
                         }
                     }
 
-                    if(!empty($to_date)) {
-                        if($to_date < $currenctDate) {
+                    if (!empty($to_date)) {
+                        if ($to_date < $currenctDate) {
                             return ['success' => false, 'message' => 'To date and time should greater than current date and time'];
                         }
                     }
 
 
                     if (!empty($to_date) || !empty($frm_date)) {
-                        if(($frm_date > $to_date) && !empty($to_date) && $rfq){
+                        if (($frm_date > $to_date) && !empty($to_date) && $rfq) {
                             return ['success' => false, 'message' => 'From date and time should greater than to date and time'];
-                        } elseif($frm_date > $to_date && !$rfq) {
+                        } elseif ($frm_date > $to_date && !$rfq) {
                             return ['success' => false, 'message' => 'From date and time should greater than to date and time'];
                         }
                     }
                 }
-                    
-                    CalendarDatesDetail::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
-                    foreach ($input['calendarDates'] as $calDate) {
-                        $fromTime =new Carbon($calDate['from_time']);
-                        $frm_date = new Carbon($calDate['from_date']);
-                        $frm_date = ($calDate['from_time']) ? $frm_date->format('Y-m-d').' '.$fromTime->format('H:i:s') : $frm_date->format('Y-m-d');
-                        $to_date = null;
-                        if (!empty($calDate['to_date'])) {
-                            $toTime = new Carbon($calDate['to_time']);
-                            $to_date = new Carbon($calDate['to_date']);
-                            $to_date = ($calDate['to_time']) ? $to_date->format('Y-m-d').' '.$toTime->format('H:i:s') : $to_date->format('Y-m-d') ;
-                        }
 
-                        $calDt['tender_id'] = $input['id'];
-                        $calDt['calendar_date_id'] = $calDate['id'];
-                        $calDt['from_date'] = $frm_date;
-                        $calDt['to_date'] = $to_date;
-                        $calDt['company_id'] = $input['company_id'];
-                        $calDt['created_by'] = $employee->employeeSystemID;
-                        $calDt['created_at'] = Carbon::now();
-                        CalendarDatesDetail::create($calDt);
+               
+                $calenderDetails = $this->deleteCalenderDetails($input['id'], $input['company_id']);
+                if (!$calenderDetails['success']) {
+                    return $this->sendError($calenderDetails['message'], 500);
+                }
+
+                foreach ($input['calendarDates'] as $calDate) {
+                    $fromTime = new Carbon($calDate['from_time']);
+                    $frm_date = new Carbon($calDate['from_date']);
+                    $frm_date = ($calDate['from_time']) ? $frm_date->format('Y-m-d') . ' ' . $fromTime->format('H:i:s') : $frm_date->format('Y-m-d');
+                    $to_date = null;
+                    if (!empty($calDate['to_date'])) {
+                        $toTime = new Carbon($calDate['to_time']);
+                        $to_date = new Carbon($calDate['to_date']);
+                        $to_date = ($calDate['to_time']) ? $to_date->format('Y-m-d') . ' ' . $toTime->format('H:i:s') : $to_date->format('Y-m-d');
                     }
-                    return ['success' => true, 'message' => 'Successfully updated', 'data' => $input['addCalendarDates']];
+
+                    $calDt['tender_id'] = $input['id'];
+                    $calDt['calendar_date_id'] = $calDate['id'];
+                    $calDt['from_date'] = $frm_date;
+                    $calDt['to_date'] = $to_date;
+                    $calDt['company_id'] = $input['company_id'];
+                    $calDt['created_by'] = $employee->employeeSystemID;
+                    $calDt['created_at'] = Carbon::now();
+                    CalendarDatesDetail::create($calDt);
+                }
+                return ['success' => true, 'message' => 'Successfully updated', 'data' => $input['addCalendarDates']];
             } else {
                 CalendarDatesDetail::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
             }
@@ -1461,7 +1525,7 @@ WHERE
             'no_of_alternative_solutions.required' => 'Number of Alternative solutions is required.',
             'commercial_weightage.required' => 'Commercial Criteria Weightage is required.',
             'technical_weightage.required' => 'Technical Criteria Weightage is required.',
-                ];
+        ];
 
         $validator = \Validator::make($input, [
             'title' => 'required',
@@ -1476,7 +1540,7 @@ WHERE
 
         ], $messages);
 
-        if(!isset($input['rfq'])){
+        if (!isset($input['rfq'])) {
             $messages = [
                 'estimated_value.required' => 'Estimated Value is required.',
                 'bank_id.required' => 'Bank is required.',
@@ -1544,7 +1608,7 @@ WHERE
 
         $companyID = $request->companyId;
         $empID = \Helper::getEmployeeSystemID();
-        if(isset($input['rfx'])){
+        if (isset($input['rfx'])) {
             $rfx = $input['rfx'];
         }
 
@@ -1570,9 +1634,9 @@ WHERE
                 ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
                 /*->on('erp_documentapproved.departmentSystemID', '=', 'employeesdepartments.departmentSystemID')*/
                 ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
-            if($rfx){
+            if ($rfx) {
                 $query->where('employeesdepartments.documentSystemID', 113);
-            } else{
+            } else {
                 $query->where('employeesdepartments.documentSystemID', 108);
             }
             $query->where('employeesdepartments.companySystemID', $companyID)
@@ -1585,12 +1649,12 @@ WHERE
                 ->where('srm_tender_master.company_id', $companyID)
                 ->where('srm_tender_master.approved', 0)
                 ->where('srm_tender_master.confirmed_yn', 1);
-            if($rfx){
-                $query->where('srm_tender_master.document_type', '!=',0);
+            if ($rfx) {
+                $query->where('srm_tender_master.document_type', '!=', 0);
             }
         });
 
-        if($rfx){
+        if ($rfx) {
             $poMasters = $poMasters->where('erp_documentapproved.approvedYN', 0)
                 ->join('currencymaster', 'currency_id', '=', 'currencyID')
                 ->join('employees', 'created_by', 'employees.employeeSystemID')
@@ -1606,7 +1670,7 @@ WHERE
                 ->where('erp_documentapproved.companySystemID', $companyID);
         }
 
-        
+
         $search = $request->input('search.value');
 
         if ($search) {
@@ -1641,7 +1705,7 @@ WHERE
 
     public function approveTender(Request $request)
     {
-      
+
         $approve = \Helper::approveDocument($request);
 
         if (!$approve["success"]) {
@@ -1675,7 +1739,7 @@ WHERE
 
         $companyID = $request->companyId;
         $empID = \Helper::getEmployeeSystemID();
-        if(isset($input['rfx'])){
+        if (isset($input['rfx'])) {
             $rfx = $input['rfx'];
         }
 
@@ -1704,9 +1768,9 @@ WHERE
                 /*->on('erp_documentapproved.departmentSystemID', '=', 'employeesdepartments.departmentSystemID')*/
                 ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
 
-            if($rfx){
+            if ($rfx) {
                 $query->where('employeesdepartments.documentSystemID', 113);
-            } else{
+            } else {
                 $query->where('employeesdepartments.documentSystemID', 108);
             }
 
@@ -1720,11 +1784,11 @@ WHERE
                 ->where('srm_tender_master.company_id', $companyID)
                 ->where('srm_tender_master.approved', -1)
                 ->where('srm_tender_master.confirmed_yn', 1);
-            if($rfx){
-                $query->where('srm_tender_master.document_type', '!=',0);
+            if ($rfx) {
+                $query->where('srm_tender_master.document_type', '!=', 0);
             }
         });
-        if($rfx){
+        if ($rfx) {
             $poMasters = $poMasters->where('erp_documentapproved.approvedYN', -1)
                 ->join('currencymaster', 'currency_id', '=', 'currencyID')
                 ->join('employees', 'created_by', 'employees.employeeSystemID')
@@ -2025,7 +2089,7 @@ WHERE
             if ($selectAll == true) {
                 $pullList = [];
                 TenderSupplierAssignee::where('tender_master_id', $tenderId)
-                    ->whereNotNull('supplier_assigned_id')
+                    ->whereNotNull('supplier_assigned_id')->where('mail_sent', 0)
                     ->delete();
                 $suppilerAssigned = SupplierAssigned::whereDoesntHave('tenderSupplierAssigned', function ($query) use ($tenderId) {
                     $query->where('tender_master_id', '=', $tenderId);
@@ -2114,10 +2178,10 @@ WHERE
         $total = ((int)$commercialWeightage + (int)$technicalWeightage);
         $employee = \Helper::getEmployeeInfo();
         if ($total != 100) {
-           return ['status' => false, 'message' => 'The total Evaluation Criteria Weightage cannot be less than 100'];
+            return ['status' => false, 'message' => 'The total Evaluation Criteria Weightage cannot be less than 100'];
         }
 
-        if(!isset($input['rfx'])){
+        if (!isset($input['rfx'])) {
             if ($input['commercial_weightage'] != 0 && ($input['commercial_passing_weightage'] == 0 || is_null($input['commercial_passing_weightage']))) {
                 return ['status' => false, 'message' => 'Commercial Passing Weightage is required'];
             }
@@ -2129,17 +2193,18 @@ WHERE
 
 
         $tenderMaster = TenderMaster::find($input['id']);
-        $tenderbidEmployee = SrmTenderBidEmployeeDetails::where('tender_id',$input['id'])->count();
-        
-        if(($input['min_approval_bid_opening'] != 0)) {
-            if($tenderbidEmployee < $input['min_approval_bid_opening']) {
-                return ['status' => false, 'message' => "Atleast ".$input['min_approval_bid_opening']." employee should selected"];
+        $tenderbidEmployee = SrmTenderBidEmployeeDetails::where('tender_id', $input['id'])->count();
+
+        if (($input['min_approval_bid_opening'] != 0)) {
+            if ($tenderbidEmployee < $input['min_approval_bid_opening']) {
+                return ['status' => false, 'message' => "Atleast " . $input['min_approval_bid_opening'] . " employee should selected"];
             }
         }
-  
+
 
         DB::beginTransaction();
         try {
+            $tenderMaster = TenderMaster::find($input['id']);
             $data['tender_type_id'] = $input['tender_type_id'];
             $data['envelop_type_id'] = (empty($input['envelop_type_id'])) ? 0 : $input['envelop_type_id'];
             $data['evaluation_type_id'] = $input['evaluation_type_id'];
@@ -2151,8 +2216,8 @@ WHERE
             $data['technical_passing_weightage'] = $input['technical_passing_weightage'];
             $data['commercial_passing_weightage'] = $input['commercial_passing_weightage'];
             $data['min_approval_bid_opening'] = $input['min_approval_bid_opening'];
-            $result = TenderMaster::where('id', $input['id'])->update($data);
-            if ($result) {
+            $tenderMaster->update($data);
+            if ($tenderMaster) {
                 if (isset($input['document_types'])) {
                     if (count($input['document_types']) > 0) {
                         TenderDocumentTypeAssign::where('tender_id', $input['id'])->where('company_id', $input['company_id'])->delete();
@@ -2199,7 +2264,7 @@ WHERE
             'technical_weightage' => 'required'
         ], $messages);
 
-        if(!isset($input['rfx'])){
+        if (!isset($input['rfx'])) {
             $messages = [
                 'envelop_type_id.required' => 'Envelop Type is required.',
                 'commercial_passing_weightage.required' => 'Commercial Passing Weightage is required.',
@@ -2237,7 +2302,10 @@ WHERE
 
             $calendarDatesDetail = CalendarDatesDetail::where('calendar_date_id', $request['calenderDateTypeId'])
                 ->where('tender_id', $request['tenderMasterId'])
-                ->delete();
+                ->first();
+
+            $result = CalendarDatesDetail::find($calendarDatesDetail->id);
+            $result->delete();
             DB::commit();
             return ['success' => true, 'message' => 'Successfully deleted', 'data' => $calendarDatesDetail];
         } catch (\Exception $e) {
@@ -2252,32 +2320,32 @@ WHERE
         $employee = \Helper::getEmployeeInfo();
 
         $rfx = isset($request['rfq']) ? true : false;
-        $fromTime =($request['from_time']) ? new Carbon($request['from_time']) : null;
+        $fromTime = ($request['from_time']) ? new Carbon($request['from_time']) : null;
         $toTime = ($request['to_time']) ? new Carbon($request['to_time']) : null;
 
         $calendarDatesDetail = CalendarDatesDetail::where('calendar_date_id', $request['calenderDateTypeId'])
             ->where('tender_id', $request['tenderMasterId'])
             ->first();
 
-            if(!isset($request['from_time'])) {
-                $fromTime = new Carbon($calendarDatesDetail->from_time);
-            }
+        if (!isset($request['from_time'])) {
+            $fromTime = new Carbon($calendarDatesDetail->from_time);
+        }
 
-            if(!isset($request['to_time'])) {
-                $toTime = new Carbon($calendarDatesDetail->to_time);
-            }
+        if (!isset($request['to_time'])) {
+            $toTime = new Carbon($calendarDatesDetail->to_time);
+        }
 
 
         if (isset($request['from_date'])) {
             $frm_date = new Carbon($request['from_date']);
-            $frm_date = ($fromTime) ? $frm_date->format('Y-m-d').' '.$fromTime->format('H:i:s') : $frm_date->format('Y-m-d');
+            $frm_date = ($fromTime) ? $frm_date->format('Y-m-d') . ' ' . $fromTime->format('H:i:s') : $frm_date->format('Y-m-d');
             $data['from_date'] = $frm_date;
         }
 
 
         if (isset($request['to_date']) && !empty($request['to_date'])) {
             $to_date = new Carbon($request['to_date']);
-            $to_date = ($toTime) ? $to_date->format('Y-m-d').' '.$toTime->format('H:i:s') : $to_date->format('Y-m-d');
+            $to_date = ($toTime) ? $to_date->format('Y-m-d') . ' ' . $toTime->format('H:i:s') : $to_date->format('Y-m-d');
             $data['to_date'] = $to_date;
         } else {
             $to_date = null;
@@ -2299,41 +2367,39 @@ WHERE
 
         $data['updated_at'] = Carbon::now();
         $data['updated_by'] = $employee->employeeSystemID;
-       
-        
+
+
         DB::beginTransaction();
         try {
 
             $calendarDatesDetail = CalendarDatesDetail::where('calendar_date_id', $request['calenderDateTypeId'])
-            ->where('tender_id', $request['tenderMasterId'])
-            ->first();
+                ->where('tender_id', $request['tenderMasterId'])
+                ->first();
 
             if (empty($calendarDatesDetail)) {
                 return $this->sendError('Calendar Date Type not found');
             }
 
-            if(isset($request['time_changed']) && $request['time_changed']) {
-                if($calendarDatesDetail->from_time != $fromTime || $calendarDatesDetail->to_time != $toTime) {
+            if (isset($request['time_changed']) && $request['time_changed']) {
+                if ($calendarDatesDetail->from_time != $fromTime || $calendarDatesDetail->to_time != $toTime) {
 
                     $calendarDatesDetail = CalendarDatesDetail::where('calendar_date_id', $request['calenderDateTypeId'])
-                    ->where('tender_id', $request['tenderMasterId'])
-                    ->update($data);
+                        ->where('tender_id', $request['tenderMasterId'])
+                        ->first();
+                     $calenderDates =  CalendarDatesDetail::find($calendarDatesDetail->id);  
+                     $calenderDates->update($data);
                     DB::commit();
                     return ['success' => true, 'message' => 'updated', 'data' => $calendarDatesDetail];
-         
                 }
-
-            }else {
+            } else {
                 $calendarDatesDetail = CalendarDatesDetail::where('calendar_date_id', $request['calenderDateTypeId'])
-                ->where('tender_id', $request['tenderMasterId'])
-                ->update($data);
+                    ->where('tender_id', $request['tenderMasterId'])
+                    ->first();
+                $calenderDates =  CalendarDatesDetail::find($calendarDatesDetail->id);  
+                $calenderDates->update($data);
                 DB::commit();
                 return ['success' => true, 'message' => 'Successfully updated', 'data' => $calendarDatesDetail];
-     
             }
-
-
-
         } catch (\Exception $e) {
             DB::rollback();
             Log::error($this->failed($e));
@@ -2360,9 +2426,9 @@ WHERE
         //     $q->with(['tender_type', 'envelop_type', 'currency']);
         // }])->get();
 
-        $query = TenderMaster::with(['currency', 'srm_bid_submission_master','tender_type','envelop_type','srmTenderMasterSupplier'])->whereHas('srmTenderMasterSupplier')->where('published_yn', 1);
+        $query = TenderMaster::with(['currency', 'srm_bid_submission_master', 'tender_type', 'envelop_type', 'srmTenderMasterSupplier'])->whereHas('srmTenderMasterSupplier')->where('published_yn', 1);
 
-       // return $this->sendResponse($query, 'Tender Masters retrieved successfully');
+        // return $this->sendResponse($query, 'Tender Masters retrieved successfully');
 
         $search = $request->input('search.value');
         if ($search) {
@@ -2397,7 +2463,7 @@ WHERE
         $companySystemID = $input['companySystemID'];
         $is_date_disable = false;
         $is_comm_date_disable = false;
-        $data['master'] = TenderMaster::with(['procument_activity', 'confirmed_by','tender_type','envelop_type','evaluation_type'])->where('id', $input['tenderMasterId'])->first();
+        $data['master'] = TenderMaster::with(['procument_activity', 'confirmed_by', 'tender_type', 'envelop_type', 'evaluation_type'])->where('id', $input['tenderMasterId'])->first();
         $activity = ProcumentActivity::with(['tender_procurement_category'])->where('tender_id', $input['tenderMasterId'])->where('company_id', $input['companySystemID'])->get();
         $act = array();
         if (!empty($activity)) {
@@ -2409,7 +2475,7 @@ WHERE
         }
         $data['activity'] = $act;
 
-                $qry = "SELECT
+        $qry = "SELECT
             srm_calendar_dates.id as id,
             srm_calendar_dates.calendar_date as calendar_date,
             srm_calendar_dates.company_id as company_id,
@@ -2421,7 +2487,7 @@ WHERE
         WHERE
             srm_calendar_dates.company_id = $companySystemID";
 
-                $qryAll = "SELECT
+        $qryAll = "SELECT
             srm_calendar_dates.id as id,
             srm_calendar_dates.calendar_date as calendar_date,
             srm_calendar_dates.company_id as company_id,
@@ -2443,13 +2509,10 @@ WHERE
         $stage = $data['master']['stage'];
         $current_date2 = Carbon::createFromFormat('Y-m-d H:i:s', $current_date);
 
-        if($stage == 1)
-        {
+        if ($stage == 1) {
             $opening_date_comp = $data['master']['bid_opening_date'];
             $opening_date_comp_end = $data['master']['bid_opening_end_date'];
-        }
-        else if($stage == 2)
-        {
+        } else if ($stage == 2) {
             $opening_date_comp = $data['master']['technical_bid_opening_date'];
             $opening_date_comp_end = $data['master']['technical_bid_closing_date'];
 
@@ -2457,41 +2520,32 @@ WHERE
             $closing_commer_date_comp = $data['master']['commerical_bid_closing_date'];
 
             $result1 = $current_date2->gt($opening_commer_date_comp);
-            if($closing_commer_date_comp == null)
-            {   
+            if ($closing_commer_date_comp == null) {
                 $result2 = true;
-            }
-            else
-            {
+            } else {
                 $result2 = $closing_commer_date_comp->gt($current_date2);
             }
-            
-            
-            
 
-            if($result1 && $result2)
-            {
+
+
+
+            if ($result1 && $result2) {
                 $is_comm_date_disable = true;
             }
-
         }
 
 
         $result3 = $current_date2->gt($opening_date_comp);
-        if($opening_date_comp_end == null)
-        {
+        if ($opening_date_comp_end == null) {
             $result4 = true;
-        }
-        else
-        {
+        } else {
             $result4 = $opening_date_comp_end->gt($current_date2);
         }
 
-        
-   
 
-        if($result3 && $result4)
-        {
+
+
+        if ($result3 && $result4) {
             $is_date_disable = true;
         }
 
@@ -2516,7 +2570,7 @@ WHERE
 
     public function tenderCommiteApproveal(Request $request)
     {
-       
+
         $input = $request->all();
         $tender_id = $input['tender_id'];
         $emp_id = $input['emp_id'];
@@ -2524,52 +2578,42 @@ WHERE
         $val = $input['data']['value'];
         $id = $input['id'];
         $type = $input['type'];
-        
-        
+
+
 
         DB::beginTransaction();
         try {
-            if($type == 2)
-            {
+            if ($type == 2) {
                 $data['status'] = $val;
                 $data['remarks'] = $comments;
-            }
-            else if($type == 1)
-            {
+            } else if ($type == 1) {
                 $data['commercial_eval_status'] = $val;
                 $data['commercial_eval_remarks'] = $comments;
-            }
-            else if($type == 3)
-            {
+            } else if ($type == 3) {
                 $data['tender_award_commite_mem_status'] = $val;
                 $data['tender_award_commite_mem_comment'] = $comments;
-                
             }
-          
-            $results = SrmTenderBidEmployeeDetails::where('emp_id',$emp_id)->where('tender_id',$tender_id)->where('emp_id',$emp_id)->update($data,$id);
+
+            $results = SrmTenderBidEmployeeDetails::where('emp_id', $emp_id)->where('tender_id', $tender_id)->where('emp_id', $emp_id)->update($data, $id);
 
 
-            if($type == 3)
-            {
+            if ($type == 3) {
                 $min_Approval = $input['min_approval'];
 
-                $results = SrmTenderBidEmployeeDetails::where('tender_id',$tender_id)->where('tender_award_commite_mem_status',1)->count();
-                $pending = SrmTenderBidEmployeeDetails::where('tender_id',$tender_id)->where('tender_award_commite_mem_status',0)->count();
+                $results = SrmTenderBidEmployeeDetails::where('tender_id', $tender_id)->where('tender_award_commite_mem_status', 1)->count();
+                $pending = SrmTenderBidEmployeeDetails::where('tender_id', $tender_id)->where('tender_award_commite_mem_status', 0)->count();
 
                 $need = $min_Approval - $results;
                 $status = 0;
-                if($min_Approval <= $results)
-                {
-                     $status = 1;
-                }
-                else if($need > $pending)
-                {
-                     $status = 2;
+                if ($min_Approval <= $results) {
+                    $status = 1;
+                } else if ($need > $pending) {
+                    $status = 2;
                 }
 
-                TenderMaster::where('id',$tender_id)->update(['award_commite_mem_status'=>$status]);
+                TenderMaster::where('id', $tender_id)->update(['award_commite_mem_status' => $status]);
             }
-    
+
             DB::commit();
             return ['success' => true, 'message' => 'Successfully updated', 'data' => $results];
         } catch (\Exception $e) {
@@ -2577,28 +2621,26 @@ WHERE
             Log::error($this->failed($e));
             return ['success' => false, 'message' => $e];
         }
-    
-
     }
 
     public function tenderBidDocVerification(Request $request)
     {
-      
+
         $input = $request->all();
         $id = $input['tender_id'];
         $comments = $input['comments'];
-       // $val = $input['type'];
-        
+        // $val = $input['type'];
+
         DB::beginTransaction();
         try {
-            
+
             $bid_sub_data['doc_verifiy_by_emp'] = \Helper::getEmployeeSystemID();
             $bid_sub_data['doc_verifiy_date'] =  date('Y-m-d H:i:s');
             $bid_sub_data['doc_verifiy_status'] = 1;
             $bid_sub_data['doc_verifiy_comment'] = $comments;
 
-            $results = TenderMaster::where('id',$id)->update($bid_sub_data,$id);
-    
+            $results = TenderMaster::where('id', $id)->update($bid_sub_data, $id);
+
             DB::commit();
             return ['success' => true, 'message' => 'Successfully updated', 'data' => $results];
         } catch (\Exception $e) {
@@ -2618,81 +2660,75 @@ WHERE
         $id = $input['id'];
         $tenderId = $input['tenderMasterId'];
         $bid_id = $input['bid_id'];
-        if($id == null)
-        {
+        if ($id == null) {
             $master_data = null;
             $bid_master_ids = (array)$bid_id;
-            $submission_master_data = BidSubmissionMaster::where('id',$bid_id)->first();
-        }
-        else
-        {
-            $master_data = BidEvaluationSelection::where('id',$id)->first();
+            $submission_master_data = BidSubmissionMaster::where('id', $bid_id)->first();
+        } else {
+            $master_data = BidEvaluationSelection::where('id', $id)->first();
 
-            $bid_master_ids = json_decode(BidEvaluationSelection::where('id',$id)->pluck('bids')[0],true);
+            $bid_master_ids = json_decode(BidEvaluationSelection::where('id', $id)->pluck('bids')[0], true);
             $submission_master_data = null;
         }
 
-    
 
-        $data['bid_submissions'] = BidSubmissionMaster::with('SupplierRegistrationLink')->whereIn('id',$bid_master_ids)->get();
 
-        $techniqal_wightage = TenderMaster::where('id',$tenderId)->select('id','technical_weightage')->first();
+        $data['bid_submissions'] = BidSubmissionMaster::with('SupplierRegistrationLink')->whereIn('id', $bid_master_ids)->get();
 
-       
-        $data['criteriaDetail'] = EvaluationCriteriaDetails::with(['evaluation_criteria_score_config','tender_criteria_answer_type', 'bid_submission_detail1' => function ($q) use ($bid_master_ids) {
-            $q->whereIn('bid_master_id', $bid_master_ids)->orderBy('bid_master_id')->with(['srm_bid_submission_master'=>function($q){
-                $q->select('id','technical_verify_status');
+        $techniqal_wightage = TenderMaster::where('id', $tenderId)->select('id', 'technical_weightage')->first();
+
+
+        $data['criteriaDetail'] = EvaluationCriteriaDetails::with(['evaluation_criteria_score_config', 'tender_criteria_answer_type', 'bid_submission_detail1' => function ($q) use ($bid_master_ids) {
+            $q->whereIn('bid_master_id', $bid_master_ids)->orderBy('bid_master_id')->with(['srm_bid_submission_master' => function ($q) {
+                $q->select('id', 'technical_verify_status');
             }]);
         }, 'child' => function ($q) use ($bid_master_ids) {
-            $q->with(['evaluation_criteria_score_config','tender_criteria_answer_type', 'bid_submission_detail1' => function ($q) use ($bid_master_ids) {
-                $q->whereIn('bid_master_id', $bid_master_ids)->orderBy('bid_master_id')->with(['srm_bid_submission_master'=>function($q){
-                    $q->select('id','technical_verify_status');
+            $q->with(['evaluation_criteria_score_config', 'tender_criteria_answer_type', 'bid_submission_detail1' => function ($q) use ($bid_master_ids) {
+                $q->whereIn('bid_master_id', $bid_master_ids)->orderBy('bid_master_id')->with(['srm_bid_submission_master' => function ($q) {
+                    $q->select('id', 'technical_verify_status');
                 }]);
             }, 'child' => function ($q) use ($bid_master_ids) {
-                $q->with(['evaluation_criteria_score_config','tender_criteria_answer_type', 'bid_submission_detail1' => function ($q) use ($bid_master_ids) {
-                    $q->whereIn('bid_master_id', $bid_master_ids)->orderBy('bid_master_id')->with(['srm_bid_submission_master'=>function($q){
-                        $q->select('id','technical_verify_status');
+                $q->with(['evaluation_criteria_score_config', 'tender_criteria_answer_type', 'bid_submission_detail1' => function ($q) use ($bid_master_ids) {
+                    $q->whereIn('bid_master_id', $bid_master_ids)->orderBy('bid_master_id')->with(['srm_bid_submission_master' => function ($q) {
+                        $q->select('id', 'technical_verify_status');
                     }]);
                 }, 'child' => function ($q) use ($bid_master_ids) {
-                    $q->with(['evaluation_criteria_score_config','tender_criteria_answer_type', 'bid_submission_detail1' => function ($q) use ($bid_master_ids) {
-                        $q->whereIn('bid_master_id', $bid_master_ids)->orderBy('bid_master_id')->with(['srm_bid_submission_master'=>function($q){
-                            $q->select('id','technical_verify_status');
+                    $q->with(['evaluation_criteria_score_config', 'tender_criteria_answer_type', 'bid_submission_detail1' => function ($q) use ($bid_master_ids) {
+                        $q->whereIn('bid_master_id', $bid_master_ids)->orderBy('bid_master_id')->with(['srm_bid_submission_master' => function ($q) {
+                            $q->select('id', 'technical_verify_status');
                         }]);
                     }]);
                 }]);
             }]);
         }])->where('tender_id', $tenderId)->where('level', 1)->where('critera_type_id', 2)->get();
-   
-       $wight = [];
-       $percentage = [];
+
+        $wight = [];
+        $percentage = [];
 
 
-        foreach($bid_master_ids as $ids)
-        {
-            $srm_score = BidSubmissionDetail::where('bid_master_id',$ids)->sum('result');
-            $erp_score_score = BidSubmissionDetail::where('bid_master_id',$ids)->sum('eval_result');
+        foreach ($bid_master_ids as $ids) {
+            $srm_score = BidSubmissionDetail::where('bid_master_id', $ids)->sum('result');
+            $erp_score_score = BidSubmissionDetail::where('bid_master_id', $ids)->sum('eval_result');
 
-            $result =  round(($srm_score/100)*$techniqal_wightage->technical_weightage,3);
-            $eval_result = round(($erp_score_score/100)*$techniqal_wightage->technical_weightage,3);
+            $result =  round(($srm_score / 100) * $techniqal_wightage->technical_weightage, 3);
+            $eval_result = round(($erp_score_score / 100) * $techniqal_wightage->technical_weightage, 3);
 
             $temp['result'] = $result;
             $temp['eval_result'] = $eval_result;
 
             $updated['tech_weightage'] =  $eval_result;
-            $output = BidSubmissionMaster::where('id',$ids)->update($updated);
+            $output = BidSubmissionMaster::where('id', $ids)->update($updated);
 
-            if($techniqal_wightage->technical_weightage == 0)
-            {
+            if ($techniqal_wightage->technical_weightage == 0) {
                 $temp1['result_percentage'] = 0;
                 $temp1['eval_result_percentage'] = 0;
-            }
-            else{
-                $temp1['result_percentage'] = round((($result)/$techniqal_wightage->technical_weightage)*100,3);
-                $temp1['eval_result_percentage'] = round( (($eval_result)/$techniqal_wightage->technical_weightage)*100,3);
+            } else {
+                $temp1['result_percentage'] = round((($result) / $techniqal_wightage->technical_weightage) * 100, 3);
+                $temp1['eval_result_percentage'] = round((($eval_result) / $techniqal_wightage->technical_weightage) * 100, 3);
             }
 
-            array_push($wight,$temp);
-            array_push($percentage,$temp1);
+            array_push($wight, $temp);
+            array_push($percentage, $temp1);
         }
 
 
@@ -2701,7 +2737,6 @@ WHERE
         $data['master_data'] = $master_data;
         $data['submission_master_data'] = $submission_master_data;
         return $this->sendResponse($data, 'Tender Masters retrieved successfully');
-
     }
 
 
@@ -2723,9 +2758,9 @@ WHERE
         //     $q->with(['tender_type', 'envelop_type', 'currency']);
         // }])->get();
 
-        $query = TenderMaster::with(['currency', 'srm_bid_submission_master','tender_type','envelop_type','srmTenderMasterSupplier'])->whereHas('srmTenderMasterSupplier')->where('published_yn', 1)->where('technical_eval_status', 1)->where('go_no_go_status', 1);
+        $query = TenderMaster::with(['currency', 'srm_bid_submission_master', 'tender_type', 'envelop_type', 'srmTenderMasterSupplier'])->whereHas('srmTenderMasterSupplier')->where('published_yn', 1)->where('technical_eval_status', 1)->where('go_no_go_status', 1);
 
-       // return $this->sendResponse($query, 'Tender Masters retrieved successfully');
+        // return $this->sendResponse($query, 'Tender Masters retrieved successfully');
 
         $search = $request->input('search.value');
         if ($search) {
@@ -2760,19 +2795,19 @@ WHERE
         $bidMasterId = $request->input('extraParams.id');
 
 
-     
+
         $data = PricingScheduleMaster::with(['tender_bid_format_master', 'bid_schedule' => function ($q) use ($bidMasterId) {
             $q->where('bid_master_id', $bidMasterId);
         }, 'pricing_shedule_details' => function ($q) use ($bidMasterId) {
             $q->with(['bid_main_work' => function ($q) use ($bidMasterId) {
                 $q->where('bid_master_id', $bidMasterId);
-            },'bid_format_detail' =>function ($q) use ($bidMasterId) {
+            }, 'bid_format_detail' => function ($q) use ($bidMasterId) {
                 $q->where('bid_master_id', $bidMasterId);
                 $q->orWhere('bid_master_id', null);
             }]);
         }])->where('tender_id', $tenderId)->get();
 
-     
+
 
         return [
             'success' => true,
@@ -2782,7 +2817,7 @@ WHERE
     }
 
 
-    
+
     public function getCommercialEvalBoq(Request $request)
     {
         $mainWorkId = $request->input('extraParams.mainWorkId');
@@ -2791,7 +2826,7 @@ WHERE
             $q->where('bid_master_id', $bidMasterId);
         }])->where('main_work_id', $mainWorkId)->get();
 
-     
+
 
         return [
             'success' => true,
@@ -2812,9 +2847,9 @@ WHERE
 
         $companyId = $request['companyId'];
 
-        $query = TenderMaster::with(['currency', 'srm_bid_submission_master','tender_type','envelop_type','srmTenderMasterSupplier'])->whereHas('srmTenderMasterSupplier')->where('published_yn', 1)
-        ->where('commercial_verify_status', 1)
-        ->where('technical_eval_status', 1);
+        $query = TenderMaster::with(['currency', 'srm_bid_submission_master', 'tender_type', 'envelop_type', 'srmTenderMasterSupplier'])->whereHas('srmTenderMasterSupplier')->where('published_yn', 1)
+            ->where('commercial_verify_status', 1)
+            ->where('technical_eval_status', 1);
 
         $search = $request->input('search.value');
         if ($search) {
@@ -2841,7 +2876,7 @@ WHERE
             ->make(true);
     }
 
-    
+
     public function getTechnicalRanking(Request $request)
     {
         $input = $request->all();
@@ -2854,27 +2889,39 @@ WHERE
 
         $companyId = $request['companyId'];
         $tenderId = $request['tenderId'];
-        $techniqal_wightage = TenderMaster::where('id',$tenderId)->select('id','technical_weightage')->first();
+        $techniqal_wightage = TenderMaster::where('id', $tenderId)->select('id', 'technical_weightage','document_type')->first();
+
+        if($techniqal_wightage->document_type == 0)
+        {
+            $query = BidSubmissionMaster::selectRaw("round(SUM((srm_bid_submission_detail.eval_result/100)*srm_tender_master.technical_weightage),3) as weightage,srm_bid_submission_master.id,srm_bid_submission_master.bidSubmittedDatetime,srm_bid_submission_master.tender_id,srm_supplier_registration_link.name,srm_bid_submission_detail.id as bid_id,srm_bid_submission_master.commercial_verify_status,srm_bid_submission_master.bidSubmissionCode,srm_tender_master.technical_passing_weightage as passing_weightage")
+            ->join('srm_supplier_registration_link', 'srm_supplier_registration_link.id', '=', 'srm_bid_submission_master.supplier_registration_id')
+            ->join('srm_tender_master', 'srm_tender_master.id', '=', 'srm_bid_submission_master.tender_id')
+            ->join('srm_bid_submission_detail', 'srm_bid_submission_detail.bid_master_id', '=', 'srm_bid_submission_master.id')
+            ->join('srm_evaluation_criteria_details', 'srm_evaluation_criteria_details.id', '=', 'srm_bid_submission_detail.evaluation_detail_id')
+            ->havingRaw('weightage >= passing_weightage')
+            ->groupBy('srm_bid_submission_master.id')
+            ->where('srm_bid_submission_master.status', 1)->where('srm_bid_submission_master.bidSubmittedYN', 1)->where('srm_bid_submission_master.tender_id', $tenderId)
+            ->orderBy('weightage', 'desc');
+        }
+        else
+        {
+            $query = BidSubmissionMaster::selectRaw("'' as weightage,srm_bid_submission_master.id,srm_bid_submission_master.bidSubmittedDatetime,srm_bid_submission_master.tender_id,srm_supplier_registration_link.name,'' as bid_id,srm_bid_submission_master.commercial_verify_status,srm_bid_submission_master.bidSubmissionCode,srm_tender_master.technical_passing_weightage as passing_weightage")
+            ->join('srm_supplier_registration_link', 'srm_supplier_registration_link.id', '=', 'srm_bid_submission_master.supplier_registration_id')
+            ->join('srm_tender_master', 'srm_tender_master.id', '=', 'srm_bid_submission_master.tender_id')
+            ->groupBy('srm_bid_submission_master.id')
+            ->where('srm_bid_submission_master.status', 1)->where('srm_bid_submission_master.bidSubmittedYN', 1)->where('srm_bid_submission_master.tender_id', $tenderId)
+            ->orderBy('weightage', 'desc');
+        }
 
 
-
-        $query = BidSubmissionMaster::selectRaw("round(SUM((srm_bid_submission_detail.eval_result/100)*srm_tender_master.technical_weightage),3) as weightage,srm_bid_submission_master.id,srm_bid_submission_master.bidSubmittedDatetime,srm_bid_submission_master.tender_id,srm_supplier_registration_link.name,srm_bid_submission_detail.id as bid_id,srm_bid_submission_master.commercial_verify_status,srm_bid_submission_master.bidSubmissionCode,srm_tender_master.technical_passing_weightage as passing_weightage")
-        ->join('srm_supplier_registration_link', 'srm_supplier_registration_link.id', '=', 'srm_bid_submission_master.supplier_registration_id')
-        ->join('srm_tender_master', 'srm_tender_master.id', '=', 'srm_bid_submission_master.tender_id')
-        ->join('srm_bid_submission_detail', 'srm_bid_submission_detail.bid_master_id', '=', 'srm_bid_submission_master.id')
-        ->join('srm_evaluation_criteria_details', 'srm_evaluation_criteria_details.id', '=', 'srm_bid_submission_detail.evaluation_detail_id')
-        ->havingRaw('weightage >= passing_weightage')
-        ->groupBy('srm_bid_submission_master.id')
-        ->where('srm_bid_submission_master.status', 1)->where('srm_bid_submission_master.bidSubmittedYN', 1)->where('srm_bid_submission_master.tender_id', $tenderId)
-        ->orderBy('weightage','desc')
-        ;
+ 
 
         $search = $request->input('search.value');
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
             $query = $query->where(function ($query) use ($search) {
                 $query->where('name', 'LIKE', "%{$search}%")
-                ->orWhere('bidSubmissionCode', 'LIKE', "%{$search}%");
+                    ->orWhere('bidSubmissionCode', 'LIKE', "%{$search}%");
             });
         }
 
@@ -2905,37 +2952,52 @@ WHERE
 
         $companyId = $request['companyId'];
         $tenderId = $request['tenderId'];
-        $techniqal_wightage = TenderMaster::where('id',$tenderId)->select('id','technical_weightage','commercial_weightage')->first();
+        $techniqal_wightage = TenderMaster::where('id', $tenderId)->select('id', 'technical_weightage', 'commercial_weightage','document_type')->first();
 
         $total_amount = 0;
 
-        $query1 = BidSubmissionMaster::selectRaw("round(SUM((srm_bid_submission_detail.eval_result/100)*srm_tender_master.technical_weightage),3) as weightage,srm_bid_submission_master.id,srm_bid_submission_master.bidSubmittedDatetime,srm_bid_submission_master.tender_id,srm_supplier_registration_link.name,srm_bid_submission_detail.id as bid_id,srm_bid_submission_master.commercial_verify_status,srm_bid_submission_master.bidSubmissionCode,srm_tender_master.technical_passing_weightage as passing_weightage,srm_bid_submission_master.comm_weightage,srm_bid_submission_master.line_item_total,srm_supplier_registration_link.id as supplier_id")
-        ->join('srm_supplier_registration_link', 'srm_supplier_registration_link.id', '=', 'srm_bid_submission_master.supplier_registration_id')
-        ->join('srm_tender_master', 'srm_tender_master.id', '=', 'srm_bid_submission_master.tender_id')
-        ->join('srm_bid_submission_detail', 'srm_bid_submission_detail.bid_master_id', '=', 'srm_bid_submission_master.id')
-        ->join('srm_evaluation_criteria_details', 'srm_evaluation_criteria_details.id', '=', 'srm_bid_submission_detail.evaluation_detail_id')
-        ->join('srm_bid_main_work', 'srm_bid_main_work.bid_master_id', '=', 'srm_bid_submission_master.id')
-        ->havingRaw('weightage >= passing_weightage')
-        ->groupBy('srm_bid_submission_master.id')
-        ->where('srm_bid_submission_master.status', 1)->where('srm_bid_submission_master.bidSubmittedYN', 1)->where('srm_bid_submission_master.tender_id', $tenderId)->where('srm_bid_submission_master.commercial_verify_status', 1)
-        ->orderBy('srm_bid_submission_master.comm_weightage','asc')->pluck('supplier_id')->toArray();
+        if($techniqal_wightage->document_type == 0)
+        {
+            $query1 = BidSubmissionMaster::selectRaw("round(SUM((srm_bid_submission_detail.eval_result/100)*srm_tender_master.technical_weightage),3) as weightage,srm_bid_submission_master.id,srm_bid_submission_master.bidSubmittedDatetime,srm_bid_submission_master.tender_id,srm_supplier_registration_link.name,srm_bid_submission_detail.id as bid_id,srm_bid_submission_master.commercial_verify_status,srm_bid_submission_master.bidSubmissionCode,srm_tender_master.technical_passing_weightage as passing_weightage,srm_bid_submission_master.comm_weightage,srm_bid_submission_master.line_item_total,srm_supplier_registration_link.id as supplier_id")
+            ->join('srm_supplier_registration_link', 'srm_supplier_registration_link.id', '=', 'srm_bid_submission_master.supplier_registration_id')
+            ->join('srm_tender_master', 'srm_tender_master.id', '=', 'srm_bid_submission_master.tender_id')
+            ->join('srm_bid_submission_detail', 'srm_bid_submission_detail.bid_master_id', '=', 'srm_bid_submission_master.id')
+            ->join('srm_evaluation_criteria_details', 'srm_evaluation_criteria_details.id', '=', 'srm_bid_submission_detail.evaluation_detail_id')
+            ->join('srm_bid_main_work', 'srm_bid_main_work.bid_master_id', '=', 'srm_bid_submission_master.id')
+            ->havingRaw('weightage >= passing_weightage')
+            ->groupBy('srm_bid_submission_master.id')
+            ->where('srm_bid_submission_master.status', 1)->where('srm_bid_submission_master.bidSubmittedYN', 1)->where('srm_bid_submission_master.tender_id', $tenderId)->where('srm_bid_submission_master.commercial_verify_status', 1)
+            ->orderBy('srm_bid_submission_master.comm_weightage', 'asc')->pluck('supplier_id')->toArray();
+        }
+        else
+        {
+            
+            $query1 = BidSubmissionMaster::selectRaw("srm_bid_submission_master.id,srm_bid_submission_master.bidSubmittedDatetime,srm_bid_submission_master.tender_id,srm_supplier_registration_link.name,'' as bid_id,srm_bid_submission_master.commercial_verify_status,srm_bid_submission_master.bidSubmissionCode,srm_tender_master.technical_passing_weightage as passing_weightage,srm_bid_submission_master.comm_weightage,srm_bid_submission_master.line_item_total,srm_supplier_registration_link.id as supplier_id")
+            ->join('srm_supplier_registration_link', 'srm_supplier_registration_link.id', '=', 'srm_bid_submission_master.supplier_registration_id')
+            ->join('srm_tender_master', 'srm_tender_master.id', '=', 'srm_bid_submission_master.tender_id')
+            ->join('srm_bid_main_work', 'srm_bid_main_work.bid_master_id', '=', 'srm_bid_submission_master.id')
+            ->groupBy('srm_bid_submission_master.id')
+            ->where('srm_bid_submission_master.status', 1)->where('srm_bid_submission_master.bidSubmittedYN', 1)->where('srm_bid_submission_master.tender_id', $tenderId)->where('srm_bid_submission_master.commercial_verify_status', 1)
+            ->orderBy('srm_bid_submission_master.comm_weightage', 'asc')->pluck('supplier_id')->toArray();
+        }
+
 
 
 
         $query = TenderFinalBids::selectRaw('srm_tender_final_bids.id,srm_tender_final_bids.status,srm_tender_final_bids.supplier_id,srm_tender_final_bids.com_weightage as weightage,srm_tender_final_bids.bid_id,srm_bid_submission_master.bidSubmittedDatetime,srm_supplier_registration_link.name,srm_bid_submission_master.bidSubmissionCode,srm_bid_submission_master.line_item_total')
-        ->join('srm_bid_submission_master', 'srm_bid_submission_master.id', '=', 'srm_tender_final_bids.bid_id')
-        ->join('srm_supplier_registration_link', 'srm_supplier_registration_link.id', '=', 'srm_bid_submission_master.supplier_registration_id')
-        ->where('srm_tender_final_bids.tender_id', $tenderId)
-        ->orderBy('srm_tender_final_bids.com_weightage','desc');
+            ->join('srm_bid_submission_master', 'srm_bid_submission_master.id', '=', 'srm_tender_final_bids.bid_id')
+            ->join('srm_supplier_registration_link', 'srm_supplier_registration_link.id', '=', 'srm_bid_submission_master.supplier_registration_id')
+            ->where('srm_tender_final_bids.tender_id', $tenderId)
+            ->orderBy('srm_tender_final_bids.com_weightage', 'desc');
 
-      
+
 
         $search = $request->input('search.value');
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
             $query = $query->where(function ($query) use ($search) {
                 $query->where('name', 'LIKE', "%{$search}%")
-                ->orWhere('bidSubmissionCode', 'LIKE', "%{$search}%");
+                    ->orWhere('bidSubmissionCode', 'LIKE', "%{$search}%");
             });
         }
 
@@ -2949,24 +3011,19 @@ WHERE
                 }
             })
             ->addIndexColumn()
-            ->addColumn('selection', function($row) use($query1) {
+            ->addColumn('selection', function ($row) use ($query1) {
 
                 $count =  count(array_keys($query1, $row->supplier_id));
-                if($count == 1)
-                {
-                    
+                if ($count == 1) {
+
                     return true;
-                }
-                else
-                {
+                } else {
                     return false;
                 }
-               
             })
-            ->addColumn('radio', function($row) use($query1) {
+            ->addColumn('radio', function ($row) use ($query1) {
 
-               return 1;
-               
+                return 1;
             })
             ->with('orderCondition', $sort)
             ->make(true);
@@ -2979,124 +3036,107 @@ WHERE
 
         $bidMasterId = $this->getCommercialBids($tenderId);
         $data['bids'] = $bidMasterId;
-        $items = $this->getPricingItems($bidMasterId,$tenderId);
- 
-       foreach($items[0]->pricing_shedule_details as $key=>$val) 
-       {
-        
-        if($val->is_disabled == 1)
-        {
-               $val1 =  CommercialBidRankingItems::updateOrCreate(
-                ['bid_format_detail_id' => $val->id,'tender_id' => $tenderId,'value' => (double)$val->bid_format_detail->value,'filed_type' => $val->field_type,'is_disable'=>1],
-                ['bid_format_detail_id' => $val->id,'tender_id' => $tenderId,'value' => (double)$val->bid_format_detail->value,'filed_type' => $val->field_type,'is_disable'=>1]
-               );
-               
-                PricingScheduleDetail::where('id',$val1->bid_format_detail_id)->where('tender_id',$tenderId)->update(['tender_ranking_line_item'=>$val1->id]);
-              
-        }
-        else if($val->is_disabled == 0 && ($val->boq_applicable == 0 || $val->boq_applicable == 1))
-        {
-            
-            $count = count($val->tender_boq_items);
-            if($count > 0)
-            {
-                $child_exist = 1;
-            }
-            else
-            {
-                $child_exist = 0;
-            }
-                $val2 = CommercialBidRankingItems::updateOrCreate(
-                    ['bid_format_detail_id' => $val->id,'tender_id' => $tenderId,'filed_type' => $val->field_type,'is_main'=>1,'is_child_exist'=>$child_exist],
-                    ['bid_format_detail_id' => $val->id,'tender_id' => $tenderId,'filed_type' => $val->field_type,'is_main'=>1,'is_child_exist'=>$child_exist]
+        $items = $this->getPricingItems($bidMasterId, $tenderId);
+
+        foreach ($items[0]->pricing_shedule_details as $key => $val) {
+
+            if ($val->is_disabled == 1) {
+                $val1 =  CommercialBidRankingItems::updateOrCreate(
+                    ['bid_format_detail_id' => $val->id, 'tender_id' => $tenderId, 'value' => (float)$val->bid_format_detail->value, 'filed_type' => $val->field_type, 'is_disable' => 1],
+                    ['bid_format_detail_id' => $val->id, 'tender_id' => $tenderId, 'value' => (float)$val->bid_format_detail->value, 'filed_type' => $val->field_type, 'is_disable' => 1]
                 );
 
-                PricingScheduleDetail::where('id',$val2->bid_format_detail_id)->where('tender_id',$tenderId)->update(['tender_ranking_line_item'=>$val2->id]);
+                PricingScheduleDetail::where('id', $val1->bid_format_detail_id)->where('tender_id', $tenderId)->update(['tender_ranking_line_item' => $val1->id]);
+            } else if ($val->is_disabled == 0 && ($val->boq_applicable == 0 || $val->boq_applicable == 1)) {
 
-            foreach($val->tender_boq_items as $bid_works)
-            {
-             
+                $count = count($val->tender_boq_items);
+                if ($count > 0) {
+                    $child_exist = 1;
+                } else {
+                    $child_exist = 0;
+                }
+                $val2 = CommercialBidRankingItems::updateOrCreate(
+                    ['bid_format_detail_id' => $val->id, 'tender_id' => $tenderId, 'filed_type' => $val->field_type, 'is_main' => 1, 'is_child_exist' => $child_exist],
+                    ['bid_format_detail_id' => $val->id, 'tender_id' => $tenderId, 'filed_type' => $val->field_type, 'is_main' => 1, 'is_child_exist' => $child_exist]
+                );
 
-                $val3 = CommercialBidRankingItems::updateOrCreate(
-                    ['bid_format_detail_id' => $bid_works->id,'tender_id' => $tenderId,'filed_type' => $val->field_type,'is_main'=>0,'is_child_exist'=>1,'parent_id'=>$val->id],
-                    ['bid_format_detail_id' => $bid_works->id,'tender_id' => $tenderId,'filed_type' => $val->field_type,'is_main'=>0,'is_child_exist'=>1,'parent_id'=>$val->id]
-                   );
+                PricingScheduleDetail::where('id', $val2->bid_format_detail_id)->where('tender_id', $tenderId)->update(['tender_ranking_line_item' => $val2->id]);
 
-                   TenderBoqItems::where('id',$val3->bid_format_detail_id)->update(['tender_ranking_line_item'=>$val3->id]);
+                foreach ($val->tender_boq_items as $bid_works) {
+
+
+                    $val3 = CommercialBidRankingItems::updateOrCreate(
+                        ['bid_format_detail_id' => $bid_works->id, 'tender_id' => $tenderId, 'filed_type' => $val->field_type, 'is_main' => 0, 'is_child_exist' => 1, 'parent_id' => $val->id],
+                        ['bid_format_detail_id' => $bid_works->id, 'tender_id' => $tenderId, 'filed_type' => $val->field_type, 'is_main' => 0, 'is_child_exist' => 1, 'parent_id' => $val->id]
+                    );
+
+                    TenderBoqItems::where('id', $val3->bid_format_detail_id)->update(['tender_ranking_line_item' => $val3->id]);
+                }
             }
         }
-        
-       }
-    
-        $line_item_values =  CommercialBidRankingItems::where('tender_id',$tenderId)->where('status',1)->get();
-        $this->updateLineItem($bidMasterId,$line_item_values,$tenderId);
 
-        $data['bid_submissions'] = BidSubmissionMaster::with('SupplierRegistrationLink')->whereIn('id',$bidMasterId)->where('tender_id',$tenderId)->get();
-        $items = $this->getPricingItems($bidMasterId,$tenderId);
+        $line_item_values =  CommercialBidRankingItems::where('tender_id', $tenderId)->where('status', 1)->get();
+        $this->updateLineItem($bidMasterId, $line_item_values, $tenderId);
+
+        $data['bid_submissions'] = BidSubmissionMaster::with('SupplierRegistrationLink')->whereIn('id', $bidMasterId)->where('tender_id', $tenderId)->get();
+        $items = $this->getPricingItems($bidMasterId, $tenderId);
         $data['items']  = $items;
         return $this->sendResponse($data, 'data retrieved successfully');
     }
 
-     public function getPricingItems($bidMasterId,$tenderId)
-     {
-       return PricingScheduleMaster::with(['tender_bid_format_master','pricing_shedule_details' => function ($q) use ($bidMasterId) {
+    public function getPricingItems($bidMasterId, $tenderId)
+    {
+        return PricingScheduleMaster::with(['tender_bid_format_master', 'pricing_shedule_details' => function ($q) use ($bidMasterId) {
             $q->with(['bid_main_works' => function ($q) use ($bidMasterId) {
                 $q->whereIn('bid_master_id', $bidMasterId);
-            },'bid_format_detail' =>function ($q) use ($bidMasterId) {
+            }, 'bid_format_detail' => function ($q) use ($bidMasterId) {
                 $q->whereIn('bid_master_id', $bidMasterId);
                 $q->orWhere('bid_master_id', null);
-            },'tender_boq_items'=>function($q){
-                $q->with(['bid_boqs','ranking_items']);
-            },'ranking_items'])->whereNotIn('field_type', [4]);;
+            }, 'tender_boq_items' => function ($q) {
+                $q->with(['bid_boqs', 'ranking_items']);
+            }, 'ranking_items'])->whereNotIn('field_type', [4]);;
         }])->where('tender_id', $tenderId)->get();
-     }
+    }
 
 
     public function updateBidLineItem(Request $request)
     {
         DB::beginTransaction();
         try {
-            
+
             $tenderId = $request['tenderMasterId'];
             $id = $request['id'];
             $checked = $request['checked'];
             $rang_id = $request['rang_id'];
             $type = $request['type'];
 
-            if($type == 1)
-            {
-                $update =  CommercialBidRankingItems::where('tender_id',$tenderId)->update(['status'=>$checked]);
-                TenderMaster::where('id',$tenderId)->update(['commercial_line_item_status'=>$checked]);
-            }
-            else
-            {
+            if ($type == 1) {
+                $update =  CommercialBidRankingItems::where('tender_id', $tenderId)->update(['status' => $checked]);
+                TenderMaster::where('id', $tenderId)->update(['commercial_line_item_status' => $checked]);
+            } else {
                 $ranging =  CommercialBidRankingItems::find($rang_id);
 
-                if($ranging->is_child_exist == 1 && $ranging->is_main == 1)
-                {
-                  $update =  CommercialBidRankingItems::where('parent_id',$id)->update(['status'=>$checked]);
+                if ($ranging->is_child_exist == 1 && $ranging->is_main == 1) {
+                    $update =  CommercialBidRankingItems::where('parent_id', $id)->update(['status' => $checked]);
                 }
                 CommercialBidRankingItems::updateOrCreate(
-                    ['id'=>$rang_id,'bid_format_detail_id' => $id,'tender_id' => $tenderId],
-                    ['bid_format_detail_id' => $id,'tender_id' => $tenderId,'status'=>$checked]
+                    ['id' => $rang_id, 'bid_format_detail_id' => $id, 'tender_id' => $tenderId],
+                    ['bid_format_detail_id' => $id, 'tender_id' => $tenderId, 'status' => $checked]
                 );
 
-                if($ranging->is_main == 0)
-                {
-                    $count =  CommercialBidRankingItems::where('parent_id',$ranging->parent_id)->where('status',1)->count();
-                    if($checked || $count == 0)
-                    {
-                        $update =  CommercialBidRankingItems::where('bid_format_detail_id',$ranging->parent_id)->where('is_main',1)->update(['status'=>$checked]);
-
+                if ($ranging->is_main == 0) {
+                    $count =  CommercialBidRankingItems::where('parent_id', $ranging->parent_id)->where('status', 1)->count();
+                    if ($checked || $count == 0) {
+                        $update =  CommercialBidRankingItems::where('bid_format_detail_id', $ranging->parent_id)->where('is_main', 1)->update(['status' => $checked]);
                     }
                 }
             }
 
             $bidMasterId = $this->getCommercialBids($tenderId);
 
-            $line_item_values =  CommercialBidRankingItems::where('tender_id',$tenderId)->where('status',1)->get();
-            $this->updateLineItem($bidMasterId,$line_item_values,$tenderId);
-    
+            $line_item_values =  CommercialBidRankingItems::where('tender_id', $tenderId)->where('status', 1)->get();
+            $this->updateLineItem($bidMasterId, $line_item_values, $tenderId);
+
             DB::commit();
             return ['success' => true, 'message' => 'Successfully updated', 'data' => true];
         } catch (\Exception $e) {
@@ -3104,82 +3144,73 @@ WHERE
             Log::error($this->failed($e));
             return ['success' => false, 'message' => $e];
         }
-
     }
-    
-     public function confirmCommBidLineItem(Request $request)
-     {
-        
+
+    public function confirmCommBidLineItem(Request $request)
+    {
+
 
         DB::beginTransaction();
         try {
-            
+
             $tenderId = $request['tenderMasterId'];
             $status = $request['commercial_ranking_line_item_status'];
             $bids = $request['bids'];
-    
-            $techniqal_wightage = TenderMaster::where('id',$tenderId)->select('id','technical_weightage','commercial_weightage')->first();
+
+            $techniqal_wightage = TenderMaster::where('id', $tenderId)->select('id', 'technical_weightage', 'commercial_weightage')->first();
             $techniqal_wightage->commercial_ranking_line_item_status = $status;
             $techniqal_wightage->save();
-    
-            $total_amount = BidSubmissionMaster::whereIn('id',$bids)->sum('line_item_total');
-    
-            $result = BidSubmissionMaster::whereIn('id',$bids)->select('id','line_item_total','tech_weightage','supplier_registration_id')->get();
 
-            $supplier_ids = BidSubmissionMaster::whereIn('id',$bids)->pluck('supplier_registration_id')->toArray();
-    
+            $total_amount = BidSubmissionMaster::whereIn('id', $bids)->sum('line_item_total');
+
+            $result = BidSubmissionMaster::whereIn('id', $bids)->select('id', 'line_item_total', 'tech_weightage', 'supplier_registration_id')->get();
+
+            $supplier_ids = BidSubmissionMaster::whereIn('id', $bids)->pluck('supplier_registration_id')->toArray();
+
             $highest_val1 = 0;
-            foreach($result as $key=>$val)
-            {
-                
+            foreach ($result as $key => $val) {
+
                 $highest_val = $total_amount - $val->line_item_total;
-                if($highest_val1 < $highest_val)
-                {
+                if ($highest_val1 < $highest_val) {
                     $highest_val1 = $highest_val;
                 }
                 $result[$key]['new_val'] = $highest_val;
             }
-    
-            foreach($result as $key=>$val)
-            {
+
+            foreach ($result as $key => $val) {
                 $output = 0;
-                if($highest_val1 != 0)
-                {
-                    $output = round(($val->new_val/$highest_val1)*100,3);
+                if ($highest_val1 != 0) {
+                    $output = round(($val->new_val / $highest_val1) * 100, 3);
                 }
-                
+
 
                 $count =  count(array_keys($supplier_ids, $val->supplier_registration_id));
-    
-    
-                $weightage= round(($output/100)*$techniqal_wightage->commercial_weightage,3);
-    
-                $results = BidSubmissionMaster::find($val->id)
-                ->update(['comm_weightage' => $weightage]);
 
 
-                $total = round($val->tech_weightage + $weightage,3);
+                $weightage = round(($output / 100) * $techniqal_wightage->commercial_weightage, 3);
 
                 $results = BidSubmissionMaster::find($val->id)
-                ->update(['total_weightage' => $total]);
+                    ->update(['comm_weightage' => $weightage]);
+
+
+                $total = round($val->tech_weightage + $weightage, 3);
+
+                $results = BidSubmissionMaster::find($val->id)
+                    ->update(['total_weightage' => $total]);
 
                 $status_val = 0;
-                if($count == 1)
-                {
+                if ($count == 1) {
                     $status_val = 1;
                 }
                 TenderFinalBids::updateOrCreate(
-                    ['tender_id'=>$tenderId,'bid_id' => $val->id,'supplier_id' => $val->supplier_registration_id],
-                    ['tender_id'=>$tenderId,'bid_id' => $val->id,'supplier_id' => $val->supplier_registration_id,'com_weightage'=>$weightage,'tech_weightage'=>$val->tech_weightage,'total_weightage'=>$total,'status'=>$status_val]
-                   );
-
-
-          
+                    ['tender_id' => $tenderId, 'bid_id' => $val->id, 'supplier_id' => $val->supplier_registration_id],
+                    ['tender_id' => $tenderId, 'bid_id' => $val->id, 'supplier_id' => $val->supplier_registration_id, 'com_weightage' => $weightage, 'tech_weightage' => $val->tech_weightage, 'total_weightage' => $total, 'status' => $status_val]
+                );
             }
-            
-           
 
-    
+
+
+
             DB::commit();
             return ['success' => true, 'message' => 'Line items Successfully updated', 'data' => $results];
         } catch (\Exception $e) {
@@ -3187,33 +3218,30 @@ WHERE
             Log::error($this->failed($e));
             return ['success' => false, 'message' => $e];
         }
-     }
+    }
 
 
-     public function confirmFinalCommercial(Request $request)
-     {
+    public function confirmFinalCommercial(Request $request)
+    {
         DB::beginTransaction();
         try {
 
-            
-            $inputs = $request['extraParams'];
-            $tenderId = $inputs['tenderMasterId']; 
-            $selected_suppliers = $inputs['suppliers']; 
-            $ids = $inputs['ids']; 
-            $comment = $inputs['comment']; 
-            $suppliers = TenderFinalBids::distinct('supplier_id')->where('tender_id',$tenderId)->where('status',0)->pluck('supplier_id')->toArray();
-            $is_equal = $this->array_equal($selected_suppliers,$suppliers);
 
-            if(!$is_equal)
-            {
+            $inputs = $request['extraParams'];
+            $tenderId = $inputs['tenderMasterId'];
+            $selected_suppliers = $inputs['suppliers'];
+            $ids = $inputs['ids'];
+            $comment = $inputs['comment'];
+            $suppliers = TenderFinalBids::distinct('supplier_id')->where('tender_id', $tenderId)->where('status', 0)->pluck('supplier_id')->toArray();
+            $is_equal = $this->array_equal($selected_suppliers, $suppliers);
+
+            if (!$is_equal) {
                 return $this->sendError('Please select atleast one bid for each suppliers', 500);
+            } else {
+                TenderFinalBids::whereIn('id', $ids)->update(['status' => true]);
+                TenderMaster::where('id', $tenderId)->update(['combined_ranking_status' => true, 'commercial_ranking_comment' => $comment]);
             }
-            else
-            {
-                TenderFinalBids::whereIn('id',$ids)->update(['status'=>true]);
-                TenderMaster::where('id',$tenderId)->update(['combined_ranking_status'=>true,'commercial_ranking_comment'=>$comment]);
-            }
-      
+
 
             DB::commit();
             return ['success' => true, 'message' => 'Successfully updated', 'data' => true];
@@ -3222,98 +3250,82 @@ WHERE
             Log::error($this->failed($e));
             return ['success' => false, 'message' => $e];
         }
-
-
-
-     }
-     function array_equal($a, $b) {
-        return (
-             is_array($a) 
-             && is_array($b) 
-             && count($a) == count($b) 
-             && array_diff($a, $b) === array_diff($b, $a)
+    }
+    function array_equal($a, $b)
+    {
+        return (is_array($a)
+            && is_array($b)
+            && count($a) == count($b)
+            && array_diff($a, $b) === array_diff($b, $a)
         );
     }
 
-    function updateLineItem($bidMasterId,$line_item_values,$tenderId)
+    function updateLineItem($bidMasterId, $line_item_values, $tenderId)
     {
 
-        foreach($bidMasterId as $key=>$val)
-        {
-            
-             $total = 0;
- 
-             
-             foreach($line_item_values as $item)
-             {
-                 if($item->is_disable == 0)
-                 {
-                     if($item->is_child_exist == 1 && $item->is_main == 0)
-                     {
- 
-                         $boq = BidBoq::where('boq_id',$item->bid_format_detail_id)->where('bid_master_id',$val)->where('main_works_id',$item->parent_id)->select('total_amount')->first();
- 
-                         if($item->filed_type == 3)
-                         {
-                         $total += $boq->total_amount/100;
-                         }
-                         else
-                         {
-                         $total += $boq->total_amount;
-                         }
-                         
-                     }
-                     else if($item->is_child_exist == 0 && $item->is_main == 1)
-                     {
-                        
-                         $boq_mai = BidMainWork::where('main_works_id',$item->bid_format_detail_id)->where('bid_master_id',$val)->where('tender_id',$tenderId)->select('total_amount')->first();
- 
-                        if(isset($boq_mai))
-                        {
-                            if($item->filed_type == 3)
-                            {
-                            $total += $boq_mai->total_amount/100;
-                            }
-                            else
-                            {
-                            $total += $boq_mai->total_amount;
+        foreach ($bidMasterId as $key => $val) {
+
+            $total = 0;
+
+
+            foreach ($line_item_values as $item) {
+                if ($item->is_disable == 0) {
+                    if ($item->is_child_exist == 1 && $item->is_main == 0) {
+
+                        $boq = BidBoq::where('boq_id', $item->bid_format_detail_id)->where('bid_master_id', $val)->where('main_works_id', $item->parent_id)->select('total_amount')->first();
+
+                        if ($item->filed_type == 3) {
+                            $total += $boq->total_amount / 100;
+                        } else {
+                            $total += $boq->total_amount;
+                        }
+                    } else if ($item->is_child_exist == 0 && $item->is_main == 1) {
+
+                        $boq_mai = BidMainWork::where('main_works_id', $item->bid_format_detail_id)->where('bid_master_id', $val)->where('tender_id', $tenderId)->select('total_amount')->first();
+
+                        if (isset($boq_mai)) {
+                            if ($item->filed_type == 3) {
+                                $total += $boq_mai->total_amount / 100;
+                            } else {
+                                $total += $boq_mai->total_amount;
                             }
                         }
-                    
-                     }
-                    
-                 }
-                 else if($item->is_disable == 1)
-                 {
-                     if($item->filed_type == 3)
-                     {
-                     $total += $item->value/100;
-                     }
-                     else
-                     {
-                     $total += $item->value;
-                     }
-                 }
- 
-                 
- 
-     
-             }
-             $results = BidSubmissionMaster::find($val)
-             ->update(['line_item_total' => $total]);
- 
+                    }
+                } else if ($item->is_disable == 1) {
+                    if ($item->filed_type == 3) {
+                        $total += $item->value / 100;
+                    } else {
+                        $total += $item->value;
+                    }
+                }
+            }
+            $results = BidSubmissionMaster::find($val)
+                ->update(['line_item_total' => $total]);
         }
     }
 
     function getCommercialBids($tenderId)
     {
-        return BidSubmissionMaster::selectRaw("round(SUM((srm_bid_submission_detail.eval_result/100)*srm_tender_master.technical_weightage),3) as weightage,srm_bid_submission_master.id,srm_bid_submission_master.bidSubmittedDatetime,srm_bid_submission_master.tender_id,srm_bid_submission_detail.id as bid_id,srm_bid_submission_master.commercial_verify_status,srm_bid_submission_master.bidSubmissionCode,srm_tender_master.technical_passing_weightage as passing_weightage")
-        ->join('srm_tender_master', 'srm_tender_master.id', '=', 'srm_bid_submission_master.tender_id')
-        ->join('srm_bid_submission_detail', 'srm_bid_submission_detail.bid_master_id', '=', 'srm_bid_submission_master.id')
-        ->havingRaw('weightage >= passing_weightage')
-        ->groupBy('srm_bid_submission_master.id')
-        ->where('srm_bid_submission_master.status', 1)->where('srm_bid_submission_master.bidSubmittedYN', 1)->where('srm_bid_submission_master.tender_id', $tenderId)->where('srm_bid_submission_master.commercial_verify_status', 1)
-        ->orderBy('srm_bid_submission_master.id','asc')->pluck('id');
+        $tenderDetails = TenderMaster::select('id', 'document_type')->where('id', $tenderId)->first();
+        if($tenderDetails->document_type == 0)
+        {
+            return BidSubmissionMaster::selectRaw("round(SUM((srm_bid_submission_detail.eval_result/100)*srm_tender_master.technical_weightage),3) as weightage,srm_bid_submission_master.id,srm_bid_submission_master.bidSubmittedDatetime,srm_bid_submission_master.tender_id,srm_bid_submission_detail.id as bid_id,srm_bid_submission_master.commercial_verify_status,srm_bid_submission_master.bidSubmissionCode,srm_tender_master.technical_passing_weightage as passing_weightage")
+            ->join('srm_tender_master', 'srm_tender_master.id', '=', 'srm_bid_submission_master.tender_id')
+            ->join('srm_bid_submission_detail', 'srm_bid_submission_detail.bid_master_id', '=', 'srm_bid_submission_master.id')
+            ->havingRaw('weightage >= passing_weightage')
+            ->groupBy('srm_bid_submission_master.id')
+            ->where('srm_bid_submission_master.status', 1)->where('srm_bid_submission_master.bidSubmittedYN', 1)->where('srm_bid_submission_master.tender_id', $tenderId)->where('srm_bid_submission_master.commercial_verify_status', 1)
+            ->orderBy('srm_bid_submission_master.id', 'asc')->pluck('id');
+        }
+        else
+        {
+            return BidSubmissionMaster::selectRaw("srm_bid_submission_master.id,srm_bid_submission_master.bidSubmittedDatetime,srm_bid_submission_master.tender_id,'' as bid_id,srm_bid_submission_master.commercial_verify_status,srm_bid_submission_master.bidSubmissionCode,srm_tender_master.technical_passing_weightage as passing_weightage")
+            ->join('srm_tender_master', 'srm_tender_master.id', '=', 'srm_bid_submission_master.tender_id')
+            ->groupBy('srm_bid_submission_master.id')
+            ->where('srm_bid_submission_master.status', 1)->where('srm_bid_submission_master.bidSubmittedYN', 1)->where('srm_bid_submission_master.tender_id', $tenderId)->where('srm_bid_submission_master.commercial_verify_status', 1)
+            ->orderBy('srm_bid_submission_master.id', 'asc')->pluck('id');
+        }
+ 
     }
 
     public function getRankingCompletedTenderList(Request $request)
@@ -3328,8 +3340,8 @@ WHERE
 
         $companyId = $request['companyId'];
 
-        $query = TenderMaster::with(['currency', 'srm_bid_submission_master','tender_type','envelop_type','srmTenderMasterSupplier'])->whereHas('srmTenderMasterSupplier')->where('published_yn', 1)
-        ->where('is_awarded', 1);
+        $query = TenderMaster::with(['currency', 'srm_bid_submission_master', 'tender_type', 'envelop_type', 'srmTenderMasterSupplier'])->whereHas('srmTenderMasterSupplier')->where('published_yn', 1)
+            ->where('is_awarded', 1);
 
         $search = $request->input('search.value');
         if ($search) {
@@ -3360,33 +3372,32 @@ WHERE
     public function getAwardedFormData(Request $request)
     {
         $tenderId = $request['tenderMasterId'];
-        $tender = TenderMaster::where('id',$tenderId)->with(['ranking_supplier'=>function($q){
-            $q->where('award',1)->with('supplier');
+        $tender = TenderMaster::where('id', $tenderId)->with(['ranking_supplier' => function ($q) {
+            $q->where('award', 1)->with('supplier');
         }])->first();
-      
+
         return $this->sendResponse($tender, 'data retrieved successfully');
     }
 
     public function confirmFinalBidAwardComment(Request $request)
     {
-       
-       
+
+
         DB::beginTransaction();
         try {
             $tenderId = $request['tender_id'];
             $status = $request['final_tender_comment_status'];
             $comment = $request['final_tender_award_comment'];
             $emails = SrmTenderBidEmployeeDetails::where('tender_id', $tenderId)->with('employee')->get();
-    
+
             $redirectUrl =  $this->checkDomain($tenderId);
 
             $tender = TenderMaster::find($tenderId);
             $tender->final_tender_award_comment = $comment;
             $tender->final_tender_comment_status = $status;
             $tender->save();
-    
-            foreach($emails as $mail)
-            {
+
+            foreach ($emails as $mail) {
                 $name = $mail->employee->empFullName;
                 $body = "Hi $name , <br><br> The Tender $tender->tender_code has been available for the final employee committee approval for tender awarding. <br><br> <a href=$redirectUrl>Click here to approve</a> <br><br>Thank you.";
                 $dataEmail['empEmail'] = $mail->employee->empUserName;
@@ -3402,8 +3413,6 @@ WHERE
             DB::rollback();
             return $this->sendError($e->getMessage());
         }
-       
-
     }
 
     public static function checkDomain($id)
@@ -3428,15 +3437,15 @@ WHERE
 
     public function sendTenderAwardEmail(Request $request)
     {
-   
+
         DB::beginTransaction();
         try {
             $tenderId = $request['tender_id'];
-            $tender = TenderMaster::where('id',$tenderId)->with(['ranking_supplier'=>function($q){
-                $q->where('award',1)->with('supplier');
-            },'company'])->first();
+            $tender = TenderMaster::where('id', $tenderId)->with(['ranking_supplier' => function ($q) {
+                $q->where('award', 1)->with('supplier');
+            }, 'company'])->first();
 
-           
+
             $tender->final_tender_award_email = 1;
             $tender->save();
 
@@ -3448,7 +3457,7 @@ WHERE
             $dataEmail['alertMessage'] = "Tender Award";
             $dataEmail['emailAlertMessage'] = $body;
             $sendEmail = \Email::sendEmailErp($dataEmail);
-    
+
             DB::commit();
             return $this->sendResponse($tender, 'Email Send successfully');
         } catch (\Exception $e) {
@@ -3470,8 +3479,11 @@ WHERE
         }
 
         $companyID = $request->companyId;
+        $documentID = $request->documentID;
+        $rollOver = $documentID == 117?'RollLevForApp_curr':'confirmation_RollLevForApp_curr';
+        $approved = $documentID == 117?'document_modify_request.approved':'document_modify_request.confirmation_approved';
         $empID = \Helper::getEmployeeSystemID();
-        if(isset($input['rfx'])){
+        if (isset($input['rfx'])) {
             $rfx = $input['rfx'];
         }
 
@@ -3497,31 +3509,31 @@ WHERE
             $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
                 /*->on('erp_documentapproved.departmentSystemID', '=', 'employeesdepartments.departmentSystemID')*/
                 ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
-            if($rfx){
+            if ($rfx) {
                 $query->where('employeesdepartments.documentSystemID', 113);
-            } else{
+            } else {
                 $query->where('employeesdepartments.documentSystemID', 108);
             }
             $query->where('employeesdepartments.companySystemID', $companyID)
                 ->where('employeesdepartments.employeeSystemID', $empID)
                 ->where('employeesdepartments.isActive', 1)
                 ->where('employeesdepartments.removedYN', 0);
-        })->join('document_modify_request', function ($query) use ($companyID, $empID, $rfx) {
+        })->join('document_modify_request', function ($query) use ($companyID, $empID, $rfx,$rollOver,$approved) {
             $query->on('erp_documentapproved.documentSystemCode', '=', 'id')
-                ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
+                ->on('erp_documentapproved.rollLevelOrder', '=', $rollOver)
                 ->where('document_modify_request.companySystemID', $companyID)
-                ->where('document_modify_request.approved', 0);
+                ->where($approved, 0);
         })->leftJoin('srm_tender_master', 'srm_tender_master.tender_edit_version_id', '=', 'document_modify_request.id');
 
 
-            $poMasters = $poMasters->where('erp_documentapproved.approvedYN', 0)
+        $poMasters = $poMasters->where('erp_documentapproved.approvedYN', 0)
             // ->join('currencymaster', 'currency_id', '=', 'currencyID')
             ->join('employees', 'document_modify_request.requested_employeeSystemID', 'employees.employeeSystemID')
-            ->where('erp_documentapproved.documentSystemID', 117)
+            ->where('erp_documentapproved.documentSystemID', $documentID)
             ->where('erp_documentapproved.rejectedYN', 0)
             ->where('erp_documentapproved.companySystemID', $companyID);
 
-        
+
         $search = $request->input('search.value');
 
         if ($search) {
@@ -3566,8 +3578,11 @@ WHERE
         }
 
         $companyID = $request->companyId;
+        $documentID = $request->documentID;
+        $rollOver = $documentID == 117?'RollLevForApp_curr':'confirmation_RollLevForApp_curr';
+        $approved = $documentID == 117?'document_modify_request.approved':'document_modify_request.confirmation_approved';
         $empID = \Helper::getEmployeeSystemID();
-        if(isset($input['rfx'])){
+        if (isset($input['rfx'])) {
             $rfx = $input['rfx'];
         }
 
@@ -3594,9 +3609,9 @@ WHERE
                 /*->on('erp_documentapproved.departmentSystemID', '=', 'employeesdepartments.departmentSystemID')*/
                 ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID');
 
-            if($rfx){
+            if ($rfx) {
                 $query->where('employeesdepartments.documentSystemID', 113);
-            } else{
+            } else {
                 $query->where('employeesdepartments.documentSystemID', 108);
             }
 
@@ -3604,20 +3619,20 @@ WHERE
                 ->where('employeesdepartments.employeeSystemID', $empID)
                 ->where('employeesdepartments.isActive', 1)
                 ->where('employeesdepartments.removedYN', 0);
-        })->join('document_modify_request', function ($query) use ($companyID, $empID, $rfx) {
+        })->join('document_modify_request', function ($query) use ($companyID, $empID, $rfx,$approved) {
             $query->on('erp_documentapproved.documentSystemCode', '=', 'id')
                 ->where('document_modify_request.companySystemID', $companyID)
-                ->where('document_modify_request.approved', -1);
+                ->where($approved, -1);
         })->leftJoin('srm_tender_master', 'srm_tender_master.tender_edit_version_id', '=', 'document_modify_request.id');
 
 
         $poMasters = $poMasters->where('erp_documentapproved.approvedYN', -1)
-        // ->join('currencymaster', 'currency_id', '=', 'currencyID')
-                ->join('employees', 'document_modify_request.requested_employeeSystemID', 'employees.employeeSystemID')
-                ->where('erp_documentapproved.documentSystemID', 117)
-                ->where('erp_documentapproved.companySystemID', $companyID);
+            // ->join('currencymaster', 'currency_id', '=', 'currencyID')
+            ->join('employees', 'document_modify_request.requested_employeeSystemID', 'employees.employeeSystemID')
+            ->where('erp_documentapproved.documentSystemID', $documentID)
+            ->where('erp_documentapproved.companySystemID', $companyID);
 
-        
+
         $search = $request->input('search.value');
 
         if ($search) {
@@ -3648,5 +3663,43 @@ WHERE
             ->addColumn('Actions', 'Actions', "Actions")
             //->addColumn('Index', 'Index', "Index")
             ->make(true);
+    } 
+    
+    public function deleteProcumentActivity($id, $company_id)
+    {
+
+        DB::beginTransaction();
+        try {
+            $proActivity = ProcumentActivity::where('tender_id', $id)->where('company_id', $company_id)->select('id')->get();
+
+            foreach ($proActivity as $val) {
+                $procument = ProcumentActivity::find($val->id);
+                $procument->delete();
+            }
+
+            DB::commit();
+            return ['success' => true, 'message' => 'Successfully Deleted'];
+        } catch (\Exception $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
     }
-}
+
+    public function deleteCalenderDetails($id, $company_id)
+    {
+
+        DB::beginTransaction();
+        try {
+            $details = CalendarDatesDetail::where('tender_id', $id)->where('company_id', $company_id)->select('id')->get();  
+
+            foreach ($details as $val) {
+                $calender = CalendarDatesDetail::find($val->id);
+                $calender->delete();
+            }
+
+            DB::commit();
+            return ['success' => true, 'message' => 'Successfully Deleted'];
+        } catch (\Exception $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
+    }
+} 

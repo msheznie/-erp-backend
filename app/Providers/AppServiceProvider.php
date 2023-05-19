@@ -11,6 +11,7 @@ use App\Observers\CapitalizationObserver;
 use App\Observers\DepreciationObserver;
 use App\Observers\AssetObserver;
 use App\Observers\DisposalObserver;
+use App\Observers\TenderObserver;
 use Carbon\Carbon;
 use Illuminate\Queue\Events\JobFailed;
 use Illuminate\Support\Facades\Queue;
@@ -18,6 +19,30 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Passport\Passport;
 use App\Models\FixedAssetMaster;
+use App\Models\TenderMaster;
+use App\Observers\TenderBidEmployeeObserver;
+use App\Models\SrmTenderBidEmployeeDetails;
+use App\Models\PricingScheduleMaster;
+use App\Models\ScheduleBidFormatDetails;
+use App\Observers\PricingScheduleMasterObserver;
+use App\Observers\ScheduleBidFormatDetailsObserver;
+use App\Models\PricingScheduleDetail;
+use App\Observers\PricingScheduleDetailObserver;
+use App\Models\TenderBoqItems;
+use App\Observers\TenderBoqItemsObserver;
+use App\Models\EvaluationCriteriaDetails;
+use App\Observers\EvaluationCriteriaDetailsObserver;
+use App\Models\DocumentAttachments;
+use App\Observers\DocumentAttachmentsObserver;
+use App\Models\TenderCirculars;
+use App\Observers\TenderCircularsObserver;
+use App\Models\CircularAmendments;
+use App\Observers\CircularAmendmentsObserver;
+use App\Models\CalendarDatesDetail;
+use App\Observers\CalendarDatesDetailObserver;
+use App\Models\ProcumentActivity;
+use App\Observers\ProcumentActivityObserver;
+
 class AppServiceProvider extends ServiceProvider
 {
     /**
@@ -37,6 +62,18 @@ class AppServiceProvider extends ServiceProvider
         FixedAssetDepreciationMaster::observe(DepreciationObserver::class);
         AssetCapitalization::observe(CapitalizationObserver::class);
         AssetDisposalMaster::observe(DisposalObserver::class);
+        TenderMaster::observe(TenderObserver::class);
+        SrmTenderBidEmployeeDetails::observe(TenderBidEmployeeObserver::class);
+        PricingScheduleMaster::observe(PricingScheduleMasterObserver::class);
+        ScheduleBidFormatDetails::observe(ScheduleBidFormatDetailsObserver::class);
+        PricingScheduleDetail::observe(PricingScheduleDetailObserver::class);
+        TenderBoqItems::observe(TenderBoqItemsObserver::class);
+        EvaluationCriteriaDetails::observe(EvaluationCriteriaDetailsObserver::class);
+        DocumentAttachments::observe(DocumentAttachmentsObserver::class);
+        TenderCirculars::observe(TenderCircularsObserver::class);
+        CircularAmendments::observe(CircularAmendmentsObserver::class);
+        CalendarDatesDetail::observe(CalendarDatesDetailObserver::class);
+        ProcumentActivity::observe(ProcumentActivityObserver::class);
 
         Validator::extend('greater_than_field', function($attribute, $value, $parameters, $validator) {
             $min_field = $parameters[0];

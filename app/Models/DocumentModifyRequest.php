@@ -191,7 +191,17 @@ class DocumentModifyRequest extends Model
         'code',
         'requested',
         'serial_number',
-        'timesReferred'
+        'timesReferred',
+        'confirmation_date',
+        'confirmation_RollLevForApp_curr',
+        'confirmation_approved',
+        'confirmation_approved_date',
+        'confirmation_approved_by_user_system_id',
+        'confirmation_rejected',
+        'confirmation_rejected_date',
+        'confirmation_rejected_by_user_system_id',
+        'confirm',
+        'modify_type'
     ];
 
     /**
