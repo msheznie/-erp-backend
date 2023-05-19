@@ -479,11 +479,18 @@ class TenderMasterAPIController extends AppBaseController
             foreach ($assignedDocsArray as $assignedDocs) {
                 $notInArray[] = $assignedDocs['document_type_id'];
             }
-            if ($tenderMaster['published_yn'] === 1) {
-                $data['documentTypes'] = TenderDocumentTypes::where('id', 3)->whereNotIn('id', $notInArray)->get();
-            } else {
-                $data['documentTypes'] = TenderDocumentTypes::where('company_id', $employee->empCompanySystemID)->whereNotIn('id', $notInArray)->get();
-            }
+            if ($tenderMaster['published_yn'] === 1 && !empty($input['editable']) && !empty($input['isConfirm']) && isset($input['editable'] ,$input['isConfirm']) && $input['editable'] && !$input['isConfirm'])
+                {
+                    $data['documentTypes'] = TenderDocumentTypes::whereNotIn('id', $notInArray)->get();
+                }
+                else if(($tenderMaster['published_yn'] === 1 && !empty($input['editable']) && isset($input['editable']) && !$input['editable'] )|| ($tenderMaster['published_yn'] === 1 && !empty($input['isConfirm']) && isset($input['isConfirm']) && $input['isConfirm']))
+                {
+                    $data['documentTypes'] = TenderDocumentTypes::where('id', 3)->whereNotIn('id', $notInArray)->get();
+                }
+                else 
+                {
+                    $data['documentTypes'] = TenderDocumentTypes::where('company_id', $employee->empCompanySystemID)->whereNotIn('id', $notInArray)->get();
+                }
         }
 
         if (isset($input['tenderMasterId'])) {

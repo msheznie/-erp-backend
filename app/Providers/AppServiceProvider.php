@@ -42,6 +42,8 @@ use App\Models\CalendarDatesDetail;
 use App\Observers\CalendarDatesDetailObserver;
 use App\Models\ProcumentActivity;
 use App\Observers\ProcumentActivityObserver;
+use App\Models\TenderDocumentTypeAssign;
+use App\Observers\TenderDocumentTypeObserver;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -74,6 +76,7 @@ class AppServiceProvider extends ServiceProvider
         CircularAmendments::observe(CircularAmendmentsObserver::class);
         CalendarDatesDetail::observe(CalendarDatesDetailObserver::class);
         ProcumentActivity::observe(ProcumentActivityObserver::class);
+        TenderDocumentTypeAssign::observe(TenderDocumentTypeObserver::class);
 
         Validator::extend('greater_than_field', function($attribute, $value, $parameters, $validator) {
             $min_field = $parameters[0];
