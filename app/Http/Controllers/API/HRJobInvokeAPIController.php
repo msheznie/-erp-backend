@@ -21,6 +21,7 @@ use App\Services\hrms\attendance\AttendanceDataPullingService;
 use App\Services\hrms\attendance\AttendanceDailySummaryService;
 use App\Services\hrms\attendance\AttendanceWeeklySummaryService;
 use App\helper\BirthdayWishService;
+use App\Jobs\HrDocNotificationJob;
 use App\Jobs\TravelRequestNotificationJob;
 use App\Models\Company;
 use App\Models\NotificationCompanyScenario;
@@ -187,5 +188,19 @@ class HRJobInvokeAPIController extends AppBaseController
         Artisan::call('command:leaveCarryForwardComputationSchedule');
 
         return $this->sendResponse(null, 'Job triggered successfully');
+    }
+
+    function sendHrDocNotifications(Request $request)
+    { 
+        $input = $request->all();  
+      
+        $tenantId = $input['tenantId'];
+        $companyId = $input['companyId'];
+        $id = $input['id'];
+        $visibility = $input['visibility'];
+        $emlpoyees = $input['emlpoyees'];
+    
+        HrDocNotificationJob::dispatch($tenantId, $companyId, $id, $visibility, $emlpoyees); 
+        return $this->sendResponse([], 'HR document notification scenario added to queue');
     }
 }
