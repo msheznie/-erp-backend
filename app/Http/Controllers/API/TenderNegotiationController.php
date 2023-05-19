@@ -51,6 +51,8 @@ class TenderNegotiationController extends AppBaseController
         $input = $request->all();
         $input['started_by'] = Auth::user()->employee_id;
         $input['status'] = 1;
+        $srmTenderBidEmployeeDetails = SrmTenderBidEmployeeDetails::where('tender_id', $input['srm_tender_master_id'])->count();
+        $input['no_to_approve'] =  $srmTenderBidEmployeeDetails;
         $updateTenderMasterRecord = $this->updateTenderMasterRecord($input);
 
         if($updateTenderMasterRecord) {
@@ -186,20 +188,21 @@ class TenderNegotiationController extends AppBaseController
     public function sendEmailToCommitteMembers($tenderNeotiation,$input) {
 
         $srmTenderBidEmployeeDetails = SrmTenderBidEmployeeDetails::where('tender_id', $tenderNeotiation['srm_tender_master_id'])->with('employee')->get();
-        $supplierTenderNegotiation = SupplierTenderNegotiation::where('tender_negotiation_id',$input['id'])->first();
+        $supplierTenderNegotiations = SupplierTenderNegotiation::where('tender_negotiation_id',$input['id'])->get();
         if($srmTenderBidEmployeeDetails) {
             foreach($srmTenderBidEmployeeDetails as $srmTenderBidEmployeeDetail) {
                 $employee = ($srmTenderBidEmployeeDetail) ? $srmTenderBidEmployeeDetail->employee : null;
-                if(isset($employee) &&  !is_null($employee->empEmail)) {
-                    $dataEmail['empEmail'] = $employee->empEmail;
-                    $dataEmail['companySystemID'] = $employee->companySystemID;
-                    $redirectUrl =  env("SRM_TENDER_URL");
-                    $companyName = (Auth::user()->employee && Auth::user()->employee->company) ? Auth::user()->employee->company->CompanyName : null ;
-                    // $temp = "<p>Dear " . $employee->empName . ',</p><p>We are pleased to inform you that we have selected your bid for negotiation. We appreciate the time and effort you put into preparing your proposal, and we were impressed by the quality and value it provides</p><br/><p>We believe that your proposal aligns with our business needs, and we look forward to discussing it in more detail during the negotiation process.</p><p>Please let us know if you have any questions or concerns regarding the negotiation process. We are committed to working collaboratively with you to ensure that we arrive at a mutually beneficial agreement that meets both our needs.</p><p>Thank you again for your bid and your interest in working with us. We look forward to a successful negotiation and a long and productive business relationship.</p><p>Please find the link below.</p><p><a href="' . $redirectUrl . '">Click here to view</a></p><br/><br/><p>Best Regards</p><p>' . $companyName . '</p>';
-                    $dataEmail['alertMessage'] = $supplierTenderNegotiation->bidSubmissionCode." - Tender Negotiation For Approval";
-                    $temp = "";
-                    $dataEmail['emailAlertMessage'] = $temp;
-                    $sendEmail = \Email::sendEmailErp($dataEmail);
+                foreach($supplierTenderNegotiations as $supplierTenderNegotiation) {
+                    if(isset($employee) &&  !is_null($employee->empEmail)) {
+                        $dataEmail['empEmail'] = $employee->empEmail;
+                        $dataEmail['companySystemID'] = $employee->companySystemID;
+                        $redirectUrl =  env("SRM_TENDER_URL");
+                        $companyName = (Auth::user()->employee && Auth::user()->employee->company) ? Auth::user()->employee->company->CompanyName : null ;
+                        $temp = "Hi  $employee->empName , <br><br> The Tender Bid $supplierTenderNegotiation->bidSubmissionCode has been available for the final employee committee approval for tender bid approval. <br><br> <a href=$redirectUrl>Click here to approve</a> <br><br>Thank you.";
+                        $dataEmail['alertMessage'] = $supplierTenderNegotiation->bidSubmissionCode." - Tender Negotiation For Approval";
+                        $dataEmail['emailAlertMessage'] = $temp;
+                        $sendEmail = \Email::sendEmailErp($dataEmail);
+                    }
                 }
             }
         }

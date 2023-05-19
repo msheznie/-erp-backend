@@ -213,7 +213,7 @@ class TenderMasterAPIController extends AppBaseController
     {
         /** @var TenderMaster $tenderMaster */
         $tenderMaster = $this->tenderMasterRepository->findWithoutFail($id);
-
+        
         if (empty($tenderMaster)) {
             return $this->sendError('Tender Master not found');
         }
@@ -3683,6 +3683,19 @@ WHERE
         $query = TenderNegotiation::with(['area','tenderMaster' => function ($q){ 
             $q->with(['currency','tender_type','envelop_type']);
         }]);
+
+        if (array_key_exists('tenderNegotiationStatus', $input)) {
+            if ($input['tenderNegotiationStatus'] != 0  && !is_null($input['tenderNegotiationStatus'])) {
+                $query->where('status', $input['tenderNegotiationStatus']);
+            }
+        }
+
+ 
+        if (array_key_exists('CurrencyID', $input)) {
+            if ($input['CurrencyID'] != 0  && !is_null($input['CurrencyID'])) {
+                $query->where('currency.currencyID', $input['CurrencyID']);
+            }
+        }
 
         $search = $request->input('search.value');
         if ($search) {

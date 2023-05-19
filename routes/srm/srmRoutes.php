@@ -242,3 +242,4 @@ Route::resource('tenderNegotiationApprovals', 'TenderNegotiationApprovalControll
 
 Route::post('tender-negotiation-approvals-get-employees', 'TenderNegotiationApprovalController@getEmployees');
 
+Route::post('publishNegotiation', 'TenderNegotiationApprovalController@publishNegotiation');
