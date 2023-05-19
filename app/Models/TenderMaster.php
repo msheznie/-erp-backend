@@ -314,7 +314,8 @@ class TenderMaster extends Model
         'award_commite_mem_status',
         'final_tender_comment_status',
         'tender_edit_version_id',
-        'is_negotiation_started'
+        'is_negotiation_started',
+        'tender_edit_confirm_id'
     ];
     /**
      * The attributes that should be casted to native types.

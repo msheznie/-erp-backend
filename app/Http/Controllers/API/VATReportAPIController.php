@@ -513,6 +513,7 @@ class VATReportAPIController extends AppBaseController
             $data[$x]['Is Claimed'] = '';
 
             $company_name = $company->CompanyName;
+            $company_code = isset($company->CompanyID)?$company->CompanyID: null;
             $to_date = \Helper::dateFormat($request->toDate);
             $from_date = \Helper::dateFormat($request->fromDate);
             
@@ -536,6 +537,7 @@ class VATReportAPIController extends AppBaseController
                                     'from_date'=>$from_date,
                                     'to_date'=>$to_date,
                                     'company_name'=>$company_name,
+                                    'company_code'=>$company_code,
                                     'cur'=>$cur,
                                     'title'=>$title);
 
@@ -743,6 +745,8 @@ class VATReportAPIController extends AppBaseController
 
 
             $company = Company::find($request->companySystemID);
+            $company_code = isset($company->CompanyID)?$company->CompanyID: null;
+
             if(!empty($company)){
                 $company_name = $company->CompanyName;
                 $company_vat_registration_number = $company->vatRegistratonNumber;
@@ -768,6 +772,7 @@ class VATReportAPIController extends AppBaseController
                                     'from_date'=>$from_date,
                                     'to_date'=>$to_date,
                                     'company_name'=>$company_name,
+                                    'company_code'=>$company_code,
                                     'title'=>$title,
                                     'company_vat_registration_number' =>$company_vat_registration_number);
 

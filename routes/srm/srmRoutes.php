@@ -243,3 +243,6 @@ Route::resource('tenderNegotiationApprovals', 'TenderNegotiationApprovalControll
 Route::post('tender-negotiation-approvals-get-employees', 'TenderNegotiationApprovalController@getEmployees');
 
 Route::post('publishNegotiation', 'TenderNegotiationApprovalController@publishNegotiation');
+Route::resource('calendar_dates_detail_edit_logs', 'CalendarDatesDetailEditLogAPIController');
+Route::resource('procument_activity_edit_logs', 'ProcumentActivityEditLogAPIController');
+Route::post('getTenderFilterData', 'TenderMasterAPIController@getTenderFilterData');

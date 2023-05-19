@@ -390,4 +390,16 @@ class Company extends Model
     {
         return $this->hasMany('App\Models\Company', 'group_two','companySystemID')->whereIn('group_type', [2,3]);
     }
+
+
+    public static function getComanyCode($companySystemID)
+    {
+        $company = Company::find($companySystemID);
+
+        if ($company) {
+            return $company->CompanyID;
+        } else {
+            return null;
+        }
+    }
 }

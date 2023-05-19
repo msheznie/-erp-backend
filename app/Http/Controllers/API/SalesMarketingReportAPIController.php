@@ -941,11 +941,15 @@ class SalesMarketingReportAPIController extends AppBaseController
 
 
                 }
-
+                $companyMaster = Company::find(isset($request->companySystemID)?$request->companySystemID:null);
+                $companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
+                $detail_array = array(
+                    'company_code'=>$companyCode,
+                );
 
                 $fileName = 'quotation_so_report';
                 $path = 'sales/report/quotation_so_report/excel/';
-                $basePath = CreateExcel::process($data,$type,$fileName,$path);
+                $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
 
                 if($basePath == '')
                 {
@@ -1317,6 +1321,7 @@ class SalesMarketingReportAPIController extends AppBaseController
 
                 $company = Company::find($input['companySystemID']);
                 $output = $this->getSalesDetailQry($input, $search);
+                $companyCode = isset($company->CompanyID) ? $company->CompanyID: null;
 
                 $locaCurrencyID = $company->localCurrencyID;
                 $reportingCurrencyID = $company->reportingCurrency;
@@ -1325,6 +1330,7 @@ class SalesMarketingReportAPIController extends AppBaseController
 
                 $currency = CurrencyMaster::find($currencyID);
                 $data = [];
+                $reportData = array('company_code' => $companyCode);
                 if ($output) {
                     foreach ($output as $key => $value) {
                         $profit = (isset($input['currencyID']) && $input['currencyID'] == 1) ? floatval($value->localAmount) - floatval($value->localCost) : floatval($value->rptAmount) - floatval($value->rptCost);
@@ -1365,7 +1371,7 @@ class SalesMarketingReportAPIController extends AppBaseController
 
                 $fileName = 'sales_detail_report_';
                 $path = 'sales/report/sales_detail_report_/excel/';
-                $basePath = CreateExcel::process($data,$type,$fileName,$path);
+                $basePath = CreateExcel::process($data,$type,$fileName,$path,$reportData);
 
                 if($basePath == '')
                 {
@@ -2360,12 +2366,16 @@ class SalesMarketingReportAPIController extends AppBaseController
             }
         }
 
-
+        $companyMaster = Company::find(isset($request->companyId)?$request->companyId:null);
+        $companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
+        $detail_array = array(
+            'company_code'=>$companyCode,
+        );
 
 
         $fileName = 'so_to_receipt';
         $path = 'sales/report/so_to_receipt/excel/';
-        $basePath = CreateExcel::process($data,$type,$fileName,$path);
+        $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
 
         if($basePath == '')
         {

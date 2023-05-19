@@ -2492,6 +2492,11 @@ erp_grvdetails.itemDescription,warehousemaster.wareHouseDescription,erp_grvmaste
             ->where('documentSystemID', $input['documentSystemID'])
             ->delete();
 
+        BudgetConsumedData::where('documentSystemCode', $purchaseOrderID)
+            ->where('companySystemID', $purchaseOrder->companySystemID)
+            ->where('documentSystemID', $input['documentSystemID'])
+            ->delete();
+
         if ($deleteApproval) {
             $update = ProcumentOrder::where('purchaseOrderID', $purchaseOrderID)
                 ->update([
@@ -5440,11 +5445,16 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         {
             $doc_name = 'purchase_work_order';
             $doc_name_path = 'purchase_work_order/';
-        }    
-      
+        }
+        $companyID = isset($input['companyId']) ? $input['companyId']: null;
+        $companyMaster = Company::find($companyID);
+        $companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
+        $detail_array = array(
+            'company_code'=>$companyCode
+        );
         
         $path = 'procurement/'.$doc_name_path.'excel/';
-        $basePath = CreateExcel::process($data,$type,$doc_name,$path);
+        $basePath = CreateExcel::process($data,$type,$doc_name,$path,$detail_array);
 
         if($basePath == '')
         {
@@ -5810,11 +5820,16 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             }
         }
 
+        $companyMaster = Company::find(isset($request->companyId)?$request->companyId:null);
+        $companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
+        $detail_array = array(
+            'company_code'=>$companyCode,
+        );
         
         $doc_name = 'po_to_payment';
         $doc_name_path = 'po_to_payment/';
         $path = 'procurement/report/'.$doc_name_path.'excel/';
-        $basePath = CreateExcel::process($data,$type,$doc_name,$path);
+        $basePath = CreateExcel::process($data,$type,$doc_name,$path,$detail_array);
 
         if($basePath == '')
         {

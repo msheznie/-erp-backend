@@ -36,6 +36,7 @@ use App\helper\TaxService;
 use App\Http\Requests\API\CreateBookInvSuppMasterAPIRequest;
 use App\Http\Requests\API\UpdateBookInvSuppMasterAPIRequest;
 use App\Models\AccountsPayableLedger;
+use App\Models\BudgetConsumedData;
 use App\Models\EmployeeLedger;
 use App\Models\SupplierInvoiceDirectItem;
 use App\Models\BookInvSuppDet;
@@ -770,12 +771,11 @@ class BookInvSuppMasterAPIController extends AppBaseController
             }
 
             }
-
             if ($input['documentType'] != 4 && $input['retentionAmount'] > 0) {
 
                 $isConfigured = SystemGlCodeScenario::find(13);
-                $isDetailConfigured = SystemGlCodeScenarioDetail::where('systemGLScenarioID', 13)->first();
-
+                $companyID = isset($bookInvSuppMaster->companySystemID) ? $bookInvSuppMaster->companySystemID: null;
+                $isDetailConfigured = SystemGlCodeScenarioDetail::where('systemGLScenarioID', 13)->where('companySystemID', $companyID)->first();
                 if($isConfigured && $isDetailConfigured) {
                     if ($isConfigured->isActive != 1 || $isDetailConfigured->chartOfAccountSystemID == null || $isDetailConfigured->chartOfAccountSystemID == 0) {
                         return $this->sendError('Chart of account is not configured for retention control account', 500);
@@ -3092,6 +3092,11 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
                 ->delete();
 
             TaxLedgerDetail::where('documentMasterAutoID', $bookingSuppMasInvAutoID)
+                ->where('companySystemID', $bookInvSuppMasterData->companySystemID)
+                ->where('documentSystemID', $bookInvSuppMasterData->documentSystemID)
+                ->delete();
+
+            BudgetConsumedData::where('documentSystemCode', $bookingSuppMasInvAutoID)
                 ->where('companySystemID', $bookInvSuppMasterData->companySystemID)
                 ->where('documentSystemID', $bookInvSuppMasterData->documentSystemID)
                 ->delete();

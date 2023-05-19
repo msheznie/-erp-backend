@@ -76,6 +76,11 @@ class ClubManagementAPIController extends AppBaseController
 
                     $companyCurrency = \Helper::companyCurrency($dt['companySystemID']);
 
+                    $segment = SegmentMaster::find($dt['serviceLineSystemID']);
+                    if (empty($segment)) {
+                        return $this->sendError('Segment not found');
+                    }
+
 
                     $companyCurrencyConversion = \Helper::currencyConversion($dt['companySystemID'], $myCurr, $myCurr, 0);
 
@@ -127,6 +132,8 @@ class ClubManagementAPIController extends AppBaseController
                         'companyFinancePeriodID' => isset($financePeriod->companyFinancePeriodID) ? $financePeriod->companyFinancePeriodID : null,
                         'FYPeriodDateFrom' => isset($financePeriod->dateFrom) ? $financePeriod->dateFrom : null,
                         'FYPeriodDateTo' => isset($financePeriod->dateTo) ? $financePeriod->dateTo : null,
+                        'serviceLineSystemID' => isset($segment->serviceLineSystemID) ? $segment->serviceLineSystemID: null,
+                        'serviceLineCode' => isset($segment->ServiceLineCode) ? $segment->ServiceLineCode: null,
                         'bankID' => $dt['bankID'],
                         'bankAccountID' => $dt['bankAccountID'],
 

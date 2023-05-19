@@ -296,12 +296,17 @@ class ItemMasterAPIController extends AppBaseController
         } else {
             $data = array();
         }
+        $companyMaster = Company::find(isset($input['companyId'])?$input['companyId']: null);
+        $companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
+        $detail_array = array(
+            'company_code'=>$companyCode,
+        );
 
 
         $fileName = 'item_master';
         $path = 'system/item_master/excel/';
         $type = 'xls';
-        $basePath = CreateExcel::process($data,$type,$fileName,$path);
+        $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
 
         if($basePath == '')
         {
@@ -1622,11 +1627,23 @@ class ItemMasterAPIController extends AppBaseController
 
 
         $itemMasters = ItemMaster::whereHas('itemAssigned', function ($query) use ($companyId) {
-            return $query->where('companySystemID', '=', $companyId);
+            return $query->where('companySystemID', '=', $companyId)->where('isAssigned', '=', -1);
         })->with(['unit', 'unit_by', 'financeMainCategory', 'financeSubCategory'])
         ->when((isset($input['PurchaseRequestID']) && $input['PurchaseRequestID'] > 0), function($query) use ($input) {
             $query->whereDoesntHave('purchase_request_details', function($query) use ($input) {
                 $query->where('purchaseRequestID', $input['PurchaseRequestID']);
+            });
+        })->when((isset($input['purchaseOrderID']) && $input['purchaseOrderID'] > 0), function($query) use ($input) {
+            $query->whereDoesntHave('purchase_order_details', function($query) use ($input) {
+                $query->where('purchaseOrderMasterID', $input['purchaseOrderID']);
+            });
+        })->when((isset($input['materialReqeuestID']) && $input['materialReqeuestID'] > 0), function($query) use ($input) {
+            $query->whereDoesntHave('erp_requestdetails', function($query) use ($input) {
+                $query->where('requestDetailsID', $input['materialReqeuestID']);
+            });
+        })->when((isset($input['itemIssueAutoID']) && $input['itemIssueAutoID'] > 0), function($query) use ($input) {
+            $query->whereDoesntHave('material_issue_details', function($query) use ($input) {
+                $query->where('itemIssueAutoID', $input['itemIssueAutoID']);
             });
         });
 

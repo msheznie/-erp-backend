@@ -975,10 +975,14 @@ WHERE
 
                     // return $this->sendResponse(array(), 'Successfully export');
 
-
+                    $companyMaster = Company::find(isset($request->companySystemID)?$request->companySystemID:null);
+                    $companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
+                    $detail_array = array(
+                        'company_code'=>$companyCode,
+                    );
                     $doc_name = 'po_analysis';
                     $path = 'procurement/report/po_analysis/excel/';
-                    $basePath = CreateExcel::process($data,$type,$doc_name,$path);
+                    $basePath = CreateExcel::process($data,$type,$doc_name,$path,$detail_array);
             
                     if($basePath == '')
                     {
@@ -1202,10 +1206,14 @@ WHERE
 
                     // return $this->sendResponse(array(), 'successfully export');
 
-
+                    $companyMaster = Company::find(isset($request->companySystemID)?$request->companySystemID:null);
+                    $companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
+                    $detail_array = array(
+                        'company_code'=>$companyCode,
+                    );
                     $doc_name = 'po_wise_analysis';
                     $path = 'procurement/report/po_wise_analysis/excel/';
-                    $basePath = CreateExcel::process($data,$type,$doc_name,$path);
+                    $basePath = CreateExcel::process($data,$type,$doc_name,$path,$detail_array);
             
                     if($basePath == '')
                     {
@@ -1309,10 +1317,14 @@ WHERE
 
                     // return $this->sendResponse(array(), 'successfully export');
 
-
+                    $companyMaster = Company::find(isset($request->companySystemID)?$request->companySystemID:null);
+                    $companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
+                    $detail_array = array(
+                        'company_code'=>$companyCode,
+                    );
                     $doc_name = 'po_wise_analysis_company';
                     $path = 'procurement/report/po_wise_analysis_company/excel/';
-                    $basePath = CreateExcel::process($data,$type,$doc_name,$path);
+                    $basePath = CreateExcel::process($data,$type,$doc_name,$path,$detail_array);
             
                     if($basePath == '')
                     {
@@ -1426,11 +1438,15 @@ WHERE
 
                     // return $this->sendResponse(array(), 'successfully export');
 
-
+                    $companyMaster = Company::find(isset($request->companySystemID)?$request->companySystemID:null);
+                    $companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
+                    $detail_array = array(
+                        'company_code'=>$companyCode,
+                    );
                     
                     $doc_name = 'po_wise_analysis_supplier';
                     $path = 'procurement/report/po_wise_analysis_supplier/excel/';
-                    $basePath = CreateExcel::process($data,$type,$doc_name,$path);
+                    $basePath = CreateExcel::process($data,$type,$doc_name,$path,$detail_array);
             
                     if($basePath == '')
                     {
@@ -1499,10 +1515,14 @@ WHERE
 
 
 
-                          
+                $companyMaster = Company::find(isset($request->companySystemID)?$request->companySystemID:null);
+                $companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
+                $detail_array = array(
+                    'company_code'=>$companyCode,
+                );
                 $doc_name = 'order_inquiry';
                 $path = 'procurement/report/order_inquiry/excel/';
-                $basePath = CreateExcel::process($data,$type,$doc_name,$path);
+                $basePath = CreateExcel::process($data,$type,$doc_name,$path,$detail_array);
         
                 if($basePath == '')
                 {

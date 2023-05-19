@@ -95,6 +95,13 @@ use App\Models\CompanyFinanceYear;
 use App\Jobs\CreateAccumulatedDepreciation;
 use App\Services\WebPushNotificationService;
 use App\Services\GeneralLedger\GlPostedDateService;
+use App\Models\TenderCirculars;
+use App\Models\CircularAmendments;
+use App\Models\CircularSuppliers;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\EmailForQueuing;
+use App\Models\DocumentModifyRequest;
+use App\helper\TenderDetails;
 
 class Helper
 {
@@ -3012,6 +3019,17 @@ class Helper
                     $docInforArr["modelName"] = 'DocumentModifyRequest';
                     $docInforArr["primarykey"] = 'id';
                     break;
+                case 118:
+                    $docInforArr["documentCodeColumnName"] = 'code';
+                    $docInforArr["confirmColumnName"] = 'confirm';
+                    $docInforArr["confirmedBy"] = 'requested_by_name';
+                    $docInforArr["confirmedByEmpID"] = 'requested_employeeSystemID';
+                    $docInforArr["confirmedBySystemID"] = 'requested_employeeSystemID';
+                    $docInforArr["confirmedDate"] = 'confirmation_date';
+                    $docInforArr["tableName"] = 'document_modify_request';
+                    $docInforArr["modelName"] = 'DocumentModifyRequest';
+                    $docInforArr["primarykey"] = 'id';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
             }
@@ -3033,7 +3051,7 @@ class Helper
                         }
                     }
                 }
-
+             
                 //validate currency
                 if (in_array($params["document"], self::documentListForValidateCurrency())) {
                     $currencyValidate = CurrencyValidation::validateCurrency($params["document"], $masterRec);
@@ -3056,7 +3074,7 @@ class Helper
                 {
                     $reference_document_id = $params['reference_document_id'];
                 }
-
+                
                 //checking whether document approved table has a data for the same document
                 $docExist = Models\DocumentApproved::where('documentSystemID', $params["document"])->where('documentSystemCode', $params["autoID"])->first();
                 if (!$docExist) {
@@ -3102,7 +3120,7 @@ class Helper
                                 return ['success' => false, 'message' => 'Policy not available for this document.'];
                             }
                         
-                            
+                                
 
                             // get approval rolls
                             $approvalLevel = Models\ApprovalLevel::with('approvalrole')->where('companySystemID', $params["company"])->where('documentSystemID', $reference_document_id)->where('departmentSystemID', $document["departmentSystemID"])->where('isActive', -1);
@@ -3152,7 +3170,7 @@ class Helper
                             }
 
                             $output = $approvalLevel->first();
-
+                            
                             //when iscategorywiseapproval true and output is empty again check for isCategoryWiseApproval = 0
                             if (empty($output)) {
 
@@ -3192,7 +3210,7 @@ class Helper
                                     $output = $approvalLevel->first();
                                 }
                             }
-
+                            
 
                             if ($output) {
                                 /** get source document master record*/
@@ -3221,7 +3239,7 @@ class Helper
                                 }
                                 // insert rolls to document approved table
                                 Models\DocumentApproved::insert($documentApproved);
-
+                                
                                 $documentApproved = Models\DocumentApproved::where("documentSystemID", $params["document"])
                                     ->where("documentSystemCode", $sorceDocument[$docInforArr["primarykey"]])
                                     ->where("rollLevelOrder", 1)
@@ -3260,19 +3278,17 @@ class Helper
                                         $pushNotificationArray = [];
                                         $document = Models\DocumentMaster::where('documentSystemID', $documentApproved->documentSystemID)->first();
 
-
-                                        if($params["document"] == 117)
+                                        
+                                        if($params["document"] == 117 )
                                         {
-                                            if($sorceDocument->type == 1)
-                                            {
-                                                $document->documentDescription = 'Edit Request';
-                                            }
-                                            else
-                                            {
-                                                $document->documentDescription = 'Amend Request';
-                                            }
+                                            $document->documentDescription = $sorceDocument->type == 1?'Edit request':'Amend request';
                                         }
 
+                                        if($params["document"] == 118 )
+                                        {
+                                            $document->documentDescription = $sorceDocument->type == 1?'Edit confirm request':'Amend confirm request';
+                                        }
+                                        
                                         $approvedDocNameBody = $document->documentDescription . ' <b>' . $documentApproved->documentCode . '</b>';
 
                                         // if (in_array($params["document"], self::documentListForClickHere())) {
@@ -3331,13 +3347,13 @@ class Helper
                                                 }
                                             }
                                         }
-
+                                        
                                         $sendEmail = \Email::sendEmail($emails);
                                         if (!$sendEmail["success"]) {
                                             return ['success' => false, 'message' => $sendEmail["message"]];
                                         }
 
-
+                                        
 
                                         $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, 1);
 
@@ -4209,6 +4225,18 @@ class Helper
                 $docInforArr["confirmedYN"] = "requested";
                 $docInforArr["confirmedEmpSystemID"] = "requested_employeeSystemID";
                 break;
+            case 118: // Edit Approve request
+                $docInforArr["tableName"] = 'document_modify_request';
+                $docInforArr["modelName"] = 'DocumentModifyRequest';
+                $docInforArr["primarykey"] = 'id';
+                $docInforArr["approvedColumnName"] = 'confirmation_approved';
+                $docInforArr["approvedBy"] = 'approved_by_user_system_id';
+                $docInforArr["approvedBySystemID"] = 'confirmation_approved_by_user_system_id';
+                $docInforArr["approvedDate"] = 'confirmation_approved_date';
+                $docInforArr["approveValue"] = -1;
+                $docInforArr["confirmedYN"] = "requested";
+                $docInforArr["confirmedEmpSystemID"] = "requested_employeeSystemID";
+                break;       
             default:
                 return ['success' => false, 'message' => 'Document ID not found'];
         }
@@ -4217,6 +4245,7 @@ class Helper
         //return ['success' => true , 'message' => $docInforArr];
         DB::beginTransaction();
         try {
+            
             $userMessage = 'Successfully approved the document';
             $more_data = [];
             $userMessageE = '';
@@ -4229,7 +4258,7 @@ class Helper
                     $reference_document_id = $input['reference_document_id'];
                 }
 
-                
+                    
                 // get current employee detail
                 $empInfo = self::getEmployeeInfo();
                 $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
@@ -4297,7 +4326,7 @@ class Helper
                 if ($docApproved->rejectedYN == -1) {
                     return ['success' => false, 'message' => 'Level is already rejected'];
                 }
-
+              
                 //check document is already approved
                 $isApproved = Models\DocumentApproved::where('documentApprovedID', $input["documentApprovedID"])->where('approvedYN', -1)->first();
                 if (!$isApproved) {
@@ -4755,7 +4784,70 @@ class Helper
                                
                                 $acc_d = CreateAccumulatedDepreciation::dispatch($input["faID"]);
                             }
-                            //
+                            
+                        
+                            if ($input["documentSystemID"] == 118) {
+                           
+                                $tenderObj = TenderDetails::getTenderMasterData($input['id']);
+                                $documentModify = DocumentModifyRequest::select('id','type')->where('id',$tenderObj->tender_edit_version_id)->first();
+                           
+
+                                if(isset($documentModify) && $documentModify->type == 2)
+                                {   
+                                 
+                                        $circulars = TenderCirculars::select('id','description','status','circular_name')->where('tender_id', $input['id'])->where('status',0)->get();
+                                        $companyName = "";
+                                        $company = Company::find($docApproved->companySystemID);
+                                        if(isset($company->CompanyName)){
+                                            $companyName =  $company->CompanyName;
+                                        }
+                                       
+                                        foreach($circulars as $circular)
+                                        {
+                                          
+                                            $att['updated_by'] = $empInfo->employeeSystemID;
+                                            $att['status'] = 1;
+                                            $result = TenderCirculars::where('id', $circular['id'])->update($att);
+                                            $supplierList = CircularSuppliers::select('id','supplier_id','circular_id','status')
+                                                                                ->with([ 'supplier_registration_link', 'srm_circular_amendments.document_attachments'])
+                                                                                ->where('circular_id', $circular['id'])
+                                                                                ->get();
+                                            $amendmentsList = CircularAmendments::select('id','amendment_id')
+                                                                                ->with('document_attachments')
+                                                                                ->where('circular_id', $circular['id'])
+                                                                                ->get();
+                                                                      
+                                            $file = array();
+                                            foreach ($amendmentsList as $amendments){
+                                                $file[$amendments->document_attachments->originalFileName] = Helper::getFileUrlFromS3($amendments->document_attachments->path);
+                                            }
+                                          
+                                            $dataEmail['attachmentList'] = $file; 
+                                            if ($result) {
+                                                foreach ($supplierList as $supplier){
+        
+                                                    $description = "";
+                                                    if(isset($circular['description'])){
+                                                        $description = "<b>Circular Description : </b>" . $description. "<br /><br />";
+                                                    }
+                                                
+                                                    $dataEmail['empEmail'] = $supplier->supplier_registration_link->email;
+                                                    $dataEmail['companySystemID'] = $docApproved->companySystemID;
+                                                    $temp =  "Dear Supplier,"."<br /><br />"." Please find published tender circular details below."."<br /><br /><b>". "Circular Name : ". "</b>".$circular['circular_name'] ." "."<br /><br />". $description .$companyName."</b><br /><br />"."Thank You"."<br /><br /><b>";
+                                                    $dataEmail['emailAlertMessage'] = $temp;
+                                                    $dataEmail['alertMessage'] = 'Tender Circular';
+                                                    $sendEmail = \Email::sendEmailErp($dataEmail);
+                                                }
+        
+                                              
+                                            } else {
+                                                return ['success' => false, 'message' => 'Published failed'];
+                                            }
+        
+                                        }
+                                }
+
+                            }
 
                             // insert the record to general ledger
                             if (in_array($input["documentSystemID"], [3, 8, 12, 13, 10, 20, 61, 24, 7, 19, 15, 11, 4, 21, 22, 17, 23, 41, 71, 87, 97])) {
@@ -4803,9 +4895,18 @@ class Helper
 
                         } else {
                             // update roll level in master table
-                            $rollLevelUpdate = $namespacedModel::find($input["documentSystemCode"])->update(['RollLevForApp_curr' => $input["rollLevelOrder"] + 1]);
-                        }
+                            if($input['documentSystemID'] == 118)
+                            {
+                                $rollLevelUpdate = $namespacedModel::find($input["documentSystemCode"])->update(['confirmation_RollLevForApp_curr' => $input["rollLevelOrder"] + 1]);
 
+                            }
+                            else
+                            {
+                                $rollLevelUpdate = $namespacedModel::find($input["documentSystemCode"])->update(['RollLevForApp_curr' => $input["rollLevelOrder"] + 1]);
+
+                            }
+                        }
+                     
                         // update record in document approved table
                         $approvedeDoc = $docApproved::find($input["documentApprovedID"])->update(['approvedYN' => -1, 'approvedDate' => now(), 'approvedComments' => $input["approvedComments"], 'employeeID' => $empInfo->empID, 'employeeSystemID' => $empInfo->employeeSystemID]);
 
@@ -4818,17 +4919,16 @@ class Helper
                             $document = Models\DocumentMaster::where('documentSystemID', $currentApproved->documentSystemID)->first();
                            
 
-                            if($input["documentSystemID"] == 117)
+                            if($input["documentSystemID"] == 117 )
                             {
-                                if($sourceModel->type == 1)
-                                {
-                                    $document->documentDescription = 'Edit Request';
-                                }
-                                else
-                                {
-                                    $document->documentDescription = 'Amend Request';
-                                }
+                                $document->documentDescription = $sourceModel->type == 1?'Edit Request':'Amend Request';
                             }
+
+                            if($input["documentSystemID"] == 118)
+                            {
+                                $document->documentDescription = $sourceModel->type == 1?'Edit Approve Request':'Amend Approve Request';
+                            }
+
                             $subjectName = $document->documentDescription . ' ' . $currentApproved->documentCode;
                             $bodyName = $document->documentDescription . ' ' . '<b>' . $currentApproved->documentCode . '</b>';
 
@@ -4947,13 +5047,13 @@ class Helper
                         
                         $sendEmail = \Email::sendEmail($emails);
 
-
+                      
                         if (!$sendEmail["success"]) {
                             return ['success' => false, 'message' => $sendEmail["message"]];
                         }
 
                         $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, 1);
-
+                        
                         $webPushData = [
                             'title' => $pushNotificationMessage,
                             'body' => '',
@@ -4985,8 +5085,8 @@ class Helper
                 $msg = $e->getMessage();
             }
 
-            return ['success' => false, 'message' => $msg];
-            // return ['success' => false, 'message' => $e->getMessage()." Line:".$e->getLine()];
+            // return ['success' => false, 'message' => $msg];
+            return ['success' => false, 'message' => $e->getMessage()." Line:".$e->getLine()];
 
         }
     }
@@ -5495,6 +5595,12 @@ class Helper
                     $docInforArr["primarykey"] = 'id';
                     $docInforArr["referredColumnName"] = 'timesReferred';
                     break;
+                case 118: // Edit Request
+                    $docInforArr["tableName"] = 'document_modify_request';
+                    $docInforArr["modelName"] = 'DocumentModifyRequest';
+                    $docInforArr["primarykey"] = 'id';
+                    $docInforArr["referredColumnName"] = 'timesReferred';
+                    break;
                 default:
                     return ['success' => false, 'message' => 'Document ID not set'];
             }
@@ -5522,6 +5628,10 @@ class Helper
                             $timesReferredUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->increment($docInforArr["referredColumnName"]);
                             $refferedBackYNUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->update(['refferedBackYN' => -1]);
                         }
+                        else if($input["documentSystemID"] == 118)
+                        {
+                            $refferedBackYNUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->update(['confirmation_rejected' => -1,'confirmation_rejected_date' => now(),'confirmation_rejected_by_user_system_id' => $empInfo->employeeSystemID]);
+                        }
 
                         /*send Email*/
                         $confirmedUser = 0;
@@ -5541,16 +5651,14 @@ class Helper
                             //     return ['success' => false, 'message' => 'Policy not found for this document'];
                             // }
 
-                            if($input["documentSystemID"] == 117)
+                            if($input["documentSystemID"] == 117 )
                             {
-                                if($sourceModel->type == 1)
-                                {
-                                    $document->documentDescription = 'Edit Request';
-                                }
-                                else
-                                {
-                                    $document->documentDescription = 'Amend Request';
-                                }
+                                $document->documentDescription = $sourceModel->type == 1?'Edit Request':'Amend Request';
+                            }
+
+                            if($input["documentSystemID"] == 118)
+                            {
+                                $document->documentDescription = $sourceModel->type == 1?'Edit Approve Request':'Amend Approve Request';
                             }
 
                             $subjectName = $document->documentDescription . ' ' . $currentApproved->documentCode;
@@ -5598,6 +5706,11 @@ class Helper
                             if($input["documentSystemID"] == 117)
                             {
                                 $refferedBackYNUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->update(['status' => 0,'rejected_date' => now(),'rejected_by_user_system_id' => $empInfo->employeeSystemID]);
+
+                            }
+                            if($input["documentSystemID"] == 118)
+                            {
+                                $refferedBackYNUpdate = $namespacedModel::find($docApprove["documentSystemCode"])->update(['status' => 0,'confirmation_rejected_date' => now(),'confirmation_rejected_by_user_system_id' => $empInfo->employeeSystemID]);
 
                             }
 
@@ -5665,9 +5778,15 @@ class Helper
     public static function getEmployeeInfo()
     {
         $user = Models\User::find(Auth::id());
+        
+        if(empty($user)){ 
+            return  new \stdClass();
+        }
+        
         $employee = Models\Employee::with(['profilepic', 'user_data' => function($query) {
-            $query->select('uuid', 'employee_id');
-        }])->find($user->employee_id);
+                $query->select('uuid', 'employee_id');
+            }])->find($user->employee_id); 
+    
         return $employee;
     }
 
@@ -7352,8 +7471,8 @@ class Helper
                 $budgetConsumeData = array();
                 $masterRec = Models\BookInvSuppMaster::find($params["autoID"]);
                 if ($masterRec) {
-                    if ($masterRec->documentType == 1) {
-                        $directDetail = \DB::select('SELECT directInvoiceDetailsID,directInvoiceAutoID,serviceLineSystemID,serviceLineCode,chartOfAccountSystemID,glCode,budgetYear,SUM(localAmount) as localAmountTot, sum(comRptAmount) as comRptAmountTot FROM erp_directinvoicedetails WHERE directInvoiceAutoID = ' . $params["autoID"] . ' GROUP BY serviceLineSystemID,chartOfAccountSystemID ');
+                    if ($masterRec->documentType == 1 || $masterRec->documentType == 4) {
+                        $directDetail = \DB::select('SELECT directInvoiceDetailsID,directInvoiceAutoID,serviceLineSystemID,serviceLineCode,chartOfAccountSystemID,glCode,budgetYear,SUM(localAmount) as localAmountTot, sum(comRptAmount) as comRptAmountTot, detail_project_id FROM erp_directinvoicedetails WHERE directInvoiceAutoID = ' . $params["autoID"] . ' GROUP BY serviceLineSystemID,chartOfAccountSystemID,detail_project_id ');
 
                         if (!empty($directDetail)) {
                             foreach ($directDetail as $value) {
@@ -7380,14 +7499,46 @@ class Helper
                                         "consumedRptCurrencyID" => $masterRec->companyReportingCurrencyID,
                                         "consumedRptAmount" => abs($value->comRptAmountTot),
                                         "timestamp" => date('d/m/Y H:i:s A'),
-                                        "projectID" => $masterRec->projectID
+                                        "projectID" => $value->detail_project_id
 
                                     );
                                 }
                             }
                             $budgetConsumeStore = Models\BudgetConsumedData::insert($budgetConsumeData);
                         }
-                    }
+                    } else if ($masterRec->documentType == 3) {
+                        $budgetConsumeData = array();
+                        $directDetail = \DB::select('SELECT SUM((supplier_invoice_items.costPerUnitLocalCur) *supplier_invoice_items.noQty) as costPerUnitLocalCur,SUM((supplier_invoice_items.costPerUnitComRptCur)*supplier_invoice_items.noQty) as costPerUnitComRptCur,supplier_invoice_items.companyReportingCurrencyID,supplier_invoice_items.financeGLcodePLSystemID,supplier_invoice_items.companySystemID,erp_bookinvsuppmaster.serviceLineSystemID,supplier_invoice_items.localCurrencyID, erp_bookinvsuppmaster.projectID, erp_bookinvsuppmaster.companyFinanceYearID, MONTH(createdDateAndTime) as month FROM supplier_invoice_items INNER JOIN erp_bookinvsuppmaster ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = supplier_invoice_items.bookingSuppMasInvAutoID  WHERE supplier_invoice_items.itemFinanceCategoryID != 3 AND supplier_invoice_items.bookingSuppMasInvAutoID = ' . $params["autoID"] . ' GROUP BY supplier_invoice_items.companySystemID,erp_bookinvsuppmaster.serviceLineSystemID,supplier_invoice_items.financeGLcodePLSystemID,erp_bookinvsuppmaster.projectID');
+
+                        if (!empty($directDetail)) {
+                            foreach ($directDetail as $value) {
+                                if ($value->financeGLcodePLSystemID != "") {
+                                    $budgetConsumeData[] = array(
+                                        "companySystemID" => $value->companySystemID,
+                                        "companyID" => Models\Company::getComanyCode($value->companySystemID),
+                                        "serviceLineSystemID" => $value->serviceLineSystemID,
+                                        "serviceLineCode" => Models\SegmentMaster::getSegmentCode($value->serviceLineSystemID),
+                                        "documentSystemID" => $masterRec["documentSystemID"],
+                                        "documentID" => $masterRec["documentID"],
+                                        "documentSystemCode" => $params["autoID"],
+                                        "documentCode" => $masterRec["bookingInvCode"],
+                                        "chartOfAccountID" => $value->financeGLcodePLSystemID,
+                                        "GLCode" => Models\ChartOfAccount::getAccountCode($value->financeGLcodePLSystemID),
+                                        "year" => Models\CompanyFinanceYear::budgetYearByFinanceYearID($value->companyFinanceYearID),
+                                        "companyFinanceYearID" => $value->companyFinanceYearID,
+                                        "month" => $value->month,
+                                        "consumedLocalCurrencyID" => $value->localCurrencyID,
+                                        "consumedLocalAmount" => $value->costPerUnitLocalCur,
+                                        "consumedRptCurrencyID" => $value->companyReportingCurrencyID,
+                                        "consumedRptAmount" => $value->costPerUnitComRptCur,
+                                        "projectID" => $value->projectID,
+                                        "timestamp" => date('d/m/Y H:i:s A')
+                                    );
+                                }
+                            }
+                        }
+                        $budgetConsume = Models\BudgetConsumedData::insert($budgetConsumeData);
+                    } 
                 }
                 break;
             case 4:

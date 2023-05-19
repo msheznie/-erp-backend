@@ -145,6 +145,8 @@ Route::group([], function() {
     Route::post('storePoPaymentTermsLogistic', 'PoAdvancePaymentAPIController@storePoPaymentTermsLogistic')->name('Store procurement order payment terms logistic');
     Route::post('purchaseOrderStatusesSendEmail', 'PurchaseOrderStatusAPIController@purchaseOrderStatusesSendEmail')->name('Purchase order statuses send email');
     Route::post('storeGRVDetailsFromPO', 'GRVDetailsAPIController@storeGRVDetailsFromPO')->name('Store grv details from procurement order');
+    Route::post('purchaseOrderValidateItem', 'PurchaseOrderDetailsAPIController@purchaseOrderValidateItem')->name('Procurement order validate item');
+    Route::post('purchaseOrderDetailsAddAllItems', 'PurchaseOrderDetailsAPIController@purchaseOrderDetailsAddAllItems')->name('Procurement order add all item');
 
     Route::resource('po_detail_expected_delivery_dates', 'PoDetailExpectedDeliveryDateAPIController');
     Route::resource('procurement-order', 'ProcumentOrderAPIController');

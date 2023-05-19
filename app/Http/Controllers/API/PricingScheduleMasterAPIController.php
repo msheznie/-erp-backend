@@ -18,6 +18,7 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Models\PricingScheduleDetail;
+use App\Models\TenderBoqItems;
 
 /**
  * Class PricingScheduleMasterController
@@ -400,7 +401,8 @@ class PricingScheduleMasterAPIController extends AppBaseController
 
             if(isset($input['id'])){
                 $data['updated_by'] = $employee->employeeSystemID;
-                $result = PricingScheduleMaster::where('id',$input['id'])->update($data);
+                $pricingSheduleMaster = PricingScheduleMaster::find($input['id']);
+                $result = $pricingSheduleMaster->update($data);
                 if($result){
                     if($schedule['price_bid_format_id'] != $input['price_bid_format_id']){
                         $master['status']=0;
@@ -438,16 +440,23 @@ class PricingScheduleMasterAPIController extends AppBaseController
 
 
                     // }
-                    $is_complete = true;
-                    $priceBidShe = TenderBidFormatDetail::where('tender_id',$input['price_bid_format_id'])->get();
+               
+                    $priceBidShe = TenderBidFormatDetail::where('tender_id',$input['price_bid_format_id'])->select('id','field_type','tender_id','label','is_disabled','boq_applicable','formula_string')->get();
 
-                  
+                    $status_updated['status'] = true;
+                    $status_updated['boq_status'] = true;
 
                     foreach ($priceBidShe as $bid){
 
-                        if(($bid->is_disabled == 1 || $bid->boq_applicable == 1) && $bid->field_type != 4)
+                        if(($bid->is_disabled == 1) && $bid->field_type != 4)
                         {
-                            $is_complete = false;
+                            $status_updated['status'] = false;
+                        }
+
+                        
+                        if(($bid->boq_applicable == 1) && $bid->field_type != 4)
+                        {
+                            $status_updated['boq_status'] = false;
                         }
                         
                         $dataBidShed['tender_id']=$input['tenderMasterId'];
@@ -464,14 +473,9 @@ class PricingScheduleMasterAPIController extends AppBaseController
                         PricingScheduleDetail::create($dataBidShed);
 
                     }
-                    if($is_complete)
-                    {
-                        $priceBidSheUpdate = PricingScheduleMaster::where('id',$result['id'])->first();
-                        $priceBidSheUpdate->status = 1;
-                        $priceBidSheUpdate->save();
-                    }
+              
 
-           
+                    PricingScheduleMaster::where('id',$result['id'])->update($status_updated);
 
                     DB::commit();
                     return ['success' => true, 'message' => 'Successfully saved', 'data' => $result];
@@ -496,11 +500,22 @@ class PricingScheduleMasterAPIController extends AppBaseController
         $input = $request->all();
         DB::beginTransaction();
         try {
-            $result = PricingScheduleMaster::where('id',$input['id'])->delete();
+            $sheduleMaster = PricingScheduleMaster::find($input['id']);
+            $result = $sheduleMaster->delete();
             if($result){
                 //TenderMainWorks::where('schedule_id',$input['id'])->delete();
-                ScheduleBidFormatDetails::where('schedule_id',$input['id'])->delete();
+        
+                $sheduleDetails = $this->deleteSheduleDetails($input['id']);
+                if (!$sheduleDetails['success']) {
+                    return $this->sendError($sheduleDetails['message'], 500);
+                }
+                $boqItems = PricingScheduleDetail::select('id')->where('pricing_schedule_master_id',$input['id'])->where('boq_applicable',1)->get();
                 PricingScheduleDetail::where('pricing_schedule_master_id',$input['id'])->delete();
+
+                $boqDetails = $this->deleteBoqItems($boqItems);
+                if (!$boqDetails['success']) {
+                    return $this->sendError($boqDetails['message'], 500);
+                }
                 DB::commit();
                 return ['success' => true, 'message' => 'Successfully deleted', 'data' => $result];
             }
@@ -592,14 +607,26 @@ class PricingScheduleMasterAPIController extends AppBaseController
             if(isset($input['priceBidFormat'])){
                 if(count($input['priceBidFormat'])>0){
                     $result = false;
-                    $is_complete = true;
+                    $isComplete = true;
+                    $isBoqComplete = true;
                     foreach ($input['priceBidFormat'] as $val){
+
+                        if($val['boq_applicable'] == 1 && $val['typeId'] != 4)
+                        {
+                            $id = $val['id'];
+                            $result1 = TenderBoqItems::where('main_work_id',$id)->count();
+                            if(($result1) == 0)
+                            {
+                                $isBoqComplete = false;
+                            }
+                        }
+
 
                         if($val['is_disabled'] == 1 && $val['typeId'] != 4)
                         {
                             if(empty($val['value']) || $val['value'] == null)
                             {
-                                $is_complete = false;
+                                $isComplete = false;
                             }
                         }
                      
@@ -622,17 +649,16 @@ class PricingScheduleMasterAPIController extends AppBaseController
                         
                     }
                     
-                    $exist = ScheduleBidFormatDetails::where('schedule_id',$masterData['schedule_id'])->first();
+                    $exist = ScheduleBidFormatDetails::where('schedule_id',$masterData['schedule_id'])->select('id')->first();
 
                         
                     if($result){
-                        if($is_complete){
-                            $master['status']=1;
-                        }
-                        else
-                        {
-                            $master['status']=0;
-                        }
+
+                       
+                        $master['status'] = ($isComplete) ? 1 : 0;
+                  
+                        $master['boq_status'] = ($isBoqComplete) ? 1 : 0;
+
                         PricingScheduleMaster::where('id',$masterData['schedule_id'])->update($master);
                         DB::commit();
                         return ['success' => true, 'message' => 'Successfully saved', 'data' => $result];
@@ -674,4 +700,49 @@ class PricingScheduleMasterAPIController extends AppBaseController
 
         // return TenderBidFormatDetail::where('tender_id',$priceSchedule['price_bid_format_id'])->where('is_disabled',0)->whereNotIn('id', $bidDetailId)->get();
     }
+
+    public function deleteSheduleDetails($id)
+    {
+
+        DB::beginTransaction();
+        try {
+            $details = ScheduleBidFormatDetails::where('schedule_id',$id)->get();
+
+            foreach ($details as $val) {
+                $shedule = ScheduleBidFormatDetails::find($val->id);
+                $shedule->delete();
+            }
+
+            DB::commit();
+            return ['success' => true, 'message' => 'Successfully Deleted'];
+        } catch (\Exception $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
+    }
+
+    public function deleteBoqItems($items)
+    {
+
+        DB::beginTransaction();
+        try {
+
+            foreach($items as $item)
+            {   
+               $boqItems =  TenderBoqItems::select('id')->where('main_work_id',$item->id)->get();
+               foreach($boqItems as $boqItem)
+               {
+                $boqItem = TenderBoqItems::find($boqItem->id);
+                $boqItem->delete();
+               }
+
+      
+
+            }
+            DB::commit();
+            return ['success' => true, 'message' => 'Successfully Deleted'];
+        } catch (\Exception $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
+    }
+    
 }

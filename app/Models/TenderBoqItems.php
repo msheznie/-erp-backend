@@ -90,7 +90,8 @@ class TenderBoqItems extends Model
         'created_by',
         'updated_by',
         'company_id',
-        'tender_ranking_line_item'
+        'tender_ranking_line_item',
+        'tender_id'
     ];
 
     /**

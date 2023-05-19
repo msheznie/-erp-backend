@@ -25,6 +25,7 @@ use App\helper\TaxService;
 use App\Http\Requests\API\CreateDebitNoteAPIRequest;
 use App\Http\Requests\API\UpdateDebitNoteAPIRequest;
 use App\Models\AccountsPayableLedger;
+use App\Models\BudgetConsumedData;
 use App\Models\EmployeeLedger;
 use App\Models\Company;
 use App\Models\ChartOfAccountsAssigned;
@@ -2265,6 +2266,11 @@ UNION ALL
                 ->where('documentSystemID', $debitNoteMasterData->documentSystemID)
                 ->delete();
 
+            BudgetConsumedData::where('documentSystemCode', $debitNoteAutoID)
+                ->where('companySystemID', $debitNoteMasterData->companySystemID)
+                ->where('documentSystemID', $debitNoteMasterData->documentSystemID)
+                ->delete();
+
             // updating fields
             $debitNoteMasterData->confirmedYN = 0;
             $debitNoteMasterData->confirmedByEmpSystemID = null;
@@ -2408,11 +2414,15 @@ UNION ALL
                 $x++;
             }
         }
-
+        $companyMaster = Company::find(isset($request->companyId)?$request->companyId: null);
+        $companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
+        $detail_array = array(
+            'company_code'=>$companyCode,
+        );
 
         $fileName = 'debit_note_by_company';
         $path = 'accounts-payable/debit_note_by_company/excel/';
-        $basePath = CreateExcel::process($data,$request->docType,$fileName,$path);
+        $basePath = CreateExcel::process($data,$request->docType,$fileName,$path,$detail_array);
 
         if($basePath == '')
         {

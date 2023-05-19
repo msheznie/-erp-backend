@@ -1189,9 +1189,10 @@ FROM
                 $toDate = $request->toDate;
 
                 $templateName = "export_report.scrap_inventory_report";
-                
 
-                $reportData = ['scrapDetails' => $items, 'Title'=>'Scrap Inventory Report', 'companyName' => $company->CompanyName, 'fromDate' => $fromDate, 'toDate' => $toDate, 'suppliers' => $suppliers, 'companySystemID' => $companySystemID, 'currency_id' => $currency_id, 'company'=> $company];
+                $companyCode = isset($company->CompanyID) ? $company->CompanyID: null;
+
+                $reportData = ['scrapDetails' => $items, 'Title'=>'Scrap Inventory Report', 'companyName' => $company->CompanyName, 'companyCode' => $companyCode, 'fromDate' => $fromDate, 'toDate' => $toDate, 'suppliers' => $suppliers, 'companySystemID' => $companySystemID, 'currency_id' => $currency_id, 'company'=> $company];
 
                 $file_type = $request->type;  
                 $fileName = 'scrap_inventory_report';
@@ -1289,7 +1290,9 @@ FROM
                 $title = 'Inventory Summary Report';
                 $path = 'inventory/report/inventory_summary_report/excel/';
                 $cur = NULL;
-                $detail_array = array('type' => 1,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$cur,'title'=>$title);
+                $companyID = isset($company->CompanyID) ? $company->CompanyID: 'common';
+
+                $detail_array = array('type' => 1,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'company_code'=>$companyID,'cur'=>$cur,'title'=>$title);
                 $basePath = CreateExcel::process($dataSorted,$request->type,$fileName,$path,$detail_array);
         
                 if($basePath == '')
@@ -1444,7 +1447,9 @@ FROM
                     $title = 'Stock Transaction';
                     $path = 'inventory/report/stock_transaction/excel/';
                     $cur = NULL;
-                    $detail_array = array('type' => 1,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$cur,'title'=>$title);
+                    $companyCode = isset($company->CompanyID) ? $company->CompanyID: 'common';
+
+                    $detail_array = array('type' => 1,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'company_code'=>$companyCode, 'cur'=>$cur,'title'=>$title);
                     $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
             
                     if($basePath == '')
@@ -1623,7 +1628,9 @@ FROM
                     $title = 'Stock Aging Report';
                     $path = 'inventory/report/stock_aging/excel/';
                     $cur = NULL;
-                    $detail_array = array('type' => 2,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$cur,'title'=>$title);
+                    $companyCode = isset($company->CompanyID) ? $company->CompanyID: 'common';
+
+                    $detail_array = array('type' => 2,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'company_code'=>$companyCode,'cur'=>$cur,'title'=>$title);
                     $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
             
                     if($basePath == '')
@@ -1709,7 +1716,9 @@ FROM
                 $title = 'Stock Details Report';
                 $path = 'inventory/report/stock_Detail/excel/';
                 $cur = NULL;
-                $detail_array = array('type' => 2,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$cur,'title'=>$title);
+                $companyCode = isset($company->CompanyID) ? $company->CompanyID: 'common';
+
+                $detail_array = array('type' => 2,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'company_code'=>$companyCode,'cur'=>$cur,'title'=>$title);
 
                 $basePath = CreateExcel::process($data,$request->type,$fileName,$path,$detail_array);
         
@@ -1758,14 +1767,15 @@ FROM
                     
                 $company = Company::find($request->companySystemID);
                 $company_name = $company->CompanyName;
-                
+                $companyCode = isset($company->CompanyID) ? $company->CompanyID: 'common';
+
                 $fileName = 'min_max_analysis';
                 $title = 'Inventory Min & Max Analysis';
                 $path = 'inventory/report/min_max_analysis/excel/';
                 $cur = NULL;
                 $from_date = null;
                 $to_date = null;
-                $detail_array = array('type' => 1,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'cur'=>$cur,'title'=>$title);
+                $detail_array = array('type' => 1,'from_date'=>$from_date,'to_date'=>$to_date,'company_name'=>$company_name,'company_code'=>$companyCode,'cur'=>$cur,'title'=>$title);
                 $basePath = CreateExcel::process($data,$request->type,$fileName,$path,$detail_array);
         
                 if($basePath == '')

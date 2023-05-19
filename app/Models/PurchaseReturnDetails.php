@@ -336,4 +336,14 @@ class PurchaseReturnDetails extends Model
     public function vat_sub_category(){
         return $this->belongsTo('App\Models\TaxVatCategories','vatSubCategoryID','taxVatSubCategoriesAutoID');
     }
+
+    public function budget_detail_pl()
+    {
+        return $this->belongsTo('App\Models\Budjetdetails', 'financeGLcodePLSystemID','chartOfAccountID');
+    }
+
+    public function budget_detail_bs()
+    {
+        return $this->belongsTo('App\Models\Budjetdetails', 'financeGLcodebBSSystemID','chartOfAccountID');
+    }
 }

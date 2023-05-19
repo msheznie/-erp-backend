@@ -497,6 +497,14 @@ class email
                         $data['docCode'] = $editRequedt->code;
                     }
                     break;
+                case 118:
+                    $editRequedt = DocumentModifyRequest::find($data['docSystemCode']);
+
+                    if (!empty($editRequedt)) {
+                        $data['docApprovedYN'] = $editRequedt->confirmation_approved;
+                        $data['docCode'] = $editRequedt->code;
+                    }
+                    break;   
                 default:
                     return ['success' => false, 'message' => 'Document ID not found'];
             }
@@ -546,10 +554,11 @@ class email
         // if ($hasPolicy) {
             Log::info('Email send start');
             $data['attachmentFileName'] = isset($data['attachmentFileName']) ? $data['attachmentFileName'] : '';
+            $data['attachmentList'] = isset($data['attachmentList']) ? $data['attachmentList'] : [];
             if (isset($data['empEmail']) && $data['empEmail']) {
                 $data['empEmail'] = self::emailAddressFormat($data['empEmail']);
                 if ($data['empEmail']) {
-                    Mail::to($data['empEmail'])->send(new EmailForQueuing($data['alertMessage'], $data['emailAlertMessage'], $data['attachmentFileName']));
+                    Mail::to($data['empEmail'])->send(new EmailForQueuing($data['alertMessage'], $data['emailAlertMessage'], $data['attachmentFileName'],$data['attachmentList']));
                 }
             }
             Log::info('email sent success fully to - :' . $data['empEmail']);
