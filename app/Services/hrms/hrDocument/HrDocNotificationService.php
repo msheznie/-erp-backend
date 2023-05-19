@@ -54,17 +54,12 @@ class HrDocNotificationService
         $msg = '';
         $logType = 'info';
 
-        $token = md5(Carbon::now()->format('YmdHisu'));
-        // $apiKey = $request->input('api_key');
-        // $loginUrl = env('PORTAL_LINK') . $token . '/' . $apiKey;
-        $loginUrl ='#';
         foreach ($this->notifyList as $val) {
             $dataEmail['empEmail'] = $val['EEmail'];
             $dataEmail['companySystemID'] = $this->companyId;
             
             $temp = '<p>Dear ' . $val['Ename2'] . ', <br /></p>';
             $temp .=  '<p> HR has uploaded a new document, please login to download it.</p>';
-            $temp .= "<br />" . "</b><a href='" . $loginUrl . "'>Click here to login</a>";
             $dataEmail['emailAlertMessage'] = $temp;
             $dataEmail['alertMessage'] = 'New HR Document';
             $sendEmail = \Email::sendEmailErp($dataEmail);
