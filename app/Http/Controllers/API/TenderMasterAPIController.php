@@ -428,11 +428,11 @@ class TenderMasterAPIController extends AppBaseController
             foreach ($assignedDocsArray as $assignedDocs) {
                 $notInArray[] = $assignedDocs['document_type_id'];
             }
-            if ($tenderMaster['published_yn'] === 1 && isset($input['editable']) && $input['editable'] && isset($input['isConfirm']) && !$input['isConfirm'])
+            if ($tenderMaster['published_yn'] === 1 && !empty($input['editable']) && !empty($input['isConfirm']) && isset($input['editable'] ,$input['isConfirm']) && $input['editable'] && !$input['isConfirm'])
                 {
                     $data['documentTypes'] = TenderDocumentTypes::whereNotIn('id', $notInArray)->get();
                 }
-                else if(($tenderMaster['published_yn'] === 1 && isset($input['editable']) && !$input['editable'] )|| ($tenderMaster['published_yn'] === 1 && isset($input['isConfirm']) && $input['isConfirm']))
+                else if(($tenderMaster['published_yn'] === 1 && !empty($input['editable']) && isset($input['editable']) && !$input['editable'] )|| ($tenderMaster['published_yn'] === 1 && !empty($input['isConfirm']) && isset($input['isConfirm']) && $input['isConfirm']))
                 {
                     $data['documentTypes'] = TenderDocumentTypes::where('id', 3)->whereNotIn('id', $notInArray)->get();
                 }
