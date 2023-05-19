@@ -26,10 +26,10 @@ class HrDocNotificationJob implements ShouldQueue
     public $tenantId;
     public $companyId; 
     public $id; 
-    public $emlpoyees; 
+    public $employees; 
     public $visibility;
 
-    public function __construct($tenantId, $companyId, $id, $visibility, $emlpoyees)
+    public function __construct($tenantId, $companyId, $id, $visibility, $employees)
     {
         if(env('IS_MULTI_TENANCY',false)){
             self::onConnection('database_main');
@@ -41,7 +41,7 @@ class HrDocNotificationJob implements ShouldQueue
         $this->companyId = $companyId;
         $this->id = $id; 
         $this->visibility = $visibility;
-        $this->emlpoyees = $emlpoyees; 
+        $this->employees = $employees; 
     }
 
     /**
@@ -69,8 +69,7 @@ class HrDocNotificationJob implements ShouldQueue
             DB::table('job_logs')->insert($data);
         } else {            
             CommonJobService::db_switch($db_name);
-            $emp = [11,12];
-            $obj = new HrDocNotificationService($this->companyId, $this->tenantId, $this->id ,$this->visibility,$emp);
+            $obj = new HrDocNotificationService($this->companyId, $this->tenantId, $this->id ,$this->visibility,$this->employees);
             $obj->execute();
         }
     }

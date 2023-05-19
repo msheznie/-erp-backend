@@ -5,12 +5,9 @@ namespace App\Services\hrms\hrDocument;
 use Collator;
 use Exception;
 use Carbon\Carbon;
-use App\helper\CommonJobService;
 use App\Models\Company;
-use App\Models\NotificationCompanyScenario;
 use App\Models\SrpEmployeeDetails;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\File;
 
 class HrDocNotificationService
 {
@@ -21,8 +18,6 @@ class HrDocNotificationService
     private $visibility;
     private $employees;
     private $notifyList;
-    private $documentCode;
-
 
     public function __construct($companyId, $tenantId, $id, $visibility, $employees)
     {
@@ -32,14 +27,11 @@ class HrDocNotificationService
         $this->date = Carbon::now()->format('Y-m-d H:i:s');
         $this->visibility = $visibility;
         $this->employees = $employees;
-        $this->notifyList = [];
-        $this->documentCode = $id;
+        $this->notifyList = [];      
     }
 
     function execute()
     { 
-        
-        $this->insertToLogTb(['Document Code'=> $this->id ,'Message'=> 'one'],'error');  
         
         if ( $this->visibility == 2 && empty($this->employees)) {
             $this->insertToLogTb(['Document Code'=> $this->id ,'Message'=> 'Employees does not exists'],'error');  
@@ -47,32 +39,32 @@ class HrDocNotificationService
         }
 
         $this->validateNotifyEmpDataExists();
-        $this->insertToLogTb(['Document Code'=> $this->id ,'Message'=> 'Employees data does not exists'],'error');  
-
+       
         if (empty($this->notifyList)) {
             $this->insertToLogTb(['Document Code'=> $this->id ,'Message'=> 'Employees data does not exists'],'error');  
             return false;
         }
         $this->sendEmail();
-        $this->insertToLogTb([ 'Document Code'=> $this->documentCode ,'Message'=> 'Execution successfully completed']);
+        $this->insertToLogTb([ 'Document Code'=> $this->id ,'Message'=> 'Execution successfully completed']);
     }
 
     public function sendEmail()
     { 
-        $this->insertToLogTb(['Document Code'=> $this->id ,'Message'=> 'two'],'error');  
-
-        $this->insertToLogTb([ 'Document Code'=> $this->documentCode ,'Message'=> 'Email Function Triggered']);
+        $this->insertToLogTb([ 'Document Code'=> $this->id ,'Message'=> 'Email Function Triggered']);
         $msg = '';
         $logType = 'info';
-        // $this->generateTravelRequestPdf(); 
-        // $dataEmail['attachmentFileName'] = $this->pdfName; 
-    
 
+        $token = md5(Carbon::now()->format('YmdHisu'));
+        // $apiKey = $request->input('api_key');
+        // $loginUrl = env('PORTAL_LINK') . $token . '/' . $apiKey;
+        $loginUrl ='#';
         foreach ($this->notifyList as $val) {
             $dataEmail['empEmail'] = $val['EEmail'];
             $dataEmail['companySystemID'] = $this->companyId;
+            
             $temp = '<p>Dear ' . $val['Ename2'] . ', <br /></p>';
             $temp .=  '<p> HR has uploaded a new document, please login to download it.</p>';
+            $temp .= "<br />" . "</b><a href='" . $loginUrl . "'>Click here to login</a>";
             $dataEmail['emailAlertMessage'] = $temp;
             $dataEmail['alertMessage'] = 'New HR Document';
             $sendEmail = \Email::sendEmailErp($dataEmail);
@@ -82,7 +74,7 @@ class HrDocNotificationService
             }else { 
                 $msg = "HR Document notification sent for {$val['EIdNo']} | {$val['Ename2']} ";
             }
-            $this->insertToLogTb(['Document Code'=> $this->documentCode ,'Message'=> $msg],$logType); 
+            $this->insertToLogTb(['Document Code'=> $this->id ,'Message'=> $msg],$logType); 
         }
     }
 
@@ -95,12 +87,19 @@ class HrDocNotificationService
 
     public function getEmpDetails()
     { 
-        $notifyEmpData = SrpEmployeeDetails::select('EIdNo', 'Ename2', 'EEmail')
+        if($this->visibility == 2){
+            return SrpEmployeeDetails::select('EIdNo', 'Ename2', 'EEmail')
             ->whereIn('EIdNo', $this->employees)
             ->get()
             ->toArray();
-        
-        return $notifyEmpData;
+        }   
+
+        return SrpEmployeeDetails::select('EIdNo', 'Ename2', 'EEmail')
+            ->where('Erp_companyID', $this->companyId)
+            ->where('empConfirmedYN', 1)
+            ->where('isDischarged', 0)
+            ->get()
+            ->toArray();       
     }
 
     public function getCompanyData(){ 
@@ -115,7 +114,7 @@ class HrDocNotificationService
             'company_id' => $this->companyId,
             'module' => 'HRMS',
             'description' => 'HR Document Notification Scenario',
-            'scenario_id' => 20,
+            'scenario_id' => 0,
             'processed_for' => $this->date,
             'logged_at' => $this->date,
             'log_type' => $logType,
