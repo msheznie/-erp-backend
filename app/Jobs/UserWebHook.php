@@ -39,31 +39,37 @@ class UserWebHook implements ShouldQueue
 
     public function handle()
     {
+
         CommonJobService::db_switch($this->dataBase);
+
         DB::beginTransaction();
         try {
             Log::useFiles(storage_path().'/logs/create_user_web_hook.log');
             $api_external_key = $this->api_external_key;
             $api_external_url = $this->api_external_url;
+            $empID = $this->empID;
 
             if($api_external_key != null && $api_external_url != null) {
 
-                $employees = Employee::selectRaw('empFullName', 'empEmail', 'empTelMobile')->where('employeeSystemID', $this->empID)->first();
+                $employees = Employee::selectRaw('empFullName as name, empEmail as email, empTelMobile as phoneNumber')->where('employeeSystemID', $empID)->first();
+                Log::info("Test: ".$employees);
 
                 $client = new Client();
                 $headers = [
                     'content-type' => 'application/json',
                     'Authorization' => 'ERP '.$api_external_key
                 ];
-                $res = $client->request('POST', $api_external_url . '/create_customer', [
+                $res = $client->request('POST', $api_external_url . '/api/v1/create_employee', [
                     'headers' => $headers,
                     'json' => [
                         'data' => $employees
                     ]
                 ]);
                 $json = $res->getBody();
+                Log::info("Json out: ".$json);
 
-                Log::info('API guzzle: ' . $json);
+                DB::commit();
+
             }
         } catch (\Exception $e)
         {

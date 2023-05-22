@@ -4,19 +4,24 @@ namespace App\Http\Controllers\API\HelpDesk;
 
 use App\Http\Controllers\AppBaseController;
 use App\Jobs\UserWebHook;
+use App\Models\ThirdPartyIntegrationKeys;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class HelpDeskAPIController extends AppBaseController
 {
-        public function postCustomers(Request $request){
+        public function postEmployee(Request $request){
             DB::beginTransaction();
             try {
                 $empID = $request->employeeSystemID;
                 $db = isset($request->db) ? $request->db : "";
+                $thirdParty = ThirdPartyIntegrationKeys::where('third_party_system_id', 5)->first();
+                DB::commit();
 
-                UserWebHook::dispatch($db, $empID, $request->api_external_key, $request->api_external_url);
+                UserWebHook::dispatch($db, $empID, $thirdParty->api_external_key, $thirdParty->api_external_url);
+
+                return $this->sendResponse($thirdParty, 'Help Desk Info');
 
             }
             catch(\Exception $e){
