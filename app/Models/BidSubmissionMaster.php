@@ -154,4 +154,9 @@ class BidSubmissionMaster extends Model
     public function BidDocumentVerification(){
         return $this->hasMany('App\Models\BidDocumentVerification', 'bis_submission_master_id', 'id');
     }
+
+    public function TenderFinalBids() {
+        return $this->belongsTo(TenderFinalBids::class, 'bid_id','id');
+
+    }
 }

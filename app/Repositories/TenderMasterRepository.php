@@ -89,6 +89,12 @@ class TenderMasterRepository extends BaseRepository
             array('value'=> 2 , 'label'=> 'Published'), 
         );
 
+        $tenderNegotiationStatus =  array(
+            array('value'=> 1 , 'label'=> 'Negotiation Not Started'),
+            array('value'=> 2 , 'label'=> 'Negotiation Pending'), 
+            array('value'=> 3 , 'label'=> 'Negotiation Completed'), 
+        );
+
         $status =array(
             array('value'=> 1 , 'label'=> 'Not Confirmed'),
             array('value'=> 2 , 'label'=> 'Pending Approval'), 
@@ -134,6 +140,7 @@ class TenderMasterRepository extends BaseRepository
             'gonogo' => $gonogo,
             'stage' => $stage,
             'commercial' => $commercial,
+            'tenderNegotiationStatus' => $tenderNegotiationStatus
         ); 
  
         return $data;

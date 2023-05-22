@@ -3788,7 +3788,7 @@ WHERE
         DB::beginTransaction();
         try {
             $tenderId = $request['tenderMasterId'];
-            $tender = TenderMaster::where('id',$tenderId)->first();
+            $tender = TenderMaster::where('id',$tenderId)->select('is_negotiation_started')->first();
             $tender->is_negotiation_started = 1;
             $tender->save();
 
@@ -3812,22 +3812,30 @@ WHERE
 
         $companyId = $request['companyId'];
 
-        $query = TenderNegotiation::with(['area','tenderMaster' => function ($q){ 
-            $q->with(['currency','tender_type','envelop_type']);
+        $query = TenderNegotiation::with(['area' => function ($query)  use ($input) {
+            $query->select('pricing_schedule','technical_evaluation','tender_documents','id','tender_negotiation_id');
+        },'tenderMaster' => function ($q) use ($input){ 
+            $q->select('title','description','currency_id','envelop_type_id','tender_code','stage','bid_opening_date','technical_bid_opening_date','commerical_bid_opening_date','tender_type_id','id')->with(['currency' => function ($c) use ($input) {
+                $c->select('CurrencyName','currencyID','CurrencyCode');
+            },'tender_type' => function ($t) {
+                $t->select('id','name','description');
+            },'envelop_type' => function ($e) {
+                $e->select('id','name','description');
+            }] );
         }]);
 
-        if (array_key_exists('tenderNegotiationStatus', $input)) {
-            if ($input['tenderNegotiationStatus'] != 0  && !is_null($input['tenderNegotiationStatus'])) {
-                $query->where('status', $input['tenderNegotiationStatus']);
-            }
+        if (array_key_exists('tenderNegotiationSatus', $input) && isset($input['tenderNegotiationSatus'])) {
+                $query->where('status', $input['tenderNegotiationSatus']);
         }
 
+        
+        if (array_key_exists('currencyId', $input) && isset($input['currencyId'])) {
+            $query->whereIN('currencyId',collect($input['currencyId'])->pluck('id')->toArray())->select('srm_tender_master_id','status','approved_yn','id','confirmed_yn');
+
+          }
+
  
-        if (array_key_exists('CurrencyID', $input)) {
-            if ($input['CurrencyID'] != 0  && !is_null($input['CurrencyID'])) {
-                $query->where('currency.currencyID', $input['CurrencyID']);
-            }
-        }
+
 
         $search = $request->input('search.value');
         if ($search) {
@@ -3892,7 +3900,8 @@ WHERE
         $technical = !empty($input['filters']['technical']) ? $input['filters']['technical']: null; 
         $stage = !empty($input['filters']['stage']) ? $input['filters']['stage']: null; 
         $commercial = !empty($input['filters']['commercial']) ? $input['filters']['commercial']: null; 
-
+        $tenderNegotiationStatus = !empty($input['filters']['tenderNegotiationStatus']) ? $input['filters']['tenderNegotiationStatus']: null; 
+        
         $filters = [
             'currencyId' => $currencyId,
             'selection' => $selection,
@@ -3904,6 +3913,7 @@ WHERE
             'technical' => $technical,
             'stage' => $stage,
             'commercial' => $commercial,
+            'tenderNegotiationStatus' => $tenderNegotiationStatus
         ];
 
         return $filters;

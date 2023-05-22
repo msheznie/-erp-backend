@@ -547,11 +547,11 @@ class email
     public static function sendEmailErp($data)
     {
         Log::info('Send Email Erp funtion start');
-        // $hasPolicy = CompanyPolicyMaster::where('companySystemID', $data['companySystemID'])
-        //     ->where('companyPolicyCategoryID', 37)
-        //     ->where('isYesNO', 1)
-        //     ->exists();
-        // if ($hasPolicy) {
+        $hasPolicy = CompanyPolicyMaster::where('companySystemID', $data['companySystemID'])
+            ->where('companyPolicyCategoryID', 37)
+            ->where('isYesNO', 1)
+            ->exists();
+        if ($hasPolicy) {
             Log::info('Email send start');
             $data['attachmentFileName'] = isset($data['attachmentFileName']) ? $data['attachmentFileName'] : '';
             $data['attachmentList'] = isset($data['attachmentList']) ? $data['attachmentList'] : [];
@@ -563,9 +563,9 @@ class email
             }
             Log::info('email sent success fully to - :' . $data['empEmail']);
             Log::info('QUEUE_DRIVER : ' . env('QUEUE_DRIVER'));
-        // } else {
-        //     Alert::create($data);
-        // }
+        } else {
+            Alert::create($data);
+        }
 
         return ['success' => true, 'message' => 'Successfully Inserted'];
     }

@@ -48,28 +48,44 @@ class SupplierTenderNegotiationController extends AppBaseController
     public function store(CreateSupplierTenderNegotiationRequest $request)
     {
         $input = $request->all();
-        $supplierList = $input['supplierList'];
-
-        $this->supplierTenderNegotiationRepository->deleteSuppliersOfNegotiation($input['tender_negotiation_id']);
-
-        foreach($supplierList as $supplier) {
-            $data = [
-                'tender_negotiation_id' => $input['tender_negotiation_id'],
-                'suppliermaster_id' =>  $supplier,
-                'srm_bid_submission_master_id' => $input['srm_bid_submission_master_id'],
-                'bidSubmissionCode' => $input['bidSubmissionCode']
-            ];
-
-            $checkSupplierExist = $this->checkSupplierExist($data);
 
 
-            if(!$checkSupplierExist) {
+        if(!empty($input['supplierList']) && $input['isChecked']) {
+                $supplierId = $input['supplierList'];
+
+                $data = [
+                    'tender_negotiation_id' => $input['tenderNegotiationID'],
+                    'suppliermaster_id' =>  $supplierId,
+                    'srm_bid_submission_master_id' => $input['srm_bid_submission_master_id'],
+                    'bidSubmissionCode' => $input['bidSubmissionCode']
+                ];
+    
+                $checkSupplierExist = $this->checkSupplierExist($data);
+                
+                if($checkSupplierExist) { 
+                    return $this->sendResponse($checkSupplierExist, 'Data Already Exists');
+                }
+    
                 $supplierTenderNegotiation = $this->supplierTenderNegotiationRepository->create($data);
-                return $this->sendResponse($supplierTenderNegotiation->toArray(), 'Supplier added successfully');
-            }
-        }
 
-        return $this->sendResponse(null, 'Supplier added successfully');
+                if($supplierTenderNegotiation) {
+                    return $this->sendResponse($supplierTenderNegotiation->toArray(), 'Supplier added successfully');
+                }else {
+                    return $this->sendError("Cannot add Supplier to Negotiation", 500);
+                }
+
+
+        }else {
+            if(!$input['isChecked']) {
+                if(isset($input['tenderNegotiationID']) && isset($input['supplierList'])) {
+                    $this->supplierTenderNegotiationRepository->deleteSuppliersOfNegotiation($input);
+                }
+            }
+        return $this->sendResponse(null, 'Supplier removed successfully');
+
+        }
+       
+
 
     }
 
@@ -145,16 +161,12 @@ class SupplierTenderNegotiationController extends AppBaseController
 
     public function checkSupplierExist($data) {
         $checkSupplierAlreadyInserted = $this->supplierTenderNegotiationRepository->checkSupplierAlreadyInserted($data);
-        if(count($checkSupplierAlreadyInserted) > 0) 
-            return true;
-
-        return false;
+        return (count($checkSupplierAlreadyInserted) > 0) ?  true :  false;
     }
 
     public function getTenderNegotiatedSupplierIds(Request $request) {
         $supplierTenderNegotiations = $this->supplierTenderNegotiationRepository->all();
-       
-        return $this->sendResponse($supplierTenderNegotiations->where('tender_negotiation_id',$request['tender_negotiation_id'])->pluck('suppliermaster_id')->toArray(), 'Data retrieved successfully');
+        return $this->sendResponse($supplierTenderNegotiations->where('tender_negotiation_id',$request['tenderNegotiationID'])->pluck('suppliermaster_id')->toArray(), 'Data retrieved successfully');
 
     }
 }

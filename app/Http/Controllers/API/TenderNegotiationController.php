@@ -9,6 +9,7 @@ use App\Http\Requests\StorePostTenderNegotiation;
 use App\Http\Controllers\AppBaseController;
 use App\Models\TenderMaster;
 use App\Models\TenderFinalBids;
+use App\Models\BidSubmissionMaster;
 use App\Models\TenderNegotiation;
 use App\Models\SupplierTenderNegotiation;
 use App\Models\SrmTenderBidEmployeeDetails;
@@ -49,15 +50,18 @@ class TenderNegotiationController extends AppBaseController
     {
         
         $input = $request->all();
-        $input['started_by'] = Auth::user()->employee_id;
+        $input['started_by'] = \Helper::getEmployeeSystemID();
         $input['status'] = 1;
-        $srmTenderBidEmployeeDetails = SrmTenderBidEmployeeDetails::where('tender_id', $input['srm_tender_master_id'])->count();
+        $srmTenderBidEmployeeDetails = SrmTenderBidEmployeeDetails::where('tender_id', $input['srm_tender_master_id'])->select('id')->count();
         $input['no_to_approve'] =  $srmTenderBidEmployeeDetails;
         $updateTenderMasterRecord = $this->updateTenderMasterRecord($input);
 
-        if($updateTenderMasterRecord) {
+        if(isset($updateTenderMasterRecord)) {
+            $input['currencyId'] = $updateTenderMasterRecord->currency_id;
             $tenderNeotiation = $this->tenderNegotiationRepository->create($input);
             return $this->sendResponse($tenderNeotiation->toArray(), 'Tender Negotiation started successfully');
+        }else {
+            return $this->sendError('Tender Master not found!', 404);
         }
 
     }
@@ -87,14 +91,12 @@ class TenderNegotiationController extends AppBaseController
     {
         $input = $request->input();
         // update the minimum approval count to the column
-        $srmTenderBidEmployeeDetails = SrmTenderBidEmployeeDetails::where('tender_id', $input['srm_tender_master_id'])->count();
-        if(isset($input['confirmed_yn']) && $input['confirmed_yn']) {
-            if(isset($id)) {
+        $srmTenderBidEmployeeDetails = SrmTenderBidEmployeeDetails::where('tender_id', $input['srm_tender_master_id'])->select('id')->count();
+        if (isset($input['confirmed_yn']) && $input['confirmed_yn'] && isset($id)) {
                 $tenderNeotiation = $this->tenderNegotiationRepository->find($id);
                 $this->sendEmailToCommitteMembers($tenderNeotiation,$input);
-            }
         }
-        $input['confirmed_by'] =  Auth::user()->employee_id;
+        $input['confirmed_by'] =   \Helper::getEmployeeSystemID();
         $input['confirmed_at'] =  Carbon::now();
         $input['no_to_approve'] =  $srmTenderBidEmployeeDetails;
         $tenderNeotiation = $this->tenderNegotiationRepository->update($input, $id);
@@ -114,12 +116,12 @@ class TenderNegotiationController extends AppBaseController
 
     public function updateTenderMasterRecord($input) {
 
-        $tender = TenderMaster::where('id',$input['srm_tender_master_id'])->first();
+        $tender = TenderMaster::where('id',$input['srm_tender_master_id'])->select('is_negotiation_started','id','currency_id')->first();
 
         if($tender) {
             $tender->is_negotiation_started = 1;
             $tender->save();
-            return true;
+            return $tender;
         }
 
 
@@ -141,8 +143,6 @@ class TenderNegotiationController extends AppBaseController
         ->where('srm_tender_final_bids.status',1)
         ->where('srm_tender_final_bids.tender_id', $tenderId)
         ->orderBy('srm_tender_final_bids.total_weightage','desc');
-
-      
 
         $search = $request->input('search.value');
         if ($search) {
@@ -168,37 +168,27 @@ class TenderNegotiationController extends AppBaseController
     }
 
     public function getFormData(Request $request) {
-        $currencyIds = [];
-        $tenderNegotiations = TenderNegotiation::with(['tenderMaster' => function ($q){ 
-            $q->with(['currency','tender_type','envelop_type']);
-        }])->get();
-        foreach($tenderNegotiations as $tendderNegotiation) {
-            array_push($currencyIds,$tendderNegotiation->tenderMaster->currency_id);
-        }
         $yesNoSelection = YesNoSelection::all();
-        $currencies = CurrencyMaster::whereIn('currencyID',$currencyIds)->select(['currencyID as value','CurrencyName as label'])->get();
-        $data = [
-            'yesNoSelection' => $yesNoSelection,
-            'currencies' => $currencies
-        ];
-        return $this->sendResponse($data, 'Tender Negotiation started successfully');
- 
+        return $this->sendResponse($yesNoSelection, 'Data reterived successfully');
     }
 
     public function sendEmailToCommitteMembers($tenderNeotiation,$input) {
 
-        $srmTenderBidEmployeeDetails = SrmTenderBidEmployeeDetails::where('tender_id', $tenderNeotiation['srm_tender_master_id'])->with('employee')->get();
-        $supplierTenderNegotiations = SupplierTenderNegotiation::where('tender_negotiation_id',$input['id'])->get();
+        $srmTenderBidEmployeeDetails = SrmTenderBidEmployeeDetails::with(['employee' => function ($q){ 
+            $q->select('employeeSystemID','empFullName','empID','empCompanySystemID','empEmail');
+        }])->where('tender_id', $tenderNeotiation['srm_tender_master_id'])->get();
+        $supplierTenderNegotiations = SupplierTenderNegotiation::where('tender_negotiation_id',$input['id'])->select('bidSubmissionCode')->get();
+
         if($srmTenderBidEmployeeDetails) {
             foreach($srmTenderBidEmployeeDetails as $srmTenderBidEmployeeDetail) {
                 $employee = ($srmTenderBidEmployeeDetail) ? $srmTenderBidEmployeeDetail->employee : null;
                 foreach($supplierTenderNegotiations as $supplierTenderNegotiation) {
-                    if(isset($employee) &&  !is_null($employee->empEmail)) {
+                    if(isset($employee) &&  $employee->empEmail) {
                         $dataEmail['empEmail'] = $employee->empEmail;
-                        $dataEmail['companySystemID'] = $employee->companySystemID;
+                        $dataEmail['companySystemID'] = $employee->empCompanySystemID;
                         $redirectUrl =  env("SRM_TENDER_URL");
                         $companyName = (Auth::user()->employee && Auth::user()->employee->company) ? Auth::user()->employee->company->CompanyName : null ;
-                        $temp = "Hi  $employee->empName , <br><br> The Tender Bid $supplierTenderNegotiation->bidSubmissionCode has been available for the final employee committee approval for tender bid approval. <br><br> <a href=$redirectUrl>Click here to approve</a> <br><br>Thank you.";
+                        $temp = "Hi  $employee->empFullName , <br><br> The Tender Bid $supplierTenderNegotiation->bidSubmissionCode has been available for the final employee committee approval for tender bid approval. <br><br> <a href=$redirectUrl>Click here to approve</a> <br><br>Thank you.";
                         $dataEmail['alertMessage'] = $supplierTenderNegotiation->bidSubmissionCode." - Tender Negotiation For Approval";
                         $dataEmail['emailAlertMessage'] = $temp;
                         $sendEmail = \Email::sendEmailErp($dataEmail);

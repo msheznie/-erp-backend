@@ -144,16 +144,12 @@ class TenderNegotiationAreaController extends AppBaseController
     public function getSelectedAreas(Request $request) {
         
         $input = $request->input();
-
-        $tenderNegotiationArea = $this->tenderNegotiationAreaRepository->getTenderNegotiationAreaBySupplierNegotiationID($input['tender_negotiation_id']);
-
-        return $this->sendResponse($tenderNegotiationArea, 'Tender Negotiation Area retereived successfully');
-
-    }
-
-    public function findSupplierTenderNegotiationId($input) {
-
-        return SupplierTenderNegotiation::where('tender_negotiation_id',$input['tender_negotiation_id'])->where('suppliermaster_id',$input['supplier_id'])->first();
+        $tenderNegotiationArea = $this->tenderNegotiationAreaRepository->getTenderNegotiationAreaBySupplierNegotiationID($input['tenderNegotiationID']);
+        if($tenderNegotiationArea) {
+            return $this->sendResponse($tenderNegotiationArea, 'Tender Negotiation Area retereived successfully');
+        }else {
+            return $this->sendError('Tender Negotiation Area data not found', 404);
+        }
 
     }
 }

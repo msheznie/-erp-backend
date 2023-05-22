@@ -240,7 +240,7 @@ Route::post('getSelectedAreas', 'TenderNegotiationAreaController@getSelectedArea
 
 Route::resource('tenderNegotiationApprovals', 'TenderNegotiationApprovalController');
 
-Route::post('tender-negotiation-approvals-get-employees', 'TenderNegotiationApprovalController@getEmployees');
+Route::post('tenderNegotiationApprovalsGetEmployees', 'TenderNegotiationApprovalController@getEmployees');
 
 Route::post('publishNegotiation', 'TenderNegotiationApprovalController@publishNegotiation');
 Route::resource('calendar_dates_detail_edit_logs', 'CalendarDatesDetailEditLogAPIController');

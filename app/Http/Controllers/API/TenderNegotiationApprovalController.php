@@ -56,8 +56,6 @@ class TenderNegotiationApprovalController extends AppBaseController
 
         $tenderNegotiationApproval = $this->tenderNegotiationApprovalRepository->create($input);
         
-        $tenderNegotiationApprovals = $this->tenderNegotiationApprovalRepository->all();
-
         if($tenderNegotiationApproval) {
             if($this->checkPublishNegotiation($input)) {
                 $tenderNegotiation = TenderNegotiation::find($input['tender_negotiation_id']);
@@ -65,6 +63,8 @@ class TenderNegotiationApprovalController extends AppBaseController
                 $tenderNegotiation->save();
             }
             return $this->sendResponse($tenderNegotiationApproval->toArray(), 'Tender Negotiation Approval created successfully');
+        }else {
+            return $this->sendError('Tender Negotiation Approval Connot Create',404);
         }
     }
 
@@ -147,11 +147,13 @@ class TenderNegotiationApprovalController extends AppBaseController
 
     public function getEmployees(Request $request) {
         
-        $data = SrmTenderBidEmployeeDetails::where('tender_id', $request['tender_id'])->with('employee')->get();
+        $data = SrmTenderBidEmployeeDetails::where('tender_id', $request['tender_id'])->with(['employee' => function ($q) {
+            $q->select('employeeSystemID','empFullName','empID');
+        }])->get();
 
         foreach($data as $dt) {
             $emp = $dt->employee;
-            $status = TenderNegotiationApproval::where('tender_negotiation_id',$request['tenderNegotiationId'])->where('emp_id',$emp->employeeSystemID)->first();
+            $status = TenderNegotiationApproval::where('tender_negotiation_id',$request['tenderNegotiationId'])->where('emp_id',$emp->employeeSystemID)->select(['status','id'])->first();
             $emp['tender_negotiation_approval_status'] = ($status) ? $status->status : 0;
             $dt['status_id'] = ($status) ? $status->id : 0;
           
@@ -162,28 +164,21 @@ class TenderNegotiationApprovalController extends AppBaseController
 
     public function checkPublishNegotiation($input){
 
-        $tenderNegotiation = TenderNegotiation::find($input['tender_negotiation_id']);
+        $tenderNegotiation = TenderNegotiation::select('no_to_approve')->find($input['tender_negotiation_id']);
 
-        $totalNoToApprove = $tenderNegotiation->no_to_approve;
         $tenderNegotiationApproval = $this->tenderNegotiationApprovalRepository->all();
         $totalApprovedTenderNegotiations = $tenderNegotiationApproval->where('tender_negotiation_id',$input['tender_negotiation_id'])->where('status',1)->count();
-
-        if($totalNoToApprove == $totalApprovedTenderNegotiations) {
-            $tenderNegotiation->approved_yn = true;
-            return true;
-        }else {
-            $tenderNegotiation->approved_yn = false;
-            return false;
-        }
+        return ($tenderNegotiation->no_to_approve == $totalApprovedTenderNegotiations);
+   
     }
 
     public function publishNegotiation(Request $request){
         $input = $request->input('item');
-        $tenderNegotiation = TenderNegotiation::find($input['id']);
+        $tenderNegotiation = TenderNegotiation::select('status','id')->find($input['id']);
         $tenderNegotiation->status = 2;
         $tenderNegotiation->save();
 
-        $tenderMaster = TenderMaster::find($input['srm_tender_master_id']);
+        $tenderMaster = TenderMaster::select('is_awarded','id')->find($input['srm_tender_master_id']);
         $tenderMaster->is_awarded = false;
         $tenderMaster->save();
 
@@ -192,12 +187,12 @@ class TenderNegotiationApprovalController extends AppBaseController
     }
 
     public function sendEmailToSuppliers($input) {
-            $srmTenderBidEmployeeDetails = SrmTenderBidEmployeeDetails::where('tender_id', $input['srm_tender_master_id'])->with('employee')->get();
-            $supplierTenderNegotiations = SupplierTenderNegotiation::where('tender_negotiation_id',$input['id'])->get();
+            $srmTenderBidEmployeeDetails = SrmTenderBidEmployeeDetails::select('id')->where('tender_id', $input['srm_tender_master_id'])->with('employee')->get();
+            $supplierTenderNegotiations = SupplierTenderNegotiation::where('tender_negotiation_id',$input['id'])->select('suppliermaster_id','bidSubmissionCode')->get();
             if($srmTenderBidEmployeeDetails) {
                 foreach($supplierTenderNegotiations as $supplierTenderNegotiation) {
-                    $employee = SupplierRegistrationLink::find($supplierTenderNegotiation->suppliermaster_id);
-                    if(isset($employee) &&  !is_null($employee->email)) {
+                    $employee = SupplierRegistrationLink::select('email','company_id','name')->find($supplierTenderNegotiation->suppliermaster_id);
+                    if(isset($employee) &&  $employee->email) {
                         $dataEmail['empEmail'] = $employee->email;
                         $dataEmail['companySystemID'] = $employee->company_id;
                         $loginUrl = env('SRM_LINK');

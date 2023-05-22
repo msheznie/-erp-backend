@@ -22,7 +22,8 @@ class TenderNegotiation extends Model
         'confirmed_at',
         'comments',
         'started_by',
-        'no_to_approve'
+        'no_to_approve',
+        'currencyId'
     ];
 
         /**
@@ -40,7 +41,8 @@ class TenderNegotiation extends Model
         'confirmed_by' => 'integer',
         'comments' => 'string',
         'confirmed_at' => 'date',
-        'no_to_approve' => 'integer'
+        'no_to_approve' => 'integer',
+        'currencyId' => 'integer'
     ];
 
         /**
@@ -59,7 +61,7 @@ class TenderNegotiation extends Model
     }
 
     public function supplierTenderNegotiation() {
-        return $this->hasOne('App\Models\SupplierTenderNegotiation', 'id', 'srm_tender_master_id');
+        return $this->hasOne('App\Models\SupplierTenderNegotiation', 'id', 'tender_negotiation_id');
     }
 
     public function confirmed_by()

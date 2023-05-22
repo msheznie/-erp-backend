@@ -24,7 +24,9 @@ class TenderNegotiationRepository extends BaseRepository
         'confirmed_by',
         'confirmed_at',
         'started_by',
-        'comments'
+        'comments',
+        'no_to_approve',
+        'currencyId'
     ];
 
     /**
@@ -36,6 +38,6 @@ class TenderNegotiationRepository extends BaseRepository
     }
 
     public function withRelations($id,$relations) {
-        return $this->where('id',$id)->with($relations)->get();
+        return $this->where('id',$id)->select(['srm_tender_master_id','status','approved_yn','comments','confirmed_yn','no_to_approve','id','confirmed_by'])->with($relations)->get();
     }
 }
