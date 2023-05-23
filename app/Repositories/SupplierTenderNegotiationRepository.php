@@ -36,7 +36,7 @@ class SupplierTenderNegotiationRepository extends BaseRepository
 
     
     public function checkSupplierAlreadyInserted($data){
-        $data = $this->model->where('tender_negotiation_id', $data['tender_negotiation_id'])->where('suppliermaster_id', $data['suppliermaster_id'])->where('srm_bid_submission_master_id',$data['srm_bid_submission_master_id']);
+        $data = $this->model->select('id')->where('tender_negotiation_id', $data['tender_negotiation_id'])->where('suppliermaster_id', $data['suppliermaster_id'])->where('srm_bid_submission_master_id',$data['srm_bid_submission_master_id']);
         return $data->get();
     }
 

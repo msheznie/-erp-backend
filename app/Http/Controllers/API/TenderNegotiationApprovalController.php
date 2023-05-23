@@ -147,7 +147,7 @@ class TenderNegotiationApprovalController extends AppBaseController
 
     public function getEmployees(Request $request) {
         
-        $data = SrmTenderBidEmployeeDetails::where('tender_id', $request['tender_id'])->with(['employee' => function ($q) {
+        $data = SrmTenderBidEmployeeDetails::select('id','emp_id','tender_id')->where('tender_id', $request['tender_id'])->with(['employee' => function ($q) {
             $q->select('employeeSystemID','empFullName','empID');
         }])->get();
 
@@ -163,12 +163,9 @@ class TenderNegotiationApprovalController extends AppBaseController
     }
 
     public function checkPublishNegotiation($input){
-
         $tenderNegotiation = TenderNegotiation::select('no_to_approve')->find($input['tender_negotiation_id']);
-
-        $tenderNegotiationApproval = $this->tenderNegotiationApprovalRepository->select('id')->get();
-        $totalApprovedTenderNegotiations = $tenderNegotiationApproval->where('tender_negotiation_id',$input['tender_negotiation_id'])->where('status',1)->count();
-        return ($tenderNegotiation->no_to_approve == $totalApprovedTenderNegotiations);
+        $tenderNegotiationApproval = $this->tenderNegotiationApprovalRepository->select('id')->where('tender_negotiation_id',$input['tender_negotiation_id'])->where('status',1)->count();
+        return ($tenderNegotiation->no_to_approve == $tenderNegotiationApproval);
    
     }
 
