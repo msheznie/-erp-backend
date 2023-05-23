@@ -184,7 +184,7 @@ class TenderNegotiationApprovalController extends AppBaseController
     }
 
     public function sendEmailToSuppliers($input) {
-            $srmTenderBidEmployeeDetails = SrmTenderBidEmployeeDetails::select('id')->where('tender_id', $input['srm_tender_master_id'])->with('employee')->get();
+            $srmTenderBidEmployeeDetails = SrmTenderBidEmployeeDetails::select('id','emp_id','tender_id')->where('tender_id', $input['srm_tender_master_id'])->with('employee')->get();
             $supplierTenderNegotiations = SupplierTenderNegotiation::where('tender_negotiation_id',$input['id'])->select('suppliermaster_id','bidSubmissionCode')->get();
             if($srmTenderBidEmployeeDetails) {
                 foreach($supplierTenderNegotiations as $supplierTenderNegotiation) {

@@ -35,6 +35,6 @@ class TenderNegotiationAreaRepository extends BaseRepository
     }
 
     public function getTenderNegotiationAreaBySupplierNegotiationID($id) {
-        return $this->where('tender_negotiation_id',$id)->get();
+        return $this->select('tender_negotiation_id','pricing_schedule','technical_evaluation','tender_documents')->where('tender_negotiation_id',$id)->get();
     }
 }

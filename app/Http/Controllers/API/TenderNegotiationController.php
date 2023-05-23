@@ -173,9 +173,9 @@ class TenderNegotiationController extends AppBaseController
 
     public function sendEmailToCommitteMembers($tenderNeotiation,$input) {
 
-        $srmTenderBidEmployeeDetails = SrmTenderBidEmployeeDetails::with(['employee' => function ($q){ 
+        $srmTenderBidEmployeeDetails = SrmTenderBidEmployeeDetails::select('id','emp_id','tender_id')->where('tender_id', $tenderNeotiation['srm_tender_master_id'])->with(['employee' => function ($q){ 
             $q->select('employeeSystemID','empFullName','empID','empCompanySystemID','empEmail');
-        }])->where('tender_id', $tenderNeotiation['srm_tender_master_id'])->get();
+        }])->get();
         $supplierTenderNegotiations = SupplierTenderNegotiation::where('tender_negotiation_id',$input['id'])->select('bidSubmissionCode')->get();
 
         if($srmTenderBidEmployeeDetails) {
