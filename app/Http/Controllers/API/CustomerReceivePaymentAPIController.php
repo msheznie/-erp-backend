@@ -1362,21 +1362,17 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         $input['PayeeEmpID'] = $input['employeeID'];
 
 
-            if ($input['payeeTypeID'] == 1) {
-                $input['PayeeName'] = null;
-                $input['PayeeEmpID'] = null;
-            } else if ($input['payeeTypeID'] == 2) {
-                $input['PayeeName'] = null;
-                $input['customerID'] = null;
+        if ($input['payeeTypeID'] == 1 && $input['documentType'] == 14) {
+            $input['PayeeName'] = null;
+            $input['PayeeEmpID'] = null;
+        } else if ($input['payeeTypeID'] == 2 && $input['documentType'] == 14) {
+            $input['PayeeName'] = null;
+            $input['customerID'] = null;
 
-            } else if ($input['payeeTypeID'] == 3) {
-                $input['PayeeEmpID'] = null;
-                $input['customerID'] = null;
-
-            }
-
-
-
+        } else if ($input['payeeTypeID'] == 3 && $input['documentType'] == 14) {
+            $input['PayeeEmpID'] = null;
+            $input['customerID'] = null;
+        }
 
         $customerReceivePayment = $this->customerReceivePaymentRepository->update($input, $id);
 
