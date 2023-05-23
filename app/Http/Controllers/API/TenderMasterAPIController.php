@@ -14,6 +14,7 @@ use App\Models\CompanyDocumentAttachment;
 use App\Models\CurrencyMaster;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\TenderNegotiation;
 use App\Models\EmployeesDepartment;
 use App\Models\EnvelopType;
 use App\Models\EvaluationCriteriaDetails;
@@ -218,7 +219,7 @@ class TenderMasterAPIController extends AppBaseController
     {
         /** @var TenderMaster $tenderMaster */
         $tenderMaster = $this->tenderMasterRepository->findWithoutFail($id);
-
+        
         if (empty($tenderMaster)) {
             return $this->sendError('Tender Master not found');
         }
@@ -3783,6 +3784,85 @@ WHERE
         }
     }
 
+    public function startTenderNegotiation(Request $request) {
+        
+        DB::beginTransaction();
+        try {
+            $tenderId = $request['tenderMasterId'];
+            $tender = TenderMaster::where('id',$tenderId)->select('is_negotiation_started')->first();
+            $tender->is_negotiation_started = 1;
+            $tender->save();
+
+            DB::commit();
+            return $this->sendResponse($tender, 'Tender Negotiation Started Successfully');
+        } catch (\Exception $e) {
+            DB::rollback();
+            return $this->sendError($e->getMessage());
+        }
+    }
+
+    public function getNegotiationStartedTenderList(Request $request)
+    {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $request['companyId'];
+
+        $query = TenderNegotiation::select('srm_tender_master_id','status','approved_yn','confirmed_yn','comments','started_by','no_to_approve','currencyId','id')->with(['area' => function ($query)  use ($input) {
+            $query->select('pricing_schedule','technical_evaluation','tender_documents','id','tender_negotiation_id');
+        },'tenderMaster' => function ($q) use ($input){ 
+            $q->select('title','description','currency_id','envelop_type_id','tender_code','stage','bid_opening_date','technical_bid_opening_date','commerical_bid_opening_date','tender_type_id','id')->with(['currency' => function ($c) use ($input) {
+                $c->select('CurrencyName','currencyID','CurrencyCode');
+            },'tender_type' => function ($t) {
+                $t->select('id','name','description');
+            },'envelop_type' => function ($e) {
+                $e->select('id','name','description');
+            }]);
+        }]);
+
+        if (array_key_exists('tenderNegotiationSatus', $input) && isset($input['tenderNegotiationSatus'])) {
+                $query->where('status', $input['tenderNegotiationSatus']);
+        }
+
+        
+        if (array_key_exists('currencyId', $input) && isset($input['currencyId'])) {
+            $query->whereIN('currencyId',collect($input['currencyId'])->pluck('id')->toArray())->select('srm_tender_master_id','status','approved_yn','id','confirmed_yn');
+
+          }
+
+ 
+
+
+        $search = $request->input('search.value');
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $query = $query->where(function ($query) use ($search) {
+                $query->where('description', 'LIKE', "%{$search}%");
+                $query->orWhere('description_sec_lang', 'LIKE', "%{$search}%");
+                $query->orWhere('title', 'LIKE', "%{$search}%");
+                $query->orWhere('title_sec_lang', 'LIKE', "%{$search}%");
+            });
+        }
+
+
+        return \DataTables::eloquent($query)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('id', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
     public function deleteCalenderDetails($id, $company_id)
     {
 
@@ -3821,7 +3901,8 @@ WHERE
         $technical = !empty($input['filters']['technical']) ? $input['filters']['technical']: null; 
         $stage = !empty($input['filters']['stage']) ? $input['filters']['stage']: null; 
         $commercial = !empty($input['filters']['commercial']) ? $input['filters']['commercial']: null; 
-
+        $tenderNegotiationStatus = !empty($input['filters']['tenderNegotiationStatus']) ? $input['filters']['tenderNegotiationStatus']: null; 
+        
         $filters = [
             'currencyId' => $currencyId,
             'selection' => $selection,
@@ -3833,6 +3914,7 @@ WHERE
             'technical' => $technical,
             'stage' => $stage,
             'commercial' => $commercial,
+            'tenderNegotiationStatus' => $tenderNegotiationStatus
         ];
 
         return $filters;

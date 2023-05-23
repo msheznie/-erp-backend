@@ -1,0 +1,47 @@
+<?php
+
+namespace App\Repositories;
+
+use App\Models\SupplierTenderNegotiation;
+use InfyOm\Generator\Common\BaseRepository;
+
+/**
+ * Class SupplierTenderNegotiationRepository
+ * @package App\Repositories
+ * @version April 24, 2023, 11:03 am +04
+ *
+ * @method SupplierTenderNegotiation findWithoutFail($id, $columns = ['*'])
+ * @method SupplierTenderNegotiation find($id, $columns = ['*'])
+ * @method SupplierTenderNegotiation first($columns = ['*'])
+*/
+class SupplierTenderNegotiationRepository extends BaseRepository
+{
+    /**
+     * @var array
+     */
+    protected $fieldSearchable = [
+        'tender_negotiation_id',
+        'suppliermaster_id',
+        'srm_bid_submission_master_id',
+        'bidSubmissionCode'
+    ];
+
+    /**
+     * Configure the Model
+     **/
+    public function model()
+    {
+        return SupplierTenderNegotiation::class;
+    }
+
+    
+    public function checkSupplierAlreadyInserted($data){
+        $data = $this->model->select('id')->where('tender_negotiation_id', $data['tender_negotiation_id'])->where('suppliermaster_id', $data['suppliermaster_id'])->where('srm_bid_submission_master_id',$data['srm_bid_submission_master_id']);
+        return $data->get();
+    }
+
+    public function deleteSuppliersOfNegotiation($input) {
+        $this->model->where('tender_negotiation_id',$input['tenderNegotiationID'])->where('srm_bid_submission_master_id',$input['srm_bid_submission_master_id'])->where('suppliermaster_id',$input['supplierList'])->delete();
+        return true;
+    }
+}

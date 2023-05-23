@@ -58,6 +58,7 @@ class TenderMasterRepository extends BaseRepository
         'technical_bid_closing_date',
         'commerical_bid_opening_date',
         'commerical_bid_closing_date',
+        'is_negotiation_started'
 
     ];
 
@@ -86,6 +87,12 @@ class TenderMasterRepository extends BaseRepository
         $published =  array(
             array('value'=> 1 , 'label'=> 'Not Published'),
             array('value'=> 2 , 'label'=> 'Published'), 
+        );
+
+        $tenderNegotiationStatus =  array(
+            array('value'=> 1 , 'label'=> 'Negotiation Not Started'),
+            array('value'=> 2 , 'label'=> 'Negotiation Pending'), 
+            array('value'=> 3 , 'label'=> 'Negotiation Completed'), 
         );
 
         $status =array(
@@ -133,6 +140,7 @@ class TenderMasterRepository extends BaseRepository
             'gonogo' => $gonogo,
             'stage' => $stage,
             'commercial' => $commercial,
+            'tenderNegotiationStatus' => $tenderNegotiationStatus
         ); 
  
         return $data;

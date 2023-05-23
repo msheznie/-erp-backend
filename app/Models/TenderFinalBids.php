@@ -156,4 +156,8 @@ class TenderFinalBids extends Model
     {
         return $this->belongsTo('App\Models\SupplierRegistrationLink', 'supplier_id', 'id');
     }
+
+    public function bid_submission_master() {
+        return $this->belongsTo('App\Models\BidSubmissionMaster', 'bid_id', 'id');
+    }
 }

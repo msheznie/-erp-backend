@@ -314,6 +314,7 @@ class TenderMaster extends Model
         'award_commite_mem_status',
         'final_tender_comment_status',
         'tender_edit_version_id',
+        'is_negotiation_started',
         'tender_edit_confirm_id'
     ];
     /**
@@ -386,6 +387,7 @@ class TenderMaster extends Model
         'doc_verifiy_status' => 'integer',
         'published_at' => 'datetime',
         'document_type' => 'integer',
+        'is_negotiation_started'=> 'integer',
     ];
 
     /**
@@ -461,6 +463,10 @@ class TenderMaster extends Model
 
     public function company(){
         return $this->belongsTo('App\Models\Company','company_id','companySystemID');
+    }
+
+    public function tender_negotiation() {
+        return $this->hasMany('App\Models\TenderNegotiation','srm_tender_master_id','id');
     }
     
     public function getDocumentSalesStartTimeAttribute() {

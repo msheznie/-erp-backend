@@ -333,4 +333,6 @@ class Employee extends Model
     {
         return $this->hasOne(SrpEmployeeDetails::class, 'EIdNo', 'employeeSystemID');
     }
+
+
 }
