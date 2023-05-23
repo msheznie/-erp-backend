@@ -166,7 +166,7 @@ class TenderNegotiationApprovalController extends AppBaseController
 
         $tenderNegotiation = TenderNegotiation::select('no_to_approve')->find($input['tender_negotiation_id']);
 
-        $tenderNegotiationApproval = $this->tenderNegotiationApprovalRepository->all();
+        $tenderNegotiationApproval = $this->tenderNegotiationApprovalRepository->select('id')->get();
         $totalApprovedTenderNegotiations = $tenderNegotiationApproval->where('tender_negotiation_id',$input['tender_negotiation_id'])->where('status',1)->count();
         return ($tenderNegotiation->no_to_approve == $totalApprovedTenderNegotiations);
    

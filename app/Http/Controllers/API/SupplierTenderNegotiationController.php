@@ -78,10 +78,16 @@ class SupplierTenderNegotiationController extends AppBaseController
         }else {
             if(!$input['isChecked']) {
                 if(isset($input['tenderNegotiationID']) && isset($input['supplierList'])) {
-                    $this->supplierTenderNegotiationRepository->deleteSuppliersOfNegotiation($input);
+                   $deleteSupplier =  $this->supplierTenderNegotiationRepository->deleteSuppliersOfNegotiation($input);
+                   if($deleteSupplier) {
+                        return $this->sendResponse(null, 'Supplier removed successfully');
+                   }else {
+                        return $this->sendError("Cannot Delete Supplier", 500);
+                   }
+                }else {
+                    return $this->sendError("Cannot add Supplier to Negotiation", 500);
                 }
             }
-        return $this->sendResponse(null, 'Supplier removed successfully');
 
         }
        
@@ -165,8 +171,7 @@ class SupplierTenderNegotiationController extends AppBaseController
     }
 
     public function getTenderNegotiatedSupplierIds(Request $request) {
-        $supplierTenderNegotiations = $this->supplierTenderNegotiationRepository->all();
-        return $this->sendResponse($supplierTenderNegotiations->where('tender_negotiation_id',$request['tenderNegotiationID'])->pluck('suppliermaster_id')->toArray(), 'Data retrieved successfully');
-
+        $data = $this->supplierTenderNegotiationRepository->where('tender_negotiation_id',$request['tenderNegotiationID'])->pluck('suppliermaster_id')->toArray();
+        return $this->sendResponse($data ,'Data retrieved successfully');
     }
 }
