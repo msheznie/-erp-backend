@@ -16,7 +16,6 @@ Route::get('getConfigurationInfo', 'ConfigurationAPIController@getConfigurationI
 
 Route::group(['middleware' => ['tenant','locale']], function () {
     Route::get('getAppearance', 'CompanyAPIController@getAppearance');
-    Route::post('postEmployee', 'HelpDesk\HelpDeskAPIController@postEmployee');
 
     Route::group(['middleware' => ['pos_api']], function (){
         Route::get('pull_tax_details', 'ClubManagement\ClubManagementAPIController@pullTaxDetails');
@@ -1843,6 +1842,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 Route::group(['middleware' => ['tenantById']], function (){
 
     Route::group(['middleware' => ['pos_api','hrms_employee']], function () {
+        Route::post('postEmployee', 'HelpDesk\HelpDeskAPIController@postEmployee');
         Route::post('post_supplier_invoice', 'HRMS\HRMSAPIController@createSupplierInvoice');
     });
 });

@@ -3,6 +3,8 @@
 namespace App\Jobs;
 
 use App\Models\Employee;
+use App\Models\EmployeeDetails;
+use App\Models\SrpEmployeeDetails;
 use GuzzleHttp\Client;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
@@ -51,7 +53,11 @@ class UserWebHook implements ShouldQueue
 
             if($api_external_key != null && $api_external_url != null) {
 
-                $employees = Employee::selectRaw('empFullName as name, empEmail as email, empTelMobile as phoneNumber')->where('employeeSystemID', $empID)->first();
+                $employees = Employee::selectRaw('empFullName as employee_name, empEmail as email')->where('employeeSystemID', $empID)->first();
+
+                $srpEmployee = SrpEmployeeDetails::find($empID);
+
+                $employees->mobile_no = $srpEmployee->EpMobile;
                 Log::info("Test: ".$employees);
 
                 $client = new Client();
@@ -59,11 +65,9 @@ class UserWebHook implements ShouldQueue
                     'content-type' => 'application/json',
                     'Authorization' => 'ERP '.$api_external_key
                 ];
-                $res = $client->request('POST', $api_external_url . '/api/v1/create_employee', [
+                $res = $client->request('POST', $api_external_url . '/helpdesk-qa/v1/create_employee', [
                     'headers' => $headers,
-                    'json' => [
-                        'data' => $employees
-                    ]
+                    'json' => $employees
                 ]);
                 $json = $res->getBody();
                 Log::info("Json out: ".$json);
