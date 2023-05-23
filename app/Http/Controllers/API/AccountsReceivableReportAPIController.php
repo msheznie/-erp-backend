@@ -4511,6 +4511,7 @@ WHERE
                     erp_companyreporttemplatedetails.description as templateDetailDescription,
                     erp_companyreporttemplatedetails.controlAccountType as controlAccountID,
                     erp_companyreporttemplatelinks.glAutoID as chartOfAccountSystemID,
+                    erp_companyreporttemplate.companySystemID as templateCompanySystemID,
                     erp_companyreporttemplatelinks.glCode
                 FROM
                     erp_companyreporttemplatedetails
@@ -4518,7 +4519,7 @@ WHERE
                     INNER JOIN erp_companyreporttemplate ON erp_companyreporttemplatedetails.companyReportTemplateID = erp_companyreporttemplate.companyReportTemplateID
                 WHERE
                     ( ( ( erp_companyreporttemplate.isDefault ) = 1 ) AND ( ( erp_companyreporttemplate.reportID ) = 2 ) )
-                    ) AS revenueGLCodes ON erp_generalledger.chartOfAccountSystemID = revenueGLCodes.chartOfAccountSystemID
+                    ) AS revenueGLCodes ON erp_generalledger.chartOfAccountSystemID = revenueGLCodes.chartOfAccountSystemID AND erp_generalledger.companySystemID = revenueGLCodes.templateCompanySystemID
                 WHERE
                     DATE(erp_generalledger.documentDate) <= "' . $asOfDate . '"
                     AND YEAR ( erp_generalledger.documentDate ) = "' . $year . '"
