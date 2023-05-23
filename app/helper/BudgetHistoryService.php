@@ -14,7 +14,10 @@ class BudgetHistoryService
                                       ->get()
                                       ->toArray();
 
-        $budgetDeatilsHistory = BudgetDetailHistory::insert($budgetDeatils);
+        foreach (array_chunk($budgetDeatils,1000) as $chunkData)  
+		{
+        	$budgetDeatilsHistory = BudgetDetailHistory::insert($chunkData);
+		}
 
 		return ['status' => true];
 	}
