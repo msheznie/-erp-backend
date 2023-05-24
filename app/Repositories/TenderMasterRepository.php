@@ -91,7 +91,7 @@ class TenderMasterRepository extends BaseRepository
 
         $tenderNegotiationStatus =  array(
             array('value'=> 1 , 'label'=> 'Negotiation Not Started'),
-            array('value'=> 2 , 'label'=> 'Negotiation Pending'), 
+            array('value'=> 2 , 'label'=> 'Negotiation Started'), 
             array('value'=> 3 , 'label'=> 'Negotiation Completed'), 
         );
 

@@ -184,10 +184,13 @@ class TenderNegotiationController extends AppBaseController
 
         $search = $request->input('search.value');
         if ($search) {
-            $search = str_replace("\\", "\\\\", $search);
-            $query = $query->where(function ($query) use ($search) {
-                $query->where('name', 'LIKE', "%{$search}%")
-                ->orWhere('bidSubmissionCode', 'LIKE', "%{$search}%");
+            $query = $query->where(function ($a) use ($search) {
+                $a->orWhereHas('bid_submission_master', function ($b) use ($search) {
+                    $b->where('bidSubmissionCode', 'LIKE', "%{$search}%");
+                    $b->orWhereHas('SupplierRegistrationLink', function ($c) use ($search) {
+                        $c->where('name', 'LIKE', "%{$search}%");
+                    });
+                });
             });
         }
 

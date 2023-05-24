@@ -3815,7 +3815,8 @@ WHERE
         $query = TenderNegotiation::select('srm_tender_master_id','status','approved_yn','confirmed_yn','comments','started_by','no_to_approve','currencyId','id')->with(['area' => function ($query)  use ($input) {
             $query->select('pricing_schedule','technical_evaluation','tender_documents','id','tender_negotiation_id');
         },'tenderMaster' => function ($q) use ($input){ 
-            $q->select('title','description','currency_id','envelop_type_id','tender_code','stage','bid_opening_date','technical_bid_opening_date','commerical_bid_opening_date','tender_type_id','id')->with(['currency' => function ($c) use ($input) {
+            $q->select('title','description','currency_id','envelop_type_id','tender_code','stage','bid_opening_date','technical_bid_opening_date','commerical_bid_opening_date','tender_type_id','id');
+            $q->with(['currency' => function ($c) use ($input) {
                 $c->select('CurrencyName','currencyID','CurrencyCode');
             },'tender_type' => function ($t) {
                 $t->select('id','name','description');
@@ -3840,11 +3841,12 @@ WHERE
         $search = $request->input('search.value');
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
-            $query = $query->where(function ($query) use ($search) {
-                $query->where('description', 'LIKE', "%{$search}%");
-                $query->orWhere('description_sec_lang', 'LIKE', "%{$search}%");
-                $query->orWhere('title', 'LIKE', "%{$search}%");
-                $query->orWhere('title_sec_lang', 'LIKE', "%{$search}%");
+            $query = $query->where(function ($a) use ($search) {
+                $a->orWhereHas('tenderMaster', function ($b) use ($search) {
+                    $b->where('title', 'LIKE', "%{$search}%");
+                    $b->orWhere('description', 'LIKE', "%{$search}%");
+                    $b->orWhere('tender_code', 'LIKE', "%{$search}%");
+                });
             });
         }
 
