@@ -41,7 +41,7 @@ class SupplierTenderNegotiationRepository extends BaseRepository
     }
 
     public function deleteSuppliersOfNegotiation($input) {
-        $this->model->where('tender_negotiation_id',$input['tenderNegotiationID'])->where('srm_bid_submission_master_id',$input['srm_bid_submission_master_id'])->where('suppliermaster_id',$input['supplierList'])->delete();
-        return true;
+        $deleteRecord = $this->model->where('tender_negotiation_id',$input['tenderNegotiationID'])->where('srm_bid_submission_master_id',$input['srm_bid_submission_master_id'])->where('suppliermaster_id',$input['supplierList'])->delete();
+        return ($deleteRecord) ? true : false;
     }
 }
