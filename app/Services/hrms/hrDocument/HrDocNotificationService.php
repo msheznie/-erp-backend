@@ -12,22 +12,22 @@ use Illuminate\Support\Facades\DB;
 class HrDocNotificationService
 {
     private $companyId;
-    private $tenantId;
     private $id;
     private $date;
     private $visibility;
     private $employees;
     private $notifyList;
+    private $portalUrl;
 
-    public function __construct($companyId, $tenantId, $id, $visibility, $employees)
+    public function __construct($companyId, $id, $visibility, $employees, $portalUrl='')
     {
         $this->companyId = $companyId;
-        $this->tenantId = $tenantId;
         $this->id = $id;
         $this->date = Carbon::now()->format('Y-m-d H:i:s');
         $this->visibility = $visibility;
         $this->employees = $employees;
-        $this->notifyList = [];      
+        $this->notifyList = [];   
+        $this->portalUrl = $portalUrl;   
     }
 
     function execute()
@@ -59,7 +59,10 @@ class HrDocNotificationService
             $dataEmail['companySystemID'] = $this->companyId;
             
             $temp = '<p>Dear ' . $val['Ename2'] . ', <br /></p>';
-            $temp .=  '<p> HR has uploaded a new document, please login to download it.</p>';
+            $temp .= '<p> HR has uploaded a new document, please login to download it.</p>';
+            if($this->portalUrl){
+               $temp .= '<br><a href="'.$this->portalUrl.'"> Click here to view. </a> ';
+            }
             $dataEmail['emailAlertMessage'] = $temp;
             $dataEmail['alertMessage'] = 'New HR Document';
             $sendEmail = \Email::sendEmailErp($dataEmail);
