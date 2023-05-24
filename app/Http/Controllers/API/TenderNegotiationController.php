@@ -52,8 +52,8 @@ class TenderNegotiationController extends AppBaseController
         $input = $request->all();
         $input['started_by'] = \Helper::getEmployeeSystemID();
         $input['status'] = 1;
-        $srmTenderBidEmployeeDetails = SrmTenderBidEmployeeDetails::where('tender_id', $input['srm_tender_master_id'])->select('id')->count();
-        $input['no_to_approve'] =  $srmTenderBidEmployeeDetails;
+        $tenderMaster = TenderMaster::find($input['srm_tender_master_id'])->select('min_approval_bid_opening')->first();
+        $input['no_to_approve'] =  ($tenderMaster) ? $tenderMaster->min_approval_bid_opening :  0;
         $updateTenderMasterRecord = $this->updateTenderMasterRecord($input);
 
         if(isset($updateTenderMasterRecord)) {
@@ -89,16 +89,18 @@ class TenderNegotiationController extends AppBaseController
      */
     public function update(Request $request, $id)
     {
-        $input = $request->input();
-        // update the minimum approval count to the column
-        $srmTenderBidEmployeeDetails = SrmTenderBidEmployeeDetails::where('tender_id', $input['srm_tender_master_id'])->select('id')->count();
-        if (isset($input['confirmed_yn']) && $input['confirmed_yn'] && isset($id)) {
-                $tenderNeotiation = $this->tenderNegotiationRepository->find($id);
-                $this->sendEmailToCommitteMembers($tenderNeotiation,$input);
+        $input =  $request->all();
+        $confirmationValidation = $this->validateConfirmation($input);
+        if(!$confirmationValidation['success']) {
+            return $this->sendError($confirmationValidation['message'], $confirmationValidation['code']);
         }
+      
+        $tenderNeotiation = $this->tenderNegotiationRepository->find($id);
+        $this->sendEmailToCommitteMembers($tenderNeotiation,$input);
+        $tenderMaster = TenderMaster::find($input['srm_tender_master_id'])->select('min_approval_bid_opening')->first();
         $input['confirmed_by'] =   \Helper::getEmployeeSystemID();
         $input['confirmed_at'] =  Carbon::now();
-        $input['no_to_approve'] =  $srmTenderBidEmployeeDetails;
+        $input['no_to_approve'] =  ($tenderMaster) ? $tenderMaster->min_approval_bid_opening :  0;
         $tenderNeotiation = $this->tenderNegotiationRepository->update($input, $id);
         return $this->sendResponse($tenderNeotiation->toArray(), "Tender Negotiation Updated successfully");
     }
@@ -127,6 +129,39 @@ class TenderNegotiationController extends AppBaseController
 
         return false;
     }
+
+
+    public function validateConfirmation($input) {
+        $messages = [
+            'id.required' => 'ID is required'
+        ];
+      
+        $validator = \Validator::make($input, [
+            'id' => 'required'
+        ], $messages);
+      
+        if ($validator->fails()) {
+            return ['status' => false, 'code' => 422, 'message' => $validator->messages()];
+        } 
+      
+        $tenderNegotiation =$this->tenderNegotiationRepository->find($input['id'])->with(['area' => function($a) {
+                $a->select('id','tender_negotiation_id');
+            },'SupplierTenderNegotiation' => function ($s) {
+                $s->select('id','tender_negotiation_id');
+            }])->first();
+      
+        if(empty($tenderNegotiation->area)) {
+            return ['success' => false,'message' => 'Tender Negotiation Area Not Selected!','code'=> 403];
+        }
+      
+        if(empty($tenderNegotiation->SupplierTenderNegotiation)) {
+            return ['success' => false,'message' => 'Tender Negotiation Supplier/s Not Selected!','code'=> 403];
+      
+        } 
+
+        return ['success' => true, 'code' => 200, 'message' => ''];
+    }
+
 
     public function getFinalBidsForTenderNegotiation(Request $request)
     {
