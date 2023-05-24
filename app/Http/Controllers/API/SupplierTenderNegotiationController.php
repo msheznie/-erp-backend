@@ -188,24 +188,31 @@ class SupplierTenderNegotiationController extends AppBaseController
         }])->where('tender_id',$tenderId)->where('status',1)->orderBy('total_weightage','desc')->get();
 
 
-        foreach($tenderFinalBids as $tenderFinalBid) {
+        if($tenderFinalBids) {
+            foreach($tenderFinalBids as $tenderFinalBid) {
 
-            $data = [
-                'tender_negotiation_id' => $input['tenderNegotiationID'],
-                'suppliermaster_id' => $tenderFinalBid->supplier_id,
-                'srm_bid_submission_master_id' => $tenderFinalBid->bid_id,
-                'bidSubmissionCode' => $tenderFinalBid->bid_submission_master->bidSubmissionCode,
-                'tenderNegotiationID' => $input['tenderNegotiationID'],
-                'supplierList'=> $tenderFinalBid->supplier_id,
-            ];
+                $data = [
+                    'tender_negotiation_id' => $input['tenderNegotiationID'],
+                    'suppliermaster_id' => $tenderFinalBid->supplier_id,
+                    'srm_bid_submission_master_id' => $tenderFinalBid->bid_id,
+                    'bidSubmissionCode' => $tenderFinalBid->bid_submission_master->bidSubmissionCode,
+                    'tenderNegotiationID' => $input['tenderNegotiationID'],
+                    'supplierList'=> $tenderFinalBid->supplier_id,
+                ];
+    
+                $this->supplierTenderNegotiationRepository->deleteSuppliersOfNegotiation($data);
+                $this->supplierTenderNegotiationRepository->create($data);
+    
+            }
 
-            $this->supplierTenderNegotiationRepository->deleteSuppliersOfNegotiation($data);
-            $this->supplierTenderNegotiationRepository->create($data);
+            return $this->sendResponse($data ,'All Suppliers Added Successfully');
 
-
+        }else {
+            return $this->sendError("Sorry, Cannot add suppliers", 500);
         }
 
-        return $this->sendResponse($data ,'All Suppliers Added Successfully');
+
+
     }
 
 
