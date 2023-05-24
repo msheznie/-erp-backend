@@ -93,8 +93,14 @@ class TenderNegotiationController extends AppBaseController
         // update the minimum approval count to the column
         $srmTenderBidEmployeeDetails = SrmTenderBidEmployeeDetails::where('tender_id', $input['srm_tender_master_id'])->select('id')->count();
         if (isset($input['confirmed_yn']) && $input['confirmed_yn'] && isset($id)) {
+            $validationToTenderConfirmation = $this->validateConfirmation($input);
+            if($validationToTenderConfirmation['success']) {
                 $tenderNeotiation = $this->tenderNegotiationRepository->find($id);
                 $this->sendEmailToCommitteMembers($tenderNeotiation,$input);
+            }else {
+              return $this->sendError($validationToTenderConfirmation['message'], 422);
+            }
+               
         }
         $input['confirmed_by'] =   \Helper::getEmployeeSystemID();
         $input['confirmed_at'] =  Carbon::now();
@@ -127,6 +133,32 @@ class TenderNegotiationController extends AppBaseController
 
         return false;
     }
+
+
+    public function validateConfirmation($input) {
+        if(isset($input['id'])) {
+            $tenderNegotiation =$this->tenderNegotiationRepository->find($input['id'])->with(['area' => function($a) {
+                $a->select('id','tender_negotiation_id');
+            },'SupplierTenderNegotiation' => function ($s) {
+                $s->select('id','tender_negotiation_id');
+            }])->first();
+    
+            if(!isset($tenderNegotiation->area)) {
+                return ['success' => false,'message' => 'Tender Negotiation Area Not Selected!'];
+            }
+    
+            if(!isset($tenderNegotiation->SupplierTenderNegotiation)) {
+                return ['success' => false,'message' => 'Tender Negotiation Supplier/s Not Selected!'];
+    
+            }
+    
+            return ['success' => true,'message' => ''];
+        }else {
+            return ['success' => false,'message' => 'Data not found'];
+        }
+
+    }
+
 
     public function getFinalBidsForTenderNegotiation(Request $request)
     {

@@ -61,7 +61,7 @@ class TenderNegotiation extends Model
     }
 
     public function supplierTenderNegotiation() {
-        return $this->hasOne('App\Models\SupplierTenderNegotiation', 'id', 'tender_negotiation_id');
+        return $this->hasOne('App\Models\SupplierTenderNegotiation', 'tender_negotiation_id', 'id');
     }
 
     public function confirmed_by()
