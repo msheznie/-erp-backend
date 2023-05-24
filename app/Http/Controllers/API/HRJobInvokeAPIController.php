@@ -198,9 +198,10 @@ class HRJobInvokeAPIController extends AppBaseController
         $companyId = $input['companyId'];
         $id = $input['id'];
         $visibility = $input['visibility'];
-        $emlpoyees = $input['emlpoyees'];
+        $employees = $input['employees'];
+        $portalUrl = $input['portalUrl'];
     
-        HrDocNotificationJob::dispatch($tenantId, $companyId, $id, $visibility, $emlpoyees); 
+        HrDocNotificationJob::dispatch($tenantId, $companyId, $id, $visibility, $employees, $portalUrl); 
         return $this->sendResponse([], 'HR document notification scenario added to queue');
     }
 }

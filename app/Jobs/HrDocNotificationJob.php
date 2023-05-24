@@ -10,8 +10,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
+
 
 class HrDocNotificationJob implements ShouldQueue
 {
@@ -28,8 +27,9 @@ class HrDocNotificationJob implements ShouldQueue
     public $id; 
     public $employees; 
     public $visibility;
+    public $portalUrl;
 
-    public function __construct($tenantId, $companyId, $id, $visibility, $employees)
+    public function __construct($tenantId, $companyId, $id, $visibility, $employees, $portalUrl)
     {
         if(env('IS_MULTI_TENANCY',false)){
             self::onConnection('database_main');
@@ -42,6 +42,7 @@ class HrDocNotificationJob implements ShouldQueue
         $this->id = $id; 
         $this->visibility = $visibility;
         $this->employees = $employees; 
+        $this->portalUrl = $portalUrl; 
     }
 
     /**
@@ -53,23 +54,16 @@ class HrDocNotificationJob implements ShouldQueue
     {
         
         $db_name = CommonJobService::get_tenant_db($this->tenantId);
+        Log::useFiles( CommonJobService::get_specific_log_file('hr-document') );
         
         if (empty($db_name)) {
-            $message = "db details not found. \t on file: " . __CLASS__ . " \tline no :" . __LINE__;
-            $data = [
-                'company_id' => $this->companyId,
-                'module' => 'HRMS',
-                'description' => 'HR Document Notification Scenario Error',
-                'scenario_id' => 0,
-                'processed_for' => Carbon::now()->format('Y-m-d H:i:s'),
-                'logged_at' => Carbon::now()->format('Y-m-d H:i:s'),
-                'log_type' => 'error',
-                'log_data' => json_encode($message)
-            ];
-            DB::table('job_logs')->insert($data);
+            Log::error("db details not found. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
+           
         } else {            
+            Log::info("Job triggered");
+
             CommonJobService::db_switch($db_name);
-            $obj = new HrDocNotificationService($this->companyId, $this->tenantId, $this->id ,$this->visibility,$this->employees);
+            $obj = new HrDocNotificationService($this->companyId, $this->id ,$this->visibility,$this->employees ,$this->portalUrl);
             $obj->execute();
         }
     }
