@@ -6,7 +6,9 @@ use App\Http\Requests\CreateSupplierTenderNegotiationRequest;
 use App\Http\Requests\UpdateSupplierTenderNegotiationRequest;
 use App\Repositories\SupplierTenderNegotiationRepository;
 use App\Http\Controllers\AppBaseController;
+use App\Models\SupplierTenderNegotiation;
 use Illuminate\Http\Request;
+use App\Models\TenderFinalBids;
 use Flash;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -173,5 +175,48 @@ class SupplierTenderNegotiationController extends AppBaseController
     public function getTenderNegotiatedSupplierIds(Request $request) {
         $data = $this->supplierTenderNegotiationRepository->where('tender_negotiation_id',$request['tenderNegotiationID'])->pluck('suppliermaster_id')->toArray();
         return $this->sendResponse($data ,'Data retrieved successfully');
+    }
+
+    public function addAllSuppliersToNegotiation(Request $request) {
+        $input = $request->all();
+
+        $tenderId = $input['tenderId'];
+        $tenderFinalBids = TenderFinalBids::select('id','bid_id','supplier_id','tender_id')->with(['bid_submission_master' => function ($q) {
+            $q->select('bidSubmissionCode','id','supplier_registration_id')->with(['SupplierRegistrationLink' => function ($s) {
+                $s->select('name','id');
+            }]);
+        }])->where('tender_id',$tenderId)->where('status',1)->orderBy('total_weightage','desc')->get();
+
+
+        foreach($tenderFinalBids as $tenderFinalBid) {
+
+            $data = [
+                'tender_negotiation_id' => $input['tenderNegotiationID'],
+                'suppliermaster_id' => $tenderFinalBid->supplier_id,
+                'srm_bid_submission_master_id' => $tenderFinalBid->bid_id,
+                'bidSubmissionCode' => $tenderFinalBid->bid_submission_master->bidSubmissionCode,
+                'tenderNegotiationID' => $input['tenderNegotiationID'],
+                'supplierList'=> $tenderFinalBid->supplier_id,
+            ];
+
+            $this->supplierTenderNegotiationRepository->deleteSuppliersOfNegotiation($data);
+            $this->supplierTenderNegotiationRepository->create($data);
+
+
+        }
+
+        return $this->sendResponse($data ,'All Suppliers Added Successfully');
+    }
+
+
+    public function deleteAllSuppliersFromNegotiation(Request $request) {
+        $input = $request->all();
+        $deleteAllRecords = SupplierTenderNegotiation::where('tender_negotiation_id',$input['tenderNegotiationID'])->delete();
+        if($deleteAllRecords) {
+            return $this->sendResponse($deleteAllRecords ,'All Suppliers deleted Successfully');
+        }else {
+            return $this->sendError("Sorry, Can't delete suppliers", 500);
+        }
+
     }
 }
