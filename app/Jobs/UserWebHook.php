@@ -65,7 +65,7 @@ class UserWebHook implements ShouldQueue
                     'content-type' => 'application/json',
                     'Authorization' => 'ERP '.$api_external_key
                 ];
-                $res = $client->request('POST', $api_external_url . '/helpdesk-qa/v1/create_employee', [
+                $res = $client->request('POST', $api_external_url . '/create_employee', [
                     'headers' => $headers,
                     'json' => $employees
                 ]);
