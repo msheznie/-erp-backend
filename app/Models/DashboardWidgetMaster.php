@@ -66,6 +66,8 @@ class DashboardWidgetMaster extends Model
         'sortOrder',
         'widgetMasterIcon',
         'isActive',
+        'isDefault',
+        'widgetTypeID',
         'timestamp'
     ];
 
@@ -81,6 +83,8 @@ class DashboardWidgetMaster extends Model
         'sortOrder' => 'string',
         'widgetMasterIcon' => 'string',
         'isActive' => 'integer',
+        'isDefault' => 'integer',
+        'widgetTypeID' => 'integer',
         'timestamp' => 'datetime'
     ];
 
