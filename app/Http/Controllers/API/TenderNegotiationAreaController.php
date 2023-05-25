@@ -52,6 +52,10 @@ class TenderNegotiationAreaController extends AppBaseController
         
         $tenderNegotiationArea = $this->tenderNegotiationAreaRepository->create($input);
 
+        if(!$tenderNegotiationArea) {
+            return $this->sendError('Tender negotiation area data not found', 404);
+        }
+
         return $this->sendResponse($tenderNegotiationArea->toArray(), 'Tender Negotiation Area added successfully');
 
     }
@@ -146,11 +150,11 @@ class TenderNegotiationAreaController extends AppBaseController
         
         $input = $request->input();
         $tenderNegotiationArea = $this->tenderNegotiationAreaRepository->getTenderNegotiationAreaBySupplierNegotiationID($input['tenderNegotiationID']);
-        if($tenderNegotiationArea) {
-            return $this->sendResponse($tenderNegotiationArea->toArray(), 'Tender negotiation area retereived successfully');
-        }else {
+        
+        if(!$tenderNegotiationArea) {
             return $this->sendError('Tender negotiation area data not found', 404);
         }
+        return $this->sendResponse($tenderNegotiationArea->toArray(), 'Tender negotiation area retereived successfully');
 
     }
 }

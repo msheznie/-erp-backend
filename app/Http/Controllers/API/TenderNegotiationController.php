@@ -56,13 +56,14 @@ class TenderNegotiationController extends AppBaseController
         $input['no_to_approve'] =  ($tenderMaster) ? $tenderMaster->min_approval_bid_opening :  0;
         $updateTenderMasterRecord = $this->updateTenderMasterRecord($input);
 
-        if(isset($updateTenderMasterRecord)) {
-            $input['currencyId'] = $updateTenderMasterRecord->currency_id;
-            $tenderNeotiation = $this->tenderNegotiationRepository->create($input);
-            return $this->sendResponse($tenderNeotiation->toArray(), 'Tender negotiation started successfully');
-        }else {
+        if(!isset($updateTenderMasterRecord)) {
             return $this->sendError('Tender Master not found!', 404);
         }
+
+        $input['currencyId'] = $updateTenderMasterRecord->currency_id;
+        $tenderNeotiation = $this->tenderNegotiationRepository->create($input);
+        return $this->sendResponse($tenderNeotiation->toArray(), 'Tender negotiation started successfully');
+
 
     }
 
