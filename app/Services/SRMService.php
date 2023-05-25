@@ -3843,6 +3843,10 @@ class SRMService
             $bidSubmitted->whereHas('TenderBidNegotiation', function ($query) use ($tenderNegotiationData) {
                 $query->where('bid_submission_code_old' , $tenderNegotiationData[0]['supplier_tender_negotiation']['bidSubmissionCode']);
             });
+        } else {
+            $bidSubmitted->whereDoesntHave('TenderBidNegotiation', function ($query) use ($tenderNegotiationData) {
+                $query->where('bid_submission_code_old', '!=' ,$tenderNegotiationData[0]['supplier_tender_negotiation']['bidSubmissionCode']);
+            });
         }
 
         $bidSubmitted = $bidSubmitted->where('tender_id', $tenderId)
