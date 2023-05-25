@@ -534,4 +534,6 @@ return [
     'customer_invoice_receipt' => 'سند قبض بناءا على فاتورة العميل',
     'direct_receipt' => 'سند قبض مباشر',
 
+    'order_code'=> 'Order Code',
+    
 ];

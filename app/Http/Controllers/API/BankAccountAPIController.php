@@ -240,7 +240,9 @@ class BankAccountAPIController extends AppBaseController
         $custInvoice = CustomerInvoice::where('bankAccountID', $id)->where('canceledYN', 0)->where('bankID', $bankAccount->bankmasterAutoID)->first();
 
         if($supplierInvoice || $custReceivePay|| $custInvoice){
-            return $this->sendError(trans('custom.bank_account_in_transactions'),500);
+            if($input['isManualActive'] == $bankAccount->isManualActive ){
+                return $this->sendError(trans('custom.bank_account_in_transactions'),500);
+            }
         }
 
         $checkDuplicateAccountNo = BankAccount::where('bankAccountAutoID', '!=', $id)
