@@ -11,6 +11,7 @@ use App\Models\Company;
 use App\Models\BookInvSuppMaster;
 use App\Models\DashboardWidgetMaster;
 use App\Models\AccountsReceivableLedger;
+use App\Models\CustomerMaster;
 use App\Models\DepartmentMaster;
 use App\Models\GeneralLedger;
 use App\Models\PaySupplierInvoiceMaster;
@@ -23,6 +24,7 @@ use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Carbon\Carbon;
 
 /**
  * Class DashboardWidgetMasterController
@@ -1219,9 +1221,36 @@ GROUP BY
                 $data = ['data' => $currentYearData, 'currency' => $companyData->reportingcurrency];
 
                 return $this->sendResponse($data, "widget data retrived successfully");
-                
+
                 break;
-            
+            case 2:
+                $overdueRecivable = GeneralLedger::whereIn('documentSystemID',[20,19,21])
+                                                ->whereHas('customer', function ($query){
+                                                    $query->whereRaw('customermaster.custGLAccountSystemID = erp_generalledger.chartOfAccountSystemID');
+                                                })
+                                                ->whereIn('companySystemID', $childCompanies)
+                                                ->whereDate('documentDate', '<=', Carbon::now()->format('Y-m-d'))
+                                                ->selectRaw('supplierCodeSystem,SUM(documentRptAmount) AS total, documentRptCurrencyID')
+                                                ->with(['customer', 'rptcurrency'])
+                                                ->groupBy('supplierCodeSystem')
+                                                ->orderBy('total','DESC')
+                                                ->limit(10)
+                                                ->get();
+
+                 $overduePayable = GeneralLedger::whereIn('documentSystemID',[4,11,15])
+                                        ->whereHas('supplier', function ($query){
+                                            $query->whereRaw('suppliermaster.liabilityAccountSysemID = erp_generalledger.chartOfAccountSystemID');
+                                        })
+                                        ->whereIn('companySystemID', $childCompanies)
+                                        ->selectRaw('supplierCodeSystem,SUM(documentRptAmount*-1) AS total, documentRptCurrencyID')
+                                        ->with(['supplier', 'rptcurrency'])
+                                        ->groupBy('supplierCodeSystem')
+                                        ->orderBy('total','DESC')
+                                        ->limit(10)
+                                        ->get();
+
+                return $this->sendResponse(['overdueRecivable' => $overdueRecivable, 'overduePayable' => $overduePayable], "widget data retrived successfully");
+                break;
             default:
                 // code...
                 break;
