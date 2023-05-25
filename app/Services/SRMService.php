@@ -3061,12 +3061,10 @@ class SRMService
         $bidSubmissionData = self::BidSubmissionStatusData($bidMasterId, $tenderId);
         
         $evaluvationCriteriaDetailsCount = EvaluationCriteriaDetails::where('tender_id',$tenderId)->where('critera_type_id',1)->count();
-        Log::info(['$evaluvationCriteriaDetailsCount', $evaluvationCriteriaDetailsCount]);
         $bidSubmissionDataCount = BidSubmissionDetail::join('srm_evaluation_criteria_details','srm_bid_submission_detail.evaluation_detail_id','=','srm_evaluation_criteria_details.id')
             ->where('srm_bid_submission_detail.tender_id',$tenderId)
             ->where('srm_bid_submission_detail.bid_master_id',$bidMasterId)
             ->where('srm_evaluation_criteria_details.critera_type_id',1)->count();
-        Log::info(['$bidSubmissionDataCount', $bidSubmissionDataCount]);
 
         $documentTypeAssingedCount = TenderDocumentTypeAssign::where('tender_id',$tenderId)->count();
 
@@ -3838,7 +3836,6 @@ class SRMService
         $tenderId = $request->input('extra.tenderId');
         $tenderNegotiation = $request->input('extra.tender_negotiation');
         $tenderNegotiationData = $request->input('extra.tender_negotiation_data');
-        Log::info($tenderNegotiationData[0]['supplier_tender_negotiation']);
         $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
         $bidSubmitted = BidSubmissionMaster::with(['SupplierRegistrationLink']);
 
