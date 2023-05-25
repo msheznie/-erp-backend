@@ -85,6 +85,7 @@ define('SAVE_INVOICE', 'SAVE_INVOICE');
 define('GET_PAYMENTVOUCHERS', 'GET_PAYMENTVOUCHERS');
 define('GET_PAYMENT_VOUCHER_DETAILS', 'GET_PAYMENT_VOUCHER_DETAILS');
 define('CHECK_GRV_CREATION', 'CHECK_GRV_CREATION');
+define('GET_NEGOTIATION_TENDERS', 'GET_NEGOTIATION_TENDERS');
 
 
 class APIController extends Controller
@@ -243,7 +244,9 @@ class APIController extends Controller
             case GET_PAYMENT_VOUCHER_DETAILS:
                 return $this->SRMService->getPaymentVouchersDetails($request);  
             case CHECK_GRV_CREATION:
-                return $this->SRMService->checkGrvCreation($request);  
+                return $this->SRMService->checkGrvCreation($request);
+            case GET_NEGOTIATION_TENDERS:
+                return $this->SRMService->getNegotiationTenders($request);
                      
             default:
                 return [

@@ -157,6 +157,15 @@ class BidSubmissionMaster extends Model
 
     public function TenderFinalBids() {
         return $this->belongsTo(TenderFinalBids::class, 'bid_id','id');
+    }
 
+    public function SupplierTenderNegotiation()
+    {
+        return $this->hasOne('App\Models\SupplierTenderNegotiation', 'bidSubmissionCode', 'bidSubmissionCode');
+    }
+
+    public function TenderBidNegotiation()
+    {
+        return $this->hasOne('App\Models\TenderBidNegotiation', 'bid_submission_master_id_new', 'id');
     }
 }
