@@ -62,9 +62,19 @@ class TenderNegotiationApprovalController extends AppBaseController
                 $tenderNegotiation->approved_yn = true;
                 $tenderNegotiation->save();
             }
-            return $this->sendResponse($tenderNegotiationApproval->toArray(), 'Tender Negotiation Approval created successfully');
+
+            if(isset($input['status'])) {
+                if($input['status'] == 1) {
+                    return $this->sendResponse($tenderNegotiationApproval->toArray(), 'Tender negotiation approved successfully');
+                }else {
+                    return $this->sendResponse($tenderNegotiationApproval->toArray(), 'Tender negotiation rejected successfully');
+                }
+            }else {
+                return $this->sendError('Tender negotiation approval connot create',404);
+            }
+
         }else {
-            return $this->sendError('Tender Negotiation Approval Connot Create',404);
+            return $this->sendError('Tender negotiation approval connot create',404);
         }
     }
 
@@ -80,7 +90,7 @@ class TenderNegotiationApprovalController extends AppBaseController
         $tenderNegotiationApproval = $this->tenderNegotiationApprovalRepository->findWithoutFail($id);
 
         if (empty($tenderNegotiationApproval)) {
-            Flash::error('Tender Negotiation Approval not found');
+            Flash::error('Tender negotiation approval not found');
 
             return redirect(route('tenderNegotiationApprovals.index'));
         }
@@ -107,7 +117,7 @@ class TenderNegotiationApprovalController extends AppBaseController
         $tenderNegotiatonApprovals = $this->tenderNegotiationApprovalRepository->findWithoutFail($id);
 
         if (empty($tenderNegotiatonApprovals)) {
-            return $this->sendError('Tender Negotiation Approvals not found');
+            return $this->sendError('Tender negotiation approvals not found');
         }
 
         $tenderNegotiatonApprovals = $this->tenderNegotiationApprovalRepository->update($input, $id);
@@ -117,7 +127,7 @@ class TenderNegotiationApprovalController extends AppBaseController
             $tenderNegotiation->save();
         }
 
-        return $this->sendResponse($tenderNegotiatonApprovals->toArray(), 'Tender Negotiation Approvals updated successfully');
+        return $this->sendResponse($tenderNegotiatonApprovals->toArray(), 'Tender negotiation approvals updated successfully');
        
     }
 
@@ -196,7 +206,7 @@ class TenderNegotiationApprovalController extends AppBaseController
                         $url = trim($loginUrl,"/register");
                         $redirectUrl= $url."/tender-management/tenders";
                         $companyName = (Auth::user()->employee && Auth::user()->employee->company) ? Auth::user()->employee->company->CompanyName : null ;
-                        $temp = "<p>Dear " . $employee->name . ',</p><p>We are pleased to inform you that we have selected your bid for negotiation. We appreciate the time and effort you put into preparing your proposal, and we were impressed by the quality and value it provides</p><br/><p>We believe that your proposal aligns with our business needs, and we look forward to discussing it in more detail during the negotiation process.</p><p>Please let us know if you have any questions or concerns regarding the negotiation process. We are committed to working collaboratively with you to ensure that we arrive at a mutually beneficial agreement that meets both our needs.</p><p>Thank you again for your bid and your interest in working with us. We look forward to a successful negotiation and a long and productive business relationship.</p><p>Please find the link below.</p><p><a href="' . $redirectUrl . '">Click here to view</a></p><br/><br/><p>Best Regards</p><p>' . $companyName . '</p>';
+                        $temp = "<p>Dear " . $employee->name . ',</p><p>We are pleased to inform you that we have selected your bid for negotiation. We appreciate the time and effort you put into preparing your proposal, and we were impressed by the quality and value it provides.</p><p>We believe that your proposal aligns with our business needs, and we look forward to discussing it in more detail during the negotiation process.</p><p>Please let us know if you have any questions or concerns regarding the negotiation process. We are committed to working collaboratively with you to ensure that we arrive at a mutually beneficial agreement that meets both our needs.</p><p>Thank you again for your bid and your interest in working with us. We look forward to a successful negotiation and a long and productive business relationship.</p><p>Please find the link below.</p><p><a href="' . $redirectUrl . '">Click here to view</a></p><br/><br/><p>Best Regards</p><p>' . $companyName . '</p>';
                         $dataEmail['alertMessage'] = "Tender Bid For Negotiation - ".$supplierTenderNegotiation->bidSubmissionCode;
                         $dataEmail['emailAlertMessage'] = $temp;
                         $sendEmail = \Email::sendEmailErp($dataEmail);

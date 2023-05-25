@@ -3793,7 +3793,7 @@ WHERE
             $tender->save();
 
             DB::commit();
-            return $this->sendResponse($tender, 'Tender Negotiation Started Successfully');
+            return $this->sendResponse($tender, 'Tender negotiation started successfully');
         } catch (\Exception $e) {
             DB::rollback();
             return $this->sendError($e->getMessage());

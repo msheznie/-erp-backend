@@ -22,7 +22,8 @@ class TenderNegotiationApprovalRepository extends BaseRepository
     protected $fieldSearchable = [
         'emp_id',
         'tender_negotiation_id',
-        'status'
+        'status',
+        'comment'
     ];
 
     /**
