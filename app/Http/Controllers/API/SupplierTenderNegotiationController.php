@@ -57,11 +57,12 @@ class SupplierTenderNegotiationController extends AppBaseController
         $deleteSuppliers =  $this->supplierTenderNegotiationRepository->deleteSuppliersOfNegotiation($input);
         $supplierTenderNegotiation = $this->supplierTenderNegotiationRepository->insert($data);
 
-        if($supplierTenderNegotiation) {
-            return $this->sendResponse($supplierTenderNegotiation, 'Supplier added successfully');
-        }else {
+        if(!$supplierTenderNegotiation) {
             return $this->sendError("Cannot add Supplier to Negotiation", 500);
         }
+        
+        return $this->sendResponse($supplierTenderNegotiation, 'Supplier added successfully');
+
 
     }
 
