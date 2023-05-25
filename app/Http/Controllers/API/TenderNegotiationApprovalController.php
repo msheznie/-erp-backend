@@ -56,29 +56,25 @@ class TenderNegotiationApprovalController extends AppBaseController
 
         $tenderNegotiationApproval = $this->tenderNegotiationApprovalRepository->create($input);
         
-        if($tenderNegotiationApproval) {
-            if($this->checkPublishNegotiation($input)) {
-                $tenderNegotiation = TenderNegotiation::find($input['tender_negotiation_id']);
-                $tenderNegotiation->approved_yn = true;
-                $tenderNegotiation->save();
-            }
-
-            if(!isset($input['status'])) {
-                return $this->sendError('Tender negotiation approval connot create',404);
-            }
-
-            if($input['status'] == 1) {
-                $message = 'Tender negotiation approved successfully';
-            }else {
-                $message = 'Tender negotiation rejected successfully';   
-            }
-            
-            return $this->sendResponse($tenderNegotiationApproval->toArray(),$message);
-        
-
-        }else {
+        if(!$tenderNegotiationApproval || !isset($input['status'])) { 
             return $this->sendError('Tender negotiation approval connot create',404);
         }
+
+        if($this->checkPublishNegotiation($input)) {
+            $tenderNegotiation = TenderNegotiation::find($input['tender_negotiation_id']);
+            $tenderNegotiation->approved_yn = true;
+            $tenderNegotiation->save();
+        }
+
+        if($input['status'] == 1) {
+            $message = 'Tender negotiation approved successfully';
+        }else {
+            $message = 'Tender negotiation rejected successfully';   
+        }
+        
+        return $this->sendResponse($tenderNegotiationApproval->toArray(),$message);
+
+        
     }
 
     /**
