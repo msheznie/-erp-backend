@@ -2658,6 +2658,65 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         }
     }
 
+    public function validationsForPDC(Request $request){
+        $bankAccountID = $request->get('bankAccountID');
+        $companySystemID = $request->get('companyID');
+
+
+        $bankAccount = BankAccount::find($bankAccountID);
+
+        if(!empty($bankAccount)) {
+
+            $chequeRegister = ChequeRegister::where('bank_id', $bankAccount->bankmasterAutoID)->where('bank_account_id', $bankAccount->bankAccountAutoID)->where('isActive', 1)->first();
+
+            if (empty($chequeRegister)) {
+                return $this->sendError('No Active cheque register found for the selected bank account');
+            }
+
+            $usedCheckID = $this->getLastUsedChequeID($companySystemID, $bankAccount->bankAccountAutoID);
+
+            $unUsedCheque = ChequeRegisterDetail::whereHas('master', function ($q) use ($companySystemID, $bankAccount) {
+                $q->where('bank_account_id', $bankAccount->bankAccountAutoID)
+                    ->where('company_id', $companySystemID)
+                    ->where('isActive', 1);
+            })
+                ->where('status', 0)
+                ->where(function ($q) use ($usedCheckID) {
+                    if ($usedCheckID) {
+                        $q->where('id', '>', $usedCheckID);
+                    }
+                })
+                ->orderBy('id', 'ASC')
+                ->first();
+
+            if (empty($unUsedCheque)) {
+                return $this->sendError('There are no unused cheques in the cheque register ' . $chequeRegister->description . ' Define a new cheque register for the selected bank account');
+
+            }
+        }
+
+        return $this->sendResponse([], "PDC cheques validated successfully");
+
+        }
+
+    public function getLastUsedChequeID($company_system_id, $bank_account_id) {
+        $usedCheque = ChequeRegisterDetail::whereHas('master', function ($q) use($company_system_id,$bank_account_id) {
+            $q->where('bank_account_id', $bank_account_id)
+                ->where('company_id', $company_system_id)
+                ->where('isActive', 1);
+        })
+            ->where(function ($q) {
+                $q->where('status', 1)  // status = 1 => used
+                ->orWhere('status', 2); // // status = 2 => cancelled
+            })
+            ->orderBy('id', 'DESC')
+            ->first();
+
+        if(!empty($usedCheque)){
+            return $usedCheque->id;
+        }
+        return null;
+    }
 
     public function generatePdcForPv(Request $request)
     {
