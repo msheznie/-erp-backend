@@ -63,16 +63,18 @@ class TenderNegotiationApprovalController extends AppBaseController
                 $tenderNegotiation->save();
             }
 
-            if(isset($input['status'])) {
-                if($input['status'] == 1) {
-                    $message = 'Tender negotiation approved successfully';
-                }else {
-                    $message = 'Tender negotiation rejected successfully';   
-                }
-                return $this->sendResponse($tenderNegotiationApproval->toArray(),$message);
-            }else {
+            if(!isset($input['status'])) {
                 return $this->sendError('Tender negotiation approval connot create',404);
             }
+
+            if($input['status'] == 1) {
+                $message = 'Tender negotiation approved successfully';
+            }else {
+                $message = 'Tender negotiation rejected successfully';   
+            }
+            
+            return $this->sendResponse($tenderNegotiationApproval->toArray(),$message);
+        
 
         }else {
             return $this->sendError('Tender negotiation approval connot create',404);
