@@ -72,7 +72,8 @@ class TenderNegotiationApproval extends Model
     public $fillable = [
         'emp_id',
         'tender_negotiation_id',
-        'status'
+        'status',
+        'comment'
     ];
 
     /**
@@ -84,7 +85,8 @@ class TenderNegotiationApproval extends Model
         'id' => 'integer',
         'emp_id' => 'integer',
         'tender_negotiation_id' => 'integer',
-        'status' => 'integer'
+        'status' => 'integer',
+        'comment' => 'string'
     ];
 
     /**

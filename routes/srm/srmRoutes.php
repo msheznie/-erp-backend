@@ -246,3 +246,9 @@ Route::post('publishNegotiation', 'TenderNegotiationApprovalController@publishNe
 Route::resource('calendar_dates_detail_edit_logs', 'CalendarDatesDetailEditLogAPIController');
 Route::resource('procument_activity_edit_logs', 'ProcumentActivityEditLogAPIController');
 Route::post('getTenderFilterData', 'TenderMasterAPIController@getTenderFilterData');
+
+Route::post('addAllSuppliersToNegotiation', 'SupplierTenderNegotiationController@addAllSuppliersToNegotiation');
+
+Route::post('deleteAllSuppliersFromNegotiation', 'SupplierTenderNegotiationController@deleteAllSuppliersFromNegotiation');
+
+

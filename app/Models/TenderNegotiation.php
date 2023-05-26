@@ -59,7 +59,7 @@ class TenderNegotiation extends Model
     {
         return $this->hasOne('App\Models\TenderMaster', 'id', 'srm_tender_master_id');
     }
-
+    
     public function confirmed_by()
     {
         return $this->belongsTo('App\Models\Employee', 'confirmed_by', 'employeeSystemID');

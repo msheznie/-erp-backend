@@ -86,7 +86,7 @@ class SupplierTenderNegotiation extends Model
      * @var array
      */
     public static $rules = [
-        'tenderNegotiationID'=> 'required',
+        'tenderNegotiationId'=> 'required',
     ];
 
     
