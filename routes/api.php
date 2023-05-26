@@ -416,6 +416,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('addPVDetailsByInterCompany', 'DirectPaymentDetailsAPIController@addPVDetailsByInterCompany');
             Route::post('pv-md-deduction-type', 'DirectPaymentDetailsAPIController@updat_monthly_deduction');
             Route::post('generatePdcForPv', 'PaySupplierInvoiceMasterAPIController@generatePdcForPv');
+            Route::get('validationsForPDC', 'PaySupplierInvoiceMasterAPIController@validationsForPDC');
             Route::post('updateBankBalance', 'PaySupplierInvoiceMasterAPIController@updateBankBalance');
             Route::put('paymentVoucherUpdateCurrency/{id}', 'PaySupplierInvoiceMasterAPIController@updateCurrency');
             Route::put('paymentVoucherProjectUpdate/{id}', 'PaySupplierInvoiceMasterAPIController@paymentVoucherProjectUpdate');
