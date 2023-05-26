@@ -91,11 +91,43 @@ class TenderNegotiationController extends AppBaseController
     public function update(Request $request, $id)
     {
         $input =  $request->all();
-        $confirmationValidation = $this->validateConfirmation($input);
-        if(!$confirmationValidation['success']) {
-            return $this->sendError($confirmationValidation['message'], $confirmationValidation['code']);
-        }
+        $messages = [
+            'id.required' => 'ID is required',
+            'comments.required'  => 'Comment is required',
+        ];
       
+        $validator = \Validator::make($input, [
+            'id' => 'required','comments.required'
+        ], $messages);
+      
+        $tenderNegotiation =TenderNegotiation::select('id')
+        ->where('id',$input['id'])
+        ->with(['area' => function($a) {
+                $a->select('id','tender_negotiation_id');
+            },'SupplierTenderNegotiation' => function ($s) {
+                $s->select('id','tender_negotiation_id');
+            }])->first();
+
+     
+        
+        if(empty($input['comments'])) {
+            return $this->sendError('Comment is required',422);
+        }
+
+        if(empty($tenderNegotiation['area'])) {
+            return $this->sendError('Tender negotiation area not selected!',422);
+        }
+
+        if(empty($tenderNegotiation['SupplierTenderNegotiation'])) {
+            return $this->sendError('Tender negotiation supplier/s not selected!',422);
+
+        }
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(),422);
+        } 
+      
+
         $tenderNeotiation = $this->tenderNegotiationRepository->find($id);
         $this->sendEmailToCommitteMembers($tenderNeotiation,$input);
         $tenderMaster = TenderMaster::find($input['srm_tender_master_id'])->select('min_approval_bid_opening')->first();
@@ -132,36 +164,6 @@ class TenderNegotiationController extends AppBaseController
     }
 
 
-    public function validateConfirmation($input) {
-        $messages = [
-            'id.required' => 'ID is required'
-        ];
-      
-        $validator = \Validator::make($input, [
-            'id' => 'required'
-        ], $messages);
-      
-        if ($validator->fails()) {
-            return ['status' => false, 'code' => 422, 'message' => $validator->messages()];
-        } 
-      
-        $tenderNegotiation =$this->tenderNegotiationRepository->find($input['id'])->with(['area' => function($a) {
-                $a->select('id','tender_negotiation_id');
-            },'SupplierTenderNegotiation' => function ($s) {
-                $s->select('id','tender_negotiation_id');
-            }])->first();
-      
-        if(empty($tenderNegotiation->area)) {
-            return ['success' => false,'message' => 'Tender negotiation area not selected!','code'=> 403];
-        }
-      
-        if(empty($tenderNegotiation->SupplierTenderNegotiation)) {
-            return ['success' => false,'message' => 'Tender negotiation supplier/s not selected!','code'=> 403];
-      
-        } 
-
-        return ['success' => true, 'code' => 200, 'message' => ''];
-    }
 
 
     public function getFinalBidsForTenderNegotiation(Request $request)
