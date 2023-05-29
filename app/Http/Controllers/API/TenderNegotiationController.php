@@ -108,6 +108,7 @@ class TenderNegotiationController extends AppBaseController
             return $this->sendError($resValidation['message'], $statusCode);
         }
         
+        $tenderMasterId = $input['srm_tender_master_id'];
 
         $userId = \Helper::getEmployeeSystemID();
         $selectedSupplierList = $input['selectedSupplierList']; 
@@ -146,7 +147,12 @@ class TenderNegotiationController extends AppBaseController
 
         $tenderNeotiation = $this->tenderNegotiationRepository->find($id);
         $this->sendEmailToCommitteMembers($tenderNeotiation,$input);
-        $tenderMaster = TenderMaster::find($id)->select('min_approval_bid_opening')->first();
+
+        if(!$id) {
+            return $this->sendError('Tender Master not found');
+        }
+
+        $tenderMaster = TenderMaster::select('min_approval_bid_opening')->where('id',$id)->first();
         $input['confirmed_by'] =  $userId;
         $input['confirmed_at'] =  Carbon::now();
         $input['no_to_approve'] =  ($tenderMaster) ? $tenderMaster->min_approval_bid_opening :  0;
