@@ -18,6 +18,11 @@ class TenantByKey
      */
     public function handle(Request $request, Closure $next)
     {
+        $dbRoutes = [
+            'api/v1/postEmployee'
+//            'api/v1/post_supplier_invoice'
+        ];
+
         if (env('IS_MULTI_TENANCY', false)) {
 
             if($request->hasHeader('api-key')) {
@@ -31,6 +36,13 @@ class TenantByKey
 
             // get tenant details by api key in request
             $tenant = Tenant::whereApiKey($api_key)->first();
+            if (!empty($tenant)) {
+
+                if (in_array($request->route()->uri, $dbRoutes)) {
+                    $request->request->add(['db' => $tenant->database]);
+                }
+
+            }
 
             if(empty($tenant)) return "Tenant not exists with provided API key ";
 
