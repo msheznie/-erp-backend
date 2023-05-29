@@ -55,24 +55,31 @@ class UserWebHook implements ShouldQueue
 
                 $employees = Employee::selectRaw('empFullName as employee_name, empEmail as email')->where('employeeSystemID', $empID)->first();
 
-                $srpEmployee = SrpEmployeeDetails::find($empID);
+                if(empty($employees)){
+                    DB::rollback();
+                    Log::error("Employee Not Found");
+                }
+                if(!empty($employees)) {
 
-                $employees->mobile_no = $srpEmployee->EpMobile;
-                Log::info("Test: ".$employees);
+                    $srpEmployee = SrpEmployeeDetails::find($empID);
 
-                $client = new Client();
-                $headers = [
-                    'content-type' => 'application/json',
-                    'Authorization' => 'ERP '.$api_external_key
-                ];
-                $res = $client->request('POST', $api_external_url . '/create_employee', [
-                    'headers' => $headers,
-                    'json' => $employees
-                ]);
-                $json = $res->getBody();
-                Log::info("Json out: ".$json);
+                    $employees->mobile_no = isset($srpEmployee->EpMobile) ? $srpEmployee->EpMobile: null;
+                    Log::info("Test: " . $employees);
 
-                DB::commit();
+                    $client = new Client();
+                    $headers = [
+                        'content-type' => 'application/json',
+                        'Authorization' => 'ERP ' . $api_external_key
+                    ];
+                    $res = $client->request('POST', $api_external_url . '/create_employee', [
+                        'headers' => $headers,
+                        'json' => $employees
+                    ]);
+                    $json = $res->getBody();
+                    Log::info("Json out: " . $json);
+
+                    DB::commit();
+                }
 
             }
         } catch (\Exception $e)

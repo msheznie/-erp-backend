@@ -14,7 +14,7 @@ class HelpDeskAPIController extends AppBaseController
         public function postEmployee(Request $request){
             DB::beginTransaction();
             try {
-                $empID = $request->employee_id;
+                $empID = $request->employeeSystemID;
                 $db = isset($request->db) ? $request->db : "";
                 $thirdParty = ThirdPartyIntegrationKeys::where('third_party_system_id', 5)->first();
                 DB::commit();
