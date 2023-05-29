@@ -119,11 +119,7 @@ class TenderNegotiationController extends AppBaseController
         $areaList = $this->getTenderNegotiationsAreas($id);  
 
 
-        if(empty($areaList)) {
-            $this->saveAreaList($selectedAreaList,$id);
-        }else {
-            $this->updateAreaList($selectedAreaList,$id);
-        }
+
 
 
         if($unCheckedSupList->isNotEmpty()){   
@@ -140,10 +136,18 @@ class TenderNegotiationController extends AppBaseController
                 }
         }
 
+
+        if(empty($areaList)) {
+            $this->saveAreaList($selectedAreaList,$id);
+        }else {
+            $this->updateAreaList($selectedAreaList,$id);
+        }
+
+
         $tenderNeotiation = $this->tenderNegotiationRepository->find($id);
         $this->sendEmailToCommitteMembers($tenderNeotiation,$input);
         $tenderMaster = TenderMaster::find($id)->select('min_approval_bid_opening')->first();
-        $input['confirmed_by'] =   \Helper::getEmployeeSystemID();
+        $input['confirmed_by'] =  $userId;
         $input['confirmed_at'] =  Carbon::now();
         $input['no_to_approve'] =  ($tenderMaster) ? $tenderMaster->min_approval_bid_opening :  0;
         $tenderNeotiation = $this->tenderNegotiationRepository->update($input, $id);
@@ -284,11 +288,7 @@ class TenderNegotiationController extends AppBaseController
         $areaList = $this->getTenderNegotiationsAreas($tenderNegotiationId);  
 
 
-        if(empty($areaList)) {
-            $this->saveAreaList($selectedAreaList,$tenderNegotiationId);
-        }else {
-            $this->updateAreaList($selectedAreaList,$tenderNegotiationId);
-        }
+
 
 
         if($unCheckedSupList->isNotEmpty()){   
@@ -306,19 +306,16 @@ class TenderNegotiationController extends AppBaseController
         }
 
         
-
+        if(empty($areaList)) {
+            $this->saveAreaList($selectedAreaList,$tenderNegotiationId);
+        }else {
+            $this->updateAreaList($selectedAreaList,$tenderNegotiationId);
+        }
 
         $saveTenderNegotiation = TenderNegotiation::find($tenderNegotiationId);
+        $tenderMaster = TenderMaster::find($input['tenderId'])->select('min_approval_bid_opening')->first();
         $saveTenderNegotiation->comments = $input['comments'];
-
-        if(isset($input['confirmYn']) &&  $input['confirmYn']) {
-            $tenderNeotiation = $this->tenderNegotiationRepository->find($tenderNegotiationId);
-            $tenderMaster = TenderMaster::find($input['tenderId'])->select('min_approval_bid_opening')->first();
-            $saveTenderNegotiation->confirmed_yn =  (isset($input['confirmYn'])) ? $input['confirmYn'] :false;
-            $saveTenderNegotiation->confirmed_by =   $userId;
-            $saveTenderNegotiation->confirmed_at =  Carbon::now();
-            $saveTenderNegotiation->no_to_approve =  ($tenderMaster) ? $tenderMaster->min_approval_bid_opening :  0;
-        }
+        $saveTenderNegotiation->no_to_approve =  ($tenderMaster) ? $tenderMaster->min_approval_bid_opening :  0;
 
         $result =  $saveTenderNegotiation->save();
 
