@@ -5,12 +5,14 @@ namespace App\Http\Controllers\API;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Repositories\TenderNegotiationRepository;
+use App\Repositories\SupplierTenderNegotiationRepository;
+use App\Repositories\TenderNegotiationAreaRepository;
 use App\Http\Requests\StorePostTenderNegotiation;
 use App\Http\Controllers\AppBaseController;
 use App\Models\TenderMaster;
 use App\Models\TenderFinalBids;
-use App\Models\BidSubmissionMaster;
 use App\Models\TenderNegotiation;
+use App\Models\BidSubmissionMaster;
 use App\Models\SupplierTenderNegotiation;
 use App\Models\SrmTenderBidEmployeeDetails;
 use App\Models\YesNoSelection;
@@ -21,10 +23,17 @@ use Auth;
 class TenderNegotiationController extends AppBaseController
 {
     private $tenderNegotiationRepository;
-
-    public function __construct(TenderNegotiationRepository $tenderNegotiationRepository)
+    private $supplierTenderNegotiationRepository;
+    private $tenderNegotiationAreaRepository;
+    public function __construct(TenderNegotiationRepository $tenderNegotiationRepository, 
+                                SupplierTenderNegotiationRepository $supplierTenderNegotiationRepository,
+                                TenderNegotiationAreaRepository $tenderNegotiationAreaRepository
+    )
     {
         $this->tenderNegotiationRepository = $tenderNegotiationRepository;
+        $this->supplierTenderNegotiationRepository = $supplierTenderNegotiationRepository;
+        $this->tenderNegotiationAreaRepository = $tenderNegotiationAreaRepository;
+
     }
 
  
@@ -109,10 +118,11 @@ class TenderNegotiationController extends AppBaseController
             }])->first();
 
      
-        
         if(empty($input['comments'])) {
             return $this->sendError('Comment is required',422);
         }
+
+
 
         if(empty($tenderNegotiation['area'])) {
             return $this->sendError('Tender negotiation area not selected!',422);
@@ -242,5 +252,57 @@ class TenderNegotiationController extends AppBaseController
 
     }
 
+    public function saveTenderNegotiationDetails(Request $request) {
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('confirmYn'));
 
+        $messages = [
+            'supplierArray.required' => 'Select at least one supplier',
+            'areaArray.required' => 'Select at least one area',
+            'comment.required_if'  => 'Comment is required',
+            'tenderNegotiationId' => 'Tender Negotiation is required',
+            
+        ];
+
+        $validator = \Validator::make($request->all(), [
+            'supplierArray' => 'required',
+            'areaArray' => 'required',
+            'tenderNegotiationId' => 'required',
+            'comment' => ['required_if:confirmYn,1'],
+
+        ],$messages);
+
+
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422);
+        }
+
+
+        $supplierDataArray = $input['supplierArray'];
+        $areaDataArray = $input['areaArray'];
+        $tenderNegotiationId = $input['tenderNegotiationId'];
+        
+        $input['tenderNegotiationID'] = $tenderNegotiationId;
+
+        $deleteSuppliers =  $this->supplierTenderNegotiationRepository->deleteSuppliersOfNegotiation($input);
+        $supplierTenderNegotiation = $this->supplierTenderNegotiationRepository->insert($supplierDataArray);
+
+        $areas =  $this->tenderNegotiationAreaRepository->where('tender_negotiation_id',$tenderNegotiationId)->delete();
+        $tenderNegotiationArea = $this->tenderNegotiationAreaRepository->create($areaDataArray);
+
+
+        $saveTenderNegotiation = TenderNegotiation::find($tenderNegotiationId);
+        $saveTenderNegotiation->comments = $input['comment'];
+        $saveTenderNegotiation->confirmed_yn =  (isset($input['confirmYn'])) ? $input['confirmYn'] :false;
+        $result =  $saveTenderNegotiation->save();
+
+        if($result) {
+            return $this->sendResponse($saveTenderNegotiation, 'Record updated successfully');
+        }else {
+            return $this->sendError('Sorry! Cannot update record', 404);
+
+        }
+
+    }
 }
+
