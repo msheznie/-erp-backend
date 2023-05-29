@@ -228,7 +228,7 @@ class TenderNegotiationController extends AppBaseController
         $srmTenderBidEmployeeDetails = SrmTenderBidEmployeeDetails::select('id','emp_id','tender_id')->where('tender_id', $tenderNeotiation['srm_tender_master_id'])->with(['employee' => function ($q){ 
             $q->select('employeeSystemID','empFullName','empID','empCompanySystemID','empEmail');
         }])->get();
-        $supplierTenderNegotiations = SupplierTenderNegotiation::where('tender_negotiation_id',$input['id'])->select('bidSubmissionCode')->get();
+        $supplierTenderNegotiations = SupplierTenderNegotiation::where('tender_negotiation_id',$input['tenderNegotiationID'])->select('bidSubmissionCode')->get();
 
         if($srmTenderBidEmployeeDetails) {
             foreach($srmTenderBidEmployeeDetails as $srmTenderBidEmployeeDetail) {
@@ -257,17 +257,19 @@ class TenderNegotiationController extends AppBaseController
         $input = $this->convertArrayToSelectedValue($input, array('confirmYn'));
 
         $messages = [
-            'supplierArray.required' => 'Select at least one supplier',
-            'areaArray.required' => 'Select at least one area',
+            'supplierArray.required_if' => 'Select at least one supplier',
+            'areaArray.required_if' => 'Select at least one area',
             'comment.required_if'  => 'Comment is required',
             'tenderNegotiationId' => 'Tender Negotiation is required',
+            'tenderId' =>  'Tender Id is required',
             
         ];
 
         $validator = \Validator::make($request->all(), [
-            'supplierArray' => 'required',
-            'areaArray' => 'required',
+            'supplierArray' =>  ['required_if:confirmYn,1'],
+            'areaArray' =>  ['required_if:confirmYn,1'],
             'tenderNegotiationId' => 'required',
+            'tenderId' =>  'required',
             'comment' => ['required_if:confirmYn,1'],
 
         ],$messages);
@@ -290,11 +292,23 @@ class TenderNegotiationController extends AppBaseController
         $areas =  $this->tenderNegotiationAreaRepository->where('tender_negotiation_id',$tenderNegotiationId)->delete();
         $tenderNegotiationArea = $this->tenderNegotiationAreaRepository->create($areaDataArray);
 
-
         $saveTenderNegotiation = TenderNegotiation::find($tenderNegotiationId);
         $saveTenderNegotiation->comments = $input['comment'];
-        $saveTenderNegotiation->confirmed_yn =  (isset($input['confirmYn'])) ? $input['confirmYn'] :false;
+
+        if(isset($input['confirmYn']) &&  $input['confirmYn']) {
+            $tenderNeotiation = $this->tenderNegotiationRepository->find($tenderNegotiationId);
+            $tenderMaster = TenderMaster::find($input['tenderId'])->select('min_approval_bid_opening')->first();
+            $saveTenderNegotiation->confirmed_yn =  (isset($input['confirmYn'])) ? $input['confirmYn'] :false;
+            $saveTenderNegotiation->confirmed_by =   \Helper::getEmployeeSystemID();
+            $saveTenderNegotiation->confirmed_at =  Carbon::now();
+            $saveTenderNegotiation->no_to_approve =  ($tenderMaster) ? $tenderMaster->min_approval_bid_opening :  0;
+            $this->sendEmailToCommitteMembers($tenderNeotiation,$input);
+
+        }
+
         $result =  $saveTenderNegotiation->save();
+
+
 
         if($result) {
             return $this->sendResponse($saveTenderNegotiation, 'Record updated successfully');
