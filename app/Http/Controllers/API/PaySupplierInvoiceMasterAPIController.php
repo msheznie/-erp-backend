@@ -1502,6 +1502,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             $input = $request->all();
             $input = $this->convertArrayToValue($input);
 
+
             /** @var PaySupplierInvoiceMaster $paySupplierInvoiceMaster */
             $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->findWithoutFail($id);
 
@@ -1670,9 +1671,21 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 $input['BPVchequeDate'] = null;
                 $input['BPVchequeNo'] = null;
                 $input['expenseClaimOrPettyCash'] = null;
+
             } else {
                 $input['pdcChequeYN'] = 0;
             }
+
+            if (isset($input['pdcChequeYN']) && $input['pdcChequeYN'] == false) {
+
+                PdcLog::where('documentSystemID', $input['documentSystemID'])
+                    ->where('documentmasterAutoID', $input['PayMasterAutoId'])
+                    ->delete();
+
+                ChequeRegisterDetail::where('document_id', $input['PayMasterAutoId'])->where('document_master_id', $input['documentSystemID'])->update(['status' => 0, 'document_master_id' => null, 'document_id' => null]);
+
+            }
+
 
             $warningMessage = '';
 
