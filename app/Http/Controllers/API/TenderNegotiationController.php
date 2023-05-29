@@ -5,12 +5,15 @@ namespace App\Http\Controllers\API;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Repositories\TenderNegotiationRepository;
+use App\Repositories\SupplierTenderNegotiationRepository;
+use App\Repositories\TenderNegotiationAreaRepository;
 use App\Http\Requests\StorePostTenderNegotiation;
 use App\Http\Controllers\AppBaseController;
 use App\Models\TenderMaster;
 use App\Models\TenderFinalBids;
-use App\Models\BidSubmissionMaster;
+use App\Models\TenderNegotiationArea;
 use App\Models\TenderNegotiation;
+use App\Models\BidSubmissionMaster;
 use App\Models\SupplierTenderNegotiation;
 use App\Models\SrmTenderBidEmployeeDetails;
 use App\Models\YesNoSelection;
@@ -21,10 +24,17 @@ use Auth;
 class TenderNegotiationController extends AppBaseController
 {
     private $tenderNegotiationRepository;
-
-    public function __construct(TenderNegotiationRepository $tenderNegotiationRepository)
+    private $supplierTenderNegotiationRepository;
+    private $tenderNegotiationAreaRepository;
+    public function __construct(TenderNegotiationRepository $tenderNegotiationRepository, 
+                                SupplierTenderNegotiationRepository $supplierTenderNegotiationRepository,
+                                TenderNegotiationAreaRepository $tenderNegotiationAreaRepository
+    )
     {
         $this->tenderNegotiationRepository = $tenderNegotiationRepository;
+        $this->supplierTenderNegotiationRepository = $supplierTenderNegotiationRepository;
+        $this->tenderNegotiationAreaRepository = $tenderNegotiationAreaRepository;
+
     }
 
  
@@ -91,21 +101,61 @@ class TenderNegotiationController extends AppBaseController
     public function update(Request $request, $id)
     {
         $input =  $request->all();
-        $confirmationValidation = $this->validateConfirmation($input);
-        if(!$confirmationValidation['success']) {
-            return $this->sendError($confirmationValidation['message'], $confirmationValidation['code']);
+        $resValidation = $this->validateConfirmation($input);
+       
+        if (!$resValidation['status']) {
+            $statusCode = isset($resValidation['code']) ? $resValidation['code'] : 404;
+            return $this->sendError($resValidation['message'], $statusCode);
         }
-      
+        
+
+        $userId = \Helper::getEmployeeSystemID();
+        $selectedSupplierList = $input['selectedSupplierList']; 
+        $supplierList = $this->getTenderNegotiationsSuppliers($id);  
+        $unCheckedSupList =  collect($supplierList)->whereNotIn('srm_bid_submission_master_id',array_column($selectedSupplierList, 'srm_bid_submission_master_id'));
+        $checkedSupplierList = collect($selectedSupplierList)->whereNotIn('srm_bid_submission_master_id',array_column($supplierList, 'srm_bid_submission_master_id')); 
+       
+        $selectedAreaList = $input['selectedArealList']; 
+        $areaList = $this->getTenderNegotiationsAreas($id);  
+
+
+
+
+
+        if($unCheckedSupList->isNotEmpty()){   
+            $removeUncheckedSuppliers = $this->removeUncheckedSuppliers($unCheckedSupList,$id);
+                if(!$removeUncheckedSuppliers['status']){ 
+                    return $this->sendError($removeUncheckedSuppliers['message']);
+                }
+        } 
+
+        if($checkedSupplierList->isNotEmpty()){
+            $addSelectedSuppliers = $this->addSelectedSuppliers($checkedSupplierList,$id);
+                if(!$addSelectedSuppliers['status']){
+                    return $this->sendError($addSelectedSuppliers['message']);
+                }
+        }
+
+
+        if(empty($areaList)) {
+            $this->saveAreaList($selectedAreaList,$id);
+        }else {
+            $this->updateAreaList($selectedAreaList,$id);
+        }
+
+
         $tenderNeotiation = $this->tenderNegotiationRepository->find($id);
         $this->sendEmailToCommitteMembers($tenderNeotiation,$input);
-        $tenderMaster = TenderMaster::find($input['srm_tender_master_id'])->select('min_approval_bid_opening')->first();
-        $input['confirmed_by'] =   \Helper::getEmployeeSystemID();
+        $tenderMaster = TenderMaster::find($id)->select('min_approval_bid_opening')->first();
+        $input['confirmed_by'] =  $userId;
         $input['confirmed_at'] =  Carbon::now();
         $input['no_to_approve'] =  ($tenderMaster) ? $tenderMaster->min_approval_bid_opening :  0;
         $tenderNeotiation = $this->tenderNegotiationRepository->update($input, $id);
-        return $this->sendResponse($tenderNeotiation->toArray(), "Tender Negotiation Updated successfully");
-    }
+        
+         
+        return $this->sendResponse([], "Tender Negotiation Updated successfully");
 
+    }
     /**
      * Remove the specified resource from storage.
      *
@@ -132,36 +182,6 @@ class TenderNegotiationController extends AppBaseController
     }
 
 
-    public function validateConfirmation($input) {
-        $messages = [
-            'id.required' => 'ID is required'
-        ];
-      
-        $validator = \Validator::make($input, [
-            'id' => 'required'
-        ], $messages);
-      
-        if ($validator->fails()) {
-            return ['status' => false, 'code' => 422, 'message' => $validator->messages()];
-        } 
-      
-        $tenderNegotiation =$this->tenderNegotiationRepository->find($input['id'])->with(['area' => function($a) {
-                $a->select('id','tender_negotiation_id');
-            },'SupplierTenderNegotiation' => function ($s) {
-                $s->select('id','tender_negotiation_id');
-            }])->first();
-      
-        if(empty($tenderNegotiation->area)) {
-            return ['success' => false,'message' => 'Tender negotiation area not selected!','code'=> 403];
-        }
-      
-        if(empty($tenderNegotiation->SupplierTenderNegotiation)) {
-            return ['success' => false,'message' => 'Tender negotiation supplier/s not selected!','code'=> 403];
-      
-        } 
-
-        return ['success' => true, 'code' => 200, 'message' => ''];
-    }
 
 
     public function getFinalBidsForTenderNegotiation(Request $request)
@@ -219,7 +239,7 @@ class TenderNegotiationController extends AppBaseController
         $srmTenderBidEmployeeDetails = SrmTenderBidEmployeeDetails::select('id','emp_id','tender_id')->where('tender_id', $tenderNeotiation['srm_tender_master_id'])->with(['employee' => function ($q){ 
             $q->select('employeeSystemID','empFullName','empID','empCompanySystemID','empEmail');
         }])->get();
-        $supplierTenderNegotiations = SupplierTenderNegotiation::where('tender_negotiation_id',$input['id'])->select('bidSubmissionCode')->get();
+        $supplierTenderNegotiations = SupplierTenderNegotiation::where('tender_negotiation_id',$input['tenderNegotiationId'])->select('bidSubmissionCode')->get();
 
         if($srmTenderBidEmployeeDetails) {
             foreach($srmTenderBidEmployeeDetails as $srmTenderBidEmployeeDetail) {
@@ -243,5 +263,174 @@ class TenderNegotiationController extends AppBaseController
 
     }
 
+    public function saveTenderNegotiationDetails(Request $request) {
+        $input = $request->all();
+        $input = $this->convertArrayToSelectedValue($input, array('confirmYn'));
+        $resValidation = $this->validateConfirmation($input);
 
+        if (!$resValidation['status']) {
+            $statusCode = isset($resValidation['code']) ? $resValidation['code'] : 404;
+            return $this->sendError($resValidation['message'], $statusCode);
+        }
+        
+
+
+        $supplierDataArray = $input['selectedSupplierList'];
+        $selectedAreaList = $input['selectedArealList'];
+        $tenderNegotiationId = $input['tenderNegotiationId'];
+        $input['tenderNegotiationID'] = $tenderNegotiationId;
+
+
+        $userId = \Helper::getEmployeeSystemID();
+        $selectedSupplierList = $supplierDataArray; 
+        $supplierList = $this->getTenderNegotiationsSuppliers($tenderNegotiationId);  
+        $unCheckedSupList =  collect($supplierList)->whereNotIn('srm_bid_submission_master_id',array_column($selectedSupplierList, 'srm_bid_submission_master_id'));
+        $checkedSupplierList = collect($selectedSupplierList)->whereNotIn('srm_bid_submission_master_id',array_column($supplierList, 'srm_bid_submission_master_id')); 
+       
+        $selectedAreaList = $input['selectedArealList']; 
+        $areaList = $this->getTenderNegotiationsAreas($tenderNegotiationId);  
+
+
+
+
+
+        if($unCheckedSupList->isNotEmpty()){   
+            $removeUncheckedSuppliers = $this->removeUncheckedSuppliers($unCheckedSupList,$tenderNegotiationId);
+                if(!$removeUncheckedSuppliers['status']){ 
+                    return $this->sendError($removeUncheckedSuppliers['message']);
+                }
+        } 
+
+        if($checkedSupplierList->isNotEmpty()){
+            $addSelectedSuppliers = $this->addSelectedSuppliers($checkedSupplierList,$tenderNegotiationId);
+                if(!$addSelectedSuppliers['status']){
+                    return $this->sendError($addSelectedSuppliers['message']);
+                }
+        }
+
+        
+        if(empty($areaList)) {
+            $this->saveAreaList($selectedAreaList,$tenderNegotiationId);
+        }else {
+            $this->updateAreaList($selectedAreaList,$tenderNegotiationId);
+        }
+
+        $saveTenderNegotiation = TenderNegotiation::find($tenderNegotiationId);
+        $tenderMaster = TenderMaster::find($input['tenderId'])->select('min_approval_bid_opening')->first();
+        $saveTenderNegotiation->comments = $input['comments'];
+        $saveTenderNegotiation->no_to_approve =  ($tenderMaster) ? $tenderMaster->min_approval_bid_opening :  0;
+
+        $result =  $saveTenderNegotiation->save();
+
+
+
+        if($result) {
+            return $this->sendResponse($saveTenderNegotiation, 'Record updated successfully');
+        }else {
+            return $this->sendError('Sorry! Cannot update record', 404);
+
+        }
+
+    }
+
+    public function validateConfirmation($input){
+
+        $messages = [
+            'id.required_if' => 'ID is required',
+            'comments.required'  => 'Comment is required',
+            'selectedSupplierList.required'  => 'Supplier is required',
+            'selectedArealList.required'  => 'Area is required',
+        ];
+      
+        $validator = \Validator::make($input, [
+            'id' => ['required_if:confirmYn,1'],
+            'comments'=>'required',
+            'selectedSupplierList'=> 'required|array',
+            'selectedArealList'=> 'required|array',
+        ], $messages);
+
+        if ($validator->fails()) {
+            return ['status' => false, 'code' => 422, 'message' => $validator->messages()]; 
+        }  
+
+        return ['status' => true, 'message' => "success"]; 
+
+    }
+
+
+
+    public function getTenderNegotiationsSuppliers($id){ 
+        return SupplierTenderNegotiation::select('suppliermaster_id','srm_bid_submission_master_id')
+        ->where('tender_negotiation_id',$id) 
+        ->get()
+        ->toArray();
+    }
+
+    public function getTenderNegotiationsAreas($id) {
+        return TenderNegotiationArea::select('pricing_schedule','technical_evaluation','tender_documents')
+        ->where('tender_negotiation_id',$id) 
+        ->get()
+        ->toArray();
+    }
+
+    public function removeUncheckedSuppliers($unCheckedSupList,$id){
+       
+        $supplierList = collect($unCheckedSupList)->toArray();   
+
+        $supplierUnchecked = SupplierTenderNegotiation::where('tender_negotiation_id',$id)
+        ->whereIn('srm_bid_submission_master_id',array_column($supplierList,'srm_bid_submission_master_id')) 
+        ->whereIn('suppliermaster_id',array_column($supplierList,'suppliermaster_id')) 
+        ->delete();
+
+        if(!$supplierUnchecked){ 
+            return ['status' => false,'message' =>'Supplier deltation failed'];  
+        }
+
+        return ['status' => true,'message' =>'Supplier deltation success'];  
+    }
+
+
+    public function addSelectedSuppliers($checkedSupplierList,$id){   
+        $data = [];
+    
+        foreach ($checkedSupplierList as $val ){
+            $data[] = [
+                'tender_negotiation_id'=> $id,
+                'suppliermaster_id'=> $val['suppliermaster_id'],
+                'srm_bid_submission_master_id'=> $val['srm_bid_submission_master_id'],
+                'bidSubmissionCode'=> $val['bidSubmissionCode']
+            ];
+        }
+
+        $results = SupplierTenderNegotiation::insert($data);
+
+        if(!$results){ 
+            return ['status' => false,'message' =>'Supplier insertion failed'];  
+        }
+
+        return ['status' => true,'message' =>'Supplier insertion success'];
+    }
+
+    public function saveAreaList($checkedAreaList,$id){   
+
+        $results = TenderNegotiationArea::create($checkedAreaList);
+
+        if(!$results){ 
+            return ['status' => false,'message' =>'Area creation failed'];  
+        }
+
+        return ['status' => true,'message' =>'Area creation success'];  
+    }
+
+
+    public function updateAreaList($checkedAreaList,$id) {
+        $updateArea = TenderNegotiationArea::where('tender_negotiation_id',$id)->update($checkedAreaList);
+        if(!$updateArea){ 
+            return ['status' => false,'message' =>'Area cannot update'];  
+        }
+
+        return ['status' => true,'message' =>'Area updated success'];  
+
+    }
 }
+
