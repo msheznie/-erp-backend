@@ -109,6 +109,7 @@ class TenderNegotiationController extends AppBaseController
         }
         
         $tenderMasterId = $input['srm_tender_master_id'];
+        $noToApproval = $this->getTenderMaster($tenderMasterId);
 
         $userId = \Helper::getEmployeeSystemID();
         $selectedSupplierList = $input['selectedSupplierList']; 
@@ -148,14 +149,9 @@ class TenderNegotiationController extends AppBaseController
         $tenderNeotiation = $this->tenderNegotiationRepository->find($id);
         $this->sendEmailToCommitteMembers($tenderNeotiation,$input);
 
-        if(!$id) {
-            return $this->sendError('Tender Master not found');
-        }
-
-        $tenderMaster = TenderMaster::select('min_approval_bid_opening')->where('id',$id)->first();
         $input['confirmed_by'] =  $userId;
         $input['confirmed_at'] =  Carbon::now();
-        $input['no_to_approve'] =  ($tenderMaster) ? $tenderMaster->min_approval_bid_opening :  0;
+        $input['no_to_approve'] =  $noToApproval;
         $tenderNeotiation = $this->tenderNegotiationRepository->update($input, $id);
         
          
@@ -269,14 +265,6 @@ class TenderNegotiationController extends AppBaseController
     public function saveTenderNegotiationDetails(Request $request) {
         $input = $request->all();
         $input = $this->convertArrayToSelectedValue($input, array('confirmYn'));
-        $resValidation = $this->validateConfirmation($input);
-
-        if (!$resValidation['status']) {
-            $statusCode = isset($resValidation['code']) ? $resValidation['code'] : 404;
-            return $this->sendError($resValidation['message'], $statusCode);
-        }
-        
-
 
         $supplierDataArray = $input['selectedSupplierList'];
         $selectedAreaList = $input['selectedArealList'];
@@ -319,9 +307,11 @@ class TenderNegotiationController extends AppBaseController
         }
 
         $saveTenderNegotiation = TenderNegotiation::find($tenderNegotiationId);
-        $tenderMaster = TenderMaster::find($input['tenderId'])->select('min_approval_bid_opening')->first();
+        $tenderMasterId= $input['tenderId'];
+        $noToApproval = $this->getTenderMaster($tenderMasterId);
+
         $saveTenderNegotiation->comments = $input['comments'];
-        $saveTenderNegotiation->no_to_approve =  ($tenderMaster) ? $tenderMaster->min_approval_bid_opening :  0;
+        $saveTenderNegotiation->no_to_approve = $noToApproval;
 
         $result =  $saveTenderNegotiation->save();
 
@@ -360,7 +350,13 @@ class TenderNegotiationController extends AppBaseController
 
     }
 
-
+    public function getTenderMaster($tenderMasterId){
+        $tenderMaster = TenderMaster::select('min_approval_bid_opening')
+        ->where('id',$tenderMasterId)
+        ->first();
+        return ($tenderMaster) ? $tenderMaster->min_approval_bid_opening :  0;
+  
+      }
 
     public function getTenderNegotiationsSuppliers($id){ 
         return SupplierTenderNegotiation::select('suppliermaster_id','srm_bid_submission_master_id')
