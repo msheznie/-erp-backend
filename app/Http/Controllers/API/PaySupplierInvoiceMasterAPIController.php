@@ -2113,6 +2113,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
                     $error_count = 0;
 
+                    DirectPaymentDetails::where('directPaymentAutoID', $id)->update(['bankCurrencyER' => $input['BPVbankCurrencyER']]);
 
                     $employeeInvoice = CompanyPolicyMaster::where('companyPolicyCategoryID', 68)
                                     ->where('companySystemID', $paySupplierInvoiceMaster->companySystemID)

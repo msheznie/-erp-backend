@@ -406,21 +406,12 @@ class BankLedgerAPIController extends AppBaseController
                     if (!empty($checkGLAmount)) {
                         $glAmount = 0;
                         $conditionChecking = true;
-                        if ($bankLedger->bankCurrency == $checkGLAmount->documentLocalCurrencyID) {
-                            $glAmount = $checkGLAmount->documentLocalAmount;
-                        } else if ($bankLedger->bankCurrency == $checkGLAmount->documentRptCurrencyID) {
-                            $glAmount = $checkGLAmount->documentRptAmount;
-                        }else if($bankLedger->bankCurrency == $checkGLAmount->documentTransCurrencyID){
-                            $glAmount = $checkGLAmount->documentTransAmount;
-                        }else{
-                            $conditionChecking = false;
-                        }
-
-                        $a = abs($bankLedger->payAmountBank);
+                        $glAmount = $checkGLAmount->documentRptAmount;
+                        $a = abs($bankLedger->payAmountCompRpt);
                         $b = abs($glAmount);
                         $epsilon = 0.00001;
 
-                        if ($conditionChecking && (abs($a-$b) > $epsilon)) {
+                        if ((abs($a-$b) > $epsilon)) {
                             return $this->sendError(trans('custom.bank_amount_is_not_matching_with_gl_amount'), 500);
                         }
                     } else {
