@@ -328,7 +328,7 @@ class BarcodeConfigurationAPIController extends AppBaseController
             $subCompanies = [$selectedCompanyId];
         }
         $barCodeFonts = [["value"=>1,"label"=>"Code 128"],["value"=>2,"label"=>"Code 39"]];
-        $paper_szie = [["value"=>1,"label"=>"A3"],["value"=>2,"label"=>"A4"],["value"=>3,"label"=>"55mm x 30mm"]];
+        $paper_szie = [["value"=>1,"label"=>"A3"],["value"=>2,"label"=>"A4"],["value"=>3,"label"=>"55mm x 45mm"]];
         $companies = Company::whereIn('companySystemID', $subCompanies)
             ->selectRaw('companySystemID as value,CONCAT(CompanyID, " - " ,CompanyName) as label')
             ->get();
@@ -669,7 +669,7 @@ class BarcodeConfigurationAPIController extends AppBaseController
                     $barcodesCountTotal = 0;
                     $column = 0;
                     $page_width = 55;
-                    $page_height = 30;
+                    $page_height = 45;
     
                     $pdf = new \PDF_BARCODE('L', 'mm', [$page_width,$page_height]);
     
@@ -707,7 +707,7 @@ class BarcodeConfigurationAPIController extends AppBaseController
                     $barcodesCountTotal = 0;
                     $column = 0;
                     $page_width = 55;
-                    $page_height = 30;
+                    $page_height = 45;
         
                     $pdf = new \PDF_BARCODE('L', 'mm',  [$page_width,$page_height]);
         
