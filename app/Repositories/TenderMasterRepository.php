@@ -58,7 +58,8 @@ class TenderMasterRepository extends BaseRepository
         'technical_bid_closing_date',
         'commerical_bid_opening_date',
         'commerical_bid_closing_date',
-        'is_negotiation_started'
+        'is_negotiation_started',
+        'negotiation_published'
 
     ];
 
