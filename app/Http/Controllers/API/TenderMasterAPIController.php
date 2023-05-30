@@ -218,7 +218,8 @@ class TenderMasterAPIController extends AppBaseController
     public function show($id)
     {
         /** @var TenderMaster $tenderMaster */
-        $tenderMaster = $this->tenderMasterRepository->findWithoutFail($id);
+        // $tenderMaster = $this->tenderMasterRepository->findWithoutFail($id);
+        $tenderMaster = TenderMaster::where('id',$id)->with('tender_negotiation')->first();
         
         if (empty($tenderMaster)) {
             return $this->sendError('Tender Master not found');

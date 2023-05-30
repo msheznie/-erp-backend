@@ -20,6 +20,7 @@ use App\Models\YesNoSelection;
 use App\Models\CurrencyMaster;
 use Carbon\Carbon;
 use Auth;
+use Illuminate\Support\Facades\DB;
 
 class TenderNegotiationController extends AppBaseController
 {
@@ -238,29 +239,47 @@ class TenderNegotiationController extends AppBaseController
         $srmTenderBidEmployeeDetails = SrmTenderBidEmployeeDetails::select('id','emp_id','tender_id')->where('tender_id', $tenderNeotiation['srm_tender_master_id'])->with(['employee' => function ($q){ 
             $q->select('employeeSystemID','empFullName','empID','empCompanySystemID','empEmail');
         }])->get();
-        $supplierTenderNegotiations = SupplierTenderNegotiation::where('tender_negotiation_id',$input['tenderNegotiationId'])->select('bidSubmissionCode')->get();
+        $supplierTenderNegotiations = SupplierTenderNegotiation::where('tender_negotiation_id',$input['tenderNegotiationId'])->with(['bid_submission_master'  => function ($q) {
+            $q->select('bidSubmissionCode','id','bidSubmittedDatetime','supplier_registration_id');
+            $q->with(['SupplierRegistrationLink' => function ($s) {
+                $s->select('name','id');
+            }]);
+        }])->select('bidSubmissionCode','srm_bid_submission_master_id','suppliermaster_id')->get();
 
+        $tenderMaster = TenderMaster::find($input['srm_tender_master_id'])->select('tender_code')->first();
+        $table = "<table style='width:100%;'><thead style='
+        padding: 1%;
+        width: 100%;
+        '><tr><th style='padding:1%;'>Bid Code</th><th style='padding:1%;'>Bid Submission Date</th><th style='padding:1%;'>Supplier Name</th></tr></thead><tbody>";
+
+        foreach($supplierTenderNegotiations as $supplierTenderNegotiation) {
+
+            $date = ($supplierTenderNegotiation->bid_submission_master) ? new Carbon($supplierTenderNegotiation->bid_submission_master->bidSubmittedDatetime) : null;
+            $supplierName = ($supplierTenderNegotiation->bid_submission_master->SupplierRegistrationLink) ? $supplierTenderNegotiation->bid_submission_master->SupplierRegistrationLink->name : null;
+            $suppplierName = ($supplierTenderNegotiation->supplier) ? $supplierTenderNegotiation->supplier->name : null;
+            $table.= "<tr><td style='padding:1%;'>".$supplierTenderNegotiation->bidSubmissionCode."</td><td style='padding:1%;'>".$date->toDayDateTimeString()."</td><td style='padding:1%;'>".$suppplierName."</td></tr>";
+        }
+
+        $table .= "</tbody></table>";
         if($srmTenderBidEmployeeDetails) {
             foreach($srmTenderBidEmployeeDetails as $srmTenderBidEmployeeDetail) {
                 $employee = ($srmTenderBidEmployeeDetail) ? $srmTenderBidEmployeeDetail->employee : null;
-                foreach($supplierTenderNegotiations as $supplierTenderNegotiation) {
                     if(isset($employee) &&  $employee->empEmail) {
                         $dataEmail['empEmail'] = $employee->empEmail;
                         $dataEmail['companySystemID'] = $employee->empCompanySystemID;
-                        $loginUrl = env('SRM_LINK');
-                        $url = trim($loginUrl,"/register");
-                        $redirectUrl= $url."/tender-management/tenders";
+                        $redirectUrl = env('ERP_APPROVE_URL');
                         $companyName = (Auth::user()->employee && Auth::user()->employee->company) ? Auth::user()->employee->company->CompanyName : null ;
-                        $temp = "Hi  $employee->empFullName , <br><br> The tender negotiation $supplierTenderNegotiation->bidSubmissionCode has been available for the approval. <br><br> <a href=$redirectUrl>Click here to approve</a> <br><br>Thank you.";
-                        $dataEmail['alertMessage'] = $supplierTenderNegotiation->bidSubmissionCode." - Tender negotiation for approval";
+                        // $temp = "Hi  $employee->empFullName , <br><br>The tender ". $tenderMaster->tender_code ."  has been available for the negotitaion approval.<br><br> The Follwing bid submission are available $table <a href=$redirectUrl>Click here to approve</a> <br><br>Thank you.";
+                        $temp = "Hi  $employee->empFullName , <br><br>The tender ". $tenderMaster->tender_code ."  has been available for the negotitaion approval.<br><br><a href=$redirectUrl>Click here to approve</a> <br><br>Thank you.";
+                        $dataEmail['alertMessage'] = $tenderMaster->tender_code." - Tender negotiation for approval";
                         $dataEmail['emailAlertMessage'] = $temp;
                         $sendEmail = \Email::sendEmailErp($dataEmail);
                     }
-                }
             }
         }
 
     }
+
 
     public function saveTenderNegotiationDetails(Request $request) {
         $input = $request->all();
@@ -280,9 +299,6 @@ class TenderNegotiationController extends AppBaseController
        
         $selectedAreaList = $input['selectedArealList']; 
         $areaList = $this->getTenderNegotiationsAreas($tenderNegotiationId);  
-
-
-
 
 
         if($unCheckedSupList->isNotEmpty()){   
