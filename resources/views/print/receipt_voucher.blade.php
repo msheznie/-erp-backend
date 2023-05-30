@@ -823,4 +823,32 @@
             </table>
         </div>
     @endif
+
+
+    @if($masterdata->pdcChequeYN == 1)
+        <div style="margin-top: 30px">
+            <table class="table table-bordered" style="width: 100%;">
+                <thead>
+                <tr class="theme-tr-head">
+                    <th>#</th>
+                    <th class="text-center">{{ __('custom.cheque_no') }}</th>
+                    <th class="text-center">{{ __('custom.cheque_date') }}</th>
+                    <th class="text-center">{{ __('custom.comment') }}</th>
+                    <th class="text-center">{{ __('custom.amount') }}</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach ($masterdata->pdc_cheque as $item)
+                    <tr style="border-top: 1px solid #ffffff !important;border-bottom: 1px solid #ffffff !important;">
+                        <td>{{$loop->iteration}}</td>
+                        <td>{{$item->chequeNo}}</td>
+                        <td>{{ \App\helper\Helper::dateFormat($item->chequeDate)}}</td>
+                        <td>{{$item->comments}}</td>
+                        <td class="text-right">{{number_format($item->amount, $transDecimal)}}</td>
+                    </tr>
+                @endforeach
+                </tbody>
+            </table>
+        </div>
+    @endif
 </div>
