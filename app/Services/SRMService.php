@@ -49,6 +49,8 @@ use App\Models\TenderFaq;
 use App\Models\TenderMainWorks;
 use App\Models\TenderMaster;
 use App\Models\TenderMasterSupplier;
+use App\Models\TenderNegotiation;
+use App\Models\TenderNegotiationArea;
 use App\Models\TenderSupplierAssignee;
 use App\Models\WarehouseMaster;
 use App\Models\BookInvSuppMaster;
@@ -2255,6 +2257,12 @@ class SRMService
         $tenderId = $request->input('extra.tenderId');
         $critera_type_id = $request->input('extra.critera_type_id');
         $bidMasterId = $request->input('extra.bidMasterId');
+        $negotiation = $request->input('extra.negotiation');
+
+        if($negotiation){
+            $tenderNegotiationArea = $this->getTenderNegotiationArea($tenderId, $bidMasterId);
+            $data['technical_evaluation'] = $tenderNegotiationArea->technical_evaluation;
+        }
 
         $data['criteriaDetail'] = EvaluationCriteriaDetails::with(['evaluation_criteria_score_config', 'evaluation_criteria_type', 'tender_criteria_answer_type', 'bid_submission_detail' => function ($q) use ($bidMasterId) {
             $q->where('bid_master_id', $bidMasterId);
@@ -2822,6 +2830,7 @@ class SRMService
         $assignDocumentTypesDeclared = [1,2,3];
         $assignDocumentTypes = TenderDocumentTypeAssign::where('tender_id',$tenderId)->pluck('document_type_id')->toArray();
         $doucments = (array_merge($assignDocumentTypesDeclared,$assignDocumentTypes));
+        $negotiation = $request->input('extra.negotiation');
 
         $type = TenderMaster::where('id',$tenderId)->select('document_type')->first();
 
@@ -2848,6 +2857,11 @@ class SRMService
 
         $data['bidSubmitted'] = $this->getBidMasterData($bidMasterId);
 
+        if($negotiation){
+            $tenderNegotiationArea = $this->getTenderNegotiationArea($tenderId, $bidMasterId);
+            $data['tender_documents'] = $tenderNegotiationArea->tender_documents;
+        }
+
         return [
             'success' => true,
             'message' => 'Successfully Received',
@@ -2859,6 +2873,7 @@ class SRMService
         $tenderId = $request->input('extra.tenderId');
         $bidMasterId = $request->input('extra.bidMasterId');
         $envelopType = $request->input('extra.envelopType');
+        $negotiation = $request->input('extra.negotiation');
         $assignDocumentTypesDeclared = [1,2,3];
         $assignDocumentTypes = TenderDocumentTypeAssign::where('tender_id',$tenderId)->pluck('document_type_id')->toArray();
         $doucments = (array_merge($assignDocumentTypesDeclared,$assignDocumentTypes));
@@ -2884,6 +2899,11 @@ class SRMService
         ->where('envelopType', 3)->where('attachmentType',2)->get();
 
         $data['bidSubmitted'] = $this->getBidMasterData($bidMasterId);
+
+        if($negotiation){
+            $tenderNegotiationArea = $this->getTenderNegotiationArea($tenderId, $bidMasterId);
+            $data['tender_documents'] = $tenderNegotiationArea->tender_documents;
+        }
 
         return [
             'success' => true,
@@ -3003,6 +3023,13 @@ class SRMService
     {
         $tenderId = $request->input('extra.tenderId');
         $bidMasterId = $request->input('extra.bidMasterId');
+        $negotiation = $request->input('extra.negotiation');
+
+        if($negotiation){
+            $tenderNegotiationArea = $this->getTenderNegotiationArea($tenderId, $bidMasterId);
+            $data['pricing_schedule'] = $tenderNegotiationArea->pricing_schedule;
+        }
+
         $data['commercialBid'] = PricingScheduleMaster::with(['tender_bid_format_master', 'bid_schedule' => function ($q) use ($bidMasterId) {
             $q->where('bid_master_id', $bidMasterId);
         }, 'pricing_shedule_details' => function ($q) use ($bidMasterId) {
@@ -3015,6 +3042,7 @@ class SRMService
         }])->where('tender_id', $tenderId)->get();
 
         $data['bidSubmitted'] = $this->getBidMasterData($bidMasterId);
+
 
         return [
             'success' => true,
@@ -4320,7 +4348,7 @@ class SRMService
         }
     }
 
-        private function getPreBidClarificationsResponseForExcel($tenderId)
+    private function getPreBidClarificationsResponseForExcel($tenderId)
         {
         $array_value = array();
         $x = 0;
@@ -4717,5 +4745,21 @@ class SRMService
         }
     }
 
+    private function getTenderNegotiationArea($tenderId, $bidMasterId)
+    {
+        $tenderNegotiationId = TenderNegotiation::select('id')->with('area')->where('srm_tender_master_id', $tenderId)->first();
 
+        $supplierTenderNegotiation = SupplierTenderNegotiation::select('srm_bid_submission_master_id')
+            ->where('tender_negotiation_id', $tenderNegotiationId->id)->first();
+
+        $tenderBidNegotiation = TenderBidNegotiation::where('tender_negotiation_id', $tenderNegotiationId->id)
+            ->where('bid_submission_master_id_new', $bidMasterId)
+            ->first();
+
+        if($supplierTenderNegotiation->srm_bid_submission_master_id == $tenderBidNegotiation->bid_submission_master_id_old){
+            return $tenderNegotiationId->area;
+        } else {
+            return null;
+        }
+    }
 }
