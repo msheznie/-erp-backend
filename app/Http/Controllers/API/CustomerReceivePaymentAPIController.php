@@ -2804,7 +2804,9 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         }, 'details', 'bankledger_by' => function ($query) {
             $query->with('bankrec_by');
             $query->where('documentSystemID', 21);
-        },'audit_trial.modified_by','advance_receipt_details'])->first();
+        },'audit_trial.modified_by','advance_receipt_details','pdc_cheque'=> function ($query) {
+            $query->where('documentSystemID', 21);
+        }])->first();
 
         $isProjectBase = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
         ->where('companySystemID', $output->companySystemID)
@@ -2936,7 +2938,9 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             $query->where('documentSystemID', 21);
         }, 'directdetails' => function ($query) {
             $query->with('project','segment');
-        }, 'details','advance_receipt_details'])->first();
+        }, 'details','advance_receipt_details','pdc_cheque'=> function ($query) {
+            $query->where('documentSystemID', 21);
+        }])->first();
 
         if (empty($customerReceivePaymentRecord)) {
             return $this->sendError('Customer Receive Payment not found');
