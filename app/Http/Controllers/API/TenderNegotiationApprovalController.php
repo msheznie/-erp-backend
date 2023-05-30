@@ -184,9 +184,8 @@ class TenderNegotiationApprovalController extends AppBaseController
         $tenderNegotiation = TenderNegotiation::select('status','id')->find($input['id']);
         $tenderNegotiation->status = 2;
         $tenderNegotiation->save();
-
-        $tenderMaster = TenderMaster::select('is_awarded','id')->find($input['srm_tender_master_id']);
-        $tenderMaster->is_awarded = false;
+        $tenderMaster = TenderMaster::select('negotiation_published','id')->find($input['srm_tender_master_id']);
+        $tenderMaster->negotiation_published = 1;
         $tenderMaster->save();
 
         $this->sendEmailToSuppliers($input);

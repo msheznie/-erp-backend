@@ -249,7 +249,8 @@ class TenderNegotiationController extends AppBaseController
             }]);
         }])->select('bidSubmissionCode','srm_bid_submission_master_id','suppliermaster_id')->get();
 
-        $tenderMaster = TenderMaster::find($input['srm_tender_master_id'])->select('tender_code')->first();
+        $tenderMaster = TenderMaster::where('id',$input['srm_tender_master_id'])->select('tender_code')->first();
+
         $table = "<table style='width:100%;'><thead style='
         padding: 1%;
         width: 100%;
