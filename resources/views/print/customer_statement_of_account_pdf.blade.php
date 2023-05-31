@@ -215,7 +215,7 @@
                     <td>{{ $det->documentCode  }}</td>
                     <td>{{\Helper::dateFormat($det->postedDate)}}</td>
                     <td>{{$det->clientContractID}}</td>
-                    <td></td>
+                    <td>{{$det->PONumber}}</td>
                     <td>{{\Helper::dateFormat($det->invoiceDate)}}</td>
                     <td style="word-break: break-all;white-space: normal;">{{$det->documentNarration}}</td>
                     <td>{{$det->documentCurrency}}</td>

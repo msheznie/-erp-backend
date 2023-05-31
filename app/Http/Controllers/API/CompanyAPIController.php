@@ -18,6 +18,7 @@ use App\helper\Helper;
 use App\helper\hrCompany;
 use App\Http\Requests\API\CreateCompanyAPIRequest;
 use App\Http\Requests\API\UpdateCompanyAPIRequest;
+use App\Models\AppearanceSettings;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\Company;
 use App\Models\ChartOfAccount;
@@ -227,6 +228,20 @@ class CompanyAPIController extends AppBaseController
 
     }
 
+    public function getAppearance(Request $request){
+
+        $appearanceSystemID = $request->get('appearance_system_id');
+
+        $data= AppearanceSettings::with(['elements'])->where('appearance_system_id', $appearanceSystemID)->get();
+        foreach ($data as $dt){
+            if($dt->appearance_element_id == 2){
+                $dt->value = Helper::getFileUrlFromS3($dt->value);
+            }
+
+        }
+
+        return $this->sendResponse($data,'Record retrieved successfully');
+    }
 
     public function getAdvanceAccount(Request $request)
     {

@@ -2448,7 +2448,8 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 FROM
                     erp_paysupplierinvoicedetail
                 INNER JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicemaster.PayMasterAutoId = erp_paysupplierinvoicedetail.PayMasterAutoId
-                WHERE erp_paysupplierinvoicemaster.invoiceType != 6 AND erp_paysupplierinvoicemaster.invoiceType != 7
+                JOIN erp_debitnote ON erp_paysupplierinvoicedetail.PayMasterAutoId = erp_debitnote.debitNoteAutoID
+                WHERE erp_paysupplierinvoicemaster.invoiceType != 6 AND erp_paysupplierinvoicemaster.invoiceType != 7 AND erp_debitnote.type = 1
                 GROUP BY
                     erp_paysupplierinvoicedetail.apAutoID
                     ) sid ON sid.apAutoID = erp_accountspayableledger.apAutoID
