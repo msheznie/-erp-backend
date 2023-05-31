@@ -218,7 +218,8 @@ class TenderMasterAPIController extends AppBaseController
     public function show($id)
     {
         /** @var TenderMaster $tenderMaster */
-        $tenderMaster = $this->tenderMasterRepository->findWithoutFail($id);
+        // $tenderMaster = $this->tenderMasterRepository->findWithoutFail($id);
+        $tenderMaster = TenderMaster::where('id',$id)->with('tender_negotiation')->first();
         
         if (empty($tenderMaster)) {
             return $this->sendError('Tender Master not found');
@@ -3439,7 +3440,7 @@ WHERE
         $companyId = $request['companyId'];
 
         $query = TenderMaster::with(['currency', 'srm_bid_submission_master', 'tender_type', 'envelop_type', 'srmTenderMasterSupplier'])->whereHas('srmTenderMasterSupplier')->where('published_yn', 1)
-            ->where('is_awarded', 1);
+            ->where('is_awarded', 1)->where('negotiation_published',0);
 
         $search = $request->input('search.value');
         if ($search) {

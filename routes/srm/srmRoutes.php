@@ -252,3 +252,5 @@ Route::post('addAllSuppliersToNegotiation', 'SupplierTenderNegotiationController
 Route::post('deleteAllSuppliersFromNegotiation', 'SupplierTenderNegotiationController@deleteAllSuppliersFromNegotiation');
 
 
+Route::post('saveTenderNegotiationDetails', 'TenderNegotiationController@saveTenderNegotiationDetails');
+
