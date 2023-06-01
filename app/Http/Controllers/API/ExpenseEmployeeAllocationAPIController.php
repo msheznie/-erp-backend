@@ -4,9 +4,11 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateExpenseEmployeeAllocationAPIRequest;
 use App\Http\Requests\API\UpdateExpenseEmployeeAllocationAPIRequest;
+use App\Models\ExpenseAssetAllocation;
 use App\Models\ExpenseEmployeeAllocation;
 use App\Models\DirectPaymentDetails;
 use App\Models\DirectInvoiceDetails;
+use App\Models\ItemIssueDetails;
 use App\Repositories\ExpenseEmployeeAllocationRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -166,13 +168,56 @@ class ExpenseEmployeeAllocationAPIController extends AppBaseController
             $input['amountLocal'] = $currencyConversion['localAmount'];
             $input['dateOfDeduction'] = Carbon::parse($input['dateOfDeduction']);
         }
-        
+        else if($input['documentSystemID'] == 8) {
+
+            $meterialissue = ItemIssueDetails::with(['master'])->find($input['documentDetailID']);
+            if (!$meterialissue) {
+                return $this->sendError("Meterial issues detail not found");
+            }
+            $detailTotal = round($meterialissue->issueCostRptTotal,2);
+            $input['chartOfAccountSystemID'] = $meterialissue->financeGLcodePLSystemID;
+            $companySystemID = isset($meterialissue->master->companySystemID) ? $meterialissue->master->companySystemID : null;
+            $issueDate = isset($meterialissue->master->issueDate) ? $meterialissue->master->issueDate : null;
+            //$transactionCurrencyID = isset($meterialissue->localCurrencyID) ? $meterialissue->localCurrencyID : null;
+
+            if(isset($input['assignedQty'])){
+                $detailQtyIssuedTotal = $meterialissue->qtyIssued;
+                $costPerQty = $meterialissue->issueCostRpt;
+                $input['amount'] = $costPerQty * $input['assignedQty'];
+
+                $allocatedQtySum = ExpenseEmployeeAllocation::where('documentDetailID', $input['documentDetailID'])
+                    ->where('documentSystemID', $input['documentSystemID'])
+                    ->sum('assignedQty');
+
+                $newQtyTotal = $allocatedQtySum + $input['assignedQty'];
+
+
+                if (($newQtyTotal - $detailQtyIssuedTotal) > 0) {
+                    return $this->sendError("Assigned qty cannot be greater than detail qty.");
+                }
+            }
+
+            $input['amountRpt'] = $input['amount'];
+            $input['dateOfDeduction'] = $issueDate;
+
+            if ($meterialissue->issueCostRptTotal == 0) {
+                return $this->sendError("Total Value cannot be zero.");
+            }
+
+            if(is_numeric($input['amount']) != 1){
+                return $this->sendError("Please enter a numeric value to the amount field.");
+            }
+
+            $input['amountLocal'] = ($meterialissue->issueCostLocalTotal/$meterialissue->issueCostRptTotal)*$input['amount'];
+
+
+        }
         
         $allocatedSum = ExpenseEmployeeAllocation::where('documentDetailID', $input['documentDetailID'])
                                                   ->where('documentSystemID', $input['documentSystemID'])
                                                   ->sum('amount');
 
-        $newTotal = $allocatedSum + floatval($input['amount']);
+        $newTotal = round($allocatedSum + floatval($input['amount']),2);
 
 
         if ($newTotal > $detailTotal) {
