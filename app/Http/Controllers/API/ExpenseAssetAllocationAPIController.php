@@ -237,6 +237,23 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
                 $companySystemID = isset($meterialissue->master->companySystemID) ? $meterialissue->master->companySystemID : null;
                 //$transactionCurrencyID = isset($meterialissue->localCurrencyID) ? $meterialissue->localCurrencyID : null;
 
+                if(isset($input['allocation_qty'])){
+                    $detailQtyIssuedTotal = $meterialissue->qtyIssued;
+                    $costPerQty = $meterialissue->issueCostRpt;
+                    $input['amount'] = $costPerQty * $input['allocation_qty'];
+
+                    $allocatedQtySum = ExpenseAssetAllocation::where('documentDetailID', $input['documentDetailID'])
+                                                            ->where('documentSystemID', $input['documentSystemID'])
+                                                            ->sum('allocation_qty');
+
+                    $newQtyTotal = $allocatedQtySum + $input['allocation_qty'];
+
+
+                    if (($newQtyTotal - $detailQtyIssuedTotal) > 0) {
+                        return $this->sendError("Allocated qty cannot be greater than detail qty.");
+                    }
+                }
+                
                 $input['amountRpt'] = $input['amount'];
 
                 if ($meterialissue->issueCostRptTotal == 0) {
