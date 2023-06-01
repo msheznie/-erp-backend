@@ -315,7 +315,9 @@
                     <td>
                         <span>{{$masterData['destination']}}</span>
                         @if($masterData['travel_type'] == 1)
-                            <br><span>{{$masterData['city']}}</span>
+                            <br>
+                            <span style="font-weight:bold;">City : </span>
+                            <span>{{$masterData['city']}}</span>
                         @endif
                     </td>
 
