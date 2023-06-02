@@ -174,7 +174,7 @@ class ExpenseEmployeeAllocationAPIController extends AppBaseController
             if (!$meterialissue) {
                 return $this->sendError("Meterial issues detail not found");
             }
-            $detailTotal = round($meterialissue->issueCostRptTotal,2);
+            $detailTotal = $meterialissue->issueCostRptTotal;
             $input['chartOfAccountSystemID'] = $meterialissue->financeGLcodePLSystemID;
             $companySystemID = isset($meterialissue->master->companySystemID) ? $meterialissue->master->companySystemID : null;
             $issueDate = isset($meterialissue->master->issueDate) ? $meterialissue->master->issueDate : null;
@@ -217,7 +217,7 @@ class ExpenseEmployeeAllocationAPIController extends AppBaseController
                                                   ->where('documentSystemID', $input['documentSystemID'])
                                                   ->sum('amount');
 
-        $newTotal = round($allocatedSum + floatval($input['amount']),2);
+        $newTotal = $allocatedSum + floatval($input['amount']);
 
 
         if ($newTotal > $detailTotal) {
