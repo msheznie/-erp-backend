@@ -1112,7 +1112,7 @@ class ItemIssueMasterAPIController extends AppBaseController
             ->orderby('year', 'desc')
             ->get();
 
-        $employeeInventory = CompanyPolicyMaster::where('companyPolicyCategoryID', 73)
+        $employeeInventory = CompanyPolicyMaster::where('companyPolicyCategoryID', 74)
             ->where('companySystemID', $companyId)
             ->first();
 
