@@ -102,7 +102,8 @@ class ExpenseEmployeeAllocation extends Model
         'amount',
         'amountRpt',
         'amountLocal',
-        'dateOfDeduction'
+        'dateOfDeduction',
+        'assignedQty'
     ];
 
     /**
@@ -117,6 +118,7 @@ class ExpenseEmployeeAllocation extends Model
         'documentDetailID' => 'integer',
         'chartOfAccountSystemID' => 'integer',
         'documentSystemCode' => 'integer',
+        'assignedQty' => 'integer',
         'amount' => 'float',
         'amountRpt' => 'float',
         'amountLocal' => 'float',

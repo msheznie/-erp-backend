@@ -1112,6 +1112,10 @@ class ItemIssueMasterAPIController extends AppBaseController
             ->orderby('year', 'desc')
             ->get();
 
+        $employeeInventory = CompanyPolicyMaster::where('companyPolicyCategoryID', 74)
+            ->where('companySystemID', $companyId)
+            ->first();
+
         $wareHouseLocation = WarehouseMaster::where("companySystemID", $companyId);
         if (isset($request['type']) && $request['type'] != 'filter') {
             $wareHouseLocation = $wareHouseLocation->where('isActive', 1);
@@ -1184,6 +1188,7 @@ class ItemIssueMasterAPIController extends AppBaseController
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
             'month' => $month,
             'years' => $years,
+            'employeeInventoryPolicy' => ($employeeInventory && $employeeInventory->isYesNO == 1) ? true : false,
             'wareHouseLocation' => $wareHouseLocation,
             'wareHouseBinLocations' => $wareHouseBinLocations,
             'financialYears' => $financialYears,
