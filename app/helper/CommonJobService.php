@@ -43,6 +43,8 @@ class CommonJobService
                 return storage_path() . '/logs/birthday_wishes_service.log';
             case 'leave-carry-forward':
                 return storage_path() . '/logs/leave_carry_forward_service.log';
+            case 'hr-document':
+                return storage_path() . '/logs/hr_document_service.log';
 
         }
     }
