@@ -656,7 +656,7 @@ class SRMService
                     $masterData = $masterData->toArray();
                     $input['bookingSuppMasInvAutoID'] = $id;
                     $masterData['detail_data'] = ['grvDetails' => [], 'logisticYN' => 0];
-        
+
                     foreach ($masterData['detail'] as $detail) {
                         $input['bookingSupInvoiceDetAutoID'] = $detail['bookingSupInvoiceDetAutoID'];
                         $detailData = $this->supplierInvoiceItemDetailRepository->getGRVDetailsForSupplierInvoice($input);
@@ -678,7 +678,7 @@ class SRMService
                 ];
 
                 break;
-            default: 
+            default:
                 return [
                     'success' => false,
                     'message' => 'No records found',
@@ -686,7 +686,7 @@ class SRMService
                 ];
             break;
         }
-       
+
 
 
     }
@@ -1256,7 +1256,7 @@ class SRMService
         $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
         $supplierRegIdAll =  $this->getAllSupplierRegIdByUUID($request->input('supplier_uuid'));
         $is_rfx = $request->input('extra.rfx');
-        
+
         foreach ($supplierRegIdAll as $supplierReg) {
             $registrationLinkIds[] = $supplierReg['id'];
         }
@@ -1290,7 +1290,7 @@ class SRMService
         ->whereIn('document_type',$type)
         ->get()
         ->toArray();
-    
+
 
         foreach ($openTendersNotPurchased as $openTendersNotPurchasedId) {
             $tenderMasterId[] = $openTendersNotPurchasedId['id'];
@@ -1309,12 +1309,14 @@ class SRMService
                 $q->where('purchased_by', '=', $supplierRegId);
             })->whereIn('id', $tenderMasterId)->where('published_yn', 1);
         } else if ($request->input('extra.tender_status') == 2) {
-            $query = TenderMaster::with(['currency', 'srm_bid_submission_master' => function ($query) use ($supplierRegId) {
+            $query = TenderMaster::with(['currency', 'tender_negotiation.SupplierTenderNegotiation', 'srm_bid_submission_master' => function ($query) use ($supplierRegId) {
                 $query->where('supplier_registration_id', '=', $supplierRegId);
             }, 'srmTenderMasterSupplier' => function ($q) use ($supplierRegId) {
                 $q->where('purchased_by', '=', $supplierRegId);
             }])->whereHas('srmTenderMasterSupplier', function ($q) use ($supplierRegId) {
                 $q->where('purchased_by', '=', $supplierRegId);
+            })->whereDoesntHave('tender_negotiation', function ($q) use ($supplierRegId) {
+                $q->where('status', '=', 1);
             })->where('published_yn', 1);
 
         }
@@ -1324,12 +1326,12 @@ class SRMService
                 $type = [1,2,3];
             }
             else
-            {   
+            {
                 $type = [0];
             }
 
             $query->whereIn('document_type',$type);
-            
+
         $search = $request->input('search.value');
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
@@ -1373,51 +1375,8 @@ class SRMService
     public function getNegotiationTenders(Request $request)
     {
         $input = $request->all();
-        $registrationLinkIds = array();
-        //$tenderMasterId = array();
         $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
-        $supplierRegIdAll =  $this->getAllSupplierRegIdByUUID($request->input('supplier_uuid'));
         $is_rfx = $request->input('extra.rfx');
-
-        foreach ($supplierRegIdAll as $supplierReg) {
-            $registrationLinkIds[] = $supplierReg['id'];
-        }
-
-        //$supplierData =  self::getSupplierData($request->input('supplier_uuid'));
-
-        //Get Purchased tenders for user
-        $purchasedTenderIds = TenderMasterSupplier::select(DB::raw('DISTINCT tender_master_id'))->whereIn('purchased_by', $registrationLinkIds)->get()->toArray();
-
-        //Get Assigned tenders for user without purchased tenders
-        $tenderIds = TenderSupplierAssignee::select('tender_master_id')
-            ->whereIn('registration_link_id', $registrationLinkIds)
-            ->whereNotIn('tender_master_id', $purchasedTenderIds)
-            ->get()
-            ->toArray();
-
-        foreach ($tenderIds as $tenderId) {
-           // $tenderMasterId[] = $tenderId['tender_master_id'];
-        }
-        //Get Open Tenders Not Purchased
-        if($is_rfx)
-        {
-            $type = [1,2,3];
-        }
-        else
-        {
-            $type = [0];
-        }
-
-        $openTendersNotPurchased = TenderMaster::select('id')->where('tender_type_id', 1)
-        ->whereNotIn('id', $purchasedTenderIds)
-        ->whereIn('document_type',$type)
-        ->get()
-        ->toArray();
-
-
-        foreach ($openTendersNotPurchased as $openTendersNotPurchasedId) {
-          //  $tenderMasterId[] = $openTendersNotPurchasedId['id'];
-        }
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -1437,16 +1396,9 @@ class SRMService
             })->where('published_yn', 1);
         }
 
-            if($is_rfx)
-            {
-                $type = [1,2,3];
-            }
-            else
-            {
-                $type = [0];
-            }
+        $type = $is_rfx ? [1, 2, 3] : [0];
 
-            $query->whereIn('document_type',$type);
+        $query->whereIn('document_type',$type);
 
         $search = $request->input('search.value');
         if ($search) {
@@ -1467,7 +1419,6 @@ class SRMService
             }
         }
 
-
         $data = DataTables::eloquent($query)
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
@@ -1483,7 +1434,7 @@ class SRMService
 
         return [
             'success' => true,
-            'message' => 'Tender list successfully get',
+            'message' => 'Tender Negotiation list successfully get',
             'data' => $data
         ];
     }
@@ -2186,8 +2137,8 @@ class SRMService
                 }
                 $query->where('documentSystemID', $type);
             });
-        }]) 
-        ->whereIn('id',$doucments)   
+        }])
+        ->whereIn('id',$doucments)
         ->where('srm_action', '!=', 2)
         ->WhereHas('attachments', function ($q1) use ($tenderMasterId,$tenderMaster) {
                 $q1->where('documentSystemCode', $tenderMasterId)
@@ -2202,7 +2153,7 @@ class SRMService
                         }
                         $query->where('documentSystemID', $type);
                     });
-        }) 
+        })
         ->get();
 
         $data['attachments'] = $attachments;
@@ -2388,26 +2339,26 @@ class SRMService
         }
 
         if (!empty($bidSubmitted) && count($bidSubmitted) > 0) {
-            $bidMasterId = 0; 
+            $bidMasterId = 0;
         } else {
 
             DB::beginTransaction();
             try {
 
                 $lastSerialNo = BidSubmissionMaster::orderBy('id', 'desc')
-                ->first(); 
-    
+                ->first();
+
                 if(isset($lastSerialNo->serialNumber) && $lastSerialNo->serialNumber != null)
                 {
-    
+
                     $lastSerialValue = 1;
                     if ($lastSerialNo) {
                         $lastSerialValue = intval($lastSerialNo->serialNumber) + 1;
                     }
-    
+
                     $att['serialNumber'] = $lastSerialValue;
                     $att['bidSubmissionCode'] = 'Bid_'.str_pad($lastSerialValue, 10, '0', STR_PAD_LEFT);
-    
+
                 }
                 else
                 {
@@ -2424,18 +2375,18 @@ class SRMService
                 $result = BidSubmissionMaster::create($att);
                 $bidMasterId = $result['id'];
 
-                if(count($bidSubmitted) == 0){
+                if(count($bidSubmitted) == 0 && $tender_negotiation){
                     $this->crateNewNegotiationTender($tender_id,$tender_negotiation_data,$bidMasterId,$supplierRegId,$att);
                 }
-    
+
                 $details = PricingScheduleMaster::with(['tender_bid_format_master', 'pricing_shedule_details'=>function($query){
                     $query->where('field_type',4);
                 }])->where('tender_id', $tender_id)->get();
 
-            
+
                 foreach($details as $detail)
                 {
-                    
+
                     foreach($detail->pricing_shedule_details as $bid)
                     {
                             $data['bid_format_detail_id'] = $bid->id;
@@ -2446,7 +2397,7 @@ class SRMService
                             $data['bid_master_id'] = $bidMasterId;
                             $results = ScheduleBidFormatDetails::create($data);
 
-                
+
 
 
 
@@ -2454,7 +2405,7 @@ class SRMService
 
                     if(count($detail->pricing_shedule_details) > 0)
                     {
-                        $outcome = DB::table('srm_pricing_schedule_detail')->where('bid_format_id',$detail->price_bid_format_id)->where('pricing_schedule_master_id',$detail->id) 
+                        $outcome = DB::table('srm_pricing_schedule_detail')->where('bid_format_id',$detail->price_bid_format_id)->where('pricing_schedule_master_id',$detail->id)
                         //->leftJoin('srm_schedule_bid_format_details', 'srm_pricing_schedule_detail.id', '=', 'srm_schedule_bid_format_details.bid_format_detail_id')
                         ->join('tender_field_type', 'srm_pricing_schedule_detail.field_type', '=', 'tender_field_type.id')
                         ->leftJoin('srm_bid_main_work', function($join) use($bidMasterId){
@@ -2470,13 +2421,13 @@ class SRMService
                                             WHEN (srm_pricing_schedule_detail.field_type != 4 && srm_pricing_schedule_detail.is_disabled = 1) THEN srm_schedule_bid_format_details.value    
                                             WHEN (srm_pricing_schedule_detail.field_type != 4 && srm_pricing_schedule_detail.boq_applicable = 1) THEN srm_bid_main_work.total_amount    
                                             WHEN (srm_pricing_schedule_detail.is_disabled = 0 && srm_pricing_schedule_detail.boq_applicable = 0) THEN srm_bid_main_work.total_amount 
-                                            END) AS value'))  
+                                            END) AS value'))
                         ->get();
-                
+
                         $details_obj = array_map(function($item) {
-                            return (array)$item; 
+                            return (array)$item;
                         }, $outcome->toArray());
-                
+
 
                         $formula_cal = PirceBidFormula::process($details_obj);
 
@@ -2489,15 +2440,15 @@ class SRMService
                                     ['bid_format_detail_id' => $key, 'schedule_id' => $detail->id,'bid_master_id'=>$bidMasterId],
                                     ['value' => $val1,'bid_master_id',$bidMasterId]
                                 );
-            
+
                             }
-                        
-                    
+
+
                         }
                     }
-    
+
                 }
-    
+
                 DB::commit();
             } catch (\Exception $e) {
                 DB::rollback();
@@ -2837,7 +2788,7 @@ class SRMService
         $data['attachments'] = DocumentAttachments::with(['tender_document_types' => function ($q) use ($doucments){
             $q->whereIn('id',$doucments);
             $q->where('srm_action', 1);
-            
+
         }, 'document_attachments' => function ($q) use ($bidMasterId) {
             $q->where('documentSystemCode', $bidMasterId);
         }])->whereHas('tender_document_types', function ($q) use ($doucments){
@@ -2984,7 +2935,7 @@ class SRMService
                 $bid_date['bis_submission_master_id'] = $bidMasterId;
                 BidDocumentVerification::create($bid_date);
             }
-   
+
 
 
             DB::commit();
@@ -3087,7 +3038,7 @@ class SRMService
         $supplierData =  self::getSupplierData($request->input('supplier_uuid'));
 
         $bidSubmissionData = self::BidSubmissionStatusData($bidMasterId, $tenderId);
-        
+
         $evaluvationCriteriaDetailsCount = EvaluationCriteriaDetails::where('tender_id',$tenderId)->where('critera_type_id',1)->count();
         $bidSubmissionDataCount = BidSubmissionDetail::join('srm_evaluation_criteria_details','srm_bid_submission_detail.evaluation_detail_id','=','srm_evaluation_criteria_details.id')
             ->where('srm_bid_submission_detail.tender_id',$tenderId)
@@ -3105,7 +3056,7 @@ class SRMService
         $data['isBidSubmissionStatus'] = $bidSubmissionData['bidsubmission'];
 
         $doucments = [];
-        
+
         $documentAttachedCountIds = DocumentAttachments::with(['tender_document_types' => function ($q) use ($doucments){
             $q->where('srm_action', 1);
         }, 'document_attachments' => function ($q) use ($bidMasterId) {
@@ -3124,7 +3075,7 @@ class SRMService
             $query->where('documentSystemID', $type);
         })
         ->where('envelopType', 3)->where('attachmentType',2)->pluck('attachmentID')->toArray();
-        
+
         $documentAttachedCountAnswer = DocumentAttachments::whereIn('parent_id', $documentAttachedCountIds)
         ->where(function($query) use($doc_type){
             if($doc_type == 0)
@@ -3158,7 +3109,7 @@ class SRMService
             $query->where('documentSystemID', $type);
         })
         ->where('envelopType', 2)->where('attachmentType',2)->pluck('attachmentID')->toArray();
-        
+
         $documentAttachedCountAnswerTechnical = DocumentAttachments::whereIn('parent_id', $documentAttachedCountIdsTechnical)
         ->where(function($query) use($doc_type){
             if($doc_type == 0)
@@ -3192,7 +3143,7 @@ class SRMService
         })
         ->where('envelopType', 1)->where('attachmentType',2)->pluck('attachmentID')->toArray();
 
-        
+
         $documentAttachedCountAnswerCommercial = DocumentAttachments::whereIn('parent_id', $documentAttachedCountIdsCommercial)
         ->where(function($query) use($doc_type){
             if($doc_type == 0)
@@ -3241,11 +3192,11 @@ class SRMService
             ->get();
         $has_work_ids = Array();
         $i = 0;
-        
+
         foreach($main_works_ids as $main_works_id) {
             if($main_works_id->boq_applicable) {
                 $boqItems = TenderBoqItems::where('main_work_id',$main_works_id->id)->get();
-                        
+
                 foreach($boqItems as $boqItem) {
                     $dataBidBoq = BidBoq::where('boq_id',$boqItem->id)->where('bid_master_id',$bidMasterId)->where('created_by',$supplierData->id)->where('main_works_id',$main_works_id->id)->get();
                     if(count($dataBidBoq) > 0) {
@@ -3262,13 +3213,13 @@ class SRMService
                         $i++;
                     }
                 }
-     
-               
+
+
             }else {
                 if($main_works_id->field_type == 4) {
                     $bid_format_details = DB::table('srm_schedule_bid_format_details')->where('bid_format_detail_id',$main_works_id->id)->where('created_by',$supplierData->id)->get();
-                         
-     
+
+
                     if(count($bid_format_details) > 0) {
                         $has_work_ids[$i] = "true";
                     }else {
@@ -3292,8 +3243,8 @@ class SRMService
                     }
                 }
             }
-            
-            
+
+
         }
 
         if($evaluvationCriteriaDetailsCount == $bidSubmissionDataCount)  {
@@ -3306,8 +3257,8 @@ class SRMService
             $data['goNoGoStatus'] = -1;
         }
 
-        
-       
+
+
         if(count($documentAttachedCountIds) == $documentAttachedCountAnswer) {
             $data['commonStatus'] = 0;
         }else {
@@ -3318,7 +3269,7 @@ class SRMService
             $data['commonStatus'] = -1;
         }
 
-        
+
         if((count($documentAttachedCountIdsTechnical) == $documentAttachedCountAnswerTechnical) && $bidSubmissionData['technicalEvaluationCriteria'] == 0) {
             $data['technicalStatus'] = 0;
         }else {
@@ -3369,7 +3320,7 @@ class SRMService
 
         $data['activeTab'] = $activeTab;
 
-        
+
         return [
             'success' => true,
             'message' => 'Main Envelop data retrieved successfully',
@@ -3383,7 +3334,7 @@ class SRMService
         $bidMasterId = $request->input('extra.bidMasterId');
         $detail = $request->input('extra.detail');
         $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
-        
+
         DB::beginTransaction();
         try {
             $att['main_works_id'] = $detail['id'];
@@ -3410,11 +3361,11 @@ class SRMService
                 $result = BidMainWork::create($att);
             }
 
-                            
+
           $pricing_shedule = PricingScheduleDetail::where('id',$detail['id'])->first();
 
 
-        $outcome = DB::table('srm_pricing_schedule_detail')->where('bid_format_id',$detail['bid_format_id'])->where('pricing_schedule_master_id',$detail['pricing_schedule_master_id']) 
+        $outcome = DB::table('srm_pricing_schedule_detail')->where('bid_format_id',$detail['bid_format_id'])->where('pricing_schedule_master_id',$detail['pricing_schedule_master_id'])
         //->leftJoin('srm_schedule_bid_format_details', 'srm_pricing_schedule_detail.id', '=', 'srm_schedule_bid_format_details.bid_format_detail_id')
         ->join('tender_field_type', 'srm_pricing_schedule_detail.field_type', '=', 'tender_field_type.id')
         ->leftJoin('srm_bid_main_work', function($join) use($bidMasterId){
@@ -3431,32 +3382,32 @@ class SRMService
                             WHEN (srm_pricing_schedule_detail.field_type != 4 && srm_pricing_schedule_detail.is_disabled = 1) THEN srm_schedule_bid_format_details.value    
                             WHEN (srm_pricing_schedule_detail.field_type != 4 && srm_pricing_schedule_detail.boq_applicable = 1) THEN srm_bid_main_work.total_amount    
                             WHEN (srm_pricing_schedule_detail.is_disabled = 0 && srm_pricing_schedule_detail.boq_applicable = 0) THEN srm_bid_main_work.total_amount  
-                            END) AS value'))  
+                            END) AS value'))
         ->get();
 
         $details = array_map(function($item) {
-            return (array)$item; 
+            return (array)$item;
         }, $outcome->toArray());
 
 
- 
-             
+
+
             $formula_cal = PirceBidFormula::process($details);
-    
+
             foreach($formula_cal as $val)
             {
                 foreach($val as $key=>$val1)
-                {   
-                    $formatted_val =  round($val1, 3);   
-                    
+                {
+                    $formatted_val =  round($val1, 3);
+
                     $flight = ScheduleBidFormatDetails::updateOrCreate(
                         ['bid_format_detail_id' => $key, 'schedule_id' => $pricing_shedule->pricing_schedule_master_id,'bid_master_id'=>$bidMasterId],
                         ['value' => $formatted_val,'bid_master_id',$bidMasterId]
                     );
 
                 }
-            
-        
+
+
             }
 
 
@@ -3498,7 +3449,7 @@ class SRMService
         $detail = $request->input('extra.detail');
         $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
 
-  
+
 
         DB::beginTransaction();
         try {
@@ -3510,7 +3461,7 @@ class SRMService
             $att['unit_amount'] = $detail['bid_boq']['unit_amount'];
             $att['total_amount'] = round($detail['bid_boq']['total_amount'],3);
             $att['supplier_registration_id'] = $supplierRegId;
-            
+
             if (isset($detail['bid_boq']['id'])) {
                 if (empty($detail['bid_boq']['unit_amount']) && empty($detail['bid_boq']['qty'])) {
                     $result = BidBoq::where('id', $detail['bid_boq']['id'])->delete();
@@ -3525,7 +3476,7 @@ class SRMService
                 $result = BidBoq::create($att);
             }
             $boqTot = BidBoq::selectRaw('SUM(qty) as qty , SUM(total_amount) as total_amount')->where('bid_master_id', $bidMasterId)->where('main_works_id', $detail['main_work_id'])->first();
-            
+
             if (!empty($boqTot['qty'])) {
                 $bidMainWork = BidMainWork::where('main_works_id', $detail['main_work_id'])->where('bid_master_id', $bidMasterId)->first();
                 if (!empty($bidMainWork)) {
@@ -3550,10 +3501,10 @@ class SRMService
                 }
 
 
-                
+
         $pricing_shedule = PricingScheduleDetail::where('id',$mainWorkId)->first();
 
-        $outcome = DB::table('srm_pricing_schedule_detail')->where('bid_format_id',$pricing_shedule->bid_format_id)->where('pricing_schedule_master_id',$pricing_shedule->pricing_schedule_master_id) 
+        $outcome = DB::table('srm_pricing_schedule_detail')->where('bid_format_id',$pricing_shedule->bid_format_id)->where('pricing_schedule_master_id',$pricing_shedule->pricing_schedule_master_id)
          //->leftJoin('srm_schedule_bid_format_details', 'srm_pricing_schedule_detail.id', '=', 'srm_schedule_bid_format_details.bid_format_detail_id')
          ->join('tender_field_type', 'srm_pricing_schedule_detail.field_type', '=', 'tender_field_type.id')
          ->leftJoin('srm_bid_main_work', function($join) use($bidMasterId){
@@ -3569,14 +3520,14 @@ class SRMService
                                WHEN (srm_pricing_schedule_detail.field_type != 4 && srm_pricing_schedule_detail.is_disabled = 1) THEN srm_schedule_bid_format_details.value    
                                WHEN (srm_pricing_schedule_detail.field_type != 4 && srm_pricing_schedule_detail.boq_applicable = 1) THEN srm_bid_main_work.total_amount    
                                WHEN (srm_pricing_schedule_detail.is_disabled = 0 && srm_pricing_schedule_detail.boq_applicable = 0) THEN srm_bid_main_work.total_amount 
-                               END) AS value'))  
+                               END) AS value'))
         ->get();
 
         $details = array_map(function($item) {
-            return (array)$item; 
+            return (array)$item;
         }, $outcome->toArray());
 
-    
+
 
             $formula_cal = PirceBidFormula::process($details);
 
@@ -3591,8 +3542,8 @@ class SRMService
                     );
 
                 }
-            
-        
+
+
             }
 
 
@@ -3716,22 +3667,22 @@ class SRMService
     {
         $tenderId = $request->input('extra.tenderId');
         $noOfBids = $request->input('extra.noOfBids') + 1;
-        $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid')); 
+        $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
         $lastSerialNumber = 1;
 
 
 
-    
-        DB::beginTransaction(); 
-        try { 
+
+        DB::beginTransaction();
+        try {
 
 
             $lastSerialNo = BidSubmissionMaster::orderBy('id', 'desc')
-            ->first(); 
+            ->first();
 
             if(isset($lastSerialNo->serialNumber) && $lastSerialNo->serialNumber != null)
             {
-                
+
                 $lastSerialValue = 1;
                 if ($lastSerialNo) {
                     $lastSerialValue = intval($lastSerialNo->serialNumber) + 1;
@@ -3746,12 +3697,12 @@ class SRMService
                 $att['serialNumber'] = 1;
                 $att['bidSubmissionCode'] = 'Bid_'.str_pad(1, 10, '0', STR_PAD_LEFT);
             }
-         
-            
+
+
             $lastSerial = BidSubmissionMaster::where('tender_id', $tenderId)
 				->where('supplier_registration_id', $supplierRegId)
 				->orderBy('id', 'desc')
-				->first(); 
+				->first();
 			if ($lastSerial) {
 				$lastSerialNumber = intval($lastSerial->bid_sequence) + 1;
 			}
@@ -3761,17 +3712,17 @@ class SRMService
             $att['uuid'] = Uuid::generate()->string;
             $att['bid_sequence'] = 1;
             $att['created_at'] = Carbon::now();
-            $att['created_by'] = $supplierRegId;  
-            $att['bid_sequence'] = $lastSerialNumber;  
-            $result = BidSubmissionMaster::create($att); 
+            $att['created_by'] = $supplierRegId;
+            $att['bid_sequence'] = $lastSerialNumber;
+            $result = BidSubmissionMaster::create($att);
 
             $bidMasterId = $result['id'];
 
             $submittedCount = BidSubmissionMaster::where('tender_id',$tenderId)
             ->where('supplier_registration_id',$supplierRegId)
-            ->get();  
+            ->get();
 
-            if( count($submittedCount) > $noOfBids){ 
+            if( count($submittedCount) > $noOfBids){
                 return [
                     'success' => false,
                     'message' => 'Cannot have more than '.(int)$noOfBids.' bids for this tender',
@@ -3785,7 +3736,7 @@ class SRMService
 
             foreach($details as $detail)
             {
-               
+
                 foreach($detail->pricing_shedule_details as $bid)
                 {
                         $data['bid_format_detail_id'] = $bid->id;
@@ -3801,7 +3752,7 @@ class SRMService
 
                 if(count($detail->pricing_shedule_details) > 0)
                 {
-                    $outcome = DB::table('srm_pricing_schedule_detail')->where('bid_format_id',$detail->price_bid_format_id)->where('pricing_schedule_master_id',$detail->id) 
+                    $outcome = DB::table('srm_pricing_schedule_detail')->where('bid_format_id',$detail->price_bid_format_id)->where('pricing_schedule_master_id',$detail->id)
                     //->leftJoin('srm_schedule_bid_format_details', 'srm_pricing_schedule_detail.id', '=', 'srm_schedule_bid_format_details.bid_format_detail_id')
                     ->join('tender_field_type', 'srm_pricing_schedule_detail.field_type', '=', 'tender_field_type.id')
                     ->leftJoin('srm_bid_main_work', function($join) use($bidMasterId){
@@ -3817,13 +3768,13 @@ class SRMService
                                         WHEN (srm_pricing_schedule_detail.field_type != 4 && srm_pricing_schedule_detail.is_disabled = 1) THEN srm_schedule_bid_format_details.value    
                                         WHEN (srm_pricing_schedule_detail.field_type != 4 && srm_pricing_schedule_detail.boq_applicable = 1) THEN srm_bid_main_work.total_amount    
                                         WHEN (srm_pricing_schedule_detail.is_disabled = 0 && srm_pricing_schedule_detail.boq_applicable = 0) THEN srm_bid_main_work.total_amount 
-                                        END) AS value'))  
+                                        END) AS value'))
                     ->get();
-            
+
                     $details_obj = array_map(function($item) {
-                        return (array)$item; 
+                        return (array)$item;
                     }, $outcome->toArray());
-            
+
 
                     $formula_cal = PirceBidFormula::process($details_obj);
 
@@ -3836,15 +3787,15 @@ class SRMService
                                 ['bid_format_detail_id' => $key, 'schedule_id' => $detail->id,'bid_master_id'=>$bidMasterId],
                                 ['value' => $val1,'bid_master_id',$bidMasterId]
                             );
-        
+
                         }
-                    
-                
+
+
                     }
                 }
-    
-               
-           
+
+
+
             }
 
             DB::commit();
@@ -3896,7 +3847,7 @@ class SRMService
             $attachments = DocumentAttachments::with(['tender_document_types' => function ($q) use ($doucments){
                 $q->whereIn('id',$doucments);
                 $q->where('srm_action', 1);
-                
+
             }, 'document_attachments' => function ($q) use ($bidMasterId) {
                 $q->where('documentSystemCode', $bidMasterId);
             }])->whereHas('tender_document_types', function ($q) use ($doucments){
@@ -3912,9 +3863,9 @@ class SRMService
                     $type = 113;
                 }
                 $query->where('documentSystemID', $type);
-    
+
             })->where('parent_id', null)->where('envelopType', 2)->count();
-   
+
 
             $criteriaDetail = EvaluationCriteriaDetails::with(['evaluation_criteria_score_config', 'evaluation_criteria_type', 'tender_criteria_answer_type', 'bid_submission_detail' => function ($q) use ($bidMasterId) {
                 $q->where('bid_master_id', $bidMasterId);
@@ -3936,7 +3887,7 @@ class SRMService
             {
                 $group['technical_status'] = false;
             }
-       
+
             $evaluvationCriteriaDetailsCount = EvaluationCriteriaDetails::where('tender_id',$group['tender_id'])->where('critera_type_id',1)->count();
             $bidSubmissionDataCount = BidSubmissionDetail::join('srm_evaluation_criteria_details','srm_bid_submission_detail.evaluation_detail_id','=','srm_evaluation_criteria_details.id')
                 ->where('srm_bid_submission_detail.tender_id',$group['tender_id'])
@@ -3968,7 +3919,7 @@ class SRMService
                     $type = 113;
                 }
                 $query->where('documentSystemID', $type);
-    
+
             })
             ->where('envelopType', 3)->where('attachmentType',2)->pluck('attachmentID')->toArray();
 
@@ -3983,7 +3934,7 @@ class SRMService
                         $type = 113;
                     }
                     $query->where('documentSystemID', $type);
-        
+
                 })
                 ->where('documentSystemCode', $bidMasterId)
                 ->count();
@@ -4026,7 +3977,7 @@ class SRMService
                     $type = 113;
                 }
                 $query->where('documentSystemID', $type);
-    
+
             })
             ->where('envelopType', 1)->where('attachmentType',2)->pluck('attachmentID')->toArray();
 
@@ -4041,7 +3992,7 @@ class SRMService
                     $type = 113;
                 }
                 $query->where('documentSystemID', $type);
-    
+
             })
             ->where('documentSystemCode', $bidMasterId)->count();
 
@@ -4172,31 +4123,32 @@ class SRMService
             $group['bid_submission_status'] = $bidSubmissionData['bidsubmission'];
             return $group;
         });
-        if(!empty($bidSubmitted) && count($bidSubmitted) > 0){ 
+        if(!empty($bidSubmitted) && count($bidSubmitted) > 0){
             return [
                 'success' => true,
                 'message' => 'Successfully retrived',
                 'data' =>  $bidSubmitted
             ];
-        }else { 
+        }else {
             return [
                 'success' => true,
                 'message' => 'Successfully retrived Data',
                 'data' =>  ' '
             ];
         }
-        
+
     }
-    
-    public function deleteBidData($request){ 
+
+    public function deleteBidData($request){
         $tenderId = $request->input('extra.tenderId');
         $bidId = $request->input('extra.bidId');
-        $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid')); 
+        $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
+        $tenderNegotiation = $request->input('extra.tender_negotiation');
 
         BidSubmissionMaster::where('tender_id', $tenderId)
         ->where('id',$bidId)
         ->delete();
-        
+
         BidBoq::where('bid_master_id',$bidId)->delete();
 
         BidMainWork::where('bid_master_id',$bidId)
@@ -4216,14 +4168,18 @@ class SRMService
         ->where('documentSystemCode',$bidId)
         ->delete();
 
+        if($tenderNegotiation){
+            TenderBidNegotiation::where('bid_submission_master_id_new', $bidId)->delete();
+        }
+
         if(ScheduleBidFormatDetails::where('bid_master_id',$bidId)->count() > 0)
         {
             ScheduleBidFormatDetails::where('bid_master_id',$bidId)
             ->delete();
-    
+
         }
 
- 
+
         return [
             'success' => true,
             'message' => 'Successfully retrived',
@@ -4434,7 +4390,7 @@ class SRMService
     public function getInvoiceAttachment($request)
     {
         $id = $request->input('extra.id');
-       
+
        $query = DocumentAttachments::where('documentSystemID', 11)
             ->where('documentSystemCode', $id)
             ->where('attachmentType', 0);
@@ -4460,8 +4416,8 @@ class SRMService
                 'message' => 'Invoice attachment successfully get',
                 'data' => $data
             ];
-     
-      
+
+
     }
 
     public function removeInvoiceAttachment($request)
@@ -4480,7 +4436,7 @@ class SRMService
 
     public function createInvoice(Request $request)
     {
-     
+
         $data['id'] = $request->input('extra.id');
         $data['companySystemID'] = $request->input('extra.companySystemID');
 
@@ -4527,7 +4483,7 @@ class SRMService
         $projectID = collect($projectID)->pluck('id');
 
         $search = $request->input('search.value');
-        
+
 
         $paymentVoucher = PaySupplierInvoiceMaster::where('BPVsupplierID', $supplierID)->whereIn('invoiceType',[2,3,5])->where('approved',-1)->with(['supplier', 'created_by', 'suppliercurrency', 'bankcurrency', 'expense_claim_type', 'paymentmode', 'project']);
 
@@ -4587,7 +4543,7 @@ class SRMService
                     $query->with(['bankrec_by', 'bank_transfer']);
                 },'audit_trial.modified_by'])->first();
 
-        
+
         $isProjectBase = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
         ->where('companySystemID', $output->companySystemID)
         ->where('isYesNO', 1)
@@ -4598,14 +4554,14 @@ class SRMService
             'success' => true,
             'message' => 'Payment Vouchers successfully get',
             'data' => $output
-        ]; 
-   
+        ];
+
     }
 
 
     public function checkGrvCreation(Request $request)
     {
-     
+
         $id = $request->input('extra.id');
         $data['exit'] = false;
 
@@ -4624,7 +4580,10 @@ class SRMService
     }
 
     private function crateNewNegotiationTender($tender_id,$tender_negotiation_data,$bidMasterId,$supplierRegId,$att){
-
+        $tenderNegotiationArea = TenderNegotiation::select('id')->with('area')->where('srm_tender_master_id', $tender_id)->first();
+        $pricingSchedule= $tenderNegotiationArea->area->pricing_schedule;
+        $technicalEvaluation = $tenderNegotiationArea->area->technical_evaluation;
+        $tenderDocuments = $tenderNegotiationArea->area->tender_documents;
         $data['tender_id'] = $tender_id;
         $data['tender_negotiation_id'] = $tender_negotiation_data[0]['supplier_tender_negotiation']['tender_negotiation_id'];
         $data['bid_submission_master_id_old'] = $tender_negotiation_data[0]['supplier_tender_negotiation']['srm_bid_submission_master_id'];
@@ -4645,7 +4604,9 @@ class SRMService
                 $newBidSubmissionDetail->tender_id = $tender_id;
                 $newBidSubmissionDetail->evaluation_detail_id = $bidSubmissionDetail['evaluation_detail_id'];
                 $newBidSubmissionDetail->score_id = $bidSubmissionDetail['score_id'];
-                $newBidSubmissionDetail->score = $bidSubmissionDetail['score'];
+                if(!$technicalEvaluation){
+                    $newBidSubmissionDetail->score = $bidSubmissionDetail['score'];
+                }   
                 $newBidSubmissionDetail->result = $bidSubmissionDetail['result'];
                 $newBidSubmissionDetail->created_at = Carbon::now();
                 $newBidSubmissionDetail->created_by = $supplierRegId;
@@ -4660,38 +4621,42 @@ class SRMService
             }
         }
 
-        $docAttachments = DocumentAttachments::where('documentSystemCode', $tender_negotiation_data[0]['supplier_tender_negotiation']['srm_bid_submission_master_id'])->get();
+        $docAttachments = DocumentAttachments::where('documentSystemCode', $tender_negotiation_data[0]['supplier_tender_negotiation']['srm_bid_submission_master_id']);
+            if($tenderDocuments) {
+                $docAttachments = $docAttachments->whereNull('parent_id');
+            }
+           $docAttachments = $docAttachments->get();
 
         if(count($docAttachments) > 0){
             foreach ($docAttachments as $docAttachment){
-                $doc = new DocumentAttachments();
-                $doc->companySystemID = $docAttachment['companySystemID'];
-                $doc->companyID = $docAttachment['companyID'];
-                $doc->documentSystemID = $docAttachment['documentSystemID'];
-                $doc->documentID = $docAttachment['documentID'];
-                $doc->documentSystemCode = $newBidMasterId;
-                $doc->approvalLevelOrder = $docAttachment['approvalLevelOrder'];
-                $doc->attachmentDescription = $docAttachment['attachmentDescription'];
-                $doc->location = $docAttachment['location'];
-                $doc->path = $docAttachment['path'];
-                $doc->originalFileName = $docAttachment['originalFileName'];
-                $doc->myFileName = $docAttachment['myFileName'];
-                $doc->docExpirtyDate = $docAttachment['docExpirtyDate'];
-                $doc->attachmentType = $docAttachment['attachmentType'];
-                $doc->sizeInKbs = $docAttachment['sizeInKbs'];
-                $doc->isUploaded = $docAttachment['isUploaded'];
-                $doc->pullFromAnotherDocument = $docAttachment['pullFromAnotherDocument'];
-                $doc->parent_id = $docAttachment['parent_id'];
-                $doc->timeStamp = Carbon::now();
-                $doc->envelopType = $docAttachment['envelopType'];
-                $doc->order_number = $docAttachment['order_number'];
-                $doc->save();
+                        $doc = new DocumentAttachments();
+                        $doc->companySystemID = $docAttachment['companySystemID'];
+                        $doc->companyID = $docAttachment['companyID'];
+                        $doc->documentSystemID = $docAttachment['documentSystemID'];
+                        $doc->documentID = $docAttachment['documentID'];
+                        $doc->documentSystemCode = $newBidMasterId;
+                        $doc->approvalLevelOrder = $docAttachment['approvalLevelOrder'];
+                        $doc->attachmentDescription = $docAttachment['attachmentDescription'];
+                        $doc->location = $docAttachment['location'];
+                        $doc->path = $docAttachment['path'];
+                        $doc->originalFileName = $docAttachment['originalFileName'];
+                        $doc->myFileName = $docAttachment['myFileName'];
+                        $doc->docExpirtyDate = $docAttachment['docExpirtyDate'];
+                        $doc->attachmentType = $docAttachment['attachmentType'];
+                        $doc->sizeInKbs = $docAttachment['sizeInKbs'];
+                        $doc->isUploaded = $docAttachment['isUploaded'];
+                        $doc->pullFromAnotherDocument = $docAttachment['pullFromAnotherDocument'];
+                        $doc->parent_id = $docAttachment['parent_id'];
+                        $doc->timeStamp = Carbon::now();
+                        $doc->envelopType = $docAttachment['envelopType'];
+                        $doc->order_number = $docAttachment['order_number'];
+                        $doc->save();
             }
         }
 
         $bidMainWorks = BidMainWork::where('bid_master_id', $tender_negotiation_data[0]['supplier_tender_negotiation']['srm_bid_submission_master_id'])->get();
 
-        if(count($bidMainWorks) > 0){
+        if(count($bidMainWorks) > 0 && !$pricingSchedule){
             foreach ($bidMainWorks as $bidMainWork){
                 $bid = new BidMainWork();
                 $bid->main_works_id = $bidMainWork['main_works_id'];
@@ -4727,7 +4692,7 @@ class SRMService
 
         $bidBoqs = BidBoq::where('bid_master_id', $tender_negotiation_data[0]['supplier_tender_negotiation']['srm_bid_submission_master_id'])->get();
 
-        if(count($bidBoqs) > 0){
+        if(count($bidBoqs) > 0 && !$pricingSchedule){
             foreach ($bidBoqs as $bidBoq){
                 $bidBoqRecord = new BidBoq();
                 $bidBoqRecord->boq_id = $bidBoq['boq_id'];
