@@ -1913,6 +1913,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                                 });
                             })
                             ->where('apAutoID', $val->apAutoID)
+                            ->where('matchingDocID', 0)
                             ->first();
 
                         $a = ($val->addedDocumentSystemID == 11) ? $payDetailMoreBooked->supplierPaymentAmount : abs($payDetailMoreBooked->supplierPaymentAmount);
