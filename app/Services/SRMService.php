@@ -4683,7 +4683,9 @@ class SRMService
                 $bid->bid_master_id = $newBidMasterId;
                 $bid->tender_id = $bidSchedule['tender_id'];
                 $bid->supplier_registration_id = $bidSchedule['supplier_registration_id'];
-                $bid->remarks = $bidSchedule['remarks'];
+                if(!$pricingSchedule){
+                    $bid->remarks = $bidSchedule['remarks'];
+                }
                 $bid->created_at = Carbon::now();
                 $bid->created_by = $supplierRegId;
                 $bid->save();
