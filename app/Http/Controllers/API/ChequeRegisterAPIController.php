@@ -158,6 +158,8 @@ class ChequeRegisterAPIController extends AppBaseController
             $input['created_at'] = Helper::currentDateTime();
             $input['created_by'] = Helper::getEmployeeSystemID();
             $input['created_pc'] = gethostname();
+            $input['isActive'] = 0;
+
 
             $chequeRegister = $this->chequeRegisterRepository->create($input);
 
@@ -691,6 +693,30 @@ class ChequeRegisterAPIController extends AppBaseController
 
     }
 
+    public function checkChequeRegisterStatus(Request $request){
+        $input = $request->all();
+
+        $chequeRegister = ChequeRegister::find($input['registerID']);
+
+        if (empty($chequeRegister)) {
+            return $this->sendError('Cheque Register not found');
+        }
+
+        if($chequeRegister->isActive == 0) {
+
+            $sameAccounts = ChequeRegister::where('bank_id', $chequeRegister->bank_id)->where('bank_account_id', $chequeRegister->bank_account_id)->where('isActive', 1)->where('id', '!=', $input['registerID'])->get();
+            if ($sameAccounts->isEmpty()) {
+                $sameAccounts = null;
+            }
+        }
+        else{
+            $sameAccounts = null;
+        }
+
+        return $this->sendResponse($sameAccounts, "Status updated successfully");
+
+    }
+
 
     public function chequeRegisterStatusChange(Request $request)
     {
@@ -702,8 +728,14 @@ class ChequeRegisterAPIController extends AppBaseController
             return $this->sendError('Cheque Register not found');
         }
 
+        if($chequeRegister->isActive == 0) {
+            ChequeRegister::where('bank_id', $chequeRegister->bank_id)->where('bank_account_id', $chequeRegister->bank_account_id)->where('isActive', 1)->where('id', '!=', $input['registerID'])->update(['isActive' => 0]);
+        }
+
         $chequeRegister->isActive = ($chequeRegister->isActive == 1) ? 0 : 1;
         $chequeRegister->save();
+
+
 
 
          return $this->sendResponse([], "Status updated successfully");

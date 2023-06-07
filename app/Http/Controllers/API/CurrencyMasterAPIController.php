@@ -465,4 +465,26 @@ class CurrencyMasterAPIController extends AppBaseController
         return $this->sendResponse($reportingCurrencyCode, 'Data retrieved successfully');
 
     }
+
+    public function getCompanyLocalCurrencyCode(Request $request)
+    {
+        $input = $request->all();
+        $localCurrency = 0;
+
+        $company = Company::where('companySystemID', $input['companyID'])->first();
+
+        if (empty($company)) {
+            return $this->sendError('Company Master not found');
+        }
+
+        if (!empty($company->localCurrencyID)) {
+            $localCurrency = $company->localCurrencyID;
+            $localCurrencyCode = CurrencyMaster::find($localCurrency);
+        } else {
+            return $this->sendError('Company local currency not found');
+        }
+
+        return $this->sendResponse($localCurrencyCode, 'Data retrieved successfully');
+
+    }
 }

@@ -536,5 +536,5 @@ return [
     'sales_order_no' => 'Sales Order No',
     'invoice_code' => 'Invoice Code',
     'net_total' => 'Net Total',
-    
+    'order_code'=> 'Order Code',
 ];
