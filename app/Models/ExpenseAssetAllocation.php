@@ -76,7 +76,7 @@ class ExpenseAssetAllocation extends Model
         'chartOfAccountSystemID' => 'integer',
         'documentSystemCode' => 'integer',
         'amount' => 'float',
-        'allocation_qty' => 'integer',
+        'allocation_qty' => 'float',
         'amountRpt' => 'float',
         'amountLocal' => 'float'
     ];
