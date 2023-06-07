@@ -315,7 +315,8 @@ class TenderMaster extends Model
         'final_tender_comment_status',
         'tender_edit_version_id',
         'is_negotiation_started',
-        'tender_edit_confirm_id'
+        'tender_edit_confirm_id',
+        'negotiation_published'
     ];
     /**
      * The attributes that should be casted to native types.
@@ -388,6 +389,7 @@ class TenderMaster extends Model
         'published_at' => 'datetime',
         'document_type' => 'integer',
         'is_negotiation_started'=> 'integer',
+        'negotiation_published'=> 'integer'
     ];
 
     /**

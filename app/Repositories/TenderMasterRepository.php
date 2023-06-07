@@ -58,7 +58,8 @@ class TenderMasterRepository extends BaseRepository
         'technical_bid_closing_date',
         'commerical_bid_opening_date',
         'commerical_bid_closing_date',
-        'is_negotiation_started'
+        'is_negotiation_started',
+        'negotiation_published'
 
     ];
 
@@ -91,7 +92,7 @@ class TenderMasterRepository extends BaseRepository
 
         $tenderNegotiationStatus =  array(
             array('value'=> 1 , 'label'=> 'Negotiation Not Started'),
-            array('value'=> 2 , 'label'=> 'Negotiation Pending'), 
+            array('value'=> 2 , 'label'=> 'Negotiation Started'), 
             array('value'=> 3 , 'label'=> 'Negotiation Completed'), 
         );
 

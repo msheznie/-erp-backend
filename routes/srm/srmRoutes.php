@@ -248,3 +248,10 @@ Route::resource('procument_activity_edit_logs', 'ProcumentActivityEditLogAPICont
 Route::post('getTenderFilterData', 'TenderMasterAPIController@getTenderFilterData');
 Route::post('approveBidOpening', 'TenderMasterAPIController@approveBidOpening');
 
+Route::post('addAllSuppliersToNegotiation', 'SupplierTenderNegotiationController@addAllSuppliersToNegotiation');
+
+Route::post('deleteAllSuppliersFromNegotiation', 'SupplierTenderNegotiationController@deleteAllSuppliersFromNegotiation');
+
+
+Route::post('saveTenderNegotiationDetails', 'TenderNegotiationController@saveTenderNegotiationDetails');
+

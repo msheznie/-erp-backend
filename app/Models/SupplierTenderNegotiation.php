@@ -86,8 +86,19 @@ class SupplierTenderNegotiation extends Model
      * @var array
      */
     public static $rules = [
-        'tenderNegotiationID'=> 'required',
+        'tenderNegotiationId'=> 'required',
     ];
+
+
+    public function bid_submission_master() {
+        return $this->belongsTo('App\Models\BidSubmissionMaster', 'srm_bid_submission_master_id', 'id');
+    }
+
+    public function supplier()
+    {
+        return $this->belongsTo('App\Models\SupplierRegistrationLink', 'suppliermaster_id', 'id');
+    }
+
 
     
 }

@@ -4511,6 +4511,7 @@ WHERE
                     erp_companyreporttemplatedetails.description as templateDetailDescription,
                     erp_companyreporttemplatedetails.controlAccountType as controlAccountID,
                     erp_companyreporttemplatelinks.glAutoID as chartOfAccountSystemID,
+                    erp_companyreporttemplate.companySystemID as templateCompanySystemID,
                     erp_companyreporttemplatelinks.glCode
                 FROM
                     erp_companyreporttemplatedetails
@@ -4518,7 +4519,7 @@ WHERE
                     INNER JOIN erp_companyreporttemplate ON erp_companyreporttemplatedetails.companyReportTemplateID = erp_companyreporttemplate.companyReportTemplateID
                 WHERE
                     ( ( ( erp_companyreporttemplate.isDefault ) = 1 ) AND ( ( erp_companyreporttemplate.reportID ) = 2 ) )
-                    ) AS revenueGLCodes ON erp_generalledger.chartOfAccountSystemID = revenueGLCodes.chartOfAccountSystemID
+                    ) AS revenueGLCodes ON erp_generalledger.chartOfAccountSystemID = revenueGLCodes.chartOfAccountSystemID AND erp_generalledger.companySystemID = revenueGLCodes.templateCompanySystemID
                 WHERE
                     DATE(erp_generalledger.documentDate) <= "' . $asOfDate . '"
                     AND YEAR ( erp_generalledger.documentDate ) = "' . $year . '"
@@ -4949,8 +4950,8 @@ AND erp_generalledger.documentRptAmount > 0 AND erp_generalledger.glAccountTypeI
                                 revenueCustomerDetail.glCode,
                                 revenueCustomerDetail.AccountDescription,
                                 revenueCustomerDetail.documentDate,
-                                IF('.$showVAT.' = 1, round(revenueCustomerDetail.MyRptAmount,0) + VATAmountRPT , round(revenueCustomerDetail.MyRptAmount,0)) as RptAmount,
-                                IF('.$showVAT.' = 1, round(revenueCustomerDetail.MyLocalAmount,0) + VATAmountLocal , round(revenueCustomerDetail.MyLocalAmount,0)) as localAmount,
+                                IF('.$showVAT.' = 1, revenueCustomerDetail.MyRptAmount + VATAmountRPT , revenueCustomerDetail.MyRptAmount) as RptAmount,
+                                IF('.$showVAT.' = 1, revenueCustomerDetail.MyLocalAmount + VATAmountLocal , revenueCustomerDetail.MyLocalAmount) as localAmount,
                                 documentLocalCurrency,
                                 documentLocalDecimalPlaces,
                                 documentRptCurrency,
