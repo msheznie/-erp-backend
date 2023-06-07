@@ -91,10 +91,9 @@ class CreateDepreciation implements ShouldQueue
                                                 ->orderBy('faID', 'desc')
                                                 ->get();
     
-                    $depAmountRptTotal = 0;
-                    $depAmountLocalTotal = 0;
+
                     if (count($faMaster) > 0) {
-                        $chunkSize = 100; // Set the desired chunk size
+                        $chunkSize = 100;
                         $faMasterArray = (array) $faMaster;
                         $totalItems = count($faMasterArray);
                         $totalChunks = ceil($totalItems / $chunkSize);
@@ -104,12 +103,10 @@ class CreateDepreciation implements ShouldQueue
                             $end = ($chunkIndex + 1) * $chunkSize;
                             $chunkData = array_slice($faMasterArray, $start, $chunkSize);
                             $finalData = [];
-//                            Log::info($chunkData);
                             $chunkData = reset($chunkData);
 
                             foreach ($chunkData as $val) {
-                                $amount_local = 0;
-//                                if (is_object($val) && property_exists($val, 'depperiod_by')) {
+                                    $amount_local = 0;
                                     $depAmountRpt = 0;
                                     $depAmountLocal =  0;
                                     $nbvLocal = $val->COSTUNIT - $depAmountLocal;
