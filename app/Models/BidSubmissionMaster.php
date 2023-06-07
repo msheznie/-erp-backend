@@ -159,4 +159,9 @@ class BidSubmissionMaster extends Model
         return $this->belongsTo(TenderFinalBids::class, 'bid_id','id');
 
     }
+
+    public function documents() {
+        return $this->hasMany(DocumentAttachments::class, 'documentSystemCode','id');
+
+    }
 }

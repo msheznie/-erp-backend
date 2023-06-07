@@ -38,6 +38,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Models\BidDocumentVerification;
 use App\Models\BidSubmissionMaster;
+use App\Models\TenderMaster;
 /**
  * Class DocumentAttachmentsController
  * @package App\Http\Controllers\API
@@ -1067,11 +1068,11 @@ class DocumentAttachmentsAPIController extends AppBaseController
         $sort = 'asc';
         $id = $request['id'];
         $tenderId = $request['tenderId'];
+        $documentType = TenderMaster::select('document_type')->where('id',$tenderId)->first();
 
-
-
+        $documentSystemId = $documentType->document_type == 0 ? 108:113;
         
-        $query = DocumentAttachments::with('bid_verify')->where('documentSystemCode', $id)->where('documentSystemID', 108)->where('attachmentType',0)->where('envelopType',3);
+        $query = DocumentAttachments::with('bid_verify')->where('documentSystemCode', $id)->where('documentSystemID', $documentSystemId)->where('attachmentType',0)->where('envelopType',3);
 
        // return $this->sendResponse($query, 'Tender Masters retrieved successfully');
 
@@ -1200,7 +1201,12 @@ class DocumentAttachmentsAPIController extends AppBaseController
           
             $input = $request->all();
             $id = $input['bid_id'];
-            $comments = $input['comments'];
+            $comments = '';
+            if(isset($input['comments']) && !empty($input['comments']))
+            {
+                $comments = $input['comments'];
+            }
+           
             $val = $input['type'];
             
             DB::beginTransaction();
@@ -1233,7 +1239,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
             DB::beginTransaction();
             try {
                 
-     
+                $documentType = TenderMaster::select('document_type')->where('id',$tender_id)->first();
 
                 $results = DocumentAttachments::where('documentSystemCode',$id)->where('documentSystemID', 108)->where('envelopType',3)->count();
 
@@ -1245,9 +1251,10 @@ class DocumentAttachmentsAPIController extends AppBaseController
                     $bid_sub_data['doc_verifiy_date'] =  date('Y-m-d H:i:s');
                     $results = BidSubmissionMaster::where('id',$id)->update($bid_sub_data,$id);
                 }
-        
+                
+                $data['type'] = $documentType->document_type;
                 DB::commit();
-                return ['success' => true, 'message' => 'Successfully updated', 'data' => $results];
+                return ['success' => true, 'message' => 'Successfully updated', 'data' => $data];
             } catch (\Exception $e) {
                 DB::rollback();
                 Log::error($this->failed($e));

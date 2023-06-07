@@ -468,6 +468,12 @@ class TenderMaster extends Model
     public function tender_negotiation() {
         return $this->hasMany('App\Models\TenderNegotiation','srm_tender_master_id','id');
     }
+
+    public function criteriaDetails()
+    {
+        return $this->hasMany('App\Models\EvaluationCriteriaDetails', 'tender_id', 'id');
+    }
+
     
     public function getDocumentSalesStartTimeAttribute() {
         if($this->document_sales_start_date) {
