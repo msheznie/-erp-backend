@@ -392,77 +392,90 @@ class BidSubmissionMasterAPIController extends AppBaseController
 
     public function getTenderBits(Request $request)
     {
-        $input = $request->all();
+       
+        DB::beginTransaction();
+        try {
+            
+            $input = $request->all();
 
-        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+                $sort = 'asc';
+            } else {
+                $sort = 'desc';
+            }
             $sort = 'asc';
-        } else {
-            $sort = 'desc';
-        }
-        $sort = 'asc';
-        $companyId = $request['companyId'];
-        $tenderId = $request['tenderId'];
-        $type = $request['type'];
-
-        
-        $tender = TenderMaster::select('id','document_type')->withCount(['DocumentAttachments'=>function($q){
-            $q->where('attachmentType',0)->where('envelopType',3);
-        }])->where('id', $tenderId)->first();
-
-        if($tender->document_type != 0 && $tender->document_attachments_count == 0 )
-        {
-            $bid_sub_data['doc_verifiy_yn'] = 1;
-            $bid_sub_data['doc_verifiy_by_emp'] = \Helper::getEmployeeSystemID();
-            $bid_sub_data['doc_verifiy_date'] =  date('Y-m-d H:i:s');
-            $bid_sub_data['doc_verifiy_status'] = 1;
-            $bid_sub_data['doc_verifiy_comment'] = '';
-            BidSubmissionMaster::where('tender_id', $tenderId)->update($bid_sub_data);
-        }
-
-
-        $query = BidSubmissionMaster::with(['tender:id,document_type','SupplierRegistrationLink','bidSubmissionDetail' => function($query){
-            $query->whereHas('srm_evaluation_criteria_details.evaluation_criteria_type', function ($query) {
-                $query->where('id', 1);
-            });
-        }])->withCount(['documents'=>function($q){
-            $q->where('documentSystemID', 113)->where('attachmentType',0)->where('envelopType',3);
-        }])->where('status', 1)->where('bidSubmittedYN', 1)->where('tender_id', $tenderId);
-
-        if($type == 2)
-        {
-            $query = $query->where('doc_verifiy_status',1);
-        }
-      
-
-        $search = $request->input('search.value');
-        if ($search) {
-            $search = str_replace("\\", "\\\\", $search);
-            $query = $query->where(function ($query) use ($search) {
-                $query->WhereHas('SupplierRegistrationLink', function ($query) use ($search) {
-                    $query->where('name', 'like', "%{$search}%");
+            $companyId = $request['companyId'];
+            $tenderId = $request['tenderId'];
+            $type = $request['type'];
+    
+            
+            $tender = TenderMaster::select('id','document_type')->withCount(['DocumentAttachments'=>function($q){
+                $q->where('attachmentType',0)->where('envelopType',3);
+            }])->where('id', $tenderId)->first();
+    
+            if($tender->document_type != 0 && $tender->document_attachments_count == 0 )
+            {
+                $bid_sub_data['doc_verifiy_yn'] = 1;
+                $bid_sub_data['doc_verifiy_by_emp'] = \Helper::getEmployeeSystemID();
+                $bid_sub_data['doc_verifiy_date'] =  date('Y-m-d H:i:s');
+                $bid_sub_data['doc_verifiy_status'] = 1;
+                $bid_sub_data['doc_verifiy_comment'] = '';
+                BidSubmissionMaster::where('tender_id', $tenderId)->update($bid_sub_data);
+            }
+    
+    
+            $query = BidSubmissionMaster::with(['tender:id,document_type','SupplierRegistrationLink','bidSubmissionDetail' => function($query){
+                $query->whereHas('srm_evaluation_criteria_details.evaluation_criteria_type', function ($query) {
+                    $query->where('id', 1);
                 });
-            });
-        }
-
-        return \DataTables::eloquent($query)
-            ->order(function ($query) use ($input,$sort) {
-                if (request()->has('order')) {
-                    if ($input['order'][0]['column'] == 0) {
-                        $query->orderBy('id', $sort);
+            }])->withCount(['documents'=>function($q){
+                $q->where('documentSystemID', 113)->where('attachmentType',0)->where('envelopType',3);
+            }])->where('status', 1)->where('bidSubmittedYN', 1)->where('tender_id', $tenderId);
+    
+            if($type == 2)
+            {
+                $query = $query->where('doc_verifiy_status',1);
+            }
+          
+    
+            $search = $request->input('search.value');
+            if ($search) {
+                $search = str_replace("\\", "\\\\", $search);
+                $query = $query->where(function ($query) use ($search) {
+                    $query->WhereHas('SupplierRegistrationLink', function ($query) use ($search) {
+                        $query->where('name', 'like', "%{$search}%");
+                    });
+                });
+            }
+    
+            return \DataTables::eloquent($query)
+                ->order(function ($query) use ($input,$sort) {
+                    if (request()->has('order')) {
+                        if ($input['order'][0]['column'] == 0) {
+                            $query->orderBy('id', $sort);
+                        }
                     }
-                }
-            })
-            ->addIndexColumn()
-            ->addColumn('is_rfx', function ($row)  {
+                })
+                ->addIndexColumn()
+                ->addColumn('is_rfx', function ($row)  {
+    
+                    if ($row->tender->document_type != 0) {
+                        return true;
+                    } else {
+                        return false;
+                    }
+                })
+                ->with('orderCondition', $sort)
+                ->make(true);
 
-                if ($row->tender->document_type != 0) {
-                    return true;
-                } else {
-                    return false;
-                }
-            })
-            ->with('orderCondition', $sort)
-            ->make(true);
+            DB::commit();
+        
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($e);
+            return ['success' => false, 'data' => '', 'message' => $e];
+        }
+       
     }
 
     public function getTenderBidGoNoGoResponse(Request $request){
