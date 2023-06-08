@@ -28,6 +28,7 @@ use App\Models\CompanyFinanceYear;
 use App\Models\CompanyPolicyMaster;
 use App\Models\Contract;
 use App\Models\ItemAssigned;
+use App\Models\SrpEmployeeDetails;
 use App\Models\StockTransfer;
 use App\Models\CustomerMaster;
 use App\Models\DocumentApproved;
@@ -1321,6 +1322,34 @@ class ItemIssueMasterAPIController extends AppBaseController
         $mpdf->WriteHTML($html);
         return $mpdf->Output($fileName, 'I');
 
+    }
+
+    public function getTypeheadActiveEmployees(Request $request)
+    {
+        $input = $request->all();
+        $employees = "";
+        $companySystemID = isset($input['companySystemID']) ? $input['companySystemID'] : 0;
+        if (array_key_exists('search', $input)) {
+            $search = $input['search'];
+            $employees = SrpEmployeeDetails::where(function ($query) use ($search) {
+                $query->where('Ecode', 'LIKE', "%{$search}%")
+                    ->orWhere('Ename2', 'LIKE', "%{$search}%");
+            });
+
+            if ($companySystemID > 0) {
+                $employees = $employees->where('Erp_companyID', $companySystemID);
+            }
+            $employees = $employees->where('empConfirmedYN', 1);
+            $employees = $employees->where('isDischarged', 0);
+
+
+        }
+
+        $employees = $employees
+            ->take(20)
+            ->get();
+
+        return $this->sendResponse($employees->toArray(), 'Data retrieved successfully');
     }
 
     public function materielIssueReopen(Request $request)
