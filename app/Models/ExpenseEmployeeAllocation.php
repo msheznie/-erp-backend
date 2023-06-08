@@ -118,7 +118,7 @@ class ExpenseEmployeeAllocation extends Model
         'documentDetailID' => 'integer',
         'chartOfAccountSystemID' => 'integer',
         'documentSystemCode' => 'integer',
-        'assignedQty' => 'integer',
+        'assignedQty' => 'float',
         'amount' => 'float',
         'amountRpt' => 'float',
         'amountLocal' => 'float',
