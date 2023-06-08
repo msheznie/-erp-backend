@@ -404,6 +404,21 @@ class BidSubmissionMasterAPIController extends AppBaseController
         $tenderId = $request['tenderId'];
         $type = $request['type'];
 
+        
+        $tender = TenderMaster::select('id','document_type')->withCount(['DocumentAttachments'=>function($q){
+            $q->where('attachmentType',0)->where('envelopType',3);
+        }])->where('id', $tenderId)->first();
+
+        if($tender->document_type != 0 && $tender->document_attachments_count == 0 )
+        {
+            $bid_sub_data['doc_verifiy_yn'] = 1;
+            $bid_sub_data['doc_verifiy_by_emp'] = \Helper::getEmployeeSystemID();
+            $bid_sub_data['doc_verifiy_date'] =  date('Y-m-d H:i:s');
+            $bid_sub_data['doc_verifiy_status'] = 1;
+            $bid_sub_data['doc_verifiy_comment'] = '';
+            BidSubmissionMaster::where('tender_id', $tenderId)->update($bid_sub_data);
+        }
+
 
         $query = BidSubmissionMaster::with(['tender:id,document_type','SupplierRegistrationLink','bidSubmissionDetail' => function($query){
             $query->whereHas('srm_evaluation_criteria_details.evaluation_criteria_type', function ($query) {
@@ -440,14 +455,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
             ->addIndexColumn()
             ->addColumn('is_rfx', function ($row)  {
 
-                if ($row->tender->document_type != 0 && $row->documents_count == 0) {
-                    $id = $row->id;
-                    $bid_sub_data['doc_verifiy_yn'] = 1;
-                    $bid_sub_data['doc_verifiy_by_emp'] = \Helper::getEmployeeSystemID();
-                    $bid_sub_data['doc_verifiy_date'] =  date('Y-m-d H:i:s');
-                    $bid_sub_data['doc_verifiy_status'] = 1;
-                    $bid_sub_data['doc_verifiy_comment'] = '';
-                    BidSubmissionMaster::where('id', $id)->update($bid_sub_data);
+                if ($row->tender->document_type != 0) {
                     return true;
                 } else {
                     return false;
