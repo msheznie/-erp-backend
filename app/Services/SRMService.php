@@ -1316,7 +1316,7 @@ class SRMService
             }])->whereHas('srmTenderMasterSupplier', function ($q) use ($supplierRegId) {
                 $q->where('purchased_by', '=', $supplierRegId);
             })->whereDoesntHave('tender_negotiation', function ($q) use ($supplierRegId) {
-                $q->where('status', '=', 1);
+                $q->where('status', '=', 2);
             })->where('published_yn', 1);
 
         }
@@ -1392,7 +1392,7 @@ class SRMService
             }])->whereHas('srmTenderMasterSupplier', function ($q) use ($supplierRegId) {
                 $q->where('purchased_by', '=', $supplierRegId);
             })->whereHas('tender_negotiation', function ($q) use ($supplierRegId) {
-                $q->where('status', '=', 1);
+                $q->where('status', '=', 2);
             })->where('published_yn', 1);
         }
 
@@ -1411,7 +1411,7 @@ class SRMService
             });
         }
 
-        if($is_rfx)
+        if($is_rfx && !empty($is_rfx))
         {
             if($request->input('extra.rfx_typ') != '')
             {
@@ -2333,7 +2333,8 @@ class SRMService
             ->get();
 
         if($tender_negotiation){
-            $bidSubmitted = TenderBidNegotiation::where('bid_Submission_code_old', $tender_negotiation_data[0]['supplier_tender_negotiation']['bidSubmissionCode'])
+            $bidSubmitted = TenderBidNegotiation::select('tender_id', 'tender_negotiation_id', 'bid_submission_master_id_old', 'bid_submission_master_id_new', 'bid_submission_code_old', 'supplier_registration_id')
+                ->where('bid_Submission_code_old', $tender_negotiation_data[0]['supplier_tender_negotiation']['bidSubmissionCode'])
                 ->where('supplier_registration_id', $supplierRegId)
                 ->get();
         }
@@ -2379,8 +2380,8 @@ class SRMService
                     $this->crateNewNegotiationTender($tender_id,$tender_negotiation_data,$bidMasterId,$supplierRegId,$att);
                 }
 
-                $details = PricingScheduleMaster::with(['tender_bid_format_master', 'pricing_shedule_details'=>function($query){
-                    $query->where('field_type',4);
+                $details = PricingScheduleMaster::select('id', 'price_bid_format_id')->with(['tender_bid_format_master', 'pricing_shedule_details'=>function($query){
+                    $query->select('pricing_schedule_master_id', 'company_id')->where('field_type',4);
                 }])->where('tender_id', $tender_id)->get();
 
 
@@ -4581,7 +4582,7 @@ class SRMService
 
     private function crateNewNegotiationTender($tender_id,$tender_negotiation_data,$bidMasterId,$supplierRegId,$att){
         $tenderNegotiationArea = TenderNegotiation::select('id')->with('area')->where('srm_tender_master_id', $tender_id)->first();
-        $pricingSchedule= $tenderNegotiationArea->area->pricing_schedule;
+        $pricingSchedule = $tenderNegotiationArea->area->pricing_schedule;
         $technicalEvaluation = $tenderNegotiationArea->area->technical_evaluation;
         $tenderDocuments = $tenderNegotiationArea->area->tender_documents;
         $data['tender_id'] = $tender_id;
@@ -4590,7 +4591,7 @@ class SRMService
         $data['bid_submission_master_id_new'] = $bidMasterId;
         $data['bid_submission_code_old'] = $tender_negotiation_data[0]['supplier_tender_negotiation']['bidSubmissionCode'];
         $data['supplier_registration_id'] = $supplierRegId;
-        $data['bid_submission_code_new'] = $att['bidSubmissionCode'];
+        //$data['bid_submission_code_new'] = $att['bidSubmissionCode'];
         $att['created_at'] = Carbon::now();
         TenderBidNegotiation::create($data);
 
@@ -4719,7 +4720,8 @@ class SRMService
         $supplierTenderNegotiation = SupplierTenderNegotiation::select('srm_bid_submission_master_id')
             ->where('tender_negotiation_id', $tenderNegotiationId->id)->first();
 
-        $tenderBidNegotiation = TenderBidNegotiation::where('tender_negotiation_id', $tenderNegotiationId->id)
+        $tenderBidNegotiation = TenderBidNegotiation::select('bid_submission_master_id_old')
+            ->where('tender_negotiation_id', $tenderNegotiationId->id)
             ->where('bid_submission_master_id_new', $bidMasterId)
             ->first();
 
