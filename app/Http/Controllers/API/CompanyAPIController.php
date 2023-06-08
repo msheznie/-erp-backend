@@ -202,6 +202,7 @@ class CompanyAPIController extends AppBaseController
                                                                 ->where('isYesNO',1)
                                                                 ->exists();
 
+        $hasSupplierGeneratePolicy = Helper::checkPolicy($selectedCompanyId, 76);  
 
         $output = array('companies' => $companies->toArray(),
             'liabilityAccount' => $liabilityAccount,
@@ -222,7 +223,8 @@ class CompanyAPIController extends AppBaseController
             'isEEOSSPolicy' => $hasEEOSSPolicy,
             'supplierCategories' => $supplierCategories,
             'supplierGroups' => $supplierGroups,
-            'isGroup' => $isGroup
+            'isGroup' => $isGroup,
+            'hasSupplierGeneratePolicy'=> $hasSupplierGeneratePolicy
             );
         return $this->sendResponse($output, 'Record retrieved successfully');
 

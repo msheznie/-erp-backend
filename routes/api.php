@@ -88,6 +88,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
                     Route::post('generateAMReport', 'AssetManagementReportAPIController@generateReport');
                     Route::post('exportAMReport', 'AssetManagementReportAPIController@exportReport');
                     Route::post('exportAssetMaster', 'FixedAssetMasterAPIController@exportAssetMaster');
+                    Route::resource('fixed_asset_depreciation_masters', 'FixedAssetDepreciationMasterAPIController');
+                    Route::post('getAssetDepPeriodsByID', 'FixedAssetDepreciationPeriodAPIController@getAssetDepPeriodsByID');
+
                 });
             });
 
@@ -777,7 +780,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::get('getAssetCostingByID/{id}', 'FixedAssetMasterAPIController@getAssetCostingByID');
             Route::post('updateCustomerReciept', 'CustomerReceivePaymentDetailAPIController@updateCustomerReciept');
-            Route::resource('fixed_asset_depreciation_masters', 'FixedAssetDepreciationMasterAPIController');
             Route::post('getAllDepreciationByCompany', 'FixedAssetDepreciationMasterAPIController@getAllDepreciationByCompany');
             Route::get('getDepreciationFormData', 'FixedAssetDepreciationMasterAPIController@getDepreciationFormData');
             Route::get('assetDepreciationByID/{id}', 'FixedAssetDepreciationMasterAPIController@assetDepreciationByID');
@@ -864,7 +866,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             
             
             Route::resource('fixed_asset_depreciation_periods', 'FixedAssetDepreciationPeriodAPIController');
-            Route::post('getAssetDepPeriodsByID', 'FixedAssetDepreciationPeriodAPIController@getAssetDepPeriodsByID');
             Route::post('exportAMDepreciation', 'FixedAssetDepreciationPeriodAPIController@exportAMDepreciation');
             Route::resource('asset_types', 'AssetTypeAPIController');
             
