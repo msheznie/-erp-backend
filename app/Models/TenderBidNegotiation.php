@@ -18,8 +18,7 @@ class TenderBidNegotiation extends Model
         'bid_submission_master_id_old',
         'bid_submission_master_id_new',
         'bid_submission_code_old',
-        'supplier_registration_id',
-        'bid_submission_code_new',
+        'supplier_id',
         'created_at',
         'updated_at'
     ];
@@ -28,10 +27,9 @@ class TenderBidNegotiation extends Model
         'tender_id' => 'integer',
         'tender_negotiation_id' => 'integer',
         'bid_submission_master_id_old' => 'integer',
-        'supplier_registration_id' => 'integer',
-        'bid_submission_master_id_new' => 'boolean',
+        'bid_submission_master_id_new' => 'integer',
+        'supplier_id' => 'integer',
         'bid_submission_code_old' => 'string',
-        'bid_submission_code_new' => 'string',
         'created_at' => 'date',
         'updated_at' => 'date'
     ];

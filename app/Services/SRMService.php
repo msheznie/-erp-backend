@@ -2333,9 +2333,9 @@ class SRMService
             ->get();
 
         if($tender_negotiation){
-            $bidSubmitted = TenderBidNegotiation::select('tender_id', 'tender_negotiation_id', 'bid_submission_master_id_old', 'bid_submission_master_id_new','bid_submission_code_old', 'supplier_registration_id')
+            $bidSubmitted = TenderBidNegotiation::select('tender_id', 'tender_negotiation_id', 'bid_submission_master_id_old', 'bid_submission_master_id_new','bid_submission_code_old', 'supplier_id')
                 ->where('bid_Submission_code_old', $tender_negotiation_data[0]['supplier_tender_negotiation']['bidSubmissionCode'])
-                ->where('supplier_registration_id', $supplierRegId)
+                ->where('supplier_id', $supplierRegId)
                 ->get();
         }
 
@@ -4590,8 +4590,7 @@ class SRMService
         $data['bid_submission_master_id_old'] = $tender_negotiation_data[0]['supplier_tender_negotiation']['srm_bid_submission_master_id'];
         $data['bid_submission_master_id_new'] = $bidMasterId;
         $data['bid_submission_code_old'] = $tender_negotiation_data[0]['supplier_tender_negotiation']['bidSubmissionCode'];
-        $data['supplier_registration_id'] = $supplierRegId;
-        $data['bid_submission_code_new'] = $att['bidSubmissionCode'];
+        $data['supplier_id'] = $supplierRegId;
         $att['created_at'] = Carbon::now();
         TenderBidNegotiation::create($data);
 
