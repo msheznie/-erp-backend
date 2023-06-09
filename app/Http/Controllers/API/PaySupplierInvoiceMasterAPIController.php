@@ -1678,11 +1678,17 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
             if (isset($input['pdcChequeYN']) && $input['pdcChequeYN'] == false) {
 
-                PdcLog::where('documentSystemID', $input['documentSystemID'])
+                $isPdcLog = PdcLog::where('documentSystemID', $input['documentSystemID'])
                     ->where('documentmasterAutoID', $input['PayMasterAutoId'])
-                    ->delete();
+                    ->first();
 
-                ChequeRegisterDetail::where('document_id', $input['PayMasterAutoId'])->where('document_master_id', $input['documentSystemID'])->update(['status' => 0, 'document_master_id' => null, 'document_id' => null]);
+                if(!empty($isPdcLog)) {
+                    ChequeRegisterDetail::where('document_id', $input['PayMasterAutoId'])->where('document_master_id', $input['documentSystemID'])->update(['status' => 0, 'document_master_id' => null, 'document_id' => null]);
+
+                    PdcLog::where('documentSystemID', $input['documentSystemID'])
+                        ->where('documentmasterAutoID', $input['PayMasterAutoId'])
+                        ->delete();
+                }
 
             }
 
