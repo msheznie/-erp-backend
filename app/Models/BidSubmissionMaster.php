@@ -170,7 +170,7 @@ class BidSubmissionMaster extends Model
     }
 
     public function documents() {
-        return $this->hasMany(DocumentAttachments::class, 'documentSystemCode','id');
+        return $this->hasMany(DocumentAttachments::class, 'documentSystemCode','tender_id');
 
     }
 }
