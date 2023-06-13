@@ -55,13 +55,43 @@ class BankLedgerPdfJob implements ShouldQueue
         $root = "bank-ledger-pdf/".$currentDate;
 
         $output = BankLedgerService::getBankLedgerData($request);
+
+
         $outputChunkData = collect($output)->chunk(300);
 
         $reportCount = 1;
 
         foreach ($outputChunkData as $key1 => $output1) {
+
+            if (count($request->accounts) == 1) {
+                foreach ($output1 as $key => $value) {
+                    $value->accountBalance = $this->calculateAccountBalance($output1, $key, $request->currencyID);
+                }
+            }
+            
             GenerateBankLedgerPdf::dispatch($db, $request, $reportCount, $this->userIds, $output1, count($outputChunkData), $root);
             $reportCount++;
         }
+    }
+
+
+    public function calculateAccountBalance($data, $index, $currencyID)
+    {
+        $balance = 0;
+
+        foreach ($data as $key => $value) {
+            if ($key <= $index) {
+                if ($currencyID == 1) {
+                    $balance += $value->bankDebit - $value->bankCredit;
+                } else if ($currencyID == 2) {
+                    $balance += $value->rptDebit - $value->rptCredit;
+                } else if ($currencyID == 3) {
+                    $balance += $value->localDebit - $value->localCredit;
+                }
+            }
+        }
+
+        return $balance;
+
     }
 }

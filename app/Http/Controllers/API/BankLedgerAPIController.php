@@ -2466,6 +2466,11 @@ class BankLedgerAPIController extends AppBaseController
             $currencyCode = "";
         }
 
+        if (count($request->accounts) == 1) {
+            foreach ($output as $key => $value) {
+                $value->accountBalance = $this->calculateAccountBalance($output, $key, $request->currencyID);
+            }
+        }
         
         $total = array();
         $total['documentLocalAmountDebit'] = array_sum(collect($output)->pluck('localDebit')->toArray());
@@ -2488,12 +2493,38 @@ class BankLedgerAPIController extends AppBaseController
                         ->make(true);
     }
 
+    public function calculateAccountBalance($data, $index, $currencyID)
+    {
+        $balance = 0;
+
+        foreach ($data as $key => $value) {
+            if ($key <= $index) {
+                if ($currencyID == 1) {
+                    $balance += $value->bankDebit - $value->bankCredit;
+                } else if ($currencyID == 2) {
+                    $balance += $value->rptDebit - $value->rptCredit;
+                } else if ($currencyID == 3) {
+                    $balance += $value->localDebit - $value->localCredit;
+                }
+            }
+        }
+
+        return $balance;
+
+    }
+
     public function exportBankLedgerReport(Request $request)
     {
         $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
         $checkIsGroup = Company::find($request->companySystemID);
 
         $output = BankLedgerService::getBankLedgerData($request);
+
+        if (count($request->accounts) == 1) {
+            foreach ($output as $key => $value) {
+                $value->accountBalance = $this->calculateAccountBalance($output, $key, $request->currencyID);
+            }
+        }
 
         $requestCurrencyRpt = CurrencyMaster::where('currencyID', $checkIsGroup->reportingCurrency)->first();
         $requestCurrencyLocal = CurrencyMaster::where('currencyID', $checkIsGroup->localCurrencyID)->first();
@@ -2530,6 +2561,8 @@ class BankLedgerAPIController extends AppBaseController
             $subTotalCreditRpt = 0;
             $subTotalDebitLocal = 0;
             $subTotalCreditRptLocal = 0;
+            $subTotalDebitBank = 0;
+            $subTotalCreditBank = 0;
 
             $dataArrayNew = array();
 
@@ -2564,17 +2597,31 @@ class BankLedgerAPIController extends AppBaseController
                     $data[$x]['Currency'] = $val->bankCurrency;
                     $data[$x]['Debit (Bank Currency)'] = round($val->bankDebit, $val->bankCurrencyDecimal);
                     $data[$x]['Credit (Bank Currency)'] = round($val->bankCredit, $val->bankCurrencyDecimal);
+                    
+                    if (count($request->accounts) == 1) {
+                        $data[$x]['Account Balance'] = isset($val->accountBalance) ? round($val->accountBalance, $val->bankCurrencyDecimal): "";
+                    }
                 }
 
                 if ($checkIsGroup->isGroup == 0 && $request->currencyID == 3) {
                     $data[$x]['Debit (Local Currency - ' . $currencyCode . ')'] = round($val->localDebit, $decimalPlace);
                     $data[$x]['Credit (Local Currency - ' . $currencyCode . ')'] = round($val->localCredit, $decimalPlace);
+
+                    if (count($request->accounts) == 1) {
+                        $data[$x]['Account Balance'] = isset($val->accountBalance) ? round($val->accountBalance, $decimalPlace): "";
+                    }
                 }
 
                 if($request->currencyID == 2) {
                     $data[$x]['Debit (Reporting Currency - ' . $currencyCode . ')'] = round($val->rptDebit, $decimalPlace);
                     $data[$x]['Credit (Reporting Currency - ' . $currencyCode . ')'] = round($val->rptCredit, $decimalPlace);
+
+                    if (count($request->accounts) == 1) {
+                        $data[$x]['Account Balance'] = isset($val->accountBalance) ? round($val->accountBalance, $decimalPlace): "";
+                    }
                 }
+
+
 
 
                 $subTotalDebitRpt += round($val->rptDebit, $decimalPlace);
@@ -2582,6 +2629,9 @@ class BankLedgerAPIController extends AppBaseController
 
                 $subTotalDebitLocal += round($val->localDebit, $decimalPlace);
                 $subTotalCreditRptLocal += round($val->localCredit, $decimalPlace);
+
+                $subTotalDebitBank += round($val->bankDebit, $val->bankCurrencyDecimal);
+                $subTotalCreditBank += round($val->bankCredit, $val->bankCurrencyDecimal);
                 $x++;
             }
         }
@@ -2612,7 +2662,14 @@ class BankLedgerAPIController extends AppBaseController
         }
 
         if ($request->currencyID != 1) {
-            $data[$x]['Supplier/Customer'] = "Grand Total";
+            $data[$x]['Supplier/Customer'] = "Total Amount";
+        }
+
+        if ($request->currencyID == 1) {
+            $data[$x]['Supplier/Customer'] = "";
+            $data[$x]['Currency'] = "Total Amount";;
+            $data[$x]['Debit (Bank Currency)'] = $subTotalDebitBank;
+            $data[$x]['Credit (Bank Currency)'] = $subTotalCreditBank;
         }
 
         if ($checkIsGroup->isGroup == 0 && $request->currencyID == 3) {
@@ -2636,7 +2693,6 @@ class BankLedgerAPIController extends AppBaseController
         $data[$x]['Date'] = "";
         $data[$x]['Document Narration'] = "";
 
-        $data[$x]['Supplier/Customer'] = "";
         if (in_array('confi_name', $extraColumns)) {
             $data[$x]['Confirmed By'] = "";
         }
@@ -2652,14 +2708,27 @@ class BankLedgerAPIController extends AppBaseController
         if (in_array('app_date', $extraColumns)) {
             $data[$x]['Approved Date'] = "";
         }
+
+        if ($request->currencyID != 1) {
+            $data[$x]['Supplier/Customer'] = "Net Amount";
+        }
+
+        if ($request->currencyID == 1) {
+            $data[$x]['Supplier/Customer'] = "";
+            $data[$x]['Currency'] = "Net Amount";;
+            $data[$x]['Debit (Bank Currency)'] = ($subTotalDebitBank - $subTotalCreditBank) > 0 ? ($subTotalDebitBank - $subTotalCreditBank) : "";;
+            $data[$x]['Credit (Bank Currency)'] = ($subTotalDebitBank - $subTotalCreditBank) < 0 ? ($subTotalDebitBank - $subTotalCreditBank) * -1 : "";;
+        }
+
+
         if ($checkIsGroup->isGroup == 0 && $request->currencyID == 3) {
-            $data[$x]['Debit (Local Currency - ' . $currencyCode . ')'] = "";
-            $data[$x]['Credit (Local Currency - ' . $currencyCode . ')'] = round($subTotalDebitLocal - $subTotalCreditRptLocal, $decimalPlace);
+            $data[$x]['Debit (Local Currency - ' . $currencyCode . ')'] = ($subTotalDebitLocal - $subTotalCreditRptLocal) > 0 ? round($subTotalDebitLocal - $subTotalCreditRptLocal, $decimalPlace) : "";
+            $data[$x]['Credit (Local Currency - ' . $currencyCode . ')'] = ($subTotalDebitLocal - $subTotalCreditRptLocal) < 0 ? round(($subTotalDebitLocal - $subTotalCreditRptLocal) * -1, $decimalPlace) : "";
         }
 
         if($request->currencyID == 2) {
-            $data[$x]['Debit (Reporting Currency - ' . $currencyCode . ')'] = "";
-            $data[$x]['Credit (Reporting Currency - ' . $currencyCode . ')'] = round($subTotalDebitRpt - $subTotalCreditRpt, $decimalPlace);
+            $data[$x]['Debit (Reporting Currency - ' . $currencyCode . ')'] = ($subTotalDebitRpt - $subTotalCreditRpt) > 0 ? round($subTotalDebitRpt - $subTotalCreditRpt, $decimalPlace) : "";
+            $data[$x]['Credit (Reporting Currency - ' . $currencyCode . ')'] = ($subTotalDebitRpt - $subTotalCreditRpt) < 0 ? round(($subTotalDebitRpt - $subTotalCreditRpt) * -1, $decimalPlace) : "";
         }
 
         $type = $request->type;
