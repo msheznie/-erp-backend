@@ -405,9 +405,14 @@ class BidSubmissionMasterAPIController extends AppBaseController
         $tenderId = $request['tenderId'];
         $type = $request['type']; 
 
-        $tender = TenderMaster::select('id','document_type')->withCount(['DocumentAttachments'=>function($q){
-            $q->where('attachmentType',2)->where('envelopType',3);
-        }])->where('id', $tenderId)->first();
+        $tender = TenderMaster::select('id','document_type')->withCount(['DocumentAttachments'=>function($q) use ($companyId){
+            $q->where('companySystemID',$companyId)
+            ->where('attachmentType',2)
+            ->where('envelopType',3);
+        }])
+        ->where('id', $tenderId)
+        ->where('company_id', $companyId) 
+        ->first();
         
         if($tender->document_type != 0 && $tender->document_attachments_count == 0 )
         {
@@ -418,8 +423,9 @@ class BidSubmissionMasterAPIController extends AppBaseController
                 $query->whereHas('srm_evaluation_criteria_details.evaluation_criteria_type', function ($query) {
                     $query->where('id', 1);
                 });
-        }])->withCount(['documents'=>function($q){
-                $q->where('documentSystemID', 113)  
+        }])->withCount(['documents'=>function($q) use ($companyId){
+                $q->where('companySystemID',$companyId)
+                ->where('documentSystemID', 113)  
                 ->where('attachmentType',2)  
                 ->where('envelopType',3);
         }])->where('status', 1)->where('bidSubmittedYN', 1)->where('tender_id', $tenderId);
