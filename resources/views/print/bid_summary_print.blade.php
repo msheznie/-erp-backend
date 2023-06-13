@@ -19,13 +19,34 @@
         <td colspan="9">&nbsp;</td>
     </tr>
     <tr>
-        <td><strong>Tender Code:</strong></td>
+        <td><strong>
+            @if($documentType == 0)
+                Tender Code:
+            @elseif($documentType == 1)
+                RFQ Code:
+            @elseif($documentType == 2)
+                RFI Code:
+            @elseif($documentType == 3)
+                RFP Code:
+            @endif
+        </strong></td>
         <td colspan="2">
             @if ($bidData[0]['tender_code'])
                 {{$bidData[0]['tender_code']}}
             @endif
         </td>
-        <td colspan="2"><strong>Tender Title:</strong></td>
+        <td colspan="2"><strong>
+            @if($documentType == 0)
+                Tender Title:
+            @elseif($documentType == 1)
+                RFQ Title:
+            @elseif($documentType == 2)
+                RFI Title:
+            @elseif($documentType == 3)
+                RFP Title:
+            @endif
+
+        </strong></td>
         <td colspan="4">
             @if ($bidData[0]['title'])
                 {{$bidData[0]['title']}}
@@ -33,13 +54,33 @@
         </td>
     </tr>
     <tr>
-        <td><strong>Tender Description:</strong></td>
+        <td><strong>
+           @if($documentType == 0)
+                Tender Description:
+            @elseif($documentType == 1)
+                RFQ Description:
+            @elseif($documentType == 2)
+                RFI Description:
+            @elseif($documentType == 3)
+                RFP Description:
+            @endif
+        </strong></td>
         <td colspan="2">
             @if ($bidData[0]['description'])
                 {{$bidData[0]['description']}}
             @endif
         </td>
-        <td colspan="2"><strong>Tender Publish Date:</strong></td>
+        <td colspan="2"><strong>
+            @if($documentType == 0)
+                Tender Publish Date:
+            @elseif($documentType == 1)
+                RFQ Publish Date:
+            @elseif($documentType == 2)
+                RFI Publish Date:
+            @elseif($documentType == 3)
+                RFP Publish Date:
+            @endif
+        </strong></td>
         <td colspan="4">
             {{\Carbon\Carbon::parse($bidData[0]['published_at'])->format('d/m/Y')}}
         </td>
@@ -113,11 +154,13 @@
                     </td>
                 @endforeach
                 <td>
-                    @if ($item->doc_verifiy_status == 1)
-                        Approved
-                    @endif
-                    @if ($item->doc_verifiy_status == 2)
-                        Rejected
+                    @if ($count != 0)
+                        @if ($item->doc_verifiy_status == 1)
+                            Approved
+                        @endif
+                        @if ($item->doc_verifiy_status == 2)
+                            Rejected
+                        @endif 
                     @endif
                 </td>
                 <td colspan="1">{{$item->doc_verifiy_comment}}</td>

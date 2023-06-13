@@ -168,4 +168,9 @@ class BidSubmissionMaster extends Model
     {
         return $this->hasOne('App\Models\TenderBidNegotiation', 'bid_submission_master_id_new', 'id');
     }
+
+    public function documents() {
+        return $this->hasMany(DocumentAttachments::class, 'documentSystemCode','id');
+
+    }
 }
