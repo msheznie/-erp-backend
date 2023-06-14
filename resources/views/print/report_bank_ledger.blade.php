@@ -203,7 +203,7 @@
                 @if(in_array('app_date', $extraColumns))
                     <th>Approved Date</th>
                 @endif
-                @if(($isGroup == 0 && $currencyID == 3) || $currencyID == 2 || ($currencyID == 1 && $accBalanceShow))
+                @if(($isGroup == 0 && $currencyID == 3) || $currencyID == 2 || $currencyID == 1)
                     <th style="text-align: center">Debit</th>
                     <th style="text-align: center">Credit</th>
                 @endif
@@ -249,7 +249,7 @@
                         <td class="text-right">{{number_format($val->rptCredit, $currencyDecimalPlace)}}</td>
                         {{$balanceDecimal = $currencyDecimalPlace}}
                     @endif
-                    @if($currencyID == 1 && $accBalanceShow)
+                    @if($currencyID == 1)
                         <td class="text-right">{{number_format($val->bankDebit, $val->bankCurrencyDecimal)}}</td>
                         <td class="text-right">{{number_format($val->bankCredit, $val->bankCurrencyDecimal)}}</td>
                         {{$balanceDecimal = $val->bankCurrencyDecimal}}
@@ -268,87 +268,91 @@
                 {{$acBankCreditTotal += $val->bankCredit}}
                 {{$bankDecimal = $val->bankCurrencyDecimal}}
             @endforeach
-            <tr style="background-color: #E7E7E7">
-                <td colspan="{{6 + count($extraColumns)}}" class="text-right"
-                    style=""><b>Total Amount:</b>
-                </td>
-                @if($isGroup == 0 && $currencyID == 3)
-                    <td class="text-right">
-                        <b>{{number_format($acLocalDebitTotal, $currencyDecimalPlace)}}</b>
+            @if(($currencyID == 1 && $accBalanceShow) || ($isGroup == 0 && $currencyID == 3) || $currencyID == 2)
+                <tr style="background-color: #E7E7E7">
+                    <td colspan="{{6 + count($extraColumns)}}" class="text-right"
+                        style=""><b>Total Amount:</b>
                     </td>
-                @endif
-                @if($isGroup == 0 && $currencyID == 3)
-                    <td class="text-right">
-                        <b>{{number_format($acLocalCreditTotal, $currencyDecimalPlace)}}</b>
-                    </td>
-                @endif
-                @if($currencyID == 2)
-                    <td class="text-right">
-                        <b>{{number_format($acRptDebitTotal, $currencyDecimalPlace)}}</b>
-                    </td>
-                    <td class="text-right">
-                        <b>{{number_format($acRptCreditTotal, $currencyDecimalPlace)}}</b>
-                    </td>
-                @endif
+                    @if($isGroup == 0 && $currencyID == 3)
+                        <td class="text-right">
+                            <b>{{number_format($acLocalDebitTotal, $currencyDecimalPlace)}}</b>
+                        </td>
+                    @endif
+                    @if($isGroup == 0 && $currencyID == 3)
+                        <td class="text-right">
+                            <b>{{number_format($acLocalCreditTotal, $currencyDecimalPlace)}}</b>
+                        </td>
+                    @endif
+                    @if($currencyID == 2)
+                        <td class="text-right">
+                            <b>{{number_format($acRptDebitTotal, $currencyDecimalPlace)}}</b>
+                        </td>
+                        <td class="text-right">
+                            <b>{{number_format($acRptCreditTotal, $currencyDecimalPlace)}}</b>
+                        </td>
+                    @endif
 
-                @if($currencyID == 1 && $accBalanceShow)
-                    <td class="text-right">
-                        <b>{{number_format($acBankDebitTotal, $bankDecimal)}}</b>
+                    @if($currencyID == 1 && $accBalanceShow)
+                        <td class="text-right">
+                            <b>{{number_format($acBankDebitTotal, $bankDecimal)}}</b>
+                        </td>
+                        <td class="text-right">
+                            <b>{{number_format($acBankCreditTotal, $bankDecimal)}}</b>
+                        </td>
+                    @endif
+                </tr>
+            @endif
+            @if(($currencyID == 1 && $accBalanceShow) || ($isGroup == 0 && $currencyID == 3) || $currencyID == 2)
+                <tr style="background-color: #E7E7E7">
+                    <td colspan="{{6 + count($extraColumns)}}" class="text-right"
+                        style="">
+                        <b>Net Amount</b>
                     </td>
-                    <td class="text-right">
-                        <b>{{number_format($acBankCreditTotal, $bankDecimal)}}</b>
-                    </td>
-                @endif
-            </tr>
-            <tr style="background-color: #E7E7E7">
-                <td colspan="{{6 + count($extraColumns)}}" class="text-right"
-                    style="">
-                    <b>Net Amount</b>
-                </td>
-                @if($isGroup == 0 && $currencyID == 3)
+                    @if($isGroup == 0 && $currencyID == 3)
 
-                    @if(($acLocalDebitTotal - $acLocalCreditTotal) > 0)
-                        <td class="text-right">
-                            <b>{{number_format(($acLocalDebitTotal - $acLocalCreditTotal ), $currencyDecimalPlace)}}</b>
-                        </td>
-                        <td></td>
+                        @if(($acLocalDebitTotal - $acLocalCreditTotal) > 0)
+                            <td class="text-right">
+                                <b>{{number_format(($acLocalDebitTotal - $acLocalCreditTotal ), $currencyDecimalPlace)}}</b>
+                            </td>
+                            <td></td>
+                        @endif
+                        @if(($acLocalDebitTotal - $acLocalCreditTotal) < 0)
+                            <td></td>
+                            <td class="text-right">
+                                <b>{{number_format((($acLocalDebitTotal - $acLocalCreditTotal) * -1), $currencyDecimalPlace)}}</b>
+                            </td>
+                        @endif
                     @endif
-                    @if(($acLocalDebitTotal - $acLocalCreditTotal) < 0)
-                        <td></td>
-                        <td class="text-right">
-                            <b>{{number_format((($acLocalDebitTotal - $acLocalCreditTotal) * -1), $currencyDecimalPlace)}}</b>
-                        </td>
+                    @if($currencyID == 2)
+                        @if(($acRptDebitTotal - $acRptCreditTotal) > 0)
+                            <td class="text-right">
+                                <b>{{number_format(($acRptDebitTotal - $acRptCreditTotal ), $currencyDecimalPlace)}}</b>
+                            </td>
+                            <td></td>
+                        @endif
+                        @if(($acRptDebitTotal - $acRptCreditTotal) < 0)
+                            <td></td>
+                            <td class="text-right">
+                                <b>{{number_format((($acRptDebitTotal - $acRptCreditTotal) * -1), $currencyDecimalPlace)}}</b>
+                            </td>
+                        @endif
                     @endif
-                @endif
-                @if($currencyID == 2)
-                    @if(($acRptDebitTotal - $acRptCreditTotal) > 0)
-                        <td class="text-right">
-                            <b>{{number_format(($acRptDebitTotal - $acRptCreditTotal ), $currencyDecimalPlace)}}</b>
-                        </td>
-                        <td></td>
+                    @if($currencyID == 1 && $accBalanceShow)
+                        @if(($acBankDebitTotal - $acBankCreditTotal) > 0)
+                            <td class="text-right">
+                                <b>{{number_format(($acBankDebitTotal - $acBankCreditTotal ), $bankDecimal)}}</b>
+                            </td>
+                            <td></td>
+                        @endif
+                        @if(($acBankDebitTotal - $acBankCreditTotal) < 0)
+                            <td></td>
+                            <td class="text-right">
+                                <b>{{number_format((($acBankDebitTotal - $acBankCreditTotal) * -1), $bankDecimal)}}</b>
+                            </td>
+                        @endif
                     @endif
-                    @if(($acRptDebitTotal - $acRptCreditTotal) < 0)
-                        <td></td>
-                        <td class="text-right">
-                            <b>{{number_format((($acRptDebitTotal - $acRptCreditTotal) * -1), $currencyDecimalPlace)}}</b>
-                        </td>
-                    @endif
-                @endif
-                @if($currencyID == 1 && $accBalanceShow)
-                    @if(($acBankDebitTotal - $acBankCreditTotal) > 0)
-                        <td class="text-right">
-                            <b>{{number_format(($acBankDebitTotal - $acBankCreditTotal ), $bankDecimal)}}</b>
-                        </td>
-                        <td></td>
-                    @endif
-                    @if(($acBankDebitTotal - $acBankCreditTotal) < 0)
-                        <td></td>
-                        <td class="text-right">
-                            <b>{{number_format((($acBankDebitTotal - $acBankCreditTotal) * -1), $bankDecimal)}}</b>
-                        </td>
-                    @endif
-                @endif
-            </tr>
+                </tr>
+            @endif
         @endforeach
     </table>
 </div>

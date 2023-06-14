@@ -2665,7 +2665,7 @@ class BankLedgerAPIController extends AppBaseController
             $data[$x]['Supplier/Customer'] = "Total Amount";
         }
 
-        if ($request->currencyID == 1) {
+        if ($request->currencyID == 1 && count($request->accounts) == 1) {
             $data[$x]['Supplier/Customer'] = "";
             $data[$x]['Currency'] = "Total Amount";;
             $data[$x]['Debit (Bank Currency)'] = $subTotalDebitBank;
@@ -2713,7 +2713,7 @@ class BankLedgerAPIController extends AppBaseController
             $data[$x]['Supplier/Customer'] = "Net Amount";
         }
 
-        if ($request->currencyID == 1) {
+        if ($request->currencyID == 1 && count($request->accounts) == 1) {
             $data[$x]['Supplier/Customer'] = "";
             $data[$x]['Currency'] = "Net Amount";;
             $data[$x]['Debit (Bank Currency)'] = ($subTotalDebitBank - $subTotalCreditBank) > 0 ? ($subTotalDebitBank - $subTotalCreditBank) : "";;
