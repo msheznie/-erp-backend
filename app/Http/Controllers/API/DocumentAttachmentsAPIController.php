@@ -1239,11 +1239,10 @@ class DocumentAttachmentsAPIController extends AppBaseController
             DB::beginTransaction();
             try {
                 
-                $documentType = TenderMaster::select('document_type')->where('id',$tender_id)->first();
-
-                $results = DocumentAttachments::where('documentSystemCode',$id)->where('documentSystemID', 108)->where('envelopType',3)->count();
-
-
+                $documentType = TenderMaster::select('document_type')->where('id',$tender_id)->first();  
+                $documetSystemId = ($documentType->document_type) == 1 ? 108 : 113; 
+                $results = DocumentAttachments::where('documentSystemCode',$id)->where('documentSystemID', $documetSystemId)->where('envelopType',3)->count(); 
+                
                 if($results == 0)
                 {
                     $bid_sub_data['doc_verifiy_yn'] = 1;
