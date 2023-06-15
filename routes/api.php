@@ -1504,6 +1504,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             /* Asset Request */
             Route::resource('asset_requests', 'AssetRequestAPIController');
             Route::post('getAllAssetRequestList', 'AssetRequestAPIController@getAllAssetRequestList');
+            Route::get('getItemsOptionForAssetRequest', 'AssetRequestAPIController@getItemsOptionForAssetRequest');
+            Route::post('mapLineItemAr', 'AssetRequestAPIController@mapLineItemAr')->name('Map line item Ar');
             Route::get('asset-request-details', 'AssetRequestDetailAPIController@getAssetRequestDetails');
             Route::get('getassetRequestMaster', 'AssetRequestDetailAPIController@getAssetRequestMaster');
             Route::get('getassetRequestDetailSelected', 'AssetRequestDetailAPIController@getAssetRequestDetailSelected');

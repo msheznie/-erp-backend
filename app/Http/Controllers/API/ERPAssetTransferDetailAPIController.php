@@ -8,6 +8,7 @@ use App\Models\ERPAssetTransferDetail;
 use App\Repositories\ERPAssetTransferDetailRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use App\Models\AssetRequestDetail;
 use App\Models\ERPAssetTransfer;
 use App\Models\ErpLocation;
 use App\Models\FixedAssetMaster;
@@ -159,6 +160,14 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
                     return $this->sendError('Asset already acknowledged');  
                 }
 
+                $AssetRequestUpdateData = [
+                    'detail' => $value['detail'],
+                    'itemCodeSystem' => $value['itemCodeSystem']
+                ];
+
+                $updateAssetRequest = AssetRequestDetail::where('erp_fa_fa_asset_request_id',$value['erp_fa_fa_asset_request_id'])
+                                                        ->where('id', $value['id'])
+                                                        ->update($AssetRequestUpdateData);
                 
                 $data[] = [
                     'erp_fa_fa_asset_transfer_id' => $value['masterID'],
