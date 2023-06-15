@@ -104,10 +104,22 @@
                     @if ($bidData[0]['technical_bid_opening_date'])
                         {{\Carbon\Carbon::parse($bidData[0]['technical_bid_opening_date'])->format('d/m/Y')}}
                     @endif
+
+                    @if (empty($bidData[0]['technical_bid_opening_date']))
+                        -
+                    @endif
                 </td>
                 <td colspan="2"><strong>Commercial Bid Opening Date:</strong></td>
                 <td colspan="4">
+
+                @if ($bidData[0]['commerical_bid_opening_date'])
                     {{\Carbon\Carbon::parse($bidData[0]['commerical_bid_opening_date'])->format('d/m/Y')}}
+                @endif
+
+                @if (empty($bidData[0]['commerical_bid_opening_date']))
+                   -
+                @endif
+                   
                 </td>
         @endif
     </tr>
@@ -142,28 +154,38 @@
                 <td>{{\Carbon\Carbon::parse($item->created_at)->format('d/m/Y')}}</td>
                 @foreach ($attachments[$loop->index] as $doc2)
                     <td style="text-align: center;">
-                        @if($doc2->bid_verify->status == 1)
+                    @switch($doc2->bid_verify->status)
+                        @case(1)
                             Yes
-                        @endif
-                        @if($doc2->bid_verify->status == 2)
+                        @break
+                        @case(2)
                             Yes
-                        @endif
-                        @if($doc2->bid_verify->status == 3)
+                        @break
+                        @case(3)
                             No
-                        @endif
+                        @break
+                    @endswitch
                     </td>
-                @endforeach
-                <td>
+                @endforeach 
+
                     @if ($count != 0)
+                    <td>
                         @if ($item->doc_verifiy_status == 1)
                             Approved
                         @endif
                         @if ($item->doc_verifiy_status == 2)
                             Rejected
-                        @endif 
-                    @endif
-                </td>
-                <td colspan="1">{{$item->doc_verifiy_comment}}</td>
+                        @endif
+                    </td>
+                    @else
+                    <td style="text-align: center;"> - </td>
+                    @endif 
+
+                    @if (!empty($item->doc_verifiy_comment))
+                    <td colspan="1">   $item->doc_verifiy_comment </td>
+                    @else
+                    <td style="text-align: center;"> - </td>
+                    @endif 
             </tr>
         @endforeach
     </tbody>
