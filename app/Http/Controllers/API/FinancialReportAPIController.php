@@ -727,7 +727,6 @@ srp_erp_ioubookingmaster.approvedYN = 1
         }
 
         $data = array_values($data);
-
         $employees = $this->getGeneralLedgerSelectedEmployees($fromDate,$toDate,$typeID,$companyID,$employeeDatas);
 
         return $this->sendResponse([$data,$employees,$currencyCodeLocal,$currencyCodeRpt,$currencyDecimalLocal,$currencyDecimalRpt], 'Record retrieved successfully');
@@ -8430,8 +8429,8 @@ GROUP BY
         erp_debitnote.debitNoteCode AS documentCode,
         erp_debitnote.comments AS description,
         erp_debitnote.empID AS employeeID,
-        erp_debitnote.debitAmountLocal AS amountLocal,
-        erp_debitnote.debitAmountRpt AS amountRpt,
+        erp_debitnote.netAmountLocal AS amountLocal,
+        erp_debitnote.netAmountRpt AS amountRpt,
         erp_debitnote.invoiceNumber AS referenceDoc,
         erp_debitnote.postedDate AS referenceDocDate,
         erp_debitnote.debitNoteAutoID AS masterID,
