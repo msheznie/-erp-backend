@@ -256,7 +256,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
              
                 if($evaluation > 0)
                 {
-                    return $this->sendError('Please enter the remaining user values for the techniqal evaluation',500);
+                    return $this->sendError('Please enter the remaining user values for the technical evaluation',500);
                 }
 
 
@@ -405,19 +405,33 @@ class BidSubmissionMasterAPIController extends AppBaseController
         $tenderId = $request['tenderId'];
         $type = $request['type']; 
 
-        $tender = TenderMaster::select('id','document_type')->withCount(['DocumentAttachments'=>function($q) use ($companyId){
+        $tender = TenderMaster::select('id','document_type')
+        ->withCount(['criteriaDetails',  
+         'criteriaDetails AS technical_count' => function ($query) {
+            $query->where('critera_type_id', 2);
+            }
+        ])->withCount(['DocumentAttachments'=>function($q) use ($companyId){
             $q->where('companySystemID',$companyId)
             ->where('attachmentType',2)
             ->where('envelopType',3);
         }])
         ->where('id', $tenderId)
         ->where('company_id', $companyId) 
-        ->first();
-        
-        if($tender->document_type != 0 && $tender->document_attachments_count == 0 )
-        {
-            $this->updateBidSubmission($tenderId);
+        ->first(); 
+
+        if($tender->document_type != 0)
+        { 
+            if($tender->document_attachments_count == 0){ 
+                $this->updateBidSubmission($tenderId);
+            }  
+
+            if($tender->technical_count == 0){ 
+                $this->updateTechnicalEvalStaus($tenderId);
+            }
+            
         }
+
+
     
         $query = BidSubmissionMaster::with(['tender:id,document_type','SupplierRegistrationLink','bidSubmissionDetail' => function($query){
                 $query->whereHas('srm_evaluation_criteria_details.evaluation_criteria_type', function ($query) {
@@ -468,14 +482,25 @@ class BidSubmissionMasterAPIController extends AppBaseController
     
     }
 
+    public function updateTechnicalEvalStaus($tenderId){ 
+        try {
+            $tenderMaster['technical_eval_status'] = 1; 
+            TenderMaster::where('id', $tenderId)->update($tenderMaster); 
+            DB::commit();
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
+    }
+
     public function updateBidSubmission($tenderId){ 
         try {
-            $bid_sub_data['doc_verifiy_yn'] = 1;
-            $bid_sub_data['doc_verifiy_by_emp'] = \Helper::getEmployeeSystemID();
-            $bid_sub_data['doc_verifiy_date'] =  date('Y-m-d H:i:s');
-            $bid_sub_data['doc_verifiy_status'] = 1;
-            $bid_sub_data['doc_verifiy_comment'] = '';
-            BidSubmissionMaster::where('tender_id', $tenderId)->update($bid_sub_data); 
+            $bidSubData['doc_verifiy_yn'] = 1;
+            $bidSubData['doc_verifiy_by_emp'] = \Helper::getEmployeeSystemID();
+            $bidSubData['doc_verifiy_date'] =  date('Y-m-d H:i:s');
+            $bidSubData['doc_verifiy_status'] = 1;
+            $bidSubData['doc_verifiy_comment'] = '';
+            BidSubmissionMaster::where('tender_id', $tenderId)->update($bidSubData); 
             DB::commit();
         } catch (\Exception $exception) {
             DB::rollBack();

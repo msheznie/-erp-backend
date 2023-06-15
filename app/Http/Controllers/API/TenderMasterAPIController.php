@@ -2753,7 +2753,7 @@ WHERE
 
         $input = $request->all();
         $id = $input['tender_id'];
-        $comments = $input['comments'];
+        $comments = isset($input['comments']) ? $input['comments'] : null;
         // $val = $input['type'];
 
         DB::beginTransaction();
