@@ -2883,7 +2883,11 @@ WHERE
         //     $q->with(['tender_type', 'envelop_type', 'currency']);
         // }])->get();
 
-        $query = TenderMaster::with(['currency', 'srm_bid_submission_master', 'tender_type', 'envelop_type', 'srmTenderMasterSupplier'])->whereHas('srmTenderMasterSupplier')->where('published_yn', 1)->where('technical_eval_status', 1)->where('go_no_go_status', 1);
+        $query = TenderMaster::with(['currency', 'srm_bid_submission_master', 'tender_type', 'envelop_type', 'srmTenderMasterSupplier'])
+                                ->whereHas('srmTenderMasterSupplier')->where('published_yn', 1)
+                                ->where('technical_eval_status', 1)
+                                ->where('doc_verifiy_status', 1)
+                                ->where('go_no_go_status', 1);
 
 
         if ($filters['currencyId'] && count($filters['currencyId']) > 0) {
@@ -4021,7 +4025,8 @@ WHERE
             $id = $input['id'];
             $data['technical_eval_status'] = 1;
             $data['go_no_go_status'] = 1;
-
+            $data['doc_verifiy_status'] = 1;
+            
             $bid_status['doc_verifiy_status'] = 1;
     
             TenderMaster::where('id', $id)->update($data);
