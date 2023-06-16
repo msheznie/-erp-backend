@@ -1240,8 +1240,8 @@ class DocumentAttachmentsAPIController extends AppBaseController
             try {
                 
                 $documentType = TenderMaster::select('document_type')->where('id',$tender_id)->first();  
-                $documetSystemId = ($documentType->document_type) == 1 ? 108 : 113; 
-                $results = DocumentAttachments::where('documentSystemCode',$id)->where('documentSystemID', $documetSystemId)->where('envelopType',3)->count(); 
+                $documetSystemId = ($documentType->document_type) == 0 ? 108 : 113; 
+                $results = DocumentAttachments::where('documentSystemCode',$id)->where('documentSystemID', $documetSystemId)->where('envelopType',3)->count();   
                 
                 if($results == 0)
                 {
