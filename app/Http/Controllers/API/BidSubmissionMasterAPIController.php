@@ -969,8 +969,16 @@ class BidSubmissionMasterAPIController extends AppBaseController
     {
         $tenderId = $request['tenderMasterId'];
 
-        $tenderDetails = TenderMaster::select('id', 'document_type')->where('id', $tenderId)->first();
-        if($tenderDetails->document_type == 0)
+        $tenderDetails= TenderMaster::select('id')->withCount(['criteriaDetails', 
+        'criteriaDetails AS go_no_go_count' => function ($query) {
+        $query->where('critera_type_id', 1);
+         },
+         'criteriaDetails AS technical_count' => function ($query) {
+            $query->where('critera_type_id', 2);
+        }
+           ])->where('id', $tenderId)->first();
+
+        if($tenderDetails->technical_count != 0)
         {
             $queryResult = BidSubmissionMaster::selectRaw("
             SUM((srm_bid_submission_detail.eval_result/100)*srm_tender_master.technical_weightage) as weightage, 
@@ -1150,9 +1158,17 @@ class BidSubmissionMasterAPIController extends AppBaseController
 
         $bidSubmissionIDs = $request->input('supplierID');
         $bidSubmissionIDs = collect($bidSubmissionIDs)->pluck('id')->toArray();
-        $tenderMaster = TenderMaster::find($tenderId);  
 
-        if($tenderMaster->document_type == 0)
+        $tenderMaster= TenderMaster::select('id')->withCount(['criteriaDetails', 
+        'criteriaDetails AS go_no_go_count' => function ($query) {
+        $query->where('critera_type_id', 1);
+         },
+         'criteriaDetails AS technical_count' => function ($query) {
+            $query->where('critera_type_id', 2);
+        }
+             ])->where('id', $tenderId)->first();
+
+        if($tenderMaster->technical_count != 0)
         {
            
             $suppliers = BidSubmissionMaster::selectRaw("
