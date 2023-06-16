@@ -6,15 +6,24 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\SrmTenderBidEmployeeDetails;
 use App\Http\Controllers\AppBaseController;
-use Carbon\Carbon;
-
+use Carbon\Carbon; 
 
 class TenderBidEmployeeDetailsController extends AppBaseController
 {
     public function store(Request $request) {
+        $input = $request->all();
 
-        SrmTenderBidEmployeeDetails::insert($request['data']);
-        return $this->sendResponse([], 'Employee saved successfully');
+ 
+        $validator = \Validator::make($input['data'],[
+            'emp_id' => 'required',
+            'tender_id' => 'required',
+        ]);
+        if ($validator->fails()) {           
+            return $this->sendError($validator->errors()->first());
+        }
+
+        $result = SrmTenderBidEmployeeDetails::create($request['data']);
+        return $this->sendResponse($result, 'Employee saved successfully');
 
     }
 
@@ -27,8 +36,15 @@ class TenderBidEmployeeDetailsController extends AppBaseController
     }
 
     public function deleteEmp(Request $request) {
-        $data = SrmTenderBidEmployeeDetails::where('tender_id',$request['tender_id'])->where('emp_id',$request['emp_id'])->delete();
-        return $this->sendResponse($data, 'Employee deleted successfully');
+        $tenderEmployeeDetails = SrmTenderBidEmployeeDetails::where('tender_id',$request['tender_id'])->where('emp_id',$request['emp_id'])->first();
+        $result = SrmTenderBidEmployeeDetails::find($tenderEmployeeDetails->id);
+
+        if (empty($result)) {
+            return $this->sendError('Employee Details not found');
+        }
+        $result->delete();
+
+        return $this->sendResponse($tenderEmployeeDetails, 'Employee deleted successfully');
     }
 
     public function getEmployeesApproval(Request $request) {

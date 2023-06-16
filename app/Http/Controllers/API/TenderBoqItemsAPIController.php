@@ -20,6 +20,8 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use App\Models\PricingScheduleDetail;
 use App\Models\PricingScheduleMaster;
+use App\Models\ScheduleBidFormatDetails;
+
 /**
  * Class TenderBoqItemsController
  * @package App\Http\Controllers\API
@@ -335,9 +337,7 @@ class TenderBoqItemsAPIController extends AppBaseController
 
 
 
-
-    
-
+            
         DB::beginTransaction();
         try {
             $data['main_work_id']=$input['main_work_id'];
@@ -347,10 +347,11 @@ class TenderBoqItemsAPIController extends AppBaseController
             }
             $data['uom']=$input['uom'];
             $data['qty']=$input['qty'];
+            $data['tender_id']=$input['tender_id'];
             $data['created_by'] = $employee->employeeSystemID;
 
             $result = TenderBoqItems::create($data);
-
+         
             if($result){
 
                 $mainwork = PricingScheduleDetail::where('id', $input['main_work_id'])->first();
@@ -371,10 +372,10 @@ class TenderBoqItemsAPIController extends AppBaseController
                     }
                    
                 }
-        
+          
                 if($is_main_works_complete)
                 {
-                    $master['status']= 1;
+                    $master['boq_status']= 1;
                     PricingScheduleMaster::where('id',$mainwork->pricing_schedule_master_id)->update($master);
                 }
 
@@ -419,14 +420,14 @@ class TenderBoqItemsAPIController extends AppBaseController
 
         DB::beginTransaction();
         try {
+
+            $model = TenderBoqItems::find($input['id']);
             $data['item_name']=$input['item_name'];
             $data['description']=$input['description'];
             $data['uom']=$input['uom'];
             $data['qty']=$input['qty'];
             $data['updated_by'] = $employee->employeeSystemID;
-
-            $result = TenderBoqItems::where('id',$input['id'])->update($data);
-
+            $result = $model->update($data);
             if($result){
                 DB::commit();
                 return ['success' => true, 'message' => 'Successfully updated'];
@@ -441,11 +442,35 @@ class TenderBoqItemsAPIController extends AppBaseController
 
     public function deleteTenderBoqItem(Request $request)
     {
+
+        
         $input = $request->all();
         DB::beginTransaction();
         try {
-            $result = TenderBoqItems::where('id',$input['id'])->delete();
+            $tenderBoqItems = TenderBoqItems::find($input['id']);
+            $result = $tenderBoqItems->delete();
             if($result){
+                $mainwork = $this->getMainwork($input['main_work_id']); 
+                $mainworkItems = $this->getMainworkItems($mainwork); 
+                $isMainWorksComplete = true;
+                if($mainworkItems->count() > 0)
+                {
+                    $details = $mainworkItems->get();
+                    foreach($details as $main)
+                    {
+                        if(count($main->tender_boq_items) == 0)
+                        {   
+                            $isMainWorksComplete = false;
+                            break;
+                        }
+                       
+                    }
+                   
+                }
+                
+                $master['boq_status'] = ($isMainWorksComplete) ? 1 : 0;
+                PricingScheduleMaster::where('id',$mainwork->pricing_schedule_master_id)->update($master);
+            
                 DB::commit();
                 return ['success' => true, 'message' => 'Successfully deleted', 'data' => $result];
             }
@@ -609,5 +634,24 @@ class TenderBoqItemsAPIController extends AppBaseController
             DB::rollBack();
             return $this->sendError($exception->getMessage());
         }
+    }
+
+
+    public function getMainwork($id)
+    {
+        $output =  PricingScheduleDetail::where('id', $id)
+                                ->select('id','tender_id','pricing_schedule_master_id')
+                                ->first();
+        return $output;
+    }
+
+    public function getMainworkItems($mainwork)
+    {
+        $output = PricingScheduleDetail::with(['tender_boq_items'])->where('tender_id', $mainwork->tender_id)
+                                        ->where('deleted_at',null)
+                                        ->where('boq_applicable', true)
+                                        ->where('pricing_schedule_master_id', $mainwork->pricing_schedule_master_id);
+
+         return $output;                               
     }
 }
