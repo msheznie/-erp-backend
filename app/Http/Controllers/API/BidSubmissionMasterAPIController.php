@@ -812,17 +812,8 @@ class BidSubmissionMasterAPIController extends AppBaseController
         $companyId = $request['companyId'];
         $tenderId = $request['tenderId'];
 
-        $tender= TenderMaster::select('id')->withCount(['criteriaDetails', 
-            'criteriaDetails AS go_no_go_count' => function ($query) {
-            $query->where('critera_type_id', 1);
-             },
-             'criteriaDetails AS technical_count' => function ($query) {
-                $query->where('critera_type_id', 2);
-            }
-        ])->where('id', $tenderId)->first();
-
-
-        if($tender->technical_count == 0)
+        $technicalCount = $this->getTechnicalCount($tenderId);     
+        if($technicalCount->technical_count == 0)
         {
             $query = BidSubmissionMaster::selectRaw("'' as weightage,srm_bid_submission_master.id,srm_bid_submission_master.bidSubmittedDatetime,srm_bid_submission_master.tender_id,srm_supplier_registration_link.name,'' as bid_id,srm_bid_submission_master.commercial_verify_status,srm_bid_submission_master.bidSubmissionCode,srm_tender_master.technical_passing_weightage as passing_weightage")
             ->join('srm_supplier_registration_link', 'srm_supplier_registration_link.id', '=', 'srm_bid_submission_master.supplier_registration_id')
@@ -969,8 +960,9 @@ class BidSubmissionMasterAPIController extends AppBaseController
     {
         $tenderId = $request['tenderMasterId'];
 
-        $tenderDetails = TenderMaster::select('id', 'document_type')->where('id', $tenderId)->first();
-        if($tenderDetails->document_type == 0)
+        $technicalCount = $this->getTechnicalCount($tenderId); 
+
+        if($technicalCount->technical_count != 0)
         {
             $queryResult = BidSubmissionMaster::selectRaw("
             SUM((srm_bid_submission_detail.eval_result/100)*srm_tender_master.technical_weightage) as weightage, 
@@ -1150,9 +1142,11 @@ class BidSubmissionMasterAPIController extends AppBaseController
 
         $bidSubmissionIDs = $request->input('supplierID');
         $bidSubmissionIDs = collect($bidSubmissionIDs)->pluck('id')->toArray();
-        $tenderMaster = TenderMaster::find($tenderId);  
 
-        if($tenderMaster->document_type == 0)
+        $tenderMaster = TenderMaster::find($tenderId); 
+        $technicalCount = $this->getTechnicalCount($tenderId);     
+
+        if($technicalCount->technical_count != 0)
         {
            
             $suppliers = BidSubmissionMaster::selectRaw("
@@ -1295,5 +1289,12 @@ class BidSubmissionMasterAPIController extends AppBaseController
    
   
         return $data;
+    }
+
+    public function getTechnicalCount($tenderId){ 
+        return TenderMaster::select('id')->withCount(['criteriaDetails',
+         'criteriaDetails AS technical_count' => function ($query) {
+            $query->where('critera_type_id', 2);
+         }])->where('id', $tenderId)->first();
     }
 }
