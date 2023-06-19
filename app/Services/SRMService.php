@@ -4597,16 +4597,19 @@ class SRMService
         if ($tender_negotiation_data[0]['supplier_tender_negotiation']['srm_bid_submission_master_id']) {
             $newBidMasterId = $bidMasterId;
 
-            $bidSubmissionDetails = BidSubmissionDetail::where('bid_master_id', $tender_negotiation_data[0]['supplier_tender_negotiation']['srm_bid_submission_master_id'])->get()->toArray();
+            $bidSubmissionDetails = BidSubmissionDetail::where('bid_master_id', $tender_negotiation_data[0]['supplier_tender_negotiation']['srm_bid_submission_master_id']);
+            if ($technicalEvaluation){
+                $bidSubmissionDetails = $bidSubmissionDetails->whereNotNull('score_id');
+            }
+            $bidSubmissionDetails = $bidSubmissionDetails->get()->toArray();
+
             foreach ($bidSubmissionDetails as $bidSubmissionDetail){
                 $newBidSubmissionDetail = new BidSubmissionDetail;
                 $newBidSubmissionDetail->bid_master_id = $newBidMasterId;
                 $newBidSubmissionDetail->tender_id = $tender_id;
                 $newBidSubmissionDetail->evaluation_detail_id = $bidSubmissionDetail['evaluation_detail_id'];
                 $newBidSubmissionDetail->score_id = $bidSubmissionDetail['score_id'];
-                if(!$technicalEvaluation){
-                    $newBidSubmissionDetail->score = $bidSubmissionDetail['score'];
-                }   
+                $newBidSubmissionDetail->score =  $bidSubmissionDetail['score'] ;
                 $newBidSubmissionDetail->result = $bidSubmissionDetail['result'];
                 $newBidSubmissionDetail->created_at = Carbon::now();
                 $newBidSubmissionDetail->created_by = $supplierRegId;
