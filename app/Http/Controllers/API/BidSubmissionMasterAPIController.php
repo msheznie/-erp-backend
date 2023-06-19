@@ -298,7 +298,12 @@ class BidSubmissionMasterAPIController extends AppBaseController
                     ->join('srm_evaluation_criteria_details', 'srm_evaluation_criteria_details.id', '=', 'srm_bid_submission_detail.evaluation_detail_id')
                     ->havingRaw('weightage >= passing_weightage')
                     ->groupBy('srm_bid_submission_master.id')
-                    ->where('srm_evaluation_criteria_details.critera_type_id', 2)->where('srm_bid_submission_master.commercial_verify_status','!=', 1)->where('srm_bid_submission_master.status', 1)->where('srm_bid_submission_master.bidSubmittedYN', 1)->where('srm_bid_submission_master.tender_id', $tender_id)
+                    ->where('srm_evaluation_criteria_details.critera_type_id', 2)
+                    ->where('srm_bid_submission_master.commercial_verify_status','!=', 1)
+                    ->where('srm_bid_submission_master.doc_verifiy_status','!=', 2)
+                    ->where('srm_bid_submission_master.status', 1)
+                    ->where('srm_bid_submission_master.bidSubmittedYN', 1)
+                    ->where('srm_bid_submission_master.tender_id', $tender_id)
                     ->get();
                 }
                 else
@@ -307,13 +312,15 @@ class BidSubmissionMasterAPIController extends AppBaseController
                     ->join('srm_supplier_registration_link', 'srm_supplier_registration_link.id', '=', 'srm_bid_submission_master.supplier_registration_id')
                     ->join('srm_tender_master', 'srm_tender_master.id', '=', 'srm_bid_submission_master.tender_id')
                     ->groupBy('srm_bid_submission_master.id')
-                    ->where('srm_bid_submission_master.commercial_verify_status','!=', 1)->where('srm_bid_submission_master.status', 1)->where('srm_bid_submission_master.bidSubmittedYN', 1)->where('srm_bid_submission_master.tender_id', $tender_id)
+                    ->where('srm_bid_submission_master.commercial_verify_status','!=', 1)
+                    ->where('srm_bid_submission_master.doc_verifiy_status','!=', 2)
+                    ->where('srm_bid_submission_master.status', 1)
+                    ->where('srm_bid_submission_master.bidSubmittedYN', 1)
+                    ->where('srm_bid_submission_master.tender_id', $tender_id)
                     ->get();
                 }
                 //$query = BidSubmissionMaster::where('tender_id', $tender_id)->where('commercial_verify_status','!=', 1)->where('bidSubmittedYN',1)->where('status',1)->count();
-
-     
-                $count = count($query);
+                $count = count($query); 
 
                 if($count == 0)
                 {
@@ -994,6 +1001,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
                 ->where('srm_bid_submission_master.status', 1)
                 ->where('srm_bid_submission_master.bidSubmittedYN', 1)
                 ->where('srm_bid_submission_master.tender_id', $tenderId)
+                ->where('srm_bid_submission_master.doc_verifiy_status', 1)
                 ->orderBy('srm_bid_submission_master.id', 'desc')
                 ->get();
 
@@ -1161,6 +1169,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
                 ->havingRaw('weightage >= passing_weightage')
                 ->groupBy('srm_bid_submission_master.id')
                 ->where('srm_bid_submission_master.status', 1)
+                ->where('srm_bid_submission_master.doc_verifiy_status','!=',2)
                 ->where('srm_bid_submission_master.bidSubmittedYN', 1)
                 ->where('srm_bid_submission_master.tender_id', $tenderId)
                 ->orderBy('srm_bid_submission_master.id', 'desc');
@@ -1177,6 +1186,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
                 ->groupBy('srm_bid_submission_master.id')
                 ->where('srm_bid_submission_master.status', 1)
                 ->where('srm_bid_submission_master.bidSubmittedYN', 1)
+                ->where('srm_bid_submission_master.doc_verifiy_status','!=',2)
                 ->where('srm_bid_submission_master.tender_id', $tenderId)
                 ->orderBy('srm_bid_submission_master.id', 'desc');
         }
