@@ -1290,6 +1290,20 @@ class FixedAssetMasterAPIController extends AppBaseController
         return $this->sendResponse($output, 'Fixed Asset Master retrieved successfully');
     }
 
+     public function assetCostingForPrint(Request $request)
+    {
+        $input = $request->all();
+        
+        $fixedAssetMaster = $this->fixedAssetMasterRepository->with(['confirmed_by', 'group_to', 'posttogl_by', 'disposal_by','supplier','department', 'departmentmaster', 'category_by', 'sub_category_by', 'sub_category_by2', 'sub_category_by3', 'location', 'assettypemaster', 'finance_category'])->findWithoutFail($input['id']);
+        if (empty($fixedAssetMaster)) {
+            return $this->sendError('Fixed Asset Master not found');
+        }
+
+        $output = ['fixedAssetMaster' => $fixedAssetMaster];
+
+        return $this->sendResponse($output, 'Fixed Asset Master retrieved successfully');
+    }
+
     function assetCostingReopen(Request $request)
     {
         DB::beginTransaction();

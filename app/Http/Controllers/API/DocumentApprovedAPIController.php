@@ -1564,7 +1564,7 @@ WHERE
     {
         $approve = \Helper::approveDocument($request);
         if (!$approve["success"]) {
-            return $this->sendError($approve["message"]);
+            return $this->sendError($approve["message"], 404, ['type' => isset($approve["type"]) ? $approve["type"] : ""]);
         } else {
             return $this->sendResponse(array(), $approve["message"]);
         }
