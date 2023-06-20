@@ -3037,6 +3037,7 @@ class SRMService
         $bidMasterId = $request->input('extra.bidMasterId');
         $supplierRegId =  self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
         $supplierData =  self::getSupplierData($request->input('supplier_uuid'));
+        $negotiation = $request->input('extra.negotiation');
 
         $bidSubmissionData = self::BidSubmissionStatusData($bidMasterId, $tenderId);
 
@@ -3321,6 +3322,12 @@ class SRMService
 
         $data['activeTab'] = $activeTab;
 
+        if($negotiation){
+            $tenderNegotiationArea = $this->getTenderNegotiationArea($tenderId, $bidMasterId);
+            $data['pricing_schedule'] = $tenderNegotiationArea->pricing_schedule;
+            $data['technical_evaluation'] = $tenderNegotiationArea->technical_evaluation;
+            $data['tender_documents'] = $tenderNegotiationArea->tender_documents;
+        }
 
         return [
             'success' => true,
