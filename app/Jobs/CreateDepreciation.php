@@ -55,8 +55,8 @@ class CreateDepreciation implements ShouldQueue
     public function handle(fixedAssetDepreciationMasterRepository $faDepMaster)
     {
 
-        ini_set('max_execution_time', 5000);
-        ini_set('memory_limit', '1024M');
+        ini_set('max_execution_time', 6000);
+        ini_set('memory_limit', -1);
 
         CommonJobService::db_switch($this->dataBase);
         Log::useFiles(storage_path() . '/logs/depreciation_jobs.log');
@@ -214,9 +214,12 @@ class CreateDepreciation implements ShouldQueue
 
 
                         }
+
+                        $db = $this->dataBase;
+
                         if (count($finalData) > 0) {
                             foreach (array_chunk($finalData,1000) as $t) {
-                                FixedAssetDepreciationPeriod::insert($t);
+                                DepreciationInsert::dispatch($db, $t);
                             }
                         }
 

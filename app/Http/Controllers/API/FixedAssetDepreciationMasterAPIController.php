@@ -55,8 +55,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
     public function __construct(FixedAssetDepreciationMasterRepository $fixedAssetDepreciationMasterRepo)
     {
         $this->fixedAssetDepreciationMasterRepository = $fixedAssetDepreciationMasterRepo;
-        ini_set('max_execution_time', 5000);
-        ini_set('memory_limit', '1024M');
+
     }
 
     /**
@@ -140,6 +139,9 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
      */
     public function store(CreateFixedAssetDepreciationMasterAPIRequest $request)
     {
+        ini_set('max_execution_time', 6000);
+        ini_set('memory_limit', -1);
+
         $input = $request->all();
         $input = $this->convertArrayToValue($input);
 
@@ -482,6 +484,9 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
      */
     public function destroy($id)
     {
+
+        ini_set('max_execution_time', 6000);
+        ini_set('memory_limit', -1);
         /** @var FixedAssetDepreciationMaster $fixedAssetDepreciationMaster */
         $fixedAssetDepreciationMaster = $this->fixedAssetDepreciationMasterRepository->findWithoutFail($id);
 
