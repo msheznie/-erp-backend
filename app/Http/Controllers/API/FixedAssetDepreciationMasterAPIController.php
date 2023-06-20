@@ -42,6 +42,7 @@ use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\Models\AssetDisposalMaster;
 
 /**
  * Class FixedAssetDepreciationMasterController
@@ -142,7 +143,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = $this->convertArrayToValue($input);
-
+        
         $dataBase = isset($input['db']) ? $input['db'] : "";
         DB::beginTransaction();
         try {
@@ -152,25 +153,36 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
 
             if($is_pending_job_exist == 0)
             {
-                
+
                 $doc_date = CompanyFinancePeriod::where('companyFinancePeriodID',$input['companyFinancePeriodID'])->select('dateTo')->first();
 
-         
+                $disposelMaster = AssetDisposalMaster::selectRaw("erp_fa_asset_disposalmaster.disposalDocumentCode,erp_fa_asset_master.faID,erp_fa_asset_disposalmaster.assetdisposalMasterAutoID,erp_fa_asset_disposaldetail.faCode")
+                                ->join('erp_fa_asset_disposaldetail', 'erp_fa_asset_disposaldetail.assetdisposalMasterAutoID', '=', 'erp_fa_asset_disposalmaster.assetdisposalMasterAutoID')
+                                ->join('erp_fa_asset_master', 'erp_fa_asset_master.faID', '=', 'erp_fa_asset_disposaldetail.faID')
+                                ->where(function($query) {
+                                    $query->where('erp_fa_asset_disposalmaster.confirmedYN', 0)
+                                            ->orWhere('erp_fa_asset_disposalmaster.approvedYN', 0);
+                                })
+                                ->where('erp_fa_asset_master.dateDEP','<',$doc_date->dateTo)
+                                ->where('erp_fa_asset_master.approved','=',-1)
+                                ->where('erp_fa_asset_master.assetType','=', 1)
+                                ->where('erp_fa_asset_master.companySystemID','=', $input['companySystemID']);
 
-                $assest_fixds = FixedAssetMaster::with(['depperiod_by' => function ($query) {
-                    $query->selectRaw('SUM(depAmountRpt) as depAmountRpt,round((SUM(depAmountLocal))) as depAmountLocal,faID');
-                    $query->whereHas('master_by', function ($query) {
-                        $query->where('approved', -1);
-                    });
-                    $query->groupBy('faID');
-                }])
-                ->WhereDate('dateDEP','<',$doc_date->dateTo)
-                ->ofCompany([$input['companySystemID']])
-                ->isApproved()
-                ->assetType(1)
-                ->isDisposed()->get();
+                if($disposelMaster->count() > 0)
+                {
+                    return $this->sendError('There are assets pulled to pending disposal documents. Complete the disposals or remove assets from disposals to proceed', 500);
 
-               
+                }
+
+                $unconfirmedAssest = $this->getAssests($doc_date->dateTo,0,$input['companySystemID']);
+
+                if(isset($input['type']) && $input['type'] == 1 && count($unconfirmedAssest) > 0)
+                {
+                    return $this->sendError('There  are assets to be approved. Are you sure you want to proceed ?', 300);
+                }    
+
+                $assest_fixds =  $this->getAssests($doc_date->dateTo,-1,$input['companySystemID']);
+
                 foreach($assest_fixds as $key=>$val)
                 {
                     $cos_unit = $val->COSTUNIT;
@@ -317,6 +329,22 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
 
     }
 
+    public function getAssests($date,$val,$companyId)
+    {
+        return FixedAssetMaster::with(['depperiod_by' => function ($query) {
+            $query->selectRaw('SUM(depAmountRpt) as depAmountRpt,round((SUM(depAmountLocal))) as depAmountLocal,faID');
+            $query->whereHas('master_by', function ($query) {
+                $query->where('approved', -1);
+            });
+            $query->groupBy('faID');
+        }])
+        ->WhereDate('dateDEP','<',$date)
+        ->ofCompany([$companyId])
+        ->assetType(1)
+        ->where('approved',$val)
+        ->isDisposed()->get();
+
+    }
     /**
      * @param int $id
      * @return Response
