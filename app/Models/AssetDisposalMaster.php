@@ -286,6 +286,11 @@ class AssetDisposalMaster extends Model
         return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'assetdisposalMasterAutoID')->where('documentSystemID',41);
     }
 
+    public function details()
+    {
+        return $this->hasMany('App\Models\AssetDisposalDetail', 'assetdisposalMasterAutoID', 'assetdisposalMasterAutoID');
+    }
+
     public function company()
     {
         return $this->belongsTo('App\Models\Company', 'companySystemID', 'companySystemID');
