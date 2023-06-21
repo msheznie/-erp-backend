@@ -578,7 +578,33 @@
             </table>
         </div>
     @endif
-    <div style="padding-bottom: 20px!important; padding-top: 15px!important; page-break-inside: avoid; !important;">
+
+    @if($masterdata->pdcChequeYN == 1)
+        <div style="margin-top: 30px">
+            <table class="table table-bordered" style="width: 100%;">
+                <thead>
+                <tr class="theme-tr-head">
+                    <th style="text-align: center">{{ __('custom.cheque_no') }}</th>
+                    <th style="text-align: center">{{ __('custom.cheque_date') }}</th>
+                    <th style="text-align: center">{{ __('custom.comment') }}</th>
+                    <th style="text-align: center">{{ __('custom.amount') }}</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach ($masterdata->pdc_cheque as $pdc_cheque)
+                    <tr style="border-top: 1px solid #ffffff !important;border-bottom: 1px solid #ffffff !important;">
+                        <td>{{$pdc_cheque->chequeNo}}</td>
+                        <td>{{ \App\helper\Helper::dateFormat($pdc_cheque->chequeDate)}}</td>
+                        <td>{{$pdc_cheque->comments}}</td>
+                        <td style="text-align: right">{{number_format($pdc_cheque->amount, $transDecimal)}}</td>
+                    </tr>
+                @endforeach
+                </tbody>
+            </table>
+        </div>
+    @endif
+
+    <div style="padding-bottom: 20px!important; padding-top: 35px!important; page-break-inside: avoid; !important;">
     <table style="width:100%;">
         <tr>
             <td width="40%"><span style="font-weight: bold">{{ __('custom.confirmed_by') }} :</span> {{ $masterdata->confirmed_by? $masterdata->confirmed_by->empFullName:'' }}

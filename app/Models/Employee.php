@@ -333,4 +333,9 @@ class Employee extends Model
     {
         return $this->hasOne(SrpEmployeeDetails::class, 'EIdNo', 'employeeSystemID');
     }
+
+    public function language()
+    {
+        return $this->hasOne('App\Models\EmployeeLanguage','employeeID','employeeSystemID');
+    }
 }
