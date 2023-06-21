@@ -2203,12 +2203,19 @@ class SRMService
         ];
     }
 
-    public function getGoNoGoBidSubmissionData($request)
+    public function getGoNoGoBidSubmissionData($request, $negotiationStatus = false, $arr = [])
     {
-        $tenderId = $request->input('extra.tenderId');
-        $critera_type_id = $request->input('extra.critera_type_id');
-        $bidMasterId = $request->input('extra.bidMasterId');
-        $negotiation = $request->input('extra.negotiation');
+        if(!$negotiationStatus){
+            $tenderId = $request->input('extra.tenderId');
+            $critera_type_id = $request->input('extra.critera_type_id');
+            $bidMasterId = $request->input('extra.bidMasterId');
+            $negotiation = $request->input('extra.negotiation');
+        } else {
+            $tenderId = $arr[0];
+            $critera_type_id = 1;
+            $bidMasterId = $arr[1];
+            $negotiation = $negotiationStatus;
+        }
 
         if($negotiation){
             $tenderNegotiationArea = $this->getTenderNegotiationArea($tenderId, $bidMasterId);
@@ -4587,7 +4594,7 @@ class SRMService
 
     }
 
-    private function crateNewNegotiationTender($tender_id,$tender_negotiation_data,$bidMasterId,$supplierRegId,$att){
+    private function crateNewNegotiationTender($tender_id, $tender_negotiation_data, $bidMasterId, $supplierRegId, $att){
         $tenderNegotiationArea = TenderNegotiation::select('id')->with('area')->where('srm_tender_master_id', $tender_id)->first();
         $pricingSchedule = $tenderNegotiationArea->area->pricing_schedule;
         $technicalEvaluation = $tenderNegotiationArea->area->technical_evaluation;
@@ -4604,9 +4611,15 @@ class SRMService
         if ($tender_negotiation_data[0]['supplier_tender_negotiation']['srm_bid_submission_master_id']) {
             $newBidMasterId = $bidMasterId;
 
+            $goNoGoBidSubmissionData = $this->getGoNoGoBidSubmissionData(null,true, [$tender_id, $tender_negotiation_data[0]['supplier_tender_negotiation']['srm_bid_submission_master_id']]);
+            $criteriaDetailArr = array();
+            foreach($goNoGoBidSubmissionData['data']['criteriaDetail'] as $criteriaDetail){
+                $criteriaDetailArr[] = $criteriaDetail['id'];
+            }
+
             $bidSubmissionDetails = BidSubmissionDetail::where('bid_master_id', $tender_negotiation_data[0]['supplier_tender_negotiation']['srm_bid_submission_master_id']);
             if ($technicalEvaluation){
-                $bidSubmissionDetails = $bidSubmissionDetails->whereNotNull('score_id');
+                $bidSubmissionDetails = $bidSubmissionDetails->whereIn('evaluation_detail_id', $criteriaDetailArr);
             }
             $bidSubmissionDetails = $bidSubmissionDetails->get()->toArray();
 
@@ -4724,20 +4737,8 @@ class SRMService
 
     private function getTenderNegotiationArea($tenderId, $bidMasterId)
     {
-        $tenderNegotiationId = TenderNegotiation::select('id')->with('area')->where('srm_tender_master_id', $tenderId)->first();
+        $tenderNegotiationResults = TenderNegotiation::select('id')->with('area')->where('srm_tender_master_id', $tenderId)->first();
 
-        $supplierTenderNegotiation = SupplierTenderNegotiation::select('srm_bid_submission_master_id')
-            ->where('tender_negotiation_id', $tenderNegotiationId->id)->first();
-
-        $tenderBidNegotiation = TenderBidNegotiation::select('bid_submission_master_id_old')
-            ->where('tender_negotiation_id', $tenderNegotiationId->id)
-            ->where('bid_submission_master_id_new', $bidMasterId)
-            ->first();
-
-        if($supplierTenderNegotiation->srm_bid_submission_master_id == $tenderBidNegotiation->bid_submission_master_id_old){
-            return $tenderNegotiationId->area;
-        } else {
-            return null;
-        }
+        return ($tenderNegotiationResults) ? $tenderNegotiationResults->area : null;
     }
 }
