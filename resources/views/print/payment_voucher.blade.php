@@ -584,7 +584,6 @@
             <table class="table table-bordered" style="width: 100%;">
                 <thead>
                 <tr class="theme-tr-head">
-                    <th>#</th>
                     <th style="text-align: center">{{ __('custom.cheque_no') }}</th>
                     <th style="text-align: center">{{ __('custom.cheque_date') }}</th>
                     <th style="text-align: center">{{ __('custom.comment') }}</th>
