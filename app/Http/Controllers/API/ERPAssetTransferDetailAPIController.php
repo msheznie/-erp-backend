@@ -160,15 +160,6 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
                     return $this->sendError('Asset already acknowledged');  
                 }
 
-                $AssetRequestUpdateData = [
-                    'detail' => $value['detail'],
-                    'itemCodeSystem' => $value['itemCodeSystem']
-                ];
-
-                $updateAssetRequest = AssetRequestDetail::where('erp_fa_fa_asset_request_id',$value['erp_fa_fa_asset_request_id'])
-                                                        ->where('id', $value['id'])
-                                                        ->update($AssetRequestUpdateData);
-                
                 $data[] = [
                     'erp_fa_fa_asset_transfer_id' => $value['masterID'],
                     'erp_fa_fa_asset_request_id' => $value['erp_fa_fa_asset_request_id'],
@@ -177,6 +168,7 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
                     'pr_created_yn' => (isset($value['pr_created_yn']) && $value['pr_created_yn'] == true ? 1 : 0),
                     'company_id' => $value['company_id'],
                     'created_user_id' => \Helper::getEmployeeSystemID(),
+                    'itemCodeSystem' => $value['itemCodeSystem']
                 ];
             }
             $this->eRPAssetTransferDetailRepository->insert($data);
@@ -353,7 +345,7 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
         $data['assetMaster'] = ERPAssetTransfer::where('id', $id)->first();
 
         if ($data['assetMaster']->type == 1) {
-            $data['assetRequestDetails'] = ERPAssetTransferDetail::with(['assetRequestDetail', 'assetMaster','assetRequestMaster'])->where('erp_fa_fa_asset_transfer_id', $id)->get();
+            $data['assetRequestDetails'] = ERPAssetTransferDetail::with(['assetRequestDetail', 'assetMaster','assetRequestMaster','item_detail'])->where('erp_fa_fa_asset_transfer_id', $id)->get();
         } else {
             $data['assetRequestDetails'] = ERPAssetTransferDetail::with(['fromLocation', 'toLocation', 'assetMaster'])->where('erp_fa_fa_asset_transfer_id', $id)->get();
         }
