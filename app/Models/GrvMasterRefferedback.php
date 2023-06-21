@@ -510,7 +510,8 @@ class GrvMasterRefferedback extends Model
         'modifiedUserSystemID',
         'modifiedUser',
         'createdDateTime',
-        'TIMESTAMP'
+        'TIMESTAMP',
+        'deliveryAppoinmentID'
     ];
 
     /**
