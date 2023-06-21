@@ -2910,7 +2910,9 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 'bankledger_by' => function ($query) {
                     $query->where('documentSystemID', 4);
                     $query->with(['bankrec_by', 'bank_transfer']);
-                },'audit_trial.modified_by'])->first();
+                },'audit_trial.modified_by','pdc_cheque' => function ($q) {
+                    $q->where('documentSystemID', 4);
+                } ])->first();
 
         $isProjectBase = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
         ->where('companySystemID', $output->companySystemID)
@@ -4353,7 +4355,9 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
                 }, 'approved_by' => function ($query) {
                     $query->with('employee');
                     $query->where('documentSystemID', 4);
-                }, 'created_by', 'cancelled_by'])->first();
+                }, 'created_by', 'cancelled_by','pdc_cheque' => function ($q) {
+                    $q->where('documentSystemID', 4);
+                }])->first();
 
         if (empty($output)) {
             return $this->sendError('Customer Receive Payment not found');
