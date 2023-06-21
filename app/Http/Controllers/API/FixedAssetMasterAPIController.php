@@ -940,7 +940,14 @@ class FixedAssetMasterAPIController extends AppBaseController
             $input["timestamp"] = date('Y-m-d H:i:s');
             unset($input['itemPicture']);
 
-            $fixedAssetMaster = $this->fixedAssetMasterRepository->update($input, $id);
+            if($fixedAssetMaster && $fixedAssetMaster->approved == -1){
+                $amendableData = array_only($input,['departmentSystemID','departmentID','serviceLineSystemID','serviceLineCode','assetDescription','MANUFACTURE','COMMENTS','LOCATION','lastVerifiedDate','faCatID','faSubCatID','faSubCatID2','faSubCatID3','AUDITCATOGARY','COSTGLCODE','ACCDEPGLCODE','DEPGLCODE','DISPOGLCODE', 'accdepglCodeSystemID', 'costglCodeSystemID', 'depglCodeSystemID', 'dispglCodeSystemID']);
+
+                $fixedAssetMaster = $this->fixedAssetMasterRepository->update($amendableData, $id);
+            } else {
+                $fixedAssetMaster = $this->fixedAssetMasterRepository->update($input, $id);
+            }
+
 
             /*Activity log*/
 
