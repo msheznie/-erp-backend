@@ -93,9 +93,14 @@
                 @endif
             </td>
             <td colspan="8">
-                @if ($bidData[0]['stage'] == 1)
-                    {{\Carbon\Carbon::parse($bidData[0]['bid_opening_date'])->format('d/m/Y')}}
-                @endif
+                @if ($bidData[0]['stage'] == 1) 
+                    @if ($bidData[0]['bid_opening_date'])
+                            {{\Carbon\Carbon::parse($bidData[0]['bid_opening_date'])->format('d/m/Y')}}
+                    @endif 
+                    @if (empty($bidData[0]['technical_bid_opening_date']))
+                            -
+                    @endif 
+                @endif 
             </td>
         @endif
         @if ($bidData[0]['stage'] == 2)
@@ -182,7 +187,7 @@
                     @endif 
 
                     @if (!empty($item->doc_verifiy_comment))
-                    <td colspan="1">   $item->doc_verifiy_comment </td>
+                    <td colspan="1">{{$item->doc_verifiy_comment}} </td>
                     @else
                     <td style="text-align: center;"> - </td>
                     @endif 

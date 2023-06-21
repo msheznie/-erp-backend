@@ -45,7 +45,16 @@
         <td style="border: hidden"></td>
     </tr>
     <tr>
-        <td style="border: hidden"><strong>Commercial Bid Opening Date: </strong>{{\Carbon\Carbon::parse($commerical_bid_opening_date)->format('d/m/Y')}}</td>
+        <td style="border: hidden"><strong>Commercial Bid Opening Date: </strong>
+        @if ($commerical_bid_opening_date)
+            {{\Carbon\Carbon::parse($commerical_bid_opening_date)->format('d/m/Y')}}
+        @endif
+
+        @if (empty($commerical_bid_opening_date))
+                   -
+        @endif 
+    
+    </td>
         <td style="border: hidden"></td>
     </tr>
 </table>

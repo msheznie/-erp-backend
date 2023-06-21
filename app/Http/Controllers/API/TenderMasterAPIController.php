@@ -3058,8 +3058,8 @@ WHERE
 
         $companyId = $request['companyId'];
         $tenderId = $request['tenderId'];
-        $technicalCount =  $this->getTechnicalCount($tenderId);
-
+        $technicalCount =  $this->getTechnicalCount($tenderId); 
+        
         if($technicalCount->technical_count > 0)
         {
             $query = BidSubmissionMaster::selectRaw("round(SUM((srm_bid_submission_detail.eval_result/100)*srm_tender_master.technical_weightage),3) as weightage,srm_bid_submission_master.id,srm_bid_submission_master.bidSubmittedDatetime,srm_bid_submission_master.tender_id,srm_supplier_registration_link.name,srm_bid_submission_detail.id as bid_id,srm_bid_submission_master.commercial_verify_status,srm_bid_submission_master.bidSubmissionCode,srm_tender_master.technical_passing_weightage as passing_weightage")
@@ -3599,8 +3599,9 @@ WHERE
             $tender->save();
 
             foreach ($emails as $mail) {
-                $name = $mail->employee->empFullName;
-                $body = "Hi $name , <br><br> The Tender $tender->tender_code has been available for the final employee committee approval for tender awarding. <br><br> <a href=$redirectUrl>Click here to approve</a> <br><br>Thank you.";
+                $name = $mail->employee->empFullName; 
+                $documentType = ($tender->document_type == 0) ? 'Tender' : 'RFX';
+                $body = "Hi $name , <br><br> The $documentType $tender->tender_code has been available for the final employee committee approval for $documentType awarding. <br><br> <a href=$redirectUrl>Click here to approve</a> <br><br>Thank you.";
                 $dataEmail['empEmail'] = $mail->employee->empUserName;
                 $dataEmail['companySystemID'] = $request['companySystemID'];
                 $dataEmail['alertMessage'] = "Employee Committee Approval";
@@ -3652,10 +3653,14 @@ WHERE
 
             $name = $tender->ranking_supplier->supplier->name;
             $company = $tender->company->CompanyName;
-            $body = "Hi $name <br><br> We are pleased to inform, that $company decided to award Tender ($tender->tender_code & $tender->description) to $name.<br>For more details kindly contact the Contact Person <br><br> Regards,<br>$company.";
+            $documentType = $this->getDocumentType($tender->document_type);
+
+            $tenderCode = ($tender->description) ? "$tender->tender_code - $tender->description" : $tender->tender_code;
+
+            $body = "Hi $name <br><br> We are pleased to inform, that $company decided to award $documentType ($tenderCode) to $name.<br>For more details kindly contact the Contact Person <br><br> Regards,<br>$company.";
             $dataEmail['empEmail'] = $tender->ranking_supplier->supplier->email;
             $dataEmail['companySystemID'] = $tender->company_id;
-            $dataEmail['alertMessage'] = "Tender Award";
+            $dataEmail['alertMessage'] = "$documentType Award";
             $dataEmail['emailAlertMessage'] = $body;
             $sendEmail = \Email::sendEmailErp($dataEmail);
 
@@ -4051,5 +4056,24 @@ WHERE
          'criteriaDetails AS technical_count' => function ($query) {
             $query->where('critera_type_id', 2);
          }])->where('id', $tenderId)->first();
+    }
+
+    public function getDocumentType($documentType){ 
+        switch($documentType){
+            case 0 :                
+                 return 'Tender';
+            break;  
+            case 1:
+                return 'Quotation';
+            break; 
+            case 2:
+               return 'Information';
+            break; 
+            case 3:
+                return 'Proposal';
+            break;
+                return 'Tender';
+            default:
+        }
     }
 } 
