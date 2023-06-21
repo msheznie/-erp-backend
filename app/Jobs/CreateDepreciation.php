@@ -215,11 +215,9 @@ class CreateDepreciation implements ShouldQueue
 
                         }
 
-                        $db = $this->dataBase;
-
                         if (count($finalData) > 0) {
                             foreach (array_chunk($finalData,1000) as $t) {
-                                DepreciationInsert::dispatch($db, $t);
+                                FixedAssetDepreciationPeriod::insert($t);
                             }
                         }
 
