@@ -221,14 +221,6 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     return $this->sendError($validator->messages(), 422);
                 }
 
-                $checkDefaultTemplate = ReportTemplate::where('isDefault', 1)
-                                                      ->where('reportID', 2)
-                                                      ->where('companySystemID', $request->companySystemID)
-                                                      ->first();
-
-                if (!$checkDefaultTemplate) {
-                    return $this->sendError("Please configure default template to generate the report", 500);
-                }
 
                 break;
             case 'CSR':
@@ -4518,7 +4510,7 @@ WHERE
                     INNER JOIN erp_companyreporttemplatelinks ON erp_companyreporttemplatedetails.detID = erp_companyreporttemplatelinks.templateDetailID
                     INNER JOIN erp_companyreporttemplate ON erp_companyreporttemplatedetails.companyReportTemplateID = erp_companyreporttemplate.companyReportTemplateID
                 WHERE
-                    ( ( ( erp_companyreporttemplate.isDefault ) = 1 ) AND ( ( erp_companyreporttemplate.reportID ) = 2 ) )
+                    erp_companyreporttemplate.reportID  = 2 
                     ) AS revenueGLCodes ON erp_generalledger.chartOfAccountSystemID = revenueGLCodes.chartOfAccountSystemID AND erp_generalledger.companySystemID = revenueGLCodes.templateCompanySystemID
                 WHERE
                     DATE(erp_generalledger.documentDate) <= "' . $asOfDate . '"
@@ -5033,7 +5025,7 @@ AND erp_generalledger.documentRptAmount > 0 AND erp_generalledger.glAccountTypeI
                                 INNER JOIN erp_companyreporttemplatelinks ON erp_companyreporttemplatedetails.detID = erp_companyreporttemplatelinks.templateDetailID 
                                 INNER JOIN erp_companyreporttemplate ON erp_companyreporttemplatedetails.companyReportTemplateID = erp_companyreporttemplate.companyReportTemplateID 
                             WHERE
-                                erp_companyreporttemplate.isDefault = 1 AND erp_companyreporttemplate.reportID = 2
+                                erp_companyreporttemplate.reportID = 2
                                 ) AS revenueGLCodes ON erp_generalledger.chartOfAccountSystemID = revenueGLCodes.chartOfAccountSystemID
                                 WHERE erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
                                 AND chartofaccounts.controlAccountsSystemID = 1
