@@ -1747,6 +1747,12 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('srp_erp_template_masters', 'SrpErpTemplateMasterAPIController');
             Route::resource('srp_erp_form_categories', 'SrpErpFormCategoryAPIController');
             Route::resource('srp_erp_templates', 'SrpErpTemplatesAPIController');
+
+            // erp_language
+            Route::resource('erp_language_master', 'ERPLanguageMasterAPIController');
+            Route::post('store-employee-language', 'ERPLanguageMasterAPIController@storeEmployeeLanguage');
+
+
         
         });
     });
@@ -1901,7 +1907,8 @@ Route::post('documentUploadDelete', 'ThirdPartySystemsDocumentUploadAndDownloadA
 Route::get('viewHrDocuments', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@viewHrDocuments');
         
 
-
 /*
  * End external related routes
  */
+
+

@@ -5667,6 +5667,10 @@ class Helper
         $user = Models\User::find(Auth::id());
         $employee = Models\Employee::with(['profilepic', 'user_data' => function($query) {
             $query->select('uuid', 'employee_id');
+        },'language' => function ($q) {
+            $q->with(['language' => function ($l) {
+                $l->select(['languageID','languageShortCode','icon']);
+            }]);
         }])->find($user->employee_id);
         return $employee;
     }
