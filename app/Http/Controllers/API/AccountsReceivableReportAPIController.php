@@ -4995,21 +4995,6 @@ AND erp_generalledger.documentRptAmount > 0 AND erp_generalledger.glAccountTypeI
                                 AND erp_generalledger.clientContractID = contractmaster.ContractNumber
                                 LEFT JOIN currencymaster currLocal ON erp_generalledger.documentLocalCurrencyID = currLocal.currencyID
                                 LEFT JOIN currencymaster currRpt ON erp_generalledger.documentRptCurrencyID = currRpt.currencyID
-                                INNER JOIN (
-                            SELECT
-                                erp_companyreporttemplatedetails.detID as templatesDetailsAutoID,
-                                erp_companyreporttemplatedetails.companyReportTemplateID as templatesMasterAutoID,
-                                erp_companyreporttemplatedetails.description as templateDetailDescription,
-                                erp_companyreporttemplatedetails.controlAccountType as controlAccountID,
-                                erp_companyreporttemplatelinks.glAutoID as chartOfAccountSystemID,
-                                erp_companyreporttemplatelinks.glCode 
-                            FROM
-                                erp_companyreporttemplatedetails
-                                INNER JOIN erp_companyreporttemplatelinks ON erp_companyreporttemplatedetails.detID = erp_companyreporttemplatelinks.templateDetailID 
-                                INNER JOIN erp_companyreporttemplate ON erp_companyreporttemplatedetails.companyReportTemplateID = erp_companyreporttemplate.companyReportTemplateID 
-                            WHERE
-                                erp_companyreporttemplate.reportID = 2
-                                ) AS revenueGLCodes ON erp_generalledger.chartOfAccountSystemID = revenueGLCodes.chartOfAccountSystemID
                                 WHERE erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
                                 AND chartofaccounts.controlAccountsSystemID = 1
                                 AND DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" 
