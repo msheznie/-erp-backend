@@ -32,7 +32,18 @@
 <h1><center>Commercial Bid Schedule Wise Evaluation Report</center></h1>
 <table style="width:100%;" class="sup-item-summary-report-head">
     <tr>
-        <td style="border: hidden"><strong>Tender ID:</strong> {{ $data[0]['tender']['tender_code'] }} </td>
+        <td style="border: hidden"><strong>
+
+        @if($data[0]['tender']['document_type'] == 0)
+                Tender ID:
+        @elseif($data[0]['tender']['document_type'] == 1)
+                RFQ ID:
+        @elseif($data[0]['tender']['document_type'] == 2)
+                RFI ID:
+        @elseif($data[0]['tender']['document_type'] == 3)
+                RFP ID:
+        @endif     
+        </strong> {{ $data[0]['tender']['tender_code'] }} </td>
         <td style="border: hidden"></td>
     </tr>
     <tr>
@@ -40,7 +51,17 @@
         <td style="border: hidden"></td>
     </tr>
     <tr>
-        <td style="border: hidden"><strong>Tender Title:</strong> {{ $data[0]['tender']['title'] }}</td>
+        <td style="border: hidden"><strong>
+        @if($data[0]['tender']['document_type'] == 0)
+                Tender Title:
+        @elseif($data[0]['tender']['document_type'] == 1)
+                RFQ Title:
+        @elseif($data[0]['tender']['document_type'] == 2)
+                RFI Title:
+        @elseif($data[0]['tender']['document_type'] == 3)
+                RFP Title:
+        @endif       
+        </strong> {{ $data[0]['tender']['title'] }}</td>
         <td style="border: hidden"></td>
     </tr>
     <tr>

@@ -880,7 +880,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
             }
         }
 
-        $tenderDetails = TenderMaster::select('description', 'tender_code','commerical_bid_opening_date')->where('id', $tenderId)->get();
+        $tenderDetails = TenderMaster::select('description', 'tender_code','commerical_bid_opening_date','document_type')->where('id', $tenderId)->get();
 
         $notBoqitems = [];
         if(isset($itemList)){
@@ -955,7 +955,8 @@ class BidSubmissionMasterAPIController extends AppBaseController
             'supplier_list' => $supplierNameCode,
             'srm_bid_submission_master' => $queryResult[0]['tender_master']['srm_bid_submission_master'],
             'item_list' => $data,
-            'totalItemsCount' => $itemsArrayCount
+            'totalItemsCount' => $itemsArrayCount,
+            'documentType'=> $tenderDetails[0]['document_type']
         );
 
         $html = view('print.bid_supplier_item_print', $order);

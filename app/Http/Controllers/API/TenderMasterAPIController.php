@@ -3653,11 +3653,8 @@ WHERE
 
             $name = $tender->ranking_supplier->supplier->name;
             $company = $tender->company->CompanyName;
-            $documentType = $this->getDocumentType($tender->document_type);
-
-            $tenderCode = ($tender->description) ? "$tender->tender_code - $tender->description" : $tender->tender_code;
-
-            $body = "Hi $name <br><br> We are pleased to inform, that $company decided to award $documentType ($tenderCode) to $name.<br>For more details kindly contact the Contact Person <br><br> Regards,<br>$company.";
+            $documentType = $this->getDocumentType($tender->document_type); 
+            $body = "Hi $name <br><br> We are pleased to inform, that $company decided to award $documentType ($tender->tender_code - $tender->title) to $name.<br>For more details kindly contact the Contact Person <br><br> Regards,<br>$company.";
             $dataEmail['empEmail'] = $tender->ranking_supplier->supplier->email;
             $dataEmail['companySystemID'] = $tender->company_id;
             $dataEmail['alertMessage'] = "$documentType Award";
