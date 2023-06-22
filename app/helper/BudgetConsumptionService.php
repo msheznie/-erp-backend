@@ -582,7 +582,6 @@ class BudgetConsumptionService
 
 			$finalData = [];
 
-
 			if (count($glCodes) == 0) {
 				if ($budgetFormData['departmentWiseCheckBudgetPolicy']) {
 					foreach ($templateCategoryIDs as $key => $value) {
@@ -638,7 +637,6 @@ class BudgetConsumptionService
 								$finalData[$value.$serviceLineSystemID]['glCodes'] = $glCodes;
 							}
 						}
-
 					}
 				} else {
 					foreach ($templateCategoryIDs as $key => $value) {
@@ -3255,7 +3253,7 @@ class BudgetConsumptionService
 
 	public static function fixedAssetCostingDocumentAmountByTemplate($budgetFormData, $templateCategoryIDs, $glCodes = [], $fixedAssetFlag)
 	{
-		$docAmountQry = FixedAssetMaster::selectRaw('SUM(costUnitRpt) AS totalCost, faID, companySystemID ,costglCodeSystemID as chartOfAccountSystemID, costglCodeSystemID as chartOfAccountID, serviceLineSystemID')
+		$docAmountQry = FixedAssetMaster::selectRaw('SUM(costUnitRpt) AS totalCost, faID, companySystemID , costglCodeSystemID,costglCodeSystemID as chartOfAccountSystemID, costglCodeSystemID as chartOfAccountID, serviceLineSystemID')
 											 ->whereHas('budget_detail',function($query) use ($budgetFormData, $templateCategoryIDs, $glCodes) {
 											 	$query->where('companySystemID', $budgetFormData['companySystemID'])
 											 		   ->where('Year', $budgetFormData['budgetYear'])
