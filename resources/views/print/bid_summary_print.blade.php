@@ -97,7 +97,7 @@
                     @if ($bidData[0]['bid_opening_date'])
                             {{\Carbon\Carbon::parse($bidData[0]['bid_opening_date'])->format('d/m/Y')}}
                     @endif 
-                    @if (empty($bidData[0]['technical_bid_opening_date']))
+                    @if (empty($bidData[0]['bid_opening_date']))
                             -
                     @endif 
                 @endif 
@@ -156,7 +156,7 @@
                 <td>{{$item->SupplierRegistrationLink->id}}</td>
                 <td>{{$item->bidSubmissionCode}}</td>
                 <td>{{$item->SupplierRegistrationLink->name}}</td>
-                <td>{{\Carbon\Carbon::parse($item->created_at)->format('d/m/Y')}}</td>
+                <td>{{\Carbon\Carbon::parse($item->bidSubmittedDatetime)->format('d/m/Y')}}</td>
                 @foreach ($attachments[$loop->index] as $doc2)
                     <td style="text-align: center;">
                     @switch($doc2->bid_verify->status)
