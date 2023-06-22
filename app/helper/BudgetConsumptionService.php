@@ -3323,7 +3323,7 @@ class BudgetConsumptionService
 				$groups = collect($docAmountQry)->groupBy('templateDetailID');
 			}
 
-			$pendingPoQryData = $groups->map(function ($group) {
+			$pendingPoQryData = $groups->map(function ($group) use ($budgetFormData) {
 			    return [
 			        'templateDetailID' => $group->first()['templateDetailID'],
 			        'budgetYear' => $budgetFormData['budgetYear'],
