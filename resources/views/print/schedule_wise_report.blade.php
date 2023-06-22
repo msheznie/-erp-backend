@@ -74,7 +74,7 @@
             {{\Carbon\Carbon::parse($data[0]['tender']['commerical_bid_opening_date'])->format('d/m/Y')}}
             @endif
 
-            @if (empty($bidData[0]['commerical_bid_opening_date']))
+            @if (empty($data[0]['tender']['commerical_bid_opening_date']))
             -
             @endif 
         </td>
