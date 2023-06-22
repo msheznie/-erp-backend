@@ -450,7 +450,7 @@ class FinancialReportAPIController extends AppBaseController
 
     public function generateprojectUtilizationReport(Request $request)
     {
-        $documentSystemIDs = [2, 3, 4, 18, 21, 19, 15];
+        $documentSystemIDs = [2, 3, 4, 18, 21, 19, 15, 17];
         $dateFrom = (new Carbon($request->fromDate))->format('d/m/Y');
         $dateTo = (new Carbon($request->toDate))->format('d/m/Y');
 
@@ -465,7 +465,7 @@ class FinancialReportAPIController extends AppBaseController
         $documentCurrencyID = $projectDetail->currency['currencyID'];
         $reportingCurrency = Company::with('reportingcurrency')->where('companySystemID',$companySystemID)->first();
 
-        $budgetConsumedData = BudgetConsumedData::with('purchase_order','debit_note', 'credit_note', 'direct_payment_voucher')
+        $budgetConsumedData = BudgetConsumedData::with('purchase_order','debit_note', 'credit_note', 'direct_payment_voucher', 'grv_master', 'jv_master')
                                                     ->where('projectID', $projectID)
                                                     ->when(count($serviceline) > 0, function ($query) use ($serviceline) {
                                                         $query->whereIn('serviceLineSystemID', $serviceline);
@@ -483,6 +483,12 @@ class FinancialReportAPIController extends AppBaseController
                 }, 
                 'direct_payment_voucher_detail' => function ($query) use ($fromDate, $toDate) {
                     $query->whereBetween('approvedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                }, 
+                'grv_master_detail' => function ($query) use ($fromDate, $toDate) {
+                    $query->whereBetween('approvedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                }, 
+                'jv_master_detail' => function ($query) use ($fromDate, $toDate) {
+                    $query->whereBetween('approvedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
                 }
             ])
 
@@ -498,6 +504,12 @@ class FinancialReportAPIController extends AppBaseController
                     $query->whereBetween('approvedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
                 })
                 ->orWhereHas('direct_payment_voucher_detail', function ($query) use ($fromDate, $toDate) {
+                    $query->whereBetween('approvedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                })
+                ->orWhereHas('grv_master_detail', function ($query) use ($fromDate, $toDate) {
+                    $query->whereBetween('approvedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                })
+                ->orWhereHas('jv_master_detail', function ($query) use ($fromDate, $toDate) {
                     $query->whereBetween('approvedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
                 });
             })
@@ -526,6 +538,12 @@ class FinancialReportAPIController extends AppBaseController
                 })
                 ->orWhereHas('direct_payment_voucher', function ($query) use ($fromDate, $toDate) {
                     $query->whereBetween('approvedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                })
+                ->orWhereHas('grv_master', function ($query) use ($fromDate, $toDate) {
+                    $query->whereBetween('approvedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
+                })
+                ->orWhereHas('jv_master', function ($query) use ($fromDate, $toDate) {
+                    $query->whereBetween('approvedDate', [$fromDate.' 00:00:00', $toDate.' 23:59:59']);
                 });
             })
 
@@ -550,6 +568,12 @@ class FinancialReportAPIController extends AppBaseController
                     $query->whereDate('approvedDate', '<', $fromDate);
                 })
                 ->orWhereHas('direct_payment_voucher', function ($query) use ($fromDate, $toDate) {
+                    $query->whereDate('approvedDate', '<', $fromDate);
+                })
+                ->orWhereHas('grv_master', function ($query) use ($fromDate, $toDate) {
+                    $query->whereDate('approvedDate', '<', $fromDate);
+                })
+                ->orWhereHas('jv_master', function ($query) use ($fromDate, $toDate) {
                     $query->whereDate('approvedDate', '<', $fromDate);
                 });
             })
