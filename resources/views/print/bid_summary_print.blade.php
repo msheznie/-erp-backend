@@ -173,18 +173,21 @@
                     </td>
                 @endforeach 
 
-                    @if ($count != 0)
-                    <td>
-                        @if ($item->doc_verifiy_status == 1)
-                            Approved
+                    
+                        @if (($documentType != 0 && $count != 0) || $documentType == 0)
+                        <td>
+                            @if ($item->doc_verifiy_status == 1)
+                                Approved
+                            @elseif ($item->doc_verifiy_status == 2)
+                                Rejected
+                            @else
+                                -
+                            @endif
+                        </td> 
+                        @else
+                        <td style="text-align: center;"> - </td>
                         @endif
-                        @if ($item->doc_verifiy_status == 2)
-                            Rejected
-                        @endif
-                    </td>
-                    @else
-                    <td style="text-align: center;"> - </td>
-                    @endif 
+                
 
                     @if (!empty($item->doc_verifiy_comment))
                     <td colspan="1">{{$item->doc_verifiy_comment}} </td>
