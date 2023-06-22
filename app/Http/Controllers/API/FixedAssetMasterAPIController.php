@@ -27,6 +27,7 @@ use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\DepartmentMaster;
 use App\Models\DocumentApproved;
+use App\Models\BudgetConsumedData;
 use App\Models\DocumentMaster;
 use App\Models\DocumentReferedHistory;
 use App\Models\EmployeesDepartment;
@@ -2177,6 +2178,12 @@ class FixedAssetMasterAPIController extends AppBaseController
             if(is_null($masterData->docOriginSystemCode)){
                 $fixedAssetCosting = FixedAssetCost::ofFixedAsset($id)->delete();
             }
+
+            //deleting budget consumption
+            $deletebudgetData = BudgetConsumedData::where('documentSystemCode', $id)
+                ->where('companySystemID', $masterData->companySystemID)
+                ->where('documentSystemID', $masterData->documentSystemID)
+                ->delete();
 
             // updating fields
             $masterData->confirmedYN = 0;
