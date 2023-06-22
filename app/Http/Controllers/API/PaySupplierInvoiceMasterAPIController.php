@@ -1615,12 +1615,28 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                         ->first();
                     $policy = isset($policy->isYesNO) && $policy->isYesNO == 1;
 
-                    if($policy == false || $paySupplierInvoiceMaster->invoiceType != 3) {
+                    // if($policy == false || $paySupplierInvoiceMaster->invoiceType != 3) {
                         $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
                         $input['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
-                    }
+                    // }
                 }
             }
+
+
+            $checkErChange = isset($input['checkErChange']) ? $input['checkErChange'] : true;
+
+            if ((($paySupplierInvoiceMaster->BPVbankCurrencyER != $input['BPVbankCurrencyER'] && $input['BPVbankCurrency'] == $paySupplierInvoiceMaster->BPVbankCurrency) || $paySupplierInvoiceMaster->localCurrencyER != $input['localCurrencyER'] && $input['localCurrencyID'] == $paySupplierInvoiceMaster->localCurrencyID || $paySupplierInvoiceMaster->companyRptCurrencyER != $input['companyRptCurrencyER'] && $input['companyRptCurrencyID'] == $paySupplierInvoiceMaster->companyRptCurrencyID)) {
+                
+
+                if ($checkErChange) {
+                    $erMessage = "<p>The exchange rates are updated as follows,</p><p style='font-size: medium;'>Previous rates Bank ER ".$paySupplierInvoiceMaster->BPVbankCurrencyER." | Local ER ".$paySupplierInvoiceMaster->localCurrencyER." | Reporting ER ".$paySupplierInvoiceMaster->companyRptCurrencyER."</p><p style='font-size: medium;'>Current rates Bank ER ".$input['BPVbankCurrencyER']." | Local ER ".$input['localCurrencyER']." | Reporting ER ".$input['companyRptCurrencyER']."</p><p>Are you sure you want to proceed ?</p>";
+
+                    return $this->sendError($erMessage, 500, ['type' => 'erChange']);
+                } else {
+                    PaySupplierInvoiceMaster::where('PayMasterAutoId', $paySupplierInvoiceMaster->PayMasterAutoId)->update(['BPVbankCurrencyER' => $input['BPVbankCurrencyER'], 'localCurrencyER' => $input['localCurrencyER'], 'companyRptCurrencyER' => $input['companyRptCurrencyER']]);
+                }
+            }
+
 
             if ($paySupplierInvoiceMaster->invoiceType == 3) {
                 if ($input['payeeType'] == 3) {
