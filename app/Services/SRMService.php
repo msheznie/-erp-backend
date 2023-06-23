@@ -2206,9 +2206,9 @@ class SRMService
     public function getGoNoGoBidSubmissionData($request, $negotiationStatus = false, $arr = [])
     {
 
-        $tenderId = $arr[0];
+        $tenderId = (sizeof($arr) > 0) ? $arr[0] : null;
         $critera_type_id = 1;
-        $bidMasterId = $arr[1];
+        $bidMasterId = (sizeof($arr) > 0) ? $arr[1] : null;
         $negotiation = $negotiationStatus;
 
         if(!$negotiationStatus){
@@ -3227,7 +3227,7 @@ class SRMService
 
             }else {
                 if($main_works_id->field_type == 4) {
-                    $bid_format_details = DB::table('srm_schedule_bid_format_details')->where('bid_format_detail_id',$main_works_id->id)->where('created_by',$supplierData->id)->get();
+                    $bid_format_details = DB::table('srm_schedule_bid_format_details')->where('bid_format_detail_id',$main_works_id->id)->get();
 
 
                     if(count($bid_format_details) > 0) {
