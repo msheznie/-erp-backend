@@ -5335,7 +5335,6 @@ AND erp_generalledger.documentRptAmount > 0 AND erp_generalledger.glAccountTypeI
                     erp_generalledger.glCode,
                     erp_generalledger.glAccountType,
                     chartofaccounts.controlAccounts,
-                    revenueGLCodes.controlAccountID,
                     erp_generalledger.supplierCodeSystem,
                 IF
                     (
@@ -5363,36 +5362,21 @@ AND erp_generalledger.documentRptAmount > 0 AND erp_generalledger.glAccountTypeI
                     LEFT JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID
                     LEFT JOIN contractmaster ON erp_generalledger.clientContractID = contractmaster.ContractNumber
                     AND erp_generalledger.companyID = contractmaster.CompanyID
-                    INNER JOIN (
-                SELECT
-                    erp_templatesdetails.templatesDetailsAutoID,
-                    erp_templatesdetails.templatesMasterAutoID,
-                    erp_templatesdetails.templateDetailDescription,
-                    erp_templatesdetails.controlAccountID,
-                    erp_templatesdetails.controlAccountSubID,
-                    erp_templatesglcode.chartOfAccountSystemID,
-                    erp_templatesglcode.glCode
-                FROM
-                    erp_templatesdetails
-                    INNER JOIN erp_templatesglcode ON erp_templatesdetails.templatesDetailsAutoID = erp_templatesglcode.templatesDetailsAutoID
-                WHERE
-                    ( ( ( erp_templatesdetails.templatesMasterAutoID ) = 15 ) AND ( ( erp_templatesdetails.controlAccountID ) = "PLI" ) )
-                    ) AS revenueGLCodes ON erp_generalledger.chartOfAccountSystemID = revenueGLCodes.chartOfAccountSystemID
                 WHERE
                     DATE(erp_generalledger.documentDate) <= "' . $asOfDate . '"
                     AND YEAR ( erp_generalledger.documentDate ) = "' . $year . '"
                     AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
+                    AND chartofaccounts.controlAccountsSystemID = 1
                     ) AS revenueDetailData
                     LEFT JOIN customermaster ON customermaster.customerCodeSystem = revenueDetailData.mySupplierCode
                 WHERE
                     (
                         revenueDetailData.mySupplierCode IN (' . join(',', $customerSystemID) . ')
                     )
-                    OR revenueDetailData.mySupplierCode IS NULL 
-    OR revenueDetailData.mySupplierCode = ""
                     ) AS revenueDataSummary
                 GROUP BY
-                    revenueDataSummary.companySystemID
+                    revenueDataSummary.companySystemID,
+                    revenueDataSummary.mySupplierCode
                 ORDER BY
 	                Total DESC');
         return $output;
@@ -5431,6 +5415,7 @@ AND erp_generalledger.documentRptAmount > 0 AND erp_generalledger.glAccountTypeI
 		collectionMonthWise.companyID as companyCode,
 	collectionMonthWise.CompanyName as CompanyName,
 	CustomerName,
+	CutomerCode,
 	collectionMonthWise.companyID,
     collectionMonthWise.CompanyName,
 	DocYEAR,
@@ -5567,7 +5552,7 @@ AND YEAR (
 	) AS collectionMonthWise
 GROUP BY
 	collectionMonthWise.companyID,
-	collectionMonthWise.DocYEAR;');
+	collectionMonthWise.DocYEAR,collectionMonthWise.CutomerCode;');
 
         return $output;
 
