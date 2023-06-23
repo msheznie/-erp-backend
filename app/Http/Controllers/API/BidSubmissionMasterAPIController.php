@@ -851,9 +851,10 @@ class BidSubmissionMasterAPIController extends AppBaseController
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
             $query = $query->where(function ($query) use ($search) {
-                $query->where('name', 'like', "%{$search}%");
+                $query->where('name', 'like', "%{$search}%")
+                ->orWhere('bidSubmissionCode', 'LIKE', "%{$search}%");
             });
-            $query->Orwhere('bidSubmissionCode', 'LIKE', "%{$search}%");
+            
         }
 
         return \DataTables::eloquent($query)
