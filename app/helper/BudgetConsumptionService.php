@@ -1937,7 +1937,7 @@ class BudgetConsumptionService
 
 	public static function pendingFixedAssetCostingQry($budgetFormData, $templateCategoryIDs, $glCodes, $fixedAssetFlag, $directDocument)
 	{
-		$pendingSupInvQry = FixedAssetMaster::selectRaw('SUM(costUnitRpt) AS amount, costglCodeSystemID as chartOfAccountSystemID, companySystemID, serviceLineSystemID, costglCodeSystemID as chartOfAccountID')
+		$pendingSupInvQry = FixedAssetMaster::selectRaw('SUM(costUnitRpt) AS amount, costglCodeSystemID as chartOfAccountSystemID, companySystemID, serviceLineSystemID, costglCodeSystemID as chartOfAccountID, costglCodeSystemID')
 								 		     ->where('companySystemID', $budgetFormData['companySystemID'])
 								 		     ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
 											 	$query->whereIn('serviceLineSystemID', $budgetFormData['serviceLineSystemID']);
