@@ -1315,8 +1315,6 @@ class SRMService
                 $q->where('purchased_by', '=', $supplierRegId);
             }])->whereHas('srmTenderMasterSupplier', function ($q) use ($supplierRegId) {
                 $q->where('purchased_by', '=', $supplierRegId);
-            })->whereDoesntHave('tender_negotiation', function ($q) use ($supplierRegId) {
-                $q->where('status', '=', 2);
             })->where('published_yn', 1);
 
         }
@@ -1393,6 +1391,8 @@ class SRMService
                 $q->where('purchased_by', '=', $supplierRegId);
             })->whereHas('tender_negotiation', function ($q) use ($supplierRegId) {
                 $q->where('status', '=', 2);
+            })->whereHas('tender_negotiation.SupplierTenderNegotiation', function ($q) use ($supplierRegId) {
+                $q->where('suppliermaster_id', $supplierRegId);
             })->where('published_yn', 1);
         }
 
