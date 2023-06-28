@@ -2221,6 +2221,7 @@ class SRMService
         if($negotiation){
             $tenderNegotiationArea = $this->getTenderNegotiationArea($tenderId, $bidMasterId);
             $data['technical_evaluation'] = $tenderNegotiationArea->technical_evaluation;
+            $data['tender_documents'] = $tenderNegotiationArea->tender_documents;
         }
 
         $data['criteriaDetail'] = EvaluationCriteriaDetails::with(['evaluation_criteria_score_config', 'evaluation_criteria_type', 'tender_criteria_answer_type', 'bid_submission_detail' => function ($q) use ($bidMasterId) {
@@ -2820,6 +2821,7 @@ class SRMService
         if($negotiation){
             $tenderNegotiationArea = $this->getTenderNegotiationArea($tenderId, $bidMasterId);
             $data['tender_documents'] = $tenderNegotiationArea->tender_documents;
+            $data['technical_evaluation'] = $tenderNegotiationArea->technical_evaluation;
         }
 
         return [
@@ -2988,6 +2990,7 @@ class SRMService
         if($negotiation){
             $tenderNegotiationArea = $this->getTenderNegotiationArea($tenderId, $bidMasterId);
             $data['pricing_schedule'] = $tenderNegotiationArea->pricing_schedule;
+            $data['tender_documents'] = $tenderNegotiationArea->tender_documents;
         }
 
         $data['commercialBid'] = PricingScheduleMaster::with(['tender_bid_format_master', 'bid_schedule' => function ($q) use ($bidMasterId) {
