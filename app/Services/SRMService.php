@@ -1315,8 +1315,10 @@ class SRMService
                 $q->where('purchased_by', '=', $supplierRegId);
             }])->whereHas('srmTenderMasterSupplier', function ($q) use ($supplierRegId) {
                 $q->where('purchased_by', '=', $supplierRegId);
-            })->whereDoesntHave('tender_negotiation', function ($q) use ($supplierRegId) {
-                $q->where('status', '=', 2);
+            })->where(function ($q) use ($supplierRegId) {
+                $q->whereDoesntHave('tender_negotiation.SupplierTenderNegotiation', function ($q) use ($supplierRegId) {
+                    $q->where('suppliermaster_id', $supplierRegId)->where('status', 2);
+                });
             })->where('published_yn', 1);
 
         }
@@ -3336,10 +3338,12 @@ class SRMService
         $data['activeTab'] = $activeTab;
 
         if($negotiation){
+            $bidSubmissionParentCode = TenderBidNegotiation::select('bid_submission_code_old')->where('bid_submission_master_id_new', $bidMasterId)->first();
             $tenderNegotiationArea = $this->getTenderNegotiationArea($tenderId, $bidMasterId);
             $data['pricing_schedule'] = $tenderNegotiationArea->pricing_schedule;
             $data['technical_evaluation'] = $tenderNegotiationArea->technical_evaluation;
             $data['tender_documents'] = $tenderNegotiationArea->tender_documents;
+            $data['bidSubmissionParentCode'] = $bidSubmissionParentCode->bid_submission_code_old;
         }
 
         return [
