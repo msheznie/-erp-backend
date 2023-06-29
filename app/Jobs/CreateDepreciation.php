@@ -55,7 +55,7 @@ class CreateDepreciation implements ShouldQueue
     public function handle(fixedAssetDepreciationMasterRepository $faDepMaster)
     {
 
-        ini_set('max_execution_time', 6000);
+        ini_set('max_execution_time', 21600);
         ini_set('memory_limit', -1);
 
         CommonJobService::db_switch($this->dataBase);
