@@ -23,13 +23,13 @@ class TravelRequestNotificationJob implements ShouldQueue
      * @return void
      */
 
-    public $tenantId;
+    public $db_name;
     public $companyId; 
     public $id; 
     public $tripMaster; 
     public $tripRequestBookings; 
 
-    public function __construct($tenantId, $companyId, $id,$tripMaster,$tripRequestBookings)
+    public function __construct($db_name, $companyId, $id,$tripMaster,$tripRequestBookings)
     {
         if(env('IS_MULTI_TENANCY',false)){
             self::onConnection('database_main');
@@ -37,7 +37,7 @@ class TravelRequestNotificationJob implements ShouldQueue
             self::onConnection('database');
         }
         
-        $this->tenantId = $tenantId;
+        $this->db_name = $db_name;
         $this->companyId = $companyId;
         $this->id = $id; 
         $this->tripMaster = $tripMaster; 
@@ -51,23 +51,13 @@ class TravelRequestNotificationJob implements ShouldQueue
      */
     public function handle()
     {
-        $db_name = CommonJobService::get_tenant_db($this->tenantId);
-        if (empty($db_name)) {
-            $message = "db details not found. \t on file: " . __CLASS__ . " \tline no :" . __LINE__;
-            $data = [
-                'company_id' => $this->companyId,
-                'module' => 'HRMS',
-                'description' => 'Travel Request Notification Scenario',
-                'scenario_id' => 20,
-                'processed_for' => Carbon::now()->format('Y-m-d H:i:s'),
-                'logged_at' => Carbon::now()->format('Y-m-d H:i:s'),
-                'log_type' => 'error',
-                'log_data' => json_encode($message)
-            ];
-            DB::table('job_logs')->insert($data);
+        Log::useFiles( CommonJobService::get_specific_log_file('travel-request') );
+        if (empty($this->db_name)) {
+            Log::error("db details not found. \t on file: " . __CLASS__ ." \tline no :".__LINE__);            
         } else {
-            CommonJobService::db_switch($db_name);
-            $obj = new TravelRequestNotificationService($this->companyId, $this->tenantId, $this->id,$this->tripMaster,$this->tripRequestBookings);
+            Log::info("Job triggered");
+            CommonJobService::db_switch($this->db_name);
+            $obj = new TravelRequestNotificationService($this->companyId, $this->id,$this->tripMaster,$this->tripRequestBookings);
             $obj->execute();
         }
     }

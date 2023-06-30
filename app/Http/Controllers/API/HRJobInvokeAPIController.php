@@ -181,7 +181,9 @@ class HRJobInvokeAPIController extends AppBaseController
         $id = $input['id'];
         $tripMaster = $input['tripMaster'];
         $tripRequestBookings = $input['tripRequestBookings'];
-        TravelRequestNotificationJob::dispatch($tenantId, $companyId, $id,$tripMaster,$tripRequestBookings); 
+        $db_name = CommonJobService::get_tenant_db($tenantId);
+
+        TravelRequestNotificationJob::dispatch($db_name, $companyId, $id,$tripMaster,$tripRequestBookings); 
         return $this->sendResponse([], 'Travel request notification scenario added to queue');
     }
  

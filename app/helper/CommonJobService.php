@@ -45,6 +45,8 @@ class CommonJobService
                 return storage_path() . '/logs/leave_carry_forward_service.log';
             case 'hr-document':
                 return storage_path() . '/logs/hr_document_service.log';
+            case 'travel-request':
+                    return storage_path() . '/logs/travel_request_service.log';
 
         }
     }
