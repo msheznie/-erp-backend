@@ -178,11 +178,6 @@ class NotificationService
                         case 9:
                             $emailContent = RolReachedNotification::getReOrderLevelReachedEmailContent($details, $notificationUserVal[$key]['empName']);
                             break;
-
-                        case 39:
-                            $department = new DepartmentEndDateExpiryNotificationService($companyID, $notDaySetup);
-                            $department->proceed();
-                            break;
                         default:
                             Log::error("Email content configuration not done for scenario {$scenario_des}");
                             break;
