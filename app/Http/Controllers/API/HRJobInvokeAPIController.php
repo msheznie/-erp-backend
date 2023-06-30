@@ -22,6 +22,7 @@ use App\Services\hrms\attendance\AttendanceDailySummaryService;
 use App\Services\hrms\attendance\AttendanceWeeklySummaryService;
 use App\helper\BirthdayWishService;
 use App\Jobs\HrDocNotificationJob;
+use App\Jobs\ReturnToWorkNotificationJob;
 use App\Jobs\TravelRequestNotificationJob;
 use App\Models\Company;
 use App\Models\NotificationCompanyScenario;
@@ -200,8 +201,9 @@ class HRJobInvokeAPIController extends AppBaseController
         $visibility = $input['visibility'];
         $employees = $input['employees'];
         $portalUrl = $input['portalUrl'];
-    
-        HrDocNotificationJob::dispatch($tenantId, $companyId, $id, $visibility, $employees, $portalUrl); 
+        $db_name = CommonJobService::get_tenant_db($tenantId);
+        
+        HrDocNotificationJob::dispatch($db_name, $companyId, $id, $visibility, $employees, $portalUrl); 
         return $this->sendResponse([], 'HR document notification scenario added to queue');
     }
 }
