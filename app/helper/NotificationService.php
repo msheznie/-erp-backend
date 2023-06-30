@@ -130,7 +130,7 @@ class NotificationService
                         break;
 
                     case 39:
-                        $department = new DepartmentEndDateExpiryNotificationService($companyID, $notDaySetup);
+                        $department = new DepartmentExpiryNotificationService($companyID, $notDaySetup);
                         $department->proceed();
                         $details = [];
                         break;

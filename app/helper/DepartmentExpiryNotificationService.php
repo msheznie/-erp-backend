@@ -1,27 +1,26 @@
 <?php
 
+
 namespace App\helper;
 
-use App\Models\HREmpContractHistory;
 use App\Models\HrEmpDepartments;
 use App\Models\HrmsEmployeeManager;
 use App\Models\NotificationUser;
 use App\Models\SrpEmployeeDetails;
-use App\Models\SrpErpPayShiftEmployees;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-class DepartmentEndDateExpiryNotificationService
+
+class DepartmentExpiryNotificationService
 {
 
-    private $company;
     private $comScenarioId;
     private $type;
     private $days;
     private $currentDate;
     private $mailSubject = "Department End date Expiry Notification";
-    private $debug = false; //default false
+    private $debug = false; //default false can use for debug
     private $sentMailCount = 0;
     private $expiryDate = null;
     private $expiredDepartments = [];
@@ -29,13 +28,11 @@ class DepartmentEndDateExpiryNotificationService
     public function __construct($company, $setup)
     {
         ['companyScenarionID' => $comScenarioId, 'beforeAfter' => $type, 'days' => $days] = $setup;
-
         $this->companyId = $company;
         $this->comScenarioId = $comScenarioId;
         $this->type = $type;
         $this->days = $days;
         $this->currentDate = Carbon::now()->format('Y-m-d H:i:s');
-
     }
 
     public function proceed()
@@ -49,20 +46,16 @@ class DepartmentEndDateExpiryNotificationService
             ->with('employees')
             ->get();
 
-
         if (count($expiredDepartments) == 0) {
             $log = "Expiry Department does not exist for type: {$this->type} and days: {$this->days}";
             $log .= "\t on file: " . __CLASS__ . " \tline no :" . __LINE__;
-
             if ($this->debug) {
                 echo "<pre>$log</pre>";
                 Log::error($log);
             }
-
             $this->insertToLogTb($log, 'error');
             return false;
         }
-
 
         $this->expiredDepartments = $expiredDepartments->toArray();
         $expiredDepartmentMsg = count($this->expiredDepartments) . " expired department found. \t on file: " . __CLASS__ . " \tline no :" . __LINE__;
@@ -79,12 +72,10 @@ class DepartmentEndDateExpiryNotificationService
             return false;
         }
 
-
         if ($this->debug) {
             echo '<pre> <h3>Expired Department</h3>';
             print_r($expiredDepartments);
             echo '</pre>';
-
         }
 
         foreach ($usersSetup as $row) {
@@ -93,23 +84,22 @@ class DepartmentEndDateExpiryNotificationService
                     $mailTo = $row->empID;
                     $this->toSpecificEmployee($mailTo);
                     break;
-
                 case 7: //Reporting manager
-                    //$this->toReportingManager();
+                    $this->toReportingManager();
                     break;
-
                 case 9: //Applicable Employee
-                    //$this->toDocumentOwner();
+                    $this->toDocumentOwner();
                     break;
-
                 default:
                     $defErrMsg = "Unknown Applicable Category \t on file: " . __CLASS__ . " \tline no :" . __LINE__;
                     $this->insertToLogTb($defErrMsg, 'error');
             }
         }
 
+
         $mailMessage = $this->sentMailCount . " expired Department document mails send \t on file: " . __CLASS__ . " \tline no :" . __LINE__;
         $this->insertToLogTb($mailMessage);
+
 
         return true;
     }
@@ -117,20 +107,19 @@ class DepartmentEndDateExpiryNotificationService
     public function toDocumentOwner(){
         $data = collect( $this->expiredDepartments )->groupBy('EmpID')->toArray();
 
+
         $mailBodyStr = '';
         foreach ($data as $row){
 
             $mailTo = $row[0]['employees'];
-
             $mailBody = "Dear {$mailTo['Ename2']},<br/>";
             $mailBody .= $this->emailBody(9 );
             $mailBody .= $this->expiryTable($row, true);
 
-
             $empEmail = $mailTo['EEmail'];
             $subject = $this->mailSubject;
 
-            NotificationService::emailNotification($this->company, $subject, $empEmail, $mailBody);
+            NotificationService::emailNotification($this->companyId, $subject, $empEmail, $mailBody);
 
             $this->sentMailCount++;
 
@@ -165,6 +154,7 @@ class DepartmentEndDateExpiryNotificationService
             echo '<pre> <h3>Manager :</h3>'; print_r($manager->toArray()); echo '</pre>';
         }
 
+
         $manager = collect( $manager->toArray() )->groupBy('managerID')->toArray();
 
         $empWiseDocs = collect( $this->expiredDepartments )->groupBy('EmpID')->toArray();
@@ -176,7 +166,6 @@ class DepartmentEndDateExpiryNotificationService
             $myReportingData = collect([]);
             foreach ($row as $rpt){
                 $thisEmp = $rpt['empID'];
-
                 if( array_key_exists($thisEmp, $empWiseDocs)){
                     $myReportingData = $myReportingData->concat( $empWiseDocs[$thisEmp] );
                 }
@@ -191,10 +180,9 @@ class DepartmentEndDateExpiryNotificationService
             $empEmail = $managerInfo['EEmail'];
             $subject = $this->mailSubject;
 
-            NotificationService::emailNotification($this->company, $subject, $empEmail, $mailBody);
+            NotificationService::emailNotification($this->companyId, $subject, $empEmail, $mailBody);
 
             $this->sentMailCount++;
-
             if($this->debug) { $mailBodyStr .= '<br/><br/>' . $mailBody; }
         }
 
@@ -259,7 +247,7 @@ class DepartmentEndDateExpiryNotificationService
 
         $empEmail = $mailTo->EEmail;
         $subject = $this->mailSubject;
-        NotificationService::emailNotification($this->company, $subject, $empEmail, $mailBody);
+        NotificationService::emailNotification($this->companyId, $subject, $empEmail, $mailBody);
 
         $this->sentMailCount++;
 
@@ -279,11 +267,9 @@ class DepartmentEndDateExpiryNotificationService
             case 1: //Employee
                 $str .= "Departments expiry details as follow";
                 break;
-
             case 7: //Reporting manager
                 $str .= "Departments of your reporting employees expiry details as follow";
                 break;
-
             case 9: //Applicable Employee
                 $str .= "Your departments expiry details as follow";
                 break;
