@@ -35,7 +35,8 @@ class NotificationService
             6, //HR document expiry
             7, //HR - Employee contract expiry
             8, //HR - Employee end of probation
-            14 //HR - Employee end of shift period
+            14, //HR - Employee end of shift period
+            39 // HR - Department End date Expiry Notification
         ];
     }
 
@@ -128,6 +129,12 @@ class NotificationService
                         $details = [];
                         break;
 
+                    case 39:
+                        $department = new DepartmentEndDateExpiryNotificationService($companyID, $notDaySetup);
+                        $department->proceed();
+                        $details = [];
+                        break;
+
                     default:
                         Log::error("Applicable category configuration not exist for scenario {$scenario_des}");
 
@@ -170,6 +177,11 @@ class NotificationService
                             break;
                         case 9:
                             $emailContent = RolReachedNotification::getReOrderLevelReachedEmailContent($details, $notificationUserVal[$key]['empName']);
+                            break;
+
+                        case 39:
+                            $department = new DepartmentEndDateExpiryNotificationService($companyID, $notDaySetup);
+                            $department->proceed();
                             break;
                         default:
                             Log::error("Email content configuration not done for scenario {$scenario_des}");
