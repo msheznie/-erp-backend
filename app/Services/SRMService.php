@@ -3350,7 +3350,7 @@ class SRMService
             $data['tender_documents'] = $tenderNegotiationArea->tender_documents;
             $data['bidSubmissionParentCode'] = $bidSubmissionParentCode->bid_submission_code_old;
         }
-
+         
         return [
             'success' => true,
             'message' => 'Main Envelop data retrieved successfully',
