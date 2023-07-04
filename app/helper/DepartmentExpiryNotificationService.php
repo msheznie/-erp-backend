@@ -9,18 +9,16 @@ use App\Models\NotificationUser;
 use App\Models\SrpEmployeeDetails;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-
 
 class DepartmentExpiryNotificationService
 {
 
     private $comScenarioId;
+    private $companyId;
     private $type;
     private $days;
     private $currentDate;
     private $mailSubject = "Department End date Expiry Notification";
-    private $debug = false; //default false can use for debug
     private $sentMailCount = 0;
     private $expiryDate = null;
     private $expiredDepartments = [];
@@ -39,7 +37,7 @@ class DepartmentExpiryNotificationService
     {
         $this->expiryDate = NotificationService::get_filter_date($this->type, $this->days);
 
-        $expiredDepartments = HrEmpDepartments::where('date_to', '<', now())
+        $expiredDepartments = HrEmpDepartments::where('date_to', '<', $this->expiryDate)
             ->where('isPrimary', 1)
             ->where('Erp_companyID', $this->companyId)
             ->with('departments')
@@ -49,33 +47,20 @@ class DepartmentExpiryNotificationService
         if (count($expiredDepartments) == 0) {
             $log = "Expiry Department does not exist for type: {$this->type} and days: {$this->days}";
             $log .= "\t on file: " . __CLASS__ . " \tline no :" . __LINE__;
-            if ($this->debug) {
-                echo "<pre>$log</pre>";
-                Log::error($log);
-            }
-            $this->insertToLogTb($log, 'error');
+            $this->insertToLogTb($log);
             return false;
         }
 
         $this->expiredDepartments = $expiredDepartments->toArray();
-        $expiredDepartmentMsg = count($this->expiredDepartments) . " expired department found. \t on file: " . __CLASS__ . " \tline no :" . __LINE__;
+        $expireDepartmentMsg = " expired department found. \t on file: " . __CLASS__ . " \tline no :" . __LINE__;
+        $expiredDepartmentMsg = count($this->expiredDepartments) . $expireDepartmentMsg ;
         $this->insertToLogTb($expiredDepartmentMsg);
 
         $usersSetup = NotificationUser::get_notification_users_setup($this->comScenarioId);
         if (count($usersSetup) == 0) {
-            if ($this->debug) {
-                echo "<pre>User's not configured for Expiry Department. \t on file: {__CLASS__} \tline no : {__LINE_} </pre>";
-            }
-
             $userConfMessage = "User's not configured for Department End Date Expiry. \t on file: " . __CLASS__ . " \tline no :" . __LINE__;
             $this->insertToLogTb($userConfMessage, 'error');
             return false;
-        }
-
-        if ($this->debug) {
-            echo '<pre> <h3>Expired Department</h3>';
-            print_r($expiredDepartments);
-            echo '</pre>';
         }
 
         foreach ($usersSetup as $row) {
@@ -96,8 +81,8 @@ class DepartmentExpiryNotificationService
             }
         }
 
-
-        $mailMessage = $this->sentMailCount . " expired Department document mails send \t on file: " . __CLASS__ . " \tline no :" . __LINE__;
+        $expiredDepartmentMsg = " expired Department document mails send \t on file: " . __CLASS__ . " \tline no :" . __LINE__;
+        $mailMessage = $this->sentMailCount . $expiredDepartmentMsg;
         $this->insertToLogTb($mailMessage);
 
 
@@ -107,8 +92,6 @@ class DepartmentExpiryNotificationService
     public function toDocumentOwner(){
         $data = collect( $this->expiredDepartments )->groupBy('EmpID')->toArray();
 
-
-        $mailBodyStr = '';
         foreach ($data as $row){
 
             $mailTo = $row[0]['employees'];
@@ -123,12 +106,6 @@ class DepartmentExpiryNotificationService
 
             $this->sentMailCount++;
 
-            if($this->debug) { $mailBodyStr .= '<br/><br/>' . $mailBody; }
-        }
-
-        if($this->debug){
-            echo '<br/> <h3>to_document_owner line no '. __LINE__.'</h3> <br/>';
-            echo $mailBodyStr;
         }
 
         return true;
@@ -146,20 +123,15 @@ class DepartmentExpiryNotificationService
             ->get();
 
         if(count($manager) == 0){
-            Log::error("Manager details not found for Expiry HR documents. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
+            $managerError = "Manager details not found for Expiry HR documents. \t on file: ". __CLASS__ ." \tline no :".__LINE__;
+            $this->insertToLogTb($managerError);
             return false;
         }
-
-        if($this->debug){
-            echo '<pre> <h3>Manager :</h3>'; print_r($manager->toArray()); echo '</pre>';
-        }
-
 
         $manager = collect( $manager->toArray() )->groupBy('managerID')->toArray();
 
         $empWiseDocs = collect( $this->expiredDepartments )->groupBy('EmpID')->toArray();
 
-        $mailBodyStr = '';
         foreach ($manager as $row){
             $managerInfo = $row[0]['info'];
 
@@ -183,12 +155,7 @@ class DepartmentExpiryNotificationService
             NotificationService::emailNotification($this->companyId, $subject, $empEmail, $mailBody);
 
             $this->sentMailCount++;
-            if($this->debug) { $mailBodyStr .= '<br/><br/>' . $mailBody; }
-        }
 
-        if($this->debug){
-            echo '<br/> <h3>to_reporting_manager line no '. __LINE__.'</h3> <br/>';
-            echo $mailBodyStr;
         }
 
         return true;
@@ -219,11 +186,12 @@ class DepartmentExpiryNotificationService
             }
 
             $department = $row['departments'];
+            $dateTo = Carbon::parse($row['date_to'])->toDateString();
             $body .= '<tr>
                 <td style="text-align:left;border: 1px solid black;">' . $x . '</td>  
                 '.$empName.'
                 <td style="text-align:left;border: 1px solid black;">' . $department['DepartmentDes'] . '</td> 
-                <td style="text-align:left;border: 1px solid black;">' . $row['date_to'] . '</td>                 
+                <td style="text-align:left;border: 1px solid black;">' . $dateTo . '</td>                 
                 </tr>';
             $x++;
         }
@@ -250,11 +218,6 @@ class DepartmentExpiryNotificationService
         NotificationService::emailNotification($this->companyId, $subject, $empEmail, $mailBody);
 
         $this->sentMailCount++;
-
-        if($this->debug){
-            echo '<br/><h3> to_specific_employee line no '. __LINE__ .' </h3><br/>';
-            echo $mailBody;
-        }
 
         return true;
     }
