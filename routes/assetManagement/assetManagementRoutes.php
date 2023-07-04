@@ -32,3 +32,12 @@ Route::group([], function(){
     Route::post('getVerificationApprovedByUser', 'AssetVerificationAPIController@getVerificationApprovedByUser')->name("Get asset verification approved");
 
 });
+
+
+
+//transaction - Asset Allocation
+Route::group([], function(){
+    Route::post('getAllAllocationByCompany', 'FixedAssetMasterAPIController@getAllAllocationByCompany')->name("Get asset allocation");
+    Route::get('getFAGrvDetailsByID', 'FixedAssetMasterAPIController@getFAGrvDetailsByID')->name("Get FAGrv Details");
+    Route::resource('fixed_asset_masters', 'FixedAssetMasterAPIController');
+});
