@@ -59,6 +59,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             require __DIR__.'/../routes/accountsPayable/accountsPayableRoutes.php';
             require __DIR__.'/../routes/accountsReceivable/accountsReceivableRoutes.php';
             require __DIR__.'/../routes/salesAndMarketing/salesAndMarketingRoutes.php';
+            require __DIR__.'/../routes/assetManagement/assetManagementRoutes.php';
 
             Route::post('getAllEmployees', 'EmployeeAPIController@getAllEmployees');
 
@@ -670,8 +671,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('getAllBankReconciliationList', 'BankReconciliationAPIController@getAllBankReconciliationList');
             Route::post('amendBankReconciliationReview', 'BankReconciliationAPIController@amendBankReconciliationReview');
             Route::resource('fixed_asset_masters', 'FixedAssetMasterAPIController');
-            Route::get('getAllocationFormData', 'FixedAssetMasterAPIController@getAllocationFormData');
-            Route::get('getPostToGLAccounts', 'FixedAssetMasterAPIController@getPostToGLAccounts');
             Route::post('getAllAllocationByCompany', 'FixedAssetMasterAPIController@getAllAllocationByCompany');
             Route::post('getAllCostingByCompany', 'FixedAssetMasterAPIController@getAllCostingByCompany');
             Route::post('referBackCosting', 'FixedAssetMasterAPIController@referBackCosting');
@@ -700,8 +699,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('capitalizationReopen', 'AssetCapitalizationAPIController@capitalizationReopen');
             Route::post('referBackCapitalization', 'AssetCapitalizationAPIController@referBackCapitalization');
             Route::get('getAssetCapitalizationMaster', 'AssetCapitalizationAPIController@getAssetCapitalizationMaster');
-            Route::post('getCapitalizationApprovalByUser', 'AssetCapitalizationAPIController@getCapitalizationApprovalByUser');
-            Route::post('getCapitalizationApprovedByUser', 'AssetCapitalizationAPIController@getCapitalizationApprovedByUser');
             Route::resource('asset_capitalization_details', 'AssetCapitalizationDetailAPIController');
             Route::get('getCapitalizationDetails', 'AssetCapitalizationDetailAPIController@getCapitalizationDetails');
             Route::post('deleteAllAssetCapitalizationDet', 'AssetCapitalizationDetailAPIController@deleteAllAssetCapitalizationDet');
@@ -769,26 +766,18 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('getAllcompaniesByDepartment', 'DocumentApprovedAPIController@getAllcompaniesByDepartment');
 
             Route::resource('fixed_asset_masters', 'FixedAssetMasterAPIController');
-            Route::post('getFixedAssetSubCat', 'FixedAssetMasterAPIController@getFixedAssetSubCat');
             Route::get('getFinanceGLCode', 'FixedAssetMasterAPIController@getFinanceGLCode');
             Route::get('getFAGrvDetailsByID', 'FixedAssetMasterAPIController@getFAGrvDetailsByID');
             Route::post('assetCostingReopen', 'FixedAssetMasterAPIController@assetCostingReopen');
 
-            Route::post('getCostingApprovalByUser', 'FixedAssetMasterAPIController@getCostingApprovalByUser');
-            Route::post('getCostingApprovedByUser', 'FixedAssetMasterAPIController@getCostingApprovedByUser');
             Route::get('getAssetCostingMaster', 'FixedAssetMasterAPIController@getAssetCostingMaster');
             Route::post('amendAssetCostingReview', 'FixedAssetMasterAPIController@amendAssetCostingReview');
 
-            Route::get('getAssetCostingByID/{id}', 'FixedAssetMasterAPIController@getAssetCostingByID');
-            Route::get('assetCostingForPrint', 'FixedAssetMasterAPIController@assetCostingForPrint');
             Route::post('updateCustomerReciept', 'CustomerReceivePaymentDetailAPIController@updateCustomerReciept');
             Route::post('getAllDepreciationByCompany', 'FixedAssetDepreciationMasterAPIController@getAllDepreciationByCompany');
-            Route::get('getDepreciationFormData', 'FixedAssetDepreciationMasterAPIController@getDepreciationFormData');
             Route::get('assetDepreciationByID/{id}', 'FixedAssetDepreciationMasterAPIController@assetDepreciationByID');
             Route::get('assetDepreciationMaster', 'FixedAssetDepreciationMasterAPIController@assetDepreciationMaster');
             Route::post('assetDepreciationReopen', 'FixedAssetDepreciationMasterAPIController@assetDepreciationReopen');
-            Route::post('getAssetDepApprovalByUser', 'FixedAssetDepreciationMasterAPIController@getAssetDepApprovalByUser');
-            Route::post('getAssetDepApprovedByUser', 'FixedAssetDepreciationMasterAPIController@getAssetDepApprovedByUser');
             Route::post('referBackDepreciation', 'FixedAssetDepreciationMasterAPIController@referBackDepreciation');
             Route::post('amendAssetDepreciationReview', 'FixedAssetDepreciationMasterAPIController@amendAssetDepreciationReview');
             Route::post('updateReceiptVoucherMatchDetail', 'CustomerReceivePaymentDetailAPIController@updateReceiptVoucherMatchDetail');
@@ -837,8 +826,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('asset_disposal_masters', 'AssetDisposalMasterAPIController');
             Route::post('getAllDisposalByCompany', 'AssetDisposalMasterAPIController@getAllDisposalByCompany');
             Route::post('disposalReopen', 'AssetDisposalMasterAPIController@disposalReopen');
-            Route::post('getDisposalApprovalByUser', 'AssetDisposalMasterAPIController@getDisposalApprovalByUser');
-            Route::post('getDisposalApprovedByUser', 'AssetDisposalMasterAPIController@getDisposalApprovedByUser');
             Route::post('getAllAssetsForDisposal', 'AssetDisposalMasterAPIController@getAllAssetsForDisposal');
             Route::post('referBackDisposal', 'AssetDisposalMasterAPIController@referBackDisposal');
             Route::get('getDisposalFormData', 'AssetDisposalMasterAPIController@getDisposalFormData');
@@ -1486,8 +1473,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('storeVerification', 'AssetVerificationAPIController@store');
             Route::delete('deleteAssetVerification/{id}', 'AssetVerificationAPIController@destroy');
             Route::get('getVerificationById/{id}', 'AssetVerificationAPIController@show');
-            Route::post('getVerificationApprovalByUser', 'AssetVerificationAPIController@getVerificationApprovalByUser');
-            Route::post('getVerificationApprovedByUser', 'AssetVerificationAPIController@getVerificationApprovedByUser');
             Route::put('updateAssetVerification/{id}', 'AssetVerificationAPIController@update');
             Route::post('getAllCostingByCompanyForVerification', 'AssetVerificationAPIController@getAllCostingByCompanyForVerification');
             Route::post('addAssetToVerification/{id}', 'AssetVerificationDetailAPIController@store');
@@ -1522,14 +1507,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('asset-transfer-drop', 'ERPAssetTransferDetailAPIController@assetTransferDrop');
             Route::get('typeAheadAssetDrop', 'ERPAssetTransferDetailAPIController@typeAheadAssetDrop');
             Route::post('add-employee-asset-transfer-asset-detail/{id}', 'ERPAssetTransferDetailAPIController@addEmployeeAsset');
-            Route::get('asset-transfer-details', 'ERPAssetTransferDetailAPIController@getAssetTransferDetails');
-            Route::post('getAssetTransferApprovalByUser', 'ERPAssetTransferAPIController@getAssetTransferApprovalByUser');
-            Route::post('rejectAssetTransfer', 'ERPAssetTransferAPIController@rejectAssetTransfer');
-            Route::post('approveAssetTransfer', 'ERPAssetTransferAPIController@approveAssetTransfer');
             Route::get('getAssetTransferData', 'ERPAssetTransferAPIController@getAssetTransferData');
             Route::post('asset_transfer_detail_asset', 'ERPAssetTransferDetailAPIController@assetTransferDetailAsset');
             Route::get('getAssetDropPR', 'ERPAssetTransferAPIController@getAssetDropPR');
-            Route::post('getAssetTransferApprovalByUserApproved', 'ERPAssetTransferAPIController@getAssetTransferApprovalByUserApproved');
             Route::get('asset-location-value', 'ERPAssetTransferDetailAPIController@getAssetLocationValue');
             Route::get('getAssetTransferMasterRecord', 'ERPAssetTransferAPIController@getAssetTransferMasterRecord');
             Route::post('assetTransferReopen', 'ERPAssetTransferAPIController@assetTransferReopen');
@@ -1808,7 +1788,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     Route::post('oauth/login_with_token', 'AuthAPIController@authWithToken');
     Route::get('printDeliveryOrder', 'DeliveryOrderAPIController@printDeliveryOrder');
     Route::get('printSalesReturn', 'SalesReturnAPIController@printSalesReturn');
-    Route::get('printERPAssetTransfer', 'ERPAssetTransferDetailAPIController@printERPAssetTransfer');
     Route::resource('work_order_generation_logs', 'WorkOrderGenerationLogAPIController');
     Route::resource('external_link_hashes', 'ExternalLinkHashAPIController');
     Route::resource('registered_suppliers', 'RegisteredSupplierAPIController');
