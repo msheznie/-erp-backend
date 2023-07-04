@@ -37,11 +37,20 @@ class DepartmentExpiryNotificationService
     {
         $this->expiryDate = NotificationService::get_filter_date($this->type, $this->days);
 
-        $expiredDepartments = HrEmpDepartments::where('date_to', '<', $this->expiryDate)
+        $expiredDepartments = HrEmpDepartments::where('date_to',$this->expiryDate)
             ->where('isPrimary', 1)
             ->where('Erp_companyID', $this->companyId)
-            ->with('departments')
-            ->with('employees')
+            ->whereHas('employees', function ($q1) {
+                $q1->where('isDischarged', 0);
+            })
+            ->with([
+                'departments' => function ($q2) {
+                    $q2->select('DepartmentMasterID', 'DepartmentDes');
+                },
+                'employees' => function ($q3) {
+                    $q3->select('EIdNo', 'ECode', 'Ename2', 'EEmail');
+                }
+            ])->select('date_to','DepartmentMasterID','EmpID')
             ->get();
 
         if (count($expiredDepartments) == 0) {
@@ -58,7 +67,9 @@ class DepartmentExpiryNotificationService
 
         $usersSetup = NotificationUser::get_notification_users_setup($this->comScenarioId);
         if (count($usersSetup) == 0) {
-            $userConfMessage = "User's not configured for Department End Date Expiry. \t on file: " . __CLASS__ . " \tline no :" . __LINE__;
+            $userConfMessage = "User's not configured for Department End Date Expiry. \t on file: " . __CLASS__ ;
+            $userConfMessage .= " \tline no :" . __LINE__;
+
             $this->insertToLogTb($userConfMessage, 'error');
             return false;
         }
@@ -81,11 +92,10 @@ class DepartmentExpiryNotificationService
             }
         }
 
-        $expiredDepartmentMsg = " expired Department document mails send \t on file: " . __CLASS__ . " \tline no :" . __LINE__;
+        $expiredDepartmentMsg = " expired Department document mails send \t on file: " . __CLASS__ ;
+        $expiredDepartmentMsg .= " \tline no :". __LINE__;
         $mailMessage = $this->sentMailCount . $expiredDepartmentMsg;
         $this->insertToLogTb($mailMessage);
-
-
         return true;
     }
 
@@ -123,7 +133,8 @@ class DepartmentExpiryNotificationService
             ->get();
 
         if(count($manager) == 0){
-            $managerError = "Manager details not found for Expiry HR documents. \t on file: ". __CLASS__ ." \tline no :".__LINE__;
+            $managerError = "Manager details not found for Expiry HR documents. \t on file: ". __CLASS__ ;
+            $managerError .= " \tline no :".__LINE__;
             $this->insertToLogTb($managerError);
             return false;
         }
