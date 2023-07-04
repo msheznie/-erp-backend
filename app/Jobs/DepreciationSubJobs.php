@@ -169,7 +169,7 @@ class DepreciationSubJobs
             }
 
             if (count($finalData) > 0) {
-                foreach (array_chunk($finalData, 1000) as $t) {
+                foreach (array_chunk($finalData, 100) as $t) {
                     FixedAssetDepreciationPeriod::insert($t);
                 }
             }
@@ -180,6 +180,7 @@ class DepreciationSubJobs
             if ($depDetail) {
                 $fixedAssetDepreciationMasters = $faDepMaster->update(['depAmountLocal' => $depDetail->depAmountLocal, 'depAmountRpt' => $depDetail->depAmountRpt, 'isDepProcessingYN' => 1], $depMasterAutoID);
             }
+            DB::commit();
         }
         catch (\Exception $e){
             DB::rollback();
