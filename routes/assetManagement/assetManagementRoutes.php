@@ -36,7 +36,7 @@ Route::group([], function(){
 //transaction - Asset Depreciation
 Route::group([], function() {
     Route::post('getAllDepreciationByCompany', 'FixedAssetDepreciationMasterAPIController@getAllDepreciationByCompany')->name('Get depreciation by company');
-    Route::post('exportAMDepreciation', 'FixedAssetDepreciationPeriodAPIController@exportAMDepreciation')->name('');
+    Route::post('exportAMDepreciation', 'FixedAssetDepreciationPeriodAPIController@exportAMDepreciation')->name('Export asset depreciation');
 
     Route::group(['middleware' => 'max_memory_limit'], function () {
         Route::group(['middleware' => 'max_execution_limit'], function () {
