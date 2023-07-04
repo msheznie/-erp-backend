@@ -1318,6 +1318,10 @@ class SRMService
             })->where(function ($q) use ($supplierRegId) {
                 $q->whereDoesntHave('tender_negotiation.SupplierTenderNegotiation', function ($q) use ($supplierRegId) {
                     $q->where('suppliermaster_id', $supplierRegId)->where('status', 2);
+                })->orWhere(function ($q) use ($supplierRegId) {
+                    $q->whereHas('tender_negotiation.SupplierTenderNegotiation', function ($q) use ($supplierRegId) {
+                        $q->where('suppliermaster_id', '!=', $supplierRegId);
+                    })->doesntHave('tender_negotiation');
                 });
             })->where('published_yn', 1);
 
