@@ -50,7 +50,7 @@ class DepartmentExpiryNotificationService
                 'employees' => function ($q3) {
                     $q3->select('EIdNo', 'ECode', 'Ename2', 'EEmail');
                 }
-            ])->select('date_to','DepartmentMasterID','EmpID')
+            ])->select('date_to', 'DepartmentMasterID', 'EmpID')
             ->get();
 
         if (count($expiredDepartments) == 0) {
