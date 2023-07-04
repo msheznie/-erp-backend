@@ -670,8 +670,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('getAllBankReconciliationByBankAccount', 'BankReconciliationAPIController@getAllBankReconciliationByBankAccount');
             Route::post('getAllBankReconciliationList', 'BankReconciliationAPIController@getAllBankReconciliationList');
             Route::post('amendBankReconciliationReview', 'BankReconciliationAPIController@amendBankReconciliationReview');
-            Route::resource('fixed_asset_masters', 'FixedAssetMasterAPIController');
-            Route::post('getAllAllocationByCompany', 'FixedAssetMasterAPIController@getAllAllocationByCompany');
             Route::post('getAllCostingByCompany', 'FixedAssetMasterAPIController@getAllCostingByCompany');
             Route::post('referBackCosting', 'FixedAssetMasterAPIController@referBackCosting');
             Route::post('createFixedAssetCosting', 'FixedAssetMasterAPIController@create');
@@ -765,9 +763,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('exportTMReport', 'BankReconciliationAPIController@exportReport');
             Route::get('getAllcompaniesByDepartment', 'DocumentApprovedAPIController@getAllcompaniesByDepartment');
 
-            Route::resource('fixed_asset_masters', 'FixedAssetMasterAPIController');
             Route::get('getFinanceGLCode', 'FixedAssetMasterAPIController@getFinanceGLCode');
-            Route::get('getFAGrvDetailsByID', 'FixedAssetMasterAPIController@getFAGrvDetailsByID');
             Route::post('assetCostingReopen', 'FixedAssetMasterAPIController@assetCostingReopen');
 
             Route::get('getAssetCostingMaster', 'FixedAssetMasterAPIController@getAssetCostingMaster');
@@ -1435,7 +1431,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('sentCustomerStatement', 'AccountsReceivableReportAPIController@sentCustomerStatement');
             Route::post('sentCustomerLedger', 'AccountsReceivableReportAPIController@sentCustomerLedger');
 
-            Route::post('exportTransactionsRecord', 'TransactionsExportExcel@exportRecord')->name("Export Record");
 
             Route::post('getAllCurrencyConversionApproval', 'CurrencyConversionMasterAPIController@getAllCurrencyConversionApproval');
             Route::post('approveCurrencyConversion', 'CurrencyConversionMasterAPIController@approveCurrencyConversion');
