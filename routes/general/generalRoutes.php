@@ -54,3 +54,5 @@ Route::post('generateSegmentGlReportExcel', 'GeneralLedgerAPIController@generate
 Route::get('getVatCategoryFormData', 'TaxVatCategoriesAPIController@getVatCategoryFormData')->name('Get vat category form data');
 Route::post('updateItemVatCategories', 'TaxVatCategoriesAPIController@updateItemVatCategories')->name('Update item vat categories');
 Route::get('getInvoiceDetailsForDeliveryOrderPrintView', 'DeliveryOrderAPIController@getInvoiceDetailsForDeliveryOrderPrintView')->name('Get invoice details for delivery order print view');
+
+Route::post('exportTransactionsRecord', 'TransactionsExportExcel@exportRecord')->name("Export Record");
