@@ -55,3 +55,6 @@ Route::get('getVatCategoryFormData', 'TaxVatCategoriesAPIController@getVatCatego
 Route::post('updateItemVatCategories', 'TaxVatCategoriesAPIController@updateItemVatCategories')->name('Update item vat categories');
 Route::get('getInvoiceDetailsForDeliveryOrderPrintView', 'DeliveryOrderAPIController@getInvoiceDetailsForDeliveryOrderPrintView')->name('Get invoice details for delivery order print view');
 Route::post('exportTransactionsRecord', 'TransactionsExportExcel@exportRecord')->name("Export Record");
+
+Route::post('getDocumentDetails', 'PurchaseRequestAPIController@getDocumentDetails')->name("Get Document Details");
+

@@ -90,8 +90,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
                     Route::post('generateAMReport', 'AssetManagementReportAPIController@generateReport');
                     Route::post('exportAMReport', 'AssetManagementReportAPIController@exportReport');
                     Route::post('exportAssetMaster', 'FixedAssetMasterAPIController@exportAssetMaster');
-                    Route::resource('fixed_asset_depreciation_masters', 'FixedAssetDepreciationMasterAPIController');
-                    Route::post('getAssetDepPeriodsByID', 'FixedAssetDepreciationPeriodAPIController@getAssetDepPeriodsByID');
 
                 });
             });
@@ -770,7 +768,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('amendAssetCostingReview', 'FixedAssetMasterAPIController@amendAssetCostingReview');
 
             Route::post('updateCustomerReciept', 'CustomerReceivePaymentDetailAPIController@updateCustomerReciept');
-            Route::post('getAllDepreciationByCompany', 'FixedAssetDepreciationMasterAPIController@getAllDepreciationByCompany');
             Route::get('assetDepreciationByID/{id}', 'FixedAssetDepreciationMasterAPIController@assetDepreciationByID');
             Route::get('assetDepreciationMaster', 'FixedAssetDepreciationMasterAPIController@assetDepreciationMaster');
             Route::post('assetDepreciationReopen', 'FixedAssetDepreciationMasterAPIController@assetDepreciationReopen');
@@ -851,7 +848,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             
             
             Route::resource('fixed_asset_depreciation_periods', 'FixedAssetDepreciationPeriodAPIController');
-            Route::post('exportAMDepreciation', 'FixedAssetDepreciationPeriodAPIController@exportAMDepreciation');
             Route::resource('asset_types', 'AssetTypeAPIController');
             
             
@@ -1414,7 +1410,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('deleteAllADVReceiptDetail', 'AdvanceReceiptDetailsAPIController@deleteAllADVReceiptDetail');
 
 
-            Route::post('getDocumentDetails', 'PurchaseRequestAPIController@getDocumentDetails')->name("Get Document Details");
 
             Route::get('getVATFilterFormData', 'VATReportAPIController@getVATFilterFormData');
             Route::post('validateVATReport', 'VATReportAPIController@validateVATReport');

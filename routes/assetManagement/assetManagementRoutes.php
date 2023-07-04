@@ -33,6 +33,20 @@ Route::group([], function(){
 
 });
 
+//transaction - Asset Depreciation
+Route::group([], function() {
+    Route::post('getAllDepreciationByCompany', 'FixedAssetDepreciationMasterAPIController@getAllDepreciationByCompany')->name('Get depreciation by company');
+    Route::post('exportAMDepreciation', 'FixedAssetDepreciationPeriodAPIController@exportAMDepreciation')->name('');
+
+    Route::group(['middleware' => 'max_memory_limit'], function () {
+        Route::group(['middleware' => 'max_execution_limit'], function () {
+            Route::post('getAssetDepPeriodsByID', 'FixedAssetDepreciationPeriodAPIController@getAssetDepPeriodsByID')->name('Get asset depreciation periods by id');
+            Route::resource('fixed_asset_depreciation_masters', 'FixedAssetDepreciationMasterAPIController');
+
+        });
+    });
+
+});
 
 
 //transaction - Asset Allocation
