@@ -59,6 +59,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             require __DIR__.'/../routes/accountsPayable/accountsPayableRoutes.php';
             require __DIR__.'/../routes/accountsReceivable/accountsReceivableRoutes.php';
             require __DIR__.'/../routes/salesAndMarketing/salesAndMarketingRoutes.php';
+            require __DIR__.'/../routes/treasuryManagement/treasuryManagementRoutes.php';
             require __DIR__.'/../routes/assetManagement/assetManagementRoutes.php';
 
             Route::post('getAllEmployees', 'EmployeeAPIController@getAllEmployees');
@@ -635,10 +636,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
 
             Route::resource('bank_reconciliations', 'BankReconciliationAPIController');
-            Route::get('bankReconciliationAudit', 'BankReconciliationAPIController@bankReconciliationAudit');
             Route::get('getCheckBeforeCreate', 'BankReconciliationAPIController@getCheckBeforeCreate');
-            Route::post('getBankReconciliationApprovalByUser', 'BankReconciliationAPIController@getBankReconciliationApprovalByUser');
-            Route::post('getBankReconciliationApprovedByUser', 'BankReconciliationAPIController@getBankReconciliationApprovedByUser');
             Route::post('bankRecReopen', 'BankReconciliationAPIController@bankRecReopen');
             Route::post('bankReconciliationReferBack', 'BankReconciliationAPIController@bankReconciliationReferBack');
 
@@ -723,8 +721,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('getCheckBeforeCreateBankTransfers', 'PaymentBankTransferAPIController@getCheckBeforeCreate');
             Route::post('getAllBankTransferByBankAccount', 'PaymentBankTransferAPIController@getAllBankTransferByBankAccount');
             Route::post('getAllBankTransferList', 'PaymentBankTransferAPIController@getAllBankTransferList');
-            Route::post('getBankTransferApprovalByUser', 'PaymentBankTransferAPIController@getBankTransferApprovalByUser');
-            Route::post('getBankTransferApprovedByUser', 'PaymentBankTransferAPIController@getBankTransferApprovedByUser');
             Route::get('exportPaymentBankTransferPreCheck', 'PaymentBankTransferAPIController@exportPaymentBankTransferPreCheck');
             Route::post('paymentBankTransferReopen', 'PaymentBankTransferAPIController@paymentBankTransferReopen');
             Route::post('paymentBankTransferReferBack', 'PaymentBankTransferAPIController@paymentBankTransferReferBack');
@@ -979,8 +975,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             
             
             Route::get('getBankAccountFormData', 'BankAccountAPIController@getBankAccountFormData');
-            Route::post('getBankAccountApprovalByUser', 'BankAccountAPIController@getBankAccountApprovalByUser');
-            Route::post('getBankAccountApprovedByUser', 'BankAccountAPIController@getBankAccountApprovedByUser');
             Route::get('bankAccountAudit', 'BankAccountAPIController@bankAccountAudit');
             Route::post('bankAccountReopen', 'BankAccountAPIController@bankAccountReopen');
             Route::post('bankAccountReferBack', 'BankAccountAPIController@bankAccountReferBack');
@@ -1407,7 +1401,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('sentCustomerLedger', 'AccountsReceivableReportAPIController@sentCustomerLedger');
 
 
-            Route::post('getAllCurrencyConversionApproval', 'CurrencyConversionMasterAPIController@getAllCurrencyConversionApproval');
             Route::post('approveCurrencyConversion', 'CurrencyConversionMasterAPIController@approveCurrencyConversion');
             Route::post('rejectCurrencyConversion', 'CurrencyConversionMasterAPIController@rejectCurrencyConversion');
 
@@ -1735,6 +1728,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     Route::get('printExpenseClaimMaster', 'ExpenseClaimMasterAPIController@printExpenseClaimMaster');
     Route::get('printCreditNote', 'CreditNoteAPIController@printCreditNote');
     Route::get('printDebitNote', 'DebitNoteAPIController@printDebitNote');
+    Route::get('printSupplierInvoice', 'BookInvSuppMasterAPIController@printSupplierInvoice');
     Route::get('printBankReconciliation', 'BankReconciliationAPIController@printBankReconciliation');
     Route::get('printChequeItems', 'BankLedgerAPIController@printChequeItems');
     Route::get('printSuppliers', 'SupplierMasterAPIController@printSuppliers');
