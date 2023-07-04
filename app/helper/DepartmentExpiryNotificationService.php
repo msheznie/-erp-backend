@@ -55,7 +55,7 @@ class DepartmentExpiryNotificationService
             ->get();
 
         if (count($expiredDepartments) == 0) {
-            $log = "Expiry Department does not exist for type: {$this->type} and days: {$this->days}";
+            $log = "Expiry department does not exist for type: {$this->type} and days: {$this->days}";
             $log .= "\t on file: " . __CLASS__ . " \tline no :" . __LINE__;
             $this->insertToLogTb($log);
             return false;
@@ -68,7 +68,7 @@ class DepartmentExpiryNotificationService
 
         $usersSetup = NotificationUser::get_notification_users_setup($this->comScenarioId);
         if (count($usersSetup) == 0) {
-            $userConfMessage = "User's not configured for Department End Date Expiry. \t on file: " . __CLASS__ ;
+            $userConfMessage = "User's not configured for department end date expiry. \t on file: " . __CLASS__ ;
             $userConfMessage .= " \tline no :" . __LINE__;
 
             $this->insertToLogTb($userConfMessage, 'error');
@@ -93,7 +93,7 @@ class DepartmentExpiryNotificationService
             }
         }
 
-        $expiredDepartmentMsg = " expired Department document mails send \t on file: " . __CLASS__ ;
+        $expiredDepartmentMsg = " expired department document mails send \t on file: " . __CLASS__ ;
         $expiredDepartmentMsg .= " \tline no :". __LINE__;
         $mailMessage = $this->sentMailCount . $expiredDepartmentMsg;
         $this->insertToLogTb($mailMessage);
@@ -134,7 +134,7 @@ class DepartmentExpiryNotificationService
             ->get();
 
         if(count($manager) == 0){
-            $managerError = "Manager details not found for Expiry HR documents. \t on file: ". __CLASS__ ;
+            $managerError = "Manager details not found for expiry department. \t on file: ". __CLASS__ ;
             $managerError .= " \tline no :".__LINE__;
             $this->insertToLogTb($managerError);
             return false;
