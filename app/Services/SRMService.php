@@ -2824,6 +2824,7 @@ class SRMService
             $tenderNegotiationArea = $this->getTenderNegotiationArea($tenderId, $bidMasterId);
             $data['tender_documents'] = $tenderNegotiationArea->tender_documents;
             $data['technical_evaluation'] = $tenderNegotiationArea->technical_evaluation;
+            $data['pricing_schedule'] = $tenderNegotiationArea->pricing_schedule;
         }
 
         return [
@@ -3336,7 +3337,7 @@ class SRMService
         $data['activeTab'] = $activeTab;
 
         if($negotiation){
-            $tenderNegotiationArea = $this->getTenderNegotiationArea($tenderId, $bidMasterId);
+            $tenderNegotiationArea = $this->getTenderNegotiationArea($tenderId);
             $data['pricing_schedule'] = $tenderNegotiationArea->pricing_schedule;
             $data['technical_evaluation'] = $tenderNegotiationArea->technical_evaluation;
             $data['tender_documents'] = $tenderNegotiationArea->tender_documents;
@@ -3854,7 +3855,6 @@ class SRMService
             ->orderBy('id', 'ASC')
             ->get();
 
-
         $bidSubmitted = collect($bidSubmitted)->map(function ($group) {
             $bidMasterId = $group['id'];
             $bidSubmissionData = self::BidSubmissionStatusData($group['id'], $group['tender_id']);
@@ -4142,8 +4142,19 @@ class SRMService
             }
             //$group['technical_bid_submission_status'] = $bidSubmissionData['technicalEvaluationCriteria'];
             $group['bid_submission_status'] = $bidSubmissionData['bidsubmission'];
+
+            $tenderNegotiationArea =  $this->getTenderNegotiationArea($tender);
+            if($tenderNegotiationArea != null){
+                $group['pricing_schedule'] = $tenderNegotiationArea->pricing_schedule;
+                $group['technical_evaluation'] = $tenderNegotiationArea->technical_evaluation;
+                $group['tender_documents'] = $tenderNegotiationArea->tender_documents;
+            }
+
             return $group;
         });
+
+
+
         if(!empty($bidSubmitted) && count($bidSubmitted) > 0){
             return [
                 'success' => true,
@@ -4742,7 +4753,7 @@ class SRMService
         }
     }
 
-    private function getTenderNegotiationArea($tenderId, $bidMasterId)
+    private function getTenderNegotiationArea($tenderId)
     {
         $tenderNegotiationResults = TenderNegotiation::select('id')->with('area')->where('srm_tender_master_id', $tenderId)->first();
 
