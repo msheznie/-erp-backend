@@ -49,12 +49,14 @@ Route::group([], function() {
 
 });
 
+
 //transaction - Asset Allocation
 Route::group([], function(){
     Route::post('getAllAllocationByCompany', 'FixedAssetMasterAPIController@getAllAllocationByCompany')->name("Get asset allocation");
     Route::get('getFAGrvDetailsByID', 'FixedAssetMasterAPIController@getFAGrvDetailsByID')->name("Get FAGrv Details");
     Route::resource('fixed_asset_masters', 'FixedAssetMasterAPIController');
 });
+
 
 
 //transaction - Asset Costing
@@ -76,3 +78,7 @@ Route::group([], function(){
 
 
 });
+<<<<<<< HEAD
+=======
+
+>>>>>>> b3d5aaffe5903bb13359bccb657327b535419e30
