@@ -50,7 +50,7 @@ use App\Services\MaterialRequestService;
 use App\Repositories\UserRepository;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-
+use App\Models\ExpenseAssetAllocation;
 /**
  * Class ItemIssueDetailsController
  * @package App\Http\Controllers\API
@@ -977,6 +977,21 @@ class ItemIssueDetailsAPIController extends AppBaseController
                 return $this->sendError("Issuing qty cannot be more than requested qty", 500, $qtyError);
             }
         }
+ 
+
+        if ($itemIssue->issueType == 1) 
+            {
+                $allocatedSum = ExpenseAssetAllocation::where('documentDetailID', $input['itemIssueDetailID'])
+                ->where('documentSystemID', $itemIssue->documentSystemID)
+                ->where('documentSystemCode', $input['itemIssueAutoID'])
+                ->sum('allocation_qty');
+
+                if ($allocatedSum > $input['qtyIssued']) {
+                    return $this->sendError("Allocated quantity cannot be greater than the detail quantity.");
+                }
+               
+
+            }
 
         $itemIssueDetails = $this->itemIssueDetailsRepository->update($input, $id);
 
