@@ -1309,22 +1309,19 @@ class SRMService
                 $q->where('purchased_by', '=', $supplierRegId);
             })->whereIn('id', $tenderMasterId)->where('published_yn', 1);
         } else if ($request->input('extra.tender_status') == 2) {
+
+            $negotiatedTenders = TenderNegotiation::select('srm_tender_master_id')
+                ->where('status', 2)->whereHas('SupplierTenderNegotiation', function ($q) use ($supplierRegId) {
+                    $q->where('suppliermaster_id', $supplierRegId);
+                })->get()->pluck('srm_tender_master_id')->toArray();
+
             $query = TenderMaster::with(['currency', 'tender_negotiation.SupplierTenderNegotiation', 'srm_bid_submission_master' => function ($query) use ($supplierRegId) {
                 $query->where('supplier_registration_id', '=', $supplierRegId);
             }, 'srmTenderMasterSupplier' => function ($q) use ($supplierRegId) {
                 $q->where('purchased_by', '=', $supplierRegId);
             }])->whereHas('srmTenderMasterSupplier', function ($q) use ($supplierRegId) {
                 $q->where('purchased_by', '=', $supplierRegId);
-            })->where(function ($q) use ($supplierRegId) {
-                $q->whereDoesntHave('tender_negotiation.SupplierTenderNegotiation', function ($q) use ($supplierRegId) {
-                    $q->where('suppliermaster_id', $supplierRegId)->where('status', 2);
-                })->orWhere(function ($q) use ($supplierRegId) {
-                    $q->whereHas('tender_negotiation.SupplierTenderNegotiation', function ($q) use ($supplierRegId) {
-                        $q->where('suppliermaster_id', '!=', $supplierRegId);
-                    })->doesntHave('tender_negotiation');
-                });
-            })->where('published_yn', 1);
-
+            })->whereNotIn('id', $negotiatedTenders)->where('published_yn', 1);
         }
 
             if($is_rfx)
@@ -3350,7 +3347,7 @@ class SRMService
             $data['tender_documents'] = $tenderNegotiationArea->tender_documents;
             $data['bidSubmissionParentCode'] = $bidSubmissionParentCode->bid_submission_code_old;
         }
-         
+
         return [
             'success' => true,
             'message' => 'Main Envelop data retrieved successfully',
