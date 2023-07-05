@@ -89,7 +89,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
                 Route::group(['middleware' => 'max_execution_limit'], function () {
                     Route::post('generateAMReport', 'AssetManagementReportAPIController@generateReport');
                     Route::post('exportAMReport', 'AssetManagementReportAPIController@exportReport');
-                    Route::post('exportAssetMaster', 'FixedAssetMasterAPIController@exportAssetMaster');
                     Route::resource('fixed_asset_depreciation_masters', 'FixedAssetDepreciationMasterAPIController');
                     Route::post('getAssetDepPeriodsByID', 'FixedAssetDepreciationPeriodAPIController@getAssetDepPeriodsByID');
 
@@ -670,9 +669,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('getAllBankReconciliationByBankAccount', 'BankReconciliationAPIController@getAllBankReconciliationByBankAccount');
             Route::post('getAllBankReconciliationList', 'BankReconciliationAPIController@getAllBankReconciliationList');
             Route::post('amendBankReconciliationReview', 'BankReconciliationAPIController@amendBankReconciliationReview');
-            Route::post('getAllCostingByCompany', 'FixedAssetMasterAPIController@getAllCostingByCompany');
             Route::post('referBackCosting', 'FixedAssetMasterAPIController@referBackCosting');
-            Route::post('createFixedAssetCosting', 'FixedAssetMasterAPIController@create');
 
             // Receipt Voucher
             Route::resource('customer_receive_payments', 'CustomerReceivePaymentAPIController',['only' => ['store', 'show', 'update']]);
@@ -693,7 +690,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('getCapitalizationFormData', 'AssetCapitalizationAPIController@getCapitalizationFormData');
             Route::get('getAssetByCategory', 'AssetCapitalizationAPIController@getAssetByCategory');
             Route::get('getAssetNBV', 'AssetCapitalizationAPIController@getAssetNBV');
-            Route::get('getCapitalizationFixedAsset', 'AssetCapitalizationAPIController@getCapitalizationFixedAsset');
             Route::post('capitalizationReopen', 'AssetCapitalizationAPIController@capitalizationReopen');
             Route::post('referBackCapitalization', 'AssetCapitalizationAPIController@referBackCapitalization');
             Route::get('getAssetCapitalizationMaster', 'AssetCapitalizationAPIController@getAssetCapitalizationMaster');
@@ -763,10 +759,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('exportTMReport', 'BankReconciliationAPIController@exportReport');
             Route::get('getAllcompaniesByDepartment', 'DocumentApprovedAPIController@getAllcompaniesByDepartment');
 
-            Route::get('getFinanceGLCode', 'FixedAssetMasterAPIController@getFinanceGLCode');
             Route::post('assetCostingReopen', 'FixedAssetMasterAPIController@assetCostingReopen');
 
-            Route::get('getAssetCostingMaster', 'FixedAssetMasterAPIController@getAssetCostingMaster');
             Route::post('amendAssetCostingReview', 'FixedAssetMasterAPIController@amendAssetCostingReview');
 
             Route::post('updateCustomerReciept', 'CustomerReceivePaymentDetailAPIController@updateCustomerReciept');
@@ -884,8 +878,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('salary_process_masters', 'SalaryProcessMasterAPIController');
             Route::resource('salary_process_employment_types', 'SalaryProcessEmploymentTypesAPIController');
             Route::get('getAssetCostingViewByFaID/{id}', 'FixedAssetMasterAPIController@getAssetCostingViewByFaID');
-            Route::post('assetCostingUpload', 'FixedAssetMasterAPIController@assetCostingUpload');
-            Route::get('downloadAssetTemplate', 'FixedAssetMasterAPIController@downloadAssetTemplate');
             Route::get('downloadPrItemUploadTemplate', 'PurchaseRequestAPIController@downloadPrItemUploadTemplate');
             
             Route::get('downloadQuotationItemUploadTemplate','QuotationMasterAPIController@downloadQuotationItemUploadTemplate');
@@ -1821,7 +1813,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     Route::get('getSearchSupplierByCompanySRM', 'SupplierMasterAPIController@getSearchSupplierByCompanySRM');
     Route::get('updateExemptVATPos', 'ProcumentOrderAPIController@updateExemptVATPos');
     Route::get('downloadFileTender', 'DocumentAttachmentsAPIController@downloadFileTender');
-    Route::post('genearetBarcode', 'BarcodeConfigurationAPIController@genearetBarcode');
 
 });
 

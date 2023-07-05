@@ -33,11 +33,31 @@ Route::group([], function(){
 
 });
 
-
-
 //transaction - Asset Allocation
 Route::group([], function(){
     Route::post('getAllAllocationByCompany', 'FixedAssetMasterAPIController@getAllAllocationByCompany')->name("Get asset allocation");
     Route::get('getFAGrvDetailsByID', 'FixedAssetMasterAPIController@getFAGrvDetailsByID')->name("Get FAGrv Details");
     Route::resource('fixed_asset_masters', 'FixedAssetMasterAPIController');
 });
+
+
+//transaction - Asset Costing
+Route::group([], function(){
+    Route::post('getAllCostingByCompany', 'FixedAssetMasterAPIController@getAllCostingByCompany')->name("Get Asset Costing By Name");
+    Route::group(['middleware' => 'max_memory_limit'], function () {
+        Route::group(['middleware' => 'max_execution_limit'], function () {
+            Route::post('exportAssetMaster', 'FixedAssetMasterAPIController@exportAssetMaster')->name("Export Asset Master");
+
+        });
+    });
+    Route::get('getFinanceGLCode', 'FixedAssetMasterAPIController@getFinanceGLCode')->name("Get Financial GL Code");
+    Route::get('getCapitalizationFixedAsset', 'AssetCapitalizationAPIController@getCapitalizationFixedAsset')->name("Get Capitilization Fixed Asset");
+    Route::post('createFixedAssetCosting', 'FixedAssetMasterAPIController@create')->name("Create Fixed Asset Costing");
+    Route::get('downloadAssetTemplate', 'FixedAssetMasterAPIController@downloadAssetTemplate')->name("Download Asset Template");
+    Route::post('assetCostingUpload', 'FixedAssetMasterAPIController@assetCostingUpload')->name("Asset Costing Upload");
+    Route::post('genearetBarcode', 'BarcodeConfigurationAPIController@genearetBarcode')->name("Generate Barcode");
+    Route::get('getAssetCostingMaster', 'FixedAssetMasterAPIController@getAssetCostingMaster')->name("Get Asset Costing Master");
+
+
+});
+
