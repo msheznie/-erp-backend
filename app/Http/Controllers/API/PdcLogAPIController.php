@@ -499,7 +499,7 @@ class PdcLogAPIController extends AppBaseController
 
             $empInfo = Helper::getEmployeeInfo();
 
-            $masterData = ['documentSystemID' => $input['documentSystemID'], 'autoID' => $input['documentmasterAutoID'], 'companySystemID' => $input['companySystemID'], 'employeeSystemID' => $empInfo->employeeSystemID];
+            $masterData = ['documentSystemID' => $input['documentSystemID'], 'autoID' => $input['documentmasterAutoID'], 'companySystemID' => $input['companySystemID'], 'employeeSystemID' => $empInfo->employeeSystemID, 'pdcID' => $input['id']];
 
             if ($input['newStatus'] == 1 || $input['newStatus'] == 2) {
                 $jobGL = PdcDoubleEntry::dispatch($masterData, $input);
