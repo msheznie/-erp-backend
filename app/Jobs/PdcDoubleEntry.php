@@ -8,6 +8,7 @@ use App\Models\AdvanceReceiptDetails;
 use App\Models\AssetCapitalization;
 use App\Models\AssetDisposalDetail;
 use App\Models\AssetDisposalMaster;
+use App\Models\PdcLog;
 use App\Models\BookInvSuppDet;
 use App\Models\BookInvSuppMaster;
 use App\Models\CreditNote;
@@ -112,6 +113,7 @@ class PdcDoubleEntry implements ShouldQueue
                 $taxLedgerData = [];
                 $finalData = [];
                 $empID = Employee::find($masterModel['employeeSystemID']);
+                $pdcLogData = PdcLog::find($masterModel['pdcID']);
                 switch ($masterModel["documentSystemID"]) {
                     case 4: // PV - Payment Voucher
                         $masterData = PaySupplierInvoiceMaster::with(['bank', 'financeperiod_by', 'transactioncurrency', 'localcurrency', 'rptcurrency'])->find($masterModel["autoID"]);
@@ -165,7 +167,8 @@ class PdcDoubleEntry implements ShouldQueue
                             $data['holdingShareholder'] = null;
                             $data['holdingPercentage'] = 0;
                             $data['nonHoldingPercentage'] = 0;
-                            $data['chequeNumber'] = $masterData->BPVchequeNo;
+                            $data['chequeNumber'] = $pdcLogData ? $pdcLogData->chequeNo : null;
+                            $data['pdcID'] = $pdcLogData ? $pdcLogData->id : null;
                             $data['documentType'] = $masterData->invoiceType;
                             $data['createdDateTime'] = \Helper::currentDateTime();
                             $data['createdUserID'] = $empID->empID;
@@ -389,6 +392,7 @@ class PdcDoubleEntry implements ShouldQueue
                             $masterModel['pdcDate'] = $pdcData['date'];
                             $masterModel['pdcChequeDate'] = $pdcData['chequeDate'];
                             $masterModel['pdcChequeNo'] = $pdcData['chequeNo'];
+                            $masterModel['pdcID'] = $pdcData['id'];
                             Log::info($pdcData);
                             Log::info($masterModel);
                             if ($pdcData['newStatus'] == 1) {
@@ -470,7 +474,8 @@ class PdcDoubleEntry implements ShouldQueue
                             $data['holdingShareholder'] = null;
                             $data['holdingPercentage'] = 0;
                             $data['nonHoldingPercentage'] = 0;
-                            $data['chequeNumber'] = $masterData->custChequeNo;
+                            $data['chequeNumber'] = $pdcLogData ? $pdcLogData->chequeNo : null;
+                            $data['pdcID'] = $pdcLogData ? $pdcLogData->id : null;
                             $data['documentType'] = $masterData->documentType;
                             $data['createdDateTime'] = \Helper::currentDateTime();
                             $data['createdUserID'] = $empID->empID;
@@ -621,7 +626,8 @@ class PdcDoubleEntry implements ShouldQueue
                                     $data['documentChequeNo'] = $pdcData['chequeNo'];
                                     $data['documentChequeDate'] = Carbon::parse($pdcData['chequeDate']);
                                     $data['payeeID'] = $custReceivePayment->customerID;
-
+                                    $data['pdcID'] = $pdcLogData ? $pdcLogData->id : null;
+                                    
                                     $payee = CustomerMaster::find($custReceivePayment->customerID);
                                     if ($payee) {
                                         $data['payeeCode'] = $payee->CutomerCode;
