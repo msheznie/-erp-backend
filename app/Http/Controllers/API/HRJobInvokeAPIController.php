@@ -181,9 +181,9 @@ class HRJobInvokeAPIController extends AppBaseController
         $id = $input['id'];
         $tripMaster = $input['tripMaster'];
         $tripRequestBookings = $input['tripRequestBookings'];
-        $db_name = CommonJobService::get_tenant_db($tenantId);
+        $dbName = CommonJobService::get_tenant_db($tenantId);
 
-        TravelRequestNotificationJob::dispatch($db_name, $companyId, $id,$tripMaster,$tripRequestBookings); 
+        TravelRequestNotificationJob::dispatch($dbName, $companyId, $id,$tripMaster,$tripRequestBookings); 
         return $this->sendResponse([], 'Travel request notification scenario added to queue');
     }
  
@@ -203,9 +203,21 @@ class HRJobInvokeAPIController extends AppBaseController
         $visibility = $input['visibility'];
         $employees = $input['employees'];
         $portalUrl = $input['portalUrl'];
-        $db_name = CommonJobService::get_tenant_db($tenantId);
+        $dbName = CommonJobService::get_tenant_db($tenantId);
         
-        HrDocNotificationJob::dispatch($db_name, $companyId, $id, $visibility, $employees, $portalUrl); 
+        HrDocNotificationJob::dispatch($dbName, $companyId, $id, $visibility, $employees, $portalUrl); 
         return $this->sendResponse([], 'HR document notification scenario added to queue');
+    }
+
+    function sendReturnToWorkNotifications(Request $request){
+        $input = $request->all();  
+        $tenantId = $input['tenantId'];
+        $dbName = CommonJobService::get_tenant_db($tenantId);
+        $companyId = $input['companyId'];
+        $id = $input['id'];   
+        $masterDetails = $input['masterDetails'];
+
+        ReturnToWorkNotificationJob::dispatch($dbName, $companyId, $id, $masterDetails); 
+        return $this->sendResponse([], 'Return to work notification scenario added to queue');
     }
 }

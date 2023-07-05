@@ -47,6 +47,8 @@ class CommonJobService
                 return storage_path() . '/logs/hr_document_service.log';
             case 'travel-request':
                     return storage_path() . '/logs/travel_request_service.log';
+            case 'return-to-work':
+                return storage_path() . '/logs/return_to_work_service.log';
 
         }
     }
