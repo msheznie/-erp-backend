@@ -3747,6 +3747,11 @@ class BudgetConsumptionService
 
                 	$currencyConversionRptAmount = \Helper::currencyConversion($value->companySystemID, $value->currencyID, $value->currencyID, $value->amount);
 
+                    if($value->amount < 0){
+
+                        $currencyConversionRptAmount['localAmount'] = $currencyConversionRptAmount['localAmount'] * -1;
+                        $currencyConversionRptAmount['reportingAmount'] = $currencyConversionRptAmount['reportingAmount'] * -1;
+                    }
 
                     $budgetConsumeData[] = array(
 	                    "companySystemID" => $value->companySystemID,
