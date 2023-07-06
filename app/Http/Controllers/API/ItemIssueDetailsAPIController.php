@@ -51,6 +51,8 @@ use App\Repositories\UserRepository;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Models\ExpenseAssetAllocation;
+use App\Models\ExpenseEmployeeAllocation;
+
 /**
  * Class ItemIssueDetailsController
  * @package App\Http\Controllers\API
@@ -989,8 +991,17 @@ class ItemIssueDetailsAPIController extends AppBaseController
                 if ($allocatedSum > $input['qtyIssued']) {
                     return $this->sendError("Allocated quantity cannot be greater than the detail quantity.");
                 }
-               
 
+                $allocatedQtySum = ExpenseEmployeeAllocation::where('documentDetailID', $input['itemIssueDetailID'])
+                ->where('documentSystemID', $itemIssue->documentSystemID)
+                ->where('documentSystemCode', $input['itemIssueAutoID'])
+                ->sum('assignedQty');
+
+                
+               
+                if ($allocatedQtySum > $input['qtyIssued']) {
+                    return $this->sendError("Allocated quantity cannot be greater than the detail quantity.");
+                }
             }
 
         $itemIssueDetails = $this->itemIssueDetailsRepository->update($input, $id);
