@@ -100,5 +100,17 @@ class CurrencyMaster extends Model
     }
 
 
+    public static function getCurrencyCode($currencyID)
+    {
+        $currency = CurrencyMaster::find($currencyID);
 
+        return $currency ? $currency->CurrencyCode : "";
+    }
+
+     public static function getDecimalPlaces($currencyID)
+    {
+        $currency = CurrencyMaster::find($currencyID);
+
+        return $currency ? $currency->DecimalPlaces : 2;
+    }
 }
