@@ -263,7 +263,7 @@ class DepartmentExpiryNotificationService
             'company_id' => $this->companyId,
             'module' => 'HRMS',
             'description' => 'Department End date Expiry Notification',
-            'scenario_id' => $this->comScenarioId,
+            'scenario_id' => 39,
             'processed_for' => $this->currentDate,
             'logged_at' => $this->currentDate,
             'log_type' => $logType,
