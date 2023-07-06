@@ -25,7 +25,7 @@ class DepreciationSubJobs
     public $outputData;
 
 
-    public function __construct($dispatch_db, $outputData, $depMasterAutoID, $depMaster, $depDate)
+    public function __construct($dispatch_db, $outputData, $depMasterAutoID, $depMaster, $depDate, $faCounts, $chunkDataSizeCounts)
     {
         if(env('IS_MULTI_TENANCY',false)){
             self::onConnection('database_main');
@@ -37,18 +37,22 @@ class DepreciationSubJobs
         $this->depMasterAutoID = $depMasterAutoID;
         $this->depMaster = $depMaster;
         $this->depDate = $depDate;
+        $this->faCounts = $faCounts;
+        $this->chunkDataSizeCounts = $chunkDataSizeCounts;
     }
 
 
     public function handle(fixedAssetDepreciationMasterRepository $faDepMaster)
     {
-        ini_set('max_execution_time', 6000);
+        ini_set('max_execution_time', 21600);
         ini_set('memory_limit', -1);
         $db = $this->dispatch_db;
         $output = $this->outputData;
         $depMasterAutoID = $this->depMasterAutoID;
         $depMaster = $this->depMaster;
         $depDate = $this->depDate;
+        $faCounts = $this->faCounts;
+        $chunkDataSizeCounts = $this->chunkDataSizeCounts;
 
 
         CommonJobService::db_switch($db);
@@ -173,13 +177,16 @@ class DepreciationSubJobs
                     FixedAssetDepreciationPeriod::insert($t);
                 }
             }
+            Log::info($chunkDataSizeCounts);
+            Log::info($faCounts);
 
-
+        if($faCounts == $chunkDataSizeCounts) {
             $depDetail = FixedAssetDepreciationPeriod::selectRaw('SUM(depAmountLocal) as depAmountLocal, SUM(depAmountRpt) as depAmountRpt')->OfDepreciation($depMasterAutoID)->first();
             Log::info('Depreciation processing');
             if ($depDetail) {
                 $fixedAssetDepreciationMasters = $faDepMaster->update(['depAmountLocal' => $depDetail->depAmountLocal, 'depAmountRpt' => $depDetail->depAmountRpt, 'isDepProcessingYN' => 1], $depMasterAutoID);
             }
+        }
             DB::commit();
         }
         catch (\Exception $e){
