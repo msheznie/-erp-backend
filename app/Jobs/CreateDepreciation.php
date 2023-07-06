@@ -96,10 +96,16 @@ class CreateDepreciation implements ShouldQueue
 
                     $depAmountRptTotal = 0;
                     $depAmountLocalTotal = 0;
+
                     if (count($faMaster) > 0) {
                         $chunkSize = 100;
-                        $faMaster->chunk($chunkSize)->each(function ($chunk) use ($db, $depMasterAutoID, $depMaster, $depDate) {
-                            DepreciationSubJobs::dispatch($db, $chunk->all(), $depMasterAutoID, $depMaster, $depDate);
+                        $totalDataSize = count($faMaster);
+                        $chunkDataSizeCounts = ceil($totalDataSize / $chunkSize);
+                        $faCounts = 1;
+
+                        $faMaster->chunk($chunkSize)->each(function ($chunk) use ($db, $depMasterAutoID, $depMaster, $depDate, &$faCounts, $chunkDataSizeCounts) {
+                            DepreciationSubJobs::dispatch($db, $chunk->all(), $depMasterAutoID, $depMaster, $depDate,$faCounts, $chunkDataSizeCounts);
+                            $faCounts++;
                         });
                     }
 
