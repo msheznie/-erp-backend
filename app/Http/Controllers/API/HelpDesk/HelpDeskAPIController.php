@@ -22,9 +22,8 @@ class HelpDeskAPIController extends AppBaseController
                 if(!empty($thirdParty)){
                     UserWebHook::dispatch($db, $empID, $thirdParty->api_external_key, $thirdParty->api_external_url);
                 } else {
-                    $this->sendError("Please setup third party integration",500);
+                    return $this->sendResponse([], 'There is no third party integration');
                 }
-
 
                 return $this->sendResponse($thirdParty, 'Help Desk Info');
 
