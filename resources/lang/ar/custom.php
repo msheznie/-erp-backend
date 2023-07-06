@@ -536,4 +536,7 @@ return [
 
     'order_code'=> 'Order Code',
     
+    'material_request_voucher'=> 'قسيمة طلب مواد',
+    'qty_requested'=> 'الكمية المطلوبة',
+    'requested_by'=> 'طلب بواسطة'
 ];
