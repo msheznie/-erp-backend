@@ -177,8 +177,6 @@ class DepreciationSubJobs
                     FixedAssetDepreciationPeriod::insert($t);
                 }
             }
-            Log::info($chunkDataSizeCounts);
-            Log::info($faCounts);
 
         if($faCounts == $chunkDataSizeCounts) {
             $depDetail = FixedAssetDepreciationPeriod::selectRaw('SUM(depAmountLocal) as depAmountLocal, SUM(depAmountRpt) as depAmountRpt')->OfDepreciation($depMasterAutoID)->first();
