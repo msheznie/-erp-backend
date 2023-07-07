@@ -3190,10 +3190,6 @@ class SRMService
             ->where('created_by',$supplierData->id)
             ->count();
 
-
-
-
-
         // $pring_schedul_master_ids = PricingScheduleMaster::where('tender_id',$tenderId)->where('status',1)->pluck('id')->toArray();
         $pring_schedul_master_ids =  PricingScheduleMaster::with(['tender_main_works' => function ($q1) use ($tenderId, $bidMasterId) {
             $q1->where('tender_id', $tenderId);
@@ -3338,6 +3334,8 @@ class SRMService
         }
 
         $data['activeTab'] = $activeTab;
+        $data['documentAttachedCountIdsCommercial'] = count($documentAttachedCountIdsCommercial);
+        $data['documentAttachedCountIdsTechnical'] = count($documentAttachedCountIdsTechnical);
 
         if($negotiation){
             $tenderNegotiationArea = $this->getTenderNegotiationArea($tenderId);
@@ -4145,8 +4143,11 @@ class SRMService
             }else {
                 $group['technical_bid_submission_status'] =1;
             }
+
             //$group['technical_bid_submission_status'] = $bidSubmissionData['technicalEvaluationCriteria'];
             $group['bid_submission_status'] = $bidSubmissionData['bidsubmission'];
+            $group['documentAttachedCountIdsCommercial'] = count($documentAttachedCountIdsCommercial);
+            $group['documentAttachedCountIdsTechnical'] = count($documentAttachedCountIdsTechnical);
 
             $tenderNegotiationArea =  $this->getTenderNegotiationArea($tender);
             if($tenderNegotiationArea != null){
