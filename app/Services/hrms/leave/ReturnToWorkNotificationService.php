@@ -42,7 +42,7 @@ class ReturnToWorkNotificationService
         }       
 
         $this->sendEmail();
-        $this->insertToLogTb([ 'Document Code'=> $this->documentCode ,'Message'=> 'execution successfully completed']);
+        $this->insertToLogTb(['Document Code' => $this->documentCode, 'Message' => 'execution successfully completed']);
     }
   
     public function validateNotificationScenarioActive()
@@ -50,8 +50,8 @@ class ReturnToWorkNotificationService
         $notificationCompanyScenario = $this->getScenarioEmployees();
         $this->isScenarioActive = (!empty($notificationCompanyScenario)) ? true : false;
         if (!$this->isScenarioActive) {
-            $this->insertToLogTb(['Document Code'=> $this->documentCode ,'Message'=> 'Notification scenario Does not exist or 
-            does not active'],'error');  
+            $this->insertToLogTb(['Document Code' => $this->documentCode, 'Message' => 'Notification scenario Does not exist or 
+            does not active'], 'error');  
         }
     }
 
@@ -60,7 +60,7 @@ class ReturnToWorkNotificationService
         $getNotifyEmployees = $this->getScenarioEmployees(true);
         $this->notifyList = (!empty($getNotifyEmployees) ? $getNotifyEmployees['user'] : []);
         if (empty($this->notifyList)) { 
-            $this->insertToLogTb(['Document Code'=> $this->documentCode ,'Message'=> 'Employees Does not exists'],'error');  
+            $this->insertToLogTb(['Document Code' => $this->documentCode, 'Message' => 'Employees Does not exists'], 'error');
         }
     }
 
@@ -73,12 +73,12 @@ class ReturnToWorkNotificationService
 
         if ($getEmployees) {
             $getScenarioEmployees = $getScenarioEmployees->with(['user' => function ($q) {
-                $q->select('id', 'empID', 'companyScenarionID', 'isActive' ,'applicableCategoryID')
+                $q->select('id', 'empID', 'companyScenarionID', 'isActive', 'applicableCategoryID')
                     ->where('isActive', '=', 1)
                     ->with(['employee' => function ($q3) {
                         $q3->select('employeeSystemID', 'empFullName', 'empEmail', 'empID');
                     }]);
-            }])
+                }])
                 ->whereHas('user', function ($query) {
                     $query->where('isActive', '=', 1);
                 });
@@ -89,7 +89,7 @@ class ReturnToWorkNotificationService
 
     public function sendEmail()
     { 
-        $this->insertToLogTb([ 'Document Code'=> $this->documentCode ,'Message'=> 'Email Function Triggered']);
+        $this->insertToLogTb(['Document Code' => $this->documentCode, 'Message' => 'Email Function Triggered']);
         $msg = '';
         $logType = 'info';
 
@@ -97,22 +97,20 @@ class ReturnToWorkNotificationService
 
             $mailTo = '';
             $name = '';
-            if($val['applicableCategoryID'] == 7 ){ //Reporting manager
+            if ($val['applicableCategoryID'] == 7) { //Reporting manager
                 $manageInfo = $this->getReportingManagerInfo();
-                $this->insertToLogTb([ 'Message'=> $manageInfo]);
+                $this->insertToLogTb(['Message' => $manageInfo]);
 
-                if(empty($manageInfo)){ 
-                    $msg= 'Manager details not found for return to work notification';
-                    $this->insertToLogTb(['applicableCategoryID'=> $val['applicableCategoryID'] ,'Message'=> $msg],'error'); 
-                    
+                if (empty($manageInfo)) {
+                    $msg = 'Manager details not found for return to work notification';
+                    $this->insertToLogTb(['applicableCategoryID' => $val['applicableCategoryID'], 'Message' => $msg], 'error');
                 }
                 $mailTo = $manageInfo['EEmail'];
                 $name = $manageInfo['Ename2'];
-                $this->insertToLogTb(['applicableCategoryID'=> $val['applicableCategoryID'] ,'Message'=>$mailTo]); 
-
-            }else{ // Employee
-                $mailTo = $val['employee']['empEmail']; 
-                $this->insertToLogTb(['applicableCategoryID'=> $val['applicableCategoryID'] ,'Message'=>$mailTo]); 
+                $this->insertToLogTb(['applicableCategoryID' => $val['applicableCategoryID'], 'Message' => $mailTo]);
+            } else { // Employee
+                $mailTo = $val['employee']['empEmail'];
+                $this->insertToLogTb(['applicableCategoryID' => $val['applicableCategoryID'], 'Message' => $mailTo]);
                 $name = $val['employee']['empFullName'];
             }
 
@@ -132,18 +130,16 @@ class ReturnToWorkNotificationService
             if (!$sendEmail["success"]) {
                 $msg = "Travel request notification not sent for {$name} "; 
                 $logType = 'error';
-                $this->insertToLogTb(['Document Code'=> $this->documentCode ,'Message'=> $msg],$logType); 
-
-            }else { 
+                $this->insertToLogTb(['Document Code' => $this->documentCode, 'Message' => $msg], $logType); 
+            } else {
                 $msg = "Travel request notification sent for {$name} ";
-                $this->insertToLogTb(['Document Code'=> $this->documentCode ,'Message'=> $msg],$logType); 
-
+                $this->insertToLogTb(['Document Code' => $this->documentCode, 'Message' => $msg], $logType); 
             }
-            
         }
     }
 
-    public function getReportingManagerInfo(){               
+    public function getReportingManagerInfo()
+    {
         $manager = HrmsEmployeeManager::selectRaw('empID,managerID')
             ->where('active', 1)
             ->where('empID', $this->masterDet['empID'])
@@ -153,11 +149,11 @@ class ReturnToWorkNotificationService
         return $manager['info'];        
     }
 
-    public function email_body(){
+    public function email_body()
+    {
 
         $str = "<br/>";
         $str = "<br/>The following employee has returned to work:";
-               
         $str .= ".<br/><b> Employee Name </b> : " . $this->masterDet['Ename2'];
         $str .= ".<br/><b> Leave Type </b> : " . $this->masterDet['leaveTypeDesc'];
         $str .= ".<br/><b> Leave From </b> : " . $this->masterDet['startDate'];
