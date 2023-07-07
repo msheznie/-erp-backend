@@ -28,9 +28,9 @@ class HrDocNotificationJob implements ShouldQueue
     public $employees; 
     public $visibility;
     public $portalUrl;
-    public $db_name;
+    public $dbName;
 
-    public function __construct($db_name, $companyId, $id, $visibility, $employees, $portalUrl)
+    public function __construct($dbName, $companyId, $id, $visibility, $employees, $portalUrl)
     {
         if(env('IS_MULTI_TENANCY',false)){
             self::onConnection('database_main');
@@ -38,7 +38,7 @@ class HrDocNotificationJob implements ShouldQueue
             self::onConnection('database');
         }
         
-        $this->db_name = $db_name;
+        $this->dbName = $dbName;
         $this->companyId = $companyId;
         $this->id = $id; 
         $this->visibility = $visibility;
@@ -56,13 +56,13 @@ class HrDocNotificationJob implements ShouldQueue
         
         Log::useFiles( CommonJobService::get_specific_log_file('hr-document') );
         
-        if (empty($this->db_name)) {
+        if (empty($this->dbName)) {
             Log::error("db details not found. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
            
         } else {            
             Log::info("Job triggered");
 
-            CommonJobService::db_switch($this->db_name);
+            CommonJobService::db_switch($this->dbName);
             $obj = new HrDocNotificationService($this->companyId, $this->id ,$this->visibility,$this->employees ,$this->portalUrl);
             $obj->execute();
         }

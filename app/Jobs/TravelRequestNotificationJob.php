@@ -23,13 +23,13 @@ class TravelRequestNotificationJob implements ShouldQueue
      * @return void
      */
 
-    public $db_name;
+    public $dbName;
     public $companyId; 
     public $id; 
     public $tripMaster; 
     public $tripRequestBookings; 
 
-    public function __construct($db_name, $companyId, $id,$tripMaster,$tripRequestBookings)
+    public function __construct($dbName, $companyId, $id,$tripMaster,$tripRequestBookings)
     {
         if(env('IS_MULTI_TENANCY',false)){
             self::onConnection('database_main');
@@ -37,7 +37,7 @@ class TravelRequestNotificationJob implements ShouldQueue
             self::onConnection('database');
         }
         
-        $this->db_name = $db_name;
+        $this->dbName = $dbName;
         $this->companyId = $companyId;
         $this->id = $id; 
         $this->tripMaster = $tripMaster; 
@@ -52,11 +52,11 @@ class TravelRequestNotificationJob implements ShouldQueue
     public function handle()
     {
         Log::useFiles( CommonJobService::get_specific_log_file('travel-request') );
-        if (empty($this->db_name)) {
+        if (empty($this->dbName)) {
             Log::error("db details not found. \t on file: " . __CLASS__ ." \tline no :".__LINE__);            
         } else {
             Log::info("Job triggered");
-            CommonJobService::db_switch($this->db_name);
+            CommonJobService::db_switch($this->dbName);
             $obj = new TravelRequestNotificationService($this->companyId, $this->id,$this->tripMaster,$this->tripRequestBookings);
             $obj->execute();
         }
