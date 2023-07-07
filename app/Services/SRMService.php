@@ -1388,7 +1388,9 @@ class SRMService
         }
 
        if ($request->input('extra.tender_status') == 2) {
-            $query = TenderMaster::with(['currency', 'tender_negotiation.SupplierTenderNegotiation', 'srm_bid_submission_master' => function ($query) use ($supplierRegId) {
+            $query = TenderMaster::with(['currency', 'tender_negotiation.SupplierTenderNegotiation' => function ($q) use ($supplierRegId) {
+               $q->where('suppliermaster_id', $supplierRegId);
+           }, 'srm_bid_submission_master' => function ($query) use ($supplierRegId) {
                 $query->with('SupplierTenderNegotiation')->where('supplier_registration_id', '=', $supplierRegId);
             }, 'srmTenderMasterSupplier' => function ($q) use ($supplierRegId) {
                 $q->where('purchased_by', '=', $supplierRegId);
@@ -3341,7 +3343,10 @@ class SRMService
 
         if($negotiation){
             $tenderNegotiationArea = $this->getTenderNegotiationArea($tenderId);
-            $bidSubmissionParentCode = TenderBidNegotiation::select('bid_submission_code_old')->where('bid_submission_master_id_new', $bidMasterId)->first();
+            $bidSubmissionParentCode = TenderBidNegotiation::select('bid_submission_code_old')
+                ->where('bid_submission_master_id_new', $bidMasterId)
+                ->where('supplier_id', $supplierData->id)
+                ->first();
             $data['pricing_schedule'] = $tenderNegotiationArea->pricing_schedule;
             $data['technical_evaluation'] = $tenderNegotiationArea->technical_evaluation;
             $data['tender_documents'] = $tenderNegotiationArea->tender_documents;
