@@ -154,7 +154,7 @@ class ReturnToWorkNotificationService
 
         $str = "<br/>";
         $str = "<br/>The following employee has returned to work:";
-        $str .= ".<br/><b> Employee Name </b> : " . $this->masterDet['Ename2'];
+        $str .= ".<br/><b> Employee Name </b> : " . $this->masterDet['empName'];
         $str .= ".<br/><b> Leave Type </b> : " . $this->masterDet['leaveTypeDesc'];
         $str .= ".<br/><b> Leave From </b> : " . $this->masterDet['startDate'];
         $str .= ".<br/><b> Leave To </b> : " . $this->masterDet['endDate'];
