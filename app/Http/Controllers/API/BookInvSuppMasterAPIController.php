@@ -1033,6 +1033,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 }
             }
 
+
             //checking Supplier Invoice amount is greater than GRV Amount validations
             if ($input['documentType'] == 0 || $input['documentType'] == 2) {
                 $checktotalExceed = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
@@ -1049,27 +1050,28 @@ class BookInvSuppMasterAPIController extends AppBaseController
                         $valEligible = true;
                     }
                     foreach ($checktotalExceed as $exc) {
-                        $grvDetailSum = GRVDetails::select(DB::raw('COALESCE(SUM(landingCost_TransCur * noQty),0) as total, SUM(VATAmount*noQty) as transVATAmount'))
+                        $grvDetailSum = GRVDetails::select(DB::raw('COALESCE(SUM(landingCost_RptCur * noQty),0) as total, SUM(VATAmountRpt*noQty) as transVATAmount'))
                             ->where('grvAutoID', $exc->grvAutoID)
                             ->first();
 
                         $logisticVATTotal = PoAdvancePayment::where('grvAutoID', $exc->grvAutoID)
-                                                            ->sum('VATAmount');
+                                                            ->sum('VATAmountRpt');
 
 
                         $checkPreTotal = BookInvSuppDet::where('grvAutoID', $exc->grvAutoID)
-                            ->sum('totTransactionAmount');
+                            ->sum('totRptAmount');
                         if (!$valEligible) {
                             $grvDetailTotal = $grvDetailSum['total'];
                         } else {
                             $grvDetailTotal = $grvDetailSum['total'] + $grvDetailSum['transVATAmount'] + $logisticVATTotal;
                         }
                         if (round($checkPreTotal, $documentCurrencyDecimalPlace) > round($grvDetailTotal, $documentCurrencyDecimalPlace)) {
-                            return $this->sendError('Supplier Invoice amount is greater than GRV amount. Total Invoice amount is '.round($checkPreTotal, $documentCurrencyDecimalPlace). ' And Total GRV amount is '. round($grvDetailTotal, $documentCurrencyDecimalPlace), 500);
+                            return $this->sendError('Supplier Invoice amount is greater than GRV amount. Total Invoice amount(Reporting Currency) is '.round($checkPreTotal, $documentCurrencyDecimalPlace). ' And Total GRV amount(Reporting Currency) is '. round($grvDetailTotal, $documentCurrencyDecimalPlace), 500);
                         }
                     }
                 }
             }
+
 
             if ($input['documentType'] == 0) {
                 //updating PO Master invoicedBooked flag
