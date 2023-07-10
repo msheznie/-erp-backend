@@ -221,8 +221,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::resource('document_approveds', 'DocumentApprovedAPIController');
 
-            Route::resource('bank_accounts', 'BankAccountAPIController');
-            Route::post('getAllBankAccountByCompany', 'BankAccountAPIController@getAllBankAccountByCompany');
 
             Route::post('getBankBalance', 'BankAccountAPIController@getBankBalance');
             Route::get('getBankAccountsByBankID', 'BankAccountAPIController@getBankAccountsByBankID');
@@ -624,10 +622,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('addPaymentVoucherMatchingPaymentDetail', 'PaySupplierInvoiceDetailAPIController@addPaymentVoucherMatchingPaymentDetail');
             Route::post('updatePaymentVoucherMatchingDetail', 'PaySupplierInvoiceDetailAPIController@updatePaymentVoucherMatchingDetail');
 
-            Route::resource('bank_ledgers', 'BankLedgerAPIController');
-            Route::post('updateTreasuryCollection', 'BankLedgerAPIController@updateTreasuryCollection');
-            Route::post('getBankReconciliationsByType', 'BankLedgerAPIController@getBankReconciliationsByType');
-            Route::post('getBankAccountPaymentReceiptByType', 'BankLedgerAPIController@getBankAccountPaymentReceiptByType');
 
             Route::post('getChequePrintingItems', 'BankLedgerAPIController@getChequePrintingItems');
             Route::get('getChequePrintingFormData', 'BankLedgerAPIController@getChequePrintingFormData');
@@ -635,13 +629,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('updatePrintAhliChequeItems', 'BankLedgerAPIController@updatePrintAhliChequeItems');
 
 
-            Route::resource('bank_reconciliations', 'BankReconciliationAPIController');
-            Route::get('getCheckBeforeCreate', 'BankReconciliationAPIController@getCheckBeforeCreate');
-            Route::post('bankRecReopen', 'BankReconciliationAPIController@bankRecReopen');
-            Route::post('bankReconciliationReferBack', 'BankReconciliationAPIController@bankReconciliationReferBack');
 
-            Route::get('getBankReconciliationFormData', 'BankReconciliationAPIController@getBankReconciliationFormData');
-            Route::post('getAllBankReconciliationByBankAccount', 'BankReconciliationAPIController@getAllBankReconciliationByBankAccount');
             Route::post('getAllBankReconciliationList', 'BankReconciliationAPIController@getAllBankReconciliationList');
             Route::post('amendBankReconciliationReview', 'BankReconciliationAPIController@amendBankReconciliationReview');
             Route::post('referBackCosting', 'FixedAssetMasterAPIController@referBackCosting');
@@ -944,8 +932,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('getReferBackHistoryByBankTransfer', 'PaymentBankTransferRefferedBackAPIController@getReferBackHistoryByBankTransfer');
             Route::resource('bankTransferDetailRefferedBacks', 'PaymentBankTransferDetailRefferedBackAPIController');
 
-            Route::resource('bankRecRefferedBack', 'BankReconciliationRefferedBackAPIController');
-            Route::post('getReferBackHistoryByBankRec', 'BankReconciliationRefferedBackAPIController@getReferBackHistoryByBankRec');
 
             Route::resource('grvDetailsRefferedbacks', 'GrvDetailsRefferedbackAPIController');
             Route::resource('document_restriction_assigns', 'DocumentRestrictionAssignAPIController');
