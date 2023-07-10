@@ -31,6 +31,14 @@ class ReturnToWorkNotificationService
 
     function execute()
     { 
+
+        if (empty($this->masterDet)) {
+            $this->insertToLogTb(['Document Code' => '', 'Message' => 'Master details not found', 'error']);
+            return false;
+        }
+
+        $this->documentCode = $this->masterDet['documentCode'];
+
         $this->validateNotificationScenarioActive();
         if (!$this->isScenarioActive) {
             return false;
@@ -97,20 +105,22 @@ class ReturnToWorkNotificationService
 
             $mailTo = '';
             $name = '';
+            $applicableCatDesc = '';
             if ($val['applicableCategoryID'] == 7) { //Reporting manager
+                $applicableCatDesc = 'Reporting manager';
                 $manageInfo = $this->getReportingManagerInfo();
-                $this->insertToLogTb(['Message' => $manageInfo]);
+
 
                 if (empty($manageInfo)) {
                     $msg = 'Manager details not found for return to work notification';
-                    $this->insertToLogTb(['applicableCategoryID' => $val['applicableCategoryID'], 'Message' => $msg], 'error');
+                    $this->insertToLogTb(['Document' =>  $this->documentCode, 'Message' => $msg], 'error');
                 }
                 $mailTo = $manageInfo['EEmail'];
                 $name = $manageInfo['Ename2'];
-                $this->insertToLogTb(['applicableCategoryID' => $val['applicableCategoryID'], 'Message' => $mailTo]);
+                
             } else { // Employee
+                $applicableCatDesc = 'Employee';
                 $mailTo = $val['employee']['empEmail'];
-                $this->insertToLogTb(['applicableCategoryID' => $val['applicableCategoryID'], 'Message' => $mailTo]);
                 $name = $val['employee']['empFullName'];
             }
 
@@ -128,12 +138,12 @@ class ReturnToWorkNotificationService
             $sendEmail = \Email::sendEmailErp($emails);
 
             if (!$sendEmail["success"]) {
-                $msg = "Travel request notification not sent for {$name} "; 
+                $msg = "Return to work notification not sent for {$applicableCatDesc} {$name} "; 
                 $logType = 'error';
                 $this->insertToLogTb(['Document Code' => $this->documentCode, 'Message' => $msg], $logType); 
             } else {
-                $msg = "Travel request notification sent for {$name} ";
-                $this->insertToLogTb(['Document Code' => $this->documentCode, 'Message' => $msg], $logType); 
+                $msg = "Return to work notification sent for {$applicableCatDesc} {$name} ";
+                $this->insertToLogTb(['Document Code' => $this->documentCode, 'Message' => $msg]); 
             }
         }
     }
