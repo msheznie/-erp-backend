@@ -98,7 +98,7 @@ class CreateDepreciation implements ShouldQueue
                     $depAmountLocalTotal = 0;
 
                     if (count($faMaster) > 0) {
-                        $chunkSize = 50;
+                        $chunkSize = 30;
                         $totalDataSize = count($faMaster);
                         $chunkDataSizeCounts = ceil($totalDataSize / $chunkSize);
                         $faCounts = 1;
