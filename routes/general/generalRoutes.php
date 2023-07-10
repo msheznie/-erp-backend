@@ -58,4 +58,6 @@ Route::get('getInvoiceDetailsForDeliveryOrderPrintView', 'DeliveryOrderAPIContro
 Route::post('exportTransactionsRecord', 'TransactionsExportExcel@exportRecord')->name("Export Record");
 
 Route::post('getDocumentDetails', 'PurchaseRequestAPIController@getDocumentDetails')->name("Get Document Details");
+Route::get('getAllFinancePeriodBasedFY', 'CompanyFinancePeriodAPIController@getAllFinancePeriodBasedFY')->name("Get All Finance Period Based FY");
+Route::get('getCustomerByCompany', 'CustomerMasterAPIController@getCustomerByCompany')->name("Get Customer By Company");
 
