@@ -148,6 +148,8 @@ class DepreciationSubJobs
                                         $data['depForFYperiodStartDate'] = $companyFinancePeriodID1->dateFrom;
                                         $data['depForFYperiodEndDate'] = $companyFinancePeriodID1->dateTo;
                                         $data['timestamp'] = NOW();
+                                        Log::info('test1:'.$faCounts);
+
                                         array_push($finalData, $data);
                                     }
                                 }
@@ -165,6 +167,7 @@ class DepreciationSubJobs
                             $data['depForFYperiodStartDate'] = $depMaster->FYPeriodDateFrom;
                             $data['depForFYperiodEndDate'] = $depMaster->FYPeriodDateTo;
                             $data['timestamp'] = NOW();
+                            Log::info('test2:'.$faCounts);
                             array_push($finalData, $data);
                         }
                     }
@@ -174,6 +177,8 @@ class DepreciationSubJobs
 
             if (count($finalData) > 0) {
                 foreach (array_chunk($finalData, 100) as $t) {
+                    Log::info('test insert:'.$faCounts);
+
                     FixedAssetDepreciationPeriod::insert($t);
                 }
             }
@@ -184,6 +189,7 @@ class DepreciationSubJobs
                     Log::info('Depreciation processing');
                     $fixedAssetDepreciationMasters = $faDepMaster->update(['depAmountLocal' => $depDetail->depAmountLocal, 'depAmountRpt' => $depDetail->depAmountRpt, 'isDepProcessingYN' => 1], $depMasterAutoID);
                 } else {
+                    Log::info('test3:'.$faCounts);
                     $fixedAssetDepreciationMasters = $faDepMaster->update(['depAmountLocal' => $depDetail->depAmountLocal, 'depAmountRpt' => $depDetail->depAmountRpt], $depMasterAutoID);
                 }
             }
