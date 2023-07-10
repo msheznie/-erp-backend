@@ -27,6 +27,7 @@ use App\Models\Company;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\DepartmentMaster;
 use App\Models\DocumentApproved;
+use App\Models\BudgetConsumedData;
 use App\Models\DocumentMaster;
 use App\Models\DocumentReferedHistory;
 use App\Models\EmployeesDepartment;
@@ -940,7 +941,14 @@ class FixedAssetMasterAPIController extends AppBaseController
             $input["timestamp"] = date('Y-m-d H:i:s');
             unset($input['itemPicture']);
 
-            $fixedAssetMaster = $this->fixedAssetMasterRepository->update($input, $id);
+            if($fixedAssetMaster && $fixedAssetMaster->approved == -1){
+                $amendableData = array_only($input,['departmentSystemID','departmentID','serviceLineSystemID','serviceLineCode','assetDescription','MANUFACTURE','COMMENTS','LOCATION','lastVerifiedDate','faCatID','faSubCatID','faSubCatID2','faSubCatID3','AUDITCATOGARY','COSTGLCODE','ACCDEPGLCODE','DEPGLCODE','DISPOGLCODE', 'accdepglCodeSystemID', 'costglCodeSystemID', 'depglCodeSystemID', 'dispglCodeSystemID']);
+
+                $fixedAssetMaster = $this->fixedAssetMasterRepository->update($amendableData, $id);
+            } else {
+                $fixedAssetMaster = $this->fixedAssetMasterRepository->update($input, $id);
+            }
+
 
             /*Activity log*/
 
@@ -1276,7 +1284,7 @@ class FixedAssetMasterAPIController extends AppBaseController
 
         $fixedAssetCosting = FixedAssetCost::with(['localcurrency', 'rptcurrency'])->ofFixedAsset($id)->get();
         $groupedAsset = $this->fixedAssetMasterRepository->findWhere(['groupTO' => $id, 'approved' => -1]);
-        $depAsset = FixedAssetDepreciationPeriod::ofAsset($id)->whereHas('master_by', function ($q) {
+        $depAsset = FixedAssetDepreciationPeriod::ofAsset($id)->with('master_by')->whereHas('master_by', function ($q) {
             $q->where('approved', -1);
         })->get();
         $insurance = FixedAssetInsuranceDetail::with(['policy_by', 'location_by'])->ofAsset($id)->get();
@@ -1286,6 +1294,20 @@ class FixedAssetMasterAPIController extends AppBaseController
         }
 
         $output = ['fixedAssetMaster' => $fixedAssetMaster, 'fixedAssetCosting' => $fixedAssetCosting, 'groupedAsset' => $groupedAsset, 'depAsset' => $depAsset, 'insurance' => $insurance];
+
+        return $this->sendResponse($output, 'Fixed Asset Master retrieved successfully');
+    }
+
+     public function assetCostingForPrint(Request $request)
+    {
+        $input = $request->all();
+        
+        $fixedAssetMaster = $this->fixedAssetMasterRepository->with(['confirmed_by', 'group_to', 'posttogl_by', 'disposal_by','supplier','department', 'departmentmaster', 'category_by', 'sub_category_by', 'sub_category_by2', 'sub_category_by3', 'location', 'assettypemaster', 'finance_category'])->findWithoutFail($input['id']);
+        if (empty($fixedAssetMaster)) {
+            return $this->sendError('Fixed Asset Master not found');
+        }
+
+        $output = ['fixedAssetMaster' => $fixedAssetMaster];
 
         return $this->sendResponse($output, 'Fixed Asset Master retrieved successfully');
     }
@@ -2156,6 +2178,12 @@ class FixedAssetMasterAPIController extends AppBaseController
             if(is_null($masterData->docOriginSystemCode)){
                 $fixedAssetCosting = FixedAssetCost::ofFixedAsset($id)->delete();
             }
+
+            //deleting budget consumption
+            $deletebudgetData = BudgetConsumedData::where('documentSystemCode', $id)
+                ->where('companySystemID', $masterData->companySystemID)
+                ->where('documentSystemID', $masterData->documentSystemID)
+                ->delete();
 
             // updating fields
             $masterData->confirmedYN = 0;

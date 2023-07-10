@@ -1502,6 +1502,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             $input = $request->all();
             $input = $this->convertArrayToValue($input);
 
+
             /** @var PaySupplierInvoiceMaster $paySupplierInvoiceMaster */
             $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->findWithoutFail($id);
 
@@ -1614,12 +1615,28 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                         ->first();
                     $policy = isset($policy->isYesNO) && $policy->isYesNO == 1;
 
-                    if($policy == false || $paySupplierInvoiceMaster->invoiceType != 3) {
+                    // if($policy == false || $paySupplierInvoiceMaster->invoiceType != 3) {
                         $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
                         $input['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
-                    }
+                    // }
                 }
             }
+
+
+            $checkErChange = isset($input['checkErChange']) ? $input['checkErChange'] : true;
+
+            if ((($paySupplierInvoiceMaster->BPVbankCurrencyER != $input['BPVbankCurrencyER'] && $input['BPVbankCurrency'] == $paySupplierInvoiceMaster->BPVbankCurrency) || $paySupplierInvoiceMaster->localCurrencyER != $input['localCurrencyER'] && $input['localCurrencyID'] == $paySupplierInvoiceMaster->localCurrencyID || $paySupplierInvoiceMaster->companyRptCurrencyER != $input['companyRptCurrencyER'] && $input['companyRptCurrencyID'] == $paySupplierInvoiceMaster->companyRptCurrencyID)) {
+                
+
+                if ($checkErChange) {
+                    $erMessage = "<p>The exchange rates are updated as follows,</p><p style='font-size: medium;'>Previous rates Bank ER ".$paySupplierInvoiceMaster->BPVbankCurrencyER." | Local ER ".$paySupplierInvoiceMaster->localCurrencyER." | Reporting ER ".$paySupplierInvoiceMaster->companyRptCurrencyER."</p><p style='font-size: medium;'>Current rates Bank ER ".$input['BPVbankCurrencyER']." | Local ER ".$input['localCurrencyER']." | Reporting ER ".$input['companyRptCurrencyER']."</p><p>Are you sure you want to proceed ?</p>";
+
+                    return $this->sendError($erMessage, 500, ['type' => 'erChange']);
+                } else {
+                    PaySupplierInvoiceMaster::where('PayMasterAutoId', $paySupplierInvoiceMaster->PayMasterAutoId)->update(['BPVbankCurrencyER' => $input['BPVbankCurrencyER'], 'localCurrencyER' => $input['localCurrencyER'], 'companyRptCurrencyER' => $input['companyRptCurrencyER']]);
+                }
+            }
+
 
             if ($paySupplierInvoiceMaster->invoiceType == 3) {
                 if ($input['payeeType'] == 3) {
@@ -1670,9 +1687,27 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 $input['BPVchequeDate'] = null;
                 $input['BPVchequeNo'] = null;
                 $input['expenseClaimOrPettyCash'] = null;
+
             } else {
                 $input['pdcChequeYN'] = 0;
             }
+
+            if (isset($input['pdcChequeYN']) && $input['pdcChequeYN'] == false) {
+
+                $isPdcLog = PdcLog::where('documentSystemID', $input['documentSystemID'])
+                    ->where('documentmasterAutoID', $input['PayMasterAutoId'])
+                    ->first();
+
+                if(!empty($isPdcLog)) {
+                    ChequeRegisterDetail::where('document_id', $input['PayMasterAutoId'])->where('document_master_id', $input['documentSystemID'])->update(['status' => 0, 'document_master_id' => null, 'document_id' => null]);
+
+                    PdcLog::where('documentSystemID', $input['documentSystemID'])
+                        ->where('documentmasterAutoID', $input['PayMasterAutoId'])
+                        ->delete();
+                }
+
+            }
+
 
             $warningMessage = '';
 
@@ -2114,6 +2149,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
                     $error_count = 0;
 
+                    DirectPaymentDetails::where('directPaymentAutoID', $id)->update(['bankCurrencyER' => $input['BPVbankCurrencyER']]);
 
                     $employeeInvoice = CompanyPolicyMaster::where('companyPolicyCategoryID', 68)
                                     ->where('companySystemID', $paySupplierInvoiceMaster->companySystemID)
@@ -2659,6 +2695,65 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         }
     }
 
+    public function validationsForPDC(Request $request){
+        $bankAccountID = $request->get('bankAccountID');
+        $companySystemID = $request->get('companyID');
+
+
+        $bankAccount = BankAccount::find($bankAccountID);
+
+        if(!empty($bankAccount)) {
+
+            $chequeRegister = ChequeRegister::where('bank_id', $bankAccount->bankmasterAutoID)->where('bank_account_id', $bankAccount->bankAccountAutoID)->where('isActive', 1)->first();
+
+            if (empty($chequeRegister)) {
+                return $this->sendError('No Active cheque register found for the selected bank account');
+            }
+
+            $usedCheckID = $this->getLastUsedChequeID($companySystemID, $bankAccount->bankAccountAutoID);
+
+            $unUsedCheque = ChequeRegisterDetail::whereHas('master', function ($q) use ($companySystemID, $bankAccount) {
+                $q->where('bank_account_id', $bankAccount->bankAccountAutoID)
+                    ->where('company_id', $companySystemID)
+                    ->where('isActive', 1);
+            })
+                ->where('status', 0)
+                ->where(function ($q) use ($usedCheckID) {
+                    if ($usedCheckID) {
+                        $q->where('id', '>', $usedCheckID);
+                    }
+                })
+                ->orderBy('id', 'ASC')
+                ->first();
+
+            if (empty($unUsedCheque)) {
+                return $this->sendError('There are no unused cheques in the cheque register ' . $chequeRegister->description . ' Define a new cheque register for the selected bank account');
+
+            }
+        }
+
+        return $this->sendResponse([], "PDC cheques validated successfully");
+
+        }
+
+    public function getLastUsedChequeID($company_system_id, $bank_account_id) {
+        $usedCheque = ChequeRegisterDetail::whereHas('master', function ($q) use($company_system_id,$bank_account_id) {
+            $q->where('bank_account_id', $bank_account_id)
+                ->where('company_id', $company_system_id)
+                ->where('isActive', 1);
+        })
+            ->where(function ($q) {
+                $q->where('status', 1)  // status = 1 => used
+                ->orWhere('status', 2); // // status = 2 => cancelled
+            })
+            ->orderBy('id', 'DESC')
+            ->first();
+
+        if(!empty($usedCheque)){
+            return $usedCheque->id;
+        }
+        return null;
+    }
 
     public function generatePdcForPv(Request $request)
     {
@@ -2831,7 +2926,9 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 'bankledger_by' => function ($query) {
                     $query->where('documentSystemID', 4);
                     $query->with(['bankrec_by', 'bank_transfer']);
-                },'audit_trial.modified_by'])->first();
+                },'audit_trial.modified_by','pdc_cheque' => function ($q) {
+                    $q->where('documentSystemID', 4);
+                } ])->first();
 
         $isProjectBase = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
         ->where('companySystemID', $output->companySystemID)
@@ -4274,7 +4371,9 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
                 }, 'approved_by' => function ($query) {
                     $query->with('employee');
                     $query->where('documentSystemID', 4);
-                }, 'created_by', 'cancelled_by'])->first();
+                }, 'created_by', 'cancelled_by','pdc_cheque' => function ($q) {
+                    $q->where('documentSystemID', 4);
+                }])->first();
 
         if (empty($output)) {
             return $this->sendError('Customer Receive Payment not found');

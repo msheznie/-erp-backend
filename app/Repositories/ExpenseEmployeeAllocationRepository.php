@@ -28,7 +28,8 @@ class ExpenseEmployeeAllocationRepository extends BaseRepository
         'amount',
         'amountRpt',
         'amountLocal',
-        'dateOfDeduction'
+        'dateOfDeduction',
+        'assignedQty'
     ];
 
     /**

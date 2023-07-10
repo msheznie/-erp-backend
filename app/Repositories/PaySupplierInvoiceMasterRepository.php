@@ -2,13 +2,17 @@
 
 namespace App\Repositories;
 
+use App\Models\ChequeRegister;
 use App\Models\ChequeRegisterDetail;
 use App\Models\AdvancePaymentDetails;
 use App\Models\PaySupplierInvoiceDetail;
 use App\Models\PurchaseOrderDetails;
+use App\Models\PoAdvancePayment;
 use App\Models\PoAddons;
 use App\Models\ProcumentOrder;
+use App\Models\CurrencyMaster;
 use App\Models\CompanyPolicyMaster;
+use App\Models\Company;
 use App\Models\PaySupplierInvoiceMaster;
 use InfyOm\Generator\Common\BaseRepository;
 use App\helper\StatusService;
@@ -384,6 +388,12 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
         $chequeGenrated = false;
         if (!empty($is_exist_policy_GCNFCR)) {
             $chequeGenrated = true;
+
+            $chequeRegister = ChequeRegister::where('bank_id', $bankAccount->bankmasterAutoID)->where('bank_account_id', $bankAccount->bankAccountAutoID)->where('isActive', 1)->first();
+            if(empty($chequeRegister)){
+                return ['status' => false, 'message' => "No Active cheque register found for the selected bank account"];
+            }
+
             $usedCheckID = $this->getLastUsedChequeID($companySystemID, $bankAccount->bankAccountAutoID);
 
             $unUsedCheque = ChequeRegisterDetail::whereHas('master', function ($q) use ($companySystemID, $bankAccount) {
@@ -412,7 +422,7 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
                 ChequeRegisterDetail::where('id', $unUsedCheque->id)->update($update_array);
 
             } else {
-                return ['status' => false, 'message' => "Could not found unassigned cheques to generate PDC Cheques. Please add cheques to cheque registry"];
+                return ['status' => false, 'message' => "There are no unused cheques in the cheque register $chequeRegister->description. Define a new cheque register for the selected bank account"];
             }
         } 
 
@@ -423,8 +433,15 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
     {
 
         $procumentOrder = ProcumentOrder::with(['transactioncurrency'])->find($purchaseOrderID);
-
+        $poComareAmountRpt = 0;
+        $paymentCompareRpt = 0;
+        $validateDta = [];
         if ($procumentOrder) {
+
+            $companyData = Company::with(['reportingcurrency'])->find($procumentOrder->companySystemID);
+
+            $rptDecimal = isset($companyData->reportingcurrency->DecimalPlaces) ? $companyData->reportingcurrency->DecimalPlaces : 2;
+
             $poMasterSum = PurchaseOrderDetails::selectRaw('COALESCE(SUM(netAmount),0) as masterTotalSum')
                                                 ->where('purchaseOrderMasterID', $purchaseOrderID)
                                                 ->first();
@@ -439,8 +456,49 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
                                         ->where('poId', $purchaseOrderID)
                                         ->first();
 
+            $logistics = PoAdvancePayment::where('poID', $purchaseOrderID)
+                                         ->selectRaw('COALESCE(SUM(reqAmount + VATAmount),0) as reqAmountSum, currencyID')
+                                         ->groupBy('currencyID')
+                                         ->get();
 
-            $poTotalAmount = $poMasterSum['masterTotalSum'] + $poAddonMasterSum['addonTotalSum'] + $poMasterVATSum['masterTotalVATSum'];
+
+            $poTotalAmountTrans = $poMasterSum['masterTotalSum'] + $poAddonMasterSum['addonTotalSum'] + $poMasterVATSum['masterTotalVATSum'];
+
+
+            $poConversion = \Helper::currencyConversion($procumentOrder->companySystemID, $procumentOrder->supplierTransactionCurrencyID, $procumentOrder->supplierTransactionCurrencyID, $poTotalAmountTrans);
+
+
+            $poComareAmountRpt += $poConversion['reportingAmount'];
+
+
+
+            $temp['key'] = "Purchase Order Amount";
+            $temp['currency'] = isset($procumentOrder->transactioncurrency->CurrencyCode) ? $procumentOrder->transactioncurrency->CurrencyCode : "USD";
+            $temp['transAmount'] = number_format($poTotalAmountTrans, (isset($procumentOrder->transactioncurrency->DecimalPlaces) ? $procumentOrder->transactioncurrency->DecimalPlaces : 2));
+            $temp['rptAmount'] = number_format($poConversion['reportingAmount'], (isset($companyData->reportingcurrency->DecimalPlaces) ? $companyData->reportingcurrency->DecimalPlaces : 2));
+
+
+            $validateDta[] = $temp;
+            $temp = [];
+
+
+            foreach ($logistics as $key => $value) {
+                $logisticConversion = \Helper::currencyConversion($procumentOrder->companySystemID, $value->currencyID, $value->currencyID, $value->reqAmountSum);
+
+
+                $poComareAmountRpt += $logisticConversion['reportingAmount'];
+
+                $temp['key'] = "Logistic Amount";
+                $temp['currency'] = CurrencyMaster::getCurrencyCode($value->currencyID);
+                $temp['transAmount'] = number_format($value->reqAmountSum, CurrencyMaster::getDecimalPlaces($value->currencyID));
+                $temp['rptAmount'] = number_format($logisticConversion['reportingAmount'], (isset($companyData->reportingcurrency->DecimalPlaces) ? $companyData->reportingcurrency->DecimalPlaces : 2));
+
+
+                $validateDta[] = $temp;
+                $temp = [];
+            }
+
+
 
             $totalAdavancePayment =  AdvancePaymentDetails::where('purchaseOrderID', $purchaseOrderID)
                                                           ->whereHas('advancepaymentmaster', function($query) {
@@ -449,7 +507,26 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
                                                           ->whereHas('pay_invoice', function($query) {
                                                                 $query->where('refferedBackYN', 0);
                                                           })
-                                                          ->sum('paymentAmount');
+                                                          ->selectRaw('COALESCE(SUM(paymentAmount),0) as paymentAmountSum, supplierTransCurrencyID')
+                                                          ->groupBy('supplierTransCurrencyID')
+                                                          ->get();
+
+
+            foreach ($totalAdavancePayment as $key => $value) {
+                $advConversion = \Helper::currencyConversion($procumentOrder->companySystemID, $value->supplierTransCurrencyID, $value->supplierTransCurrencyID, $value->paymentAmountSum);
+
+
+                $paymentCompareRpt += $advConversion['reportingAmount'];
+
+                $temp['key'] = "Advance Payment Amount";
+                $temp['currency'] = CurrencyMaster::getCurrencyCode($value->supplierTransCurrencyID);
+                $temp['transAmount'] = number_format($value->paymentAmountSum, CurrencyMaster::getDecimalPlaces($value->supplierTransCurrencyID));
+                $temp['rptAmount'] = number_format($advConversion['reportingAmount'], (isset($companyData->reportingcurrency->DecimalPlaces) ? $companyData->reportingcurrency->DecimalPlaces : 2));
+
+
+                $validateDta[] = $temp;
+                $temp = [];
+            }
 
 
             $totalSupplierPayment = PaySupplierInvoiceDetail::where('purchaseOrderID', $purchaseOrderID)
@@ -457,19 +534,45 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
                                                             ->whereHas('payment_master', function($query) {
                                                                     $query->where('refferedBackYN', 0);
                                                             })
-                                                            ->sum('supplierPaymentAmount');
+                                                            ->selectRaw('COALESCE(SUM(supplierPaymentAmount),0) as supplierPaymentAmountSum, supplierTransCurrencyID')
+                                                            ->groupBy('supplierTransCurrencyID')
+                                                            ->get();
 
 
-            $totalPayment = $totalAdavancePayment + $totalSupplierPayment;
+            foreach ($totalSupplierPayment as $key => $value) {
+                $suppPayConversion = \Helper::currencyConversion($procumentOrder->companySystemID, $value->supplierTransCurrencyID, $value->supplierTransCurrencyID, $value->supplierPaymentAmountSum);
 
 
-            $decimalPlcaes = isset($procumentOrder->transactioncurrency->DecimalPlaces) ? $procumentOrder->transactioncurrency->DecimalPlaces : 2;
-            $currencyCode = isset($procumentOrder->transactioncurrency->CurrencyCode) ? $procumentOrder->transactioncurrency->CurrencyCode : "USD";
+                $paymentCompareRpt += $suppPayConversion['reportingAmount'];
 
-            $roundedPoTotal = round($poTotalAmount, $decimalPlcaes);
-            $roundedTotalPayment = round($totalPayment, $decimalPlcaes);
-            if (floatval($roundedTotalPayment) > floatval($roundedPoTotal)) {
-                $message = "Purchase Order ".$procumentOrder->purchaseOrderCode." will be overpaid. Purchase Order Amount : ".$currencyCode." ".number_format($poTotalAmount, $decimalPlcaes).", Supplier Payment : ".$currencyCode." ".number_format($totalSupplierPayment, $decimalPlcaes).", Advance Payment : ".$currencyCode." ".number_format($totalAdavancePayment, $decimalPlcaes);
+                $temp['key'] = "Supplier Payment Amount";
+                $temp['currency'] = CurrencyMaster::getCurrencyCode($value->supplierTransCurrencyID);
+                $temp['transAmount'] = number_format($value->supplierPaymentAmountSum, CurrencyMaster::getDecimalPlaces($value->supplierTransCurrencyID));
+                $temp['rptAmount'] = number_format($suppPayConversion['reportingAmount'], (isset($companyData->reportingcurrency->DecimalPlaces) ? $companyData->reportingcurrency->DecimalPlaces : 2));
+
+
+                $validateDta[] = $temp;
+                $temp = [];
+            }
+
+
+            $roundedPoTotal = round($poComareAmountRpt, $rptDecimal);
+            $roundedTotalPayment = round($paymentCompareRpt, $rptDecimal);
+
+            $epsilon = 0.00001;
+            $rptCurrencyCode = isset($companyData->reportingcurrency->CurrencyCode) ? $companyData->reportingcurrency->CurrencyCode : "USD";
+
+
+            if ((floatval($roundedTotalPayment) - floatval($roundedPoTotal)) > $epsilon) {
+                $message = "<span class='text-danger'> Purchase Order ".$procumentOrder->purchaseOrderCode." will be overpaid.</span><br> <table style='width:100%;'><tr><th style='font-size: small;text-align:left;border:1px solid;'>Currency</th><th style='text-align:center;font-size: small;border:1px solid;'>Rpt (".$rptCurrencyCode.")</th><th colspan='2' style='border:1px solid;text-align:center;font-size: small'>Transaction</th></tr>";
+
+                foreach ($validateDta as $key => $value) {
+                    $message .= "<tr><td style='text-align:left;border:1px solid;'>".$value['key']."</td><td style='border:1px solid;'>".$value['rptAmount']."</td><td style='border:1px solid;'>".$value['currency']."</td><td style='border:1px solid;'>".$value['transAmount']."</td><tr>";
+                }
+
+                $message .= "</table><br>";
+
+
                 return ['status' => false, 'message' => $message];
             }
 

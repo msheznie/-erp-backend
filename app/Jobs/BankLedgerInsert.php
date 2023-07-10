@@ -98,6 +98,7 @@ class BankLedgerInsert implements ShouldQueue
                         $data['bankCurrencyER'] = $masterData->BPVbankCurrencyER;
                         $data['documentChequeNo'] = (isset($masterModel['pdcFlag']) && $masterModel['pdcFlag']) ? $masterModel['pdcChequeNo'] : $masterData->BPVchequeNo;
                         $data['documentChequeDate'] = (isset($masterModel['pdcFlag']) && $masterModel['pdcFlag']) ? $masterModel['pdcChequeDate'] : $masterData->BPVchequeDate;
+                        $data['pdcID'] = isset($masterModel['pdcID']) ? $masterModel['pdcID'] : null;
                         $data['payeeID'] = $masterData->BPVsupplierID;
 
                         $payee = SupplierMaster::find($masterData->BPVsupplierID);

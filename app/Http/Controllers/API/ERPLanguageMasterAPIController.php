@@ -1,0 +1,331 @@
+<?php
+
+namespace App\Http\Controllers\API;
+
+use App\Http\Requests\API\CreateERPLanguageMasterAPIRequest;
+use App\Http\Requests\API\UpdateERPLanguageMasterAPIRequest;
+use App\Models\ERPLanguageMaster;
+use App\Models\EmployeeLanguage;
+use App\Models\Employee;
+use App\Repositories\ERPLanguageMasterRepository;
+use Illuminate\Http\Request;
+use App\Http\Controllers\AppBaseController;
+use InfyOm\Generator\Criteria\LimitOffsetCriteria;
+use Prettus\Repository\Criteria\RequestCriteria;
+use Response;
+
+/**
+ * Class ERPLanguageMasterController
+ * @package App\Http\Controllers\API
+ */
+
+class ERPLanguageMasterAPIController extends AppBaseController
+{
+    /** @var  ERPLanguageMasterRepository */
+    private $eRPLanguageMasterRepository;
+
+    public function __construct(ERPLanguageMasterRepository $eRPLanguageMasterRepo)
+    {
+        $this->eRPLanguageMasterRepository = $eRPLanguageMasterRepo;
+    }
+
+    /**
+     * @param Request $request
+     * @return Response
+     *
+     * @OA\Get(
+     *      path="/eRPLanguageMasters",
+     *      summary="getERPLanguageMasterList",
+     *      tags={"ERPLanguageMaster"},
+     *      description="Get all ERPLanguageMasters",
+     *      @OA\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @OA\Schema(
+     *              type="object",
+     *              @OA\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @OA\Property(
+     *                  property="data",
+     *                  type="array",
+     *                  @OA\Items(ref="#/definitions/ERPLanguageMaster")
+     *              ),
+     *              @OA\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function index(Request $request)
+    {
+        $this->eRPLanguageMasterRepository->pushCriteria(new RequestCriteria($request));
+        $this->eRPLanguageMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
+        $eRPLanguageMasters = $this->eRPLanguageMasterRepository->select(['languageShortCode','isActive','icon','languageID'])->where('isActive',1)->get();
+        return $this->sendResponse($eRPLanguageMasters->toArray(), 'Languages retrieved successfully');
+    }
+
+    /**
+     * @param Request $request
+     * @return Response
+     *
+     * @OA\Post(
+     *      path="/eRPLanguageMasters",
+     *      summary="createERPLanguageMaster",
+     *      tags={"ERPLanguageMaster"},
+     *      description="Create ERPLanguageMaster",
+     *      @OA\RequestBody(
+     *        required=true,
+     *        @OA\MediaType(
+     *            mediaType="application/x-www-form-urlencoded",
+     *            @OA\Schema(
+     *                type="object",
+     *                required={""},
+     *                @OA\Property(
+     *                    property="name",
+     *                    description="desc",
+     *                    type="string"
+     *                )
+     *            )
+     *        )
+     *      ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @OA\Schema(
+     *              type="object",
+     *              @OA\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @OA\Property(
+     *                  property="data",
+     *                  ref="#/definitions/ERPLanguageMaster"
+     *              ),
+     *              @OA\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function store(Request $request)
+    {
+        $input = $request->all();
+
+        $eRPLanguageMaster = $this->eRPLanguageMasterRepository->create($input);
+
+        return $this->sendResponse($eRPLanguageMaster->toArray(), 'Language Master saved successfully');
+    }
+
+    /**
+     * @param int $id
+     * @return Response
+     *
+     * @OA\Get(
+     *      path="/eRPLanguageMasters/{id}",
+     *      summary="getERPLanguageMasterItem",
+     *      tags={"ERPLanguageMaster"},
+     *      description="Get ERPLanguageMaster",
+     *      @OA\Parameter(
+     *          name="id",
+     *          description="id of ERPLanguageMaster",
+     *           @OA\Schema(
+     *             type="integer"
+     *          ),
+     *          required=true,
+     *          in="path"
+     *      ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @OA\Schema(
+     *              type="object",
+     *              @OA\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @OA\Property(
+     *                  property="data",
+     *                  ref="#/definitions/ERPLanguageMaster"
+     *              ),
+     *              @OA\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function show($id)
+    {
+        /** @var ERPLanguageMaster $eRPLanguageMaster */
+        $eRPLanguageMaster = $this->eRPLanguageMasterRepository->findWithoutFail($id);
+
+        if (empty($eRPLanguageMaster)) {
+            return $this->sendError('E R P Language Master not found');
+        }
+
+        return $this->sendResponse($eRPLanguageMaster->toArray(), 'E R P Language Master retrieved successfully');
+    }
+
+    /**
+     * @param int $id
+     * @param Request $request
+     * @return Response
+     *
+     * @OA\Put(
+     *      path="/eRPLanguageMasters/{id}",
+     *      summary="updateERPLanguageMaster",
+     *      tags={"ERPLanguageMaster"},
+     *      description="Update ERPLanguageMaster",
+     *      @OA\Parameter(
+     *          name="id",
+     *          description="id of ERPLanguageMaster",
+     *           @OA\Schema(
+     *             type="integer"
+     *          ),
+     *          required=true,
+     *          in="path"
+     *      ),
+     *      @OA\RequestBody(
+     *        required=true,
+     *        @OA\MediaType(
+     *            mediaType="application/x-www-form-urlencoded",
+     *            @OA\Schema(
+     *                type="object",
+     *                required={""},
+     *                @OA\Property(
+     *                    property="name",
+     *                    description="desc",
+     *                    type="string"
+     *                )
+     *            )
+     *        )
+     *      ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @OA\Schema(
+     *              type="object",
+     *              @OA\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @OA\Property(
+     *                  property="data",
+     *                  ref="#/definitions/ERPLanguageMaster"
+     *              ),
+     *              @OA\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function update($id, UpdateERPLanguageMasterAPIRequest $request)
+    {
+        $input = $request->all();
+
+        /** @var ERPLanguageMaster $eRPLanguageMaster */
+        $eRPLanguageMaster = $this->eRPLanguageMasterRepository->findWithoutFail($id);
+
+        if (empty($eRPLanguageMaster)) {
+            return $this->sendError('E R P Language Master not found');
+        }
+
+        $eRPLanguageMaster = $this->eRPLanguageMasterRepository->update($input, $id);
+
+        return $this->sendResponse($eRPLanguageMaster->toArray(), 'ERPLanguageMaster updated successfully');
+    }
+
+    /**
+     * @param int $id
+     * @return Response
+     *
+     * @OA\Delete(
+     *      path="/eRPLanguageMasters/{id}",
+     *      summary="deleteERPLanguageMaster",
+     *      tags={"ERPLanguageMaster"},
+     *      description="Delete ERPLanguageMaster",
+     *      @OA\Parameter(
+     *          name="id",
+     *          description="id of ERPLanguageMaster",
+     *           @OA\Schema(
+     *             type="integer"
+     *          ),
+     *          required=true,
+     *          in="path"
+     *      ),
+     *      @OA\Response(
+     *          response=200,
+     *          description="successful operation",
+     *          @OA\Schema(
+     *              type="object",
+     *              @OA\Property(
+     *                  property="success",
+     *                  type="boolean"
+     *              ),
+     *              @OA\Property(
+     *                  property="data",
+     *                  type="string"
+     *              ),
+     *              @OA\Property(
+     *                  property="message",
+     *                  type="string"
+     *              )
+     *          )
+     *      )
+     * )
+     */
+    public function destroy($id)
+    {
+        /** @var ERPLanguageMaster $eRPLanguageMaster */
+        $eRPLanguageMaster = $this->eRPLanguageMasterRepository->findWithoutFail($id);
+
+        if (empty($eRPLanguageMaster)) {
+            return $this->sendError('E R P Language Master not found');
+        }
+
+        $eRPLanguageMaster->delete();
+
+        return $this->sendSuccess('E R P Language Master deleted successfully');
+    }
+
+    public function storeEmployeeLanguage(Request $request) {
+        $input = $request->input();
+        $employee = Employee::find($input['employeeID']);
+
+        if($this->checkRecordExists($input)) {
+            $data = $this->updateRecord($input);
+            if(!$data) {
+                return $this->sendError('Cannot update data');
+            }
+            return $this->sendResponse($data->toArray(), 'Language updated successfully');
+        }else {
+            $createRecord = EmployeeLanguage::create($input);
+            return $this->sendResponse($createRecord->toArray(), 'Language saved successfully');
+
+        }
+
+
+
+    }
+
+    public function updateRecord($input) {
+        $record = EmployeeLanguage::where('employeeID',$input['employeeID'])->first();
+        $record->languageID = $input['languageID'];
+        $record->save();
+        return ($record) ? $record : false;
+    }
+
+    public function checkRecordExists($input) {
+        $record = EmployeeLanguage::where('employeeID',$input['employeeID'])->first();
+        return ($record) ? true : false;
+    }
+}

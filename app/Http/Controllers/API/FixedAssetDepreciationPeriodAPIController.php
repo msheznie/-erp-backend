@@ -282,6 +282,8 @@ class FixedAssetDepreciationPeriodAPIController extends AppBaseController
 
     public function getAssetDepPeriodsByID(Request $request)
     {
+        ini_set('max_execution_time', 5000);
+        ini_set('memory_limit', '1024M');
         $input = $request->all();
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {

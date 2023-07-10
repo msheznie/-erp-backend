@@ -9,6 +9,7 @@ use App\Repositories\AssetRequestDetailRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use App\Models\AssetRequest;
+use App\Models\CompanyPolicyMaster;
 use App\Models\FixedAssetMaster;
 use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -314,7 +315,21 @@ class AssetRequestDetailAPIController extends AppBaseController
         GROUP BY erp_fa_fa_asset_request_detail_id) transferedQty ON transferedQty.requestDetailID = erp_fa_fa_asset_request_details.id
         WHERE company_id = $companyID AND erp_fa_fa_asset_request_id = $assetRequestMasterID HAVING qty > 0");
 
-        return $this->sendResponse($assetRequestDetail, 'Asset request detail data retrieved successfully');
+        $allowItemToTypePolicy = false;
+        $allowItemToType = CompanyPolicyMaster::where('companyPolicyCategoryID', 75)
+                                            ->where('companySystemID', $companyID)
+                                            ->first();
+
+        if ($allowItemToType) {
+            if ($allowItemToType->isYesNO) {
+                $allowItemToTypePolicy = true;
+            }
+        }
+        $data = [
+            'assetRequestDetail'=> $assetRequestDetail,
+            'allowItemToTypePolicy'=> $allowItemToTypePolicy
+        ];
+        return $this->sendResponse($data, 'Asset request detail data retrieved successfully');
     }
     public function getAssetDropData(Request $request){ 
         $input = $request->all();
