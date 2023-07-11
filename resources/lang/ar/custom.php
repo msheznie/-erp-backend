@@ -553,4 +553,7 @@ return [
     "work" => "عمل",
     "direct" => "مباشر",
     "requisition" => "طلب",
+    'material_request_voucher'=> 'قسيمة طلب مواد',
+    'qty_requested'=> 'الكمية المطلوبة',
+    'requested_by'=> 'طلب بواسطة'
 ];

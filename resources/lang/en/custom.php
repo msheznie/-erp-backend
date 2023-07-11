@@ -552,4 +552,7 @@ return [
     "work" => "Work",
     "direct" => "Direct",
     "requisition" => "Requisition",
+    'material_request_voucher'=> 'Material Request Voucher',
+    'qty_requested'=> 'Qty Requested',
+    'requested_by'=> 'Requested By'
 ];
