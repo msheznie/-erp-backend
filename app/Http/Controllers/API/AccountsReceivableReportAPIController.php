@@ -5002,7 +5002,7 @@ AND erp_generalledger.documentRptAmount > 0 AND erp_generalledger.glAccountTypeI
                                 ) AS revenueCustomerDetail
                                 LEFT JOIN customermaster ON revenueCustomerDetail.mySupplierCode = customermaster.customerCodeSystem
                                 WHERE (revenueCustomerDetail.mySupplierCode IN (' . join(',', $customerSystemID) . ')' . $nullCustomer . ')
-                                GROUP BY customermaster.customerCodeSystem, serviceLineSystemID, chartOfAccountSystemID,documentSystemID,documentSystemCode');
+                                GROUP BY customermaster.customerCodeSystem, serviceLineSystemID, chartOfAccountSystemID,documentSystemID,documentSystemCode, documentNarration');
 
         return $output;
     }
