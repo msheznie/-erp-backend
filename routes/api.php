@@ -1702,6 +1702,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('printCustomerInvoice', 'CustomerInvoiceDirectAPIController@printCustomerInvoice');
         Route::get('printReceiptVoucher', 'CustomerReceivePaymentAPIController@printReceiptVoucher');
         Route::get('printPaymentVoucher', 'PaySupplierInvoiceMasterAPIController@printPaymentVoucher');
+        Route::get('printMaterielRequest', 'MaterielRequestAPIController@printMaterielRequest');
     });
 
     Route::get('getPoLogisticPrintPDF', 'PoAdvancePaymentAPIController@getPoLogisticPrintPDF')->name('Get procurement order logistic print pdf');
@@ -1722,7 +1723,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     Route::get('printBankReconciliation', 'BankReconciliationAPIController@printBankReconciliation');
     Route::get('printChequeItems', 'BankLedgerAPIController@printChequeItems');
     Route::get('printSuppliers', 'SupplierMasterAPIController@printSuppliers');
-    Route::get('printMaterielRequest', 'MaterielRequestAPIController@printMaterielRequest');
     Route::get('exportPaymentBankTransfer', 'PaymentBankTransferAPIController@exportPaymentBankTransfer');
     Route::get('printJournalVoucher', 'JvMasterAPIController@printJournalVoucher');
     Route::get('printPaymentMatching', 'MatchDocumentMasterAPIController@printPaymentMatching');

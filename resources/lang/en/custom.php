@@ -537,4 +537,8 @@ return [
     'invoice_code' => 'Invoice Code',
     'net_total' => 'Net Total',
     'order_code'=> 'Order Code',
+
+    'material_request_voucher'=> 'Material Request Voucher',
+    'qty_requested'=> 'Qty Requested',
+    'requested_by'=> 'Requested By'
 ];
