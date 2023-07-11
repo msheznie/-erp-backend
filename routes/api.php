@@ -1680,6 +1680,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('printCustomerInvoice', 'CustomerInvoiceDirectAPIController@printCustomerInvoice');
         Route::get('printReceiptVoucher', 'CustomerReceivePaymentAPIController@printReceiptVoucher');
         Route::get('printPaymentVoucher', 'PaySupplierInvoiceMasterAPIController@printPaymentVoucher');
+        Route::get('printPurchaseRequest', 'PurchaseRequestAPIController@printPurchaseRequest');
         Route::get('printMaterielRequest', 'MaterielRequestAPIController@printMaterielRequest');
     });
 
@@ -1687,7 +1688,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     Route::post('getReportPDF', 'ReportAPIController@pdfExportReport');
     Route::post('generateARReportPDF', 'AccountsReceivableReportAPIController@pdfExportReport');
     Route::post('generateAPReportPDF', 'AccountsPayableReportAPIController@pdfExportReport');
-    Route::get('printPurchaseRequest', 'PurchaseRequestAPIController@printPurchaseRequest');
     Route::get('printItemReturn', 'ItemReturnMasterAPIController@printItemReturn');
     Route::get('printStockReceive', 'StockReceiveAPIController@printStockReceive');
     Route::get('printStockTransfer', 'StockTransferAPIController@printStockTransfer');
