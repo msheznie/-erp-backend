@@ -9036,4 +9036,25 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
         return $this->sendResponse(['notifyCutOffDate' => $notifyCutOffDate, 'messages' => $notifyCutOffDateMessages], 'cut off date checked successfully!!');
     }
+
+    public function procumentOrderTotals(Request $request)
+    {
+        $input = $request->all();
+
+        $purchaseOrderID = $input['purchaseOrderID'];
+
+        $totalSubOrderAmountPreview = PurchaseOrderDetails::where('purchaseOrderMasterID', $purchaseOrderID)
+            ->sum('netAmount');
+
+        $totalVat = PurchaseOrderDetails::selectRaw('SUM(VATAmount * noQty) as totalVat')
+            ->where('purchaseOrderMasterID', $purchaseOrderID)->first()
+            ->totalVat;
+        if(empty($totalVat)){
+            $totalVat = 0;
+        }
+
+        $procumentArray = (['totalSubOrderAmountPreview' => $totalSubOrderAmountPreview, 'totalVat' => $totalVat]);
+
+        return $this->sendResponse($procumentArray, 'Data retrieved successfully');
+    }
 }
