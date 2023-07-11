@@ -78,3 +78,15 @@ Route::group([], function(){
 
 
 });
+
+
+//transaction - Asset Disposal
+Route::group([], function(){
+    Route::get('getDisposalFormData', 'AssetDisposalMasterAPIController@getDisposalFormData')->name("Get Asset Disposal Data");
+    Route::post('getAllDisposalByCompany', 'AssetDisposalMasterAPIController@getAllDisposalByCompany')->name("Get Asset Disposal By Company");
+    Route::resource('asset_disposal_masters', 'AssetDisposalMasterAPIController');
+    Route::get('getAssetDisposalDetail', 'AssetDisposalDetailAPIController@getAssetDisposalDetail')->name("Get Disposal Details");
+    Route::post('getAllAssetsForDisposal', 'AssetDisposalMasterAPIController@getAllAssetsForDisposal')->name("Get Asset from Disposal");
+    Route::resource('asset_disposal_details', 'AssetDisposalDetailAPIController');
+
+});

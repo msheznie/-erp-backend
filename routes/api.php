@@ -202,7 +202,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::post('getAllCustomersByCompany', 'CustomerAssignedAPIController@getAllCustomersByCompany');
 
-            Route::get('getCustomerByCompany', 'CustomerMasterAPIController@getCustomerByCompany');
 
             //confirmation
             Route::post('confirmDocument', 'PurchaseRequestAPIController@confirmDocument');
@@ -343,7 +342,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('customer_invoices', 'CustomerInvoiceAPIController');
             Route::resource('accounts_receivable_ledgers', 'AccountsReceivableLedgerAPIController');
       
-            Route::get('getAllFinancePeriodBasedFY', 'CompanyFinancePeriodAPIController@getAllFinancePeriodBasedFY')->name("Get All Finance Period Based FY");
             Route::get('getAllFinancePeriodForYear', 'CompanyFinancePeriodAPIController@getAllFinancePeriodForYear')->name("Get All Finance Period For Year");
             
             Route::resource('item_issue_types', 'ItemIssueTypeAPIController');
@@ -772,16 +770,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('getAllGLCodesByTemplate', 'TemplatesDetailsAPIController@getAllGLCodesByTemplate');
             Route::get('getAllGLCodes', 'TemplatesDetailsAPIController@getAllGLCodes');
             Route::get('getTemplateByGLCode', 'TemplatesDetailsAPIController@getTemplateByGLCode');
-            Route::resource('asset_disposal_masters', 'AssetDisposalMasterAPIController');
-            Route::post('getAllDisposalByCompany', 'AssetDisposalMasterAPIController@getAllDisposalByCompany');
             Route::post('disposalReopen', 'AssetDisposalMasterAPIController@disposalReopen');
-            Route::post('getAllAssetsForDisposal', 'AssetDisposalMasterAPIController@getAllAssetsForDisposal');
             Route::post('referBackDisposal', 'AssetDisposalMasterAPIController@referBackDisposal');
-            Route::get('getDisposalFormData', 'AssetDisposalMasterAPIController@getDisposalFormData');
             Route::post('amendAssetDisposalReview', 'AssetDisposalMasterAPIController@amendAssetDisposalReview');
 
-            Route::get('getAssetDisposalDetail', 'AssetDisposalDetailAPIController@getAssetDisposalDetail');
-            Route::resource('asset_disposal_details', 'AssetDisposalDetailAPIController');
             Route::post('deleteAllDisposalDetail', 'AssetDisposalDetailAPIController@deleteAllDisposalDetail');
             Route::resource('budget_transfer', 'BudgetTransferFormAPIController');
             Route::post('getBudgetTransferApprovedByUser', 'BudgetTransferFormAPIController@getBudgetTransferApprovedByUser');
