@@ -535,5 +535,25 @@ return [
     'direct_receipt' => 'سند قبض مباشر',
 
     'order_code'=> 'Order Code',
-    
+    "priority" => "الاولوية",
+    "requisitioner" => "مقدم الطلب",
+    "location" => "الموقع",
+    "comments" => "تعليقات",
+    "document_no" => "رقم المستند",
+    "date" => "تاريخ",
+    "part_number" => "رقم الجزء / الرقم المرجعي",
+    "qty_requested" => "الكمية المطلوبة",
+    "alt_qnty" => "الكمية البديلة",
+    "qty_on_order" => "الكمية في الطلب",
+    "po_qty" => "PO الكمية",
+    "confirmed_by" => "تم التأكيد بواسطة",
+    'reviewed_by' => 'تمت مراجعته من قبل',
+    'electronically_approved_by' => 'معتمد إلكترونيًا بواسطة',
+    'purchase' => 'مشتريات',
+    "work" => "عمل",
+    "direct" => "مباشر",
+    "requisition" => "طلب",
+    'material_request_voucher'=> 'قسيمة طلب مواد',
+    'qty_requested'=> 'الكمية المطلوبة',
+    'requested_by'=> 'طلب بواسطة'
 ];

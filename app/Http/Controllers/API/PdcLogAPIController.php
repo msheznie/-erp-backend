@@ -10,6 +10,7 @@ use App\Models\CompanyPolicyMaster;
 use App\Models\ChequeTemplateBank;
 use App\Models\BankMaster;
 use App\Models\BankAccount;
+use App\Models\BankLedger;
 use App\helper\Helper;
 use App\Jobs\PdcDoubleEntry;
 use App\Models\ChequeRegisterDetail;
@@ -493,6 +494,13 @@ class PdcLogAPIController extends AppBaseController
         if (!isset($input['documentSystemID']) || (isset($input['documentSystemID']) && is_null($input['documentSystemID']))) {
             return $this->sendError("Document ID not found", 500);
         }
+
+        $checkBankLedger = BankLedger::where('pdcID', $input['id'])->where('trsClearedYN', -1)->first();
+
+        if ($checkBankLedger && $input['newStatus'] == 2) {
+            return $this->sendError("PDC cheque already cleared for treasury, cannot be returned", 500);
+        }
+
 
         DB::beginTransaction();
         try {

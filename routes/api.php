@@ -202,7 +202,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::post('getAllCustomersByCompany', 'CustomerAssignedAPIController@getAllCustomersByCompany');
 
-            Route::get('getCustomerByCompany', 'CustomerMasterAPIController@getCustomerByCompany');
 
             //confirmation
             Route::post('confirmDocument', 'PurchaseRequestAPIController@confirmDocument');
@@ -221,8 +220,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::resource('document_approveds', 'DocumentApprovedAPIController');
 
-            Route::resource('bank_accounts', 'BankAccountAPIController');
-            Route::post('getAllBankAccountByCompany', 'BankAccountAPIController@getAllBankAccountByCompany');
 
             Route::post('getBankBalance', 'BankAccountAPIController@getBankBalance');
             Route::get('getBankAccountsByBankID', 'BankAccountAPIController@getBankAccountsByBankID');
@@ -345,7 +342,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('customer_invoices', 'CustomerInvoiceAPIController');
             Route::resource('accounts_receivable_ledgers', 'AccountsReceivableLedgerAPIController');
       
-            Route::get('getAllFinancePeriodBasedFY', 'CompanyFinancePeriodAPIController@getAllFinancePeriodBasedFY')->name("Get All Finance Period Based FY");
             Route::get('getAllFinancePeriodForYear', 'CompanyFinancePeriodAPIController@getAllFinancePeriodForYear')->name("Get All Finance Period For Year");
             
             Route::resource('item_issue_types', 'ItemIssueTypeAPIController');
@@ -624,10 +620,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('addPaymentVoucherMatchingPaymentDetail', 'PaySupplierInvoiceDetailAPIController@addPaymentVoucherMatchingPaymentDetail');
             Route::post('updatePaymentVoucherMatchingDetail', 'PaySupplierInvoiceDetailAPIController@updatePaymentVoucherMatchingDetail');
 
-            Route::resource('bank_ledgers', 'BankLedgerAPIController');
-            Route::post('updateTreasuryCollection', 'BankLedgerAPIController@updateTreasuryCollection');
-            Route::post('getBankReconciliationsByType', 'BankLedgerAPIController@getBankReconciliationsByType');
-            Route::post('getBankAccountPaymentReceiptByType', 'BankLedgerAPIController@getBankAccountPaymentReceiptByType');
 
             Route::post('getChequePrintingItems', 'BankLedgerAPIController@getChequePrintingItems');
             Route::get('getChequePrintingFormData', 'BankLedgerAPIController@getChequePrintingFormData');
@@ -635,13 +627,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('updatePrintAhliChequeItems', 'BankLedgerAPIController@updatePrintAhliChequeItems');
 
 
-            Route::resource('bank_reconciliations', 'BankReconciliationAPIController');
-            Route::get('getCheckBeforeCreate', 'BankReconciliationAPIController@getCheckBeforeCreate');
-            Route::post('bankRecReopen', 'BankReconciliationAPIController@bankRecReopen');
-            Route::post('bankReconciliationReferBack', 'BankReconciliationAPIController@bankReconciliationReferBack');
 
-            Route::get('getBankReconciliationFormData', 'BankReconciliationAPIController@getBankReconciliationFormData');
-            Route::post('getAllBankReconciliationByBankAccount', 'BankReconciliationAPIController@getAllBankReconciliationByBankAccount');
             Route::post('getAllBankReconciliationList', 'BankReconciliationAPIController@getAllBankReconciliationList');
             Route::post('amendBankReconciliationReview', 'BankReconciliationAPIController@amendBankReconciliationReview');
             Route::post('referBackCosting', 'FixedAssetMasterAPIController@referBackCosting');
@@ -784,16 +770,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('getAllGLCodesByTemplate', 'TemplatesDetailsAPIController@getAllGLCodesByTemplate');
             Route::get('getAllGLCodes', 'TemplatesDetailsAPIController@getAllGLCodes');
             Route::get('getTemplateByGLCode', 'TemplatesDetailsAPIController@getTemplateByGLCode');
-            Route::resource('asset_disposal_masters', 'AssetDisposalMasterAPIController');
-            Route::post('getAllDisposalByCompany', 'AssetDisposalMasterAPIController@getAllDisposalByCompany');
             Route::post('disposalReopen', 'AssetDisposalMasterAPIController@disposalReopen');
-            Route::post('getAllAssetsForDisposal', 'AssetDisposalMasterAPIController@getAllAssetsForDisposal');
             Route::post('referBackDisposal', 'AssetDisposalMasterAPIController@referBackDisposal');
-            Route::get('getDisposalFormData', 'AssetDisposalMasterAPIController@getDisposalFormData');
             Route::post('amendAssetDisposalReview', 'AssetDisposalMasterAPIController@amendAssetDisposalReview');
 
-            Route::get('getAssetDisposalDetail', 'AssetDisposalDetailAPIController@getAssetDisposalDetail');
-            Route::resource('asset_disposal_details', 'AssetDisposalDetailAPIController');
             Route::post('deleteAllDisposalDetail', 'AssetDisposalDetailAPIController@deleteAllDisposalDetail');
             Route::resource('budget_transfer', 'BudgetTransferFormAPIController');
             Route::post('getBudgetTransferApprovedByUser', 'BudgetTransferFormAPIController@getBudgetTransferApprovedByUser');
@@ -944,8 +924,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('getReferBackHistoryByBankTransfer', 'PaymentBankTransferRefferedBackAPIController@getReferBackHistoryByBankTransfer');
             Route::resource('bankTransferDetailRefferedBacks', 'PaymentBankTransferDetailRefferedBackAPIController');
 
-            Route::resource('bankRecRefferedBack', 'BankReconciliationRefferedBackAPIController');
-            Route::post('getReferBackHistoryByBankRec', 'BankReconciliationRefferedBackAPIController@getReferBackHistoryByBankRec');
 
             Route::resource('grvDetailsRefferedbacks', 'GrvDetailsRefferedbackAPIController');
             Route::resource('document_restriction_assigns', 'DocumentRestrictionAssignAPIController');
@@ -1702,13 +1680,14 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::get('printCustomerInvoice', 'CustomerInvoiceDirectAPIController@printCustomerInvoice');
         Route::get('printReceiptVoucher', 'CustomerReceivePaymentAPIController@printReceiptVoucher');
         Route::get('printPaymentVoucher', 'PaySupplierInvoiceMasterAPIController@printPaymentVoucher');
+        Route::get('printPurchaseRequest', 'PurchaseRequestAPIController@printPurchaseRequest');
+        Route::get('printMaterielRequest', 'MaterielRequestAPIController@printMaterielRequest');
     });
 
     Route::get('getPoLogisticPrintPDF', 'PoAdvancePaymentAPIController@getPoLogisticPrintPDF')->name('Get procurement order logistic print pdf');
     Route::post('getReportPDF', 'ReportAPIController@pdfExportReport');
     Route::post('generateARReportPDF', 'AccountsReceivableReportAPIController@pdfExportReport');
     Route::post('generateAPReportPDF', 'AccountsPayableReportAPIController@pdfExportReport');
-    Route::get('printPurchaseRequest', 'PurchaseRequestAPIController@printPurchaseRequest');
     Route::get('printItemReturn', 'ItemReturnMasterAPIController@printItemReturn');
     Route::get('printStockReceive', 'StockReceiveAPIController@printStockReceive');
     Route::get('printStockTransfer', 'StockTransferAPIController@printStockTransfer');
@@ -1722,7 +1701,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     Route::get('printBankReconciliation', 'BankReconciliationAPIController@printBankReconciliation');
     Route::get('printChequeItems', 'BankLedgerAPIController@printChequeItems');
     Route::get('printSuppliers', 'SupplierMasterAPIController@printSuppliers');
-    Route::get('printMaterielRequest', 'MaterielRequestAPIController@printMaterielRequest');
     Route::get('exportPaymentBankTransfer', 'PaymentBankTransferAPIController@exportPaymentBankTransfer');
     Route::get('printJournalVoucher', 'JvMasterAPIController@printJournalVoucher');
     Route::get('printPaymentMatching', 'MatchDocumentMasterAPIController@printPaymentMatching');
