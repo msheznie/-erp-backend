@@ -463,6 +463,7 @@ return [
     'ship_to' => 'Ship To',
     'ship_contact' => 'Ship Contact',
     'invoice_no' => 'Invoice No',
+    'invoice_to' => 'Invoice To',
     'payment_contact' => 'Payment Contact',
     'alt_uom' => 'Alt.UOM',
     'item_qty' => 'Alt.Qty',
