@@ -459,6 +459,7 @@ return [
     'ship_to' => 'شحن إلى',
     'ship_contact' => 'تفاصيل الشخص',
     'invoice_no' => 'رقم الفاتورة',
+    'invoice_to' => 'إصدار الفاتورة إلى',
     'payment_contact' => 'جهة الدفع',
     'alt_uom' => 'وحدة القياس البديلة',
     'item_qty' => 'الكمية البديلة',

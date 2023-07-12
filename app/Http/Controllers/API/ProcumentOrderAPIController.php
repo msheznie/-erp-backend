@@ -297,6 +297,7 @@ class ProcumentOrderAPIController extends AppBaseController
                     $input['soldTocontactPersonTelephone'] = $address['contactPersonTelephone'];
                     $input['soldTocontactPersonFaxNo'] = $address['contactPersonFaxNo'];
                     $input['soldTocontactPersonEmail'] = $address['contactPersonEmail'];
+                    $input['vat_number'] = $address['vat_number'];
                 }
             }
         }
@@ -1847,7 +1848,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $createdDateTime = ($poBasicData) ? Carbon::parse($poBasicData->createdDateTime) : null;
 
-        $output = ProcumentOrder::where('purchaseOrderID', $request->purchaseOrderID)->with(['segment', 'created_by',
+        $output = ProcumentOrder::where('purchaseOrderID', $request->purchaseOrderID)->with(['sold_to','segment', 'created_by',
             'detail' => function ($query) {
                 $query->with(['project','unit','altUom','item'=>function($query1){
                     $query1->select('itemCodeSystem','itemDescription')->with('specification');
@@ -6425,6 +6426,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                         "vatRegisteredYN" => $checkPOMaster->vatRegisteredYN,
                         "createdDateTime" => Carbon::now(),
                         "timeStamp" => Carbon::now(),
+                        "vat_number" => $checkPOMaster->vat_number,
                     ];
 
                     $poMasterDataRes = ProcumentOrder::create($poMasterData);
