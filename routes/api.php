@@ -1821,3 +1821,6 @@ Route::get('viewHrDocuments', 'ThirdPartySystemsDocumentUploadAndDownloadAPICont
  */
 
 
+
+
+Route::resource('asset_warranties', 'AssetWarrantyAPIController');
