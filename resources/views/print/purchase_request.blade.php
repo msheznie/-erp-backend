@@ -344,7 +344,7 @@
                 <td width="60%">
                     <table width="100%">
                         <tr>
-                            <td width="100px">
+                            <td width="110px">
                                 <span style="font-weight:bold;">{{ __('custom.confirmed_by') }} :</span>
                             </td>
                             <td width="400px">
