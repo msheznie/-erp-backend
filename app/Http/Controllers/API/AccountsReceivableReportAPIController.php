@@ -4909,6 +4909,7 @@ AND erp_generalledger.documentRptAmount > 0 AND erp_generalledger.glAccountTypeI
         $showVAT = (isset($request->showVAT) && $request->showVAT) ? 1 : 0;
 
         $output = \DB::select('SELECT
+                                revenueCustomerDetail.GeneralLedgerID,
                                 revenueCustomerDetail.companySystemID,
                                 revenueCustomerDetail.companyID,
                                 revenueCustomerDetail.CompanyName,
@@ -4937,6 +4938,7 @@ AND erp_generalledger.documentRptAmount > 0 AND erp_generalledger.glAccountTypeI
                             FROM
                             (
                             SELECT
+                                erp_generalledger.GeneralLedgerID,
                                 erp_generalledger.companySystemID,
                                 erp_generalledger.companyID,
                                 companymaster.CompanyName,
@@ -5002,7 +5004,7 @@ AND erp_generalledger.documentRptAmount > 0 AND erp_generalledger.glAccountTypeI
                                 ) AS revenueCustomerDetail
                                 LEFT JOIN customermaster ON revenueCustomerDetail.mySupplierCode = customermaster.customerCodeSystem
                                 WHERE (revenueCustomerDetail.mySupplierCode IN (' . join(',', $customerSystemID) . ')' . $nullCustomer . ')
-                                GROUP BY customermaster.customerCodeSystem, serviceLineSystemID, chartOfAccountSystemID,documentSystemID,documentSystemCode, documentNarration');
+                                GROUP BY GeneralLedgerID,customermaster.customerCodeSystem, serviceLineSystemID, chartOfAccountSystemID,documentSystemID,documentSystemCode, documentNarration');
 
         return $output;
     }
