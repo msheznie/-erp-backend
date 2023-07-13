@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use Eloquent as Model;
-
+use Illuminate\Database\Eloquent\SoftDeletes;
 /**
  * @OA\Schema(
  *      schema="AssetWarranty",
@@ -119,7 +119,7 @@ use Eloquent as Model;
  */
 class AssetWarranty extends Model
 {
-
+    use SoftDeletes;
     public $table = 'asset_warranty';
     
     const CREATED_AT = 'created_at';
@@ -160,16 +160,20 @@ class AssetWarranty extends Model
         'createdUserSystemID' => 'integer'
     ];
 
+    protected $hidden = [
+        'createdUserSystemID', 'createdUserID','deleted_at', 'updated_at','created_at',
+    ];
+
     /**
      * Validation rules
      *
      * @var array
      */
     public static $rules = [
-        'warranty_provider' => 'required',
-        'start_date' => 'required',
-        'duration' => 'required',
-        'end_date' => 'required'
+        // 'warranty_provider' => 'required',
+        // 'start_date' => 'required',
+        // 'duration' => 'required',
+        // 'end_date' => 'required'
     ];
 
     

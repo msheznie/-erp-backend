@@ -11,7 +11,7 @@ use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
-
+use Carbon\Carbon;
 /**
  * Class AssetWarrantyController
  * @package App\Http\Controllers\API
@@ -115,10 +115,13 @@ class AssetWarrantyAPIController extends AppBaseController
     public function store(CreateAssetWarrantyAPIRequest $request)
     {
         $input = $request->all();
-
+        $input['start_date'] = new Carbon($input['start_date']);
+        $input['end_date'] = new Carbon($input['end_date']);
+        $input['createdUserID'] = \Helper::getEmployeeID();
+        $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
         $assetWarranty = $this->assetWarrantyRepository->create($input);
 
-        return $this->sendResponse($assetWarranty->toArray(), 'Asset Warranty saved successfully');
+        return $this->sendResponse($input, 'Asset Warranty saved successfully');
     }
 
     /**
@@ -237,10 +240,11 @@ class AssetWarrantyAPIController extends AppBaseController
         if (empty($assetWarranty)) {
             return $this->sendError('Asset Warranty not found');
         }
-
+        $input['start_date'] = new Carbon($input['start_date']);
+        $input['end_date'] = new Carbon($input['end_date']);
         $assetWarranty = $this->assetWarrantyRepository->update($input, $id);
 
-        return $this->sendResponse($assetWarranty->toArray(), 'AssetWarranty updated successfully');
+        return $this->sendResponse($assetWarranty->toArray(), 'Asset Warranty Updated Successfully');
     }
 
     /**
@@ -292,7 +296,41 @@ class AssetWarrantyAPIController extends AppBaseController
         }
 
         $assetWarranty->delete();
+        return $this->sendResponse(true, 'Asset Warranty deleted successfully');
 
-        return $this->sendSuccess('Asset Warranty deleted successfully');
+    }
+
+    public function getWarranty(Request $request)
+    {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $code = $input['documentSystemCode'];
+        $assetWarranty = AssetWarranty::where('documentSystemCode',$code);
+
+        $search = $request->input('search.value');
+        if ($search) {
+            $assetWarranty = $assetWarranty->where(function ($query) use ($search) {
+                $query->orWhere('warranty_provider', 'LIKE', "%{$search}%");
+            });
+        }
+
+
+        return \DataTables::eloquent($assetWarranty)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('id', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
     }
 }
