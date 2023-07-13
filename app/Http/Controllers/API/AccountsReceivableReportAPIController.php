@@ -243,20 +243,13 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     'fromDate' => 'required',
                     'reportTypeID' => 'required',
                     'currencyID' => 'required',
-                    'year' => 'required',
                     'customers' => 'required'
                 ]);
-
-                $fromDate = new Carbon($request->fromDate);
-                $fromDate = $fromDate->format('d/m/Y');
-                $year = explode("/", $fromDate);
 
                 if ($validator->fails()) {
                     return $this->sendError($validator->messages(), 422);
                 }
-                if ($year['2'] != $request->year) {
-                    return $this->sendError(trans('custom.not_in_selected_year'));
-                }
+
 
                 break;
             case 'CNR':
@@ -5246,7 +5239,8 @@ AND erp_generalledger.documentRptAmount > 0 AND erp_generalledger.glAccountTypeI
         $controlAccountsSystemID = $request->controlAccountsSystemID;
 
         $currency = $request->currencyID;
-        $year = $request->year;
+        $year = date('Y', strtotime($asOfDate));
+
 
         $currencyClm = "MyRptAmount";
 
@@ -5389,7 +5383,7 @@ AND erp_generalledger.documentRptAmount > 0 AND erp_generalledger.glAccountTypeI
         //$fromDate = $fromDate->addDays(1);
         $fromDate = $fromDate->format('Y-m-d');
 
-        $fromYear = $request->year;
+        $fromYear = date('Y', strtotime($fromDate));
 
         $companyID = "";
         $checkIsGroup = Company::find($request->companySystemID);
@@ -6151,7 +6145,7 @@ GROUP BY
 
 
         $currency = $request->currencyID;
-        $year = $request->year;
+        $year = date('Y', strtotime($asOfDate));
 
         $currencyClm = "MyRptAmount";
 
