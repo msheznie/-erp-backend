@@ -2960,8 +2960,22 @@ class PurchaseRequestAPIController extends AppBaseController
         return $this->sendResponse($output,'Success');
     }
 
+    public function getPurchaseRequestTotal(Request $request)
+    {
+        $input = $request->all();
 
-     public function downloadPrItemUploadTemplate(Request $request)
+        $purchaseRequestID = $input['purchaseRequestID'];
+
+        $totalAmount = PurchaseRequestDetails::where('purchaseRequestID', $purchaseRequestID)
+            ->sum('totalCost');
+
+        $purchaseArray = (['totalAmount' => $totalAmount]);
+
+        return $this->sendResponse($purchaseArray, 'Data retrieved successfully');
+    }
+
+
+        public function downloadPrItemUploadTemplate(Request $request)
     {
         $input = $request->all();
         $disk =Helper::policyWiseDisk($input['companySystemID'], 'public');

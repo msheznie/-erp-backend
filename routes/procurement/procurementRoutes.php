@@ -39,6 +39,7 @@ Route::group([], function() {
     Route::get('manualClosePurchaseRequestPreCheck', 'PurchaseRequestAPIController@manualClosePurchaseRequestPreCheck')->name('Manual close purchase request precheck');
     Route::get('getWarehouseStockDetails', 'PurchaseRequestDetailsAPIController@getWarehouseStockDetails')->name('Get warehouse stock details');
     Route::get('getWarehouse', 'PurchaseRequestAPIController@getWarehouse')->name('Get purchase request warehouse');
+    Route::get('getPurchaseRequestTotal', 'PurchaseRequestAPIController@getPurchaseRequestTotal')->name('Get purchase request total');
     Route::get('exportPurchaseHistory', 'PurchaseOrderDetailsAPIController@exportPurchaseHistory')->name('Export Purchase History');
 
     Route::post('pull-mr-details', 'PurchaseRequestAPIController@pullMrDetails')->name('Pull mr details');
@@ -109,7 +110,8 @@ Route::group([], function() {
     Route::get('ProcurementOrderAudit', 'ProcumentOrderAPIController@ProcurementOrderAudit')->name('Procurement order audit');
     Route::get('getPurchaseOrderDetailForGRV', 'PurchaseOrderDetailsAPIController@getPurchaseOrderDetailForGRV')->name('Get purchase order detail for grv');
     Route::get('getLogisticPrintDetail', 'PoAdvancePaymentAPIController@getLogisticPrintDetail')->name('Get logistic print detail');
-    
+    Route::get('procumentOrderTotals', 'ProcumentOrderAPIController@procumentOrderTotals')->name('Procurement order totals');
+
 
     Route::post('allocateExpectedDeliveryDates', 'PoDetailExpectedDeliveryDateAPIController@allocateExpectedDeliveryDates')->name('Allocate expected delivery dates');
     Route::post('getAllocatedExpectedDeliveryDates', 'PoDetailExpectedDeliveryDateAPIController@getAllocatedExpectedDeliveryDates')->name('Get allocated expected delivery dates');
