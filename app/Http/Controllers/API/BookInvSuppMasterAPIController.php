@@ -3191,4 +3191,23 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
         return $this->sendResponse($directCustomerInvoices, 'Data retrieved successfully');
     }
 
+
+    public function getPurchaseOrdersLikedWithSi(Request $request)
+    {
+        $input = $request->all();
+
+        $siData = BookInvSuppDet::where('bookingSuppMasInvAutoID', $input['invoiceID'])
+                               ->groupBy('purchaseOrderID')
+                               ->whereNotNull('purchaseOrderID')
+                               ->get();
+
+        $poIds = count($siData) > 0 ? $siData->pluck('purchaseOrderID') : [];
+
+        $purchaseOrders = ProcumentOrder::selectRaw('purchaseOrderID as value, purchaseOrderCode as label')
+                                        ->whereIn('purchaseOrderID', $poIds)
+                                        ->get();
+
+
+        return $this->sendResponse($purchaseOrders, 'Data retrieved successfully');
+    }
 }
