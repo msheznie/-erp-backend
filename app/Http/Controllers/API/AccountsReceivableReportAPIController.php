@@ -1385,7 +1385,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
 
                     $reportData = array(
                         'fromDate' =>$request->fromDate,
-                        'year' =>$request->year,
+                        'year' =>date('Y', strtotime($request->fromDate)),
                         'revenueData' => $outputRevenue,
                         'outputCollection' => $outputCollection,
                         'outputOutstanding' => $outputOutstanding,
