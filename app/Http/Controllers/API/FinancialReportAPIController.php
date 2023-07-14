@@ -3100,7 +3100,7 @@ srp_erp_ioubookingmaster.approvedYN = 1
                                     $data[$x]['Company ID'] = $val->companyID;
                                     $data[$x]['Company Name'] = $val->CompanyName;
                                     $data[$x]['GL  Type'] = $val->glAccountType;
-                                    $data[$x]['Template Description'] = $val->templateDetailDescription;
+                                    $data[$x]['Template Description'] = $val->templateDescription;
                                     $data[$x]['Document Type'] = $val->documentID;
                                     $data[$x]['Document Number'] = $val->documentCode;
                                     $data[$x]['Date'] = \Helper::dateFormat($val->documentDate);
@@ -3333,7 +3333,7 @@ srp_erp_ioubookingmaster.approvedYN = 1
                             $data[$x]['GL Code'] = $val->glCode;
                             $data[$x]['Account Description'] = $val->AccountDescription;
                             $data[$x]['GL  Type'] = $val->glAccountType;
-                            $data[$x]['Template Description'] = $val->templateDetailDescription;
+                            $data[$x]['Template Description'] = $val->templateDescription;
                             $data[$x]['Document Type'] = $val->documentID;
                             $data[$x]['Document Number'] = $val->documentCode;
                             $data[$x]['Date'] = \Helper::dateFormat($val->documentDate);
@@ -4735,6 +4735,7 @@ srp_erp_ioubookingmaster.approvedYN = 1
                         erp_generalledger.documentFinalApprovedDate,
                         erp_templatesglcode.templateMasterID,
                         erp_templatesdetails.templateDetailDescription,
+                        erp_companyreporttemplatedetails.description as templateDescription,
                     IF
                         ( documentLocalAmount > 0, documentLocalAmount, 0 ) AS localDebit,
                     IF
@@ -4759,6 +4760,7 @@ srp_erp_ioubookingmaster.approvedYN = 1
                                   WHERE erp_templatesmaster.isActive = -1 AND  erp_templatesmaster.isBudgetUpload = -1
                         )
                         LEFT JOIN erp_templatesdetails ON erp_templatesdetails.templatesDetailsAutoID = erp_templatesglcode.templatesDetailsAutoID 
+                        LEFT JOIN erp_companyreporttemplatedetails ON erp_companyreporttemplatedetails.detID = chartofaccounts.reportTemplateCategory 
                     WHERE
                         erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
                         AND DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"
@@ -4795,6 +4797,7 @@ srp_erp_ioubookingmaster.approvedYN = 1
                         erp_generalledger.documentFinalApprovedDate,
                         erp_templatesglcode.templateMasterID,
                         erp_templatesdetails.templateDetailDescription,
+                        erp_companyreporttemplatedetails.description as templateDescription,
                         sum( IF ( documentLocalAmount > 0, documentLocalAmount, 0 ) ) AS localDebit,
                         sum( IF ( documentLocalAmount < 0, ( documentLocalAmount *- 1 ), 0 ) ) AS localCredit,
                         erp_generalledger.documentRptCurrencyID,
@@ -4814,6 +4817,7 @@ srp_erp_ioubookingmaster.approvedYN = 1
                                   WHERE erp_templatesmaster.isActive = -1 AND  erp_templatesmaster.isBudgetUpload = -1
                         )
                         LEFT JOIN erp_templatesdetails ON erp_templatesdetails.templatesDetailsAutoID = erp_templatesglcode.templatesDetailsAutoID
+                        LEFT JOIN erp_companyreporttemplatedetails ON erp_companyreporttemplatedetails.detID = chartofaccounts.reportTemplateCategory 
                         WHERE
                         erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
                         AND erp_generalledger.glAccountTypeID = 1
