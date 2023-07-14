@@ -154,7 +154,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
      */
     public function store(CreateDocumentAttachmentsAPIRequest $request)
     {
-     //   DB::beginTransaction();
+       DB::beginTransaction();
         try {
 
             $input = $request->all();
@@ -233,10 +233,10 @@ class DocumentAttachmentsAPIController extends AppBaseController
             $documentAttachments = $this->documentAttachmentsRepository->update($input, $documentAttachments->attachmentID);
             
 
-          //  DB::commit();
+            DB::commit();
             return $this->sendResponse($documentAttachments->toArray(), 'Document Attachments saved successfully');
         } catch (\Exception $exception) {
-           // DB::rollBack();
+            DB::rollBack();
             return $this->sendError('Unable to upload the attachment', 500);
         }
     }
