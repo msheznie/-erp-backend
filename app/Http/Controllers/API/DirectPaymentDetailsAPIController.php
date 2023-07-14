@@ -42,6 +42,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\DB;
 use App\Models\ExpenseAssetAllocation;
+use App\Models\ExpenseEmployeeAllocation;
 
 
 /**
@@ -449,6 +450,15 @@ class DirectPaymentDetailsAPIController extends AppBaseController
 
             
             if ($allocatedSum > $input['DPAmount']) {
+                return $this->sendError("Allocated amount cannot be greater than the detail amount.");
+            }
+            
+            $allocatedQtySum = ExpenseEmployeeAllocation::where('documentDetailID', $input['directPaymentDetailsID'])
+            ->where('documentSystemID', $payMaster->documentSystemID)
+            ->where('documentSystemCode', $input['directPaymentAutoID'])
+            ->sum('amount');
+
+            if ($allocatedQtySum > $input['DPAmount']) {
                 return $this->sendError("Allocated amount cannot be greater than the detail amount.");
             }
            

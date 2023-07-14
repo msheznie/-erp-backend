@@ -1664,6 +1664,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('store-employee-language', 'ERPLanguageMasterAPIController@storeEmployeeLanguage');
 
 
+            Route::get('getPurchaseOrdersLikedWithSi', 'BookInvSuppMasterAPIController@getPurchaseOrdersLikedWithSi');
         
         });
     });

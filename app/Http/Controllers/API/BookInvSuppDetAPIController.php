@@ -21,6 +21,7 @@ use App\Models\SupplierAssigned;
 use App\Models\Company;
 use App\Models\GRVMaster;
 use App\Models\CompanyPolicyMaster;
+use App\Models\DirectInvoiceDetails;
 use App\Models\GeneralLedger;
 use App\Models\SupplierInvoiceItemDetail;
 use App\Models\GRVDetails;
@@ -434,6 +435,17 @@ class BookInvSuppDetAPIController extends AppBaseController
         $unbilledgrvAutoID = $bookInvSuppDet->unbilledgrvAutoID;
         $poMasterAutoID = $bookInvSuppDet->purchaseOrderID;
         $documentCurrencyDecimalPlace =  $bookInvSuppDet->supplierTransactionCurrencyID;
+
+
+        if ($poMasterAutoID > 0) {
+            $checkExtraCharges = DirectInvoiceDetails::where('directInvoiceAutoID', $bookInvSuppDet->bookingSuppMasInvAutoID)
+                                                     ->where('purchaseOrderID', $poMasterAutoID)
+                                                     ->first();
+
+            if ($checkExtraCharges) {
+                return $this->sendError("Extra charges has been liked with this PO. Please delete extra charge and continue",500);
+            }
+        }
 
         $bookInvSuppDet->delete();
 

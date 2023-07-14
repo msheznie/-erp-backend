@@ -142,7 +142,7 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
                 return $this->sendError("Supplier invoice detail not found");
             }
 
-            $detailTotal = $directDetail->netAmount + $directDetail->VATAmount;
+            $detailTotal = $directDetail->netAmount;
 
             $input['chartOfAccountSystemID'] = $directDetail->chartOfAccountSystemID;
             $companySystemID = isset($directDetail->supplier_invoice_master->companySystemID) ? $directDetail->supplier_invoice_master->companySystemID : null;
