@@ -154,7 +154,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
      */
     public function store(CreateDocumentAttachmentsAPIRequest $request)
     {
-       DB::beginTransaction();
+        DB::beginTransaction();
         try {
 
             $input = $request->all();
