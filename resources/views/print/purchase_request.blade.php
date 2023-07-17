@@ -361,7 +361,7 @@
                 <td width="30%">
                     <table>
                         <tr>
-                            <td width="100px">
+                            <td width="200px">
                                 <span style="font-weight:bold;">{{ __('custom.reviewed_by') }} :</span>
                             </td>
                             <td>
