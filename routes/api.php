@@ -500,7 +500,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('rig_masters', 'RigMasterAPIController');
 
 
-            Route::get('getDirectInvoiceGL', 'ChartOfAccountsAssignedAPIController@getDirectInvoiceGL')->name("Get Direct Invoice GL");
             Route::get('getGLForJournalVoucherDirect', 'ChartOfAccountsAssignedAPIController@getGLForJournalVoucherDirect');
 
 
@@ -646,16 +645,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('performa_temps', 'PerformaTempAPIController');
             Route::resource('free_billings', 'FreeBillingAPIController');
 
-            Route::resource('asset_capitalizations', 'AssetCapitalizationAPIController');
-            Route::post('getAllCapitalizationByCompany', 'AssetCapitalizationAPIController@getAllCapitalizationByCompany');
-            Route::get('getCapitalizationFormData', 'AssetCapitalizationAPIController@getCapitalizationFormData');
-            Route::get('getAssetByCategory', 'AssetCapitalizationAPIController@getAssetByCategory');
-            Route::get('getAssetNBV', 'AssetCapitalizationAPIController@getAssetNBV');
             Route::post('capitalizationReopen', 'AssetCapitalizationAPIController@capitalizationReopen');
             Route::post('referBackCapitalization', 'AssetCapitalizationAPIController@referBackCapitalization');
-            Route::get('getAssetCapitalizationMaster', 'AssetCapitalizationAPIController@getAssetCapitalizationMaster');
-            Route::resource('asset_capitalization_details', 'AssetCapitalizationDetailAPIController');
-            Route::get('getCapitalizationDetails', 'AssetCapitalizationDetailAPIController@getCapitalizationDetails');
             Route::post('deleteAllAssetCapitalizationDet', 'AssetCapitalizationDetailAPIController@deleteAllAssetCapitalizationDet');
 
             Route::resource('journalVoucherCRUD', 'JvMasterAPIController');

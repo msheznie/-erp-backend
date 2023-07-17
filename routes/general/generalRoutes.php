@@ -60,4 +60,5 @@ Route::post('exportTransactionsRecord', 'TransactionsExportExcel@exportRecord')-
 Route::post('getDocumentDetails', 'PurchaseRequestAPIController@getDocumentDetails')->name("Get Document Details");
 Route::get('getAllFinancePeriodBasedFY', 'CompanyFinancePeriodAPIController@getAllFinancePeriodBasedFY')->name("Get All Finance Period Based FY");
 Route::get('getCustomerByCompany', 'CustomerMasterAPIController@getCustomerByCompany')->name("Get Customer By Company");
+Route::get('getDirectInvoiceGL', 'ChartOfAccountsAssignedAPIController@getDirectInvoiceGL')->name("Get Direct Invoice GL");
 
