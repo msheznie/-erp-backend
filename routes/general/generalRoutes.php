@@ -61,3 +61,5 @@ Route::post('getDocumentDetails', 'PurchaseRequestAPIController@getDocumentDetai
 Route::get('getAllFinancePeriodBasedFY', 'CompanyFinancePeriodAPIController@getAllFinancePeriodBasedFY')->name("Get All Finance Period Based FY");
 Route::get('getCustomerByCompany', 'CustomerMasterAPIController@getCustomerByCompany')->name("Get Customer By Company");
 
+Route::get('getBankAccount', 'PaySupplierInvoiceMasterAPIController@getBankAccount')->name('Get bank account');
+
