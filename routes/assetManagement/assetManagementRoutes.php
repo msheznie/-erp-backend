@@ -91,3 +91,20 @@ Route::group([], function(){
     Route::resource('asset_disposal_details', 'AssetDisposalDetailAPIController');
 
 });
+
+
+//transaction - Asset Capitalization
+Route::group([], function(){
+    Route::get('getCapitalizationFormData', 'AssetCapitalizationAPIController@getCapitalizationFormData')->name("Get Asset Capitalization Form Data");
+    Route::post('getAllCapitalizationByCompany', 'AssetCapitalizationAPIController@getAllCapitalizationByCompany')->name("Get Asset Capitalization By Company");
+    Route::resource('asset_capitalizations', 'AssetCapitalizationAPIController');
+    Route::get('getAssetByCategory', 'AssetCapitalizationAPIController@getAssetByCategory')->name("Get Asset By Category");
+    Route::get('getCapitalizationDetails', 'AssetCapitalizationDetailAPIController@getCapitalizationDetails')->name("Get Asset Capitalization Details");
+    Route::resource('asset_capitalization_details', 'AssetCapitalizationDetailAPIController');
+    Route::get('getAssetNBV', 'AssetCapitalizationAPIController@getAssetNBV')->name("Get Asset NBV");
+    Route::get('getAssetCapitalizationMaster', 'AssetCapitalizationAPIController@getAssetCapitalizationMaster')->name("Get Asset Capitalization Master");
+
+});
+
+
+
