@@ -1532,7 +1532,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                         $data['timestamp'] = \Helper::currentDateTime();
                         $data['matchDocumentMasterAutoID'] = $matchDocumentMaster->matchDocumentMasterAutoID;
 
-                        array_push($finalData, $data);
+                        // array_push($finalData, $data);
 
                         $exchangeGainServiceLine = SegmentMaster::where('companySystemID',$PaySupplierInvoiceMasterExData->companySystemID)
                             ->where('isPublic',1)
