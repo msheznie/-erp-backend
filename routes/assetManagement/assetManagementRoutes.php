@@ -106,5 +106,21 @@ Route::group([], function(){
 
 });
 
+//transaction - Asset Verification
+Route::group([], function(){
+    Route::get('getVerificationFormData', 'AssetVerificationAPIController@getVerificationFormData')->name("Get Asset Verification Form data");
+    Route::post('getAllAssetVerification', 'AssetVerificationAPIController@index')->name("Get Asset Verification");
+    Route::post('storeVerification', 'AssetVerificationAPIController@store')->name("Store Asset Verification");
+    Route::delete('deleteAssetVerification/{id}', 'AssetVerificationAPIController@destroy')->name("Delete Asset Verification");
+    Route::get('getVerificationById/{id}', 'AssetVerificationAPIController@show')->name("Get VerificationBy Id");
+    Route::post('getVerificationDetailsById', 'AssetVerificationDetailAPIController@index')->name("Get Verification detailed by Id");
+    Route::post('getAllCostingByCompanyForVerification', 'AssetVerificationAPIController@getAllCostingByCompanyForVerification')->name("Get All Costing By Company For Verification");
+    Route::post('addAssetToVerification/{id}', 'AssetVerificationDetailAPIController@store')->name("Add Asset To Verification");
+    Route::delete('deleteAssetFromVerification/{id}', 'AssetVerificationDetailAPIController@destroy')->name("Delete Asset From Verification");
+    Route::put('updateAssetVerification/{id}', 'AssetVerificationAPIController@update')->name("Update Asset Verification");
+
+
+});
+
 
 
