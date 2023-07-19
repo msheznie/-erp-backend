@@ -65,3 +65,8 @@ Route::group([], function() {
     Route::resource('cheque_register_details', 'ChequeRegisterDetailAPIController');
 
 });
+
+//Bank Reconciliation
+Route::group([],function () {
+    Route::post('getAllBankReconciliationList', 'BankReconciliationAPIController@getAllBankReconciliationList')->name('Get all bank reconciliation list');
+});
