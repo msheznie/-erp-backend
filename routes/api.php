@@ -88,8 +88,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::group(['middleware' => 'max_memory_limit'], function () {
                 Route::group(['middleware' => 'max_execution_limit'], function () {
-                    Route::post('generateAMReport', 'AssetManagementReportAPIController@generateReport');
-                    Route::post('exportAMReport', 'AssetManagementReportAPIController@exportReport');
                     Route::resource('fixed_asset_depreciation_masters', 'FixedAssetDepreciationMasterAPIController');
                     Route::post('getAssetDepPeriodsByID', 'FixedAssetDepreciationPeriodAPIController@getAssetDepPeriodsByID');
                     Route::post('exportAssetMaster', 'FixedAssetMasterAPIController@exportAssetMaster');
@@ -263,8 +261,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('exportARReport', 'AccountsReceivableReportAPIController@exportReport');
             Route::get('getAcountReceivableFilterData', 'AccountsReceivableReportAPIController@getAcountReceivableFilterData');
 
-            Route::post('validateAMReport', 'AssetManagementReportAPIController@validateReport');
-            Route::get('getAssetManagementFilterData', 'AssetManagementReportAPIController@getFilterData');
             Route::post('assetRegisterDrillDown', 'AssetManagementReportAPIController@getAssetRegisterSummaryDrillDownQRY');
             Route::post('exportAssetRegisterSummaryDrillDown', 'AssetManagementReportAPIController@getAssetRegisterSummaryDrillDownExport');
             Route::post('assetCWIPDrillDown', 'AssetManagementReportAPIController@assetCWIPDrillDown');
