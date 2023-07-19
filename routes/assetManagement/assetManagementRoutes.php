@@ -143,3 +143,18 @@ Route::group([], function(){
 });
 
 
+//report - Asset Register
+Route::group([], function(){
+    Route::get('getAssetManagementFilterData', 'AssetManagementReportAPIController@getFilterData')->name("Get Asset Managment Filter Data");
+    Route::post('validateAMReport', 'AssetManagementReportAPIController@validateReport')->name('Validate Report asset Management');
+    Route::group(['middleware' => 'max_memory_limit'], function () {
+        Route::group(['middleware' => 'max_execution_limit'], function () {
+            
+            Route::post('generateAMReport', 'AssetManagementReportAPIController@generateReport')->name('Generate Report asset Management');
+            Route::post('exportAMReport', 'AssetManagementReportAPIController@exportReport')->name('Export Report asset Management');
+
+        });
+    });
+
+});
+
