@@ -440,8 +440,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('getPaymentVoucherPendingAmountDetails', 'PaySupplierInvoiceMasterAPIController@getPaymentVoucherPendingAmountDetails');
 
 
-            Route::get('getBankAccount', 'PaySupplierInvoiceMasterAPIController@getBankAccount');
-            Route::post('getMultipleAccountsByBank', 'PaySupplierInvoiceMasterAPIController@getMultipleAccountsByBank');
             Route::post('getAllPaymentVoucherByCompany', 'PaySupplierInvoiceMasterAPIController@getAllPaymentVoucherByCompany');
             Route::get('getPaymentVoucherFormData', 'PaySupplierInvoiceMasterAPIController@getPaymentVoucherFormData');
             Route::post('amendPaymentVoucherReview', 'PaySupplierInvoiceMasterAPIController@amendPaymentVoucherReview');
@@ -1073,23 +1071,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             /*Company Document Attachments*/
 
             /* ChequeRegister */
-            Route::resource('cheque_registers', 'ChequeRegisterAPIController');
 
-            Route::resource('cheque_register_details', 'ChequeRegisterDetailAPIController');
 
-            Route::get('getChequeRegisterFormData', 'ChequeRegisterAPIController@getChequeRegisterFormData');
-            Route::post('chequeRegisterStatusChange', 'ChequeRegisterAPIController@chequeRegisterStatusChange');
-            Route::post('checkChequeRegisterStatus', 'ChequeRegisterAPIController@checkChequeRegisterStatus');
-            Route::get('getChequeRegisterByMasterID', 'ChequeRegisterAPIController@getChequeRegisterByMasterID');
 
-            Route::post('getAllChequeRegistersByCompany', 'ChequeRegisterAPIController@getAllChequeRegistersByCompany');
-            Route::get('chequeRegisterDetailsAudit', 'ChequeRegisterDetailAPIController@chequeRegisterDetailsAudit');
-            Route::post('getAllChequeRegisterDetails', 'ChequeRegisterDetailAPIController@getAllChequeRegisterDetails');
-            Route::get('getAllUnusedCheckDetails', 'ChequeRegisterDetailAPIController@getAllUnusedCheckDetails');
-            Route::post('chequeRegisterDetailCancellation', 'ChequeRegisterDetailAPIController@chequeRegisterDetailCancellation');
-            Route::post('chequeRegisterDetailSwitch', 'ChequeRegisterDetailAPIController@chequeRegisterDetailSwitch');
-            Route::get('getChequeSwitchFormData', 'ChequeRegisterDetailAPIController@getChequeSwitchFormData');
-            Route::post('exportChequeRegistry', 'ChequeRegisterAPIController@exportChequeRegistry');
             Route::get('revertChequePrint', 'BankLedgerAPIController@revertChequePrint');
             Route::get('getCancelledDetails', 'PurchaseRequestAPIController@getCancelledDetails');
             Route::get('getClosedDetails', 'PurchaseRequestAPIController@getClosedDetails');
