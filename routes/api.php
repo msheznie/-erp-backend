@@ -1384,30 +1384,16 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             /* Asset Request */
             Route::resource('asset_requests', 'AssetRequestAPIController');
-            Route::post('getAllAssetRequestList', 'AssetRequestAPIController@getAllAssetRequestList');
             Route::get('getItemsOptionForAssetRequest', 'AssetRequestAPIController@getItemsOptionForAssetRequest');
             Route::post('mapLineItemAr', 'AssetRequestAPIController@mapLineItemAr')->name('Map line item Ar');
-            Route::get('asset-request-details', 'AssetRequestDetailAPIController@getAssetRequestDetails');
-            Route::get('getassetRequestMaster', 'AssetRequestDetailAPIController@getAssetRequestMaster');
-            Route::get('getassetRequestDetailSelected', 'AssetRequestDetailAPIController@getAssetRequestDetailSelected');
-            Route::get('getAssetDropData', 'AssetRequestDetailAPIController@getAssetDropData');
 
             /* Asset Transfer */
-            Route::resource('asset_transfer', 'ERPAssetTransferAPIController');
-            Route::post('getAllAssetTransferList', 'ERPAssetTransferAPIController@getAllAssetTransferList');
-            Route::get('fetch-asset-transfer-master/{id}', 'ERPAssetTransferAPIController@fetchAssetTransferMaster');
-            Route::post('add-asset-transfer-detail/{id}', 'ERPAssetTransferDetailAPIController@store');
-            Route::get('get-employee-asset-transfer-details/{id}', 'ERPAssetTransferDetailAPIController@get_employee_asset_transfer_details');
-            Route::resource('asset_transfer_detail', 'ERPAssetTransferDetailAPIController');
             Route::get('asset-transfer-drop', 'ERPAssetTransferDetailAPIController@assetTransferDrop');
             Route::get('typeAheadAssetDrop', 'ERPAssetTransferDetailAPIController@typeAheadAssetDrop');
             Route::post('add-employee-asset-transfer-asset-detail/{id}', 'ERPAssetTransferDetailAPIController@addEmployeeAsset');
-            Route::get('getAssetTransferData', 'ERPAssetTransferAPIController@getAssetTransferData');
             Route::post('asset_transfer_detail_asset', 'ERPAssetTransferDetailAPIController@assetTransferDetailAsset');
             Route::get('getAssetDropPR', 'ERPAssetTransferAPIController@getAssetDropPR');
             Route::get('asset-location-value', 'ERPAssetTransferDetailAPIController@getAssetLocationValue');
-            Route::get('getAssetTransferMasterRecord', 'ERPAssetTransferAPIController@getAssetTransferMasterRecord');
-            Route::post('assetTransferReopen', 'ERPAssetTransferAPIController@assetTransferReopen');
             Route::post('amendAssetTrasfer', 'ERPAssetTransferAPIController@amendAssetTrasfer');
             Route::post('getAssetTransferAmendHistory', 'AssetTransferReferredbackAPIController@getAssetTransferAmendHistory');
             Route::get('fetch-asset-transfer-master-amend/{id}', 'AssetTransferReferredbackAPIController@fetchAssetTransferMasterAmend');
@@ -1418,7 +1404,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('getAssetVerificationAmendHistory', 'ERPAssetVerificationReferredbackAPIController@getAssetVerificationAmendHistory');
             Route::get('fetchAssetVerification/{id}', 'ERPAssetVerificationReferredbackAPIController@fetchAssetVerification');
             Route::post('fetchAssetVerificationDetailAmend', 'ERPAssetVerificationDetailReferredbackAPIController@fetchAssetVerificationDetailAmend');
-            Route::get('assetStatus', 'ERPAssetTransferAPIController@assetStatus');
 
             Route::post('amendBudgetTrasfer', 'BudgetTransferFormAPIController@amendBudgetTrasfer');
             Route::post('getBudgetTransferAmendHistory', 'BudgetTransferFormRefferedBackAPIController@getBudgetTransferAmendHistory');
