@@ -1374,17 +1374,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('budget_review_transfer_additions', 'BudgetReviewTransferAdditionAPIController');
             Route::get('getBudgetReviewTransferAddition', 'BudgetReviewTransferAdditionAPIController@getBudgetReviewTransferAddition');
 
-            Route::get('getVerificationFormData', 'AssetVerificationAPIController@getVerificationFormData');
-            Route::post('getAllAssetVerification', 'AssetVerificationAPIController@index');
-            Route::post('storeVerification', 'AssetVerificationAPIController@store');
-            Route::delete('deleteAssetVerification/{id}', 'AssetVerificationAPIController@destroy');
-            Route::get('getVerificationById/{id}', 'AssetVerificationAPIController@show');
-            Route::put('updateAssetVerification/{id}', 'AssetVerificationAPIController@update');
-            Route::post('getAllCostingByCompanyForVerification', 'AssetVerificationAPIController@getAllCostingByCompanyForVerification');
-            Route::post('addAssetToVerification/{id}', 'AssetVerificationDetailAPIController@store');
-            Route::post('getVerificationDetailsById', 'AssetVerificationDetailAPIController@index');
-            Route::delete('deleteAssetFromVerification/{id}', 'AssetVerificationDetailAPIController@destroy');
-
             Route::post('erp_project_masters', 'ErpProjectMasterAPIController@index');
             Route::post('get_projects', 'ErpProjectMasterAPIController@get_projects');
             Route::post('erp_project_masters/create', 'ErpProjectMasterAPIController@store');
