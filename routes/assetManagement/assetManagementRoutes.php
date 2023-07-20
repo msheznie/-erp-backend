@@ -106,5 +106,55 @@ Route::group([], function(){
 
 });
 
+//transaction - Asset Verification
+Route::group([], function(){
+    Route::get('getVerificationFormData', 'AssetVerificationAPIController@getVerificationFormData')->name("Get Asset Verification Form data");
+    Route::post('getAllAssetVerification', 'AssetVerificationAPIController@index')->name("Get Asset Verification");
+    Route::post('storeVerification', 'AssetVerificationAPIController@store')->name("Store Asset Verification");
+    Route::delete('deleteAssetVerification/{id}', 'AssetVerificationAPIController@destroy')->name("Delete Asset Verification");
+    Route::get('getVerificationById/{id}', 'AssetVerificationAPIController@show')->name("Get VerificationBy Id");
+    Route::post('getVerificationDetailsById', 'AssetVerificationDetailAPIController@index')->name("Get Verification detailed by Id");
+    Route::post('getAllCostingByCompanyForVerification', 'AssetVerificationAPIController@getAllCostingByCompanyForVerification')->name("Get All Costing By Company For Verification");
+    Route::post('addAssetToVerification/{id}', 'AssetVerificationDetailAPIController@store')->name("Add Asset To Verification");
+    Route::delete('deleteAssetFromVerification/{id}', 'AssetVerificationDetailAPIController@destroy')->name("Delete Asset From Verification");
+    Route::put('updateAssetVerification/{id}', 'AssetVerificationAPIController@update')->name("Update Asset Verification");
 
+
+});
+
+
+//transaction - Asset Transfer
+Route::group([], function(){
+    Route::post('getAllAssetTransferList', 'ERPAssetTransferAPIController@getAllAssetTransferList')->name("Get Asset Transfer list");
+    Route::post('getAllAssetRequestList', 'AssetRequestAPIController@getAllAssetRequestList')->name("Get Asset Request list");
+    Route::get('getAssetTransferData', 'ERPAssetTransferAPIController@getAssetTransferData')->name("Get Asset Transfer Form Data");
+    Route::resource('asset_transfer', 'ERPAssetTransferAPIController');
+    Route::get('getassetRequestMaster', 'AssetRequestDetailAPIController@getAssetRequestMaster')->name("Get Asset Request Master");
+    Route::get('getAssetDropData', 'AssetRequestDetailAPIController@getAssetDropData')->name("Get Asset Drop Data");
+    Route::get('getassetRequestDetailSelected', 'AssetRequestDetailAPIController@getAssetRequestDetailSelected')->name("Get Asset Request Detail Selected");
+    Route::post('add-asset-transfer-detail/{id}', 'ERPAssetTransferDetailAPIController@store')->name("Add Asset Transfer Detail");
+    Route::get('assetStatus', 'ERPAssetTransferAPIController@assetStatus')->name("Get Asset Status");
+    Route::get('get-employee-asset-transfer-details/{id}', 'ERPAssetTransferDetailAPIController@get_employee_asset_transfer_details')->name("Get Employee asset transfer Details");
+    Route::resource('asset_transfer_detail', 'ERPAssetTransferDetailAPIController');
+    Route::get('fetch-asset-transfer-master/{id}', 'ERPAssetTransferAPIController@fetchAssetTransferMaster')->name("Fetch Asset transfer Master");
+    Route::get('getAssetTransferMasterRecord', 'ERPAssetTransferAPIController@getAssetTransferMasterRecord')->name("Fetch Asset transfer Master Record");
+    Route::post('assetTransferReopen', 'ERPAssetTransferAPIController@assetTransferReopen')->name("Reopen Asset transfer");
+    Route::get('asset-request-details', 'AssetRequestDetailAPIController@getAssetRequestDetails')->name("Get Asset Request Details");
+});
+
+
+//report - Asset Register
+Route::group([], function(){
+    Route::get('getAssetManagementFilterData', 'AssetManagementReportAPIController@getFilterData')->name("Get Asset Managment Filter Data");
+    Route::post('validateAMReport', 'AssetManagementReportAPIController@validateReport')->name('Validate Report asset Management');
+    Route::group(['middleware' => 'max_memory_limit'], function () {
+        Route::group(['middleware' => 'max_execution_limit'], function () {
+            
+            Route::post('generateAMReport', 'AssetManagementReportAPIController@generateReport')->name('Generate Report asset Management');
+            Route::post('exportAMReport', 'AssetManagementReportAPIController@exportReport')->name('Export Report asset Management');
+
+        });
+    });
+
+});
 

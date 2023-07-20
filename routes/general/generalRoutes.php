@@ -62,3 +62,5 @@ Route::get('getAllFinancePeriodBasedFY', 'CompanyFinancePeriodAPIController@getA
 Route::get('getCustomerByCompany', 'CustomerMasterAPIController@getCustomerByCompany')->name("Get Customer By Company");
 Route::get('getDirectInvoiceGL', 'ChartOfAccountsAssignedAPIController@getDirectInvoiceGL')->name("Get Direct Invoice GL");
 
+Route::get('getBankAccount', 'PaySupplierInvoiceMasterAPIController@getBankAccount')->name('Get bank account');
+

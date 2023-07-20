@@ -43,3 +43,30 @@ Route::group([], function() {
     Route::resource('bankRecRefferedBack', 'BankReconciliationRefferedBackAPIController');
 
 });
+
+//Cheque Register
+Route::group([], function() {
+    Route::post('getAllChequeRegistersByCompany', 'ChequeRegisterAPIController@getAllChequeRegistersByCompany')->name('Get all cheque registers by company');
+    Route::post('getMultipleAccountsByBank', 'PaySupplierInvoiceMasterAPIController@getMultipleAccountsByBank')->name('Get multiple accounts by bank');
+    Route::post('exportChequeRegistry', 'ChequeRegisterAPIController@exportChequeRegistry')->name('Export cheque registry');
+    Route::post('checkChequeRegisterStatus', 'ChequeRegisterAPIController@checkChequeRegisterStatus')->name('Check cheque register status');
+    Route::post('chequeRegisterStatusChange', 'ChequeRegisterAPIController@chequeRegisterStatusChange')->name('Cheque register status change');
+    Route::post('chequeRegisterDetailCancellation', 'ChequeRegisterDetailAPIController@chequeRegisterDetailCancellation')->name('Cheque register detail cancellation');
+    Route::post('chequeRegisterDetailSwitch', 'ChequeRegisterDetailAPIController@chequeRegisterDetailSwitch')->name('Cheque register detail switch');
+    Route::post('getAllChequeRegisterDetails', 'ChequeRegisterDetailAPIController@getAllChequeRegisterDetails')->name('Get all cheque register details');
+    
+    Route::get('getAllUnusedCheckDetails', 'ChequeRegisterDetailAPIController@getAllUnusedCheckDetails')->name('Get all unused check details');
+    Route::get('getChequeRegisterFormData', 'ChequeRegisterAPIController@getChequeRegisterFormData')->name('Get cheque register form data');
+    Route::get('chequeRegisterDetailsAudit', 'ChequeRegisterDetailAPIController@chequeRegisterDetailsAudit')->name('Cheque register details audit');
+    Route::get('getChequeSwitchFormData', 'ChequeRegisterDetailAPIController@getChequeSwitchFormData')->name('Get cheque switch form data');
+    Route::get('getChequeRegisterByMasterID', 'ChequeRegisterAPIController@getChequeRegisterByMasterID')->name('Get cheque register by master id');
+
+    Route::resource('cheque_registers', 'ChequeRegisterAPIController');
+    Route::resource('cheque_register_details', 'ChequeRegisterDetailAPIController');
+
+});
+
+//Bank Reconciliation
+Route::group([],function () {
+    Route::post('getAllBankReconciliationList', 'BankReconciliationAPIController@getAllBankReconciliationList')->name('Get all bank reconciliation list');
+});

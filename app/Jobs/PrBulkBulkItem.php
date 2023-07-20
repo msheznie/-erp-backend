@@ -55,7 +55,7 @@ class PrBulkBulkItem implements ShouldQueue
     public function handle()
     {
         $db = $this->dispatch_db;
-        Log::useFiles(storage_path() . '/logs/po_bulk_item.log');
+        Log::useFiles(storage_path() . '/logs/pr_bulk_item.log');
         Log::info('---- Job  Start-----' . date('H:i:s'));
         CommonJobService::db_switch($db);
 
