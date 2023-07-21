@@ -70,3 +70,21 @@ Route::group([], function() {
 Route::group([],function () {
     Route::post('getAllBankReconciliationList', 'BankReconciliationAPIController@getAllBankReconciliationList')->name('Get all bank reconciliation list');
 });
+
+//Bank Transfer List
+Route::group([],function () {
+
+    Route::post('getAllBankTransferList', 'PaymentBankTransferAPIController@getAllBankTransferList')->name('Get all bank transfer list');
+    Route::post('getPaymentsByBankTransfer', 'BankLedgerAPIController@getPaymentsByBankTransfer')->name('Get payments by bank transfer');
+    Route::post('paymentBankTransferReopen', 'PaymentBankTransferAPIController@paymentBankTransferReopen')->name('Payment bank transfer reopen');
+    Route::post('paymentBankTransferReferBack', 'PaymentBankTransferAPIController@paymentBankTransferReferBack')->name('Payment bank transfer referback');
+    Route::post('getReferBackHistoryByBankTransfer', 'PaymentBankTransferRefferedBackAPIController@getReferBackHistoryByBankTransfer')->name('Get referback history by bank transfer');
+    Route::post('getAllBankTransferByBankAccount', 'PaymentBankTransferAPIController@getAllBankTransferByBankAccount')->name('Get all bank transfer by bank account');
+
+    Route::get('getCheckBeforeCreateBankTransfers', 'PaymentBankTransferAPIController@getCheckBeforeCreate')->name('Get check before create bank transfers');
+    Route::get('exportPaymentBankTransferPreCheck', 'PaymentBankTransferAPIController@exportPaymentBankTransferPreCheck')->name('Export payment bank transfer precheck');
+
+    Route::resource('payment_bank_transfers', 'PaymentBankTransferAPIController');
+    Route::resource('bankTransferRefferedBack', 'PaymentBankTransferRefferedBackAPIController');
+
+});

@@ -64,3 +64,4 @@ Route::get('getDirectInvoiceGL', 'ChartOfAccountsAssignedAPIController@getDirect
 
 Route::get('getBankAccount', 'PaySupplierInvoiceMasterAPIController@getBankAccount')->name('Get bank account');
 
+Route::get('getBankAccountsByBankID', 'BankAccountAPIController@getBankAccountsByBankID')->name('Get bank accounts by bank id');

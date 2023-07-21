@@ -220,7 +220,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
 
             Route::post('getBankBalance', 'BankAccountAPIController@getBankBalance');
-            Route::get('getBankAccountsByBankID', 'BankAccountAPIController@getBankAccountsByBankID');
             Route::resource('procument_order_details', 'ProcumentOrderDetailAPIController');
 
             Route::resource('poPaymentTermsRequestCRUD', 'PoAdvancePaymentAPIController');
@@ -684,14 +683,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('getSIDetailDirectAmendHistory', 'DirectInvoiceDetailsRefferedBackAPIController@getSIDetailDirectAmendHistory');
 
 
-            Route::resource('payment_bank_transfers', 'PaymentBankTransferAPIController');
-            Route::get('getCheckBeforeCreateBankTransfers', 'PaymentBankTransferAPIController@getCheckBeforeCreate');
-            Route::post('getAllBankTransferByBankAccount', 'PaymentBankTransferAPIController@getAllBankTransferByBankAccount');
-            Route::post('getAllBankTransferList', 'PaymentBankTransferAPIController@getAllBankTransferList');
-            Route::get('exportPaymentBankTransferPreCheck', 'PaymentBankTransferAPIController@exportPaymentBankTransferPreCheck');
-            Route::post('paymentBankTransferReopen', 'PaymentBankTransferAPIController@paymentBankTransferReopen');
-            Route::post('paymentBankTransferReferBack', 'PaymentBankTransferAPIController@paymentBankTransferReferBack');
-            Route::post('getPaymentsByBankTransfer', 'BankLedgerAPIController@getPaymentsByBankTransfer');
             Route::post('amendBankTransferReview', 'BankLedgerAPIController@amendBankTransferReview');
             Route::post('clearExportBlockConfirm', 'BankLedgerAPIController@clearExportBlockConfirm');
 
@@ -904,8 +895,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('asset_disposal_referreds', 'AssetDisposalReferredAPIController');
             Route::resource('asset_disposal_detail_referreds', 'AssetDisposalDetailReferredAPIController');
 
-            Route::resource('bankTransferRefferedBack', 'PaymentBankTransferRefferedBackAPIController');
-            Route::post('getReferBackHistoryByBankTransfer', 'PaymentBankTransferRefferedBackAPIController@getReferBackHistoryByBankTransfer');
             Route::resource('bankTransferDetailRefferedBacks', 'PaymentBankTransferDetailRefferedBackAPIController');
 
 
