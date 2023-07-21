@@ -458,6 +458,7 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
                                         ->first();
 
             $logistics = PoAdvancePayment::where('poID', $purchaseOrderID)
+                                         ->where('logisticCategoryID', '>', 0)
                                          ->selectRaw('COALESCE(SUM(reqAmount + VATAmount),0) as reqAmountSum, currencyID')
                                          ->groupBy('currencyID')
                                          ->get();
