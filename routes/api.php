@@ -906,8 +906,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('getEmployeeMasterData', 'EmployeeAPIController@getEmployeeMasterData');
             Route::get('getReferBackApprovedDetails', 'DocumentReferedHistoryAPIController@getReferBackApprovedDetails');
 
-            Route::post('getBankMasterByCompany', 'BankAssignAPIController@getBankMasterByCompany');
-            Route::post('getAccountsByBank', 'BankAccountAPIController@getAccountsByBank');
             Route::get('getBankLedgerFilterFormData', 'BankLedgerAPIController@getBankLedgerFilterFormData');
             Route::post('validateBankLedgerReport', 'BankLedgerAPIController@validateBankLedgerReport');
             Route::post('generateBankLedgerReport', 'BankLedgerAPIController@generateBankLedgerReport');
@@ -915,14 +913,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('generateBankLedgerReportPDF', 'BankLedgerAPIController@generateBankLedgerReportPDF');
             
             
-            Route::get('getBankAccountFormData', 'BankAccountAPIController@getBankAccountFormData');
-            Route::get('bankAccountAudit', 'BankAccountAPIController@bankAccountAudit');
-            Route::post('bankAccountReopen', 'BankAccountAPIController@bankAccountReopen');
-            Route::post('bankAccountReferBack', 'BankAccountAPIController@bankAccountReferBack');
             Route::resource('bank_account_reffered_backs', 'BankAccountRefferedBackAPIController');
             
-            Route::resource('bankAccountReferedBack', 'BankAccountRefferedBackAPIController');
-            Route::post('getAccountsReferBackHistory', 'BankAccountRefferedBackAPIController@getAccountsReferBackHistory');
 
             Route::post('getFinancialYearsByCompany', 'CompanyFinanceYearAPIController@getFinancialYearsByCompany');
             Route::get('getFinanceYearFormData', 'CompanyFinanceYearAPIController@getFinanceYearFormData');

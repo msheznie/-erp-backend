@@ -104,3 +104,19 @@ Route::group([],function () {
     Route::post('issueNewCheque', 'PdcLogAPIController@issueNewCheque')->name('Issue new cheque');
 
 });
+
+//Bank Account
+Route::group([],function () {
+
+    Route::post('getAccountsByBank', 'BankAccountAPIController@getAccountsByBank')->name('Get accounts by bank');
+    Route::post('bankAccountReopen', 'BankAccountAPIController@bankAccountReopen')->name('Bank account reopen');
+    Route::post('bankAccountReferBack', 'BankAccountAPIController@bankAccountReferBack')->name('Bank account refer back');
+    Route::post('getAccountsReferBackHistory', 'BankAccountRefferedBackAPIController@getAccountsReferBackHistory')->name('Get accounts refer back history');
+    Route::post('getBankMasterByCompany', 'BankAssignAPIController@getBankMasterByCompany')->name('Get bank master by company');
+
+    Route::get('bankAccountAudit', 'BankAccountAPIController@bankAccountAudit')->name('Bank account audit');
+    Route::get('getBankAccountFormData', 'BankAccountAPIController@getBankAccountFormData')->name('Get bank account form data');
+
+    Route::resource('bankAccountReferedBack', 'BankAccountRefferedBackAPIController');
+
+});
