@@ -1532,7 +1532,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                         $data['timestamp'] = \Helper::currentDateTime();
                         $data['matchDocumentMasterAutoID'] = $matchDocumentMaster->matchDocumentMasterAutoID;
 
-                        array_push($finalData, $data);
+                        // array_push($finalData, $data);
 
                         $exchangeGainServiceLine = SegmentMaster::where('companySystemID',$PaySupplierInvoiceMasterExData->companySystemID)
                             ->where('isPublic',1)
@@ -1562,7 +1562,6 @@ class MatchDocumentMasterAPIController extends AppBaseController
                         }
                         $data['timestamp'] = \Helper::currentDateTime();
                         array_push($finalData, $data);
-
                         if ($finalData) {
                             $storeSupplierInvoiceHistory = GeneralLedger::insert($finalData);
                         }
@@ -1653,10 +1652,10 @@ class MatchDocumentMasterAPIController extends AppBaseController
                             $data['documentTransAmount'] = \Helper::roundValue($ap->transAmount) * -1;;
                             $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                             $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
-                            $data['documentLocalAmount'] = \Helper::roundValue($ap->localAmount) * -1;
+                            $data['documentLocalAmount'] = \Helper::roundValue($ap->localAmount - $diffLocal) * -1;
                             $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
                             $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
-                            $data['documentRptAmount'] = \Helper::roundValue($ap->rptAmount) * -1;
+                            $data['documentRptAmount'] = \Helper::roundValue($ap->rptAmount - $diffRpt) * -1;
                             $data['timestamp'] = \Helper::currentDateTime();
                             array_push($finalData, $data);
 
@@ -1672,14 +1671,13 @@ class MatchDocumentMasterAPIController extends AppBaseController
                             $data['documentTransAmount'] = \Helper::roundValue($ap->transAmount);
                             $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                             $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
-                            $data['documentLocalAmount'] = \Helper::roundValue($ap->localAmount);
+                            $data['documentLocalAmount'] =   \Helper::roundValue($ap->localAmount);
                             $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
                             $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
                             $data['documentRptAmount'] = \Helper::roundValue($ap->rptAmount);
                             $data['timestamp'] = \Helper::currentDateTime();
                             array_push($finalData, $data);
                         }
-                       
 
                         foreach ($finalData as $data) {
                             GeneralLedger::create($data);
