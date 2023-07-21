@@ -88,3 +88,19 @@ Route::group([],function () {
     Route::resource('bankTransferRefferedBack', 'PaymentBankTransferRefferedBackAPIController');
 
 });
+
+//PDC logs
+Route::group([],function () {
+
+    Route::get('pdc-logs/get-form-data', 'PdcLogAPIController@getFormData')->name('Pdc logs/ Get form data');
+    Route::get('getNextChequeNo', 'PdcLogAPIController@getNextChequeNo')->name('Get next cheque no');
+
+    Route::post('get-all-issued-cheques', 'PdcLogAPIController@getIssuedCheques')->name('Get all issued cheques');
+    Route::post('get-all-received-cheques', 'PdcLogAPIController@getAllReceivedCheques')->name('Get all received cheques');
+    Route::post('printPdcCheque', 'PdcLogAPIController@printPdcCheque')->name('Print pdc cheque');
+    Route::post('updatePrintAhliChequeItems', 'BankLedgerAPIController@updatePrintAhliChequeItems')->name('Update print ahli cheque items');
+    Route::post('changePdcChequeStatus', 'PdcLogAPIController@changePdcChequeStatus')->name('Change pdc cheque status');
+    Route::post('reverseGeneratedChequeNo', 'PdcLogAPIController@reverseGeneratedChequeNo')->name('Reverse generated cheque no');
+    Route::post('issueNewCheque', 'PdcLogAPIController@issueNewCheque')->name('Issue new cheque');
+
+});

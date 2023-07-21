@@ -616,7 +616,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('getChequePrintingItems', 'BankLedgerAPIController@getChequePrintingItems');
             Route::get('getChequePrintingFormData', 'BankLedgerAPIController@getChequePrintingFormData');
             Route::post('updatePrintChequeItems', 'BankLedgerAPIController@updatePrintChequeItems');
-            Route::post('updatePrintAhliChequeItems', 'BankLedgerAPIController@updatePrintAhliChequeItems');
 
 
 
@@ -1422,21 +1421,13 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::resource('pdc_logs', 'PdcLogAPIController');
             Route::post('getPdcCheques', 'PdcLogAPIController@getPdcCheques');
-            Route::post('printPdcCheque', 'PdcLogAPIController@printPdcCheque');
 
-            Route::post('get-all-issued-cheques', 'PdcLogAPIController@getIssuedCheques');
 
-            Route::post('get-all-received-cheques', 'PdcLogAPIController@getAllReceivedCheques');
 
             Route::get('pdc-logs/banks', 'PdcLogAPIController@getAllBanks');
 
-            Route::get('pdc-logs/get-form-data', 'PdcLogAPIController@getFormData');
 
             Route::post('deleteAllPDC', 'PdcLogAPIController@deleteAllPDC');
-            Route::post('changePdcChequeStatus', 'PdcLogAPIController@changePdcChequeStatus');
-            Route::post('reverseGeneratedChequeNo', 'PdcLogAPIController@reverseGeneratedChequeNo');
-            Route::post('issueNewCheque', 'PdcLogAPIController@issueNewCheque');
-            Route::get('getNextChequeNo', 'PdcLogAPIController@getNextChequeNo');
             Route::get('getBankTemplates/{id}', 'ChequeTemplateBankAPIController@getBankTemplates');
 
             Route::resource('vat_return_filling_masters', 'VatReturnFillingMasterAPIController');
