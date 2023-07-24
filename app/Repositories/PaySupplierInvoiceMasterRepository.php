@@ -484,26 +484,28 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
             $temp = [];
 
             $extraCharges = DirectInvoiceDetails::where('purchaseOrderID', $purchaseOrderID)
-                                                ->selectRaw('COALESCE(SUM(netAmount),0) as totalExtraCharges')
+                                                ->selectRaw('COALESCE(SUM(netAmount),0) as totalExtraCharges, DIAmountCurrency')
                                                 ->with(['transactioncurrency'])
-                                                ->first();
+                                                ->groupBy('DIAmountCurrency')
+                                                ->get();
 
             if ($extraCharges) {
-
-                $extraChargesConversion = \Helper::currencyConversion($procumentOrder->companySystemID, $procumentOrder->supplierTransactionCurrencyID, $procumentOrder->supplierTransactionCurrencyID, $extraCharges->totalExtraCharges);
-
-
-                $poComareAmountRpt += $extraChargesConversion['reportingAmount'];
+                foreach ($extraCharges as $key => $value) {
+                    $extraChargesConversion = \Helper::currencyConversion($procumentOrder->companySystemID, $value->DIAmountCurrency, $value->DIAmountCurrency, $value->totalExtraCharges);
 
 
-                $temp['key'] = "Supplier Invoice Extra Charges";
-                $temp['currency'] = isset($procumentOrder->transactioncurrency->CurrencyCode) ? $procumentOrder->transactioncurrency->CurrencyCode : "USD";
-                $temp['transAmount'] = number_format($extraCharges->totalExtraCharges, (isset($procumentOrder->transactioncurrency->DecimalPlaces) ? $procumentOrder->transactioncurrency->DecimalPlaces : 2));
-                $temp['rptAmount'] = number_format($extraChargesConversion['reportingAmount'], (isset($companyData->reportingcurrency->DecimalPlaces) ? $companyData->reportingcurrency->DecimalPlaces : 2));
+                    $poComareAmountRpt += $extraChargesConversion['reportingAmount'];
 
 
-                $validateDta[] = $temp;
-                $temp = [];
+                    $temp['key'] = "Supplier Invoice Extra Charges";
+                    $temp['currency'] = CurrencyMaster::getCurrencyCode($value->DIAmountCurrency);
+                    $temp['transAmount'] = number_format($value->totalExtraCharges, CurrencyMaster::getDecimalPlaces($value->DIAmountCurrency));
+                    $temp['rptAmount'] = number_format($extraChargesConversion['reportingAmount'], (isset($companyData->reportingcurrency->DecimalPlaces) ? $companyData->reportingcurrency->DecimalPlaces : 2));
+
+
+                    $validateDta[] = $temp;
+                    $temp = [];
+                }
             }
 
             foreach ($logistics as $key => $value) {
