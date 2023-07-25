@@ -1652,7 +1652,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
     Route::resource('finance_category_serials', 'FinanceCategorySerialAPIController');
 
-    if (env("APP_ENV") != "production") {
+    if (env("LOG_ENABLE", false)) {
         Route::get('logs', '\Rap2hpoutre\LaravelLogViewer\LogViewerController@index');
     }
 
