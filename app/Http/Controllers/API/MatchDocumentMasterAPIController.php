@@ -2123,7 +2123,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                     ->where('isAssigned', '-1')
                                     ->where('isActive', '1')
                                     ->get();
-        $companyFinanceYear = \Helper::companyFinanceYear($companyId, 0);
+        $companyFinanceYear = \Helper::companyFinanceYear($companyId, 1);
         $output = array('yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
             'month' => $month,
