@@ -41,6 +41,9 @@ use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\DB;
+use App\Models\ExpenseAssetAllocation;
+use App\Models\ExpenseEmployeeAllocation;
+
 
 /**
  * Class DirectPaymentDetailsController
@@ -438,6 +441,28 @@ class DirectPaymentDetailsAPIController extends AppBaseController
 
         $isVATEligible = TaxService::checkCompanyVATEligible($payMaster->companySystemID);
         if($payMaster->invoiceType == 3) {
+
+
+            $allocatedSum = ExpenseAssetAllocation::where('documentDetailID', $input['directPaymentDetailsID'])
+            ->where('documentSystemID', $payMaster->documentSystemID)
+            ->where('documentSystemCode', $input['directPaymentAutoID'])
+            ->sum('amount');
+
+            
+            if ($allocatedSum > $input['DPAmount']) {
+                return $this->sendError("Allocated amount cannot be greater than the detail amount.");
+            }
+            
+            $allocatedQtySum = ExpenseEmployeeAllocation::where('documentDetailID', $input['directPaymentDetailsID'])
+            ->where('documentSystemID', $payMaster->documentSystemID)
+            ->where('documentSystemCode', $input['directPaymentAutoID'])
+            ->sum('amount');
+
+            if ($allocatedQtySum > $input['DPAmount']) {
+                return $this->sendError("Allocated amount cannot be greater than the detail amount.");
+            }
+           
+
             if ($isVATEligible) {
                 $policy = CompanyPolicyMaster::where('companySystemID', $input['companySystemID'])
                     ->where('companyPolicyCategoryID', 67)

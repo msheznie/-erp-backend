@@ -384,8 +384,10 @@ class AssetDisposalMasterAPIController extends AppBaseController
             $documentSystemID = $assetDisposalMaster->documentSystemID;
 
             $toCompany = Company::find($input['toCompanySystemID']);
+            $toCompanyName = '';
             if ($toCompany) {
                 $input['toCompanyID'] = $toCompany->CompanyID;
+                $toCompanyName = $toCompany->CompanyName;
             }
 
             $input['disposalDocumentDate'] = new Carbon($input['disposalDocumentDate']);
@@ -549,7 +551,7 @@ class AssetDisposalMasterAPIController extends AppBaseController
                             }
                         }
                     }
-
+                    $finalError['company'] = [$toCompanyName];
                     $confirm_error = array('type' => 'itemcode_not_exist', 'data' => $finalError);
                     if ($error_count > 0) {
                         return $this->sendError(trans('custom.there_are_few_assets_not_linked_to_an_item_code_please_link_it_before_you_confirm'), 500, $confirm_error);

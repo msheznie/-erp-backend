@@ -11,6 +11,7 @@ use App\Models\PoAdvancePayment;
 use App\Models\PoAddons;
 use App\Models\ProcumentOrder;
 use App\Models\CurrencyMaster;
+use App\Models\DirectInvoiceDetails;
 use App\Models\CompanyPolicyMaster;
 use App\Models\Company;
 use App\Models\PaySupplierInvoiceMaster;
@@ -457,6 +458,7 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
                                         ->first();
 
             $logistics = PoAdvancePayment::where('poID', $purchaseOrderID)
+                                         ->where('logisticCategoryID', '>', 0)
                                          ->selectRaw('COALESCE(SUM(reqAmount + VATAmount),0) as reqAmountSum, currencyID')
                                          ->groupBy('currencyID')
                                          ->get();
@@ -481,6 +483,30 @@ class PaySupplierInvoiceMasterRepository extends BaseRepository
             $validateDta[] = $temp;
             $temp = [];
 
+            $extraCharges = DirectInvoiceDetails::where('purchaseOrderID', $purchaseOrderID)
+                                                ->selectRaw('COALESCE(SUM(netAmount),0) as totalExtraCharges, DIAmountCurrency')
+                                                ->with(['transactioncurrency'])
+                                                ->groupBy('DIAmountCurrency')
+                                                ->get();
+
+            if ($extraCharges) {
+                foreach ($extraCharges as $key => $value) {
+                    $extraChargesConversion = \Helper::currencyConversion($procumentOrder->companySystemID, $value->DIAmountCurrency, $value->DIAmountCurrency, $value->totalExtraCharges);
+
+
+                    $poComareAmountRpt += $extraChargesConversion['reportingAmount'];
+
+
+                    $temp['key'] = "Supplier Invoice Extra Charges";
+                    $temp['currency'] = CurrencyMaster::getCurrencyCode($value->DIAmountCurrency);
+                    $temp['transAmount'] = number_format($value->totalExtraCharges, CurrencyMaster::getDecimalPlaces($value->DIAmountCurrency));
+                    $temp['rptAmount'] = number_format($extraChargesConversion['reportingAmount'], (isset($companyData->reportingcurrency->DecimalPlaces) ? $companyData->reportingcurrency->DecimalPlaces : 2));
+
+
+                    $validateDta[] = $temp;
+                    $temp = [];
+                }
+            }
 
             foreach ($logistics as $key => $value) {
                 $logisticConversion = \Helper::currencyConversion($procumentOrder->companySystemID, $value->currencyID, $value->currencyID, $value->reqAmountSum);
