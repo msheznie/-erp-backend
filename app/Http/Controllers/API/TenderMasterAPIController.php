@@ -34,6 +34,7 @@ use App\Models\TenderType;
 use App\Models\SrmTenderBidEmployeeDetails;
 use App\Models\YesNoSelection;
 use App\Repositories\TenderMasterRepository;
+use App\TenderPurchaseRequest;
 use App\Traits\AuditTrial;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -1469,6 +1470,18 @@ WHERE
                     }
                 }
 
+                if(isset($input['purchaseRequestID']) && sizeof($input['purchaseRequestID']) > 0){
+                    foreach ($input['purchaseRequestID'] as $pr) {
+                        $data = [
+                            'tender_id' => $input['id'],
+                            'purchase_request_id' => $pr['id'],
+                            'company_id' => $input['company_id'],
+                        ];
+
+                        TenderPurchaseRequest::create($data);
+                    }
+
+                }
 
                 DB::commit();
                 return ['success' => true, 'message' => 'Successfully updated', 'data' => $input['addCalendarDates']];
