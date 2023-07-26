@@ -4,16 +4,15 @@ namespace App\Jobs;
 
 use Illuminate\Bus\Queueable;
 use App\helper\CommonJobService;
-use App\Services\hrms\travelRequest\TravelRequestNotificationService;
+use App\Services\hrms\leave\ReturnToWorkNotificationService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
 
-class TravelRequestNotificationJob implements ShouldQueue
+
+class ReturnToWorkNotificationJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -23,13 +22,12 @@ class TravelRequestNotificationJob implements ShouldQueue
      * @return void
      */
 
-    public $dbName;
     public $companyId; 
     public $id; 
-    public $tripMaster; 
-    public $tripRequestBookings; 
+    public $dbName;
+    public $masterDetails;
 
-    public function __construct($dbName, $companyId, $id,$tripMaster,$tripRequestBookings)
+    public function __construct($dbName, $companyId, $id, $masterDetails)
     {
         if(env('IS_MULTI_TENANCY',false)){
             self::onConnection('database_main');
@@ -40,8 +38,8 @@ class TravelRequestNotificationJob implements ShouldQueue
         $this->dbName = $dbName;
         $this->companyId = $companyId;
         $this->id = $id; 
-        $this->tripMaster = $tripMaster; 
-        $this->tripRequestBookings = $tripRequestBookings; 
+        $this->masterDetails = $masterDetails; 
+        
     }
 
     /**
@@ -51,13 +49,17 @@ class TravelRequestNotificationJob implements ShouldQueue
      */
     public function handle()
     {
-        Log::useFiles( CommonJobService::get_specific_log_file('travel-request') );
+        
+        Log::useFiles( CommonJobService::get_specific_log_file('return-to-work') );
+        
         if (empty($this->dbName)) {
-            Log::error("db details not found. \t on file: " . __CLASS__ ." \tline no :".__LINE__);            
-        } else {
+            Log::error("db details not found. \t on file: " . __CLASS__ ." \tline no :".__LINE__);
+           
+        } else {            
             Log::info("Job triggered");
+
             CommonJobService::db_switch($this->dbName);
-            $obj = new TravelRequestNotificationService($this->companyId, $this->id,$this->tripMaster,$this->tripRequestBookings);
+            $obj = new ReturnToWorkNotificationService($this->companyId, $this->id, $this->masterDetails);
             $obj->execute();
         }
     }
