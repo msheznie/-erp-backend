@@ -250,7 +250,13 @@ class ERPAssetTransfer extends Model
     {
         if (isset($this->attributes['type'])) {
             if ($this->attributes['type']) {
-                return ($this->attributes['type'] == 1) ? 'Request Based Transfer' : 'Direct';
+                if($this->attributes['type'] == 1) {
+                    return 'Request Based Transfer';
+                }else if ($this->attributes['type'] == 2) {
+                    return 'Direct to Location';
+                }else {
+                    return 'Direct to Employee';
+                }
             } else {
                 return 'N/A';
             }

@@ -16,6 +16,7 @@ use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
 use App\Models\DocumentReferedHistory;
 use App\Models\EmployeesDepartment;
+use App\Models\Employee;
 use App\Models\ERPAssetTransferDetail;
 use App\Models\ERPAssetTransferDetailsRefferedback;
 use App\Models\FixedAssetMaster;
@@ -888,5 +889,26 @@ class ERPAssetTransferAPIController extends AppBaseController
         $data['assetCode'] = isset($data['assetRecords'][0]) ? $data['assetRecords'][0]->assetMaster->asset_code_concat : '-';
 
         return $data;
+    }
+
+    public function getEmployeesToSelectDrpdwn(Request $request) {
+        $input = $request->all();
+        $companyID = $input['companyID'];
+
+        $toEmployeeList = Employee::where('empCompanySystemID',$companyID)->where('discharegedYN','!=',-1)->whereHas('hr_emp', function($q){
+            $q->where('isDischarged', 0)->where('empConfirmedYN', 1);
+        })->get();
+
+        $fromEmployeeList = Employee::where('empCompanySystemID',$companyID)->whereHas('hr_emp', function($q){
+            $q->where('empConfirmedYN', 1);
+        })->get();
+
+        $data = [
+            'to_employees' => $toEmployeeList,
+            'from_employees' => $fromEmployeeList
+        ];
+
+        return $this->sendResponse($data, 'Employee data reterived successfully');
+
     }
 }

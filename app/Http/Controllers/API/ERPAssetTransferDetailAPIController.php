@@ -347,7 +347,11 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
         if ($data['assetMaster']->type == 1) {
             $data['assetRequestDetails'] = ERPAssetTransferDetail::with(['assetRequestDetail', 'assetMaster','assetRequestMaster','item_detail'])->where('erp_fa_fa_asset_transfer_id', $id)->get();
         } else {
-            $data['assetRequestDetails'] = ERPAssetTransferDetail::with(['fromLocation', 'toLocation', 'assetMaster'])->where('erp_fa_fa_asset_transfer_id', $id)->get();
+            $data['assetRequestDetails'] = ERPAssetTransferDetail::with(['fromLocation', 'toLocation', 'assetMaster','fromEmployee' => function($query) {
+                $query->select(['employeeSystemID','empFullName']);
+            },'toEmployee' => function($query) {
+                $query->select(['employeeSystemID','empFullName']);
+            }])->where('erp_fa_fa_asset_transfer_id', $id)->get();
         }
         return $this->sendResponse($data, 'Asset Request Detail');
     }
@@ -388,25 +392,52 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
         if (isset($input) && !empty($input)) {
             $x = 1;
             foreach ($input as $item => $value) {
-                if ($value['from_location'][0] == $value['to_location']) {
-                    return $this->sendError('Line No ' . $x . ' From Location And To Location Cannot be same');
-                } else {
-
-                    $data[] = [
-                        'erp_fa_fa_asset_transfer_id' => $id,
-                        'from_location_id' => $value['from_location'][0],
-                        'to_location_id' => $value['to_location'],
-                        'fa_master_id' => $value['asset'],
-                        'company_id' => $value['companySystemID'],
-                        'created_user_id' => \Helper::getEmployeeSystemID(),
-                    ];
-
-
-                    FixedAssetMaster::find($value['asset'])
-                        ->update([
-                            'LOCATION' =>  $value['to_location']
-                        ]);
+                if($input[0]['isDirectToEmployee']) {
+                    if ($value['from_emp'][0] == $value['to_emp']) {
+                        return $this->sendError('Line No ' . $x . ' From Location And To Location Cannot be same');
+                    } else {
+    
+                        $data[] = [
+                            'erp_fa_fa_asset_transfer_id' => $id,
+                            'from_emp_id' => $value['from_emp'][0],
+                            'to_emp_id' => $value['to_emp'],
+                            'fa_master_id' => $value['asset'],
+                            'company_id' => $value['companySystemID'],
+                            'from_location_id' => NULL,
+                            'to_location_id' => NULL,
+                            'created_user_id' => \Helper::getEmployeeSystemID(),
+                        ];
+    
+    
+                        FixedAssetMaster::find($value['asset'])
+                            ->update([
+                                'empID' =>  $value['to_emp']
+                            ]);
+                    }
+                }else {
+                    if ($value['from_location'][0] == $value['to_location']) {
+                        return $this->sendError('Line No ' . $x . ' From Location And To Location Cannot be same');
+                    } else {
+    
+                        $data[] = [
+                            'erp_fa_fa_asset_transfer_id' => $id,
+                            'from_location_id' => $value['from_location'][0],
+                            'to_location_id' => $value['to_location'],
+                            'fa_master_id' => $value['asset'],
+                            'company_id' => $value['companySystemID'],
+                            'created_user_id' => \Helper::getEmployeeSystemID(),
+                            'from_emp_id' => NULL,
+                            'to_emp_id' => NULL,
+                        ];
+    
+    
+                        FixedAssetMaster::find($value['asset'])
+                            ->update([
+                                'LOCATION' =>  $value['to_location']
+                            ]);
+                    }
                 }
+                
                 $x++;
             }
             $this->eRPAssetTransferDetailRepository->insert($data);
@@ -456,7 +487,11 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
             $data['assetTransferDetail'] = ERPAssetTransferDetail::with(['assetRequestDetail', 'assetMaster'])->where('company_id', $companyID)
                 ->where('erp_fa_fa_asset_transfer_id', $id)->get();
         } else {
-            $data['assetTransferDetail'] = ERPAssetTransferDetail::with(['fromLocation', 'toLocation', 'assetMaster'])->where('company_id', $companyID)
+            $data['assetTransferDetail'] = ERPAssetTransferDetail::with(['fromLocation', 'toLocation', 'assetMaster','fromEmployee' => function($query) {
+                $query->select(['employeeSystemID','empFullName']);
+            },'toEmployee' => function($query) {
+                $query->select(['employeeSystemID','empFullName']);
+            }])->where('company_id', $companyID)
                 ->where('erp_fa_fa_asset_transfer_id', $id)->get();
         }
 
@@ -489,6 +524,17 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
         $companyID = $input['companyID'];
         $assetID = $input['assetID'];
         $data['assetLocation'] = FixedAssetMaster::select('faID', 'LOCATION')
+            ->where('faID', $assetID)
+            ->where('companySystemID', $companyID)->first();
+
+        return $data;
+    }
+    public function getAssetEmployeeValue(Request $request)
+    {
+        $input = $request->all();
+        $companyID = $input['companyID'];
+        $assetID = $input['assetID'];
+        $data['assetLocation'] = FixedAssetMaster::select('faID', 'empID')
             ->where('faID', $assetID)
             ->where('companySystemID', $companyID)->first();
 

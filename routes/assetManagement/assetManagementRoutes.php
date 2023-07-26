@@ -140,6 +140,8 @@ Route::group([], function(){
     Route::get('getAssetTransferMasterRecord', 'ERPAssetTransferAPIController@getAssetTransferMasterRecord')->name("Fetch Asset transfer Master Record");
     Route::post('assetTransferReopen', 'ERPAssetTransferAPIController@assetTransferReopen')->name("Reopen Asset transfer");
     Route::get('asset-request-details', 'AssetRequestDetailAPIController@getAssetRequestDetails')->name("Get Asset Request Details");
+    Route::post('getEmployeesToSelectDrpdwn', 'ERPAssetTransferAPIController@getEmployeesToSelectDrpdwn')->name("Get Employees to Direct to Employee type asset transfer");
+    Route::get('asset-employee-value','ERPAssetTransferDetailAPIController@getAssetEmployeeValue')->name('Get Asset Assigned Employee value');
 });
 
 
