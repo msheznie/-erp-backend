@@ -880,15 +880,12 @@ class MatchDocumentMasterAPIController extends AppBaseController
             return $this->sendError($customValidation["message"], 500, array('type' => 'already_confirmed'));
         }
 
-        // check date within financial period
-        $companyFinanceYear = CompanyFinanceYear::where('companySystemID', '=', $matchDocumentMaster->companySystemID)
-            ->where('isActive', -1)
-            ->where('isCurrent', -1)
-            ->first();
 
-        if(empty($companyFinanceYear)){
+        if(!isset($input['companyFinanceYearID']) )
+        {
             return $this->sendError('No Active Finance Year Found', 500);
         }
+       
 
         if($input['matchingType'] == 'AP'){
             $department = 1;
@@ -897,16 +894,14 @@ class MatchDocumentMasterAPIController extends AppBaseController
         }else{
             return $this->sendError('Matching Type Found', 500);
         }
-        $companyFinancePeriods = CompanyFinancePeriod::where('companySystemID', '=', $matchDocumentMaster->companySystemID)
-            ->where('companyFinanceYearID', $companyFinanceYear->companyFinanceYearID)
-            ->where('departmentSystemID', $department)
-            ->where('isActive', -1)
-//            ->where('isCurrent', -1)
-            ->get();
 
-        if(!count((array)$companyFinancePeriods) >0){
-            return $this->sendError('No Active Finance Period Found', 500);
+
+        if(($input['companyFinancePeriodID']) == null)
+        {
+            return $this->sendError('No Active Finance Year Found', 500);
         }
+    
+        $companyFinancePeriods = CompanyFinancePeriod::where('companyFinancePeriodID',$input['companyFinancePeriodID'])->get();
 
         $isInFinancePeriod = false;
         foreach ($companyFinancePeriods as $period) {
@@ -2128,7 +2123,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                     ->where('isAssigned', '-1')
                                     ->where('isActive', '1')
                                     ->get();
-
+        $companyFinanceYear = \Helper::companyFinanceYear($companyId, 1);
         $output = array('yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
             'month' => $month,
@@ -2137,7 +2132,8 @@ class MatchDocumentMasterAPIController extends AppBaseController
             'suppliers' => $supplier,
             'employees' => $employees,
             'customer' => $customer,
-            'isAdvanceReceipt' => Helper::checkPolicy($companyId,49)
+            'isAdvanceReceipt' => Helper::checkPolicy($companyId,49),
+            'companyFinanceYear' => $companyFinanceYear,
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
