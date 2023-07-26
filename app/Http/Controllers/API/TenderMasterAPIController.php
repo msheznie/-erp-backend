@@ -14,6 +14,7 @@ use App\Models\CompanyDocumentAttachment;
 use App\Models\CurrencyMaster;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\PurchaseRequest;
 use App\Models\TenderNegotiation;
 use App\Models\EmployeesDepartment;
 use App\Models\EnvelopType;
@@ -739,6 +740,10 @@ WHERE
             }
         }
         $data['documentTypes'] = $docTypeArr;
+
+        //Get Purchase Request Data
+        $purchaseRequest = PurchaseRequest::select('purchaseRequestID as id', 'purchaseRequestCode')->where('approved', '-1')->get();
+        $data['purchaseRequest'] = $purchaseRequest;
         return $data;
     }
 
