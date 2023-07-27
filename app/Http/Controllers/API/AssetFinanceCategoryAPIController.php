@@ -566,17 +566,15 @@ class AssetFinanceCategoryAPIController extends AppBaseController
             
         $chartOfAccountsForCostAcc = ChartOfAccountsAssigned::where('companySystemID', $companyId)
             ->where('catogaryBLorPLID', 1)
-            ->where('controlAccounts', 'BSA')
+            ->where('controlAccountsSystemID', 3)
             ->where('controllAccountYN', 1)
             ->selectRaw('chartOfAccountSystemID as value,CONCAT(AccountCode, " | " ,AccountDescription) as label')
             ->get();
 
         $chartOfAccountsForAccDep = ChartOfAccountsAssigned::where('companySystemID', $companyId)
             ->where('catogaryBLorPLID', 1)
-            ->where(function($query) {
-                $query->where('controlAccounts', 'BSA')
-                      ->orWhere('controlAccounts', 'BSL');
-            })->where('controllAccountYN', 1)
+            ->whereIn('controlAccountsSystemID', [3, 4])
+            ->where('controllAccountYN', 1)
             ->selectRaw('chartOfAccountSystemID as value,CONCAT(AccountCode, " | " ,AccountDescription) as label')
             ->get();
 
