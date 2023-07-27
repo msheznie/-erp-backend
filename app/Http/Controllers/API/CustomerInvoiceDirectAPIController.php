@@ -749,9 +749,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         if (($_post['bookingDate'] >= $_post['FYPeriodDateFrom']) && ($_post['bookingDate'] <= $_post['FYPeriodDateTo'])) {
 
         } else {
+            return $this->sendError('Document Date should be between financial period start date and end date.', 500);
             $curentDate = Carbon::parse(now())->format('Y-m-d') . ' 00:00:00';
-            $_post['bookingDate'] = $curentDate;
-            // return $this->sendError('Document Date should be between financial period start date and end date.', 500);
+            // $_post['bookingDate'] = $curentDate;
 
         }
 

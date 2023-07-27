@@ -61,8 +61,8 @@ class TenantEnforce
             'api/v1/generateBankLedgerReportPDF',
             'api/v1/postPosEntries',
             'api/v1/requestDetailsAddAllItems',
-            'api/v1/materialIssuetDetailsAddAllItems'
-
+            'api/v1/materialIssuetDetailsAddAllItems',
+            'api/v1/postEmployeeFromPortal'
         ];
 
 

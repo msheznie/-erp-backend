@@ -966,4 +966,11 @@ class PaySupplierInvoiceMaster extends Model
         return $q->leftJoin('erp_bankmaster as '.$as,$as.'.bankmasterAutoID','erp_paysupplierinvoicemaster.'.$column)
         ->addSelect($as.".bankName as ".$columnAs);
     }
+
+
+    public function pdc_cheque()
+    {
+        return $this->hasMany('App\Models\PdcLog', 'documentmasterAutoID', 'PayMasterAutoId');
+    }
+    
 }

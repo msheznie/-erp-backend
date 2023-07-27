@@ -55,9 +55,13 @@ class PrBulkBulkItem implements ShouldQueue
     public function handle()
     {
         $db = $this->dispatch_db;
+        Log::useFiles(storage_path() . '/logs/pr_bulk_item.log');
+        Log::info('---- Job  Start-----' . date('H:i:s'));
         CommonJobService::db_switch($db);
 
         $input = $this->data;
+        DB::beginTransaction();
+        try {
         $base_controller = app()->make(AppBaseController::class);
         $input = $base_controller->convertArrayToSelectedValue($input, ['financeCategoryMaster', 'financeCategorySub']);
 
@@ -94,7 +98,7 @@ class PrBulkBulkItem implements ShouldQueue
            
         $companyId = $input['companySystemID'];
         $itemMasters = ItemMaster::whereHas('itemAssigned', function ($query) use ($companyId) {
-                                    return $query->where('companySystemID', '=', $companyId);
+                                    return $query->where('companySystemID', '=', $companyId)->where('isAssigned', -1);
                                  })->where('isActive',1)
                                  ->where('itemApprovedYN',1)
                                  ->when((isset($input['financeCategoryMaster']) && $input['financeCategoryMaster']), function($query) use ($input){
@@ -245,6 +249,12 @@ class PrBulkBulkItem implements ShouldQueue
         $purchaseRequest->update();
         $purchaseRequestDetails = PurchaseRequestDetails::insert($dataToAdd);
         Log::info('succefully added PR items');
+        DB::commit();
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            Log::error('Error');
+            Log::error($exception->getMessage());
+        }
     }
 
     public function failed($exception)

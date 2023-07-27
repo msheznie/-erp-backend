@@ -168,7 +168,7 @@
                 <table>
                     <tr>
                         <td width="50px">
-                            <span style="font-weight:bold;">Priority </span>
+                            <span style="font-weight:bold;">{{ __('custom.priority') }} </span>
                         </td>
                         <td width="10px">
                             <span style="font-weight:bold;">:</span>
@@ -181,7 +181,7 @@
                     </tr>
                     <tr>
                         <td width="50px">
-                            <span style="font-weight:bold;">Requisioner</span>
+                            <span style="font-weight:bold;">{{ __('custom.requisitioner') }}</span>
                         </td>
                         <td width="10px">
                             <span style="font-weight:bold;">:</span>
@@ -194,7 +194,7 @@
                     </tr>
                     <tr>
                         <td width="50px">
-                            <span style="font-weight:bold;">Location</span>
+                            <span style="font-weight:bold;">{{ __('custom.location') }}</span>
                         </td>
                         <td width="10px">
                             <span style="font-weight:bold;">:</span>
@@ -207,7 +207,7 @@
                     </tr>
                     <tr>
                         <td width="70px">
-                            <span style="font-weight:bold;">Comments </span>
+                            <span style="font-weight:bold;">{{ __('custom.comments') }} </span>
                         </td>
                         <td width="10px">
                             <span style="font-weight:bold;">:</span>
@@ -221,22 +221,22 @@
             <td style="width: 40%;text-align: center">
                 <h3>
                     @if($request->documentSystemID == 1)
-                        Purchase
+                        {{ __('custom.purchase') }}
                     @endif
                     @if($request->documentSystemID == 50)
-                        Work
+                        {{ __('custom.work') }} 
                     @endif
                     @if($request->documentSystemID == 51)
-                        Direct
+                    {{ __('custom.direct') }}  
                     @endif
-                    Requisition
+                    {{ __('custom.requisition') }}  
                 </h3>
             </td>
             <td style="width: 30%">
                 <table valign="top">
                     <tr>
                         <td width="90px">
-                            <span style="font-weight:bold;">Document No</span>
+                            <span style="font-weight:bold;">{{ __('custom.document_no') }}</span>
                         </td>
                         <td width="10px">
                             <span style="font-weight:bold;">:</span>
@@ -247,7 +247,7 @@
                     </tr>
                     <tr>
                         <td width="90px">
-                            <span style="font-weight:bold;">Date </span>
+                            <span style="font-weight:bold;">{{ __('custom.date') }} </span>
                         </td>
                         <td width="10px">
                             <span style="font-weight:bold;">:</span>
@@ -263,15 +263,15 @@
                                 <span style="font-weight:bold;">
                                     <h3 class="text-muted">
                                         @if($request->cancelledYN == -1)
-                                            Cancelled
+                                        {{ __('custom.cancelled') }}
                                         @elseif($request->PRConfirmedYN == 0 && $request->approved == 0)
-                                            Not Confirmed
+                                        {{ __('custom.not_confirmed') }}
                                         @elseif($request->PRConfirmedYN == 1 && $request->approved == 0  && $request->timesReferred == 0)
-                                            Pending Approval
+                                        {{ __('custom.pending_approval') }} 
                                         @elseif($request->PRConfirmedYN == 1 && $request->approved == 0 && $request->timesReferred > 0)
-                                            Referred Back
+                                        {{ __('custom.referred_back') }}
                                         @elseif($request->PRConfirmedYN == 1 && ($request->approved == 1 || $request->approved == -1))
-                                            Fully Approved
+                                        {{ __('custom.fully_approved') }}
                                         @endif
                                         </h3>
                                 </span>
@@ -287,19 +287,19 @@
             <thead>
             <tr  style="background-color: #DEDEDE !important; border-color:#000">
                 <th></th>
-                <th class="text-left">Item Code</th>
-                <th class="text-left">Item Description</th>
-                <th class="text-left">Part No / Ref.Number</th>
-                <th class="text-left">UOM</th>
-                <th class="text-left">QTY Requested</th>
+                <th class="text-left">{{ __('custom.item_code') }}</th>
+                <th class="text-left">{{ __('custom.item_description') }}</th>
+                <th class="text-left">{{ __('custom.part_number') }}</th>
+                <th class="text-left">{{ __('custom.uom') }}</th>
+                <th class="text-left">{{ __('custom.qty_requested') }}</th>
                  @if($request->allowAltUom)
-                <th class="text-left">Alt.UOM</th>
-                <th class="text-left">Alt.Qty</th>
+                <th class="text-left">{{ __('custom.alt_uom') }}</th>
+                <th class="text-left">{{ __('custom.alt_qnty') }}</th>
                 @endif
-                <th class="text-left">QTY On Order</th>
+                <th class="text-left">{{ __('custom.qty_on_order') }}</th>
 
                 @if($request->approved == -1)
-                    <th class="text-left">PO Qty</th>
+                    <th class="text-left">{{ __('custom.po_qty') }}</th>
                 @endif
             </tr>
             </thead>
@@ -344,8 +344,8 @@
                 <td width="60%">
                     <table width="100%">
                         <tr>
-                            <td width="100px">
-                                <span style="font-weight:bold;">Confirmed By :</span>
+                            <td width="110px">
+                                <span style="font-weight:bold;">{{ __('custom.confirmed_by') }} :</span>
                             </td>
                             <td width="400px">
                                 @if($request->confirmed_by)
@@ -361,8 +361,8 @@
                 <td width="30%">
                     <table>
                         <tr>
-                            <td width="100px">
-                                <span style="font-weight:bold;">Reviewed By :</span>
+                            <td width="200px">
+                                <span style="font-weight:bold;">{{ __('custom.reviewed_by') }} :</span>
                             </td>
                             <td>
                                 <div style="border-bottom: 1px solid black;width: 200px;margin-top: 7px;"></div>
@@ -374,7 +374,7 @@
         </table>
     </div>
     <div class="row" style="margin-top: 10px">
-        <span style="font-weight:bold;">Electronically Approved By :</span>
+        <span style="font-weight:bold;">{{ __('custom.electronically_approved_by') }} :</span>
     </div>
     <div style="margin-top: 10px">
         <table>

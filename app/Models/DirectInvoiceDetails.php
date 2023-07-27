@@ -162,6 +162,7 @@ class DirectInvoiceDetails extends Model
         'localCurrency',
         'localCurrencyER',
         'localAmount',
+        'purchaseOrderID',
         'comRptCurrency',
         'comRptCurrencyER',
         'comRptAmount',
@@ -209,6 +210,7 @@ class DirectInvoiceDetails extends Model
         'localCurrency' => 'integer',
         'localCurrencyER' => 'float',
         'localAmount' => 'float',
+        'purchaseOrderID' => 'integer',
         'comRptCurrency' => 'integer',
         'comRptCurrencyER' => 'float',
         'exempt_vat_portion' => 'float',
@@ -240,6 +242,11 @@ class DirectInvoiceDetails extends Model
         return $this->belongsTo('App\Models\SegmentMaster', 'serviceLineSystemID', 'serviceLineSystemID');
     }
 
+    public function purchase_order()
+    {
+        return $this->belongsTo('App\Models\ProcumentOrder', 'purchaseOrderID', 'purchaseOrderID');
+    }
+
     public function chartofaccount()
     {
         return $this->belongsTo('App\Models\ChartOfAccount', 'chartOfAccountSystemID','chartOfAccountSystemID');
@@ -267,5 +274,10 @@ class DirectInvoiceDetails extends Model
     public function project()
     {
         return $this->belongsTo('App\Models\ErpProjectMaster', 'detail_project_id', 'id');
+    }
+
+    public function transactioncurrency()
+    {
+        return $this->belongsTo('App\Models\CurrencyMaster', 'DIAmountCurrency', 'currencyID');
     }
 }

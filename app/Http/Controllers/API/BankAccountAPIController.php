@@ -168,9 +168,13 @@ class BankAccountAPIController extends AppBaseController
             if ($input['isTempBank'] != 1) {
                 $checkAlreadyAssignGl = BankAccount::where('companySystemID', $input['companySystemID'])
                     ->where('chartOfAccountSystemID', $input['chartOfAccountSystemID'])
+                    ->where('isAccountActive', 1)
                     ->first();
-                if (!empty($checkAlreadyAssignGl)) {
-                    return $this->sendError(trans('custom.selected_chart_of_account_code_is_already_linked_in') .' '. $checkAlreadyAssignGl->AccountNo . '.', 500);
+
+                if($input['isAccountActive'] == 1){
+                    if (!empty($checkAlreadyAssignGl)) {
+                        return $this->sendError(trans('custom.selected_chart_of_account_code_is_already_linked_in') .' '. $checkAlreadyAssignGl->AccountNo . '.', 500);
+                    }
                 }
             }
 
@@ -289,9 +293,12 @@ class BankAccountAPIController extends AppBaseController
                 $checkAlreadyAssignGl = BankAccount::where('bankAccountAutoID', '!=', $id)
                     ->where('companySystemID', $input['companySystemID'])
                     ->where('chartOfAccountSystemID', $input['chartOfAccountSystemID'])
+                    ->where('isAccountActive', 1)
                     ->first();
-                if (!empty($checkAlreadyAssignGl)) {
-                    return $this->sendError(trans('custom.selected_chart_of_account_code_is_already_linked_in') .' '. $checkAlreadyAssignGl->AccountNo . '.', 500);
+                if($input['isAccountActive'] == 1){
+                    if (!empty($checkAlreadyAssignGl)) {
+                        return $this->sendError(trans('custom.selected_chart_of_account_code_is_already_linked_in') .' '. $checkAlreadyAssignGl->AccountNo . '.', 500);
+                    }
                 }
             } 
             

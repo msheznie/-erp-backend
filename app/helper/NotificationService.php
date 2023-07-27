@@ -35,7 +35,8 @@ class NotificationService
             6, //HR document expiry
             7, //HR - Employee contract expiry
             8, //HR - Employee end of probation
-            14 //HR - Employee end of shift period
+            14, //HR - Employee end of shift period
+            39 // HR - Department End date Expiry Notification
         ];
     }
 
@@ -125,6 +126,12 @@ class NotificationService
                     case 14:
                         $shift = new ShiftPeriodEndNotificationService($companyID, $notDaySetup);
                         $shift->ended_shift();
+                        $details = [];
+                        break;
+
+                    case 39:
+                        $department = new DepartmentExpiryNotificationService($companyID, $notDaySetup);
+                        $department->proceed();
                         $details = [];
                         break;
 

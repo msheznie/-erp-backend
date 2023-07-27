@@ -91,7 +91,7 @@ class AssetTransferService
 			erp_fa_fa_asset_request_details.comment
 			FROM `erp_fa_fa_asset_transfer_details`
 			JOIN erp_fa_fa_asset_request_details ON erp_fa_fa_asset_request_details.id = erp_fa_fa_asset_transfer_details.erp_fa_fa_asset_request_detail_id 
-			WHERE erp_fa_fa_asset_transfer_id = {$input['id']} AND fa_master_id = 0 AND erp_fa_fa_asset_transfer_details.company_id = $companyID GROUP BY itemCodeSystem"); 
+			WHERE erp_fa_fa_asset_transfer_id = {$input['id']} AND fa_master_id = 0 AND erp_fa_fa_asset_transfer_details.company_id = $companyID GROUP BY erp_fa_fa_asset_transfer_details.itemCodeSystem"); 
 		
 			if (!empty($query)) {
 				foreach ($query as $val) {

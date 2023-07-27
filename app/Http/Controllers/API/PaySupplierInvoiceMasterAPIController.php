@@ -1502,6 +1502,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             $input = $request->all();
             $input = $this->convertArrayToValue($input);
 
+
             /** @var PaySupplierInvoiceMaster $paySupplierInvoiceMaster */
             $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->findWithoutFail($id);
 
@@ -1614,12 +1615,28 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                         ->first();
                     $policy = isset($policy->isYesNO) && $policy->isYesNO == 1;
 
-                    if($policy == false || $paySupplierInvoiceMaster->invoiceType != 3) {
+                    // if($policy == false || $paySupplierInvoiceMaster->invoiceType != 3) {
                         $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
                         $input['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
-                    }
+                    // }
                 }
             }
+
+
+            $checkErChange = isset($input['checkErChange']) ? $input['checkErChange'] : true;
+
+            if ((($paySupplierInvoiceMaster->BPVbankCurrencyER != $input['BPVbankCurrencyER'] && $input['BPVbankCurrency'] == $paySupplierInvoiceMaster->BPVbankCurrency) || $paySupplierInvoiceMaster->localCurrencyER != $input['localCurrencyER'] && $input['localCurrencyID'] == $paySupplierInvoiceMaster->localCurrencyID || $paySupplierInvoiceMaster->companyRptCurrencyER != $input['companyRptCurrencyER'] && $input['companyRptCurrencyID'] == $paySupplierInvoiceMaster->companyRptCurrencyID)) {
+                
+
+                if ($checkErChange) {
+                    $erMessage = "<p>The exchange rates are updated as follows,</p><p style='font-size: medium;'>Previous rates Bank ER ".$paySupplierInvoiceMaster->BPVbankCurrencyER." | Local ER ".$paySupplierInvoiceMaster->localCurrencyER." | Reporting ER ".$paySupplierInvoiceMaster->companyRptCurrencyER."</p><p style='font-size: medium;'>Current rates Bank ER ".$input['BPVbankCurrencyER']." | Local ER ".$input['localCurrencyER']." | Reporting ER ".$input['companyRptCurrencyER']."</p><p>Are you sure you want to proceed ?</p>";
+
+                    return $this->sendError($erMessage, 500, ['type' => 'erChange']);
+                } else {
+                    PaySupplierInvoiceMaster::where('PayMasterAutoId', $paySupplierInvoiceMaster->PayMasterAutoId)->update(['BPVbankCurrencyER' => $input['BPVbankCurrencyER'], 'localCurrencyER' => $input['localCurrencyER'], 'companyRptCurrencyER' => $input['companyRptCurrencyER']]);
+                }
+            }
+
 
             if ($paySupplierInvoiceMaster->invoiceType == 3) {
                 if ($input['payeeType'] == 3) {
@@ -1670,9 +1687,27 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 $input['BPVchequeDate'] = null;
                 $input['BPVchequeNo'] = null;
                 $input['expenseClaimOrPettyCash'] = null;
+
             } else {
                 $input['pdcChequeYN'] = 0;
             }
+
+            if (isset($input['pdcChequeYN']) && $input['pdcChequeYN'] == false) {
+
+                $isPdcLog = PdcLog::where('documentSystemID', $input['documentSystemID'])
+                    ->where('documentmasterAutoID', $input['PayMasterAutoId'])
+                    ->first();
+
+                if(!empty($isPdcLog)) {
+                    ChequeRegisterDetail::where('document_id', $input['PayMasterAutoId'])->where('document_master_id', $input['documentSystemID'])->update(['status' => 0, 'document_master_id' => null, 'document_id' => null]);
+
+                    PdcLog::where('documentSystemID', $input['documentSystemID'])
+                        ->where('documentmasterAutoID', $input['PayMasterAutoId'])
+                        ->delete();
+                }
+
+            }
+
 
             $warningMessage = '';
 
@@ -1913,6 +1948,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                                 });
                             })
                             ->where('apAutoID', $val->apAutoID)
+                            ->where('matchingDocID', 0)
                             ->first();
 
                         $a = ($val->addedDocumentSystemID == 11) ? $payDetailMoreBooked->supplierPaymentAmount : abs($payDetailMoreBooked->supplierPaymentAmount);
@@ -2113,6 +2149,7 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
                     $error_count = 0;
 
+                    DirectPaymentDetails::where('directPaymentAutoID', $id)->update(['bankCurrencyER' => $input['BPVbankCurrencyER']]);
 
                     $employeeInvoice = CompanyPolicyMaster::where('companyPolicyCategoryID', 68)
                                     ->where('companySystemID', $paySupplierInvoiceMaster->companySystemID)
@@ -2658,6 +2695,65 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
         }
     }
 
+    public function validationsForPDC(Request $request){
+        $bankAccountID = $request->get('bankAccountID');
+        $companySystemID = $request->get('companyID');
+
+
+        $bankAccount = BankAccount::find($bankAccountID);
+
+        if(!empty($bankAccount)) {
+
+            $chequeRegister = ChequeRegister::where('bank_id', $bankAccount->bankmasterAutoID)->where('bank_account_id', $bankAccount->bankAccountAutoID)->where('isActive', 1)->first();
+
+            if (empty($chequeRegister)) {
+                return $this->sendError('No Active cheque register found for the selected bank account');
+            }
+
+            $usedCheckID = $this->getLastUsedChequeID($companySystemID, $bankAccount->bankAccountAutoID);
+
+            $unUsedCheque = ChequeRegisterDetail::whereHas('master', function ($q) use ($companySystemID, $bankAccount) {
+                $q->where('bank_account_id', $bankAccount->bankAccountAutoID)
+                    ->where('company_id', $companySystemID)
+                    ->where('isActive', 1);
+            })
+                ->where('status', 0)
+                ->where(function ($q) use ($usedCheckID) {
+                    if ($usedCheckID) {
+                        $q->where('id', '>', $usedCheckID);
+                    }
+                })
+                ->orderBy('id', 'ASC')
+                ->first();
+
+            if (empty($unUsedCheque)) {
+                return $this->sendError('There are no unused cheques in the cheque register ' . $chequeRegister->description . ' Define a new cheque register for the selected bank account');
+
+            }
+        }
+
+        return $this->sendResponse([], "PDC cheques validated successfully");
+
+        }
+
+    public function getLastUsedChequeID($company_system_id, $bank_account_id) {
+        $usedCheque = ChequeRegisterDetail::whereHas('master', function ($q) use($company_system_id,$bank_account_id) {
+            $q->where('bank_account_id', $bank_account_id)
+                ->where('company_id', $company_system_id)
+                ->where('isActive', 1);
+        })
+            ->where(function ($q) {
+                $q->where('status', 1)  // status = 1 => used
+                ->orWhere('status', 2); // // status = 2 => cancelled
+            })
+            ->orderBy('id', 'DESC')
+            ->first();
+
+        if(!empty($usedCheque)){
+            return $usedCheque->id;
+        }
+        return null;
+    }
 
     public function generatePdcForPv(Request $request)
     {
@@ -2830,7 +2926,9 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 'bankledger_by' => function ($query) {
                     $query->where('documentSystemID', 4);
                     $query->with(['bankrec_by', 'bank_transfer']);
-                },'audit_trial.modified_by'])->first();
+                },'audit_trial.modified_by','pdc_cheque' => function ($q) {
+                    $q->where('documentSystemID', 4);
+                } ])->first();
 
         $isProjectBase = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
         ->where('companySystemID', $output->companySystemID)
@@ -3289,8 +3387,8 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                         FROM
                         	erp_paysupplierinvoicedetail 
                         INNER JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicemaster.PayMasterAutoId = erp_paysupplierinvoicedetail.PayMasterAutoId
-                        JOIN erp_debitnote ON erp_paysupplierinvoicedetail.PayMasterAutoId = erp_debitnote.debitNoteAutoID
-                        WHERE erp_paysupplierinvoicemaster.invoiceType != 6 AND erp_paysupplierinvoicemaster.invoiceType != 7 AND erp_debitnote.type = 1
+                        LEFT JOIN erp_debitnote ON erp_paysupplierinvoicedetail.PayMasterAutoId = erp_debitnote.debitNoteAutoID
+                        WHERE erp_paysupplierinvoicemaster.invoiceType != 6 AND erp_paysupplierinvoicemaster.invoiceType != 7 AND (erp_debitnote.type = 1 OR erp_debitnote.debitNoteAutoID IS NULL)
                         GROUP BY
                         	erp_paysupplierinvoicedetail.apAutoID 
                         	) sid ON sid.apAutoID = erp_accountspayableledger.apAutoID
@@ -3327,96 +3425,8 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 	AND erp_accountspayableledger.companySystemID = ' . $paySupplierInvoiceMaster->companySystemID . ' 
                 	AND erp_accountspayableledger.supplierCodeSystem = ' . $paySupplierInvoiceMaster->BPVsupplierID . ' 
                 	AND erp_accountspayableledger.supplierTransCurrencyID = ' . $paySupplierInvoiceMaster->supplierTransCurrencyID . ' HAVING ROUND(paymentBalancedAmount, ' . $decimalPlaces . ') != 0 ORDER BY erp_accountspayableledger.apAutoID DESC';
-        } elseif ($paySupplierInvoiceMaster->invoiceType == 6){
-            $sql = 'SELECT
-                	erp_accountspayableledger.apAutoID,
-                	erp_accountspayableledger.documentSystemCode as bookingInvSystemCode,
-                	erp_accountspayableledger.supplierTransCurrencyID,
-                	erp_accountspayableledger.supplierTransER,
-                	erp_accountspayableledger.localCurrencyID,
-                	erp_accountspayableledger.localER,
-                	erp_accountspayableledger.localAmount,
-                	erp_accountspayableledger.comRptCurrencyID,
-                	erp_accountspayableledger.comRptER,
-                	erp_accountspayableledger.comRptAmount,
-                	erp_accountspayableledger.companySystemID,
-                	erp_accountspayableledger.companyID,
-                	erp_accountspayableledger.documentSystemID as addedDocumentSystemID,
-                	erp_accountspayableledger.documentID as addedDocumentID,
-                	erp_accountspayableledger.documentCode as bookingInvDocCode,
-                	erp_accountspayableledger.documentDate as bookingInvoiceDate,
-                	erp_accountspayableledger.invoiceType as addedDocumentType,
-                	erp_accountspayableledger.supplierCodeSystem,
-                	erp_accountspayableledger.supplierInvoiceNo,
-                	erp_accountspayableledger.supplierInvoiceDate,
-                	erp_accountspayableledger.supplierDefaultCurrencyID,
-                	erp_accountspayableledger.supplierDefaultCurrencyER,
-                	erp_accountspayableledger.supplierDefaultAmount,
-                    erp_accountspayableledger.purchaseOrderID,
-                    erp_accountspayableledger.isRetention,
-                    poid.purchaseOrderCode,
-                	CurrencyCode,
-                	DecimalPlaces,
-                	IFNULL(supplierInvoiceAmount,0) as supplierInvoiceAmount,
-                	IFNULL(supplierInvoiceAmount,0) - IFNULL(sid.SumOfsupplierPaymentAmount,0)- IFNULL(md.matchedAmount *- 1,0) as paymentBalancedAmount,
-                	IFNULL(ABS(sid.SumOfsupplierPaymentAmount),0) + IFNULL(md.matchedAmount,0) as matchedAmount,
-                	false as isChecked 
-                FROM
-                	erp_accountspayableledger
-                    LEFT JOIN (
-                      SELECT
-                            erp_purchaseordermaster.purchaseOrderCode,
-                            erp_purchaseordermaster.purchaseOrderID
-                        FROM
-                            erp_purchaseordermaster
-                        ) poid ON poid.purchaseOrderID = erp_accountspayableledger.purchaseOrderID
-                	LEFT JOIN (
-                        SELECT
-                        	erp_paysupplierinvoicedetail.apAutoID,
-                        	IFNULL(Sum( erp_paysupplierinvoicedetail.supplierPaymentAmount ),0) AS SumOfsupplierPaymentAmount,
-                        	IFNULL(Sum( erp_paysupplierinvoicedetail.paymentBalancedAmount ),0) AS SumOfpaymentBalancedAmount 
-                        FROM
-                        	erp_paysupplierinvoicedetail 
-                        INNER JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicemaster.PayMasterAutoId = erp_paysupplierinvoicedetail.PayMasterAutoId
-                        JOIN erp_debitnote ON erp_paysupplierinvoicedetail.PayMasterAutoId = erp_debitnote.debitNoteAutoID
-                        WHERE erp_paysupplierinvoicemaster.invoiceType != 6 AND erp_paysupplierinvoicemaster.invoiceType != 7 AND erp_debitnote.type = 2
-                        GROUP BY
-                        	erp_paysupplierinvoicedetail.apAutoID 
-                        	) sid ON sid.apAutoID = erp_accountspayableledger.apAutoID
-                        	LEFT JOIN (
-                        SELECT
-                        	erp_matchdocumentmaster.PayMasterAutoId,
-                        	erp_matchdocumentmaster.companyID,
-                        	erp_matchdocumentmaster.companySystemID,
-                        	erp_matchdocumentmaster.documentSystemID,
-                        	erp_matchdocumentmaster.BPVcode,
-                        	erp_matchdocumentmaster.BPVsupplierID,
-                        	erp_matchdocumentmaster.supplierTransCurrencyID,
-                        	SUM(erp_matchdocumentmaster.matchedAmount) as matchedAmount,
-                        	SUM(erp_matchdocumentmaster.matchLocalAmount) as matchLocalAmount,
-                        	SUM(erp_matchdocumentmaster.matchRptAmount) as matchRptAmount
-                        FROM
-                        	erp_matchdocumentmaster 
-                        WHERE
-                        	erp_matchdocumentmaster.companySystemID = ' . $paySupplierInvoiceMaster->companySystemID . ' 
-                        	AND erp_matchdocumentmaster.documentSystemID = 15
-                        	GROUP BY companySystemID,PayMasterAutoId,documentSystemID,BPVsupplierID,supplierTransCurrencyID
-                        	) md ON md.documentSystemID = erp_accountspayableledger.documentSystemID 
-                	AND md.PayMasterAutoId = erp_accountspayableledger.documentSystemCode 
-                	AND md.BPVsupplierID = erp_accountspayableledger.supplierCodeSystem 
-                	AND md.supplierTransCurrencyID = erp_accountspayableledger.supplierTransCurrencyID 
-                	AND md.companySystemID = erp_accountspayableledger.companySystemID 
-                	LEFT JOIN currencymaster ON erp_accountspayableledger.supplierTransCurrencyID = currencymaster.currencyID 
-                WHERE
-                	erp_accountspayableledger.invoiceType IN ( 0, 1, 4, 7, 2,3 ) 
-                	AND erp_accountspayableledger.documentSystemID != 4
-                	AND DATE_FORMAT(erp_accountspayableledger.documentDate,"%Y-%m-%d") <= "' . $BPVdate . '" 
-                	AND erp_accountspayableledger.selectedToPaymentInv = 0 
-                	AND erp_accountspayableledger.fullyInvoice <> 2 
-                	AND erp_accountspayableledger.companySystemID = ' . $paySupplierInvoiceMaster->companySystemID . ' 
-                	AND erp_accountspayableledger.supplierCodeSystem = ' . $paySupplierInvoiceMaster->BPVsupplierID . ' 
-                	AND erp_accountspayableledger.supplierTransCurrencyID = ' . $paySupplierInvoiceMaster->supplierTransCurrencyID . ' HAVING ROUND(paymentBalancedAmount, ' . $decimalPlaces . ') != 0 ORDER BY erp_accountspayableledger.apAutoID DESC';
-        } else {
+        }
+        else {
             $sql = 'SELECT
                 	erp_accountspayableledger.apAutoID,
                 	erp_accountspayableledger.documentSystemCode as bookingInvSystemCode,
@@ -4361,7 +4371,9 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
                 }, 'approved_by' => function ($query) {
                     $query->with('employee');
                     $query->where('documentSystemID', 4);
-                }, 'created_by', 'cancelled_by'])->first();
+                }, 'created_by', 'cancelled_by','pdc_cheque' => function ($q) {
+                    $q->where('documentSystemID', 4);
+                }])->first();
 
         if (empty($output)) {
             return $this->sendError('Customer Receive Payment not found');
