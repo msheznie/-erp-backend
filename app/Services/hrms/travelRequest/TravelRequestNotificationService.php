@@ -14,7 +14,6 @@ use Illuminate\Support\Facades\File;
 class TravelRequestNotificationService
 {
     private $companyId;
-    private $tenantId;
     private $id;
     private $date;
     private $isScenarioActive;
@@ -25,10 +24,9 @@ class TravelRequestNotificationService
     private $documentCode;
 
 
-    public function __construct($companyId, $tenantId, $id,$tripMaster,$tripRequestBookings)
+    public function __construct($companyId,  $id,$tripMaster,$tripRequestBookings)
     {
         $this->companyId = $companyId;
-        $this->tenantId = $tenantId;
         $this->id = $id;
         $this->date = Carbon::now()->format('Y-m-d H:i:s');
         $this->isScenarioActive = false;
