@@ -560,15 +560,31 @@ class AssetFinanceCategoryAPIController extends AppBaseController
     {
         $companyId = $request->get('selectedCompanyId');
         $yesNoSelection = YesNoSelection::selectRaw('idyesNoselection as value,YesNo as label')->get();
-
-
         $chartOfAccounts = ChartOfAccountsAssigned::where('companySystemID', $companyId)
+            ->selectRaw('chartOfAccountSystemID as value,CONCAT(AccountCode, " | " ,AccountDescription) as label')
+            ->get();
+            
+        $chartOfAccountsForCostAcc = ChartOfAccountsAssigned::where('companySystemID', $companyId)
+            ->where('catogaryBLorPLID', 1)
+            ->where('controlAccounts', 'BSA')
+            ->where('controllAccountYN', 1)
+            ->selectRaw('chartOfAccountSystemID as value,CONCAT(AccountCode, " | " ,AccountDescription) as label')
+            ->get();
+
+        $chartOfAccountsForAccDep = ChartOfAccountsAssigned::where('companySystemID', $companyId)
+            ->where('catogaryBLorPLID', 1)
+            ->where(function($query) {
+                $query->where('controlAccounts', 'BSA')
+                      ->orWhere('controlAccounts', 'BSL');
+            })->where('controllAccountYN', 1)
             ->selectRaw('chartOfAccountSystemID as value,CONCAT(AccountCode, " | " ,AccountDescription) as label')
             ->get();
 
         $output = array(
             'yesNoSelection' => $yesNoSelection,
             'chartOfAccounts' => $chartOfAccounts,
+            'chartOfAccountsForCostAcc' => $chartOfAccountsForCostAcc,
+            'chartOfAccountsForAccDep' => $chartOfAccountsForAccDep,
         );
 
         return $this->sendResponse($output, trans('custom.retrieve', ['attribute' => trans('custom.record')]));
