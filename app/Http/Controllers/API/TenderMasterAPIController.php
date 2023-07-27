@@ -29,12 +29,12 @@ use App\Models\TenderBoqItems;
 use App\Models\TenderMainWorks;
 use App\Models\TenderMaster;
 use App\Models\TenderProcurementCategory;
+use App\Models\TenderPurchaseRequest;
 use App\Models\TenderSiteVisitDates;
 use App\Models\TenderType;
 use App\Models\SrmTenderBidEmployeeDetails;
 use App\Models\YesNoSelection;
 use App\Repositories\TenderMasterRepository;
-use App\TenderPurchaseRequest;
 use App\Traits\AuditTrial;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -742,9 +742,20 @@ WHERE
         }
         $data['documentTypes'] = $docTypeArr;
 
-        //Get Purchase Request Data
-        $purchaseRequest = PurchaseRequest::select('purchaseRequestID as id', 'purchaseRequestCode')->where('approved', '-1')->get();
+        // Get Purchase Request Data
+        $purchaseRequest = PurchaseRequest::select('purchaseRequestID as id', 'purchaseRequestCode')
+            ->with(['tender_purchase_request'])
+            ->where('approved', '-1')
+            ->whereDoesntHave('tender_purchase_request', function ($query) use ($tenderMasterId) {
+                $query->where('tender_id','!=' ,$tenderMasterId);
+            })
+            ->get();
         $data['purchaseRequest'] = $purchaseRequest;
+
+        // Get Tender Purchase Request Data
+        $tenderPurchaseRequestList = TenderPurchaseRequest::select('purchase_request_id as id')->where('tender_id', $tenderMasterId)->get();
+        $data['tenderPurchaseRequestList'] = $tenderPurchaseRequestList;
+
         return $data;
     }
 
@@ -1470,8 +1481,8 @@ WHERE
                     }
                 }
 
-                if(isset($input['purchaseRequestID']) && sizeof($input['purchaseRequestID']) > 0){
-                    foreach ($input['purchaseRequestID'] as $pr) {
+                if(isset($input['purchaseRequest']) && sizeof($input['purchaseRequest']) > 0){
+                    foreach ($input['purchaseRequest'] as $pr) {
                         $data = [
                             'tender_id' => $input['id'],
                             'purchase_request_id' => $pr['id'],

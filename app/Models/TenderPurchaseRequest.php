@@ -1,6 +1,6 @@
 <?php
 
-namespace App;
+namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
@@ -19,4 +19,9 @@ class TenderPurchaseRequest extends Model
         'purchase_request_id' => 'integer',
         'company_id' => 'integer'
     ];
+
+    public function purchase_request()
+    {
+        return $this->belongsTo(PurchaseRequest::class, 'purchase_request_id', 'purchaseRequestID');
+    }
 }
