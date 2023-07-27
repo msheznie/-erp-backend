@@ -4073,4 +4073,8 @@ WHERE
             default:
         }
     }
+
+    public function getTenderPr(Request $request){ 
+        return $this->tenderMasterRepository->getTenderPr($request);
+    }
 } 

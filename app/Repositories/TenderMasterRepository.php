@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Models\CurrencyMaster;
 use App\Models\EnvelopType;
+use App\Models\PurchaseRequest;
 use App\Models\TenderMaster;
 use App\Models\TenderType;
 use InfyOm\Generator\Common\BaseRepository;
@@ -145,5 +146,19 @@ class TenderMasterRepository extends BaseRepository
         ); 
  
         return $data;
+    }
+
+    public function getTenderPr(Request $request){ 
+        $input = $request->all();
+        $tenderId = $input['tenderId'];
+        $companyId = $input['companyId'];
+
+        $data = PurchaseRequest::select('purchaseRequestID','companyID','purchaseRequestCode')
+        ->where('companySystemID',$companyId)
+        ->limit(10)
+        ->get();
+
+        return $data;
+
     }
 }
