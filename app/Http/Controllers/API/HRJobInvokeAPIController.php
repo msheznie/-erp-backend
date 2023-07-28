@@ -27,7 +27,7 @@ use App\Jobs\TravelRequestNotificationJob;
 use App\Models\Company;
 use App\Models\NotificationCompanyScenario;
 use Illuminate\Support\Facades\Artisan;
-
+use App\Models\NotificationScenarios;
 
 class HRJobInvokeAPIController extends AppBaseController
 {
@@ -219,5 +219,22 @@ class HRJobInvokeAPIController extends AppBaseController
 
         ReturnToWorkNotificationJob::dispatch($dbName, $companyId, $id, $masterDetails); 
         return $this->sendResponse([], 'Return to work notification scenario added to queue');
+    }
+
+    function hrNotificationDebug($scenarioId, Request $request){
+
+        if(isset($scenarioId)){
+            $scenario = NotificationScenarios::find($scenarioId);
+            if(empty($scenario)){
+                return $this->sendResponse([], 'Scenario is not found');
+            }
+
+            NotificationService::process($scenarioId);
+                return $this->sendResponse([], $scenario->scenarioDescription. ' is processed');
+            }else
+        {
+            return $this->sendResponse([], 'Scenario ID is not found');
+        }
+
     }
 }
