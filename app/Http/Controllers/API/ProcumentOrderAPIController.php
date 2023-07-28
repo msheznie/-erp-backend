@@ -988,7 +988,7 @@ class ProcumentOrderAPIController extends AppBaseController
             $accountValidationArray = [];
             foreach ($poDetails as $key => $value) {
                 if (is_null($value->itemFinanceCategoryID)) {
-                    $accountValidationArray[] = "Finance category of " . $value->itemPrimaryCode . " not found";
+                    $accountValidationArray[3][] = "Finance category of " . $value->itemPrimaryCode . " not found";
                 } else {
                     switch ($value->itemFinanceCategoryID) {
                         case 1:
@@ -1027,6 +1027,11 @@ class ProcumentOrderAPIController extends AppBaseController
                 if (isset($accountValidationArray[2])) {
                     $itemsB = implode(", ", $accountValidationArray[2]);
                     $accountValidationErrrArray[] = "Expense account configuration is not done correctly. Activate includePLforGRVYN for the item(s) " . $itemsB;
+                }
+
+                if (isset($accountValidationArray[3])) {
+                    $itemsC = implode(", ", $accountValidationArray[3]);
+                    $accountValidationErrrArray[] = $itemsC;
                 }
                 return $this->sendError($accountValidationErrrArray, 420);
             }
