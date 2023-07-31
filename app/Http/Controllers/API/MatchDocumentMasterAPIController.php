@@ -769,9 +769,12 @@ class MatchDocumentMasterAPIController extends AppBaseController
                     ->where('isCurrent', -1)
                     ->first();
 
-                    $input['companyFinancePeriodID'] = $companyFinancePeriod->companyFinancePeriodID;
-                    $input['FYPeriodDateFrom'] = $companyFinancePeriod->dateFrom;
-                    $input['FYEFYPeriodDateTond'] = $companyFinancePeriod->dateTo;
+                    if($companyFinancePeriod)
+                    {
+                        $input['companyFinancePeriodID'] = $companyFinancePeriod->companyFinancePeriodID;
+                        $input['FYPeriodDateFrom'] = $companyFinancePeriod->dateFrom;
+                        $input['FYEFYPeriodDateTond'] = $companyFinancePeriod->dateTo;
+                    }
 
                 }
         }
