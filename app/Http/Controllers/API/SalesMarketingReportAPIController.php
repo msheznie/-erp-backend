@@ -1323,7 +1323,7 @@ class SalesMarketingReportAPIController extends AppBaseController
 
                 $fileName = 'sales_analysis_soh_report';
 
-                $path = 'procurement/report/sales_analysis_detail_summary_report/excel/';
+                $path = 'procurement/report/sales_analysis_detail_vs_soh_report/excel/';
 
                 $file_type = $request->type;
 
