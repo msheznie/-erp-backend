@@ -747,10 +747,39 @@ class MatchDocumentMasterAPIController extends AppBaseController
         $input['createdUserID'] = \Helper::getEmployeeID();
         $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
 
+
+        $currentFinanceYear = \Helper::companyFinanceYear($input['companySystemID'], 0);
+
+
+        if(isset($currentFinanceYear) && count($currentFinanceYear) > 0)
+        {
+               
+            $companyfinanceyear = CompanyFinanceYear::select('bigginingDate','endingDate')->where('companyFinanceYearID', $currentFinanceYear[0]->companyFinanceYearID)
+            ->where('companySystemID', $input['companySystemID'])
+            ->first();
+                if ($companyfinanceyear) {
+                    $input['companyFinanceYearID'] = $currentFinanceYear[0]->companyFinanceYearID;
+                    $input['FYBiggin'] = $companyfinanceyear->bigginingDate;
+                    $input['FYEnd'] = $companyfinanceyear->endingDate;
+
+                    $companyFinancePeriod = CompanyFinancePeriod::select('companyFinancePeriodID','dateFrom','dateTo')->where('companySystemID', '=', $input['companySystemID'])
+                    ->where('companyFinanceYearID', $currentFinanceYear[0]->companyFinanceYearID)
+                    ->where('departmentSystemID', 1)
+                    ->where('isActive', -1)
+                    ->where('isCurrent', -1)
+                    ->first();
+
+                    $input['companyFinancePeriodID'] = $companyFinancePeriod->companyFinancePeriodID;
+                    $input['FYPeriodDateFrom'] = $companyFinancePeriod->dateFrom;
+                    $input['FYEFYPeriodDateTond'] = $companyFinancePeriod->dateTo;
+
+                }
+        }
         
         $matchDocumentMasters = $this->matchDocumentMasterRepository->create($input);
 
         return $this->sendResponse($matchDocumentMasters->toArray(), 'Match Document Master saved successfully');
+
     }
 
     /**
@@ -856,7 +885,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
         $input = array_except($input, ['created_by', 'BPVsupplierID', 'company', 'confirmed_by', 'modified_by','localcurrency','rptcurrency','supplier','employee','customer']);
         $input = $this->convertArrayToValue($input);
 
-  
+        
         $employee = \Helper::getEmployeeInfo();
 
         /** @var MatchDocumentMaster $matchDocumentMaster */
@@ -874,12 +903,6 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 $input['matchingDocdate'] = new Carbon($input['matchingDocdate']);
             }
         }
-
-        $customValidation = CustomValidation::validation(70, $matchDocumentMaster, 2, $input);
-        if (!$customValidation["success"]) {
-            return $this->sendError($customValidation["message"], 500, array('type' => 'already_confirmed'));
-        }
-
 
         if(!isset($input['companyFinanceYearID']) )
         {
@@ -916,8 +939,16 @@ class MatchDocumentMasterAPIController extends AppBaseController
         }
 
         if(!$isInFinancePeriod){
-            return $this->sendError('Document date should be between financial period start date and end date',500, array('type' => 'already_confirmed'));
+            return $this->sendError('Document date should be between financial period start date and end date',500);
         }
+
+        $customValidation = CustomValidation::validation(70, $matchDocumentMaster, 2, $input);
+
+        
+        if (!$customValidation["success"]) {
+            return $this->sendError($customValidation["message"], 500, array('type' => 'already_confirmed'));
+        }
+        
         // end of check date within financial period
         if($matchDocumentMaster->matchingOption != 1) {
             $detailAmountTotTran = PaySupplierInvoiceDetail::where('matchingDocID', $id)
