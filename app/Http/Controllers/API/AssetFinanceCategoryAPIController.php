@@ -568,6 +568,8 @@ class AssetFinanceCategoryAPIController extends AppBaseController
             ->where('catogaryBLorPLID', 1)
             ->where('controlAccountsSystemID', 3)
             ->where('controllAccountYN', 1)
+            ->where('isActive', 1)
+            ->where('isAssigned', -1)
             ->selectRaw('chartOfAccountSystemID as value,CONCAT(AccountCode, " | " ,AccountDescription) as label')
             ->get();
 
@@ -575,6 +577,8 @@ class AssetFinanceCategoryAPIController extends AppBaseController
             ->where('catogaryBLorPLID', 1)
             ->whereIn('controlAccountsSystemID', [3, 4])
             ->where('controllAccountYN', 1)
+            ->where('isActive', 1)
+            ->where('isAssigned', -1)
             ->selectRaw('chartOfAccountSystemID as value,CONCAT(AccountCode, " | " ,AccountDescription) as label')
             ->get();
 
