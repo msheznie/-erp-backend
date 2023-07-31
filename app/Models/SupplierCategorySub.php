@@ -35,9 +35,10 @@ class SupplierCategorySub extends Model
     // use SoftDeletes;
 
     public $table = 'suppliercategorysub';
-    
-    const CREATED_AT = 'created_at';
-    const UPDATED_AT = 'updated_at';
+    protected $primaryKey  = 'supCategorySubID';
+
+    const CREATED_AT = 'createdDateTime';
+    const UPDATED_AT = 'timeStamp';
 
 
     protected $dates = ['deleted_at'];
@@ -46,7 +47,9 @@ class SupplierCategorySub extends Model
     public $fillable = [
         'supMasterCategoryID',
         'subCategoryCode',
+        'categoryName',
         'categoryDescription',
+        'isActive',
         'timeStamp',
         'createdUserGroup',
         'createdPcID',
@@ -68,6 +71,7 @@ class SupplierCategorySub extends Model
         'categoryDescription' => 'string',
         'createdUserGroup' => 'string',
         'createdPcID' => 'string',
+        'isActive' => 'string',
         'createdUserID' => 'string',
         'modifiedPc' => 'string',
         'modifiedUser' => 'string'

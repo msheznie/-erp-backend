@@ -7,6 +7,8 @@
 
 
 //supplier master
+use Illuminate\Support\Facades\Route;
+
 Route::group([], function(){
 	Route::get('supplierFormData', 'CompanyAPIController@getSupplierFormData')->name('Supplier Form Data');
 	Route::get('getAdvanceAccount', 'CompanyAPIController@getAdvanceAccount')->name("Advance accounts for selected company");
@@ -351,4 +353,20 @@ Route::group([], function() {
 	Route::post('getLogisticCategories', 'AddonCostCategoriesAPIController@getLogisticCategories')->name("Get logistic categories");
 
 	Route::resource('addon_cost_categories', 'AddonCostCategoriesAPIController');
+});
+
+//Supplier Business Category
+Route::group([], function() {
+    Route::post('getAllSupplierBusinessCategories', 'SupplierCategoryMasterAPIController@getAllSupplierBusinessCategories')->name("Get all supplier business categories");
+    Route::get('supplierBusinessCategoryFormData', 'SupplierCategoryMasterAPIController@getSupplierBusinessCategoryFormData')->name("Get supplier business category form data");
+    Route::post('validateSupplierBusinessCategoryAmend', 'SupplierCategoryMasterAPIController@validateSupplierBusinessCategoryAmend')->name("Validate supplier business category amend");
+    Route::resource('supplierBusinessCategories', 'SupplierCategoryMasterAPIController');
+});
+
+//Supplier Business Sub Category
+Route::group([], function() {
+    Route::post('getAllSupplierBusinessSubCategories', 'SupplierCategorySubAPIController@getAllSupplierBusinessSubCategories')->name("Get all supplier business sub categories");
+    Route::get('supplierBusinessSubCategoryFormData', 'SupplierCategorySubAPIController@getSupplierBusinessSubCategoryFormData')->name("Get supplier business sub category form data");
+    Route::post('validateSupplierBusinessSubCategoryAmend', 'SupplierCategorySubAPIController@validateSupplierBusinessSubCategoryAmend')->name("Validate supplier business sub category amend");
+    Route::resource('supplierBusinessSubCategories', 'SupplierCategorySubAPIController');
 });

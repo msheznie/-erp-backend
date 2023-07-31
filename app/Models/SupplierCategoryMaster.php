@@ -34,9 +34,10 @@ class SupplierCategoryMaster extends Model
     //use SoftDeletes;
 
     public $table = 'suppliercategorymaster';
-    
-    const CREATED_AT = 'created_at';
-    const UPDATED_AT = 'updated_at';
+    protected $primaryKey  = 'supCategoryMasterID';
+
+    const CREATED_AT = 'createdDateTime';
+    const UPDATED_AT = 'timeStamp';
 
 
     protected $dates = ['deleted_at'];
@@ -48,6 +49,8 @@ class SupplierCategoryMaster extends Model
         'createdUserGroup',
         'createdPcID',
         'createdUserID',
+        'categoryName',
+        'isActive',
         'modifiedPc',
         'modifiedUser',
         'createdDateTime',
@@ -62,7 +65,9 @@ class SupplierCategoryMaster extends Model
     protected $casts = [
         'supCategoryMasterID' => 'integer',
         'categoryCode' => 'string',
+        'categoryName' => 'string',
         'categoryDescription' => 'string',
+        'isActive' => 'string',
         'createdUserGroup' => 'string',
         'createdPcID' => 'string',
         'createdUserID' => 'string',
