@@ -236,7 +236,7 @@ class HRProbationNotificationService
 
         $str .= ".<br/><b> Expiry date </b> : " . $this->expiry_date;
 
-        $expiry_date_frm = Carbon::parse( '2023-09-28' )->format('Y-m-d');
+        $expiry_date_frm = Carbon::parse( $this->expiry_date )->format('Y-m-d');
         $to_day = Carbon::now()->format('Y-m-d');
 
         if( $expiry_date_frm != $to_day && $type != 0){
