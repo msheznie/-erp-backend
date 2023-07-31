@@ -480,6 +480,16 @@ class FixedAssetMasterAPIController extends AppBaseController
             return $this->sendError("Salvage value cannot be less than Zero", 500);
         }
 
+        if($input['assetType'] == 1){
+            if(empty($input['depMonth']) || $input['depMonth'] == 0){
+                return $this->sendError("Life time in Years cannot be Blank or Zero, update the lifetime of the asset to proceed", 500);
+            }
+        } else {
+            if($input['depMonth'] == ''){
+                $input['depMonth'] = 0;
+            }
+        }
+
         DB::beginTransaction();
         try {
             $messages = [
