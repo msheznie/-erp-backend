@@ -2000,6 +2000,7 @@ WHERE
                 $x++;
             }
         }
+
         else {
             $data = array();
         }
