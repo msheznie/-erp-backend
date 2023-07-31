@@ -990,8 +990,6 @@ class SalesMarketingReportAPIController extends AppBaseController
                 $toDate = new Carbon($toDate);
                 $toDate = $toDate->format('Y-m-d');
 
-                $data = array();
-
                 $invoiceDetails = CustomerInvoiceItemDetails::with(['local_currency','reporting_currency','sales_return_details'=>function($query) use ($customers,$warehouses,$subCategories,$mainCategories) {
                     $query->with(['master']);
                 },'item_by'=>
@@ -1026,86 +1024,17 @@ class SalesMarketingReportAPIController extends AppBaseController
                     )->get();
 
                 $company = Company::with(['reportingcurrency', 'localcurrency'])->find($request->companySystemID);
-                $companyCode = isset($company->CompanyID)?$company->CompanyID:'common';
+                $templateName = "export_report.sales_analysis_detail_report";
 
+                $reportData = ['invoiceDetails' => $invoiceDetails, 'company' => $company, 'fromDate' => $fromDate, 'toDate' => $toDate, 'currencyID' => $currencyID];
 
-                foreach ($invoiceDetails as $val) {
-                    if($val->master != null && $val->item_by != null){
+                \Excel::create('finance', function ($excel) use ($reportData, $templateName) {
+                    $excel->sheet('New sheet', function ($sheet) use ($reportData, $templateName) {
+                        $sheet->loadView($templateName, $reportData);
+                    });
+                })->download('csv');
 
-                         $isSalesReturn = isset($val->sales_return_details->master->approvedYN) ? $val->sales_return_details->master->approvedYN: 0;
-                        if($isSalesReturn == -1 ) {
-                           $qtyIssued = $val->qtyIssued - $val->sales_return_details->qtyReturned;
-
-                        }
-                        if($isSalesReturn != -1 ){
-                            $qtyIssued =  $val->qtyIssued;
-
-                        }
-
-                        if($currencyID == 1){
-                           $currencyCode = $val->local_currency->CurrencyCode;
-                        }
-                        if($currencyID == 2){
-                            $currencyCode = $val->reporting_currency->CurrencyCode;
-                        }
-
-                        if($currencyID == 1) {
-                            $sellingCostMargin = number_format($val->sellingCostAfterMarginLocal, $company->localcurrency->DecimalPlaces);
-                        }
-                        if($currencyID == 2) {
-                            $sellingCostMargin = number_format($val->sellingCostAfterMarginRpt, $company->reportingcurrency->DecimalPlaces);
-                        }
-
-                        if($currencyID == 1){
-                         $netTotal = number_format($val->sellingTotal / $val->localCurrencyER,$company->localcurrency->DecimalPlaces);
-                        }
-
-                        if($currencyID == 2){
-                            $netTotal = number_format($val->sellingTotal / $val->reportingCurrencyER,$company->reportingcurrency->DecimalPlaces);
-                        }
-
-
-                        $data[] = array(
-                            'Location Code' => $val->master->warehouse->wareHouseCode,
-                            'Location' => $val->master->warehouse->location->locationName,
-                            'Segment' => $val->master->segment->ServiceLineDes,
-                            'Transaction Type' => $val->master->documentID,
-                            'Transaction Code' => $val->master->bookingInvCode,
-                            'Transaction Date' => \Carbon\Carbon::parse($val->master->createdDateAndTime)->format("d/m/Y"),
-                            'Narration' => $val->comments,
-                            'Item Code' => $val->itemPrimaryCode,
-                            'Item Description' => $val->itemDescription,
-                            'UOM' => $val->uom_default->UnitShortCode,
-                            'Barcode' => $val->item_by->barcode,
-                            'Sub Category' => $val->item_by->financeSubCategory->categoryDescription,
-                            'Revenue Acc Code' => $val->financeGLcodeRevenue,
-                            'Sold Qty' => $qtyIssued,
-                            'Currency' => $currencyCode,
-                            'Sold Price' => $sellingCostMargin,
-                            'Net Sales Amount' => $netTotal,
-                            'Discount Amount' => 0
-                        );
-                    }
-
-
-                }
-
-
-                $doc_name = 'sales_analysis_detail_report';
-                $path = 'procurement/report/sales_analysis_detail_report/excel/';
-
-                $detail_array = array('type' => 1,'title'=>'Sales Detail','from_date'=>$fromDate,'to_date'=>$toDate,'company_name'=>$company->CompanyName,'company_code'=>$companyCode);
-
-                $basePath = CreateExcel::process($data,$type,$doc_name,$path,$detail_array);
-
-                if($basePath == '')
-                {
-                    return $this->sendError('Unable to export excel');
-                }
-                else
-                {
-                    return $this->sendResponse($basePath, trans('custom.success_export'));
-                }
+                return $this->sendResponse(array(), 'successfully export');
 
                 break;
             case 'SARDS':
