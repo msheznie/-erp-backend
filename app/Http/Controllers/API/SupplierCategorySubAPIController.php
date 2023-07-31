@@ -16,12 +16,16 @@ use App\Http\Requests\API\UpdateSupplierCategorySubAPIRequest;
 use App\Models\SupplierCategorySub;
 use App\Models\SupplierMaster;
 use App\Models\SupplierSubCategoryAssign;
+use App\Models\YesNoSelection;
 use App\Repositories\SupplierCategorySubRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Yajra\DataTables\DataTables;
 
 /**
  * Class SupplierCategorySubController
@@ -62,7 +66,7 @@ class SupplierCategorySubAPIController extends AppBaseController
 
         if($supplier){
             $supMasterCategoryID = $supplier['supCategoryMasterID']; //493;
-            $supplierCategorySubs = SupplierCategorySub::where('supMasterCategoryID','=',$supMasterCategoryID)->get();
+            $supplierCategorySubs = SupplierCategorySub::where('supMasterCategoryID','=',$supMasterCategoryID)->where('isActive',1)->get();
         }else{
             $supplierCategorySubs = [];
         }
@@ -105,9 +109,25 @@ class SupplierCategorySubAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $supplierCategorySubs = $this->supplierCategorySubRepository->create($input);
+        $validator = Validator::make($input, [
+            'subCategoryCode' => 'unique:suppliercategorysub',
+            'categoryName' => 'unique:suppliercategorysub',
+            'categoryDescription' => 'required'
+        ],[
+            'subCategoryCode.unique'   => 'Sub category code already exists',
+            'categoryName.unique'   => 'Sub category name already exists'
+        ]);
 
-        return $this->sendResponse($supplierCategorySubs->toArray(), 'Supplier Category Sub saved successfully');
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422 );
+        }
+
+        $id = Auth::id();
+        $input['createdUserID'] = $id;
+
+        $supplierSubCategoryMaster = $this->supplierCategorySubRepository->create($input);
+
+        return $this->sendResponse($supplierSubCategoryMaster->toArray(), trans('custom.save', ['attribute' => trans('custom.supplier_business_sub_category')]));
     }
 
     /**
@@ -121,13 +141,13 @@ class SupplierCategorySubAPIController extends AppBaseController
     public function show($id)
     {
         /** @var SupplierCategorySub $supplierCategorySub */
-        $supplierCategorySub = $this->supplierCategorySubRepository->findWithoutFail($id);
+        $supplierCategorySub = $this->supplierCategorySubRepository->find($id);
 
         if (empty($supplierCategorySub)) {
-            return $this->sendError('Supplier Category Sub not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.supplier_business_sub_category')]));
         }
 
-        return $this->sendResponse($supplierCategorySub->toArray(), 'Supplier Category Sub retrieved successfully');
+        return $this->sendResponse($supplierCategorySub->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.supplier_business_sub_category')]));
     }
 
     /**
@@ -147,12 +167,40 @@ class SupplierCategorySubAPIController extends AppBaseController
         $supplierCategorySub = $this->supplierCategorySubRepository->findWithoutFail($id);
 
         if (empty($supplierCategorySub)) {
-            return $this->sendError('Supplier Category Sub not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.supplier_business_sub_category')]));
         }
 
-        $supplierCategorySub = $this->supplierCategorySubRepository->update($input, $id);
+        if($supplierCategorySub->subCategoryCode != $request->subCategoryCode){
+            $validator = Validator::make($input, [
+                'subCategoryCode' => 'unique:suppliercategorysub'
+            ],[
+                'subCategoryCode.unique'   => 'Sub category code already exists'
+            ]);
 
-        return $this->sendResponse($supplierCategorySub->toArray(), 'SupplierCategorySub updated successfully');
+            if ($validator->fails()) {
+                return $this->sendError($validator->messages(), 422 );
+            }
+        }
+
+        if($supplierCategorySub->categoryName != $request->categoryName){
+            $validator = Validator::make($input, [
+                'categoryName' => 'unique:suppliercategorysub'
+            ],[
+                'categoryName.unique'   => 'Sub category name already exists'
+            ]);
+
+            if ($validator->fails()) {
+                return $this->sendError($validator->messages(), 422 );
+            }
+        }
+
+        $id = Auth::id();
+        $input = $request->except(['createdUserID']);
+        $input['modifiedUser'] = $id;
+
+        $supplierCategorySub->update($input);
+
+        return $this->sendResponse($supplierCategorySub->refresh()->toArray(), trans('custom.update', ['attribute' => trans('custom.supplier_business_sub_category')]));
     }
 
     /**
@@ -169,11 +217,82 @@ class SupplierCategorySubAPIController extends AppBaseController
         $supplierCategorySub = $this->supplierCategorySubRepository->findWithoutFail($id);
 
         if (empty($supplierCategorySub)) {
-            return $this->sendError('Supplier Category Sub not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.supplier_business_sub_category')]));
+        }
+
+        $subCategoryAssign= SupplierSubCategoryAssign::where('supSubCategoryID', $id)->first();
+
+        if ($subCategoryAssign) {
+            return $this->sendError("This category has already been pulled to Supplier Master, cannot be deleted");
         }
 
         $supplierCategorySub->delete();
 
-        return $this->sendResponse($id, 'Supplier Category Sub deleted successfully');
+        return $this->sendResponse($id,trans('custom.delete', ['attribute' => trans('custom.supplier_business_sub_category')]));
+    }
+
+    public function getAllSupplierBusinessSubCategories(Request $request){
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $supplierBusinessSubCategories = SupplierCategorySub::select('*');
+        $supplierBusinessSubCategories = $supplierBusinessSubCategories->where('supMasterCategoryID',$input['supplierBusinessCategoryID']);
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $supplierBusinessSubCategories = $supplierBusinessSubCategories->where(function ($query) use ($search) {
+                $query->where('subCategoryCode', 'LIKE', "%{$search}%")
+                    ->orWhere('categoryName', 'LIKE', "%{$search}%")
+                    ->orWhere('categoryDescription', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return DataTables::of($supplierBusinessSubCategories)
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions')
+            ->make(true);
+    }
+
+    public function getSupplierBusinessSubCategoryFormData(Request $request)
+    {
+        $yesNoSelection = YesNoSelection::selectRaw('idyesNoselection as value,YesNo as label')->get();
+
+        $output = array('yesNoSelection' => $yesNoSelection);
+
+        return $this->sendResponse($output, trans('custom.retrieve', ['attribute' => trans('custom.record')]));
+    }
+
+    public function validateSupplierBusinessSubCategoryAmend(Request $request)
+    {
+        $input = $request->all();
+
+        $supplierBusinessSubCategory = $this->supplierCategorySubRepository->find($input['id']);
+
+        if (!$supplierBusinessSubCategory) {
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.supplier_business_sub_category')]));
+        }
+
+        $errorMessages = null;
+        $successMessages = null;
+        $amendable = null;
+
+        $subCategoryAssign = SupplierSubCategoryAssign::where('supSubCategoryID', $input['id'])->first();
+
+        if ($subCategoryAssign) {
+            $errorMessages = "This sub category cannot be amended. it had used in supplier master";
+            $amendable = false;
+        } else {
+            $successMessages = "Use of Supplier business category checking is done in supplier master";
+            $amendable = true;
+        }
+
+        return $this->sendResponse(['errorMessages' => $errorMessages, 'successMessages' => $successMessages, 'amendable'=> $amendable], "validated successfully");
     }
 }
