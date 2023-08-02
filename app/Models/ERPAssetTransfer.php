@@ -248,21 +248,16 @@ class ERPAssetTransfer extends Model
 
     public function getTransferTypeAttribute(): string
     {
-        if (isset($this->attributes['type'])) {
-            if ($this->attributes['type']) {
-                if($this->attributes['type'] == 1) {
-                    return 'Request Based Transfer';
-                }else if ($this->attributes['type'] == 2) {
-                    return 'Direct to Location';
-                }else {
-                    return 'Direct to Employee';
-                }
-            } else {
-                return 'N/A';
-            }
+        switch ($this->attributes['type']) {
+            case 1: return 'Request Based - Employee';
+            case 2: return 'Direct to Location';
+            case 3: return 'Direct to Employee';
+            case 4: return 'Request Based - Department';
+            default: return '';
+
         }
-        return '';
     }
+    
     public function company()
     {
         return $this->belongsTo('App\Models\Company', 'company_id', 'companySystemID');

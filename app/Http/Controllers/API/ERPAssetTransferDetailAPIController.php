@@ -11,6 +11,7 @@ use App\Http\Controllers\AppBaseController;
 use App\Models\AssetRequestDetail;
 use App\Models\ERPAssetTransfer;
 use App\Models\ErpLocation;
+use App\Models\DepartmentMaster;
 use App\Models\FixedAssetMaster;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
@@ -344,8 +345,8 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
     {
         $data['assetMaster'] = ERPAssetTransfer::where('id', $id)->first();
 
-        if ($data['assetMaster']->type == 1) {
-            $data['assetRequestDetails'] = ERPAssetTransferDetail::with(['assetRequestDetail', 'assetMaster','assetRequestMaster','item_detail'])->where('erp_fa_fa_asset_transfer_id', $id)->get();
+        if ($data['assetMaster']->type == 1 || $data['assetMaster']->type == 4) {
+            $data['assetRequestDetails'] = ERPAssetTransferDetail::with(['assetRequestDetail', 'assetMaster','assetRequestMaster','item_detail','department'])->where('erp_fa_fa_asset_transfer_id', $id)->get();
         } else {
             $data['assetRequestDetails'] = ERPAssetTransferDetail::with(['fromLocation', 'toLocation', 'assetMaster','fromEmployee' => function($query) {
                 $query->select(['employeeSystemID','empFullName']);
@@ -539,5 +540,19 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
             ->where('companySystemID', $companyID)->first();
 
         return $data;
+    }
+
+    public function getDepartmentList(Request $request) {
+        $departments = DepartmentMaster::select(['departmentSystemID','DepartmentDescription'])->showInCombo()->where('isActive',true)->get();
+        return $this->sendResponse($departments, 'Department data reterived');
+
+    }
+
+    public function getDepartmentOfAsset(Request $request) {
+        $input = $request->all();
+        $deparment = FixedAssetMaster::select('departmentSystemID')->where('faID',$input['assetID'])->with(['departmentmaster' => function ($q) {
+            $q->select(['DepartmentDescription','departmentSystemID']);
+        }])->first();
+        return $this->sendResponse($deparment, 'Department reterived');
     }
 }
