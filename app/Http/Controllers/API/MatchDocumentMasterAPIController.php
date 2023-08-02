@@ -759,10 +759,8 @@ class MatchDocumentMasterAPIController extends AppBaseController
             ->first();
                 if ($companyfinanceyear) {
                     $input['companyFinanceYearID'] = $currentFinanceYear[0]->companyFinanceYearID;
-                    $input['FYBiggin'] = $companyfinanceyear->bigginingDate;
-                    $input['FYEnd'] = $companyfinanceyear->endingDate;
 
-                    $companyFinancePeriod = CompanyFinancePeriod::select('companyFinancePeriodID','dateFrom','dateTo')->where('companySystemID', '=', $input['companySystemID'])
+                    $companyFinancePeriod = CompanyFinancePeriod::select('companyFinancePeriodID')->where('companySystemID', '=', $input['companySystemID'])
                     ->where('companyFinanceYearID', $currentFinanceYear[0]->companyFinanceYearID)
                     ->where('departmentSystemID', 1)
                     ->where('isActive', -1)
@@ -772,8 +770,6 @@ class MatchDocumentMasterAPIController extends AppBaseController
                     if($companyFinancePeriod)
                     {
                         $input['companyFinancePeriodID'] = $companyFinancePeriod->companyFinancePeriodID;
-                        $input['FYPeriodDateFrom'] = $companyFinancePeriod->dateFrom;
-                        $input['FYEFYPeriodDateTond'] = $companyFinancePeriod->dateTo;
                     }
 
                 }

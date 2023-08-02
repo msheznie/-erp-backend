@@ -389,11 +389,7 @@ class MatchDocumentMaster extends Model
         'employeeGLCodeSystemID',
         'employeeGLCode',
         'companyFinanceYearID',
-        'FYBiggin',
-        'FYEnd',
         'companyFinancePeriodID',
-        'FYPeriodDateFrom',
-        'FYPeriodDateTo',
     ];
 
     /**
