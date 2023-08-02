@@ -471,6 +471,27 @@ class JvMasterAPIController extends AppBaseController
                 return $this->sendError($validator->messages(), 422);
             }
 
+
+            $query = JvDetail::selectRaw("chartofaccounts.AccountCode")
+            ->join('chartofaccounts', 'chartofaccounts.chartOfAccountSystemID', '=', 'erp_jvdetail.chartOfAccountSystemID')
+            ->where('chartofaccounts.isActive',0)
+            ->where('erp_jvdetail.jvMasterAutoId', $input['jvMasterAutoId'])
+            ->groupBy('chartofaccounts.AccountCode');
+
+            if($query->count() > 0)
+            {
+                $inActiveAccounts = $query->pluck('AccountCode');
+                $msg = '';
+                foreach($inActiveAccounts as $account)
+                {
+                    $msg .= ' '.$account.' ,';
+                }
+
+
+                return $this->sendError("The Chart of Accounts $msg are Inactive, update it as active/change the GL code to proceed.",421);
+
+            }
+
             $documentDate = $input['JVdate'];
             $monthBegin = $input['FYPeriodDateFrom'];
             $monthEnd = $input['FYPeriodDateTo'];
