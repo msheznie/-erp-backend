@@ -142,6 +142,10 @@ Route::group([], function(){
     Route::get('asset-request-details', 'AssetRequestDetailAPIController@getAssetRequestDetails')->name("Get Asset Request Details");
     Route::post('getEmployeesToSelectDrpdwn', 'ERPAssetTransferAPIController@getEmployeesToSelectDrpdwn')->name("Get Employees to Direct to Employee type asset transfer");
     Route::get('asset-employee-value','ERPAssetTransferDetailAPIController@getAssetEmployeeValue')->name('Get Asset Assigned Employee value');
+    Route::post('getDepartmentList','ERPAssetTransferDetailAPIController@getDepartmentList')->name('Get department list');
+    Route::post('getDepartmentOfAsset','ERPAssetTransferDetailAPIController@getDepartmentOfAsset')->name('Get department of asset');
+
+    
 });
 
 
