@@ -570,8 +570,10 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
         if(empty($allocatedAsssets)) {
             $validationSuccess = true;
         }else {
+            $total = 0;
             foreach($allocatedAsssets as $allocatedAssset) {
-                if($item['netAmount'] < $allocatedAssset->amount) {
+                $total += $allocatedAssset->amount;
+                if($item['netAmount'] < $total) {
                     return $this->sendError("Detail amount cannot be less than allocated amount.");
                 }
              }
