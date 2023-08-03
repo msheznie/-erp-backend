@@ -244,7 +244,7 @@ class SupplierCategoryMasterAPIController extends AppBaseController
         $supplierMaster = SupplierMaster::where('supCategoryMasterID', $input['id'])->first();
 
         if ($supplierMaster) {
-            $errorMessages = "This category cannot be amended. it had used in supplier master";
+            $errorMessages = "cannot be amended. it has been used in supplier master";
             $amendable = false;
         } else {
             $successMessages = "Use of Supplier business category checking is done in supplier master";
