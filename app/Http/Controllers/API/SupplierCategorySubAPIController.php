@@ -110,16 +110,23 @@ class SupplierCategorySubAPIController extends AppBaseController
         $input = $request->all();
 
         $validator = Validator::make($input, [
-            'subCategoryCode' => 'unique:suppliercategorysub',
-            'categoryName' => 'unique:suppliercategorysub',
+            'subCategoryCode' => 'required',
+            'categoryName' => 'required',
             'categoryDescription' => 'required'
-        ],[
-            'subCategoryCode.unique'   => 'Sub category code already exists',
-            'categoryName.unique'   => 'Sub category name already exists'
         ]);
 
         if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422 );
+        }
+
+        $subCategoriesByMaster = SupplierCategorySub::where('supMasterCategoryID',$input['supMasterCategoryID'])->where('subCategoryCode',$input['subCategoryCode'])->first();
+        if($subCategoriesByMaster){
+            return $this->sendError('Sub Category Code ' . trans('custom.already_exists'),422);
+        }
+
+        $subCategoriesByMaster = SupplierCategorySub::where('supMasterCategoryID',$input['supMasterCategoryID'])->where('categoryName',$input['categoryName'])->first();
+        if($subCategoriesByMaster){
+            return $this->sendError('Sub Category Name ' . trans('custom.already_exists'),422);
         }
 
         $id = Auth::id();
@@ -171,26 +178,16 @@ class SupplierCategorySubAPIController extends AppBaseController
         }
 
         if($supplierCategorySub->subCategoryCode != $request->subCategoryCode){
-            $validator = Validator::make($input, [
-                'subCategoryCode' => 'unique:suppliercategorysub'
-            ],[
-                'subCategoryCode.unique'   => 'Sub category code already exists'
-            ]);
-
-            if ($validator->fails()) {
-                return $this->sendError($validator->messages(), 422 );
+            $subCategoriesByMaster = SupplierCategorySub::where('supMasterCategoryID',$input['supMasterCategoryID'])->where('subCategoryCode',$input['subCategoryCode'])->first();
+            if($subCategoriesByMaster){
+                return $this->sendError('Sub Category Code ' . trans('custom.already_exists'),422);
             }
         }
 
         if($supplierCategorySub->categoryName != $request->categoryName){
-            $validator = Validator::make($input, [
-                'categoryName' => 'unique:suppliercategorysub'
-            ],[
-                'categoryName.unique'   => 'Sub category name already exists'
-            ]);
-
-            if ($validator->fails()) {
-                return $this->sendError($validator->messages(), 422 );
+            $subCategoriesByMaster = SupplierCategorySub::where('supMasterCategoryID',$input['supMasterCategoryID'])->where('categoryName',$input['categoryName'])->first();
+            if($subCategoriesByMaster){
+                return $this->sendError('Sub Category Name ' . trans('custom.already_exists'),422);
             }
         }
 
@@ -223,7 +220,7 @@ class SupplierCategorySubAPIController extends AppBaseController
         $subCategoryAssign= SupplierSubCategoryAssign::where('supSubCategoryID', $id)->first();
 
         if ($subCategoryAssign) {
-            return $this->sendError("This category has already been pulled to Supplier Master, cannot be deleted");
+            return $this->sendError("This sub category has already been pulled to Supplier Master, cannot be deleted");
         }
 
         $supplierCategorySub->delete();
@@ -240,7 +237,7 @@ class SupplierCategorySubAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $supplierBusinessSubCategories = SupplierCategorySub::select('*');
+        $supplierBusinessSubCategories = SupplierCategorySub::select('*')->orderBy('supCategorySubID', 'desc');
         $supplierBusinessSubCategories = $supplierBusinessSubCategories->where('supMasterCategoryID',$input['supplierBusinessCategoryID']);
         $search = $request->input('search.value');
 
@@ -286,7 +283,7 @@ class SupplierCategorySubAPIController extends AppBaseController
         $subCategoryAssign = SupplierSubCategoryAssign::where('supSubCategoryID', $input['id'])->first();
 
         if ($subCategoryAssign) {
-            $errorMessages = "This sub category cannot be amended. it had used in supplier master";
+            $errorMessages = "cannot be amended. it has been used in supplier master";
             $amendable = false;
         } else {
             $successMessages = "Use of Supplier business category checking is done in supplier master";
