@@ -3129,7 +3129,7 @@ WHERE
 
         $companyId = $request['companyId'];
         $tenderId = $request['tenderId'];
-        $getRankCount = TenderFinalBids::where('tender_id', $tenderId)
+        /*$getRankCount = TenderFinalBids::where('tender_id', $tenderId)
             ->where('commercial_ranking', '!=', null)
             ->count();
 
@@ -3158,7 +3158,7 @@ WHERE
                 TenderFinalBids::where('id', $record->id)
                     ->update(['commercial_ranking' => $record->ranking]);
             }
-        }
+        }*/
 
         $techniqal_wightage = TenderMaster::where('id', $tenderId)->select('id', 'technical_weightage', 'commercial_weightage')
                                             ->withCount(['criteriaDetails', 
@@ -3426,7 +3426,37 @@ WHERE
                 );
             }
 
+            // Create Commercial Ranking and update to table
+            $getRankCount = TenderFinalBids::where('tender_id', $tenderId)
+                ->where('commercial_ranking', '!=', null)
+                ->count();
 
+            if($getRankCount == 0){
+                $tenderFinalBids = TenderFinalBids::select('id','com_weightage')
+                    ->where('tender_id', $tenderId)
+                    ->orderBy('com_weightage', 'desc')
+                    ->get();
+
+                $weightage = null;
+                $index1 = 1;
+                foreach ($tenderFinalBids as $index => $record) {
+                    if ($index === 0) {
+                        $weightage = $record->com_weightage;
+                        $record->ranking = $index1;
+                    } else {
+                        if ($weightage === $record->com_weightage) {
+                            $record->ranking = $index1;
+                        } else {
+                            $weightage = $record->com_weightage;
+                            $index1++;
+                            $record->ranking = $index1;
+                        }
+                    }
+                    // Update the record in the database with the calculated ranking
+                    TenderFinalBids::where('id', $record->id)
+                        ->update(['commercial_ranking' => $record->ranking]);
+                }
+            }
 
 
             DB::commit();
@@ -3460,6 +3490,37 @@ WHERE
                 TenderMaster::where('id', $tenderId)->update(['combined_ranking_status' => true, 'commercial_ranking_comment' => $comment]);
             }
 
+            $getRankCount = TenderFinalBids::where('tender_id', $tenderId)
+                ->where('ranking', '!=', null)
+                ->count();
+
+            if($getRankCount == 0){
+                $tenderFinalBids = TenderFinalBids::select('id','total_weightage')
+                    ->where('tender_id', $tenderId)
+                    ->where('status', '!=', 0)
+                    ->orderBy('total_weightage', 'desc')
+                    ->get();
+
+                $weightage = null;
+                $index1 = 1;
+                foreach ($tenderFinalBids as $index => $record) {
+                    if ($index === 0) {
+                        $weightage = $record->total_weightage;
+                        $record->ranking = $index1;
+                    } else {
+                        if ($weightage === $record->total_weightage) {
+                            $record->ranking = $index1;
+                        } else {
+                            $weightage = $record->total_weightage;
+                            $index1++;
+                            $record->ranking = $index1;
+                        }
+                    }
+                    // Update the record in the database with the calculated ranking
+                    TenderFinalBids::where('id', $record->id)
+                        ->update(['combined_ranking' => $record->ranking]);
+                }
+            }
 
             DB::commit();
             return ['success' => true, 'message' => 'Successfully updated', 'data' => true];
