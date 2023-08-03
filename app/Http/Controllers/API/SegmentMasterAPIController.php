@@ -14,6 +14,7 @@
  **/
 namespace App\Http\Controllers\API;
 
+use App\helper\CreateExcel;
 use App\Http\Requests\API\CreateSegmentMasterAPIRequest;
 use App\Http\Requests\API\UpdateSegmentMasterAPIRequest;
 use App\Models\BookInvSuppMaster;
@@ -25,6 +26,7 @@ use App\Models\DebitNote;
 use App\Models\DebitNoteDetails;
 use App\Models\DeliveryOrder;
 use App\Models\DeliveryOrderDetail;
+use App\Models\DirectInvoiceDetails;
 use App\Models\DirectPaymentDetails;
 use App\Models\DirectReceiptDetail;
 use App\Models\EmployeeDetails;
@@ -388,6 +390,17 @@ class SegmentMasterAPIController extends AppBaseController
             ];
         }
 
+        $dis = DirectInvoiceDetails::with(['supplier_invoice_master'])->where('serviceLineSystemID', $segmentId)
+            ->whereHas('supplier_invoice_master', function ($q) {
+                $q->where('confirmedYN', 1);
+            })->get();
+
+        foreach ($dis as $di) {
+            $controlData[] = [
+                'documentCode' => $di->supplier_invoice_master->bookingInvCode,
+            ];
+        }
+
         $dpvs = DirectPaymentDetails::with(['master'])->where('serviceLineSystemID', $segmentId)
             ->whereHas('master', function ($q) {
                 $q->where('confirmedYN', 1);
@@ -435,6 +448,14 @@ class SegmentMasterAPIController extends AppBaseController
         foreach ($cis as $ci) {
             $controlData[] = [
                 'documentCode' => $ci->master->bookingInvCode,
+            ];
+        }
+
+        $cims = CustomerInvoice::where('serviceLineSystemID', $segmentId)->where('confirmedYN', 1)->get();
+
+        foreach ($cims as $cim){
+            $controlData[] = [
+                'documentCode' => $cim->bookingInvCode,
             ];
         }
 
@@ -501,6 +522,76 @@ class SegmentMasterAPIController extends AppBaseController
         }
 
         return $controlData;
+    }
+
+    public function exportProcessedSegments(Request $request){
+        $type = $request->type;
+        $segmentId = $request->segmentId;
+        $output = $this->affectedDocumentsBySegment($segmentId);
+        if ($output) {
+            $x = 0;
+            foreach ($output as $val) {
+                $data[$x]['#'] = $x + 1;
+                $data[$x]['Document Code'] = $val['documentCode'];
+                $x++;
+
+            }
+        }
+        else {
+            $data = array();
+        }
+        $companyMaster = Company::find(isset($request->companySystemID)?$request->companySystemID:null);
+        $companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
+        $detail_array = array(
+            'company_code'=>$companyCode,
+        );
+        $doc_name = 'assigned_employees';
+        $path = 'segments/processed_documents/excel/';
+        $basePath = CreateExcel::process($data,$type,$doc_name,$path,$detail_array);
+
+        if($basePath == '')
+        {
+            return $this->sendError('Unable to export excel');
+        }
+        else
+        {
+            return $this->sendResponse($basePath, trans('custom.success_export'));
+        }
+    }
+    public function exportAssignedEmp(Request $request){
+
+        $type = $request->type;
+        $segmentId = $request->segmentId;
+        $output = $this->assignedEmployeesBySegment($segmentId);
+        if ($output) {
+            $x = 0;
+            foreach ($output as $val) {
+                $data[$x]['#'] = $x + 1;
+                $data[$x]['Employee Code'] = $val->ECode;
+                $x++;
+
+            }
+        }
+        else {
+            $data = array();
+        }
+        $companyMaster = Company::find(isset($request->companySystemID)?$request->companySystemID:null);
+        $companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
+        $detail_array = array(
+            'company_code'=>$companyCode,
+        );
+        $doc_name = 'assigned_employees';
+        $path = 'segments/assigned_employees/excel/';
+        $basePath = CreateExcel::process($data,$type,$doc_name,$path,$detail_array);
+
+        if($basePath == '')
+        {
+            return $this->sendError('Unable to export excel');
+        }
+        else
+        {
+            return $this->sendResponse($basePath, trans('custom.success_export'));
+        }
     }
 
     public function deleteSubLevels($sub_levels)
