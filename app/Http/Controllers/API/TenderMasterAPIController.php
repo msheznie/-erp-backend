@@ -753,7 +753,11 @@ WHERE
         $data['purchaseRequest'] = $purchaseRequest;
 
         // Get Tender Purchase Request Data
-        $tenderPurchaseRequestList = TenderPurchaseRequest::select('purchase_request_id as id')->where('tender_id', $tenderMasterId)->get();
+        //$tenderPurchaseRequestList = TenderPurchaseRequest::select('purchase_request_id as id')->where('tender_id', $tenderMasterId)->get();
+        $tenderPurchaseRequestList = TenderPurchaseRequest::select('purchase_request_id as id', 'erp_purchaserequest.purchaseRequestCode as itemName')
+            ->leftJoin('erp_purchaserequest', 'erp_purchaserequest.purchaseRequestID', '=', 'srm_tender_purchase_request.purchase_request_id')
+            ->where('tender_id', $tenderMasterId)
+            ->get();
         $data['tenderPurchaseRequestList'] = $tenderPurchaseRequestList;
 
         return $data;
@@ -1481,8 +1485,15 @@ WHERE
                     }
                 }
 
+                $tenderPurchaseRequestCount = TenderPurchaseRequest::where('tender_id', $input['id'])->count();
+
+                if( $tenderPurchaseRequestCount > 0){
+                    TenderPurchaseRequest::where('tender_id', $input['id'])->delete();
+                }
+
                 if(isset($input['purchaseRequest']) && sizeof($input['purchaseRequest']) > 0){
                     foreach ($input['purchaseRequest'] as $pr) {
+
                         $data = [
                             'tender_id' => $input['id'],
                             'purchase_request_id' => $pr['id'],
