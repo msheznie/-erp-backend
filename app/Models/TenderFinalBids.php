@@ -116,7 +116,7 @@ class TenderFinalBids extends Model
         'tech_weightage',
         'tender_id',
         'total_weightage',
-        'ranking',
+        'combined_ranking',
         'commercial_ranking'
     ];
 
@@ -136,7 +136,7 @@ class TenderFinalBids extends Model
         'tender_id' => 'integer',
         'total_weightage' => 'float',
         'commercial_ranking' => 'integer',
-        'ranking' => 'integer',
+        'combined_ranking' => 'integer',
     ];
 
     /**
