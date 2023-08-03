@@ -199,7 +199,7 @@ class SupplierCategoryMasterAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $supplierBusinessCategories = SupplierCategoryMaster::select('*');
+        $supplierBusinessCategories = SupplierCategoryMaster::select('*')->orderBy('supCategoryMasterID', 'desc');
         $search = $request->input('search.value');
 
         if ($search) {

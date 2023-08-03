@@ -240,7 +240,7 @@ class SupplierCategorySubAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $supplierBusinessSubCategories = SupplierCategorySub::select('*');
+        $supplierBusinessSubCategories = SupplierCategorySub::select('*')->orderBy('supCategorySubID', 'desc');
         $supplierBusinessSubCategories = $supplierBusinessSubCategories->where('supMasterCategoryID',$input['supplierBusinessCategoryID']);
         $search = $request->input('search.value');
 
