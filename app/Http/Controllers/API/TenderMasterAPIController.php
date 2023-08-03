@@ -3461,7 +3461,7 @@ WHERE
             }
 
             $getRankCount = TenderFinalBids::where('tender_id', $tenderId)
-                ->where('ranking', '!=', null)
+                ->where('combined_ranking', '!=', null)
                 ->count();
 
             if($getRankCount == 0){
