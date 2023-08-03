@@ -1453,6 +1453,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('checkAssetAllocation', 'ExpenseAssetAllocationAPIController@checkAssetAllocation');
             Route::post('checkDeliveryAppoinrmentApproval', 'AppointmentAPIController@checkDeliveryAppoinrmentApproval');
             Route::post('createAppointmentGrv', 'AppointmentAPIController@createAppointmentGrv');
+            Route::post('validateDirectItemWithAssetExpense', 'ExpenseAssetAllocationAPIController@validateDirectItemWithAssetExpense');
 
 
             /**
