@@ -941,12 +941,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
             return $this->sendError('Document date should be between financial period start date and end date',500);
         }
 
-        $customValidation = CustomValidation::validation(70, $matchDocumentMaster, 2, $input);
 
-        
-        if (!$customValidation["success"]) {
-            return $this->sendError($customValidation["message"], 500, array('type' => 'already_confirmed'));
-        }
         
         // end of check date within financial period
         if($matchDocumentMaster->matchingOption != 1) {
@@ -1006,6 +1001,13 @@ class MatchDocumentMasterAPIController extends AppBaseController
             if ($formattedMatchingDate < $postedDate) {
                 return $this->sendError('Debit note is posted on ' . $postedDate . '. You cannot select a date less than posted date !', 500);
             }
+        }
+
+        $customValidation = CustomValidation::validation(70, $matchDocumentMaster, 2, $input);
+
+        
+        if (!$customValidation["success"]) {
+            return $this->sendError($customValidation["message"], 500, array('type' => 'already_confirmed'));
         }
       
         if ($matchDocumentMaster->matchingConfirmedYN == 0 && $input['matchingConfirmedYN'] == 1) {
