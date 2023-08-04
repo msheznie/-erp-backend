@@ -147,6 +147,14 @@ class ERPAssetTransferAPIController extends AppBaseController
                 'reference_no' => 'required',
                 'type' => 'required',
             ], $messages);
+        }else if(isset($input['type']) && $input['type'] == 3) {
+            $validator = \Validator::make($input, [
+                'document_date' => 'required|date',
+                'narration' => 'required',
+                'reference_no' => 'required',
+                'type' => 'required',
+                'serviceLineSystemID' => 'required'
+            ], $messages);
         }else {
             $validator = \Validator::make($input, [
                 'document_date' => 'required|date',
@@ -340,6 +348,14 @@ class ERPAssetTransferAPIController extends AppBaseController
                 'narration' => 'required',
                 'reference_no' => 'required',
                 'type' => 'required',
+            ], $messages);
+        }else if (isset($input['type']) && $input['type'] == 3) {
+            $validator = \Validator::make($input, [
+                'document_date' => 'required|date',
+                'narration' => 'required',
+                'reference_no' => 'required',
+                'type' => 'required',
+                'serviceLineSystemID' => 'required',
             ], $messages);
         }else {
             $validator = \Validator::make($input, [
