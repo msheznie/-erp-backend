@@ -360,6 +360,7 @@ Route::group([], function() {
     Route::post('getAllSupplierBusinessCategories', 'SupplierCategoryMasterAPIController@getAllSupplierBusinessCategories')->name("Get all supplier business categories");
     Route::get('supplierBusinessCategoryFormData', 'SupplierCategoryMasterAPIController@getSupplierBusinessCategoryFormData')->name("Get supplier business category form data");
     Route::post('validateSupplierBusinessCategoryAmend', 'SupplierCategoryMasterAPIController@validateSupplierBusinessCategoryAmend')->name("Validate supplier business category amend");
+    Route::get('supplierBusinessCategoryDestroyCheck/{id}', 'SupplierCategoryMasterAPIController@destroyCheck')->name("Validate supplier business category can delete");
     Route::resource('supplierBusinessCategories', 'SupplierCategoryMasterAPIController');
 });
 
@@ -368,5 +369,6 @@ Route::group([], function() {
     Route::post('getAllSupplierBusinessSubCategories', 'SupplierCategorySubAPIController@getAllSupplierBusinessSubCategories')->name("Get all supplier business sub categories");
     Route::get('supplierBusinessSubCategoryFormData', 'SupplierCategorySubAPIController@getSupplierBusinessSubCategoryFormData')->name("Get supplier business sub category form data");
     Route::post('validateSupplierBusinessSubCategoryAmend', 'SupplierCategorySubAPIController@validateSupplierBusinessSubCategoryAmend')->name("Validate supplier business sub category amend");
+    Route::get('supplierBusinessSubCategoryDestroyCheck/{id}', 'SupplierCategorySubAPIController@destroyCheck')->name("Validate supplier business sub category can delete");
     Route::resource('supplierBusinessSubCategories', 'SupplierCategorySubAPIController');
 });

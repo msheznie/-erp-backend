@@ -67,7 +67,7 @@ class SupplierCategoryMaster extends Model
         'categoryCode' => 'string',
         'categoryName' => 'string',
         'categoryDescription' => 'string',
-        'isActive' => 'string',
+        'isActive' => 'integer',
         'createdUserGroup' => 'string',
         'createdPcID' => 'string',
         'createdUserID' => 'string',

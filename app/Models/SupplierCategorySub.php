@@ -71,7 +71,7 @@ class SupplierCategorySub extends Model
         'categoryDescription' => 'string',
         'createdUserGroup' => 'string',
         'createdPcID' => 'string',
-        'isActive' => 'string',
+        'isActive' => 'integer',
         'createdUserID' => 'string',
         'modifiedPc' => 'string',
         'modifiedUser' => 'string'
