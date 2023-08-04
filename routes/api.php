@@ -195,6 +195,11 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('getSegmentMasterFormData', 'SegmentMasterAPIController@getSegmentMasterFormData');
             Route::get('getOrganizationStructure', 'SegmentMasterAPIController@getOrganizationStructure');
             Route::resource('segment/masters', 'SegmentMasterAPIController');
+            Route::post('getAffectedDocuments', 'SegmentMasterAPIController@getAffectedDocuments');
+            Route::post('getAssignedEmployees', 'SegmentMasterAPIController@getAssignedEmployees');
+            Route::post('exportAssignedEmp', 'SegmentMasterAPIController@exportAssignedEmp');
+            Route::post('exportProcessedSegments', 'SegmentMasterAPIController@exportProcessedSegments');
+
 
             Route::post('updateSegmentMaster', 'SegmentMasterAPIController@updateSegmentMaster');
 

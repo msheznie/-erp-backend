@@ -14,14 +14,38 @@
  **/
 namespace App\Http\Controllers\API;
 
+use App\helper\CreateExcel;
 use App\Http\Requests\API\CreateSegmentMasterAPIRequest;
 use App\Http\Requests\API\UpdateSegmentMasterAPIRequest;
+use App\Models\BookInvSuppMaster;
+use App\Models\CreditNote;
+use App\Models\CreditNoteDetails;
+use App\Models\CustomerInvoice;
+use App\Models\CustomerInvoiceDirectDetail;
+use App\Models\DebitNote;
+use App\Models\DebitNoteDetails;
+use App\Models\DeliveryOrder;
+use App\Models\DeliveryOrderDetail;
+use App\Models\DirectInvoiceDetails;
+use App\Models\DirectPaymentDetails;
+use App\Models\DirectReceiptDetail;
+use App\Models\EmployeeDetails;
+use App\Models\GRVMaster;
+use App\Models\JvDetail;
+use App\Models\MaterielRequest;
+use App\Models\PaySupplierInvoiceMaster;
+use App\Models\PurchaseReturn;
+use App\Models\QuotationMaster;
 use App\Models\SegmentMaster;
 use App\Models\ProcumentOrder;
 use App\Models\GeneralLedger;
 use App\Models\PurchaseRequest;
 use App\Models\Company;
+use App\Models\ServiceLine;
 use App\Models\SrpEmployeeDetails;
+use App\Models\StockAdjustment;
+use App\Models\StockReceive;
+use App\Models\StockTransfer;
 use App\Models\YesNoSelection;
 use App\Repositories\SegmentMasterRepository;
 use Illuminate\Http\Request;
@@ -194,6 +218,7 @@ class SegmentMasterAPIController extends AppBaseController
 
         //delete validation 
         $segmentUsed = false;
+        $segmentUsedByEmp = false;
         $procumentOrderCheck = ProcumentOrder::where('serviceLineSystemID', $id)
                                              ->first();
 
@@ -228,13 +253,34 @@ class SegmentMasterAPIController extends AppBaseController
                                  ->first();
 
             if ($checkEmployeeDetails) {
-                $segmentUsed = true;
+                $segmentUsedByEmp = true;
             }
         }
 
-        if ($segmentUsed) {
-            return $this->sendError("This segment is used in some documents. Therefore, cannot delete", 500);
+
+        $isSubSegments = ServiceLine::where('masterID', $id)->where('isDeleted', 0)->first();
+
+        if (!empty($isSubSegments)) {
+            return $this->sendError("This segment ". $segmentMaster->ServiceLineDes . " cannot be deleted. There are child segments associated with this", 500);
         }
+
+         $isDocs = $this->affectedDocumentsBySegment($id);
+
+
+        if (!empty($isDocs)) {
+            $segmentUsed = true;
+        }
+
+        if ($segmentUsed) {
+            return $this->sendError("Cannot delete this segment", 500,[1, $segmentMaster->ServiceLineDes]);
+        }
+
+
+        if ($segmentUsedByEmp) {
+            return $this->sendError("Cannot delete this segment", 500,[2, $segmentMaster->ServiceLineDes]);
+        }
+
+
 
         DB::beginTransaction();
         try {
@@ -250,6 +296,301 @@ class SegmentMasterAPIController extends AppBaseController
         } catch (\Exception $e) {
             DB::rollback();
             return $this->sendError('Error occred while deleting segments'.$e->getMessage());
+        }
+    }
+
+    public function getAffectedDocuments(Request $request){
+        $input = $request->all();
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+        $segmentId = $request->segmentId;
+
+        $controlData = $this->affectedDocumentsBySegment($segmentId);
+
+        return \DataTables::collection($controlData)
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->make(true);
+    }
+
+    public function getAssignedEmployees(Request $request){
+        $input = $request->all();
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+        $segmentId = $request->segmentId;
+
+        $controlData = $this->assignedEmployeesBySegment($segmentId);
+
+        return \DataTables::collection($controlData)
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->make(true);
+    }
+
+    public function assignedEmployeesBySegment($segmentId){
+
+        $assignedEmployees = SrpEmployeeDetails::where('segmentID', $segmentId)->get();
+
+        return $assignedEmployees;
+    }
+
+    public function affectedDocumentsBySegment($segmentId){
+
+        $controlData = [];
+
+        $jvs = JvDetail::with(['master'])->where('serviceLineSystemID', $segmentId)
+            ->whereHas('master', function ($q) {
+                $q->where('confirmedYN', 1);
+            })->get();
+
+        foreach ($jvs as $jv) {
+            $controlData[] = [
+                'documentCode' => $jv->master->JVcode,
+            ];
+        }
+
+        $prs = PurchaseRequest::where('PRConfirmedYN', 1)->where('serviceLineSystemID', $segmentId)->get();
+
+        foreach ($prs as $pr) {
+            $controlData[] = [
+                'documentCode' => $pr->purchaseRequestCode,
+            ];
+        }
+
+        $pos = ProcumentOrder::where('poConfirmedYN', 1)->where('serviceLineSystemID', $segmentId)->get();
+
+        foreach ($pos as $po) {
+            $controlData[] = [
+                'documentCode' => $po->purchaseOrderCode,
+            ];
+        }
+
+
+        $grvs = GRVMaster::where('grvConfirmedYN', 1)->where('serviceLineSystemID', $segmentId)->get();
+
+        foreach ($grvs as $grv) {
+            $controlData[] = [
+                'documentCode' => $grv->grvPrimaryCode,
+            ];
+        }
+
+        $sis = BookInvSuppMaster::where('serviceLineSystemID', $segmentId)->where('confirmedYN', 1)->get();
+
+        foreach ($sis as $si){
+            $controlData[] = [
+                'documentCode' => $si->bookingInvCode,
+            ];
+        }
+
+        $dis = DirectInvoiceDetails::with(['supplier_invoice_master'])->where('serviceLineSystemID', $segmentId)
+            ->whereHas('supplier_invoice_master', function ($q) {
+                $q->where('confirmedYN', 1);
+            })->get();
+
+        foreach ($dis as $di) {
+            $controlData[] = [
+                'documentCode' => $di->supplier_invoice_master->bookingInvCode,
+            ];
+        }
+
+        $dpvs = DirectPaymentDetails::with(['master'])->where('serviceLineSystemID', $segmentId)
+            ->whereHas('master', function ($q) {
+                $q->where('confirmedYN', 1);
+            })->get();
+
+        foreach ($dpvs as $dpv) {
+            $controlData[] = [
+                'documentCode' => $dpv->master->BPVcode,
+            ];
+        }
+
+        $dns = DebitNoteDetails::with(['master'])->where('serviceLineSystemID', $segmentId)
+            ->whereHas('master', function ($q) {
+                $q->where('confirmedYN', 1);
+            })->get();
+
+        foreach ($dns as $dn) {
+            $controlData[] = [
+                'documentCode' => $dn->master->debitNoteCode,
+            ];
+        }
+
+        $qts = QuotationMaster::where('confirmedYN', 1)->where('serviceLineSystemID', $segmentId)->get();
+
+        foreach ($qts as $qt) {
+            $controlData[] = [
+                'documentCode' => $qt->quotationCode,
+            ];
+        }
+
+        $dos = DeliveryOrder::where('confirmedYN', 1)->where('serviceLineSystemID', $segmentId)->get();
+
+
+        foreach ($dos as $do) {
+            $controlData[] = [
+                'documentCode' => $do->deliveryOrderCode,
+            ];
+        }
+
+        $cis = CustomerInvoiceDirectDetail::with(['master'])->where('serviceLineSystemID', $segmentId)
+            ->whereHas('master', function ($q) {
+                $q->where('confirmedYN', 1);
+            })->get();
+
+        foreach ($cis as $ci) {
+            $controlData[] = [
+                'documentCode' => $ci->master->bookingInvCode,
+            ];
+        }
+
+        $cims = CustomerInvoice::where('serviceLineSystemID', $segmentId)->where('confirmedYN', 1)->get();
+
+        foreach ($cims as $cim){
+            $controlData[] = [
+                'documentCode' => $cim->bookingInvCode,
+            ];
+        }
+
+        $dvs = DirectReceiptDetail::with(['master'])->where('serviceLineSystemID', $segmentId)
+            ->whereHas('master', function ($q) {
+                $q->where('confirmedYN', 1);
+            })->get();
+
+        foreach ($dvs as $dv) {
+            $controlData[] = [
+                'documentCode' => $dv->master->custPaymentReceiveCode,
+            ];
+        }
+
+        $cns = CreditNoteDetails::with(['master'])->where('serviceLineSystemID', $segmentId)
+            ->whereHas('master', function ($q) {
+                $q->where('confirmedYN', 1);
+            })->get();
+
+        foreach ($cns as $cn) {
+            $controlData[] = [
+                'documentCode' => $cn->master->creditNoteCode,
+            ];
+        }
+
+        $mrts = MaterielRequest::where('serviceLineSystemID', $segmentId)->where('confirmedYN', 1)->get();
+
+        foreach ($mrts as $mrt){
+            $controlData[] = [
+                'documentCode' => $mrt->RequestCode,
+            ];
+        }
+
+        $sts = StockTransfer::where('serviceLineSystemID', $segmentId)->where('confirmedYN', 1)->get();
+
+        foreach ($sts as $st){
+            $controlData[] = [
+                'documentCode' => $st->stockTransferCode,
+            ];
+        }
+
+        $srs = StockReceive::where('serviceLineSystemID', $segmentId)->where('confirmedYN', 1)->get();
+
+        foreach ($srs as $sr){
+            $controlData[] = [
+                'documentCode' => $sr->stockReceiveCode,
+            ];
+        }
+
+        $sas = StockAdjustment::where('serviceLineSystemID', $segmentId)->where('confirmedYN', 1)->get();
+
+        foreach ($sas as $sa){
+            $controlData[] = [
+                'documentCode' => $sa->stockAdjustmentCode,
+            ];
+        }
+
+        $prs = PurchaseReturn::where('serviceLineSystemID', $segmentId)->where('confirmedYN', 1)->get();
+
+        foreach ($prs as $pr){
+            $controlData[] = [
+                'documentCode' => $pr->purchaseReturnCode,
+            ];
+        }
+
+        return $controlData;
+    }
+
+    public function exportProcessedSegments(Request $request){
+        $type = $request->type;
+        $segmentId = $request->segmentId;
+        $output = $this->affectedDocumentsBySegment($segmentId);
+        if ($output) {
+            $x = 0;
+            foreach ($output as $val) {
+                $data[$x]['#'] = $x + 1;
+                $data[$x]['Document Code'] = $val['documentCode'];
+                $x++;
+
+            }
+        }
+        else {
+            $data = array();
+        }
+        $companyMaster = Company::find(isset($request->companySystemID)?$request->companySystemID:null);
+        $companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
+        $detail_array = array(
+            'company_code'=>$companyCode,
+        );
+        $doc_name = 'assigned_employees';
+        $path = 'segments/processed_documents/excel/';
+        $basePath = CreateExcel::process($data,$type,$doc_name,$path,$detail_array);
+
+        if($basePath == '')
+        {
+            return $this->sendError('Unable to export excel');
+        }
+        else
+        {
+            return $this->sendResponse($basePath, trans('custom.success_export'));
+        }
+    }
+    public function exportAssignedEmp(Request $request){
+
+        $type = $request->type;
+        $segmentId = $request->segmentId;
+        $output = $this->assignedEmployeesBySegment($segmentId);
+        if ($output) {
+            $x = 0;
+            foreach ($output as $val) {
+                $data[$x]['#'] = $x + 1;
+                $data[$x]['Employee Code'] = $val->ECode;
+                $x++;
+
+            }
+        }
+        else {
+            $data = array();
+        }
+        $companyMaster = Company::find(isset($request->companySystemID)?$request->companySystemID:null);
+        $companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
+        $detail_array = array(
+            'company_code'=>$companyCode,
+        );
+        $doc_name = 'assigned_employees';
+        $path = 'segments/assigned_employees/excel/';
+        $basePath = CreateExcel::process($data,$type,$doc_name,$path,$detail_array);
+
+        if($basePath == '')
+        {
+            return $this->sendError('Unable to export excel');
+        }
+        else
+        {
+            return $this->sendResponse($basePath, trans('custom.success_export'));
         }
     }
 
