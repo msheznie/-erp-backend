@@ -82,6 +82,7 @@ use App\Models\TaxMaster;
 use App\Models\UnbilledGrvGroupBy;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
+use App\Models\ExpenseAssetAllocation;
 use App\Repositories\BookInvSuppMasterRepository;
 use App\Repositories\SupplierInvoiceItemDetailRepository;
 use App\Repositories\ExpenseAssetAllocationRepository;
@@ -484,8 +485,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $input = $request->all();
         $input = array_except($input, ['created_by', 'confirmedByName', 'financeperiod_by', 'financeyear_by', 'supplier','employee',
             'confirmedByEmpID', 'confirmedDate', 'company', 'confirmed_by', 'confirmedByEmpSystemID','transactioncurrency','direct_customer_invoice']);
+        $directItems = $input['directItems'];
         $input = $this->convertArrayToValue($input);
-
         $employee = \Helper::getEmployeeInfo();
 
         /** @var BookInvSuppMaster $bookInvSuppMaster */
@@ -718,6 +719,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 ]);
             }
 
+            
             if ($validatorSupp->fails()) {
                 return $this->sendError($validator->messages(), 422);
             }
@@ -796,6 +798,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             }
 
             $checkItems = 0;
+
             if ($input['documentType'] == 1 || $input['documentType'] == 4) {
                 $checkItems = DirectInvoiceDetails::where('directInvoiceAutoID', $id)
                     ->count();
@@ -838,6 +841,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 }
 
             } 
+
+
 
             if ($checkItems > 0) {
                 $checkQuantity = DirectInvoiceDetails::where('directInvoiceAutoID', $id)
@@ -1165,6 +1170,23 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 }
             }
 
+            $allocatedAsssets = ExpenseAssetAllocation::where('documentSystemCode', $input['bookingSuppMasInvAutoID'])
+            ->with(['asset'])
+            ->get();
+
+
+             if(isset($allocatedAsssets) && isset($directItems))  {
+                $total = 0;
+                foreach($allocatedAsssets as $allocatedAssset) {
+                    $total += $allocatedAssset->amount;
+                    foreach($directItems as $item) {
+                        if(isset($item['netAmount']) && $item['netAmount'] < $total) {
+                            return $this->sendError("Detail amount cannot be less than allocated amount.");
+                        }
+                    }
+                }
+            }
+
             $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
             if ($error_count > 0) {
                 return $this->sendError("You cannot confirm this document.", 500, $confirm_error);
@@ -1288,6 +1310,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
             if ($input['documentType'] == 0 || $input['documentType'] == 2) {
                 $this->supplierInvoiceItemDetailRepository->updateSupplierInvoiceItemDetail($id);
             }
+
+
 
             $params = array(
                 'autoID' => $id,
@@ -1762,6 +1786,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 }
             }
 
+    
+
             foreach ($directInvoiceDetails as $item) {
                 $updateItem = DirectInvoiceDetails::find($item['directInvoiceDetailsID']);
 
@@ -1801,6 +1827,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                     $error_count++;
                 }
             }
+
 
             $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
             if ($error_count > 0) {
