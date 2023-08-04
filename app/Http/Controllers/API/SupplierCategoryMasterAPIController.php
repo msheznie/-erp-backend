@@ -17,6 +17,7 @@ use App\Models\SupplierCategoryMaster;
 use App\Models\SupplierMaster;
 use App\Models\YesNoSelection;
 use App\Repositories\SupplierCategoryMasterRepository;
+use App\Repositories\UserRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\Auth;
@@ -35,10 +36,12 @@ class SupplierCategoryMasterAPIController extends AppBaseController
 {
     /** @var  SupplierCategoryMasterRepository */
     private $supplierCategoryMasterRepository;
+    private $userRepository;
 
-    public function __construct(SupplierCategoryMasterRepository $supplierCategoryMasterRepo)
+    public function __construct(SupplierCategoryMasterRepository $supplierCategoryMasterRepo,UserRepository $userRepo)
     {
         $this->supplierCategoryMasterRepository = $supplierCategoryMasterRepo;
+        $this->userRepository = $userRepo;
     }
 
     /**
@@ -70,8 +73,8 @@ class SupplierCategoryMasterAPIController extends AppBaseController
         $input = $request->all();
 
         $validator = Validator::make($input, [
-            'categoryCode' => 'unique:suppliercategorymaster',
-            'categoryName' => 'unique:suppliercategorymaster',
+            'categoryCode' => 'required|unique:suppliercategorymaster',
+            'categoryName' => 'required|unique:suppliercategorymaster',
             'categoryDescription' => 'required'
         ],[
             'categoryCode.unique'   => 'Category code already exists',
@@ -83,7 +86,14 @@ class SupplierCategoryMasterAPIController extends AppBaseController
         }
 
         $id = Auth::id();
-        $input['createdUserID'] = $id;
+        $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
+
+        $empId = $user->employee['empID'];
+        $input['createdUserID'] = $empId;
+        $input['createdPcID'] = gethostname();
+        $input['createdUserGroup'] = $user->employee['userGroupID'];
+
+        $input['isActive'] = is_array($input['isActive']) ? $input['isActive'][0] : $input['isActive'];
 
         $supplierCategoryMaster = $this->supplierCategoryMasterRepository->create($input);
 
@@ -155,7 +165,13 @@ class SupplierCategoryMasterAPIController extends AppBaseController
 
         $id = Auth::id();
         $input = $request->except(['createdUserID']);
-        $input['modifiedUser'] = $id;
+
+        $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
+        $empId = $user->employee['empID'];
+        $input['modifiedUser'] = $empId;
+        $input['modifiedPc'] = gethostname();
+
+        $input['isActive'] = is_array($input['isActive']) ? $input['isActive'][0] : $input['isActive'];
 
         $supplierCategoryMaster->update($input);
 
@@ -179,15 +195,27 @@ class SupplierCategoryMasterAPIController extends AppBaseController
             return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.supplier_business_category')]));
         }
 
+        $supplierCategoryMaster->delete();
+
+        return $this->sendResponse($id,trans('custom.delete', ['attribute' => trans('custom.supplier_business_category')]));
+    }
+
+    public function destroyCheck($id)
+    {
+        /** @var SupplierCategoryMaster $supplierCategoryMaster */
+        $supplierCategoryMaster = $this->supplierCategoryMasterRepository->findWithoutFail($id);
+
+        if (empty($supplierCategoryMaster)) {
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.supplier_business_category')]));
+        }
+
         $supplierMaster = SupplierMaster::where('supCategoryMasterID', $id)->first();
 
         if ($supplierMaster) {
             return $this->sendError("This category has already been pulled to Supplier Master, cannot be deleted");
         }
 
-        $supplierCategoryMaster->delete();
-
-        return $this->sendResponse($id,trans('custom.delete', ['attribute' => trans('custom.supplier_business_category')]));
+        return $this->sendResponse($id,"This category can be delete");
     }
 
     public function getAllSupplierBusinessCategories(Request $request){
@@ -244,7 +272,7 @@ class SupplierCategoryMasterAPIController extends AppBaseController
         $supplierMaster = SupplierMaster::where('supCategoryMasterID', $input['id'])->first();
 
         if ($supplierMaster) {
-            $errorMessages = "cannot be amended. it has been used in supplier master";
+            $errorMessages = "cannot be amended. Since, it has been used in supplier master";
             $amendable = false;
         } else {
             $successMessages = "Use of Supplier business category checking is done in supplier master";

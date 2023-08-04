@@ -18,6 +18,7 @@ use App\Models\SupplierMaster;
 use App\Models\SupplierSubCategoryAssign;
 use App\Models\YesNoSelection;
 use App\Repositories\SupplierCategorySubRepository;
+use App\Repositories\UserRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\Auth;
@@ -36,10 +37,12 @@ class SupplierCategorySubAPIController extends AppBaseController
 {
     /** @var  SupplierCategorySubRepository */
     private $supplierCategorySubRepository;
+    private $userRepository;
 
-    public function __construct(SupplierCategorySubRepository $supplierCategorySubRepo)
+    public function __construct(SupplierCategorySubRepository $supplierCategorySubRepo,UserRepository $userRepo)
     {
         $this->supplierCategorySubRepository = $supplierCategorySubRepo;
+        $this->userRepository = $userRepo;
     }
 
     /**
@@ -130,7 +133,14 @@ class SupplierCategorySubAPIController extends AppBaseController
         }
 
         $id = Auth::id();
-        $input['createdUserID'] = $id;
+        $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
+
+        $empId = $user->employee['empID'];
+        $input['createdUserID'] = $empId;
+        $input['createdPcID'] = gethostname();
+        $input['createdUserGroup'] = $user->employee['userGroupID'];
+
+        $input['isActive'] = is_array($input['isActive']) ? $input['isActive'][0] : $input['isActive'];
 
         $supplierSubCategoryMaster = $this->supplierCategorySubRepository->create($input);
 
@@ -193,7 +203,13 @@ class SupplierCategorySubAPIController extends AppBaseController
 
         $id = Auth::id();
         $input = $request->except(['createdUserID']);
-        $input['modifiedUser'] = $id;
+
+        $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
+        $empId = $user->employee['empID'];
+        $input['modifiedUser'] = $empId;
+        $input['modifiedPc'] = gethostname();
+
+        $input['isActive'] = is_array($input['isActive']) ? $input['isActive'][0] : $input['isActive'];
 
         $supplierCategorySub->update($input);
 
@@ -217,15 +233,27 @@ class SupplierCategorySubAPIController extends AppBaseController
             return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.supplier_business_sub_category')]));
         }
 
+        $supplierCategorySub->delete();
+
+        return $this->sendResponse($id,trans('custom.delete', ['attribute' => trans('custom.supplier_business_sub_category')]));
+    }
+
+    public function destroyCheck($id)
+    {
+        /** @var SupplierCategoryMaster $supplierCategoryMaster */
+        $supplierCategoryMaster = $this->supplierCategorySubRepository->findWithoutFail($id);
+
+        if (empty($supplierCategoryMaster)) {
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.supplier_business_category')]));
+        }
+
         $subCategoryAssign= SupplierSubCategoryAssign::where('supSubCategoryID', $id)->first();
 
         if ($subCategoryAssign) {
             return $this->sendError("This sub category has already been pulled to Supplier Master, cannot be deleted");
         }
 
-        $supplierCategorySub->delete();
-
-        return $this->sendResponse($id,trans('custom.delete', ['attribute' => trans('custom.supplier_business_sub_category')]));
+        return $this->sendResponse($id,"This sub category can be delete");
     }
 
     public function getAllSupplierBusinessSubCategories(Request $request){
@@ -283,7 +311,7 @@ class SupplierCategorySubAPIController extends AppBaseController
         $subCategoryAssign = SupplierSubCategoryAssign::where('supSubCategoryID', $input['id'])->first();
 
         if ($subCategoryAssign) {
-            $errorMessages = "cannot be amended. it has been used in supplier master";
+            $errorMessages = "cannot be amended. Since, it has been used in supplier master";
             $amendable = false;
         } else {
             $successMessages = "Use of Supplier business category checking is done in supplier master";
