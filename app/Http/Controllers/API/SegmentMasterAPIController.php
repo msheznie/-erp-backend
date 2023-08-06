@@ -31,6 +31,8 @@ use App\Models\DirectPaymentDetails;
 use App\Models\DirectReceiptDetail;
 use App\Models\EmployeeDetails;
 use App\Models\GRVMaster;
+use App\Models\ItemIssueMaster;
+use App\Models\ItemMaster;
 use App\Models\JvDetail;
 use App\Models\MaterielRequest;
 use App\Models\PaySupplierInvoiceMaster;
@@ -218,20 +220,9 @@ class SegmentMasterAPIController extends AppBaseController
 
         //delete validation 
         $segmentUsed = false;
+        $segmentUsedByDocs = false;
         $segmentUsedByEmp = false;
-        $procumentOrderCheck = ProcumentOrder::where('serviceLineSystemID', $id)
-                                             ->first();
 
-        if ($procumentOrderCheck) {
-            $segmentUsed = true;
-        }
-
-        $checkPR = PurchaseRequest::where('serviceLineSystemID', $id)
-                                             ->first();
-
-        if ($checkPR) {
-            $segmentUsed = true;
-        }
 
         $checkGeneralLedger = GeneralLedger::where('serviceLineSystemID', $id)
                                  ->first();
@@ -268,16 +259,20 @@ class SegmentMasterAPIController extends AppBaseController
 
 
         if (!empty($isDocs)) {
-            $segmentUsed = true;
+            $segmentUsedByDocs = true;
         }
 
-        if ($segmentUsed) {
+        if ($segmentUsedByDocs) {
             return $this->sendError("Cannot delete this segment", 500,[1, $segmentMaster->ServiceLineDes]);
         }
 
 
         if ($segmentUsedByEmp) {
             return $this->sendError("Cannot delete this segment", 500,[2, $segmentMaster->ServiceLineDes]);
+        }
+
+        if ($segmentUsed) {
+            return $this->sendError("This segment is used in some documents. Therefore, cannot delete", 500);
         }
 
 
@@ -478,6 +473,14 @@ class SegmentMasterAPIController extends AppBaseController
         foreach ($cns as $cn) {
             $controlData[] = [
                 'documentCode' => $cn->master->creditNoteCode,
+            ];
+        }
+
+        $mis = ItemIssueMaster::where('serviceLineSystemID', $segmentId)->where('confirmedYN', 1)->get();
+
+        foreach ($mis as $mi){
+            $controlData[] = [
+                'documentCode' => $mi->itemIssueCode,
             ];
         }
 
