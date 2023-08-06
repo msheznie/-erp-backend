@@ -1172,17 +1172,20 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 }
             }
 
-            $directInvoiceItems = $directItems;
-            foreach ($directInvoiceItems as $directInvoiceItem) {
-                $allocatedItems = ExpenseAssetAllocation::where('documentDetailID',$directInvoiceItem['directInvoiceDetailsID'])->where('documentSystemCode',$directInvoiceItem['directInvoiceAutoID'])->get();
-                $total = 0;
-                foreach($allocatedItems as $allocatedItem) {
-                    $total += $allocatedItem->amount;
-                    if(isset($directInvoiceItem['netAmount']) && $directInvoiceItem['netAmount'] < $total) {
-                        return $this->sendError("Detail amount cannot be less than allocated amount.",500);
+            if($input['documentType'] == 1 || $input['documentType'] == 4) {
+                $directInvoiceItems = $directItems;
+                foreach ($directInvoiceItems as $directInvoiceItem) {
+                    $allocatedItems = ExpenseAssetAllocation::where('documentDetailID',$directInvoiceItem['directInvoiceDetailsID'])->where('documentSystemCode',$directInvoiceItem['directInvoiceAutoID'])->get();
+                    $total = 0;
+                    foreach($allocatedItems as $allocatedItem) {
+                        $total += $allocatedItem->amount;
+                        if(isset($directInvoiceItem['netAmount']) && $directInvoiceItem['netAmount'] < $total) {
+                            return $this->sendError("Detail amount cannot be less than allocated amount.",500);
+                        }
                     }
                 }
             }
+
 
             $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
             if ($error_count > 0) {
