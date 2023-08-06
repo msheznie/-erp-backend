@@ -711,11 +711,11 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
             if ($input['documentType'] == 4) {
                 $validatorSupp = \Validator::make($input, [
-                    'employeeID' => 'required|numeric|min:1',
+                    'employeeID' => 'required|numeric|min:0',
                 ]);
             } else {
                 $validatorSupp = \Validator::make($input, [
-                    'supplierID' => 'required|numeric|min:1',
+                    'supplierID' => 'required|numeric|min:0',
                 ]);
             }
 
@@ -773,6 +773,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
             }
 
             }
+
+            
             if ($input['documentType'] != 4 && $input['retentionAmount'] > 0) {
 
                 $isConfigured = SystemGlCodeScenario::find(13);
@@ -1170,19 +1172,14 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 }
             }
 
-            $allocatedAsssets = ExpenseAssetAllocation::where('documentSystemCode', $input['bookingSuppMasInvAutoID'])
-            ->with(['asset'])
-            ->get();
-
-
-             if(isset($allocatedAsssets) && isset($directItems))  {
+            $directInvoiceItems = $directItems;
+            foreach ($directInvoiceItems as $directInvoiceItem) {
+                $allocatedItems = ExpenseAssetAllocation::where('documentDetailID',$directInvoiceItem['directInvoiceDetailsID'])->where('documentSystemCode',$directInvoiceItem['directInvoiceAutoID'])->get();
                 $total = 0;
-                foreach($allocatedAsssets as $allocatedAssset) {
-                    $total += $allocatedAssset->amount;
-                    foreach($directItems as $item) {
-                        if(isset($item['netAmount']) && $item['netAmount'] < $total) {
-                            return $this->sendError("Detail amount cannot be less than allocated amount.");
-                        }
+                foreach($allocatedItems as $allocatedItem) {
+                    $total += $allocatedItem->amount;
+                    if(isset($directInvoiceItem['netAmount']) && $directInvoiceItem['netAmount'] < $total) {
+                        return $this->sendError("Detail amount cannot be less than allocated amount.",500);
                     }
                 }
             }
