@@ -687,10 +687,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
 
 
-            Route::get('getTreasuryManagementFilterData', 'BankReconciliationAPIController@getTreasuryManagementFilterData');
-            Route::post('validateTMReport', 'BankReconciliationAPIController@validateTMReport');
-            Route::post('generateTMReport', 'BankReconciliationAPIController@generateTMReport');
-            Route::post('exportTMReport', 'BankReconciliationAPIController@exportReport');
             Route::get('getAllcompaniesByDepartment', 'DocumentApprovedAPIController@getAllcompaniesByDepartment');
 
             Route::post('assetCostingReopen', 'FixedAssetMasterAPIController@assetCostingReopen');
@@ -906,11 +902,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('getEmployeeMasterData', 'EmployeeAPIController@getEmployeeMasterData');
             Route::get('getReferBackApprovedDetails', 'DocumentReferedHistoryAPIController@getReferBackApprovedDetails');
 
-            Route::get('getBankLedgerFilterFormData', 'BankLedgerAPIController@getBankLedgerFilterFormData');
-            Route::post('validateBankLedgerReport', 'BankLedgerAPIController@validateBankLedgerReport');
-            Route::post('generateBankLedgerReport', 'BankLedgerAPIController@generateBankLedgerReport');
-            Route::post('exportBankLedgerReport', 'BankLedgerAPIController@exportBankLedgerReport');
-            Route::post('generateBankLedgerReportPDF', 'BankLedgerAPIController@generateBankLedgerReportPDF');
             
             
             Route::resource('bank_account_reffered_backs', 'BankAccountRefferedBackAPIController');
