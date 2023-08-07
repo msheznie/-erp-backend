@@ -120,3 +120,18 @@ Route::group([],function () {
     Route::resource('bankAccountReferedBack', 'BankAccountRefferedBackAPIController');
 
 });
+
+//Bank Reconciliation Review
+Route::group([],function () {
+
+    Route::post('amendBankReconciliationReview', 'BankReconciliationAPIController@amendBankReconciliationReview')->name('Amend bank reconciliation review');
+
+});
+
+//Bank Trasfer Review
+Route::group([],function () {
+
+    Route::post('amendBankTransferReview', 'BankLedgerAPIController@amendBankTransferReview')->name('Amend bank transfer review');
+    Route::post('clearExportBlockConfirm', 'BankLedgerAPIController@clearExportBlockConfirm')->name('Clear export block confirm');
+
+});

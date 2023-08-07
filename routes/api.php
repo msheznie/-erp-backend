@@ -624,7 +624,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
 
 
-            Route::post('amendBankReconciliationReview', 'BankReconciliationAPIController@amendBankReconciliationReview');
             Route::post('referBackCosting', 'FixedAssetMasterAPIController@referBackCosting');
 
             // Receipt Voucher
@@ -687,8 +686,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('getSIDetailDirectAmendHistory', 'DirectInvoiceDetailsRefferedBackAPIController@getSIDetailDirectAmendHistory');
 
 
-            Route::post('amendBankTransferReview', 'BankLedgerAPIController@amendBankTransferReview');
-            Route::post('clearExportBlockConfirm', 'BankLedgerAPIController@clearExportBlockConfirm');
 
             Route::get('getTreasuryManagementFilterData', 'BankReconciliationAPIController@getTreasuryManagementFilterData');
             Route::post('validateTMReport', 'BankReconciliationAPIController@validateTMReport');
