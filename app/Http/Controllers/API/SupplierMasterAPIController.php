@@ -639,7 +639,7 @@ class SupplierMasterAPIController extends AppBaseController
         foreach ($subCategories as $subCategoryID){
             $subCategory = SupplierCategorySub::where('supCategorySubID',$subCategoryID)->first();
             if($subCategory->supMasterCategoryID != $input['supCategoryMasterID']){
-                return $this->sendError('Please remove old sub categories before assign supplier master with new business category.');
+                return $this->sendError('Please remove the already added sub categories before changing to a new Business Category.');
             }
         }
 
