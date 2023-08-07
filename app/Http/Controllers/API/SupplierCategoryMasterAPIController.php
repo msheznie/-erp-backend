@@ -14,6 +14,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateSupplierCategoryMasterAPIRequest;
 use App\Http\Requests\API\UpdateSupplierCategoryMasterAPIRequest;
 use App\Models\SupplierCategoryMaster;
+use App\Models\SupplierCategorySub;
 use App\Models\SupplierMaster;
 use App\Models\YesNoSelection;
 use App\Repositories\SupplierCategoryMasterRepository;
@@ -194,6 +195,8 @@ class SupplierCategoryMasterAPIController extends AppBaseController
         if (empty($supplierCategoryMaster)) {
             return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.supplier_business_category')]));
         }
+
+        SupplierCategorySub::where('supMasterCategoryID',$supplierCategoryMaster->supCategoryMasterID)->delete();
 
         $supplierCategoryMaster->delete();
 
