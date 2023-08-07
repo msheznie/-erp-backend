@@ -164,3 +164,13 @@ Route::group([], function(){
 
 });
 
+
+//Report - Asset Insuarance
+Route::group([], function(){
+    Route::post('generateAssetInsuranceReport', 'FixedAssetMasterAPIController@generateAssetInsuranceReport')->name('Generate Asset Insurance Report');
+    Route::post('exportAssetInsuranceReport', 'FixedAssetMasterAPIController@exportAssetInsuranceReport')->name('Export Asset Insurance Report');
+
+});
+
+
+
