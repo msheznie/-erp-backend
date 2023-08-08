@@ -481,10 +481,20 @@ class JvMasterAPIController extends AppBaseController
             if($query->count() > 0)
             {
                 $inActiveAccounts = $query->pluck('AccountCode');
+                $lastKey = count($inActiveAccounts) - 1;
+
+
                 $msg = '';
-                foreach($inActiveAccounts as $account)
-                {
-                    $msg .= ' '.$account.' ,';
+                foreach($inActiveAccounts as $key => $account)
+                {   
+                    if ($key != $lastKey) {
+                        $msg .= ' '.$account.' ,';
+                    }
+                    else
+                    {
+                        $msg .= ' '.$account;
+                    }
+                   
                 }
 
 
