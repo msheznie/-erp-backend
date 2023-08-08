@@ -477,7 +477,7 @@ class JvMasterAPIController extends AppBaseController
             ->where('chartofaccounts.isActive',0)
             ->where('erp_jvdetail.jvMasterAutoId', $input['jvMasterAutoId'])
             ->groupBy('chartofaccounts.AccountCode');
-
+            
             if($query->count() > 0)
             {
                 $inActiveAccounts = $query->pluck('AccountCode');
