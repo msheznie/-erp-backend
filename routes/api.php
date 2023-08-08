@@ -11,6 +11,8 @@
 |
 */
 
+use Illuminate\Support\Facades\Route;
+
 Route::get('getConfigurationInfo', 'ConfigurationAPIController@getConfigurationInfo');
 
 
@@ -477,22 +479,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('inv_reclassifications', 'InventoryReclassificationAPIController');
 
             Route::resource('item_client_reference', 'ItemClientReferenceNumberMasterAPIController');
-            Route::get('getDebitNoteMasterRecord', 'DebitNoteAPIController@getDebitNoteMasterRecord');
-            Route::resource('debit_notes', 'DebitNoteAPIController');
-            Route::put('debitNoteUpdateCurrency/{id}', 'DebitNoteAPIController@updateCurrency');
-            Route::put('updateDebiteNoteType/{id}', 'DebitNoteAPIController@updateDebiteNoteType');
-            Route::post('getAllDebitNotes', 'DebitNoteAPIController@getAllDebitNotes');
-            Route::post('exportDebitNotesByCompany', 'DebitNoteAPIController@exportDebitNotesByCompany');
-            
-            Route::post('debitNoteReopen', 'DebitNoteAPIController@debitNoteReopen');
-            
-            Route::resource('debit_note_details', 'DebitNoteDetailsAPIController');
-            Route::get('getDetailsByDebitNote', 'DebitNoteDetailsAPIController@getDetailsByDebitNote');
-            Route::get('getDebitNotePaymentStatusHistory', 'DebitNoteAPIController@getDebitNotePaymentStatusHistory');
-            Route::post('amendDebitNote', 'DebitNoteAPIController@amendDebitNote');
-            Route::post('amendDebitNoteReview', 'DebitNoteAPIController@amendDebitNoteReview');
-            
-            Route::post('checkPaymentStatusDNPrint', 'DebitNoteAPIController@checkPaymentStatusDNPrint');
 
             Route::resource('performa_masters', 'PerformaMasterAPIController');
             Route::resource('rig_masters', 'RigMasterAPIController');
@@ -725,8 +711,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('syncGlBudget', 'BudjetdetailsAPIController@syncGlBudget');
             Route::post('getBudgetDetailHistory', 'BudjetdetailsAPIController@getBudgetDetailHistory');
 
-            Route::get('checkPolicyForExchangeRates', 'CommonPoliciesAPIController@checkPolicyForExchangeRates');
-
             Route::resource('budjetdetails', 'BudjetdetailsAPIController');
             Route::post('getDetailsByBudget', 'BudjetdetailsAPIController@getDetailsByBudget');
             Route::post('exportDetailsByBudget', 'BudjetdetailsAPIController@exportReport');
@@ -854,11 +838,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
 
             Route::resource('debitNoteDetailsRefferedbacks', 'DebitNoteDetailsRefferedbackAPIController');
-            Route::resource('debitNoteMasterRefferedbacksCRUD', 'DebitNoteMasterRefferedbackAPIController');
-            Route::post('getDebitNoteAmendHistory', 'DebitNoteMasterRefferedbackAPIController@getDebitNoteAmendHistory');
-            Route::get('getDNDetailAmendHistory', 'DebitNoteDetailsRefferedbackAPIController@getDNDetailAmendHistory');
-            Route::put('debitNoteLocalUpdate/{id}', 'DebitNoteAPIController@debitNoteLocalUpdate');
-            Route::put('debitNoteReportingUpdate/{id}','DebitNoteAPIController@debitNoteReportingUpdate');
 
             Route::resource('jvMasterReferredbacks', 'JvMasterReferredbackAPIController');
             Route::resource('jvDetailsReferredbacks', 'JvDetailsReferredbackAPIController');
