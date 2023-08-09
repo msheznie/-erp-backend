@@ -7,6 +7,8 @@
 
 
 //transactions
+use Illuminate\Support\Facades\Route;
+
 Route::group([], function() {
 
     Route::resource('supplierInvoiceCRUD', 'BookInvSuppMasterAPIController',['only' => ['store', 'show', 'update']]);
@@ -41,7 +43,6 @@ Route::group([], function(){
     Route::post('getDebitNoteApprovalByUser', 'DebitNoteAPIController@getDebitNoteApprovalByUser')->name("Get pending for approval - Debit Note");
     Route::post('getDebitNoteApprovedByUser', 'DebitNoteAPIController@getDebitNoteApprovedByUser')->name("Get approved - Debit Note");
     Route::post('approvalPreCheckDebitNote', 'DebitNoteAPIController@approvalPreCheckDebitNote')->name("Debit note approval pre check");
-    Route::get('getDebitNoteFormData', 'DebitNoteAPIController@getDebitNoteFormData')->name("Get Debit note form data");
 
     Route::post('getPaymentApprovalByUser', 'PaySupplierInvoiceMasterAPIController@getPaymentApprovalByUser')->name("Get pending for approval - Payment Voucher");
     Route::post('getPaymentApprovedByUser', 'PaySupplierInvoiceMasterAPIController@getPaymentApprovedByUser')->name("Get approved - Payment Voucher");
@@ -51,3 +52,25 @@ Route::group([], function(){
     Route::post('rejectSupplierInvoice', 'BookInvSuppMasterAPIController@rejectSupplierInvoice')->name("Reject supplier invoice");
 });
 
+//Debit Note
+Route::group([], function(){
+    Route::get('getDebitNoteFormData', 'DebitNoteAPIController@getDebitNoteFormData')->name("Get Debit note form data");
+    Route::post('exportDebitNotesByCompany', 'DebitNoteAPIController@exportDebitNotesByCompany')->name('Export debit notes by company');
+    Route::post('getDebitNoteAmendHistory', 'DebitNoteMasterRefferedbackAPIController@getDebitNoteAmendHistory')->name('Get debit note amend history');
+    Route::get('getDNDetailAmendHistory', 'DebitNoteDetailsRefferedbackAPIController@getDNDetailAmendHistory')->name('Get debit note detail amend history');
+    Route::get('getDebitNoteMasterRecord', 'DebitNoteAPIController@getDebitNoteMasterRecord')->name('Get debit note master record');
+    Route::post('getAllDebitNotes', 'DebitNoteAPIController@getAllDebitNotes')->name('Get all debit notes');
+    Route::put('debitNoteUpdateCurrency/{id}', 'DebitNoteAPIController@updateCurrency')->name('Debit note update currency');
+    Route::put('updateDebiteNoteType/{id}', 'DebitNoteAPIController@updateDebiteNoteType')->name('Update debit note type');
+    Route::get('getDetailsByDebitNote', 'DebitNoteDetailsAPIController@getDetailsByDebitNote')->name('Get details by debit note');
+    Route::put('debitNoteLocalUpdate/{id}', 'DebitNoteAPIController@debitNoteLocalUpdate')->name('Debit note local update');
+    Route::put('debitNoteReportingUpdate/{id}','DebitNoteAPIController@debitNoteReportingUpdate')->name('Debit note reporting update');
+    Route::post('debitNoteReopen', 'DebitNoteAPIController@debitNoteReopen')->name('Debit note reopen');
+    Route::get('getDebitNotePaymentStatusHistory', 'DebitNoteAPIController@getDebitNotePaymentStatusHistory')->name('Get debit note payment status history');
+    Route::post('amendDebitNote', 'DebitNoteAPIController@amendDebitNote')->name('Amend debit Note');
+    Route::post('amendDebitNoteReview', 'DebitNoteAPIController@amendDebitNoteReview')->name('Amend debit note review');
+    Route::post('checkPaymentStatusDNPrint', 'DebitNoteAPIController@checkPaymentStatusDNPrint')->name('Check payment status debit note print');
+    Route::resource('debit_note_details', 'DebitNoteDetailsAPIController');
+    Route::resource('debitNoteMasterRefferedbacksCRUD', 'DebitNoteMasterRefferedbackAPIController');
+    Route::resource('debit_notes', 'DebitNoteAPIController');
+});
