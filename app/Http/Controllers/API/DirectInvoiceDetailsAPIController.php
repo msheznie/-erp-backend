@@ -419,6 +419,8 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
 
         SupplierInvoice::updateMaster($input['directInvoiceAutoID']);
 
+        \Helper::updateSupplierRetentionAmount($input['directInvoiceAutoID'],$BookInvSuppMaster);
+
         return $this->sendResponse($directInvoiceDetails->toArray(), 'Direct Invoice Details updated successfully');
     }
 
