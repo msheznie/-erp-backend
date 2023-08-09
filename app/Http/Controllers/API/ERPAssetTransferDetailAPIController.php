@@ -434,7 +434,7 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
     
                         FixedAssetMaster::find($value['asset'])
                             ->update([
-                                'LOCATION' =>  $value['to_location']
+                                'LOCATION' =>  isset($value['to_location'][0]) ? $value['to_location'][0]:$value['to_location']
                             ]);
                     }
                 }
