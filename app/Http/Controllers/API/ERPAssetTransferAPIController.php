@@ -372,6 +372,14 @@ class ERPAssetTransferAPIController extends AppBaseController
             return $this->sendError($validator->messages(), 422);
         }
 
+        if(($input['type'] == 2  || $input['type'] == 1 || $input['type'] == 3) && $input['serviceLineSystemID'] == 0) {
+            return $this->sendError('Segment cannot be null. Select a segment and try again', 500);
+        }
+
+        if(($input['type'] == 2 || $input['type'] == 1) && $input['location'] == 0) {
+            return $this->sendError('Location required cannot be null. Select a location and try again', 500);
+        }
+
         if(isset( $input['serviceLineSystemID'])) {
             $data['serviceLineSystemID'] =  $input['serviceLineSystemID'];
             $segment = SegmentMaster::where('serviceLineSystemID', $data['serviceLineSystemID'])->first();
