@@ -498,7 +498,7 @@ class JvMasterAPIController extends AppBaseController
                 }
 
 
-                return $this->sendError("The Chart of Accounts $msg are Inactive, update it as active/change the GL code to proceed.",500,['type' => 'ca_inactive']);
+                return $this->sendError("The Chart of Account/s $msg are Inactive, update it as active/change the GL code to proceed.",500,['type' => 'ca_inactive']);
 
             }
 
