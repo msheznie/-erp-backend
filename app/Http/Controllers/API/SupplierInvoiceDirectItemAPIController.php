@@ -407,6 +407,8 @@ class SupplierInvoiceDirectItemAPIController extends AppBaseController
             $suppItemDetails = $this->supplierInvoiceDirectItemRepository->update($input, $id);
             $validateVATCategories = TaxService::validateVatCategoriesInDocumentDetails($supplierInvoice->documentSystemID, $supplierInvoice->companySystemID, $id, $input, 0, $supplierInvoice->documentType);
 
+            \Helper::updateSupplierRetentionAmount($input['bookingSuppMasInvAutoID'],$supplierInvoice);
+
             DB::commit();
             return $this->sendResponse($suppItemDetails->toArray(), 'Supplier Invoice Details updated successfully');
         } catch (\Exception $ex) {
@@ -458,11 +460,17 @@ class SupplierInvoiceDirectItemAPIController extends AppBaseController
         /** @var SupplierInvoiceDirectItem $supplierInvoiceDirectItem */
         $supplierInvoiceDirectItem = $this->supplierInvoiceDirectItemRepository->findWithoutFail($id);
 
+        $supplierInvoice = BookInvSuppMaster::where('bookingSuppMasInvAutoID', $supplierInvoiceDirectItem->bookingSuppMasInvAutoID)
+        ->first();
+        
         if (empty($supplierInvoiceDirectItem)) {
             return $this->sendError('Supplier Invoice Direct Item not found');
         }
 
         $supplierInvoiceDirectItem->delete();
+
+    
+        \Helper::updateSupplierRetentionAmount($supplierInvoiceDirectItem->bookingSuppMasInvAutoID,$supplierInvoice);
 
         return $this->sendResponse([], 'Supplier Invoice Direct Item deleted successfully');
     }
@@ -516,6 +524,7 @@ class SupplierInvoiceDirectItemAPIController extends AppBaseController
             $deleteDetails = SupplierInvoiceDirectItem::where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID)->delete();
         }
 
+        \Helper::updateSupplierRetentionAmount($bookingSuppMasInvAutoID,$supInvoice);
         return $this->sendResponse($bookingSuppMasInvAutoID, 'Details deleted successfully');
     }
 }
