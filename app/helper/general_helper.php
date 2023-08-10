@@ -4494,26 +4494,37 @@ class Helper
                                 $assetTransferDetailsItems = ERPAssetTransferDetail::where('erp_fa_fa_asset_transfer_id',$input['id'])->get();
                                 if(isset($assetTransferDetailsItems)) {
                                     foreach($assetTransferDetailsItems as $assetTransferDetailItem) {
+                                        $fxedAsset = FixedAssetMaster::where('faID',$assetTransferDetailItem->fa_master_id)->first();
+                                        if($fxedAsset->selectedForDisposal) {
+                                            DB::rollback();
+                                            return ['success' => false, 'message' => 'The selected assets '.$fxedAsset->faCode.' cannot be transferred, as it is already selected for disposal'];
+                                        }
+
+                                        if($fxedAsset->DIPOSED) {
+                                            DB::rollback();
+                                            return ['success' => false, 'message' => 'The selected assets '.$fxedAsset->faCode.' cannot be transferred, as it is already disposed'];
+                                        }
+
                                         if($input['type'] == 2) {
-                                            $fxedAsset = FixedAssetMaster::where('faID',$assetTransferDetailItem->fa_master_id)->first();
                                             $fxedAsset->LOCATION = $assetTransferDetailItem->to_location_id;
-                                            $fxedAsset->save();
                                         }
         
                                         if($input['type'] == 3) {
-                                                $fxedAsset = FixedAssetMaster::where('faID',$assetTransferDetailItem->fa_master_id)->first();
                                                 $fxedAsset->empID = $assetTransferDetailItem->to_emp_id;
-                                                $fxedAsset->save();
                                         }
                                         
                                         if($input['type'] == 4 && isset($assetTransferDetailItem->department)) {
-                                            $fxedAsset = FixedAssetMaster::where('faID',$assetTransferDetailItem->fa_master_id)->first();
                                             $fxedAsset->departmentSystemID = $assetTransferDetailItem->department->departmentSystemID;
                                             $fxedAsset->departmentID = $assetTransferDetailItem->department->DepartmentID;
-                                            $fxedAsset->save();
-                                    }
+                                        }
+
+                                        $fxedAsset->save();
+
                                     }
                                 }
+
+
+
                             }
 
 
