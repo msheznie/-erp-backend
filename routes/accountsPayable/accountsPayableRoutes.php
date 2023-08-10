@@ -74,3 +74,40 @@ Route::group([], function(){
     Route::resource('debitNoteMasterRefferedbacksCRUD', 'DebitNoteMasterRefferedbackAPIController');
     Route::resource('debit_notes', 'DebitNoteAPIController');
 });
+
+//Payment Voucher
+Route::group([],function (){
+    Route::get('getBankMemoBySupplierCurrencyId', 'BankMemoSupplierAPIController@getBankMemoBySupplierCurrencyId')->name('Get bank memo by supplier currency id');
+    Route::get('payeeBankMemosByDocument', 'BankMemoPayeeAPIController@payeeBankMemosByDocument')->name('Payee bank memo by document');
+    Route::post('payeeBankMemoDeleteAll', 'BankMemoPayeeAPIController@payeeBankMemoDeleteAll')->name('Payee bank memo delete all');
+    Route::get('getPaymentVoucherMaster', 'PaySupplierInvoiceMasterAPIController@getPaymentVoucherMaster')->name('Get payment voucher master');
+    Route::post('getAllPaymentVoucherByCompany', 'PaySupplierInvoiceMasterAPIController@getAllPaymentVoucherByCompany')->name('Get all payment voucher by company');
+    Route::get('getPaymentVoucherFormData', 'PaySupplierInvoiceMasterAPIController@getPaymentVoucherFormData')->name('Get payment voucher form data');
+    Route::put('paymentVoucherLocalUpdate/{id}', 'PaySupplierInvoiceMasterAPIController@paymentVoucherLocalUpdate')->name('Payment voucher local update');
+    Route::put('paymentVoucherReportingUpdate/{id}','PaySupplierInvoiceMasterAPIController@paymentVoucherReportingUpdate')->name('Payment voucher reporting update');
+    Route::get('validationsForPDC', 'PaySupplierInvoiceMasterAPIController@validationsForPDC')->name('Validation for pdc');
+    Route::put('paymentVoucherProjectUpdate/{id}', 'PaySupplierInvoiceMasterAPIController@paymentVoucherProjectUpdate')->name('Payment voucher project update');
+    Route::get('getRetentionValues', 'PaySupplierInvoiceMasterAPIController@getRetentionValues')->name('Get retention values');
+    Route::put('paymentVoucherUpdateCurrency/{id}', 'PaySupplierInvoiceMasterAPIController@updateCurrency')->name('Payment voucher update currency');
+    Route::post('checkPVDocumentActive', 'PaySupplierInvoiceMasterAPIController@checkPVDocumentActive')->name('Check pv document active');
+    Route::post('addPOPaymentDetail', 'PaySupplierInvoiceDetailAPIController@addPOPaymentDetail')->name('Add po payment detail');
+    Route::get('getPOPaymentForPV', 'PaySupplierInvoiceMasterAPIController@getPOPaymentForPV')->name('Get po payment for pv');
+    Route::get('getADVPaymentForPV', 'PaySupplierInvoiceMasterAPIController@getADVPaymentForPV')->name('Get adv payment for pv');
+    Route::get('getPOPaymentDetails', 'PaySupplierInvoiceDetailAPIController@getPOPaymentDetails')->name('Get po payment details');
+    Route::get('getADVPaymentDetails', 'AdvancePaymentDetailsAPIController@getADVPaymentDetails')->name('Get adv payment details');
+    Route::post('deleteAllPOPaymentDetail', 'PaySupplierInvoiceDetailAPIController@deleteAllPOPaymentDetail')->name('Delete all po payment detail');
+    Route::post('addADVPaymentDetail', 'AdvancePaymentDetailsAPIController@addADVPaymentDetail')->name('Add adv payment detail');
+    Route::post('addADVPaymentDetailNotLinkPo', 'AdvancePaymentDetailsAPIController@addADVPaymentDetailNotLinkPo')->name('Add adv payment detail not link po');
+    Route::post('deleteAllADVPaymentDetail', 'AdvancePaymentDetailsAPIController@deleteAllADVPaymentDetail')->name('Delete all adv payment detail');
+    Route::get('getDirectPaymentDetails', 'DirectPaymentDetailsAPIController@getDirectPaymentDetails')->name('Get direct payment details');
+    Route::post('deleteAllDirectPayment', 'DirectPaymentDetailsAPIController@deleteAllDirectPayment')->name('Delete all direct payment');
+    Route::post('paymentVoucherReopen', 'PaySupplierInvoiceMasterAPIController@paymentVoucherReopen')->name('Payment voucher re open');
+    Route::get('getPaymentVoucherGL', 'ChartOfAccountsAssignedAPIController@getPaymentVoucherGL')->name('Get payment voucher gl');
+    Route::post('updateDirectPaymentAccount', 'DirectPaymentDetailsAPIController@updateDirectPaymentAccount')->name('Update direct payment account');
+
+    Route::resource('direct_payment_details', 'DirectPaymentDetailsAPIController',['except' => ['index']]);
+    Route::resource('advance_payment_details', 'AdvancePaymentDetailsAPIController');
+    Route::resource('pay_supplier_invoice_details', 'PaySupplierInvoiceDetailAPIController',['except' => ['index','store']]);
+    Route::resource('pay_supplier_invoice_masters', 'PaySupplierInvoiceMasterAPIController', ['only' => ['store', 'show', 'update']]);
+    Route::resource('bank_memo_payees', 'BankMemoPayeeAPIController');
+});

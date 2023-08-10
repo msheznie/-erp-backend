@@ -67,3 +67,4 @@ Route::get('getBankAccount', 'PaySupplierInvoiceMasterAPIController@getBankAccou
 Route::get('getBankAccountsByBankID', 'BankAccountAPIController@getBankAccountsByBankID')->name('Get bank accounts by bank id');
 
 Route::get('checkPolicyForExchangeRates', 'CommonPoliciesAPIController@checkPolicyForExchangeRates')->name('Check policy for exchange rates');
+Route::post('getBankBalance', 'BankAccountAPIController@getBankBalance')->name('Get bank balance');
