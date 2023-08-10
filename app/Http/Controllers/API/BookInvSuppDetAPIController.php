@@ -38,7 +38,9 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
 use Response;
 use App\helper\TaxService;
-
+use App\Models\SupplierInvoiceDirectItem;
+use App\Models\CurrencyMaster;
+use App\helper\Helper;
 /**
  * Class BookInvSuppDetController
  * @package App\Http\Controllers\API
@@ -490,6 +492,10 @@ class BookInvSuppDetAPIController extends AppBaseController
 
         $this->deleteReturnUnbilledGrvs($unbilledSum->grvAutoID, $bookInvSuppDet->bookingSuppMasInvAutoID);
 
+        $bookInvSuppMaster = BookInvSuppMaster::find($bookInvSuppDet->bookingSuppMasInvAutoID);
+
+        \Helper::updateSupplierRetentionAmount($bookInvSuppDet->bookingSuppMasInvAutoID,$bookInvSuppMaster);
+
         return $this->sendResponse($id, trans('custom.delete', ['attribute' => trans('custom.supplier_invoice_details')]));
     }
 
@@ -522,6 +528,7 @@ class BookInvSuppDetAPIController extends AppBaseController
 
     public function storePOBaseDetail(Request $request)
     {
+        
         $input = $request->all();
         $prDetail_arr = array();
         $validator = array();
@@ -779,6 +786,7 @@ class BookInvSuppDetAPIController extends AppBaseController
             }
 
 
+            \Helper::updateSupplierRetentionAmount($bookingSuppMasInvAutoID,$bookInvSuppMaster);
 
             DB::commit();
             return $this->sendResponse('', trans('custom.save', ['attribute' => trans('custom.purchase_order_details')]));
@@ -788,6 +796,7 @@ class BookInvSuppDetAPIController extends AppBaseController
         }
 
     }
+
 
     public function editPOBaseDetail(Request $request)
     {
@@ -889,7 +898,7 @@ class BookInvSuppDetAPIController extends AppBaseController
                     return $this->sendError($result['message'], 500);
                 } 
             }
-
+            \Helper::updateSupplierRetentionAmount($bookingSuppMasInvAutoID,$bookInvSuppMaster);
             DB::commit();
             return $this->sendResponse('', trans('custom.save', ['attribute' => trans('custom.purchase_order_details')]));
         } catch (\Exception $exception) {
