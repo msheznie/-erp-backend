@@ -348,6 +348,8 @@ class AssetRequestDetailAPIController extends AppBaseController
         $companyID = $input['companyId'];
         $assetMaster = FixedAssetMaster::where('companySystemID',$companyID)
         ->where('approved',-1)
+        ->where('selectedForDisposal',0)
+        ->where('DIPOSED',0)
         ->get();
         return $this->sendResponse($assetMaster->toArray(), 'Asset master data retrieved successfully');
     }
