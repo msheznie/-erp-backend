@@ -8679,7 +8679,7 @@ class Helper
     
         for ($i = 0; $i < count($supplierItems); $i++) {
           $tot += doubleval($supplierItems[$i]->netAmount);
-          $vatTot += doubleval($supplierItems[$i]->VATAmount) * parseFloat($supplierItems[$i]->noQty);
+          $vatTot += doubleval($supplierItems[$i]->VATAmount) * doubleval($supplierItems[$i]->noQty);
         }
 
         $totalNet = $tot + $vatTot;

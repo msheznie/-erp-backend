@@ -483,6 +483,8 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
 
         $directInvoiceDetails->delete();
 
+        $bookInvSuppMaster = BookInvSuppMaster::find($directInvoiceDetails->directInvoiceAutoID);
+        \Helper::updateSupplierRetentionAmount($directInvoiceDetails->directInvoiceAutoID,$bookInvSuppMaster);
 
         return $this->sendResponse($id, 'Direct Invoice Details deleted successfully');
     }
@@ -531,6 +533,7 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
 
                 }
             }
+        \Helper::updateSupplierRetentionAmount($directInvoiceAutoID,$supInvoice);
 
         return $this->sendResponse($directInvoiceAutoID, 'Details deleted successfully');
     }
