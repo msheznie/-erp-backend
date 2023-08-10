@@ -4502,7 +4502,7 @@ class Helper
         
                                         if($input['type'] == 3) {
                                                 $fxedAsset = FixedAssetMaster::where('faID',$assetTransferDetailItem->fa_master_id)->first();
-                                                $fxedAsset->empID = $assetTransferDetailItem->to_emp;
+                                                $fxedAsset->empID = $assetTransferDetailItem->to_emp_id;
                                                 $fxedAsset->save();
                                         }
                                         
