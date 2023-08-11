@@ -221,20 +221,20 @@ class HRJobInvokeAPIController extends AppBaseController
         return $this->sendResponse([], 'Return to work notification scenario added to queue');
     }
 
-    function hrNotificationDebug($scenarioId, Request $request){
-
-        if(isset($scenarioId)){
+    function hrNotificationDebug($scenarioId)
+    {
+        if(!isset($scenarioId))
+        {
+            return $this->sendResponse([], 'Scenario ID is not found');
+        }
+        else
+        {
             $scenario = NotificationScenarios::find($scenarioId);
             if(empty($scenario)){
                 return $this->sendResponse([], 'Scenario is not found');
             }
-
             NotificationService::process($scenarioId);
                 return $this->sendResponse([], $scenario->scenarioDescription. ' is processed');
-            }else
-        {
-            return $this->sendResponse([], 'Scenario ID is not found');
         }
-
     }
 }

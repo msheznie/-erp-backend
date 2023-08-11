@@ -6,7 +6,7 @@ use App\Models\HrmsEmployeeManager;
 use App\Models\NotificationUser;
 use App\Models\SrpEmployeeDetails;
 use Carbon\Carbon;
-use App\Traits\CustomDateDiffForHumanTraite;
+use App\Traits\CustomDateDiffForHumanTrait;
 use Illuminate\Support\Facades\Log;
 
 class HRProbationNotificationService
@@ -20,7 +20,7 @@ class HRProbationNotificationService
     private $mail_subject = "End of employee probation period remainder";
     private $debug = false;
     private $sent_mail_count = 0;
-    use CustomDateDiffForHumanTraite;
+    use CustomDateDiffForHumanTrait;
 
     public function __construct($company, $setup){
         [ 'companyScenarionID' => $comScenarioID, 'beforeAfter' => $type, 'days' => $days ] = $setup;
@@ -74,7 +74,7 @@ class HRProbationNotificationService
             switch ($row->applicableCategoryID) {
                 case 1: //Employee
                     $mail_to = $row->empID;
-                    $this->to_specific_employee($mail_to,$this->type);
+                    $this->to_specific_employee($mail_to, $this->type);
                     break;
 
                 case 7: //Reporting manager
@@ -97,7 +97,7 @@ class HRProbationNotificationService
         return true;
     }
 
-    public function to_specific_employee($mail_to_emp , $type){
+    public function to_specific_employee($mail_to_emp, $type){
         $mail_to = SrpEmployeeDetails::selectRaw('Ename2, EEmail')->find( $mail_to_emp );
 
         if(empty($mail_to)){
@@ -106,7 +106,7 @@ class HRProbationNotificationService
         }
 
         $mail_body = "Dear {$mail_to->Ename2},<br/>";
-        $mail_body .= $this->email_body(1 ,$type);
+        $mail_body .= $this->email_body(1, $type);
         $mail_body .= $this->expiry_table($this->expired_docs);
 
         $empEmail = $mail_to->EEmail;
@@ -133,7 +133,7 @@ class HRProbationNotificationService
             $mail_to = $row[0];
 
             $mail_body = "Dear {$mail_to['Ename2']},<br/>";
-            $mail_body .= $this->email_body(9 ,$type);
+            $mail_body .= $this->email_body(9, $type);
 
 
             $empEmail = $mail_to['EEmail'];
@@ -195,7 +195,7 @@ class HRProbationNotificationService
             $my_reporting_data = $my_reporting_data->toArray();
 
             $mail_body = "Dear {$manager_info['Ename2']},<br/>";
-            $mail_body .= $this->email_body(7 ,$type);
+            $mail_body .= $this->email_body(7, $type);
             $mail_body .= $this->expiry_table( $my_reporting_data );
 
             $empEmail = $manager_info['EEmail'];
@@ -216,7 +216,7 @@ class HRProbationNotificationService
         return true;
     }
 
-    public function email_body( $for , $type){
+    public function email_body($for, $type){
 
         $str = "<br/>"; //End of employee probation period
 
