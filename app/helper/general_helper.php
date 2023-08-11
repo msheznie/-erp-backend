@@ -8731,7 +8731,7 @@ class Helper
             $decimalPlaces = $currency->DecimalPlaces;
         }
         
-        $retentionAmountToFixed = number_format($retentionAmount,$decimalPlaces);
+        $retentionAmountToFixed = round($retentionAmount,$decimalPlaces);
         $bookInvSuppMaster->retentionAmount = $retentionAmountToFixed;
         $bookInvSuppMaster->save();
     }
