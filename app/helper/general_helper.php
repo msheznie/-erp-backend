@@ -2403,7 +2403,7 @@ class Helper
                             return ['success' => false, 'message' => $sendEmail["message"]];
                         }
 
-                        $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, 1);
+                        $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, 1, $dataBase);
 
                         $webPushData = [
                             'title' => $pushNotificationMessage,
@@ -5053,7 +5053,7 @@ class Helper
                             return ['success' => false, 'message' => $sendEmail["message"]];
                         }
 
-                        $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, 1);
+                        $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, 1, $dataBase);
                         
                         $webPushData = [
                             'title' => $pushNotificationMessage,
