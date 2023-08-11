@@ -6,7 +6,7 @@ use Carbon\Carbon;
 
 trait CustomDateDiffForHumanTrait
 {
-    private $NoofDiffInDays; 
+    private $noOfDiffInDays; 
     private $years; 
     private $months; 
     private $days; 
@@ -16,7 +16,7 @@ trait CustomDateDiffForHumanTrait
         $startDate = Carbon::parse($toDay);
         $endDate = Carbon::parse($expiryDate);
 
-        $NoofDiffInDays = $startDate->diffInDays( $endDate );
+        $noOfDiffInDays = $startDate->diffInDays( $endDate );
 
         $getDayFormat = $this->getYear();
         $getDayType = $this->createDayType( $dayType );
@@ -32,19 +32,19 @@ trait CustomDateDiffForHumanTrait
 
     private function getYear()
     {
-        $years = floor($this->NoofDiffInDays / 365);
+        $years = floor($this->noOfDiffInDays / 365);
         return  $this->getMonth();
     }
 
     private function getMonth()
     {
-        $months = floor(($this->NoofDiffInDays - ($this->years * 365))/30.5);
+        $months = floor(($this->noOfDiffInDays - ($this->years * 365))/30.5);
         return $this->getDay();
     }
 
     private function getDay()
     {
-        $days = ($this->NoofDiffInDays - ($this->years * 365) - ($this->months * 30.5));
+        $days = ($this->noOfDiffInDays - ($this->years * 365) - ($this->months * 30.5));
         return $this->createDayFormat();
     }
     
