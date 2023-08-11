@@ -37,6 +37,7 @@ use App\Models\DeliveryOrderDetail;
 use App\Models\InterCompanyAssetDisposal;
 use App\Models\FixedAssetMaster;
 use App\Models\Alert;
+use App\Models\ERPAssetTransferDetail;
 use App\Models\Company;
 use App\Models\CompanyPolicyMaster;
 use App\Models\CustomerMaster;
@@ -4483,6 +4484,7 @@ class Helper
                                     return ['success' => false, 'message' => 'GL entries are already passed for this document'];
                                 }
                             }
+                           
 
                             if ($input["documentSystemID"] == 103) { // Asset Transfer
                                 $generatePR = AssetTransferService::generatePRForAssetTransfer($input);
@@ -4490,7 +4492,46 @@ class Helper
                                     DB::rollback();
                                     return ['success' => false, 'message' => $generatePR['message']];
                                 }
+
                             }
+
+                            if ($input["documentSystemID"] == 103) {
+                                $assetTransferDetailsItems = ERPAssetTransferDetail::where('erp_fa_fa_asset_transfer_id',$input['id'])->get();
+                                if(isset($assetTransferDetailsItems)) {
+                                    foreach($assetTransferDetailsItems as $assetTransferDetailItem) {
+                                        $fxedAsset = FixedAssetMaster::where('faID',$assetTransferDetailItem->fa_master_id)->first();
+                                        if($fxedAsset->selectedForDisposal) {
+                                            DB::rollback();
+                                            return ['success' => false, 'message' => 'The selected assets '.$fxedAsset->faCode.' cannot be transferred, as it is already selected for disposal'];
+                                        }
+
+                                        if($fxedAsset->DIPOSED) {
+                                            DB::rollback();
+                                            return ['success' => false, 'message' => 'The selected assets '.$fxedAsset->faCode.' cannot be transferred, as it is already disposed'];
+                                        }
+
+                                        if($input['type'] == 2) {
+                                            $fxedAsset->LOCATION = $assetTransferDetailItem->to_location_id;
+                                        }
+        
+                                        if($input['type'] == 3) {
+                                                $fxedAsset->empID = $assetTransferDetailItem->to_emp_id;
+                                        }
+                                        
+                                        if($input['type'] == 4 && isset($assetTransferDetailItem->department)) {
+                                            $fxedAsset->departmentSystemID = $assetTransferDetailItem->department->departmentSystemID;
+                                            $fxedAsset->departmentID = $assetTransferDetailItem->department->DepartmentID;
+                                        }
+
+                                        $fxedAsset->save();
+
+                                    }
+                                }
+
+
+
+                            }
+
 
                             $finalupdate = $namespacedModel::find($input["documentSystemCode"])->update([$docInforArr["approvedColumnName"] => $docInforArr["approveValue"], $docInforArr["approvedBy"] => $empInfo->empID, $docInforArr["approvedBySystemID"] => $empInfo->employeeSystemID, $docInforArr["approvedDate"] => now()]);
 
