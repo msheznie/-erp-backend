@@ -61,6 +61,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             require __DIR__.'/../routes/salesAndMarketing/salesAndMarketingRoutes.php';
             require __DIR__.'/../routes/treasuryManagement/treasuryManagementRoutes.php';
             require __DIR__.'/../routes/assetManagement/assetManagementRoutes.php';
+            require __DIR__.'/../routes/general/customReport.php';
 
             Route::post('getAllEmployees', 'EmployeeAPIController@getAllEmployees');
 
@@ -1224,18 +1225,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('getMobileReportFormData', 'MobileBillMasterAPIController@getMobileReportFormData');
             Route::post('exportMobileReport', 'MobileBillMasterAPIController@exportMobileReport');
 
-            Route::resource('custom_report_types', 'CustomReportTypeAPIController');
             Route::resource('custom_report_masters', 'CustomReportMasterAPIController');
             Route::resource('custom_report_columns', 'CustomReportColumnsAPIController');
-            Route::resource('custom_user_reports', 'CustomUserReportsAPIController');
-            Route::post('getCustomReportsByUser', 'CustomUserReportsAPIController@getCustomReportsByUser');
-            Route::post('customReportView', 'CustomUserReportsAPIController@customReportView');
-            Route::post('exportCustomReport', 'CustomUserReportsAPIController@exportCustomReport');
             Route::resource('custom_user_report_columns', 'CustomUserReportColumnsAPIController');
             Route::resource('custom_filters_columns', 'CustomFiltersColumnAPIController');
-            Route::resource('custom_report_employees', 'CustomReportEmployeesAPIController');
-            Route::post('getCustomReportAssignedEmployee', 'CustomReportEmployeesAPIController@getCustomReportAssignedEmployee');
-            Route::get('getUnAssignEmployeeByReport', 'CustomReportEmployeesAPIController@getEmployees');
             Route::resource('custom_user_report_summarizes', 'CustomUserReportSummarizeAPIController');
 
 
