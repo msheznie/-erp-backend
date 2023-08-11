@@ -68,3 +68,8 @@ Route::get('getBankAccountsByBankID', 'BankAccountAPIController@getBankAccountsB
 
 Route::get('checkPolicyForExchangeRates', 'CommonPoliciesAPIController@checkPolicyForExchangeRates')->name('Check policy for exchange rates');
 Route::post('getBankBalance', 'BankAccountAPIController@getBankBalance')->name('Get bank balance');
+
+Route::get('getBudgetConsumptionByDocument', 'BudgetMasterAPIController@getBudgetConsumptionByDocument')->name('Get budget consumption by document');
+
+// Matching
+Route::get('getMatchDocumentMasterRecord', 'MatchDocumentMasterAPIController@getMatchDocumentMasterRecord')->name('Get match document master record');
