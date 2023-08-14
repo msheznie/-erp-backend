@@ -16,16 +16,16 @@ trait CustomDateDiffForHumanTrait
         $startDate = Carbon::parse($toDay);
         $endDate = Carbon::parse($expiryDate);
 
-        $noOfDiffInDays = $startDate->diffInDays( $endDate );
+        $this->noOfDiffInDays = $startDate->diffInDays($endDate);
 
         $getDayFormat = $this->getYear();
-        $getDayType = $this->createDayType( $dayType );
+        $getDayType = $this->createDayType($dayType);
 
         return $getDayFormat.' '.$getDayType;
    
     }
    
-    private function createDayType( $dayType )
+    private function createDayType($dayType)
     {     
        return ($dayType == 1)? 'remaining': 'ago';   
     }
