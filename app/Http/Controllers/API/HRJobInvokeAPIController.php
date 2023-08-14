@@ -227,14 +227,14 @@ class HRJobInvokeAPIController extends AppBaseController
         {
             return $this->sendResponse([], 'Scenario ID is not found');
         }
-        else
-        {
-            $scenario = NotificationScenarios::find($scenarioId);
-            if(empty($scenario)){
-                return $this->sendResponse([], 'Scenario is not found');
-            }
-            NotificationService::process($scenarioId);
-                return $this->sendResponse([], $scenario->scenarioDescription. ' is processed');
+
+        $scenario = NotificationScenarios::find($scenarioId);
+        if(empty($scenario)){
+            return $this->sendResponse([], 'Scenario is not found');
         }
+        NotificationService::process($scenarioId);
+        
+        return $this->sendResponse([], $scenario->scenarioDescription. ' is processed');
+        
     }
 }

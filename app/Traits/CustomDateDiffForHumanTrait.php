@@ -32,19 +32,19 @@ trait CustomDateDiffForHumanTrait
 
     private function getYear()
     {
-        $years = floor($this->noOfDiffInDays / 365);
+        $this->years = floor($this->noOfDiffInDays / 365);
         return  $this->getMonth();
     }
 
     private function getMonth()
     {
-        $months = floor(($this->noOfDiffInDays - ($this->years * 365))/30.5);
+        $this->months = floor(($this->noOfDiffInDays - ($this->years * 365))/30.5);
         return $this->getDay();
     }
 
     private function getDay()
     {
-        $days = ($this->noOfDiffInDays - ($this->years * 365) - ($this->months * 30.5));
+        $this->days = ($this->noOfDiffInDays - ($this->years * 365) - ($this->months * 30.5));
         return $this->createDayFormat();
     }
     

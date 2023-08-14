@@ -74,15 +74,15 @@ class HRProbationNotificationService
             switch ($row->applicableCategoryID) {
                 case 1: //Employee
                     $mail_to = $row->empID;
-                    $this->to_specific_employee($mail_to, $this->type);
+                    $this->to_specific_employee($mail_to);
                     break;
 
                 case 7: //Reporting manager
-                    $this->to_reporting_manager($this->type);
+                    $this->to_reporting_manager();
                     break;
 
                 case 9: //Applicable Employee
-                    $this->to_document_owner($this->type);
+                    $this->to_document_owner();
                     break;
 
                 default:
@@ -97,7 +97,7 @@ class HRProbationNotificationService
         return true;
     }
 
-    public function to_specific_employee($mail_to_emp, $type){
+    public function to_specific_employee($mail_to_emp){
         $mail_to = SrpEmployeeDetails::selectRaw('Ename2, EEmail')->find( $mail_to_emp );
 
         if(empty($mail_to)){
@@ -106,7 +106,7 @@ class HRProbationNotificationService
         }
 
         $mail_body = "Dear {$mail_to->Ename2},<br/>";
-        $mail_body .= $this->email_body(1, $type);
+        $mail_body .= $this->email_body(1);
         $mail_body .= $this->expiry_table($this->expired_docs);
 
         $empEmail = $mail_to->EEmail;
@@ -124,7 +124,7 @@ class HRProbationNotificationService
         return true;
     }
 
-    public function to_document_owner($type){
+    public function to_document_owner(){
         $data = collect( $this->expired_docs )->groupBy('EIdNo')->toArray();
 
         $mail_body_str = '';
@@ -133,7 +133,7 @@ class HRProbationNotificationService
             $mail_to = $row[0];
 
             $mail_body = "Dear {$mail_to['Ename2']},<br/>";
-            $mail_body .= $this->email_body(9, $type);
+            $mail_body .= $this->email_body(9);
 
 
             $empEmail = $mail_to['EEmail'];
@@ -154,7 +154,7 @@ class HRProbationNotificationService
         return true;
     }
 
-    public function to_reporting_manager($type){
+    public function to_reporting_manager(){
         $emp_list = array_column($this->expired_docs, 'EIdNo');
         $emp_list = array_unique($emp_list);
 
@@ -195,7 +195,7 @@ class HRProbationNotificationService
             $my_reporting_data = $my_reporting_data->toArray();
 
             $mail_body = "Dear {$manager_info['Ename2']},<br/>";
-            $mail_body .= $this->email_body(7, $type);
+            $mail_body .= $this->email_body(7);
             $mail_body .= $this->expiry_table( $my_reporting_data );
 
             $empEmail = $manager_info['EEmail'];
@@ -216,7 +216,7 @@ class HRProbationNotificationService
         return true;
     }
 
-    public function email_body($for, $type){
+    public function email_body($for){
 
         $str = "<br/>"; //End of employee probation period
 
@@ -239,8 +239,8 @@ class HRProbationNotificationService
         $expiry_date_frm = Carbon::parse( $this->expiry_date )->format('Y-m-d');
         $to_day = Carbon::now()->format('Y-m-d');
 
-        if( $expiry_date_frm != $to_day && $type != 0){
-            $diffForHumans = $this->getDateDiff($expiry_date_frm, $to_day, $type);
+        if( $expiry_date_frm != $to_day && $this->type != 0){
+            $diffForHumans = $this->getDateDiff($expiry_date_frm, $to_day, $this->type);
             $str .= ' ( '. $diffForHumans . " ) ";
         }
 
