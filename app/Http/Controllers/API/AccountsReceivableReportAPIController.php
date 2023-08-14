@@ -633,7 +633,6 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                     $checkIsGroup = Company::find($request->companySystemID);
                     $output = $this->getCustomerRevenueMonthlySummary($request);
-                    
                     $currency = $request->currencyID;
                     $currencyId = 2;
 
@@ -678,7 +677,6 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     foreach ($output as $val) {
                         $outputArr[$val->CompanyName][] = $val;
                     }
-                    
                     return array('reportData' => $outputArr,
                         'companyName' => $checkIsGroup->CompanyName,
                         'decimalPlace' => $decimalPlace,
@@ -1697,7 +1695,6 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $fileName = 'Revenue Detail';
                     $path = 'accounts-receivable/report/revenue_by_customer/excel/';
                     $detail_array = array('type' => 1,'from_date'=>$from_date,'to_date'=>$toDate,'company_name'=>$company_name,'company_code'=>$companyCode,'cur'=>$requestCurrency,'title'=>$title);
-                    
                     $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
     
                     if($basePath == '')
@@ -1947,7 +1944,6 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                     $checkIsGroup = Company::find($request->companySystemID);
                     $output = $this->getCustomerRevenueMonthlySummary($request);
-                    
                     $companyLogo = $checkIsGroup->logo_url;
 
                     $currency = $request->currencyID;
@@ -1991,7 +1987,6 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     foreach ($output as $val) {
                         $outputArr[$val->CompanyName][] = $val;
                     }
-                    
                     $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'decimalPlace' => $decimalPlace, 'total' => $total, 'currency' => $requestCurrency->CurrencyCode, 'year' => $request->year, 'fromDate' => \Helper::dateFormat($request->fromDate));
 
                     $html = view('print.revenue_monthly_summary', $dataArr);
