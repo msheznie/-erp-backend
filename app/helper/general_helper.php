@@ -103,6 +103,11 @@ use App\Mail\EmailForQueuing;
 use App\Models\DocumentModifyRequest;
 use App\helper\TenderDetails;
 
+use App\Models\DirectInvoiceDetails;
+use App\Models\BookInvSuppDet;
+use App\Models\SupplierInvoiceDirectItem;
+use App\Models\CurrencyMaster;
+
 class Helper
 {
     /**
@@ -8636,4 +8641,58 @@ class Helper
 
         return $array;
     }
+
+    public static function updateSupplierRetentionAmount($bookingSuppMasInvAutoID, $bookInvSuppMaster)
+    { 
+        $directItems = DirectInvoiceDetails::where('directInvoiceAutoID', $bookingSuppMasInvAutoID)
+        ->with(['segment', 'purchase_order'])
+        ->get();
+
+
+        
+        $invDetailItems = BookInvSuppDet::where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID)
+        ->with(['grvmaster', 'pomaster'])
+        ->get();
+
+
+        $supplierItems = SupplierInvoiceDirectItem::where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID)
+        ->with(['unit' => function ($query) {
+        }, 'vat_sub_category'])->get();
+
+        if(count($supplierItems) == 0) {
+            $supplierItems = SupplierInvoiceDirectItem::where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID)
+            ->with(['unit' => function ($query) {
+            }, 'vat_sub_category'])->get();
+        }
+
+         $tot = 0;
+         $vatTot = 0;
+         $totalNet = 0;
+        for ($i = 0; $i < count($directItems); $i++) {
+          $tot += doubleval($directItems[$i]->DIAmount);
+          $vatTot += doubleval($directItems[$i]->VATAmount);
+        }
+
+        for ($i = 0; $i < count($invDetailItems); $i++) {
+          $tot += doubleval($invDetailItems[$i]->supplierInvoAmount);
+        }
+    
+        for ($i = 0; $i < count($supplierItems); $i++) {
+          $tot += doubleval($supplierItems[$i]->netAmount);
+          $vatTot += doubleval($supplierItems[$i]->VATAmount) * doubleval($supplierItems[$i]->noQty);
+        }
+
+        $totalNet = $tot + $vatTot;
+        $retentionAmount = $totalNet * $bookInvSuppMaster->retentionPercentage/100;
+        $decimalPlaces = 3;
+        $currency = CurrencyMaster::select('DecimalPlaces')->where('currencyID',$bookInvSuppMaster->localCurrencyID)->first();
+        if ($currency) {
+            $decimalPlaces = $currency->DecimalPlaces;
+        }
+        
+        $retentionAmountToFixed = round($retentionAmount,$decimalPlaces);
+        $bookInvSuppMaster->retentionAmount = $retentionAmountToFixed;
+        $bookInvSuppMaster->save();
+    }
+
 }
