@@ -29,6 +29,7 @@ use App\Http\Requests\API\UpdateCustomerReceivePaymentAPIRequest;
 use App\Models\AccountsReceivableLedger;
 use App\Models\AdvanceReceiptDetails;
 use App\Models\BankLedger;
+use App\Models\ChartOfAccount;
 use App\Models\ChequeRegisterDetail;
 use App\Models\Employee;
 use App\Models\SystemGlCodeScenarioDetail;
@@ -68,6 +69,7 @@ use App\Models\YesNoSelectionForMinus;
 use App\Models\YesNoSelection;
 use App\Models\Months;
 use App\Repositories\CustomerReceivePaymentRepository;
+use App\Services\ChartOfAccountValidationService;
 use App\Traits\AuditTrial;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -1306,6 +1308,25 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 } 
             }
 
+            if ($input['documentType'] == 14) {
+                $object = new ChartOfAccountValidationService();
+                $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $id, $input["companySystemID"]);
+                $resData = ((isset($result['status']) && $result['status']) && (isset($result['data']['finalData']) && $result['data']['finalData'])) ? $result['data']['finalData'] : [];
+
+                $accountCodes = [];
+
+                foreach ($resData as $key => $value) {
+                    $chartOfAccounts = ChartOfAccount::where('isActive', 0)->where('chartOfAccountSystemID', $value['chartOfAccountSystemID'])->first();
+                    if(!empty($chartOfAccounts)) {
+                        $accountCodes[] = $chartOfAccounts['AccountCode'];
+                    }
+                }
+                $accountCodesString = implode(',', $accountCodes);
+
+                if (!empty($accountCodes)) {
+                    return $this->sendError('The Chart of Account/s ' . $accountCodesString . '  inactive. Update or change the linked Chart of Account to proceed', 500);
+                }
+            }
 
             $params = array('autoID' => $id,
                 'company' => $customerReceivePayment->companySystemID,

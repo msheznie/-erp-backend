@@ -26,6 +26,7 @@ use App\Http\Requests\API\CreateDebitNoteAPIRequest;
 use App\Http\Requests\API\UpdateDebitNoteAPIRequest;
 use App\Models\AccountsPayableLedger;
 use App\Models\BudgetConsumedData;
+use App\Models\ChartOfAccount;
 use App\Models\EmployeeLedger;
 use App\Models\Company;
 use App\Models\ChartOfAccountsAssigned;
@@ -58,6 +59,7 @@ use App\Models\YesNoSelectionForMinus;
 use App\Models\SystemGlCodeScenarioDetail;
 use App\Models\SystemGlCodeScenario;
 use App\Repositories\DebitNoteRepository;
+use App\Services\ChartOfAccountValidationService;
 use App\Traits\AuditTrial;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -919,7 +921,25 @@ class DebitNoteAPIController extends AppBaseController
 
                  Taxdetail::create($taxDetail);
             }
-            
+
+                $object = new ChartOfAccountValidationService();
+                $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $id, $input["companySystemID"]);
+                $resData = ((isset($result['status']) && $result['status']) && (isset($result['data']['finalData']) && $result['data']['finalData'])) ? $result['data']['finalData'] : [];
+
+                $accountCodes = [];
+
+                foreach ($resData as $key => $value) {
+                    $chartOfAccounts = ChartOfAccount::where('isActive', 0)->where('chartOfAccountSystemID', $value['chartOfAccountSystemID'])->first();
+                    if(!empty($chartOfAccounts)) {
+                        $accountCodes[] = $chartOfAccounts['AccountCode'];
+                    }
+                }
+                $accountCodesString = implode(',', $accountCodes);
+
+                if (!empty($accountCodes)) {
+                    return $this->sendError('The Chart of Account/s ' . $accountCodesString . '  inactive. Update or change the linked Chart of Account to proceed', 500);
+                }
+
 
             $input['RollLevForApp_curr'] = 1;
             $params = array('autoID' => $id,
