@@ -633,7 +633,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                     $checkIsGroup = Company::find($request->companySystemID);
                     $output = $this->getCustomerRevenueMonthlySummary($request);
-
+                    
                     $currency = $request->currencyID;
                     $currencyId = 2;
 
@@ -678,7 +678,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     foreach ($output as $val) {
                         $outputArr[$val->CompanyName][] = $val;
                     }
-
+                    
                     return array('reportData' => $outputArr,
                         'companyName' => $checkIsGroup->CompanyName,
                         'decimalPlace' => $decimalPlace,
@@ -1675,11 +1675,11 @@ class AccountsReceivableReportAPIController extends AppBaseController
 
                             $decimalPlace = 0;
                             if ($currencyID == '2') {
-                                $decimalPlace = 0; //!empty($localCurrency) ? $localCurrency->DecimalPlaces : 2;
+                                $decimalPlace = !empty($val->documentLocalDecimalPlaces) ? $val->documentLocalDecimalPlaces : 2;
                                 $data[$x]['Currency'] = $val->documentLocalCurrency;
                                 $data[$x]['Amount'] = round($val->localAmount, $decimalPlace);
                             } else if ($currencyID == '3') {
-                                $decimalPlace = 0; //!empty($rptCurrency) ? $rptCurrency->DecimalPlaces : 2;
+                                $decimalPlace = !empty($val->documentRptDecimalPlaces) ? $val->documentRptDecimalPlaces : 2;
                                 $data[$x]['Currency'] = $val->documentRptCurrency;
                                 $data[$x]['Amount'] = round($val->RptAmount, $decimalPlace);
                             } else {
@@ -1697,7 +1697,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $fileName = 'Revenue Detail';
                     $path = 'accounts-receivable/report/revenue_by_customer/excel/';
                     $detail_array = array('type' => 1,'from_date'=>$from_date,'to_date'=>$toDate,'company_name'=>$company_name,'company_code'=>$companyCode,'cur'=>$requestCurrency,'title'=>$title);
-
+                    
                     $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
     
                     if($basePath == '')
@@ -1947,7 +1947,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                     $checkIsGroup = Company::find($request->companySystemID);
                     $output = $this->getCustomerRevenueMonthlySummary($request);
-
+                    
                     $companyLogo = $checkIsGroup->logo_url;
 
                     $currency = $request->currencyID;
@@ -1991,7 +1991,7 @@ class AccountsReceivableReportAPIController extends AppBaseController
                     foreach ($output as $val) {
                         $outputArr[$val->CompanyName][] = $val;
                     }
-
+                    
                     $dataArr = array('reportData' => (object)$outputArr, 'companyName' => $checkIsGroup->CompanyName, 'companylogo' => $companyLogo, 'decimalPlace' => $decimalPlace, 'total' => $total, 'currency' => $requestCurrency->CurrencyCode, 'year' => $request->year, 'fromDate' => \Helper::dateFormat($request->fromDate));
 
                     $html = view('print.revenue_monthly_summary', $dataArr);
@@ -4479,14 +4479,16 @@ WHERE
                     erp_generalledger.documentLocalCurrencyID,
                     erp_generalledger.documentRptCurrencyID,
                     erp_generalledger.documentLocalAmount,
-                    round((erp_generalledger.documentLocalAmount *- 1),0) AS MyLocalAmount,
+                    round((erp_generalledger.documentLocalAmount *- 1),currLocal.DecimalPlaces) AS MyLocalAmount,
                     erp_generalledger.documentRptAmount,
-                    round((erp_generalledger.documentRptAmount *- 1),0) AS MyRptAmount
+                    round((erp_generalledger.documentRptAmount *- 1),currRpt.DecimalPlaces) AS MyRptAmount
                 FROM
                     erp_generalledger
                     INNER JOIN chartofaccounts ON erp_generalledger.chartOfAccountSystemID = chartofaccounts.chartOfAccountSystemID
                     LEFT JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID
                     LEFT JOIN contractmaster ON erp_generalledger.clientContractID = contractmaster.ContractNumber
+                    LEFT JOIN currencymaster currLocal ON erp_generalledger.documentLocalCurrencyID = currLocal.currencyID
+                    LEFT JOIN currencymaster currRpt ON erp_generalledger.documentRptCurrencyID = currRpt.currencyID
                     AND erp_generalledger.companyID = contractmaster.CompanyID
                 WHERE
                     DATE(erp_generalledger.documentDate) <= "' . $asOfDate . '"
