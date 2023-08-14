@@ -1915,13 +1915,13 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 MAINQUERY.invoiceDate,
                                 transCurrencyDet.CurrencyCode as transCurrencyCode,
                                 transCurrencyDet.DecimalPlaces as documentTransDecimalPlaces,
-                                MAINQUERY.docTransAmount AS documentAmountTrans,
+                                MAINQUERY.docTransAmount * -1 AS documentAmountTrans,
                                 localCurrencyDet.CurrencyCode as localCurrencyCode,
                                 localCurrencyDet.DecimalPlaces as documentLocalDecimalPlaces,
-                                MAINQUERY.docLocalAmount AS documentAmountLocal,
+                                MAINQUERY.docLocalAmount * -1 AS documentAmountLocal,
                                 rptCurrencyDet.CurrencyCode as rptCurrencyCode,
                                 rptCurrencyDet.DecimalPlaces as documentRptDecimalPlaces,
-                                MAINQUERY.docRptAmount AS documentAmountRpt,
+                                MAINQUERY.docRptAmount * -1 AS documentAmountRpt,
 
                                 (MAINQUERY.debitNoteMatchedAmountTrans + MAINQUERY.PaidPaymentVoucherTransAmount - MAINQUERY.InvoiceMatchedINMatchingAmountTrans - MAINQUERY.InvoiceMatchedForpaymentAmountTrans) * -1 AS PaidAmountTrans,
 
@@ -1929,11 +1929,11 @@ class AccountsPayableReportAPIController extends AppBaseController
 
                                 (MAINQUERY.debitNoteMatchedAmountRpt + MAINQUERY.PaidPaymentVoucherRptAmount - MAINQUERY.InvoiceMatchedINMatchingAmountRpt - MAINQUERY.InvoiceMatchedForpaymentAmountRpt) * -1 AS PaidAmountRpt,
 
-                                MAINQUERY.docTransAmount+MAINQUERY.debitNoteMatchedAmountTrans + MAINQUERY.PaidPaymentVoucherTransAmount - MAINQUERY.InvoiceMatchedINMatchingAmountTrans - MAINQUERY.InvoiceMatchedForpaymentAmountTrans  as balanceAmountTrans,
+                                (MAINQUERY.docTransAmount+MAINQUERY.debitNoteMatchedAmountTrans + MAINQUERY.PaidPaymentVoucherTransAmount - MAINQUERY.InvoiceMatchedINMatchingAmountTrans - MAINQUERY.InvoiceMatchedForpaymentAmountTrans) * -1  as balanceAmountTrans,
 
-                                MAINQUERY.docLocalAmount+MAINQUERY.debitNoteMatchedAmountLocal + MAINQUERY.PaidPaymentVoucherLocalAmount - MAINQUERY.InvoiceMatchedINMatchingAmountLocal - MAINQUERY.InvoiceMatchedForpaymentAmountLocal  as balanceAmountLocal,
+                                (MAINQUERY.docLocalAmount+MAINQUERY.debitNoteMatchedAmountLocal + MAINQUERY.PaidPaymentVoucherLocalAmount - MAINQUERY.InvoiceMatchedINMatchingAmountLocal - MAINQUERY.InvoiceMatchedForpaymentAmountLocal) * -1  as balanceAmountLocal,
 
-                                MAINQUERY.docRptAmount + MAINQUERY.debitNoteMatchedAmountRpt + MAINQUERY.PaidPaymentVoucherRptAmount - MAINQUERY.InvoiceMatchedINMatchingAmountRpt - MAINQUERY.InvoiceMatchedForpaymentAmountRpt AS balanceAmountRpt,
+                                (MAINQUERY.docRptAmount + MAINQUERY.debitNoteMatchedAmountRpt + MAINQUERY.PaidPaymentVoucherRptAmount - MAINQUERY.InvoiceMatchedINMatchingAmountRpt - MAINQUERY.InvoiceMatchedForpaymentAmountRpt) * -1 AS balanceAmountRpt,
                                 MAINQUERY.glCode,
                                 chartofaccounts.AccountDescription
                             FROM
