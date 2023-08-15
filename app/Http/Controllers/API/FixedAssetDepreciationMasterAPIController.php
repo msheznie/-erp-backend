@@ -151,7 +151,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
         try {
 
             $is_pending_job_exist = FixedAssetDepreciationMaster::where('approved','=',0)->where('companySystemID' ,'=', $input['companySystemID'])->count();
-            die();
+
 
             if($is_pending_job_exist == 0)
             {
