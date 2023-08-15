@@ -103,7 +103,9 @@ class ERPAssetTransferDetail extends Model
         'pr_created_yn',
         'company_id',
         'itemCodeSystem',
-        'created_user_id'
+        'created_user_id',
+        'from_emp_id',
+        'to_emp_id',
     ];
 
     /**
@@ -122,7 +124,9 @@ class ERPAssetTransferDetail extends Model
         'pr_created_yn' => 'integer',
         'company_id' => 'integer',
         'itemCodeSystem' => 'integer',
-        'created_user_id' => 'integer'
+        'created_user_id' => 'integer',
+        'from_emp_id' => 'integer',
+        'to_emp_id' => 'integer',
     ];
 
     /**
@@ -170,5 +174,13 @@ class ERPAssetTransferDetail extends Model
     public function smePayAsset()
     {
         return $this->hasOne(SMEPayAsset::class,'masterID','srp_erp_pay_assets_id');
+    }
+    public function fromEmployee()
+    {
+        return $this->hasOne(Employee::class,'employeeSystemID','from_emp_id');
+    }
+    public function toEmployee()
+    {
+        return $this->hasOne(Employee::class,'employeeSystemID','to_emp_id');
     }
 }

@@ -2001,17 +2001,26 @@ WHERE
             }
         }
 
-         \Excel::create('saving_report', function ($excel) use ($data) {
-            $excel->sheet('sheet name', function ($sheet) use ($data) {
-                $sheet->fromArray($data, null, 'A1', true);
-                $sheet->setAutoSize(true);
-                $sheet->getStyle('C1:C2')->getAlignment()->setWrapText(true);
-            });
-            $lastrow = $excel->getActiveSheet()->getHighestRow();
-            $excel->getActiveSheet()->getStyle('A1:J' . $lastrow)->getAlignment()->setWrapText(true);
-        })->download($type);
+        else {
+            $data = array();
+        }
+        $companyMaster = Company::find(isset($request->companySystemID)?$request->companySystemID:null);
+        $companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
+        $detail_array = array(
+            'company_code'=>$companyCode,
+        );
+        $doc_name = 'saving_report';
+        $path = 'procurement/report/saving_report/excel/';
+        $basePath = CreateExcel::process($data,$type,$doc_name,$path,$detail_array);
 
-        return $this->sendResponse(array(), 'successfully export');
+        if($basePath == '')
+        {
+            return $this->sendError('Unable to export excel');
+        }
+        else
+        {
+            return $this->sendResponse($basePath, trans('custom.success_export'));
+        }
     }
 
 }

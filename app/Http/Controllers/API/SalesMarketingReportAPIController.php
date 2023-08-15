@@ -1024,17 +1024,27 @@ class SalesMarketingReportAPIController extends AppBaseController
                     )->get();
 
                 $company = Company::with(['reportingcurrency', 'localcurrency'])->find($request->companySystemID);
+                $companyCode = isset($company->CompanyID)?$company->CompanyID:'common';
                 $templateName = "export_report.sales_analysis_detail_report";
 
-                $reportData = ['invoiceDetails' => $invoiceDetails, 'company' => $company, 'fromDate' => $fromDate, 'toDate' => $toDate, 'currencyID' => $currencyID];
+                $reportData = ['invoiceDetails' => $invoiceDetails, 'company' => $company, 'fromDate' => $fromDate, 'toDate' => $toDate, 'currencyID' => $currencyID, 'companyCode'=>$companyCode];
 
-                \Excel::create('finance', function ($excel) use ($reportData, $templateName) {
-                    $excel->sheet('New sheet', function ($sheet) use ($reportData, $templateName) {
-                        $sheet->loadView($templateName, $reportData);
-                    });
-                })->download('csv');
+                $fileName = 'sales_analysis_detail_report';
 
-                return $this->sendResponse(array(), 'successfully export');
+                $path = 'procurement/report/sales_analysis_detail_report/excel/';
+
+                $file_type = $request->type;
+
+                $basePath = CreateExcel::loadView($reportData,$file_type,$fileName,$path,$templateName);
+
+                if($basePath == '')
+                {
+                    return $this->sendError('Unable to export excel');
+                }
+                else
+                {
+                    return $this->sendResponse($basePath, trans('custom.success_export'));
+                }
 
                 break;
             case 'SARDS':
@@ -1141,19 +1151,30 @@ class SalesMarketingReportAPIController extends AppBaseController
 
 
                 $company = Company::with(['reportingcurrency', 'localcurrency'])->find($request->companySystemID);
+                $companyCode = isset($company->CompanyID)?$company->CompanyID:'common';
+
 
                 $templateName = "export_report.sales_analysis_detail_summary_report";
 
-                $reportData = ['warehouses' => $warehouse_descriptions, 'warehouseCodes' => $warehouses,'invoiceDetails' => $warehouseArray, 'company' => $company, 'fromDate' => $fromDate, 'toDate' => $toDate,'currencyID'=>$currencyID,'totalReturn'=>$warehouseReturnSum
-                ];
 
-                \Excel::create('finance', function ($excel) use ($reportData, $templateName) {
-                    $excel->sheet('New sheet', function ($sheet) use ($reportData, $templateName) {
-                        $sheet->loadView($templateName, $reportData);
-                    });
-                })->download('csv');
+                $reportData = ['warehouses' => $warehouse_descriptions, 'warehouseCodes' => $warehouses,'invoiceDetails' => $warehouseArray, 'company' => $company, 'fromDate' => $fromDate, 'toDate' => $toDate,'currencyID'=>$currencyID,'totalReturn'=>$warehouseReturnSum, 'companyCode'=>$companyCode];
 
-                return $this->sendResponse(array(), 'successfully export');
+                $fileName = 'sales_analysis_summary_report';
+
+                $path = 'procurement/report/sales_analysis_detail_summary_report/excel/';
+
+                $file_type = $request->type;
+
+                $basePath = CreateExcel::loadView($reportData,$file_type,$fileName,$path,$templateName);
+
+                if($basePath == '')
+                {
+                    return $this->sendError('Unable to export excel');
+                }
+                else
+                {
+                    return $this->sendResponse($basePath, trans('custom.success_export'));
+                }
 
                 break;
             case 'SARDVS':
@@ -1294,18 +1315,28 @@ class SalesMarketingReportAPIController extends AppBaseController
                 }
 
                 $company = Company::with(['reportingcurrency', 'localcurrency'])->find($request->companySystemID);
+                $companyCode = isset($company->CompanyID)?$company->CompanyID:'common';
 
                 $templateName = "export_report.sales_analysis_detail_vs_soh_report";
 
-                $reportData = ['warehouses' => $warehouse_descriptions, 'warehouseCodes' => $warehouses,'invoiceDetails' => $warehouseArray, 'warehouseArraySum' => $warehouseArraySum, 'company' => $company, 'fromDate' => $fromDate, 'toDate' => $toDate, 'currencyID'=>$currencyID,'totalReturn'=>$warehouseReturnSum];
+                $reportData = ['warehouses' => $warehouse_descriptions, 'warehouseCodes' => $warehouses,'invoiceDetails' => $warehouseArray, 'warehouseArraySum' => $warehouseArraySum, 'company' => $company, 'fromDate' => $fromDate, 'toDate' => $toDate, 'currencyID'=>$currencyID,'totalReturn'=>$warehouseReturnSum, 'companyCode'=>$companyCode];
 
-                \Excel::create('finance', function ($excel) use ($reportData, $templateName) {
-                    $excel->sheet('New sheet', function ($sheet) use ($reportData, $templateName) {
-                        $sheet->loadView($templateName, $reportData);
-                    });
-                })->download('csv');
+                $fileName = 'sales_analysis_soh_report';
 
-                return $this->sendResponse(array(), 'successfully export');
+                $path = 'procurement/report/sales_analysis_detail_vs_soh_report/excel/';
+
+                $file_type = $request->type;
+
+                $basePath = CreateExcel::loadView($reportData,$file_type,$fileName,$path,$templateName);
+
+                if($basePath == '')
+                {
+                    return $this->sendError('Unable to export excel');
+                }
+                else
+                {
+                    return $this->sendResponse($basePath, trans('custom.success_export'));
+                }
 
                 break;
             case 'SDR':

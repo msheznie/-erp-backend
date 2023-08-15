@@ -556,4 +556,29 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
 
         return $this->sendResponse($data, 'Data retrieved successfully');
     }
+
+    public function validateDirectItemWithAssetExpense(Request $request)
+    {
+        $input = $request->all();
+        $item = $input['item'];
+        $validationSuccess = true;
+        $allocatedAsssets = ExpenseAssetAllocation::where('documentDetailID', $input['documentDetailID'])
+                                                  ->where('documentSystemID', $input['documentSystemID'])
+                                                  ->with(['asset'])
+                                                  ->get();
+        
+        if(empty($allocatedAsssets)) {
+            $validationSuccess = true;
+        }else {
+            $total = 0;
+            foreach($allocatedAsssets as $allocatedAssset) {
+                $total += $allocatedAssset->amount;
+                if($item['netAmount'] < $total) {
+                    return $this->sendError("Detail amount cannot be less than allocated amount.");
+                }
+             }
+        }
+
+        return $this->sendResponse($validationSuccess, 'Data retrieved successfully');
+    }
 }

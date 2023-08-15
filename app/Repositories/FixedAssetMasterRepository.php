@@ -106,7 +106,8 @@ class FixedAssetMasterRepository extends BaseRepository
         'tempRecord',
         'toolsCondition',
         'selectedforJobYN',
-        'timestamp'
+        'timestamp',
+        'empID'
     ];
 
     /**

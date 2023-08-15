@@ -387,7 +387,9 @@ class MatchDocumentMaster extends Model
         'user_type',
         'employee_id',
         'employeeGLCodeSystemID',
-        'employeeGLCode'
+        'employeeGLCode',
+        'companyFinanceYearID',
+        'companyFinancePeriodID',
     ];
 
     /**

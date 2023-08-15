@@ -28,7 +28,9 @@ class ERPAssetTransferDetailRepository extends BaseRepository
         'fa_master_id',
         'pr_created_yn',
         'company_id',
-        'created_user_id'
+        'created_user_id',
+        'from_emp_id',
+        'to_emp_id',
     ];
 
     /**
