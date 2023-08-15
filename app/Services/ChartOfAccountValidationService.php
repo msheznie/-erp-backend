@@ -3,6 +3,7 @@
 
 namespace App\Services;
 
+use App\Models\ChartOfAccount;
 use App\Services\GeneralLedger\CreditNoteGlService;
 use App\Services\GeneralLedger\CustomerInvoiceGlService;
 use App\Services\GeneralLedger\CustomerReceivePaymentGlService;
@@ -119,7 +120,20 @@ class ChartOfAccountValidationService
                 $result = ['status' => false, 'message' => "Document ID not found"];
         }
 
-        return $result;
+        $resData = ((isset($result['status']) && $result['status']) && (isset($result['data']['finalData']) && $result['data']['finalData'])) ? $result['data']['finalData'] : [];
+
+        $accountCodes = [];
+
+        foreach ($resData as $key => $value) {
+            $chartOfAccounts = ChartOfAccount::where('isActive', 0)->where('chartOfAccountSystemID', $value['chartOfAccountSystemID'])->first();
+            if(!empty($chartOfAccounts)) {
+                $accountCodes[] = $chartOfAccounts['AccountCode'];
+            }
+        }
+        $accountCodesString = implode(',', $accountCodes);
+
+
+        return ['accountCodes' => $accountCodes, 'accountCodesString' => $accountCodesString];
     }
 
 }

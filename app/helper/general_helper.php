@@ -4397,21 +4397,10 @@ class Helper
 
                                 $object = new ChartOfAccountValidationService();
                                 $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $input["documentSystemCode"], $input["companySystemID"]);
-                                $resData = ((isset($result['status']) && $result['status']) && (isset($result['data']['finalData']) && $result['data']['finalData'])) ? $result['data']['finalData'] : [];
 
-                                $accountCodes = [];
-
-                                foreach ($resData as $key => $value) {
-                                    $chartOfAccounts = ChartOfAccount::where('isActive', 0)->where('chartOfAccountSystemID', $value['chartOfAccountSystemID'])->first();
-                                    if(!empty($chartOfAccounts)){
-                                        $accountCodes[] = $chartOfAccounts['AccountCode'];
-                                    }
-                                }
-                                $accountCodesString = implode(',', $accountCodes);
-                                if (!empty($accountCodes)) {
-                                    $error =  "The Chart of Account/s " . $accountCodesString . "  inactive. Update or change the linked Chart of Account to proceed";
+                                if (isset($result) && !empty($result["accountCodes"])) {
+                                    $error = "The Chart of Account/s " . $result["accountCodesString"] . "  inactive. Update or change the linked Chart of Account to proceed";
                                     return ['success' => false, 'message' => $error];
-
                                 }
                             }
 
@@ -4431,20 +4420,9 @@ class Helper
                                 if ($supplierInvMaster->documentType == 1 || $supplierInvMaster->documentType == 3 || $supplierInvMaster->documentType == 4) {
                                     $object = new ChartOfAccountValidationService();
                                     $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $input["documentSystemCode"], $input["companySystemID"]);
-                                    $resData = ((isset($result['status']) && $result['status']) && (isset($result['data']['finalData']) && $result['data']['finalData'])) ? $result['data']['finalData'] : [];
 
-                                    $accountCodes = [];
-
-                                    foreach ($resData as $key => $value) {
-                                        $chartOfAccounts = ChartOfAccount::where('isActive', 0)->where('chartOfAccountSystemID', $value['chartOfAccountSystemID'])->first();
-                                        if(!empty($chartOfAccounts)) {
-                                            $accountCodes[] = $chartOfAccounts['AccountCode'];
-                                        }
-                                    }
-                                    $accountCodesString = implode(',', $accountCodes);
-
-                                    if (!empty($accountCodes)) {
-                                        $error =  "The Chart of Account/s " . $accountCodesString . "  inactive. Update or change the linked Chart of Account to proceed";
+                                    if (isset($result) && !empty($result["accountCodes"])) {
+                                        $error = "The Chart of Account/s " . $result["accountCodesString"] . "  inactive. Update or change the linked Chart of Account to proceed";
                                         return ['success' => false, 'message' => $error];
                                     }
                                 }
@@ -4463,20 +4441,9 @@ class Helper
 
                                 $object = new ChartOfAccountValidationService();
                                 $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $input["documentSystemCode"], $input["companySystemID"]);
-                                $resData = ((isset($result['status']) && $result['status']) && (isset($result['data']['finalData']) && $result['data']['finalData'])) ? $result['data']['finalData'] : [];
 
-                                $accountCodes = [];
-
-                                foreach ($resData as $key => $value) {
-                                    $chartOfAccounts = ChartOfAccount::where('isActive', 0)->where('chartOfAccountSystemID', $value['chartOfAccountSystemID'])->first();
-                                    if(!empty($chartOfAccounts)) {
-                                        $accountCodes[] = $chartOfAccounts['AccountCode'];
-                                    }
-                                }
-                                $accountCodesString = implode(',', $accountCodes);
-
-                                if (!empty($accountCodes)) {
-                                    $error =  "The Chart of Account/s " . $accountCodesString . "  inactive. Update or change the linked Chart of Account to proceed";
+                                if (isset($result) && !empty($result["accountCodes"])) {
+                                    $error = "The Chart of Account/s " . $result["accountCodesString"] . "  inactive. Update or change the linked Chart of Account to proceed";
                                     return ['success' => false, 'message' => $error];
                                 }
 
@@ -4495,20 +4462,9 @@ class Helper
                                 if ($paySupplierMaster->invoiceType == 3) {
                                     $object = new ChartOfAccountValidationService();
                                     $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $input["documentSystemCode"], $input["companySystemID"]);
-                                    $resData = ((isset($result['status']) && $result['status']) && (isset($result['data']['finalData']) && $result['data']['finalData'])) ? $result['data']['finalData'] : [];
 
-                                    $accountCodes = [];
-
-                                    foreach ($resData as $key => $value) {
-                                        $chartOfAccounts = ChartOfAccount::where('isActive', 0)->where('chartOfAccountSystemID', $value['chartOfAccountSystemID'])->first();
-                                        if(!empty($chartOfAccounts)) {
-                                            $accountCodes[] = $chartOfAccounts['AccountCode'];
-                                        }
-                                    }
-                                    $accountCodesString = implode(',', $accountCodes);
-
-                                    if (!empty($accountCodes)) {
-                                        $error =  "The Chart of Account/s " . $accountCodesString . "  inactive. Update or change the linked Chart of Account to proceed";
+                                    if (isset($result) && !empty($result["accountCodes"])) {
+                                        $error = "The Chart of Account/s " . $result["accountCodesString"] . "  inactive. Update or change the linked Chart of Account to proceed";
                                         return ['success' => false, 'message' => $error];
                                     }
                                 }
@@ -4518,20 +4474,9 @@ class Helper
 
                                 $object = new ChartOfAccountValidationService();
                                 $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $input["documentSystemCode"], $input["companySystemID"]);
-                                $resData = ((isset($result['status']) && $result['status']) && (isset($result['data']['finalData']) && $result['data']['finalData'])) ? $result['data']['finalData'] : [];
 
-                                $accountCodes = [];
-
-                                foreach ($resData as $key => $value) {
-                                    $chartOfAccounts = ChartOfAccount::where('isActive', 0)->where('chartOfAccountSystemID', $value['chartOfAccountSystemID'])->first();
-                                    if(!empty($chartOfAccounts)) {
-                                        $accountCodes[] = $chartOfAccounts['AccountCode'];
-                                    }
-                                }
-                                $accountCodesString = implode(',', $accountCodes);
-
-                                if (!empty($accountCodes)) {
-                                    $error =  "The Chart of Account/s " . $accountCodesString . "  inactive. Update or change the linked Chart of Account to proceed";
+                                if (isset($result) && !empty($result["accountCodes"])) {
+                                    $error = "The Chart of Account/s " . $result["accountCodesString"] . "  inactive. Update or change the linked Chart of Account to proceed";
                                     return ['success' => false, 'message' => $error];
                                 }
                             }
@@ -4542,20 +4487,9 @@ class Helper
                                 if ($customerReceivePayment->documentType == 14) {
                                     $object = new ChartOfAccountValidationService();
                                     $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $input["documentSystemCode"], $input["companySystemID"]);
-                                    $resData = ((isset($result['status']) && $result['status']) && (isset($result['data']['finalData']) && $result['data']['finalData'])) ? $result['data']['finalData'] : [];
 
-                                    $accountCodes = [];
-
-                                    foreach ($resData as $key => $value) {
-                                        $chartOfAccounts = ChartOfAccount::where('isActive', 0)->where('chartOfAccountSystemID', $value['chartOfAccountSystemID'])->first();
-                                        if(!empty($chartOfAccounts)) {
-                                            $accountCodes[] = $chartOfAccounts['AccountCode'];
-                                        }
-                                    }
-                                    $accountCodesString = implode(',', $accountCodes);
-
-                                    if (!empty($accountCodes)) {
-                                        $error = "The Chart of Account/s " . $accountCodesString . "  inactive. Update or change the linked Chart of Account to proceed";
+                                    if (isset($result) && !empty($result["accountCodes"])) {
+                                        $error = "The Chart of Account/s " . $result["accountCodesString"] . "  inactive. Update or change the linked Chart of Account to proceed";
                                         return ['success' => false, 'message' => $error];
                                     }
                                 }

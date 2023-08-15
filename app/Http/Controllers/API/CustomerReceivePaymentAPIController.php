@@ -1311,20 +1311,10 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             if ($input['documentType'] == 14) {
                 $object = new ChartOfAccountValidationService();
                 $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $id, $input["companySystemID"]);
-                $resData = ((isset($result['status']) && $result['status']) && (isset($result['data']['finalData']) && $result['data']['finalData'])) ? $result['data']['finalData'] : [];
 
-                $accountCodes = [];
 
-                foreach ($resData as $key => $value) {
-                    $chartOfAccounts = ChartOfAccount::where('isActive', 0)->where('chartOfAccountSystemID', $value['chartOfAccountSystemID'])->first();
-                    if(!empty($chartOfAccounts)) {
-                        $accountCodes[] = $chartOfAccounts['AccountCode'];
-                    }
-                }
-                $accountCodesString = implode(',', $accountCodes);
-
-                if (!empty($accountCodes)) {
-                    return $this->sendError('The Chart of Account/s ' . $accountCodesString . '  inactive. Update or change the linked Chart of Account to proceed', 500);
+                if (isset($result) && !empty($result["accountCodes"])) {
+                    return $this->sendError('The Chart of Account/s ' . $result["accountCodesString"] . '  inactive. Update or change the linked Chart of Account to proceed', 500);
                 }
             }
 
