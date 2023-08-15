@@ -1732,6 +1732,8 @@ Route::get('viewDocumentEmployeeImgBulk', 'ThirdPartySystemsDocumentUploadAndDow
 Route::post('documentUploadDelete', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@documentUploadDelete');
 Route::get('viewHrDocuments', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@viewHrDocuments');
         
+Route::get('hrNotificationDebug/{id}', 'HRJobInvokeAPIController@hrNotificationDebug');
+
 
 /*
  * End external related routes
