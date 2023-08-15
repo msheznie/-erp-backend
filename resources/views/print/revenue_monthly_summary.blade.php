@@ -212,19 +212,19 @@
                 {{ $gTotal += $det->Total }}
                 <tr>
                     <td>{{ $det->CustomerName  }}</td>
-                    <td style="text-align: right">{{ number_format($det->Jan) }}</td>
-                    <td style="text-align: right">{{ number_format($det->Feb) }}</td>
-                    <td style="text-align: right">{{ number_format($det->March) }}</td>
-                    <td style="text-align: right">{{ number_format($det->April) }}</td>
-                    <td style="text-align: right">{{ number_format($det->May) }}</td>
-                    <td style="text-align: right">{{ number_format($det->June) }}</td>
-                    <td style="text-align: right">{{ number_format($det->July) }}</td>
-                    <td style="text-align: right">{{ number_format($det->Aug) }}</td>
-                    <td style="text-align: right">{{ number_format($det->Sept) }}</td>
-                    <td style="text-align: right">{{ number_format($det->Oct) }}</td>
-                    <td style="text-align: right">{{ number_format($det->Nov) }}</td>
-                    <td style="text-align: right">{{ number_format($det->Dece) }}</td>
-                    <td style="text-align: right">{{ number_format($det->Total) }}</td>
+                    <td style="text-align: right">{{ number_format($det->Jan,$decimalPlace) }}</td>
+                    <td style="text-align: right">{{ number_format($det->Feb,$decimalPlace) }}</td>
+                    <td style="text-align: right">{{ number_format($det->March,$decimalPlace) }}</td>
+                    <td style="text-align: right">{{ number_format($det->April,$decimalPlace) }}</td>
+                    <td style="text-align: right">{{ number_format($det->May,$decimalPlace) }}</td>
+                    <td style="text-align: right">{{ number_format($det->June,$decimalPlace) }}</td>
+                    <td style="text-align: right">{{ number_format($det->July,$decimalPlace) }}</td>
+                    <td style="text-align: right">{{ number_format($det->Aug,$decimalPlace) }}</td>
+                    <td style="text-align: right">{{ number_format($det->Sept,$decimalPlace) }}</td>
+                    <td style="text-align: right">{{ number_format($det->Oct,$decimalPlace) }}</td>
+                    <td style="text-align: right">{{ number_format($det->Nov,$decimalPlace) }}</td>
+                    <td style="text-align: right">{{ number_format($det->Dece,$decimalPlace) }}</td>
+                    <td style="text-align: right">{{ number_format($det->Total,$decimalPlace) }}</td>
                 </tr>
             @endforeach
             <tr>
