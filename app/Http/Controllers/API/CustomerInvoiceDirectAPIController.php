@@ -80,6 +80,7 @@ use App\Models\YesNoSelectionForMinus;
 use App\Models\ErpDocumentTemplate;
 use App\Models\SecondaryCompany;
 use App\Repositories\CustomerInvoiceDirectRepository;
+use App\Services\ChartOfAccountValidationService;
 use App\Traits\AuditTrial;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -1015,6 +1016,15 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                         $amount = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $id)
                             ->sum('issueCostRptTotal');
 
+                        if ($isPerforma == 0 || $isPerforma == 2) {
+                            $object = new ChartOfAccountValidationService();
+                            $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $id, $input["companySystemID"]);
+
+                            if (isset($result) && !empty($result["accountCodes"])) {
+                                return $this->sendError($result["errorMsg"]);
+                            }
+                        }
+
                         $params = array('autoID' => $id,
                             'company' => $customerInvoiceDirect->companySystemID,
                             'document' => $customerInvoiceDirect->documentSystemiD,
@@ -1030,8 +1040,6 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                         } else {
                             return $this->sendResponse($customerInvoiceDirect->toArray(), 'Customer invoice confirmed successfully');
                         }
-
-
                     } else {
                         $detailValidation = CustomerInvoiceDirectDetail::selectRaw("glSystemID,IF ( serviceLineCode IS NULL OR serviceLineCode = '', null, 1 ) AS serviceLineCode,IF ( serviceLineSystemID IS NULL OR serviceLineSystemID = '' OR serviceLineSystemID = 0, null, 1 ) AS serviceLineSystemID, IF ( unitOfMeasure IS NULL OR unitOfMeasure = '' OR unitOfMeasure = 0, null, 1 ) AS unitOfMeasure, IF ( invoiceQty IS NULL OR invoiceQty = '' OR invoiceQty = 0, null, 1 ) AS invoiceQty, IF ( contractID IS NULL OR contractID = '' OR contractID = 0, null, 1 ) AS contractID,
                     IF ( invoiceAmount IS NULL OR invoiceAmount = '' OR invoiceAmount = 0, null, 1 ) AS invoiceAmount,

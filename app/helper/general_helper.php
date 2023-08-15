@@ -33,6 +33,7 @@ use App\Jobs\WarehouseItemUpdate;
 use App\Jobs\CreateConsoleJV;
 use App\Models;
 use App\Models\AssetVerificationDetail;
+use App\Models\ChartOfAccount;
 use App\Models\DeliveryOrderDetail;
 use App\Models\InterCompanyAssetDisposal;
 use App\Models\FixedAssetMaster;
@@ -41,6 +42,7 @@ use App\Models\ERPAssetTransferDetail;
 use App\Models\Company;
 use App\Models\CompanyPolicyMaster;
 use App\Models\CustomerMaster;
+use App\Models\CustomerInvoiceDirect;
 use App\Models\CustomerReceivePayment;
 use App\Models\CustomerReceivePaymentDetail;
 use App\Models\DocumentRestrictionAssign;
@@ -66,6 +68,7 @@ use App\Models\User;
 use App\Models\DebitNote;
 use App\Models\PaySupplierInvoiceMaster;
 use App\Models\SupplierRegistrationLink;
+use App\Services\ChartOfAccountValidationService;
 use App\Traits\ApproveRejectTransaction;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -4393,6 +4396,13 @@ class Helper
                                     $masterModel = ['supplierPrimaryCode' => $input["supplierPrimaryCode"], 'documentSystemID' => $input["documentSystemID"], 'documentID' => $grvMaster->documentID, 'documentSystemCode' => $input["documentSystemCode"], 'documentCode' => $grvMaster->grvPrimaryCode, 'documentDate' => $grvMaster->createdDateTime, 'documentNarration' => $grvMaster->grvNarration, 'supplierID' => $grvMaster->supplierID, 'supplierCode' => $grvMaster->supplierPrimaryCode, 'supplierName' => $grvMaster->supplierName, 'confirmedDate' => $grvMaster->grvConfirmedDate, 'confirmedBy' => $grvMaster->grvConfirmedByEmpSystemID, 'approvedDate' => $grvMaster->approvedDate, 'lastApprovedBy' => $empInfo->employeeSystemID, 'transactionCurrency' => $grvMaster->supplierTransactionCurrencyID, 'amount' => $grvMaster->grvTotalSupplierTransactionCurrency];
                                     CreateSupplierTransactions::dispatch($masterModel);
                                 }
+
+                                $object = new ChartOfAccountValidationService();
+                                $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $input["documentSystemCode"], $input["companySystemID"]);
+
+                                if (isset($result) && !empty($result["accountCodes"])) {
+                                    return ['success' => false, 'message' => $result["errorMsg"]];
+                                }
                             }
 
 
@@ -4407,6 +4417,15 @@ class Helper
                                     CreateSupplierTransactions::dispatch($masterModel);
 
                                 }
+
+                                if ($supplierInvMaster->documentType == 1 || $supplierInvMaster->documentType == 3 || $supplierInvMaster->documentType == 4) {
+                                    $object = new ChartOfAccountValidationService();
+                                    $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $input["documentSystemCode"], $input["companySystemID"]);
+
+                                    if (isset($result) && !empty($result["accountCodes"])) {
+                                        return ['success' => false, 'message' => $result["errorMsg"]];
+                                    }
+                                }
                             }
 
 
@@ -4419,6 +4438,14 @@ class Helper
                                     $masterModel = ['supplierPrimaryCode' => $input["supplierPrimaryCode"], 'documentSystemID' => $input["documentSystemID"], 'documentID' => $debitNoteMaster->documentID, 'documentSystemCode' => $input["documentSystemCode"], 'documentCode' => $debitNoteMaster->debitNoteCode, 'documentDate' => $debitNoteMaster->createdDateAndTime, 'documentNarration' => $debitNoteMaster->comments, 'supplierID' => $debitNoteMaster->supplierID, 'supplierCode' => $supplierMaster->primarySupplierCode, 'supplierName' => $supplierMaster->supplierName, 'confirmedDate' => $debitNoteMaster->confirmedDate, 'confirmedBy' => $debitNoteMaster->confirmedByEmpSystemID, 'approvedDate' => $debitNoteMaster->approvedDate, 'lastApprovedBy' => $empInfo->employeeSystemID, 'transactionCurrency' => $debitNoteMaster->supplierTransactionCurrencyID, 'amount' => $debitNoteMaster->debitAmountTrans];
                                     CreateSupplierTransactions::dispatch($masterModel);
                                 }
+
+                                $object = new ChartOfAccountValidationService();
+                                $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $input["documentSystemCode"], $input["companySystemID"]);
+
+                                if (isset($result) && !empty($result["accountCodes"])) {
+                                    return ['success' => false, 'message' => $result["errorMsg"]];
+                                }
+
                             }
 
                             if($input["documentSystemID"] == 4){
@@ -4430,9 +4457,54 @@ class Helper
                                     $masterModel = ['supplierPrimaryCode' => $input["supplierPrimaryCode"], 'documentSystemID' => $input["documentSystemID"], 'documentID' => $paySupplierMaster->documentID, 'documentSystemCode' => $input["documentSystemCode"], 'documentCode' => $paySupplierMaster->BPVcode, 'documentDate' => $paySupplierMaster->createdDateTime, 'documentNarration' => $paySupplierMaster->BPVNarration, 'supplierID' => $paySupplierMaster->BPVsupplierID, 'supplierCode' => $supplierMaster->primarySupplierCode, 'supplierName' => $supplierMaster->supplierName, 'confirmedDate' => $paySupplierMaster->confirmedDate, 'confirmedBy' => $paySupplierMaster->confirmedByEmpSystemID, 'approvedDate' => $paySupplierMaster->approvedDate, 'lastApprovedBy' => $empInfo->employeeSystemID, 'transactionCurrency' => $paySupplierMaster->supplierTransCurrencyID, 'amount' => $paySupplierMaster->suppAmountDocTotal];
                                     CreateSupplierTransactions::dispatch($masterModel);
                                 }
+
+                                if ($paySupplierMaster->invoiceType == 3) {
+                                    $object = new ChartOfAccountValidationService();
+                                    $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $input["documentSystemCode"], $input["companySystemID"]);
+
+                                    if (isset($result) && !empty($result["accountCodes"])) {
+                                        return ['success' => false, 'message' => $result["errorMsg"]];
+                                    }
+                                }
                             }
 
-                            // create monthly deduction
+                            if($input["documentSystemID"] == 71) {
+
+                                $object = new ChartOfAccountValidationService();
+                                $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $input["documentSystemCode"], $input["companySystemID"]);
+
+                                if (isset($result) && !empty($result["accountCodes"])) {
+                                    return ['success' => false, 'message' => $result["errorMsg"]];
+                                }
+                            }
+
+                            if($input["documentSystemID"] == 20) {
+
+                                $customerInvoiceDirect = CustomerInvoiceDirect::find($input["documentSystemCode"]);
+                                if ($customerInvoiceDirect->isPerforma == 0 || $customerInvoiceDirect->isPerforma == 2) {
+                                    $object = new ChartOfAccountValidationService();
+                                    $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $input["documentSystemCode"], $input["companySystemID"]);
+
+                                    if (isset($result) && !empty($result["accountCodes"])) {
+                                        return ['success' => false, 'message' => $result["errorMsg"]];
+                                    }
+                                }
+                            }
+
+                            if($input["documentSystemID"] == 21) {
+
+                                $customerReceivePayment  = CustomerReceivePayment::find($input["documentSystemCode"]);
+                                if ($customerReceivePayment->documentType == 14) {
+                                    $object = new ChartOfAccountValidationService();
+                                    $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $input["documentSystemCode"], $input["companySystemID"]);
+
+                                    if (isset($result) && !empty($result["accountCodes"])) {
+                                        return ['success' => false, 'message' => $result["errorMsg"]];
+                                    }
+                                }
+                            }
+
+                                // create monthly deduction
                             if (
                                 $input["documentSystemID"] == 4 &&
                                 $input['createMonthlyDeduction'] == 1 &&
