@@ -41,6 +41,7 @@ use App\Models\Alert;
 use App\Models\Company;
 use App\Models\CompanyPolicyMaster;
 use App\Models\CustomerMaster;
+use App\Models\CustomerInvoiceDirect;
 use App\Models\CustomerReceivePayment;
 use App\Models\CustomerReceivePaymentDetail;
 use App\Models\DocumentRestrictionAssign;
@@ -4399,8 +4400,7 @@ class Helper
                                 $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $input["documentSystemCode"], $input["companySystemID"]);
 
                                 if (isset($result) && !empty($result["accountCodes"])) {
-                                    $error = "The Chart of Account/s " . $result["accountCodesString"] . "  inactive. Update or change the linked Chart of Account to proceed";
-                                    return ['success' => false, 'message' => $error];
+                                    return ['success' => false, 'message' => $result["errorMsg"]];
                                 }
                             }
 
@@ -4422,8 +4422,7 @@ class Helper
                                     $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $input["documentSystemCode"], $input["companySystemID"]);
 
                                     if (isset($result) && !empty($result["accountCodes"])) {
-                                        $error = "The Chart of Account/s " . $result["accountCodesString"] . "  inactive. Update or change the linked Chart of Account to proceed";
-                                        return ['success' => false, 'message' => $error];
+                                        return ['success' => false, 'message' => $result["errorMsg"]];
                                     }
                                 }
                             }
@@ -4443,8 +4442,7 @@ class Helper
                                 $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $input["documentSystemCode"], $input["companySystemID"]);
 
                                 if (isset($result) && !empty($result["accountCodes"])) {
-                                    $error = "The Chart of Account/s " . $result["accountCodesString"] . "  inactive. Update or change the linked Chart of Account to proceed";
-                                    return ['success' => false, 'message' => $error];
+                                    return ['success' => false, 'message' => $result["errorMsg"]];
                                 }
 
                             }
@@ -4464,8 +4462,7 @@ class Helper
                                     $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $input["documentSystemCode"], $input["companySystemID"]);
 
                                     if (isset($result) && !empty($result["accountCodes"])) {
-                                        $error = "The Chart of Account/s " . $result["accountCodesString"] . "  inactive. Update or change the linked Chart of Account to proceed";
-                                        return ['success' => false, 'message' => $error];
+                                        return ['success' => false, 'message' => $result["errorMsg"]];
                                     }
                                 }
                             }
@@ -4476,8 +4473,20 @@ class Helper
                                 $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $input["documentSystemCode"], $input["companySystemID"]);
 
                                 if (isset($result) && !empty($result["accountCodes"])) {
-                                    $error = "The Chart of Account/s " . $result["accountCodesString"] . "  inactive. Update or change the linked Chart of Account to proceed";
-                                    return ['success' => false, 'message' => $error];
+                                    return ['success' => false, 'message' => $result["errorMsg"]];
+                                }
+                            }
+
+                            if($input["documentSystemID"] == 20) {
+
+                                $customerInvoiceDirect = CustomerInvoiceDirect::find($input["documentSystemCode"]);
+                                if ($customerInvoiceDirect->isPerforma == 0 || $customerInvoiceDirect->isPerforma == 2) {
+                                    $object = new ChartOfAccountValidationService();
+                                    $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $input["documentSystemCode"], $input["companySystemID"]);
+
+                                    if (isset($result) && !empty($result["accountCodes"])) {
+                                        return ['success' => false, 'message' => $result["errorMsg"]];
+                                    }
                                 }
                             }
 
@@ -4489,8 +4498,7 @@ class Helper
                                     $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $input["documentSystemCode"], $input["companySystemID"]);
 
                                     if (isset($result) && !empty($result["accountCodes"])) {
-                                        $error = "The Chart of Account/s " . $result["accountCodesString"] . "  inactive. Update or change the linked Chart of Account to proceed";
-                                        return ['success' => false, 'message' => $error];
+                                        return ['success' => false, 'message' => $result["errorMsg"]];
                                     }
                                 }
                             }

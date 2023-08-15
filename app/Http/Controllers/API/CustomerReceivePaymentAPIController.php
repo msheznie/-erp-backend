@@ -1314,7 +1314,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
 
                 if (isset($result) && !empty($result["accountCodes"])) {
-                    return $this->sendError('The Chart of Account/s ' . $result["accountCodesString"] . '  inactive. Update or change the linked Chart of Account to proceed', 500);
+                    return $this->sendError($result["errorMsg"]);
                 }
             }
 
