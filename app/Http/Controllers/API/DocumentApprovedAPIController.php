@@ -858,7 +858,8 @@ WHERE
 	$filter
 	AND erp_documentapproved.documentSystemID IN ( 4 ) 
 	AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0
-	) AS PendingPaymentApprovals UNION ALL
+	) AS PendingPaymentApprovals 
+UNION ALL
 SELECT
 	* 
 FROM
@@ -912,7 +913,483 @@ WHERE
 	$filter
 	AND erp_documentapproved.documentSystemID IN ( 11 ) 
 	AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0
-	) AS PendingSupplierInvoiceApprovals UNION ALL
+	) AS PendingSupplierInvoiceApprovals
+UNION ALL
+SELECT
+	* 
+FROM
+	(
+SELECT
+DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
+	erp_documentapproved.documentApprovedID,
+	erp_documentapproved.approvalLevelID,
+	erp_documentapproved.rollLevelOrder,
+	erp_approvallevel.noOfLevels AS NoOfLevels,
+	erp_documentapproved.companySystemID,
+	erp_documentapproved.companyID,
+	'' as approval_remarks,
+	erp_documentapproved.documentSystemID,
+	erp_documentapproved.documentID,
+	erp_documentapproved.documentSystemCode,
+	erp_documentapproved.documentCode,
+	erp_grvmaster.grvNarration as comments,
+	erp_documentapproved.docConfirmedDate,
+	erp_documentapproved.approvedDate,
+	employees.empName AS confirmedEmployee,
+	suppliermaster.supplierName AS SupplierOrCustomer,
+			currencymaster.DecimalPlaces ,
+	currencymaster.CurrencyCode AS DocumentCurrency,
+	erp_grvmaster.grvTotalSupplierTransactionCurrency AS DocumentValue,
+	0 AS amended,
+	employeesdepartments.employeeID,
+	erp_documentapproved.approvedYN,
+	erp_grvmaster.grvType AS documentType 
+FROM
+	erp_documentapproved
+	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
+	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
+	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
+	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
+	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
+	INNER JOIN erp_grvmaster ON erp_grvmaster.companySystemID = erp_documentapproved.companySystemID 
+	AND erp_grvmaster.documentSystemID = erp_documentapproved.documentSystemID 
+	AND erp_grvmaster.grvAutoID = erp_documentapproved.documentSystemCode 
+	AND erp_grvmaster.RollLevForApp_curr = erp_documentapproved.rollLevelOrder 
+	AND erp_grvmaster.grvConfirmedYN = 1 
+	AND erp_grvmaster.approved = 0
+	AND erp_grvmaster.grvCancelledYN = 0
+	INNER JOIN suppliermaster ON suppliermaster.supplierCodeSystem = erp_grvmaster.supplierID
+	INNER JOIN currencymaster ON currencymaster.currencyID = erp_grvmaster.supplierTransactionCurrencyID 
+WHERE
+	erp_documentapproved.approvedYN = 0 
+	AND erp_documentapproved.rejectedYN = 0 
+	AND erp_documentapproved.approvalGroupID > 0 
+	$filter
+	AND erp_documentapproved.documentSystemID IN ( 3 ) 
+	AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0
+	) AS PendingGrvApprovals
+UNION ALL
+SELECT
+	* 
+FROM
+	(
+SELECT
+DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
+	erp_documentapproved.documentApprovedID,
+	erp_documentapproved.approvalLevelID,
+	erp_documentapproved.rollLevelOrder,
+	erp_approvallevel.noOfLevels AS NoOfLevels,
+	erp_documentapproved.companySystemID,
+	erp_documentapproved.companyID,
+	'' as approval_remarks,
+	erp_documentapproved.documentSystemID,
+	erp_documentapproved.documentID,
+	erp_documentapproved.documentSystemCode,
+	erp_documentapproved.documentCode,
+	erp_itemissuemaster.comment as comments,
+	erp_documentapproved.docConfirmedDate,
+	erp_documentapproved.approvedDate,
+	employees.empName AS confirmedEmployee,
+	customermaster.CustomerName AS SupplierOrCustomer,
+	2,
+	'' AS DocumentCurrency,
+	'' AS DocumentValue,
+	0 AS amended,
+	employeesdepartments.employeeID,
+	erp_documentapproved.approvedYN,
+	erp_itemissuemaster.issueType AS documentType 
+FROM
+	erp_documentapproved
+	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
+	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
+	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
+	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
+	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
+	INNER JOIN erp_itemissuemaster ON erp_itemissuemaster.companySystemID = erp_documentapproved.companySystemID 
+	AND erp_itemissuemaster.documentSystemID = erp_documentapproved.documentSystemID 
+	AND erp_itemissuemaster.itemIssueAutoID = erp_documentapproved.documentSystemCode 
+	AND erp_itemissuemaster.RollLevForApp_curr = erp_documentapproved.rollLevelOrder 
+	AND erp_itemissuemaster.confirmedYN = 1 
+	AND erp_itemissuemaster.approved = 0
+	INNER JOIN customermaster ON customermaster.customerCodeSystem = erp_itemissuemaster.customerSystemID
+WHERE
+	erp_documentapproved.approvedYN = 0 
+	AND erp_documentapproved.rejectedYN = 0 
+	AND erp_documentapproved.approvalGroupID > 0 
+	$filter
+	AND erp_documentapproved.documentSystemID IN ( 8 ) 
+	AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0
+	) AS PendingMaterialIssueApprovals
+UNION ALL
+SELECT
+	* 
+FROM
+	(
+SELECT
+DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
+	erp_documentapproved.documentApprovedID,
+	erp_documentapproved.approvalLevelID,
+	erp_documentapproved.rollLevelOrder,
+	erp_approvallevel.noOfLevels AS NoOfLevels,
+	erp_documentapproved.companySystemID,
+	erp_documentapproved.companyID,
+	'' as approval_remarks,
+	erp_documentapproved.documentSystemID,
+	erp_documentapproved.documentID,
+	erp_documentapproved.documentSystemCode,
+	erp_documentapproved.documentCode,
+	erp_request.comments as comments,
+	erp_documentapproved.docConfirmedDate,
+	erp_documentapproved.approvedDate,
+	employees.empName AS confirmedEmployee,
+	'' AS SupplierOrCustomer,
+	2,
+	'' AS DocumentCurrency,
+	'' AS DocumentValue,
+	0 AS amended,
+	employeesdepartments.employeeID,
+	erp_documentapproved.approvedYN,
+	'' AS documentType 
+FROM
+	erp_documentapproved
+	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
+	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
+	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
+	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
+	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
+	INNER JOIN erp_request ON erp_request.companySystemID = erp_documentapproved.companySystemID 
+	AND erp_request.documentSystemID = erp_documentapproved.documentSystemID 
+	AND erp_request.RequestID = erp_documentapproved.documentSystemCode 
+	AND erp_request.RollLevForApp_curr = erp_documentapproved.rollLevelOrder 
+	AND erp_request.ConfirmedYN = 1 
+	AND erp_request.approved = 0
+	AND erp_request.cancelledYN = 0
+WHERE
+	erp_documentapproved.approvedYN = 0 
+	AND erp_documentapproved.rejectedYN = 0 
+	AND erp_documentapproved.approvalGroupID > 0 
+	$filter
+	AND erp_documentapproved.documentSystemID IN ( 9 ) 
+	AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0
+	) AS PendingMaterialIssueApprovals
+UNION ALL
+SELECT
+	* 
+FROM
+	(
+SELECT
+DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
+	erp_documentapproved.documentApprovedID,
+	erp_documentapproved.approvalLevelID,
+	erp_documentapproved.rollLevelOrder,
+	erp_approvallevel.noOfLevels AS NoOfLevels,
+	erp_documentapproved.companySystemID,
+	erp_documentapproved.companyID,
+	'' as approval_remarks,
+	erp_documentapproved.documentSystemID,
+	erp_documentapproved.documentID,
+	erp_documentapproved.documentSystemCode,
+	erp_documentapproved.documentCode,
+	erp_itemreturnmaster.comment as comments,
+	erp_documentapproved.docConfirmedDate,
+	erp_documentapproved.approvedDate,
+	employees.empName AS confirmedEmployee,
+	'' AS SupplierOrCustomer,
+	2,
+	'' AS DocumentCurrency,
+	'' AS DocumentValue,
+	0 AS amended,
+	employeesdepartments.employeeID,
+	erp_documentapproved.approvedYN,
+	'' AS documentType 
+FROM
+	erp_documentapproved
+	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
+	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
+	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
+	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
+	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
+	INNER JOIN erp_itemreturnmaster ON erp_itemreturnmaster.companySystemID = erp_documentapproved.companySystemID 
+	AND erp_itemreturnmaster.documentSystemID = erp_documentapproved.documentSystemID 
+	AND erp_itemreturnmaster.itemReturnAutoID = erp_documentapproved.documentSystemCode 
+	AND erp_itemreturnmaster.RollLevForApp_curr = erp_documentapproved.rollLevelOrder 
+	AND erp_itemreturnmaster.confirmedYN = 1 
+	AND erp_itemreturnmaster.approved = 0
+WHERE
+	erp_documentapproved.approvedYN = 0 
+	AND erp_documentapproved.rejectedYN = 0 
+	AND erp_documentapproved.approvalGroupID > 0 
+	$filter
+	AND erp_documentapproved.documentSystemID IN ( 12 ) 
+	AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0
+	) AS PendingMaterialRetuenApprovals
+UNION ALL
+SELECT
+	* 
+FROM
+	(
+SELECT
+DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
+	erp_documentapproved.documentApprovedID,
+	erp_documentapproved.approvalLevelID,
+	erp_documentapproved.rollLevelOrder,
+	erp_approvallevel.noOfLevels AS NoOfLevels,
+	erp_documentapproved.companySystemID,
+	erp_documentapproved.companyID,
+	'' as approval_remarks,
+	erp_documentapproved.documentSystemID,
+	erp_documentapproved.documentID,
+	erp_documentapproved.documentSystemCode,
+	erp_documentapproved.documentCode,
+	erp_purchasereturnmaster.narration as comments,
+	erp_documentapproved.docConfirmedDate,
+	erp_documentapproved.approvedDate,
+	employees.empName AS confirmedEmployee,
+	suppliermaster.supplierName AS SupplierOrCustomer,
+	currencymaster.DecimalPlaces ,
+	'' AS DocumentCurrency,
+	'' AS DocumentValue,
+	0 AS amended,
+	employeesdepartments.employeeID,
+	erp_documentapproved.approvedYN,
+	'' AS documentType 
+FROM
+	erp_documentapproved
+	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
+	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
+	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
+	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
+	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
+	INNER JOIN erp_purchasereturnmaster ON erp_purchasereturnmaster.companySystemID = erp_documentapproved.companySystemID 
+	AND erp_purchasereturnmaster.documentSystemID = erp_documentapproved.documentSystemID 
+	AND erp_purchasereturnmaster.purhaseReturnAutoID = erp_documentapproved.documentSystemCode 
+	AND erp_purchasereturnmaster.RollLevForApp_curr = erp_documentapproved.rollLevelOrder 
+	AND erp_purchasereturnmaster.confirmedYN = 1 
+	AND erp_purchasereturnmaster.approved = 0
+	INNER JOIN suppliermaster ON suppliermaster.supplierCodeSystem = erp_purchasereturnmaster.supplierID
+	INNER JOIN currencymaster ON currencymaster.currencyID = erp_purchasereturnmaster.supplierTransactionCurrencyID 
+WHERE
+	erp_documentapproved.approvedYN = 0 
+	AND erp_documentapproved.rejectedYN = 0 
+	AND erp_documentapproved.approvalGroupID > 0 
+	$filter
+	AND erp_documentapproved.documentSystemID IN ( 24 ) 
+	AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0
+	) AS PendingPurchaseRetuenApprovals
+UNION ALL
+SELECT
+	* 
+FROM
+	(
+SELECT
+DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
+	erp_documentapproved.documentApprovedID,
+	erp_documentapproved.approvalLevelID,
+	erp_documentapproved.rollLevelOrder,
+	erp_approvallevel.noOfLevels AS NoOfLevels,
+	erp_documentapproved.companySystemID,
+	erp_documentapproved.companyID,
+	'' as approval_remarks,
+	erp_documentapproved.documentSystemID,
+	erp_documentapproved.documentID,
+	erp_documentapproved.documentSystemCode,
+	erp_documentapproved.documentCode,
+	erp_stockadjustment.comment as comments,
+	erp_documentapproved.docConfirmedDate,
+	erp_documentapproved.approvedDate,
+	employees.empName AS confirmedEmployee,
+	'' AS SupplierOrCustomer,
+	2,
+	'' AS DocumentCurrency,
+	'' AS DocumentValue,
+	0 AS amended,
+	employeesdepartments.employeeID,
+	erp_documentapproved.approvedYN,
+	'' AS documentType 
+FROM
+	erp_documentapproved
+	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
+	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
+	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
+	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
+	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
+	INNER JOIN erp_stockadjustment ON erp_stockadjustment.companySystemID = erp_documentapproved.companySystemID 
+	AND erp_stockadjustment.documentSystemID = erp_documentapproved.documentSystemID 
+	AND erp_stockadjustment.stockAdjustmentAutoID = erp_documentapproved.documentSystemCode 
+	AND erp_stockadjustment.RollLevForApp_curr = erp_documentapproved.rollLevelOrder 
+	AND erp_stockadjustment.confirmedYN = 1 
+	AND erp_stockadjustment.approved = 0
+WHERE
+	erp_documentapproved.approvedYN = 0 
+	AND erp_documentapproved.rejectedYN = 0 
+	AND erp_documentapproved.approvalGroupID > 0 
+	$filter
+	AND erp_documentapproved.documentSystemID IN ( 7 ) 
+	AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0
+	) AS PendingStockAdjustmentApprovals
+UNION ALL
+SELECT
+	* 
+FROM
+	(
+SELECT
+DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
+	erp_documentapproved.documentApprovedID,
+	erp_documentapproved.approvalLevelID,
+	erp_documentapproved.rollLevelOrder,
+	erp_approvallevel.noOfLevels AS NoOfLevels,
+	erp_documentapproved.companySystemID,
+	erp_documentapproved.companyID,
+	'' as approval_remarks,
+	erp_documentapproved.documentSystemID,
+	erp_documentapproved.documentID,
+	erp_documentapproved.documentSystemCode,
+	erp_documentapproved.documentCode,
+	erp_stocktransfer.comment as comments,
+	erp_documentapproved.docConfirmedDate,
+	erp_documentapproved.approvedDate,
+	employees.empName AS confirmedEmployee,
+	'' AS SupplierOrCustomer,
+	2,
+	'' AS DocumentCurrency,
+	'' AS DocumentValue,
+	0 AS amended,
+	employeesdepartments.employeeID,
+	erp_documentapproved.approvedYN,
+	'' AS documentType 
+FROM
+	erp_documentapproved
+	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
+	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
+	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
+	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
+	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
+	INNER JOIN erp_stocktransfer ON erp_stocktransfer.companySystemID = erp_documentapproved.companySystemID 
+	AND erp_stocktransfer.documentSystemID = erp_documentapproved.documentSystemID 
+	AND erp_stocktransfer.stockTransferAutoID = erp_documentapproved.documentSystemCode 
+	AND erp_stocktransfer.RollLevForApp_curr = erp_documentapproved.rollLevelOrder 
+	AND erp_stocktransfer.confirmedYN = 1 
+	AND erp_stocktransfer.approved = 0
+WHERE
+	erp_documentapproved.approvedYN = 0 
+	AND erp_documentapproved.rejectedYN = 0 
+	AND erp_documentapproved.approvalGroupID > 0 
+	$filter
+	AND erp_documentapproved.documentSystemID IN ( 13 ) 
+	AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0
+	) AS PendingStockTransferApprovals
+UNION ALL
+SELECT
+	* 
+FROM
+	(
+SELECT
+DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
+	erp_documentapproved.documentApprovedID,
+	erp_documentapproved.approvalLevelID,
+	erp_documentapproved.rollLevelOrder,
+	erp_approvallevel.noOfLevels AS NoOfLevels,
+	erp_documentapproved.companySystemID,
+	erp_documentapproved.companyID,
+	'' as approval_remarks,
+	erp_documentapproved.documentSystemID,
+	erp_documentapproved.documentID,
+	erp_documentapproved.documentSystemCode,
+	erp_documentapproved.documentCode,
+	erp_stockreceive.comment as comments,
+	erp_documentapproved.docConfirmedDate,
+	erp_documentapproved.approvedDate,
+	employees.empName AS confirmedEmployee,
+	'' AS SupplierOrCustomer,
+	2,
+	'' AS DocumentCurrency,
+	'' AS DocumentValue,
+	0 AS amended,
+	employeesdepartments.employeeID,
+	erp_documentapproved.approvedYN,
+	'' AS documentType 
+FROM
+	erp_documentapproved
+	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
+	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
+	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
+	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
+	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
+	INNER JOIN erp_stockreceive ON erp_stockreceive.companySystemID = erp_documentapproved.companySystemID 
+	AND erp_stockreceive.documentSystemID = erp_documentapproved.documentSystemID 
+	AND erp_stockreceive.stockReceiveAutoID = erp_documentapproved.documentSystemCode 
+	AND erp_stockreceive.RollLevForApp_curr = erp_documentapproved.rollLevelOrder 
+	AND erp_stockreceive.confirmedYN = 1 
+	AND erp_stockreceive.approved = 0
+WHERE
+	erp_documentapproved.approvedYN = 0 
+	AND erp_documentapproved.rejectedYN = 0 
+	AND erp_documentapproved.approvalGroupID > 0 
+	$filter
+	AND erp_documentapproved.documentSystemID IN ( 10 ) 
+	AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0
+	) AS PendingStockReciveApprovals
+UNION ALL
+SELECT
+	* 
+FROM
+	(
+SELECT
+DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
+	erp_documentapproved.documentApprovedID,
+	erp_documentapproved.approvalLevelID,
+	erp_documentapproved.rollLevelOrder,
+	erp_approvallevel.noOfLevels AS NoOfLevels,
+	erp_documentapproved.companySystemID,
+	erp_documentapproved.companyID,
+	'' as approval_remarks,
+	erp_documentapproved.documentSystemID,
+	erp_documentapproved.documentID,
+	erp_documentapproved.documentSystemCode,
+	erp_documentapproved.documentCode,
+	erp_stockcount.comment as comments,
+	erp_documentapproved.docConfirmedDate,
+	erp_documentapproved.approvedDate,
+	employees.empName AS confirmedEmployee,
+	'' AS SupplierOrCustomer,
+	2,
+	'' AS DocumentCurrency,
+	'' AS DocumentValue,
+	0 AS amended,
+	employeesdepartments.employeeID,
+	erp_documentapproved.approvedYN,
+	'' AS documentType 
+FROM
+	erp_documentapproved
+	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
+	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
+	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
+	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
+	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
+	INNER JOIN erp_stockcount ON erp_stockcount.companySystemID = erp_documentapproved.companySystemID 
+	AND erp_stockcount.documentSystemID = erp_documentapproved.documentSystemID 
+	AND erp_stockcount.stockCountAutoID = erp_documentapproved.documentSystemCode 
+	AND erp_stockcount.RollLevForApp_curr = erp_documentapproved.rollLevelOrder 
+	AND erp_stockcount.confirmedYN = 1 
+	AND erp_stockcount.approved = 0
+WHERE
+	erp_documentapproved.approvedYN = 0 
+	AND erp_documentapproved.rejectedYN = 0 
+	AND erp_documentapproved.approvalGroupID > 0 
+	$filter
+	AND erp_documentapproved.documentSystemID IN ( 97 ) 
+	AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0
+	) AS PendingStockCountApprovals
+UNION ALL
 SELECT
 	* 
 FROM
@@ -1261,7 +1738,7 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	'' AS SupplierOrCustomer,
 	2 AS DecimalPlaces ,
 	'' AS DocumentCurrency,
-	0 AS DocumentValue,
+	'' AS DocumentValue,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
@@ -1312,7 +1789,7 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	'' AS SupplierOrCustomer,
 	2 AS DecimalPlaces ,
 	'' AS DocumentCurrency,
-	0 AS DocumentValue,
+	'' AS DocumentValue,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
@@ -1363,7 +1840,7 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	'' AS SupplierOrCustomer,
 	2 AS DecimalPlaces ,
 	'' AS DocumentCurrency,
-	0 AS DocumentValue,
+	'' AS DocumentValue,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
@@ -1416,7 +1893,7 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	'' AS SupplierOrCustomer,
 	2 AS DecimalPlaces ,
 	'' AS DocumentCurrency,
-	0 AS DocumentValue,
+	'' AS DocumentValue,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
@@ -1467,7 +1944,7 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	'' AS SupplierOrCustomer,
 	2 AS DecimalPlaces ,
 	'' AS DocumentCurrency,
-	0 AS DocumentValue,
+	'' AS DocumentValue,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
@@ -1518,7 +1995,7 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	'' AS SupplierOrCustomer,
 	2 AS DecimalPlaces ,
 	'' AS DocumentCurrency,
-	0 AS DocumentValue,
+	'' AS DocumentValue,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
