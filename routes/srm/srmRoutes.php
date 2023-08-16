@@ -254,3 +254,11 @@ Route::post('deleteAllSuppliersFromNegotiation', 'SupplierTenderNegotiationContr
 
 Route::post('saveTenderNegotiationDetails', 'TenderNegotiationController@saveTenderNegotiationDetails');
 
+Route::group(['prefix' => 'srm'], function (){
+        
+    Route::group(['middleware' => ['tenant']], function (){
+        Route::post('fetch', 'SRM\APIController@fetch')->name("Get supplier KYC details");
+    });
+
+});
+
