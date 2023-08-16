@@ -4351,6 +4351,10 @@ WHERE
             $companyID = (array)$request->companySystemID;
         }
 
+
+        $local = CurrencyMaster::select('DecimalPlaces')->where('currencyID',$checkIsGroup->localCurrencyID)->first();
+        $reporting = CurrencyMaster::select('DecimalPlaces')->where('currencyID',$checkIsGroup->reportingCurrency)->first();
+
         $customers = (array)$request->customers;
         $customerSystemID = collect($customers)->pluck('customerCodeSystem')->toArray();
 
@@ -4474,9 +4478,9 @@ WHERE
                     erp_generalledger.documentLocalCurrencyID,
                     erp_generalledger.documentRptCurrencyID,
                     erp_generalledger.documentLocalAmount,
-                    round((erp_generalledger.documentLocalAmount *- 1),currLocal.DecimalPlaces) AS MyLocalAmount,
+                    round((erp_generalledger.documentLocalAmount *- 1),"'.$local->DecimalPlaces.'") AS MyLocalAmount,
                     erp_generalledger.documentRptAmount,
-                    round((erp_generalledger.documentRptAmount *- 1),currRpt.DecimalPlaces) AS MyRptAmount
+                    round((erp_generalledger.documentRptAmount *- 1),"'.$reporting->DecimalPlaces.'") AS MyRptAmount
                 FROM
                     erp_generalledger
                     INNER JOIN chartofaccounts ON erp_generalledger.chartOfAccountSystemID = chartofaccounts.chartOfAccountSystemID
