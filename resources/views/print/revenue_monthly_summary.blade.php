@@ -179,7 +179,7 @@
                 <th width="6%">Oct</th>
                 <th width="6%">Nov</th>
                 <th width="6%">Dec</th>
-                <th width="8%">Total</th>
+                <th width="15%">Total</th>
             </tr>
             </thead>
             <tbody>
