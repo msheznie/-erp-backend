@@ -1402,6 +1402,213 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	erp_approvallevel.noOfLevels AS NoOfLevels,
 	erp_documentapproved.companySystemID,
 	erp_documentapproved.companyID,
+	'' as approval_remarks,
+	erp_documentapproved.documentSystemID,
+	erp_documentapproved.documentID,
+	erp_documentapproved.documentSystemCode,
+	erp_documentapproved.documentCode,
+	erp_bankrecmaster.description as comments,
+	erp_documentapproved.docConfirmedDate,
+	erp_documentapproved.approvedDate,
+	employees.empName AS confirmedEmployee,
+	'' AS SupplierOrCustomer,
+	2,
+	'' AS DocumentCurrency,
+	'' AS DocumentValue,
+	0 AS amended,
+	employeesdepartments.employeeID,
+	erp_documentapproved.approvedYN,
+	'' AS documentType 
+FROM
+	erp_documentapproved
+	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
+	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
+	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
+	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
+	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
+	INNER JOIN erp_bankrecmaster ON erp_bankrecmaster.companySystemID = erp_documentapproved.companySystemID 
+	AND erp_bankrecmaster.documentSystemID = erp_documentapproved.documentSystemID 
+	AND erp_bankrecmaster.bankRecAutoID = erp_documentapproved.documentSystemCode 
+	AND erp_bankrecmaster.RollLevForApp_curr = erp_documentapproved.rollLevelOrder 
+	AND erp_bankrecmaster.confirmedYN = 1 
+	AND erp_bankrecmaster.approvedYN = 0
+WHERE
+	erp_documentapproved.approvedYN = 0 
+	AND erp_documentapproved.rejectedYN = 0 
+	AND erp_documentapproved.approvalGroupID > 0 
+	$filter
+	AND erp_documentapproved.documentSystemID IN ( 62 ) 
+	AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0
+	) AS PendingBankReconciliationApprovals
+UNION ALL
+SELECT
+	* 
+FROM
+	(
+SELECT
+DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
+	erp_documentapproved.documentApprovedID,
+	erp_documentapproved.approvalLevelID,
+	erp_documentapproved.rollLevelOrder,
+	erp_approvallevel.noOfLevels AS NoOfLevels,
+	erp_documentapproved.companySystemID,
+	erp_documentapproved.companyID,
+	'' as approval_remarks,
+	erp_documentapproved.documentSystemID,
+	erp_documentapproved.documentID,
+	erp_documentapproved.documentSystemCode,
+	erp_documentapproved.documentCode,
+	erp_paymentbanktransfer.narration as comments,
+	erp_documentapproved.docConfirmedDate,
+	erp_documentapproved.approvedDate,
+	employees.empName AS confirmedEmployee,
+	'' AS SupplierOrCustomer,
+	2,
+	'' AS DocumentCurrency,
+	'' AS DocumentValue,
+	0 AS amended,
+	employeesdepartments.employeeID,
+	erp_documentapproved.approvedYN,
+	'' AS documentType 
+FROM
+	erp_documentapproved
+	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
+	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
+	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
+	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
+	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
+	INNER JOIN erp_paymentbanktransfer ON erp_paymentbanktransfer.companySystemID = erp_documentapproved.companySystemID 
+	AND erp_paymentbanktransfer.documentSystemID = erp_documentapproved.documentSystemID 
+	AND erp_paymentbanktransfer.paymentBankTransferID = erp_documentapproved.documentSystemCode 
+	AND erp_paymentbanktransfer.RollLevForApp_curr = erp_documentapproved.rollLevelOrder 
+	AND erp_paymentbanktransfer.confirmedYN = 1 
+	AND erp_paymentbanktransfer.approvedYN = 0
+WHERE
+	erp_documentapproved.approvedYN = 0 
+	AND erp_documentapproved.rejectedYN = 0 
+	AND erp_documentapproved.approvalGroupID > 0 
+	$filter
+	AND erp_documentapproved.documentSystemID IN ( 64 ) 
+	AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0
+	) AS PendingBankTransferApprovals
+UNION ALL
+SELECT
+	* 
+FROM
+	(
+SELECT
+DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
+	erp_documentapproved.documentApprovedID,
+	erp_documentapproved.approvalLevelID,
+	erp_documentapproved.rollLevelOrder,
+	erp_approvallevel.noOfLevels AS NoOfLevels,
+	erp_documentapproved.companySystemID,
+	erp_documentapproved.companyID,
+	'' as approval_remarks,
+	erp_documentapproved.documentSystemID,
+	erp_documentapproved.documentID,
+	erp_documentapproved.documentSystemCode,
+	erp_bankaccount.AccountNo as documentCode,
+	erp_bankaccount.AccountName as comments,
+	erp_documentapproved.docConfirmedDate,
+	erp_documentapproved.approvedDate,
+	employees.empName AS confirmedEmployee,
+	'' AS SupplierOrCustomer,
+	2,
+	currencymaster.CurrencyCode AS DocumentCurrency,
+	'' AS DocumentValue,
+	0 AS amended,
+	employeesdepartments.employeeID,
+	erp_documentapproved.approvedYN,
+	'' AS documentType 
+FROM
+	erp_documentapproved
+	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
+	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
+	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
+	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
+	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
+	INNER JOIN erp_bankaccount ON erp_bankaccount.companySystemID = erp_documentapproved.companySystemID 
+	AND erp_bankaccount.documentSystemID = erp_documentapproved.documentSystemID 
+	AND erp_bankaccount.bankAccountAutoID = erp_documentapproved.documentSystemCode 
+	AND erp_bankaccount.RollLevForApp_curr = erp_documentapproved.rollLevelOrder 
+	AND erp_bankaccount.confirmedYN = 1 
+	AND erp_bankaccount.approvedYN = 0
+	INNER JOIN currencymaster ON currencymaster.currencyID = erp_bankaccount.accountCurrencyID 
+WHERE
+	erp_documentapproved.approvedYN = 0 
+	AND erp_documentapproved.rejectedYN = 0 
+	AND erp_documentapproved.approvalGroupID > 0 
+	$filter
+	AND erp_documentapproved.documentSystemID IN ( 66 ) 
+	AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0
+	) AS PendingBankAccountApprovals
+UNION ALL
+SELECT
+	* 
+FROM
+	(
+SELECT
+DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
+	erp_documentapproved.documentApprovedID,
+	erp_documentapproved.approvalLevelID,
+	erp_documentapproved.rollLevelOrder,
+	erp_approvallevel.noOfLevels AS NoOfLevels,
+	erp_documentapproved.companySystemID,
+	erp_documentapproved.companyID,
+	'' as approval_remarks,
+	erp_documentapproved.documentSystemID,
+	erp_documentapproved.documentID,
+	erp_documentapproved.documentSystemCode,
+	erp_documentapproved.documentCode,
+	currency_conversion_master.description as comments,
+	erp_documentapproved.docConfirmedDate,
+	erp_documentapproved.approvedDate,
+	employees.empName AS confirmedEmployee,
+	'' AS SupplierOrCustomer,
+	2,
+	'' AS DocumentCurrency,
+	'' AS DocumentValue,
+	0 AS amended,
+	employeesdepartments.employeeID,
+	erp_documentapproved.approvedYN,
+	'' AS documentType 
+FROM
+	erp_documentapproved
+	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
+	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
+	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
+	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
+	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
+	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
+	INNER JOIN currency_conversion_master ON currency_conversion_master.id = erp_documentapproved.documentSystemCode 
+	AND currency_conversion_master.RollLevForApp_curr = erp_documentapproved.rollLevelOrder 
+	AND currency_conversion_master.confirmedYN = 1 
+	AND currency_conversion_master.approvedYN = 0
+WHERE
+	erp_documentapproved.approvedYN = 0 
+	AND erp_documentapproved.rejectedYN = 0 
+	AND erp_documentapproved.approvalGroupID > 0 
+	$filter
+	AND erp_documentapproved.documentSystemID IN ( 96 ) 
+	AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0
+	) AS PendingCurrencyConversionApprovals
+UNION ALL
+SELECT
+	* 
+FROM
+	(
+SELECT
+DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
+	erp_documentapproved.documentApprovedID,
+	erp_documentapproved.approvalLevelID,
+	erp_documentapproved.rollLevelOrder,
+	erp_approvallevel.noOfLevels AS NoOfLevels,
+	erp_documentapproved.companySystemID,
+	erp_documentapproved.companyID,
 	'' as approval_remarks,	erp_documentapproved.documentSystemID,
 	erp_documentapproved.documentID,
 	erp_documentapproved.documentSystemCode,
