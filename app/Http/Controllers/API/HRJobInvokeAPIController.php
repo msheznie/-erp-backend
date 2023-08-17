@@ -226,7 +226,7 @@ class HRJobInvokeAPIController extends AppBaseController
         $input = $request->all();
 
         if(!isset($input['tenantId']) || !isset($input['scenarioId'])){
-            return $this->sendError('Tenant Id and Scenario Id Required', 422);
+            return $this->sendError('Tenant ID and Scenario ID are required', 422);
         }
 
         $tenantId = $input['tenantId'];
