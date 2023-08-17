@@ -230,7 +230,6 @@ class HRJobInvokeAPIController extends AppBaseController
         }
 
         $tenantId = $input['tenantId'];
-
         $scenarioId =$input['scenarioId'];
     
         $dbName = CommonJobService::get_tenant_db($tenantId);
