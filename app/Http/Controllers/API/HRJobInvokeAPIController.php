@@ -225,21 +225,22 @@ class HRJobInvokeAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $tenantId = $input['tenantId'];
-
-        $scenarioId = $input['scenarioId'];
-
-        if(!isset($tenantId) || !isset($scenarioId)){
-            return $this->sendResponse([], 'Tenant Id and Scenario Id Required');
+        if(!isset($input['tenantId']) || !isset($input['scenarioId'])){
+            return $this->sendError('Tenant Id and Scenario Id Required', 422);
         }
 
+        $tenantId = $input['tenantId'];
+
+        $scenarioId =$input['scenarioId'];
+    
         $dbName = CommonJobService::get_tenant_db($tenantId);
 
         CommonJobService::db_switch($dbName);
 
         $scenario = NotificationScenarios::find($scenarioId);
+
         if(empty($scenario)){
-            return $this->sendResponse([], 'Scenario is not found');
+            return $this->sendError('Scenario is not found', 422);
         }
         NotificationService::process($scenarioId);
         
