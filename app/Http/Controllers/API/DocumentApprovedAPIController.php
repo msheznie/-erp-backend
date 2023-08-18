@@ -1013,7 +1013,7 @@ FROM
 	AND erp_itemissuemaster.RollLevForApp_curr = erp_documentapproved.rollLevelOrder 
 	AND erp_itemissuemaster.confirmedYN = 1 
 	AND erp_itemissuemaster.approved = 0
-	INNER JOIN customermaster ON customermaster.customerCodeSystem = erp_itemissuemaster.customerSystemID
+	LEFT JOIN customermaster ON customermaster.customerCodeSystem = erp_itemissuemaster.customerSystemID
 WHERE
 	erp_documentapproved.approvedYN = 0 
 	AND erp_documentapproved.rejectedYN = 0 
