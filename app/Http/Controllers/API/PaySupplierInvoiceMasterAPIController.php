@@ -1226,16 +1226,6 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
                 }
 
-
-                if ($paySupplierInvoiceMaster->invoiceType == 3) {
-                    $object = new ChartOfAccountValidationService();
-                    $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $id, $input["companySystemID"]);
-
-                    if (isset($result) && !empty($result["accountCodes"])) {
-                        return $this->sendError($result["errorMsg"]);
-                    }
-                }
-
                 $params = array('autoID' => $id, 'company' => $companySystemID, 'document' => $documentSystemID, 'segment' => '', 'category' => '', 'amount' => 0);
                 $confirm = \Helper::confirmDocument($params);
                 if (!$confirm["success"]) {
@@ -2380,7 +2370,14 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                                                                     
                     $amountForApproval = $totalAmountForApprovalData ? $totalAmountForApprovalData->total : 0;
                 }
+                if ($paySupplierInvoiceMaster->invoiceType == 3) {
+                    $object = new ChartOfAccountValidationService();
+                    $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $id, $input["companySystemID"]);
 
+                    if (isset($result) && !empty($result["accountCodes"])) {
+                        return $this->sendError($result["errorMsg"],500, ['type' => 'confirm']);
+                    }
+                }
                 $params = array('autoID' => $id, 'company' => $companySystemID, 'document' => $documentSystemID, 'segment' => '', 'category' => '', 'amount' => $amountForApproval);
                 $confirm = \Helper::confirmDocument($params);
                 if (!$confirm["success"]) {

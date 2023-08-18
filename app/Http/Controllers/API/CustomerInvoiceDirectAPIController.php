@@ -776,6 +776,14 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                     return $this->sendError('Document date should be between the selected financial period start date and end date.', 500);
                 }
 
+                if ($isPerforma == 0 || $isPerforma == 2) {
+                    $object = new ChartOfAccountValidationService();
+                    $result = $object->checkChartOfAccountStatus($customerInvoiceDirect->documentSystemiD, $id,$customerInvoiceDirect->companySystemID);
+
+                    if (isset($result) && !empty($result["accountCodes"])) {
+                        return $this->sendError($result["errorMsg"], 500);
+                    }
+                }
                 /**/
                 if ($isPerforma != 1) {
 
@@ -1016,14 +1024,6 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                         $amount = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $id)
                             ->sum('issueCostRptTotal');
 
-                        if ($isPerforma == 0 || $isPerforma == 2) {
-                            $object = new ChartOfAccountValidationService();
-                            $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $id, $input["companySystemID"]);
-
-                            if (isset($result) && !empty($result["accountCodes"])) {
-                                return $this->sendError($result["errorMsg"]);
-                            }
-                        }
 
                         $params = array('autoID' => $id,
                             'company' => $customerInvoiceDirect->companySystemID,
