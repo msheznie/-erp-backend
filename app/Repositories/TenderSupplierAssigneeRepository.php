@@ -41,7 +41,7 @@ class TenderSupplierAssigneeRepository extends BaseRepository
 
     public function deleteAllAssignedSuppliers($input) {
 
-        $data = TenderSupplierAssignee::where('tender_master_id',$input['tenderId'])->where('company_id',$input['companySystemId'])->where('mail_sent',0)->whereNotIn('supplier_assigned_id', $input['removedSupplierAssignedIds'])->delete();
+        $data = TenderSupplierAssignee::where('tender_master_id',$input['tenderId'])->where('company_id',$input['companySystemId'])->where('mail_sent',0)->whereNotIn('supplier_assigned_id', $input['removedSupplierAssignedIds'])->delete(); 
 
         if($data) 
             return true;
