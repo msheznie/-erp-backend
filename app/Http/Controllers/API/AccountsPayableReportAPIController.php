@@ -1819,7 +1819,35 @@ class AccountsPayableReportAPIController extends AppBaseController
                 LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUERY.documentRptCurrencyID
                  LEFT JOIN companymaster ON companymaster.companySystemID = MAINQUERY.companySystemID
                  GROUP BY MAINQUERY.supplierCodeSystem, MAINQUERY.chartOfAccountSystemID ) as finalAgingDetail ORDER BY documentDate,suppliername';
+
         return \DB::select($query);
+    }
+    public function exchangeGainLoss($results, $currency) {
+
+        foreach ($results as $index => $result){
+            $exchangeGainLossAccount = SystemGlCodeScenarioDetail::getGlByScenario($result->companySystemID, $result->documentSystemID , 14);
+            $chartOfAccount = GeneralLedger::where('documentSystemCode', $result->documentSystemCode)->where('chartOfAccountSystemID', $exchangeGainLossAccount)->where('companySystemID', $result->companySystemID)->where('documentType', NULL)->where('matchDocumentMasterAutoID', "!=", NULL)->first();
+            if(!empty($chartOfAccount)) {
+                if ($currency == 1) {
+                    $result->exchangeGL = $chartOfAccount->documentTransAmount;
+                } else if ($currency == 2) {
+                    $result->exchangeGL = $chartOfAccount->documentLocalAmount;
+                } else {
+                    $result->exchangeGL = $chartOfAccount->documentRptAmount;
+                }
+            }
+            else {
+                $result->exchangeGL = 0;
+            }
+
+            $dif = $result->balanceAmount - round($result->exchangeGL,2);
+
+            if ($dif == 0) {
+                unset($results[$index]);
+            }
+        }
+
+        return $results;
     }
 
     function getSupplierStatementQRY($request)
@@ -2119,31 +2147,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                             LEFT JOIN currencymaster as localCurrencyDet ON localCurrencyDet.currencyID=MAINQUERY.documentLocalCurrencyID
                             LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUERY.documentRptCurrencyID) as finalAgingDetail WHERE ' . $whereQry . ' <> 0 ORDER BY ' . $filterOrderBy . ' ASC;');
 
-
-        foreach ($results as $index => $result){
-            $exchangeGainLossAccount = SystemGlCodeScenarioDetail::getGlByScenario($result->companySystemID, $result->documentSystemID , 14);
-            $chartOfAccount = GeneralLedger::where('documentSystemCode', $result->documentSystemCode)->where('chartOfAccountSystemID', $exchangeGainLossAccount)->where('companySystemID', $result->companySystemID)->where('documentType', NULL)->where('matchDocumentMasterAutoID', "!=", NULL)->first();
-            if(!empty($chartOfAccount)) {
-               if ($currency == 1) {
-                   $result->exchangeGL = $chartOfAccount->documentTransAmount;
-               } else if ($currency == 2) {
-                   $result->exchangeGL = $chartOfAccount->documentLocalAmount;
-               } else {
-                   $result->exchangeGL = $chartOfAccount->documentRptAmount;
-               }
-            }
-            else {
-               $result->exchangeGL = 0;
-            }
-
-            $dif = $result->balanceAmount - round($result->exchangeGL,2);
-
-            if ($dif == 0) {
-                unset($results[$index]);
-            }
-        }
-
-        return $results;
+        return $this->exchangeGainLoss($results, $currency);
     }
 
     function getPaymentSuppliersByYear($request)
@@ -3215,29 +3219,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                             LEFT JOIN currencymaster as localCurrencyDet ON localCurrencyDet.currencyID=MAINQUERY.documentLocalCurrencyID
                             LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUERY.documentRptCurrencyID) as finalAgingDetail WHERE ' . $whereQry . ' <> 0 ORDER BY documentDate ASC) as grandFinal;');
 
+        $output = $this->exchangeGainLoss($output, $currency);
 
-        foreach ($output as $index => $result){
-            $exchangeGainLossAccount = SystemGlCodeScenarioDetail::getGlByScenario($result->companySystemID, $result->documentSystemID , 14);
-            $chartOfAccount = GeneralLedger::where('documentSystemCode', $result->documentSystemCode)->where('chartOfAccountSystemID', $exchangeGainLossAccount)->where('companySystemID', $result->companySystemID)->where('documentType', NULL)->where('matchDocumentMasterAutoID', "!=", NULL)->first();
-            if(!empty($chartOfAccount)) {
-                if ($currency == 1) {
-                    $result->exchangeGL = $chartOfAccount->documentTransAmount;
-                } else if ($currency == 2) {
-                    $result->exchangeGL = $chartOfAccount->documentLocalAmount;
-                } else {
-                    $result->exchangeGL = $chartOfAccount->documentRptAmount;
-                }
-            }
-            else {
-                $result->exchangeGL = 0;
-            }
-
-            $dif = $result->balanceAmount - round($result->exchangeGL,2);
-
-            if ($dif == 0) {
-                unset($output[$index]);
-            }
-        }
 
         return ['data' => $output, 'aging' => $aging];
     }
@@ -3579,28 +3562,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                             LEFT JOIN currencymaster as localCurrencyDet ON localCurrencyDet.currencyID=MAINQUERY.documentLocalCurrencyID
                             LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUERY.documentRptCurrencyID) as finalAgingDetail WHERE ' . $whereQry . ' <> 0 ORDER BY documentDate ASC) as grandFinal GROUP BY supplierCodeSystem,companyID, chartOfAccountSystemID ORDER BY suppliername;');
 
-        foreach ($output as $index => $result){
-            $exchangeGainLossAccount = SystemGlCodeScenarioDetail::getGlByScenario($result->companySystemID, $result->documentSystemID , 14);
-            $chartOfAccount = GeneralLedger::where('documentSystemCode', $result->documentSystemCode)->where('chartOfAccountSystemID', $exchangeGainLossAccount)->where('companySystemID', $result->companySystemID)->where('documentType', NULL)->where('matchDocumentMasterAutoID', "!=", NULL)->first();
-            if(!empty($chartOfAccount)) {
-                if ($currency == 1) {
-                    $result->exchangeGL = $chartOfAccount->documentTransAmount;
-                } else if ($currency == 2) {
-                    $result->exchangeGL = $chartOfAccount->documentLocalAmount;
-                } else {
-                    $result->exchangeGL = $chartOfAccount->documentRptAmount;
-                }
-            }
-            else {
-                $result->exchangeGL = 0;
-            }
-
-            $dif = $result->balanceAmount - round($result->exchangeGL,2);
-
-            if ($dif == 0) {
-                unset($output[$index]);
-            }
-        }
+        $output = $this->exchangeGainLoss($output, $currency);
 
         return ['data' => $output, 'aging' => $aging];
     }
@@ -3933,28 +3895,9 @@ class AccountsPayableReportAPIController extends AppBaseController
                             LEFT JOIN currencymaster as transCurrencyDet ON transCurrencyDet.currencyID=MAINQUERY.documentTransCurrencyID
                             LEFT JOIN currencymaster as localCurrencyDet ON localCurrencyDet.currencyID=MAINQUERY.documentLocalCurrencyID
                             LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUERY.documentRptCurrencyID) as finalAgingDetail WHERE ' . $whereQry . ' > 0 ORDER BY documentDate ASC) as grandFinal;');
-        foreach ($output as $index => $result){
-            $exchangeGainLossAccount = SystemGlCodeScenarioDetail::getGlByScenario($result->companySystemID, $result->documentSystemID , 14);
-            $chartOfAccount = GeneralLedger::where('documentSystemCode', $result->documentSystemCode)->where('chartOfAccountSystemID', $exchangeGainLossAccount)->where('companySystemID', $result->companySystemID)->where('documentType', NULL)->where('matchDocumentMasterAutoID', "!=", NULL)->first();
-            if(!empty($chartOfAccount)) {
-                if ($currency == 1) {
-                    $result->exchangeGL = $chartOfAccount->documentTransAmount;
-                } else if ($currency == 2) {
-                    $result->exchangeGL = $chartOfAccount->documentLocalAmount;
-                } else {
-                    $result->exchangeGL = $chartOfAccount->documentRptAmount;
-                }
-            }
-            else {
-                $result->exchangeGL = 0;
-            }
 
-            $dif = $result->balanceAmount - round($result->exchangeGL,2);
+        $output = $this->exchangeGainLoss($output, $currency);
 
-            if ($dif == 0) {
-                unset($output[$index]);
-            }
-        }
         return ['data' => $output, 'aging' => $aging];
     }
 
@@ -4290,28 +4233,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                             LEFT JOIN currencymaster as localCurrencyDet ON localCurrencyDet.currencyID=MAINQUERY.documentLocalCurrencyID
                             LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUERY.documentRptCurrencyID) as finalAgingDetail WHERE ' . $whereQry . ' > 0 ORDER BY documentDate ASC) as grandFinal GROUP BY supplierCodeSystem,companyID, chartOfAccountSystemID ORDER BY suppliername;');
 
-        foreach ($output as $index => $result){
-            $exchangeGainLossAccount = SystemGlCodeScenarioDetail::getGlByScenario($result->companySystemID, $result->documentSystemID , 14);
-            $chartOfAccount = GeneralLedger::where('documentSystemCode', $result->documentSystemCode)->where('chartOfAccountSystemID', $exchangeGainLossAccount)->where('companySystemID', $result->companySystemID)->where('documentType', NULL)->where('matchDocumentMasterAutoID', "!=", NULL)->first();
-            if(!empty($chartOfAccount)) {
-                if ($currency == 1) {
-                    $result->exchangeGL = $chartOfAccount->documentTransAmount;
-                } else if ($currency == 2) {
-                    $result->exchangeGL = $chartOfAccount->documentLocalAmount;
-                } else {
-                    $result->exchangeGL = $chartOfAccount->documentRptAmount;
-                }
-            }
-            else {
-                $result->exchangeGL = 0;
-            }
+        $output = $this->exchangeGainLoss($output, $currency);
 
-            $dif = $result->balanceAmount - round($result->exchangeGL,2);
-
-            if ($dif == 0) {
-                unset($output[$index]);
-            }
-        }
         return ['data' => $output, 'aging' => $aging];
     }
 
