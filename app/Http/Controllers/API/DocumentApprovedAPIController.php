@@ -2476,14 +2476,16 @@ FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID
 	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID
-	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID
+	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
 	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
 	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
 	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
+	INNER JOIN itemmaster ON  erp_documentapproved.documentSystemCode = itemmaster.itemCodeSystem AND erp_documentapproved.rollLevelOrder = RollLevForApp_curr
 WHERE
 	erp_documentapproved.approvedYN = 0
 	AND erp_documentapproved.rejectedYN = 0
 	AND erp_documentapproved.approvalGroupID > 0
+	AND itemmaster.itemApprovedYN = 0
     $filter
 	AND erp_documentapproved.documentSystemID IN ( 57 )
 	AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0
@@ -2525,12 +2527,14 @@ FROM
 	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
 	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
 	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
-	INNER JOIN customermaster ON erp_documentapproved.documentSystemCode = customerCodeSystem
+	INNER JOIN customermaster ON erp_documentapproved.documentSystemCode = customerCodeSystem AND erp_documentapproved.rollLevelOrder = RollLevForApp_curr
 
 WHERE
 	erp_documentapproved.approvedYN = 0
 	AND erp_documentapproved.rejectedYN = 0
 	AND erp_documentapproved.approvalGroupID > 0
+	AND customermaster.approvedYN = 0
+	AND customermaster.confirmedYN = 1
     $filter
 	AND erp_documentapproved.documentSystemID IN ( 58 )
 	AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0
@@ -2626,11 +2630,11 @@ FROM
 		erp_documentapproved.approvedYN = 0 
 		AND erp_documentapproved.rejectedYN = 0 
 		AND suppliermaster.approvedYN = 0 
+		$filter
 		AND suppliermaster.supplierConfirmedYN = 1
 		AND erp_documentapproved.approvalGroupID > 0 
 		AND erp_documentapproved.documentSystemID IN ( 56 ) 
-		AND employeesdepartments.isActive = 1 
-	AND employeesdepartments.removedYN = 0  
+		AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0
 	) AS pendingSupplierMasterApprovals
 	)t 
 	INNER JOIN companymaster ON t.companySystemID = companymaster.companySystemID 
