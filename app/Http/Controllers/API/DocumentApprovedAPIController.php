@@ -2626,6 +2626,7 @@ FROM
 		erp_documentapproved.approvedYN = 0 
 		AND erp_documentapproved.rejectedYN = 0 
 		AND suppliermaster.approvedYN = 0 
+		$filter
 		AND suppliermaster.supplierConfirmedYN = 1
 		AND erp_documentapproved.approvalGroupID > 0 
 		AND erp_documentapproved.documentSystemID IN ( 56 ) 
