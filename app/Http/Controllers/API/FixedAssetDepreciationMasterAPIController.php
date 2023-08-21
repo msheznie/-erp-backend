@@ -157,7 +157,21 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
             {
 
                 $doc_date = CompanyFinancePeriod::where('companyFinancePeriodID',$input['companyFinancePeriodID'])->select('dateTo')->first();
+                $to_date = $doc_date->dateTo;
+                $depeciatedAssets = FixedAssetMaster::whereHas('depperiod_by',function($query)use ($to_date){
+                    $query->where('depForFYperiodEndDate','=',$to_date);
+                 })
+                ->WhereDate('dateDEP','<',$to_date)
+                ->ofCompany([$input['companySystemID']])
+                ->assetType(1)
+                ->where('approved',-1)
+                ->count();
 
+                if(($depeciatedAssets) > 0 && $input['depAssets'])
+                {
+                    return $this->sendError('Depreciation will be processed only for the assets for which no depreciation has been recorded for the selected year and month', 300,['type' => 'depreciatedAssets']);
+                }   
+                
                 $disposelMaster = AssetDisposalMaster::selectRaw("erp_fa_asset_disposalmaster.disposalDocumentCode,erp_fa_asset_master.faID,erp_fa_asset_disposalmaster.assetdisposalMasterAutoID,erp_fa_asset_disposaldetail.faCode")
                                 ->join('erp_fa_asset_disposaldetail', 'erp_fa_asset_disposaldetail.assetdisposalMasterAutoID', '=', 'erp_fa_asset_disposalmaster.assetdisposalMasterAutoID')
                                 ->join('erp_fa_asset_master', 'erp_fa_asset_master.faID', '=', 'erp_fa_asset_disposaldetail.faID')
