@@ -232,7 +232,7 @@ class SupplierInvoiceTaxLedgerService
                 $ledgerDetailsData['itemCode'] = null;
                 $ledgerDetailsData['itemDescription'] = null;
                 $ledgerDetailsData['VATPercentage'] = $value->VATPercentage;
-                $ledgerDetailsData['taxableAmount'] = $value->netAmount * $value->noQty;
+                $ledgerDetailsData['taxableAmount'] = $value->netAmount;
                 $ledgerDetailsData['VATAmount'] = $value->VATAmount * $value->noQty;
                 $ledgerDetailsData['recoverabilityAmount'] = $value->VATAmount * $value->noQty;
                 $ledgerDetailsData['localER'] = $value->localCurrencyER;
