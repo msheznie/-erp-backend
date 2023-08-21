@@ -826,6 +826,11 @@ class FixedAssetMaster extends Model
         return $this->hasMany('App\Models\FixedAssetDepreciationPeriod', 'faID', 'faID');
     }
 
+    public function depperiod_period()
+    {
+        return $this->hasMany('App\Models\FixedAssetDepreciationPeriod', 'faID', 'faID');
+    }
+
     public function depperiod2_by(){
         return $this->depperiod_by();
     }
