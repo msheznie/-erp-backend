@@ -7,6 +7,7 @@ use App\helper\inventory;
 use App\helper\TaxService;
 use App\Http\Requests\API\CreateDeliveryOrderAPIRequest;
 use App\Http\Requests\API\UpdateDeliveryOrderAPIRequest;
+use App\Models\ChartOfAccount;
 use App\Models\Company;
 use App\Models\PurchaseReturn;
 use App\Models\CompanyDocumentAttachment;
@@ -39,6 +40,7 @@ use App\Models\WarehouseMaster;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\DeliveryOrderRepository;
+use App\Services\ChartOfAccountValidationService;
 use App\Traits\AuditTrial;
 use App\Models\Taxdetail;
 use Carbon\Carbon;
@@ -662,6 +664,13 @@ class DeliveryOrderAPIController extends AppBaseController
 
             if($taxSum  > 0 && empty(TaxService::getOutputVATTransferGLAccount($deliveryOrder->companySystemID))){
                 return $this->sendError('Cannot confirm. Output VAT GL Account not configured.', 500);
+            }
+
+            $object = new ChartOfAccountValidationService();
+            $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $id, $input["companySystemID"]);
+
+            if (isset($result) && !empty($result["accountCodes"])) {
+                return $this->sendError($result["errorMsg"]);
             }
 
             $params = array('autoID' => $id,

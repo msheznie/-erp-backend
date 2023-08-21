@@ -1356,12 +1356,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('inter_company_stock_transfers', 'InterCompanyStockTransferAPIController');
             Route::resource('supplier_invoice_direct_items', 'SupplierInvoiceDirectItemAPIController');
             Route::post('deleteAllSIDirectItemDetail', 'SupplierInvoiceDirectItemAPIController@deleteAllSIDirectItemDetail');
-
-            Route::post('getPricingScheduleList', 'PricingScheduleMasterAPIController@getPricingScheduleList');
-            Route::post('getPricingScheduleDropDowns', 'PricingScheduleMasterAPIController@getPricingScheduleDropDowns');
-            Route::post('addPricingSchedule', 'PricingScheduleMasterAPIController@addPricingSchedule');
-            Route::post('getPricingScheduleMaster', 'PricingScheduleMasterAPIController@getPricingScheduleMaster');
-            Route::post('deletePricingSchedule', 'PricingScheduleMasterAPIController@deletePricingSchedule');
+         
             Route::resource('employee_ledgers', 'EmployeeLedgerAPIController');
             Route::resource('srp_erp_pay_shift_employees', 'SrpErpPayShiftEmployeesAPIController');
 
@@ -1379,6 +1374,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('removeCriteriaConfig', 'EvaluationCriteriaScoreConfigAPIController@removeCriteriaConfig');
             Route::post('addEvaluationCriteriaConfig', 'EvaluationCriteriaScoreConfigAPIController@addEvaluationCriteriaConfig');
             Route::post('updateCriteriaScore', 'EvaluationCriteriaScoreConfigAPIController@updateCriteriaScore');
+          
+            Route::resource('expense_employee_allocations', 'ExpenseEmployeeAllocationAPIController');
+            Route::post('getAllocatedEmployeesForExpense', 'ExpenseEmployeeAllocationAPIController@getAllocatedEmployeesForExpense');
 
             Route::resource('job_error_logs', 'JobErrorLogAPIController');
             Route::resource('barcode_configurations', 'BarcodeConfigurationAPIController');

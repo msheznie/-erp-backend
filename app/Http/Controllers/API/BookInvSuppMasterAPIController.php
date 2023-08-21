@@ -37,6 +37,8 @@ use App\Http\Requests\API\CreateBookInvSuppMasterAPIRequest;
 use App\Http\Requests\API\UpdateBookInvSuppMasterAPIRequest;
 use App\Models\AccountsPayableLedger;
 use App\Models\BudgetConsumedData;
+use App\Models\ChartOfAccount;
+use App\Models\CustomerMaster;
 use App\Models\EmployeeLedger;
 use App\Models\SupplierInvoiceDirectItem;
 use App\Models\BookInvSuppDet;
@@ -86,6 +88,7 @@ use App\Models\ExpenseAssetAllocation;
 use App\Repositories\BookInvSuppMasterRepository;
 use App\Repositories\SupplierInvoiceItemDetailRepository;
 use App\Repositories\ExpenseAssetAllocationRepository;
+use App\Services\ChartOfAccountValidationService;
 use App\Traits\AuditTrial;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -1311,7 +1314,14 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 $this->supplierInvoiceItemDetailRepository->updateSupplierInvoiceItemDetail($id);
             }
 
+            if ($input['documentType'] == 1 || $input['documentType'] == 3 || $input['documentType'] == 4) {
+                $object = new ChartOfAccountValidationService();
+                $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $id, $input["companySystemID"]);
 
+                if (isset($result) && !empty($result["accountCodes"])) {
+                    return $this->sendError($result["errorMsg"]);
+                }
+            }
 
             $params = array(
                 'autoID' => $id,
@@ -1322,6 +1332,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 'amount' => $input['bookingAmountTrans']
             );
             $confirm = \Helper::confirmDocument($params);
+
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"]);
             }

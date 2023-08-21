@@ -106,6 +106,7 @@ class ERPAssetTransferDetail extends Model
         'created_user_id',
         'from_emp_id',
         'to_emp_id',
+        'departmentSystemID'
     ];
 
     /**
@@ -127,6 +128,7 @@ class ERPAssetTransferDetail extends Model
         'created_user_id' => 'integer',
         'from_emp_id' => 'integer',
         'to_emp_id' => 'integer',
+        'departmentSystemID' => 'integer'
     ];
 
     /**
@@ -182,5 +184,10 @@ class ERPAssetTransferDetail extends Model
     public function toEmployee()
     {
         return $this->hasOne(Employee::class,'employeeSystemID','to_emp_id');
+    }
+
+    public function department()
+    {
+        return $this->hasOne(DepartmentMaster::class,'departmentSystemID','departmentSystemID');
     }
 }

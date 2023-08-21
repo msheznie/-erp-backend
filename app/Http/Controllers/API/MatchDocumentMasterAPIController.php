@@ -3307,6 +3307,12 @@ ORDER BY
             $masterData->matchingConfirmedDate = null;
             $masterData->save();
 
+            $paySupplierInvoice = PaySupplierInvoiceMaster::find($masterData->PayMasterAutoId);
+            if (!empty($paySupplierInvoice)) {
+                $paySupplierInvoice->matchInvoice = 0;
+                $paySupplierInvoice->save();
+            }
+
             if($masterData->documentSystemID == 4 || $masterData->documentSystemID == 15){
                 GeneralLedger::where('documentSystemID',$masterData->documentSystemID)
                                ->where('documentSystemCode',$masterData->PayMasterAutoId)

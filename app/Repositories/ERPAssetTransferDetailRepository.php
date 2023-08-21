@@ -31,6 +31,7 @@ class ERPAssetTransferDetailRepository extends BaseRepository
         'created_user_id',
         'from_emp_id',
         'to_emp_id',
+        'departmentSystemID'
     ];
 
     /**

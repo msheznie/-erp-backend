@@ -33,13 +33,16 @@ use App\Jobs\WarehouseItemUpdate;
 use App\Jobs\CreateConsoleJV;
 use App\Models;
 use App\Models\AssetVerificationDetail;
+use App\Models\ChartOfAccount;
 use App\Models\DeliveryOrderDetail;
 use App\Models\InterCompanyAssetDisposal;
 use App\Models\FixedAssetMaster;
 use App\Models\Alert;
+use App\Models\ERPAssetTransferDetail;
 use App\Models\Company;
 use App\Models\CompanyPolicyMaster;
 use App\Models\CustomerMaster;
+use App\Models\CustomerInvoiceDirect;
 use App\Models\CustomerReceivePayment;
 use App\Models\CustomerReceivePaymentDetail;
 use App\Models\DocumentRestrictionAssign;
@@ -65,6 +68,7 @@ use App\Models\User;
 use App\Models\DebitNote;
 use App\Models\PaySupplierInvoiceMaster;
 use App\Models\SupplierRegistrationLink;
+use App\Services\ChartOfAccountValidationService;
 use App\Traits\ApproveRejectTransaction;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -102,6 +106,11 @@ use Illuminate\Support\Facades\Mail;
 use App\Mail\EmailForQueuing;
 use App\Models\DocumentModifyRequest;
 use App\helper\TenderDetails;
+
+use App\Models\DirectInvoiceDetails;
+use App\Models\BookInvSuppDet;
+use App\Models\SupplierInvoiceDirectItem;
+use App\Models\CurrencyMaster;
 
 class Helper
 {
@@ -2403,7 +2412,7 @@ class Helper
                             return ['success' => false, 'message' => $sendEmail["message"]];
                         }
 
-                        $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, 1);
+                        $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, 1, $dataBase);
 
                         $webPushData = [
                             'title' => $pushNotificationMessage,
@@ -4387,6 +4396,13 @@ class Helper
                                     $masterModel = ['supplierPrimaryCode' => $input["supplierPrimaryCode"], 'documentSystemID' => $input["documentSystemID"], 'documentID' => $grvMaster->documentID, 'documentSystemCode' => $input["documentSystemCode"], 'documentCode' => $grvMaster->grvPrimaryCode, 'documentDate' => $grvMaster->createdDateTime, 'documentNarration' => $grvMaster->grvNarration, 'supplierID' => $grvMaster->supplierID, 'supplierCode' => $grvMaster->supplierPrimaryCode, 'supplierName' => $grvMaster->supplierName, 'confirmedDate' => $grvMaster->grvConfirmedDate, 'confirmedBy' => $grvMaster->grvConfirmedByEmpSystemID, 'approvedDate' => $grvMaster->approvedDate, 'lastApprovedBy' => $empInfo->employeeSystemID, 'transactionCurrency' => $grvMaster->supplierTransactionCurrencyID, 'amount' => $grvMaster->grvTotalSupplierTransactionCurrency];
                                     CreateSupplierTransactions::dispatch($masterModel);
                                 }
+
+                                $object = new ChartOfAccountValidationService();
+                                $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $input["documentSystemCode"], $input["companySystemID"]);
+
+                                if (isset($result) && !empty($result["accountCodes"])) {
+                                    return ['success' => false, 'message' => $result["errorMsg"]];
+                                }
                             }
 
 
@@ -4401,6 +4417,15 @@ class Helper
                                     CreateSupplierTransactions::dispatch($masterModel);
 
                                 }
+
+                                if ($supplierInvMaster->documentType == 1 || $supplierInvMaster->documentType == 3 || $supplierInvMaster->documentType == 4) {
+                                    $object = new ChartOfAccountValidationService();
+                                    $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $input["documentSystemCode"], $input["companySystemID"]);
+
+                                    if (isset($result) && !empty($result["accountCodes"])) {
+                                        return ['success' => false, 'message' => $result["errorMsg"]];
+                                    }
+                                }
                             }
 
 
@@ -4413,6 +4438,14 @@ class Helper
                                     $masterModel = ['supplierPrimaryCode' => $input["supplierPrimaryCode"], 'documentSystemID' => $input["documentSystemID"], 'documentID' => $debitNoteMaster->documentID, 'documentSystemCode' => $input["documentSystemCode"], 'documentCode' => $debitNoteMaster->debitNoteCode, 'documentDate' => $debitNoteMaster->createdDateAndTime, 'documentNarration' => $debitNoteMaster->comments, 'supplierID' => $debitNoteMaster->supplierID, 'supplierCode' => $supplierMaster->primarySupplierCode, 'supplierName' => $supplierMaster->supplierName, 'confirmedDate' => $debitNoteMaster->confirmedDate, 'confirmedBy' => $debitNoteMaster->confirmedByEmpSystemID, 'approvedDate' => $debitNoteMaster->approvedDate, 'lastApprovedBy' => $empInfo->employeeSystemID, 'transactionCurrency' => $debitNoteMaster->supplierTransactionCurrencyID, 'amount' => $debitNoteMaster->debitAmountTrans];
                                     CreateSupplierTransactions::dispatch($masterModel);
                                 }
+
+                                $object = new ChartOfAccountValidationService();
+                                $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $input["documentSystemCode"], $input["companySystemID"]);
+
+                                if (isset($result) && !empty($result["accountCodes"])) {
+                                    return ['success' => false, 'message' => $result["errorMsg"]];
+                                }
+
                             }
 
                             if($input["documentSystemID"] == 4){
@@ -4424,9 +4457,54 @@ class Helper
                                     $masterModel = ['supplierPrimaryCode' => $input["supplierPrimaryCode"], 'documentSystemID' => $input["documentSystemID"], 'documentID' => $paySupplierMaster->documentID, 'documentSystemCode' => $input["documentSystemCode"], 'documentCode' => $paySupplierMaster->BPVcode, 'documentDate' => $paySupplierMaster->createdDateTime, 'documentNarration' => $paySupplierMaster->BPVNarration, 'supplierID' => $paySupplierMaster->BPVsupplierID, 'supplierCode' => $supplierMaster->primarySupplierCode, 'supplierName' => $supplierMaster->supplierName, 'confirmedDate' => $paySupplierMaster->confirmedDate, 'confirmedBy' => $paySupplierMaster->confirmedByEmpSystemID, 'approvedDate' => $paySupplierMaster->approvedDate, 'lastApprovedBy' => $empInfo->employeeSystemID, 'transactionCurrency' => $paySupplierMaster->supplierTransCurrencyID, 'amount' => $paySupplierMaster->suppAmountDocTotal];
                                     CreateSupplierTransactions::dispatch($masterModel);
                                 }
+
+                                if ($paySupplierMaster->invoiceType == 3) {
+                                    $object = new ChartOfAccountValidationService();
+                                    $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $input["documentSystemCode"], $input["companySystemID"]);
+
+                                    if (isset($result) && !empty($result["accountCodes"])) {
+                                        return ['success' => false, 'message' => $result["errorMsg"]];
+                                    }
+                                }
                             }
 
-                            // create monthly deduction
+                            if($input["documentSystemID"] == 71) {
+
+                                $object = new ChartOfAccountValidationService();
+                                $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $input["documentSystemCode"], $input["companySystemID"]);
+
+                                if (isset($result) && !empty($result["accountCodes"])) {
+                                    return ['success' => false, 'message' => $result["errorMsg"]];
+                                }
+                            }
+
+                            if($input["documentSystemID"] == 20) {
+
+                                $customerInvoiceDirect = CustomerInvoiceDirect::find($input["documentSystemCode"]);
+                                if ($customerInvoiceDirect->isPerforma == 0 || $customerInvoiceDirect->isPerforma == 2) {
+                                    $object = new ChartOfAccountValidationService();
+                                    $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $input["documentSystemCode"], $input["companySystemID"]);
+
+                                    if (isset($result) && !empty($result["accountCodes"])) {
+                                        return ['success' => false, 'message' => $result["errorMsg"]];
+                                    }
+                                }
+                            }
+
+                            if($input["documentSystemID"] == 21) {
+
+                                $customerReceivePayment  = CustomerReceivePayment::find($input["documentSystemCode"]);
+                                if ($customerReceivePayment->documentType == 14) {
+                                    $object = new ChartOfAccountValidationService();
+                                    $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $input["documentSystemCode"], $input["companySystemID"]);
+
+                                    if (isset($result) && !empty($result["accountCodes"])) {
+                                        return ['success' => false, 'message' => $result["errorMsg"]];
+                                    }
+                                }
+                            }
+
+                                // create monthly deduction
                             if (
                                 $input["documentSystemID"] == 4 &&
                                 $input['createMonthlyDeduction'] == 1 &&
@@ -4478,6 +4556,7 @@ class Helper
                                     return ['success' => false, 'message' => 'GL entries are already passed for this document'];
                                 }
                             }
+                           
 
                             if ($input["documentSystemID"] == 103) { // Asset Transfer
                                 $generatePR = AssetTransferService::generatePRForAssetTransfer($input);
@@ -4485,7 +4564,46 @@ class Helper
                                     DB::rollback();
                                     return ['success' => false, 'message' => $generatePR['message']];
                                 }
+
                             }
+
+                            if ($input["documentSystemID"] == 103) {
+                                $assetTransferDetailsItems = ERPAssetTransferDetail::where('erp_fa_fa_asset_transfer_id',$input['id'])->get();
+                                if(isset($assetTransferDetailsItems)) {
+                                    foreach($assetTransferDetailsItems as $assetTransferDetailItem) {
+                                        $fxedAsset = FixedAssetMaster::where('faID',$assetTransferDetailItem->fa_master_id)->first();
+                                        if($fxedAsset->selectedForDisposal) {
+                                            DB::rollback();
+                                            return ['success' => false, 'message' => 'The selected assets '.$fxedAsset->faCode.' cannot be transferred, as it is already selected for disposal'];
+                                        }
+
+                                        if($fxedAsset->DIPOSED) {
+                                            DB::rollback();
+                                            return ['success' => false, 'message' => 'The selected assets '.$fxedAsset->faCode.' cannot be transferred, as it is already disposed'];
+                                        }
+
+                                        if($input['type'] == 2) {
+                                            $fxedAsset->LOCATION = $assetTransferDetailItem->to_location_id;
+                                        }
+        
+                                        if($input['type'] == 3) {
+                                                $fxedAsset->empID = $assetTransferDetailItem->to_emp_id;
+                                        }
+                                        
+                                        if($input['type'] == 4 && isset($assetTransferDetailItem->department)) {
+                                            $fxedAsset->departmentSystemID = $assetTransferDetailItem->department->departmentSystemID;
+                                            $fxedAsset->departmentID = $assetTransferDetailItem->department->DepartmentID;
+                                        }
+
+                                        $fxedAsset->save();
+
+                                    }
+                                }
+
+
+
+                            }
+
 
                             $finalupdate = $namespacedModel::find($input["documentSystemCode"])->update([$docInforArr["approvedColumnName"] => $docInforArr["approveValue"], $docInforArr["approvedBy"] => $empInfo->empID, $docInforArr["approvedBySystemID"] => $empInfo->employeeSystemID, $docInforArr["approvedDate"] => now()]);
 
@@ -4781,9 +4899,7 @@ class Helper
                             }
 
                             if ($input["documentSystemID"] == 22) {
-
-                               
-                                $acc_d = CreateAccumulatedDepreciation::dispatch($input["faID"]);
+                                $acc_d = CreateAccumulatedDepreciation::dispatch($input["documentSystemCode"]);
                             }
                             
                         
@@ -5053,7 +5169,7 @@ class Helper
                             return ['success' => false, 'message' => $sendEmail["message"]];
                         }
 
-                        $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, 1);
+                        $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, 1, $dataBase);
                         
                         $webPushData = [
                             'title' => $pushNotificationMessage,
@@ -8636,4 +8752,58 @@ class Helper
 
         return $array;
     }
+
+    public static function updateSupplierRetentionAmount($bookingSuppMasInvAutoID, $bookInvSuppMaster)
+    { 
+        $directItems = DirectInvoiceDetails::where('directInvoiceAutoID', $bookingSuppMasInvAutoID)
+        ->with(['segment', 'purchase_order'])
+        ->get();
+
+
+        
+        $invDetailItems = BookInvSuppDet::where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID)
+        ->with(['grvmaster', 'pomaster'])
+        ->get();
+
+
+        $supplierItems = SupplierInvoiceDirectItem::where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID)
+        ->with(['unit' => function ($query) {
+        }, 'vat_sub_category'])->get();
+
+        if(count($supplierItems) == 0) {
+            $supplierItems = SupplierInvoiceDirectItem::where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID)
+            ->with(['unit' => function ($query) {
+            }, 'vat_sub_category'])->get();
+        }
+
+         $tot = 0;
+         $vatTot = 0;
+         $totalNet = 0;
+        for ($i = 0; $i < count($directItems); $i++) {
+          $tot += doubleval($directItems[$i]->DIAmount);
+          $vatTot += doubleval($directItems[$i]->VATAmount);
+        }
+
+        for ($i = 0; $i < count($invDetailItems); $i++) {
+          $tot += doubleval($invDetailItems[$i]->supplierInvoAmount);
+        }
+    
+        for ($i = 0; $i < count($supplierItems); $i++) {
+          $tot += doubleval($supplierItems[$i]->netAmount);
+          $vatTot += doubleval($supplierItems[$i]->VATAmount) * doubleval($supplierItems[$i]->noQty);
+        }
+
+        $totalNet = $tot + $vatTot;
+        $retentionAmount = $totalNet * $bookInvSuppMaster->retentionPercentage/100;
+        $decimalPlaces = 3;
+        $currency = CurrencyMaster::select('DecimalPlaces')->where('currencyID',$bookInvSuppMaster->localCurrencyID)->first();
+        if ($currency) {
+            $decimalPlaces = $currency->DecimalPlaces;
+        }
+        
+        $retentionAmountToFixed = round($retentionAmount,$decimalPlaces);
+        $bookInvSuppMaster->retentionAmount = $retentionAmountToFixed;
+        $bookInvSuppMaster->save();
+    }
+
 }
