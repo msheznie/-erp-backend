@@ -2467,7 +2467,7 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	'' AS SupplierOrCustomer,
 			0 AS DecimalPlaces ,
 	'' AS DocumentCurrency,
-	0 AS DocumentValue,
+	'' AS DocumentValue,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
@@ -2512,7 +2512,7 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	customermaster.CustomerName AS SupplierOrCustomer,
 			0 AS DecimalPlaces ,
 	'' AS DocumentCurrency,
-	0 AS DocumentValue,
+	'' AS DocumentValue,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
@@ -2559,7 +2559,7 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	'' AS SupplierOrCustomer,
 			0 AS DecimalPlaces ,
 	'' AS DocumentCurrency,
-	0 AS DocumentValue,
+	'' AS DocumentValue,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
@@ -2582,55 +2582,7 @@ WHERE
     $filter
 	AND erp_documentapproved.documentSystemID IN ( 59 )
 	AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0
-	) AS pendingChartOfAccountsApprovals UNION ALL SELECT
-	* 
-FROM
-	(
-	SELECT
-		DATEDIFF( CURDATE(), erp_documentapproved.docConfirmedDate ) AS dueDays,
-		erp_documentapproved.documentApprovedID,
-		erp_documentapproved.approvalLevelID,
-		erp_documentapproved.rollLevelOrder,
-		erp_approvallevel.noOfLevels AS NoOfLevels,
-		erp_documentapproved.companySystemID,
-		erp_documentapproved.companyID,
-		'' AS approval_remarks,
-		erp_documentapproved.documentSystemID,
-		erp_documentapproved.documentID,
-		erp_documentapproved.documentSystemCode,
-		erp_documentapproved.documentCode,
-		'item master' AS narration,
-		erp_documentapproved.docConfirmedDate,
-		erp_documentapproved.approvedDate,
-		employees.empName AS confirmedEmployee,
-		registeredsupplier.supplierName AS SupplierOrCustomer,
-		currencymaster.DecimalPlaces AS DecimalPlaces,
-		currencymaster.CurrencyCode AS DocumentCurrency,
-		0 AS DocumentValue,
-		0 AS amended,
-		employeesdepartments.employeeID,
-		erp_documentapproved.approvedYN,
-		0 AS documentType 
-	FROM
-		erp_documentapproved
-		INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
-		AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
-		AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
-		AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
-		INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
-		INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID 
-		INNER JOIN registeredsupplier ON erp_documentapproved.documentSystemCode = id AND erp_documentapproved.rollLevelOrder = RollLevForApp_curr
-		INNER JOIN currencymaster ON registeredsupplier.currency = currencymaster.currencyID
-	WHERE
-		erp_documentapproved.approvedYN = 0 
-		AND erp_documentapproved.rejectedYN = 0 
-		AND registeredsupplier.approvedYN = 0 
-		AND registeredsupplier.supplierConfirmedYN = 1
-		AND erp_documentapproved.approvalGroupID > 0 
-		AND erp_documentapproved.documentSystemID IN ( 86 ) 
-		AND employeesdepartments.isActive = 1 
-	AND employeesdepartments.removedYN = 0  
-	) AS pendingRegistredSupplierApprovals UNION ALL 
+	) AS pendingChartOfAccountsApprovals UNION ALL 
 	SELECT
 	* 
 FROM
@@ -2655,7 +2607,7 @@ FROM
 		suppliermaster.supplierName AS SupplierOrCustomer,
 		currencymaster.DecimalPlaces AS DecimalPlaces,
 		currencymaster.CurrencyCode AS DocumentCurrency,
-		0 AS DocumentValue,
+		'' AS DocumentValue,
 		0 AS amended,
 		employeesdepartments.employeeID,
 		erp_documentapproved.approvedYN,
