@@ -63,7 +63,15 @@ Route::get('getCustomerByCompany', 'CustomerMasterAPIController@getCustomerByCom
 Route::get('getDirectInvoiceGL', 'ChartOfAccountsAssignedAPIController@getDirectInvoiceGL')->name("Get Direct Invoice GL");
 
 Route::get('getBankAccount', 'PaySupplierInvoiceMasterAPIController@getBankAccount')->name('Get bank account');
-
+Route::post('getBankBalance', 'BankAccountAPIController@getBankBalance')->name('Get bank balance');
 Route::get('getBankAccountsByBankID', 'BankAccountAPIController@getBankAccountsByBankID')->name('Get bank accounts by bank id');
 
 Route::get('checkPolicyForExchangeRates', 'CommonPoliciesAPIController@checkPolicyForExchangeRates')->name('Check policy for exchange rates');
+
+Route::get('getBudgetConsumptionByDocument', 'BudgetMasterAPIController@getBudgetConsumptionByDocument')->name('Get budget consumption by document');
+
+// Matching
+Route::get('getMatchDocumentMasterRecord', 'MatchDocumentMasterAPIController@getMatchDocumentMasterRecord')->name('Get match document master record');
+
+Route::resource('expense_employee_allocations', 'ExpenseEmployeeAllocationAPIController');
+Route::post('getAllocatedEmployeesForExpense', 'ExpenseEmployeeAllocationAPIController@getAllocatedEmployeesForExpense')->name('Get allocated employees for expense');
