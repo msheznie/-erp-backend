@@ -2481,11 +2481,14 @@ FROM
 	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
 	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
 	INNER JOIN itemmaster ON  erp_documentapproved.documentSystemCode = itemmaster.itemCodeSystem AND erp_documentapproved.rollLevelOrder = RollLevForApp_curr
+	INNER JOIN financeitemcategorymaster ON itemCategoryID = financeCategoryMaster
+	INNER JOIN financeitemcategorysub ON itemCategorySubID = financeCategorySub
+	INNER JOIN units ON UnitID = unit
 WHERE
 	erp_documentapproved.approvedYN = 0
+	AND itemmaster.itemApprovedYN = 0
 	AND erp_documentapproved.rejectedYN = 0
 	AND erp_documentapproved.approvalGroupID > 0
-	AND itemmaster.itemApprovedYN = 0
     $filter
 	AND erp_documentapproved.documentSystemID IN ( 57 )
 	AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0
