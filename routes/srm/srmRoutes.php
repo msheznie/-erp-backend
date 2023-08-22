@@ -74,11 +74,11 @@ Route::post('mainWorksItemsUpload', 'TenderMainWorksAPIController@mainWorksItems
 Route::post('deleteMainWorks', 'TenderMainWorksAPIController@deleteMainWorks');
 Route::post('updateWorkOrderDescription', 'TenderMainWorksAPIController@updateWorkOrderDescription')->name("Update work order description");
 
-Route::post('getFaqFormData', 'TenderMasterAPIController@getFaqFormData');
-Route::post('createFaq', 'TenderFaqAPIController@createFaq');
-Route::post('getFaqList', 'TenderFaqAPIController@getFaqList');
-Route::post('getFaq', 'TenderFaqAPIController@getFaq');
-Route::post('deleteFaq', 'TenderFaqAPIController@deleteFaq');
+Route::post('getFaqFormData', 'TenderMasterAPIController@getFaqFormData')->name("Get FAQ form data");
+Route::post('createFaq', 'TenderFaqAPIController@createFaq')->name("Create FAQ");
+Route::post('getFaqList', 'TenderFaqAPIController@getFaqList')->name("Get FAQ list");
+Route::post('getFaq', 'TenderFaqAPIController@getFaq')->name("Get FAQ");
+Route::post('deleteFaq', 'TenderFaqAPIController@deleteFaq')->name("Delete FAQ");
 
 Route::post('loadTenderBoqItems', 'TenderBoqItemsAPIController@loadTenderBoqItems')->name("Load tender boq items");
 Route::post('addTenderBoqItems', 'TenderBoqItemsAPIController@addTenderBoqItems')->name("Add tender boq items");
