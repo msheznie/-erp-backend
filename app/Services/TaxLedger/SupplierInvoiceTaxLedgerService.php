@@ -210,9 +210,11 @@ class SupplierInvoiceTaxLedgerService
                 $ledgerDetailsData['documentDate'] = $masterDocumentDate;
                 $ledgerDetailsData['postedDate'] = date('Y-m-d H:i:s');
                 $ledgerDetailsData['documentNumber'] = $masterData->bookingInvCode;
-                $ledgerDetailsData['chartOfAccountSystemID'] = $value->financeGLcodebBSSystemID;
 
-                $chartOfAccountData = ChartOfAccount::find($value->financeGLcodebBSSystemID);
+                $chartOfAccountSystemID = isset($taxLedgerData['inputVATGlAccountID']) ? $taxLedgerData['inputVATGlAccountID'] : null;
+                $ledgerDetailsData['chartOfAccountSystemID'] = $chartOfAccountSystemID;
+
+                $chartOfAccountData = ChartOfAccount::find($chartOfAccountSystemID);
 
                 if ($chartOfAccountData) {
                     $ledgerDetailsData['accountCode'] = $chartOfAccountData->AccountCode;
