@@ -132,7 +132,7 @@ class ChartOfAccountValidationService
         }
         $accountCodesString = implode(',', $accountCodes);
 
-        $error = "The Chart of Account/s  $accountCodesString  inactive. Update or change the linked Chart of Account to proceed";
+        $error = "The Chart of Account/s  $accountCodesString are inactive. Update or change the linked Chart of Account to proceed";
 
         return ['accountCodes' => $accountCodes, 'errorMsg' => $error];
     }
