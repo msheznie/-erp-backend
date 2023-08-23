@@ -13,6 +13,9 @@
 
 use Illuminate\Support\Facades\Route;
 
+Route::get('endPointTaxLedger', 'TaxLedgerAPIController@endPointTaxLedger');
+
+
 Route::get('getConfigurationInfo', 'ConfigurationAPIController@getConfigurationInfo');
 
 

@@ -4,8 +4,13 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateTaxLedgerAPIRequest;
 use App\Http\Requests\API\UpdateTaxLedgerAPIRequest;
+use App\Models\BookInvSuppMaster;
 use App\Models\TaxLedger;
+use App\helper\CommonJobService;
+use App\Models\TaxLedgerDetail;
 use App\Repositories\TaxLedgerRepository;
+use App\Services\GeneralLedger\SupplierInvoiceGlService;
+use App\Services\TaxLedgerService;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -277,5 +282,45 @@ class TaxLedgerAPIController extends AppBaseController
         $taxLedger->delete();
 
         return $this->sendSuccess('Tax Ledger deleted successfully');
+    }
+
+
+    public function endPointTaxLedger()
+    {
+
+        $tenants = CommonJobService::tenant_list();
+        if (count($tenants) == 0) {
+            return "tenant list is empty";
+        }
+
+        foreach ($tenants as $tenant) {
+            $tenantDb = $tenant->database;
+
+            CommonJobService::db_switch($tenantDb);
+
+            $documentCodes = BookInvSuppMaster::whereIn('documentType', [3, 4])->where('approved', -1)->pluck('bookingInvCode')->toArray();
+
+            $missingInTaxDetail = TaxLedger::whereIn('documentCode', $documentCodes)
+                ->pluck('documentCode')->toArray();
+
+            $missingInTaxLedger = TaxLedgerDetail::whereIn('documentNumber', $documentCodes)
+                ->pluck('documentNumber')->toArray();
+
+            $missingDocumentCodes = array_diff($documentCodes, array_merge($missingInTaxDetail, $missingInTaxLedger));
+
+            $documents = BookInvSuppMaster::whereIn('bookingInvCode', $missingDocumentCodes)->whereIn('documentType', [3, 4])->where('approved', -1)->get();
+
+            foreach ($documents as $document) {
+
+                $masterModel = ['documentSystemID' => 11, 'autoID' => $document->bookingSuppMasInvAutoID, 'companySystemID' => $document->companySystemID, 'employeeSystemID' => $document->approvedByUserSystemID];
+
+                $result = SupplierInvoiceGlService::processEntry($masterModel);
+
+                if (isset($result['data'])) {
+                    TaxLedgerService::postLedgerEntry($result['data']['taxLedgerData'], $masterModel);
+                }
+            }
+            return $this->sendResponse([], 'Tax Ledger updated successfully');
+        }
     }
 }
