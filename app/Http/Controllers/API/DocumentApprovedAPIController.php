@@ -2442,9 +2442,9 @@ WHERE
     $filter
 	AND erp_documentapproved.documentSystemID IN ( 21 )
 	AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0
-	) AS PendingReceiptVoucherApprovals UNION ALL
+	) AS PendingReceiptVoucherApprovals UNION All
 	SELECT
-	*
+	* 
 FROM
 	(
 SELECT
@@ -2452,45 +2452,44 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	erp_documentapproved.documentApprovedID,
 	erp_documentapproved.approvalLevelID,
 	erp_documentapproved.rollLevelOrder,
-	erp_approvallevel.noOfLevels AS NoOfLevels,
+	'' AS NoOfLevels,
 	erp_documentapproved.companySystemID,
 	erp_documentapproved.companyID,
-	'' as approval_remarks,
-	erp_documentapproved.documentSystemID,
+	'' as approval_remarks,	erp_documentapproved.documentSystemID,
 	erp_documentapproved.documentID,
 	erp_documentapproved.documentSystemCode,
 	erp_documentapproved.documentCode,
-	'' AS narration,
+	itemmaster.itemDescription AS comments,
 	erp_documentapproved.docConfirmedDate,
 	erp_documentapproved.approvedDate,
 	employees.empName AS confirmedEmployee,
 	'' AS SupplierOrCustomer,
-			0 AS DecimalPlaces ,
+	2 AS DecimalPlaces ,
 	'' AS DocumentCurrency,
 	'' AS DocumentValue,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	0 AS documentType
+	'' AS documentType 
 FROM
 	erp_documentapproved
-	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID
-	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID
+	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
+	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
 	AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
 	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
-	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
 	INNER JOIN employees ON erp_documentapproved.docConfirmedByEmpSystemID = employees.employeeSystemID
-	INNER JOIN itemmaster ON  erp_documentapproved.documentSystemCode = itemmaster.itemCodeSystem AND erp_documentapproved.rollLevelOrder = RollLevForApp_curr
-	INNER JOIN financeitemcategorymaster ON itemCategoryID = financeCategoryMaster
-	INNER JOIN financeitemcategorysub ON itemCategorySubID = financeCategorySub
-	INNER JOIN units ON UnitID = unit
+	INNER JOIN itemmaster ON itemmaster.primaryCompanySystemID = erp_documentapproved.companySystemID 
+	AND itemmaster.documentSystemID = erp_documentapproved.documentSystemID 
+	AND itemmaster.itemCodeSystem = erp_documentapproved.documentSystemCode 
+	AND itemmaster.RollLevForApp_curr = erp_documentapproved.rollLevelOrder 
+	AND itemmaster.itemApprovedYN = 0 
+	AND itemmaster.itemConfirmedYN = 1 
 WHERE
 	erp_documentapproved.approvedYN = 0
-	AND itemmaster.itemApprovedYN = 0
-	AND erp_documentapproved.rejectedYN = 0
-	AND erp_documentapproved.approvalGroupID > 0
-    $filter
-	AND erp_documentapproved.documentSystemID IN ( 57 )
+	AND erp_documentapproved.rejectedYN = 0 
+	AND erp_documentapproved.approvalGroupID > 0 
+	$filter
+	AND erp_documentapproved.documentSystemID IN ( 57 ) 
 	AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0
 	) AS pendingItemMasterApprovals UNION ALL
 	SELECT
