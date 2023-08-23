@@ -120,3 +120,35 @@ Route::group([],function () {
     Route::resource('bankAccountReferedBack', 'BankAccountRefferedBackAPIController');
 
 });
+
+//Bank Reconciliation Review
+Route::group([],function () {
+
+    Route::post('amendBankReconciliationReview', 'BankReconciliationAPIController@amendBankReconciliationReview')->name('Amend bank reconciliation review');
+
+});
+
+//Bank Trasfer Review
+Route::group([],function () {
+
+    Route::post('amendBankTransferReview', 'BankLedgerAPIController@amendBankTransferReview')->name('Amend bank transfer review');
+    Route::post('clearExportBlockConfirm', 'BankLedgerAPIController@clearExportBlockConfirm')->name('Clear export block confirm');
+
+});
+
+//Report
+Route::group([],function () {
+    
+    Route::post('generateBankLedgerReport', 'BankLedgerAPIController@generateBankLedgerReport')->name('Generate bank ledger report');
+    Route::post('exportBankLedgerReport', 'BankLedgerAPIController@exportBankLedgerReport')->name('Export bank ledger report');
+    Route::post('generateBankLedgerReportPDF', 'BankLedgerAPIController@generateBankLedgerReportPDF')->name('Generate bank ledger report pdf');
+    Route::post('validateBankLedgerReport', 'BankLedgerAPIController@validateBankLedgerReport')->name('Validate bank ledger report');
+    Route::post('generateTMReport', 'BankReconciliationAPIController@generateTMReport')->name('Generate tm report');
+    Route::post('exportTMReport', 'BankReconciliationAPIController@exportReport')->name('Export tm report');
+    Route::post('validateTMReport', 'BankReconciliationAPIController@validateTMReport')->name('Validate tm report');
+
+    Route::get('getBankLedgerFilterFormData', 'BankLedgerAPIController@getBankLedgerFilterFormData')->name('Get bank ledger filter form data');
+    Route::get('getTreasuryManagementFilterData', 'BankReconciliationAPIController@getTreasuryManagementFilterData')->name('Get treasury management filter data');
+
+
+});

@@ -161,7 +161,9 @@ class AssetRequest extends Model
         'approved_by_emp_name',
         'approved_by_emp_id',
         'current_level_no',
-        'created_user_id'
+        'created_user_id',
+        'departmentSystemID',
+        'type'
     ];
 
     /**
@@ -189,7 +191,9 @@ class AssetRequest extends Model
         'approved_by_emp_name' => 'string',
         'approved_by_emp_id' => 'integer',
         'current_level_no' => 'integer',
-        'created_user_id' => 'integer'
+        'created_user_id' => 'integer',
+        'departmentSystemID'  => 'integer',
+        'type'   => 'integer',
     ];
 
     /**

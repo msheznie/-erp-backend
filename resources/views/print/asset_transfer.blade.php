@@ -387,8 +387,31 @@
                     <tr style="border-top: 1px solid #ffffff !important;border-bottom: 1px solid #ffffff !important;">
                         <td>{{$loop->iteration}}</td>
                         <td> {{$itemDirect->assetMaster->assetCodeConcat}}</td>
-                        <td> {{$itemDirect->fromLocation->locationName}}</td>
-                        <td> {{$itemDirect->toLocation->locationName}}</td>
+                        <td> {{($itemDirect->fromLocation) ? $itemDirect->fromLocation->locationName : ''}}</td>
+                        <td> {{($itemDirect->toLocation) ? $itemDirect->toLocation->locationName : ''}}</td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+            @endif
+
+            @if($assetTransferMaster->type == 3)
+            <table class="table table-bordered" style="width: 100%;">
+                <thead>
+                    <tr class="theme-tr-head">
+                        <th>#</th>
+                        <th class="text-center">Asset</th>
+                        <th class="text-center">From Employee</th>
+                        <th class="text-center">To Employee</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach ($assetTransferDetail as $itemDirect)
+                    <tr style="border-top: 1px solid #ffffff !important;border-bottom: 1px solid #ffffff !important;">
+                        <td>{{$loop->iteration}}</td>
+                        <td> {{$itemDirect->assetMaster->assetCodeConcat}}</td>
+                        <td class="text-center"> {{($itemDirect->fromEmployee) ? $itemDirect->fromEmployee->empFullName : ''}}</td>
+                        <td class="text-center"> {{($itemDirect->toEmployee) ? $itemDirect->toEmployee->empFullName : ''}}</td>
                     </tr>
                     @endforeach
                 </tbody>
