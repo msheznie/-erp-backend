@@ -86,17 +86,17 @@ Route::post('updateTenderBoqItem', 'TenderBoqItemsAPIController@updateTenderBoqI
 Route::get('downloadTenderBoqItemUploadTemplate', 'TenderBoqItemsAPIController@downloadTenderBoqItemUploadTemplate')->name("Download tender boq item upload template");
 Route::post('deleteTenderBoqItem', 'TenderBoqItemsAPIController@deleteTenderBoqItem')->name("Delete tender boq item");
 Route::post('tenderBoqItemsUpload', 'TenderBoqItemsAPIController@tenderBoqItemsUpload')->name("Tender boq items upload");
-Route::post('getPreBidClarifications', 'TenderBidClarificationsAPIController@getPreBidClarifications');
-Route::post('getPreBidClarificationsResponse', 'TenderBidClarificationsAPIController@getPreBidClarificationsResponse');
-Route::post('createResponse', 'TenderBidClarificationsAPIController@createResponse');
+Route::post('getPreBidClarifications', 'TenderBidClarificationsAPIController@getPreBidClarifications')->name("Get pre bid clarifications");
+Route::post('getPreBidClarificationsResponse', 'TenderBidClarificationsAPIController@getPreBidClarificationsResponse')->name("Get pre bid clarifications response");
+Route::post('createResponse', 'TenderBidClarificationsAPIController@createResponse')->name("Create response");
 Route::post('getTenderMasterApproval', 'TenderMasterAPIController@getTenderMasterApproval')->name("Get tender master approval");
 Route::post('getTenderMasterFullApproved', 'TenderMasterAPIController@getTenderMasterFullApproved')->name("Get tender master full approved");
 Route::post('approveTender', 'TenderMasterAPIController@approveTender')->name("Approve tender");
 Route::post('rejectTender', 'TenderMasterAPIController@rejectTender')->name("Reject tender");
-Route::post('deletePreTender', 'TenderBidClarificationsAPIController@deletePreTender');
-Route::post('getPreBidEditData', 'TenderBidClarificationsAPIController@getPreBidEditData');
-Route::post('updatePreBid', 'TenderBidClarificationsAPIController@updatePreBid');
-Route::post('closeThread', 'TenderBidClarificationsAPIController@closeThread');
+Route::post('deletePreTender', 'TenderBidClarificationsAPIController@deletePreTender')->name("Delete pre tender");
+Route::post('getPreBidEditData', 'TenderBidClarificationsAPIController@getPreBidEditData')->name("Get pre bid edit data");
+Route::post('updatePreBid', 'TenderBidClarificationsAPIController@updatePreBid')->name("Update pre bid");
+Route::post('closeThread', 'TenderBidClarificationsAPIController@closeThread')->name("Close thread");
 Route::post('reOpenTender', 'TenderMasterAPIController@reOpenTender')->name("Reopen tender");
 Route::post('tenderMasterPublish', 'TenderMasterAPIController@tenderMasterPublish')->name("Tender master publish");
 
