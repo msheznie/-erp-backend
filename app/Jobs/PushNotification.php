@@ -14,6 +14,7 @@ use LaravelFCM\Message\PayloadNotificationBuilder;
 use FCM;
 use App\Models\FcmToken;
 use LaravelFCM\Message\Topics;
+use App\helper\CommonJobService;
 
 class PushNotification implements ShouldQueue
 {
@@ -22,13 +23,29 @@ class PushNotification implements ShouldQueue
     protected $pushNotificationUserIds;
     protected $notificationType;
     protected $sendPushNotification = true;
+    protected $dataBase;
+
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($pushNotificationArray, $pushNotificationUserIds, $notificationType)
+    public function __construct($pushNotificationArray, $pushNotificationUserIds, $notificationType, $dataBase = "")
     {
+        if ($dataBase != "") {
+            if(env('QUEUE_DRIVER_CHANGE','database') == 'database'){
+                if(env('IS_MULTI_TENANCY',false)){
+                     self::onConnection('database_main');
+                }else{
+                     self::onConnection('database');
+                }
+            }else{
+                self::onConnection(env('QUEUE_DRIVER_CHANGE','database'));
+            }
+        }
+
+        $this->dataBase = $dataBase;
+
         $this->pushNotificationArray = $pushNotificationArray;
         $this->pushNotificationUserIds = $pushNotificationUserIds;
         $this->notificationType = $notificationType;
@@ -41,6 +58,10 @@ class PushNotification implements ShouldQueue
      */
     public function handle()
     {
+        if ($this->dataBase != "") {
+            CommonJobService::db_switch($this->dataBase);
+        }
+
         Log::useFiles(storage_path() . '/logs/push_notification_created.log');
         Log::info('Successfully start push_notification_created' . date('H:i:s'));
 

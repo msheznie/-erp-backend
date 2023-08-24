@@ -78,7 +78,7 @@ class CreateDepreciation implements ShouldQueue
                             $query->where('approved', -1);
                         });
                         $query->groupBy('faID');
-                    }])
+                    },'depperiod_period'])
                         ->where(function($q) use($depDate){
                             $q->isDisposed()
                                 ->orWhere(function ($q1) use($depDate){

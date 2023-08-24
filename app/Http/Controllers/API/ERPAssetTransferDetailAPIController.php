@@ -160,6 +160,7 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
                 if(!empty($assetExistUnApproved)){ 
                     return $this->sendError('Asset already acknowledged');  
                 }
+                
 
                 $data[] = [
                     'erp_fa_fa_asset_transfer_id' => $value['masterID'],
@@ -169,7 +170,8 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
                     'pr_created_yn' => (isset($value['pr_created_yn']) && $value['pr_created_yn'] == true ? 1 : 0),
                     'company_id' => $value['company_id'],
                     'created_user_id' => \Helper::getEmployeeSystemID(),
-                    'itemCodeSystem' => $value['itemCodeSystem']
+                    'itemCodeSystem' => $value['itemCodeSystem'],
+                    'departmentSystemID' => (isset($value['type'][0]) && $value['type'][0] == 4 && isset($value['department'])) ? $value['department']['departmentSystemID'] : NULL
                 ];
             }
             $this->eRPAssetTransferDetailRepository->insert($data);
@@ -346,7 +348,9 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
         $data['assetMaster'] = ERPAssetTransfer::where('id', $id)->first();
 
         if ($data['assetMaster']->type == 1 || $data['assetMaster']->type == 4) {
-            $data['assetRequestDetails'] = ERPAssetTransferDetail::with(['assetRequestDetail', 'assetMaster','assetRequestMaster','item_detail','department'])->where('erp_fa_fa_asset_transfer_id', $id)->get();
+            $data['assetRequestDetails'] = ERPAssetTransferDetail::with(['assetRequestDetail', 'assetMaster','assetRequestMaster','item_detail','department' => function ($d) {
+                $d->select(['departmentSystemID','DepartmentDescription','DepartmentID']);
+            }])->where('erp_fa_fa_asset_transfer_id', $id)->get();
         } else {
             $data['assetRequestDetails'] = ERPAssetTransferDetail::with(['fromLocation', 'toLocation', 'assetMaster','fromEmployee' => function($query) {
                 $query->select(['employeeSystemID','empFullName']);
@@ -410,10 +414,10 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
                         ];
     
     
-                        FixedAssetMaster::find($value['asset'])
-                            ->update([
-                                'empID' =>  $value['to_emp']
-                            ]);
+                        // FixedAssetMaster::find($value['asset'])
+                        //     ->update([
+                        //         'empID' =>  $value['to_emp']
+                        //     ]);
                     }
                 }else {
                     if ($value['from_location'][0] == $value['to_location']) {
@@ -423,7 +427,7 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
                         $data[] = [
                             'erp_fa_fa_asset_transfer_id' => $id,
                             'from_location_id' => $value['from_location'][0],
-                            'to_location_id' => $value['to_location'],
+                            'to_location_id' => isset($value['to_location'][0]) ? $value['to_location'][0]:$value['to_location'],
                             'fa_master_id' => $value['asset'],
                             'company_id' => $value['companySystemID'],
                             'created_user_id' => \Helper::getEmployeeSystemID(),
@@ -432,10 +436,10 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
                         ];
     
     
-                        FixedAssetMaster::find($value['asset'])
-                            ->update([
-                                'LOCATION' =>  $value['to_location']
-                            ]);
+                        // FixedAssetMaster::find($value['asset'])
+                        //     ->update([
+                        //         'LOCATION' =>  isset($value['to_location'][0]) ? $value['to_location'][0]:$value['to_location']
+                        //     ]);
                     }
                 }
                 

@@ -32,6 +32,7 @@ use App\Repositories\PaySupplierInvoiceDetailRepository;
 use App\Repositories\UserRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use App\Models\DebitNote;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -528,12 +529,26 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                 return $this->sendError('Pay Supplier Invoice Detail not found');
             }
 
-           
-            
-            $payMaster = PaySupplierInvoiceMaster::find($paySupplierInvoiceDetail->PayMasterAutoId);
+            if($paySupplierInvoiceDetail->documentID == 'PV' && $paySupplierInvoiceDetail->documentSystemID == 4){
+                $payMaster = PaySupplierInvoiceMaster::find($paySupplierInvoiceDetail->PayMasterAutoId);
 
-            if (empty($payMaster)) {
-                return $this->sendError('Payment voucher not found');
+                if (empty($payMaster)) {
+                    return $this->sendError('Payment voucher not found');
+                }
+                $isPaymentVoucher = true;
+            } else {
+                $isPaymentVoucher = false;
+            }
+
+            if($paySupplierInvoiceDetail->documentID == 'DN' && $paySupplierInvoiceDetail->documentSystemID == 15){
+                $payMaster = DebitNote::find($paySupplierInvoiceDetail->PayMasterAutoId);
+
+                if (empty($payMaster)) {
+                    return $this->sendError('Debit Note not found');
+                }
+                $isDebitNote = true;
+            } else {
+                $isDebitNote = false;
             }
 
             if ($paySupplierInvoiceDetail->matchingDocID == 0) {
@@ -563,7 +578,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             if($user_type == 1)
             {
                 $supplierPaidAmountSum = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, 
-                Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')->when(($payMaster->invoiceType != 6 && $payMaster->invoiceType != 7), function($query) {
+                Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')->when( ( ($isPaymentVoucher && ($payMaster->invoiceType != 6 && $payMaster->invoiceType != 7)) || ($isDebitNote && ($payMaster && $payMaster->type == 1)) ), function($query) {
                         $query->whereHas('payment_master', function($query) {
                             $query->where(function($query) {
                                 $query->where('invoiceType', '!=', 6)
@@ -582,7 +597,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             {
 
                 $supplierPaidAmountSum = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, 
-                Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')->when(($payMaster->invoiceType == 6 || $payMaster->invoiceType == 7), function($query) {
+                Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')->when( ( ($isPaymentVoucher && ($payMaster->invoiceType == 6 || $payMaster->invoiceType == 7)) || ($isDebitNote && ($payMaster && $payMaster->type == 2)) ), function($query) {
                 $query->whereHas('payment_master', function($query) {
                     $query->whereIn('invoiceType',[6,7]);
                 });
@@ -599,12 +614,12 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                 
                 $supplierPaidAmountSum = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, 
                        Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')
-                ->when(($payMaster->invoiceType == 6 || $payMaster->invoiceType == 7), function($query) {
+                ->when((($isPaymentVoucher && ($payMaster->invoiceType == 6 || $payMaster->invoiceType == 7)) || ($isDebitNote && ($payMaster && $payMaster->type == 2))), function($query) {
                     $query->whereHas('payment_master', function($query) {
                         $query->whereIn('invoiceType',[6,7]);
                     });
                 })
-                ->when(($payMaster->invoiceType != 6 && $payMaster->invoiceType != 7), function($query) {
+                ->when((($isPaymentVoucher && ($payMaster->invoiceType != 6 && $payMaster->invoiceType != 7)) || ($isDebitNote && ($payMaster && $payMaster->type == 1))), function($query) {
                     $query->whereHas('payment_master', function($query) {
                         $query->where(function($query) {
                             $query->where('invoiceType', '!=', 6)

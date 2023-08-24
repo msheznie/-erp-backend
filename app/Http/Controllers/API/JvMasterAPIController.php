@@ -477,18 +477,28 @@ class JvMasterAPIController extends AppBaseController
             ->where('chartofaccounts.isActive',0)
             ->where('erp_jvdetail.jvMasterAutoId', $input['jvMasterAutoId'])
             ->groupBy('chartofaccounts.AccountCode');
-
+            
             if($query->count() > 0)
             {
                 $inActiveAccounts = $query->pluck('AccountCode');
+                $lastKey = count($inActiveAccounts) - 1;
+
+
                 $msg = '';
-                foreach($inActiveAccounts as $account)
-                {
-                    $msg .= ' '.$account.' ,';
+                foreach($inActiveAccounts as $key => $account)
+                {   
+                    if ($key != $lastKey) {
+                        $msg .= ' '.$account.' ,';
+                    }
+                    else
+                    {
+                        $msg .= ' '.$account;
+                    }
+                   
                 }
 
 
-                return $this->sendError("The Chart of Accounts $msg are Inactive, update it as active/change the GL code to proceed.",500,['type' => 'ca_inactive']);
+                return $this->sendError("The Chart of Account/s $msg are Inactive, update it as active/change the GL code to proceed.",500,['type' => 'ca_inactive']);
 
             }
 
