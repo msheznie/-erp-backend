@@ -13,7 +13,7 @@
 
 use Illuminate\Support\Facades\Route;
 
-Route::get('endPointTaxLedger', 'TaxLedgerAPIController@endPointTaxLedger');
+Route::get('updateTaxLedgerForSupplierInvoice', 'TaxLedgerAPIController@updateTaxLedgerForSupplierInvoice');
 
 
 Route::get('getConfigurationInfo', 'ConfigurationAPIController@getConfigurationInfo');

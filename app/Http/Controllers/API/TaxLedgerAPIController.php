@@ -285,7 +285,7 @@ class TaxLedgerAPIController extends AppBaseController
     }
 
 
-    public function endPointTaxLedger()
+    public function updateTaxLedgerForSupplierInvoice()
     {
 
         $tenants = CommonJobService::tenant_list();
@@ -298,26 +298,21 @@ class TaxLedgerAPIController extends AppBaseController
 
             CommonJobService::db_switch($tenantDb);
 
-            $documentCodes = BookInvSuppMaster::whereIn('documentType', [3, 4])->where('approved', -1)->pluck('bookingInvCode')->toArray();
-
-            $missingInTaxDetail = TaxLedger::whereIn('documentCode', $documentCodes)
-                ->pluck('documentCode')->toArray();
-
-            $missingInTaxLedger = TaxLedgerDetail::whereIn('documentNumber', $documentCodes)
-                ->pluck('documentNumber')->toArray();
-
-            $missingDocumentCodes = array_diff($documentCodes, array_merge($missingInTaxDetail, $missingInTaxLedger));
-
-            $documents = BookInvSuppMaster::whereIn('bookingInvCode', $missingDocumentCodes)->whereIn('documentType', [3, 4])->where('approved', -1)->get();
+            $documents = BookInvSuppMaster::whereIn('documentType', [3, 4])->where('approved', -1)->get();
 
             foreach ($documents as $document) {
 
-                $masterModel = ['documentSystemID' => 11, 'autoID' => $document->bookingSuppMasInvAutoID, 'companySystemID' => $document->companySystemID, 'employeeSystemID' => $document->approvedByUserSystemID];
+                $missingInTaxLedger = TaxLedger::where('documentMasterAutoID', $document->bookingSuppMasInvAutoID)->where('documentSystemID', 11)->first();
+                $missingInTaxLedgerDetail = TaxLedgerDetail::where('documentMasterAutoID', $document->bookingSuppMasInvAutoID)->where('documentSystemID', 11)->first();
 
-                $result = SupplierInvoiceGlService::processEntry($masterModel);
+                if(!($missingInTaxLedger && $missingInTaxLedgerDetail)){
+                    $masterModel = ['documentSystemID' => 11, 'autoID' => $document->bookingSuppMasInvAutoID, 'companySystemID' => $document->companySystemID, 'employeeSystemID' => $document->approvedByUserSystemID];
 
-                if (isset($result['data'])) {
-                    TaxLedgerService::postLedgerEntry($result['data']['taxLedgerData'], $masterModel);
+                    $result = SupplierInvoiceGlService::processEntry($masterModel);
+
+                    if ($result['status'] && isset($result['data']['taxLedgerData'])) {
+                        TaxLedgerService::postLedgerEntry($result['data']['taxLedgerData'], $masterModel);
+                    }
                 }
             }
             return $this->sendResponse([], 'Tax Ledger updated successfully');
