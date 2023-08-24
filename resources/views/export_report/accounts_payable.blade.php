@@ -32,7 +32,7 @@
     <tbody>
     @foreach($overduePayable as $item)
         <tr>
-            <td>{{$item->customer->CustomerName}}</td>
+            <td>{{$item->supplier->nameOnPaymentCheque}}</td>
             <td>{{$item->rptcurrency->CurrencyCode}}</td>
             <td>{{number_format($item->total,$item->rptcurrency->DecimalPlaces)}}</td>
         </tr>
