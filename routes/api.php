@@ -1037,6 +1037,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('logoutApiUser', 'FcmTokenAPIController@logoutApiUser');
             Route::post('getCurrentHomeUrl', 'FcmTokenAPIController@redirectHome');
             Route::post('uploadItemsDeliveryOrder','DeliveryOrderDetailAPIController@uploadItemsDeliveryOrder');
+            Route::post('exportWidgetExcel', 'DashboardWidgetMasterAPIController@exportWidgetExcel');
 
 
             Route::post('getAllDeliveryOrder', 'DeliveryOrderAPIController@getAllDeliveryOrder');
