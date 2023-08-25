@@ -75,3 +75,4 @@ Route::get('getMatchDocumentMasterRecord', 'MatchDocumentMasterAPIController@get
 
 Route::resource('expense_employee_allocations', 'ExpenseEmployeeAllocationAPIController');
 Route::post('getAllocatedEmployeesForExpense', 'ExpenseEmployeeAllocationAPIController@getAllocatedEmployeesForExpense')->name('Get allocated employees for expense');
+Route::get('getCurrentUserInfo', 'UserAPIController@getCurrentUserInfo')->name("Get Current User Info");

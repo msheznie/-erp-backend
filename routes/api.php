@@ -375,7 +375,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('reportTemplateGLDrillDown', 'FinancialReportAPIController@reportTemplateGLDrillDown');
             Route::post('reportTemplateGLDrillDownExport', 'FinancialReportAPIController@reportTemplateGLDrillDownExport');
 
-            Route::get('getCurrentUserInfo', 'UserAPIController@getCurrentUserInfo')->name("Get Current User Info");
             Route::get('getNotifications', 'UserAPIController@getNotifications');
             Route::post('updateNotification', 'UserAPIController@updateNotification');
             Route::post('getAllNotifications', 'UserAPIController@getAllNotifications');
