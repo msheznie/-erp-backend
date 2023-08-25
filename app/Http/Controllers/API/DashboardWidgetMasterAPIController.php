@@ -1293,13 +1293,13 @@ GROUP BY
         if($request->input('widgetTypeID') == 2) {
             $templateName = "export_report.accounts_payable";
             $templateName2 = "export_report.account_receivable";
-            $reportData['report_tittle'] = 'Account Payable and Receivables';
+            $reportData['report_tittle'] = 'Account Payables and Receivables';
             $reportData['report_date'] = Carbon::now()->format('d/m/Y');
             return \Excel::create('accounts_payable_and_receivable', function ($excel) use ($reportData, $templateName,$templateName2) {
-                $excel->sheet('Overdue Payable', function ($sheet) use ($reportData, $templateName) {
+                $excel->sheet('Overdue Payables', function ($sheet) use ($reportData, $templateName) {
                     $sheet->loadView($templateName, $reportData);
                 });
-                $excel->sheet('Overdue Receivable', function ($sheet) use ($reportData, $templateName2) {
+                $excel->sheet('Overdue Receivables', function ($sheet) use ($reportData, $templateName2) {
                     $sheet->loadView($templateName2, $reportData);
                 });
             })->download('xlsx');
