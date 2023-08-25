@@ -157,13 +157,13 @@ Route::resource('tender_circulars', 'TenderCircularsAPIController');
 Route::post('store_tender_bid_documents', 'SrmBidDocumentattachmentsAPIController@storeTenderBidDocuments')->name("Store tender bid documents");
 Route::get('download_tender_files', 'SrmBidDocumentattachmentsAPIController@downloadFile')->name("Download tender files");
 
-Route::post('getEmployeesCommercialApproval','TenderBidEmployeeDetailsController@getEmployeesCommercialApproval');
-Route::post('getTenderCommercialBids', 'BidSubmissionMasterAPIController@getTenderCommercialBids');
-Route::post('getSupplierItemList', 'BidSubmissionMasterAPIController@getSupplierItemList');
-Route::post('generateSupplierItemReportTableView', 'BidSubmissionMasterAPIController@generateSupplierItemReportTableView');
-Route::post('getCommercialBidTenderList', 'TenderMasterAPIController@getCommercialBidTenderList');
-Route::post('getCommercialEval', 'TenderMasterAPIController@getCommercialEval');
-Route::post('getCommercialEvalBoq', 'TenderMasterAPIController@getCommercialEvalBoq');
+Route::post('getEmployeesCommercialApproval','TenderBidEmployeeDetailsController@getEmployeesCommercialApproval')->name("Get employees commercial approval");
+Route::post('getTenderCommercialBids', 'BidSubmissionMasterAPIController@getTenderCommercialBids')->name("Get tender commercial bids");
+Route::post('getSupplierItemList', 'BidSubmissionMasterAPIController@getSupplierItemList')->name("Get supplier item list");
+Route::post('generateSupplierItemReportTableView', 'BidSubmissionMasterAPIController@generateSupplierItemReportTableView')->name("Generate supplier item report table view");
+Route::post('getCommercialBidTenderList', 'TenderMasterAPIController@getCommercialBidTenderList')->name("Get commercial bid tender list");
+Route::post('getCommercialEval', 'TenderMasterAPIController@getCommercialEval')->name("Get commercial eval");
+Route::post('getCommercialEvalBoq', 'TenderMasterAPIController@getCommercialEvalBoq')->name("Get commercial eval boq");
 
 
 
