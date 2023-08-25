@@ -8,10 +8,10 @@
 
 
 Route::post('store_tender_documents', 'DocumentAttachmentsAPIController@storeTenderDocuments')->name("Store tender documents");
-Route::post('tenderBIdDocApproveal', 'DocumentAttachmentsAPIController@tenderBIdDocApproveal');
-Route::post('tenderBIdDocTypeApproveal', 'DocumentAttachmentsAPIController@tenderBIdDocTypeApproveal');
-Route::post('tenderBIdDocSubmission', 'DocumentAttachmentsAPIController@tenderBIdDocSubmission');
-Route::post('checkTenderBidDocExist', 'DocumentAttachmentsAPIController@checkTenderBidDocExist');
+Route::post('tenderBIdDocApproveal', 'DocumentAttachmentsAPIController@tenderBIdDocApproveal')->name("Tender bid doc approval");
+Route::post('tenderBIdDocTypeApproveal', 'DocumentAttachmentsAPIController@tenderBIdDocTypeApproveal')->name("Tender bid doc type approval");
+Route::post('tenderBIdDocSubmission', 'DocumentAttachmentsAPIController@tenderBIdDocSubmission')->name("Tender bid doc submission");
+Route::post('checkTenderBidDocExist', 'DocumentAttachmentsAPIController@checkTenderBidDocExist')->name("Check tender bid doc exist");
 
 Route::post('getAllProcurementCategory', 'TenderProcurementCategoryController@getAllProcurementCategory');
 Route::resource('procurement_categories', 'TenderProcurementCategoryController');
@@ -30,11 +30,11 @@ Route::post('getActiveEmployeesForBid','TenderCommitteeController@getActiveEmplo
 Route::resource('tender-bid-employee-details','TenderBidEmployeeDetailsController');
 Route::post('tender-bid-employee-get-all','TenderBidEmployeeDetailsController@getEmployees')->name("Get tender bid employees");
 Route::post('tender-bid-employee-delete','TenderBidEmployeeDetailsController@deleteEmp')->name("Delete tender bid employee");
-Route::post('tender-bid-employee-approval-count','TenderBidEmployeeDetailsController@getEmployeesApproval');
+Route::post('tender-bid-employee-approval-count','TenderBidEmployeeDetailsController@getEmployeesApproval')->name("Get employees approval");
 
-Route::post('getTenderBits', 'BidSubmissionMasterAPIController@getTenderBits');
-Route::post('getTenderBidGoNoGoResponse', 'BidSubmissionMasterAPIController@getTenderBidGoNoGoResponse');
-Route::post('updateTenderBidGoNoGoResponse', 'BidSubmissionMasterAPIController@updateTenderBidGoNoGoResponse');
+Route::post('getTenderBits', 'BidSubmissionMasterAPIController@getTenderBits')->name("Get tender bits");
+Route::post('getTenderBidGoNoGoResponse', 'BidSubmissionMasterAPIController@getTenderBidGoNoGoResponse')->name("Get tender bid go no go response");
+Route::post('updateTenderBidGoNoGoResponse', 'BidSubmissionMasterAPIController@updateTenderBidGoNoGoResponse')->name("Update tender bid go no go response");
 
 Route::post('getTenderBidFormats', 'TenderBidFormatMasterAPIController@getTenderBidFormats');
 Route::post('storeBidFormat', 'TenderBidFormatMasterAPIController@storeBidFormat');
@@ -57,15 +57,15 @@ Route::post('loadTenderSubCategory', 'TenderMasterAPIController@loadTenderSubCat
 Route::post('loadTenderSubActivity', 'TenderMasterAPIController@loadTenderSubActivity')->name("Load tender sub activity");
 Route::post('loadTenderBankAccount', 'TenderMasterAPIController@loadTenderBankAccount')->name("Load tender bank account");
 Route::post('updateTender', 'TenderMasterAPIController@updateTender')->name("Update tender");
-Route::post('getPurchasedTenderList', 'TenderMasterAPIController@getPurchasedTenderList');
-Route::post('getPurchaseTenderMasterData', 'TenderMasterAPIController@getPurchaseTenderMasterData');
-Route::post('tenderCommiteApproveal', 'TenderMasterAPIController@tenderCommiteApproveal');
-Route::post('getTenderTechniqalEvaluation', 'TenderMasterAPIController@getTenderTechniqalEvaluation');
+Route::post('getPurchasedTenderList', 'TenderMasterAPIController@getPurchasedTenderList')->name("Get purchased tender list");
+Route::post('getPurchaseTenderMasterData', 'TenderMasterAPIController@getPurchaseTenderMasterData')->name("Get purchase tender master data");
+Route::post('tenderCommiteApproveal', 'TenderMasterAPIController@tenderCommiteApproveal')->name("Tender commite approval");
+Route::post('getTenderTechniqalEvaluation', 'TenderMasterAPIController@getTenderTechniqalEvaluation')->name("Get tender technical evaluation");
 
 
 Route::post('addFormula', 'TenderBidFormatMasterAPIController@addFormula');
 Route::post('formulaGenerate', 'TenderBidFormatMasterAPIController@formulaGenerate');
-Route::post('tenderBidDocVerification', 'TenderMasterAPIController@tenderBidDocVerification');
+Route::post('tenderBidDocVerification', 'TenderMasterAPIController@tenderBidDocVerification')->name("Tender bid doc verification");
 
 Route::post('getMainWorksList', 'TenderMainWorksAPIController@getMainWorksList')->name("Get main works list");
 Route::post('addMainWorks', 'TenderMainWorksAPIController@addMainWorks');
@@ -154,16 +154,16 @@ Route::resource('tender_document_types', 'TenderDocumentTypesAPIController');
 
 Route::resource('tender_circulars', 'TenderCircularsAPIController');
 
-Route::post('store_tender_bid_documents', 'SrmBidDocumentattachmentsAPIController@storeTenderBidDocuments');
-Route::get('download_tender_files', 'SrmBidDocumentattachmentsAPIController@downloadFile');
+Route::post('store_tender_bid_documents', 'SrmBidDocumentattachmentsAPIController@storeTenderBidDocuments')->name("Store tender bid documents");
+Route::get('download_tender_files', 'SrmBidDocumentattachmentsAPIController@downloadFile')->name("Download tender files");
 
-Route::post('getEmployeesCommercialApproval','TenderBidEmployeeDetailsController@getEmployeesCommercialApproval');
-Route::post('getTenderCommercialBids', 'BidSubmissionMasterAPIController@getTenderCommercialBids');
-Route::post('getSupplierItemList', 'BidSubmissionMasterAPIController@getSupplierItemList');
-Route::post('generateSupplierItemReportTableView', 'BidSubmissionMasterAPIController@generateSupplierItemReportTableView');
-Route::post('getCommercialBidTenderList', 'TenderMasterAPIController@getCommercialBidTenderList');
-Route::post('getCommercialEval', 'TenderMasterAPIController@getCommercialEval');
-Route::post('getCommercialEvalBoq', 'TenderMasterAPIController@getCommercialEvalBoq');
+Route::post('getEmployeesCommercialApproval','TenderBidEmployeeDetailsController@getEmployeesCommercialApproval')->name("Get employees commercial approval");
+Route::post('getTenderCommercialBids', 'BidSubmissionMasterAPIController@getTenderCommercialBids')->name("Get tender commercial bids");
+Route::post('getSupplierItemList', 'BidSubmissionMasterAPIController@getSupplierItemList')->name("Get supplier item list");
+Route::post('generateSupplierItemReportTableView', 'BidSubmissionMasterAPIController@generateSupplierItemReportTableView')->name("Generate supplier item report table view");
+Route::post('getCommercialBidTenderList', 'TenderMasterAPIController@getCommercialBidTenderList')->name("Get commercial bid tender list");
+Route::post('getCommercialEval', 'TenderMasterAPIController@getCommercialEval')->name("Get commercial eval");
+Route::post('getCommercialEvalBoq', 'TenderMasterAPIController@getCommercialEvalBoq')->name("Get commercial eval boq");
 
 
 
@@ -173,7 +173,7 @@ Route::resource('srm_bid_documentattachments', 'SrmBidDocumentattachmentsAPICont
 
 Route::resource('bid_document_verifications', 'BidDocumentVerificationAPIController');
 Route::resource('bid_evaluation_selections', 'BidEvaluationSelectionAPIController');
-Route::post('getBidSelection', 'BidEvaluationSelectionAPIController@getBidSelection');
+Route::post('getBidSelection', 'BidEvaluationSelectionAPIController@getBidSelection')->name("Get bid selection");
 
 Route::resource('bid_schedules', 'BidScheduleAPIController');
 Route::resource('bid_main_works', 'BidMainWorkAPIController');
@@ -188,13 +188,13 @@ Route::resource('schedule_bid_format_details', 'ScheduleBidFormatDetailsAPIContr
 Route::post('getPriceBidFormatDetails', 'PricingScheduleMasterAPIController@getPriceBidFormatDetails')->name("Get price bid format details");
 Route::post('addPriceBidDetails', 'PricingScheduleMasterAPIController@addPriceBidDetails')->name("Add price bid details");
 Route::post('getNotPulledPriceBidDetails', 'PricingScheduleMasterAPIController@getNotPulledPriceBidDetails')->name("Get not pulled price bid details");
-Route::post('bidGoNoGoCommentAndStatus', 'BidSubmissionMasterAPIController@bidGoNoGoCommentAndStatus');
+Route::post('bidGoNoGoCommentAndStatus', 'BidSubmissionMasterAPIController@bidGoNoGoCommentAndStatus')->name("Bid go no go comment and status");
 
-Route::post('getBidVerificationStatus', 'BidSubmissionMasterAPIController@getBidVerificationStatus');
-Route::post('getVerifieddBids', 'BidSubmissionMasterAPIController@getVerifieddBids');
-Route::post('saveTechnicalEvalBidSubmissionLine', 'BidSubmissionMasterAPIController@saveTechnicalEvalBidSubmissionLine');
-Route::post('removeBid', 'BidEvaluationSelectionAPIController@removeBid');
-Route::post('addBid', 'BidEvaluationSelectionAPIController@addBid');
+Route::post('getBidVerificationStatus', 'BidSubmissionMasterAPIController@getBidVerificationStatus')->name("Get bid verification status");
+Route::post('getVerifieddBids', 'BidSubmissionMasterAPIController@getVerifieddBids')->name("Get verified bids");
+Route::post('saveTechnicalEvalBidSubmissionLine', 'BidSubmissionMasterAPIController@saveTechnicalEvalBidSubmissionLine')->name("Save technical eval bid submission line");
+Route::post('removeBid', 'BidEvaluationSelectionAPIController@removeBid')->name("Remove bid");
+Route::post('addBid', 'BidEvaluationSelectionAPIController@addBid')->name("Add bid");
 Route::post('getEvalCompletedTenderList', 'TenderMasterAPIController@getEvalCompletedTenderList');
 Route::post('getTechnicalRanking', 'TenderMasterAPIController@getTechnicalRanking');
 Route::post('getCommercialRanking', 'TenderMasterAPIController@getCommercialRanking');

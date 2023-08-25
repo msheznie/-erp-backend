@@ -563,7 +563,8 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                 $user_type = $matchDocumentMasterObj->user_type;
             }
            
-
+            $matchDocumentMasterObj['matchedAmount'] = $matchDocumentMasterObj->matchedAmount - $paySupplierInvoiceDetail->supplierPaymentAmount;
+            $matchDocumentMasterObj['matchingAmount'] = $matchDocumentMasterObj->matchingAmount - $paySupplierInvoiceDetail->supplierPaymentAmount;
 
             if ($paySupplierInvoiceDetail->documentSystemID != 0) {
                 if ($paySupplierInvoiceDetail->matching_master && $paySupplierInvoiceDetail->matching_master->matchingConfirmedYN) {
@@ -572,6 +573,8 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             }
 
             $paySupplierInvoiceDetailDelete->delete();
+
+            $matchDocumentMasterObj->save();
 
             
 

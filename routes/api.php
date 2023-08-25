@@ -13,6 +13,9 @@
 
 use Illuminate\Support\Facades\Route;
 
+Route::get('updateTaxLedgerForSupplierInvoice', 'TaxLedgerAPIController@updateTaxLedgerForSupplierInvoice');
+
+
 Route::get('getConfigurationInfo', 'ConfigurationAPIController@getConfigurationInfo');
 
 
@@ -63,6 +66,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             require __DIR__.'/../routes/salesAndMarketing/salesAndMarketingRoutes.php';
             require __DIR__.'/../routes/treasuryManagement/treasuryManagementRoutes.php';
             require __DIR__.'/../routes/assetManagement/assetManagementRoutes.php';
+            require __DIR__.'/../routes/general/customReport.php';
             require __DIR__.'/../routes/supplierManagement/supplierManagementRoutes.php';
 
             Route::post('getAllEmployees', 'EmployeeAPIController@getAllEmployees');
@@ -371,7 +375,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('reportTemplateGLDrillDown', 'FinancialReportAPIController@reportTemplateGLDrillDown');
             Route::post('reportTemplateGLDrillDownExport', 'FinancialReportAPIController@reportTemplateGLDrillDownExport');
 
-            Route::get('getCurrentUserInfo', 'UserAPIController@getCurrentUserInfo')->name("Get Current User Info");
             Route::get('getNotifications', 'UserAPIController@getNotifications');
             Route::post('updateNotification', 'UserAPIController@updateNotification');
             Route::post('getAllNotifications', 'UserAPIController@getAllNotifications');
@@ -1037,6 +1040,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('logoutApiUser', 'FcmTokenAPIController@logoutApiUser');
             Route::post('getCurrentHomeUrl', 'FcmTokenAPIController@redirectHome');
             Route::post('uploadItemsDeliveryOrder','DeliveryOrderDetailAPIController@uploadItemsDeliveryOrder');
+            Route::post('exportWidgetExcel', 'DashboardWidgetMasterAPIController@exportWidgetExcel');
 
 
             Route::post('getAllDeliveryOrder', 'DeliveryOrderAPIController@getAllDeliveryOrder');
@@ -1138,18 +1142,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('getMobileReportFormData', 'MobileBillMasterAPIController@getMobileReportFormData');
             Route::post('exportMobileReport', 'MobileBillMasterAPIController@exportMobileReport');
 
-            Route::resource('custom_report_types', 'CustomReportTypeAPIController');
             Route::resource('custom_report_masters', 'CustomReportMasterAPIController');
             Route::resource('custom_report_columns', 'CustomReportColumnsAPIController');
-            Route::resource('custom_user_reports', 'CustomUserReportsAPIController');
-            Route::post('getCustomReportsByUser', 'CustomUserReportsAPIController@getCustomReportsByUser');
-            Route::post('customReportView', 'CustomUserReportsAPIController@customReportView');
-            Route::post('exportCustomReport', 'CustomUserReportsAPIController@exportCustomReport');
             Route::resource('custom_user_report_columns', 'CustomUserReportColumnsAPIController');
             Route::resource('custom_filters_columns', 'CustomFiltersColumnAPIController');
-            Route::resource('custom_report_employees', 'CustomReportEmployeesAPIController');
-            Route::post('getCustomReportAssignedEmployee', 'CustomReportEmployeesAPIController@getCustomReportAssignedEmployee');
-            Route::get('getUnAssignEmployeeByReport', 'CustomReportEmployeesAPIController@getEmployees');
             Route::resource('custom_user_report_summarizes', 'CustomUserReportSummarizeAPIController');
 
 
