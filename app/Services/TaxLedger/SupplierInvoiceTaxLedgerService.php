@@ -100,7 +100,7 @@ class SupplierInvoiceTaxLedgerService
                                     ->groupBy('vatSubCategoryID')
                                     ->get();
             if ($details->isEmpty()) {
-                return ['status' => false, 'message' => "There are no details present"];
+                return ['status' => false, 'error' => ['message' => "No details found"]];
             }
 
             foreach ($details as $key => $value) {
@@ -181,7 +181,7 @@ class SupplierInvoiceTaxLedgerService
                 ->get();
 
             if ($details->isEmpty()) {
-                return ['status' => false, 'message' => "There are no details present"];
+                return ['status' => false, 'error' => ['message' => "No details found"]];
             }
 
 
@@ -266,7 +266,7 @@ class SupplierInvoiceTaxLedgerService
                                     ->get();
 
             if ($details->isEmpty()) {
-                return ['status' => false, 'message' => "There are no details present"];
+                return ['status' => false, 'error' => ['message' => "No details found"]];
             }
 
             foreach ($details as $key => $value) {
