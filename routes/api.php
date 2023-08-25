@@ -1520,6 +1520,11 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
     if (env("LOG_ENABLE", false)) {
         Route::get('logs', '\Rap2hpoutre\LaravelLogViewer\LogViewerController@index');
+
+        Route::get('runCronJob/{cron}', function ($cron) {
+            Artisan::call($cron);
+            return 'CRON Job run successfully';
+        });
     }
 
     Route::get('notification-service', 'NotificationCompanyScenarioAPIController@notification_service');
