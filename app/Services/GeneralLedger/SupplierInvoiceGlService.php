@@ -139,7 +139,7 @@ class SupplierInvoiceGlService
 
 
 
-        if (isset($masterData->directdetail) && count($masterData->directdetail) > 0) {
+        if (isset($masterData->directdetail[0]) && count($masterData->directdetail) > 0) {
             $poInvoiceDirectLocalExtCharge = (isset($masterData->directdetail[0]->localAmount)) ? $masterData->directdetail[0]->localAmount : 0;
             $poInvoiceDirectRptExtCharge = (isset($masterData->directdetail[0]->rptAmount)) ? $masterData->directdetail[0]->rptAmount : 0;
             $poInvoiceDirectTransExtCharge = (isset($masterData->directdetail[0]->transAmount)) ? $masterData->directdetail[0]->transAmount : 0;
@@ -203,7 +203,7 @@ class SupplierInvoiceGlService
                 $data['documentLocalAmount'] = \Helper::roundValue($directItemCurrencyConversion['localAmount'] + $masterData->item_details[0]->totalVATAmountLocal + $poInvoiceDirectLocalExtCharge) * -1;
                 $data['documentRptAmount'] = \Helper::roundValue($directItemCurrencyConversion['reportingAmount'] + $masterData->item_details[0]->totalVATAmountRpt + $poInvoiceDirectRptExtCharge) * -1;
             } else { // check if it is direct invoice
-                if(isset($directdetail[0])) {
+                if(isset($masterData->directdetail[0])) {
                     if ($masterData->documentType == 1 && $masterData->rcmActivated) {
                         $data['documentTransAmount'] = \Helper::roundValue($masterData->directdetail[0]->transAmount) * -1;
                         $data['documentLocalAmount'] = \Helper::roundValue($masterData->directdetail[0]->localAmount) * -1;
