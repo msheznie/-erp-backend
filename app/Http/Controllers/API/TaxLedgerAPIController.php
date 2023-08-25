@@ -13,6 +13,7 @@ use App\Services\GeneralLedger\SupplierInvoiceGlService;
 use App\Services\TaxLedgerService;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\Log;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -299,7 +300,7 @@ class TaxLedgerAPIController extends AppBaseController
             CommonJobService::db_switch($tenantDb);
 
             $documents = BookInvSuppMaster::whereIn('documentType', [3, 4])->where('approved', -1)->get();
-
+            Log::info($documents);
             foreach ($documents as $document) {
 
                 $missingInTaxLedger = TaxLedger::where('documentMasterAutoID', $document->bookingSuppMasInvAutoID)->where('documentSystemID', 11)->first();
@@ -309,6 +310,8 @@ class TaxLedgerAPIController extends AppBaseController
                     $masterModel = ['documentSystemID' => 11, 'autoID' => $document->bookingSuppMasInvAutoID, 'companySystemID' => $document->companySystemID, 'employeeSystemID' => $document->approvedByUserSystemID];
 
                     $result = SupplierInvoiceGlService::processEntry($masterModel);
+                    Log::info("result");
+                    Log::info($result);
 
                     if ($result['status'] && isset($result['data']['taxLedgerData'])) {
                         TaxLedgerService::postLedgerEntry($result['data']['taxLedgerData'], $masterModel);
