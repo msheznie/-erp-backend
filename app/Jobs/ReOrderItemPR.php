@@ -258,7 +258,7 @@ class ReOrderItemPR implements ShouldQueue
                                         $policy = $allowFinanceCategory->isYesNO;
 
                                         if ($policy == 0) {
-                                            if ($new_purchaseRequests->financeCategory == null || $new_purchaseRequests->financeCategory == 0) {
+                                            if (isset($new_purchaseRequests->financeCategory) && ($new_purchaseRequests->financeCategory == null || $new_purchaseRequests->financeCategory == 0)) {
                                                 $is_failed = true;
                                             }
 
