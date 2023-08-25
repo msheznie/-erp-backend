@@ -298,8 +298,11 @@ class TaxLedgerAPIController extends AppBaseController
             $tenantDb = $tenant->database;
 
             CommonJobService::db_switch($tenantDb);
+            Log::info("tenantDb");
+            Log::info($tenantDb);
 
             $documents = BookInvSuppMaster::whereIn('documentType', [3, 4])->where('approved', -1)->get();
+            Log::info("documents");
             Log::info($documents);
             foreach ($documents as $document) {
 
