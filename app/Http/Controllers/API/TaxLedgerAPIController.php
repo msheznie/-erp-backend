@@ -290,8 +290,7 @@ class TaxLedgerAPIController extends AppBaseController
     {
 
         $tenants = CommonJobService::tenant_list();
-        Log::info("tenants");
-        Log::info($tenants);
+
         if (count($tenants) == 0) {
             return "tenant list is empty";
         }
@@ -300,12 +299,9 @@ class TaxLedgerAPIController extends AppBaseController
             $tenantDb = $tenant->database;
 
             CommonJobService::db_switch($tenantDb);
-            Log::info("tenantDb");
-            Log::info($tenantDb);
 
             $documents = BookInvSuppMaster::whereIn('documentType', [3, 4])->where('approved', -1)->get();
-            Log::info("documents");
-            Log::info($documents);
+
             foreach ($documents as $document) {
 
                 $missingInTaxLedger = TaxLedger::where('documentMasterAutoID', $document->bookingSuppMasInvAutoID)->where('documentSystemID', 11)->first();
@@ -315,15 +311,13 @@ class TaxLedgerAPIController extends AppBaseController
                     $masterModel = ['documentSystemID' => 11, 'autoID' => $document->bookingSuppMasInvAutoID, 'companySystemID' => $document->companySystemID, 'employeeSystemID' => $document->approvedByUserSystemID];
 
                     $result = SupplierInvoiceGlService::processEntry($masterModel);
-                    Log::info("result");
-                    Log::info($result);
 
                     if ($result['status'] && isset($result['data']['taxLedgerData'])) {
                         TaxLedgerService::postLedgerEntry($result['data']['taxLedgerData'], $masterModel);
                     }
                 }
             }
-            return $this->sendResponse([], 'Tax Ledger updated successfully');
         }
+        return $this->sendResponse([], 'Tax Ledger updated successfully');
     }
 }
