@@ -6,6 +6,7 @@ use App\Models\DirectPaymentDetails;
 use App\Models\PaySupplierInvoiceMaster;
 use App\Models\POSTaxGLEntries;
 use App\Models\SupplierInvoiceDirectItem;
+use App\Services\JobErrorLogService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
@@ -98,6 +99,9 @@ class SupplierInvoiceTaxLedgerService
                                     ->whereNotNull('vatSubCategoryID')
                                     ->groupBy('vatSubCategoryID')
                                     ->get();
+            if ($details->isEmpty()) {
+                return ['status' => false, 'message' => "There are no details present"];
+            }
 
             foreach ($details as $key => $value) {
                 $subCategoryData = TaxVatCategories::with(['tax'])->find($value->vatSubCategoryID);
@@ -176,7 +180,12 @@ class SupplierInvoiceTaxLedgerService
                 ->groupBy('vatSubCategoryID')
                 ->get();
 
-            foreach ($details as $key => $value) {
+            if ($details->isEmpty()) {
+                return ['status' => false, 'message' => "There are no details present"];
+            }
+
+
+                foreach ($details as $key => $value) {
                 $subCategoryData = TaxVatCategories::with(['tax'])->find($value->vatSubCategoryID);
 
                 if ($subCategoryData) {
@@ -255,6 +264,10 @@ class SupplierInvoiceTaxLedgerService
                                     ->whereNotNull('vatSubCategoryID')
                                     ->groupBy('vatSubCategoryID')
                                     ->get();
+
+            if ($details->isEmpty()) {
+                return ['status' => false, 'message' => "There are no details present"];
+            }
 
             foreach ($details as $key => $value) {
                 $subCategoryData = TaxVatCategories::with(['tax'])->find($value->vatSubCategoryID);
