@@ -290,6 +290,8 @@ class TaxLedgerAPIController extends AppBaseController
     {
 
         $tenants = CommonJobService::tenant_list();
+        Log::info("tenants");
+        Log::info($tenants);
         if (count($tenants) == 0) {
             return "tenant list is empty";
         }
