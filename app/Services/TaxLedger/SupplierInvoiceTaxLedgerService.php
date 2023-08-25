@@ -99,9 +99,6 @@ class SupplierInvoiceTaxLedgerService
                                     ->whereNotNull('vatSubCategoryID')
                                     ->groupBy('vatSubCategoryID')
                                     ->get();
-            if ($details->isEmpty()) {
-                return ['status' => false, 'error' => ['message' => "No details found"]];
-            }
 
             foreach ($details as $key => $value) {
                 $subCategoryData = TaxVatCategories::with(['tax'])->find($value->vatSubCategoryID);
@@ -188,10 +185,6 @@ class SupplierInvoiceTaxLedgerService
                 ->groupBy('vatSubCategoryID')
                 ->get();
 
-            if ($details->isEmpty()) {
-                return ['status' => false, 'error' => ['message' => "No details found"]];
-            }
-
 
                 foreach ($details as $key => $value) {
                 $subCategoryData = TaxVatCategories::with(['tax'])->find($value->vatSubCategoryID);
@@ -272,10 +265,7 @@ class SupplierInvoiceTaxLedgerService
                                     ->whereNotNull('vatSubCategoryID')
                                     ->groupBy('vatSubCategoryID')
                                     ->get();
-
-            if ($details->isEmpty()) {
-                return ['status' => false, 'error' => ['message' => "No details found"]];
-            }
+            
 
             foreach ($details as $key => $value) {
                 $subCategoryData = TaxVatCategories::with(['tax'])->find($value->vatSubCategoryID);
