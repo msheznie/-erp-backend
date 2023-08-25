@@ -505,8 +505,24 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
                 return $this->sendError(trans('custom.you_cannot_delete_advance_payment_detail_this_document_already_confirmed'),500);
             }
 
+            $matchDocumentMasterAutoID = $advancePaymentDetails->matchingDocID;
+            
+            $payMaster = MatchDocumentMaster::find($matchDocumentMasterAutoID);
+
+            if (empty($payMaster)) {
+                return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.payment_voucher')]));
+            }
+
+            if($payMaster->matchingConfirmedYN){
+                return $this->sendError(trans('custom.you_cannot_delete_advance_payment_detail_this_document_already_confirmed'),500);
+            }
+
+            $payMaster['matchedAmount'] = $payMaster->matchedAmount - $advancePaymentDetails->paymentAmount;
+            $payMaster['matchingAmount'] = $payMaster->matchingAmount - $advancePaymentDetails->paymentAmount;
 
             $advancePaymentDetails->delete();
+            $payMaster->save();
+
 
             $advancePayment = PoAdvancePayment::find($advancePaymentDetails2->poAdvPaymentID);
 
@@ -558,10 +574,16 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
 
             /** @var AdvancePaymentDetails $advancePaymentDetails */
             $advancePaymentDetails = $this->advancePaymentDetailsRepository->findWhere(['matchingDocID' => $matchDocumentMasterAutoID]);
+            
+            $totalPaymentAmount = $this->advancePaymentDetailsRepository->findWhere(['matchingDocID' => $matchDocumentMasterAutoID])->sum('paymentAmount');
 
             if (empty($advancePaymentDetails)) {
                 return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.pay_supplier_invoice_detail')]));
             }
+
+            $payMaster['matchedAmount'] = $payMaster->matchedAmount - $totalPaymentAmount;
+            $payMaster['matchingAmount'] = $payMaster->matchingAmount - $totalPaymentAmount;
+            $payMaster->save();
 
             foreach ($advancePaymentDetails as $val) {
 
