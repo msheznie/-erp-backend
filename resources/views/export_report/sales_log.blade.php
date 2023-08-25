@@ -42,9 +42,9 @@
         <tr>
             <td>{{$item->customer->CustomerName}}</td>
             <td>{{$item->currentYearValue}}</td>
-            <td>{{$item->currentYearPercentage}}</td>
+            <td>{{number_format($item->currentYearPercentage,2)}}</td>
             <td>{{$item->previousYearValue}}</td>
-            <td>{{$item->previousYearPercentage}}</td>
+            <td>{{number_format($item->previousYearPercentage,2)}}</td>
         </tr>
         @php $total += $item['currentYearValue'] @endphp
         @php $total2 += $item['previousYearValue'] @endphp
