@@ -6,6 +6,7 @@ use App\Models\DirectPaymentDetails;
 use App\Models\PaySupplierInvoiceMaster;
 use App\Models\POSTaxGLEntries;
 use App\Models\SupplierInvoiceDirectItem;
+use App\Services\JobErrorLogService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
@@ -69,7 +70,7 @@ class SupplierInvoiceTaxLedgerService
         $ledgerDetailsData = $ledgerData;
         $ledgerDetailsData['createdUserSystemID'] = $empID->employeeSystemID;
         
-        $masterData = BookInvSuppMaster::with(['financeperiod_by', 'supplier','directdetail' => function ($query) {
+        $masterData = BookInvSuppMaster::with(['financeperiod_by', 'supplier', 'employee', 'directdetail' => function ($query) {
             $query->selectRaw('SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount,SUM(DIAmount) as transAmount,directInvoiceAutoID');
         }])->find($masterModel["autoID"]);
 
@@ -80,7 +81,7 @@ class SupplierInvoiceTaxLedgerService
 
         $ledgerData['documentCode'] = $masterData->bookingInvCode;
         $ledgerData['documentDate'] = $masterDocumentDate;
-        $ledgerData['partyID'] = $masterData->supplierID;
+        $ledgerData['partyID'] = ($masterData->documentType == 4) ? $masterData->employeeID : $masterData->supplierID;
         $ledgerData['documentFinalApprovedByEmpSystemID'] = $masterData->approvedByUserSystemID;
 
         $netAmount = ($masterData->documentType == 1) ? $masterData->netAmount : $masterData->bookingAmountTrans; 
@@ -146,11 +147,19 @@ class SupplierInvoiceTaxLedgerService
                 $ledgerDetailsData['originalInvoice'] = null;
                 $ledgerDetailsData['originalInvoiceDate'] = null;
                 $ledgerDetailsData['dateOfSupply'] = null;
-                $ledgerDetailsData['partyType'] = 1;
-                $ledgerDetailsData['partyAutoID'] = $masterData->supplierID;
-                $ledgerDetailsData['partyVATRegisteredYN'] = isset($masterData->supplier->vatEligible) ? $masterData->supplier->vatEligible : 0;
-                $ledgerDetailsData['partyVATRegNo'] = isset($masterData->supplier->vatNumber) ? $masterData->supplier->vatNumber : "";
-                $ledgerDetailsData['countryID'] = isset($masterData->supplier->supplierCountryID) ? $masterData->supplier->supplierCountryID : "";
+                if ($masterData->documentType == 1) {
+                    $ledgerDetailsData['partyType'] = 1;
+                    $ledgerDetailsData['partyAutoID'] = $masterData->supplierID;
+                    $ledgerDetailsData['partyVATRegisteredYN'] = isset($masterData->supplier->vatEligible) ? $masterData->supplier->vatEligible : 0;
+                    $ledgerDetailsData['partyVATRegNo'] = isset($masterData->supplier->vatNumber) ? $masterData->supplier->vatNumber : "";
+                    $ledgerDetailsData['countryID'] = isset($masterData->supplier->supplierCountryID) ? $masterData->supplier->supplierCountryID : "";
+                } else if ($masterData->documentType == 4) {
+                    $ledgerDetailsData['partyType'] = 3;
+                    $ledgerDetailsData['partyAutoID'] = $masterData->employeeID;
+                    $ledgerDetailsData['partyVATRegisteredYN'] = 0;
+                    $ledgerDetailsData['partyVATRegNo'] = null;
+                    $ledgerDetailsData['countryID'] =null;
+                }
                 $ledgerDetailsData['itemSystemCode'] = null;
                 $ledgerDetailsData['itemCode'] = null;
                 $ledgerDetailsData['itemDescription'] = null;
@@ -176,7 +185,8 @@ class SupplierInvoiceTaxLedgerService
                 ->groupBy('vatSubCategoryID')
                 ->get();
 
-            foreach ($details as $key => $value) {
+
+                foreach ($details as $key => $value) {
                 $subCategoryData = TaxVatCategories::with(['tax'])->find($value->vatSubCategoryID);
 
                 if ($subCategoryData) {
@@ -255,6 +265,7 @@ class SupplierInvoiceTaxLedgerService
                                     ->whereNotNull('vatSubCategoryID')
                                     ->groupBy('vatSubCategoryID')
                                     ->get();
+            
 
             foreach ($details as $key => $value) {
                 $subCategoryData = TaxVatCategories::with(['tax'])->find($value->vatSubCategoryID);
