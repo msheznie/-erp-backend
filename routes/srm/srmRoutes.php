@@ -13,7 +13,7 @@ Route::post('tenderBIdDocTypeApproveal', 'DocumentAttachmentsAPIController@tende
 Route::post('tenderBIdDocSubmission', 'DocumentAttachmentsAPIController@tenderBIdDocSubmission')->name("Tender bid doc submission");
 Route::post('checkTenderBidDocExist', 'DocumentAttachmentsAPIController@checkTenderBidDocExist')->name("Check tender bid doc exist");
 
-Route::post('getAllProcurementCategory', 'TenderProcurementCategoryController@getAllProcurementCategory');
+Route::post('getAllProcurementCategory', 'TenderProcurementCategoryController@getAllProcurementCategory')->name("Get all procurement category");
 Route::resource('procurement_categories', 'TenderProcurementCategoryController');
 
 Route::post('get_all_calendar_dates', 'TenderCalendarDatesController@getAllCalendarDates');
