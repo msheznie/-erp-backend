@@ -204,11 +204,11 @@ Route::post('confirmCommBidLineItem', 'TenderMasterAPIController@confirmCommBidL
 Route::post('confirmFinalCommercial', 'TenderMasterAPIController@confirmFinalCommercial')->name("Confirm final commercial");
 Route::post('getFinalBids', 'TenderFinalBidsAPIController@getFinalBids')->name("Get final bids");
 Route::post('confirmFinalBid', 'TenderFinalBidsAPIController@confirmFinalBid')->name("Confirm final bid");
-Route::post('getRankingCompletedTenderList', 'TenderMasterAPIController@getRankingCompletedTenderList');
-Route::post('getAwardedFormData', 'TenderMasterAPIController@getAwardedFormData');
-Route::post('getEmployeesTenderAwardinglApproval','TenderBidEmployeeDetailsController@getEmployeesTenderAwardinglApproval');
-Route::post('confirmFinalBidAwardComment', 'TenderMasterAPIController@confirmFinalBidAwardComment');
-Route::post('sendTenderAwardEmail', 'TenderMasterAPIController@sendTenderAwardEmail');
+Route::post('getRankingCompletedTenderList', 'TenderMasterAPIController@getRankingCompletedTenderList')->name("Get ranking completed tender list");
+Route::post('getAwardedFormData', 'TenderMasterAPIController@getAwardedFormData')->name("Get awarded form data");
+Route::post('getEmployeesTenderAwardinglApproval','TenderBidEmployeeDetailsController@getEmployeesTenderAwardinglApproval')->name("Get employees tender awarding approval");
+Route::post('confirmFinalBidAwardComment', 'TenderMasterAPIController@confirmFinalBidAwardComment')->name("Confirm final bid award comment");
+Route::post('sendTenderAwardEmail', 'TenderMasterAPIController@sendTenderAwardEmail')->name("Send tender award email");
 Route::post('getNegotiationStartedTenderList', 'TenderMasterAPIController@getNegotiationStartedTenderList');
 
 
