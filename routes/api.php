@@ -1447,80 +1447,33 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
 
             Route::get('getPurchaseOrdersLikedWithSi', 'BookInvSuppMasterAPIController@getPurchaseOrdersLikedWithSi');
-        
+
+
+            Route::resource('tax_ledgers', 'TaxLedgerAPIController');
+            Route::resource('employee_designations', 'EmployeeDesignationAPIController');
+            Route::resource('hrms_designations', 'HrmsDesignationAPIController');
+            Route::resource('hrms_employee_managers', 'HrmsEmployeeManagerAPIController');
+            Route::resource('finance_category_serials', 'FinanceCategorySerialAPIController');
         });
     });
 
+    require __DIR__.'/../routes/printPdf/printPdfRoutes.php';
+    
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
     Route::get('getSupplierRegisterFormData', 'SupplierMasterAPIController@getSupplierRegisterFormData');
     Route::post('registerSupplier', 'SupplierMasterAPIController@registerSupplier');
 
-    Route::group(['middleware' => 'print_lang'], function () {
-        Route::get('getProcumentOrderPrintPDF', 'ProcumentOrderAPIController@getProcumentOrderPrintPDF')->name('Get procurement order print pdf');
-        Route::get('goodReceiptVoucherPrintPDF', 'GRVMasterAPIController@goodReceiptVoucherPrintPDF');
-        Route::get('printItemIssue', 'ItemIssueMasterAPIController@printItemIssue');
-        Route::get('deliveryPrintItemIssue', 'ItemIssueMasterAPIController@deliveryPrintItemIssue');
-        Route::get('printCustomerInvoice', 'CustomerInvoiceDirectAPIController@printCustomerInvoice');
-        Route::get('printReceiptVoucher', 'CustomerReceivePaymentAPIController@printReceiptVoucher');
-        Route::get('printPaymentVoucher', 'PaySupplierInvoiceMasterAPIController@printPaymentVoucher');
-        Route::get('printPurchaseRequest', 'PurchaseRequestAPIController@printPurchaseRequest');
-        Route::get('printMaterielRequest', 'MaterielRequestAPIController@printMaterielRequest');
-    });
-
-    Route::get('getPoLogisticPrintPDF', 'PoAdvancePaymentAPIController@getPoLogisticPrintPDF')->name('Get procurement order logistic print pdf');
-    Route::post('getReportPDF', 'ReportAPIController@pdfExportReport');
-    Route::post('generateARReportPDF', 'AccountsReceivableReportAPIController@pdfExportReport');
-    Route::post('generateAPReportPDF', 'AccountsPayableReportAPIController@pdfExportReport');
-    Route::get('printItemReturn', 'ItemReturnMasterAPIController@printItemReturn');
-    Route::get('printStockReceive', 'StockReceiveAPIController@printStockReceive');
-    Route::get('printStockTransfer', 'StockTransferAPIController@printStockTransfer');
     
-    Route::get('printPurchaseReturn', 'PurchaseReturnAPIController@printPurchaseReturn');
-    Route::get('printExpenseClaim', 'ExpenseClaimAPIController@printExpenseClaim');
-    Route::get('printExpenseClaimMaster', 'ExpenseClaimMasterAPIController@printExpenseClaimMaster');
-    Route::get('printCreditNote', 'CreditNoteAPIController@printCreditNote');
-    Route::get('printDebitNote', 'DebitNoteAPIController@printDebitNote');
-    Route::get('printSupplierInvoice', 'BookInvSuppMasterAPIController@printSupplierInvoice');
-    Route::get('printBankReconciliation', 'BankReconciliationAPIController@printBankReconciliation');
-    Route::get('printChequeItems', 'BankLedgerAPIController@printChequeItems');
-    Route::get('printSuppliers', 'SupplierMasterAPIController@printSuppliers');
-    Route::get('exportPaymentBankTransfer', 'PaymentBankTransferAPIController@exportPaymentBankTransfer');
-    Route::get('printJournalVoucher', 'JvMasterAPIController@printJournalVoucher');
-    Route::get('printPaymentMatching', 'MatchDocumentMasterAPIController@printPaymentMatching');
-    Route::get('getSalesQuotationPrintPDF', 'QuotationMasterAPIController@getSalesQuotationPrintPDF');
-    Route::get('getBatchSubmissionDetailsPrintPDF', 'CustomerInvoiceTrackingAPIController@getBatchSubmissionDetailsPrintPDF');
-    Route::get('BidSummaryReport', 'BidSubmissionMasterAPIController@BidSummaryExportReport');
-    Route::get('supplier-item-wise-report', 'BidSubmissionMasterAPIController@SupplierItemWiseExportReport');
-    Route::post('schedule-wise-report', 'BidSubmissionMasterAPIController@SupplierSheduleWiseReport');
-    Route::post('SupplierScheduleWiseExportReport', 'BidSubmissionMasterAPIController@SupplierScheduleWiseExportReport');
-
-    Route::get('pvSupplierPrint', 'BankLedgerAPIController@pvSupplierPrint');
     Route::get('loginwithToken', 'UserAPIController@loginwithToken');
-    Route::get('downloadFileFrom', 'DocumentAttachmentsAPIController@downloadFileFrom');
     Route::post('login', 'AuthAPIController@auth');
     Route::post('oauth/login_with_token', 'AuthAPIController@authWithToken');
-    Route::get('printDeliveryOrder', 'DeliveryOrderAPIController@printDeliveryOrder');
-    Route::get('printSalesReturn', 'SalesReturnAPIController@printSalesReturn');
+    
+    Route::get('downloadFileFrom', 'DocumentAttachmentsAPIController@downloadFileFrom');
     Route::resource('work_order_generation_logs', 'WorkOrderGenerationLogAPIController');
     Route::resource('external_link_hashes', 'ExternalLinkHashAPIController');
     Route::resource('registered_suppliers', 'RegisteredSupplierAPIController');
     Route::post('getTenderBitsDoc', 'DocumentAttachmentsAPIController@getTenderBitsDoc');
     Route::post('getConsolidatedDataAttachment', 'DocumentAttachmentsAPIController@getConsolidatedDataAttachment');
-
-    Route::resource('tax_ledgers', 'TaxLedgerAPIController');
-
-    Route::resource('employee_designations', 'EmployeeDesignationAPIController');
-
-    Route::resource('hrms_designations', 'HrmsDesignationAPIController');
-
-    Route::resource('hrms_employee_managers', 'HrmsEmployeeManagerAPIController');
-
-
-    Route::resource('finance_category_serials', 'FinanceCategorySerialAPIController');
-
-    if (env("LOG_ENABLE", false)) {
-        Route::get('logs', '\Rap2hpoutre\LaravelLogViewer\LogViewerController@index');
-    }
 
     Route::get('notification-service', 'NotificationCompanyScenarioAPIController@notification_service');
     Route::get('leave/accrual/service_test', 'LeaveAccrualMasterAPIController@accrual_service_test');
@@ -1530,6 +1483,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     Route::get('updateExemptVATPos', 'ProcumentOrderAPIController@updateExemptVATPos');
     Route::get('downloadFileTender', 'DocumentAttachmentsAPIController@downloadFileTender');
 
+    if (env("LOG_ENABLE", false)) {
+        Route::get('logs', '\Rap2hpoutre\LaravelLogViewer\LogViewerController@index');
+    }
 });
 
 
