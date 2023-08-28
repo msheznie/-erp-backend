@@ -401,13 +401,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             //Route::get('getTotalCountOfApproval', 'DocumentApprovedAPIController@getTotalCountOfApproval');
 
             // Payment Voucher
-            Route::get('getMatchingPaymentDetails', 'PaySupplierInvoiceDetailAPIController@getMatchingPaymentDetails');
-            Route::get('getMatchingADVPaymentDetails', 'AdvancePaymentDetailsAPIController@getMatchingADVPaymentDetails');
-            Route::post('addADVPaymentDetailForDirectPay', 'AdvancePaymentDetailsAPIController@addADVPaymentDetailForDirectPay');
-            Route::post('deleteMatchingAllADVPaymentDetail', 'AdvancePaymentDetailsAPIController@deleteMatchingAllADVPaymentDetail');
-            Route::post('deleteMatchingADVPaymentItem', 'AdvancePaymentDetailsAPIController@deleteMatchingADVPaymentItem');
-            Route::get('getADVPaymentForMatchingDocument', 'PaySupplierInvoiceMasterAPIController@getADVPaymentForMatchingDocument');
-
             Route::post('getPaymentVoucherPendingAmountDetails', 'PaySupplierInvoiceMasterAPIController@getPaymentVoucherPendingAmountDetails');
 
             Route::get('getAllApprovalDocuments', 'DocumentMasterAPIController@getAllApprovalDocuments');
@@ -533,19 +526,11 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('deleteAllSIDirectDetail', 'DirectInvoiceDetailsAPIController@deleteAllSIDirectDetail');
 
             // Matching
-            Route::resource('match_document_masters', 'MatchDocumentMasterAPIController',['only' => ['store', 'show', 'update']]);
-
-
-            Route::post('getMatchDocumentMasterView', 'MatchDocumentMasterAPIController@getMatchDocumentMasterView');
-            Route::get('getMatchDocumentMasterFormData', 'MatchDocumentMasterAPIController@getMatchDocumentMasterFormData');
-            Route::post('getPaymentVoucherMatchPullingDetail', 'MatchDocumentMasterAPIController@getPaymentVoucherMatchPullingDetail');
-            Route::post('PaymentVoucherMatchingCancel', 'MatchDocumentMasterAPIController@PaymentVoucherMatchingCancel');
             Route::post('receiptVoucherMatchingCancel', 'MatchDocumentMasterAPIController@receiptVoucherMatchingCancel');
             Route::post('getRVMatchDocumentMasterView', 'MatchDocumentMasterAPIController@getRVMatchDocumentMasterView');
             Route::get('getReceiptVoucherMatchItems', 'MatchDocumentMasterAPIController@getReceiptVoucherMatchItems');
             Route::post('getReceiptVoucherPullingDetail', 'MatchDocumentMasterAPIController@getReceiptVoucherPullingDetail');
             Route::post('updateReceiptVoucherMatching', 'MatchDocumentMasterAPIController@updateReceiptVoucherMatching');
-            Route::post('amendReceiptMatchingReview', 'MatchDocumentMasterAPIController@amendReceiptMatchingReview');
             Route::post('deleteAllRVMDetails', 'MatchDocumentMasterAPIController@deleteAllRVMDetails');
 
             Route::get('getPaymentVoucherMatchItems', 'PaySupplierInvoiceMasterAPIController@getPaymentVoucherMatchItems');
@@ -554,15 +539,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::post('getCustomerReceiptInvoices', 'AccountsReceivableLedgerAPIController@getCustomerReceiptInvoices');
             Route::post('saveReceiptVoucherUnAllocationsDetails', 'CustomerReceivePaymentDetailAPIController@saveReceiptVoucherUnAllocationsDetails');
-            Route::post('addPaymentVoucherMatchingPaymentDetail', 'PaySupplierInvoiceDetailAPIController@addPaymentVoucherMatchingPaymentDetail');
-            Route::post('updatePaymentVoucherMatchingDetail', 'PaySupplierInvoiceDetailAPIController@updatePaymentVoucherMatchingDetail');
-
 
             Route::post('getChequePrintingItems', 'BankLedgerAPIController@getChequePrintingItems');
             Route::get('getChequePrintingFormData', 'BankLedgerAPIController@getChequePrintingFormData');
             Route::post('updatePrintChequeItems', 'BankLedgerAPIController@updatePrintChequeItems');
-
-
 
             Route::post('referBackCosting', 'FixedAssetMasterAPIController@referBackCosting');
 

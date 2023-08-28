@@ -132,3 +132,18 @@ Route::group([],function (){
     Route::resource('pay_supplier_invoice_details', 'PaySupplierInvoiceDetailAPIController',['except' => ['index','store']]);
     Route::resource('pay_supplier_invoice_masters', 'PaySupplierInvoiceMasterAPIController', ['only' => ['store', 'show', 'update']]);
 });
+
+//Payment Voucher Matching
+Route::group([],function (){
+    Route::get('getMatchingADVPaymentDetails', 'AdvancePaymentDetailsAPIController@getMatchingADVPaymentDetails')->name('Get matching adv payment details');
+    Route::get('getMatchingPaymentDetails', 'PaySupplierInvoiceDetailAPIController@getMatchingPaymentDetails')->name('Get matching payment details');
+    Route::post('deleteMatchingAllADVPaymentDetail', 'AdvancePaymentDetailsAPIController@deleteMatchingAllADVPaymentDetail')->name('Delete matching all adv payment detail');
+    Route::post('deleteMatchingADVPaymentItem', 'AdvancePaymentDetailsAPIController@deleteMatchingADVPaymentItem')->name('Delete matching adv payment item');
+    Route::post('updatePaymentVoucherMatchingDetail', 'PaySupplierInvoiceDetailAPIController@updatePaymentVoucherMatchingDetail')->name('Update payment voucher matching detail');
+    Route::post('PaymentVoucherMatchingCancel', 'MatchDocumentMasterAPIController@PaymentVoucherMatchingCancel')->name('Payment voucher matching cancel');
+    Route::post('amendReceiptMatchingReview', 'MatchDocumentMasterAPIController@amendReceiptMatchingReview')->name('Amend receipt matching review');
+    Route::post('getPaymentVoucherMatchPullingDetail', 'MatchDocumentMasterAPIController@getPaymentVoucherMatchPullingDetail')->name('Get payment voucher match pulling detail');
+    Route::post('addPaymentVoucherMatchingPaymentDetail', 'PaySupplierInvoiceDetailAPIController@addPaymentVoucherMatchingPaymentDetail')->name('Add payment voucher matching payment detail');
+    Route::get('getADVPaymentForMatchingDocument', 'PaySupplierInvoiceMasterAPIController@getADVPaymentForMatchingDocument')->name('Get adv payment for matching document');
+    Route::post('addADVPaymentDetailForDirectPay', 'AdvancePaymentDetailsAPIController@addADVPaymentDetailForDirectPay')->name('Add adv payment detail for direct pay');
+});
