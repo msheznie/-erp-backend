@@ -36,16 +36,16 @@ Route::post('getTenderBits', 'BidSubmissionMasterAPIController@getTenderBits')->
 Route::post('getTenderBidGoNoGoResponse', 'BidSubmissionMasterAPIController@getTenderBidGoNoGoResponse')->name("Get tender bid go no go response");
 Route::post('updateTenderBidGoNoGoResponse', 'BidSubmissionMasterAPIController@updateTenderBidGoNoGoResponse')->name("Update tender bid go no go response");
 
-Route::post('getTenderBidFormats', 'TenderBidFormatMasterAPIController@getTenderBidFormats');
-Route::post('storeBidFormat', 'TenderBidFormatMasterAPIController@storeBidFormat');
-Route::post('loadBidFormatMaster', 'TenderBidFormatMasterAPIController@loadBidFormatMaster');
-Route::post('addPriceBidDetail', 'TenderBidFormatMasterAPIController@addPriceBidDetail');
-Route::post('updatePriceBidDetail', 'TenderBidFormatMasterAPIController@updatePriceBidDetail');
-Route::post('updateBidFormat', 'TenderBidFormatMasterAPIController@updateBidFormat');
-Route::post('deletePriceBideDetail', 'TenderBidFormatMasterAPIController@deletePriceBideDetail');
-Route::post('deletePriceBidMaster', 'TenderBidFormatMasterAPIController@deletePriceBidMaster');
+Route::post('getTenderBidFormats', 'TenderBidFormatMasterAPIController@getTenderBidFormats')->name("Get tender bid formats");
+Route::post('storeBidFormat', 'TenderBidFormatMasterAPIController@storeBidFormat')->name("Store bid format");
+Route::post('loadBidFormatMaster', 'TenderBidFormatMasterAPIController@loadBidFormatMaster')->name("Load bid format master");
+Route::post('addPriceBidDetail', 'TenderBidFormatMasterAPIController@addPriceBidDetail')->name("Add price bid detail");
+Route::post('updatePriceBidDetail', 'TenderBidFormatMasterAPIController@updatePriceBidDetail')->name("Update price bid detail");
+Route::post('updateBidFormat', 'TenderBidFormatMasterAPIController@updateBidFormat')->name("Update bid format");
+Route::post('deletePriceBideDetail', 'TenderBidFormatMasterAPIController@deletePriceBideDetail')->name("Delete price bid detail");
+Route::post('deletePriceBidMaster', 'TenderBidFormatMasterAPIController@deletePriceBidMaster')->name("Delete price bid master");
 
-Route::post('getBitFormatItems', 'TenderBidFormatMasterAPIController@getBitFormatItems');
+Route::post('getBitFormatItems', 'TenderBidFormatMasterAPIController@getBitFormatItems')->name("Get bid format items");
 
 
 Route::post('getTenderMasterList', 'TenderMasterAPIController@getTenderMasterList')->name("Get tender master list");
@@ -63,7 +63,7 @@ Route::post('tenderCommiteApproveal', 'TenderMasterAPIController@tenderCommiteAp
 Route::post('getTenderTechniqalEvaluation', 'TenderMasterAPIController@getTenderTechniqalEvaluation')->name("Get tender technical evaluation");
 
 
-Route::post('addFormula', 'TenderBidFormatMasterAPIController@addFormula');
+Route::post('addFormula', 'TenderBidFormatMasterAPIController@addFormula')->name("Add formula");
 Route::post('formulaGenerate', 'TenderBidFormatMasterAPIController@formulaGenerate');
 Route::post('tenderBidDocVerification', 'TenderMasterAPIController@tenderBidDocVerification')->name("Tender bid doc verification");
 
