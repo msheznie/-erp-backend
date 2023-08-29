@@ -16,7 +16,7 @@ Route::post('checkTenderBidDocExist', 'DocumentAttachmentsAPIController@checkTen
 Route::post('getAllProcurementCategory', 'TenderProcurementCategoryController@getAllProcurementCategory')->name("Get all procurement category");
 Route::resource('procurement_categories', 'TenderProcurementCategoryController');
 
-Route::post('get_all_calendar_dates', 'TenderCalendarDatesController@getAllCalendarDates');
+Route::post('get_all_calendar_dates', 'TenderCalendarDatesController@getAllCalendarDates')->name("Get all calendar dates");
 Route::resource('calendar_date', 'TenderCalendarDatesController');
 
 Route::post('get-tender-committee', 'TenderCommitteeController@getAll');
