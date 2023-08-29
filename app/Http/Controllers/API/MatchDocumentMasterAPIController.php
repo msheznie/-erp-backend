@@ -3307,10 +3307,18 @@ ORDER BY
             $masterData->matchingConfirmedDate = null;
             $masterData->save();
 
-            $paySupplierInvoice = PaySupplierInvoiceMaster::find($masterData->PayMasterAutoId);
-            if (!empty($paySupplierInvoice)) {
-                $paySupplierInvoice->matchInvoice = 0;
-                $paySupplierInvoice->save();
+            if($masterData->documentSystemID == 4){
+                $paySupplierInvoice = PaySupplierInvoiceMaster::find($masterData->PayMasterAutoId);
+                if (!empty($paySupplierInvoice)) {
+                    $paySupplierInvoice->matchInvoice = 0;
+                    $paySupplierInvoice->save();
+                }
+            }else if($masterData->documentSystemID == 15){
+                $debitNote = DebitNote::find($masterData->PayMasterAutoId);
+                if (!empty($debitNote)) {
+                    $debitNote->matchInvoice = 0;
+                    $debitNote->save();
+                }
             }
 
             if($masterData->documentSystemID == 4 || $masterData->documentSystemID == 15){
