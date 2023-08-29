@@ -871,10 +871,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::resource('currency_conversion_histories', 'CurrencyConversionHistoryAPIController');
             
-            Route::resource('document_attachment_type', 'DocumentAttachmentTypeController');
-            Route::post('get_all_document_attachment_type', 'DocumentAttachmentTypeController@getAllDocumentAttachmentTypes');
-            Route::post('remove_document_attachment_type', 'DocumentAttachmentTypeController@removeDocumentAttachmentType');
-            
             Route::post('getAllNotDishachargeEmployeesDropdown', 'EmployeeAPIController@getAllNotDishachargeEmployeesDropdown');
 
             /* For Profile -> Profile */
