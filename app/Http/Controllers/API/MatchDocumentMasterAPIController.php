@@ -2583,6 +2583,14 @@ class MatchDocumentMasterAPIController extends AppBaseController
             return $this->sendError('Cannot cancel. Delete the invoices added to the detail and try again.');
         }
 
+        $poAdvanceRequestDetailExist = AdvancePaymentDetails::select(DB::raw('matchingDocID'))
+        ->where('matchingDocID', $matchDocumentMasterAutoID)
+        ->first();
+
+        if (!empty($poAdvanceRequestDetailExist)) {
+            return $this->sendError('Cannot cancel. Delete the po advance requests added to the detail and try again.');
+        }
+
         if ($MatchDocumentMasterData->matchingDocCode != '0') {
             $updateData = [
                 'cancelledYN' => 1,
