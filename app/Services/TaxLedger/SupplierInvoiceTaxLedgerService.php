@@ -179,7 +179,7 @@ class SupplierInvoiceTaxLedgerService
                 array_push($finalDetailData, $ledgerDetailsData);
             }
         } else if($masterData->documentType == 3) {
-            $details = SupplierInvoiceDirectItem::selectRaw('noQty, SUM(VATAmount) as transVATAmount,SUM(VATAmountLocal) as localVATAmount ,SUM(VATAmountRpt) as rptVATAmount, vatMasterCategoryID, vatSubCategoryID, localCurrencyID, companyReportingCurrencyID as reportingCurrencyID, supplierDefaultCurrencyID as transCurrencyID, companyReportingER as reportingCurrencyER, localCurrencyER as localCurrencyER, supplierDefaultER as transCurrencyER')
+            $details = SupplierInvoiceDirectItem::selectRaw('noQty, SUM(VATAmount * noQty) as transVATAmount, SUM(VATAmountLocal * noQty) as localVATAmount ,SUM(VATAmountRpt * noQty) as rptVATAmount, vatMasterCategoryID, vatSubCategoryID, localCurrencyID, companyReportingCurrencyID as reportingCurrencyID, supplierDefaultCurrencyID as transCurrencyID, companyReportingER as reportingCurrencyER, localCurrencyER as localCurrencyER, supplierDefaultER as transCurrencyER')
                 ->where('bookingSuppMasInvAutoID', $masterModel["autoID"])
                 ->whereNotNull('vatSubCategoryID')
                 ->groupBy('vatSubCategoryID')
@@ -195,9 +195,9 @@ class SupplierInvoiceTaxLedgerService
 
                 $ledgerData['subCategoryID'] = $value->vatSubCategoryID;
                 $ledgerData['masterCategoryID'] = $value->vatMasterCategoryID;
-                $ledgerData['localAmount'] = $value->localVATAmount * $value->noQty;
-                $ledgerData['rptAmount'] = $value->rptVATAmount * $value->noQty;
-                $ledgerData['transAmount'] = $value->transVATAmount * $value->noQty;
+                $ledgerData['localAmount'] = $value->localVATAmount;
+                $ledgerData['rptAmount'] = $value->rptVATAmount;
+                $ledgerData['transAmount'] = $value->transVATAmount;
                 $ledgerData['transER'] = $value->transCurrencyER;
                 $ledgerData['localER'] = $value->localCurrencyER;
                 $ledgerData['comRptER'] = $value->reportingCurrencyER;
