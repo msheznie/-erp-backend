@@ -8,6 +8,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Log;
 use Sichikawa\LaravelSendgridDriver\SendGrid;
+use App\Models\AppearanceSettings;
 
 class EmailForQueuing extends Mailable implements ShouldQueue
 {
@@ -44,7 +45,21 @@ class EmailForQueuing extends Mailable implements ShouldQueue
      */
     public function build()
     {
-       $mail = $this->view('email.default_email')
+       $color = '#C23C32';
+       $colorObj= AppearanceSettings::where('appearance_system_id', 1)->where('appearance_element_id', 1)->first();
+       if($colorObj)
+       {
+            $color = $colorObj->value;
+       }
+
+       $text = 'GEARS';
+       $textObj= AppearanceSettings::where('appearance_system_id', 1)->where('appearance_element_id', 7)->first();
+       if($textObj)
+       {
+            $text = $textObj->value;
+       }
+
+       $mail = $this->view('email.default_email',['color' => $color,'text' => $text])
                     ->subject($this->subject)
                     ->sendgrid([
                         'personalizations' => [

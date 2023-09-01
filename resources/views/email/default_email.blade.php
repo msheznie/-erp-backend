@@ -80,9 +80,9 @@
                        bgcolor="#fff">
                     <tr style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;">
                         <td class="alert alert-warning"
-                            style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; border: 1px solid #e9e9e9; box-sizing: border-box; font-size: 16px; vertical-align: top; color: #ffffff; font-weight: 500; text-align: center; border-radius: 3px 3px 0 0; background-color: #C23C32; margin: 0; padding: 20px;"
+                            style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; border: 1px solid #e9e9e9; box-sizing: border-box; font-size: 16px; vertical-align: top; color: #ffffff; font-weight: 500; text-align: center; border-radius: 3px 3px 0 0; background-color:{{ $color }}; margin: 0; padding: 20px;"
                             align="center" bgcolor="#fff" valign="top">
-                            <strong> GEARS </strong>
+                            <strong> {{ $text }} </strong>
                         </td>
                     </tr>
                     <tr style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;">
