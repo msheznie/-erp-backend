@@ -14,6 +14,7 @@ use App\Models\CompanyDocumentAttachment;
 use App\Models\CurrencyMaster;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\PurchaseRequest;
 use App\Models\TenderNegotiation;
 use App\Models\EmployeesDepartment;
 use App\Models\EnvelopType;
@@ -28,6 +29,7 @@ use App\Models\TenderBoqItems;
 use App\Models\TenderMainWorks;
 use App\Models\TenderMaster;
 use App\Models\TenderProcurementCategory;
+use App\Models\TenderPurchaseRequest;
 use App\Models\TenderSiteVisitDates;
 use App\Models\TenderType;
 use App\Models\SrmTenderBidEmployeeDetails;
@@ -739,6 +741,25 @@ WHERE
             }
         }
         $data['documentTypes'] = $docTypeArr;
+
+        // Get Purchase Request Data
+        $purchaseRequest = PurchaseRequest::select('purchaseRequestID as id', 'purchaseRequestCode')
+            ->with(['tender_purchase_request'])
+            ->where('approved', '-1')
+            ->whereDoesntHave('tender_purchase_request', function ($query) use ($tenderMasterId) {
+                $query->where('tender_id','!=' ,$tenderMasterId);
+            })
+            ->get();
+        $data['purchaseRequest'] = $purchaseRequest;
+
+        // Get Tender Purchase Request Data
+        //$tenderPurchaseRequestList = TenderPurchaseRequest::select('purchase_request_id as id')->where('tender_id', $tenderMasterId)->get();
+        $tenderPurchaseRequestList = TenderPurchaseRequest::select('purchase_request_id as id', 'erp_purchaserequest.purchaseRequestCode as itemName')
+            ->leftJoin('erp_purchaserequest', 'erp_purchaserequest.purchaseRequestID', '=', 'srm_tender_purchase_request.purchase_request_id')
+            ->where('tender_id', $tenderMasterId)
+            ->get();
+        $data['tenderPurchaseRequestList'] = $tenderPurchaseRequestList;
+
         return $data;
     }
 
@@ -1464,6 +1485,25 @@ WHERE
                     }
                 }
 
+                $tenderPurchaseRequestCount = TenderPurchaseRequest::where('tender_id', $input['id'])->count();
+
+                if( $tenderPurchaseRequestCount > 0){
+                    TenderPurchaseRequest::where('tender_id', $input['id'])->delete();
+                }
+
+                if(isset($input['purchaseRequest']) && sizeof($input['purchaseRequest']) > 0){
+                    foreach ($input['purchaseRequest'] as $pr) {
+
+                        $data = [
+                            'tender_id' => $input['id'],
+                            'purchase_request_id' => $pr['id'],
+                            'company_id' => $input['company_id'],
+                        ];
+
+                        TenderPurchaseRequest::create($data);
+                    }
+
+                }
 
                 DB::commit();
                 return ['success' => true, 'message' => 'Successfully updated', 'data' => $input['addCalendarDates']];
