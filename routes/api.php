@@ -68,6 +68,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             require __DIR__.'/../routes/assetManagement/assetManagementRoutes.php';
             require __DIR__.'/../routes/general/customReport.php';
             require __DIR__.'/../routes/supplierManagement/supplierManagementRoutes.php';
+            require __DIR__.'/../routes/sourcingManagement/sourcingManagementRoutes.php';
 
             Route::post('getAllEmployees', 'EmployeeAPIController@getAllEmployees');
 
