@@ -103,6 +103,11 @@ use App\Mail\EmailForQueuing;
 use App\Models\DocumentModifyRequest;
 use App\helper\TenderDetails;
 
+use App\Models\DirectInvoiceDetails;
+use App\Models\BookInvSuppDet;
+use App\Models\SupplierInvoiceDirectItem;
+use App\Models\CurrencyMaster;
+
 class Helper
 {
     /**
@@ -3642,6 +3647,7 @@ class Helper
         $docInforArr = array('tableName' => '', 'modelName' => '', 'primarykey' => '', 'approvedColumnName' => '', 'approvedBy' => '', 'approvedBySystemID' => '', 'approvedDate' => '', 'approveValue' => '', 'confirmedYN' => '', 'confirmedEmpSystemID' => '');
 
         $dataBase = (isset($input['db'])) ? $input['db'] : "";
+        $budgetBlockOveride = (isset($input['budgetBlockOveride'])) ? $input['budgetBlockOveride'] : false;
         switch ($input["documentSystemID"]) { // check the document id and set relavant parameters
             case 57:
                 $docInforArr["tableName"] = 'itemmaster';
@@ -4335,14 +4341,14 @@ class Helper
                     if ($approvalLevel) {
                         //Budget check on the 1st level approval for PR/DR/WR
                         if ($input["rollLevelOrder"] == 1) {
-                            if (BudgetConsumptionService::budgetCheckDocumentList($input["documentSystemID"])) {
+                            if (BudgetConsumptionService::budgetCheckDocumentList($input["documentSystemID"]) && !$budgetBlockOveride) {
                                 $budgetCheck = BudgetConsumptionService::checkBudget($input["documentSystemID"], $input["documentSystemCode"]);
                                 if ($budgetCheck['status'] && $budgetCheck['message'] != "") {
                                     if (BudgetConsumptionService::budgetBlockUpdateDocumentList($input["documentSystemID"])) {
                                         $prMasterUpdate = $namespacedModel::find($input["documentSystemCode"])->update(['budgetBlockYN' => -1]);
                                     }
                                     DB::commit();
-                                    return ['success' => false, 'message' => $budgetCheck['message']];
+                                    return ['success' => false, 'message' => $budgetCheck['message'], 'type' => isset($budgetCheck['type']) ? $budgetCheck['type'] : ""];
                                 } else {
                                     if (BudgetConsumptionService::budgetBlockUpdateDocumentList($input["documentSystemID"])) {
                                         // update PR master table
@@ -5784,9 +5790,13 @@ class Helper
         }
         
         $employee = Models\Employee::with(['profilepic', 'user_data' => function($query) {
-                $query->select('uuid', 'employee_id');
-            }])->find($user->employee_id); 
-    
+            $query->select('uuid', 'employee_id');
+        },'language' => function ($q) {
+            $q->with(['language' => function ($l) {
+                $l->select(['languageID','languageShortCode','icon']);
+            }]);
+        }])->find($user->employee_id);
+
         return $employee;
     }
 
@@ -8631,4 +8641,58 @@ class Helper
 
         return $array;
     }
+
+    public static function updateSupplierRetentionAmount($bookingSuppMasInvAutoID, $bookInvSuppMaster)
+    { 
+        $directItems = DirectInvoiceDetails::where('directInvoiceAutoID', $bookingSuppMasInvAutoID)
+        ->with(['segment', 'purchase_order'])
+        ->get();
+
+
+        
+        $invDetailItems = BookInvSuppDet::where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID)
+        ->with(['grvmaster', 'pomaster'])
+        ->get();
+
+
+        $supplierItems = SupplierInvoiceDirectItem::where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID)
+        ->with(['unit' => function ($query) {
+        }, 'vat_sub_category'])->get();
+
+        if(count($supplierItems) == 0) {
+            $supplierItems = SupplierInvoiceDirectItem::where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID)
+            ->with(['unit' => function ($query) {
+            }, 'vat_sub_category'])->get();
+        }
+
+         $tot = 0;
+         $vatTot = 0;
+         $totalNet = 0;
+        for ($i = 0; $i < count($directItems); $i++) {
+          $tot += doubleval($directItems[$i]->DIAmount);
+          $vatTot += doubleval($directItems[$i]->VATAmount);
+        }
+
+        for ($i = 0; $i < count($invDetailItems); $i++) {
+          $tot += doubleval($invDetailItems[$i]->supplierInvoAmount);
+        }
+    
+        for ($i = 0; $i < count($supplierItems); $i++) {
+          $tot += doubleval($supplierItems[$i]->netAmount);
+          $vatTot += doubleval($supplierItems[$i]->VATAmount) * doubleval($supplierItems[$i]->noQty);
+        }
+
+        $totalNet = $tot + $vatTot;
+        $retentionAmount = $totalNet * $bookInvSuppMaster->retentionPercentage/100;
+        $decimalPlaces = 3;
+        $currency = CurrencyMaster::select('DecimalPlaces')->where('currencyID',$bookInvSuppMaster->localCurrencyID)->first();
+        if ($currency) {
+            $decimalPlaces = $currency->DecimalPlaces;
+        }
+        
+        $retentionAmountToFixed = round($retentionAmount,$decimalPlaces);
+        $bookInvSuppMaster->retentionAmount = $retentionAmountToFixed;
+        $bookInvSuppMaster->save();
+    }
+
 }

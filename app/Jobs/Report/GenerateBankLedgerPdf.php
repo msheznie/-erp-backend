@@ -105,6 +105,7 @@ class GenerateBankLedgerPdf implements ShouldQueue
             'isGroup' => $checkIsGroup->isGroup,
             'currencyDecimalPlace' => $decimalPlace,
             'currencyID' => $request->currencyID,
+            'accBalanceShow' => (count($request->accounts) == 1) ? true : false,
             'currencyCode' => $currencyCode,
             'reportDate' => date('d/m/Y H:i:s A'),
             'fromDate' => \Helper::dateFormat($request->fromDate),

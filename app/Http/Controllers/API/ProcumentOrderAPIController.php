@@ -297,6 +297,7 @@ class ProcumentOrderAPIController extends AppBaseController
                     $input['soldTocontactPersonTelephone'] = $address['contactPersonTelephone'];
                     $input['soldTocontactPersonFaxNo'] = $address['contactPersonFaxNo'];
                     $input['soldTocontactPersonEmail'] = $address['contactPersonEmail'];
+                    $input['vat_number'] = $address['vat_number'];
                 }
             }
         }
@@ -987,7 +988,7 @@ class ProcumentOrderAPIController extends AppBaseController
             $accountValidationArray = [];
             foreach ($poDetails as $key => $value) {
                 if (is_null($value->itemFinanceCategoryID)) {
-                    $accountValidationArray[] = "Finance category of " . $value->itemPrimaryCode . " not found";
+                    $accountValidationArray[3][] = "Finance category of " . $value->itemPrimaryCode . " not found";
                 } else {
                     switch ($value->itemFinanceCategoryID) {
                         case 1:
@@ -1026,6 +1027,11 @@ class ProcumentOrderAPIController extends AppBaseController
                 if (isset($accountValidationArray[2])) {
                     $itemsB = implode(", ", $accountValidationArray[2]);
                     $accountValidationErrrArray[] = "Expense account configuration is not done correctly. Activate includePLforGRVYN for the item(s) " . $itemsB;
+                }
+
+                if (isset($accountValidationArray[3])) {
+                    $itemsC = implode(", ", $accountValidationArray[3]);
+                    $accountValidationErrrArray[] = $itemsC;
                 }
                 return $this->sendError($accountValidationErrrArray, 420);
             }
@@ -1847,7 +1853,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
         $createdDateTime = ($poBasicData) ? Carbon::parse($poBasicData->createdDateTime) : null;
 
-        $output = ProcumentOrder::where('purchaseOrderID', $request->purchaseOrderID)->with(['segment', 'created_by',
+        $output = ProcumentOrder::where('purchaseOrderID', $request->purchaseOrderID)->with(['sold_to','segment', 'created_by',
             'detail' => function ($query) {
                 $query->with(['project','unit','altUom','item'=>function($query1){
                     $query1->select('itemCodeSystem','itemDescription')->with('specification');
@@ -6425,6 +6431,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
                         "vatRegisteredYN" => $checkPOMaster->vatRegisteredYN,
                         "createdDateTime" => Carbon::now(),
                         "timeStamp" => Carbon::now(),
+                        "vat_number" => $checkPOMaster->vat_number,
                     ];
 
                     $poMasterDataRes = ProcumentOrder::create($poMasterData);
@@ -9035,5 +9042,26 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         }
 
         return $this->sendResponse(['notifyCutOffDate' => $notifyCutOffDate, 'messages' => $notifyCutOffDateMessages], 'cut off date checked successfully!!');
+    }
+
+    public function procumentOrderTotals(Request $request)
+    {
+        $input = $request->all();
+
+        $purchaseOrderID = $input['purchaseOrderID'];
+
+        $totalSubOrderAmountPreview = PurchaseOrderDetails::where('purchaseOrderMasterID', $purchaseOrderID)
+            ->sum('netAmount');
+
+        $totalVat = PurchaseOrderDetails::selectRaw('SUM(VATAmount * noQty) as totalVat')
+            ->where('purchaseOrderMasterID', $purchaseOrderID)->first()
+            ->totalVat;
+        if(empty($totalVat)){
+            $totalVat = 0;
+        }
+
+        $procumentArray = (['totalSubOrderAmountPreview' => $totalSubOrderAmountPreview, 'totalVat' => $totalVat]);
+
+        return $this->sendResponse($procumentArray, 'Data retrieved successfully');
     }
 }

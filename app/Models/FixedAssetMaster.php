@@ -555,7 +555,8 @@ class FixedAssetMaster extends Model
         'accumulated_depreciation_amount_rpt',
         'accumulated_depreciation_amount_lcl',
         'is_acc_dep',
-        'accumulated_depreciation_date'
+        'accumulated_depreciation_date',
+        'empID'
     ];
 
     /**
@@ -659,6 +660,7 @@ class FixedAssetMaster extends Model
         'postToGLCodeSystemID' => 'integer',
         'deleteComment' => 'string',
         'postToGLCode' => 'integer',
+        'empID' => 'integer'
     ];
 
     /**
@@ -766,6 +768,11 @@ class FixedAssetMaster extends Model
         }
     }
 
+     public function budget_detail()
+    {
+        return $this->belongsTo('App\Models\Budjetdetails', 'costglCodeSystemID','chartOfAccountID');
+    }
+
     public function scopeAssetType($query,$assetType)
     {
         return $query->where('assetType',  $assetType);
@@ -774,6 +781,11 @@ class FixedAssetMaster extends Model
     public function location()
     {
         return $this->belongsTo('App\Models\ErpLocation','LOCATION','locationID');
+    }
+
+    public function company_by()
+    {
+        return $this->belongsTo('App\Models\Company','companySystemID','companySystemID');
     }
 
     public function category_by(){

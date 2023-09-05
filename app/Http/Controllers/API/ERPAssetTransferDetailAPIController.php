@@ -8,8 +8,10 @@ use App\Models\ERPAssetTransferDetail;
 use App\Repositories\ERPAssetTransferDetailRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use App\Models\AssetRequestDetail;
 use App\Models\ERPAssetTransfer;
 use App\Models\ErpLocation;
+use App\Models\DepartmentMaster;
 use App\Models\FixedAssetMaster;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
@@ -159,7 +161,6 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
                     return $this->sendError('Asset already acknowledged');  
                 }
 
-                
                 $data[] = [
                     'erp_fa_fa_asset_transfer_id' => $value['masterID'],
                     'erp_fa_fa_asset_request_id' => $value['erp_fa_fa_asset_request_id'],
@@ -168,6 +169,7 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
                     'pr_created_yn' => (isset($value['pr_created_yn']) && $value['pr_created_yn'] == true ? 1 : 0),
                     'company_id' => $value['company_id'],
                     'created_user_id' => \Helper::getEmployeeSystemID(),
+                    'itemCodeSystem' => $value['itemCodeSystem']
                 ];
             }
             $this->eRPAssetTransferDetailRepository->insert($data);
@@ -343,10 +345,14 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
     {
         $data['assetMaster'] = ERPAssetTransfer::where('id', $id)->first();
 
-        if ($data['assetMaster']->type == 1) {
-            $data['assetRequestDetails'] = ERPAssetTransferDetail::with(['assetRequestDetail', 'assetMaster','assetRequestMaster'])->where('erp_fa_fa_asset_transfer_id', $id)->get();
+        if ($data['assetMaster']->type == 1 || $data['assetMaster']->type == 4) {
+            $data['assetRequestDetails'] = ERPAssetTransferDetail::with(['assetRequestDetail', 'assetMaster','assetRequestMaster','item_detail'])->where('erp_fa_fa_asset_transfer_id', $id)->get();
         } else {
-            $data['assetRequestDetails'] = ERPAssetTransferDetail::with(['fromLocation', 'toLocation', 'assetMaster'])->where('erp_fa_fa_asset_transfer_id', $id)->get();
+            $data['assetRequestDetails'] = ERPAssetTransferDetail::with(['fromLocation', 'toLocation', 'assetMaster','fromEmployee' => function($query) {
+                $query->select(['employeeSystemID','empFullName']);
+            },'toEmployee' => function($query) {
+                $query->select(['employeeSystemID','empFullName']);
+            }])->where('erp_fa_fa_asset_transfer_id', $id)->get();
         }
         return $this->sendResponse($data, 'Asset Request Detail');
     }
@@ -387,25 +393,52 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
         if (isset($input) && !empty($input)) {
             $x = 1;
             foreach ($input as $item => $value) {
-                if ($value['from_location'][0] == $value['to_location']) {
-                    return $this->sendError('Line No ' . $x . ' From Location And To Location Cannot be same');
-                } else {
-
-                    $data[] = [
-                        'erp_fa_fa_asset_transfer_id' => $id,
-                        'from_location_id' => $value['from_location'][0],
-                        'to_location_id' => $value['to_location'],
-                        'fa_master_id' => $value['asset'],
-                        'company_id' => $value['companySystemID'],
-                        'created_user_id' => \Helper::getEmployeeSystemID(),
-                    ];
-
-
-                    FixedAssetMaster::find($value['asset'])
-                        ->update([
-                            'LOCATION' =>  $value['to_location']
-                        ]);
+                if($input[0]['isDirectToEmployee']) {
+                    if ($value['from_emp'][0] == $value['to_emp']) {
+                        return $this->sendError('Line No ' . $x . ' From Location And To Location Cannot be same');
+                    } else {
+    
+                        $data[] = [
+                            'erp_fa_fa_asset_transfer_id' => $id,
+                            'from_emp_id' => $value['from_emp'][0],
+                            'to_emp_id' => $value['to_emp'],
+                            'fa_master_id' => $value['asset'],
+                            'company_id' => $value['companySystemID'],
+                            'from_location_id' => NULL,
+                            'to_location_id' => NULL,
+                            'created_user_id' => \Helper::getEmployeeSystemID(),
+                        ];
+    
+    
+                        FixedAssetMaster::find($value['asset'])
+                            ->update([
+                                'empID' =>  $value['to_emp']
+                            ]);
+                    }
+                }else {
+                    if ($value['from_location'][0] == $value['to_location']) {
+                        return $this->sendError('Line No ' . $x . ' From Location And To Location Cannot be same');
+                    } else {
+    
+                        $data[] = [
+                            'erp_fa_fa_asset_transfer_id' => $id,
+                            'from_location_id' => $value['from_location'][0],
+                            'to_location_id' => isset($value['to_location'][0]) ? $value['to_location'][0]:$value['to_location'],
+                            'fa_master_id' => $value['asset'],
+                            'company_id' => $value['companySystemID'],
+                            'created_user_id' => \Helper::getEmployeeSystemID(),
+                            'from_emp_id' => NULL,
+                            'to_emp_id' => NULL,
+                        ];
+    
+    
+                        FixedAssetMaster::find($value['asset'])
+                            ->update([
+                                'LOCATION' =>  isset($value['to_location'][0]) ? $value['to_location'][0]:$value['to_location']
+                            ]);
+                    }
                 }
+                
                 $x++;
             }
             $this->eRPAssetTransferDetailRepository->insert($data);
@@ -455,7 +488,11 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
             $data['assetTransferDetail'] = ERPAssetTransferDetail::with(['assetRequestDetail', 'assetMaster'])->where('company_id', $companyID)
                 ->where('erp_fa_fa_asset_transfer_id', $id)->get();
         } else {
-            $data['assetTransferDetail'] = ERPAssetTransferDetail::with(['fromLocation', 'toLocation', 'assetMaster'])->where('company_id', $companyID)
+            $data['assetTransferDetail'] = ERPAssetTransferDetail::with(['fromLocation', 'toLocation', 'assetMaster','fromEmployee' => function($query) {
+                $query->select(['employeeSystemID','empFullName']);
+            },'toEmployee' => function($query) {
+                $query->select(['employeeSystemID','empFullName']);
+            }])->where('company_id', $companyID)
                 ->where('erp_fa_fa_asset_transfer_id', $id)->get();
         }
 
@@ -492,5 +529,30 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
             ->where('companySystemID', $companyID)->first();
 
         return $data;
+    }
+    public function getAssetEmployeeValue(Request $request)
+    {
+        $input = $request->all();
+        $companyID = $input['companyID'];
+        $assetID = $input['assetID'];
+        $data['assetLocation'] = FixedAssetMaster::select('faID', 'empID')
+            ->where('faID', $assetID)
+            ->where('companySystemID', $companyID)->first();
+
+        return $data;
+    }
+
+    public function getDepartmentList(Request $request) {
+        $departments = DepartmentMaster::select(['departmentSystemID','DepartmentDescription'])->showInCombo()->where('isActive',true)->get();
+        return $this->sendResponse($departments, 'Department data reterived');
+
+    }
+
+    public function getDepartmentOfAsset(Request $request) {
+        $input = $request->all();
+        $deparment = FixedAssetMaster::select('departmentSystemID')->where('faID',$input['assetID'])->with(['departmentmaster' => function ($q) {
+            $q->select(['DepartmentDescription','departmentSystemID']);
+        }])->first();
+        return $this->sendResponse($deparment, 'Department reterived');
     }
 }

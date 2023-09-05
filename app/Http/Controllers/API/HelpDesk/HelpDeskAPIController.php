@@ -19,10 +19,13 @@ class HelpDeskAPIController extends AppBaseController
                 $thirdParty = ThirdPartyIntegrationKeys::where('third_party_system_id', 5)->first();
                 DB::commit();
 
-                UserWebHook::dispatch($db, $empID, $thirdParty->api_external_key, $thirdParty->api_external_url);
-
+                if(!empty($thirdParty)){
+                    UserWebHook::dispatch($db, $empID, $thirdParty->api_external_key, $thirdParty->api_external_url);
+                } else {
+                    return $this->sendResponse([], 'There is no third party integration');
+                }
+              
                 return $this->sendResponse($thirdParty, 'Help Desk Info');
-
             }
             catch(\Exception $e){
                 DB::rollback();

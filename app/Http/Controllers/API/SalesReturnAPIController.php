@@ -554,8 +554,8 @@ class SalesReturnAPIController extends AppBaseController
                     $updateItem->currentWareHouseStockQty = $itemCurrentCostAndQty['currentWareHouseStockQty'];
                     $updateItem->currentStockQtyInDamageReturn = $itemCurrentCostAndQty['currentStockQtyInDamageReturn'];
 
-                    $updateItem->wacValueLocal = $itemCurrentCostAndQty['wacValueLocal'];
-                    $updateItem->wacValueReporting = $itemCurrentCostAndQty['wacValueReporting'];
+                    // $updateItem->wacValueLocal = $itemCurrentCostAndQty['wacValueLocal'];
+                    // $updateItem->wacValueReporting = $itemCurrentCostAndQty['wacValueReporting'];
 
                     //discount calculation
                     $discountedUnit = $updateItem->unitTransactionAmount;
@@ -981,8 +981,8 @@ class SalesReturnAPIController extends AppBaseController
                             $invDetail_arr['doInvRemainingQty'] = floatval($new['qtyIssuedDefaultMeasure']) - floatval($new['rtnTakenQty']);
                             $invDetail_arr['currentStockQty'] = $itemCurrentCostAndQty['currentStockQty'];
                             $invDetail_arr['currentWareHouseStockQty'] = $itemCurrentCostAndQty['currentWareHouseStockQty'];
-                            $invDetail_arr['wacValueLocal'] = $itemCurrentCostAndQty['wacValueLocal'];
-                            $invDetail_arr['wacValueReporting'] = $itemCurrentCostAndQty['wacValueReporting'];
+                            $invDetail_arr['wacValueLocal'] = $new['wacValueLocal'];
+                            $invDetail_arr['wacValueReporting'] = $new['wacValueReporting'];
                             $invDetail_arr['convertionMeasureVal'] = 1;
 
                             $invDetail_arr['itemFinanceCategoryID'] = $item->financeCategoryMaster;
@@ -1430,8 +1430,8 @@ class SalesReturnAPIController extends AppBaseController
                             $invDetail_arr['doInvRemainingQty'] = floatval($new['qtyIssuedDefaultMeasure']) - floatval($new['rtnTakenQty']);
                             $invDetail_arr['currentStockQty'] = $itemCurrentCostAndQty['currentStockQty'];
                             $invDetail_arr['currentWareHouseStockQty'] = $itemCurrentCostAndQty['currentWareHouseStockQty'];
-                            $invDetail_arr['wacValueLocal'] = $itemCurrentCostAndQty['wacValueLocal'];
-                            $invDetail_arr['wacValueReporting'] = $itemCurrentCostAndQty['wacValueReporting'];
+                            $invDetail_arr['wacValueLocal'] = $new['issueCostLocal'];
+                            $invDetail_arr['wacValueReporting'] = $new['issueCostRpt'];
                             $invDetail_arr['convertionMeasureVal'] = 1;
 
                             $invDetail_arr['itemFinanceCategoryID'] = $item->financeCategoryMaster;

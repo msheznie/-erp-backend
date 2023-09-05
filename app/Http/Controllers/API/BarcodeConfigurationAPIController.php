@@ -328,7 +328,7 @@ class BarcodeConfigurationAPIController extends AppBaseController
             $subCompanies = [$selectedCompanyId];
         }
         $barCodeFonts = [["value"=>1,"label"=>"Code 128"],["value"=>2,"label"=>"Code 39"]];
-        $paper_szie = [["value"=>1,"label"=>"A3"],["value"=>2,"label"=>"A4"],["value"=>3,"label"=>"70mm x 400mm"]];
+        $paper_szie = [["value"=>1,"label"=>"A3"],["value"=>2,"label"=>"A4"],["value"=>3,"label"=>"55mm x 45mm"]];
         $companies = Company::whereIn('companySystemID', $subCompanies)
             ->selectRaw('companySystemID as value,CONCAT(CompanyID, " - " ,CompanyName) as label')
             ->get();
@@ -660,18 +660,18 @@ class BarcodeConfigurationAPIController extends AppBaseController
                 if($font == 'Code 39')
                 {
                     $barcodesCountPage = 0;
-                    $maxBarcodesPerPage = 11;
+                    $maxBarcodesPerPage = 1;
                     $maxBarcodesPerRow = 1;
-                    $marginTop = 5;
-                    $marginLeft = 5;
+                    $marginTop = 0;
+                    $marginLeft = 0.5;
                     $barcodeWidth = 0.1;
                     $barcodeHeight = 35;
                     $barcodesCountTotal = 0;
                     $column = 0;
-                    $page_width = 70;
-                    $page_height = 400;
+                    $page_width = 55;
+                    $page_height = 45;
     
-                    $pdf = new \PDF_BARCODE('P', 'mm', [$page_width,$page_height]);
+                    $pdf = new \PDF_BARCODE('L', 'mm', [$page_width,$page_height]);
     
                     foreach($assets as $key=>$val)
                     {
@@ -685,7 +685,7 @@ class BarcodeConfigurationAPIController extends AppBaseController
                     $pdf->StartTransform();
                     $pdf->Translate($marginLeft + ($column * $barcodeWidth), $marginTop + ($row * $barcodeHeight));
                     //$pdf->Code128($val,10);
-                    $pdf->Code39($val, true, false, 0.12, 25, true);
+                    $pdf->Code39($val, true, false, 0.115, 25, true);
                     $pdf->StopTransform();
                     $barcodesCountPage++;
                     $barcodesCountTotal++;
@@ -698,18 +698,18 @@ class BarcodeConfigurationAPIController extends AppBaseController
                 else  if($font == 'Code 128')
                 {
                     $barcodesCountPage = 0;
-                    $maxBarcodesPerPage = 10;
+                    $maxBarcodesPerPage = 1;
                     $maxBarcodesPerRow = 1;
-                    $marginTop = 3;
-                    $marginLeft = 3;
+                    $marginTop = 0.5;
+                    $marginLeft = 0.5;
                     $barcodeWidth = 95;
                     $barcodeHeight = 35;
                     $barcodesCountTotal = 0;
                     $column = 0;
-                    $page_width = 70;
-                    $page_height = 400;
+                    $page_width = 55;
+                    $page_height = 45;
         
-                    $pdf = new \PDF_BARCODE('P', 'mm',  [$page_width,$page_height]);
+                    $pdf = new \PDF_BARCODE('L', 'mm',  [$page_width,$page_height]);
         
                     foreach($assets as $key=>$val)
                     {

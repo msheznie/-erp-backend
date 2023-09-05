@@ -82,6 +82,7 @@ use App\Models\TaxMaster;
 use App\Models\UnbilledGrvGroupBy;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
+use App\Models\ExpenseAssetAllocation;
 use App\Repositories\BookInvSuppMasterRepository;
 use App\Repositories\SupplierInvoiceItemDetailRepository;
 use App\Repositories\ExpenseAssetAllocationRepository;
@@ -484,8 +485,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $input = $request->all();
         $input = array_except($input, ['created_by', 'confirmedByName', 'financeperiod_by', 'financeyear_by', 'supplier','employee',
             'confirmedByEmpID', 'confirmedDate', 'company', 'confirmed_by', 'confirmedByEmpSystemID','transactioncurrency','direct_customer_invoice']);
+        $directItems = $input['directItems'];
         $input = $this->convertArrayToValue($input);
-
         $employee = \Helper::getEmployeeInfo();
 
         /** @var BookInvSuppMaster $bookInvSuppMaster */
@@ -710,14 +711,15 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
             if ($input['documentType'] == 4) {
                 $validatorSupp = \Validator::make($input, [
-                    'employeeID' => 'required|numeric|min:1',
+                    'employeeID' => 'required|numeric|min:0',
                 ]);
             } else {
                 $validatorSupp = \Validator::make($input, [
-                    'supplierID' => 'required|numeric|min:1',
+                    'supplierID' => 'required|numeric|min:0',
                 ]);
             }
 
+            
             if ($validatorSupp->fails()) {
                 return $this->sendError($validator->messages(), 422);
             }
@@ -771,6 +773,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
             }
 
             }
+
+            
             if ($input['documentType'] != 4 && $input['retentionAmount'] > 0) {
 
                 $isConfigured = SystemGlCodeScenario::find(13);
@@ -796,6 +800,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             }
 
             $checkItems = 0;
+
             if ($input['documentType'] == 1 || $input['documentType'] == 4) {
                 $checkItems = DirectInvoiceDetails::where('directInvoiceAutoID', $id)
                     ->count();
@@ -838,6 +843,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 }
 
             } 
+
+
 
             if ($checkItems > 0) {
                 $checkQuantity = DirectInvoiceDetails::where('directInvoiceAutoID', $id)
@@ -1033,6 +1040,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 }
             }
 
+
             //checking Supplier Invoice amount is greater than GRV Amount validations
             if ($input['documentType'] == 0 || $input['documentType'] == 2) {
                 $checktotalExceed = BookInvSuppDet::where('bookingSuppMasInvAutoID', $id)
@@ -1049,27 +1057,28 @@ class BookInvSuppMasterAPIController extends AppBaseController
                         $valEligible = true;
                     }
                     foreach ($checktotalExceed as $exc) {
-                        $grvDetailSum = GRVDetails::select(DB::raw('COALESCE(SUM(landingCost_TransCur * noQty),0) as total, SUM(VATAmount*noQty) as transVATAmount'))
+                        $grvDetailSum = GRVDetails::select(DB::raw('COALESCE(SUM(landingCost_RptCur * noQty),0) as total, SUM(VATAmountRpt*noQty) as transVATAmount'))
                             ->where('grvAutoID', $exc->grvAutoID)
                             ->first();
 
                         $logisticVATTotal = PoAdvancePayment::where('grvAutoID', $exc->grvAutoID)
-                                                            ->sum('VATAmount');
+                                                            ->sum('VATAmountRpt');
 
 
                         $checkPreTotal = BookInvSuppDet::where('grvAutoID', $exc->grvAutoID)
-                            ->sum('totTransactionAmount');
+                            ->sum('totRptAmount');
                         if (!$valEligible) {
                             $grvDetailTotal = $grvDetailSum['total'];
                         } else {
                             $grvDetailTotal = $grvDetailSum['total'] + $grvDetailSum['transVATAmount'] + $logisticVATTotal;
                         }
                         if (round($checkPreTotal, $documentCurrencyDecimalPlace) > round($grvDetailTotal, $documentCurrencyDecimalPlace)) {
-                            return $this->sendError('Supplier Invoice amount is greater than GRV amount. Total Invoice amount is '.round($checkPreTotal, $documentCurrencyDecimalPlace). ' And Total GRV amount is '. round($grvDetailTotal, $documentCurrencyDecimalPlace), 500);
+                            return $this->sendError('Supplier Invoice amount is greater than GRV amount. Total Invoice amount(Reporting Currency) is '.round($checkPreTotal, $documentCurrencyDecimalPlace). ' And Total GRV amount(Reporting Currency) is '. round($grvDetailTotal, $documentCurrencyDecimalPlace), 500);
                         }
                     }
                 }
             }
+
 
             if ($input['documentType'] == 0) {
                 //updating PO Master invoicedBooked flag
@@ -1162,6 +1171,21 @@ class BookInvSuppMasterAPIController extends AppBaseController
                     $error_count++;
                 }
             }
+
+            if($input['documentType'] == 1 || $input['documentType'] == 4) {
+                $directInvoiceItems = $directItems;
+                foreach ($directInvoiceItems as $directInvoiceItem) {
+                    $allocatedItems = ExpenseAssetAllocation::where('documentDetailID',$directInvoiceItem['directInvoiceDetailsID'])->where('documentSystemCode',$directInvoiceItem['directInvoiceAutoID'])->get();
+                    $total = 0;
+                    foreach($allocatedItems as $allocatedItem) {
+                        $total += $allocatedItem->amount;
+                        if(isset($directInvoiceItem['netAmount']) && $directInvoiceItem['netAmount'] < $total) {
+                            return $this->sendError("Detail amount cannot be less than allocated amount.",500);
+                        }
+                    }
+                }
+            }
+
 
             $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
             if ($error_count > 0) {
@@ -1286,6 +1310,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
             if ($input['documentType'] == 0 || $input['documentType'] == 2) {
                 $this->supplierInvoiceItemDetailRepository->updateSupplierInvoiceItemDetail($id);
             }
+
+
 
             $params = array(
                 'autoID' => $id,
@@ -1760,6 +1786,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 }
             }
 
+    
+
             foreach ($directInvoiceDetails as $item) {
                 $updateItem = DirectInvoiceDetails::find($item['directInvoiceDetailsID']);
 
@@ -1799,6 +1827,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                     $error_count++;
                 }
             }
+
 
             $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
             if ($error_count > 0) {
@@ -3189,4 +3218,23 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
         return $this->sendResponse($directCustomerInvoices, 'Data retrieved successfully');
     }
 
+
+    public function getPurchaseOrdersLikedWithSi(Request $request)
+    {
+        $input = $request->all();
+
+        $siData = BookInvSuppDet::where('bookingSuppMasInvAutoID', $input['invoiceID'])
+                               ->groupBy('purchaseOrderID')
+                               ->whereNotNull('purchaseOrderID')
+                               ->get();
+
+        $poIds = count($siData) > 0 ? $siData->pluck('purchaseOrderID') : [];
+
+        $purchaseOrders = ProcumentOrder::selectRaw('purchaseOrderID as value, purchaseOrderCode as label')
+                                        ->whereIn('purchaseOrderID', $poIds)
+                                        ->get();
+
+
+        return $this->sendResponse($purchaseOrders, 'Data retrieved successfully');
+    }
 }

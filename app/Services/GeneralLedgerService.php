@@ -129,11 +129,13 @@ class GeneralLedgerService
                                ->where('documentSystemCode', $documentSystemCode)
                                ->first();
 
-        if ($geData && ($geData->documentTransAmountTotal != 0 || $geData->documentLocalAmountTotal != 0 || $geData->documentRptAmountTotal != 0)) {
+        if ($geData && ($geData->documentLocalAmountTotal != 0 || $geData->documentRptAmountTotal != 0)) {
 
-            if (abs($geData->documentTransAmountTotal) > 0.00001) {
-                return ['status' => false, 'error' => ['message' => "There will be unmatch Debit and credit for this document. Trans amount mismatched : ".$geData->documentTransAmountTotal]];
-            } else if (abs($geData->documentLocalAmountTotal) > 0.00001) {
+            // if (abs($geData->documentTransAmountTotal) > 0.00001) {
+            //     return ['status' => false, 'error' => ['message' => "There will be unmatch Debit and credit for this document. Trans amount mismatched : ".$geData->documentTransAmountTotal]];
+            // } else 
+
+            if (abs($geData->documentLocalAmountTotal) > 0.00001) {
                 return ['status' => false, 'error' => ['message' => "There will be unmatch Debit and credit for this document. Local amount mismatched : ".$geData->documentLocalAmountTotal]];
             } else if (abs($geData->documentRptAmountTotal) > 0.00001) {
                 return ['status' => false, 'error' => ['message' => "There will be unmatch Debit and credit for this document. Rpt amount mismatched : ".$geData->documentRptAmountTotal]];

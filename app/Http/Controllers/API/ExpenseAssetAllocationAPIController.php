@@ -142,7 +142,7 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
                 return $this->sendError("Supplier invoice detail not found");
             }
 
-            $detailTotal = $directDetail->netAmount + $directDetail->VATAmount;
+            $detailTotal = $directDetail->netAmount;
 
             $input['chartOfAccountSystemID'] = $directDetail->chartOfAccountSystemID;
             $companySystemID = isset($directDetail->supplier_invoice_master->companySystemID) ? $directDetail->supplier_invoice_master->companySystemID : null;
@@ -237,6 +237,23 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
                 $companySystemID = isset($meterialissue->master->companySystemID) ? $meterialissue->master->companySystemID : null;
                 //$transactionCurrencyID = isset($meterialissue->localCurrencyID) ? $meterialissue->localCurrencyID : null;
 
+                if(isset($input['allocation_qty'])){
+                    $detailQtyIssuedTotal = $meterialissue->qtyIssued;
+                    $costPerQty = $meterialissue->issueCostRpt;
+                    $input['amount'] = $costPerQty * $input['allocation_qty'];
+
+                    $allocatedQtySum = ExpenseAssetAllocation::where('documentDetailID', $input['documentDetailID'])
+                                                            ->where('documentSystemID', $input['documentSystemID'])
+                                                            ->sum('allocation_qty');
+
+                    $newQtyTotal = $allocatedQtySum + $input['allocation_qty'];
+
+
+                    if (($newQtyTotal - $detailQtyIssuedTotal) > 0) {
+                        return $this->sendError("Allocated qty cannot be greater than detail qty.");
+                    }
+                }
+                
                 $input['amountRpt'] = $input['amount'];
 
                 if ($meterialissue->issueCostRptTotal == 0) {
@@ -538,5 +555,30 @@ class ExpenseAssetAllocationAPIController extends AppBaseController
         }
 
         return $this->sendResponse($data, 'Data retrieved successfully');
+    }
+
+    public function validateDirectItemWithAssetExpense(Request $request)
+    {
+        $input = $request->all();
+        $item = $input['item'];
+        $validationSuccess = true;
+        $allocatedAsssets = ExpenseAssetAllocation::where('documentDetailID', $input['documentDetailID'])
+                                                  ->where('documentSystemID', $input['documentSystemID'])
+                                                  ->with(['asset'])
+                                                  ->get();
+        
+        if(empty($allocatedAsssets)) {
+            $validationSuccess = true;
+        }else {
+            $total = 0;
+            foreach($allocatedAsssets as $allocatedAssset) {
+                $total += $allocatedAssset->amount;
+                if($item['netAmount'] < $total) {
+                    return $this->sendError("Detail amount cannot be less than allocated amount.");
+                }
+             }
+        }
+
+        return $this->sendResponse($validationSuccess, 'Data retrieved successfully');
     }
 }

@@ -335,7 +335,7 @@
                         <tr>
                             <td style="width: 20%"><span  style="font-weight: bold">{{ __('custom.vat_no') }}</span></td>
                             <td style="width: 2%"><span  style="font-weight: bold">:</span></td>
-                            <td style="width: 78%">{{$podata->supplier->vatNumber}} </td>
+                            <td style="width: 78%">{{$podata->vat_number}} </td>
                         </tr>
                     </table>
                 </td>
@@ -506,7 +506,7 @@
                 <td style="width: 40%">
                     <table>
                         <tr>
-                            <td colspan="3"><span style="font-size: 13px; font-weight: bold;">{{ __('custom.invoice_no') }}:</span></td>
+                            <td colspan="3"><span style="font-size: 13px; font-weight: bold;">{{ __('custom.invoice_to') }}:</span></td>
                         </tr>
                         <tr>
                             <td colspan="3"><p>
@@ -527,36 +527,28 @@
                             <td style="width: 20%"><span  style="font-weight: bold">{{ __('custom.payment_contact') }}</span></td>
                             <td style="width: 2%"><span  style="font-weight: bold">:</span></td>
                             <td style="width: 78%">
-                                @if ($podata->suppliercontact)
                                     {{$podata->invoiceTocontactPersonID}}
-                                @endif
                             </td>
                         </tr>
                         <tr>
                             <td style="width: 20%"><span  style="font-weight: bold">{{ __('custom.phone') }}</span></td>
                             <td style="width: 2%"><span  style="font-weight: bold">:</span></td>
                             <td style="width: 78%">
-                                @if ($podata->suppliercontact)
                                     {{$podata->invoiceTocontactPersonTelephone}}
-                                @endif
                             </td>
                         </tr>
                         <tr>
                             <td style="width: 20%"><span  style="font-weight: bold">{{ __('custom.fax') }}</span></td>
                             <td style="width: 2%"><span  style="font-weight: bold">:</span></td>
                             <td style="width: 78%">
-                                @if ($podata->suppliercontact)
                                     {{$podata->invoiceTocontactPersonFaxNo}}
-                                @endif
                             </td>
                         </tr>
                         <tr>
                             <td style="width: 20%"><span  style="font-weight: bold">{{ __('custom.email') }}</span></td>
                             <td style="width: 2%"><span  style="font-weight: bold">:</span></td>
                             <td style="width: 78%">
-                                @if ($podata->suppliercontact)
                                     {{$podata->invoiceTocontactPersonEmail}}
-                                @endif
                             </td>
                         </tr>
                     </table>

@@ -106,6 +106,7 @@ class Address extends Model
         'contactPersonTelephone',
         'contactPersonFaxNo',
         'contactPersonEmail',
+        'vat_number',
         'isDefault',
         'timeStamp'
     ];
@@ -127,6 +128,7 @@ class Address extends Model
         'contactPersonTelephone' => 'string',
         'contactPersonFaxNo' => 'string',
         'contactPersonEmail' => 'string',
+        'vat_number' => 'string',
         'isDefault' => 'integer'
     ];
 

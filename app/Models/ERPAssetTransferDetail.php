@@ -102,7 +102,10 @@ class ERPAssetTransferDetail extends Model
         'fa_master_id',
         'pr_created_yn',
         'company_id',
-        'created_user_id'
+        'itemCodeSystem',
+        'created_user_id',
+        'from_emp_id',
+        'to_emp_id',
     ];
 
     /**
@@ -120,7 +123,10 @@ class ERPAssetTransferDetail extends Model
         'fa_master_id' => 'integer',
         'pr_created_yn' => 'integer',
         'company_id' => 'integer',
-        'created_user_id' => 'integer'
+        'itemCodeSystem' => 'integer',
+        'created_user_id' => 'integer',
+        'from_emp_id' => 'integer',
+        'to_emp_id' => 'integer',
     ];
 
     /**
@@ -134,6 +140,11 @@ class ERPAssetTransferDetail extends Model
     public function assetRequestDetail()
     {
         return $this->hasOne(AssetRequestDetail::class, 'id', 'erp_fa_fa_asset_request_detail_id');
+    }
+
+    public function item_detail()
+    {
+        return $this->belongsTo('App\Models\ItemMaster', 'itemCodeSystem', 'itemCodeSystem');
     }
 
     public function assetMaster(){ 
@@ -163,5 +174,13 @@ class ERPAssetTransferDetail extends Model
     public function smePayAsset()
     {
         return $this->hasOne(SMEPayAsset::class,'masterID','srp_erp_pay_assets_id');
+    }
+    public function fromEmployee()
+    {
+        return $this->hasOne(Employee::class,'employeeSystemID','from_emp_id');
+    }
+    public function toEmployee()
+    {
+        return $this->hasOne(Employee::class,'employeeSystemID','to_emp_id');
     }
 }

@@ -147,8 +147,7 @@ class CompanyAPIController extends AppBaseController
             ->get();
 
         /** Supplier category  */
-        $supplierCategory = SupplierCategoryMaster::orderBy('categoryDescription', 'asc')
-            ->get();
+        $supplierCategory = SupplierCategoryMaster::where('isActive',1)->orderBy('categoryName', 'asc')->get();
 
         /** Currency Master */
         $currencyMaster = CurrencyMaster::orderBy('CurrencyName', 'asc')

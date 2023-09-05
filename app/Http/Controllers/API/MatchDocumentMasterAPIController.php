@@ -747,10 +747,38 @@ class MatchDocumentMasterAPIController extends AppBaseController
         $input['createdUserID'] = \Helper::getEmployeeID();
         $input['createdUserSystemID'] = \Helper::getEmployeeSystemID();
 
+
+        $currentFinanceYear = \Helper::companyFinanceYear($input['companySystemID'], 0);
+
+
+        if(isset($currentFinanceYear) && count($currentFinanceYear) > 0)
+        {
+               
+            $companyfinanceyear = CompanyFinanceYear::select('bigginingDate','endingDate')->where('companyFinanceYearID', $currentFinanceYear[0]->companyFinanceYearID)
+            ->where('companySystemID', $input['companySystemID'])
+            ->first();
+                if ($companyfinanceyear) {
+                    $input['companyFinanceYearID'] = $currentFinanceYear[0]->companyFinanceYearID;
+
+                    $companyFinancePeriod = CompanyFinancePeriod::select('companyFinancePeriodID')->where('companySystemID', '=', $input['companySystemID'])
+                    ->where('companyFinanceYearID', $currentFinanceYear[0]->companyFinanceYearID)
+                    ->where('departmentSystemID', 1)
+                    ->where('isActive', -1)
+                    ->where('isCurrent', -1)
+                    ->first();
+
+                    if($companyFinancePeriod)
+                    {
+                        $input['companyFinancePeriodID'] = $companyFinancePeriod->companyFinancePeriodID;
+                    }
+
+                }
+        }
         
         $matchDocumentMasters = $this->matchDocumentMasterRepository->create($input);
 
         return $this->sendResponse($matchDocumentMasters->toArray(), 'Match Document Master saved successfully');
+
     }
 
     /**
@@ -856,7 +884,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
         $input = array_except($input, ['created_by', 'BPVsupplierID', 'company', 'confirmed_by', 'modified_by','localcurrency','rptcurrency','supplier','employee','customer']);
         $input = $this->convertArrayToValue($input);
 
-  
+        
         $employee = \Helper::getEmployeeInfo();
 
         /** @var MatchDocumentMaster $matchDocumentMaster */
@@ -875,20 +903,11 @@ class MatchDocumentMasterAPIController extends AppBaseController
             }
         }
 
-        $customValidation = CustomValidation::validation(70, $matchDocumentMaster, 2, $input);
-        if (!$customValidation["success"]) {
-            return $this->sendError($customValidation["message"], 500, array('type' => 'already_confirmed'));
-        }
-
-        // check date within financial period
-        $companyFinanceYear = CompanyFinanceYear::where('companySystemID', '=', $matchDocumentMaster->companySystemID)
-            ->where('isActive', -1)
-            ->where('isCurrent', -1)
-            ->first();
-
-        if(empty($companyFinanceYear)){
+        if(!isset($input['companyFinanceYearID']) )
+        {
             return $this->sendError('No Active Finance Year Found', 500);
         }
+       
 
         if($input['matchingType'] == 'AP'){
             $department = 1;
@@ -897,16 +916,14 @@ class MatchDocumentMasterAPIController extends AppBaseController
         }else{
             return $this->sendError('Matching Type Found', 500);
         }
-        $companyFinancePeriods = CompanyFinancePeriod::where('companySystemID', '=', $matchDocumentMaster->companySystemID)
-            ->where('companyFinanceYearID', $companyFinanceYear->companyFinanceYearID)
-            ->where('departmentSystemID', $department)
-            ->where('isActive', -1)
-//            ->where('isCurrent', -1)
-            ->get();
 
-        if(!count((array)$companyFinancePeriods) >0){
-            return $this->sendError('No Active Finance Period Found', 500);
+
+        if(($input['companyFinancePeriodID']) == null)
+        {
+            return $this->sendError('No Active Finance Year Found', 500);
         }
+    
+        $companyFinancePeriods = CompanyFinancePeriod::where('companyFinancePeriodID',$input['companyFinancePeriodID'])->get();
 
         $isInFinancePeriod = false;
         foreach ($companyFinancePeriods as $period) {
@@ -921,8 +938,11 @@ class MatchDocumentMasterAPIController extends AppBaseController
         }
 
         if(!$isInFinancePeriod){
-            return $this->sendError('Document date should be between financial period start date and end date',500, array('type' => 'already_confirmed'));
+            return $this->sendError('Document date should be between financial period start date and end date',500);
         }
+
+
+        
         // end of check date within financial period
         if($matchDocumentMaster->matchingOption != 1) {
             $detailAmountTotTran = PaySupplierInvoiceDetail::where('matchingDocID', $id)
@@ -981,6 +1001,13 @@ class MatchDocumentMasterAPIController extends AppBaseController
             if ($formattedMatchingDate < $postedDate) {
                 return $this->sendError('Debit note is posted on ' . $postedDate . '. You cannot select a date less than posted date !', 500);
             }
+        }
+
+        $customValidation = CustomValidation::validation(70, $matchDocumentMaster, 2, $input);
+
+        
+        if (!$customValidation["success"]) {
+            return $this->sendError($customValidation["message"], 500, array('type' => 'already_confirmed'));
         }
       
         if ($matchDocumentMaster->matchingConfirmedYN == 0 && $input['matchingConfirmedYN'] == 1) {
@@ -1532,7 +1559,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                         $data['timestamp'] = \Helper::currentDateTime();
                         $data['matchDocumentMasterAutoID'] = $matchDocumentMaster->matchDocumentMasterAutoID;
 
-                        array_push($finalData, $data);
+                        // array_push($finalData, $data);
 
                         $exchangeGainServiceLine = SegmentMaster::where('companySystemID',$PaySupplierInvoiceMasterExData->companySystemID)
                             ->where('isPublic',1)
@@ -1562,7 +1589,6 @@ class MatchDocumentMasterAPIController extends AppBaseController
                         }
                         $data['timestamp'] = \Helper::currentDateTime();
                         array_push($finalData, $data);
-
                         if ($finalData) {
                             $storeSupplierInvoiceHistory = GeneralLedger::insert($finalData);
                         }
@@ -1653,10 +1679,10 @@ class MatchDocumentMasterAPIController extends AppBaseController
                             $data['documentTransAmount'] = \Helper::roundValue($ap->transAmount) * -1;;
                             $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                             $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
-                            $data['documentLocalAmount'] = \Helper::roundValue($ap->localAmount) * -1;
+                            $data['documentLocalAmount'] = \Helper::roundValue($ap->localAmount - $diffLocal) * -1;
                             $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
                             $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
-                            $data['documentRptAmount'] = \Helper::roundValue($ap->rptAmount) * -1;
+                            $data['documentRptAmount'] = \Helper::roundValue($ap->rptAmount - $diffRpt) * -1;
                             $data['timestamp'] = \Helper::currentDateTime();
                             array_push($finalData, $data);
 
@@ -1672,14 +1698,13 @@ class MatchDocumentMasterAPIController extends AppBaseController
                             $data['documentTransAmount'] = \Helper::roundValue($ap->transAmount);
                             $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                             $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
-                            $data['documentLocalAmount'] = \Helper::roundValue($ap->localAmount);
+                            $data['documentLocalAmount'] =   \Helper::roundValue($ap->localAmount);
                             $data['documentRptCurrencyID'] = $masterData->companyRptCurrencyID;
                             $data['documentRptCurrencyER'] = $masterData->companyRptCurrencyER;
                             $data['documentRptAmount'] = \Helper::roundValue($ap->rptAmount);
                             $data['timestamp'] = \Helper::currentDateTime();
                             array_push($finalData, $data);
                         }
-                       
 
                         foreach ($finalData as $data) {
                             GeneralLedger::create($data);
@@ -2130,7 +2155,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                     ->where('isAssigned', '-1')
                                     ->where('isActive', '1')
                                     ->get();
-
+        $companyFinanceYear = \Helper::companyFinanceYear($companyId, 1);
         $output = array('yesNoSelection' => $yesNoSelection,
             'yesNoSelectionForMinus' => $yesNoSelectionForMinus,
             'month' => $month,
@@ -2139,7 +2164,8 @@ class MatchDocumentMasterAPIController extends AppBaseController
             'suppliers' => $supplier,
             'employees' => $employees,
             'customer' => $customer,
-            'isAdvanceReceipt' => Helper::checkPolicy($companyId,49)
+            'isAdvanceReceipt' => Helper::checkPolicy($companyId,49),
+            'companyFinanceYear' => $companyFinanceYear,
         );
 
         return $this->sendResponse($output, 'Record retrieved successfully');
@@ -2448,8 +2474,8 @@ class MatchDocumentMasterAPIController extends AppBaseController
                 FROM
                     erp_paysupplierinvoicedetail
                 INNER JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicemaster.PayMasterAutoId = erp_paysupplierinvoicedetail.PayMasterAutoId
-                JOIN erp_debitnote ON erp_paysupplierinvoicedetail.PayMasterAutoId = erp_debitnote.debitNoteAutoID
-                WHERE erp_paysupplierinvoicemaster.invoiceType != 6 AND erp_paysupplierinvoicemaster.invoiceType != 7 AND erp_debitnote.type = 1
+                LEFT JOIN erp_debitnote ON erp_paysupplierinvoicedetail.PayMasterAutoId = erp_debitnote.debitNoteAutoID
+                WHERE erp_paysupplierinvoicemaster.invoiceType != 6 AND erp_paysupplierinvoicemaster.invoiceType != 7 AND (erp_debitnote.type = 1 OR erp_debitnote.debitNoteAutoID IS NULL)
                 GROUP BY
                     erp_paysupplierinvoicedetail.apAutoID
                     ) sid ON sid.apAutoID = erp_accountspayableledger.apAutoID

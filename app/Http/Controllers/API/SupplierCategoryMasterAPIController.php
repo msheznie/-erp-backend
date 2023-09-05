@@ -14,12 +14,19 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateSupplierCategoryMasterAPIRequest;
 use App\Http\Requests\API\UpdateSupplierCategoryMasterAPIRequest;
 use App\Models\SupplierCategoryMaster;
+use App\Models\SupplierCategorySub;
+use App\Models\SupplierMaster;
+use App\Models\YesNoSelection;
 use App\Repositories\SupplierCategoryMasterRepository;
+use App\Repositories\UserRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Yajra\DataTables\DataTables;
 
 /**
  * Class SupplierCategoryMasterController
@@ -30,10 +37,12 @@ class SupplierCategoryMasterAPIController extends AppBaseController
 {
     /** @var  SupplierCategoryMasterRepository */
     private $supplierCategoryMasterRepository;
+    private $userRepository;
 
-    public function __construct(SupplierCategoryMasterRepository $supplierCategoryMasterRepo)
+    public function __construct(SupplierCategoryMasterRepository $supplierCategoryMasterRepo,UserRepository $userRepo)
     {
         $this->supplierCategoryMasterRepository = $supplierCategoryMasterRepo;
+        $this->userRepository = $userRepo;
     }
 
     /**
@@ -64,9 +73,32 @@ class SupplierCategoryMasterAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $supplierCategoryMasters = $this->supplierCategoryMasterRepository->create($input);
+        $validator = Validator::make($input, [
+            'categoryCode' => 'required|unique:suppliercategorymaster',
+            'categoryName' => 'required|unique:suppliercategorymaster',
+            'categoryDescription' => 'required'
+        ],[
+            'categoryCode.unique'   => 'Category code already exists',
+            'categoryName.unique'   => 'Category name already exists'
+        ]);
 
-        return $this->sendResponse($supplierCategoryMasters->toArray(), 'Supplier Category Master saved successfully');
+        if ($validator->fails()) {
+            return $this->sendError($validator->messages(), 422 );
+        }
+
+        $id = Auth::id();
+        $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
+
+        $empId = $user->employee['empID'];
+        $input['createdUserID'] = $empId;
+        $input['createdPcID'] = gethostname();
+        $input['createdUserGroup'] = $user->employee['userGroupID'];
+
+        $input['isActive'] = is_array($input['isActive']) ? $input['isActive'][0] : $input['isActive'];
+
+        $supplierCategoryMaster = $this->supplierCategoryMasterRepository->create($input);
+
+        return $this->sendResponse($supplierCategoryMaster->toArray(), trans('custom.save', ['attribute' => trans('custom.supplier_business_category')]));
     }
 
     /**
@@ -80,13 +112,13 @@ class SupplierCategoryMasterAPIController extends AppBaseController
     public function show($id)
     {
         /** @var SupplierCategoryMaster $supplierCategoryMaster */
-        $supplierCategoryMaster = $this->supplierCategoryMasterRepository->findWithoutFail($id);
+        $supplierCategoryMaster = $this->supplierCategoryMasterRepository->find($id);
 
         if (empty($supplierCategoryMaster)) {
-            return $this->sendError('Supplier Category Master not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.supplier_business_category')]));
         }
 
-        return $this->sendResponse($supplierCategoryMaster->toArray(), 'Supplier Category Master retrieved successfully');
+        return $this->sendResponse($supplierCategoryMaster->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.supplier_business_category')]));
     }
 
     /**
@@ -102,16 +134,49 @@ class SupplierCategoryMasterAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        /** @var SupplierCategoryMaster $supplierCategoryMaster */
         $supplierCategoryMaster = $this->supplierCategoryMasterRepository->findWithoutFail($id);
 
         if (empty($supplierCategoryMaster)) {
-            return $this->sendError('Supplier Category Master not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.supplier_business_category')]));
         }
 
-        $supplierCategoryMaster = $this->supplierCategoryMasterRepository->update($input, $id);
+        if($supplierCategoryMaster->categoryCode != $request->categoryCode){
+            $validator = Validator::make($input, [
+                'categoryCode' => 'unique:suppliercategorymaster'
+            ],[
+                'categoryCode.unique'   => 'Category code already exists'
+            ]);
 
-        return $this->sendResponse($supplierCategoryMaster->toArray(), 'SupplierCategoryMaster updated successfully');
+            if ($validator->fails()) {
+                return $this->sendError($validator->messages(), 422 );
+            }
+        }
+
+        if($supplierCategoryMaster->categoryName != $request->categoryName){
+            $validator = Validator::make($input, [
+                'categoryName' => 'unique:suppliercategorymaster'
+            ],[
+                'categoryName.unique'   => 'Category name already exists'
+            ]);
+
+            if ($validator->fails()) {
+                return $this->sendError($validator->messages(), 422 );
+            }
+        }
+
+        $id = Auth::id();
+        $input = $request->except(['createdUserID']);
+
+        $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
+        $empId = $user->employee['empID'];
+        $input['modifiedUser'] = $empId;
+        $input['modifiedPc'] = gethostname();
+
+        $input['isActive'] = is_array($input['isActive']) ? $input['isActive'][0] : $input['isActive'];
+
+        $supplierCategoryMaster->update($input);
+
+        return $this->sendResponse($supplierCategoryMaster->refresh()->toArray(), trans('custom.update', ['attribute' => trans('custom.supplier_business_category')]));
     }
 
     /**
@@ -128,11 +193,95 @@ class SupplierCategoryMasterAPIController extends AppBaseController
         $supplierCategoryMaster = $this->supplierCategoryMasterRepository->findWithoutFail($id);
 
         if (empty($supplierCategoryMaster)) {
-            return $this->sendError('Supplier Category Master not found');
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.supplier_business_category')]));
         }
+
+        SupplierCategorySub::where('supMasterCategoryID',$supplierCategoryMaster->supCategoryMasterID)->delete();
 
         $supplierCategoryMaster->delete();
 
-        return $this->sendResponse($id, 'Supplier Category Master deleted successfully');
+        return $this->sendResponse($id,trans('custom.delete', ['attribute' => trans('custom.supplier_business_category')]));
+    }
+
+    public function destroyCheck($id)
+    {
+        /** @var SupplierCategoryMaster $supplierCategoryMaster */
+        $supplierCategoryMaster = $this->supplierCategoryMasterRepository->findWithoutFail($id);
+
+        if (empty($supplierCategoryMaster)) {
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.supplier_business_category')]));
+        }
+
+        $supplierMaster = SupplierMaster::where('supCategoryMasterID', $id)->first();
+
+        if ($supplierMaster) {
+            return $this->sendError("This category has already been pulled to Supplier Master, cannot be deleted");
+        }
+
+        return $this->sendResponse($id,"This category can be delete");
+    }
+
+    public function getAllSupplierBusinessCategories(Request $request){
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $supplierBusinessCategories = SupplierCategoryMaster::select('*')->orderBy('supCategoryMasterID', 'desc');
+        $search = $request->input('search.value');
+
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $supplierBusinessCategories = $supplierBusinessCategories->where(function ($query) use ($search) {
+                $query->where('categoryCode', 'LIKE', "%{$search}%")
+                    ->orWhere('categoryName', 'LIKE', "%{$search}%")
+                    ->orWhere('categoryDescription', 'LIKE', "%{$search}%");
+            });
+        }
+
+        return DataTables::of($supplierBusinessCategories)
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions')
+            ->make(true);
+    }
+
+    public function getSupplierBusinessCategoryFormData(Request $request)
+    {
+        $yesNoSelection = YesNoSelection::selectRaw('idyesNoselection as value,YesNo as label')->get();
+
+        $output = array('yesNoSelection' => $yesNoSelection);
+
+        return $this->sendResponse($output, trans('custom.retrieve', ['attribute' => trans('custom.record')]));
+    }
+
+    public function validateSupplierBusinessCategoryAmend(Request $request)
+    {
+        $input = $request->all();
+
+        $supplierBusinessCategory = $this->supplierCategoryMasterRepository->find($input['id']);
+
+        if (!$supplierBusinessCategory) {
+            return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.supplier_business_category')]));
+        }
+
+        $errorMessages = null;
+        $successMessages = null;
+        $amendable = null;
+
+        $supplierMaster = SupplierMaster::where('supCategoryMasterID', $input['id'])->first();
+
+        if ($supplierMaster) {
+            $errorMessages = "cannot be amended. Since, it has been used in supplier master";
+            $amendable = false;
+        } else {
+            $successMessages = "Use of Supplier business category checking is done in supplier master";
+            $amendable = true;
+        }
+
+        return $this->sendResponse(['errorMessages' => $errorMessages, 'successMessages' => $successMessages, 'amendable'=> $amendable], "validated successfully");
     }
 }

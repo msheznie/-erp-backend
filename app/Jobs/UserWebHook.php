@@ -53,13 +53,20 @@ class UserWebHook implements ShouldQueue
 
             if($api_external_key != null && $api_external_url != null) {
 
-                $employees = Employee::selectRaw('empFullName as employee_name, empEmail as email')->where('employeeSystemID', $empID)->first();
+                $employees = Employee::selectRaw('empFullName as employee_name, empEmail as email, uuid')->where('employeeSystemID', $empID)->first();
 
                 if(empty($employees)){
                     DB::rollback();
                     Log::error("Employee Not Found");
                 }
                 if(!empty($employees)) {
+                    if($employees->uuid == null){
+
+                      Employee::where('employeeSystemID', $empID)->update(['uuid' => bin2hex(random_bytes(16))]);
+
+                      $employees = Employee::selectRaw('empFullName as employee_name, empEmail as email, uuid')->where('employeeSystemID', $empID)->first();
+
+                    }
 
                     $srpEmployee = SrpEmployeeDetails::find($empID);
 

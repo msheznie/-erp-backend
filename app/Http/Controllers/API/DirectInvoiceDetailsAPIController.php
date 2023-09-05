@@ -310,7 +310,7 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
     public function update($id, UpdateDirectInvoiceDetailsAPIRequest $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['segment']);
+        $input = array_except($input, ['segment', 'purchase_order']);
         $input = $this->convertArrayToValue($input);
         $serviceLineError = array('type' => 'serviceLine');
 
@@ -419,6 +419,8 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
 
         SupplierInvoice::updateMaster($input['directInvoiceAutoID']);
 
+        \Helper::updateSupplierRetentionAmount($input['directInvoiceAutoID'],$BookInvSuppMaster);
+
         return $this->sendResponse($directInvoiceDetails->toArray(), 'Direct Invoice Details updated successfully');
     }
 
@@ -481,6 +483,8 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
 
         $directInvoiceDetails->delete();
 
+        $bookInvSuppMaster = BookInvSuppMaster::find($directInvoiceDetails->directInvoiceAutoID);
+        \Helper::updateSupplierRetentionAmount($directInvoiceDetails->directInvoiceAutoID,$bookInvSuppMaster);
 
         return $this->sendResponse($id, 'Direct Invoice Details deleted successfully');
     }
@@ -491,7 +495,7 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
         $invoiceID = $input['invoiceID'];
 
         $items = DirectInvoiceDetails::where('directInvoiceAutoID', $invoiceID)
-            ->with(['segment'])
+            ->with(['segment', 'purchase_order'])
             ->get();
 
         return $this->sendResponse($items->toArray(), 'Direct Invoice Details retrieved successfully');
@@ -529,6 +533,7 @@ class DirectInvoiceDetailsAPIController extends AppBaseController
 
                 }
             }
+        \Helper::updateSupplierRetentionAmount($directInvoiceAutoID,$supInvoice);
 
         return $this->sendResponse($directInvoiceAutoID, 'Details deleted successfully');
     }

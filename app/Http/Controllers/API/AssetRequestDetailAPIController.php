@@ -9,6 +9,7 @@ use App\Repositories\AssetRequestDetailRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use App\Models\AssetRequest;
+use App\Models\CompanyPolicyMaster;
 use App\Models\FixedAssetMaster;
 use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -293,11 +294,23 @@ class AssetRequestDetailAPIController extends AppBaseController
     {
         $input = $request->all();
         $companyID = $input['companyId'];
-        $assetRequestMaster =DB::select("SELECT id, document_code, (requesedQty.qtyRequested - IFNULL(transferedQTY.transferedQty,0)) as qty FROM erp_fa_fa_asset_request 
+
+        $typeCondtion = '';
+        if($input['type'] == 1) {
+            $typeCondtion = ' type = 1 OR type IS NULL AND ';
+        }
+
+        if($input['type'] == 4) {
+            $typeCondtion = ' type = 2 AND ';
+        }
+
+        $query = "SELECT id, document_code, (requesedQty.qtyRequested - IFNULL(transferedQTY.transferedQty,0)) as qty FROM erp_fa_fa_asset_request
         LEFT JOIN (SELECT erp_fa_fa_asset_request_id as reqMasterID, SUM(qty) as qtyRequested FROM `erp_fa_fa_asset_request_details` WHERE company_id = $companyID 
         GROUP BY erp_fa_fa_asset_request_id  ) as requesedQty ON requesedQty.reqMasterID = erp_fa_fa_asset_request.id 
         LEFT JOIN (SELECT erp_fa_fa_asset_request_id AS MasterID, COUNT( id ) AS transferedQty FROM `erp_fa_fa_asset_transfer_details` WHERE company_id = $companyID  GROUP BY erp_fa_fa_asset_request_id) as transferedQTY ON transferedQTY.MasterID = erp_fa_fa_asset_request.id 
-        WHERE company_id = $companyID AND approved_yn = 1 HAVING qty > 0 ");
+        WHERE $typeCondtion company_id = $companyID AND approved_yn = 1 HAVING qty > 0";
+        $assetRequestMaster =DB::select($query);
+
          /* AssetRequest::where('company_id', $companyID)->where('approved_yn', 1)->get(); */
         return $this->sendResponse($assetRequestMaster, 'Asset request master data retrieved successfully');
     }
@@ -314,7 +327,21 @@ class AssetRequestDetailAPIController extends AppBaseController
         GROUP BY erp_fa_fa_asset_request_detail_id) transferedQty ON transferedQty.requestDetailID = erp_fa_fa_asset_request_details.id
         WHERE company_id = $companyID AND erp_fa_fa_asset_request_id = $assetRequestMasterID HAVING qty > 0");
 
-        return $this->sendResponse($assetRequestDetail, 'Asset request detail data retrieved successfully');
+        $allowItemToTypePolicy = false;
+        $allowItemToType = CompanyPolicyMaster::where('companyPolicyCategoryID', 75)
+                                            ->where('companySystemID', $companyID)
+                                            ->first();
+
+        if ($allowItemToType) {
+            if ($allowItemToType->isYesNO) {
+                $allowItemToTypePolicy = true;
+            }
+        }
+        $data = [
+            'assetRequestDetail'=> $assetRequestDetail,
+            'allowItemToTypePolicy'=> $allowItemToTypePolicy
+        ];
+        return $this->sendResponse($data, 'Asset request detail data retrieved successfully');
     }
     public function getAssetDropData(Request $request){ 
         $input = $request->all();
