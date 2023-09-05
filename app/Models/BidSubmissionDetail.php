@@ -96,7 +96,8 @@ class BidSubmissionDetail extends Model
         'evaluate_by',
         'evaluate_at',
         'bid_selection_id',
-        'eval_score_id'
+        'eval_score_id',
+        'technical_ranking'
     ];
 
     /**
@@ -115,6 +116,7 @@ class BidSubmissionDetail extends Model
         'created_by' => 'integer',
         'updated_by' => 'integer',
         'eval_result' => 'float',
+        'technical_ranking' => 'integer'
     ];
 
     /**

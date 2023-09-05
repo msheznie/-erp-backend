@@ -60,7 +60,6 @@ class UserWebHook implements ShouldQueue
                     Log::error("Employee Not Found");
                 }
                 if(!empty($employees)) {
-
                     if($employees->uuid == null){
 
                       Employee::where('employeeSystemID', $empID)->update(['uuid' => bin2hex(random_bytes(16))]);

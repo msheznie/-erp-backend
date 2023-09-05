@@ -27,11 +27,12 @@ class TenderBoqItemsObserver
     public function created(TenderBoqItems $tender)
     {
 
-
+        Log::info('test');
         $pricingDetails = PricingScheduleDetail::where('id',$tender->getAttribute('main_work_id'))->select('tender_id')->first();
         $obj = TenderDetails::validateTenderEdit($pricingDetails->getAttribute('tender_id'));
         $tenderObj = TenderDetails::getTenderMasterData($pricingDetails->getAttribute('tender_id'));
         $employee = \Helper::getEmployeeInfo();
+       
         if($obj && isset($employee))
         {
             $sheduleDetail = PricingScheduleDetailEditLog::where('master_id',$tender->getAttribute('main_work_id'))->orderBy('id','desc')->first();

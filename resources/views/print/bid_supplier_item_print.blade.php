@@ -29,7 +29,17 @@
 <h1><center>Commercial Bid Item Wise Evaluation Report</center></h1>
 <table style="width:100%;" style="border: none" class="sup-item-summary-report-head">
     <tr>
-        <td style="border: hidden"><strong>Tender ID:</strong> {{$tender_code}}</td>
+        <td style="border: hidden"><strong>
+        @if($documentType == 0)
+                Tender ID:
+        @elseif($documentType == 1)
+                RFQ ID:
+        @elseif($documentType == 2)
+                RFI ID:
+        @elseif($documentType == 3)
+                RFP ID:
+        @endif   
+        </strong> {{$tender_code}}</td>
         <td style="border: hidden"></td>
     </tr>
     <tr>
@@ -37,7 +47,18 @@
         <td style="border: hidden"></td>
     </tr>
     <tr>
-        <td style="border: hidden"><strong>Tender Description:</strong> {{$tender_description}}</td>
+        <td style="border: hidden"><strong>
+        @if($documentType == 0)
+                Tender Description:
+        @elseif($documentType == 1)
+                RFQ Description:
+        @elseif($documentType == 2)
+                RFI Description:
+        @elseif($documentType == 3)
+                RFP Description:
+        @endif    
+        
+        </strong> {{$tender_description}}</td>
         <td style="border: hidden"></td>
     </tr>
     <tr>
@@ -45,7 +66,16 @@
         <td style="border: hidden"></td>
     </tr>
     <tr>
-        <td style="border: hidden"><strong>Commercial Bid Opening Date: </strong>{{\Carbon\Carbon::parse($commerical_bid_opening_date)->format('d/m/Y')}}</td>
+        <td style="border: hidden"><strong>Commercial Bid Opening Date: </strong>
+        @if ($commerical_bid_opening_date)
+            {{\Carbon\Carbon::parse($commerical_bid_opening_date)->format('d/m/Y')}}
+        @endif
+
+        @if (empty($commerical_bid_opening_date))
+                   -
+        @endif 
+    
+    </td>
         <td style="border: hidden"></td>
     </tr>
 </table>
