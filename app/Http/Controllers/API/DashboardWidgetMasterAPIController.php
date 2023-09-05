@@ -6,8 +6,12 @@ use App\helper\Helper;
 use App\Http\Requests\API\CreateDashboardWidgetMasterAPIRequest;
 use App\Http\Requests\API\UpdateDashboardWidgetMasterAPIRequest;
 use App\Models\BookInvSuppDet;
+use App\Models\CompanyFinanceYear;
+use App\Models\Company;
 use App\Models\BookInvSuppMaster;
 use App\Models\DashboardWidgetMaster;
+use App\Models\AccountsReceivableLedger;
+use App\Models\CustomerMaster;
 use App\Models\DepartmentMaster;
 use App\Models\GeneralLedger;
 use App\Models\PaySupplierInvoiceMaster;
@@ -20,6 +24,7 @@ use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Carbon\Carbon;
 
 /**
  * Class DashboardWidgetMasterController
@@ -1127,5 +1132,144 @@ GROUP BY
             default:
                 return $this->sendError('Data retrieved successfully');
         }
+    }
+
+    public function getPreDefinedWidgetData(Request $request)
+    {
+        $input = $request->all();
+
+        if (!isset($input['widgetTypeID']) || (isset($input['widgetTypeID']) && is_null($input['widgetTypeID']))) {
+            return $this->sendError("Widget type not found");
+        }
+
+        $companyID = isset($input['companyID']) ? $input['companyID'] : 0;
+        $isGroup = \Helper::checkIsCompanyGroup($companyID);
+
+        if($isGroup){
+            $childCompanies = \Helper::getGroupCompany($companyID);
+        }else{
+            $childCompanies = [$companyID];
+        }
+
+        $companyData = Company::with(['reportingcurrency'])->find($companyID);
+
+        if (!$companyData) {
+            return $this->sendError("Company not found");
+        }
+
+
+        switch ($input['widgetTypeID']) {
+            case 1:
+                $currentYear = CompanyFinanceYear::currentFinanceYear($input['companyID']);
+
+                if (!$currentYear) {
+                    return $this->sendError("Current finance year is not found");
+                }
+
+                $currentFinanceYearID = $currentYear->companyFinanceYearID;
+
+
+                $previosYear = CompanyFinanceYear::selectRaw("companyFinanceYearID, DATE(bigginingDate) AS startDate, DATE(endingDate) AS endDate")
+                                                 ->where('companySystemID', $input['companyID'])
+                                                 ->whereDate('bigginingDate', '<', $currentYear->startDate)
+                                                 ->orderBy('bigginingDate', 'desc')
+                                                 ->first();
+
+                $previousFinanceYearID = $previosYear->companyFinanceYearID;
+
+
+                $currentYearData = AccountsReceivableLedger::where('documentSystemID',20)
+                                                ->whereIn('companySystemID', $childCompanies)
+                                                ->selectRaw('customerID, documentCodeSystem ,SUM(comRptAmount) AS currentYearValue')
+                                                ->whereHas('customer_invoice', function($query) use ($currentFinanceYearID) {
+                                                    $query->where('companyFinanceYearID', $currentFinanceYearID);
+                                                })
+                                                ->with(['customer'])
+                                                ->groupBy('customerID')
+                                                ->orderBy('currentYearValue','DESC')
+                                                ->limit(10)
+                                                ->get();
+
+                $currentYearTotalSales = AccountsReceivableLedger::where('documentSystemID',20)
+                                                ->whereIn('companySystemID', $childCompanies)
+                                                ->whereHas('customer_invoice', function($query) use ($currentFinanceYearID) {
+                                                    $query->where('companyFinanceYearID', $currentFinanceYearID);
+                                                })
+                                                ->sum('comRptAmount');
+
+                $previousYearTotalSales = AccountsReceivableLedger::where('documentSystemID',20)
+                                                ->whereIn('companySystemID', $childCompanies)
+                                                ->whereHas('customer_invoice', function($query) use ($previousFinanceYearID) {
+                                                    $query->where('companyFinanceYearID', $previousFinanceYearID);
+                                                })
+                                                ->sum('comRptAmount');
+
+                foreach ($currentYearData as $key => $value) {
+                    $value->previousYearValue = AccountsReceivableLedger::where('documentSystemID',20)
+                                                                        ->whereIn('companySystemID', $childCompanies)
+                                                                        ->where('customerID', $value->customerID)
+                                                                        ->whereHas('customer_invoice', function($query) use ($previousFinanceYearID) {
+                                                                            $query->where('companyFinanceYearID', $previousFinanceYearID);
+                                                                        })
+                                                                        ->sum('comRptAmount');
+
+                    $value->currentYearPercentage = ($value->currentYearValue / $currentYearTotalSales) * 100;
+                    $value->previousYearPercentage = ($value->previousYearValue / $previousYearTotalSales) * 100;
+                }
+                
+
+                $data = ['data' => $currentYearData, 'currency' => $companyData->reportingcurrency];
+
+                return $this->sendResponse($data, "widget data retrived successfully");
+
+                break;
+            case 2:
+                $overdueRecivable = GeneralLedger::whereIn('documentSystemID',[20,19,21])
+                                                ->whereHas('customer', function ($query){
+                                                    $query->whereRaw('customermaster.custGLAccountSystemID = erp_generalledger.chartOfAccountSystemID');
+                                                })
+                                                ->whereIn('companySystemID', $childCompanies)
+                                                ->whereDate('documentDate', '<=', Carbon::now()->format('Y-m-d'))
+                                                ->selectRaw('supplierCodeSystem,SUM(documentRptAmount) AS total, documentRptCurrencyID')
+                                                ->with(['customer', 'rptcurrency'])
+                                                ->groupBy('supplierCodeSystem')
+                                                ->orderBy('total','DESC')
+                                                ->limit(10)
+                                                ->get();
+
+                 $overduePayable = GeneralLedger::whereIn('documentSystemID',[4,11,15])
+                                        ->whereHas('supplier', function ($query){
+                                            $query->whereRaw('suppliermaster.liabilityAccountSysemID = erp_generalledger.chartOfAccountSystemID');
+                                        })
+                                        ->whereIn('companySystemID', $childCompanies)
+                                        ->selectRaw('supplierCodeSystem,SUM(documentRptAmount*-1) AS total, documentRptCurrencyID')
+                                        ->with(['supplier', 'rptcurrency'])
+                                        ->groupBy('supplierCodeSystem')
+                                        ->orderBy('total','DESC')
+                                        ->limit(10)
+                                        ->get();
+
+                return $this->sendResponse(['overdueRecivable' => $overdueRecivable, 'overduePayable' => $overduePayable], "widget data retrived successfully");
+                break;
+            default:
+                // code...
+                break;
+        }
+    }
+
+
+    public function previousYearValue($companySystemID, $companyFinanceYearID, $customerID)
+    {
+        $res = AccountsReceivableLedger::where('documentSystemID',20)
+                                        ->whereIn('companySystemID', $companySystemID)
+                                        ->whereIn('customerID', $customerID)
+                                        ->selectRaw('customerID, documentCodeSystem ,SUM(comRptAmount) AS previousYearValue')
+                                        ->whereHas('customer_invoice', function($query) use ($companyFinanceYearID) {
+                                            $query->where('companyFinanceYearID', $companyFinanceYearID);
+                                        })
+                                        ->first();
+
+        return $res ? $res->previousYearValue : 0;
+
     }
 }

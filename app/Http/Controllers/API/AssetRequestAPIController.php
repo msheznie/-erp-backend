@@ -8,6 +8,7 @@ use App\Models\AssetRequest;
 use App\Repositories\AssetRequestRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use App\Models\ItemAssigned;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -313,6 +314,50 @@ class AssetRequestAPIController extends AppBaseController
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->make(true);
+    }
+
+    public Function getItemsOptionForAssetRequest(Request $request) {
+        $input = $request->all();
+        $companyId = $input['companyId'];
+        $search = $request->input('search.value');
+
+        if(array_key_exists('search', $input)){
+            $itemMaster = ItemAssigned::where('companySystemID', $companyId)->where('isActive', 1)->where('isAssigned', -1)->where('financeCategoryMaster', 3);
+            $search = $input['search'];
+
+            $itemMaster = $itemMaster->where(function ($query) use ($search) {
+                $query->where('itemPrimaryCode', 'LIKE', "%{$search}%")
+                    ->orWhere('itemDescription', 'LIKE', "%{$search}%")
+                    ->orWhere('secondaryItemCode', 'LIKE', "%{$search}%");
+            });
+
+            $itemMaster = $itemMaster->get();
+
+        }
+
+        return $this->sendResponse($itemMaster->toArray(), 'Data retrieved successfully');
+    }
+
+    public function mapLineItemAr(Request $request)
+    {
+        $input = $request->all();
+
+        $companySystemID = $input['company_id'];
+        $item = ItemAssigned::where('itemCodeSystem', $input['itemCodeNew'])
+            ->where('companySystemID', $companySystemID)
+            ->first();
+
+        if (empty($item)) {
+            return $this->sendError('Item not found');
+        }
+
+        $input['itemCodeSystem'] = $input['itemCodeNew'];
+        unset($input['itemCodeNew']);
+
+        $input['detail'] = "$item->itemPrimaryCode - $item->itemDescription";
+
+        return $this->sendResponse($input, 'Asset Request item maped successfully');
+
     }
 
 }

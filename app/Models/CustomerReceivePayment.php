@@ -714,6 +714,11 @@ class CustomerReceivePayment extends Model
         return $this->belongsTo('App\Models\BankLedger', 'custReceivePaymentAutoID', 'documentSystemCode');
     }
 
+    public function pdc_cheque()
+    {
+        return $this->hasMany('App\Models\PdcLog', 'documentmasterAutoID', 'custReceivePaymentAutoID');
+    }
+
     public function setCustPaymentReceiveDateAttribute($value)
     {
         $this->attributes['custPaymentReceiveDate'] = Helper::dateAddTime($value);

@@ -256,4 +256,13 @@ class CompanyFinanceYear extends Model
         }
     }
 
+    public static function currentFinanceYear($companySystemID)
+    {
+        return CompanyFinanceYear::selectRaw("companyFinanceYearID, DATE(bigginingDate) AS startDate, DATE(endingDate) AS endDate")
+                        ->where('companySystemID', $companySystemID)
+                        ->where('isCurrent', -1)
+                        ->where('isActive', -1)
+                        ->first();
+    }
+
 }

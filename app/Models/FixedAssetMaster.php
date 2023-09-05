@@ -766,6 +766,11 @@ class FixedAssetMaster extends Model
         }
     }
 
+     public function budget_detail()
+    {
+        return $this->belongsTo('App\Models\Budjetdetails', 'costglCodeSystemID','chartOfAccountID');
+    }
+
     public function scopeAssetType($query,$assetType)
     {
         return $query->where('assetType',  $assetType);
@@ -774,6 +779,11 @@ class FixedAssetMaster extends Model
     public function location()
     {
         return $this->belongsTo('App\Models\ErpLocation','LOCATION','locationID');
+    }
+
+    public function company_by()
+    {
+        return $this->belongsTo('App\Models\Company','companySystemID','companySystemID');
     }
 
     public function category_by(){
