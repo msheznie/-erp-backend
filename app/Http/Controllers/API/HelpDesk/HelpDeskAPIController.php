@@ -24,9 +24,8 @@ class HelpDeskAPIController extends AppBaseController
                 } else {
                     return $this->sendResponse([], 'There is no third party integration');
                 }
-
+              
                 return $this->sendResponse($thirdParty, 'Help Desk Info');
-
             }
             catch(\Exception $e){
                 DB::rollback();

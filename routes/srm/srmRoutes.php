@@ -246,6 +246,7 @@ Route::post('publishNegotiation', 'TenderNegotiationApprovalController@publishNe
 Route::resource('calendar_dates_detail_edit_logs', 'CalendarDatesDetailEditLogAPIController');
 Route::resource('procument_activity_edit_logs', 'ProcumentActivityEditLogAPIController');
 Route::post('getTenderFilterData', 'TenderMasterAPIController@getTenderFilterData')->name("Get tender filter data");
+Route::post('approveBidOpening', 'TenderMasterAPIController@approveBidOpening');
 
 Route::post('addAllSuppliersToNegotiation', 'SupplierTenderNegotiationController@addAllSuppliersToNegotiation');
 
