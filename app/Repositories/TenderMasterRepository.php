@@ -193,7 +193,6 @@ class TenderMasterRepository extends BaseRepository
 
     public function prDetailFormat($data)
     {
-        Log::info(['$purchaseOrderID' , $data]);
         return [
             'purchaseRequestID' => $data['purchaseRequestID'],
             'purchaseRequestCode' => $data['purchase_request']['purchaseRequestCode'],
@@ -201,7 +200,7 @@ class TenderMasterRepository extends BaseRepository
             'itemPrimaryCode' => $data['itemPrimaryCode'],
             'itemDescription' => $data['itemDescription'],
             'noQty' => $data['quantityRequested'],
-            'unitID' => $data['altUnit'],
+            'unitID' => $data['unitOfMeasure'],
             'item_id' => $data['itemCode']
         ];
     }
