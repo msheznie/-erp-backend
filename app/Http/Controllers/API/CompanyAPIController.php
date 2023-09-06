@@ -238,6 +238,10 @@ class CompanyAPIController extends AppBaseController
             if($dt->appearance_element_id == 2){
                 $dt->value = Helper::getFileUrlFromS3($dt->value);
             }
+            if($dt->appearance_element_id == 9){
+                $dt->value = Helper::getFileUrlFromS3($dt->value);
+            }
+
 
         }
 
