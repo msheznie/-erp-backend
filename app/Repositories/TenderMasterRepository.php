@@ -4,9 +4,13 @@ namespace App\Repositories;
 
 use App\Models\CurrencyMaster;
 use App\Models\EnvelopType;
+use App\Models\ProcumentOrder;
+use App\Models\PurchaseOrderDetails;
 use App\Models\PurchaseRequest;
+use App\Models\PurchaseRequestDetails;
 use App\Models\TenderMaster;
 use App\Models\TenderType;
+use Illuminate\Support\Facades\Log;
 use InfyOm\Generator\Common\BaseRepository;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -154,11 +158,51 @@ class TenderMasterRepository extends BaseRepository
         $companyId = $input['companyId'];
 
         $data = PurchaseRequest::select('purchaseRequestID','companyID','purchaseRequestCode')
+        ->with(['tender_purchase_request' => function ($query) use ($tenderId) {
+            $query->where('tender_id', $tenderId);
+        }])
         ->where('companySystemID',$companyId)
-        ->limit(10)
+        ->whereHas('tender_purchase_request', function ($query) use ($tenderId) {
+                $query->where('tender_id', $tenderId);
+        })
+        //->limit(10)
         ->get();
 
         return $data;
 
+    }
+
+    public function getPurchaseRequestDetails(Request $request)
+    {
+        $purchaseRequestID = $request->input('purchaseRequestID');
+
+        $pr = PurchaseRequestDetails::where('purchaseRequestID', $purchaseRequestID);
+
+        $pr = $pr->with(['uom' , 'purchase_request'])->get()
+            ->transform(function ($data) {
+                return $this->prDetailFormat($data);
+            });
+
+        $result['prDetail'] = $pr;
+        return [
+            'success' => true,
+            'message' => 'PR Details Retrieved',
+            'data' => $result
+        ];
+    }
+
+    public function prDetailFormat($data)
+    {
+        Log::info(['$purchaseOrderID' , $data]);
+        return [
+            'purchaseRequestID' => $data['purchaseRequestID'],
+            'purchaseRequestCode' => $data['purchase_request']['purchaseRequestCode'],
+            'purchaseRequestDetailsID' => $data['purchaseRequestDetailsID'],
+            'itemPrimaryCode' => $data['itemPrimaryCode'],
+            'itemDescription' => $data['itemDescription'],
+            'noQty' => $data['quantityRequested'],
+            'unitID' => $data['altUnit'],
+            'item_id' => $data['itemCode']
+        ];
     }
 }

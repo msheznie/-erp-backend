@@ -14,6 +14,8 @@ use App\Models\CompanyDocumentAttachment;
 use App\Models\CurrencyMaster;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\ProcumentOrder;
+use App\Models\PurchaseOrderDetails;
 use App\Models\PurchaseRequest;
 use App\Models\TenderNegotiation;
 use App\Models\EmployeesDepartment;
@@ -753,7 +755,6 @@ WHERE
         $data['purchaseRequest'] = $purchaseRequest;
 
         // Get Tender Purchase Request Data
-        //$tenderPurchaseRequestList = TenderPurchaseRequest::select('purchase_request_id as id')->where('tender_id', $tenderMasterId)->get();
         $tenderPurchaseRequestList = TenderPurchaseRequest::select('purchase_request_id as id', 'erp_purchaserequest.purchaseRequestCode as itemName')
             ->leftJoin('erp_purchaserequest', 'erp_purchaserequest.purchaseRequestID', '=', 'srm_tender_purchase_request.purchase_request_id')
             ->where('tender_id', $tenderMasterId)
@@ -4116,5 +4117,10 @@ WHERE
 
     public function getTenderPr(Request $request){ 
         return $this->tenderMasterRepository->getTenderPr($request);
+    }
+
+    public function getPurchaseRequestDetails(Request $request)
+    {
+        return $this->tenderMasterRepository->getPurchaseRequestDetails($request);
     }
 } 
