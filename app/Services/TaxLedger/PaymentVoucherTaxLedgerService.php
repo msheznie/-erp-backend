@@ -53,7 +53,7 @@ class PaymentVoucherTaxLedgerService
         $ledgerData = [
             'documentSystemID' => $masterModel["documentSystemID"],
             'documentMasterAutoID' => $masterModel["autoID"],
-            'inputVATGlAccountID' => isset($taxLedgerData['inputVATGlAccountID']) ? $taxLedgerData['inputVATGlAccountID'] : null,
+            'inputVATGlAccountID' => isset($taxLedgerData['inputVatGLAccountID']) ? $taxLedgerData['inputVatGLAccountID'] : null,
             'inputVatTransferAccountID' => isset($taxLedgerData['inputVatTransferAccountID']) ? $taxLedgerData['inputVatTransferAccountID'] : null,
             'outputVatTransferGLAccountID' => isset($taxLedgerData['outputVatTransferGLAccountID']) ? $taxLedgerData['outputVatTransferGLAccountID'] : null,
             'outputVatGLAccountID' => isset($taxLedgerData['outputVatGLAccountID']) ? $taxLedgerData['outputVatGLAccountID'] : null,

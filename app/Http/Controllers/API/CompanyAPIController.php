@@ -239,6 +239,7 @@ class CompanyAPIController extends AppBaseController
                 $dt->value = Helper::getFileUrlFromS3($dt->value);
             }
 
+
         }
 
         return $this->sendResponse($data,'Record retrieved successfully');

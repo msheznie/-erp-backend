@@ -53,14 +53,6 @@ Route::group([], function(){
         Route::post('/supplierCreation', 'SupplierRegistrationApprovalController@supplierCreation')->name("Create supplier");
     });
 
-    Route::group(['prefix' => 'srm'], function (){
-        
-        Route::group(['middleware' => ['tenant']], function (){
-            Route::post('fetch', 'SRM\APIController@fetch')->name("Get supplier KYC details");
-        });
-
-    });
-
 });
 
 

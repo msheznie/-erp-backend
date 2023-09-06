@@ -4,6 +4,8 @@
 Route::resource('document_attachments', 'DocumentAttachmentsAPIController');  
 Route::resource('document_attachment_types', 'DocumentAttachmentTypeAPIController');
 Route::resource('general_ledgers', 'GeneralLedgerAPIController');
+Route::resource('match_document_masters', 'MatchDocumentMasterAPIController',['only' => ['store', 'show', 'update']]);
+Route::resource('expense_employee_allocations', 'ExpenseEmployeeAllocationAPIController');
 
 Route::get('downloadTemplate', 'CustomerMasterAPIController@downloadTemplate')->name('Master data bulk upload template');
 Route::get('getExampleTableData', 'ExampleTableTemplateAPIController@getExampleTableData')->name("Get example table for upload");
@@ -63,7 +65,17 @@ Route::get('getCustomerByCompany', 'CustomerMasterAPIController@getCustomerByCom
 Route::get('getDirectInvoiceGL', 'ChartOfAccountsAssignedAPIController@getDirectInvoiceGL')->name("Get Direct Invoice GL");
 
 Route::get('getBankAccount', 'PaySupplierInvoiceMasterAPIController@getBankAccount')->name('Get bank account');
-
+Route::post('getBankBalance', 'BankAccountAPIController@getBankBalance')->name('Get bank balance');
 Route::get('getBankAccountsByBankID', 'BankAccountAPIController@getBankAccountsByBankID')->name('Get bank accounts by bank id');
 
 Route::get('checkPolicyForExchangeRates', 'CommonPoliciesAPIController@checkPolicyForExchangeRates')->name('Check policy for exchange rates');
+
+Route::get('getBudgetConsumptionByDocument', 'BudgetMasterAPIController@getBudgetConsumptionByDocument')->name('Get budget consumption by document');
+
+// Matching
+Route::get('getMatchDocumentMasterRecord', 'MatchDocumentMasterAPIController@getMatchDocumentMasterRecord')->name('Get match document master record');
+Route::post('getMatchDocumentMasterView', 'MatchDocumentMasterAPIController@getMatchDocumentMasterView')->name('Get match document master view');
+Route::get('getMatchDocumentMasterFormData', 'MatchDocumentMasterAPIController@getMatchDocumentMasterFormData')->name('Get match document master form data');
+
+Route::post('getAllocatedEmployeesForExpense', 'ExpenseEmployeeAllocationAPIController@getAllocatedEmployeesForExpense')->name('Get allocated employees for expense');
+Route::get('getCurrentUserInfo', 'UserAPIController@getCurrentUserInfo')->name("Get Current User Info");

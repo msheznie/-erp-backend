@@ -414,7 +414,7 @@ class SupplierMasterAPIController extends AppBaseController
         $supplierMasters = DB::table('erp_documentapproved')
             ->select('suppliermaster.*', 'erp_documentapproved.documentApprovedID',
                 'rollLevelOrder', 'currencymaster.CurrencyCode',
-                'suppliercategorymaster.categoryDescription', 'approvalLevelID', 'documentSystemCode')
+                'suppliercategorymaster.categoryName', 'approvalLevelID', 'documentSystemCode')
             ->join('employeesdepartments', function ($query) use ($companyID, $empID) {
                 $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')->
                 on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')->
