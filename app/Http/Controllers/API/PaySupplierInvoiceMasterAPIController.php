@@ -77,6 +77,7 @@ use App\Models\YesNoSelectionForMinus;
 use App\Repositories\PaySupplierInvoiceMasterRepository;
 use App\Repositories\MatchDocumentMasterRepository;
 use App\Repositories\ExpenseAssetAllocationRepository;
+use App\Services\ChartOfAccountValidationService;
 use App\Traits\AuditTrial;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -2369,7 +2370,14 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                                                                     
                     $amountForApproval = $totalAmountForApprovalData ? $totalAmountForApprovalData->total : 0;
                 }
+                if ($paySupplierInvoiceMaster->invoiceType == 3) {
+                    $object = new ChartOfAccountValidationService();
+                    $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $id, $input["companySystemID"]);
 
+                    if (isset($result) && !empty($result["accountCodes"])) {
+                        return $this->sendError($result["errorMsg"],500, ['type' => 'confirm']);
+                    }
+                }
                 $params = array('autoID' => $id, 'company' => $companySystemID, 'document' => $documentSystemID, 'segment' => '', 'category' => '', 'amount' => $amountForApproval);
                 $confirm = \Helper::confirmDocument($params);
                 if (!$confirm["success"]) {

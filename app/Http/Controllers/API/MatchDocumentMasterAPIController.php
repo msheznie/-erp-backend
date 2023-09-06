@@ -2583,6 +2583,14 @@ class MatchDocumentMasterAPIController extends AppBaseController
             return $this->sendError('Cannot cancel. Delete the invoices added to the detail and try again.');
         }
 
+        $poAdvanceRequestDetailExist = AdvancePaymentDetails::select(DB::raw('matchingDocID'))
+        ->where('matchingDocID', $matchDocumentMasterAutoID)
+        ->first();
+
+        if (!empty($poAdvanceRequestDetailExist)) {
+            return $this->sendError('Cannot cancel. Delete the po advance requests added to the detail and try again.');
+        }
+
         if ($MatchDocumentMasterData->matchingDocCode != '0') {
             $updateData = [
                 'cancelledYN' => 1,
@@ -3306,6 +3314,20 @@ ORDER BY
             $masterData->matchingConfirmedByName = null;
             $masterData->matchingConfirmedDate = null;
             $masterData->save();
+
+            if($masterData->documentSystemID == 4){
+                $paySupplierInvoice = PaySupplierInvoiceMaster::find($masterData->PayMasterAutoId);
+                if (!empty($paySupplierInvoice)) {
+                    $paySupplierInvoice->matchInvoice = 0;
+                    $paySupplierInvoice->save();
+                }
+            }else if($masterData->documentSystemID == 15){
+                $debitNote = DebitNote::find($masterData->PayMasterAutoId);
+                if (!empty($debitNote)) {
+                    $debitNote->matchInvoice = 0;
+                    $debitNote->save();
+                }
+            }
 
             if($masterData->documentSystemID == 4 || $masterData->documentSystemID == 15){
                 GeneralLedger::where('documentSystemID',$masterData->documentSystemID)
