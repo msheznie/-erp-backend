@@ -59,11 +59,7 @@ class TenderNegotiation extends Model
     {
         return $this->hasOne('App\Models\TenderMaster', 'id', 'srm_tender_master_id');
     }
-
-    public function supplierTenderNegotiation() {
-        return $this->hasOne('App\Models\SupplierTenderNegotiation', 'tender_negotiation_id', 'id');
-    }
-
+    
     public function confirmed_by()
     {
         return $this->belongsTo('App\Models\Employee', 'confirmed_by', 'employeeSystemID');
@@ -72,6 +68,11 @@ class TenderNegotiation extends Model
     public function area() {
         return $this->hasOne('App\Models\TenderNegotiationArea', 'tender_negotiation_id', 'id');
         
+    }
+
+    public function SupplierTenderNegotiation()
+    {
+        return $this->hasOne('App\Models\SupplierTenderNegotiation', 'tender_negotiation_id', 'id');
     }
 
 }

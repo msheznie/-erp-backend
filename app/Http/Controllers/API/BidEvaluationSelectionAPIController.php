@@ -270,7 +270,7 @@ class BidEvaluationSelectionAPIController extends AppBaseController
              
                 if($evaluation > 0)
                 {
-                    return $this->sendError('Please enter the remaining user values for the techniqal evaluation',500);
+                    return $this->sendError('Please enter the remaining user values for the technical evaluation',500);
                 }
          
             }
