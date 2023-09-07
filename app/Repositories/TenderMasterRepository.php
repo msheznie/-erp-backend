@@ -8,6 +8,7 @@ use App\Models\ProcumentOrder;
 use App\Models\PurchaseOrderDetails;
 use App\Models\PurchaseRequest;
 use App\Models\PurchaseRequestDetails;
+use App\Models\TenderBoqItems;
 use App\Models\TenderMaster;
 use App\Models\TenderType;
 use Illuminate\Support\Facades\Log;
@@ -165,7 +166,6 @@ class TenderMasterRepository extends BaseRepository
         ->whereHas('tender_purchase_request', function ($query) use ($tenderId) {
                 $query->where('tender_id', $tenderId);
         })
-        //->limit(10)
         ->get();
 
         return $data;
@@ -175,6 +175,16 @@ class TenderMasterRepository extends BaseRepository
     public function getPurchaseRequestDetails(Request $request)
     {
         $purchaseRequestID = $request->input('purchaseRequestID');
+
+        $result = TenderBoqItems::where('purchase_request_id', $purchaseRequestID)->first();
+
+        if ($result) {
+            return [
+                'success' => false,
+                'message' => 'Line items are already added',
+                'data' => ''
+            ];
+        }
 
         $pr = PurchaseRequestDetails::where('purchaseRequestID', $purchaseRequestID);
 

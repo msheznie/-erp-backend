@@ -748,6 +748,7 @@ WHERE
         $purchaseRequest = PurchaseRequest::select('purchaseRequestID as id', 'purchaseRequestCode')
             ->with(['tender_purchase_request'])
             ->where('approved', '-1')
+            ->where('companySystemID', $companySystemID)
             ->whereDoesntHave('tender_purchase_request', function ($query) use ($tenderMasterId) {
                 $query->where('tender_id','!=' ,$tenderMasterId);
             })
