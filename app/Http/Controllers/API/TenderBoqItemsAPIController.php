@@ -350,9 +350,9 @@ class TenderBoqItemsAPIController extends AppBaseController
             $data['qty']=$input['qty'];
             $data['tender_id']=$input['tender_id'];
             $data['created_by'] = $employee->employeeSystemID;
-            $data['purchase_request_id'] = $input['purchaseRequestID'];
-            $data['item_primary_code'] = $input['itemPrimaryCode'];
-            $data['origin'] = $input['origin'];
+            $data['purchase_request_id'] = isset($input['purchaseRequestID']) ? $input['purchaseRequestID'] : '';
+            $data['item_primary_code'] = isset($input['itemPrimaryCode']) ? $input['itemPrimaryCode'] : '';
+            $data['origin'] = isset($input['origin']) ? $input['origin'] : '';
 
             $result = TenderBoqItems::create($data);
          
