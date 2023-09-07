@@ -542,7 +542,7 @@ class email
                     if (isset($data['empEmail']) && $data['empEmail']) {
                         $data['empEmail'] = self::emailAddressFormat($data['empEmail']);
                         if ($data['empEmail']) {
-                            Mail::to($data['empEmail'])->send(new EmailForQueuing($data['alertMessage'], $data['emailAlertMessage'], $data['attachmentFileName'],null,$color,$text));
+                            Mail::to($data['empEmail'])->send(new EmailForQueuing($data['alertMessage'], $data['emailAlertMessage'], $data['attachmentFileName'],[],$color,$text));
                         }
                     }
                     Log::info('email sent success fully to :' . $data['empEmail']);
