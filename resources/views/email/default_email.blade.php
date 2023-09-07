@@ -132,7 +132,7 @@
                             <td class="aligncenter content-block"
                                 style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; box-sizing: border-box; font-size: 12px; vertical-align: top; color: #999; text-align: center; margin: 0; padding: 0 0 20px;"
                                 align="center" valign="top">
-                                <span style="color:black">Copyright © {{ date('Y') }} OSOS Tech. All rights reserved. Powered by <span><a href="https://www.osos.om/" style="color: #F55431 !important;text-decoration: none;">OSOS</a>
+                                <span style="color:black">Copyright © {{ date('Y') }} OSOS Tech. All rights reserved. Powered by <span><a href="https://www.osos.om/" target=”_blank” style="color: #F55431 !important;text-decoration: none;">OSOS</a>
                             </td>
                         </tr>
                     </table>
