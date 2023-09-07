@@ -91,7 +91,10 @@ class TenderBoqItems extends Model
         'updated_by',
         'company_id',
         'tender_ranking_line_item',
-        'tender_id'
+        'tender_id',
+        'item_primary_code',
+        'origin',
+        'purchase_request_id'
     ];
 
     /**
@@ -108,7 +111,10 @@ class TenderBoqItems extends Model
         'qty' => 'float',
         'created_by' => 'integer',
         'updated_by' => 'integer',
-        'company_id' => 'integer'
+        'company_id' => 'integer',
+        'item_primary_code' => 'string',
+        'origin' => 'integer',
+        'purchase_request_id' => 'integer',
     ];
 
     /**

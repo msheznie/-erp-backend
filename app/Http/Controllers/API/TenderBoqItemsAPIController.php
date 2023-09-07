@@ -310,6 +310,7 @@ class TenderBoqItemsAPIController extends AppBaseController
     public function addTenderBoqItems(Request $request)
     {
         $input = $request->all();
+        Log::info($input);
         $employee = \Helper::getEmployeeInfo();
         $is_disabled = 0;
         if(!isset($input['item_name']) || empty($input['item_name'])){
@@ -349,6 +350,9 @@ class TenderBoqItemsAPIController extends AppBaseController
             $data['qty']=$input['qty'];
             $data['tender_id']=$input['tender_id'];
             $data['created_by'] = $employee->employeeSystemID;
+            $data['purchase_request_id'] = isset($input['purchaseRequestID']) ? $input['purchaseRequestID'] : '';
+            $data['item_primary_code'] = isset($input['itemPrimaryCode']) ? $input['itemPrimaryCode'] : '';
+            $data['origin'] = isset($input['origin']) ? $input['origin'] : '';
 
             $result = TenderBoqItems::create($data);
          
