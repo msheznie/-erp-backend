@@ -870,8 +870,8 @@ class VATReportAPIController extends AppBaseController
                                 },'customer'=>
                                 function($query){
                                     $query->with(['country']);
-                                }
-                                ,'rptcurrency','localcurrency','final_approved_by','document_master','main_category', 'sub_category', 'supplier_invoice', 'grv', 'purchase_return'])
+                                },
+                                'employee','rptcurrency','localcurrency','final_approved_by','document_master','main_category', 'sub_category', 'supplier_invoice', 'grv', 'purchase_return'])
                             ->orderBy('taxLedgerID', 'desc');
 
         if($isForDataTable==0){

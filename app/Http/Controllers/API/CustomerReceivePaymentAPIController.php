@@ -29,6 +29,7 @@ use App\Http\Requests\API\UpdateCustomerReceivePaymentAPIRequest;
 use App\Models\AccountsReceivableLedger;
 use App\Models\AdvanceReceiptDetails;
 use App\Models\BankLedger;
+use App\Models\ChartOfAccount;
 use App\Models\ChequeRegisterDetail;
 use App\Models\Employee;
 use App\Models\SystemGlCodeScenarioDetail;
@@ -68,6 +69,7 @@ use App\Models\YesNoSelectionForMinus;
 use App\Models\YesNoSelection;
 use App\Models\Months;
 use App\Repositories\CustomerReceivePaymentRepository;
+use App\Services\ChartOfAccountValidationService;
 use App\Traits\AuditTrial;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -1306,6 +1308,15 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 } 
             }
 
+            if ($input['documentType'] == 14) {
+                $object = new ChartOfAccountValidationService();
+                $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $id, $input["companySystemID"]);
+
+
+                if (isset($result) && !empty($result["accountCodes"])) {
+                    return $this->sendError($result["errorMsg"]);
+                }
+            }
 
             $params = array('autoID' => $id,
                 'company' => $customerReceivePayment->companySystemID,
