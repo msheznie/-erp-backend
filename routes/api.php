@@ -69,6 +69,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             require __DIR__.'/../routes/general/customReport.php';
             require __DIR__.'/../routes/supplierManagement/supplierManagementRoutes.php';
             require __DIR__.'/../routes/sourcingManagement/sourcingManagementRoutes.php';
+            require __DIR__.'/../routes/logistics/logisticsRoutes.php';
 
             Route::post('getAllEmployees', 'EmployeeAPIController@getAllEmployees');
 
@@ -237,7 +238,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('get_srp_erp_document_attachments', 'SrpErpDocumentAttachmentsAPIController@geDocumentAttachments');
 
             Route::resource('sme-attachment', 'AttachmentSMEAPIController');
-            Route::get('sme-attachment/{id}/{docID}/{companyID}', 'AttachmentSMEAPIController@show');
 
             Route::post('getAllSupplierMasterApproval', 'SupplierMasterAPIController@getAllSupplierMasterApproval');
             Route::post('getAllCustomerMasterApproval', 'CustomerMasterAPIController@getAllCustomerMasterApproval');
@@ -456,33 +456,18 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('getFilteredGRV', 'GRVMasterAPIController@getFilteredGRV')->name("Get Filtered GRV");
 
             Route::post('approveSupplierInvoice', 'BookInvSuppMasterAPIController@approveSupplierInvoice');
-            
-
 
             Route::resource('expense_claims', 'ExpenseClaimAPIController');
-            Route::resource('expense_claim_details', 'ExpenseClaimDetailsAPIController');
             Route::resource('expense_claim_types', 'ExpenseClaimTypeAPIController');
             Route::resource('expense_claim_categories', 'ExpenseClaimCategoriesAPIController');
             Route::post('getExpenseClaimByCompany', 'ExpenseClaimAPIController@getExpenseClaimByCompany');
             Route::get('getPaymentStatusHistory', 'ExpenseClaimAPIController@getPaymentStatusHistory');
-            Route::get('getExpenseClaimFormData', 'ExpenseClaimAPIController@getExpenseClaimFormData');
-            Route::get('getExpenseClaimAudit', 'ExpenseClaimAPIController@getExpenseClaimAudit');
-            Route::post('amendExpenseClaimReview', 'ExpenseClaimAPIController@amendExpenseClaimReview');
             Route::get('getDetailsByExpenseClaim', 'ExpenseClaimDetailsAPIController@getDetailsByExpenseClaim');
             Route::get('preCheckECDetailEdit', 'ExpenseClaimDetailsAPIController@preCheckECDetailEdit');
 
-            Route::resource('expense_claim_masters', 'ExpenseClaimMasterAPIController');
-            Route::post('getExpenseClaimMasterByCompany', 'ExpenseClaimMasterAPIController@getExpenseClaimMasterByCompany');
-            Route::get('getExpenseClaimMasterAudit', 'ExpenseClaimMasterAPIController@getExpenseClaimMasterAudit');
-            Route::get('getExpenseClaimMasterPaymentStatusHistory', 'ExpenseClaimMasterAPIController@getExpenseClaimMasterPaymentStatusHistory');
-
             Route::resource('expense_claim_details_masters', 'ExpenseClaimDetailsMasterAPIController');
-            Route::get('getDetailsByExpenseClaimMaster', 'ExpenseClaimDetailsMasterAPIController@getDetailsByExpenseClaimMaster');
-            Route::get('preCheckECDetailMasterEdit', 'ExpenseClaimDetailsMasterAPIController@preCheckECDetailMasterEdit');
-
 
             Route::resource('expense_claim_categories_masters', 'ExpenseClaimCategoriesMasterAPIController');
-
 
             Route::resource('logistic_details', 'LogisticDetailsAPIController');
             Route::get('getItemsByLogistic', 'LogisticDetailsAPIController@getItemsByLogistic');
@@ -492,9 +477,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('getGrvDetailsByGrvForLogistic', 'LogisticDetailsAPIController@getGrvDetailsByGrvForLogistic');
             Route::post('addLogisticDetails', 'LogisticDetailsAPIController@addLogisticDetails');
 
-
             Route::resource('logistics', 'LogisticAPIController');
-            Route::post('getCompanyLocalAndRptAmount', 'LogisticAPIController@getCompanyLocalAndRptAmount');
             Route::get('getLogisticFormData', 'LogisticAPIController@getLogisticFormData');
             Route::get('getStatusByLogistic', 'LogisticAPIController@getStatusByLogistic');
             Route::get('checkPullFromGrv', 'LogisticAPIController@checkPullFromGrv');
@@ -697,20 +680,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
 
             Route::post('generateAssetDetailDrilldown', 'AssetManagementReportAPIController@generateAssetDetailDrilldown');
-            Route::resource('monthly_additions_masters', 'MonthlyAdditionsMasterAPIController');
-            Route::get('getMonthlyAdditionAudit', 'MonthlyAdditionsMasterAPIController@getMonthlyAdditionAudit');
-            Route::post('monthlyAdditionReopen', 'MonthlyAdditionsMasterAPIController@monthlyAdditionReopen');
-            Route::post('getMonthlyAdditionsByCompany', 'MonthlyAdditionsMasterAPIController@getMonthlyAdditionsByCompany');
-            Route::get('getMonthlyAdditionFormData', 'MonthlyAdditionsMasterAPIController@getMonthlyAdditionFormData');
-            Route::post('getProcessPeriods', 'MonthlyAdditionsMasterAPIController@getProcessPeriods');
-            Route::post('amendEcMonthlyAdditionReview', 'MonthlyAdditionsMasterAPIController@amendEcMonthlyAdditionReview');
             Route::resource('monthly_addition_details', 'MonthlyAdditionDetailAPIController');
-            Route::get('getItemsByMonthlyAddition', 'MonthlyAdditionDetailAPIController@getItemsByMonthlyAddition');
-            Route::get('checkPullFromExpenseClaim', 'MonthlyAdditionDetailAPIController@checkPullFromExpenseClaim');
-            Route::get('getECForMonthlyAddition', 'MonthlyAdditionDetailAPIController@getECForMonthlyAddition');
-            Route::get('getECDetailsForMonthlyAddition', 'MonthlyAdditionDetailAPIController@getECDetailsForMonthlyAddition');
-            Route::post('addMonthlyAdditionDetails', 'MonthlyAdditionDetailAPIController@addMonthlyAdditionDetails');
-            Route::post('deleteAllMonthlyAdditionDetails', 'MonthlyAdditionDetailAPIController@deleteAllMonthlyAdditionDetails');
             Route::resource('employment_types', 'EmploymentTypeAPIController');
             Route::resource('period_masters', 'PeriodMasterAPIController');
             Route::resource('salary_process_masters', 'SalaryProcessMasterAPIController');
@@ -730,7 +700,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('direct_payment_referbacks', 'DirectPaymentReferbackAPIController');
 
             Route::resource('paymentVoucherDetailReferbacks', 'PaySupplierInvoiceDetailReferbackAPIController');
-            Route::post('addDetailsFromExpenseClaim', 'DirectPaymentDetailsAPIController@addDetailsFromExpenseClaim');
 
             Route::resource('directReceiptHistories', 'DirectReceiptDetailsRefferedHistoryAPIController');
             Route::resource('PaymentVoucherMasterReferbacks', 'PaySupplierInvoiceMasterReferbackAPIController');
