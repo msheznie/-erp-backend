@@ -524,8 +524,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('getCustomerReceiptInvoices', 'AccountsReceivableLedgerAPIController@getCustomerReceiptInvoices');
             Route::post('saveReceiptVoucherUnAllocationsDetails', 'CustomerReceivePaymentDetailAPIController@saveReceiptVoucherUnAllocationsDetails');
 
-            Route::post('getChequePrintingItems', 'BankLedgerAPIController@getChequePrintingItems');
-            Route::get('getChequePrintingFormData', 'BankLedgerAPIController@getChequePrintingFormData');
             Route::post('updatePrintChequeItems', 'BankLedgerAPIController@updatePrintChequeItems');
 
             Route::post('referBackCosting', 'FixedAssetMasterAPIController@referBackCosting');
@@ -903,7 +901,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
 
 
-            Route::get('revertChequePrint', 'BankLedgerAPIController@revertChequePrint');
             Route::get('getCancelledDetails', 'PurchaseRequestAPIController@getCancelledDetails');
             Route::get('getClosedDetails', 'PurchaseRequestAPIController@getClosedDetails');
             

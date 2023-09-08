@@ -182,3 +182,10 @@ Route::group([],function (){
     Route::resource('expense_claim_details', 'ExpenseClaimDetailsAPIController');
     Route::resource('monthly_additions_masters', 'MonthlyAdditionsMasterAPIController');
 });
+
+//Cheque Printing
+Route::group([],function (){
+    Route::post('getChequePrintingItems', 'BankLedgerAPIController@getChequePrintingItems')->name('Get cheque printing items');
+    Route::get('getChequePrintingFormData', 'BankLedgerAPIController@getChequePrintingFormData')->name('Get cheque printing form data');
+    Route::get('revertChequePrint', 'BankLedgerAPIController@revertChequePrint')->name('Revert cheque print');
+});
