@@ -122,7 +122,7 @@ class UserAPIController extends AppBaseController
                     $label = $com->company->CompanyID . " - " . $com->company->CompanyName;
 
                     if (mb_strlen($label, 'utf-8') > 26) {
-                        $label = mb_substr($label, 0, 26, 'utf-8') . '...';
+                        $label = mb_substr($label, 0, 25, 'utf-8') . '...';
                     }
 
                     $temp = array('value' => $com->company->companySystemID, 'label' => $label);
