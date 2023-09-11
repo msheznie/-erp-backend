@@ -34,8 +34,7 @@ class LeaveCarryForwardComputationService
     {
         $this->companyId = $companyData['id'];
         $this->companyCode = $companyData['code'];
-        // $this->currentDate  = Carbon::now()->format('Y-m-d');
-        $this->currentDate  = '2023-12-31';
+        $this->currentDate  = Carbon::now()->format('Y-m-d');
         $this->currentDateTime = Carbon::now()->format('Y-m-d H:m:s');
     }
 
