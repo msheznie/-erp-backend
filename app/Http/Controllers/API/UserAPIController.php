@@ -117,11 +117,16 @@ class UserAPIController extends AppBaseController
 
             $setCompanies = array();
 
-            foreach ($companies as $com){
-                if(!empty($com->company)){
-                    $label = $com->company->CompanyID." - ".$com->company->CompanyName;
-                    $temp = array('value' => $com->company->companySystemID,'label' => $label);
-                    array_push($setCompanies,$temp);
+            foreach ($companies as $com) {
+                if (!empty($com->company)) {
+                    $label = $com->company->CompanyID . " - " . $com->company->CompanyName;
+
+                    if (mb_strlen($label, 'utf-8') > 26) {
+                        $label = mb_substr($label, 0, 26, 'utf-8') . '...';
+                    }
+
+                    $temp = array('value' => $com->company->companySystemID, 'label' => $label);
+                    array_push($setCompanies, $temp);
                 }
             }
 
