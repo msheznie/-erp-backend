@@ -746,12 +746,13 @@ WHERE
 
         // Get Purchase Request Data
         $purchaseRequest = PurchaseRequest::select('purchaseRequestID as id', 'purchaseRequestCode')
-            ->with(['tender_purchase_request'])
+            ->with(['tender_purchase_request','details.podetail'])
             ->where('approved', '-1')
             ->where('companySystemID', $companySystemID)
             ->whereDoesntHave('tender_purchase_request', function ($query) use ($tenderMasterId) {
                 $query->where('tender_id','!=' ,$tenderMasterId);
             })
+            ->whereDoesntHave('details.podetail')
             ->get();
         $data['purchaseRequest'] = $purchaseRequest;
 
