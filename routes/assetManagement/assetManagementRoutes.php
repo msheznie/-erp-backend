@@ -33,7 +33,6 @@ Route::group([], function(){
 
 });
 
-
 //transaction - Asset Depreciation
 Route::group([], function() {
     Route::post('getAllDepreciationByCompany', 'FixedAssetDepreciationMasterAPIController@getAllDepreciationByCompany')->name('Get depreciation by company');
@@ -54,7 +53,11 @@ Route::group([], function() {
 Route::group([], function(){
     Route::post('getAllAllocationByCompany', 'FixedAssetMasterAPIController@getAllAllocationByCompany')->name("Get asset allocation");
     Route::get('getFAGrvDetailsByID', 'FixedAssetMasterAPIController@getFAGrvDetailsByID')->name("Get FAGrv Details");
+    Route::post('getAllocatedAssetsForExpense', 'ExpenseAssetAllocationAPIController@getAllocatedAssetsForExpense')->name("Get Allocated Assets For Expense");
+    Route::get('getCompanyAsset', 'ExpenseAssetAllocationAPIController@getCompanyAsset')->name('Get company asset');
+
     Route::resource('fixed_asset_masters', 'FixedAssetMasterAPIController');
+    Route::resource('expense_asset_allocations', 'ExpenseAssetAllocationAPIController');
 });
 
 
