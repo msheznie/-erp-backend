@@ -57,6 +57,15 @@
     </tr>
     <tr>
         <td colspan="1"></td>
+        <td colspan="16"> <b>Date Of Supply  : @if(!empty($request->date_of_supply))
+                                        {{\App\helper\Helper::dateFormat($request->date_of_supply) }}
+                                    @endif</td>
+        <td colspan="8"> <b>تاريخ التوريد : @if(!empty($request->date_of_supply))
+                                        {{\App\helper\Helper::dateFormat($request->date_of_supply) }}
+                                    @endif</b></td>
+    </tr>
+    <tr>
+        <td colspan="1"></td>
         <td colspan="16"> <b>Contract / PO No : 
                                 @if(!empty($request->invoicedetails) )
                                     {{isset($request->invoicedetails[0]->clientContractID)?$request->invoicedetails[0]->clientContractID:''}}
@@ -81,13 +90,25 @@
     <tr>
         <td colspan="1"></td>
         <td colspan="16"> <b>CUSTOMER NAME : {{$request->customer->ReportTitle}}</b></td>
-        <td colspan="8"><b>أسم العميل : {{$request->customer->reportTitleSecondLanguage}}</b></td>
+        <td colspan="8"><b>أسم العميل : {{$request->customer->ReportTitle}}</b></td>
     </tr>
     <tr>
         <td colspan="1"></td>
         <td colspan="16"> <b>ADDRESS : {{$request->customer->customerAddress1}}</b></td>
-        <td colspan="8"> <b>عنوان العميل : {{$request->customer->addressOneSecondLanguage}}</b></td>
+        <td colspan="8"> <b>عنوان العميل : {{$request->customer->customerAddress1}}</b></td>
     </tr>
+   <tr>
+        <td colspan="1"></td>
+        <td colspan="16"><b>CUSTOMER TELEPHONE : {{isset($request->CustomerContactDetails->contactPersonTelephone)?$request->CustomerContactDetails->contactPersonTelephone:' '}}</b></td>
+        <td colspan="8"> <b>رقم العميل : {{isset($request->CustomerContactDetails->contactPersonTelephone)?$request->CustomerContactDetails->contactPersonTelephone:' '}}</b></td>
+    </tr>
+
+    <tr>
+        <td colspan="1"></td>
+        <td colspan="16"><b>CUSTOMER FAX : {{isset($request->CustomerContactDetails->contactPersonFax)?$request->CustomerContactDetails->contactPersonFax:' '}}</b></td>
+        <td colspan="8"> <b>فاكس العميل : {{isset($request->CustomerContactDetails->contactPersonFax)?$request->CustomerContactDetails->contactPersonFax:' '}}</b></td>
+    </tr>
+
     <tr>
         <td colspan="1"></td>
         <td colspan="16"><b>VAT NO : {{$request->vatNumber}}</b></td>
@@ -573,6 +594,21 @@
                                     </td>
                                 @endforeach
                             </tr>
+
+                            @if ($request->isPerforma == 0)
+                                <tr>
+                                    <td colspan="1"></td>
+                                    <td colspan="3" width="100px"><span class="font-weight-bold"><b>Created By</b> </span></td>
+                                    <td><b> :
+                                            @if ($request->createduser)
+                                                {{($request->createduser) ? $request->createduser->empFullName : ''}}
+                                            @endif
+                                        </b>
+                                    </td>
+                                </tr>
+                            @endif
+
+
                         </table>
                     </div>
                 @endif
