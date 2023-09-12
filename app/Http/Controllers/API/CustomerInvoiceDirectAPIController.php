@@ -3197,7 +3197,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $secondaryBankAccount = (object)[];
         if ($customerInvoice->secondaryLogoCompanySystemID) {
             $secondaryBankAccount = CustomerInvoiceDirectDetail::with(['contract' => function ($q) {
-                $q->with(['secondary_bank_account']);
+                $q->with(['secondary_bank_account' => function ($query) {
+                    $query->with('currency');
+                }]);
             }])->where('contractID', '>', 0)
                 ->where('custInvoiceDirectID', $id)->first();
         }
@@ -3607,6 +3609,27 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 return \Excel::create($fileName_csv, function ($excel) use ($array) {
                     $excel->sheet('New sheet', function ($sheet) use ($array) {
                         $sheet->loadView('export_report.customer_invoice_tue_product_service', $array)->with('no_asset', true);
+                    });
+                })->download('csv');
+            }
+
+        }  else if ($printTemplate['printTemplateID'] == 16) {
+            if($type == 1)
+            {
+                // return $array;
+                $html = view('print.customer_invoice_template_ksa', $array);
+                $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+                $mpdf->AddPage('P');
+                $mpdf->setAutoBottomMargin = 'stretch';    
+
+                $mpdf->WriteHTML($html);
+                return $mpdf->Output($fileName, 'I');
+            }
+            else if($type == 2)
+            {
+                return \Excel::create($fileName_csv, function ($excel) use ($array) {
+                    $excel->sheet('New sheet', function ($sheet) use ($array) {
+                        $sheet->loadView('export_report.customer_invoice_template_ksa', $array)->with('no_asset', true);
                     });
                 })->download('csv');
             }
