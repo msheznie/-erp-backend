@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Models\Employee;
 use App\Models\EmployeeDetails;
 use App\Models\SrpEmployeeDetails;
+use App\Models\EmployeeLanguage;
 use GuzzleHttp\Client;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
@@ -69,8 +70,11 @@ class UserWebHook implements ShouldQueue
                     }
 
                     $srpEmployee = SrpEmployeeDetails::find($empID);
+                    
+                    $employeeLanguage = EmployeeLanguage::where('employeeID', $empID)->with(['language'])->first();
 
                     $employees->mobile_no = isset($srpEmployee->EpMobile) ? $srpEmployee->EpMobile: null;
+                    $employees->lang_short_code = ($employeeLanguage && $employeeLanguage->language) ? $employeeLanguage->language->languageShortCode : null;
                     Log::info("Test: " . $employees);
 
                     $client = new Client();

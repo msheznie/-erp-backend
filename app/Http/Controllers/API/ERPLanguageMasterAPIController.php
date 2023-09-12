@@ -6,6 +6,7 @@ use App\Http\Requests\API\CreateERPLanguageMasterAPIRequest;
 use App\Http\Requests\API\UpdateERPLanguageMasterAPIRequest;
 use App\Models\ERPLanguageMaster;
 use App\Models\EmployeeLanguage;
+use App\Models\ThirdPartyIntegrationKeys;
 use App\Models\Employee;
 use App\Repositories\ERPLanguageMasterRepository;
 use Illuminate\Http\Request;
@@ -13,6 +14,7 @@ use App\Http\Controllers\AppBaseController;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\Jobs\UserWebHook;
 
 /**
  * Class ERPLanguageMasterController
@@ -321,6 +323,14 @@ class ERPLanguageMasterAPIController extends AppBaseController
         $record = EmployeeLanguage::where('employeeID',$input['employeeID'])->first();
         $record->languageID = $input['languageID'];
         $record->save();
+
+        $db = isset($input['db']) ? $input['db'] : "";
+        $thirdParty = ThirdPartyIntegrationKeys::where('third_party_system_id', 5)->first();
+
+        if(!empty($thirdParty)){
+            UserWebHook::dispatch($db, $input['employeeID'], $thirdParty->api_external_key, $thirdParty->api_external_url);
+        } 
+
         return ($record) ? $record : false;
     }
 
