@@ -125,7 +125,11 @@ class CustomerInvoiceDirectRepository extends BaseRepository
     {
 
 
-        $customerInvoiceDirect = $this->with(['segment','company', 'customer', 'tax', 'createduser', 'bankaccount', 'currency', 'local_currency','approved_by' => function ($query) {
+        $customerInvoiceDirect = $this->with(['segment','company', 'customer', 'tax', 'createduser', 
+        'bankaccount' => function ($query) {
+            $query->with('currency');
+        }, 'currency', 'local_currency',
+        'approved_by' => function ($query) {
             $query->with('employee.details.designation')
                 ->where('documentSystemID', 20);
         }, 'invoicedetail'
@@ -172,7 +176,10 @@ class CustomerInvoiceDirectRepository extends BaseRepository
 
     function getAudit2($id)
     {
-         $customerInvoiceDirect = $this->with(['segment','company', 'customer', 'tax', 'createduser', 'bankaccount', 'currency','local_currency', 'approved_by' => function ($query) {
+         $customerInvoiceDirect = $this->with(['segment','company', 'customer', 'tax', 'createduser', 
+         'bankaccount' => function ($query) {
+            $query->with('currency');
+        }, 'currency','local_currency', 'approved_by' => function ($query) {
              $query->with('employee.details.designation')
                  ->where('documentSystemID', 20);
          }, 'invoicedetails'
@@ -191,7 +198,10 @@ class CustomerInvoiceDirectRepository extends BaseRepository
 
     function getAuditItemInvoice($id)
     {
-        $customerInvoiceDirect = $this->with(['segment','company', 'customer', 'tax', 'createduser', 'bankaccount', 'currency','local_currency', 'approved_by' => function ($query) {
+        $customerInvoiceDirect = $this->with(['segment','company', 'customer', 'tax', 'createduser', 
+        'bankaccount' => function ($query) {
+            $query->with('currency');
+        }, 'currency','local_currency', 'approved_by' => function ($query) {
             $query->with('employee.details.designation')
                 ->where('documentSystemID', 20);
         },
