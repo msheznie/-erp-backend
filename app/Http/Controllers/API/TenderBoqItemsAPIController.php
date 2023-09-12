@@ -310,7 +310,7 @@ class TenderBoqItemsAPIController extends AppBaseController
     public function addTenderBoqItems(Request $request)
     {
         $input = $request->all();
-        Log::info($input);
+
         $employee = \Helper::getEmployeeInfo();
         $is_disabled = 0;
         if(!isset($input['item_name']) || empty($input['item_name'])){
@@ -333,7 +333,12 @@ class TenderBoqItemsAPIController extends AppBaseController
             ->where('main_work_id',$input['main_work_id'])->first();
 
         if(!empty($exist)){
-            return ['success' => false, 'message' => 'Item already exist'];
+            if($input['origin'] == 1 || $input['origin'] == 2){
+                $input['qty'] = $input['qty'] + $exist->qty;
+                $exist->delete();
+            } else {
+                return ['success' => false, 'message' => 'Item already exist'];
+            }
         }
 
 
