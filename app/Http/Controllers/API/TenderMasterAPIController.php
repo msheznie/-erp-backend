@@ -749,6 +749,9 @@ WHERE
             ->with(['tender_purchase_request','details.podetail'])
             ->where('approved', '-1')
             ->where('companySystemID', $companySystemID)
+            ->whereDoesntHave('tender_purchase_request', function ($query) use ($tenderMasterId) {
+                $query->where('tender_id','!=' ,$tenderMasterId);
+            })
             ->whereDoesntHave('details.podetail')
             ->get();
         $data['purchaseRequest'] = $purchaseRequest;
@@ -828,13 +831,6 @@ WHERE
 
         if (isset($input['rfq'])) {
             $rfq = ($input['rfq'] == true) ? true : false;
-        }
-
-        if(!$rfq){
-            $confirmPRCheck = $this->checkAddedPurchaseRequest($input['id']);
-            if($confirmPRCheck){
-                return $confirmPRCheck;
-            }
         }
 
         $site_visit_date = null;
@@ -4118,34 +4114,5 @@ WHERE
     public function getPurchaseRequestDetails(Request $request)
     {
         return $this->tenderMasterRepository->getPurchaseRequestDetails($request);
-    }
-
-    public function checkAddedPurchaseRequest($tenderMasterId)
-    {
-        $tenderPurchaseRequestList = TenderPurchaseRequest::select('purchase_request_id as id', 'erp_purchaserequest.purchaseRequestCode as itemName')
-            ->leftJoin('erp_purchaserequest', 'erp_purchaserequest.purchaseRequestID', '=', 'srm_tender_purchase_request.purchase_request_id')
-            ->where('tender_id', $tenderMasterId)
-            ->get();
-
-        $sharedPurchaseRequests = TenderPurchaseRequest::select('tender_id', 'erp_purchaserequest.purchaseRequestCode as itemName')
-            ->leftJoin('erp_purchaserequest', 'erp_purchaserequest.purchaseRequestID', '=', 'srm_tender_purchase_request.purchase_request_id')
-            ->whereIn('purchase_request_id', $tenderPurchaseRequestList->pluck('id'))
-            ->where('tender_id', '!=', $tenderMasterId)
-            ->get();
-
-        if ($sharedPurchaseRequests->count() > 0) {
-            $message = '';
-
-            $groupedPurchaseRequests = $sharedPurchaseRequests->groupBy('tender_id');
-
-            foreach ($groupedPurchaseRequests as $tenderId => $purchaseRequests) {
-                $purchaseRequestCodes = $purchaseRequests->pluck('itemName')->implode(', ');
-                $tender = TenderMaster::find($tenderId);
-
-                $message .= 'Purchase Request [' . $purchaseRequestCodes . '] already used in [' . $tender->title . '] Tender. ';
-            }
-
-            return ['status' => true, 'message' => $message, 'data' => $sharedPurchaseRequests];
-        }
     }
 } 
