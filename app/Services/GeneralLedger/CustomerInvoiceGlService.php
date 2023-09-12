@@ -135,18 +135,20 @@ class CustomerInvoiceGlService
             $data['clientContractID'] = 'X';
             $data['contractUID'] = 159;
             $data['supplierCodeSystem'] = $masterData->customerID;
+            $cusTotal = CustomerInvoiceItemDetails::selectRaw("SUM(sellingTotal) as total")->WHERE('custInvoiceDirectAutoID', $masterModel["autoID"])->whereNotNull('financeGLcodebBSSystemID')->where('financeGLcodebBSSystemID', '>', 0)->groupBy('financeGLcodebBSSystemID')->get();
+            $cusTotal = isset($cusTotal[0]->total)?$cusTotal[0]->total:0;
 
             $data['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
             $data['documentTransCurrencyER'] = $masterData->custTransactionCurrencyER;
-            $data['documentTransAmount'] = $masterData->bookingAmountTrans + $masterData->VATAmount;
+            $data['documentTransAmount'] = $cusTotal + $masterData->VATAmount;
 
             $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
             $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
-            $data['documentLocalAmount'] = $masterData->bookingAmountLocal + $masterData->VATAmountLocal;
+            $data['documentLocalAmount'] = ($cusTotal / $masterData->localCurrencyER)  + $masterData->VATAmountLocal;
 
             $data['documentRptCurrencyID'] = $masterData->companyReportingCurrencyID;
             $data['documentRptCurrencyER'] = $masterData->companyReportingER;
-            $data['documentRptAmount'] = $masterData->bookingAmountRpt + $masterData->VATAmountRpt;
+            $data['documentRptAmount'] = ($cusTotal / $masterData->companyReportingER) + $masterData->VATAmountRpt;
 
             $data['documentType'] = 11;
 
