@@ -242,22 +242,24 @@
             <tr>
                 <td style="width: 50%; text-align:left;">
                     <b>INVOICE NO : {{$request->bookingInvCode}}</b><br>
+
                     <b>INVOICE DATE : @if(!empty($request->bookingDate))
                                     {{\App\helper\Helper::dateFormat($request->bookingDate) }}
                                 @endif</b><br>
+
                     <b>Date Of Supply : @if(!empty($request->date_of_supply))
                         {{\App\helper\Helper::dateFormat($request->date_of_supply) }}
                         @endif
                     </b><br>
                     
-                        <b>Contract / PO No : 
-                             @if(!empty($request->invoicedetails) )
-                                {{isset($request->invoicedetails[0]->clientContractID)?$request->invoicedetails[0]->clientContractID:''}}
-                            @endif
-                            @if($request->line_poNumber && isset($request->item_invoice) && $request->item_invoice)
-                                {{$request->PONumber}}
-                            @endif
-                        </b>
+                    <b>Contract / PO No : 
+                            @if(!empty($request->invoicedetails) )
+                            {{isset($request->invoicedetails[0]->clientContractID)?$request->invoicedetails[0]->clientContractID:''}}
+                        @endif
+                        @if($request->line_poNumber && isset($request->item_invoice) && $request->item_invoice)
+                            {{$request->PONumber}}
+                        @endif
+                    </b>
                 </td>
                 <td style="width: 50%; text-align:right; direction: rtl;">
                     <b>رقم الفاتورة : {{$request->bookingInvCode}}</b><br>
@@ -265,14 +267,19 @@
                                     {{\App\helper\Helper::dateFormat($request->bookingDate) }}
                                 @endif</b><br>
 
-                        <b>رقم العقد/أمر الشراء : @if(!empty($request->invoicedetails) )
-                                {{isset($request->invoicedetails[0]->clientContractID)?$request->invoicedetails[0]->clientContractID:''}}
-                            @endif
-                            @if($request->line_poNumber && isset($request->item_invoice) && $request->item_invoice)
-                                {{$request->PONumber}}
-                            @endif
+                    <b>تاريخ التوريد : @if(!empty($request->date_of_supply))
+                        {{\App\helper\Helper::dateFormat($request->date_of_supply) }}
+                        @endif
+                    </b><br>
 
-                        </b>
+                    <b>رقم العقد/أمر الشراء : @if(!empty($request->invoicedetails) )
+                            {{isset($request->invoicedetails[0]->clientContractID)?$request->invoicedetails[0]->clientContractID:''}}
+                        @endif
+                        @if($request->line_poNumber && isset($request->item_invoice) && $request->item_invoice)
+                            {{$request->PONumber}}
+                        @endif
+
+                    </b>
 
                 </td>
             </tr>
@@ -296,8 +303,10 @@
                     <b>CUSTOMER VATIN : {{$request->vatNumber}}</b>
                 </td>
                 <td style="width: 50%; text-align: right;direction: rtl;">
-                    <b>أسم العميل : {{$request->customer->reportTitleSecondLanguage}}</b><br>
-                    <b>عنوان العميل : {{$request->customer->addressOneSecondLanguage}}</b><br>
+                    <b>أسم العميل : {{$request->customer->ReportTitle}}</b><br>
+                    <b>عنوان العميل : {{$request->customer->customerAddress1}}</b><br>
+                    <b>رقم العميل : {{isset($request->CustomerContactDetails->contactPersonTelephone)?$request->CustomerContactDetails->contactPersonTelephone:' '}}</b><br>
+                    <b>فاكس العميل : {{isset($request->CustomerContactDetails->contactPersonFax)?$request->CustomerContactDetails->contactPersonFax:' '}}</b><br>
                     <b>الرقم الضريبي : {{$request->vatNumber}}</b>
                 </td>
             </tr>
@@ -833,6 +842,18 @@
                                     </td>
                                 @endforeach
                             </tr>
+
+                            @if ($request->isPerforma == 0)
+                                <tr>
+                                    <td width="100px"><span class="font-weight-bold"><b>Created By</b> </span></td>
+                                    <td><b> :
+                                            @if ($request->createduser)
+                                                {{($request->createduser) ? $request->createduser->empFullName : ''}}
+                                            @endif
+                                        </b>
+                                    </td>
+                                </tr>
+                            @endif
                         </table>
                     </div>
                 @endif
