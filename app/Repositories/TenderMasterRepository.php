@@ -210,7 +210,8 @@ class TenderMasterRepository extends BaseRepository
             'itemPrimaryCode' => $data['itemPrimaryCode'],
             'itemDescription' => $data['itemDescription'],
             'noQty' => $data['quantityRequested'],
-            'unitID' => $data['unitOfMeasure'],
+            'unitID' => $data['uom']['UnitID'],
+            'unitShortCode' => $data['uom']['UnitShortCode'],
             'item_id' => $data['itemCode']
         ];
     }
