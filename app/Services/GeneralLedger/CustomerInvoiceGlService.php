@@ -136,17 +136,21 @@ class CustomerInvoiceGlService
             $data['contractUID'] = 159;
             $data['supplierCodeSystem'] = $masterData->customerID;
 
+            if($masterData->isPerforma == 2){
+                $cusTotal = CustomerInvoiceItemDetails::selectRaw("SUM(sellingTotal) as total")->WHERE('custInvoiceDirectAutoID', $masterModel["autoID"])->whereNotNull('financeGLcodebBSSystemID')->where('financeGLcodebBSSystemID', '>', 0)->groupBy('financeGLcodebBSSystemID')->get();
+                $cusTotal = isset($cusTotal[0]->total)?$cusTotal[0]->total:0;
+            }
             $data['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
             $data['documentTransCurrencyER'] = $masterData->custTransactionCurrencyER;
-            $data['documentTransAmount'] = $masterData->bookingAmountTrans + $masterData->VATAmount;
+            $data['documentTransAmount'] = (($masterData->isPerforma == 2) ? $cusTotal + $masterData->VATAmount : $masterData->bookingAmountTrans + $masterData->VATAmount);
 
             $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
             $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
-            $data['documentLocalAmount'] = $masterData->bookingAmountLocal + $masterData->VATAmountLocal;
+            $data['documentLocalAmount'] = (($masterData->isPerforma == 2) ? ($cusTotal / $masterData->localCurrencyER)  + $masterData->VATAmountLocal : $masterData->bookingAmountLocal + $masterData->VATAmountLocal);
 
             $data['documentRptCurrencyID'] = $masterData->companyReportingCurrencyID;
             $data['documentRptCurrencyER'] = $masterData->companyReportingER;
-            $data['documentRptAmount'] = $masterData->bookingAmountRpt + $masterData->VATAmountRpt;
+            $data['documentRptAmount'] = (($masterData->isPerforma == 2) ? ($cusTotal / $masterData->companyReportingER) + $masterData->VATAmountRpt: $masterData->bookingAmountRpt + $masterData->VATAmountRpt);
 
             $data['documentType'] = 11;
 
