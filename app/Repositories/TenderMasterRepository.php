@@ -175,8 +175,13 @@ class TenderMasterRepository extends BaseRepository
     public function getPurchaseRequestDetails(Request $request)
     {
         $purchaseRequestID = $request->input('purchaseRequestID');
+        $tender_id = $request->input('tenderId');
 
-        $result = TenderBoqItems::where('purchase_request_id', $purchaseRequestID)->first();
+        $purchaseRequestIDToCheck = $purchaseRequestID;
+
+        $result = TenderBoqItems::where('tender_id', $tender_id)
+            ->whereRaw("FIND_IN_SET('$purchaseRequestIDToCheck', purchase_request_id) > 0")
+            ->first();
 
         if ($result) {
             return [
