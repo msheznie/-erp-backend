@@ -114,7 +114,7 @@ class TenderBoqItems extends Model
         'company_id' => 'integer',
         'item_primary_code' => 'string',
         'origin' => 'integer',
-        'purchase_request_id' => 'integer',
+        'purchase_request_id' => 'string',
     ];
 
     /**
