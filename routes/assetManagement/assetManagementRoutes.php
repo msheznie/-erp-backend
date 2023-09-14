@@ -175,5 +175,14 @@ Route::group([], function(){
 
 });
 
+//Asset Management - Barcode Configuration
+Route::group([], function(){
+    Route::post('getAllBarCodeConf', 'BarcodeConfigurationAPIController@getAllBarCodeConf')->name('Get All Barcode Configuration');
+    Route::get('getBarcodeConfigurationFormData', 'BarcodeConfigurationAPIController@getBarcodeConfigurationFormData')->name('Get Barcode Configuration');
+    Route::resource('barcode_configurations', 'BarcodeConfigurationAPIController');
+
+
+});
+
 
 
