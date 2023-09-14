@@ -982,28 +982,16 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('getPreDefinedWidgetData', 'DashboardWidgetMasterAPIController@getPreDefinedWidgetData');
             Route::post('logoutApiUser', 'FcmTokenAPIController@logoutApiUser');
             Route::post('getCurrentHomeUrl', 'FcmTokenAPIController@redirectHome');
-            Route::post('uploadItemsDeliveryOrder','DeliveryOrderDetailAPIController@uploadItemsDeliveryOrder');
             Route::post('exportWidgetExcel', 'DashboardWidgetMasterAPIController@exportWidgetExcel');
 
 
-            Route::post('getAllDeliveryOrder', 'DeliveryOrderAPIController@getAllDeliveryOrder');
             Route::post('saveDeliveryOrderTaxDetails', 'DeliveryOrderDetailAPIController@saveDeliveryOrderTaxDetail')->name("Save Delivery Order Tax Detail");
-            Route::get('getDeliveryOrderFormData', 'DeliveryOrderAPIController@getDeliveryOrderFormData');
 
-            Route::get('salesQuotationForDO', 'DeliveryOrderAPIController@salesQuotationForDO');
-            Route::get('getSalesQuoatationDetailForDO', 'DeliveryOrderAPIController@getSalesQuoatationDetailForDO');
             Route::post('cancelQuatation', 'QuotationMasterAPIController@cancelQuatation');
             Route::post('closeQuatation', 'QuotationMasterAPIController@closeQuatation');
-
-
-            Route::post('storeDeliveryDetailFromSalesQuotation', 'DeliveryOrderDetailAPIController@storeDeliveryDetailFromSalesQuotation');
-            Route::get('deliveryOrderAudit', 'DeliveryOrderAPIController@deliveryOrderAudit');
             
             
             Route::get('downloadQuotationItemUploadTemplate', 'QuotationMasterAPIController@downloadQuotationItemUploadTemplate');
-            Route::get('downloadDeliveryOrderUploadTemplate', 'DeliveryOrderAPIController@downloadQuotationItemUploadTemplate');
-
-            Route::post('sales-order/is-link-item', 'DeliveryOrderAPIController@isLinkItem');
 
             Route::resource('pre_defined_report_templates', 'PreDefinedReportTemplateAPIController');
 
@@ -1030,14 +1018,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::resource('hrms_department_masters', 'HrmsDepartmentMasterAPIController');
             Route::resource('secondary_companies', 'SecondaryCompanyAPIController');
-
-            Route::post('deliveryOrderReopen', 'DeliveryOrderAPIController@deliveryOrderReopen');
-            Route::post('getInvoiceDetailsForDO', 'DeliveryOrderAPIController@getInvoiceDetailsForDO');
-
-            Route::get('getDeliveryOrderAmendHistory', 'DeliveryOrderRefferedbackAPIController@getDeliveryOrderAmendHistory');
-            Route::post('getDeliveryOrderAmend', 'DeliveryOrderAPIController@getDeliveryOrderAmend');
-
-            Route::resource('do_refferedbacks', 'DeliveryOrderRefferedbackAPIController');
 
             Route::resource('do_detail_refferedbacks', 'DeliveryOrderDetailRefferedbackAPIController');
 
@@ -1132,7 +1112,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('salesReturnReopen', 'SalesReturnAPIController@salesReturnReopen');
             Route::post('getSalesReturnAmend', 'SalesReturnAPIController@getSalesReturnAmend');
             Route::post('approveSalesReturn', 'SalesReturnAPIController@approveSalesReturn');
-            Route::post('getSalesReturnDetailsForDO', 'SalesReturnAPIController@getSalesReturnDetailsForDO');
             Route::post('getSalesReturnDetailsForSI', 'SalesReturnAPIController@getSalesReturnDetailsForSI');
 
             Route::resource('grv_details_prns', 'GrvDetailsPrnAPIController');
