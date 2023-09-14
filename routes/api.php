@@ -1434,6 +1434,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
 Route::group(['middleware' => ['tenantById']], function (){
 
+    Route::get('pull_company_details', 'POS\PosAPIController@pullCompanyDetails');
     Route::group(['middleware' => ['pos_api','hrms_employee']], function () {
         Route::post('postEmployee', 'HelpDesk\HelpDeskAPIController@postEmployee');
         Route::post('post_supplier_invoice', 'HRMS\HRMSAPIController@createSupplierInvoice');
