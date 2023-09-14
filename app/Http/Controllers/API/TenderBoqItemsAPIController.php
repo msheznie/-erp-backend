@@ -334,11 +334,9 @@ class TenderBoqItemsAPIController extends AppBaseController
 
         $d['purchase_request_id'] = '';
         if(!empty($exist)){
-            if($input['origin'] == 1 || $input['origin'] == 2){
+            if( isset($input['origin']) && ($input['origin'] == 1 || $input['origin'] == 2)){
                 $input['qty'] = $input['qty'] + $exist->qty;
-                if($input['origin'] == 1){
-                    $d['purchase_request_id'] = isset($input['purchaseRequestID']) ? $input['purchaseRequestID'] . ',' . $exist->purchase_request_id : $exist->purchase_request_id;
-                }
+                $d['purchase_request_id'] = isset($input['purchaseRequestID']) ? $input['purchaseRequestID'] . ',' . $exist->purchase_request_id : $exist->purchase_request_id;
                 $exist->delete();
             } else {
                 return ['success' => false, 'message' => 'Item already exist'];
