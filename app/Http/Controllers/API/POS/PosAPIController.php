@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API\POS;
 
 use App\Http\Controllers\AppBaseController;
+use App\Models\Company;
 use App\Models\CustomerMasterCategory;
 use App\Models\ErpLocation;
 use App\Models\ItemMaster;
@@ -34,6 +35,18 @@ class PosAPIController extends AppBaseController
     public function __construct(POSService $POSService)
     {
         $this->POSService = $POSService;
+    }
+
+    function pullCompanyDetails(){
+        DB::beginTransaction();
+        try {
+            $companyDetails = Company::selectRaw('CompanyID, companyShortCode, CompanyName, registrationNumber, masterComapanySystemID, group_type, holding_percentage, holding_updated_date, companyCountry, CompanyAddress, CompanyEmail, localCurrencyID, reportingCurrency, vatRegisteredYN, vatRegistratonNumber, isActive')->get();
+            DB::commit();
+            return $this->sendResponse($companyDetails, 'Data Retrieved successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
     }
 
     function pullCustomerCategory(Request $request)
