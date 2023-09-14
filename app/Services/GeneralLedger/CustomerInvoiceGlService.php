@@ -137,7 +137,7 @@ class CustomerInvoiceGlService
             $data['supplierCodeSystem'] = $masterData->customerID;
 
             if($masterData->isPerforma == 2){
-                $cusTotal = CustomerInvoiceItemDetails::selectRaw("SUM(sellingTotal) as total")->WHERE('custInvoiceDirectAutoID', $masterModel["autoID"])->whereNotNull('financeGLcodebBSSystemID')->where('financeGLcodebBSSystemID', '>', 0)->groupBy('financeGLcodebBSSystemID')->get();
+                $cusTotal = CustomerInvoiceItemDetails::selectRaw("SUM(sellingTotal) as total")->WHERE('custInvoiceDirectAutoID', $masterModel["autoID"])->get();
                 $cusTotal = isset($cusTotal[0]->total)?$cusTotal[0]->total:0;
             }
             $data['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
