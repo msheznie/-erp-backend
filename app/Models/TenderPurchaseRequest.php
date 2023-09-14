@@ -24,4 +24,9 @@ class TenderPurchaseRequest extends Model
     {
         return $this->belongsTo(PurchaseRequest::class, 'purchase_request_id', 'purchaseRequestID');
     }
+
+    public function tender()
+    {
+        return $this->belongsTo(TenderMaster::class, 'tender_id', 'id');
+    }
 }

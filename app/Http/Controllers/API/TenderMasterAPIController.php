@@ -745,14 +745,28 @@ WHERE
         $data['documentTypes'] = $docTypeArr;
 
         // Get Purchase Request Data
-        $purchaseRequest = PurchaseRequest::select('purchaseRequestID as id', 'purchaseRequestCode')
+       $purchaseRequest = PurchaseRequest::select('purchaseRequestID as id', 'purchaseRequestCode')
             ->with(['tender_purchase_request','details.podetail'])
             ->where('approved', '-1')
             ->where('companySystemID', $companySystemID);
 
         if($data['master']->document_type == 0){
             $purchaseRequest = $purchaseRequest->whereDoesntHave('tender_purchase_request', function ($query) use ($tenderMasterId) {
-                $query->where('tender_id','!=' ,$tenderMasterId);
+                $query->where(function ($subQuery) use ($tenderMasterId) {
+                    $subQuery->where('tender_id', '!=', $tenderMasterId)
+                        ->whereHas('tender', function ($subSubQuery) {
+                            $subSubQuery->where('document_type', 0);
+                        });
+                });
+            });
+        } elseif ($data['master']->document_type != 0){
+            $purchaseRequest = $purchaseRequest->whereDoesntHave('tender_purchase_request', function ($query) use ($tenderMasterId) {
+                $query->where(function ($subQuery) use ($tenderMasterId) {
+                    $subQuery->where('tender_id', '!=', $tenderMasterId)
+                        ->whereHas('tender', function ($subSubQuery) {
+                            $subSubQuery->where('document_type', '!=', 0);
+                        });
+                });
             });
         }
 
