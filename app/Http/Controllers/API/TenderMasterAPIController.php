@@ -743,7 +743,7 @@ WHERE
             }
         }
         $data['documentTypes'] = $docTypeArr;
-        
+
         // Get Purchase Request Data
         $purchaseRequest = PurchaseRequest::select('purchaseRequestID as id', 'purchaseRequestCode')
             ->with(['tender_purchase_request','details.podetail'])
