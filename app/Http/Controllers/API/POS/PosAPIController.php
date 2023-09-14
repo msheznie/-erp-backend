@@ -40,7 +40,7 @@ class PosAPIController extends AppBaseController
     function pullCompanyDetails(){
         DB::beginTransaction();
         try {
-            $companyDetails = Company::selectRaw('CompanyID, companyShortCode, CompanyName, registrationNumber, masterComapanySystemID, group_type, holding_percentage, holding_updated_date, companyCountry, CompanyAddress, CompanyEmail, localCurrencyID, reportingCurrency, vatRegisteredYN, vatRegistratonNumber, isActive')->get();
+            $companyDetails = Company::selectRaw('companySystemID, CompanyID, companyShortCode, CompanyName, registrationNumber, masterComapanySystemID, group_type, holding_percentage, holding_updated_date, companyCountry, CompanyAddress, CompanyEmail, localCurrencyID, reportingCurrency, vatRegisteredYN, vatRegistratonNumber, isActive')->get();
             DB::commit();
             return $this->sendResponse($companyDetails, 'Data Retrieved successfully');
         } catch (\Exception $exception) {
