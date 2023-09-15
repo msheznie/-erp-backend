@@ -199,7 +199,7 @@
                     </tr>
                 </tbody>
 
-                @if ($request->currency && $request->currency->CurrencyCode == 'USD')
+                @if ($request->currency && $request->local_currency && $request->currency->CurrencyCode != $request->local_currency->CurrencyCode)
                     <tbody>
                         <tr>
                             <td colspan="23"><br> </td>
