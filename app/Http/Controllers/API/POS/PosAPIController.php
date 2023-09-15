@@ -37,10 +37,18 @@ class PosAPIController extends AppBaseController
         $this->POSService = $POSService;
     }
 
-    function pullCompanyDetails(){
+    function pullCompanyDetails(Request $request){
         DB::beginTransaction();
         try {
-            $companyDetails = Company::selectRaw('companySystemID, CompanyID, companyShortCode, CompanyName, registrationNumber, masterComapanySystemID, group_type, holding_percentage, holding_updated_date, companyCountry, CompanyAddress, CompanyEmail, localCurrencyID, reportingCurrency, vatRegisteredYN, vatRegistratonNumber, isActive')->get();
+            $input = $request->all();
+
+            $posType = isset($input['post_type']) ? $input['post_type']: 1;
+
+                $companyDetails = Company::selectRaw('companySystemID, CompanyID, companyShortCode, CompanyName, registrationNumber, masterComapanySystemID, group_type, holding_percentage, holding_updated_date, companyCountry, CompanyAddress, CompanyEmail, localCurrencyID, reportingCurrency, vatRegisteredYN, vatRegistratonNumber, isActive, third_party_integration_keys.api_key')
+                    ->join('third_party_integration_keys', 'companymaster.companySystemID', '=', 'third_party_integration_keys.company_id')
+                    ->where('third_party_integration_keys.third_party_system_id', $posType)
+                    ->get();
+
             DB::commit();
             return $this->sendResponse($companyDetails, 'Data Retrieved successfully');
         } catch (\Exception $exception) {
