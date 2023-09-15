@@ -47,6 +47,8 @@ class PosAPIController extends AppBaseController
                 $companyDetails = Company::selectRaw('companySystemID, CompanyID, companyShortCode, CompanyName, registrationNumber, masterComapanySystemID, group_type, holding_percentage, holding_updated_date, companyCountry, CompanyAddress, CompanyEmail, localCurrencyID, reportingCurrency, vatRegisteredYN, vatRegistratonNumber, isActive, third_party_integration_keys.api_key')
                     ->join('third_party_integration_keys', 'companymaster.companySystemID', '=', 'third_party_integration_keys.company_id')
                     ->where('third_party_integration_keys.third_party_system_id', $posType)
+                    ->where('third_party_integration_keys.api_key', '!=', null)
+                    ->groupBy('third_party_integration_keys.company_id')
                     ->get();
 
             DB::commit();
