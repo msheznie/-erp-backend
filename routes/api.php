@@ -1297,9 +1297,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('getAllocatedEmployeesForExpense', 'ExpenseEmployeeAllocationAPIController@getAllocatedEmployeesForExpense');
 
             Route::resource('job_error_logs', 'JobErrorLogAPIController');
-            Route::resource('barcode_configurations', 'BarcodeConfigurationAPIController');
-            Route::get('getBarcodeConfigurationFormData', 'BarcodeConfigurationAPIController@getBarcodeConfigurationFormData');
-            Route::post('getAllBarCodeConf', 'BarcodeConfigurationAPIController@getAllBarCodeConf');
             Route::get('checkConfigurationExit', 'BarcodeConfigurationAPIController@checkConfigurationExit');
 
             Route::resource('cash_flow_reports', 'CashFlowReportAPIController');
