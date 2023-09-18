@@ -179,7 +179,6 @@ Route::group([],function (){
     Route::post('addMonthlyAdditionDetails', 'MonthlyAdditionDetailAPIController@addMonthlyAdditionDetails')->name('Add monthly addition details');
     Route::get('getMonthlyAdditionAudit', 'MonthlyAdditionsMasterAPIController@getMonthlyAdditionAudit')->name('Get monthly addition audit');
 
-    Route::resource('expense_claim_details', 'ExpenseClaimDetailsAPIController');
     Route::resource('monthly_additions_masters', 'MonthlyAdditionsMasterAPIController');
 });
 
