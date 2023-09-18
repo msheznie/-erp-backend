@@ -569,7 +569,8 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                 if(isset($matchDocumentMasterObj['matchingAmount'])) {
                     $matchDocumentMasterObj['matchedAmount'] = $matchDocumentMasterObj->matchedAmount - $paySupplierInvoiceDetail->supplierPaymentAmount;
                 }
-    
+                
+                $matchDocumentMasterObj->save();
             }
            
 
@@ -581,7 +582,6 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
 
             $paySupplierInvoiceDetailDelete->delete();
 
-            $matchDocumentMasterObj->save();
 
             
 
