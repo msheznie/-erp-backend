@@ -144,7 +144,11 @@ class DocumentMasterAPIController extends AppBaseController
 
     public function getAllApprovalDocuments()
     {
-        $document = DocumentMaster::select('*')->whereIn('departmentSystemID', [1, 3, 4, 11, 5])->whereIn('documentSystemID', [1, 2, 4, 5, 11, 50, 51, 52, 15, 19, 20, 21, 67, 68, 17])->get()->toArray();
+        $document = DocumentMaster::select('*')
+                                  ->whereIn('departmentSystemID', [1, 3, 4, 11, 5, 9, 10, 6, 29])
+                                  ->whereIn('documentSystemID', [1, 2, 3, 4, 11, 15, 19, 20, 21, 67, 68, 17, 23, 22, 41, 103, 46, 65, 102, 8, 9, 12,24, 7, 13, 10, 97, 71, 87, 62, 64, 66, 96, 56,57,58,59])
+                                  ->get()
+                                  ->toArray();
         return $this->sendResponse($document, 'record retrieved successfully');
     }
 }

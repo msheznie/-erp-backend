@@ -71,3 +71,24 @@ Route::group([], function () {
     Route::resource('quotationMasterVersions', 'QuotationMasterVersionAPIController');
 
 });
+
+//Delivery Order
+Route::group([], function () { 
+
+    Route::get('getDeliveryOrderFormData', 'DeliveryOrderAPIController@getDeliveryOrderFormData')->name("Get delivery order form data");
+    Route::post('getAllDeliveryOrder', 'DeliveryOrderAPIController@getAllDeliveryOrder')->name("Get all delivery order");
+    Route::post('getInvoiceDetailsForDO', 'DeliveryOrderAPIController@getInvoiceDetailsForDO')->name("Get invoice details status");
+    Route::post('getSalesReturnDetailsForDO', 'SalesReturnAPIController@getSalesReturnDetailsForDO')->name("Get sales return details for delivery order");
+    Route::post('sales-order/is-link-item', 'DeliveryOrderAPIController@isLinkItem')->name("Get status for linked item");
+    Route::get('deliveryOrderAudit', 'DeliveryOrderAPIController@deliveryOrderAudit')->name("Delivery order audit");
+    Route::post('deliveryOrderReopen', 'DeliveryOrderAPIController@deliveryOrderReopen')->name("Delivery order reopen");
+    Route::post('getDeliveryOrderAmend', 'DeliveryOrderAPIController@getDeliveryOrderAmend')->name("Get delivery order amend");
+    Route::get('getDeliveryOrderAmendHistory', 'DeliveryOrderRefferedbackAPIController@getDeliveryOrderAmendHistory')->name("Get delivery order amend history");
+    Route::resource('do_refferedbacks', 'DeliveryOrderRefferedbackAPIController');
+    Route::get('downloadDeliveryOrderUploadTemplate', 'DeliveryOrderAPIController@downloadQuotationItemUploadTemplate')->name("Download quotation item upload template");
+    Route::post('uploadItemsDeliveryOrder','DeliveryOrderDetailAPIController@uploadItemsDeliveryOrder')->name("Upload items delivery order");
+    Route::get('salesQuotationForDO', 'DeliveryOrderAPIController@salesQuotationForDO')->name("Sales Quotation for delivery order");
+    Route::post('storeDeliveryDetailFromSalesQuotation', 'DeliveryOrderDetailAPIController@storeDeliveryDetailFromSalesQuotation')->name("Store delivery detail from sales quotation");
+    Route::get('getSalesQuoatationDetailForDO', 'DeliveryOrderAPIController@getSalesQuoatationDetailForDO')->name("Get sales quotation detail for delivery order");
+
+});

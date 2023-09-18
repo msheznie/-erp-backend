@@ -76,6 +76,13 @@ class UserGroupAPIController extends AppBaseController
             if (empty($userGroups)) {
                 return $this->sendError('User Group not found');
             }
+
+            $employeeExists = EmployeeNavigation::where('userGroupID',$id)->count();
+            
+            if ($employeeExists > 0) {
+                return $this->sendError('User Group already assigned to employees, cannot change the company');
+            }
+            
             if($input["defaultYN"])
             {
                 $userGroupsCheck = UserGroup::where("userGroupID", $id)->where("defaultYN", true)->count();

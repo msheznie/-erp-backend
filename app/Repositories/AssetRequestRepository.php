@@ -37,7 +37,9 @@ class AssetRequestRepository extends BaseRepository
         'approved_by_emp_name',
         'approved_by_emp_id',
         'current_level_no',
-        'created_user_id'
+        'created_user_id',  
+        'departmentSystemID',
+        'type'
     ];
 
     /**

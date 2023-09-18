@@ -34,6 +34,7 @@ use App\Models\ProcumentOrder;
 use App\Models\PaySupplierInvoiceMaster;
 use App\Models\SegmentMaster;
 use App\Models\SupplierAssigned;
+use App\Models\SupplierCategorySub;
 use App\Models\SupplierCurrency;
 use App\Models\RegisteredSupplierCurrency;
 use App\Models\RegisteredBankMemoSupplier;
@@ -47,6 +48,7 @@ use App\Models\ChartOfAccount;
 use App\Models\ExternalLinkHash;
 use App\Models\RegisteredSupplier;
 use App\Models\SupplierRegistrationLink;
+use App\Models\SupplierSubCategoryAssign;
 use App\Models\YesNoSelection;
 use App\Models\SupplierContactType;
 use App\Models\BankMemoTypes;
@@ -412,7 +414,7 @@ class SupplierMasterAPIController extends AppBaseController
         $supplierMasters = DB::table('erp_documentapproved')
             ->select('suppliermaster.*', 'erp_documentapproved.documentApprovedID',
                 'rollLevelOrder', 'currencymaster.CurrencyCode',
-                'suppliercategorymaster.categoryDescription', 'approvalLevelID', 'documentSystemCode')
+                'suppliercategorymaster.categoryName', 'approvalLevelID', 'documentSystemCode')
             ->join('employeesdepartments', function ($query) use ($companyID, $empID) {
                 $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')->
                 on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')->
@@ -626,10 +628,19 @@ class SupplierMasterAPIController extends AppBaseController
     public function updateSupplierMaster(Request $request)
     {
         $input = $this->convertArrayToValue(array_except($request->all(),['company', 'final_approved_by', 'blocked_by']));
-        
 
         if($input['liabilityAccountSysemID'] == $input['UnbilledGRVAccountSystemID'] ){
             return $this->sendError('Liability account and unbilled account cannot be same. Please select different chart of accounts.');
+        }
+
+        $id = $input['supplierCodeSystem'];
+
+        $subCategories = SupplierSubCategoryAssign::where('supplierID',$id)->pluck('supSubCategoryID');
+        foreach ($subCategories as $subCategoryID){
+            $subCategory = SupplierCategorySub::where('supCategorySubID',$subCategoryID)->first();
+            if($subCategory->supMasterCategoryID != $input['supCategoryMasterID']){
+                return $this->sendError('Please remove the already added sub categories before changing to a new Business Category.');
+            }
         }
 
         $input = array_except($input, ['supplierConfirmedEmpID', 'supplierConfirmedEmpSystemID',
@@ -653,8 +664,6 @@ class SupplierMasterAPIController extends AppBaseController
 
         $isConfirm = $input['supplierConfirmedYN'];
         //unset($input['companySystemID']);
-
-        $id = $input['supplierCodeSystem'];
 
         if (array_key_exists('supplierCountryID', $input)) {
             $input['countryID'] = $input['supplierCountryID'];

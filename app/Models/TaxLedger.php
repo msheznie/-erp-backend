@@ -299,6 +299,11 @@ class TaxLedger extends Model
         return $this->belongsTo('App\Models\SupplierMaster', 'partyID','supplierCodeSystem');
     }
 
+    public function employee()
+    {
+        return $this->belongsTo('App\Models\Employee', 'partyID', 'employeeSystemID');
+    }
+
     public function document_master(){
         return $this->belongsTo('App\Models\DocumentMaster', 'documentSystemID','documentSystemID');
     }

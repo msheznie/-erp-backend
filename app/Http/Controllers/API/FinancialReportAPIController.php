@@ -3429,7 +3429,7 @@ srp_erp_ioubookingmaster.approvedYN = 1
                 $to_date = \Helper::dateFormat($request->toDate);
                 $from_date = \Helper::dateFormat($request->fromDate);
                 $cur = null;
-                $title = "Financial General Ledeger Details";
+                $title = "Financial General Ledger";
 
                 $companyCode = isset($companyCurrency->CompanyID)?$companyCurrency->CompanyID:'common';
 

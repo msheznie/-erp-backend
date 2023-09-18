@@ -16,6 +16,7 @@ use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
 use App\Models\DocumentReferedHistory;
 use App\Models\EmployeesDepartment;
+use App\Models\Employee;
 use App\Models\ERPAssetTransferDetail;
 use App\Models\ERPAssetTransferDetailsRefferedback;
 use App\Models\FixedAssetMaster;
@@ -129,6 +130,7 @@ class ERPAssetTransferAPIController extends AppBaseController
         $input = $this->convertArrayToSelectedValue($input, ['type', 'serviceLineSystemID', 'location', 'prBelongsYear', 'budgetYear']);
         $data = array_only($input, ['type', 'serviceLineSystemID', 'location']);
         $company_id = $input['companyID'];
+       
         $messages = [
             'document_date.required' => 'Document date field is required.',
             'narration.required' => 'Narration field is required.',
@@ -137,18 +139,37 @@ class ERPAssetTransferAPIController extends AppBaseController
             'location.required' => 'Location No is required.',
             'serviceLineSystemID.required' => 'Segment is required.',
         ];
-        $validator = \Validator::make($input, [
-            'document_date' => 'required|date',
-            'narration' => 'required',
-            'reference_no' => 'required',
-            'type' => 'required',
-            'location' => 'required',
-            'serviceLineSystemID' => 'required',
-        ], $messages);
+
+        if(isset($input['type']) && $input['type'] == 4) {
+            $validator = \Validator::make($input, [
+                'document_date' => 'required|date',
+                'narration' => 'required',
+                'reference_no' => 'required',
+                'type' => 'required',
+            ], $messages);
+        }else if(isset($input['type']) && $input['type'] == 3) {
+            $validator = \Validator::make($input, [
+                'document_date' => 'required|date',
+                'narration' => 'required',
+                'reference_no' => 'required',
+                'type' => 'required',
+                'serviceLineSystemID' => 'required'
+            ], $messages);
+        }else {
+            $validator = \Validator::make($input, [
+                'document_date' => 'required|date',
+                'narration' => 'required',
+                'reference_no' => 'required',
+                'type' => 'required',
+                'location' => 'required',
+                'serviceLineSystemID' => 'required',
+            ], $messages);
+        }
 
         if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
         }
+
         $company = Company::where('companySystemID', $company_id)->first();
         $lastSerial = ERPAssetTransfer::where('company_id', $company_id)
             ->orderBy('serial_no', 'desc')
@@ -166,16 +187,24 @@ class ERPAssetTransferAPIController extends AppBaseController
                 $input['document_code'] = $assetRequestCode;
             }
             $input['type'] = $input['type'];
-            $input['serviceLineSystemID'] = $input['serviceLineSystemID'];
-            $segment = SegmentMaster::where('serviceLineSystemID', $input['serviceLineSystemID'])->first();
-            if ($segment) {
-                $input['serviceLineCode'] = $segment->ServiceLineCode;
+
+            if(isset($input['serviceLineSystemID'])) {
+                $input['serviceLineSystemID'] = $input['serviceLineSystemID'];
+                $segment = SegmentMaster::where('serviceLineSystemID', $input['serviceLineSystemID'])->first();
+                if ($segment) {
+                    $input['serviceLineCode'] = $segment->ServiceLineCode;
+                }
+            }else {
+                $input['serviceLineCode'] = NULL;
+                $input['serviceLineSystemID'] = NULL;
+
             }
+
             $input['reference_no'] = $input['reference_no'];
             $input['document_date'] = new Carbon($input['document_date']);
             $input['serial_no'] = $lastSerialNumber;
             $input['narration'] = $input['narration'];
-            $input['location'] = $input['location'];
+            $input['location'] = (isset($input['location'])) ? $input['location'] : NULL;
             $input['company_id'] = $company_id;
             $input['created_user_id'] = \Helper::getEmployeeSystemID();
             $input['prBelongsYear'] = $input['prBelongsYear'];
@@ -303,6 +332,8 @@ class ERPAssetTransferAPIController extends AppBaseController
             return $this->sendError('E R P Asset Transfer not found');
         }
 
+        
+
         $messages = [
             'document_date.required' => 'Document date field is required.',
             'narration.required' => 'Narration field is required.',
@@ -310,30 +341,62 @@ class ERPAssetTransferAPIController extends AppBaseController
             'reference_no.required' => 'Reference No is required.',
             'location.required' => 'Location is required.',
         ];
-        $validator = \Validator::make($input, [
-            'document_date' => 'required|date',
-            'narration' => 'required',
-            'reference_no' => 'required',
-            'type' => 'required',
-            'serviceLineSystemID' => 'required',
-            'location' => 'required',
-        ], $messages);
+
+        if(isset($input['type']) && $input['type'] == 4) {
+            $validator = \Validator::make($input, [
+                'document_date' => 'required|date',
+                'narration' => 'required',
+                'reference_no' => 'required',
+                'type' => 'required',
+            ], $messages);
+        }else if (isset($input['type']) && $input['type'] == 3) {
+            $validator = \Validator::make($input, [
+                'document_date' => 'required|date',
+                'narration' => 'required',
+                'reference_no' => 'required',
+                'type' => 'required',
+                'serviceLineSystemID' => 'required',
+            ], $messages);
+        }else {
+            $validator = \Validator::make($input, [
+                'document_date' => 'required|date',
+                'narration' => 'required',
+                'reference_no' => 'required',
+                'type' => 'required',
+                'location' => 'required',
+                'serviceLineSystemID' => 'required',
+            ], $messages);
+        }
 
         if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
         }
 
-        $data['serviceLineSystemID'] = $input['serviceLineSystemID'];
-        $segment = SegmentMaster::where('serviceLineSystemID', $data['serviceLineSystemID'])->first();
-        if ($segment) {
-            $data['serviceLineCode'] = $segment->ServiceLineCode;
+        if(($input['type'] == 2  || $input['type'] == 1 || $input['type'] == 3) && $input['serviceLineSystemID'] == 0) {
+            return $this->sendError('Segment cannot be null. Select a segment and try again', 500);
         }
+
+        if(($input['type'] == 2 || $input['type'] == 1) && $input['location'] == 0) {
+            return $this->sendError('Location required cannot be null. Select a location and try again', 500);
+        }
+
+        if(isset( $input['serviceLineSystemID'])) {
+            $data['serviceLineSystemID'] =  $input['serviceLineSystemID'];
+            $segment = SegmentMaster::where('serviceLineSystemID', $data['serviceLineSystemID'])->first();
+            if ($segment) {
+                $data['serviceLineCode'] = $segment->ServiceLineCode;
+            }
+        }else {
+            $data['serviceLineSystemID'] = NULL;
+            $data['serviceLineCode'] = NULL;
+        }
+
 
         $data['prBelongsYear'] = $input['prBelongsYear'];
         $data['budgetYear'] = $input['budgetYear'];
 
         $data['type'] = $input['type'];
-        $data['location'] = $input['location'];
+        $data['location'] = isset($input['location']) ? $input['location'] : NULL;
         $data['reference_no'] = $input['reference_no'];
         $data['document_date'] = new Carbon($input['document_date']);
         $data['narration'] = $input['narration'];
@@ -888,5 +951,26 @@ class ERPAssetTransferAPIController extends AppBaseController
         $data['assetCode'] = isset($data['assetRecords'][0]) ? $data['assetRecords'][0]->assetMaster->asset_code_concat : '-';
 
         return $data;
+    }
+
+    public function getEmployeesToSelectDrpdwn(Request $request) {
+        $input = $request->all();
+        $companyID = $input['companyID'];
+
+        $toEmployeeList = Employee::where('empCompanySystemID',$companyID)->where('discharegedYN','!=',-1)->whereHas('hr_emp', function($q){
+            $q->where('isDischarged', 0)->where('empConfirmedYN', 1);
+        })->get();
+
+        $fromEmployeeList = Employee::where('empCompanySystemID',$companyID)->whereHas('hr_emp', function($q){
+            $q->where('empConfirmedYN', 1);
+        })->get();
+
+        $data = [
+            'to_employees' => $toEmployeeList,
+            'from_employees' => $fromEmployeeList
+        ];
+
+        return $this->sendResponse($data, 'Employee data reterived successfully');
+
     }
 }

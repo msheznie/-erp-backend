@@ -22,6 +22,7 @@
             background-color: #f6f6f6;
         }
 
+    
         @media only screen and (max-width: 640px) {
             body {
                 padding: 0 !important;
@@ -80,9 +81,9 @@
                        bgcolor="#fff">
                     <tr style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;">
                         <td class="alert alert-warning"
-                            style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; border: 1px solid #e9e9e9; box-sizing: border-box; font-size: 16px; vertical-align: top; color: #ffffff; font-weight: 500; text-align: center; border-radius: 3px 3px 0 0; background-color: #C23C32; margin: 0; padding: 20px;"
+                            style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; border: 1px solid #e9e9e9; box-sizing: border-box; font-size: 16px; vertical-align: top; color: #ffffff; font-weight: 500; text-align: center; border-radius: 3px 3px 0 0; background-color:{{ $color }}; margin: 0; padding: 20px;"
                             align="center" bgcolor="#fff" valign="top">
-                            <strong> GEARS </strong>
+                            <strong> {{ $text }} </strong>
                         </td>
                     </tr>
                     <tr style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;">
@@ -119,31 +120,19 @@
                                         valign="top">
                                     </td>
                                 </tr>
-                                <tr style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; box-sizing: border-box; font-size: 14px; margin: 0; text-align: justify; text-justify: inter-word;">
-                                    <td class="content-block"
-                                        style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; box-sizing: border-box; font-size: 14px; vertical-align: top; margin: 0; padding: 0 0 20px;"
-                                        valign="top;">
-                                        <span>
-                                        </span>
-                                    </td>
-                                </tr>
-                                <tr style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; box-sizing: border-box; font-size: 12px; margin: 0;">
-                                    <td class="content-block"
-                                        style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; box-sizing: border-box; font-size: 12px; vertical-align: top; margin: 0; padding: 0 0 20px;">
-                                    </td>
-                                </tr>
                             </table>
                         </td>
                     </tr>
                 </table>
                 <div class="footer"
-                     style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; box-sizing: border-box; font-size: 14px; width: 100%; clear: both; color: #999; margin: 0; padding: 20px;">
+                     style="height:50px;background-color: white;font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; box-sizing: border-box; font-size: 14px; width: 100%; clear: both; color: #999; margin: 0; padding: 10px;">
                     <table width="100%"
                            style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;">
                         <tr style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; box-sizing: border-box; font-size: 14px; margin: 0;">
                             <td class="aligncenter content-block"
                                 style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif; box-sizing: border-box; font-size: 12px; vertical-align: top; color: #999; text-align: center; margin: 0; padding: 0 0 20px;"
                                 align="center" valign="top">
+                                <span style="color:black">Copyright © {{ date('Y') }} OSOS Tech. All rights reserved. Powered by <span><a href="https://www.osos.om/" target=”_blank” style="color: #F55431 !important;text-decoration: none;">OSOS</a>
                             </td>
                         </tr>
                     </table>
