@@ -1257,7 +1257,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('addEvaluationCriteriaConfig', 'EvaluationCriteriaScoreConfigAPIController@addEvaluationCriteriaConfig');
             Route::post('updateCriteriaScore', 'EvaluationCriteriaScoreConfigAPIController@updateCriteriaScore');
           
-            Route::resource('expense_employee_allocations', 'ExpenseEmployeeAllocationAPIController');
             Route::post('getAllocatedEmployeesForExpense', 'ExpenseEmployeeAllocationAPIController@getAllocatedEmployeesForExpense');
 
             Route::resource('job_error_logs', 'JobErrorLogAPIController');
