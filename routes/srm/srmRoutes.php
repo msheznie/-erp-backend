@@ -268,4 +268,5 @@ Route::group(['prefix' => 'srm'], function (){
 Route::post('get_all_document_attachment_type', 'DocumentAttachmentTypeController@getAllDocumentAttachmentTypes')->name("Get all document attachment types");
 Route::resource('document_attachment_type', 'DocumentAttachmentTypeController');
 Route::post('remove_document_attachment_type', 'DocumentAttachmentTypeController@removeDocumentAttachmentType')->name("Remove document attachment type");
+Route::post('getTenderNegotiationList', 'TenderMasterAPIController@getTenderNegotiationList')->name("Get tender negotiation list");
 

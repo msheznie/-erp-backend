@@ -2609,10 +2609,18 @@ WHERE
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
             $query = $query->where(function ($query) use ($search) {
-                $query->where('description', 'LIKE', "%{$search}%");
+                $query->where('tender_code', 'LIKE', "%{$search}%");
+                $query->orWhere('description', 'LIKE', "%{$search}%");
                 $query->orWhere('description_sec_lang', 'LIKE', "%{$search}%");
                 $query->orWhere('title', 'LIKE', "%{$search}%");
                 $query->orWhere('title_sec_lang', 'LIKE', "%{$search}%");
+                $query->orWhereHas('envelop_type', function ($q) use ($search) {
+                    $q->where('name', 'LIKE', "%{$search}%");
+                });
+                $query->orWhereHas('currency', function ($query1) use ($search) {
+                    $query1->where('CurrencyName', 'LIKE', "%{$search}%");
+                    $query1->orWhere('CurrencyCode', 'LIKE', "%{$search}%");
+                });
             });
         }
 
@@ -4239,5 +4247,95 @@ WHERE
     public function getPurchaseRequestDetails(Request $request)
     {
         return $this->tenderMasterRepository->getPurchaseRequestDetails($request);
+    }
+
+    public function getTenderNegotiationList(Request $request)
+    {
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $request['companyId'];
+
+        $filters = $this->getFilterData($input);  
+
+        $query = TenderMaster::with(['currency', 'srm_bid_submission_master', 'tender_type', 'envelop_type', 'srmTenderMasterSupplier'])
+                        ->where('is_negotiation_started',1)
+                        ->where('negotiation_published',1)
+                        ->withCount(['criteriaDetails', 
+                            'criteriaDetails AS go_no_go_count' => function ($query) {
+                            $query->where('critera_type_id', 1);
+                            },
+                            'criteriaDetails AS technical_count' => function ($query) {
+                                $query->where('critera_type_id', 2);
+                            }
+                        ])
+                        ->whereHas('srmTenderMasterSupplier')->where('published_yn', 1);
+
+
+        if ($filters['currencyId'] && count($filters['currencyId']) > 0) {
+            $query->whereIn('currency_id', $filters['currencyId']);
+        }
+
+        if ($filters['selection']) {
+            $query->where('tender_type_id', $filters['selection']);
+        }
+
+        if ($filters['envelope']) {
+            $query->where('envelop_type_id', $filters['envelope']);
+        }
+
+        if ($filters['gonogo']) {
+            $gonogo =  ($filters['gonogo'] == 1 ) ? 0 :1;
+            $query->where('go_no_go_status', $gonogo);
+        }
+
+        if ($filters['technical']) {
+            $technical =  ($filters['technical'] == 1 ) ? 0 :1;
+            $query->where('technical_eval_status', $technical);
+        }
+
+        if ($filters['stage']) { 
+            $query->where('stage', $filters['stage']);
+        }
+
+        // return $this->sendResponse($query, 'Tender Masters retrieved successfully');
+
+        $search = $request->input('search.value');
+        if ($search) {
+            $search = str_replace("\\", "\\\\", $search);
+            $query = $query->where(function ($query) use ($search) {
+                $query->where('tender_code', 'LIKE', "%{$search}%")
+                ->orWhere('negotiation_code', 'LIKE', "%{$search}%")
+                ->orWhere('description', 'LIKE', "%{$search}%")
+                ->orWhere('description_sec_lang', 'LIKE', "%{$search}%")
+                ->orWhere('title', 'LIKE', "%{$search}%")
+                ->orWhere('title_sec_lang', 'LIKE', "%{$search}%")
+                ->orWhereHas('envelop_type', function ($q) use ($search) {
+                    $q->where('name', 'LIKE', "%{$search}%");
+                })
+                ->orWhereHas('currency', function ($query1) use ($search) {
+                    $query1->where('CurrencyName', 'LIKE', "%{$search}%");
+                    $query1->orWhere('CurrencyCode', 'LIKE', "%{$search}%");
+                });
+            });
+        }
+
+
+        return \DataTables::eloquent($query)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('id', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
     }
 } 
