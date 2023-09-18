@@ -92,3 +92,18 @@ Route::group([], function () {
     Route::get('getSalesQuoatationDetailForDO', 'DeliveryOrderAPIController@getSalesQuoatationDetailForDO')->name("Get sales quotation detail for delivery order");
 
 });
+
+//Sales Return
+Route::group([], function () { 
+
+    Route::post('getAllSalesReturn', 'SalesReturnAPIController@getAllSalesReturn')->name("Get all sales return");
+    Route::resource('sales_returns', 'SalesReturnAPIController');
+    Route::resource('reasonCodeMasters', 'ReasonCodeMasterAPIController');
+    Route::get('salesReturnAudit', 'SalesReturnAPIController@salesReturnAudit')->name("Sales return audit");
+    Route::post('salesReturnReopen', 'SalesReturnAPIController@salesReturnReopen')->name("Sales return reopen");
+    Route::post('getSalesReturnAmend', 'SalesReturnAPIController@getSalesReturnAmend')->name("Get sales return amend");
+    Route::get('deliveryNoteForForSR', 'SalesReturnAPIController@deliveryNoteForForSR')->name("Delivery note for sales return");
+    Route::get('getSalesInvoiceDeliveryOrderDetail', 'SalesReturnAPIController@getSalesInvoiceDeliveryOrderDetail')->name("Get sales invoice delivery order detail");
+    Route::post('storeReturnDetailFromSIDO', 'SalesReturnAPIController@storeReturnDetailFromSIDO')->name("Store return detail from sales invoice delivery order");
+
+});
