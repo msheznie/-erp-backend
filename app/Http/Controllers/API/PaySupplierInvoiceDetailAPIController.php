@@ -561,10 +561,17 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             if(isset($matchDocumentMasterObj))
             {
                 $user_type = $matchDocumentMasterObj->user_type;
+
+                if(isset($matchDocumentMasterObj['matchedAmount'])) {
+                    $matchDocumentMasterObj['matchedAmount'] = $matchDocumentMasterObj->matchedAmount - $paySupplierInvoiceDetail->supplierPaymentAmount;
+                }
+
+                if(isset($matchDocumentMasterObj['matchingAmount'])) {
+                    $matchDocumentMasterObj['matchedAmount'] = $matchDocumentMasterObj->matchedAmount - $paySupplierInvoiceDetail->supplierPaymentAmount;
+                }
+    
             }
            
-            $matchDocumentMasterObj['matchedAmount'] = $matchDocumentMasterObj->matchedAmount - $paySupplierInvoiceDetail->supplierPaymentAmount;
-            $matchDocumentMasterObj['matchingAmount'] = $matchDocumentMasterObj->matchingAmount - $paySupplierInvoiceDetail->supplierPaymentAmount;
 
             if ($paySupplierInvoiceDetail->documentSystemID != 0) {
                 if ($paySupplierInvoiceDetail->matching_master && $paySupplierInvoiceDetail->matching_master->matchingConfirmedYN) {
