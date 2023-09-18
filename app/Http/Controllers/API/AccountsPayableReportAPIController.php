@@ -38,6 +38,7 @@ use App\Models\FinanceItemCategoryMaster;
 use App\Models\SupplierAssigned;
 use App\Models\SupplierMaster;
 use App\Models\Company;
+use App\Models\SystemGlCodeScenarioDetail;
 use App\Models\UnbilledGrvGroupBy;
 use App\Models\Year;
 use Carbon\Carbon;
@@ -335,7 +336,9 @@ class AccountsPayableReportAPIController extends AppBaseController
                     $outputArr = array();
 
                     $balanceAmount = collect($output)->pluck('balanceAmount')->toArray();
-                    $balanceAmount = array_sum($balanceAmount);
+
+                    $exchangeGL = collect($output)->pluck('exchangeGL')->toArray();
+                    $balanceAmount = array_sum($balanceAmount)- array_sum($exchangeGL);
 
                     $decimalPlace = collect($output)->pluck('balanceDecimalPlaces')->toArray();
                     $decimalPlace = array_unique($decimalPlace);
@@ -1816,7 +1819,35 @@ class AccountsPayableReportAPIController extends AppBaseController
                 LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUERY.documentRptCurrencyID
                  LEFT JOIN companymaster ON companymaster.companySystemID = MAINQUERY.companySystemID
                  GROUP BY MAINQUERY.supplierCodeSystem, MAINQUERY.chartOfAccountSystemID ) as finalAgingDetail ORDER BY documentDate,suppliername';
+
         return \DB::select($query);
+    }
+    public function exchangeGainLoss($results, $currency) {
+
+        foreach ($results as $index => $result){
+            $exchangeGainLossAccount = SystemGlCodeScenarioDetail::getGlByScenario($result->companySystemID, $result->documentSystemID , 14);
+            $chartOfAccount = GeneralLedger::where('documentSystemCode', $result->documentSystemCode)->where('chartOfAccountSystemID', $exchangeGainLossAccount)->where('companySystemID', $result->companySystemID)->where('documentType', NULL)->where('matchDocumentMasterAutoID', "!=", NULL)->first();
+            if(!empty($chartOfAccount)) {
+                if ($currency == 1) {
+                    $result->exchangeGL = $chartOfAccount->documentTransAmount;
+                } else if ($currency == 2) {
+                    $result->exchangeGL = $chartOfAccount->documentLocalAmount;
+                } else {
+                    $result->exchangeGL = $chartOfAccount->documentRptAmount;
+                }
+            }
+            else {
+                $result->exchangeGL = 0;
+            }
+
+            $dif = $result->balanceAmount - round($result->exchangeGL,2);
+
+            if ($dif == 0) {
+                unset($results[$index]);
+            }
+        }
+
+        return $results;
     }
 
     function getSupplierStatementQRY($request)
@@ -1871,7 +1902,8 @@ class AccountsPayableReportAPIController extends AppBaseController
             $decimalPlaceQry = "finalAgingDetail.documentRptDecimalPlaces AS balanceDecimalPlaces";
             $whereQry = "round( finalAgingDetail.balanceAmountRpt, finalAgingDetail.documentRptDecimalPlaces )";
         }
-        return \DB::select('SELECT
+
+        $results = \DB::select('SELECT
                                 finalAgingDetail.companySystemID,
                                 finalAgingDetail.companyID,
                                 finalAgingDetail.CompanyName,
@@ -1915,13 +1947,13 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 MAINQUERY.invoiceDate,
                                 transCurrencyDet.CurrencyCode as transCurrencyCode,
                                 transCurrencyDet.DecimalPlaces as documentTransDecimalPlaces,
-                                MAINQUERY.docTransAmount AS documentAmountTrans,
+                                MAINQUERY.docTransAmount * -1 AS documentAmountTrans,
                                 localCurrencyDet.CurrencyCode as localCurrencyCode,
                                 localCurrencyDet.DecimalPlaces as documentLocalDecimalPlaces,
-                                MAINQUERY.docLocalAmount AS documentAmountLocal,
+                                MAINQUERY.docLocalAmount * -1 AS documentAmountLocal,
                                 rptCurrencyDet.CurrencyCode as rptCurrencyCode,
                                 rptCurrencyDet.DecimalPlaces as documentRptDecimalPlaces,
-                                MAINQUERY.docRptAmount AS documentAmountRpt,
+                                MAINQUERY.docRptAmount * -1 AS documentAmountRpt,
 
                                 (MAINQUERY.debitNoteMatchedAmountTrans + MAINQUERY.PaidPaymentVoucherTransAmount - MAINQUERY.InvoiceMatchedINMatchingAmountTrans - MAINQUERY.InvoiceMatchedForpaymentAmountTrans) * -1 AS PaidAmountTrans,
 
@@ -1929,11 +1961,11 @@ class AccountsPayableReportAPIController extends AppBaseController
 
                                 (MAINQUERY.debitNoteMatchedAmountRpt + MAINQUERY.PaidPaymentVoucherRptAmount - MAINQUERY.InvoiceMatchedINMatchingAmountRpt - MAINQUERY.InvoiceMatchedForpaymentAmountRpt) * -1 AS PaidAmountRpt,
 
-                                MAINQUERY.docTransAmount+MAINQUERY.debitNoteMatchedAmountTrans + MAINQUERY.PaidPaymentVoucherTransAmount - MAINQUERY.InvoiceMatchedINMatchingAmountTrans - MAINQUERY.InvoiceMatchedForpaymentAmountTrans  as balanceAmountTrans,
+                                (MAINQUERY.docTransAmount+MAINQUERY.debitNoteMatchedAmountTrans + MAINQUERY.PaidPaymentVoucherTransAmount - MAINQUERY.InvoiceMatchedINMatchingAmountTrans - MAINQUERY.InvoiceMatchedForpaymentAmountTrans) * -1  as balanceAmountTrans,
 
-                                MAINQUERY.docLocalAmount+MAINQUERY.debitNoteMatchedAmountLocal + MAINQUERY.PaidPaymentVoucherLocalAmount - MAINQUERY.InvoiceMatchedINMatchingAmountLocal - MAINQUERY.InvoiceMatchedForpaymentAmountLocal  as balanceAmountLocal,
+                                (MAINQUERY.docLocalAmount+MAINQUERY.debitNoteMatchedAmountLocal + MAINQUERY.PaidPaymentVoucherLocalAmount - MAINQUERY.InvoiceMatchedINMatchingAmountLocal - MAINQUERY.InvoiceMatchedForpaymentAmountLocal) * -1  as balanceAmountLocal,
 
-                                MAINQUERY.docRptAmount + MAINQUERY.debitNoteMatchedAmountRpt + MAINQUERY.PaidPaymentVoucherRptAmount - MAINQUERY.InvoiceMatchedINMatchingAmountRpt - MAINQUERY.InvoiceMatchedForpaymentAmountRpt AS balanceAmountRpt,
+                                (MAINQUERY.docRptAmount + MAINQUERY.debitNoteMatchedAmountRpt + MAINQUERY.PaidPaymentVoucherRptAmount - MAINQUERY.InvoiceMatchedINMatchingAmountRpt - MAINQUERY.InvoiceMatchedForpaymentAmountRpt) * -1 AS balanceAmountRpt,                                              
                                 MAINQUERY.glCode,
                                 chartofaccounts.AccountDescription
                             FROM
@@ -2114,6 +2146,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                             LEFT JOIN currencymaster as transCurrencyDet ON transCurrencyDet.currencyID=MAINQUERY.documentTransCurrencyID
                             LEFT JOIN currencymaster as localCurrencyDet ON localCurrencyDet.currencyID=MAINQUERY.documentLocalCurrencyID
                             LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUERY.documentRptCurrencyID) as finalAgingDetail WHERE ' . $whereQry . ' <> 0 ORDER BY ' . $filterOrderBy . ' ASC;');
+
+        return $this->exchangeGainLoss($results, $currency);
     }
 
     function getPaymentSuppliersByYear($request)
@@ -2985,13 +3019,13 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 MAINQUERY.invoiceDate,
                                 transCurrencyDet.CurrencyCode as transCurrencyCode,
                                 transCurrencyDet.DecimalPlaces as documentTransDecimalPlaces,
-                                MAINQUERY.docTransAmount AS documentAmountTrans,
+                                MAINQUERY.docTransAmount * -1 AS documentAmountTrans,
                                 localCurrencyDet.CurrencyCode as localCurrencyCode,
                                 localCurrencyDet.DecimalPlaces as documentLocalDecimalPlaces,
-                                MAINQUERY.docLocalAmount AS documentAmountLocal,
+                                MAINQUERY.docLocalAmount * -1 AS documentAmountLocal,
                                 rptCurrencyDet.CurrencyCode as rptCurrencyCode,
                                 rptCurrencyDet.DecimalPlaces as documentRptDecimalPlaces,
-                                MAINQUERY.docRptAmount AS documentAmountRpt,
+                                MAINQUERY.docRptAmount * -1 AS documentAmountRpt,
                             
                                 (MAINQUERY.debitNoteMatchedAmountTrans + MAINQUERY.PaidPaymentVoucherTransAmount - MAINQUERY.InvoiceMatchedINMatchingAmountTrans - MAINQUERY.InvoiceMatchedForpaymentAmountTrans) * -1 AS PaidAmountTrans,
                             
@@ -2999,11 +3033,11 @@ class AccountsPayableReportAPIController extends AppBaseController
                             
                                 (MAINQUERY.debitNoteMatchedAmountRpt + MAINQUERY.PaidPaymentVoucherRptAmount - MAINQUERY.InvoiceMatchedINMatchingAmountRpt - MAINQUERY.InvoiceMatchedForpaymentAmountRpt) * -1 AS PaidAmountRpt,
                             
-                                MAINQUERY.docTransAmount+MAINQUERY.debitNoteMatchedAmountTrans + MAINQUERY.PaidPaymentVoucherTransAmount - MAINQUERY.InvoiceMatchedINMatchingAmountTrans - MAINQUERY.InvoiceMatchedForpaymentAmountTrans  as balanceAmountTrans,
+                                (MAINQUERY.docTransAmount+MAINQUERY.debitNoteMatchedAmountTrans + MAINQUERY.PaidPaymentVoucherTransAmount - MAINQUERY.InvoiceMatchedINMatchingAmountTrans - MAINQUERY.InvoiceMatchedForpaymentAmountTrans) * -1  as balanceAmountTrans,
                             
-                                MAINQUERY.docLocalAmount+MAINQUERY.debitNoteMatchedAmountLocal + MAINQUERY.PaidPaymentVoucherLocalAmount - MAINQUERY.InvoiceMatchedINMatchingAmountLocal - MAINQUERY.InvoiceMatchedForpaymentAmountLocal  as balanceAmountLocal,
+                                (MAINQUERY.docLocalAmount+MAINQUERY.debitNoteMatchedAmountLocal + MAINQUERY.PaidPaymentVoucherLocalAmount - MAINQUERY.InvoiceMatchedINMatchingAmountLocal - MAINQUERY.InvoiceMatchedForpaymentAmountLocal) * -1  as balanceAmountLocal,
                             
-                                MAINQUERY.docRptAmount + MAINQUERY.debitNoteMatchedAmountRpt + MAINQUERY.PaidPaymentVoucherRptAmount - MAINQUERY.InvoiceMatchedINMatchingAmountRpt - MAINQUERY.InvoiceMatchedForpaymentAmountRpt AS balanceAmountRpt,
+                                (MAINQUERY.docRptAmount + MAINQUERY.debitNoteMatchedAmountRpt + MAINQUERY.PaidPaymentVoucherRptAmount - MAINQUERY.InvoiceMatchedINMatchingAmountRpt - MAINQUERY.InvoiceMatchedForpaymentAmountRpt) * -1 AS balanceAmountRpt,
                                 MAINQUERY.glCode,
                                 chartofaccounts.AccountDescription
                             FROM
@@ -3184,6 +3218,10 @@ class AccountsPayableReportAPIController extends AppBaseController
                             LEFT JOIN currencymaster as transCurrencyDet ON transCurrencyDet.currencyID=MAINQUERY.documentTransCurrencyID
                             LEFT JOIN currencymaster as localCurrencyDet ON localCurrencyDet.currencyID=MAINQUERY.documentLocalCurrencyID
                             LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUERY.documentRptCurrencyID) as finalAgingDetail WHERE ' . $whereQry . ' <> 0 ORDER BY documentDate ASC) as grandFinal;');
+
+        $output = $this->exchangeGainLoss($output, $currency);
+
+
         return ['data' => $output, 'aging' => $aging];
     }
 
@@ -3282,6 +3320,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 finalAgingDetail.documentSystemID,
                                 finalAgingDetail.documentID,
                                 finalAgingDetail.documentCode,
+                                finalAgingDetail.documentSystemCode,
                                 finalAgingDetail.documentDate,
                                 finalAgingDetail.documentNarration,
                                 finalAgingDetail.supplierCodeSystem,
@@ -3311,6 +3350,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 MAINQUERY.documentSystemID,
                                 MAINQUERY.documentID,
                                 MAINQUERY.documentCode,
+                                MAINQUERY.documentSystemCode,
                                 MAINQUERY.documentDate,
                                 MAINQUERY.documentNarration,
                                 MAINQUERY.supplierCodeSystem,
@@ -3321,13 +3361,13 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 MAINQUERY.invoiceDate,
                                 transCurrencyDet.CurrencyCode as transCurrencyCode,
                                 transCurrencyDet.DecimalPlaces as documentTransDecimalPlaces,
-                                MAINQUERY.docTransAmount AS documentAmountTrans,
+                                MAINQUERY.docTransAmount  * -1 AS documentAmountTrans,
                                 localCurrencyDet.CurrencyCode as localCurrencyCode,
                                 localCurrencyDet.DecimalPlaces as documentLocalDecimalPlaces,
-                                MAINQUERY.docLocalAmount AS documentAmountLocal,
+                                MAINQUERY.docLocalAmount  * -1 AS documentAmountLocal,
                                 rptCurrencyDet.CurrencyCode as rptCurrencyCode,
                                 rptCurrencyDet.DecimalPlaces as documentRptDecimalPlaces,
-                                MAINQUERY.docRptAmount AS documentAmountRpt,
+                                MAINQUERY.docRptAmount  * -1 AS documentAmountRpt,
                             
                                 (MAINQUERY.debitNoteMatchedAmountTrans + MAINQUERY.PaidPaymentVoucherTransAmount - MAINQUERY.InvoiceMatchedINMatchingAmountTrans - MAINQUERY.InvoiceMatchedForpaymentAmountTrans) * -1 AS PaidAmountTrans,
                             
@@ -3335,11 +3375,11 @@ class AccountsPayableReportAPIController extends AppBaseController
                             
                                 (MAINQUERY.debitNoteMatchedAmountRpt + MAINQUERY.PaidPaymentVoucherRptAmount - MAINQUERY.InvoiceMatchedINMatchingAmountRpt - MAINQUERY.InvoiceMatchedForpaymentAmountRpt) * -1 AS PaidAmountRpt,
                             
-                                MAINQUERY.docTransAmount+MAINQUERY.debitNoteMatchedAmountTrans + MAINQUERY.PaidPaymentVoucherTransAmount - MAINQUERY.InvoiceMatchedINMatchingAmountTrans - MAINQUERY.InvoiceMatchedForpaymentAmountTrans  as balanceAmountTrans,
+                                (MAINQUERY.docTransAmount+MAINQUERY.debitNoteMatchedAmountTrans + MAINQUERY.PaidPaymentVoucherTransAmount - MAINQUERY.InvoiceMatchedINMatchingAmountTrans - MAINQUERY.InvoiceMatchedForpaymentAmountTrans) * -1  as balanceAmountTrans,
                             
-                                MAINQUERY.docLocalAmount+MAINQUERY.debitNoteMatchedAmountLocal + MAINQUERY.PaidPaymentVoucherLocalAmount - MAINQUERY.InvoiceMatchedINMatchingAmountLocal - MAINQUERY.InvoiceMatchedForpaymentAmountLocal  as balanceAmountLocal,
+                                (MAINQUERY.docLocalAmount+MAINQUERY.debitNoteMatchedAmountLocal + MAINQUERY.PaidPaymentVoucherLocalAmount - MAINQUERY.InvoiceMatchedINMatchingAmountLocal - MAINQUERY.InvoiceMatchedForpaymentAmountLocal) * -1  as balanceAmountLocal,
                             
-                                MAINQUERY.docRptAmount + MAINQUERY.debitNoteMatchedAmountRpt + MAINQUERY.PaidPaymentVoucherRptAmount - MAINQUERY.InvoiceMatchedINMatchingAmountRpt - MAINQUERY.InvoiceMatchedForpaymentAmountRpt AS balanceAmountRpt,
+                                (MAINQUERY.docRptAmount + MAINQUERY.debitNoteMatchedAmountRpt + MAINQUERY.PaidPaymentVoucherRptAmount - MAINQUERY.InvoiceMatchedINMatchingAmountRpt - MAINQUERY.InvoiceMatchedForpaymentAmountRpt) * -1 AS balanceAmountRpt,
                                 MAINQUERY.glCode,
                                 chartofaccounts.AccountDescription,
                                 chartofaccounts.chartOfAccountSystemID
@@ -3521,6 +3561,9 @@ class AccountsPayableReportAPIController extends AppBaseController
                             LEFT JOIN currencymaster as transCurrencyDet ON transCurrencyDet.currencyID=MAINQUERY.documentTransCurrencyID
                             LEFT JOIN currencymaster as localCurrencyDet ON localCurrencyDet.currencyID=MAINQUERY.documentLocalCurrencyID
                             LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUERY.documentRptCurrencyID) as finalAgingDetail WHERE ' . $whereQry . ' <> 0 ORDER BY documentDate ASC) as grandFinal GROUP BY supplierCodeSystem,companyID, chartOfAccountSystemID ORDER BY suppliername;');
+
+        $output = $this->exchangeGainLoss($output, $currency);
+
         return ['data' => $output, 'aging' => $aging];
     }
 
@@ -3652,13 +3695,13 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 MAINQUERY.invoiceDate,
                                 transCurrencyDet.CurrencyCode as transCurrencyCode,
                                 transCurrencyDet.DecimalPlaces as documentTransDecimalPlaces,
-                                MAINQUERY.docTransAmount AS documentAmountTrans,
+                                MAINQUERY.docTransAmount * -1 AS documentAmountTrans,
                                 localCurrencyDet.CurrencyCode as localCurrencyCode,
                                 localCurrencyDet.DecimalPlaces as documentLocalDecimalPlaces,
-                                MAINQUERY.docLocalAmount AS documentAmountLocal,
+                                MAINQUERY.docLocalAmount * -1 AS documentAmountLocal,
                                 rptCurrencyDet.CurrencyCode as rptCurrencyCode,
                                 rptCurrencyDet.DecimalPlaces as documentRptDecimalPlaces,
-                                MAINQUERY.docRptAmount AS documentAmountRpt,
+                                MAINQUERY.docRptAmount * -1 AS documentAmountRpt,
                             
                                 (MAINQUERY.debitNoteMatchedAmountTrans + MAINQUERY.PaidPaymentVoucherTransAmount - MAINQUERY.InvoiceMatchedINMatchingAmountTrans - MAINQUERY.InvoiceMatchedForpaymentAmountTrans) * -1 AS PaidAmountTrans,
                             
@@ -3666,11 +3709,11 @@ class AccountsPayableReportAPIController extends AppBaseController
                             
                                 (MAINQUERY.debitNoteMatchedAmountRpt + MAINQUERY.PaidPaymentVoucherRptAmount - MAINQUERY.InvoiceMatchedINMatchingAmountRpt - MAINQUERY.InvoiceMatchedForpaymentAmountRpt) * -1 AS PaidAmountRpt,
                             
-                                MAINQUERY.docTransAmount+MAINQUERY.debitNoteMatchedAmountTrans + MAINQUERY.PaidPaymentVoucherTransAmount - MAINQUERY.InvoiceMatchedINMatchingAmountTrans - MAINQUERY.InvoiceMatchedForpaymentAmountTrans  as balanceAmountTrans,
+                                (MAINQUERY.docTransAmount+MAINQUERY.debitNoteMatchedAmountTrans + MAINQUERY.PaidPaymentVoucherTransAmount - MAINQUERY.InvoiceMatchedINMatchingAmountTrans - MAINQUERY.InvoiceMatchedForpaymentAmountTrans) * -1  as balanceAmountTrans,
                             
-                                MAINQUERY.docLocalAmount+MAINQUERY.debitNoteMatchedAmountLocal + MAINQUERY.PaidPaymentVoucherLocalAmount - MAINQUERY.InvoiceMatchedINMatchingAmountLocal - MAINQUERY.InvoiceMatchedForpaymentAmountLocal  as balanceAmountLocal,
+                                (MAINQUERY.docLocalAmount+MAINQUERY.debitNoteMatchedAmountLocal + MAINQUERY.PaidPaymentVoucherLocalAmount - MAINQUERY.InvoiceMatchedINMatchingAmountLocal - MAINQUERY.InvoiceMatchedForpaymentAmountLocal) * -1  as balanceAmountLocal,
                             
-                                MAINQUERY.docRptAmount + MAINQUERY.debitNoteMatchedAmountRpt + MAINQUERY.PaidPaymentVoucherRptAmount - MAINQUERY.InvoiceMatchedINMatchingAmountRpt - MAINQUERY.InvoiceMatchedForpaymentAmountRpt AS balanceAmountRpt,
+                                (MAINQUERY.docRptAmount + MAINQUERY.debitNoteMatchedAmountRpt + MAINQUERY.PaidPaymentVoucherRptAmount - MAINQUERY.InvoiceMatchedINMatchingAmountRpt - MAINQUERY.InvoiceMatchedForpaymentAmountRpt) * -1 AS balanceAmountRpt,
                                 MAINQUERY.glCode,
                                 chartofaccounts.AccountDescription,
                                 chartofaccounts.chartOfAccountSystemID
@@ -3851,7 +3894,10 @@ class AccountsPayableReportAPIController extends AppBaseController
                             LEFT JOIN companymaster ON MAINQUERY.companySystemID = companymaster.companySystemID
                             LEFT JOIN currencymaster as transCurrencyDet ON transCurrencyDet.currencyID=MAINQUERY.documentTransCurrencyID
                             LEFT JOIN currencymaster as localCurrencyDet ON localCurrencyDet.currencyID=MAINQUERY.documentLocalCurrencyID
-                            LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUERY.documentRptCurrencyID) as finalAgingDetail WHERE ' . $whereQry . ' < 0 ORDER BY documentDate ASC) as grandFinal;');
+                            LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUERY.documentRptCurrencyID) as finalAgingDetail WHERE ' . $whereQry . ' > 0 ORDER BY documentDate ASC) as grandFinal;');
+
+        $output = $this->exchangeGainLoss($output, $currency);
+
         return ['data' => $output, 'aging' => $aging];
     }
 
@@ -3946,6 +3992,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 finalAgingDetail.documentSystemID,
                                 finalAgingDetail.documentID,
                                 finalAgingDetail.documentCode,
+                                finalAgingDetail.documentSystemCode,
                                 finalAgingDetail.documentDate,
                                 finalAgingDetail.documentNarration,
                                 finalAgingDetail.supplierCodeSystem,
@@ -3974,6 +4021,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 MAINQUERY.documentSystemID,
                                 MAINQUERY.documentID,
                                 MAINQUERY.documentCode,
+                                MAINQUERY.documentSystemCode,
                                 MAINQUERY.documentDate,
                                 MAINQUERY.documentNarration,
                                 MAINQUERY.supplierCodeSystem,
@@ -3984,13 +4032,13 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 MAINQUERY.invoiceDate,
                                 transCurrencyDet.CurrencyCode as transCurrencyCode,
                                 transCurrencyDet.DecimalPlaces as documentTransDecimalPlaces,
-                                MAINQUERY.docTransAmount AS documentAmountTrans,
+                                MAINQUERY.docTransAmount * -1 AS documentAmountTrans,
                                 localCurrencyDet.CurrencyCode as localCurrencyCode,
                                 localCurrencyDet.DecimalPlaces as documentLocalDecimalPlaces,
-                                MAINQUERY.docLocalAmount AS documentAmountLocal,
+                                MAINQUERY.docLocalAmount * -1 AS documentAmountLocal,
                                 rptCurrencyDet.CurrencyCode as rptCurrencyCode,
                                 rptCurrencyDet.DecimalPlaces as documentRptDecimalPlaces,
-                                MAINQUERY.docRptAmount AS documentAmountRpt,
+                                MAINQUERY.docRptAmount * -1 AS documentAmountRpt,
                             
                                 (MAINQUERY.debitNoteMatchedAmountTrans + MAINQUERY.PaidPaymentVoucherTransAmount - MAINQUERY.InvoiceMatchedINMatchingAmountTrans - MAINQUERY.InvoiceMatchedForpaymentAmountTrans) * -1 AS PaidAmountTrans,
                             
@@ -3998,11 +4046,11 @@ class AccountsPayableReportAPIController extends AppBaseController
                             
                                 (MAINQUERY.debitNoteMatchedAmountRpt + MAINQUERY.PaidPaymentVoucherRptAmount - MAINQUERY.InvoiceMatchedINMatchingAmountRpt - MAINQUERY.InvoiceMatchedForpaymentAmountRpt) * -1 AS PaidAmountRpt,
                             
-                                MAINQUERY.docTransAmount+MAINQUERY.debitNoteMatchedAmountTrans + MAINQUERY.PaidPaymentVoucherTransAmount - MAINQUERY.InvoiceMatchedINMatchingAmountTrans - MAINQUERY.InvoiceMatchedForpaymentAmountTrans  as balanceAmountTrans,
+                                (MAINQUERY.docTransAmount+MAINQUERY.debitNoteMatchedAmountTrans + MAINQUERY.PaidPaymentVoucherTransAmount - MAINQUERY.InvoiceMatchedINMatchingAmountTrans - MAINQUERY.InvoiceMatchedForpaymentAmountTrans) * -1  as balanceAmountTrans,
                             
-                                MAINQUERY.docLocalAmount+MAINQUERY.debitNoteMatchedAmountLocal + MAINQUERY.PaidPaymentVoucherLocalAmount - MAINQUERY.InvoiceMatchedINMatchingAmountLocal - MAINQUERY.InvoiceMatchedForpaymentAmountLocal  as balanceAmountLocal,
+                                (MAINQUERY.docLocalAmount+MAINQUERY.debitNoteMatchedAmountLocal + MAINQUERY.PaidPaymentVoucherLocalAmount - MAINQUERY.InvoiceMatchedINMatchingAmountLocal - MAINQUERY.InvoiceMatchedForpaymentAmountLocal) * -1  as balanceAmountLocal,
                             
-                                MAINQUERY.docRptAmount + MAINQUERY.debitNoteMatchedAmountRpt + MAINQUERY.PaidPaymentVoucherRptAmount - MAINQUERY.InvoiceMatchedINMatchingAmountRpt - MAINQUERY.InvoiceMatchedForpaymentAmountRpt AS balanceAmountRpt,
+                                (MAINQUERY.docRptAmount + MAINQUERY.debitNoteMatchedAmountRpt + MAINQUERY.PaidPaymentVoucherRptAmount - MAINQUERY.InvoiceMatchedINMatchingAmountRpt - MAINQUERY.InvoiceMatchedForpaymentAmountRpt) * -1 AS balanceAmountRpt,
                                 MAINQUERY.glCode,
                                 chartofaccounts.AccountDescription,
                                 chartofaccounts.chartOfAccountSystemID
@@ -4183,7 +4231,10 @@ class AccountsPayableReportAPIController extends AppBaseController
                             LEFT JOIN companymaster ON MAINQUERY.companySystemID = companymaster.companySystemID
                             LEFT JOIN currencymaster as transCurrencyDet ON transCurrencyDet.currencyID=MAINQUERY.documentTransCurrencyID
                             LEFT JOIN currencymaster as localCurrencyDet ON localCurrencyDet.currencyID=MAINQUERY.documentLocalCurrencyID
-                            LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUERY.documentRptCurrencyID) as finalAgingDetail WHERE ' . $whereQry . ' < 0 ORDER BY documentDate ASC) as grandFinal GROUP BY supplierCodeSystem,companyID, chartOfAccountSystemID ORDER BY suppliername;');
+                            LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUERY.documentRptCurrencyID) as finalAgingDetail WHERE ' . $whereQry . ' > 0 ORDER BY documentDate ASC) as grandFinal GROUP BY supplierCodeSystem,companyID, chartOfAccountSystemID ORDER BY suppliername;');
+
+        $output = $this->exchangeGainLoss($output, $currency);
+
         return ['data' => $output, 'aging' => $aging];
     }
 
@@ -5274,7 +5325,33 @@ OR (
 )
 ORDER BY
 	documentDate ASC';
-        return  \DB::select($qry);
+
+        $results = \DB::select($qry);
+
+        foreach ($results as $index => $result){
+            $exchangeGainLossAccount = SystemGlCodeScenarioDetail::getGlByScenario($result->companySystemID, $result->documentSystemID , 14);
+            $chartOfAccount = GeneralLedger::where('documentSystemCode', $result->documentSystemCode)->where('chartOfAccountSystemID', $exchangeGainLossAccount)->where('companySystemID', $result->companySystemID)->where('documentType', NULL)->where('matchDocumentMasterAutoID', "!=", NULL)->first();
+            if(!empty($chartOfAccount)) {
+                    $result->exchangeGLTrans = $chartOfAccount->documentTransAmount;
+                    $result->exchangeGLLocal = $chartOfAccount->documentLocalAmount;
+                    $result->exchangeGLRpt = $chartOfAccount->documentRptAmount;
+            }
+            else {
+                $result->exchangeGLTrans = 0;
+                $result->exchangeGLLocal = 0;
+                $result->exchangeGLRpt = 0;
+            }
+
+            $difTrans = round($result->unAllocatedAmountDoc,2) + round($result->exchangeGLTrans,2);
+            $difLocal = round($result->unAllocatedAmountLoc,2) + round($result->exchangeGLLocal,2);
+            $difRpt = round($result->unAllocatedAmountRpt,2) + round($result->exchangeGLRpt,2);
+
+            if ($difTrans == 0 && $difLocal == 0 && $difRpt == 0) {
+                unset($results[$index]);
+            }
+        }
+
+        return $results;
     }
 
     public function pdfExportReport(Request $request)
