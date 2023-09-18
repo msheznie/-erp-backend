@@ -582,7 +582,6 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
 
             $paySupplierInvoiceDetailDelete->delete();
 
-
             
 
             if($user_type == 1)
@@ -621,15 +620,14 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             }
             else
             {
-                
                 $supplierPaidAmountSum = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, 
                        Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')
-                ->when((($isPaymentVoucher && ($payMaster->invoiceType == 6 || $payMaster->invoiceType == 7)) || ($isDebitNote && ($payMaster && $payMaster->type == 2))), function($query) {
+                ->when((($isPaymentVoucher && (isset($payMaster) && $payMaster->invoiceType == 6 || isset($payMaster) &&  $payMaster->invoiceType == 7)) || ($isDebitNote && (isset($payMaster) &&  $payMaster->type == 2))), function($query) {
                     $query->whereHas('payment_master', function($query) {
                         $query->whereIn('invoiceType',[6,7]);
                     });
                 })
-                ->when((($isPaymentVoucher && ($payMaster->invoiceType != 6 && $payMaster->invoiceType != 7)) || ($isDebitNote && ($payMaster && $payMaster->type == 1))), function($query) {
+                ->when((($isPaymentVoucher && ((isset($payMaster) &&  $payMaster->invoiceType != 6) && (isset($payMaster) &&  $payMaster->invoiceType != 7))) || ($isDebitNote && (isset($payMaster) &&  $payMaster->type == 1))), function($query) {
                     $query->whereHas('payment_master', function($query) {
                         $query->where(function($query) {
                             $query->where('invoiceType', '!=', 6)
@@ -666,7 +664,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
 
             
 
-            if ($payMaster->invoiceType == 6 || $payMaster->invoiceType == 7) {
+            if (isset($payMaster) &&  $payMaster->invoiceType == 6 || isset($payMaster) &&  $payMaster->invoiceType == 7) {
                 if ($paySupplierInvoiceDetail->addedDocumentSystemID == 11) {
                     if ($totalPaidAmount == 0) {
                         $updatePayment = EmployeeLedger::find($paySupplierInvoiceDetail->apAutoID)
