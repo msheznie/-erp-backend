@@ -374,7 +374,7 @@ WHERE
 	AND erp_documentapproved.approvalGroupID > 0 
 	$filter
 	AND erp_documentapproved.documentSystemID IN ( 11 ) 
-	AND erp_documentapproved.employeeSystemID = $employeeSystemID
+	AND erp_documentapproved.employeeSystemID = $employeeSystemID GROUP BY erp_bookinvsuppmaster.bookingInvCode
 	) AS PendingSupplierInvoiceApprovals UNION ALL SELECT
 	* 
 FROM
@@ -954,7 +954,7 @@ WHERE
 	AND erp_documentapproved.approvalGroupID > 0 
 	$filter
 	AND erp_documentapproved.documentSystemID IN ( 11 ) 
-	AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0
+	AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0 GROUP BY erp_bookinvsuppmaster.bookingInvCode
 	) AS PendingSupplierInvoiceApprovals
 UNION ALL
 SELECT
