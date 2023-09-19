@@ -948,6 +948,18 @@ class FixedAssetMasterAPIController extends AppBaseController
 
             if ($fixedAssetMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
 
+                if($input['COSTUNIT'] > 0 ){
+                    if($input['costUnitRpt'] <= 0 ){
+                        return $this->sendError('Unit Price(Rpt) can’t be Zero when Unit Price(Local) has a value',500);
+                    }
+                }
+
+                if($input['accumulated_depreciation_amount_lcl'] > 0){
+                    if($input['accumulated_depreciation_amount_rpt'] <= 0 ){
+                        return $this->sendError('Acc. Depreciation(Rpt) can’t be Zero when Acc. Depreciation (Local) has a value',500);
+                    }
+                }
+
                 $params = array('autoID' => $id, 'company' => $fixedAssetMaster->companySystemID, 'document' => $fixedAssetMaster->documentSystemID, 'segment' => '', 'category' => '', 'amount' => 0);
                 $confirm = \Helper::confirmDocument($params);
                 if (!$confirm["success"]) {
