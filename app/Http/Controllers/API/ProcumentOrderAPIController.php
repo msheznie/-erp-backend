@@ -1125,7 +1125,8 @@ class ProcumentOrderAPIController extends AppBaseController
 
             // return abs($poMasterSumDeducted - $paymentTotalSum['paymentTotalSum']);
 
-            $paymentTotalSumComp = round($paymentTotalSum['paymentTotalSum'], $supplierCurrencyDecimalPlace);
+            $multiplier = pow(10, $supplierCurrencyDecimalPlace);
+            $paymentTotalSumComp = floor($paymentTotalSum['paymentTotalSum'] * $multiplier) / $multiplier;
 
             if ($paymentTotalSumComp > 0) {
                 if (abs(($poMasterSumDeducted - $paymentTotalSumComp) / $paymentTotalSumComp) < 0.00001) {
@@ -1135,7 +1136,7 @@ class ProcumentOrderAPIController extends AppBaseController
             }
 
 
-   
+            
             $poAdvancePaymentType = PoPaymentTerms::where("poID", $input['purchaseOrderID'])
                 ->get();
 
