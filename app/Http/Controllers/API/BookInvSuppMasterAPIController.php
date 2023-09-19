@@ -492,6 +492,14 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $input = $this->convertArrayToValue($input);
         $employee = \Helper::getEmployeeInfo();
 
+        if(empty($input['retentionAmount'])){
+            $input['retentionAmount'] = 0;
+        }
+
+        if(empty($input['retentionPercentage'])){
+            $input['retentionPercentage'] = 0;
+        }
+
         /** @var BookInvSuppMaster $bookInvSuppMaster */
         $bookInvSuppMaster = $this->bookInvSuppMasterRepository->findWithoutFail($id);
 
