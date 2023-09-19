@@ -44,8 +44,11 @@ class PosAPIController extends AppBaseController
 
             $posType = isset($input['post_type']) ? $input['post_type']: 1;
 
-                $companyDetails = Company::selectRaw('companySystemID, CompanyID, companyShortCode, CompanyName, registrationNumber, masterComapanySystemID, group_type, holding_percentage, holding_updated_date, companyCountry, CompanyAddress, CompanyEmail, localCurrencyID, reportingCurrency, vatRegisteredYN, vatRegistratonNumber, isActive, third_party_integration_keys.api_key')
+                $companyDetails = Company::selectRaw('companySystemID, CompanyID, companyShortCode, CompanyName, registrationNumber, masterComapanySystemID, group_type, holding_percentage, holding_updated_date, companyCountry, CompanyAddress, CompanyEmail, localCurrencyID, reportingCurrency, vatRegisteredYN, vatRegistratonNumber, isActive, third_party_integration_keys.api_key, CompanyURL, CompanyTelephone, companyCountry,countrymaster.countryName, reportingCurrencyMaster.CurrencyCode as reportingCurrencyCode, localCurrencyMaster.CurrencyCode as localCurrencyCode')
                     ->join('third_party_integration_keys', 'companymaster.companySystemID', '=', 'third_party_integration_keys.company_id')
+                    ->leftjoin('countrymaster', 'companymaster.companyCountry', '=', 'countrymaster.countryID')
+                    ->leftjoin('currencymaster as reportingCurrencyMaster', 'companymaster.reportingCurrency', '=', 'reportingCurrencyMaster.currencyID')
+                    ->leftjoin('currencymaster as localCurrencyMaster', 'companymaster.localCurrencyID', '=', 'localCurrencyMaster.currencyID')
                     ->where('third_party_integration_keys.third_party_system_id', $posType)
                     ->where('third_party_integration_keys.api_key', '!=', null)
                     ->groupBy('third_party_integration_keys.company_id')
