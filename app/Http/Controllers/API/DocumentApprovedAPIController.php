@@ -196,7 +196,6 @@ class DocumentApprovedAPIController extends AppBaseController
         }
 
         $isApproved   = isset($input['isApproved']) ? $input['isApproved'] : 0;
-
         if($isApproved){
             $qry = "SELECT t.*,companymaster.*,erp_documentmaster.documentDescription FROM (SELECT
 	*
@@ -376,7 +375,50 @@ WHERE
 	$filter
 	AND erp_documentapproved.documentSystemID IN ( 11 ) 
 	AND erp_documentapproved.employeeSystemID = $employeeSystemID
-	) AS PendingSupplierInvoiceApprovals UNION ALL
+	) AS PendingSupplierInvoiceApprovals UNION ALL SELECT
+	* 
+FROM
+	(
+SELECT
+	erp_documentapproved.documentApprovedID,
+	erp_documentapproved.companySystemID,
+	erp_documentapproved.companyID,
+	erp_documentapproved.documentSystemID,
+	erp_documentapproved.documentID,
+	erp_documentapproved.documentSystemCode,
+	erp_documentapproved.documentCode,
+	erp_bookinvsuppmaster.comments,
+	erp_documentapproved.docConfirmedDate,
+	erp_documentapproved.approvedDate,
+	employees.empName AS approvedEmployee,
+	'' AS SupplierOrCustomer,
+			currencymaster.DecimalPlaces ,
+	currencymaster.CurrencyCode AS DocumentCurrency,
+	erp_bookinvsuppmaster.bookingAmountTrans AS DocumentValue,
+	0 AS amended,
+	erp_documentapproved.approvedYN,
+	erp_bookinvsuppmaster.documentType AS documentType 
+FROM
+	erp_documentapproved
+	INNER JOIN employees ON erp_documentapproved.employeeSystemID = employees.employeeSystemID
+	INNER JOIN erp_bookinvsuppmaster ON erp_bookinvsuppmaster.companySystemID = erp_documentapproved.companySystemID 
+	AND erp_bookinvsuppmaster.documentSystemID = erp_documentapproved.documentSystemID 
+	AND erp_bookinvsuppmaster.bookingSuppMasInvAutoID = erp_documentapproved.documentSystemCode 
+	AND erp_bookinvsuppmaster.RollLevForApp_curr = erp_documentapproved.rollLevelOrder 
+	AND erp_bookinvsuppmaster.confirmedYN = 1 
+	AND erp_bookinvsuppmaster.approved = -1
+	AND erp_bookinvsuppmaster.documentType = 4
+	AND erp_bookinvsuppmaster.cancelYN = 0
+	INNER JOIN currencymaster ON currencymaster.currencyID = erp_bookinvsuppmaster.supplierTransactionCurrencyID 
+	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
+WHERE
+	erp_documentapproved.approvedYN = -1 
+	AND erp_documentapproved.rejectedYN = 0 
+	AND erp_documentapproved.approvalGroupID > 0 
+	$filter
+	AND erp_documentapproved.documentSystemID IN ( 11 ) 
+	AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0 GROUP BY erp_bookinvsuppmaster.bookingInvCode
+	) AS PendingSupplierEmployeeDirectInvoiceApprovals UNION ALL
 SELECT
 	* 
 FROM
@@ -1074,7 +1116,60 @@ WHERE
 	$filter
 	AND erp_documentapproved.documentSystemID IN ( 9 ) 
 	AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0
-	) AS PendingMaterialIssueApprovals
+	) AS PendingMaterialIssueApprovals UNION ALL 
+	SELECT
+	* 
+FROM
+	(
+SELECT
+DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
+	erp_documentapproved.documentApprovedID,
+	erp_documentapproved.approvalLevelID,
+	erp_documentapproved.rollLevelOrder,
+	erp_approvallevel.noOfLevels AS NoOfLevels,
+	erp_documentapproved.companySystemID,
+	erp_documentapproved.companyID,
+	'' as approval_remarks,
+	erp_documentapproved.documentSystemID,
+	erp_documentapproved.documentID,
+	erp_documentapproved.documentSystemCode,
+	erp_documentapproved.documentCode,
+	erp_bookinvsuppmaster.comments as comments,
+	erp_documentapproved.docConfirmedDate,
+	erp_documentapproved.approvedDate,
+	employees.empName AS confirmedEmployee,
+	customer.empName AS SupplierOrCustomer,
+	currencymaster.DecimalPlaces ,
+	currencymaster.CurrencyCode AS DocumentCurrency,
+	erp_bookinvsuppmaster.bookingAmountTrans AS DocumentValue,
+	0 AS amended,
+	employeesdepartments.employeeID,
+	erp_documentapproved.approvedYN,
+	'' AS documentType 
+FROM
+	erp_documentapproved
+	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
+	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
+	INNER JOIN employees ON erp_documentapproved.employeeSystemID = employees.employeeSystemID
+	INNER JOIN erp_bookinvsuppmaster ON erp_bookinvsuppmaster.companySystemID = erp_documentapproved.companySystemID 
+	INNER JOIN employees as customer ON customer.employeeSystemID = erp_bookinvsuppmaster.employeeID
+	AND erp_bookinvsuppmaster.documentSystemID = erp_documentapproved.documentSystemID 
+	AND erp_bookinvsuppmaster.bookingSuppMasInvAutoID = erp_documentapproved.documentSystemCode 
+	AND erp_bookinvsuppmaster.RollLevForApp_curr = erp_documentapproved.rollLevelOrder 
+	AND erp_bookinvsuppmaster.confirmedYN = 1
+	AND erp_bookinvsuppmaster.approved = 0
+	AND erp_bookinvsuppmaster.documentType = 4
+	AND erp_bookinvsuppmaster.cancelYN = 0
+	INNER JOIN currencymaster ON currencymaster.currencyID = erp_bookinvsuppmaster.supplierTransactionCurrencyID 
+WHERE
+	erp_documentapproved.approvedYN = 0 
+	AND erp_documentapproved.rejectedYN = 0 	
+	AND erp_documentapproved.approvalGroupID > 0 
+	$filter
+	AND erp_documentapproved.documentSystemID IN ( 11 ) 
+	AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0 GROUP BY erp_bookinvsuppmaster.bookingInvCode
+
+	) AS PendingSupplierEmployeeDirectInvoiceApprovals
 UNION ALL
 SELECT
 	* 
