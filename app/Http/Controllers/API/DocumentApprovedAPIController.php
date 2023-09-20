@@ -1150,8 +1150,8 @@ FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
 	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
-	INNER JOIN employees ON erp_documentapproved.employeeSystemID = employees.employeeSystemID
 	INNER JOIN erp_bookinvsuppmaster ON erp_bookinvsuppmaster.companySystemID = erp_documentapproved.companySystemID 
+	INNER JOIN employees ON erp_bookinvsuppmaster.confirmedByEmpSystemID = employees.employeeSystemID
 	INNER JOIN employees as customer ON customer.employeeSystemID = erp_bookinvsuppmaster.employeeID
 	AND erp_bookinvsuppmaster.documentSystemID = erp_documentapproved.documentSystemID 
 	AND erp_bookinvsuppmaster.bookingSuppMasInvAutoID = erp_documentapproved.documentSystemCode 
