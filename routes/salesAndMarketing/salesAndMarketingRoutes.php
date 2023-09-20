@@ -105,5 +105,6 @@ Route::group([], function () {
     Route::get('deliveryNoteForForSR', 'SalesReturnAPIController@deliveryNoteForForSR')->name("Delivery note for sales return");
     Route::get('getSalesInvoiceDeliveryOrderDetail', 'SalesReturnAPIController@getSalesInvoiceDeliveryOrderDetail')->name("Get sales invoice delivery order detail");
     Route::post('storeReturnDetailFromSIDO', 'SalesReturnAPIController@storeReturnDetailFromSIDO')->name("Store return detail from sales invoice delivery order");
+    Route::resource('sales_return_details', 'SalesReturnDetailAPIController');
 
 });

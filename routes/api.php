@@ -1099,8 +1099,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::post('assetCostingRemove', 'FixedAssetMasterAPIController@assetCostingRemove');
 
-            Route::resource('sales_return_details', 'SalesReturnDetailAPIController');
-
             Route::post('approveSalesReturn', 'SalesReturnAPIController@approveSalesReturn');
             Route::post('getSalesReturnDetailsForSI', 'SalesReturnAPIController@getSalesReturnDetailsForSI');
 
