@@ -119,6 +119,17 @@
     <br>
 
     @if ($request->isPerforma == 0)
+        <div class="row">
+            <table style="width:100%">
+                <tr>
+                    <td colspan="1"></td>
+                    <td colspan="2"><b>Comments :</td>
+                    <td colspan="3"> <b>{{$request->comments}}</b></td>
+                </tr>
+            </table>
+        </div>
+    @endif
+    @if ($request->isPerforma == 0)
         @if ($request->template <> 1 && !$request->line_invoiceDetails && !$request->item_invoice)
             <table class="table table-sm table-striped hover table-bordered" style="width: 100%;">
                 <thead>
@@ -188,7 +199,7 @@
                     </tr>
                 </tbody>
 
-                @if ($request->currency && $request->currency->CurrencyCode == 'USD')
+                @if ($request->currency && $request->local_currency && $request->currency->CurrencyCode != $request->local_currency->CurrencyCode)
                     <tbody>
                         <tr>
                             <td colspan="23"><br> </td>

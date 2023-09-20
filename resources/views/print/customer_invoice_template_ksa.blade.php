@@ -390,7 +390,7 @@
                         <td class="text-right">{{number_format($directTraSubTotal, $numberFormatting)}}</td>
                     </tr>
                 </tbody>
-                @if ($request->currency && $request->currency->CurrencyCode == 'USD')
+                @if ($request->currency && $request->local_currency && $request->currency->CurrencyCode != $request->local_currency->CurrencyCode)
                     <tbody>
                         <tr>
                             <td colspan="9"><br> </td>
