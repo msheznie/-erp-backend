@@ -1127,6 +1127,7 @@ class ProcumentOrderAPIController extends AppBaseController
 
             $paymentTotalSumComp = floatval(sprintf("%.".$supplierCurrencyDecimalPlace."f", $paymentTotalSum['paymentTotalSum']));
 
+
             if ($paymentTotalSumComp > 0) {
                 if (abs(($poMasterSumDeducted - $paymentTotalSumComp) / $paymentTotalSumComp) < 0.00001) {
                 } else {
