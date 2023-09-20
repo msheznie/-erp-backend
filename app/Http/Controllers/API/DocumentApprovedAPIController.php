@@ -401,8 +401,8 @@ SELECT
 FROM
 	erp_documentapproved
 	INNER JOIN employees ON erp_documentapproved.employeeSystemID = employees.employeeSystemID
-	INNER JOIN employees as customer ON customer.employeeSystemID = erp_bookinvsuppmaster.employeeID
 	INNER JOIN erp_bookinvsuppmaster ON erp_bookinvsuppmaster.companySystemID = erp_documentapproved.companySystemID 
+	INNER JOIN employees as customer ON customer.employeeSystemID = erp_bookinvsuppmaster.employeeID
 	AND erp_bookinvsuppmaster.documentSystemID = erp_documentapproved.documentSystemID 
 	AND erp_bookinvsuppmaster.bookingSuppMasInvAutoID = erp_documentapproved.documentSystemCode 
 	AND erp_bookinvsuppmaster.RollLevForApp_curr = erp_documentapproved.rollLevelOrder 
