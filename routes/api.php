@@ -73,7 +73,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::post('getAllEmployees', 'EmployeeAPIController@getAllEmployees');
 
-            Route::resource('employeeMasterCRUD', 'EmployeeAPIController');
             Route::resource('employee_navigations', 'EmployeeNavigationAPIController');
 
             Route::resource('navigation_menuses', 'NavigationMenusAPIController');
@@ -769,12 +768,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('getPosCustomerSearch', 'CustomerMasterAPIController@getPosCustomerSearch');
       
             Route::resource('docEmailNotificationMasters', 'DocumentEmailNotificationMasterAPIController');
-            Route::resource('salesPersonMasters', 'SalesPersonMasterAPIController');
-            Route::resource('salesPersonTargets', 'SalesPersonTargetAPIController');
-            Route::post('getAllSalesPersons', 'SalesPersonMasterAPIController@getAllSalesPersons');
-            Route::get('getSalesPersonFormData', 'SalesPersonMasterAPIController@getSalesPersonFormData');
-            Route::get('checkSalesPersonLastTarget', 'SalesPersonTargetAPIController@checkSalesPersonLastTarget');
-            Route::get('getSalesPersonTargetDetails', 'SalesPersonTargetAPIController@getSalesPersonTargetDetails');
 
             Route::post('getOrderDetailsForSQ', 'QuotationMasterAPIController@getOrderDetailsForSQ');
             Route::post('checkItemExists','QuotationMasterAPIController@checkItemExists');
