@@ -391,8 +391,8 @@ SELECT
 	erp_documentapproved.docConfirmedDate,
 	erp_documentapproved.approvedDate,
 	employees.empName AS approvedEmployee,
-	'' AS SupplierOrCustomer,
-			currencymaster.DecimalPlaces ,
+	customer.empName AS SupplierOrCustomer,
+	currencymaster.DecimalPlaces ,
 	currencymaster.CurrencyCode AS DocumentCurrency,
 	erp_bookinvsuppmaster.bookingAmountTrans AS DocumentValue,
 	0 AS amended,
@@ -401,6 +401,7 @@ SELECT
 FROM
 	erp_documentapproved
 	INNER JOIN employees ON erp_documentapproved.employeeSystemID = employees.employeeSystemID
+	INNER JOIN employees as customer ON customer.employeeSystemID = erp_bookinvsuppmaster.employeeID
 	INNER JOIN erp_bookinvsuppmaster ON erp_bookinvsuppmaster.companySystemID = erp_documentapproved.companySystemID 
 	AND erp_bookinvsuppmaster.documentSystemID = erp_documentapproved.documentSystemID 
 	AND erp_bookinvsuppmaster.bookingSuppMasInvAutoID = erp_documentapproved.documentSystemCode 
