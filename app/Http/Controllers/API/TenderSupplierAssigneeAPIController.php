@@ -20,7 +20,7 @@ use App\Mail\EmailForQueuing;
 use App\Models\SupplierRegistrationLink;
 use App\Models\TenderMaster;
 use App\Repositories\SupplierRegistrationLinkRepository;
-
+use App\helper\email;
 /**
  * Class TenderSupplierAssigneeController
  * @package App\Http\Controllers\API
@@ -504,6 +504,7 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
     public function sendSupplierEmailInvitation($email, $companyName, $loginUrl, $tenderId, $companySystemId, $type, $rfx)
     {
         $docType = 'tender';
+        $emailFormatted = email::emailAddressFormat($email);
         $tenderMaster = TenderMaster::select('title')
             ->where('id', $tenderId)
             ->where('company_id', $companySystemId)
@@ -513,11 +514,11 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
         }
 
         if ($type == 1) {
-            Mail::to($email)->send(new EmailForQueuing("Registration Link", "Dear Supplier," . "<br /><br />" . "
+            Mail::to($emailFormatted)->send(new EmailForQueuing("Registration Link", "Dear Supplier," . "<br /><br />" . "
             You are invited to participate in a new ".$docType.", " . $tenderMaster['title'] . ".
             Please find the link below to login to the supplier portal. " . "<br /><br />" . "Click Here: " . "</b><a href='" . $loginUrl . "'>" . $loginUrl . "</a><br /><br />" . " Thank You" . "<br /><br /><b>"));
         } else {
-            Mail::to($email)->send(new EmailForQueuing("Registration Link", "Dear Supplier," . "<br /><br />" . "
+            Mail::to($emailFormatted)->send(new EmailForQueuing("Registration Link", "Dear Supplier," . "<br /><br />" . "
             You are invited to participate in a new ".$docType.", " . $tenderMaster['title'] . ".
             Please find the below link to register at " . $companyName . " supplier portal. It will expire in 48 hours. " . "<br /><br />" . "Click Here: " . "</b><a href='" . $loginUrl . "'>" . $loginUrl . "</a><br /><br />" . " Thank You" . "<br /><br /><b>"));
         }
