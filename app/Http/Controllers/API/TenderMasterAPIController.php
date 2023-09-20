@@ -2942,6 +2942,7 @@ WHERE
         }
 
         $companyId = $request['companyId'];
+        $isNegotiation = isset($input['isNegotiation']) ? $input['isNegotiation'] : null;
 
         $filters = $this->getFilterData($input); 
 
@@ -2955,6 +2956,10 @@ WHERE
                                 ->where('doc_verifiy_status', 1)
                                 ->where('go_no_go_status', 1);
 
+        if($isNegotiation == 1){ 
+            $query->where('is_negotiation_started',1)
+            ->where('negotiation_published',1);
+        }
 
         if ($filters['currencyId'] && count($filters['currencyId']) > 0) {
             $query->whereIn('currency_id', $filters['currencyId']);
@@ -2983,11 +2988,16 @@ WHERE
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
             $query = $query->where(function ($query) use ($search) {
-                $query->where('description', 'LIKE', "%{$search}%");
+                $query->where('tender_code', 'LIKE', "%{$search}%");
+                $query->orWhere('description', 'LIKE', "%{$search}%");
                 $query->orWhere('description_sec_lang', 'LIKE', "%{$search}%");
                 $query->orWhere('title', 'LIKE', "%{$search}%");
                 $query->orWhere('title_sec_lang', 'LIKE', "%{$search}%");
             });
+
+            if($isNegotiation == 1){ 
+                $query->orWhere('negotiation_code', 'LIKE', "%{$search}%");
+            }
         }
 
 
