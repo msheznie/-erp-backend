@@ -2926,7 +2926,24 @@ srp_erp_ioubookingmaster.approvedYN = 1
 
                 $data = array();
                 if ($output) {
-                    $x = 0;
+                    if($request->glAccountTypeID == 1) {
+                        $data[0]['Document Code'] = '';
+                        $data[0]['Document Date'] = '';
+                        $data[0]['Document Narration'] = 'Opening Balance';
+
+                        if ($checkIsGroup->isGroup == 0) {
+                            $data[0]['Debit (Local Currency - ' . $currencyLocal . ')'] = round($request->openingBalance['openingBalDebitLocal'], $decimalPlaceLocal);
+                            $data[0]['Credit (Local Currency - ' . $currencyLocal . ')'] = round($request->openingBalance['openingBalCreditLocal'], $decimalPlaceLocal);
+                        }
+
+                        $data[0]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = round($request->openingBalance['openingBalDebitRpt'], $decimalPlaceRpt);
+                        $data[0]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($request->openingBalance['openingBalCreditRpt'], $decimalPlaceRpt);
+
+                        $x = 1;    
+                    } else {
+                        $x = 0;
+                    }
+                    
                     foreach ($output as $val) {
                         if ($request->reportSD == 'company_wise') {
                             $data[$x]['Company ID'] = $val->companyID;
@@ -3679,7 +3696,7 @@ srp_erp_ioubookingmaster.approvedYN = 1
         $serviceLines = join(',', array_map(function ($sl) {
             return $sl['serviceLineSystemID'];
         }, $request->selectedServicelines));
-
+   
         $query = 'SELECT
                         companySystemID,
                         companyID,
@@ -3693,8 +3710,8 @@ srp_erp_ioubookingmaster.approvedYN = 1
                         IF((SUM( documentLocalAmount))<0,0,(SUM(documentLocalAmount))) AS documentLocalAmountDebit,
                         IF((SUM( documentLocalAmount))<0,(SUM(documentLocalAmount*-1)),0) AS documentLocalAmountCredit,
                         documentRptCurrencyID,
-                        IF((SUM( documentRptAmount))<0,0,(SUM(documentRptAmount))) AS documentRptAmountDebit,
-                        IF((SUM( documentRptAmount))<0,(SUM(documentRptAmount*-1)),0) AS documentRptAmountCredit
+                        SUM(IF(documentRptAmount >= 0, documentRptAmount, 0)) AS documentRptAmountDebit,
+                        SUM(IF(documentRptAmount < 0, -documentRptAmount, 0)) AS documentRptAmountCredit
                     FROM
                         (
                     SELECT
@@ -4462,11 +4479,12 @@ srp_erp_ioubookingmaster.approvedYN = 1
 
         $dateQry = '';
         if ($chartOfAccount) {
-            if ($chartOfAccount->catogaryBLorPLID == 2) {
-                $dateQry = 'DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"';
-            } else {
-                $dateQry = 'DATE(erp_generalledger.documentDate) <= "' . $toDate . '" ';
-            }
+            // if ($chartOfAccount->catogaryBLorPLID == 2) {
+            //     $dateQry = 'DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"';
+            // } else {
+            //     $dateQry = 'DATE(erp_generalledger.documentDate) <= "' . $toDate . '" ';
+            // }
+            $dateQry = 'DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"';
         }
 
         $query = 'SELECT erp_generalledger.companyID,
