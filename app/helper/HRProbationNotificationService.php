@@ -6,6 +6,7 @@ use App\Models\HrmsEmployeeManager;
 use App\Models\NotificationUser;
 use App\Models\SrpEmployeeDetails;
 use Carbon\Carbon;
+use App\Traits\CustomDateDiffForHumanTrait;
 use Illuminate\Support\Facades\Log;
 
 class HRProbationNotificationService
@@ -19,7 +20,7 @@ class HRProbationNotificationService
     private $mail_subject = "End of employee probation period remainder";
     private $debug = false;
     private $sent_mail_count = 0;
-
+    use CustomDateDiffForHumanTrait;
 
     public function __construct($company, $setup){
         [ 'companyScenarionID' => $comScenarioID, 'beforeAfter' => $type, 'days' => $days ] = $setup;
@@ -32,7 +33,7 @@ class HRProbationNotificationService
 
     public function expired_doc(){
         $this->expiry_date = NotificationService::get_filter_date($this->type, $this->days);
-
+        
         $data = SrpEmployeeDetails::selectRaw('EIdNo,ECode,Ename2,EEmail,probationPeriod,EmpDesignationId')
             ->where('Erp_CompanyID', $this->company)
             ->where('isDischarged', 0)
@@ -105,7 +106,7 @@ class HRProbationNotificationService
         }
 
         $mail_body = "Dear {$mail_to->Ename2},<br/>";
-        $mail_body .= $this->email_body(1 );
+        $mail_body .= $this->email_body(1);
         $mail_body .= $this->expiry_table($this->expired_docs);
 
         $empEmail = $mail_to->EEmail;
@@ -132,7 +133,7 @@ class HRProbationNotificationService
             $mail_to = $row[0];
 
             $mail_body = "Dear {$mail_to['Ename2']},<br/>";
-            $mail_body .= $this->email_body(9 );
+            $mail_body .= $this->email_body(9);
 
 
             $empEmail = $mail_to['EEmail'];
@@ -194,7 +195,7 @@ class HRProbationNotificationService
             $my_reporting_data = $my_reporting_data->toArray();
 
             $mail_body = "Dear {$manager_info['Ename2']},<br/>";
-            $mail_body .= $this->email_body(7 );
+            $mail_body .= $this->email_body(7);
             $mail_body .= $this->expiry_table( $my_reporting_data );
 
             $empEmail = $manager_info['EEmail'];
@@ -215,7 +216,7 @@ class HRProbationNotificationService
         return true;
     }
 
-    public function email_body( $for ){
+    public function email_body($for){
 
         $str = "<br/>"; //End of employee probation period
 
@@ -238,8 +239,9 @@ class HRProbationNotificationService
         $expiry_date_frm = Carbon::parse( $this->expiry_date )->format('Y-m-d');
         $to_day = Carbon::now()->format('Y-m-d');
 
-        if( $expiry_date_frm != $to_day ){
-            $str .= ' ( '. Carbon::parse( $this->expiry_date )->diffForHumans() . " ) ";
+        if( $expiry_date_frm != $to_day && $this->type != 0){
+            $diffForHumans = $this->getDateDiff($expiry_date_frm, $to_day, $this->type);
+            $str .= ' ( '. $diffForHumans . " ) ";
         }
 
         $str .= "<br/><br/><br/>";
