@@ -130,3 +130,16 @@ Route::group([], function () {
     Route::resource('salesPersonTargets', 'SalesPersonTargetAPIController');
 
 });
+
+//Reports
+
+//Quotation
+Route::group([], function () { 
+
+    Route::post('getSalesMarketFilterData', 'SalesMarketingReportAPIController@getSalesMarketFilterData')->name("Get sales market filter data");
+    Route::post('getSubcategoriesBymainCategories', 'FinanceItemCategorySubAPIController@getSubcategoriesBymainCategories')->name("Get sub categories by main categories");
+    Route::post('validateSalesMarketReport', 'SalesMarketingReportAPIController@validateReport')->name("Validate sales market report");
+    Route::post('generateSalesMarketReport', 'SalesMarketingReportAPIController@generateReport')->name("Generate sales market report");
+    Route::post('exportSalesMarketReport', 'SalesMarketingReportAPIController@exportReport')->name("Export sales market report");
+
+});
