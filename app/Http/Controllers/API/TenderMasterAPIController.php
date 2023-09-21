@@ -70,6 +70,7 @@ use App\Models\DocumentModifyRequest;
 use App\Models\TenderCirculars;
 use App\Models\CircularAmendments;
 use App\Repositories\DocumentModifyRequestRepository;
+use App\helper\email;
 
 /**
  * Class TenderMasterController
@@ -2133,6 +2134,7 @@ WHERE
     {
         $companyName = "";
         $company = Company::find($request->input('company_id'));
+        $email = email::emailAddressFormat($request->input('email'));
         if (isset($company->CompanyName)) {
             $companyName =  $company->CompanyName;
         }
@@ -2141,7 +2143,7 @@ WHERE
         $isCreated = $this->registrationLinkRepository->save($request, $token);
         $loginUrl = env('SRM_LINK') . $token . '/' . $apiKey;
         if ($isCreated['status'] == true) {
-            Mail::to($request->input('email'))->send(new EmailForQueuing("Registration Link", "Dear Supplier," . "<br /><br />" . " Please find the below link to register at " . $companyName . " supplier portal. It will expire in 48 hours. " . "<br /><br />" . "Click Here: " . "</b><a href='" . $loginUrl . "'>" . $loginUrl . "</a><br /><br />" . " Thank You" . "<br /><br /><b>"));
+            Mail::to($email)->send(new EmailForQueuing("Registration Link", "Dear Supplier," . "<br /><br />" . " Please find the below link to register at " . $companyName . " supplier portal. It will expire in 48 hours. " . "<br /><br />" . "Click Here: " . "</b><a href='" . $loginUrl . "'>" . $loginUrl . "</a><br /><br />" . " Thank You" . "<br /><br /><b>"));
             return $this->sendResponse($loginUrl, 'Supplier Registration Link Generated successfully');
         } else {
             return $this->sendError('Supplier Registration Link Generation Failed', 500);
