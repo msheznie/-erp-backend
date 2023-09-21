@@ -124,6 +124,7 @@ Route::group([],function (){
     Route::get('getDirectPaymentDetailsHistoryByID', 'DirectPaymentReferbackAPIController@getDirectPaymentDetailsHistoryByID')->name('Get direct payment details history by id');
     Route::get('getDPExchangeRateAmount', 'DirectPaymentDetailsAPIController@getDPExchangeRateAmount')->name('Get dp exchange rate amount');
     Route::get('getDPHistoryExchangeRateAmount', 'DirectPaymentReferbackAPIController@getDPHistoryExchangeRateAmount')->name('Get dp history exchange rate amount');
+    Route::post('addDetailsFromExpenseClaim', 'DirectPaymentDetailsAPIController@addDetailsFromExpenseClaim')->name('Add details from expense claim');
 
     Route::resource('bank_memo_payees', 'BankMemoPayeeAPIController');
     Route::resource('pdc_logs', 'PdcLogAPIController');
@@ -146,4 +147,45 @@ Route::group([],function (){
     Route::post('addPaymentVoucherMatchingPaymentDetail', 'PaySupplierInvoiceDetailAPIController@addPaymentVoucherMatchingPaymentDetail')->name('Add payment voucher matching payment detail');
     Route::get('getADVPaymentForMatchingDocument', 'PaySupplierInvoiceMasterAPIController@getADVPaymentForMatchingDocument')->name('Get adv payment for matching document');
     Route::post('addADVPaymentDetailForDirectPay', 'AdvancePaymentDetailsAPIController@addADVPaymentDetailForDirectPay')->name('Add adv payment detail for direct pay');
+});
+
+//Expense Claim Analysis
+Route::group([],function () {
+    Route::post('getExpenseClaimMasterByCompany', 'ExpenseClaimMasterAPIController@getExpenseClaimMasterByCompany')->name('Get expense claim master by company');
+    Route::get('getExpenseClaimFormData', 'ExpenseClaimAPIController@getExpenseClaimFormData')->name('Get expense claim form data');
+    Route::get('getExpenseClaimMasterPaymentStatusHistory', 'ExpenseClaimMasterAPIController@getExpenseClaimMasterPaymentStatusHistory')->name('Get expense claim master payment status history');
+    Route::get('getDetailsByExpenseClaimMaster', 'ExpenseClaimDetailsMasterAPIController@getDetailsByExpenseClaimMaster')->name('Get details by expense claim master');
+    Route::get('preCheckECDetailMasterEdit', 'ExpenseClaimDetailsMasterAPIController@preCheckECDetailMasterEdit')->name('Pre check ec detail master edit');
+    Route::post('amendExpenseClaimReview', 'ExpenseClaimAPIController@amendExpenseClaimReview')->name('Amend expense claim review');
+    Route::get('getExpenseClaimAudit', 'ExpenseClaimAPIController@getExpenseClaimAudit')->name('Get expense claim audit');
+    Route::get('getExpenseClaimMasterAudit', 'ExpenseClaimMasterAPIController@getExpenseClaimMasterAudit')->name('Get expense claim master audit');
+
+    Route::resource('expense_claim_details', 'ExpenseClaimDetailsAPIController');
+    Route::resource('expense_claim_masters', 'ExpenseClaimMasterAPIController');
+});
+
+//Monthly Additions
+Route::group([],function (){
+    Route::post('getMonthlyAdditionsByCompany', 'MonthlyAdditionsMasterAPIController@getMonthlyAdditionsByCompany')->name('Get monthly additions by company');
+    Route::get('getMonthlyAdditionFormData', 'MonthlyAdditionsMasterAPIController@getMonthlyAdditionFormData')->name('Get monthly addition form data');
+    Route::post('getProcessPeriods', 'MonthlyAdditionsMasterAPIController@getProcessPeriods')->name('Get process periods');
+    Route::get('getItemsByMonthlyAddition', 'MonthlyAdditionDetailAPIController@getItemsByMonthlyAddition')->name('Get items by monthly addition');
+    Route::post('monthlyAdditionReopen', 'MonthlyAdditionsMasterAPIController@monthlyAdditionReopen')->name('Monthly addition re open');
+    Route::get('checkPullFromExpenseClaim', 'MonthlyAdditionDetailAPIController@checkPullFromExpenseClaim')->name('Check pull from expense claim');
+    Route::post('deleteAllMonthlyAdditionDetails', 'MonthlyAdditionDetailAPIController@deleteAllMonthlyAdditionDetails')->name('Delete all monthly addition details');
+    Route::post('amendEcMonthlyAdditionReview', 'MonthlyAdditionsMasterAPIController@amendEcMonthlyAdditionReview')->name('Amend ec monthly addition review');
+    Route::get('getECForMonthlyAddition', 'MonthlyAdditionDetailAPIController@getECForMonthlyAddition')->name('Get ec for monthly addition');
+    Route::get('getECDetailsForMonthlyAddition', 'MonthlyAdditionDetailAPIController@getECDetailsForMonthlyAddition')->name('Get ec details for monthly addition');
+    Route::post('addMonthlyAdditionDetails', 'MonthlyAdditionDetailAPIController@addMonthlyAdditionDetails')->name('Add monthly addition details');
+    Route::get('getMonthlyAdditionAudit', 'MonthlyAdditionsMasterAPIController@getMonthlyAdditionAudit')->name('Get monthly addition audit');
+
+    Route::resource('expense_claim_details', 'ExpenseClaimDetailsAPIController');
+    Route::resource('monthly_additions_masters', 'MonthlyAdditionsMasterAPIController');
+});
+
+//Cheque Printing
+Route::group([],function (){
+    Route::post('getChequePrintingItems', 'BankLedgerAPIController@getChequePrintingItems')->name('Get cheque printing items');
+    Route::get('getChequePrintingFormData', 'BankLedgerAPIController@getChequePrintingFormData')->name('Get cheque printing form data');
+    Route::get('revertChequePrint', 'BankLedgerAPIController@revertChequePrint')->name('Revert cheque print');
 });
