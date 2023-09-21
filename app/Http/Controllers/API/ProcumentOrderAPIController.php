@@ -6875,10 +6875,6 @@ group by purchaseOrderID,companySystemID) as pocountfnal
             ->with(['currency_by'])
             ->first();
 
-        if(!isset($purchaseRequest)){
-            return $this->sendError("Purchase request not found");
-        }
-
         $poMasters = PurchaseOrderDetails::selectRaw('sum(netAmount) as totalAmount,
                                         purchaseRequestID,purchaseOrderMasterID')
             ->where('purchaseRequestID', $purchaseRequest->purchaseRequestID)
@@ -6912,7 +6908,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         }
         $tracingData['documentSystemID'] = $purchaseRequest->documentSystemID;
         $tracingData['docAutoID'] = $purchaseRequest->purchaseRequestID;
-        $tracingData['title'] = "{Doc Code :} " . $purchaseRequest->purchaseRequestCode . " -- {Doc Date :} " . Carbon::parse($purchaseRequest->PRRequestedDate)->format('Y-m-d') . " -- {Currency :} " . $purchaseRequest->currency_by->CurrencyCode . "-- {Amount :} " . number_format($purchaseRequest->poTotalSupplierTransactionCurrency, $purchaseRequest->currency_by->DecimalPlaces) . $cancelStatus;
+        $tracingData['title'] = "{Doc Code :} " . $purchaseRequest->purchaseRequestCode . " -- {Doc Date :} " . Carbon::parse($purchaseRequest->PRRequestedDate)->format('Y-m-d') . " -- {Currency :} " . $purchaseRequest->currency_by->CurrencyCode ? $purchaseRequest->currency_by->CurrencyCode : "" . "-- {Amount :} " . number_format($purchaseRequest->poTotalSupplierTransactionCurrency, $purchaseRequest->currency_by->DecimalPlaces ? $purchaseRequest->currency_by->DecimalPlaces : 0) . $cancelStatus;
 
 
         foreach ($poData as $keyPo => $valuePo) {
