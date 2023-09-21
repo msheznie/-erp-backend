@@ -11,6 +11,7 @@ use App\Models\DocumentAttachments;
 use App\Models\PricingScheduleDetail;
 use App\Models\PricingScheduleMaster;
 use App\Models\ScheduleBidFormatDetails;
+use App\Models\TenderBidNegotiation;
 use App\Models\TenderMaster;
 use App\Repositories\BidSubmissionMasterRepository;
 use Carbon\Carbon;
@@ -410,6 +411,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
         $companyId = $request['companyId'];
         $tenderId = $request['tenderId'];
         $type = $request['type']; 
+        $isNegotiation = $request['isNegotiation'];
 
         $tender = TenderMaster::select('id','document_type')
         ->withCount(['criteriaDetails',  
@@ -437,8 +439,20 @@ class BidSubmissionMasterAPIController extends AppBaseController
             
         }
 
+        $tenderBidNegotiations = TenderBidNegotiation::select('bid_submission_master_id_new')
+            ->where('tender_id', $tenderId)
+            ->get();
 
-    
+        if ($tenderBidNegotiations->count() > 0) {
+            $bidSubmissionMasterIds = $tenderBidNegotiations->pluck('bid_submission_master_id_new')->toArray();
+            Log::info(['$tenderBidNegotiations', $bidSubmissionMasterIds]);
+        } else {
+            // Handle the case when no records are found
+            $bidSubmissionMasterIds = [];
+            Log::info('No records found for the given tenderId');
+        }
+
+
         $query = BidSubmissionMaster::with(['tender:id,document_type','SupplierRegistrationLink','bidSubmissionDetail' => function($query){
                 $query->whereHas('srm_evaluation_criteria_details.evaluation_criteria_type', function ($query) {
                     $query->where('id', 1);
@@ -449,6 +463,12 @@ class BidSubmissionMasterAPIController extends AppBaseController
                 ->where('attachmentType',2)  
                 ->where('envelopType',3);
         }])->where('status', 1)->where('bidSubmittedYN', 1)->where('tender_id', $tenderId);
+
+        if ($isNegotiation == 1) {
+            $query = $query->whereIn('id', $bidSubmissionMasterIds);
+        } else {
+            $query = $query->whereNotIn('id', $bidSubmissionMasterIds);
+        }
     
         if($type == 2)
         {
