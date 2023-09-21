@@ -245,7 +245,9 @@ Route::post('tenderNegotiationApprovalsGetEmployees', 'TenderNegotiationApproval
 Route::post('publishNegotiation', 'TenderNegotiationApprovalController@publishNegotiation');
 Route::resource('calendar_dates_detail_edit_logs', 'CalendarDatesDetailEditLogAPIController');
 Route::resource('procument_activity_edit_logs', 'ProcumentActivityEditLogAPIController');
+
 Route::post('getTenderFilterData', 'TenderMasterAPIController@getTenderFilterData')->name("Get tender filter data");
+
 Route::post('approveBidOpening', 'TenderMasterAPIController@approveBidOpening');
 
 Route::post('addAllSuppliersToNegotiation', 'SupplierTenderNegotiationController@addAllSuppliersToNegotiation');
@@ -254,6 +256,8 @@ Route::post('deleteAllSuppliersFromNegotiation', 'SupplierTenderNegotiationContr
 
 
 Route::post('saveTenderNegotiationDetails', 'TenderNegotiationController@saveTenderNegotiationDetails');
+Route::get('getTenderPr', 'TenderMasterAPIController@getTenderPr');
+Route::get('getPurchaseRequestDetails', 'TenderMasterAPIController@getPurchaseRequestDetails');
 
 Route::group(['prefix' => 'srm'], function (){
         
