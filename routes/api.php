@@ -150,8 +150,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('example_table_templates', 'ExampleTableTemplateAPIController');
 
             Route::get('getItemMasterPurchaseRequestHistory', 'PurchaseRequestDetailsAPIController@getItemMasterPurchaseRequestHistory');
-
-            Route::post('getSubcategoriesBymainCategories', 'FinanceItemCategorySubAPIController@getSubcategoriesBymainCategories');
             
             Route::get('getDropdownValues', 'FinanceItemCategoryMasterAPIController@getDropdownValues');
 
@@ -1032,11 +1030,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::resource('ci_item_details_refferedbacks', 'CustomerInvoiceItemDetailsRefferedbackAPIController');
 
-            Route::post('generateSalesMarketReport', 'SalesMarketingReportAPIController@generateReport');
             Route::post('generateSalesMarketReportSoldQty', 'SalesMarketingReportAPIController@generateSoldQty');
-            Route::post('validateSalesMarketReport', 'SalesMarketingReportAPIController@validateReport');
-            Route::post('exportSalesMarketReport', 'SalesMarketingReportAPIController@exportReport');
-            Route::post('getSalesMarketFilterData', 'SalesMarketingReportAPIController@getSalesMarketFilterData');
             Route::get('getSalesAnalysisFilterData', 'SalesMarketingReportAPIController@getSalesAnalysisFilterData');
 
             Route::post('reportSoToReceipt', 'SalesMarketingReportAPIController@reportSoToReceipt');
