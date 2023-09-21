@@ -117,3 +117,15 @@ Route::group([], function () {
     Route::post('getAllCustomersByCompany', 'CustomerAssignedAPIController@getAllCustomersByCompany')->name("Get all customers by company");
 
 });
+
+//Sales Person
+Route::group([], function () { 
+
+    Route::post('getAllSalesPersons', 'SalesPersonMasterAPIController@getAllSalesPersons')->name("Get all sales persons");
+    Route::get('getSalesPersonFormData', 'SalesPersonMasterAPIController@getSalesPersonFormData')->name("Get sales person form data");
+    Route::resource('salesPersonMasters', 'SalesPersonMasterAPIController');
+    Route::resource('employeeMasterCRUD', 'EmployeeAPIController');
+    Route::get('getSalesPersonTargetDetails', 'SalesPersonTargetAPIController@getSalesPersonTargetDetails')->name("Get sales person target details");
+    Route::get('checkSalesPersonLastTarget', 'SalesPersonTargetAPIController@checkSalesPersonLastTarget')->name("Check sales person last target");
+    Route::resource('salesPersonTargets', 'SalesPersonTargetAPIController');
+});
