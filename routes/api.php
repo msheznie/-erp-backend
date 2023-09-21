@@ -464,24 +464,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::resource('expense_claim_categories_masters', 'ExpenseClaimCategoriesMasterAPIController');
 
-            Route::resource('logistic_details', 'LogisticDetailsAPIController');
-            Route::get('getItemsByLogistic', 'LogisticDetailsAPIController@getItemsByLogistic');
-
-            Route::get('getPurchaseOrdersForLogistic', 'LogisticDetailsAPIController@getPurchaseOrdersForLogistic');
-            Route::get('getGrvByPOForLogistic', 'LogisticDetailsAPIController@getGrvByPOForLogistic');
-            Route::get('getGrvDetailsByGrvForLogistic', 'LogisticDetailsAPIController@getGrvDetailsByGrvForLogistic');
-            Route::post('addLogisticDetails', 'LogisticDetailsAPIController@addLogisticDetails');
-
-            Route::resource('logistics', 'LogisticAPIController');
-            Route::get('getLogisticFormData', 'LogisticAPIController@getLogisticFormData');
-            Route::get('getStatusByLogistic', 'LogisticAPIController@getStatusByLogistic');
-            Route::get('checkPullFromGrv', 'LogisticAPIController@checkPullFromGrv');
-            Route::get('getLogisticAudit', 'LogisticAPIController@getLogisticAudit');
-            Route::post('getAllLogisticByCompany', 'LogisticAPIController@getAllLogisticByCompany');
-            Route::post('exportLogisticsByCompanyReport', 'LogisticAPIController@exportLogisticsByCompanyReport');
             Route::resource('logistic_mode_of_imports', 'LogisticModeOfImportAPIController');
             Route::resource('logistic_shipping_modes', 'LogisticShippingModeAPIController');
-            Route::resource('logistic_shipping_statuses', 'LogisticShippingStatusAPIController');
             Route::resource('logistic_statuses', 'LogisticStatusAPIController');
 
             Route::post('getSupplierInvoiceAmend', 'BookInvSuppMasterAPIController@getSupplierInvoiceAmend');

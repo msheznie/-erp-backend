@@ -128,5 +128,4 @@ Route::group([], function () {
     Route::get('getSalesPersonTargetDetails', 'SalesPersonTargetAPIController@getSalesPersonTargetDetails')->name("Get sales person target details");
     Route::get('checkSalesPersonLastTarget', 'SalesPersonTargetAPIController@checkSalesPersonLastTarget')->name("Check sales person last target");
     Route::resource('salesPersonTargets', 'SalesPersonTargetAPIController');
-
 });

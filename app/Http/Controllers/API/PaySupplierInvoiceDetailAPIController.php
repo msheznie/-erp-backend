@@ -525,6 +525,8 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             /** @var PaySupplierInvoiceDetail $paySupplierInvoiceDetail */
             $paySupplierInvoiceDetailDelete = $this->paySupplierInvoiceDetailRepository->findWithoutFail($id);
             $paySupplierInvoiceDetail = $this->paySupplierInvoiceDetailRepository->findWithoutFail($id);
+            $payMaster = PaySupplierInvoiceMaster::find($paySupplierInvoiceDetail->PayMasterAutoId);
+
             if (empty($paySupplierInvoiceDetail)) {
                 return $this->sendError('Pay Supplier Invoice Detail not found');
             }
@@ -662,7 +664,6 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                 $totalPaidAmount = ($machAmount * -1);
             }
 
-            
 
             if (isset($payMaster) &&  $payMaster->invoiceType == 6 || isset($payMaster) &&  $payMaster->invoiceType == 7) {
                 if ($paySupplierInvoiceDetail->addedDocumentSystemID == 11) {
@@ -693,8 +694,6 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                 }
             } else {
                 if ($paySupplierInvoiceDetail->addedDocumentSystemID == 11) {
-                    
-
                     if($user_type == 2)
                     {
                           if ($totalPaidAmount == 0) {
