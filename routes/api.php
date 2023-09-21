@@ -209,9 +209,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::post('updateSegmentMaster', 'SegmentMasterAPIController@updateSegmentMaster');
 
-            Route::post('getAllCustomersByCompany', 'CustomerAssignedAPIController@getAllCustomersByCompany');
-
-
             //confirmation
             Route::post('confirmDocument', 'PurchaseRequestAPIController@confirmDocument');
 

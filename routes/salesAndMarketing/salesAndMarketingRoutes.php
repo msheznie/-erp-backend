@@ -108,3 +108,12 @@ Route::group([], function () {
     Route::resource('sales_return_details', 'SalesReturnDetailAPIController');
 
 });
+
+//Masters
+
+//Customer Master
+Route::group([], function () { 
+
+    Route::post('getAllCustomersByCompany', 'CustomerAssignedAPIController@getAllCustomersByCompany')->name("Get all customers by company");
+
+});
