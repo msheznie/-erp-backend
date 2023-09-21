@@ -143,7 +143,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::resource('finance_item_category_masters', 'FinanceItemCategoryMasterAPIController');
 
-            Route::resource('reasonCodeMasters', 'ReasonCodeMasterAPIController');
             Route::post('getAllReasonCodeMaster', 'ReasonCodeMasterAPIController@getAllReasonCodeMaster');
             Route::post('updateReasonCodeMaster', 'ReasonCodeMasterAPIController@update');
             Route::get('getAllGLCodesForReasonMaster', 'ReasonCodeMasterAPIController@getAllGLCodes');
@@ -1073,17 +1072,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::post('assetCostingRemove', 'FixedAssetMasterAPIController@assetCostingRemove');
 
-
-            Route::resource('sales_returns', 'SalesReturnAPIController');
-            Route::post('getAllSalesReturn', 'SalesReturnAPIController@getAllSalesReturn');
-            Route::post('storeReturnDetailFromSIDO', 'SalesReturnAPIController@storeReturnDetailFromSIDO');
-            Route::get('deliveryNoteForForSR', 'SalesReturnAPIController@deliveryNoteForForSR');
-            Route::get('getSalesInvoiceDeliveryOrderDetail', 'SalesReturnAPIController@getSalesInvoiceDeliveryOrderDetail');
-            Route::get('salesReturnAudit', 'SalesReturnAPIController@salesReturnAudit');
-            Route::resource('sales_return_details', 'SalesReturnDetailAPIController');
-
-            Route::post('salesReturnReopen', 'SalesReturnAPIController@salesReturnReopen');
-            Route::post('getSalesReturnAmend', 'SalesReturnAPIController@getSalesReturnAmend');
             Route::post('approveSalesReturn', 'SalesReturnAPIController@approveSalesReturn');
             Route::post('getSalesReturnDetailsForSI', 'SalesReturnAPIController@getSalesReturnDetailsForSI');
 
