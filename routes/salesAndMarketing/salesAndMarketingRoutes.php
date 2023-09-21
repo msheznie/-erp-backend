@@ -92,3 +92,40 @@ Route::group([], function () {
     Route::get('getSalesQuoatationDetailForDO', 'DeliveryOrderAPIController@getSalesQuoatationDetailForDO')->name("Get sales quotation detail for delivery order");
 
 });
+
+//Sales Return
+Route::group([], function () { 
+
+    Route::post('getAllSalesReturn', 'SalesReturnAPIController@getAllSalesReturn')->name("Get all sales return");
+    Route::resource('sales_returns', 'SalesReturnAPIController');
+    Route::resource('reasonCodeMasters', 'ReasonCodeMasterAPIController');
+    Route::get('salesReturnAudit', 'SalesReturnAPIController@salesReturnAudit')->name("Sales return audit");
+    Route::post('salesReturnReopen', 'SalesReturnAPIController@salesReturnReopen')->name("Sales return reopen");
+    Route::post('getSalesReturnAmend', 'SalesReturnAPIController@getSalesReturnAmend')->name("Get sales return amend");
+    Route::get('deliveryNoteForForSR', 'SalesReturnAPIController@deliveryNoteForForSR')->name("Delivery note for sales return");
+    Route::get('getSalesInvoiceDeliveryOrderDetail', 'SalesReturnAPIController@getSalesInvoiceDeliveryOrderDetail')->name("Get sales invoice delivery order detail");
+    Route::post('storeReturnDetailFromSIDO', 'SalesReturnAPIController@storeReturnDetailFromSIDO')->name("Store return detail from sales invoice delivery order");
+    Route::resource('sales_return_details', 'SalesReturnDetailAPIController');
+
+});
+
+//Masters
+
+//Customer Master
+Route::group([], function () { 
+
+    Route::post('getAllCustomersByCompany', 'CustomerAssignedAPIController@getAllCustomersByCompany')->name("Get all customers by company");
+
+});
+
+//Sales Person
+Route::group([], function () { 
+
+    Route::post('getAllSalesPersons', 'SalesPersonMasterAPIController@getAllSalesPersons')->name("Get all sales persons");
+    Route::get('getSalesPersonFormData', 'SalesPersonMasterAPIController@getSalesPersonFormData')->name("Get sales person form data");
+    Route::resource('salesPersonMasters', 'SalesPersonMasterAPIController');
+    Route::resource('employeeMasterCRUD', 'EmployeeAPIController');
+    Route::get('getSalesPersonTargetDetails', 'SalesPersonTargetAPIController@getSalesPersonTargetDetails')->name("Get sales person target details");
+    Route::get('checkSalesPersonLastTarget', 'SalesPersonTargetAPIController@checkSalesPersonLastTarget')->name("Check sales person last target");
+    Route::resource('salesPersonTargets', 'SalesPersonTargetAPIController');
+});
