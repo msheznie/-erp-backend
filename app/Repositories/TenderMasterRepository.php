@@ -176,11 +176,13 @@ class TenderMasterRepository extends BaseRepository
     {
         $purchaseRequestID = $request->input('purchaseRequestID');
         $tender_id = $request->input('tenderId');
+        $main_work_id = $request->input('main_work_id');
 
         $purchaseRequestIDToCheck = $purchaseRequestID;
 
         $result = TenderBoqItems::where('tender_id', $tender_id)
             ->whereRaw("FIND_IN_SET('$purchaseRequestIDToCheck', purchase_request_id) > 0")
+            ->where('main_work_id', $main_work_id)
             ->first();
 
         if ($result) {
