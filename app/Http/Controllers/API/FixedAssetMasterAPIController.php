@@ -490,6 +490,44 @@ class FixedAssetMasterAPIController extends AppBaseController
             }
         }
 
+        if(isset($input['COSTUNIT']) && $input['COSTUNIT'] > 0 ){
+            if(isset($input['costUnitRpt']) && $input['costUnitRpt'] <= 0 ){
+                return $this->sendError('Unit Price(Rpt) can’t be Zero when Unit Price(Local) has a value',500);
+            }
+        }
+
+        if(isset($input['accumulated_depreciation_amount_lcl']) && $input['accumulated_depreciation_amount_lcl'] > 0){
+            if(isset($input['accumulated_depreciation_amount_rpt']) && $input['accumulated_depreciation_amount_rpt'] <= 0 ){
+                return $this->sendError('Acc. Depreciation(Rpt) can’t be Zero when Acc. Depreciation (Local) has a value',500);
+            }
+        }
+
+        if(isset($input['salvage_value']) && $input['salvage_value'] > 0){
+            if(isset($input['salvage_value_rpt']) && $input['salvage_value_rpt'] <= 0 ){
+                return $this->sendError('Residual Value(Rpt) can’t be Zero when Residual Value(Local) has a value',500);
+            }
+        }
+
+
+        if(isset($input['costUnitRpt']) && $input['costUnitRpt'] > 0 ){
+            if(isset($input['COSTUNIT']) && $input['COSTUNIT'] <= 0 ){
+                return $this->sendError('Unit Price(Local) can’t be Zero when Unit Price(Rpt) has a value',500);
+            }
+        }
+
+        if(isset($input['accumulated_depreciation_amount_rpt']) && $input['accumulated_depreciation_amount_rpt'] > 0){
+            if(isset($input['accumulated_depreciation_amount_lcl']) && $input['accumulated_depreciation_amount_lcl'] <= 0 ){
+                return $this->sendError('Acc. Depreciation(Local) can’t be Zero when Acc. Depreciation (Rpt) has a value',500);
+            }
+        }
+
+        if(isset($input['salvage_value_rpt']) && $input['salvage_value_rpt'] > 0){
+            if(isset($input['salvage_value']) && $input['salvage_value'] <= 0 ){
+                return $this->sendError('Residual Value(Local) can’t be Zero when Residual Value(Rpt) has a value',500);
+            }
+        }
+
+        
         DB::beginTransaction();
         try {
             $messages = [
@@ -946,19 +984,45 @@ class FixedAssetMasterAPIController extends AppBaseController
             }
 
 
+            if(isset($input['COSTUNIT']) && $input['COSTUNIT'] > 0 ){
+                if(isset($input['costUnitRpt']) && $input['costUnitRpt'] <= 0 ){
+                    return $this->sendError('Unit Price(Rpt) can’t be Zero when Unit Price(Local) has a value',500);
+                }
+            }
+
+            if(isset($input['accumulated_depreciation_amount_lcl']) && $input['accumulated_depreciation_amount_lcl'] > 0){
+                if(isset($input['accumulated_depreciation_amount_rpt']) && $input['accumulated_depreciation_amount_rpt'] <= 0 ){
+                    return $this->sendError('Acc. Depreciation(Rpt) can’t be Zero when Acc. Depreciation (Local) has a value',500);
+                }
+            }
+
+            if(isset($input['salvage_value']) && $input['salvage_value'] > 0){
+                if(isset($input['salvage_value_rpt']) && $input['salvage_value_rpt'] <= 0 ){
+                    return $this->sendError('Residual Value(Rpt) can’t be Zero when Residual Value(Local) has a value',500);
+                }
+            }
+
+
+            if(isset($input['costUnitRpt']) && $input['costUnitRpt'] > 0 ){
+                if(isset($input['COSTUNIT']) && $input['COSTUNIT'] <= 0 ){
+                    return $this->sendError('Unit Price(Local) can’t be Zero when Unit Price(Rpt) has a value',500);
+                }
+            }
+
+            if(isset($input['accumulated_depreciation_amount_rpt']) && $input['accumulated_depreciation_amount_rpt'] > 0){
+                if(isset($input['accumulated_depreciation_amount_lcl']) && $input['accumulated_depreciation_amount_lcl'] <= 0 ){
+                    return $this->sendError('Acc. Depreciation(Local) can’t be Zero when Acc. Depreciation (Rpt) has a value',500);
+                }
+            }
+
+            if(isset($input['salvage_value_rpt']) && $input['salvage_value_rpt'] > 0){
+                if(isset($input['salvage_value']) && $input['salvage_value'] <= 0 ){
+                    return $this->sendError('Residual Value(Local) can’t be Zero when Residual Value(Rpt) has a value',500);
+                }
+            }
+
+
             if ($fixedAssetMaster->confirmedYN == 0 && $input['confirmedYN'] == 1) {
-
-                if($input['COSTUNIT'] > 0 ){
-                    if($input['costUnitRpt'] <= 0 ){
-                        return $this->sendError('Unit Price(Rpt) can’t be Zero when Unit Price(Local) has a value',500);
-                    }
-                }
-
-                if($input['accumulated_depreciation_amount_lcl'] > 0){
-                    if($input['accumulated_depreciation_amount_rpt'] <= 0 ){
-                        return $this->sendError('Acc. Depreciation(Rpt) can’t be Zero when Acc. Depreciation (Local) has a value',500);
-                    }
-                }
 
                 $params = array('autoID' => $id, 'company' => $fixedAssetMaster->companySystemID, 'document' => $fixedAssetMaster->documentSystemID, 'segment' => '', 'category' => '', 'amount' => 0);
                 $confirm = \Helper::confirmDocument($params);
