@@ -13,6 +13,7 @@ use App\Models\PricingScheduleMaster;
 use App\Models\ScheduleBidFormatDetails;
 use App\Models\TenderBidNegotiation;
 use App\Models\TenderMaster;
+use App\Models\TenderNegotiationArea;
 use App\Repositories\BidSubmissionMasterRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -445,15 +446,11 @@ class BidSubmissionMasterAPIController extends AppBaseController
 
         if ($tenderBidNegotiations->count() > 0) {
             $bidSubmissionMasterIds = $tenderBidNegotiations->pluck('bid_submission_master_id_new')->toArray();
-            Log::info(['$tenderBidNegotiations', $bidSubmissionMasterIds]);
         } else {
-            // Handle the case when no records are found
             $bidSubmissionMasterIds = [];
-            Log::info('No records found for the given tenderId');
         }
 
-
-        $query = BidSubmissionMaster::with(['tender:id,document_type','SupplierRegistrationLink','bidSubmissionDetail' => function($query){
+        $query = BidSubmissionMaster::with(['tender:id,document_type','SupplierRegistrationLink', 'TenderBidNegotiation.tender_negotiation_area','bidSubmissionDetail' => function($query){
                 $query->whereHas('srm_evaluation_criteria_details.evaluation_criteria_type', function ($query) {
                     $query->where('id', 1);
                 });
