@@ -1070,24 +1070,16 @@ class DocumentAttachmentsAPIController extends AppBaseController
         }
         $sort = 'asc';
         $id = $request['id'];
+
+        if($this->getOldBidSubmissonCode($id) != null){
+            $id = $this->getOldBidSubmissonCode($id);
+        }
+
         $tenderId = $request['tenderId'];
         $documentType = TenderMaster::select('document_type')->where('id',$tenderId)->first();
 
         $documentSystemId = $documentType->document_type == 0 ? 108:113;
 
-        $supplierTenderNegotiationsId = TenderBidNegotiation::where('bid_submission_master_id_new', $input['id'])
-            ->select('tender_id', 'bid_submission_master_id_old', 'tender_negotiation_id')
-            ->first();
-
-        if(isset($supplierTenderNegotiationsId)){
-            $TenderNegotiationArea = TenderNegotiationArea::select('tender_documents')
-                ->where('tender_negotiation_id', $supplierTenderNegotiationsId
-                ->tender_negotiation_id)->first();
-            if($TenderNegotiationArea->tender_documents == 0){
-                $id = $supplierTenderNegotiationsId->bid_submission_master_id_old;
-            }
-        }
-        
         $query = DocumentAttachments::with('bid_verify')->where('documentSystemCode', $id)->where('documentSystemID', $documentSystemId)->where('attachmentType',0)->where('envelopType',3);
 
        // return $this->sendResponse($query, 'Tender Masters retrieved successfully');
@@ -1251,19 +1243,10 @@ class DocumentAttachmentsAPIController extends AppBaseController
             $input = $request->all();
             $details = $input['extraParams'];
             $tender_id = $details['tenderId'];
-            $id = $details['id'];
+            $id = $request['id'];
 
-            $supplierTenderNegotiationsId = TenderBidNegotiation::where('bid_submission_master_id_new', $id)
-                ->select('tender_id', 'bid_submission_master_id_old', 'tender_negotiation_id')
-                ->first();
-
-            if(isset($supplierTenderNegotiationsId)){
-                $TenderNegotiationArea = TenderNegotiationArea::select('tender_documents')
-                    ->where('tender_negotiation_id', $supplierTenderNegotiationsId
-                        ->tender_negotiation_id)->first();
-                if($TenderNegotiationArea->tender_documents == 0){
-                    $id = $supplierTenderNegotiationsId->bid_submission_master_id_old;
-                }
+            if($this->getOldBidSubmissonCode($id) != null){
+                $id = $this->getOldBidSubmissonCode($id);
             }
 
             DB::beginTransaction();
@@ -1292,5 +1275,23 @@ class DocumentAttachmentsAPIController extends AppBaseController
         }
 
 
+        private function getOldBidSubmissonCode($id){
+            $supplierTenderNegotiationsId = TenderBidNegotiation::select('bid_submission_master_id_old')->where('bid_submission_master_id_new', $id)
+                ->select('tender_id', 'bid_submission_master_id_old', 'tender_negotiation_id')
+                ->first();
+
+            if(isset($supplierTenderNegotiationsId)){
+                $TenderNegotiationArea = TenderNegotiationArea::select('tender_documents')
+                    ->where('tender_negotiation_id', $supplierTenderNegotiationsId
+                        ->tender_negotiation_id)->first();
+                if($TenderNegotiationArea->tender_documents == 0){
+                    $id = $supplierTenderNegotiationsId->bid_submission_master_id_old;
+                }
+
+                return $id;
+            }
+
+            return null;
+        }
 
 }
