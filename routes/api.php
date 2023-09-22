@@ -1030,7 +1030,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('ci_item_details_refferedbacks', 'CustomerInvoiceItemDetailsRefferedbackAPIController');
 
             Route::post('generateSalesMarketReportSoldQty', 'SalesMarketingReportAPIController@generateSoldQty');
-            Route::get('getSalesAnalysisFilterData', 'SalesMarketingReportAPIController@getSalesAnalysisFilterData');
 
             Route::post('assetCostingRemove', 'FixedAssetMasterAPIController@assetCostingRemove');
 
