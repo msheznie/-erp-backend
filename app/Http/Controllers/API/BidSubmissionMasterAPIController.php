@@ -773,23 +773,33 @@ class BidSubmissionMasterAPIController extends AppBaseController
     public function BidSummaryExportReport(Request $request)
     {
         $tenderId = $request->get('id');
+        $isNegotiation = $request->get('isNegotiation');
         $documentTypeInfo = TenderMaster::select('document_type')->where('id',$tenderId)->first();
 
         $documentType = $documentTypeInfo->document_type;
         $documentSystemID = $documentType==0?108:113;
 
-        $bidData = TenderMaster::with(['srm_bid_submission_master' => function($query) use($tenderId){
+        $tenderBidNegotiations = TenderBidNegotiation::select('bid_submission_master_id_new')
+            ->where('tender_id', $tenderId)
+            ->get();
+
+        $bidData = TenderMaster::with(['srm_bid_submission_master' => function($query) use($tenderId, $isNegotiation, $tenderBidNegotiations){
             $query->where('status', 1);
+            if ($tenderBidNegotiations->count() > 0) {
+                $bidSubmissionMasterIds = $tenderBidNegotiations->pluck('bid_submission_master_id_new')->toArray();
+
+                if ($isNegotiation == 1) {
+                    $query->whereIn('id', $bidSubmissionMasterIds);
+                } else {
+                    $query->whereNotIn('id', $bidSubmissionMasterIds);
+                }
+            }
         }, 'srm_bid_submission_master.SupplierRegistrationLink', 'srm_bid_submission_master.BidDocumentVerification',
             'DocumentAttachments' => function($query) use($tenderId,$documentSystemID){
             $query->with(['bid_verify'])->where('documentSystemCode', $tenderId)->where('documentSystemID', $documentSystemID)
                 ->where('attachmentType', 2)->where('envelopType',3);
         }])->where('id', $tenderId)
             ->get();
-
-         
-
-
 
         $resultTable = BidSubmissionMaster::select('id')->where('tender_id', $tenderId)
             ->where('status', 1)
@@ -814,7 +824,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
 
         $time = strtotime("now");
         $fileName = 'Bid_Opening_Summary' . $time . '.pdf';
-        $order = array('bidData' => $bidData, 'attachments' => $arr,'count' => $count,'documentType' => $documentType);
+        $order = array('bidData' => $bidData, 'attachments' => $arr,'count' => $count,'documentType' => $documentType, 'isNegotiation' => $isNegotiation);
         $html = view('print.bid_summary_print', $order);
         $pdf = \App::make('dompdf.wrapper');
         $pdf->loadHTML($html);
