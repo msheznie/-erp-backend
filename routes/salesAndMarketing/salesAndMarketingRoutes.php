@@ -143,3 +143,13 @@ Route::group([], function () {
     Route::post('exportSalesMarketReport', 'SalesMarketingReportAPIController@exportReport')->name("Export sales market report");
 
 });
+
+//Sales Order To Receipt Report
+Route::group([], function () { 
+
+    Route::get('reportSoToReceiptFilterOptions', 'SalesMarketingReportAPIController@reportSoToReceiptFilterOptions')->name("Report sales order to receipt filter options");
+    Route::get('getCompanyReportingCurrencyCode', 'CurrencyMasterAPIController@getCompanyReportingCurrencyCode')->name("Get company reporting currency code");
+    Route::post('reportSoToReceipt', 'SalesMarketingReportAPIController@reportSoToReceipt')->name("Report sales order to receipt");
+    Route::post('exportSoToReceiptReport', 'SalesMarketingReportAPIController@exportSoToReceiptReport')->name("Export sales order to receipt report");
+
+});
