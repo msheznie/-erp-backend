@@ -2350,9 +2350,13 @@ class SRMService
 
         if($tender_negotiation){
             $bidSubmitted = TenderBidNegotiation::select('tender_id', 'tender_negotiation_id', 'bid_submission_master_id_old', 'bid_submission_master_id_new','bid_submission_code_old', 'supplier_id')
+               ->with(['tender_negotiation_area'])
                 ->where('bid_Submission_code_old', $tender_negotiation_data[0]['supplier_tender_negotiation']['bidSubmissionCode'])
                 ->where('supplier_id', $supplierRegId)
                 ->get();
+
+            $oldBidSubmission = BidSubmissionMaster::where('bidSubmissionCode', $tender_negotiation_data[0]['supplier_tender_negotiation']['bidSubmissionCode'])->first();
+            $tenderNegotiation_records = TenderNegotiation::with(['area'])->where('srm_tender_master_id', $tender_id)->get();
         }
 
         if (!empty($bidSubmitted) && count($bidSubmitted) > 0) {
@@ -2387,6 +2391,28 @@ class SRMService
                 $att['supplier_registration_id'] = $supplierRegId;
                 $att['uuid'] = Uuid::generate()->string;
                 $att['bid_sequence'] = 1;
+
+               if($tender_negotiation && isset($tenderNegotiation_records[0]['area']['tender_documents']) && ($tenderNegotiation_records[0]['area']['tender_documents'] == 0)){
+                    $att['doc_verifiy_yn'] = $oldBidSubmission->doc_verifiy_yn;
+                    $att['doc_verifiy_by_emp'] = $oldBidSubmission->doc_verifiy_by_emp;
+                    $att['doc_verifiy_date'] = $oldBidSubmission->doc_verifiy_date;
+                    $att['doc_verifiy_status'] = $oldBidSubmission->doc_verifiy_status;
+                    $att['doc_verifiy_comment'] = $oldBidSubmission->doc_verifiy_comment;
+                }
+
+                if($tender_negotiation && isset($tenderNegotiation_records[0]['area']['pricing_schedule']) && ($tenderNegotiation_records[0]['area']['pricing_schedule'] == 0)){
+                    $att['commercial_verify_status'] = $oldBidSubmission->commercial_verify_status;
+                    $att['commercial_verify_at'] = $oldBidSubmission->commercial_verify_at;
+                    $att['commercial_verify_by'] = $oldBidSubmission->commercial_verify_by;
+                }
+
+                if($tender_negotiation && isset($tenderNegotiation_records[0]['area']['technical_evaluation']) && ($tenderNegotiation_records[0]['area']['technical_evaluation'] == 0)){
+                    $att['technical_verify_status'] = $oldBidSubmission->technical_verify_status;
+                    $att['technical_verify_at'] = $oldBidSubmission->technical_verify_at;
+                    $att['technical_verify_by'] = $oldBidSubmission->technical_verify_by;
+                    $att['technical_eval_remarks'] = $oldBidSubmission->technical_eval_remarks;
+                }
+
                 $att['created_at'] = Carbon::now();
                 $att['created_by'] = $supplierRegId;
                 $result = BidSubmissionMaster::create($att);

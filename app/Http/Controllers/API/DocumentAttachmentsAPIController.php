@@ -24,6 +24,9 @@ use App\Models\CompanyPolicyMaster;
 use App\Models\DocumentAttachments;
 use App\Models\DocumentAttachmentType;
 use App\Models\DocumentMaster;
+use App\Models\SupplierTenderNegotiation;
+use App\Models\TenderBidNegotiation;
+use App\Models\TenderNegotiationArea;
 use App\Repositories\DocumentAttachmentsRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -1071,6 +1074,19 @@ class DocumentAttachmentsAPIController extends AppBaseController
         $documentType = TenderMaster::select('document_type')->where('id',$tenderId)->first();
 
         $documentSystemId = $documentType->document_type == 0 ? 108:113;
+
+        $supplierTenderNegotiationsId = TenderBidNegotiation::where('bid_submission_master_id_new', $input['id'])
+            ->select('tender_id', 'bid_submission_master_id_old', 'tender_negotiation_id')
+            ->first();
+
+        if(isset($supplierTenderNegotiationsId)){
+            $TenderNegotiationArea = TenderNegotiationArea::select('tender_documents')
+                ->where('tender_negotiation_id', $supplierTenderNegotiationsId
+                ->tender_negotiation_id)->first();
+            if($TenderNegotiationArea->tender_documents == 0){
+                $id = $supplierTenderNegotiationsId->bid_submission_master_id_old;
+            }
+        }
         
         $query = DocumentAttachments::with('bid_verify')->where('documentSystemCode', $id)->where('documentSystemID', $documentSystemId)->where('attachmentType',0)->where('envelopType',3);
 
@@ -1177,6 +1193,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
            // $comments = $input['comments'];
             $val = $input['data']['value'];
             $verify_id = $input['verify_id'];
+
             
             DB::beginTransaction();
             try {
@@ -1235,7 +1252,20 @@ class DocumentAttachmentsAPIController extends AppBaseController
             $details = $input['extraParams'];
             $tender_id = $details['tenderId'];
             $id = $details['id'];
-      
+
+            $supplierTenderNegotiationsId = TenderBidNegotiation::where('bid_submission_master_id_new', $id)
+                ->select('tender_id', 'bid_submission_master_id_old', 'tender_negotiation_id')
+                ->first();
+
+            if(isset($supplierTenderNegotiationsId)){
+                $TenderNegotiationArea = TenderNegotiationArea::select('tender_documents')
+                    ->where('tender_negotiation_id', $supplierTenderNegotiationsId
+                        ->tender_negotiation_id)->first();
+                if($TenderNegotiationArea->tender_documents == 0){
+                    $id = $supplierTenderNegotiationsId->bid_submission_master_id_old;
+                }
+            }
+
             DB::beginTransaction();
             try {
                 

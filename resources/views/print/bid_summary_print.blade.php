@@ -87,22 +87,32 @@
     </tr>
     <tr>
         @if ($bidData[0]['stage'] == 1)
-            <td>
-                @if ($bidData[0]['stage'] == 1)
+            <td colspan="1">
+                @if ($bidData[0]['stage'] == 1 )
                     <strong>Bid Opening Date:</strong>
                 @endif
             </td>
-            <td colspan="8">
+            <td colspan="2">
                 @if ($bidData[0]['stage'] == 1) 
-                    @if ($bidData[0]['bid_opening_date'])
+                    @if ($bidData[0]['bid_opening_date'] && $isNegotiation == 0)
                             {{\Carbon\Carbon::parse($bidData[0]['bid_opening_date'])->format('d/m/Y')}}
                     @endif 
-                    @if (empty($bidData[0]['bid_opening_date']))
+                    @if (empty($bidData[0]['bid_opening_date']) || $isNegotiation == 1)
                             -
                     @endif 
                 @endif 
             </td>
         @endif
+            <td colspan="2"><strong>
+                    @if($isNegotiation == 1)
+                        Neegotiation Tender Code:
+                    @endif
+                </strong></td>
+            <td colspan="4">
+                @if ($bidData[0]['negotiation_code'] && $isNegotiation == 1)
+                    {{$bidData[0]['negotiation_code']}}
+                @endif
+            </td>
         @if ($bidData[0]['stage'] == 2)
                 <td><strong>Technical Bid Opening Date:</strong></td>
                 <td colspan="2">
