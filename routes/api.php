@@ -104,7 +104,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             });
 
             Route::get('getCompanyReportingCurrency', 'CurrencyMasterAPIController@getCompanyReportingCurrency');
-            Route::get('getCompanyReportingCurrencyCode', 'CurrencyMasterAPIController@getCompanyReportingCurrencyCode');
             Route::get('getCompanyLocalCurrencyCode', 'CurrencyMasterAPIController@getCompanyLocalCurrencyCode');
             Route::get('checkSelectedSupplierIsActive', 'SupplierAssignedAPIController@checkSelectedSupplierIsActive');
             Route::resource('users', 'UserAPIController');
@@ -1032,11 +1031,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::post('generateSalesMarketReportSoldQty', 'SalesMarketingReportAPIController@generateSoldQty');
             Route::get('getSalesAnalysisFilterData', 'SalesMarketingReportAPIController@getSalesAnalysisFilterData');
-
-            Route::post('reportSoToReceipt', 'SalesMarketingReportAPIController@reportSoToReceipt');
-            Route::post('exportSoToReceiptReport', 'SalesMarketingReportAPIController@exportSoToReceiptReport');
-            Route::get('reportSoToReceiptFilterOptions', 'SalesMarketingReportAPIController@reportSoToReceiptFilterOptions');
-
 
             Route::post('assetCostingRemove', 'FixedAssetMasterAPIController@assetCostingRemove');
 
