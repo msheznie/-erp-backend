@@ -3708,8 +3708,8 @@ srp_erp_ioubookingmaster.approvedYN = 1
                         glAccountType,
                         glAccountTypeID,
                         documentLocalCurrencyID,
-                        IF((SUM( documentLocalAmount))<0,0,(SUM(documentLocalAmount))) AS documentLocalAmountDebit,
-                        IF((SUM( documentLocalAmount))<0,(SUM(documentLocalAmount*-1)),0) AS documentLocalAmountCredit,
+                        SUM(IF(documentLocalAmount >= 0, documentLocalAmount, 0)) AS documentLocalAmountDebit,
+                        SUM(IF(documentLocalAmount < 0, -documentLocalAmount, 0)) AS documentLocalAmountCredit,
                         documentRptCurrencyID,
                         SUM(IF(documentRptAmount >= 0, documentRptAmount, 0)) AS documentRptAmountDebit,
                         SUM(IF(documentRptAmount < 0, -documentRptAmount, 0)) AS documentRptAmountCredit
