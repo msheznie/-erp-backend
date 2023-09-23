@@ -153,3 +153,10 @@ Route::group([], function () {
     Route::post('exportSoToReceiptReport', 'SalesMarketingReportAPIController@exportSoToReceiptReport')->name("Export sales order to receipt report");
 
 });
+
+//Sales Analysis Report
+Route::group([], function () { 
+
+    Route::get('getSalesAnalysisFilterData', 'SalesMarketingReportAPIController@getSalesAnalysisFilterData')->name("Get sales analysis filter data");
+
+});
