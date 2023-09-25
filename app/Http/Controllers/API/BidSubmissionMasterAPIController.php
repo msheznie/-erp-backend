@@ -672,12 +672,13 @@ class BidSubmissionMasterAPIController extends AppBaseController
         $input = $request->all();
         $details = $input['extraParams'];
         $tenderId = $details['tenderId'];
+        $isNegotiation = $details['isNegotiation'];
 
 
 
         $bid_master_ids = BidEvaluationSelection::where('tender_id',$tenderId)->pluck('bids');
         $temp = [];
-
+        $bidSubmissionMasterIds = [];
         foreach($bid_master_ids as $bid)
         {
             foreach(json_decode($bid,true) as $val)
@@ -687,11 +688,28 @@ class BidSubmissionMasterAPIController extends AppBaseController
 
         }
 
+        $tenderBidNegotiations = TenderBidNegotiation::select('bid_submission_master_id_new')
+            ->where('tender_id', $tenderId)
+            ->get();
+
+        if ($tenderBidNegotiations->count() > 0) {
+            $bidSubmissionMasterIds = $tenderBidNegotiations->pluck('bid_submission_master_id_new')->toArray();
+        } else {
+            $bidSubmissionMasterIds = [];
+        }
 
         $query = $this->bidSubmissionMasterRepository
         ->join('srm_supplier_registration_link', 'srm_bid_submission_master.supplier_registration_id', '=', 'srm_supplier_registration_link.id')
         ->select('srm_bid_submission_master.id as id','srm_bid_submission_master.bidSubmittedDatetime as submitted_date','srm_supplier_registration_link.name as supplier_name','srm_bid_submission_master.bidSubmissionCode')
-        ->where('bidSubmittedYN', 1)->where('tender_id', $tenderId)->where('doc_verifiy_status',1)->orderBy('id')->get()->toArray();
+        ->where('bidSubmittedYN', 1)->where('tender_id', $tenderId)->where('doc_verifiy_status',1);
+
+        if ($isNegotiation == 1) {
+            $query = $query->whereIn('srm_bid_submission_master.id', $bidSubmissionMasterIds);
+        } else {
+            $query = $query->whereNotIn('srm_bid_submission_master.id', $bidSubmissionMasterIds);
+        }
+
+        $query = $query->orderBy('id')->get()->toArray();
 
         foreach($query as $key=>$val)
         {
