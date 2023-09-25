@@ -16,6 +16,7 @@
  */
 namespace App\Http\Controllers\API;
 
+use App\helper\CreateExcel;
 use App\Http\Requests\API\CreateBudgetMasterAPIRequest;
 use App\Http\Requests\API\UpdateBudgetMasterAPIRequest;
 use App\Jobs\AddBudgetDetails;
@@ -61,12 +62,15 @@ use App\Traits\AuditTrial;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
- use Carbon\Carbon;
- use Carbon\CarbonPeriod;
-
+use Carbon\Carbon;
+use Carbon\CarbonPeriod;
+use PHPExcel_IOFactory;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\FormatChkExport;
 /**
  * Class BudgetMasterController
  * @package App\Http\Controllers\API
@@ -3683,6 +3687,7 @@ class BudgetMasterAPIController extends AppBaseController
 
         $purchaseRequests = PurchaseRequest::selectRaw('purchaseRequestID as documentSystemCode, documentSystemID, purchaseRequestCode as documentCode, budgetYear, comments, createdDateTime, cancelledYN, manuallyClosed, refferedBackYN, PRConfirmedYN as confirmedYN, approved, prClosedYN as closedYN, financeCategory, serviceLineSystemID, location, priority, createdUserSystemID, "" as amount, 0 as typeID, 0 as rcmActivated,"" as referenceNumber, "" as expectedDeliveryDate, "" as confirmedDate, "" as approvedDate, "" as sentToSupplier, "" as grvRecieved, "" as invoicedBooked, "" as supplierID, "" as supplierTransactionCurrencyID, "" as poType_N, 0 as selected, purchaseRequestID')
                                            ->with(['financeCategory', 'segment', 'location', 'priority','created_by', 'document_by', 'budget_transfer_addition'])
+                                           ->with(['financeCategory', 'segment', 'location', 'priority','created_by', 'document_by', 'budget_transfer_addition'])
                                            ->where('companySystemID', $input['companySystemID'])
                                            ->where('cancelledYN', 0)
                                            ->where('approved', 0)
@@ -3782,6 +3787,222 @@ class BudgetMasterAPIController extends AppBaseController
         ->make(true);
 
 
+    }
+
+    public function downloadBudgetTemplate(Request $request){
+
+        $file_type = $request->type;
+
+        $templateMasterID = $request->templateMasterID;
+        $companyFinanceYearID = $request->companyFinanceYearID;
+        $companySystemID = $request->companySystemID;
+        $sentNotificationAt = $request->sentNotificationAt;
+
+        $templateData = [
+            "companySystemID" => $companySystemID,
+            "companyFinanceYearID" => $companyFinanceYearID
+        ];
+
+        $templateName = "download_template.budget_template";
+        $fileName = 'budget_template';
+        $path = 'general-ledger/transactions/budget-template/excel/';
+
+        $company = Company::with(['reportingcurrency', 'localcurrency'])->find($companySystemID);
+
+        $segments = SegmentMaster::where('isActive', 1)->get();
+
+        $glCOdes = ReportTemplateDetails::with(['gllink' => function ($query) use ($templateData) {
+            $query->whereHas('items', function($query) use ($templateData) {
+                $query->where('companySystemID', $templateData['companySystemID'])
+                    ->where('companyFinanceYearID', $templateData['companyFinanceYearID']);
+            })
+                ->orderBy('sortOrder');
+        }])
+            ->whereHas('gllink',function ($query) use ($templateData) {
+                $query->whereHas('items', function($query) use ($templateData) {
+                    $query->where('companySystemID', $templateData['companySystemID'])
+                        ->where('companyFinanceYearID', $templateData['companyFinanceYearID']);
+                });
+            })
+            ->where('companyReportTemplateID', $templateMasterID)
+            ->orderBy('sortOrder')
+            ->get();
+
+
+        foreach ($glCOdes as $key => $value) {
+            $value->sortOrderOfTopLevel = \Helper::headerCategoryOfReportTemplate($value->detID)['sortOrder'];
+        }
+
+        $glCOdesSorted = collect($glCOdes)->sortBy('sortOrderOfTopLevel');
+
+        $templateMaster = ReportTemplate::find($templateMasterID);
+        $financeYearMaster = CompanyFinanceYear::find($companyFinanceYearID);
+
+        $companyCode = isset($company->CompanyID) ? $company->CompanyID: null;
+
+        $beginDate = $financeYearMaster->bigginingDate;
+        $beginDate = date('d/m/Y', strtotime($beginDate));
+
+        $endDate = $financeYearMaster->endingDate;
+        $endDate = date('d/m/Y', strtotime($endDate));
+
+        $output = array(
+            'segments' => $segments,
+            'company' => $company,
+            'templateDetails' => $glCOdesSorted->values()->all(),
+            'sentNotificationAt' => $sentNotificationAt,
+            'templateMaster' => $templateMaster,
+            'financeYearMaster' => $financeYearMaster,
+            'companyCode'=>$companyCode,
+            'beginDate' => $beginDate,
+            'endDate' => $endDate
+        );
+
+        $basePath = CreateExcel::loadView($output,$file_type,$fileName,$path,$templateName);
+
+        if($basePath == '')
+        {
+            return $this->sendError('Unable to export excel');
+        }
+        else
+        {
+            return $this->sendResponse($basePath, trans('custom.success_export'));
+        }
+    }
+
+    public function uploadBudgets(Request $request) {
+
+        $input = $request->all();
+        $excelUpload = $input['excelUploadBudget'];
+        $input = array_except($request->all(), 'excelUploadBudget');
+        $input = $this->convertArrayToValue($input);
+
+        $decodeFile = base64_decode($excelUpload[0]['file']);
+        $originalFileName = $excelUpload[0]['filename'];
+        $extension = $excelUpload[0]['filetype'];
+        $size = $excelUpload[0]['size'];
+
+        $allowedExtensions = ['xlsx','xls'];
+
+        if (!in_array($extension, $allowedExtensions))
+        {
+            return $this->sendError('This type of file not allow to upload.you can only upload .xlsx (or) .xls',500);
+        }
+
+        if ($size > 20000000) {
+            return $this->sendError('The maximum size allow to upload is 20 MB',500);
+        }
+
+        $disk = 'local';
+
+
+        Storage::disk($disk)->put($originalFileName, $decodeFile);
+
+
+        $objPHPExcel = PHPExcel_IOFactory::load(Storage::disk($disk)->path($originalFileName));
+
+        $worksheet = $objPHPExcel->getActiveSheet();
+
+        $header = $worksheet->toArray();
+
+        $templateName = $header[0][1];
+        $financialYear = $header[0][3];
+        $currency = $header[1][1];
+        $notification = $header[1][3];
+        $segments = $header[6];
+        $segments = array_slice($segments, 4);
+
+        $dates = explode(" - ", $financialYear);
+
+        $startDate = $dates[0];
+        $endDate = $dates[1];
+
+        list($day, $month, $year) = explode("/", $startDate);
+        $mysqlFormattedStartDate = "{$year}-{$month}-{$day}";
+
+        list($day, $month, $year) = explode("/", $endDate);
+        $mysqlFormattedEndDate = "{$year}-{$month}-{$day}";
+
+        list($startMonth, $startDay, $startYear) = explode("/", $startDate);
+
+        $year = $startYear;
+        $month = $startMonth;
+
+        $template = ReportTemplate::where('description', $templateName)->first();
+
+        $worksheet->removeRow(1, 6);
+
+        $data = $worksheet->toArray();
+
+        $data = array_filter(collect($data)->toArray());
+
+        $keys = $data[0];
+
+        array_shift($data);
+
+        $result = [];
+
+        foreach ($data as $row) {
+            $rowAssoc = array_combine($keys, $row);
+            $result[] = $rowAssoc;
+        }
+
+        $financeYear = CompanyFinanceYear::where('companySystemID', $template->companySystemID)->where('bigginingDate', "<=", $mysqlFormattedStartDate)->where('endingDate', ">=", $mysqlFormattedEndDate)->first();
+        $employee = \Helper::getEmployeeInfo();
+
+        foreach ($segments as $segment) {
+
+            $segmentMaster = SegmentMaster::where('ServiceLineDes', $segment)->first();
+              $budgetArray = array(
+                'documentSystemID' => 65,
+                'companySystemID' => $template->companySystemID,
+                'companyID' => $template->companyID,
+                'companyFinanceYearID' => $financeYear->companyFinanceYearID,
+                'serviceLineSystemID' => $segmentMaster->serviceLineSystemID,
+                'serviceLineCode' => $segmentMaster->ServiceLineCode,
+                'templateMasterID' => $template->companyReportTemplateID,
+                'Year' => $year,
+                'month' => $month,
+                'generateStatus' => 100,
+                'createdByUserSystemID' => $employee->employeeSystemID,
+                'createdByUserID' => $employee->empID,
+                'createdDateTime' => \Helper::currentDateTime(),
+                'sentNotificationAt' => $notification,
+                'cutOffPeriod' => 3
+              );
+
+            $budget = BudgetMaster::create($budgetArray);
+
+        foreach ($result as $value) {
+
+            $budgetDetailsArray = array(
+                'budgetmasterID' => $budget->budgetmasterID,
+                'companySystemID' => $budget->companySystemID,
+                'companyId' => $budget->companyId,
+                'companyFinanceYearID' => $budget->companyFinanceYearID,
+                'serviceLineSystemID' => $budget->serviceLineSystemID,
+                'serviceLine' => $budget->serviceLine,
+                'templateDetailID' => $budget->templateDetailID,
+                'chartOfAccountID' => $budget->chartOfAccountID,
+                'glCode' => $budget->glCode,
+                'glCodeType' => $budget->glCodeType,
+                'Year' => $budget->Year,
+                'month' => $budget->month,
+                'budjetAmtLocal' => $budget->budjetAmtLocal,
+                'budjetAmtRpt' => $value->segmentDes,
+                'createdByUserSystemID' => $budget->createdByUserSystemID,
+                'createdByUserID' => $budget->createdByUserID,
+                'modifiedByUserSystemID' => $budget->modifiedByUserSystemID,
+                'modifiedByUserID' => $budget->modifiedByUserID,
+                'createdDateTime' => $budget->createdDateTime,
+                'timestamp' => $budget->timestamp
+            );
+
+            $budgetDetails = Budjetdetails::create($budgetDetailsArray);
+        }
+    }
+
+        return $this->sendResponse([$result,$segments], 'Budget upload successfully');
     }
 
     public function budgetReferBack(Request $request)

@@ -71,6 +71,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             require __DIR__.'/../routes/sourcingManagement/sourcingManagementRoutes.php';
             require __DIR__.'/../routes/logistics/logisticsRoutes.php';
 
+            Route::post('downloadBudgetTemplate', 'BudgetMasterAPIController@downloadBudgetTemplate')->name("Download Budget Template");
+            Route::post('uploadBudgets', 'BudgetMasterAPIController@uploadBudgets')->name("Upload Budgets");
+
+
             Route::post('getAllEmployees', 'EmployeeAPIController@getAllEmployees');
 
             Route::resource('employeeMasterCRUD', 'EmployeeAPIController');
