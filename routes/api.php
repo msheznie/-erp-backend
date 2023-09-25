@@ -445,8 +445,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('port_masters', 'PortMasterAPIController');
             Route::resource('delivery_terms_masters', 'DeliveryTermsMasterAPIController');
 
-            Route::get('getFilteredGRV', 'GRVMasterAPIController@getFilteredGRV')->name("Get Filtered GRV");
-
             Route::post('approveSupplierInvoice', 'BookInvSuppMasterAPIController@approveSupplierInvoice');
 
             Route::resource('expense_claims', 'ExpenseClaimAPIController');
@@ -638,8 +636,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('salary_process_employment_types', 'SalaryProcessEmploymentTypesAPIController');
             Route::get('getAssetCostingViewByFaID/{id}', 'FixedAssetMasterAPIController@getAssetCostingViewByFaID');
             Route::get('downloadPrItemUploadTemplate', 'PurchaseRequestAPIController@downloadPrItemUploadTemplate');
-            
-            Route::get('downloadQuotationItemUploadTemplate','QuotationMasterAPIController@downloadQuotationItemUploadTemplate');
 
             Route::resource('hrms_chart_of_accounts', 'HRMSChartOfAccountsAPIController');
             Route::resource('hrms_department_masters', 'HRMSDepartmentMasterAPIController');
@@ -666,10 +662,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('getCapitalizationLinkedDocument', 'AssetCapitalizationAPIController@getCapitalizationLinkedDocument');
             Route::get('getCNDetailAmendHistory', 'CreditNoteDetailsRefferdbackAPIController@getCNDetailAmendHistory');
 
-            Route::resource('customerInvoiceRefferedbacksCRUD', 'CustomerInvoiceDirectRefferedbackAPIController');
             Route::resource('customerInvoiceDetRefferedbacks', 'CustomerInvoiceDirectDetRefferedbackAPIController');
-            Route::post('getCIMasterAmendHistory', 'CustomerInvoiceDirectRefferedbackAPIController@getCIMasterAmendHistory');
-            Route::get('getCIDetailsForAmendHistory', 'CustomerInvoiceDirectDetRefferedbackAPIController@getCIDetailsForAmendHistory');
 
             Route::resource('supplier_category_icv_subs', 'SupplierCategoryICVSubAPIController');
             Route::resource('supplier_category_icv_masters', 'SupplierCategoryICVMasterAPIController');
@@ -750,9 +743,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
       
             Route::resource('docEmailNotificationMasters', 'DocumentEmailNotificationMasterAPIController');
 
-            Route::post('getOrderDetailsForSQ', 'QuotationMasterAPIController@getOrderDetailsForSQ');
-            Route::post('checkItemExists','QuotationMasterAPIController@checkItemExists');
-
             Route::resource('gposInvoices', 'GposInvoiceAPIController');
             Route::get('getInvoiceDetails', 'GposInvoiceAPIController@getInvoiceDetails');
             Route::post('getInvoicesByShift', 'GposInvoiceAPIController@getInvoicesByShift');
@@ -762,7 +752,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('quotationVersionDetails', 'QuotationVersionDetailsAPIController');
 
             Route::resource('quotationDetailsRefferedbacks', 'QuotationDetailsRefferedbackAPIController');
-            Route::get('getSQHDetailsHistory', 'QuotationDetailsRefferedbackAPIController@getSQHDetailsHistory');
            
             Route::get('printInvoice', 'GposInvoiceAPIController@printInvoice');
 
@@ -929,10 +918,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
 
             Route::post('saveDeliveryOrderTaxDetails', 'DeliveryOrderDetailAPIController@saveDeliveryOrderTaxDetail')->name("Save Delivery Order Tax Detail");
-
-            Route::post('cancelQuatation', 'QuotationMasterAPIController@cancelQuatation');
-            Route::post('closeQuatation', 'QuotationMasterAPIController@closeQuatation');
-            
             
             Route::get('downloadQuotationItemUploadTemplate', 'QuotationMasterAPIController@downloadQuotationItemUploadTemplate');
 
@@ -1013,10 +998,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('custom_user_report_columns', 'CustomUserReportColumnsAPIController');
             Route::resource('custom_filters_columns', 'CustomFiltersColumnAPIController');
             Route::resource('custom_user_report_summarizes', 'CustomUserReportSummarizeAPIController');
-
-
-            Route::get('salesQuotationForCustomerInvoice','QuotationMasterAPIController@salesQuotationForCustomerInvoice')->name("Sales Quotation For Customer Invoice");
-            Route::get('getSalesQuotationDetailForInvoice','QuotationDetailsAPIController@getSalesQuotationDetailForInvoice')->name("Get Sales Quotation Detail For Invoice");
 
             Route::get('getSalesQuotationRecord','QuotationMasterAPIController@getSalesQuotationRecord')->name("Get Sales Quotation Record");
 
