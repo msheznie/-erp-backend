@@ -364,14 +364,19 @@ class TenderFinalBidsAPIController extends AppBaseController
         try {
             $inputs = $request->all();
             $tenderId = $inputs['tenderMasterId']; 
-            $comment = $inputs['comment']; 
+            $isNegotiation = $inputs['isNegotiation'];
+            $comment = $inputs['comment'];
             $id = $inputs['id'][0]; 
-            
-         
+
             TenderFinalBids::where('id',$id)->update(['award'=>true]);
-            TenderMaster::where('id',$tenderId)->update(['is_awarded'=>true,'award_comment'=>$comment]);
-       
-      
+
+            if($isNegotiation == 0) {
+                $update = ['is_awarded'=>true,'award_comment'=>$comment];
+            } else if($isNegotiation == 1) {
+                $update = ['negotiation_is_awarded'=>true,'negotiation_award_comment'=>$comment];
+            }
+
+            TenderMaster::where('id',$tenderId)->update($update);
 
             DB::commit();
             return ['success' => true, 'message' => 'Successfully updated', 'data' => true];
