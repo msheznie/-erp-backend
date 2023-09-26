@@ -23,7 +23,10 @@ use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
-
+use App\Models\SupplierAssigned;
+use App\Models\SupplierCurrency;
+use App\Models\SupplierMaster;
+use App\Models\BankAccount;
 /**
  * Class AdvancePaymentDetailsController
  * @package App\Http\Controllers\API
@@ -275,7 +278,9 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
                     return $this->sendError(trans('custom.payment_amount_cannot_be_greater_than_requested_amount'), 500, ['type' => 'amountmismatch']);
                 }
             }
-      
+            
+            $paySupplierInvoiceMaster = $this->updatePVHeader($payMaster, $payMaster->companySystemID,$input["PayMasterAutoId"]);
+
            
             $conversion = \Helper::convertAmountToLocalRpt(201, $id, $input["paymentAmount"]);
             $input['supplierDefaultAmount'] = $conversion['defaultAmount'];
@@ -284,6 +289,9 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
             $input['supplierTransAmount'] = $input["paymentAmount"];
 
             $advancePaymentDetails = $this->advancePaymentDetailsRepository->update($input, $id);
+
+
+            $this->updatePVDetail($paySupplierInvoiceMaster,$input['PayMasterAutoId']);
 
             if(isset($advancePayment))
             {
@@ -732,9 +740,13 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
                     unset($tempArray['poTotalSupplierTransactionCurrency']);
 
                     if ($tempArray) {
+
+
+                        $paySupplierInvoiceMaster = $this->updatePVHeader($payMaster, $new['companySystemID'],$input['PayMasterAutoId']);
+
                         $paySupplierInvoiceDetails = $this->advancePaymentDetailsRepository->create($tempArray);
-                        $conversion = \Helper::convertAmountToLocalRpt(201, $paySupplierInvoiceDetails->advancePaymentDetailAutoID, $new["BalanceAmount"]);
-                        AdvancePaymentDetails::where('advancePaymentDetailAutoID', $paySupplierInvoiceDetails->advancePaymentDetailAutoID)->update(['supplierDefaultAmount' => $conversion['defaultAmount'], 'localAmount' => $conversion['localAmount'], 'comRptAmount' => $conversion['reportingAmount']]);
+
+                        $this->updatePVDetail($paySupplierInvoiceMaster,$input['PayMasterAutoId']);
 
                         $advancePayment = PoAdvancePayment::find($new['poAdvPaymentID']);
 
@@ -779,9 +791,7 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
             $input = $request->all();
             $paysupplierMaster = PaySupplierInvoiceMaster::find($input['PayMasterAutoId']);
 
-           
-
-
+            $paySupplierInvoiceMaster = $this->updatePVHeader($paysupplierMaster, $input['companySystemID'],$input['PayMasterAutoId']);
 
             $tempArray['PayMasterAutoId'] = $input['PayMasterAutoId'];
             $tempArray['comments'] = $input['comment'];
@@ -791,12 +801,12 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
             $tempArray['companyID'] = $paysupplierMaster->CompanyID;
             $tempArray['supplierTransCurrencyID'] = $paysupplierMaster->supplierTransCurrencyID;
             $tempArray['supplierTransER'] = $paysupplierMaster->supplierTransCurrencyER;
-            $tempArray['supplierDefaultCurrencyID'] = $paysupplierMaster->supplierDefCurrencyID;
-            $tempArray['supplierDefaultCurrencyER'] = $paysupplierMaster->supplierDefCurrencyER;
-            $tempArray['localCurrencyID'] = $paysupplierMaster->localCurrencyID;
-            $tempArray['localER'] = $paysupplierMaster->localCurrencyER;
-            $tempArray['comRptCurrencyID'] = $paysupplierMaster->companyRptCurrencyID;
-            $tempArray['comRptER'] = $paysupplierMaster->companyRptCurrencyER;
+            $tempArray['supplierDefaultCurrencyID'] = $paySupplierInvoiceMaster->supplierDefCurrencyID;
+            $tempArray['supplierDefaultCurrencyER'] = $paySupplierInvoiceMaster->supplierDefCurrencyER;
+            $tempArray['localCurrencyID'] = $paySupplierInvoiceMaster->localCurrencyID;
+            $tempArray['localER'] = $paySupplierInvoiceMaster->localCurrencyER;
+            $tempArray['comRptCurrencyID'] = $paySupplierInvoiceMaster->companyRptCurrencyID;
+            $tempArray['comRptER'] = $paySupplierInvoiceMaster->companyRptCurrencyER;
             $tempArray['supplierDefaultAmount'] = $input['paymentAmount'];
             $tempArray['supplierTransAmount'] = $input['paymentAmount'];
             $tempArray['comRptAmount'] = $paysupplierMaster->payAmountCompRpt;
@@ -804,9 +814,9 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
 
         
             $paySupplierInvoiceDetails = $this->advancePaymentDetailsRepository->create($tempArray);
-            $conversion = \Helper::convertAmountToLocalRpt(201, $paySupplierInvoiceDetails->advancePaymentDetailAutoID, $input["paymentAmount"]);
-            AdvancePaymentDetails::where('advancePaymentDetailAutoID', $paySupplierInvoiceDetails->advancePaymentDetailAutoID)->update(['supplierDefaultAmount' => $conversion['defaultAmount'], 'localAmount' => $conversion['localAmount'], 'comRptAmount' => $conversion['reportingAmount']]);
+            $this->updatePVDetail($paySupplierInvoiceMaster,$input['PayMasterAutoId']);
 
+ 
 
             DB::commit();
             return $this->sendResponse('', trans('custom.save', ['attribute' => trans('custom.payment_details')]));
@@ -814,6 +824,82 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
             DB::rollBack();
             return $this->sendError($exception->getMessage());
         }
+    }
+    private function updatePVDetail($paySupplierInvoiceMaster,$id)
+    {
+        $detailLevelPayments = AdvancePaymentDetails::where('PayMasterAutoId',$id)->get();
+        foreach($detailLevelPayments as $payment)
+        {
+
+            AdvancePaymentDetails::where('advancePaymentDetailAutoID', $payment->advancePaymentDetailAutoID)->update(
+                [
+                'supplierDefaultCurrencyID' => $paySupplierInvoiceMaster->supplierDefCurrencyID,
+                'supplierDefaultCurrencyER' => $paySupplierInvoiceMaster->supplierDefCurrencyER,
+                'localCurrencyID' => $paySupplierInvoiceMaster->localCurrencyID,
+                'localER' => $paySupplierInvoiceMaster->localCurrencyER,
+                'comRptCurrencyID' => $paySupplierInvoiceMaster->companyRptCurrencyID,
+                'comRptER' => $paySupplierInvoiceMaster->companyRptCurrencyER,
+                ]);
+
+            $conversion = \Helper::convertAmountToLocalRpt(201, $payment->advancePaymentDetailAutoID, $payment->paymentAmount);
+            AdvancePaymentDetails::where('advancePaymentDetailAutoID', $payment->advancePaymentDetailAutoID)->update(
+                ['supplierDefaultAmount' => $conversion['defaultAmount'], 
+                'localAmount' => $conversion['localAmount'],
+                'comRptAmount' => $conversion['reportingAmount'], 
+                ]);
+
+        }
+    }
+    private function updatePVHeader($paysupplierMaster,$companyId,$id)
+    {
+        if (isset($paysupplierMaster->BPVsupplierID) && !empty($paysupplierMaster->BPVsupplierID)) {
+            $supDetail = SupplierAssigned::where('supplierCodeSytem', $paysupplierMaster->BPVsupplierID)->where('companySystemID', $companyId)->first();
+
+            $supCurrency = SupplierCurrency::where('supplierCodeSystem', $paysupplierMaster->BPVsupplierID)->where('isAssigned', -1)->where('isDefault', -1)->first();
+
+            $masterArray['supplierTransCurrencyER'] = 1;
+            if ($supCurrency) {
+                $masterArray['supplierDefCurrencyID'] = $supCurrency->currencyID;
+                $currencyConversionDefaultMaster = \Helper::currencyConversion($companyId, $paysupplierMaster->supplierTransCurrencyID, $supCurrency->currencyID, 0);
+                if ($currencyConversionDefaultMaster) {
+                    $masterArray['supplierDefCurrencyER'] = $currencyConversionDefaultMaster['transToDocER'];
+                }
+            }
+            $supplier = SupplierMaster::find($paysupplierMaster->BPVsupplierID);
+            $masterArray['directPaymentPayee'] = $supplier->supplierName;
+        } else {
+            $masterArray['supplierTransCurrencyER'] = 1;
+            $masterArray['supplierDefCurrencyID'] = $paysupplierMaster->supplierTransCurrencyID;
+            $masterArray['supplierDefCurrencyER'] = 1;
+        }
+
+        
+        $bankAccount = BankAccount::find($paysupplierMaster->BPVAccount);
+        if ($bankAccount) {
+            $masterArray['BPVbankCurrency'] = $bankAccount->accountCurrencyID;
+            $currencyConversionDefaultMaster = \Helper::currencyConversion($companyId, $paysupplierMaster->supplierTransCurrencyID, $bankAccount->accountCurrencyID, 0);
+            if ($currencyConversionDefaultMaster) {
+                $masterArray['BPVbankCurrencyER'] = $currencyConversionDefaultMaster['transToDocER'];
+            }
+        }
+
+
+
+        $companyCurrency = \Helper::companyCurrency($companyId);
+        if ($companyCurrency) {
+            $masterArray['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;
+            $masterArray['companyRptCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
+            $companyCurrencyConversion = \Helper::currencyConversion($companyId, $paysupplierMaster->supplierTransCurrencyID, $paysupplierMaster->supplierTransCurrencyID, 0);
+            if ($companyCurrencyConversion) {
+                $masterArray['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                $masterArray['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+            }
+        }
+
+        $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->update($masterArray, $id);
+
+        return $paySupplierInvoiceMaster;
+
     }
 
     public function addADVPaymentDetailForDirectPay(Request $request)
