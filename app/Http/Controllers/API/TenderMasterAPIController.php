@@ -3256,7 +3256,7 @@ WHERE
             ->where('srm_bid_submission_master.tender_id', $tenderId)
             ->orderBy('weightage', 'desc')
             ->get();
-        
+
         $weightage = null;
         $index1 = 1;
         foreach ($tenderFinalBids as $index => $record) {
@@ -3347,11 +3347,11 @@ WHERE
             ->join('srm_supplier_registration_link', 'srm_supplier_registration_link.id', '=', 'srm_bid_submission_master.supplier_registration_id')
             ->where('srm_tender_final_bids.tender_id', $tenderId);
 
-        /*if ($isNegotiation == 1) {
-                $query = $query->whereIn('srm_bid_submission_master.id', $bidSubmissionMasterIds);
-            } else {
-                $query = $query->whereNotIn('srm_bid_submission_master.id', $bidSubmissionMasterIds);
-            }*/
+        if ($isNegotiation == 1) {
+            $query = $query->whereIn('srm_bid_submission_master.id', $bidSubmissionMasterIds);
+        } else {
+            $query = $query->whereNotIn('srm_bid_submission_master.id', $bidSubmissionMasterIds);
+        }
 
         $query =  $query->orderBy('srm_tender_final_bids.com_weightage', 'desc');
 
