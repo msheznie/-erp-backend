@@ -21,8 +21,8 @@
             <table class="table table-sm table-striped hover table-bordered">
                 <thead>
                 <tr>
-                    <th>Template Description</th>
-                    <th>Template Description</th>
+                    <th>Template Description 1</th>
+                    <th>Template Description 2</th>
                     <th>GL Code</th>
                     <th>GL Description</th>
                     @foreach($segments as $segment)

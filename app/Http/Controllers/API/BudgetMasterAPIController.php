@@ -53,6 +53,7 @@ use App\Models\PurchaseOrderDetails;
 use App\Models\SegmentMaster;
 use App\Models\TemplatesGLCode;
 use App\Models\TemplatesMaster;
+use App\Models\UploadBudgets;
 use App\Models\Year;
 use App\Models\YesNoSelection;
 use App\helper\BudgetConsumptionService;
@@ -62,6 +63,7 @@ use App\Traits\AuditTrial;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
@@ -71,6 +73,8 @@ use Carbon\CarbonPeriod;
 use PHPExcel_IOFactory;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\FormatChkExport;
+use App\Jobs\SegmentBulkInsert;
+
 /**
  * Class BudgetMasterController
  * @package App\Http\Controllers\API
@@ -3922,11 +3926,21 @@ class BudgetMasterAPIController extends AppBaseController
 
         list($day, $month, $year) = explode("/", $endDate);
         $mysqlFormattedEndDate = "{$year}-{$month}-{$day}";
+        $employee = \Helper::getEmployeeInfo();
 
         list($startMonth, $startDay, $startYear) = explode("/", $startDate);
 
         $year = $startYear;
         $month = $startMonth;
+
+        $uploadArray = array(
+            'uploadComment' => $input['uploadComment'],
+            'uploadedDate' => \Helper::currentDateTime(),
+            'uploadedBy' => $employee->empID,
+            'uploadStatus' => -1
+        );
+
+        $uploadBudget = UploadBudgets::create($uploadArray);
 
         $template = ReportTemplate::where('description', $templateName)->first();
 
@@ -3948,61 +3962,63 @@ class BudgetMasterAPIController extends AppBaseController
         }
 
         $financeYear = CompanyFinanceYear::where('companySystemID', $template->companySystemID)->where('bigginingDate', "<=", $mysqlFormattedStartDate)->where('endingDate', ">=", $mysqlFormattedEndDate)->first();
-        $employee = \Helper::getEmployeeInfo();
 
-        foreach ($segments as $segment) {
+        $budgetExists = BudgetMaster::where('templateMasterID', $template->companyReportTemplateID)->get();
 
-            $segmentMaster = SegmentMaster::where('ServiceLineDes', $segment)->first();
-              $budgetArray = array(
-                'documentSystemID' => 65,
-                'companySystemID' => $template->companySystemID,
-                'companyID' => $template->companyID,
-                'companyFinanceYearID' => $financeYear->companyFinanceYearID,
-                'serviceLineSystemID' => $segmentMaster->serviceLineSystemID,
-                'serviceLineCode' => $segmentMaster->ServiceLineCode,
-                'templateMasterID' => $template->companyReportTemplateID,
-                'Year' => $year,
-                'month' => $month,
-                'generateStatus' => 100,
-                'createdByUserSystemID' => $employee->employeeSystemID,
-                'createdByUserID' => $employee->empID,
-                'createdDateTime' => \Helper::currentDateTime(),
-                'sentNotificationAt' => $notification,
-                'cutOffPeriod' => 3
-              );
-
-            $budget = BudgetMaster::create($budgetArray);
-
-        foreach ($result as $value) {
-
-            $budgetDetailsArray = array(
-                'budgetmasterID' => $budget->budgetmasterID,
-                'companySystemID' => $budget->companySystemID,
-                'companyId' => $budget->companyId,
-                'companyFinanceYearID' => $budget->companyFinanceYearID,
-                'serviceLineSystemID' => $budget->serviceLineSystemID,
-                'serviceLine' => $budget->serviceLine,
-                'templateDetailID' => $budget->templateDetailID,
-                'chartOfAccountID' => $budget->chartOfAccountID,
-                'glCode' => $budget->glCode,
-                'glCodeType' => $budget->glCodeType,
-                'Year' => $budget->Year,
-                'month' => $budget->month,
-                'budjetAmtLocal' => $budget->budjetAmtLocal,
-                'budjetAmtRpt' => $value->segmentDes,
-                'createdByUserSystemID' => $budget->createdByUserSystemID,
-                'createdByUserID' => $budget->createdByUserID,
-                'modifiedByUserSystemID' => $budget->modifiedByUserSystemID,
-                'modifiedByUserID' => $budget->modifiedByUserID,
-                'createdDateTime' => $budget->createdDateTime,
-                'timestamp' => $budget->timestamp
-            );
-
-            $budgetDetails = Budjetdetails::create($budgetDetailsArray);
+        $segmentDes = [];
+        foreach ($budgetExists as $budgetExist) {
+            $segmentDes[] = $budgetExist->ServiceLineDes;
         }
+
+        $segments = array_filter($segments, function ($segment) use ($segmentDes) {
+            return !in_array($segment, $segmentDes);
+        });
+
+        $db = isset($request->db) ? $request->db : "";
+
+        SegmentBulkInsert::dispatch($db, $financeYear, $segments, $template, $year, $month, $notification, $uploadBudget, $result, $currency, $employee);
+
+
+        return $this->sendResponse([], 'Budget upload successfully');
     }
 
-        return $this->sendResponse([$result,$segments], 'Budget upload successfully');
+    public function getBudgetUploads(Request $request) {
+
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $reasonCodeMasters = UploadBudgets::with('uploaded_by')->select('*');
+
+
+        return \DataTables::eloquent($reasonCodeMasters)
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+    public function deleteBudgetUploads(Request $request){
+
+        $input = $request->all();
+
+        $budgetUploadID = $input['budgetUploadID'];
+
+        $budgetMaster = BudgetMaster::where('budgetUploadID', $budgetUploadID)->where('confirmedYN', 0)->where('approvedYN', 0)->first();
+        if(!empty($budgetMaster)) {
+            UploadBudgets::where('id', $budgetUploadID)->delete();
+            BudgetMaster::where('budgetUploadID', $budgetUploadID)->delete();
+            Budjetdetails::where('budgetmasterID', $budgetMaster->budgetmasterID)->delete();
+
+            return $this->sendResponse([], 'Budget upload deleted successfully');
+        }
+        else {
+            return $this->sendError('Error in deleting budget upload');
+        }
+
     }
 
     public function budgetReferBack(Request $request)
