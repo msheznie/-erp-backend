@@ -4179,6 +4179,20 @@ WHERE
         }
     }
 
+    public function closeTenderNegotiation(Request $request) {
+
+        DB::beginTransaction();
+        try {
+            $tenderId = $request['srm_tender_master_id'];
+            TenderMaster::where('id', $tenderId)->update(['is_negotiation_closed' => 1]);
+            DB::commit();
+            return $this->sendResponse('success', 'Tender negotiation closed successfully');
+        } catch (\Exception $e) {
+            DB::rollback();
+            return $this->sendError($e->getMessage());
+        }
+    }
+
     public function getNegotiationStartedTenderList(Request $request)
     {
         $input = $request->all();
