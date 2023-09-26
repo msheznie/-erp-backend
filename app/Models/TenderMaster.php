@@ -320,7 +320,8 @@ class TenderMaster extends Model
         'negotiation_code',
         'negotiation_serial_no',
         'is_negotiation_closed',
-        'negotiation_commercial_ranking_line_item_status'
+        'negotiation_commercial_ranking_line_item_status',
+        'negotiation_combined_ranking_status'
     ];
     /**
      * The attributes that should be casted to native types.

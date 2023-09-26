@@ -3631,6 +3631,7 @@ WHERE
 
             $inputs = $request['extraParams'];
             $tenderId = $inputs['tenderMasterId'];
+            $isNegotiation = $inputs['isNegotiation'];
             $selected_suppliers = $inputs['suppliers'];
             $ids = $inputs['ids'];
             $comment = $inputs['comment'];
@@ -3641,7 +3642,12 @@ WHERE
                 return $this->sendError('Please select atleast one bid for each suppliers', 500);
             } else {
                 TenderFinalBids::whereIn('id', $ids)->update(['status' => true]);
-                TenderMaster::where('id', $tenderId)->update(['combined_ranking_status' => true, 'commercial_ranking_comment' => $comment]);
+                if($isNegotiation == 1){
+                    $update = ['negotiation_combined_ranking_status' => true, 'negotiation_commercial_ranking_comment' => $comment];
+                } else {
+                    $update = ['combined_ranking_status' => true, 'commercial_ranking_comment' => $comment];
+                }
+                TenderMaster::where('id', $tenderId)->update($update);
             }
 
             $getRankCount = TenderFinalBids::where('tender_id', $tenderId)
