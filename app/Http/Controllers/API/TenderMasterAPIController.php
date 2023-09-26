@@ -3519,11 +3519,18 @@ WHERE
         try {
 
             $tenderId = $request['tenderMasterId'];
+            $isNegotiation = $request['isNegotiation'];
             $status = $request['commercial_ranking_line_item_status'];
             $bids = $request['bids'];
 
             $techniqal_wightage = TenderMaster::where('id', $tenderId)->select('id', 'technical_weightage', 'commercial_weightage')->first();
-            $techniqal_wightage->commercial_ranking_line_item_status = $status;
+
+            if($isNegotiation == 1){
+                $techniqal_wightage->negotiation_commercial_ranking_line_item_status = $status;
+            }else {
+                $techniqal_wightage->commercial_ranking_line_item_status = $status;
+            }
+
             $techniqal_wightage->save();
 
             $total_amount = BidSubmissionMaster::whereIn('id', $bids)->sum('line_item_total');

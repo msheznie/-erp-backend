@@ -333,7 +333,7 @@ class TenderFinalBidsAPIController extends AppBaseController
         }
 
         $query = $query->orderBy('srm_tender_final_bids.total_weightage','desc');
-        
+
         $search = $request->input('search.value');
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
