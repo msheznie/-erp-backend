@@ -23,7 +23,7 @@ use Illuminate\Support\Facades\Storage;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
-
+use App\helper\email;
 /**
  * Class TenderCircularsController
  * @package App\Http\Controllers\API
@@ -570,7 +570,9 @@ class TenderCircularsAPIController extends AppBaseController
                         $description = "<b>Circular Description : </b>" . $circular[0]['description']. "<br /><br />";
                     }
 
-                    Mail::to($supplier->supplier_registration_link->email)->send(new EmailForQueuing("Tender Circular", "Dear Supplier,"."<br /><br />"." Please find published tender circular details below."."<br /><br /><b>". "Circular Name : ". "</b>".$circular[0]['circular_name'] ." "."<br /><br />". $description .$companyName."</b><br /><br />"."Thank You"."<br /><br /><b>", null, $file));
+                    $email = email::emailAddressFormat($supplier->supplier_registration_link->email);
+
+                    Mail::to($email)->send(new EmailForQueuing("Tender Circular", "Dear Supplier,"."<br /><br />"." Please find published tender circular details below."."<br /><br /><b>". "Circular Name : ". "</b>".$circular[0]['circular_name'] ." "."<br /><br />". $description .$companyName."</b><br /><br />"."Thank You"."<br /><br /><b>", null, $file));
                 }
 
                 return ['success' => true, 'message' => 'Successfully Published'];

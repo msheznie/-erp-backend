@@ -79,3 +79,5 @@ Route::get('getMatchDocumentMasterFormData', 'MatchDocumentMasterAPIController@g
 
 Route::post('getAllocatedEmployeesForExpense', 'ExpenseEmployeeAllocationAPIController@getAllocatedEmployeesForExpense')->name('Get allocated employees for expense');
 Route::get('getCurrentUserInfo', 'UserAPIController@getCurrentUserInfo')->name("Get Current User Info");
+
+Route::get('sme-attachment/{id}/{docID}/{companyID}', 'AttachmentSMEAPIController@show')->name('Show attachment sme');

@@ -19,7 +19,8 @@ class TenantByKey
     public function handle(Request $request, Closure $next)
     {
         $dbRoutes = [
-            'api/v1/postEmployee'
+            'api/v1/postEmployee',
+            'api/v1/pull_company_details'
 //            'api/v1/post_supplier_invoice'
         ];
 
