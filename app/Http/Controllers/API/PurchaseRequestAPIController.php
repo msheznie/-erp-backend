@@ -1165,8 +1165,10 @@ class PurchaseRequestAPIController extends AppBaseController
 
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
-            $purchaseRequests = $purchaseRequests->where('purchaseRequestCode', 'LIKE', "%{$search}%")
-                ->orWhere('comments', 'LIKE', "%{$search}%");
+            $purchaseRequests = $purchaseRequests->where(function($query) use ($search) {
+                $query->where('erp_purchaserequest.purchaseRequestCode', 'LIKE', "%{$search}%")
+                      ->orWhere('erp_purchaserequest.comments', 'LIKE', "%{$search}%");
+            });
         }
 
         $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
