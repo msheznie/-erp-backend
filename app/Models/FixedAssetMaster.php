@@ -826,6 +826,12 @@ class FixedAssetMaster extends Model
         return $this->hasMany('App\Models\FixedAssetDepreciationPeriod', 'faID', 'faID');
     }
 
+    
+    public function assignedEmployee()
+    {
+        return $this->belongsTo('App\Models\Employee', 'empID', 'employeeSystemID');
+    }
+
     public function depperiod_period()
     {
         return $this->hasMany('App\Models\FixedAssetDepreciationPeriod', 'faID', 'faID');
