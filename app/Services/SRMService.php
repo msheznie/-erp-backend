@@ -4796,4 +4796,10 @@ class SRMService
 
         return ($tenderNegotiationResults) ? $tenderNegotiationResults->area : null;
     }
+
+    public static function getNegotiationBids($tenderId){ 
+        return TenderBidNegotiation::where('tender_id', $tenderId)
+        ->pluck('bid_submission_master_id_new')
+        ->toArray();
+    }
 }
