@@ -400,7 +400,12 @@ class TenderMaster extends Model
         'negotiation_published'=> 'integer',
         'negotiation_code'=> 'string',
         'negotiation_serial_no'=> 'integer',
-        'is_negotiation_closed'=> 'integer'
+        'is_negotiation_closed'=> 'integer',
+        'negotiation_commercial_ranking_line_item_status' => 'integer',
+        'negotiation_commercial_ranking_comment' => 'string',
+        'negotiation_combined_ranking_status' => 'integer',
+        'negotiation_award_comment' => 'string',
+        'negotiation_is_awarded' => 'integer'
     ];
 
     /**
