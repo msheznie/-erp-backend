@@ -6,7 +6,9 @@ use App\helper\CommonJobService;
 use App\Models\BudgetMaster;
 use App\Models\Budjetdetails;
 use App\Models\ChartOfAccount;
+use App\Models\CompanyFinanceYear;
 use App\Models\CurrencyMaster;
+use App\Models\ReportTemplate;
 use App\Models\ReportTemplateDetails;
 use App\Models\SegmentMaster;
 use App\Models\UploadBudgets;
@@ -17,22 +19,18 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
-class SegmentBulkInsert implements ShouldQueue
+
+class BudgetSegmentBulkInsert implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
     protected $db;
-    protected $financeYear;
-    protected $segments;
-    protected $template;
-    protected $year;
-    protected $month;
-    protected $notification;
-    protected $uploadBudget;
-    protected $result;
-    protected $currency;
+    protected $uploadData;
     protected $employee;
-    public function __construct($db, $financeYear, $segments, $template, $year, $month, $notification, $uploadBudget, $result, $currency, $employee)
+    protected $decodeFile;
+
+    public function __construct($db, $uploadData)
     {
         if(env('QUEUE_DRIVER_CHANGE','database') == 'database'){
             if(env('IS_MULTI_TENANCY',false)){
@@ -44,36 +42,84 @@ class SegmentBulkInsert implements ShouldQueue
             self::onConnection(env('QUEUE_DRIVER_CHANGE','database'));
         }
         $this->db = $db;
-        $this->financeYear = $financeYear;
-        $this->segments = $segments;
-        $this->template = $template;
-        $this->year = $year;
-        $this->month = $month;
-        $this->notification = $notification;
-        $this->uploadBudget = $uploadBudget;
-        $this->result = $result;
-        $this->currency = $currency;
-        $this->employee = $employee;
+        $this->uploadData = $uploadData;
     }
 
     public function handle()
     {
+        $uploadData = $this->uploadData;
 
-        $financeYear = $this->financeYear;
-        $segments = $this->segments;
-        $template = $this->template;
-        $year = $this->year;
-        $month = $this->month;
-        $notification = $this->notification;
-        $uploadBudget = $this->uploadBudget;
-        $result = $this->result;
-        $currency = $this->currency;
-        $employee = $this->employee;
-
-
+        CommonJobService::db_switch($this->db);
 
         DB::beginTransaction();
         try {
+            Log::useFiles(storage_path().'/logs/budget_segment_bulk_insert.log');
+
+            $uploadBudget = $uploadData['uploadBudget'];
+            $employee = $uploadData['employee'];
+            $objPHPExcel = $uploadData['objPHPExcel'];
+
+
+
+            $worksheet = $objPHPExcel->getActiveSheet();
+
+            $header = $worksheet->toArray();
+
+            $templateName = $header[0][1];
+            $financialYear = $header[0][3];
+            $currency = $header[1][1];
+            $notification = $header[1][3];
+            $segments = $header[6];
+            $segments = array_slice($segments, 4);
+
+            $dates = explode(" - ", $financialYear);
+
+            $startDate = $dates[0];
+            $endDate = $dates[1];
+
+            list($day, $month, $year) = explode("/", $startDate);
+            $mysqlFormattedStartDate = "{$year}-{$month}-{$day}";
+
+            list($day, $month, $year) = explode("/", $endDate);
+            $mysqlFormattedEndDate = "{$year}-{$month}-{$day}";
+
+            list($startMonth, $startDay, $startYear) = explode("/", $startDate);
+
+            $year = $startYear;
+            $month = $startMonth;
+
+            $template = ReportTemplate::where('description', $templateName)->first();
+
+            $worksheet->removeRow(1, 6);
+
+            $data = $worksheet->toArray();
+
+            $data = array_filter(collect($data)->toArray());
+
+            $keys = $data[0];
+
+            array_shift($data);
+
+            $result = [];
+
+            foreach ($data as $row) {
+                $rowAssoc = array_combine($keys, $row);
+                $result[] = $rowAssoc;
+            }
+
+            $financeYear = CompanyFinanceYear::where('companySystemID', $template->companySystemID)->where('bigginingDate', "<=", $mysqlFormattedStartDate)->where('endingDate', ">=", $mysqlFormattedEndDate)->first();
+
+            $budgetExists = BudgetMaster::where('templateMasterID', $template->companyReportTemplateID)->get();
+
+            $segmentDes = [];
+            foreach ($budgetExists as $budgetExist) {
+                $segmentDes[] = $budgetExist->ServiceLineDes;
+            }
+
+            $segments = array_filter($segments, function ($segment) use ($segmentDes) {
+                return !in_array($segment, $segmentDes);
+            });
+
 
             foreach ($segments as $segment) {
 
@@ -160,9 +206,15 @@ class SegmentBulkInsert implements ShouldQueue
             Log::info('Error Line No: ' . $e->getLine());
             Log::info('Error Line No: ' . $e->getFile());
             Log::info($e->getMessage());
-            Log::info('---- GL  End with Error-----' . date('H:i:s'));
-            UploadBudgets::where('id', $uploadBudget->id)->update(['uploadStatus' => 0]);
-            DB::commit();
+            Log::info('---- Budget Segment Bulk Insert Error-----' . date('H:i:s'));
+            DB::beginTransaction();
+            try {
+                UploadBudgets::where('id', $uploadBudget->id)->update(['uploadStatus' => 0]);
+                DB::commit();
+            } catch (\Exception $e){
+                UploadBudgets::where('id', $uploadBudget->id)->update(['uploadStatus' => 0]);
+                DB::commit();
+            }
         }
     }
 }
