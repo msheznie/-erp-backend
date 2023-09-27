@@ -71,9 +71,6 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
-use Maatwebsite\Excel\Facades\Excel;
-use App\Exports\FormatChkExport;
-use App\Jobs\SegmentBulkInsert;
 use PHPExcel_IOFactory;
 /**
  * Class BudgetMasterController
