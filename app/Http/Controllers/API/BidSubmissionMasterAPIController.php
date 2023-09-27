@@ -29,6 +29,8 @@ use App\Models\EvaluationCriteriaScoreConfig;
 use App\Models\BidBoq;
 use App\Models\SupplierRegistrationLink;
 use App\Repositories\TenderMasterRepository;
+use App\Services\SRMService;
+
 use function Doctrine\Common\Cache\Psr6\get;
 
 /**
@@ -863,8 +865,12 @@ class BidSubmissionMasterAPIController extends AppBaseController
 
         $companyId = $request['companyId'];
         $tenderId = $request['tenderId'];
+        $isNegotiation = $request['isNegotiation'];
 
-        $technicalCount = $this->getTechnicalCount($tenderId);     
+        $technicalCount = $this->getTechnicalCount($tenderId);      
+        $bidSubmissionMasterIds = SRMService::getNegotiationBids($tenderId);
+
+
         if($technicalCount->technical_count == 0)
         {
             $query = BidSubmissionMaster::selectRaw("'' as weightage,srm_bid_submission_master.id,srm_bid_submission_master.bidSubmittedDatetime,srm_bid_submission_master.tender_id,srm_supplier_registration_link.name,'' as bid_id,srm_bid_submission_master.commercial_verify_status,srm_bid_submission_master.bidSubmissionCode,srm_tender_master.technical_passing_weightage as passing_weightage")
@@ -874,6 +880,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
             ->where('srm_bid_submission_master.bidSubmittedYN', 1)
             ->where('srm_bid_submission_master.tender_id', $tenderId)
             ->where('srm_bid_submission_master.doc_verifiy_status','!=', 2);
+         
         }
         else
         {
@@ -888,8 +895,11 @@ class BidSubmissionMasterAPIController extends AppBaseController
             ->where('srm_bid_submission_master.status', 1)
             ->where('srm_bid_submission_master.bidSubmittedYN', 1)
             ->where('srm_bid_submission_master.doc_verifiy_status','!=', 2)
-            ->where('srm_bid_submission_master.tender_id', $tenderId);
+            ->where('srm_bid_submission_master.tender_id', $tenderId); 
         }
+        
+        $isNegotiation == 1 ? $query->whereIn('srm_bid_submission_master.id', $bidSubmissionMasterIds)
+        : $query->whereNotIn('srm_bid_submission_master.id', $bidSubmissionMasterIds);
     
 
         $search = $request->input('search.value');
