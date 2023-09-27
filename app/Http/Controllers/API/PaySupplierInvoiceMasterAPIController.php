@@ -1634,11 +1634,13 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
                     return $this->sendError($erMessage, 500, ['type' => 'erChange']);
                 } else {
-                    PaySupplierInvoiceMaster::where('PayMasterAutoId', $paySupplierInvoiceMaster->PayMasterAutoId)->update(['BPVbankCurrencyER' => $input['BPVbankCurrencyER'], 'localCurrencyER' => $input['localCurrencyER'], 'companyRptCurrencyER' => $input['companyRptCurrencyER']]);
+                    unset($input['BPVbankCurrencyER']);
+                    unset($input['localCurrencyER']);
+                    unset($input['companyRptCurrencyER']);
+                    //PaySupplierInvoiceMaster::where('PayMasterAutoId', $paySupplierInvoiceMaster->PayMasterAutoId)->update(['BPVbankCurrencyER' => $input['BPVbankCurrencyER'], 'localCurrencyER' => $input['localCurrencyER'], 'companyRptCurrencyER' => $input['companyRptCurrencyER']]);
                 }
             }
-
-
+      
             if ($paySupplierInvoiceMaster->invoiceType == 3) {
                 if ($input['payeeType'] == 3) {
                     $input['directPaymentpayeeYN'] = -1;
