@@ -12,6 +12,7 @@ use App\Models\ReportTemplate;
 use App\Models\ReportTemplateDetails;
 use App\Models\SegmentMaster;
 use App\Models\UploadBudgets;
+use App\Services\WebPushNotificationService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -198,6 +199,15 @@ class BudgetSegmentBulkInsert implements ShouldQueue
                     }
                 }
             }
+
+            $webPushData = [
+                'title' => "Upload Budget Successfully Completed",
+                'body' => "",
+                'url' => "",
+                'path' => "",
+            ];
+
+            WebPushNotificationService::sendNotification($webPushData, 3, $employee->employeeSystemID);
             UploadBudgets::where('id', $uploadBudget->id)->update(['uploadStatus' => 1]);
             DB::commit();
 
@@ -208,6 +218,14 @@ class BudgetSegmentBulkInsert implements ShouldQueue
             Log::info($e->getMessage());
             Log::info('---- Budget Segment Bulk Insert Error-----' . date('H:i:s'));
             DB::beginTransaction();
+            $webPushData = [
+                'title' => "Upload Budget Failed",
+                'body' => "",
+                'url' => "",
+                'path' => "",
+            ];
+
+            WebPushNotificationService::sendNotification($webPushData, 3, $employee->employeeSystemID);
             try {
                 UploadBudgets::where('id', $uploadBudget->id)->update(['uploadStatus' => 0]);
                 DB::commit();
