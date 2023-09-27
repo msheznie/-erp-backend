@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateTenderFinalBidsAPIRequest;
 use App\Http\Requests\API\UpdateTenderFinalBidsAPIRequest;
+use App\Models\TenderBidNegotiation;
 use App\Models\TenderFinalBids;
 use App\Repositories\TenderFinalBidsRepository;
 use Illuminate\Http\Request;
@@ -307,15 +308,31 @@ class TenderFinalBidsAPIController extends AppBaseController
             $sort = 'desc';
         }
         $tenderId = $request['tenderId'];
+        $isNegotiation = $request['isNegotiation'];
+
+        $tenderBidNegotiations = TenderBidNegotiation::select('bid_submission_master_id_new')
+            ->where('tender_id', $tenderId)
+            ->get();
+
+        if ($tenderBidNegotiations->count() > 0) {
+            $bidSubmissionMasterIds = $tenderBidNegotiations->pluck('bid_submission_master_id_new')->toArray();
+        } else {
+            $bidSubmissionMasterIds = [];
+        }
 
         $query = TenderFinalBids::selectRaw('srm_tender_final_bids.id,srm_tender_final_bids.status,srm_tender_final_bids.supplier_id,srm_tender_final_bids.com_weightage,srm_tender_final_bids.tech_weightage,srm_tender_final_bids.total_weightage,srm_tender_final_bids.bid_id,srm_bid_submission_master.bidSubmittedDatetime,srm_supplier_registration_link.name,srm_bid_submission_master.bidSubmissionCode,srm_bid_submission_master.line_item_total,srm_tender_final_bids.award, srm_tender_final_bids.combined_ranking')
         ->join('srm_bid_submission_master', 'srm_bid_submission_master.id', '=', 'srm_tender_final_bids.bid_id')
         ->join('srm_supplier_registration_link', 'srm_supplier_registration_link.id', '=', 'srm_bid_submission_master.supplier_registration_id')
         ->where('srm_tender_final_bids.status',1)
-        ->where('srm_tender_final_bids.tender_id', $tenderId)
-        ->orderBy('srm_tender_final_bids.total_weightage','desc');
+        ->where('srm_tender_final_bids.tender_id', $tenderId);
 
-      
+        if ($isNegotiation == 1) {
+            $query = $query->whereIn('srm_bid_submission_master.id', $bidSubmissionMasterIds);
+        } else {
+            $query = $query->whereNotIn('srm_bid_submission_master.id', $bidSubmissionMasterIds);
+        }
+
+        $query = $query->orderBy('srm_tender_final_bids.total_weightage','desc');
 
         $search = $request->input('search.value');
         if ($search) {
@@ -347,14 +364,19 @@ class TenderFinalBidsAPIController extends AppBaseController
         try {
             $inputs = $request->all();
             $tenderId = $inputs['tenderMasterId']; 
-            $comment = $inputs['comment']; 
+            $isNegotiation = $inputs['isNegotiation'];
+            $comment = $inputs['comment'];
             $id = $inputs['id'][0]; 
-            
-         
+
             TenderFinalBids::where('id',$id)->update(['award'=>true]);
-            TenderMaster::where('id',$tenderId)->update(['is_awarded'=>true,'award_comment'=>$comment]);
-       
-      
+
+            if($isNegotiation == 0) {
+                $update = ['is_awarded'=>true,'award_comment'=>$comment];
+            } else if($isNegotiation == 1) {
+                $update = ['negotiation_is_awarded'=>true,'negotiation_award_comment'=>$comment];
+            }
+
+            TenderMaster::where('id',$tenderId)->update($update);
 
             DB::commit();
             return ['success' => true, 'message' => 'Successfully updated', 'data' => true];

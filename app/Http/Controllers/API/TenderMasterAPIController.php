@@ -17,6 +17,7 @@ use App\Models\DocumentMaster;
 use App\Models\ProcumentOrder;
 use App\Models\PurchaseOrderDetails;
 use App\Models\PurchaseRequest;
+use App\Models\TenderBidNegotiation;
 use App\Models\TenderNegotiation;
 use App\Models\EmployeesDepartment;
 use App\Models\EnvelopType;
@@ -3073,11 +3074,17 @@ WHERE
         }
 
         $companyId = $request['companyId'];
+        $isNegotiation = $input['isNegotiation'];
+        Log::info($isNegotiation);
         $filters = $this->getFilterData($input); 
 
         $query = TenderMaster::with(['currency', 'srm_bid_submission_master', 'tender_type', 'envelop_type', 'srmTenderMasterSupplier'])->whereHas('srmTenderMasterSupplier')->where('published_yn', 1)
             ->where('commercial_verify_status', 1)
             ->where('technical_eval_status', 1);
+
+        if($isNegotiation == 1){
+            $query = $query->where('negotiation_code', '!=', null);
+        }
 
         if ($filters['currencyId'] && count($filters['currencyId']) > 0) {
                 $query->whereIn('currency_id', $filters['currencyId']);
@@ -3133,45 +3140,84 @@ WHERE
 
         $companyId = $request['companyId'];
         $tenderId = $request['tenderId'];
+        $isNegotiation = $request['isNegotiation'];
+
+        $tenderBidNegotiations = TenderBidNegotiation::select('bid_submission_master_id_new')
+            ->where('tender_id', $tenderId)
+            ->get();
+
+        if ($tenderBidNegotiations->count() > 0) {
+            $bidSubmissionMasterIds = $tenderBidNegotiations->pluck('bid_submission_master_id_new')->toArray();
+        } else {
+            $bidSubmissionMasterIds = [];
+        }
+
         $technicalCount =  $this->getTechnicalCount($tenderId);
 
         // Set Technical Ranking
         $getRankCount = BidSubmissionDetail::where('tender_id', $tenderId)
-            ->where('technical_ranking', '!=', null)
-            ->count();
+            ->where('technical_ranking', '!=', null);
+
+        if ($isNegotiation == 1) {
+            $getRankCount = $getRankCount->whereIn('bid_master_id', $bidSubmissionMasterIds);
+        } else {
+            $getRankCount = $getRankCount->whereNotIn('bid_master_id', $bidSubmissionMasterIds);
+        }
+
+        $getRankCount = $getRankCount->count();
 
         if($getRankCount == 0){
             $this->CreateStoreTechnicalRanking($tenderId);
         }
-        
+
+
+
         if($technicalCount->technical_count > 0)
         {
-            $query = BidSubmissionMaster::selectRaw("round(SUM((srm_bid_submission_detail.eval_result/100)*srm_tender_master.technical_weightage),3) as weightage,srm_bid_submission_master.id,srm_bid_submission_master.bidSubmittedDatetime,srm_bid_submission_master.tender_id,srm_supplier_registration_link.name,srm_bid_submission_detail.id as bid_id,srm_bid_submission_master.commercial_verify_status,srm_bid_submission_master.bidSubmissionCode,srm_tender_master.technical_passing_weightage as passing_weightage,srm_bid_submission_detail.technical_ranking")
+            $query = BidSubmissionMaster::selectRaw("round(SUM((srm_bid_submission_detail.eval_result/100)*srm_tender_master.technical_weightage),3) as weightage,srm_bid_submission_master.id,srm_bid_submission_master.bidSubmittedDatetime,srm_bid_submission_master.tender_id,srm_supplier_registration_link.name,srm_bid_submission_detail.id as bid_id,srm_bid_submission_master.commercial_verify_status,srm_bid_submission_master.bidSubmissionCode,srm_tender_master.technical_passing_weightage as passing_weightage,srm_bid_submission_detail.technical_ranking, area_tender_negotiation.technical_evaluation")
             ->join('srm_supplier_registration_link', 'srm_supplier_registration_link.id', '=', 'srm_bid_submission_master.supplier_registration_id')
             ->join('srm_tender_master', 'srm_tender_master.id', '=', 'srm_bid_submission_master.tender_id')
             ->join('srm_bid_submission_detail', 'srm_bid_submission_detail.bid_master_id', '=', 'srm_bid_submission_master.id')
             ->join('srm_evaluation_criteria_details', 'srm_evaluation_criteria_details.id', '=', 'srm_bid_submission_detail.evaluation_detail_id')
+            ->join('tender_negotiations', 'srm_bid_submission_master.tender_id', '=', 'tender_negotiations.srm_tender_master_id')
+            ->join('area_tender_negotiation', 'area_tender_negotiation.tender_negotiation_id', '=', 'tender_negotiations.id')
             ->havingRaw('weightage >= passing_weightage')
             ->groupBy('srm_bid_submission_master.id')
             ->where('srm_bid_submission_master.status', 1)
             ->where('srm_bid_submission_master.bidSubmittedYN', 1)
             ->where('srm_bid_submission_master.doc_verifiy_status','!=',2)
             ->where('srm_bid_submission_master.commercial_verify_status', 1)
-            ->where('srm_bid_submission_master.tender_id', $tenderId)
-            ->orderBy('weightage', 'desc');
+            ->where('srm_bid_submission_master.tender_id', $tenderId);
+
+            if ($isNegotiation == 1) {
+                $query = $query->whereIn('srm_bid_submission_master.id', $bidSubmissionMasterIds);
+            } else {
+                $query = $query->whereNotIn('srm_bid_submission_master.id', $bidSubmissionMasterIds);
+            }
+
+            $query = $query->orderBy('weightage', 'desc');
         }
         else
         {
-            $query = BidSubmissionMaster::selectRaw("'' as weightage,srm_bid_submission_master.id,srm_bid_submission_master.bidSubmittedDatetime,srm_bid_submission_master.tender_id,srm_supplier_registration_link.name,'' as bid_id,srm_bid_submission_master.commercial_verify_status,srm_bid_submission_master.bidSubmissionCode,srm_tender_master.technical_passing_weightage as passing_weightage,srm_bid_submission_detail.technical_ranking")
+            $query = BidSubmissionMaster::selectRaw("'' as weightage,srm_bid_submission_master.id,srm_bid_submission_master.bidSubmittedDatetime,srm_bid_submission_master.tender_id,srm_supplier_registration_link.name,'' as bid_id,srm_bid_submission_master.commercial_verify_status,srm_bid_submission_master.bidSubmissionCode,srm_tender_master.technical_passing_weightage as passing_weightage,srm_bid_submission_detail.technical_ranking, area_tender_negotiation.technical_evaluation")
             ->join('srm_supplier_registration_link', 'srm_supplier_registration_link.id', '=', 'srm_bid_submission_master.supplier_registration_id')
             ->join('srm_tender_master', 'srm_tender_master.id', '=', 'srm_bid_submission_master.tender_id')
+            ->join('tender_negotiations', 'srm_bid_submission_master.tender_id', '=', 'tender_negotiations.srm_tender_master_id')
+            ->join('area_tender_negotiation', 'area_tender_negotiation.tender_negotiation_id', '=', 'tender_negotiations.id')
             ->groupBy('srm_bid_submission_master.id')
             ->where('srm_bid_submission_master.status', 1)
             ->where('srm_bid_submission_master.bidSubmittedYN', 1)
             ->where('srm_bid_submission_master.doc_verifiy_status','!=',2)
             ->where('srm_bid_submission_master.commercial_verify_status', 1)
-            ->where('srm_bid_submission_master.tender_id', $tenderId)
-            ->orderBy('weightage', 'desc');
+            ->where('srm_bid_submission_master.tender_id', $tenderId);
+
+            if ($isNegotiation == 1) {
+                $query = $query->whereIn('srm_bid_submission_master.id', $bidSubmissionMasterIds);
+            } else {
+                $query = $query->whereNotIn('srm_bid_submission_master.id', $bidSubmissionMasterIds);
+            }
+
+            $query = $query->orderBy('weightage', 'desc');
         }
 
 
@@ -3248,6 +3294,17 @@ WHERE
 
         $companyId = $request['companyId'];
         $tenderId = $request['tenderId'];
+        $isNegotiation = $request['isNegotiation'];
+
+        $tenderBidNegotiations = TenderBidNegotiation::select('bid_submission_master_id_new')
+            ->where('tender_id', $tenderId)
+            ->get();
+
+        if ($tenderBidNegotiations->count() > 0) {
+            $bidSubmissionMasterIds = $tenderBidNegotiations->pluck('bid_submission_master_id_new')->toArray();
+        } else {
+            $bidSubmissionMasterIds = [];
+        }
 
         $techniqal_wightage = TenderMaster::where('id', $tenderId)->select('id', 'technical_weightage', 'commercial_weightage')
                                             ->withCount(['criteriaDetails', 
@@ -3264,23 +3321,26 @@ WHERE
 
         if($techniqal_wightage->technical_count == 0)
         {
-            $query1 =  BidSubmissionMaster::selectRaw("'' as weightage,srm_bid_submission_master.id,srm_bid_submission_master.bidSubmittedDatetime,srm_tender_final_bids.commercial_ranking,srm_bid_submission_master.tender_id,srm_supplier_registration_link.name,'' as bid_id,srm_bid_submission_master.commercial_verify_status,srm_bid_submission_master.bidSubmissionCode,srm_tender_master.technical_passing_weightage as passing_weightage,srm_supplier_registration_link.id as supplier_id")
+            $query1 =  BidSubmissionMaster::selectRaw("'' as weightage,srm_bid_submission_master.id,srm_bid_submission_master.bidSubmittedDatetime,srm_tender_final_bids.commercial_ranking,srm_bid_submission_master.tender_id,srm_supplier_registration_link.name,'' as bid_id,srm_bid_submission_master.commercial_verify_status,srm_bid_submission_master.bidSubmissionCode,srm_tender_master.technical_passing_weightage as passing_weightage,srm_supplier_registration_link.id as supplier_id, area_tender_negotiation.pricing_schedule")
             ->join('srm_supplier_registration_link', 'srm_supplier_registration_link.id', '=', 'srm_bid_submission_master.supplier_registration_id')
             ->join('srm_tender_master', 'srm_tender_master.id', '=', 'srm_bid_submission_master.tender_id')
+            ->join('tender_negotiations', 'srm_bid_submission_master.tender_id', '=', 'tender_negotiations.srm_tender_master_id')
+            ->join('area_tender_negotiation', 'area_tender_negotiation.tender_negotiation_id', '=', 'tender_negotiations.id')
             ->groupBy('srm_bid_submission_master.id')->where('srm_bid_submission_master.status', 1)
             ->where('srm_bid_submission_master.bidSubmittedYN', 1)
             ->where('srm_bid_submission_master.tender_id', $tenderId)
             ->where('srm_bid_submission_master.doc_verifiy_status', 1)->pluck('supplier_id')->toArray();
-            ;
         }
         else
         {
-            $query1 = BidSubmissionMaster::selectRaw("round(SUM((srm_bid_submission_detail.eval_result/100)*srm_tender_master.technical_weightage),3) as weightage, srm_bid_submission_master.id,srm_bid_submission_master.bidSubmittedDatetime,srm_bid_submission_master.tender_id,srm_supplier_registration_link.name,srm_bid_submission_detail.id as bid_id,srm_bid_submission_master.commercial_verify_status,srm_bid_submission_master.bidSubmissionCode,srm_tender_master.technical_passing_weightage as passing_weightage,srm_bid_submission_master.comm_weightage,srm_bid_submission_master.line_item_total,srm_supplier_registration_link.id as supplier_id")
+            $query1 = BidSubmissionMaster::selectRaw("round(SUM((srm_bid_submission_detail.eval_result/100)*srm_tender_master.technical_weightage),3) as weightage, srm_bid_submission_master.id,srm_bid_submission_master.bidSubmittedDatetime,srm_bid_submission_master.tender_id,srm_supplier_registration_link.name,srm_bid_submission_detail.id as bid_id,srm_bid_submission_master.commercial_verify_status,srm_bid_submission_master.bidSubmissionCode,srm_tender_master.technical_passing_weightage as passing_weightage,srm_bid_submission_master.comm_weightage,srm_bid_submission_master.line_item_total,srm_supplier_registration_link.id as supplier_id, area_tender_negotiation.pricing_schedule")
             ->join('srm_supplier_registration_link', 'srm_supplier_registration_link.id', '=', 'srm_bid_submission_master.supplier_registration_id')
             ->join('srm_tender_master', 'srm_tender_master.id', '=', 'srm_bid_submission_master.tender_id')
             ->join('srm_bid_submission_detail', 'srm_bid_submission_detail.bid_master_id', '=', 'srm_bid_submission_master.id')
             ->join('srm_evaluation_criteria_details', 'srm_evaluation_criteria_details.id', '=', 'srm_bid_submission_detail.evaluation_detail_id')
             ->join('srm_bid_main_work', 'srm_bid_main_work.bid_master_id', '=', 'srm_bid_submission_master.id')
+            ->join('tender_negotiations', 'srm_bid_submission_master.tender_id', '=', 'tender_negotiations.srm_tender_master_id')
+            ->join('area_tender_negotiation', 'area_tender_negotiation.tender_negotiation_id', '=', 'tender_negotiations.id')
             ->havingRaw('weightage >= passing_weightage')
             ->groupBy('srm_bid_submission_master.id')
             ->where('srm_bid_submission_master.status', 1)->where('srm_bid_submission_master.bidSubmittedYN', 1)->where('srm_bid_submission_master.tender_id', $tenderId)->where('srm_bid_submission_master.commercial_verify_status', 1)
@@ -3290,11 +3350,20 @@ WHERE
 
 
 
-        $query = TenderFinalBids::selectRaw('srm_tender_final_bids.commercial_ranking,srm_tender_final_bids.id,srm_tender_final_bids.status,srm_tender_final_bids.supplier_id,srm_tender_final_bids.com_weightage as weightage, srm_tender_final_bids.bid_id,srm_bid_submission_master.bidSubmittedDatetime,srm_supplier_registration_link.name,srm_bid_submission_master.bidSubmissionCode,srm_bid_submission_master.line_item_total')
+        $query = TenderFinalBids::selectRaw('srm_tender_final_bids.commercial_ranking,srm_tender_final_bids.id,srm_tender_final_bids.status,srm_tender_final_bids.supplier_id,srm_tender_final_bids.com_weightage as weightage, srm_tender_final_bids.bid_id,srm_bid_submission_master.bidSubmittedDatetime,srm_supplier_registration_link.name,srm_bid_submission_master.bidSubmissionCode,srm_bid_submission_master.line_item_total, area_tender_negotiation.pricing_schedule')
             ->join('srm_bid_submission_master', 'srm_bid_submission_master.id', '=', 'srm_tender_final_bids.bid_id')
+            ->join('tender_negotiations', 'srm_bid_submission_master.tender_id', '=', 'tender_negotiations.srm_tender_master_id')
+            ->join('area_tender_negotiation', 'area_tender_negotiation.tender_negotiation_id', '=', 'tender_negotiations.id')
             ->join('srm_supplier_registration_link', 'srm_supplier_registration_link.id', '=', 'srm_bid_submission_master.supplier_registration_id')
-            ->where('srm_tender_final_bids.tender_id', $tenderId)
-            ->orderBy('srm_tender_final_bids.com_weightage', 'desc');
+            ->where('srm_tender_final_bids.tender_id', $tenderId);
+
+        if ($isNegotiation == 1) {
+            $query = $query->whereIn('srm_bid_submission_master.id', $bidSubmissionMasterIds);
+        } else {
+            $query = $query->whereNotIn('srm_bid_submission_master.id', $bidSubmissionMasterIds);
+        }
+
+        $query =  $query->orderBy('srm_tender_final_bids.com_weightage', 'desc');
 
 
 
@@ -3339,8 +3408,9 @@ WHERE
     {
 
         $tenderId = $request['tenderMasterId'];
+        $isNegotiation = $request['isNegotiation'];
 
-        $bidMasterId = $this->getCommercialBids($tenderId);
+        $bidMasterId = $this->getCommercialBids($tenderId, $isNegotiation);
         $data['bids'] = $bidMasterId;
         $items = $this->getPricingItems($bidMasterId, $tenderId);
 
@@ -3459,11 +3529,18 @@ WHERE
         try {
 
             $tenderId = $request['tenderMasterId'];
+            $isNegotiation = $request['isNegotiation'];
             $status = $request['commercial_ranking_line_item_status'];
             $bids = $request['bids'];
 
             $techniqal_wightage = TenderMaster::where('id', $tenderId)->select('id', 'technical_weightage', 'commercial_weightage')->first();
-            $techniqal_wightage->commercial_ranking_line_item_status = $status;
+
+            if($isNegotiation == 1){
+                $techniqal_wightage->negotiation_commercial_ranking_line_item_status = $status;
+            }else {
+                $techniqal_wightage->commercial_ranking_line_item_status = $status;
+            }
+
             $techniqal_wightage->save();
 
             $total_amount = BidSubmissionMaster::whereIn('id', $bids)->sum('line_item_total');
@@ -3564,6 +3641,7 @@ WHERE
 
             $inputs = $request['extraParams'];
             $tenderId = $inputs['tenderMasterId'];
+            $isNegotiation = $inputs['isNegotiation'];
             $selected_suppliers = $inputs['suppliers'];
             $ids = $inputs['ids'];
             $comment = $inputs['comment'];
@@ -3574,7 +3652,12 @@ WHERE
                 return $this->sendError('Please select atleast one bid for each suppliers', 500);
             } else {
                 TenderFinalBids::whereIn('id', $ids)->update(['status' => true]);
-                TenderMaster::where('id', $tenderId)->update(['combined_ranking_status' => true, 'commercial_ranking_comment' => $comment]);
+                if($isNegotiation == 1){
+                    $update = ['negotiation_combined_ranking_status' => true, 'negotiation_commercial_ranking_comment' => $comment];
+                } else {
+                    $update = ['combined_ranking_status' => true, 'commercial_ranking_comment' => $comment];
+                }
+                TenderMaster::where('id', $tenderId)->update($update);
             }
 
             $getRankCount = TenderFinalBids::where('tender_id', $tenderId)
@@ -3670,41 +3753,63 @@ WHERE
         }
     }
 
-    function getCommercialBids($tenderId)
+    function getCommercialBids($tenderId, $isNegotiation)
     {
-            
-            $tender= TenderMaster::select('id')->withCount(['criteriaDetails', 
-                'criteriaDetails AS go_no_go_count' => function ($query) {
-                $query->where('critera_type_id', 1);
-                },
-                'criteriaDetails AS technical_count' => function ($query) {
-                    $query->where('critera_type_id', 2);
-                }
-            ])->withCount(['DocumentAttachments'=>function($q){
-                $q->where('envelopType',3);
-            }])->where('id', $tenderId)->first();
+        $tender= TenderMaster::select('id')->withCount(['criteriaDetails',
+            'criteriaDetails AS go_no_go_count' => function ($query) {
+            $query->where('critera_type_id', 1);
+            },
+            'criteriaDetails AS technical_count' => function ($query) {
+                $query->where('critera_type_id', 2);
+            }
+        ])->withCount(['DocumentAttachments'=>function($q){
+            $q->where('envelopType',3);
+        }])->where('id', $tenderId)->first();
 
-            if($tender->technical_count == 0)
-            {
-                return BidSubmissionMaster::selectRaw("'' as weightage,srm_bid_submission_master.id,srm_bid_submission_master.bidSubmittedDatetime,srm_bid_submission_master.tender_id,srm_supplier_registration_link.name,'' as bid_id,srm_bid_submission_master.commercial_verify_status,srm_bid_submission_master.bidSubmissionCode,srm_tender_master.technical_passing_weightage as passing_weightage")
-                ->join('srm_supplier_registration_link', 'srm_supplier_registration_link.id', '=', 'srm_bid_submission_master.supplier_registration_id')
-                ->join('srm_tender_master', 'srm_tender_master.id', '=', 'srm_bid_submission_master.tender_id')
-                ->groupBy('srm_bid_submission_master.id')->where('srm_bid_submission_master.status', 1)
-                ->where('srm_bid_submission_master.bidSubmittedYN', 1)
-                ->where('srm_bid_submission_master.tender_id', $tenderId)
-                ->where('srm_bid_submission_master.doc_verifiy_status', 1)->pluck('id');
-                ;
+        $tenderBidNegotiations = TenderBidNegotiation::select('bid_submission_master_id_new')
+            ->where('tender_id', $tenderId)
+            ->get();
+
+        if ($tenderBidNegotiations->count() > 0) {
+            $bidSubmissionMasterIds = $tenderBidNegotiations->pluck('bid_submission_master_id_new')->toArray();
+        } else {
+            $bidSubmissionMasterIds = [];
+        }
+
+        if($tender->technical_count == 0)
+        {
+            $query = BidSubmissionMaster::selectRaw("'' as weightage,srm_bid_submission_master.id,srm_bid_submission_master.bidSubmittedDatetime,srm_bid_submission_master.tender_id,srm_supplier_registration_link.name,'' as bid_id,srm_bid_submission_master.commercial_verify_status,srm_bid_submission_master.bidSubmissionCode,srm_tender_master.technical_passing_weightage as passing_weightage")
+            ->join('srm_supplier_registration_link', 'srm_supplier_registration_link.id', '=', 'srm_bid_submission_master.supplier_registration_id')
+            ->join('srm_tender_master', 'srm_tender_master.id', '=', 'srm_bid_submission_master.tender_id')
+            ->groupBy('srm_bid_submission_master.id')->where('srm_bid_submission_master.status', 1)
+            ->where('srm_bid_submission_master.bidSubmittedYN', 1)
+            ->where('srm_bid_submission_master.tender_id', $tenderId);
+
+            if ($isNegotiation == 1) {
+                $query = $query->whereIn('srm_bid_submission_master.id', $bidSubmissionMasterIds);
+            } else {
+                $query = $query->whereNotIn('srm_bid_submission_master.id', $bidSubmissionMasterIds);
             }
-            else
-            {
-                return BidSubmissionMaster::selectRaw("round(SUM((srm_bid_submission_detail.eval_result/100)*srm_tender_master.technical_weightage),3) as weightage,srm_bid_submission_master.id,srm_bid_submission_master.bidSubmittedDatetime,srm_bid_submission_master.tender_id,srm_bid_submission_detail.id as bid_id,srm_bid_submission_master.commercial_verify_status,srm_bid_submission_master.bidSubmissionCode,srm_tender_master.technical_passing_weightage as passing_weightage")
-                ->join('srm_tender_master', 'srm_tender_master.id', '=', 'srm_bid_submission_master.tender_id')
-                ->join('srm_bid_submission_detail', 'srm_bid_submission_detail.bid_master_id', '=', 'srm_bid_submission_master.id')
-                ->havingRaw('weightage >= passing_weightage')
-                ->groupBy('srm_bid_submission_master.id')
-                ->where('srm_bid_submission_master.status', 1)->where('srm_bid_submission_master.bidSubmittedYN', 1)->where('srm_bid_submission_master.tender_id', $tenderId)->where('srm_bid_submission_master.commercial_verify_status', 1)
-                ->orderBy('srm_bid_submission_master.id', 'asc')->pluck('id');
+
+            return $query->where('srm_bid_submission_master.doc_verifiy_status', 1)->pluck('id');
+        }
+        else
+        {
+            $query = BidSubmissionMaster::selectRaw("round(SUM((srm_bid_submission_detail.eval_result/100)*srm_tender_master.technical_weightage),3) as weightage,srm_bid_submission_master.id,srm_bid_submission_master.bidSubmittedDatetime,srm_bid_submission_master.tender_id,srm_bid_submission_detail.id as bid_id,srm_bid_submission_master.commercial_verify_status,srm_bid_submission_master.bidSubmissionCode,srm_tender_master.technical_passing_weightage as passing_weightage")
+            ->join('srm_tender_master', 'srm_tender_master.id', '=', 'srm_bid_submission_master.tender_id')
+            ->join('srm_bid_submission_detail', 'srm_bid_submission_detail.bid_master_id', '=', 'srm_bid_submission_master.id')
+            ->havingRaw('weightage >= passing_weightage')
+            ->groupBy('srm_bid_submission_master.id')
+            ->where('srm_bid_submission_master.status', 1)->where('srm_bid_submission_master.bidSubmittedYN', 1)->where('srm_bid_submission_master.tender_id', $tenderId)->where('srm_bid_submission_master.commercial_verify_status', 1);
+
+            if ($isNegotiation == 1) {
+                $query = $query->whereIn('srm_bid_submission_master.id', $bidSubmissionMasterIds);
+            } else {
+                $query = $query->whereNotIn('srm_bid_submission_master.id', $bidSubmissionMasterIds);
             }
+
+            return $query->orderBy('srm_bid_submission_master.id', 'asc')->pluck('id');
+        }
   
     }
 
@@ -4078,6 +4183,20 @@ WHERE
 
             DB::commit();
             return $this->sendResponse($tender, 'Tender negotiation started successfully');
+        } catch (\Exception $e) {
+            DB::rollback();
+            return $this->sendError($e->getMessage());
+        }
+    }
+
+    public function closeTenderNegotiation(Request $request) {
+
+        DB::beginTransaction();
+        try {
+            $tenderId = $request['srm_tender_master_id'];
+            TenderMaster::where('id', $tenderId)->update(['is_negotiation_closed' => 1]);
+            DB::commit();
+            return $this->sendResponse('success', 'Tender negotiation closed successfully');
         } catch (\Exception $e) {
             DB::rollback();
             return $this->sendError($e->getMessage());
