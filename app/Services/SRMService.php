@@ -2398,7 +2398,12 @@ class SRMService
                     $att['doc_verifiy_date'] = $oldBidSubmission->doc_verifiy_date;
                     $att['doc_verifiy_status'] = $oldBidSubmission->doc_verifiy_status;
                     $att['doc_verifiy_comment'] = $oldBidSubmission->doc_verifiy_comment;
-                }
+                    TenderMaster::where('id', $tender_id)->update([
+                       'negotiation_doc_verify_comment' => $oldBidSubmission->doc_verifiy_comment,
+                       'negotiation_doc_verify_status' => $oldBidSubmission->doc_verifiy_status
+                    ]);
+
+               }
 
                 if($tender_negotiation && isset($tenderNegotiation_records[0]['area']['pricing_schedule']) && ($tenderNegotiation_records[0]['area']['pricing_schedule'] == 0)){
                     $att['commercial_verify_status'] = $oldBidSubmission->commercial_verify_status;
