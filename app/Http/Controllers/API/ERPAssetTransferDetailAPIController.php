@@ -11,6 +11,7 @@ use App\Http\Controllers\AppBaseController;
 use App\Models\AssetRequestDetail;
 use App\Models\ERPAssetTransfer;
 use App\Models\ErpLocation;
+use App\Models\AssetRequest;
 use App\Models\DepartmentMaster;
 use App\Models\FixedAssetMaster;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -135,6 +136,7 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
                     ->where('pr_created_yn','!=',1)
                     ->get();
                     
+                $assetRequest = AssetRequest::find($value['erp_fa_fa_asset_request_id']);
                 if (count($erpAsset) > 0) {
                     return $this->sendError('Same asset cannot be link multiple times');
                 }
@@ -171,7 +173,7 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
                     'company_id' => $value['company_id'],
                     'created_user_id' => \Helper::getEmployeeSystemID(),
                     'itemCodeSystem' => $value['itemCodeSystem'],
-                    'departmentSystemID' => (isset($value['type'][0]) && $value['type'][0] == 4 && isset($value['department'])) ? $value['department']['departmentSystemID'] : NULL
+                    'departmentSystemID' => (isset($value['type'][0]) && $value['type'][0] == 4 && isset($assetRequest)) ? $assetRequest->departmentSystemID : NULL
                 ];
             }
             $this->eRPAssetTransferDetailRepository->insert($data);
@@ -541,7 +543,7 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
         $input = $request->all();
         $companyID = $input['companyID'];
         $assetID = $input['assetID'];
-        $data['assetLocation'] = FixedAssetMaster::select('faID', 'empID')
+        $data['assetLocation'] = FixedAssetMaster::with('assignedEmployee')
             ->where('faID', $assetID)
             ->where('companySystemID', $companyID)->first();
 
