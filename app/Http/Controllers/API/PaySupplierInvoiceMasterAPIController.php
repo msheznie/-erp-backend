@@ -2083,6 +2083,36 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                         return $this->sendError('Every item should have a payment amount', 500, ['type' => 'confirm']);
                     }
 
+
+                    $checkAdvVATAmount = AdvancePaymentDetails::where('PayMasterAutoId', $id)
+                                                               ->sum('VATAmount');
+
+                    if ($paySupplierInvoiceMaster->invoiceType == 5 && $paySupplierInvoiceMaster->applyVAT == 1 && $checkAdvVATAmount > 0) {
+                        if(empty(TaxService::getInputVATTransferGLAccount($paySupplierInvoiceMaster->companySystemID))){
+                            return $this->sendError('Cannot confirm. Input VAT Transfer GL Account not configured.', 500);
+                        }
+
+                        $inputVATTransferGL = TaxService::getInputVATTransferGLAccount($paySupplierInvoiceMaster->companySystemID);
+
+                        $checkAssignedStatusInputTrans = ChartOfAccountsAssigned::checkCOAAssignedStatus($inputVATTransferGL->inputVatTransferGLAccountAutoID, $paySupplierInvoiceMaster->companySystemID);
+
+                        if (!$checkAssignedStatusInputTrans) {
+                            return $this->sendError('Cannot confirm. Input VAT Transfer GL Account not assigned to company.', 500);
+                        }
+
+                        if(empty(TaxService::getInputVATGLAccount($paySupplierInvoiceMaster->companySystemID))){
+                            return $this->sendError('Cannot confirm. Input VAT GL Account not configured.', 500);
+                        }
+
+                        $inputVATGL = TaxService::getInputVATGLAccount($paySupplierInvoiceMaster->companySystemID);
+
+                        $checkAssignedStatus = ChartOfAccountsAssigned::checkCOAAssignedStatus($inputVATGL->inputVatTransferGLAccountAutoID, $paySupplierInvoiceMaster->companySystemID);
+
+                        if (!$checkAssignedStatus) {
+                            return $this->sendError('Cannot confirm. Input VAT GL Account not assigned to company.', 500);
+                        }
+                    }
+
                     $advancePaymentDetails = AdvancePaymentDetails::where('PayMasterAutoId', $id)->get();
                     foreach ($advancePaymentDetails as $val) {
                         $advancePayment = PoAdvancePayment::find($val->poAdvPaymentID);
