@@ -3950,16 +3950,24 @@ class BudgetMasterAPIController extends AppBaseController
 
         $budgetUploadID = $input['budgetUploadID'];
 
-        $budgetMaster = BudgetMaster::where('budgetUploadID', $budgetUploadID)->where('confirmedYN', 0)->where('approvedYN', 0)->first();
-        if(!empty($budgetMaster)) {
+        $uploadBudget = UploadBudgets::find($budgetUploadID);
+
+        if($uploadBudget->uploadStatus == 1) {
+
+            $budgetMaster = BudgetMaster::where('budgetUploadID', $budgetUploadID)->where('confirmedYN', 0)->where('approvedYN', 0)->first();
+            if (!empty($budgetMaster)) {
+                UploadBudgets::where('id', $budgetUploadID)->delete();
+                BudgetMaster::where('budgetUploadID', $budgetUploadID)->delete();
+                Budjetdetails::where('budgetmasterID', $budgetMaster->budgetmasterID)->delete();
+
+                return $this->sendResponse([], 'Budget upload deleted successfully');
+            } else {
+                return $this->sendError('Error in deleting budget upload');
+            }
+        } else {
             UploadBudgets::where('id', $budgetUploadID)->delete();
-            BudgetMaster::where('budgetUploadID', $budgetUploadID)->delete();
-            Budjetdetails::where('budgetmasterID', $budgetMaster->budgetmasterID)->delete();
 
             return $this->sendResponse([], 'Budget upload deleted successfully');
-        }
-        else {
-            return $this->sendError('Error in deleting budget upload');
         }
 
     }
