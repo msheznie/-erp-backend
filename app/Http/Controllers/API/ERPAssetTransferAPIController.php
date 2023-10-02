@@ -970,7 +970,7 @@ class ERPAssetTransferAPIController extends AppBaseController
         if($assetRequestedAssigned) {
             if($assetRequestedAssigned->type == 2) {
                 if($isAssetAlreadyAssigned->receivedYN == 0) {
-                    return ['success'=> false, 'message' => "Asset Transferred to department and still not acknowledged",'data' => $data];
+                    return ['success'=> false, 'message' => "Asset transferred to department and still not acknowledged",'data' => $data];
                 }
             }
         }
@@ -991,9 +991,9 @@ class ERPAssetTransferAPIController extends AppBaseController
                 })->where('to_emp_id',$assetRequest->emp_id)->where('fa_master_id',$assetID)->orderby('id','desc')->first();
             if(isset($isAssetAlreadyAssignedForEmployee)) {
                 if($isAssetAlreadyAssignedForEmployee->receivedYN == 1) {
-                    return ['success'=> false, 'message' => "Asset Transferred and Acknowdged already for this employee",'data' => $data];
+                    return ['success'=> false, 'message' => "Asset transferred and acknowdged already for this employee",'data' => $data];
                 }else {
-                    return ['success'=> false, 'message' => "Asset Transferred and still not acknowledged for this employee",'data' => $data];
+                    return ['success'=> false, 'message' => "Asset transferred and still not acknowledged for this employee",'data' => $data];
                 }
             }
         }
@@ -1011,13 +1011,13 @@ class ERPAssetTransferAPIController extends AppBaseController
             })->where('fa_master_id',$assetID)->orderby('id','desc')->first();
         if($isAssetAlreadyAssigned->receivedYN == 0) {
             $data = $this->getDataOfAssetNotAcknowldged($assetID,$companyID);
-            return ['success'=> false, 'message' => "Asset Transferred and still not acknowledged",'data' => $data];
+            return ['success'=> false, 'message' => "Asset transferred and still not acknowledged",'data' => $data];
         }
 
         // update the employee id to fixed asset
         FixedAssetMaster::where('faID',$assetID)->update(['empID' => $assetRequest->emp_id]);
 
-        return ['success'=> true, 'message' => "Asset Transferred successfully"];
+        return ['success'=> true, 'message' => "Asset transferred successfully"];
 
         
     }
@@ -1040,7 +1040,7 @@ class ERPAssetTransferAPIController extends AppBaseController
         if($assetRequestedAssigned) {
             if($assetRequestedAssigned->type == 1) {
                 if($isAssetAlreadyAssigned->receivedYN == 0) {
-                    return ['success'=> false, 'message' => "Asset Transferred to employee and still not acknowledged",'data' => $data];
+                    return ['success'=> false, 'message' => "Asset transferred to employee and still not acknowledged",'data' => $data];
                 }
             }
         }
@@ -1060,10 +1060,12 @@ class ERPAssetTransferAPIController extends AppBaseController
                         ->where('approved_yn', -1);
                 })->where('departmentSystemID',$assetRequest->departmentSystemID)->where('fa_master_id',$assetID)->orderby('id','desc')->first();
             if(isset($isAssetAlreadyAssignedForDepartment)) {
+                $dataDepartment = $this->getDataOfAssetNotAcknowldgedByDepartment($assetID,$companyID,$assetRequest->departmentSystemID,$isAssetAlreadyAssignedForDepartment->receivedYN);
+
                 if($isAssetAlreadyAssignedForDepartment->receivedYN == 1) {
-                    return ['success'=> false, 'message' => "Asset Transferred and Acknowdged already for this department",'data' => $data];
+                    return ['success'=> false, 'message' => "Asset already transferred to this department",'data' => $dataDepartment];
                 }else {
-                    return ['success'=> false, 'message' => "Asset Transferred and still not acknowledged for this department",'data' => $data];
+                    return ['success'=> false, 'message' => "Asset transferred and still not acknowledged to this department",'data' => $dataDepartment];
                 }
             }
         }
@@ -1081,7 +1083,7 @@ class ERPAssetTransferAPIController extends AppBaseController
             })->where('fa_master_id',$assetID)->orderby('id','desc')->first();
         if($isAssetAlreadyAssigned->receivedYN == 0) {
             $data = $this->getDataOfAssetNotAcknowldged($assetID,$companyID);
-            return ['success'=> false, 'message' => "Asset Transferred and still not acknowledged",'data' => $data];
+            return ['success'=> false, 'message' => "Asset transferred and still not acknowledged",'data' => $data];
         }
 
         // update the department id to fixed asset
@@ -1121,6 +1123,23 @@ class ERPAssetTransferAPIController extends AppBaseController
             })
             ->where('fa_master_id', $assetID)
             ->where('receivedYN', 0)
+            ->get();
+    }
+
+    public function getDataOfAssetNotAcknowldgedByDepartment($assetID,$companyID,$department,$receiveYn) {
+        return ERPAssetTransferDetail::with(['assetTransferMaster' => function ($query) use ($companyID) {
+            $query->where('company_id', $companyID)
+                ->where('approved_yn', -1);
+        }, 'assetMaster', 'assetRequestDetail' => function ($q) {
+            $q->with(['createdUserID']);
+        }, 'smePayAsset'])
+            ->whereHas('assetTransferMaster', function ($query) use ($companyID) {
+                $query->where('company_id', $companyID)
+                    ->where('approved_yn', -1);
+            })
+            ->where('fa_master_id', $assetID)
+            ->where('departmentSystemID', $department)
+            ->where('receivedYN', $receiveYn)
             ->get();
     }
 
