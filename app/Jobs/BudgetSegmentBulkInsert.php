@@ -207,7 +207,7 @@ class BudgetSegmentBulkInsert implements ShouldQueue
                 'path' => "",
             ];
 
-            WebPushNotificationService::sendNotification($webPushData, 3, $employee->employeeSystemID);
+//            WebPushNotificationService::sendNotification($webPushData, 3, $employee->employeeSystemID);
             UploadBudgets::where('id', $uploadBudget->id)->update(['uploadStatus' => 1]);
             DB::commit();
 
@@ -225,7 +225,7 @@ class BudgetSegmentBulkInsert implements ShouldQueue
                 'path' => "",
             ];
 
-            WebPushNotificationService::sendNotification($webPushData, 3, $employee->employeeSystemID);
+//            WebPushNotificationService::sendNotification($webPushData, 3, $employee->employeeSystemID);
             try {
                 UploadBudgets::where('id', $uploadBudget->id)->update(['uploadStatus' => 0]);
                 DB::commit();
