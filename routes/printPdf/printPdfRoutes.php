@@ -46,3 +46,5 @@ Route::get('BidSummaryReport', 'BidSubmissionMasterAPIController@BidSummaryExpor
 Route::get('supplier-item-wise-report', 'BidSubmissionMasterAPIController@SupplierItemWiseExportReport');
 Route::post('schedule-wise-report', 'BidSubmissionMasterAPIController@SupplierSheduleWiseReport');
 Route::post('SupplierScheduleWiseExportReport', 'BidSubmissionMasterAPIController@SupplierScheduleWiseExportReport');
+
+Route::post('genearetBarcode', 'BarcodeConfigurationAPIController@genearetBarcode');
