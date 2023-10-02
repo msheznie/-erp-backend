@@ -3812,19 +3812,8 @@ class BudgetMasterAPIController extends AppBaseController
 
         $segments = SegmentMaster::where('isActive', 1)->get();
 
-        $glCOdes = ReportTemplateDetails::with(['gllink' => function ($query) use ($templateData) {
-            $query->whereHas('items', function($query) use ($templateData) {
-                $query->where('companySystemID', $templateData['companySystemID'])
-                    ->where('companyFinanceYearID', $templateData['companyFinanceYearID']);
-            })
-                ->orderBy('sortOrder');
-        }])
-            ->whereHas('gllink',function ($query) use ($templateData) {
-                $query->whereHas('items', function($query) use ($templateData) {
-                    $query->where('companySystemID', $templateData['companySystemID'])
-                        ->where('companyFinanceYearID', $templateData['companyFinanceYearID']);
-                });
-            })
+        $glCOdes = ReportTemplateDetails::with(['gllink'])
+            ->where('companySystemID', $templateData['companySystemID'])
             ->where('companyReportTemplateID', $templateMasterID)
             ->orderBy('sortOrder')
             ->get();
