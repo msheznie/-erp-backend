@@ -110,16 +110,20 @@ class BudgetSegmentBulkInsert implements ShouldQueue
 
             $financeYear = CompanyFinanceYear::where('companySystemID', $template->companySystemID)->where('bigginingDate', "<=", $mysqlFormattedStartDate)->where('endingDate', ">=", $mysqlFormattedEndDate)->first();
 
-            $budgetExists = BudgetMaster::where('templateMasterID', $template->companyReportTemplateID)->get();
+            $budgetExists = BudgetMaster::where('templateMasterID', $template->companyReportTemplateID)->where('companyFinanceYearID', $financeYear->companyFinanceYearID)->get();
+
 
             $segmentDes = [];
             foreach ($budgetExists as $budgetExist) {
-                $segmentDes[] = $budgetExist->ServiceLineDes;
+                $segmentMaster = SegmentMaster::find($budgetExist->serviceLineSystemID);
+
+                $segmentDes[] = $segmentMaster->ServiceLineDes;
             }
 
             $segments = array_filter($segments, function ($segment) use ($segmentDes) {
                 return !in_array($segment, $segmentDes);
             });
+
 
 
             foreach ($segments as $segment) {
@@ -158,9 +162,6 @@ class BudgetSegmentBulkInsert implements ShouldQueue
 
                     if (!empty($templateDetail)) {
 
-                        Log::info("Template Description: " . $value['Template Description 2']);
-                        Log::info("Template Detail: " . $templateDetail);
-
 
                         $chartOfAccount = ChartOfAccount::where('AccountCode', $value['GL Code'])->first();
 
@@ -194,7 +195,6 @@ class BudgetSegmentBulkInsert implements ShouldQueue
 
                             $budgetDetails = Budjetdetails::create($budgetDetailsArray);
                         }
-                        Log::info("Budget Detail: " . $budgetDetails);
 
                     }
                 }
@@ -207,7 +207,7 @@ class BudgetSegmentBulkInsert implements ShouldQueue
                 'path' => "",
             ];
 
-            WebPushNotificationService::sendNotification($webPushData, 3, $employee->employeeSystemID);
+//            WebPushNotificationService::sendNotification($webPushData, 3, $employee->employeeSystemID);
             UploadBudgets::where('id', $uploadBudget->id)->update(['uploadStatus' => 1]);
             DB::commit();
 
@@ -225,7 +225,7 @@ class BudgetSegmentBulkInsert implements ShouldQueue
                 'path' => "",
             ];
 
-            WebPushNotificationService::sendNotification($webPushData, 3, $employee->employeeSystemID);
+//            WebPushNotificationService::sendNotification($webPushData, 3, $employee->employeeSystemID);
             try {
                 UploadBudgets::where('id', $uploadBudget->id)->update(['uploadStatus' => 0]);
                 DB::commit();
