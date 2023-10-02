@@ -147,6 +147,7 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
                     $query->where('company_id', $value['company_id'])
                         ->where('approved_yn', 0);
                 })
+                ->orderby('id','desc')
                 ->first();  
                 if(!empty($assetExistUnApproved->assetTransferMaster)){ 
                     return $this->sendError('Asset already pulled to unapproved document '.$assetExistUnApproved->assetTransferMaster->document_code);  
@@ -158,6 +159,7 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
                         ->where('returnStatus', 0);
                 })
                 ->where('receivedYN','=','1')
+                ->orderby('id','desc')
                 ->first(); 
                 if(!empty($assetExistUnApproved)){ 
                     return $this->sendError('Asset already acknowledged');  
