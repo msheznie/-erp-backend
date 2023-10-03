@@ -966,14 +966,18 @@ class ERPAssetTransferAPIController extends AppBaseController
         $data = $this->getDataOfAssetAcknowldged($assetID,$companyID);
 
 
-        $assetRequestedAssigned  = AssetRequest::select(['departmentSystemID','type','emp_id'])->where('id',$isAssetAlreadyAssigned->erp_fa_fa_asset_request_id)->first();
-        if($assetRequestedAssigned) {
-            if($assetRequestedAssigned->type == 2) {
-                if($isAssetAlreadyAssigned->receivedYN == 0) {
-                    return ['success'=> false, 'message' => "Asset transferred to department and still not acknowledged",'data' => $data];
+        if($isAssetAlreadyAssigned) {
+            $assetRequestedAssigned  = AssetRequest::select(['departmentSystemID','type','emp_id'])->where('id',$isAssetAlreadyAssigned->erp_fa_fa_asset_request_id)->first();
+            if($assetRequestedAssigned) {
+                if($assetRequestedAssigned->type == 2) {
+                    if($isAssetAlreadyAssigned->receivedYN == 0) {
+                        return ['success'=> false, 'message' => "Asset transferred to department and still not acknowledged",'data' => $data];
+                    }
                 }
             }
         }
+
+
 
 
         // check wether the request is from the same employee of the asset assigned
@@ -1014,9 +1018,6 @@ class ERPAssetTransferAPIController extends AppBaseController
             return ['success'=> false, 'message' => "Asset transferred and still not acknowledged",'data' => $data];
         }
 
-        // update the employee id to fixed asset
-        FixedAssetMaster::where('faID',$assetID)->update(['empID' => $assetRequest->emp_id]);
-
         return ['success'=> true, 'message' => "Asset transferred successfully"];
 
         
@@ -1036,15 +1037,18 @@ class ERPAssetTransferAPIController extends AppBaseController
             })->where('fa_master_id',$assetID)->orderby('id','desc')->first();
 
         $data = $this->getDataOfAssetNotAcknowldgedByEmployee($assetID,$companyID);
-        $assetRequestedAssigned  = AssetRequest::select(['departmentSystemID','type','emp_id'])->where('id',$isAssetAlreadyAssigned->erp_fa_fa_asset_request_id)->first();
-        if($assetRequestedAssigned) {
-            if($assetRequestedAssigned->type == 1) {
-                if($isAssetAlreadyAssigned->receivedYN == 0) {
-                    return ['success'=> false, 'message' => "Asset transferred to employee and still not acknowledged",'data' => $data];
+        if($isAssetAlreadyAssigned) {
+            $assetRequestedAssigned  = AssetRequest::select(['departmentSystemID','type','emp_id'])->where('id',$isAssetAlreadyAssigned->erp_fa_fa_asset_request_id)->first();
+            if($assetRequestedAssigned) {
+                if($assetRequestedAssigned->type == 1) {
+                    if($isAssetAlreadyAssigned->receivedYN == 0) {
+                        return ['success'=> false, 'message' => "Asset transferred to employee and still not acknowledged",'data' => $data];
+                    }
                 }
             }
         }
 
+        
 
         // check wether the request is from the same department of the asset assigned
         if($fixedAsset->departmentSystemID == $assetRequest->departmentSystemID) {
@@ -1081,13 +1085,10 @@ class ERPAssetTransferAPIController extends AppBaseController
                 $query->where('company_id', $companyID)
                     ->where('approved_yn', -1);
             })->where('fa_master_id',$assetID)->orderby('id','desc')->first();
-        if($isAssetAlreadyAssigned->receivedYN == 0) {
+        if($isAssetAlreadyAssigned && $isAssetAlreadyAssigned->receivedYN == 0) {
             $data = $this->getDataOfAssetNotAcknowldged($assetID,$companyID);
             return ['success'=> false, 'message' => "Asset transferred and still not acknowledged",'data' => $data];
         }
-
-        // update the department id to fixed asset
-        FixedAssetMaster::where('faID',$assetID)->update(['departmentSystemID' => $assetRequest->departmentSystemID]);
 
         return ['success'=> true, 'message' => "Asset Transferred successfully"];
 
