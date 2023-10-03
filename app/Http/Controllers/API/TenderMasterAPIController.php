@@ -3117,6 +3117,7 @@ WHERE
                 $query->where('description', 'LIKE', "%{$search}%");
                 $query->orWhere('description_sec_lang', 'LIKE', "%{$search}%");
                 $query->orWhere('title', 'LIKE', "%{$search}%");
+                $query->orWhere('negotiation_code', 'LIKE', "%{$search}%");
                 $query->orWhere('title_sec_lang', 'LIKE', "%{$search}%");
             });
         }
