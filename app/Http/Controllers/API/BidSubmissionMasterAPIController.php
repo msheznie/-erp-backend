@@ -30,6 +30,7 @@ use App\Models\BidBoq;
 use App\Models\SupplierRegistrationLink;
 use App\Repositories\TenderMasterRepository;
 use App\Services\SRMService;
+use LDAP\Result;
 
 use function Doctrine\Common\Cache\Psr6\get;
 
@@ -1026,54 +1027,65 @@ class BidSubmissionMasterAPIController extends AppBaseController
     public function getSupplierItemList(Request $request)
     {
         $tenderId = $request['tenderMasterId'];
+        $isNegotiation = $request['isNegotiation'];
 
         $technicalCount = $this->getTechnicalCount($tenderId); 
-
-        if($technicalCount->technical_count != 0)
-        {
+        $bidSubmissionMasterIds = SRMService::getNegotiationBids($tenderId);
+        if ($technicalCount->technical_count != 0) {
             $queryResult = BidSubmissionMaster::selectRaw("
-            SUM((srm_bid_submission_detail.eval_result/100)*srm_tender_master.technical_weightage) as weightage, 
-            srm_bid_submission_master.id, 
-            srm_supplier_registration_link.name,
-            srm_tender_master.technical_passing_weightage as passing_weightage,
-            srm_bid_submission_master.bidSubmissionCode")
+                SUM((srm_bid_submission_detail.eval_result/100)*srm_tender_master.technical_weightage) as weightage, 
+                srm_bid_submission_master.id as id, 
+                srm_supplier_registration_link.name,
+                srm_tender_master.technical_passing_weightage as passing_weightage,
+                srm_bid_submission_master.bidSubmissionCode")
                 ->join('srm_supplier_registration_link', 'srm_supplier_registration_link.id', '=', 'srm_bid_submission_master.supplier_registration_id')
                 ->join('srm_tender_master', 'srm_tender_master.id', '=', 'srm_bid_submission_master.tender_id')
                 ->join('srm_bid_submission_detail', 'srm_bid_submission_detail.bid_master_id', '=', 'srm_bid_submission_master.id')
                 ->join('srm_evaluation_criteria_details', 'srm_evaluation_criteria_details.id', '=', 'srm_bid_submission_detail.evaluation_detail_id')
                 ->havingRaw('weightage >= passing_weightage')
                 ->groupBy('srm_bid_submission_master.id')
-                ->where('srm_evaluation_criteria_details.critera_type_id', 2)
-                ->where('srm_bid_submission_master.status', 1)
-                ->where('srm_bid_submission_master.bidSubmittedYN', 1)
-                ->where('srm_bid_submission_master.tender_id', $tenderId)
-                ->orderBy('srm_bid_submission_master.id', 'desc')
-                ->get();
-        }
-        else
-        {
+                ->where('srm_evaluation_criteria_details.critera_type_id', 2);
+        
+            if ($isNegotiation == 1) {
+                $queryResult->whereIn('srm_bid_submission_master.id', $bidSubmissionMasterIds);
+            } else {
+                $queryResult->whereNotIn('srm_bid_submission_master.id', $bidSubmissionMasterIds);
+            }
+
+            $queryResult->where('srm_bid_submission_master.status', 1)
+            ->where('srm_bid_submission_master.bidSubmittedYN', 1)
+            ->where('srm_bid_submission_master.tender_id', $tenderId)
+            ->orderBy('srm_bid_submission_master.id', 'desc');
+
+        } else {
             $queryResult = BidSubmissionMaster::selectRaw("
-            srm_bid_submission_master.id, 
-            srm_supplier_registration_link.name,
-            srm_bid_submission_master.bidSubmissionCode")
+                srm_bid_submission_master.id, 
+                srm_supplier_registration_link.name,
+                srm_bid_submission_master.bidSubmissionCode")
                 ->join('srm_supplier_registration_link', 'srm_supplier_registration_link.id', '=', 'srm_bid_submission_master.supplier_registration_id')
                 ->join('srm_tender_master', 'srm_tender_master.id', '=', 'srm_bid_submission_master.tender_id')
                 ->groupBy('srm_bid_submission_master.id')
-                ->where('srm_bid_submission_master.status', 1)
-                ->where('srm_bid_submission_master.bidSubmittedYN', 1)
-                ->where('srm_bid_submission_master.tender_id', $tenderId)
-                ->where('srm_bid_submission_master.doc_verifiy_status', 1)
-                ->orderBy('srm_bid_submission_master.id', 'desc')
-                ->get();
+                ->where('srm_bid_submission_master.status', 1);
+        
+            if ($isNegotiation == 1) {
+                $queryResult->whereIn('srm_bid_submission_master.id', $bidSubmissionMasterIds);
+            } else {
+                $queryResult->whereNotIn('srm_bid_submission_master.id', $bidSubmissionMasterIds);
+                  
+            }
 
+           $queryResult->where('srm_bid_submission_master.bidSubmittedYN', 1)
+            ->where('srm_bid_submission_master.tender_id', $tenderId)
+            ->where('srm_bid_submission_master.doc_verifiy_status', 1)
+            ->orderBy('srm_bid_submission_master.id', 'desc');
         }
-
-
+        
+        $queryResultArray = $queryResult->get()->toArray(); 
                 
         $selctedItems = [];
 
-        foreach($queryResult as $supplier) {
-            $data = ["id" => $supplier->id, "itemName" => $supplier->bidSubmissionCode.'|'.$supplier->name];
+        foreach($queryResultArray as $supplier) {
+            $data = ["id" => $supplier['id'], "itemName" => $supplier['bidSubmissionCode'].'|'.$supplier['name']];
             array_push($selctedItems,$data);
         }   
 
@@ -1084,7 +1096,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
             ->where('is_disabled', 0)
             ->get()
             ->toArray();
-        return $this->sendResponse(['supplierList'=> $queryResult, 'itemList' => $itemListIsEnableFalse,'selectedItems'=>$selctedItems], 'Data retrieved successfully');
+        return $this->sendResponse(['supplierList'=> $queryResultArray, 'itemList' => $itemListIsEnableFalse,'selectedItems'=>$selctedItems], 'Data retrieved successfully');
     }
 
     public function generateSupplierItemReportTableView(Request $request)
