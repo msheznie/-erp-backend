@@ -334,6 +334,7 @@ class TaxLedgerDetail extends Model
         'recoverabilityAmount',
         'logisticYN',
         'addVATonPO',
+        'matchDocumentMasterAutoID',
         'exempt_vat_portion',
         'createdDateTime'
     ];
@@ -356,6 +357,7 @@ class TaxLedgerDetail extends Model
         'vatSubCategoryID' => 'integer',
         'vatMasterCategoryID' => 'integer',
         'serviceLineSystemID' => 'integer',
+        'matchDocumentMasterAutoID' => 'integer',
         'rcmApplicableYN' => 'integer',
         'documentDate' => 'datetime',
         'postedDate' => 'datetime',

@@ -4885,11 +4885,13 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
             $deleteTaxLedgerData = TaxLedger::where('documentMasterAutoID', $PayMasterAutoId)
                 ->where('companySystemID', $paymentVoucherData->companySystemID)
                 ->where('documentSystemID', $paymentVoucherData->documentSystemID)
+                ->whereNull('matchDocumentMasterAutoID')
                 ->delete();
 
             TaxLedgerDetail::where('documentMasterAutoID', $PayMasterAutoId)
                 ->where('companySystemID', $paymentVoucherData->companySystemID)
                 ->where('documentSystemID', $paymentVoucherData->documentSystemID)
+                ->whereNull('matchDocumentMasterAutoID')
                 ->delete();
 
             BudgetConsumedData::where('documentSystemCode', $PayMasterAutoId)
