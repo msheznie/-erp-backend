@@ -48,6 +48,8 @@ class BudgetSegmentBulkInsert implements ShouldQueue
 
     public function handle()
     {
+        ini_set('max_execution_time', 21600);
+        ini_set('memory_limit', -1);
         $uploadData = $this->uploadData;
 
         CommonJobService::db_switch($this->db);
