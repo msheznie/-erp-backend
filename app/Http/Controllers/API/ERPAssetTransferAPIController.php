@@ -923,11 +923,11 @@ class ERPAssetTransferAPIController extends AppBaseController
             $data['data']['assetRecords'] = $assetRequestValidation['data'];
             $data['data']['message'] = $assetRequestValidation['message'];
             $data['data']['acknowledgedYN'] = 1;
-            return $data['data'];
         }else {
-            $data['data'] = false;
-            return $data['data'];
+            $data['data'] = [];
         }
+        return $data['data'];
+
 
     }
 
