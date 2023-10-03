@@ -3726,7 +3726,6 @@ WHERE
                 $tenderFinalBids = TenderFinalBids::select('id','total_weightage')
                     ->where('tender_id', $tenderId)
                     ->where('status', '!=', 0)
-                    ->whereIn('id', $ids)
                     ->orderBy('total_weightage', 'desc')
                     ->get();
 
