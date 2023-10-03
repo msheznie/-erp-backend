@@ -201,4 +201,9 @@ Route::group([],function (){
     Route::get('getJournalVoucherMasterRecord', 'JvMasterAPIController@getJournalVoucherMasterRecord')->name('Get journal voucher master record');
 });
 
+//Supplier Statement Report
+Route::group([],function (){
+    Route::post('sentSupplierStatement', 'AccountsPayableReportAPIController@sentSupplierStatement')->name('Sent supplier statement');
+});
+
 
