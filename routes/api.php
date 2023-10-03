@@ -347,10 +347,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('item_issue_types', 'ItemIssueTypeAPIController');
 
             Route::resource('accounts_payable_ledgers', 'AccountsPayableLedgerAPIController');
-            Route::get('getAPFilterData', 'AccountsPayableReportAPIController@getAPFilterData');
-            Route::post('validateAPReport', 'AccountsPayableReportAPIController@validateAPReport');
-            Route::post('generateAPReport', 'AccountsPayableReportAPIController@generateAPReport');
-            Route::post('exportAPReport', 'AccountsPayableReportAPIController@exportReport');
 
             Route::post('exportNavigationeport', 'UserGroupAssignAPIController@exportNavigationeport');
 
@@ -509,7 +505,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('getJournalVoucherMasterFormData', 'JvMasterAPIController@getJournalVoucherMasterFormData');
             Route::post('getJournalVoucherMasterView', 'JvMasterAPIController@getJournalVoucherMasterView');
             Route::post('copyJV', 'JvMasterAPIController@copyJV');
-            Route::get('getJournalVoucherMasterRecord', 'JvMasterAPIController@getJournalVoucherMasterRecord');
             Route::get('getJournalVoucherDetails', 'JvDetailAPIController@getJournalVoucherDetails');
             Route::get('getJournalVoucherContracts', 'JvDetailAPIController@getJournalVoucherContracts');
             Route::post('journalVoucherSalaryJVDetailStore', 'JvDetailAPIController@journalVoucherSalaryJVDetailStore');
@@ -1037,7 +1032,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('assignedCompaniesByCustomerCategory', 'CustomerMasterCategoryAssignedAPIController@assignedCompaniesByCustomerCategory');
 
             Route::post('sentSupplierStatement', 'AccountsPayableReportAPIController@sentSupplierStatement');
-            Route::post('sentSupplierLedger', 'AccountsPayableReportAPIController@sentSupplierLedger');
             Route::post('sentCustomerStatement', 'AccountsReceivableReportAPIController@sentCustomerStatement');
             Route::post('sentCustomerLedger', 'AccountsReceivableReportAPIController@sentCustomerLedger');
 
