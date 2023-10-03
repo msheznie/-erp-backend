@@ -3185,12 +3185,8 @@ WHERE
             ->join('srm_supplier_registration_link', 'srm_supplier_registration_link.id', '=', 'srm_bid_submission_master.supplier_registration_id')
             ->join('srm_tender_master', 'srm_tender_master.id', '=', 'srm_bid_submission_master.tender_id')
             ->join('srm_bid_submission_detail', 'srm_bid_submission_detail.bid_master_id', '=', 'srm_bid_submission_master.id')
-            ->join('srm_evaluation_criteria_details', 'srm_evaluation_criteria_details.id', '=', 'srm_bid_submission_detail.evaluation_detail_id');
-            if ($isNegotiation == 1) {
-                $query = $query->join('tender_negotiations', 'srm_bid_submission_master.tender_id', '=', 'tender_negotiations.srm_tender_master_id')
-                ->join('area_tender_negotiation', 'area_tender_negotiation.tender_negotiation_id', '=', 'tender_negotiations.id');
-            }
-            $query = $query->havingRaw('weightage >= passing_weightage')
+            ->join('srm_evaluation_criteria_details', 'srm_evaluation_criteria_details.id', '=', 'srm_bid_submission_detail.evaluation_detail_id')
+            ->havingRaw('weightage >= passing_weightage')
             ->groupBy('srm_bid_submission_master.id')
             ->where('srm_bid_submission_master.status', 1)
             ->where('srm_bid_submission_master.bidSubmittedYN', 1)
@@ -3210,12 +3206,8 @@ WHERE
         {
             $query = BidSubmissionMaster::selectRaw("'' as weightage,srm_bid_submission_master.id,srm_bid_submission_master.bidSubmittedDatetime,srm_bid_submission_master.tender_id,srm_supplier_registration_link.name,'' as bid_id,srm_bid_submission_master.commercial_verify_status,srm_bid_submission_master.bidSubmissionCode,srm_tender_master.technical_passing_weightage as passing_weightage,srm_bid_submission_detail.technical_ranking")
             ->join('srm_supplier_registration_link', 'srm_supplier_registration_link.id', '=', 'srm_bid_submission_master.supplier_registration_id')
-            ->join('srm_tender_master', 'srm_tender_master.id', '=', 'srm_bid_submission_master.tender_id');
-            if ($isNegotiation == 1) {
-                $query = $query->join('tender_negotiations', 'srm_bid_submission_master.tender_id', '=', 'tender_negotiations.srm_tender_master_id')
-                ->join('area_tender_negotiation', 'area_tender_negotiation.tender_negotiation_id', '=', 'tender_negotiations.id');
-            }
-            $query = $query->groupBy('srm_bid_submission_master.id')
+            ->join('srm_tender_master', 'srm_tender_master.id', '=', 'srm_bid_submission_master.tender_id')
+            ->groupBy('srm_bid_submission_master.id')
             ->where('srm_bid_submission_master.status', 1)
             ->where('srm_bid_submission_master.bidSubmittedYN', 1)
             ->where('srm_bid_submission_master.doc_verifiy_status','!=',2)
@@ -3682,11 +3674,9 @@ WHERE
                     }
                     // Update the record in the database with the calculated ranking
                     if($pricing_schedule && $isNegotiation == 1){
-                        TenderFinalBids::where('id', $record->id)->whereIn('bid_id', $bidSubmissionMasterIds)
-                            ->update(['commercial_ranking' => $record->ranking]);
+                        TenderFinalBids::where('id', $record->id)->update(['commercial_ranking' => $record->ranking]);
                     } else {
-                        TenderFinalBids::where('id', $record->id)->whereNotIn('bid_id', $bidSubmissionMasterIds)
-                            ->update(['commercial_ranking' => $record->ranking]);
+                        TenderFinalBids::where('id', $record->id)->update(['commercial_ranking' => $record->ranking]);
                     }
 
                 }
@@ -3706,14 +3696,13 @@ WHERE
     {
         DB::beginTransaction();
         try {
-
-
             $inputs = $request['extraParams'];
             $tenderId = $inputs['tenderMasterId'];
             $isNegotiation = $inputs['isNegotiation'];
             $selected_suppliers = $inputs['suppliers'];
             $ids = $inputs['ids'];
             $comment = $inputs['comment'];
+
             $suppliers = TenderFinalBids::distinct('supplier_id')->where('tender_id', $tenderId)->where('status', 0)->pluck('supplier_id')->toArray();
             $is_equal = $this->array_equal($selected_suppliers, $suppliers);
             if (!$is_equal) {
@@ -3730,12 +3719,14 @@ WHERE
 
             $getRankCount = TenderFinalBids::where('tender_id', $tenderId)
                 ->where('combined_ranking', '!=', null)
+                ->whereIn('id', $ids)
                 ->count();
 
             if($getRankCount == 0){
                 $tenderFinalBids = TenderFinalBids::select('id','total_weightage')
                     ->where('tender_id', $tenderId)
                     ->where('status', '!=', 0)
+                    ->whereIn('id', $ids)
                     ->orderBy('total_weightage', 'desc')
                     ->get();
 
@@ -3755,8 +3746,7 @@ WHERE
                         }
                     }
                     // Update the record in the database with the calculated ranking
-                    TenderFinalBids::where('id', $record->id)
-                        ->update(['combined_ranking' => $record->ranking]);
+                    TenderFinalBids::where('id', $record->id)->update(['combined_ranking' => $record->ranking]);
                 }
             }
 
