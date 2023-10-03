@@ -966,14 +966,18 @@ class ERPAssetTransferAPIController extends AppBaseController
         $data = $this->getDataOfAssetAcknowldged($assetID,$companyID);
 
 
-        $assetRequestedAssigned  = AssetRequest::select(['departmentSystemID','type','emp_id'])->where('id',$isAssetAlreadyAssigned->erp_fa_fa_asset_request_id)->first();
-        if($assetRequestedAssigned) {
-            if($assetRequestedAssigned->type == 2) {
-                if($isAssetAlreadyAssigned->receivedYN == 0) {
-                    return ['success'=> false, 'message' => "Asset transferred to department and still not acknowledged",'data' => $data];
+        if($isAssetAlreadyAssigned) {
+            $assetRequestedAssigned  = AssetRequest::select(['departmentSystemID','type','emp_id'])->where('id',$isAssetAlreadyAssigned->erp_fa_fa_asset_request_id)->first();
+            if($assetRequestedAssigned) {
+                if($assetRequestedAssigned->type == 2) {
+                    if($isAssetAlreadyAssigned->receivedYN == 0) {
+                        return ['success'=> false, 'message' => "Asset transferred to department and still not acknowledged",'data' => $data];
+                    }
                 }
             }
         }
+
+
 
 
         // check wether the request is from the same employee of the asset assigned
