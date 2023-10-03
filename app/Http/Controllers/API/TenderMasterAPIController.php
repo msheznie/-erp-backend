@@ -3560,6 +3560,25 @@ WHERE
             $status = $request['commercial_ranking_line_item_status'];
             $bids = $request['bids'];
 
+            $pricing_schedule = false;
+            $technical_evaluation = false;
+
+            //Get Negotiation Area
+            if($isNegotiation == 1){
+                $tenderBidNegotiations = TenderBidNegotiation::with(['tender_negotiation_area'])->select('tender_negotiation_id')
+                    ->where('tender_id', $tenderId)
+                    ->first();
+
+                if($tenderBidNegotiations->tender_negotiation_area->pricing_schedule == 0 || $tenderBidNegotiations->tender_negotiation_area->pricing_schedule == false){
+                    $pricing_schedule = true;
+                }
+
+                if($tenderBidNegotiations->tender_negotiation_area->technical_evaluation == 0 || $tenderBidNegotiations->tender_negotiation_area->technical_evaluation == false){
+                    $technical_evaluation = true;
+                }
+
+            }
+
             $techniqal_wightage = TenderMaster::where('id', $tenderId)->select('id', 'technical_weightage', 'commercial_weightage')->first();
 
             if($isNegotiation == 1){
@@ -3597,6 +3616,14 @@ WHERE
 
 
                 $weightage = round(($output / 100) * $techniqal_wightage->commercial_weightage, 3);
+
+                if($isNegotiation == 1 && $pricing_schedule == false){
+                    $weightage = 0;
+                }
+
+                if($isNegotiation == 1 && $technical_evaluation == false){
+                    $val->tech_weightage = 0;
+                }
 
                 $results = BidSubmissionMaster::find($val->id)
                     ->update(['comm_weightage' => $weightage]);
@@ -3640,22 +3667,16 @@ WHERE
             $getRankCount = $getRankCount->count();
 
             if($getRankCount == 0){
-                $pricing_schedule = false;
-                //Get Negotiation Area
-                if($isNegotiation == 1){
-                    $tenderBidNegotiations = TenderBidNegotiation::with(['tender_negotiation_area'])->select('tender_negotiation_id')
-                        ->where('tender_id', $tenderId)
-                        ->first();
+                $tenderFinalBids = TenderFinalBids::select('id','com_weightage')
+                    ->where('tender_id', $tenderId);
 
-                    if($tenderBidNegotiations->tender_negotiation_area->pricing_schedule == 0 || $tenderBidNegotiations->tender_negotiation_area->pricing_schedule == false){
-                        $pricing_schedule = true;
-                    }
-
+                if( $isNegotiation == 1){
+                    $tenderFinalBids = $tenderFinalBids->whereIn('bid_id', $bidSubmissionMasterIds);
+                } else {
+                    $tenderFinalBids = $tenderFinalBids->whereNotIn('bid_id', $bidSubmissionMasterIds);
                 }
 
-                $tenderFinalBids = TenderFinalBids::select('id','com_weightage')
-                    ->where('tender_id', $tenderId)
-                    ->orderBy('com_weightage', 'desc')
+                $tenderFinalBids = $tenderFinalBids->orderBy('com_weightage', 'desc')
                     ->get();
 
                 $weightage = null;
@@ -3718,6 +3739,16 @@ WHERE
                 TenderMaster::where('id', $tenderId)->update($update);
             }
 
+            $tenderBidNegotiations = TenderBidNegotiation::select('bid_submission_master_id_new')
+                ->where('tender_id', $tenderId)
+                ->get();
+
+            if ($tenderBidNegotiations->count() > 0) {
+                $bidSubmissionMasterIds = $tenderBidNegotiations->pluck('bid_submission_master_id_new')->toArray();
+            } else {
+                $bidSubmissionMasterIds = [];
+            }
+
             $getRankCount = TenderFinalBids::where('tender_id', $tenderId)
                 ->where('combined_ranking', '!=', null)
                 ->whereIn('id', $ids)
@@ -3726,8 +3757,15 @@ WHERE
             if($getRankCount == 0){
                 $tenderFinalBids = TenderFinalBids::select('id','total_weightage')
                     ->where('tender_id', $tenderId)
-                    ->where('status', '!=', 0)
-                    ->orderBy('total_weightage', 'desc')
+                    ->where('status', '!=', 0);
+
+                if( $isNegotiation == 1){
+                    $tenderFinalBids = $tenderFinalBids->whereIn('bid_id', $bidSubmissionMasterIds);
+                } else {
+                    $tenderFinalBids = $tenderFinalBids->whereNotIn('bid_id', $bidSubmissionMasterIds);
+                }
+
+                $tenderFinalBids = $tenderFinalBids->orderBy('total_weightage', 'desc')
                     ->get();
 
                 $weightage = null;
