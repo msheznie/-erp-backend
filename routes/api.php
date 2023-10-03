@@ -72,7 +72,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             require __DIR__.'/../routes/logistics/logisticsRoutes.php';
 
             Route::post('downloadBudgetTemplate', 'BudgetMasterAPIController@downloadBudgetTemplate')->name("Download budget template");
-            Route::post('uploadBudgets', 'BudgetMasterAPIController@uploadBudgets')->name("Upload budgets");
             Route::post('getBudgetUploads', 'BudgetMasterAPIController@getBudgetUploads')->name("Get upload budgets");
             Route::post('deleteBudgetUploads', 'BudgetMasterAPIController@deleteBudgetUploads')->name("Delete budget uploads");
 
@@ -102,6 +101,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::group(['middleware' => 'max_memory_limit'], function () {
                 Route::group(['middleware' => 'max_execution_limit'], function () {
+                    Route::post('uploadBudgets', 'BudgetMasterAPIController@uploadBudgets')->name("Upload budgets");
                     Route::resource('fixed_asset_depreciation_masters', 'FixedAssetDepreciationMasterAPIController');
                     Route::post('getAssetDepPeriodsByID', 'FixedAssetDepreciationPeriodAPIController@getAssetDepPeriodsByID');
                     Route::post('exportAssetMaster', 'FixedAssetMasterAPIController@exportAssetMaster');
