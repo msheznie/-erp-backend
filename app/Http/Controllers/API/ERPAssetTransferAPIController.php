@@ -1014,9 +1014,6 @@ class ERPAssetTransferAPIController extends AppBaseController
             return ['success'=> false, 'message' => "Asset transferred and still not acknowledged",'data' => $data];
         }
 
-        // update the employee id to fixed asset
-        FixedAssetMaster::where('faID',$assetID)->update(['empID' => $assetRequest->emp_id]);
-
         return ['success'=> true, 'message' => "Asset transferred successfully"];
 
         
@@ -1046,6 +1043,8 @@ class ERPAssetTransferAPIController extends AppBaseController
                 }
             }
         }
+
+        
 
         // check wether the request is from the same department of the asset assigned
         if($fixedAsset->departmentSystemID == $assetRequest->departmentSystemID) {
@@ -1086,9 +1085,6 @@ class ERPAssetTransferAPIController extends AppBaseController
             $data = $this->getDataOfAssetNotAcknowldged($assetID,$companyID);
             return ['success'=> false, 'message' => "Asset transferred and still not acknowledged",'data' => $data];
         }
-
-        // update the department id to fixed asset
-        FixedAssetMaster::where('faID',$assetID)->update(['departmentSystemID' => $assetRequest->departmentSystemID]);
 
         return ['success'=> true, 'message' => "Asset Transferred successfully"];
 
