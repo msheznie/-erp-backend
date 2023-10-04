@@ -297,7 +297,7 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
                     return $this->sendError("VAT Amount cannot be greater than PO total VAT", 500);
                 }
                 $input["VATPercentage"] = ($input["VATAmount"] / $input["paymentAmount"]) * 100;
-            } if ($updateKey == 'percentage') {
+            } else if ($updateKey == 'percentage') {
 
                 if ($payMaster->advancePaymentTypeID == 0) {
                     $input["VATAmount"] = ($input["VATPercentage"]/100) * $input["amountBeforeVAT"];
