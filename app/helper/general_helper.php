@@ -4598,6 +4598,8 @@ class Helper
                                         
                                         if($input['type'] == 1) {
                                                 $fxedAsset->empID = ($assetTransferDetailItem->assetRequestMaster) ? $assetTransferDetailItem->assetRequestMaster->emp_id : null;
+                                                $assetTransferDetailItem->to_emp_id = ($assetTransferDetailItem->assetRequestMaster) ? $assetTransferDetailItem->assetRequestMaster->emp_id : null;
+                                                $assetTransferDetailItem->save();
                                         }
                                         
                                         if($input['type'] == 4 && isset($assetTransferDetailItem->department)) {                                        

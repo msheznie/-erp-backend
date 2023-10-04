@@ -966,17 +966,16 @@ class ERPAssetTransferAPIController extends AppBaseController
         $data = $this->getDataOfAssetAcknowldged($assetID,$companyID);
 
 
-        if($isAssetAlreadyAssigned) {
+        if($isAssetAlreadyAssigned && $isAssetAlreadyAssigned->erp_fa_fa_asset_request_id) {
             $assetRequestedAssigned  = AssetRequest::select(['departmentSystemID','type','emp_id'])->where('id',$isAssetAlreadyAssigned->erp_fa_fa_asset_request_id)->first();
             if($assetRequestedAssigned) {
                 if($assetRequestedAssigned->type == 2) {
-                    if($isAssetAlreadyAssigned->receivedYN == 0) {
+                    if($isAssetAlreadyAssigned && $isAssetAlreadyAssigned->receivedYN == 0) {
                         return ['success'=> false, 'message' => "Asset transferred to department and still not acknowledged",'data' => $data];
                     }
                 }
             }
         }
-
 
 
 
@@ -995,9 +994,37 @@ class ERPAssetTransferAPIController extends AppBaseController
                 })->where('to_emp_id',$assetRequest->emp_id)->where('fa_master_id',$assetID)->orderby('id','desc')->first();
             if(isset($isAssetAlreadyAssignedForEmployee)) {
                 if($isAssetAlreadyAssignedForEmployee->receivedYN == 1) {
+                    $data = ERPAssetTransferDetail::with(['assetTransferMaster' => function ($query) use ($companyID) {
+                        $query->where('company_id', $companyID)
+                            ->where('approved_yn', -1);
+                    }, 'assetMaster', 'assetRequestDetail' => function ($q) {
+                        $q->with(['createdUserID']);
+                    }, 'smePayAsset'])
+                        ->whereHas('assetTransferMaster', function ($query) use ($companyID) {
+                            $query->where('company_id', $companyID)
+                                ->where('approved_yn', -1);
+                        })
+                        ->where('fa_master_id', $assetID)
+                        ->where('to_emp_id',$assetRequest->emp_id)
+                        ->where('receivedYN', 1)
+                        ->get();
                     return ['success'=> false, 'message' => "Asset transferred and acknowdged already for this employee",'data' => $data];
                 }else {
-                    return ['success'=> false, 'message' => "Asset transferred and still not acknowledged for this employee",'data' => $data];
+                    $data2 = ERPAssetTransferDetail::with(['assetTransferMaster' => function ($query) use ($companyID) {
+                        $query->where('company_id', $companyID)
+                            ->where('approved_yn', -1);
+                    }, 'assetMaster', 'assetRequestDetail' => function ($q) {
+                        $q->with(['createdUserID']);
+                    }, 'smePayAsset'])
+                        ->whereHas('assetTransferMaster', function ($query) use ($companyID) {
+                            $query->where('company_id', $companyID)
+                                ->where('approved_yn', -1);
+                        })
+                        ->where('fa_master_id', $assetID)
+                        ->where('to_emp_id',$assetRequest->emp_id)
+                        ->where('receivedYN', 0)
+                        ->get();
+                    return ['success'=> false, 'message' => "Asset transferred and still not acknowledged for this employee",'data' => $data2];
                 }
             }
         }
@@ -1013,9 +1040,24 @@ class ERPAssetTransferAPIController extends AppBaseController
                 $query->where('company_id', $companyID)
                     ->where('approved_yn', -1);
             })->where('fa_master_id',$assetID)->orderby('id','desc')->first();
-        if($isAssetAlreadyAssigned->receivedYN == 0) {
+        if($isAssetAlreadyAssigned && $isAssetAlreadyAssigned->receivedYN == 0) {
             $data = $this->getDataOfAssetNotAcknowldged($assetID,$companyID);
             return ['success'=> false, 'message' => "Asset transferred and still not acknowledged",'data' => $data];
+        }
+
+        $isAssetAlreadyConfirmedToDepartment = ERPAssetTransferDetail::with(['assetTransferMaster' => function ($query) use ($companyID) {
+            $query->where('company_id', $companyID)
+                ->where('confirmed_yn', 1);
+        }, 'assetMaster', 'assetRequestDetail' => function ($q) {
+            $q->with(['createdUserID']);
+        }, 'smePayAsset'])
+            ->whereHas('assetTransferMaster', function ($query) use ($companyID) {
+                $query->where('company_id', $companyID)
+                    ->where('confirmed_yn', 1);
+            })->where('fa_master_id',$assetID)->orderby('id','desc')->first();
+        if($isAssetAlreadyConfirmedToDepartment && $isAssetAlreadyConfirmedToDepartment->receivedYN == 0) {
+            $dataNew = $this->getDataOfAssetConfirmed($assetID,$companyID);
+            return ['success'=> false, 'message' => "Asset transferred and still not acknowledged",'data' => $dataNew];
         }
 
         return ['success'=> true, 'message' => "Asset transferred successfully"];
@@ -1041,7 +1083,7 @@ class ERPAssetTransferAPIController extends AppBaseController
             $assetRequestedAssigned  = AssetRequest::select(['departmentSystemID','type','emp_id'])->where('id',$isAssetAlreadyAssigned->erp_fa_fa_asset_request_id)->first();
             if($assetRequestedAssigned) {
                 if($assetRequestedAssigned->type == 1) {
-                    if($isAssetAlreadyAssigned->receivedYN == 0) {
+                    if($isAssetAlreadyAssigned && $isAssetAlreadyAssigned->receivedYN == 0) {
                         return ['success'=> false, 'message' => "Asset transferred to employee and still not acknowledged",'data' => $data];
                     }
                 }
@@ -1049,6 +1091,7 @@ class ERPAssetTransferAPIController extends AppBaseController
         }
 
         
+
 
         // check wether the request is from the same department of the asset assigned
         if($fixedAsset->departmentSystemID == $assetRequest->departmentSystemID) {
@@ -1090,9 +1133,41 @@ class ERPAssetTransferAPIController extends AppBaseController
             return ['success'=> false, 'message' => "Asset transferred and still not acknowledged",'data' => $data];
         }
 
+
+        $isAssetAlreadyConfirmedToDepartment = ERPAssetTransferDetail::with(['assetTransferMaster' => function ($query) use ($companyID) {
+            $query->where('company_id', $companyID)
+                ->where('confirmed_yn', 1);
+        }, 'assetMaster', 'assetRequestDetail' => function ($q) {
+            $q->with(['createdUserID']);
+        }, 'smePayAsset'])
+            ->whereHas('assetTransferMaster', function ($query) use ($companyID) {
+                $query->where('company_id', $companyID)
+                    ->where('confirmed_yn', 1);
+            })->where('fa_master_id',$assetID)->orderby('id','desc')->first();
+        if($isAssetAlreadyConfirmedToDepartment && $isAssetAlreadyConfirmedToDepartment->receivedYN == 0) {
+            $dataNew = $this->getDataOfAssetConfirmed($assetID,$companyID);
+            return ['success'=> false, 'message' => "Asset transferred and still not acknowledged",'data' => $dataNew];
+        }
+
         return ['success'=> true, 'message' => "Asset Transferred successfully"];
 
 
+    }
+
+    public function getDataOfAssetConfirmed($assetID,$companyID) {
+        return ERPAssetTransferDetail::with(['assetTransferMaster' => function ($query) use ($companyID) {
+            $query->where('company_id', $companyID)
+                ->where('confirmed_yn', 1);
+        }, 'assetMaster', 'assetRequestDetail' => function ($q) {
+            $q->with(['createdUserID']);
+        }, 'smePayAsset'])
+            ->whereHas('assetTransferMaster', function ($query) use ($companyID) {
+                $query->where('company_id', $companyID)
+                    ->where('confirmed_yn', 1);
+            })
+            ->where('fa_master_id', $assetID)
+            ->where('receivedYN', 0)
+            ->get();
     }
 
     public function getDataOfAssetNotAcknowldged($assetID,$companyID) {
