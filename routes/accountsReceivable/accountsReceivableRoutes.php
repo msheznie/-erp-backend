@@ -147,3 +147,15 @@ Route::group([],function(){
     Route::post('getReceiptVoucherPullingDetail', 'MatchDocumentMasterAPIController@getReceiptVoucherPullingDetail')->name("Get receipt voucher pulling detail");
     Route::post('addReceiptVoucherMatchDetails', 'CustomerReceivePaymentDetailAPIController@addReceiptVoucherMatchDetails')->name("Add receipt voucher match details");
 });
+
+//Reports
+
+//Customer Ledger Reports
+Route::group([],function(){
+    Route::get('getAcountReceivableFilterData', 'AccountsReceivableReportAPIController@getAcountReceivableFilterData')->name("Get account receivable filter data");
+    Route::post('validateARReport', 'AccountsReceivableReportAPIController@validateReport')->name("Validate account receivable report");
+    Route::post('generateARReport', 'AccountsReceivableReportAPIController@generateReport')->name("Generate account receivable report");
+    Route::post('exportARReport', 'AccountsReceivableReportAPIController@exportReport')->name("Export account receivable report");
+    Route::post('sentCustomerLedger', 'AccountsReceivableReportAPIController@sentCustomerLedger')->name("Sent customer ledger");
+    Route::post('sentCustomerStatement', 'AccountsReceivableReportAPIController@sentCustomerStatement')->name("Sent customer statement");
+});

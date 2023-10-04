@@ -262,11 +262,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('validateReport', 'ReportAPIController@validateReport');
             Route::post('exportReport', 'ReportAPIController@exportReport');
 
-            Route::post('generateARReport', 'AccountsReceivableReportAPIController@generateReport');
-            Route::post('validateARReport', 'AccountsReceivableReportAPIController@validateReport');
-            Route::post('exportARReport', 'AccountsReceivableReportAPIController@exportReport');
-            Route::get('getAcountReceivableFilterData', 'AccountsReceivableReportAPIController@getAcountReceivableFilterData');
-
             Route::post('assetRegisterDrillDown', 'AssetManagementReportAPIController@getAssetRegisterSummaryDrillDownQRY');
             Route::post('exportAssetRegisterSummaryDrillDown', 'AssetManagementReportAPIController@getAssetRegisterSummaryDrillDownExport');
             Route::post('assetCWIPDrillDown', 'AssetManagementReportAPIController@assetCWIPDrillDown');
@@ -1028,9 +1023,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::post('sentSupplierStatement', 'AccountsPayableReportAPIController@sentSupplierStatement');
             Route::post('sentSupplierLedger', 'AccountsPayableReportAPIController@sentSupplierLedger');
-            Route::post('sentCustomerStatement', 'AccountsReceivableReportAPIController@sentCustomerStatement');
-            Route::post('sentCustomerLedger', 'AccountsReceivableReportAPIController@sentCustomerLedger');
-
 
             Route::post('approveCurrencyConversion', 'CurrencyConversionMasterAPIController@approveCurrencyConversion');
             Route::post('rejectCurrencyConversion', 'CurrencyConversionMasterAPIController@rejectCurrencyConversion');
