@@ -3348,8 +3348,13 @@ WHERE
             ->join('srm_tender_master', 'srm_tender_master.id', '=', 'srm_bid_submission_master.tender_id')
             ->groupBy('srm_bid_submission_master.id')->where('srm_bid_submission_master.status', 1)
             ->where('srm_bid_submission_master.bidSubmittedYN', 1)
-            ->where('srm_bid_submission_master.tender_id', $tenderId)
-            ->where('srm_bid_submission_master.doc_verifiy_status', 1)->pluck('supplier_id')->toArray();
+            ->where('srm_bid_submission_master.tender_id', $tenderId);
+                if ($isNegotiation == 1) {
+                    $query1 = $query1->whereIn('srm_bid_submission_master.id', $bidSubmissionMasterIds);
+                } else {
+                    $query1 = $query1->whereNotIn('srm_bid_submission_master.id', $bidSubmissionMasterIds);
+                }
+            $query1 = $query1->where('srm_bid_submission_master.doc_verifiy_status', 1)->pluck('supplier_id')->toArray();
         }
         else
         {
@@ -3361,7 +3366,15 @@ WHERE
             ->join('srm_bid_main_work', 'srm_bid_main_work.bid_master_id', '=', 'srm_bid_submission_master.id')
             ->havingRaw('weightage >= passing_weightage')
             ->groupBy('srm_bid_submission_master.id')
-            ->where('srm_bid_submission_master.status', 1)->where('srm_bid_submission_master.bidSubmittedYN', 1)->where('srm_bid_submission_master.tender_id', $tenderId)->where('srm_bid_submission_master.commercial_verify_status', 1)
+            ->where('srm_bid_submission_master.status', 1)->where('srm_bid_submission_master.bidSubmittedYN', 1);
+
+            if ($isNegotiation == 1) {
+                $query1 = $query1->whereIn('srm_bid_submission_master.id', $bidSubmissionMasterIds);
+            } else {
+                $query1 = $query1->whereNotIn('srm_bid_submission_master.id', $bidSubmissionMasterIds);
+            }
+
+            $query1 = $query1->where('srm_bid_submission_master.tender_id', $tenderId)->where('srm_bid_submission_master.commercial_verify_status', 1)
             ->orderBy('srm_bid_submission_master.comm_weightage', 'asc')->pluck('supplier_id')->toArray();
         }
 
@@ -3404,14 +3417,10 @@ WHERE
             ->addIndexColumn()
             ->addColumn('selection', function ($row) use ($query1, $isNegotiation) {
                 $count =  count(array_keys($query1, $row->supplier_id));
-                if($isNegotiation == 1){
+                if ($count == 1) {
                     return true;
                 } else {
-                    if ($count == 1) {
-                        return true;
-                    } else {
-                        return false;
-                    }
+                    return false;
                 }
             })
             ->addColumn('radio', function ($row) use ($query1) {
