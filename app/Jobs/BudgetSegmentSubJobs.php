@@ -160,7 +160,7 @@ class BudgetSegmentSubJobs implements ShouldQueue
                 ];
                 Log::info('Budget Segment Bulk Insert Completed Successfully '. $totalSegments);
 
-                WebPushNotificationService::sendNotification($webPushData, 3, $employee->employeeSystemID);
+//                WebPushNotificationService::sendNotification($webPushData, 3, $employee->employeeSystemID);
                 UploadBudgets::where('id', $uploadBudget->id)->update(['uploadStatus' => 1]);
             }
             Log::info($segment . ' Completed Successfully. Count- ' . $segmentCount);
