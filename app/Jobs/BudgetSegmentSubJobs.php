@@ -68,6 +68,7 @@ class BudgetSegmentSubJobs implements ShouldQueue
 
         DB::beginTransaction();
         try {
+
             $uploadBudgetCounter = UploadBudgets::find($uploadBudget->id);
             $segmentCount = $uploadBudgetCounter->counter;
             Log::info($segment.' count - '. $segmentCount);
@@ -143,13 +144,15 @@ class BudgetSegmentSubJobs implements ShouldQueue
                 }
             }
 
-            $uploadBudgetCounter = UploadBudgets::find($uploadBudget->id);
 
             $uploadBudgetCounter->increment('counter');
 
             $uploadBudgetCounter->save();
 
             $newCounterValue = $uploadBudgetCounter->counter;
+
+            Log::info($segment.' new count - '. $newCounterValue);
+
 
             if ($newCounterValue == $totalSegments) {
                 $webPushData = [
