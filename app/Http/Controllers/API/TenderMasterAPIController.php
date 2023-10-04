@@ -3346,10 +3346,10 @@ WHERE
             ->join('srm_supplier_registration_link', 'srm_supplier_registration_link.id', '=', 'srm_bid_submission_master.supplier_registration_id')
             ->join('srm_tender_master', 'srm_tender_master.id', '=', 'srm_bid_submission_master.tender_id');
 
-            if ($isNegotiation == 1) {
+           /* if ($isNegotiation == 1) {
                 $query1 = $query1->join('tender_negotiations', 'srm_bid_submission_master.tender_id', '=', 'tender_negotiations.srm_tender_master_id')
                     ->join('area_tender_negotiation', 'area_tender_negotiation.tender_negotiation_id', '=', 'tender_negotiations.id');
-            }
+            }*/
 
             $query1 = $query1->groupBy('srm_bid_submission_master.id')->where('srm_bid_submission_master.status', 1)
             ->where('srm_bid_submission_master.bidSubmittedYN', 1)
@@ -3365,10 +3365,10 @@ WHERE
             ->join('srm_evaluation_criteria_details', 'srm_evaluation_criteria_details.id', '=', 'srm_bid_submission_detail.evaluation_detail_id')
             ->join('srm_bid_main_work', 'srm_bid_main_work.bid_master_id', '=', 'srm_bid_submission_master.id');
 
-            if ($isNegotiation == 1) {
+            /*if ($isNegotiation == 1) {
             $query1 = $query1->join('tender_negotiations', 'srm_bid_submission_master.tender_id', '=', 'tender_negotiations.srm_tender_master_id')
                     ->join('area_tender_negotiation', 'area_tender_negotiation.tender_negotiation_id', '=', 'tender_negotiations.id');
-            }
+            }*/
 
             $query1 = $query1->havingRaw('weightage >= passing_weightage')
             ->groupBy('srm_bid_submission_master.id')
@@ -3560,8 +3560,8 @@ WHERE
             $status = $request['commercial_ranking_line_item_status'];
             $bids = $request['bids'];
 
-            $pricing_schedule = false;
-            $technical_evaluation = false;
+            $pricing_schedule = true;
+            $technical_evaluation = true;
 
             //Get Negotiation Area
             if($isNegotiation == 1){
@@ -3570,11 +3570,11 @@ WHERE
                     ->first();
 
                 if($tenderBidNegotiations->tender_negotiation_area->pricing_schedule == 0 || $tenderBidNegotiations->tender_negotiation_area->pricing_schedule == false){
-                    $pricing_schedule = true;
+                    $pricing_schedule = false;
                 }
 
                 if($tenderBidNegotiations->tender_negotiation_area->technical_evaluation == 0 || $tenderBidNegotiations->tender_negotiation_area->technical_evaluation == false){
-                    $technical_evaluation = true;
+                    $technical_evaluation = false;
                 }
 
             }
@@ -3694,13 +3694,9 @@ WHERE
                             $record->ranking = $index1;
                         }
                     }
-                    // Update the record in the database with the calculated ranking
-                    if($pricing_schedule && $isNegotiation == 1){
-                        TenderFinalBids::where('id', $record->id)->update(['commercial_ranking' => $record->ranking]);
-                    } else {
-                        TenderFinalBids::where('id', $record->id)->update(['commercial_ranking' => $record->ranking]);
-                    }
 
+                    // Update the record in the database with the calculated ranking
+                    TenderFinalBids::where('id', $record->id)->update(['commercial_ranking' => $record->ranking]);
                 }
             }
 
