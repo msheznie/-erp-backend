@@ -3091,6 +3091,7 @@ WHERE
 
         if($isNegotiation == 1){
             $query = $query->where('negotiation_code', '!=', null);
+            $query = $query->where('is_negotiation_closed', 0);
         }
 
         if ($filters['currencyId'] && count($filters['currencyId']) > 0) {
@@ -3918,7 +3919,9 @@ WHERE
         $companyId = $request['companyId'];
 
         $query = TenderMaster::with(['currency', 'srm_bid_submission_master', 'tender_type', 'envelop_type', 'srmTenderMasterSupplier'])->whereHas('srmTenderMasterSupplier')->where('published_yn', 1)
-            ->where('is_awarded', 1)->where('negotiation_published',0);
+            ->where('is_awarded', 1)->where('negotiation_published', 0)->orWhere('is_negotiation_closed', 1);
+
+
 
         $search = $request->input('search.value');
         if ($search) {
