@@ -60,9 +60,9 @@ class BudgetSegmentSubJobs implements ShouldQueue
         $uploadBudget = $subData['uploadBudget'];
         $result = $subData['result'];
         $currency = $subData['currency'];
-        $segmentCount = $subData['segmentCount'];
         $totalSegments = $subData['totalSegments'];
-
+        $uploadBudgetCounter = UploadBudgets::find($uploadBudget->id);
+        $segmentCount = $uploadBudgetCounter->counter;
         CommonJobService::db_switch($this->db);
         Log::useFiles(storage_path().'/logs/budget_segment_bulk_insert.log');
 
@@ -141,7 +141,15 @@ class BudgetSegmentSubJobs implements ShouldQueue
                 }
             }
 
-            if ($segmentCount == $totalSegments) {
+            $uploadBudgetCounter = UploadBudgets::find($uploadBudget->id);
+
+            $uploadBudgetCounter->increment('counter');
+
+            $uploadBudgetCounter->save();
+
+            $newCounterValue = $uploadBudgetCounter->counter;
+
+            if ($newCounterValue == $totalSegments) {
                 $webPushData = [
                     'title' => "Upload Budget Successfully Completed",
                     'body' => "",
@@ -150,7 +158,7 @@ class BudgetSegmentSubJobs implements ShouldQueue
                 ];
                 Log::info('Budget Segment Bulk Insert Completed Successfully '. $totalSegments);
 
-//            WebPushNotificationService::sendNotification($webPushData, 3, $employee->employeeSystemID);
+                WebPushNotificationService::sendNotification($webPushData, 3, $employee->employeeSystemID);
                 UploadBudgets::where('id', $uploadBudget->id)->update(['uploadStatus' => 1]);
             }
             Log::info($segment . ' Completed Successfully. Count- ' . $segmentCount);
