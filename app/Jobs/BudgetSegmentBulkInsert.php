@@ -128,7 +128,6 @@ class BudgetSegmentBulkInsert implements ShouldQueue
                 return !in_array($segment, $segmentDes);
             });
 
-            $segmentCount = 1;
             $totalSegments = count($segments);
             Log::info('Total Segments: ' . $totalSegments);
 
@@ -143,17 +142,15 @@ class BudgetSegmentBulkInsert implements ShouldQueue
                         'notification' => $notification,
                         'uploadBudget' => $uploadBudget,
                         'currency' => $currency,
-                        'segmentCount' => $segmentCount,
                         'totalSegments' => $totalSegments
                 ];
                 BudgetSegmentSubJobs::dispatch($db,$subData);
-                $segmentCount++;
             }
 
             if($totalSegments == 0){
                 Log::info('Zero segments available');
 
-                UploadBudgets::where('id', $uploadBudget->id)->update(['uploadStatus' => 1]);
+                UploadBudgets::where('id', $uploadBudget->id)->update(['uploadStatus' => 0]);
 
             }
 
@@ -173,7 +170,7 @@ class BudgetSegmentBulkInsert implements ShouldQueue
                 'path' => "",
             ];
 
-//            WebPushNotificationService::sendNotification($webPushData, 3, $employee->employeeSystemID);
+            WebPushNotificationService::sendNotification($webPushData, 3, $employee->employeeSystemID);
             try {
                 UploadBudgets::where('id', $uploadBudget->id)->update(['uploadStatus' => 0]);
                 DB::commit();
