@@ -188,3 +188,22 @@ Route::group([],function (){
     Route::get('getChequePrintingFormData', 'BankLedgerAPIController@getChequePrintingFormData')->name('Get cheque printing form data');
     Route::get('revertChequePrint', 'BankLedgerAPIController@revertChequePrint')->name('Revert cheque print');
 });
+
+//Reports
+
+//Supplier Ledger Report
+Route::group([],function (){
+    Route::get('getAPFilterData', 'AccountsPayableReportAPIController@getAPFilterData')->name('Get account payable filter data');
+    Route::post('validateAPReport', 'AccountsPayableReportAPIController@validateAPReport')->name('Validate account payable report');
+    Route::post('generateAPReport', 'AccountsPayableReportAPIController@generateAPReport')->name('Generate account payable report');
+    Route::post('exportAPReport', 'AccountsPayableReportAPIController@exportReport')->name('Export account payable report');
+    Route::post('sentSupplierLedger', 'AccountsPayableReportAPIController@sentSupplierLedger')->name('Sent supplier ledger');
+    Route::get('getJournalVoucherMasterRecord', 'JvMasterAPIController@getJournalVoucherMasterRecord')->name('Get journal voucher master record');
+});
+
+//Supplier Statement Report
+Route::group([],function (){
+    Route::post('sentSupplierStatement', 'AccountsPayableReportAPIController@sentSupplierStatement')->name('Sent supplier statement');
+});
+
+

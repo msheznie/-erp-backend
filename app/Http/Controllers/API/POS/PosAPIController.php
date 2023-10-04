@@ -44,7 +44,7 @@ class PosAPIController extends AppBaseController
 
             $posType = isset($input['pos_type']) ? $input['pos_type']: 1;
 
-                $companyDetails = Company::selectRaw('companySystemID, CompanyID, companyShortCode, CompanyName, registrationNumber, masterComapanySystemID, group_type, holding_percentage, holding_updated_date, companyCountry, CompanyAddress, CompanyEmail, localCurrencyID, reportingCurrency, vatRegisteredYN, vatRegistratonNumber, isActive, third_party_integration_keys.api_key, CompanyURL, CompanyTelephone, companyCountry,countrymaster.countryName, reportingCurrencyMaster.CurrencyCode as reportingCurrencyCode, localCurrencyMaster.CurrencyCode as localCurrencyCode')
+                $companyDetails = Company::selectRaw('companySystemID, CompanyID, companyShortCode, CompanyName, registrationNumber, group_two as masterComapanySystemID, group_type, holding_percentage, holding_updated_date, companyCountry, CompanyAddress, CompanyEmail, localCurrencyID, reportingCurrency, vatRegisteredYN, vatRegistratonNumber, isActive, third_party_integration_keys.api_key, CompanyURL, CompanyTelephone, companyCountry,countrymaster.countryName, reportingCurrencyMaster.CurrencyCode as reportingCurrencyCode, localCurrencyMaster.CurrencyCode as localCurrencyCode')
                     ->join('third_party_integration_keys', 'companymaster.companySystemID', '=', 'third_party_integration_keys.company_id')
                     ->leftjoin('countrymaster', 'companymaster.companyCountry', '=', 'countrymaster.countryID')
                     ->leftjoin('currencymaster as reportingCurrencyMaster', 'companymaster.reportingCurrency', '=', 'reportingCurrencyMaster.currencyID')
@@ -511,16 +511,31 @@ class PosAPIController extends AppBaseController
     public function pullUser(Request $request)
     {
         DB::beginTransaction();
-        try {
-            $company_id = $request->get('company_id');
-            $employee = Employee::selectRaw('employeeSystemID as id,empID as system_code,empName As name,empUserName As user_name,empEmail As email ,
-            empActive as is_active')
-                ->where('discharegedYN', 0)
-                ->where('empCompanySystemID', '=', $company_id)
-                ->get();
 
+        try {
+            $input = $request->all();
+            $isPos = isset($input['is_pos']) ? $input['is_pos']: 0;
+
+            if($isPos == 1) {
+                $employee = Employee::selectRaw('employees.employeeSystemID as id,empID as system_code,empName As name,empUserName As user_name,empEmail As email, empActive as is_active')
+                    ->join('srp_erp_employeenavigation', 'employees.employeeSystemID', '=', 'srp_erp_employeenavigation.employeeSystemID')
+                    ->join('srp_erp_navigationusergroupsetup', 'srp_erp_employeenavigation.userGroupID', '=', 'srp_erp_navigationusergroupsetup.userGroupID')
+                    ->where('srp_erp_navigationusergroupsetup.navigationMenuID', 371)
+                    ->groupBy('employees.empID')
+                    ->get();
+
+            } else {
+                $company_id = $request->get('company_id');
+                $employee = Employee::selectRaw('employeeSystemID as id,empID as system_code,empName As name,empUserName As user_name,empEmail As email ,
+            empActive as is_active')
+                    ->where('discharegedYN', 0)
+                    ->where('empCompanySystemID', '=', $company_id)
+                    ->get();
+
+            }
             DB::commit();
             return $this->sendResponse($employee, 'Data Retrieved successfully');
+
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendError($exception->getMessage());

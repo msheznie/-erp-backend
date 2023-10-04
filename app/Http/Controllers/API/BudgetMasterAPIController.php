@@ -3812,19 +3812,8 @@ class BudgetMasterAPIController extends AppBaseController
 
         $segments = SegmentMaster::where('isActive', 1)->get();
 
-        $glCOdes = ReportTemplateDetails::with(['gllink' => function ($query) use ($templateData) {
-            $query->whereHas('items', function($query) use ($templateData) {
-                $query->where('companySystemID', $templateData['companySystemID'])
-                    ->where('companyFinanceYearID', $templateData['companyFinanceYearID']);
-            })
-                ->orderBy('sortOrder');
-        }])
-            ->whereHas('gllink',function ($query) use ($templateData) {
-                $query->whereHas('items', function($query) use ($templateData) {
-                    $query->where('companySystemID', $templateData['companySystemID'])
-                        ->where('companyFinanceYearID', $templateData['companyFinanceYearID']);
-                });
-            })
+        $glCOdes = ReportTemplateDetails::with(['gllink'])
+            ->where('companySystemID', $templateData['companySystemID'])
             ->where('companyReportTemplateID', $templateMasterID)
             ->orderBy('sortOrder')
             ->get();
@@ -3954,12 +3943,14 @@ class BudgetMasterAPIController extends AppBaseController
 
         if($uploadBudget->uploadStatus == 1) {
 
-            $budgetMaster = BudgetMaster::where('budgetUploadID', $budgetUploadID)->where('confirmedYN', 0)->where('approvedYN', 0)->first();
-            if (!empty($budgetMaster)) {
-                UploadBudgets::where('id', $budgetUploadID)->delete();
+            $isBudgetMaster = BudgetMaster::where('budgetUploadID', $budgetUploadID)->where('confirmedYN', 1)->orWhere('approvedYN', 1)->first();
+            if (empty($isBudgetMaster)) {
+                $budgetMasters = BudgetMaster::where('budgetUploadID', $budgetUploadID)->get();
+                foreach ($budgetMasters as $budgetMaster) {
+                    Budjetdetails::where('budgetmasterID', $budgetMaster->budgetmasterID)->delete();
+                }
                 BudgetMaster::where('budgetUploadID', $budgetUploadID)->delete();
-                Budjetdetails::where('budgetmasterID', $budgetMaster->budgetmasterID)->delete();
-
+                UploadBudgets::where('id', $budgetUploadID)->delete();
                 return $this->sendResponse([], 'Budget upload deleted successfully');
             } else {
                 return $this->sendError('Error in deleting budget upload');

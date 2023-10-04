@@ -72,7 +72,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             require __DIR__.'/../routes/logistics/logisticsRoutes.php';
 
             Route::post('downloadBudgetTemplate', 'BudgetMasterAPIController@downloadBudgetTemplate')->name("Download budget template");
-            Route::post('uploadBudgets', 'BudgetMasterAPIController@uploadBudgets')->name("Upload budgets");
             Route::post('getBudgetUploads', 'BudgetMasterAPIController@getBudgetUploads')->name("Get upload budgets");
             Route::post('deleteBudgetUploads', 'BudgetMasterAPIController@deleteBudgetUploads')->name("Delete budget uploads");
 
@@ -102,6 +101,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::group(['middleware' => 'max_memory_limit'], function () {
                 Route::group(['middleware' => 'max_execution_limit'], function () {
+                    Route::post('uploadBudgets', 'BudgetMasterAPIController@uploadBudgets')->name("Upload budgets");
                     Route::resource('fixed_asset_depreciation_masters', 'FixedAssetDepreciationMasterAPIController');
                     Route::post('getAssetDepPeriodsByID', 'FixedAssetDepreciationPeriodAPIController@getAssetDepPeriodsByID');
                     Route::post('exportAssetMaster', 'FixedAssetMasterAPIController@exportAssetMaster');
@@ -342,10 +342,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('item_issue_types', 'ItemIssueTypeAPIController');
 
             Route::resource('accounts_payable_ledgers', 'AccountsPayableLedgerAPIController');
-            Route::get('getAPFilterData', 'AccountsPayableReportAPIController@getAPFilterData');
-            Route::post('validateAPReport', 'AccountsPayableReportAPIController@validateAPReport');
-            Route::post('generateAPReport', 'AccountsPayableReportAPIController@generateAPReport');
-            Route::post('exportAPReport', 'AccountsPayableReportAPIController@exportReport');
 
             Route::post('exportNavigationeport', 'UserGroupAssignAPIController@exportNavigationeport');
 
@@ -495,7 +491,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('getJournalVoucherMasterFormData', 'JvMasterAPIController@getJournalVoucherMasterFormData');
             Route::post('getJournalVoucherMasterView', 'JvMasterAPIController@getJournalVoucherMasterView');
             Route::post('copyJV', 'JvMasterAPIController@copyJV');
-            Route::get('getJournalVoucherMasterRecord', 'JvMasterAPIController@getJournalVoucherMasterRecord');
             Route::get('getJournalVoucherDetails', 'JvDetailAPIController@getJournalVoucherDetails');
             Route::get('getJournalVoucherContracts', 'JvDetailAPIController@getJournalVoucherContracts');
             Route::post('journalVoucherSalaryJVDetailStore', 'JvDetailAPIController@journalVoucherSalaryJVDetailStore');
@@ -1020,9 +1015,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::resource('customer_category_assigneds', 'CustomerMasterCategoryAssignedAPIController');
             Route::get('assignedCompaniesByCustomerCategory', 'CustomerMasterCategoryAssignedAPIController@assignedCompaniesByCustomerCategory');
-
-            Route::post('sentSupplierStatement', 'AccountsPayableReportAPIController@sentSupplierStatement');
-            Route::post('sentSupplierLedger', 'AccountsPayableReportAPIController@sentSupplierLedger');
 
             Route::post('approveCurrencyConversion', 'CurrencyConversionMasterAPIController@approveCurrencyConversion');
             Route::post('rejectCurrencyConversion', 'CurrencyConversionMasterAPIController@rejectCurrencyConversion');

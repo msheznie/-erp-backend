@@ -48,13 +48,17 @@ class BudgetSegmentBulkInsert implements ShouldQueue
 
     public function handle()
     {
+        ini_set('max_execution_time', 21600);
+        ini_set('memory_limit', -1);
         $uploadData = $this->uploadData;
+        $db = $this->db;
 
-        CommonJobService::db_switch($this->db);
+        CommonJobService::db_switch($db);
+        Log::useFiles(storage_path().'/logs/budget_segment_bulk_insert.log');
 
         DB::beginTransaction();
         try {
-            Log::useFiles(storage_path().'/logs/budget_segment_bulk_insert.log');
+            Log::info('Budget Segment Bulk Insert Started');
 
             $uploadBudget = $uploadData['uploadBudget'];
             $employee = $uploadData['employee'];
@@ -110,105 +114,46 @@ class BudgetSegmentBulkInsert implements ShouldQueue
 
             $financeYear = CompanyFinanceYear::where('companySystemID', $template->companySystemID)->where('bigginingDate', "<=", $mysqlFormattedStartDate)->where('endingDate', ">=", $mysqlFormattedEndDate)->first();
 
-            $budgetExists = BudgetMaster::where('templateMasterID', $template->companyReportTemplateID)->get();
+            $budgetExists = BudgetMaster::where('templateMasterID', $template->companyReportTemplateID)->where('companyFinanceYearID', $financeYear->companyFinanceYearID)->get();
+
 
             $segmentDes = [];
             foreach ($budgetExists as $budgetExist) {
-                $segmentDes[] = $budgetExist->ServiceLineDes;
+                $segmentMaster = SegmentMaster::find($budgetExist->serviceLineSystemID);
+
+                $segmentDes[] = $segmentMaster->ServiceLineDes;
             }
 
             $segments = array_filter($segments, function ($segment) use ($segmentDes) {
                 return !in_array($segment, $segmentDes);
             });
 
+            $totalSegments = count($segments);
+            Log::info('Total Segments: ' . $totalSegments);
 
             foreach ($segments as $segment) {
-
-                $segmentMaster = SegmentMaster::where('ServiceLineDes', $segment)->first();
-                $budgetArray = array(
-                    'documentSystemID' => 65,
-                    'documentID' => 'BUD',
-                    'companySystemID' => $template->companySystemID,
-                    'companyID' => $template->companyID,
-                    'companyFinanceYearID' => $financeYear->companyFinanceYearID,
-                    'serviceLineSystemID' => $segmentMaster->serviceLineSystemID,
-                    'serviceLineCode' => $segmentMaster->ServiceLineCode,
-                    'templateMasterID' => $template->companyReportTemplateID,
-                    'Year' => $year,
-                    'month' => $month,
-                    'generateStatus' => 100,
-                    'createdByUserSystemID' => $employee->employeeSystemID,
-                    'createdByUserID' => $employee->empID,
-                    'createdDateTime' => \Helper::currentDateTime(),
-                    'sentNotificationAt' => $notification,
-                    'cutOffPeriod' => 3,
-                    'budgetUploadID' => $uploadBudget->id
-                );
-
-                $budget = BudgetMaster::create($budgetArray);
-
-                foreach ($result as $value) {
-
-                    $templateDetail = ReportTemplateDetails::where('description', $value['Template Description 2'])
-                        ->where('companyReportTemplateID', $budget->templateMasterID)
-                        ->whereHas('gllink', function ($query) use ($value) {
-                            $query->where('glCode', $value['GL Code']);
-                        })
-                        ->first();
-
-                    if (!empty($templateDetail)) {
-
-                        Log::info("Template Description: " . $value['Template Description 2']);
-                        Log::info("Template Detail: " . $templateDetail);
-
-
-                        $chartOfAccount = ChartOfAccount::where('AccountCode', $value['GL Code'])->first();
-
-                        $currencyMaster = CurrencyMaster::where('CurrencyCode', $currency)->first();
-
-                        $segmentMaster = SegmentMaster::find($budget->serviceLineSystemID);
-                        $currencyConvection = \Helper::currencyConversion($budget->companySystemID, $currencyMaster->currencyID, $currencyMaster->currencyID, $value[$segmentMaster->ServiceLineDes]);
-
-                        $localAmount = \Helper::roundValue($currencyConvection['localAmount']);
-
-                        for ($i = 1; $i <= 12; $i++) {
-                            $budgetDetailsArray = array(
-                                'budgetmasterID' => $budget->budgetmasterID,
-                                'companySystemID' => $budget->companySystemID,
-                                'companyId' => $budget->companyID,
-                                'companyFinanceYearID' => $budget->companyFinanceYearID,
-                                'serviceLineSystemID' => $budget->serviceLineSystemID,
-                                'serviceLine' => $segmentMaster->ServiceLineCode,
-                                'templateDetailID' => isset($templateDetail->detID) ? $templateDetail->detID : null,
-                                'chartOfAccountID' => isset($chartOfAccount->chartOfAccountSystemID) ? $chartOfAccount->chartOfAccountSystemID : null,
-                                'glCode' => $value['GL Code'],
-                                'glCodeType' => isset($chartOfAccount->controlAccounts) ? $chartOfAccount->controlAccounts : null,
-                                'Year' => $year,
-                                'month' => $i,
-                                'budjetAmtLocal' => $localAmount / 12,
-                                'budjetAmtRpt' => $value[$segmentMaster->ServiceLineDes] / 12,
-                                'createdByUserSystemID' => $employee->employeeSystemID,
-                                'createdByUserID' => $employee->empID,
-                                'createdDateTime' => \Helper::currentDateTime(),
-                            );
-
-                            $budgetDetails = Budjetdetails::create($budgetDetailsArray);
-                        }
-                        Log::info("Budget Detail: " . $budgetDetails);
-
-                    }
-                }
+                $subData = ['segment' => $segment,
+                        'template' => $template,
+                        'employee' => $employee,
+                        'result' => $result,
+                        'financeYear' => $financeYear,
+                        'year' => $year,
+                        'month' => $month,
+                        'notification' => $notification,
+                        'uploadBudget' => $uploadBudget,
+                        'currency' => $currency,
+                        'totalSegments' => $totalSegments
+                ];
+                BudgetSegmentSubJobs::dispatch($db,$subData);
             }
 
-            $webPushData = [
-                'title' => "Upload Budget Successfully Completed",
-                'body' => "",
-                'url' => "",
-                'path' => "",
-            ];
+            if($totalSegments == 0){
+                Log::info('Zero segments available');
 
-            WebPushNotificationService::sendNotification($webPushData, 3, $employee->employeeSystemID);
-            UploadBudgets::where('id', $uploadBudget->id)->update(['uploadStatus' => 1]);
+                UploadBudgets::where('id', $uploadBudget->id)->update(['uploadStatus' => 0]);
+
+            }
+
             DB::commit();
 
         } catch (\Exception $e) {
