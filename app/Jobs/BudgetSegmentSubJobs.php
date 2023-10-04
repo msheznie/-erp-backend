@@ -66,6 +66,7 @@ class BudgetSegmentSubJobs implements ShouldQueue
         Log::useFiles(storage_path().'/logs/budget_segment_bulk_insert.log');
 
 
+        DB::beginTransaction();
         try {
 
             $uploadBudgetCounter = UploadBudgets::find($uploadBudget->id);
@@ -166,6 +167,8 @@ class BudgetSegmentSubJobs implements ShouldQueue
                 UploadBudgets::where('id', $uploadBudget->id)->update(['uploadStatus' => 1]);
             }
             Log::info($segment . ' Completed Successfully. Count- ' . $segmentCount);
+
+            DB::commit();
 
         }
         catch (\Exception $e){
