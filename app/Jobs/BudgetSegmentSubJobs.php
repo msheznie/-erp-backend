@@ -61,13 +61,15 @@ class BudgetSegmentSubJobs implements ShouldQueue
         $result = $subData['result'];
         $currency = $subData['currency'];
         $totalSegments = $subData['totalSegments'];
-        $uploadBudgetCounter = UploadBudgets::find($uploadBudget->id);
-        $segmentCount = $uploadBudgetCounter->counter;
         CommonJobService::db_switch($this->db);
+
         Log::useFiles(storage_path().'/logs/budget_segment_bulk_insert.log');
+
 
         DB::beginTransaction();
         try {
+            $uploadBudgetCounter = UploadBudgets::find($uploadBudget->id);
+            $segmentCount = $uploadBudgetCounter->counter;
             Log::info($segment.' count - '. $segmentCount);
 
             $segmentMaster = SegmentMaster::where('ServiceLineDes', $segment)->first();
