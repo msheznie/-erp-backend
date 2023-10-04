@@ -3087,7 +3087,8 @@ WHERE
 
         $query = TenderMaster::with(['currency', 'srm_bid_submission_master', 'tender_type', 'envelop_type', 'srmTenderMasterSupplier'])->whereHas('srmTenderMasterSupplier')->where('published_yn', 1)
             ->where('commercial_verify_status', 1)
-            ->where('technical_eval_status', 1);
+            ->where('technical_eval_status', 1)
+            ->where('final_tender_awarded', '!=', 1);
 
         if($isNegotiation == 1){
             $query = $query->where('negotiation_code', '!=', null);
@@ -3723,7 +3724,7 @@ WHERE
 
             $suppliers = TenderFinalBids::distinct('supplier_id')->where('tender_id', $tenderId)->where('status', 0)->pluck('supplier_id')->toArray();
             $is_equal = $this->array_equal($selected_suppliers, $suppliers);
-            if (!$is_equal) {
+            if (!$is_equal && $isNegotiation == 0) {
                 return $this->sendError('Please select atleast one bid for each suppliers', 500);
             } else {
                 TenderFinalBids::whereIn('id', $ids)->update(['status' => true]);
@@ -3918,7 +3919,11 @@ WHERE
         $companyId = $request['companyId'];
 
         $query = TenderMaster::with(['currency', 'srm_bid_submission_master', 'tender_type', 'envelop_type', 'srmTenderMasterSupplier'])->whereHas('srmTenderMasterSupplier')->where('published_yn', 1)
-            ->where('is_awarded', 1)->where('negotiation_published',0);
+            ->where('is_awarded', 1)->orWhere('negotiation_is_awarded', 1)->where(function ($query) {
+                $query->where('negotiation_published', 0)
+                    ->orWhere('is_negotiation_closed', 1);
+            });
+
 
         $search = $request->input('search.value');
         if ($search) {
@@ -4286,7 +4291,7 @@ WHERE
         DB::beginTransaction();
         try {
             $tenderId = $request['srm_tender_master_id'];
-            TenderMaster::where('id', $tenderId)->update(['is_negotiation_closed' => 1]);
+            TenderMaster::where('id', $tenderId)->update(['is_negotiation_closed' => 1, 'negotiation_is_awarded' => 1,  'final_tender_awarded' => 1]);
             DB::commit();
             return $this->sendResponse('success', 'Tender negotiation closed successfully');
         } catch (\Exception $e) {
