@@ -150,6 +150,15 @@ class BudgetSegmentBulkInsert implements ShouldQueue
             if($totalSegments == 0){
                 Log::info('Zero segments available');
 
+                $webPushData = [
+                    'title' => "Upload Budget Failed",
+                    'body' => "",
+                    'url' => "",
+                    'path' => "",
+                ];
+
+                WebPushNotificationService::sendNotification($webPushData, 3, $employee->employeeSystemID);
+
                 UploadBudgets::where('id', $uploadBudget->id)->update(['uploadStatus' => 0]);
 
             }
