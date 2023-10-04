@@ -4291,7 +4291,7 @@ WHERE
         DB::beginTransaction();
         try {
             $tenderId = $request['srm_tender_master_id'];
-            TenderMaster::where('id', $tenderId)->update(['is_negotiation_closed' => 1, 'negotiation_is_awarded' => 1,  'final_tender_awarded' => 1]);
+            TenderMaster::where('id', $tenderId)->update(['is_negotiation_closed' => 1, 'negotiation_is_awarded' => 1]);
             DB::commit();
             return $this->sendResponse('success', 'Tender negotiation closed successfully');
         } catch (\Exception $e) {
