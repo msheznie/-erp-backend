@@ -206,4 +206,11 @@ Route::group([],function (){
     Route::post('sentSupplierStatement', 'AccountsPayableReportAPIController@sentSupplierStatement')->name('Sent supplier statement');
 });
 
+//Advance Payment Request
+Route::group([],function (){
+    Route::post('generateAdvancePaymentRequestReport', 'PoAdvancePaymentAPIController@generateAdvancePaymentRequestReport')->name('Generate advance payment request report');
+    Route::post('exportAdvancePaymentRequestReport', 'PoAdvancePaymentAPIController@exportAdvancePaymentRequestReport')->name('Export advance payment request report');
+    Route::get('getAdvancePaymentRequestStatusHistory', 'ProcumentOrderAPIController@getAdvancePaymentRequestStatusHistory')->name('Get advance payment request status history');
+});
+
 
