@@ -485,7 +485,7 @@ class FixedAssetMasterAPIController extends AppBaseController
                 return $this->sendError("Life time in Years cannot be Blank or Zero, update the lifetime of the asset to proceed", 500);
             }
         } else {
-            if($input['depMonth'] == ''){
+            if(isset($input['depMonth']) && $input['depMonth'] == ''){
                 $input['depMonth'] = 0;
             }
         }
@@ -813,7 +813,7 @@ class FixedAssetMasterAPIController extends AppBaseController
                 return $this->sendError("Life time in Years cannot be Blank or Zero, update the lifetime of the asset to proceed", 500);
             }
         } else {
-            if($input['depMonth'] == ''){
+            if(isset($input['depMonth']) && $input['depMonth'] == ''){
                 $input['depMonth'] = 0;
             }
         }
