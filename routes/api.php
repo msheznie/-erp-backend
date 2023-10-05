@@ -276,8 +276,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('erp_addresses', 'ErpAddressAPIController');
             Route::resource('po_payment_terms', 'PoPaymentTermsAPIController');
             Route::resource('po_advance_payments', 'PoAdvancePaymentAPIController');
-            
-            Route::get('getAdvancePaymentRequestStatusHistory', 'ProcumentOrderAPIController@getAdvancePaymentRequestStatusHistory');
 
             Route::get('reportSpentAnalysisBySupplierFilter', 'ProcumentOrderAPIController@reportSpentAnalysisBySupplierFilter');
             Route::post('reportSpentAnalysis', 'ProcumentOrderAPIController@reportSpentAnalysis');
@@ -625,8 +623,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::resource('hrms_chart_of_accounts', 'HRMSChartOfAccountsAPIController');
             Route::resource('hrms_department_masters', 'HRMSDepartmentMasterAPIController');
-            Route::post('generateAdvancePaymentRequestReport', 'PoAdvancePaymentAPIController@generateAdvancePaymentRequestReport');
-            Route::post('exportAdvancePaymentRequestReport', 'PoAdvancePaymentAPIController@exportAdvancePaymentRequestReport');
 
             Route::post('getAllPaymentVoucherAmendHistory', 'PaySupplierInvoiceMasterReferbackAPIController@getAllPaymentVoucherAmendHistory');
             Route::resource('advance_payment_referbacks', 'AdvancePaymentReferbackAPIController');
