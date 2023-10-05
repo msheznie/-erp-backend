@@ -224,6 +224,7 @@ Route::post('getTenderEditMasterFullApproved', 'TenderMasterAPIController@getTen
 Route::post('rejectTenderEditDocument', 'TenderEditLogMasterAPIController@rejectTenderEditDocument');
 
 Route::post('startTenderNegotiation', 'TenderMasterAPIController@startTenderNegotiation');
+Route::post('closeTenderNegotiation', 'TenderMasterAPIController@closeTenderNegotiation');
 Route::post('getFormDataTenderNegotiation', 'TenderNegotiationController@getFormData');
 
 Route::resource('tender_negotiation', 'TenderNegotiationController');
@@ -270,4 +271,5 @@ Route::group(['prefix' => 'srm'], function (){
 Route::post('get_all_document_attachment_type', 'DocumentAttachmentTypeController@getAllDocumentAttachmentTypes')->name("Get all document attachment types");
 Route::resource('document_attachment_type', 'DocumentAttachmentTypeController');
 Route::post('remove_document_attachment_type', 'DocumentAttachmentTypeController@removeDocumentAttachmentType')->name("Remove document attachment type");
+Route::post('getTenderNegotiationList', 'TenderMasterAPIController@getTenderNegotiationList')->name("Get tender negotiation list");
 
