@@ -132,6 +132,13 @@ class BudgetSegmentBulkInsert implements ShouldQueue
             Log::info('Total Segments: ' . $totalSegments);
 
             foreach ($segments as $segment) {
+                $uploadBudgetCounter = UploadBudgets::find($uploadBudget->id);
+
+                $uploadBudgetCounter->increment('counter');
+
+                $uploadBudgetCounter->save();
+
+                $newCounterValue = $uploadBudgetCounter->counter;
                 $subData = ['segment' => $segment,
                         'template' => $template,
                         'employee' => $employee,
@@ -142,7 +149,8 @@ class BudgetSegmentBulkInsert implements ShouldQueue
                         'notification' => $notification,
                         'uploadBudget' => $uploadBudget,
                         'currency' => $currency,
-                        'totalSegments' => $totalSegments
+                        'totalSegments' => $totalSegments,
+                        'segmentCount' => $newCounterValue
                 ];
                 BudgetSegmentSubJobs::dispatch($db,$subData);
             }
