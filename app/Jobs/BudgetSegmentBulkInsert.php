@@ -74,7 +74,7 @@ class BudgetSegmentBulkInsert implements ShouldQueue
             $financialYear = $header[0][3];
             $currency = $header[1][1];
             $notification = $header[1][3];
-            $segments = $header[6];
+            $segments = $header[7];
             $segments = array_slice($segments, 4);
 
             $dates = explode(" - ", $financialYear);
@@ -95,7 +95,7 @@ class BudgetSegmentBulkInsert implements ShouldQueue
 
             $template = ReportTemplate::where('description', $templateName)->first();
 
-            $worksheet->removeRow(1, 6);
+            $worksheet->removeRow(1, 7);
 
             $data = $worksheet->toArray();
 

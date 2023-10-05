@@ -168,6 +168,14 @@ class BudgetSegmentSubJobs implements ShouldQueue
             Log::info('Error Line No: ' . $e->getFile());
             Log::info($e->getMessage());
             Log::info('---- Budget Segment Sub Job End with Error-----' . date('H:i:s'));
+
+            try {
+                UploadBudgets::where('id', $uploadBudget->id)->update(['uploadStatus' => 0]);
+                DB::commit();
+            } catch (\Exception $e){
+                UploadBudgets::where('id', $uploadBudget->id)->update(['uploadStatus' => 0]);
+                DB::commit();
+            }
         }
     }
 
