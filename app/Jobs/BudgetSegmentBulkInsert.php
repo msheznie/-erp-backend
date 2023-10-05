@@ -74,7 +74,7 @@ class BudgetSegmentBulkInsert implements ShouldQueue
             $financialYear = $header[0][3];
             $currency = $header[1][1];
             $notification = $header[1][3];
-            $segments = $header[6];
+            $segments = $header[7];
             $segments = array_slice($segments, 4);
 
             $dates = explode(" - ", $financialYear);
@@ -95,7 +95,7 @@ class BudgetSegmentBulkInsert implements ShouldQueue
 
             $template = ReportTemplate::where('description', $templateName)->first();
 
-            $worksheet->removeRow(1, 6);
+            $worksheet->removeRow(1, 7);
 
             $data = $worksheet->toArray();
 
@@ -131,14 +131,10 @@ class BudgetSegmentBulkInsert implements ShouldQueue
             $totalSegments = count($segments);
             Log::info('Total Segments: ' . $totalSegments);
 
+            $segmentCount = 1;
+
             foreach ($segments as $segment) {
-                $uploadBudgetCounter = UploadBudgets::find($uploadBudget->id);
 
-                $uploadBudgetCounter->increment('counter');
-
-                $uploadBudgetCounter->save();
-
-                $newCounterValue = $uploadBudgetCounter->counter;
                 $subData = ['segment' => $segment,
                         'template' => $template,
                         'employee' => $employee,
@@ -150,9 +146,10 @@ class BudgetSegmentBulkInsert implements ShouldQueue
                         'uploadBudget' => $uploadBudget,
                         'currency' => $currency,
                         'totalSegments' => $totalSegments,
-                        'segmentCount' => $newCounterValue
+                        'segmentCount' => $segmentCount
                 ];
                 BudgetSegmentSubJobs::dispatch($db,$subData);
+                $segmentCount++;
             }
 
             if($totalSegments == 0){

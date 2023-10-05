@@ -3939,7 +3939,11 @@ class BudgetMasterAPIController extends AppBaseController
 
         $budgetUploadID = $input['budgetUploadID'];
 
+        $uploadBudget = UploadBudgets::find($budgetUploadID);
 
+        if($uploadBudget->uploadStatus == -1) {
+            return $this->sendError('Error in deleting budget upload');
+        }
 
             $isBudgetMaster = BudgetMaster::where('budgetUploadID', $budgetUploadID)->where('confirmedYN', 1)->orWhere('approvedYN', 1)->first();
             if (empty($isBudgetMaster)) {
