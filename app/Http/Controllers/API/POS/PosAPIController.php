@@ -68,7 +68,12 @@ class PosAPIController extends AppBaseController
         DB::beginTransaction();
         try {
             $company_id = $request->get('company_id');
-            $customerCategories = CustomerMasterCategory::where('companySystemID', '=', $company_id)->get();
+            $customerCategories = CustomerMasterCategory::whereHas('category_assigned', function($query) use($company_id){
+                $query->where('companySystemID',$company_id);
+                $query->where('isAssigned',1);
+                $query->where('isActive',1);
+            })->get();
+
             $customerCategoryArray = array();
             foreach ($customerCategories as $item) {
                 $data = array('id' => $item->categoryID, 'party_type' => 1, 'description' => $item->categoryDescription);
@@ -133,6 +138,8 @@ class PosAPIController extends AppBaseController
            approvedBySystemID as approvedbyEmpID,approvedBy as approved_user_name,approvedComment as approved_comment')
                 ->join('chartofaccountsassigned', 'chartofaccountsassigned.chartOfAccountSystemID', '=', 'chartofaccounts.chartOfAccountSystemID')
                 ->where('chartofaccountsassigned.companySystemID', '=', $company_id)
+                ->where('chartofaccountsassigned.isAssigned', '=', -1)
+                ->where('chartofaccountsassigned.isActive', '=', 1)
                 ->where('chartofaccounts.chartOfAccountSystemID', '!=', '')
                 ->where('chartofaccounts.AccountCode', '!=', '')
                 ->where('chartofaccounts.AccountDescription', '!=', '')
@@ -361,8 +368,10 @@ class PosAPIController extends AppBaseController
                 ->join('financeitemcategorysubassigned', 'financeitemcategorysubassigned.itemCategorySubID', '=', 'financeitemcategorysub.itemCategorySubID')
                 ->where('financeitemcategorysub.itemCategorySubID', '!=', '')
                 ->where('financeitemcategorysub.categoryDescription', '!=', '')
-                ->where('financeitemcategorysubassigned.companySystemID', '=', $company_id);
-                
+                ->where('financeitemcategorysubassigned.companySystemID', '=', $company_id)
+                ->where('financeitemcategorysubassigned.isActive', '=', 1)
+                ->where('financeitemcategorysubassigned.isAssigned', '=', -1);
+
                 if(isset($input['category_id'])){
                     $financeItemCategorySub = $financeItemCategorySub->where('financeitemcategorysub.itemCategoryID', '=', $input['category_id']);
                 }
@@ -400,6 +409,8 @@ class PosAPIController extends AppBaseController
                 ->leftJoin('chartofaccounts as cost', 'cost.chartOfAccountSystemID', '=', 'financeitemcategorysub.financeGLcodePLSystemID')
                 ->join('itemassigned', 'itemassigned.itemCodeSystem', '=', 'itemmaster.itemCodeSystem')
                 ->where('itemassigned.companySystemID', '=', $company_id)
+                ->where('itemassigned.isAssigned', '=', -1)
+                ->where('itemassigned.isActive', '=', 1)
                 ->where('primaryCode', '!=', '')
                 ->where('itemmaster.documentID', '!=', '')
                 ->where('itemmaster.financeCategoryMaster', '!=', '')
@@ -821,6 +832,7 @@ class PosAPIController extends AppBaseController
     {
         DB::beginTransaction();
         try {
+            $company_id = $request->get('company_id');
             $input = $request->all();
             $input = $this->convertArrayToSelectedValue($input, array());
 
@@ -831,38 +843,42 @@ class PosAPIController extends AppBaseController
             }
 
             $customerMaster = CustomerMaster::selectRaw('   customermaster.customerCodeSystem as id,
-                                                            CustomerName,
-                                                            CutomerCode,
-                                                            customerShortCode as secondaryCode,
-                                                            customerCategoryID,
-                                                            customerAddress1,
-                                                            customerAddress2,
-                                                            customerCity,
-                                                            customerCountry as customerCountryID,
+                                                            customermaster.CustomerName,
+                                                            customermaster.CutomerCode,
+                                                            customermaster.customerShortCode as secondaryCode,
+                                                            customermaster.customerCategoryID,
+                                                            customermaster.customerAddress1,
+                                                            customermaster.customerAddress2,
+                                                            customermaster.customerCity,
+                                                            customermaster.customerCountry as customerCountryID,
                                                             countrymaster.countryName as customerCountryName,
                                                             customercontactdetails.contactPersonTelephone as customerTelephone,
                                                             customercontactdetails.contactPersonEmail as customerEmail,
 
-                                                            custGLaccount as gl_code,
-                                                            custUnbilledAccount,
+                                                            customermaster.custGLaccount as gl_code,
+                                                            customermaster.custUnbilledAccount,
 
                                                             currencymaster.currencyID as customerCurrencyID,
                                                             currencymaster.CurrencyCode as customerCurrencyCode,
                                                             currencymaster.CurrencyName as customerCurrencyName,
                                                             currencymaster.DecimalPlaces as customerCurrencyDecimalPlaces,
 
-                                                            creditDays as customerCreditPeriod,
-                                                            creditLimit as customerCreditLimit,
-                                                            isCustomerActive,
-                                                            primaryCompanySystemID,
-                                                            primaryCompanyID 
+                                                            customermaster.creditDays as customerCreditPeriod,
+                                                            customermaster.creditLimit as customerCreditLimit,
+                                                            customermaster.isCustomerActive,
+                                                            customermaster.primaryCompanySystemID,
+                                                            customermaster.primaryCompanyID 
                                                         ')
+                                                ->join('customerassigned', 'customerassigned.customerCodeSystem', '=', 'customermaster.customerCodeSystem')
                                                 ->join('countrymaster', 'countrymaster.countryID', '=', 'customermaster.customerCountry')
                                                 ->join('customercontactdetails', 'customercontactdetails.customerID', '=', 'customermaster.customerCodeSystem')
                                                 ->join('customercurrency as custcur', 'custcur.customerCodeSystem', '=', 'customermaster.customerCodeSystem')
                                                 ->join('currencymaster', 'currencymaster.currencyID', '=', 'custcur.currencyID')
                                                 ->where('customermaster.customerCodeSystem', '!=', '')
-                                                ->where('isCustomerActive', '=', 1);
+                                                ->where('isCustomerActive', '=', 1)
+                                                ->where('customerassigned.companySystemID', '=', $company_id)
+                                                ->where('customerassigned.isActive', '=', 1)
+                                                ->where('customerassigned.isAssigned', '=', -1);
 
             if (isset($input['customer_id'])) {
                 $customer_id = $input['customer_id'];
