@@ -3942,7 +3942,7 @@ class BudgetMasterAPIController extends AppBaseController
         $uploadBudget = UploadBudgets::find($budgetUploadID);
 
         if($uploadBudget->uploadStatus == -1) {
-            return $this->sendError('Error in deleting budget upload');
+            return $this->sendError('Upload in progress. Cannot be deleted.');
         }
 
             $isBudgetMaster = BudgetMaster::where('budgetUploadID', $budgetUploadID)->where('confirmedYN', 1)->orWhere('approvedYN', 1)->first();
@@ -3955,7 +3955,7 @@ class BudgetMasterAPIController extends AppBaseController
                 UploadBudgets::where('id', $budgetUploadID)->delete();
                 return $this->sendResponse([], 'Budget upload deleted successfully');
             } else {
-                return $this->sendError('Error in deleting budget upload');
+                return $this->sendError('The Budget details have already been saved. Cannot be deleted.');
             }
 
     }
