@@ -863,10 +863,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('addBatchSubmitDetails', 'CustomerInvoiceTrackingDetailAPIController@addBatchSubmitDetails');
             Route::get('getItemsByBatchSubmission', 'CustomerInvoiceTrackingDetailAPIController@getItemsByBatchSubmission');
             Route::post('exportBatchSubmissionDetails', 'CustomerInvoiceTrackingAPIController@exportBatchSubmissionDetails');
-            Route::get('getInvoiceTrackerReportFilterData', 'AccountsReceivableReportAPIController@getInvoiceTrackerReportFilterData');
             Route::post('getContractByCustomer', 'AccountsReceivableReportAPIController@getContractByCustomer');
-            Route::post('generateInvoiceTrackingReport', 'AccountsReceivableReportAPIController@generateInvoiceTrackingReport');
-
 
             Route::get('getINVTrackingFormData', 'CustomerInvoiceTrackingAPIController@getINVTrackingFormData');
             Route::post('updateAllInvoiceTrackingDetail', 'CustomerInvoiceTrackingAPIController@updateAllInvoiceTrackingDetail');

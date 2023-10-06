@@ -150,7 +150,6 @@ Route::group([],function(){
 
 //Reports
 
-//Customer Ledger Reports
 Route::group([],function(){
     Route::get('getAcountReceivableFilterData', 'AccountsReceivableReportAPIController@getAcountReceivableFilterData')->name("Get account receivable filter data");
     Route::post('validateARReport', 'AccountsReceivableReportAPIController@validateReport')->name("Validate account receivable report");
@@ -158,4 +157,6 @@ Route::group([],function(){
     Route::post('exportARReport', 'AccountsReceivableReportAPIController@exportReport')->name("Export account receivable report");
     Route::post('sentCustomerLedger', 'AccountsReceivableReportAPIController@sentCustomerLedger')->name("Sent customer ledger");
     Route::post('sentCustomerStatement', 'AccountsReceivableReportAPIController@sentCustomerStatement')->name("Sent customer statement");
+    Route::get('getInvoiceTrackerReportFilterData', 'AccountsReceivableReportAPIController@getInvoiceTrackerReportFilterData')->name("Get invoice tracker report filter data");
+    Route::post('generateInvoiceTrackingReport', 'AccountsReceivableReportAPIController@generateInvoiceTrackingReport')->name("Generate invoice tracking report");
 });
