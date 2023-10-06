@@ -3886,6 +3886,7 @@ class BudgetMasterAPIController extends AppBaseController
         $employee = \Helper::getEmployeeInfo();
 
         $uploadArray = array(
+            'companySystemID' => $input['companySystemID'],
             'uploadComment' => $input['uploadComment'],
             'uploadedDate' => \Helper::currentDateTime(),
             'uploadedBy' => $employee->empID,
@@ -3924,10 +3925,10 @@ class BudgetMasterAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $reasonCodeMasters = UploadBudgets::with('uploaded_by')->select('*');
+        $uploadBudgets = UploadBudgets::where('companySystemID', $input['companyId'])->with('uploaded_by')->select('*');
 
 
-        return \DataTables::eloquent($reasonCodeMasters)
+        return \DataTables::eloquent($uploadBudgets)
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->make(true);
