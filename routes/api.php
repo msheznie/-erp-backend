@@ -1416,8 +1416,12 @@ Route::group(['prefix' => 'external'], function (){
 
 require __DIR__.'/../routes/hrms/jobRoutes.php';
 
+Route::group(['middleware' => 'max_memory_limit'], function () {
+    Route::group(['middleware' => 'max_execution_limit'], function () {
+        Route::post('documentUpload', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@documentUpload');
+    });
+});
 
-Route::post('documentUpload', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@documentUpload');
 Route::get('viewDocument', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@viewDocument');
 Route::get('viewDocumentEmployeeImg', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@viewDocumentEmployeeImg');
 Route::get('viewDocumentEmployeeImgBulk', 'ThirdPartySystemsDocumentUploadAndDownloadAPIController@viewDocumentEmployeeImgBulk');
@@ -1431,6 +1435,8 @@ if (env("LOG_ENABLE", false)) {
         return 'CRON Job run successfully';
     });
 }       
+
+
 
 /*
  * End external related routes
