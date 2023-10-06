@@ -196,55 +196,50 @@ class CustomerMasterAPIController extends AppBaseController
         }
 
         $empID = \Helper::getEmployeeSystemID();
+        $values = implode(',', array_map(function($value)
+        {
+            return trim($value, ',');
+        }, $companyID));
+
 
         $search = $request->input('search.value');
+        $filter='';
+        if($search){
+            $search = str_replace("\\", "\\\\\\\\", $search);
+            $filter = "AND (( CutomerCode LIKE '%{$search}%') OR ( customerShortCode LIKE '%{$search}%') OR ( CustomerName LIKE '%{$search}%'))";
+        }
 
-        $customerMasters = DB::table('erp_documentapproved')->select('customermaster.*', 'countrymaster.countryName', 'erp_documentapproved.documentApprovedID', 'rollLevelOrder', 'approvalLevelID', 'documentSystemCode')->join('employeesdepartments', function ($query) use ($companyID, $empID) {
-            $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
-                ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
-                ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID')
-                ->where('employeesdepartments.documentSystemID', 58)
-                ->whereIn('employeesdepartments.companySystemID', $companyID)
-                ->where('employeesdepartments.employeeSystemID', $empID)
-                ->where('employeesdepartments.isActive', 1)
-                ->where('employeesdepartments.removedYN', 0);
-        })->join('customermaster', function ($query) use ($companyID, $empID, $search) {
-            $query->on('erp_documentapproved.documentSystemCode', '=', 'customerCodeSystem')
-                ->on('erp_documentapproved.rollLevelOrder', '=', 'RollLevForApp_curr')
-                ->whereIn('primaryCompanySystemID', $companyID)
-                ->where('customermaster.approvedYN', 0)
-                ->where('customermaster.confirmedYN', 1)
-                ->when($search != "", function ($q) use ($search) {
-                    $q->where(function ($query) use ($search) {
-                        $query->where('CutomerCode', 'LIKE', "%{$search}%")
-                            ->orWhere('customerShortCode', 'LIKE', "%{$search}%")
-                            ->orWhere('CustomerName', 'LIKE', "%{$search}%");
-                    });
-                });
-        })->where('erp_documentapproved.approvedYN', 0)
-            ->leftJoin('countrymaster', 'customerCountry', '=', 'countryID')
-            ->where('erp_documentapproved.rejectedYN', 0)
-            ->where('erp_documentapproved.documentSystemID', 58)
-            ->whereIn('erp_documentapproved.companySystemID', $companyID);
+        $sql = "SELECT customermaster.*, countrymaster.countryName, erp_documentapproved.documentApprovedID, rollLevelOrder, approvalLevelID, documentSystemCode FROM erp_documentapproved
+        inner join employeesdepartments on erp_documentapproved.approvalGroupID =  employeesdepartments.employeeGroupID 
+        and erp_documentapproved.documentSystemID = employeesdepartments.documentSystemID
+        and erp_documentapproved.companySystemID = employeesdepartments.companySystemID
+        inner join customermaster on customermaster.customerCodeSystem = erp_documentapproved.documentSystemCode AND
+        erp_documentapproved.rollLevelOrder = customermaster.RollLevForApp_curr
+        left join countrymaster on customermaster.customerCountry = countryID
+        where customermaster.approvedYN = 0 
+        {$filter}
+        AND customermaster.confirmedYN = 1
+        AND employeesdepartments.documentSystemID = 58 
+        AND erp_documentapproved.approvedYN = 0
+        AND erp_documentapproved.rejectedYN = 0
+        AND erp_documentapproved.documentSystemID = 58
+        AND employeesdepartments.isActive = 1
+        AND employeesdepartments.employeeSystemID = $empID
+        AND employeesdepartments.removedYN = 0
+        AND employeesdepartments.companySystemID IN ($values) AND primaryCompanySystemID IN ($values)
+        GROUP BY customerCodeSystem ORDER BY documentApprovedID 
+        ";
 
         $isEmployeeDischarched = \Helper::checkEmployeeDischarchedYN();
 
+        $customerMasters = DB::select($sql);
         if ($isEmployeeDischarched == 'true') {
             $customerMasters = [];
         }
 
         return \DataTables::of($customerMasters)
-            ->order(function ($query) use ($input) {
-                if (request()->has('order')) {
-                    if ($input['order'][0]['column'] == 0) {
-                        $query->orderBy('documentApprovedID', $input['order'][0]['dir']);
-                    }
-                }
-            })
             ->addIndexColumn()
             ->with('orderCondition', $sort)
-            ->addColumn('Actions', 'Actions', "Actions")
-            //->addColumn('Index', 'Index', "Index")
             ->make(true);
     }
 
