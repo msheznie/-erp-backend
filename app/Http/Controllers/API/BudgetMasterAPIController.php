@@ -3810,7 +3810,7 @@ class BudgetMasterAPIController extends AppBaseController
 
         $company = Company::with(['reportingcurrency', 'localcurrency'])->find($companySystemID);
 
-        $segments = SegmentMaster::where('isActive', 1)->get();
+        $segments = SegmentMaster::where('isActive', 1)->where('companySystemID', $templateData['companySystemID'])->get();
 
         $glCOdes = ReportTemplateDetails::with(['gllink'])
             ->where('companySystemID', $templateData['companySystemID'])

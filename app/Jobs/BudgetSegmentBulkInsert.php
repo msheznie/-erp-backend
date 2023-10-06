@@ -88,7 +88,7 @@ class BudgetSegmentBulkInsert implements ShouldQueue
             list($day, $month, $year) = explode("/", $endDate);
             $mysqlFormattedEndDate = "{$year}-{$month}-{$day}";
 
-            list($startMonth, $startDay, $startYear) = explode("/", $startDate);
+            list($startDay, $startMonth, $startYear) = explode("/", $startDate);
 
             $year = $startYear;
             $month = $startMonth;
