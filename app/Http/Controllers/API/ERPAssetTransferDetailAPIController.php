@@ -163,7 +163,7 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
                 ->orderby('id','desc')
                 ->first();
                 if(!empty($assetExistUnApproved)){ 
-                    if($assetExistUnApproved->assetRequestMaster->type == 1) {
+                    if($assetRequest->type == 1) {
                         $msg ='The asset '.$assetExistUnApproved->assetMaster->faCode.' has already been assigned to '.$assetExistUnApproved->assetRequestMaster->employee->Ename1.'. Are you sure you want to transfer it to '.$assetRequest->employee->Ename1.'';
                         return $this->sendResponse(['id' => false], $msg);
 
