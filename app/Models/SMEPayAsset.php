@@ -128,6 +128,7 @@ class SMEPayAsset extends Model
     const UPDATED_AT = 'updated_at';
 
 
+    public $timestamps = false;
 
 
     public $fillable = [
@@ -148,7 +149,8 @@ class SMEPayAsset extends Model
         'modifiedPCID',
         'modifiedUserID',
         'modifiedDateTime',
-        'timestamp'
+        'timestamp',
+        'Erp_faID'
     ];
 
     /**
