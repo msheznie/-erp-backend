@@ -13,6 +13,7 @@ use App\Models\ERPAssetTransfer;
 use App\Models\ErpLocation;
 use App\Models\AssetRequest;
 use App\Models\DepartmentMaster;
+use App\Models\SMEPayAsset;
 use App\Models\FixedAssetMaster;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
@@ -160,9 +161,13 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
                 })
                 ->where('receivedYN','=','1')
                 ->orderby('id','desc')
-                ->first(); 
+                ->first();
                 if(!empty($assetExistUnApproved)){ 
-                    return $this->sendError('Asset already acknowledged');  
+                    if($assetRequest->type == 1) {
+                        $msg ='The asset '.$assetExistUnApproved->assetMaster->faCode.' has already been assigned to '.$assetExistUnApproved->assetRequestMaster->employee->Ename1.'. Are you sure you want to transfer it to '.$assetRequest->employee->Ename1.'';
+                        return $this->sendResponse(['id' => false], $msg);
+
+                    }
                 }
                 
 
@@ -564,5 +569,17 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
             $q->select(['DepartmentDescription','departmentSystemID']);
         }])->first();
         return $this->sendResponse($deparment, 'Department reterived');
+    }
+
+    public function UpdateReturnStatus(Request $request) {
+
+        $items = $request->input();
+
+        foreach($items as $item) {
+            $payAssetsObj = SMEPayAsset::where('Erp_faID',$item['assetDropTransferID'])->update(['returnStatus' => 1]);
+        }
+
+        return $this->sendResponse($items, 'Department reterived');
+
     }
 }

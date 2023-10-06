@@ -1053,6 +1053,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('mapLineItemAr', 'AssetRequestAPIController@mapLineItemAr')->name('Map line item Ar');
 
             /* Asset Transfer */
+            Route::post('update-return-status', 'ERPAssetTransferDetailAPIController@UpdateReturnStatus');
             Route::get('asset-transfer-drop', 'ERPAssetTransferDetailAPIController@assetTransferDrop');
             Route::get('typeAheadAssetDrop', 'ERPAssetTransferDetailAPIController@typeAheadAssetDrop');
             Route::post('add-employee-asset-transfer-asset-detail/{id}', 'ERPAssetTransferDetailAPIController@addEmployeeAsset');
