@@ -39,7 +39,8 @@ class UploadBudgets extends Model
         'uploadComment',
         'uploadedDate',
         'uploadedBy',
-        'uploadStatus'
+        'uploadStatus',
+        'companySystemID'
     ];
 
     /**
