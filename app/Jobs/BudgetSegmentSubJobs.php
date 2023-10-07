@@ -84,7 +84,7 @@ class BudgetSegmentSubJobs implements ShouldQueue
                 'serviceLineCode' => $segmentMaster->ServiceLineCode,
                 'templateMasterID' => $template->companyReportTemplateID,
                 'Year' => $year,
-                'month' => $month,
+                'month' => 1,
                 'generateStatus' => 100,
                 'createdByUserSystemID' => $employee->employeeSystemID,
                 'createdByUserID' => $employee->empID,
@@ -123,8 +123,16 @@ class BudgetSegmentSubJobs implements ShouldQueue
                     $budjetAmtLocal = 0;
                     $budjetAmtRpt = 0;
                     $counter = 1;
-
+                    $startMonth = $month;
+                    $startYear = $year;
                     for ($i = 1; $i <= 12; $i++) {
+                        if($startMonth == 13){
+                            Log::info('M- '.$startMonth);
+                            $startMonth = 1;
+                            $startYear = $startYear + 1;
+                        }
+
+
                         if($counter == 12){
                             $budgetDetailsArray = array(
                                 'budgetmasterID' => $budget->budgetmasterID,
@@ -137,8 +145,8 @@ class BudgetSegmentSubJobs implements ShouldQueue
                                 'chartOfAccountID' => isset($chartOfAccount->chartOfAccountSystemID) ? $chartOfAccount->chartOfAccountSystemID : null,
                                 'glCode' => $value['GL Code'],
                                 'glCodeType' => isset($chartOfAccount->controlAccounts) ? $chartOfAccount->controlAccounts : null,
-                                'Year' => $year,
-                                'month' => $i,
+                                'Year' => $startYear,
+                                'month' => $startMonth,
                                 'budjetAmtLocal' => round(round($localAmount, $currencyMasterLocal->DecimalPlaces) - $budjetAmtLocal,$currencyMasterLocal->DecimalPlaces),
                                 'budjetAmtRpt' => round(round($value[$segmentMaster->ServiceLineDes], $currencyMaster->DecimalPlaces) - $budjetAmtRpt,$currencyMaster->DecimalPlaces),
                                 'createdByUserSystemID' => $employee->employeeSystemID,
@@ -158,8 +166,8 @@ class BudgetSegmentSubJobs implements ShouldQueue
                                 'chartOfAccountID' => isset($chartOfAccount->chartOfAccountSystemID) ? $chartOfAccount->chartOfAccountSystemID : null,
                                 'glCode' => $value['GL Code'],
                                 'glCodeType' => isset($chartOfAccount->controlAccounts) ? $chartOfAccount->controlAccounts : null,
-                                'Year' => $year,
-                                'month' => $i,
+                                'Year' => $startYear,
+                                'month' => $startMonth,
                                 'budjetAmtLocal' => round($localAmount / 12, $currencyMasterLocal->DecimalPlaces),
                                 'budjetAmtRpt' => round($value[$segmentMaster->ServiceLineDes] / 12, $currencyMaster->DecimalPlaces),
                                 'createdByUserSystemID' => $employee->employeeSystemID,
@@ -172,6 +180,7 @@ class BudgetSegmentSubJobs implements ShouldQueue
                         }
 
                         $counter++;
+                        $startMonth++;
                         $budgetDetails = Budjetdetails::create($budgetDetailsArray);
 
                     }
