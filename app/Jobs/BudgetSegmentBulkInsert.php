@@ -112,10 +112,9 @@ class BudgetSegmentBulkInsert implements ShouldQueue
                 $result[] = $rowAssoc;
             }
 
-            $financeYear = CompanyFinanceYear::where('companySystemID', $template->companySystemID)->where('bigginingDate', "<=", $mysqlFormattedStartDate)->where('endingDate', ">=", $mysqlFormattedEndDate)->first();
+            $financeYear = CompanyFinanceYear::where('companySystemID', $template->companySystemID)->whereDate('bigginingDate', '=', $mysqlFormattedStartDate)->whereDate('endingDate', '=', $mysqlFormattedEndDate)->first();
 
             $budgetExists = BudgetMaster::where('templateMasterID', $template->companyReportTemplateID)->where('companyFinanceYearID', $financeYear->companyFinanceYearID)->get();
-
 
             $segmentDes = [];
             foreach ($budgetExists as $budgetExist) {
