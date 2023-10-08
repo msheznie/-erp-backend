@@ -3906,7 +3906,8 @@ class BudgetMasterAPIController extends AppBaseController
 
         $uploadData = ['objPHPExcel' => $objPHPExcel,
             'uploadBudget' => $uploadBudget,
-            'employee' => $employee
+            'employee' => $employee,
+            'uploadedCompany' =>  $input['companySystemID'],
         ];
 
         BudgetSegmentBulkInsert::dispatch($db, $uploadData);
