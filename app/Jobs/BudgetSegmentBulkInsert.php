@@ -63,8 +63,7 @@ class BudgetSegmentBulkInsert implements ShouldQueue
             $uploadBudget = $uploadData['uploadBudget'];
             $employee = $uploadData['employee'];
             $objPHPExcel = $uploadData['objPHPExcel'];
-
-
+            $uploadedCompany = $uploadData['uploadedCompany'];
 
             $worksheet = $objPHPExcel->getActiveSheet();
 
@@ -130,11 +129,26 @@ class BudgetSegmentBulkInsert implements ShouldQueue
             $totalSegments = count($segments);
             Log::info('Total Segments: ' . $totalSegments);
 
-            $segmentCount = 1;
+            if($uploadedCompany != $template->companySystemID){
+                Log::info('Uploaded company is different from the template company');
 
-            foreach ($segments as $segment) {
+                $webPushData = [
+                    'title' => "Upload Budget Failed",
+                    'body' => "",
+                    'url' => "",
+                    'path' => "",
+                ];
 
-                $subData = ['segment' => $segment,
+//                WebPushNotificationService::sendNotification($webPushData, 3, $employee->employeeSystemID);
+
+                UploadBudgets::where('id', $uploadBudget->id)->update(['uploadStatus' => 0]);
+            } else {
+
+                $segmentCount = 1;
+
+                foreach ($segments as $segment) {
+
+                    $subData = ['segment' => $segment,
                         'template' => $template,
                         'employee' => $employee,
                         'result' => $result,
@@ -146,9 +160,10 @@ class BudgetSegmentBulkInsert implements ShouldQueue
                         'currency' => $currency,
                         'totalSegments' => $totalSegments,
                         'segmentCount' => $segmentCount
-                ];
-                BudgetSegmentSubJobs::dispatch($db,$subData);
-                $segmentCount++;
+                    ];
+                    BudgetSegmentSubJobs::dispatch($db, $subData);
+                    $segmentCount++;
+                }
             }
 
             if($totalSegments == 0){
