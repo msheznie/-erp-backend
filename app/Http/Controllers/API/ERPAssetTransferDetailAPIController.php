@@ -573,13 +573,23 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
 
     public function UpdateReturnStatus(Request $request) {
 
-        $items = $request->input();
+        if($request->input('assetTrasnferDetailID')) {
+            $assetTransferDetail = ERPAssetTransferDetail::find($request->input('assetTrasnferDetailID'));
+            if($assetTransferDetail) {
+                $payAssetsObj = SMEPayAsset::where('Erp_faID',$assetTransferDetail->fa_master_id)->update(['returnStatus' => $request->input('status')]);
+            }
 
-        foreach($items as $item) {
-            $payAssetsObj = SMEPayAsset::where('Erp_faID',$item['assetDropTransferID'])->update(['returnStatus' => 1]);
+        }else {
+            $items = $request->input('items');
+
+            foreach($items as $item) {
+                $payAssetsObj = SMEPayAsset::where('Erp_faID',$item['assetDropTransferID'])->update(['returnStatus' => $request->input('status')]);
+            }
+    
         }
 
-        return $this->sendResponse($items, 'Department reterived');
+
+        return $this->sendResponse([], 'data reterived');
 
     }
 }
