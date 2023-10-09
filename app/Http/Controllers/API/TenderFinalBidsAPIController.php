@@ -308,6 +308,7 @@ class TenderFinalBidsAPIController extends AppBaseController
             $sort = 'desc';
         }
         $tenderId = $request['tenderId'];
+
         $isNegotiation = $request['isNegotiation'];
 
         $tenderBidNegotiations = TenderBidNegotiation::select('bid_submission_master_id_new')
