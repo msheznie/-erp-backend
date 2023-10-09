@@ -158,8 +158,8 @@ class BudgetSegmentBulkInsert implements ShouldQueue
                         'currency' => $currency,
                         'totalSegments' => $totalSegments
                     ];
-                    $job = new BudgetSegmentSubJobs($db, $subData);
-                    $job->handle();
+                    BudgetSegmentSubJobs::dispatch($db, $subData)->onQueue('bulk-budget-upload');
+
                 }
             }
 
