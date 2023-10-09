@@ -73,7 +73,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::post('downloadBudgetTemplate', 'BudgetMasterAPIController@downloadBudgetTemplate')->name("Download budget template");
             Route::post('getBudgetUploads', 'BudgetMasterAPIController@getBudgetUploads')->name("Get upload budgets");
-            Route::post('deleteBudgetUploads', 'BudgetMasterAPIController@deleteBudgetUploads')->name("Delete budget uploads");
 
 
             Route::post('getAllEmployees', 'EmployeeAPIController@getAllEmployees');
@@ -106,7 +105,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
                     Route::resource('fixed_asset_depreciation_masters', 'FixedAssetDepreciationMasterAPIController');
                     Route::post('getAssetDepPeriodsByID', 'FixedAssetDepreciationPeriodAPIController@getAssetDepPeriodsByID');
                     Route::post('exportAssetMaster', 'FixedAssetMasterAPIController@exportAssetMaster');
-
+                    Route::post('deleteBudgetUploads', 'BudgetMasterAPIController@deleteBudgetUploads')->name("Delete budget uploads");
                 });
             });
 
