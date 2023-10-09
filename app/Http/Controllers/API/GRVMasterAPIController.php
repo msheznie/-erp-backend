@@ -30,6 +30,7 @@ use App\helper\TaxService;
 use App\Http\Controllers\AppBaseController;
 use App\Http\Requests\API\CreateGRVMasterAPIRequest;
 use App\Http\Requests\API\UpdateGRVMasterAPIRequest;
+use App\Models\ChartOfAccount;
 use App\Models\PurchaseOrderDetails;
 use App\Models\BudgetConsumedData;
 use App\Models\TaxVatCategories;
@@ -73,6 +74,7 @@ use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
 use App\Repositories\GRVMasterRepository;
 use App\Repositories\UserRepository;
+use App\Services\ChartOfAccountValidationService;
 use App\Traits\AuditTrial;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -828,6 +830,15 @@ class GRVMasterAPIController extends AppBaseController
                     return $this->sendError('Cannot confirm. Output VAT Transfer GL Account not assigned to company.', 500);
                 }
             }
+
+            $object = new ChartOfAccountValidationService();
+            $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $id, $input["companySystemID"]);
+
+            if (isset($result) && !empty($result["accountCodes"])) {
+                return $this->sendError($result["errorMsg"]);
+            }
+
+
 
             $params = array('autoID' => $id, 'company' => $input["companySystemID"], 'document' => $input["documentSystemID"], 'segment' => $input["serviceLineSystemID"], 'category' => '', 'amount' => $grvMasterSum['masterTotalSum']);
             $confirm = \Helper::confirmDocument($params);

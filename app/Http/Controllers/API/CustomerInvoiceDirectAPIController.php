@@ -80,6 +80,7 @@ use App\Models\YesNoSelectionForMinus;
 use App\Models\ErpDocumentTemplate;
 use App\Models\SecondaryCompany;
 use App\Repositories\CustomerInvoiceDirectRepository;
+use App\Services\ChartOfAccountValidationService;
 use App\Traits\AuditTrial;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -775,6 +776,14 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                     return $this->sendError('Document date should be between the selected financial period start date and end date.', 500);
                 }
 
+                if ($isPerforma == 0 || $isPerforma == 2) {
+                    $object = new ChartOfAccountValidationService();
+                    $result = $object->checkChartOfAccountStatus($customerInvoiceDirect->documentSystemiD, $id,$customerInvoiceDirect->companySystemID);
+
+                    if (isset($result) && !empty($result["accountCodes"])) {
+                        return $this->sendError($result["errorMsg"], 500);
+                    }
+                }
                 /**/
                 if ($isPerforma != 1) {
 
@@ -1015,6 +1024,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                         $amount = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $id)
                             ->sum('issueCostRptTotal');
 
+
                         $params = array('autoID' => $id,
                             'company' => $customerInvoiceDirect->companySystemID,
                             'document' => $customerInvoiceDirect->documentSystemiD,
@@ -1030,8 +1040,6 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                         } else {
                             return $this->sendResponse($customerInvoiceDirect->toArray(), 'Customer invoice confirmed successfully');
                         }
-
-
                     } else {
                         $detailValidation = CustomerInvoiceDirectDetail::selectRaw("glSystemID,IF ( serviceLineCode IS NULL OR serviceLineCode = '', null, 1 ) AS serviceLineCode,IF ( serviceLineSystemID IS NULL OR serviceLineSystemID = '' OR serviceLineSystemID = 0, null, 1 ) AS serviceLineSystemID, IF ( unitOfMeasure IS NULL OR unitOfMeasure = '' OR unitOfMeasure = 0, null, 1 ) AS unitOfMeasure, IF ( invoiceQty IS NULL OR invoiceQty = '' OR invoiceQty = 0, null, 1 ) AS invoiceQty, IF ( contractID IS NULL OR contractID = '' OR contractID = 0, null, 1 ) AS contractID,
                     IF ( invoiceAmount IS NULL OR invoiceAmount = '' OR invoiceAmount = 0, null, 1 ) AS invoiceAmount,
@@ -3189,7 +3197,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $secondaryBankAccount = (object)[];
         if ($customerInvoice->secondaryLogoCompanySystemID) {
             $secondaryBankAccount = CustomerInvoiceDirectDetail::with(['contract' => function ($q) {
-                $q->with(['secondary_bank_account']);
+                $q->with(['secondary_bank_account' => function ($query) {
+                    $query->with('currency');
+                }]);
             }])->where('contractID', '>', 0)
                 ->where('custInvoiceDirectID', $id)->first();
         }
@@ -3599,6 +3609,27 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 return \Excel::create($fileName_csv, function ($excel) use ($array) {
                     $excel->sheet('New sheet', function ($sheet) use ($array) {
                         $sheet->loadView('export_report.customer_invoice_tue_product_service', $array)->with('no_asset', true);
+                    });
+                })->download('csv');
+            }
+
+        }  else if ($printTemplate['printTemplateID'] == 16) {
+            if($type == 1)
+            {
+                // return $array;
+                $html = view('print.customer_invoice_template_ksa', $array);
+                $mpdf = new \Mpdf\Mpdf(['tempDir' => public_path('tmp'), 'mode' => 'utf-8', 'format' => 'A4-P', 'setAutoTopMargin' => 'stretch', 'autoMarginPadding' => -10]);
+                $mpdf->AddPage('P');
+                $mpdf->setAutoBottomMargin = 'stretch';    
+
+                $mpdf->WriteHTML($html);
+                return $mpdf->Output($fileName, 'I');
+            }
+            else if($type == 2)
+            {
+                return \Excel::create($fileName_csv, function ($excel) use ($array) {
+                    $excel->sheet('New sheet', function ($sheet) use ($array) {
+                        $sheet->loadView('export_report.customer_invoice_template_ksa', $array)->with('no_asset', true);
                     });
                 })->download('csv');
             }

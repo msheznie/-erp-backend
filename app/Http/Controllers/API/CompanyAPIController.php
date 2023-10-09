@@ -147,8 +147,7 @@ class CompanyAPIController extends AppBaseController
             ->get();
 
         /** Supplier category  */
-        $supplierCategory = SupplierCategoryMaster::orderBy('categoryDescription', 'asc')
-            ->get();
+        $supplierCategory = SupplierCategoryMaster::where('isActive',1)->orderBy('categoryName', 'asc')->get();
 
         /** Currency Master */
         $currencyMaster = CurrencyMaster::orderBy('CurrencyName', 'asc')
@@ -239,6 +238,10 @@ class CompanyAPIController extends AppBaseController
             if($dt->appearance_element_id == 2){
                 $dt->value = Helper::getFileUrlFromS3($dt->value);
             }
+            if($dt->appearance_element_id == 9){
+                $dt->value = Helper::getFileUrlFromS3($dt->value);
+            }
+
 
         }
 

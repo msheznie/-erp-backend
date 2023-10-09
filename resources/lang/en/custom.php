@@ -555,5 +555,7 @@ return [
     "requisition" => "Requisition",
     'material_request_voucher'=> 'Material Request Voucher',
     'qty_requested'=> 'Qty Requested',
-    'requested_by'=> 'Requested By'
+    'requested_by'=> 'Requested By',
+    'supplier_business_category' => 'Supplier Business Category',
+    'supplier_business_sub_category' => 'Supplier Business Sub Category'
 ];
