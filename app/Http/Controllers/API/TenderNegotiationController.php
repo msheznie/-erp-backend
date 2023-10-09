@@ -196,7 +196,7 @@ class TenderNegotiationController extends AppBaseController
             $sort = 'desc';
         }
         $tenderId = $request['tenderId'];
-        $query = TenderFinalBids::select('id','status','award','bid_id','com_weightage','supplier_id','tender_id','total_weightage','tech_weightage')->with(['supplierTenderNegotiation' => function ($a) {
+        $query = TenderFinalBids::select('id','status','award','bid_id','com_weightage','supplier_id','tender_id','total_weightage','tech_weightage', 'combined_ranking')->with(['supplierTenderNegotiation' => function ($a) {
             $a->select('id','srm_bid_submission_master_id','bidSubmissionCode','tender_negotiation_id','suppliermaster_id');
         },'bid_submission_master' => function ($q) {
             $q->select('bidSubmittedDatetime','bidSubmissionCode','line_item_total','id','supplier_registration_id')->with(['SupplierRegistrationLink' => function ($s) {
