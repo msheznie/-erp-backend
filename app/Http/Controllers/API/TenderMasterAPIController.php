@@ -3166,14 +3166,9 @@ WHERE
 
         // Set Technical Ranking
         $getRankCount = BidSubmissionDetail::where('tender_id', $tenderId)
-            ->where('technical_ranking', '!=', null)
-            ->count();
-
-        if($getRankCount == 0){
-            $this->CreateStoreTechnicalRanking($tenderId);
-        }
             ->where('technical_ranking', '!=', null);
 
+        
         if ($isNegotiation == 1) {
             $getRankCount = $getRankCount->whereIn('bid_master_id', $bidSubmissionMasterIds);
         } else {
