@@ -6,3 +6,4 @@ Route::get('attendance-notification-debug', 'HRJobInvokeAPIController@attendance
 Route::get('birthdayWishesEmailDebug', 'HRJobInvokeAPIController@birthdayWishesEmailDebug');
 Route::get('maximum-leave-carry-forward-debug', 'HRJobInvokeAPIController@maximumLeaveCarryForwardDebug');
 Route::get('hr-document-notification', 'HRJobInvokeAPIController@sendHrDocNotifications');
+Route::get('return-to-work-notification', 'HRJobInvokeAPIController@sendReturnToWorkNotifications');

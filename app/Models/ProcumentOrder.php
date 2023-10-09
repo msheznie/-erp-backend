@@ -195,6 +195,7 @@ class ProcumentOrder extends Model
         'invoiceToAddressDescription',
         'soldToAddressID',
         'soldToAddressDescriprion',
+        'vat_number',
         'paymentTerms',
         'deliveryTerms',
         'panaltyTerms',
@@ -353,6 +354,7 @@ class ProcumentOrder extends Model
         'invoiceToAddressDescription' => 'string',
         'soldToAddressID' => 'integer',
         'soldToAddressDescriprion' => 'string',
+        'vat_number' => 'string',
         'paymentTerms' => 'string',
         'deliveryTerms' => 'string',
         'panaltyTerms' => 'string',
@@ -472,6 +474,11 @@ class ProcumentOrder extends Model
     public function created_by()
     {
         return $this->belongsTo('App\Models\Employee', 'createdUserSystemID', 'employeeSystemID');
+    }
+
+    public function sold_to()
+    {
+        return $this->belongsTo('App\Models\Address', 'soldToAddressID', 'addressID');
     }
 
     public function sub_work_orders()

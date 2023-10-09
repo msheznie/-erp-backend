@@ -271,6 +271,26 @@ class BudgetConsumedData extends Model
         return $this->belongsTo('App\Models\PaySupplierInvoiceMaster', ['documentSystemCode', 'documentSystemID'], ['PayMasterAutoId', 'documentSystemID']);
     }
 
+    public function grv_master()
+    {
+        return $this->belongsTo('App\Models\GRVMaster', ['documentSystemCode', 'documentSystemID'], ['grvAutoID', 'documentSystemID']);
+    }
+
+    public function grv_master_detail()
+    {
+        return $this->belongsTo('App\Models\GRVMaster', 'documentSystemCode', 'grvAutoID');
+    }
+
+    public function jv_master()
+    {
+        return $this->belongsTo('App\Models\JvMaster', ['documentSystemCode', 'documentSystemID'], ['jvMasterAutoId', 'documentSystemID']);
+    }
+
+    public function jv_master_detail()
+    {
+        return $this->belongsTo('App\Models\JvMaster', 'documentSystemCode', 'jvMasterAutoId');
+    }
+
 
     public function budget_master()
     {

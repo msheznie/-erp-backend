@@ -18,7 +18,7 @@ class BudgetHistoryService
 		{
         	$budgetDeatilsHistory = BudgetDetailHistory::insert($chunkData);
 		}
-		
+
 		return ['status' => true];
 	}
 }

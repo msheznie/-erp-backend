@@ -274,8 +274,8 @@ class PaymentVoucherGlService
                         $data['glCode'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 5) : $masterData->bank->glCodeLinked;
                         $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                         $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-                        $data['documentTransCurrencyID'] = $masterData->BPVbankCurrency;
-                        $data['documentTransCurrencyER'] = $masterData->BPVbankCurrencyER;
+                        $data['documentTransCurrencyID'] = $masterData->supplierTransCurrencyID;
+                        $data['documentTransCurrencyER'] = $masterData->supplierTransCurrencyER;
                         $data['documentTransAmount'] = \Helper::roundValue($si->transAmount + $retationVATAmount) * -1;
                         $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                         $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
@@ -334,8 +334,8 @@ class PaymentVoucherGlService
                         $data['glCode'] = SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 14);
                         $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                         $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-                        $data['documentTransCurrencyID'] = $masterData->BPVbankCurrency;
-                        $data['documentTransCurrencyER'] = $masterData->BPVbankCurrencyER;
+                        $data['documentTransCurrencyID'] = $masterData->supplierTransCurrencyID;
+                        $data['documentTransCurrencyER'] = $masterData->supplierTransCurrencyER;
 
                         if ($diffTrans > 0 || $diffLocal > 0 || $diffRpt > 0) {
                             $data['documentTransAmount'] = \Helper::roundValue(ABS($diffTrans));
@@ -466,8 +466,8 @@ class PaymentVoucherGlService
                     $data['glCode'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 5) : $masterData->bank->glCodeLinked;
                     $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                     $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-                    $data['documentTransCurrencyID'] = $masterData->BPVbankCurrency;
-                    $data['documentTransCurrencyER'] = $masterData->BPVbankCurrencyER;
+                    $data['documentTransCurrencyID'] = $masterData->supplierTransCurrencyID;
+                    $data['documentTransCurrencyER'] = $masterData->supplierTransCurrencyER;
                     $data['documentTransAmount'] = \Helper::roundValue($ap->transAmount) * -1;
                     $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                     $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
@@ -502,8 +502,8 @@ class PaymentVoucherGlService
                             $data['glCode'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 5) : $masterData->bank->glCodeLinked;
                             $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                             $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-                            $data['documentTransCurrencyID'] = $masterData->BPVbankCurrency;
-                            $data['documentTransCurrencyER'] = $masterData->BPVbankCurrencyER;
+                            $data['documentTransCurrencyID'] = $masterData->supplierTransCurrencyID;
+                            $data['documentTransCurrencyER'] = $masterData->supplierTransCurrencyER;
                             $data['documentTransAmount'] = \Helper::roundValue($dpTotal->transAmount + $tax->transAmount) * -1;
                             $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                             $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
@@ -529,8 +529,8 @@ class PaymentVoucherGlService
                                     $data['glCode'] = $chartOfAccountData->AccountCode;
                                     $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                                     $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-                                    $data['documentTransCurrencyID'] = $masterData->BPVbankCurrency;
-                                    $data['documentTransCurrencyER'] = $masterData->BPVbankCurrencyER;
+                                    $data['documentTransCurrencyID'] = $masterData->supplierTransCurrencyID;
+                                    $data['documentTransCurrencyER'] = $masterData->supplierTransCurrencyER;
                                     $data['documentTransAmount'] = \Helper::roundValue($tax->transAmount - $exemptVatTotal->vatAmount);
                                     $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                                     $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
@@ -700,8 +700,8 @@ class PaymentVoucherGlService
                             $data['glCode'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 5) : $masterData->bank->glCodeLinked;
                             $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                             $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-                            $data['documentTransCurrencyID'] = $masterData->BPVbankCurrency;
-                            $data['documentTransCurrencyER'] = $masterData->BPVbankCurrencyER;
+                            $data['documentTransCurrencyID'] = $masterData->supplierTransCurrencyID;
+                            $data['documentTransCurrencyER'] = $masterData->supplierTransCurrencyER;
                             $data['documentTransAmount'] = \Helper::roundValue($dpTotal->transAmount + $exemptVatTotal->vatAmount) * -1;
                             $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                             $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
@@ -727,8 +727,8 @@ class PaymentVoucherGlService
                                     $data['glCode'] = $chartOfAccountData->AccountCode;
                                     $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                                     $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-                                    $data['documentTransCurrencyID'] = $masterData->BPVbankCurrency;
-                                    $data['documentTransCurrencyER'] = $masterData->BPVbankCurrencyER;
+                                    $data['documentTransCurrencyID'] = $masterData->supplierTransCurrencyID;
+                                    $data['documentTransCurrencyER'] = $masterData->supplierTransCurrencyER;
                                     $data['documentTransAmount'] = \Helper::roundValue($tax->transAmount - $exemptVatTotal->vatAmount);
                                     $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                                     $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
@@ -759,8 +759,8 @@ class PaymentVoucherGlService
                                     $data['glCode'] = $chartOfAccountData->AccountCode;
                                     $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                                     $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-                                    $data['documentTransCurrencyID'] = $masterData->BPVbankCurrency;
-                                    $data['documentTransCurrencyER'] = $masterData->BPVbankCurrencyER;
+                                    $data['documentTransCurrencyID'] = $masterData->supplierTransCurrencyID;
+                                    $data['documentTransCurrencyER'] = $masterData->supplierTransCurrencyER;
                                     $data['documentTransAmount'] = \Helper::roundValue($tax->transAmount - $exemptVatTotal->vatAmount) * -1;
                                     $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                                     $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
@@ -933,8 +933,8 @@ class PaymentVoucherGlService
                         $data['glCode'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 5) : $masterData->bank->glCodeLinked;
                         $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                         $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-                        $data['documentTransCurrencyID'] = $masterData->BPVbankCurrency;
-                        $data['documentTransCurrencyER'] = $masterData->BPVbankCurrencyER;
+                        $data['documentTransCurrencyID'] = $masterData->supplierTransCurrencyID;
+                        $data['documentTransCurrencyER'] = $masterData->supplierTransCurrencyER;
                         $data['documentTransAmount'] = \Helper::roundValue($dpTotal->transAmount) * -1;
                         $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                         $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
@@ -1035,8 +1035,8 @@ class PaymentVoucherGlService
                     $data['glCode'] = ($masterData->pdcChequeYN) ? SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 5) : $masterData->bank->glCodeLinked;
                     $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                     $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-                    $data['documentTransCurrencyID'] = $masterData->BPVbankCurrency;
-                    $data['documentTransCurrencyER'] = $masterData->BPVbankCurrencyER;
+                    $data['documentTransCurrencyID'] = $masterData->supplierTransCurrencyID;
+                    $data['documentTransCurrencyER'] = $masterData->supplierTransCurrencyER;
                     $data['documentTransAmount'] = \Helper::roundValue($dpTotal->transAmount) * -1;
                     $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                     $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
@@ -1165,8 +1165,8 @@ class PaymentVoucherGlService
                     $data['glCode'] =  SystemGlCodeScenarioDetail::getGlCodeByScenario($masterData->companySystemID, $masterData->documentSystemID, 14);
                     $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                     $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-                    $data['documentTransCurrencyID'] = $masterData->BPVbankCurrency;
-                    $data['documentTransCurrencyER'] = $masterData->BPVbankCurrencyER;
+                    $data['documentTransCurrencyID'] = $masterData->supplierTransCurrencyID;
+                    $data['documentTransCurrencyER'] = $masterData->supplierTransCurrencyER;
 
                     if ($diffTrans > 0 || $diffLocal > 0 || $diffRpt > 0) {
                         $data['documentTransAmount'] = \Helper::roundValue(ABS($diffTrans)) * -1;

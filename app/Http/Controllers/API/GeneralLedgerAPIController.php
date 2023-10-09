@@ -1311,16 +1311,16 @@ class GeneralLedgerAPIController extends AppBaseController
         $i = 0;
         $segment_data = [];
 
-        $segment_data = SegmentMaster::pluck('ServiceLineDes');
+        $segment_data = SegmentMaster::where('companySystemID',$company)->pluck('ServiceLineDes');
 
         $segment_data->push('Total');
 
-        $segments = SegmentMaster::get();
+        $segments = SegmentMaster::where('companySystemID',$company)->get();
 
         $checkIsGroup = Company::find($company);
 
         $char_ac = ChartOfAccount::where('controlAccountsSystemID',2)->pluck('chartOfAccountSystemID');
-        $seg_info = SegmentMaster::pluck('serviceLineSystemID');
+        $seg_info = SegmentMaster::where('companySystemID',$company)->pluck('serviceLineSystemID');
 
         $companyCurrency = \Helper::companyCurrency($company);
         if($companyCurrency) {

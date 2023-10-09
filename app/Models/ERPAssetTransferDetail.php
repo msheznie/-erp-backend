@@ -102,6 +102,7 @@ class ERPAssetTransferDetail extends Model
         'fa_master_id',
         'pr_created_yn',
         'company_id',
+        'itemCodeSystem',
         'created_user_id'
     ];
 
@@ -120,6 +121,7 @@ class ERPAssetTransferDetail extends Model
         'fa_master_id' => 'integer',
         'pr_created_yn' => 'integer',
         'company_id' => 'integer',
+        'itemCodeSystem' => 'integer',
         'created_user_id' => 'integer'
     ];
 
@@ -134,6 +136,11 @@ class ERPAssetTransferDetail extends Model
     public function assetRequestDetail()
     {
         return $this->hasOne(AssetRequestDetail::class, 'id', 'erp_fa_fa_asset_request_detail_id');
+    }
+
+    public function item_detail()
+    {
+        return $this->belongsTo('App\Models\ItemMaster', 'itemCodeSystem', 'itemCodeSystem');
     }
 
     public function assetMaster(){ 

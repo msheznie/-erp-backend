@@ -62,7 +62,7 @@ class PoAddBulkItemJob implements ShouldQueue
 
             $companyId = $input['companySystemID'];
             $itemMasters = ItemMaster::whereHas('itemAssigned', function ($query) use ($companyId) {
-                                        return $query->where('companySystemID', '=', $companyId);
+                                        return $query->where('companySystemID', '=', $companyId)->where('isAssigned', -1);
                                      })->where('isActive',1)
                                      ->where('itemApprovedYN',1)
                                      ->when((isset($input['financeCategoryMaster']) && $input['financeCategoryMaster']), function($query) use ($input){

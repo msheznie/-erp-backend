@@ -459,6 +459,7 @@ return [
     'ship_to' => 'شحن إلى',
     'ship_contact' => 'تفاصيل الشخص',
     'invoice_no' => 'رقم الفاتورة',
+    'invoice_to' => 'إصدار الفاتورة إلى',
     'payment_contact' => 'جهة الدفع',
     'alt_uom' => 'وحدة القياس البديلة',
     'item_qty' => 'الكمية البديلة',
@@ -512,7 +513,6 @@ return [
     'discount' => 'خصم',
     'net_amount' => 'المجموع الإجمالي الكلي',
     'total' => 'المجموع',
-    'confirmed_by' => 'تم التأكيد بواسطة',
     'printed_date' => 'تاريخ الطباعة',
     'page' => 'الصفحة',
 
@@ -535,5 +535,17 @@ return [
     'direct_receipt' => 'سند قبض مباشر',
 
     'order_code'=> 'Order Code',
-    
+    "priority" => "الاولوية",
+    "requisitioner" => "مقدم الطلب",
+    "part_number" => "رقم الجزء / الرقم المرجعي",
+    "alt_qnty" => "الكمية البديلة",
+    "qty_on_order" => "الكمية في الطلب",
+    "po_qty" => "كمية أمر الشراء",
+    'purchase' => 'مشتريات',
+    "work" => "عمل",
+    "direct" => "مباشر",
+    "requisition" => "طلب",
+    'material_request_voucher'=> 'قسيمة طلب مواد',
+    'qty_requested'=> 'الكمية المطلوبة',
+    'requested_by'=> 'طلب بواسطة'
 ];
