@@ -1563,7 +1563,11 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 $input['supplierGLCodeSystemID'] = $checkEmployeeControlAccount;
                 $input['supplierGLCode'] = ChartOfAccount::getAccountCode($checkEmployeeControlAccount);
                 $emp = Employee::find($input["directPaymentPayeeEmpID"]);
-                $input['directPaymentPayee'] = $emp->empFullName;
+                if(isset($emp) && $emp != null)
+                {
+                    $input['directPaymentPayee'] = $emp->empFullName;
+                }
+                
             }
             
 
