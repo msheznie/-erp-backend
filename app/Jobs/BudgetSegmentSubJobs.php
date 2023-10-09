@@ -61,7 +61,6 @@ class BudgetSegmentSubJobs implements ShouldQueue
         $uploadBudget = $subData['uploadBudget'];
         $result = $subData['result'];
         $currency = $subData['currency'];
-        $segmentCount = $subData['segmentCount'];
         $totalSegments = $subData['totalSegments'];
         CommonJobService::db_switch($this->db);
 
@@ -70,6 +69,8 @@ class BudgetSegmentSubJobs implements ShouldQueue
 
         DB::beginTransaction();
         try {
+            $uploadBudgetCounter = UploadBudgets::find($uploadBudget->id);
+            $segmentCount = $uploadBudgetCounter->counter;
 
             Log::info($segment.' count - '. $segmentCount);
 
@@ -188,8 +189,13 @@ class BudgetSegmentSubJobs implements ShouldQueue
                 }
             }
 
+            $uploadBudgetCounter->increment('counter');
 
-            if ($segmentCount == $totalSegments) {
+            $uploadBudgetCounter->save();
+
+            $newCounterValue = $uploadBudgetCounter->counter;
+
+            if ($newCounterValue == $totalSegments) {
                 $webPushData = [
                     'title' => "Upload Budget Successfully Completed",
                     'body' => "",
