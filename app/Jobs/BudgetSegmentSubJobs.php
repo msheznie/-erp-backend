@@ -199,12 +199,12 @@ class BudgetSegmentSubJobs implements ShouldQueue
                 $webPushData = [
                     'title' => "Upload Budget Successfully Completed",
                     'body' => "",
-                    'url' => "",
+                    'url' => "general-ledger/budget-upload",
                     'path' => "",
                 ];
                 Log::info('Budget Segment Bulk Insert Completed Successfully '. $totalSegments);
 
-               WebPushNotificationService::sendNotification($webPushData, 3, [$employee->employeeSystemID], $this->db);
+               WebPushNotificationService::sendNotification($webPushData, 2, [$employee->employeeSystemID], $this->db);
                 UploadBudgets::where('id', $uploadBudget->id)->update(['uploadStatus' => 1]);
             }
             Log::info($segment . ' Completed Successfully. Count- ' . $segmentCount);
@@ -223,11 +223,11 @@ class BudgetSegmentSubJobs implements ShouldQueue
            //  $webPushData = [
            //      'title' => "Upload Budget Failed",
            //      'body' => "",
-           //      'url' => "",
+           //      'url' => "general-ledger/budget-upload",
            //      'path' => "",
            //  ];
 
-           // WebPushNotificationService::sendNotification($webPushData, 3, [$employee->employeeSystemID], $this->db);
+           // WebPushNotificationService::sendNotification($webPushData, 2, [$employee->employeeSystemID], $this->db);
             try {
                 UploadBudgets::where('id', $uploadBudget->id)->update(['uploadStatus' => 0]);
                 DB::commit();

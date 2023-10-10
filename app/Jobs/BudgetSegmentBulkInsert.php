@@ -135,11 +135,11 @@ class BudgetSegmentBulkInsert implements ShouldQueue
                 $webPushData = [
                     'title' => "Upload Budget Failed",
                     'body' => "",
-                    'url' => "",
+                    'url' => "general-ledger/budget-upload",
                     'path' => "",
                 ];
 
-               WebPushNotificationService::sendNotification($webPushData, 3, [$employee->employeeSystemID], $db);
+               WebPushNotificationService::sendNotification($webPushData, 2, [$employee->employeeSystemID], $db);
 
                 UploadBudgets::where('id', $uploadBudget->id)->update(['uploadStatus' => 0]);
             } else {
@@ -169,11 +169,11 @@ class BudgetSegmentBulkInsert implements ShouldQueue
                 $webPushData = [
                     'title' => "Upload Budget Failed",
                     'body' => "",
-                    'url' => "",
+                    'url' => "general-ledger/budget-upload",
                     'path' => "",
                 ];
 
-               WebPushNotificationService::sendNotification($webPushData, 3, [$employee->employeeSystemID], $db);
+               WebPushNotificationService::sendNotification($webPushData, 2, [$employee->employeeSystemID], $db);
 
                 UploadBudgets::where('id', $uploadBudget->id)->update(['uploadStatus' => 0]);
 
@@ -191,11 +191,11 @@ class BudgetSegmentBulkInsert implements ShouldQueue
             $webPushData = [
                 'title' => "Upload Budget Failed",
                 'body' => "",
-                'url' => "",
+                'url' => "general-ledger/budget-upload",
                 'path' => "",
             ];
 
-           WebPushNotificationService::sendNotification($webPushData, 3, [$employee->employeeSystemID], $db);
+           WebPushNotificationService::sendNotification($webPushData, 2, [$employee->employeeSystemID], $db);
             try {
                 UploadBudgets::where('id', $uploadBudget->id)->update(['uploadStatus' => 0]);
                 DB::commit();
