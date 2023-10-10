@@ -163,3 +163,11 @@ Route::group([], function() {
     Route::resource('purchase_order_categories', 'PurchaseOrderCategoryAPIController');
     
 });
+
+//Report Open Requests
+Route::group([], function() {
+    Route::get('getReportSavingFliterData', 'ProcumentOrderAPIController@getReportSavingFliterData')->name('Get Report Saving Fliter Data');
+    Route::post('getItemSavingReport', 'ReportAPIController@getItemSavingReport')->name('Get Item Saving Report');
+    Route::post('exportExcelSavingReport', 'ReportAPIController@exportExcelSavingReport')->name('Export Excel SavingReport');
+});
+

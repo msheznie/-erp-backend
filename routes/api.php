@@ -287,7 +287,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('reportPoToPayment', 'ProcumentOrderAPIController@reportPoToPayment');
             Route::post('exportPoToPaymentReport', 'ProcumentOrderAPIController@exportPoToPaymentReport');
             Route::get('reportPoToPaymentFilterOptions', 'ProcumentOrderAPIController@reportPoToPaymentFilterOptions');
-            Route::get('getReportSavingFliterData', 'ProcumentOrderAPIController@getReportSavingFliterData');
 
             Route::get('reportPrToGrvFilterOptions', 'PurchaseRequestAPIController@reportPrToGrvFilterOptions');
 
@@ -829,8 +828,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('addBudgetAdjustment', 'BudgetAdjustmentAPIController@addBudgetAdjustment');            
             
             Route::get('getUserCountData', 'EmployeeAPIController@getUserCountData');
-            Route::post('getItemSavingReport', 'ReportAPIController@getItemSavingReport');
-            Route::post('exportExcelSavingReport', 'ReportAPIController@exportExcelSavingReport');
 
             Route::resource('customer_invoice_trackings', 'CustomerInvoiceTrackingAPIController');
 
