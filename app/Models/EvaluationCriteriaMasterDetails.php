@@ -107,9 +107,6 @@ class EvaluationCriteriaMasterDetails extends Model
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
-    protected $appends = ['active'];
-
-
     public $fillable = [
         'evaluation_criteria_master_id',
         'parent_id',
@@ -156,12 +153,8 @@ class EvaluationCriteriaMasterDetails extends Model
      * @var array
      */
     public static $rules = [
-        
-    ];
 
-    public function getActiveAttribute(){
-        return false;
-    }
+    ];
 
     public function evaluation_criteria_type()
     {
@@ -191,5 +184,10 @@ class EvaluationCriteriaMasterDetails extends Model
     public function bid_submission_detail1()
     {
         return $this->hasMany('App\Models\BidSubmissionDetail', 'evaluation_detail_id', 'id');
+    }
+
+    public function evaluation_criteria_master()
+    {
+        return $this->belongsTo('App\Models\EvaluationCriteriaMaster', 'evaluation_criteria_master_id', 'id');
     }
 }

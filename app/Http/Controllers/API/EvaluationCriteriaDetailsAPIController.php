@@ -443,7 +443,7 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
         $employee = \Helper::getEmployeeInfo();
         $is_final_level = 0;
         $sort_order = 1;
-        $sort = EvaluationCriteriaDetails::where('tender_id',$input['tenderMasterId'])->where('level',$input['level'])->where('parent_id',$input['parent_id'])->orderBy('sort_order', 'desc')->first();
+        $sort = EvaluationCriteriaMasterDetails::where('level',$input['level'])->where('parent_id',$input['parent_id'])->orderBy('sort_order', 'desc')->first();
         if(!empty($sort)){
             $sort_order = $sort['sort_order'] + 1;
         }
@@ -478,8 +478,8 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
         }
 
         $chkDuplicate =  EvaluationCriteriaMasterDetails::where('description',$input['description'])
-            //->where('level',$input['level'])
-           ->first();
+            ->where('level',$input['level'])
+            ->first();
 
         if(!empty($chkDuplicate)){
             return ['success' => false, 'message' => 'Description cannot be duplicated'];
@@ -494,7 +494,7 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
             $resultMaster = EvaluationCriteriaMaster::create($data_master);
             if($resultMaster){
                 $data['description'] = $input['description'];
-                $data['evaluation_criteria_master_id'] = '1';
+                $data['evaluation_criteria_master_id'] = $resultMaster->id;
                 $data['parent_id'] = $input['parent_id'];
                 $data['level'] = $input['level'];
                 $data['critera_type_id'] = $input['critera_type_id'];
@@ -592,6 +592,11 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
     public function getEvaluationCriteriaDetails(Request $request)
     {
         $input = $request->all();
+
+        if($input['tenderMasterId'] == null) {
+            return $this->getEvaluationCriteriaMasterDetails($request);
+        }
+
         $data['criteriaDetail'] = EvaluationCriteriaDetails::with(['evaluation_criteria_type','tender_criteria_answer_type','child'=> function($q){
                                 $q->with(['evaluation_criteria_type','tender_criteria_answer_type','child' => function($q){
                                     $q->with(['evaluation_criteria_type','tender_criteria_answer_type','child' => function($q){
@@ -599,6 +604,19 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
                                     }]);
                                 }]);
         }])->where('tender_id',$input['tenderMasterId'])->where('level',1)->where('critera_type_id',$input['critera_type_id'])->get();
+        return $data;
+    }
+
+    public function getEvaluationCriteriaMasterDetails(Request $request)
+    {
+        $input = $request->all();
+        $data['criteriaDetail'] = EvaluationCriteriaMasterDetails::with(['evaluation_criteria_master', 'evaluation_criteria_type','tender_criteria_answer_type','child'=> function($q){
+                                $q->with(['evaluation_criteria_type','tender_criteria_answer_type','child' => function($q){
+                                    $q->with(['evaluation_criteria_type','tender_criteria_answer_type','child' => function($q){
+                                        $q->with(['evaluation_criteria_type','tender_criteria_answer_type']);
+                                    }]);
+                                }]);
+        }])->where('level',1)->where('critera_type_id',$input['critera_type_id'])->get();
         return $data;
     }
 
@@ -724,6 +742,9 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
         $input = $request->all();
         $weightage = $input['weightage'];
         $tenderMasterId = $input['tenderMasterId'];
+        if($input['tenderMasterId'] == null){
+           return $this->validateWeightageMaster($request);
+        }
 
         $level  = isset($input['level']) ? $input['level'] : null;
 
@@ -740,6 +761,39 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
             $result = EvaluationCriteriaDetails::where('tender_id',$input['tenderMasterId'])
                 ->where('parent_id',$parentId)->where('level',$level)->sum('weightage');
             $parent = EvaluationCriteriaDetails::where('id',$parentId)->first();
+
+            $total = $result + $weightage;
+
+            if($total>$parent['weightage']){
+                return ['success' => false, 'message' => 'Total Child Weightage cannot exceed '.$parent['weightage']];
+            }else{
+                return ['success' => true, 'message' => 'Success'];
+            }
+        }
+
+
+    }
+
+    private function validateWeightageMaster(Request $request)
+    {
+        $input = $request->all();
+        $weightage = $input['weightage'];
+        $tenderMasterId = $input['tenderMasterId'];
+
+        $level  = isset($input['level']) ? $input['level'] : null;
+
+        $parentId = $input['parentId'];
+        if($level == 1){
+            $result = EvaluationCriteriaMasterDetails::where('level',1)->sum('weightage');
+            $total = $result + $weightage;
+            if($total>100){
+                 return ['success' => false, 'message' => 'Total weightage cannot exceed 100 percent'];
+            } else {
+                return ['success' => true, 'message' => 'Success'];
+            }
+        } else {
+            $result = EvaluationCriteriaMasterDetails::where('parent_id',$parentId)->where('level',$level)->sum('weightage');
+            $parent = EvaluationCriteriaMasterDetails::where('id',$parentId)->first();
 
             $total = $result + $weightage;
 
