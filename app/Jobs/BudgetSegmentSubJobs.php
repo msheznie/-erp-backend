@@ -61,7 +61,6 @@ class BudgetSegmentSubJobs implements ShouldQueue
         $uploadBudget = $subData['uploadBudget'];
         $result = $subData['result'];
         $currency = $subData['currency'];
-        $segmentCount = $subData['segmentCount'];
         $totalSegments = $subData['totalSegments'];
         CommonJobService::db_switch($this->db);
 
@@ -70,6 +69,8 @@ class BudgetSegmentSubJobs implements ShouldQueue
 
         DB::beginTransaction();
         try {
+            $uploadBudgetCounter = UploadBudgets::find($uploadBudget->id);
+            $segmentCount = $uploadBudgetCounter->counter;
 
             Log::info($segment.' count - '. $segmentCount);
 
@@ -188,17 +189,22 @@ class BudgetSegmentSubJobs implements ShouldQueue
                 }
             }
 
+            $uploadBudgetCounter->increment('counter');
 
-            if ($segmentCount == $totalSegments) {
+            $uploadBudgetCounter->save();
+
+            $newCounterValue = $uploadBudgetCounter->counter;
+
+            if ($newCounterValue == $totalSegments) {
                 $webPushData = [
                     'title' => "Upload Budget Successfully Completed",
                     'body' => "",
-                    'url' => "",
+                    'url' => "general-ledger/budget-upload",
                     'path' => "",
                 ];
                 Log::info('Budget Segment Bulk Insert Completed Successfully '. $totalSegments);
 
-//                WebPushNotificationService::sendNotification($webPushData, 3, $employee->employeeSystemID);
+               WebPushNotificationService::sendNotification($webPushData, 2, [$employee->employeeSystemID], $this->db);
                 UploadBudgets::where('id', $uploadBudget->id)->update(['uploadStatus' => 1]);
             }
             Log::info($segment . ' Completed Successfully. Count- ' . $segmentCount);
@@ -214,6 +220,14 @@ class BudgetSegmentSubJobs implements ShouldQueue
             Log::info($e->getMessage());
             Log::info('---- Budget Segment Sub Job End with Error-----' . date('H:i:s'));
 
+           //  $webPushData = [
+           //      'title' => "Upload Budget Failed",
+           //      'body' => "",
+           //      'url' => "general-ledger/budget-upload",
+           //      'path' => "",
+           //  ];
+
+           // WebPushNotificationService::sendNotification($webPushData, 2, [$employee->employeeSystemID], $this->db);
             try {
                 UploadBudgets::where('id', $uploadBudget->id)->update(['uploadStatus' => 0]);
                 DB::commit();

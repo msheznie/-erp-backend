@@ -135,16 +135,14 @@ class BudgetSegmentBulkInsert implements ShouldQueue
                 $webPushData = [
                     'title' => "Upload Budget Failed",
                     'body' => "",
-                    'url' => "",
+                    'url' => "general-ledger/budget-upload",
                     'path' => "",
                 ];
 
-//                WebPushNotificationService::sendNotification($webPushData, 3, $employee->employeeSystemID);
+               WebPushNotificationService::sendNotification($webPushData, 2, [$employee->employeeSystemID], $db);
 
                 UploadBudgets::where('id', $uploadBudget->id)->update(['uploadStatus' => 0]);
             } else {
-
-                $segmentCount = 1;
 
                 foreach ($segments as $segment) {
 
@@ -158,11 +156,10 @@ class BudgetSegmentBulkInsert implements ShouldQueue
                         'notification' => $notification,
                         'uploadBudget' => $uploadBudget,
                         'currency' => $currency,
-                        'totalSegments' => $totalSegments,
-                        'segmentCount' => $segmentCount
+                        'totalSegments' => $totalSegments
                     ];
-                    BudgetSegmentSubJobs::dispatch($db, $subData);
-                    $segmentCount++;
+                    BudgetSegmentSubJobs::dispatch($db, $subData)->onQueue('single');
+
                 }
             }
 
@@ -172,11 +169,11 @@ class BudgetSegmentBulkInsert implements ShouldQueue
                 $webPushData = [
                     'title' => "Upload Budget Failed",
                     'body' => "",
-                    'url' => "",
+                    'url' => "general-ledger/budget-upload",
                     'path' => "",
                 ];
 
-//                WebPushNotificationService::sendNotification($webPushData, 3, $employee->employeeSystemID);
+               WebPushNotificationService::sendNotification($webPushData, 2, [$employee->employeeSystemID], $db);
 
                 UploadBudgets::where('id', $uploadBudget->id)->update(['uploadStatus' => 0]);
 
@@ -194,11 +191,11 @@ class BudgetSegmentBulkInsert implements ShouldQueue
             $webPushData = [
                 'title' => "Upload Budget Failed",
                 'body' => "",
-                'url' => "",
+                'url' => "general-ledger/budget-upload",
                 'path' => "",
             ];
 
-//            WebPushNotificationService::sendNotification($webPushData, 3, $employee->employeeSystemID);
+           WebPushNotificationService::sendNotification($webPushData, 2, [$employee->employeeSystemID], $db);
             try {
                 UploadBudgets::where('id', $uploadBudget->id)->update(['uploadStatus' => 0]);
                 DB::commit();
