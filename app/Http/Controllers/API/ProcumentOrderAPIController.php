@@ -1125,7 +1125,8 @@ class ProcumentOrderAPIController extends AppBaseController
 
             // return abs($poMasterSumDeducted - $paymentTotalSum['paymentTotalSum']);
 
-            $paymentTotalSumComp = round($paymentTotalSum['paymentTotalSum'], $supplierCurrencyDecimalPlace);
+            $paymentTotalSumComp = floatval(sprintf("%.".$supplierCurrencyDecimalPlace."f", $paymentTotalSum['paymentTotalSum']));
+
 
             if ($paymentTotalSumComp > 0) {
                 if (abs(($poMasterSumDeducted - $paymentTotalSumComp) / $paymentTotalSumComp) < 0.00001) {
@@ -1135,7 +1136,6 @@ class ProcumentOrderAPIController extends AppBaseController
             }
 
 
-   
             $poAdvancePaymentType = PoPaymentTerms::where("poID", $input['purchaseOrderID'])
                 ->get();
 
@@ -6908,7 +6908,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         }
         $tracingData['documentSystemID'] = $purchaseRequest->documentSystemID;
         $tracingData['docAutoID'] = $purchaseRequest->purchaseRequestID;
-        $tracingData['title'] = "{Doc Code :} " . $purchaseRequest->purchaseRequestCode . " -- {Doc Date :} " . Carbon::parse($purchaseRequest->PRRequestedDate)->format('Y-m-d') . " -- {Currency :} " . $purchaseRequest->currency_by->CurrencyCode . "-- {Amount :} " . number_format($purchaseRequest->poTotalSupplierTransactionCurrency, $purchaseRequest->currency_by->DecimalPlaces) . $cancelStatus;
+        $tracingData['title'] = "{Doc Code :} " . $purchaseRequest->purchaseRequestCode . " -- {Doc Date :} " . Carbon::parse($purchaseRequest->PRRequestedDate)->format('Y-m-d') . " -- {Currency :} " . $purchaseRequest->currency_by ? $purchaseRequest->currency_by->CurrencyCode : "" . "-- {Amount :} " . number_format($purchaseRequest->poTotalSupplierTransactionCurrency, $purchaseRequest->currency_by ? $purchaseRequest->currency_by->DecimalPlaces : 2) . $cancelStatus;
 
 
         foreach ($poData as $keyPo => $valuePo) {

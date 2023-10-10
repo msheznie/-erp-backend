@@ -106,7 +106,8 @@ class ERPAssetTransferDetail extends Model
         'created_user_id',
         'from_emp_id',
         'to_emp_id',
-        'departmentSystemID'
+        'departmentSystemID',
+        'receivedYN'
     ];
 
     /**
@@ -128,7 +129,8 @@ class ERPAssetTransferDetail extends Model
         'created_user_id' => 'integer',
         'from_emp_id' => 'integer',
         'to_emp_id' => 'integer',
-        'departmentSystemID' => 'integer'
+        'departmentSystemID' => 'integer',
+        'receivedYN' => 'integer',
     ];
 
     /**

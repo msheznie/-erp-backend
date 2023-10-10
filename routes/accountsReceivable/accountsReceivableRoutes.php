@@ -134,3 +134,29 @@ Route::group([], function () {
     Route::resource('customer_receive_payment_details', 'CustomerReceivePaymentDetailAPIController',['only' => ['store', 'show', 'destroy']]);
     Route::resource('direct_receipt_details', 'DirectReceiptDetailAPIController',['only' => ['show', 'destroy']]);
 });
+
+//Receipt Matching
+Route::group([],function(){
+    Route::post('getRVMatchDocumentMasterView', 'MatchDocumentMasterAPIController@getRVMatchDocumentMasterView')->name("Get rv match document master view");
+    Route::get('getReceiptVoucherMatchItems', 'MatchDocumentMasterAPIController@getReceiptVoucherMatchItems')->name("Get receipt voucher match items");
+    Route::post('updateReceiptVoucherMatching', 'MatchDocumentMasterAPIController@updateReceiptVoucherMatching')->name("Update receipt voucher matching");
+    Route::get('getReceiptVoucherMatchDetails', 'CustomerReceivePaymentDetailAPIController@getReceiptVoucherMatchDetails')->name("Get receipt voucher match details");
+    Route::post('updateReceiptVoucherMatchDetail', 'CustomerReceivePaymentDetailAPIController@updateReceiptVoucherMatchDetail')->name("Update receipt voucher match detail");
+    Route::post('receiptVoucherMatchingCancel', 'MatchDocumentMasterAPIController@receiptVoucherMatchingCancel')->name("Receipt voucher matching cancel");
+    Route::post('deleteAllRVMDetails', 'MatchDocumentMasterAPIController@deleteAllRVMDetails')->name("Delete all rv details");
+    Route::post('getReceiptVoucherPullingDetail', 'MatchDocumentMasterAPIController@getReceiptVoucherPullingDetail')->name("Get receipt voucher pulling detail");
+    Route::post('addReceiptVoucherMatchDetails', 'CustomerReceivePaymentDetailAPIController@addReceiptVoucherMatchDetails')->name("Add receipt voucher match details");
+});
+
+//Reports
+
+Route::group([],function(){
+    Route::get('getAcountReceivableFilterData', 'AccountsReceivableReportAPIController@getAcountReceivableFilterData')->name("Get account receivable filter data");
+    Route::post('validateARReport', 'AccountsReceivableReportAPIController@validateReport')->name("Validate account receivable report");
+    Route::post('generateARReport', 'AccountsReceivableReportAPIController@generateReport')->name("Generate account receivable report");
+    Route::post('exportARReport', 'AccountsReceivableReportAPIController@exportReport')->name("Export account receivable report");
+    Route::post('sentCustomerLedger', 'AccountsReceivableReportAPIController@sentCustomerLedger')->name("Sent customer ledger");
+    Route::post('sentCustomerStatement', 'AccountsReceivableReportAPIController@sentCustomerStatement')->name("Sent customer statement");
+    Route::get('getInvoiceTrackerReportFilterData', 'AccountsReceivableReportAPIController@getInvoiceTrackerReportFilterData')->name("Get invoice tracker report filter data");
+    Route::post('generateInvoiceTrackingReport', 'AccountsReceivableReportAPIController@generateInvoiceTrackingReport')->name("Generate invoice tracking report");
+});

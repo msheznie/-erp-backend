@@ -1563,7 +1563,11 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
                 $input['supplierGLCodeSystemID'] = $checkEmployeeControlAccount;
                 $input['supplierGLCode'] = ChartOfAccount::getAccountCode($checkEmployeeControlAccount);
                 $emp = Employee::find($input["directPaymentPayeeEmpID"]);
-                $input['directPaymentPayee'] = $emp->empFullName;
+                if(isset($emp) && $emp != null)
+                {
+                    $input['directPaymentPayee'] = $emp->empFullName;
+                }
+                
             }
             
 
@@ -1634,11 +1638,13 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
                     return $this->sendError($erMessage, 500, ['type' => 'erChange']);
                 } else {
-                    PaySupplierInvoiceMaster::where('PayMasterAutoId', $paySupplierInvoiceMaster->PayMasterAutoId)->update(['BPVbankCurrencyER' => $input['BPVbankCurrencyER'], 'localCurrencyER' => $input['localCurrencyER'], 'companyRptCurrencyER' => $input['companyRptCurrencyER']]);
+                    unset($input['BPVbankCurrencyER']);
+                    unset($input['localCurrencyER']);
+                    unset($input['companyRptCurrencyER']);
+                    //PaySupplierInvoiceMaster::where('PayMasterAutoId', $paySupplierInvoiceMaster->PayMasterAutoId)->update(['BPVbankCurrencyER' => $input['BPVbankCurrencyER'], 'localCurrencyER' => $input['localCurrencyER'], 'companyRptCurrencyER' => $input['companyRptCurrencyER']]);
                 }
             }
-
-
+      
             if ($paySupplierInvoiceMaster->invoiceType == 3) {
                 if ($input['payeeType'] == 3) {
                     $input['directPaymentpayeeYN'] = -1;
@@ -2079,6 +2085,36 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
 
                     if ($checkAmount > 0) {
                         return $this->sendError('Every item should have a payment amount', 500, ['type' => 'confirm']);
+                    }
+
+
+                    $checkAdvVATAmount = AdvancePaymentDetails::where('PayMasterAutoId', $id)
+                                                               ->sum('VATAmount');
+
+                    if ($paySupplierInvoiceMaster->invoiceType == 5 && $paySupplierInvoiceMaster->applyVAT == 1 && $checkAdvVATAmount > 0) {
+                        if(empty(TaxService::getInputVATTransferGLAccount($paySupplierInvoiceMaster->companySystemID))){
+                            return $this->sendError('Cannot confirm. Input VAT Transfer GL Account not configured.', 500);
+                        }
+
+                        $inputVATTransferGL = TaxService::getInputVATTransferGLAccount($paySupplierInvoiceMaster->companySystemID);
+
+                        $checkAssignedStatusInputTrans = ChartOfAccountsAssigned::checkCOAAssignedStatus($inputVATTransferGL->inputVatTransferGLAccountAutoID, $paySupplierInvoiceMaster->companySystemID);
+
+                        if (!$checkAssignedStatusInputTrans) {
+                            return $this->sendError('Cannot confirm. Input VAT Transfer GL Account not assigned to company.', 500);
+                        }
+
+                        if(empty(TaxService::getInputVATGLAccount($paySupplierInvoiceMaster->companySystemID))){
+                            return $this->sendError('Cannot confirm. Input VAT GL Account not configured.', 500);
+                        }
+
+                        $inputVATGL = TaxService::getInputVATGLAccount($paySupplierInvoiceMaster->companySystemID);
+
+                        $checkAssignedStatus = ChartOfAccountsAssigned::checkCOAAssignedStatus($inputVATGL->inputVatTransferGLAccountAutoID, $paySupplierInvoiceMaster->companySystemID);
+
+                        if (!$checkAssignedStatus) {
+                            return $this->sendError('Cannot confirm. Input VAT GL Account not assigned to company.', 500);
+                        }
                     }
 
                     $advancePaymentDetails = AdvancePaymentDetails::where('PayMasterAutoId', $id)->get();
@@ -4853,11 +4889,13 @@ AND MASTER.companySystemID = ' . $input['companySystemID'] . ' AND BPVsupplierID
             $deleteTaxLedgerData = TaxLedger::where('documentMasterAutoID', $PayMasterAutoId)
                 ->where('companySystemID', $paymentVoucherData->companySystemID)
                 ->where('documentSystemID', $paymentVoucherData->documentSystemID)
+                ->whereNull('matchDocumentMasterAutoID')
                 ->delete();
 
             TaxLedgerDetail::where('documentMasterAutoID', $PayMasterAutoId)
                 ->where('companySystemID', $paymentVoucherData->companySystemID)
                 ->where('documentSystemID', $paymentVoucherData->documentSystemID)
+                ->whereNull('matchDocumentMasterAutoID')
                 ->delete();
 
             BudgetConsumedData::where('documentSystemCode', $PayMasterAutoId)
