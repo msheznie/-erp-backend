@@ -3087,12 +3087,10 @@ WHERE
 
         $query = TenderMaster::with(['currency', 'srm_bid_submission_master', 'tender_type', 'envelop_type', 'srmTenderMasterSupplier'])->whereHas('srmTenderMasterSupplier')->where('published_yn', 1)
             ->where('commercial_verify_status', 1)
-            ->where('technical_eval_status', 1)
-            ->where('final_tender_awarded', '!=', 1);
+            ->where('technical_eval_status', 1);
 
         if($isNegotiation == 1){
-            $query = $query->where('negotiation_code', '!=', null);
-            $query = $query->where('is_negotiation_closed', 0);
+            $query = $query->where('negotiation_code', '!=', null)->where('is_negotiation_closed', 0);
         }
 
         if ($filters['currencyId'] && count($filters['currencyId']) > 0) {
