@@ -139,7 +139,7 @@ class BudgetSegmentBulkInsert implements ShouldQueue
                     'path' => "",
                 ];
 
-//                WebPushNotificationService::sendNotification($webPushData, 3, $employee->employeeSystemID);
+               WebPushNotificationService::sendNotification($webPushData, 3, [$employee->employeeSystemID], $db);
 
                 UploadBudgets::where('id', $uploadBudget->id)->update(['uploadStatus' => 0]);
             } else {
@@ -158,7 +158,7 @@ class BudgetSegmentBulkInsert implements ShouldQueue
                         'currency' => $currency,
                         'totalSegments' => $totalSegments
                     ];
-                    BudgetSegmentSubJobs::dispatch($db, $subData)->onQueue('bulk-budget-upload');
+                    BudgetSegmentSubJobs::dispatch($db, $subData)->onQueue('single');
 
                 }
             }
@@ -173,7 +173,7 @@ class BudgetSegmentBulkInsert implements ShouldQueue
                     'path' => "",
                 ];
 
-//                WebPushNotificationService::sendNotification($webPushData, 3, $employee->employeeSystemID);
+               WebPushNotificationService::sendNotification($webPushData, 3, [$employee->employeeSystemID], $db);
 
                 UploadBudgets::where('id', $uploadBudget->id)->update(['uploadStatus' => 0]);
 
@@ -195,7 +195,7 @@ class BudgetSegmentBulkInsert implements ShouldQueue
                 'path' => "",
             ];
 
-//            WebPushNotificationService::sendNotification($webPushData, 3, $employee->employeeSystemID);
+           WebPushNotificationService::sendNotification($webPushData, 3, [$employee->employeeSystemID], $db);
             try {
                 UploadBudgets::where('id', $uploadBudget->id)->update(['uploadStatus' => 0]);
                 DB::commit();
