@@ -443,6 +443,7 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
         $employee = \Helper::getEmployeeInfo();
         $is_final_level = 0;
         $sort_order = 1;
+        $evaluationCriteriaMasterId = 0;
         $sort = EvaluationCriteriaMasterDetails::where('level',$input['level'])->where('parent_id',$input['parent_id'])->orderBy('sort_order', 'desc')->first();
         if(!empty($sort)){
             $sort_order = $sort['sort_order'] + 1;
@@ -471,117 +472,122 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
             }
         }
 
-       $chkDuplicateName =  EvaluationCriteriaMaster::where('name',$input['name'])->first();
+        if($input['level'] == 1){
+            $chkDuplicateName =  EvaluationCriteriaMaster::where('name',$input['name'])->first();
 
-        if(!empty($chkDuplicateName)){
-            return ['success' => false, 'message' => 'Name cannot be duplicated'];
-        }
+            if(!empty($chkDuplicateName)){
+                return ['success' => false, 'message' => 'Name cannot be duplicated'];
+            }
 
-        $chkDuplicate =  EvaluationCriteriaMasterDetails::where('description',$input['description'])
-            ->where('level',$input['level'])
-            ->first();
+            $chkDuplicate =  EvaluationCriteriaMasterDetails::where('description',$input['description'])
+                ->where('level',$input['level'])
+                ->first();
 
-        if(!empty($chkDuplicate)){
-            return ['success' => false, 'message' => 'Description cannot be duplicated'];
+            if(!empty($chkDuplicate)){
+                return ['success' => false, 'message' => 'Description cannot be duplicated'];
+            }
         }
 
         DB::beginTransaction();
         try {
-            $data_master['name'] = $input['name'];
-            $data_master['is_active'] = '1';
-            $data_master['company_id'] = $input['companySystemID'];
-            $data_master['created_by'] = $employee->employeeSystemID;
-            $resultMaster = EvaluationCriteriaMaster::create($data_master);
-            if($resultMaster){
-                $data['description'] = $input['description'];
-                $data['evaluation_criteria_master_id'] = $resultMaster->id;
-                $data['parent_id'] = $input['parent_id'];
-                $data['level'] = $input['level'];
-                $data['critera_type_id'] = $input['critera_type_id'];
-                if(isset($input['answer_type_id'])){
-                    $data['answer_type_id'] = $input['answer_type_id'];
-                }
-                if(!empty($input['weightage'])){
-                    $data['weightage'] = $input['weightage'];
-                }
-                if(!empty($input['passing_weightage'])) {
-                    $data['passing_weightage'] = $input['passing_weightage'];
-                }
-                $data['is_final_level'] = $is_final_level;
-                $data['sort_order'] = $sort_order;
-                $data['created_by'] = $employee->employeeSystemID;
+            if($input['level'] == 1){
+                $data_master['name'] = $input['name'];
+                $data_master['is_active'] = '1';
+                $data_master['company_id'] = $input['companySystemID'];
+                $data_master['created_by'] = $employee->employeeSystemID;
+                $resultMaster = EvaluationCriteriaMaster::create($data_master);
+                $evaluationCriteriaMasterId = $resultMaster->id;
+            } else if ($input['evaluationCriteriaMasterId'] != 0){
+                $evaluationCriteriaMasterId = $input['evaluationCriteriaMasterId'];
+            }
 
-                if($is_final_level == 1 && $input['critera_type_id'] == 2 && $input['answer_type_id'] == 2 ){
-                    if($input['yes_value'] > $input['no_value']){
-                        $data['max_value'] = $input['yes_value'];
-                        $data['min_value'] = $input['no_value'];
-                    }else{
-                        $data['max_value'] = $input['no_value'];
-                        $data['min_value'] = $input['yes_value'];
-                    }
-                }
+            $data['description'] = $input['description'];
+            $data['evaluation_criteria_master_id'] = $evaluationCriteriaMasterId;
+            $data['parent_id'] = $input['parent_id'];
+            $data['level'] = $input['level'];
+            $data['critera_type_id'] = $input['critera_type_id'];
+            if(isset($input['answer_type_id'])){
+                $data['answer_type_id'] = $input['answer_type_id'];
+            }
+            if(!empty($input['weightage'])){
+                $data['weightage'] = $input['weightage'];
+            }
+            if(!empty($input['passing_weightage'])) {
+                $data['passing_weightage'] = $input['passing_weightage'];
+            }
+            $data['is_final_level'] = $is_final_level;
+            $data['sort_order'] = $sort_order;
+            $data['created_by'] = $employee->employeeSystemID;
 
-                if($is_final_level == 1 && $input['critera_type_id'] == 2  && ($input['answer_type_id'] == 1 || $input['answer_type_id'] == 3)){
-                    $data['max_value'] = $input['max_value'];
-                }
-
-                $result = EvaluationCriteriaMasterDetails::create($data);
-
-                if($result){
-                    if($is_final_level == 1 && $input['critera_type_id'] == 2 && $input['answer_type_id'] == 2 ){
-                        $datayes['criteria_detail_id'] = $result['id'];
-                        $datayes['label'] = $input['yes_label'];
-                        $datayes['score'] = $input['yes_value'];
-                        $datayes['created_by'] = $employee->employeeSystemID;
-                        EvaluationCriteriaScoreConfig::create($datayes);
-
-                        $datano['criteria_detail_id'] = $result['id'];
-                        $datano['label'] = $input['no_label'];
-                        $datano['score'] = $input['no_value'];
-                        $datano['created_by'] = $employee->employeeSystemID;
-                        EvaluationCriteriaScoreConfig::create($datano);
-                    }
-
-                    if($is_final_level == 1 && $input['critera_type_id'] == 2 && ($input['answer_type_id'] == 4 || $input['answer_type_id'] == 5) ){
-                        if(count($input['selectedData'])>0){
-                            $minAns = 0;
-                            $maxAns = 0;
-                            $x=1;
-                            foreach ($input['selectedData'] as $vl){
-                                if($x==1){
-                                    $minAns = $vl['drop_value'];
-                                }
-
-                                if($vl['drop_value']>$maxAns){
-                                    $maxAns = $vl['drop_value'];
-                                }
-
-                                if($vl['drop_value']<$minAns){
-                                    $minAns = $vl['drop_value'];
-                                }
-
-                                $drop['criteria_detail_id'] = $result['id'];
-                                $drop['label'] = $vl['drop_label'];
-                                $drop['score'] = $vl['drop_value'];
-                                $drop['created_by'] = $employee->employeeSystemID;
-                                EvaluationCriteriaScoreConfig::create($drop);
-
-                                $ans['max_value'] = $maxAns;
-                                $ans['min_value'] = $minAns;
-                                EvaluationCriteriaDetails::where('id',$result['id'])->update($ans);
-                                $x++;
-                            }
-                        }else{
-                            return ['success' => false, 'message' => 'At least one score configuration is required'];
-                        }
-                    }
-
-
-                    DB::commit();
-                    return ['success' => true, 'message' => 'Successfully created'];
+            if($is_final_level == 1 && $input['critera_type_id'] == 2 && $input['answer_type_id'] == 2 ){
+                if($input['yes_value'] > $input['no_value']){
+                    $data['max_value'] = $input['yes_value'];
+                    $data['min_value'] = $input['no_value'];
+                }else{
+                    $data['max_value'] = $input['no_value'];
+                    $data['min_value'] = $input['yes_value'];
                 }
             }
 
+            if($is_final_level == 1 && $input['critera_type_id'] == 2  && ($input['answer_type_id'] == 1 || $input['answer_type_id'] == 3)){
+                $data['max_value'] = $input['max_value'];
+            }
+
+            $result = EvaluationCriteriaMasterDetails::create($data);
+
+            if($result){
+                if($is_final_level == 1 && $input['critera_type_id'] == 2 && $input['answer_type_id'] == 2 ){
+                    $datayes['criteria_detail_id'] = $result['id'];
+                    $datayes['label'] = $input['yes_label'];
+                    $datayes['score'] = $input['yes_value'];
+                    $datayes['created_by'] = $employee->employeeSystemID;
+                    EvaluationCriteriaScoreConfig::create($datayes);
+
+                    $datano['criteria_detail_id'] = $result['id'];
+                    $datano['label'] = $input['no_label'];
+                    $datano['score'] = $input['no_value'];
+                    $datano['created_by'] = $employee->employeeSystemID;
+                    EvaluationCriteriaScoreConfig::create($datano);
+                }
+
+                if($is_final_level == 1 && $input['critera_type_id'] == 2 && ($input['answer_type_id'] == 4 || $input['answer_type_id'] == 5) ){
+                    if(count($input['selectedData'])>0){
+                        $minAns = 0;
+                        $maxAns = 0;
+                        $x=1;
+                        foreach ($input['selectedData'] as $vl){
+                            if($x==1){
+                                $minAns = $vl['drop_value'];
+                            }
+
+                            if($vl['drop_value']>$maxAns){
+                                $maxAns = $vl['drop_value'];
+                            }
+
+                            if($vl['drop_value']<$minAns){
+                                $minAns = $vl['drop_value'];
+                            }
+
+                            $drop['criteria_detail_id'] = $result['id'];
+                            $drop['label'] = $vl['drop_label'];
+                            $drop['score'] = $vl['drop_value'];
+                            $drop['created_by'] = $employee->employeeSystemID;
+                            EvaluationCriteriaScoreConfig::create($drop);
+
+                            $ans['max_value'] = $maxAns;
+                            $ans['min_value'] = $minAns;
+                            EvaluationCriteriaDetails::where('id',$result['id'])->update($ans);
+                            $x++;
+                        }
+                    }else{
+                        return ['success' => false, 'message' => 'At least one score configuration is required'];
+                    }
+                }
+
+
+                DB::commit();
+                return ['success' => true, 'message' => 'Successfully created'];
+                }
         }catch (\Exception $e) {
             DB::rollback();
             Log::error($this->failed($e));
@@ -778,19 +784,19 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
     {
         $input = $request->all();
         $weightage = $input['weightage'];
-        $tenderMasterId = $input['tenderMasterId'];
 
         $level  = isset($input['level']) ? $input['level'] : null;
 
         $parentId = $input['parentId'];
         if($level == 1){
-            $result = EvaluationCriteriaMasterDetails::where('level',1)->sum('weightage');
+            return ['success' => true, 'message' => 'Success'];
+            /*$result = EvaluationCriteriaMasterDetails::where('level',1)->sum('weightage');
             $total = $result + $weightage;
             if($total>100){
                  return ['success' => false, 'message' => 'Total weightage cannot exceed 100 percent'];
             } else {
                 return ['success' => true, 'message' => 'Success'];
-            }
+            }*/
         } else {
             $result = EvaluationCriteriaMasterDetails::where('parent_id',$parentId)->where('level',$level)->sum('weightage');
             $parent = EvaluationCriteriaMasterDetails::where('id',$parentId)->first();
