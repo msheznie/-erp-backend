@@ -427,16 +427,19 @@ class CustomUserReportsAPIController extends AppBaseController
                     $q1->where('is_private', 0);
                 });
             });
-
+        
         if (array_key_exists('is_private', $input) && ($input['is_private'] == 0 || $input['is_private'] == 1) && !is_null($input['is_private'])) {
             $reports = $reports->where('is_private', $input['is_private']);
         }
-
-        $search = $request->input('search.value');
+        
+        $search = $request->input('search.value');      
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
             $reports = $reports->where(function ($query) use ($search) {
-                $query->where('description', 'LIKE', "%{$search}%");
+                $query->where('name', 'LIKE', "%{$search}%")
+                    ->OrWhereHas('created_by', function ($q) use ($search) {
+                        $q->where('empName', 'LIKE', "%{$search}%");
+                    });
             });
         }
 

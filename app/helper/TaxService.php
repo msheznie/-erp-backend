@@ -1518,4 +1518,37 @@ class TaxService
 
         return $totalTransVATAmount;
     }
+
+    public static function processMatchingVAT($matchDocumentMasterAutoID)
+    {
+        $supplierInvoices = PaySupplierInvoiceDetail::where('matchingDocID', $matchDocumentMasterAutoID)
+                                                                ->whereHas('supplier_invoice')
+                                                                ->with(['supplier_invoice'])
+                                                                ->get();
+
+        $supplierInvoiceVAT = 0;
+        $supplierInvoiceVATLocal = 0;
+        $supplierInvoiceVATRpt = 0;
+
+        foreach ($supplierInvoices as $key => $value) {
+            if ($value->supplier_invoice->documentType == 0) {
+                $vatDetails = self::processPoBasedSupllierInvoiceVAT($value->bookingInvSystemCode);
+                $totalVATAmount = isset($vatDetails['totalVAT']) ? $vatDetails['totalVAT'] : 0;
+                $totalExemptVAT = isset($vatDetails['exemptVAT']) ? $vatDetails['exemptVAT'] : 0;
+                $totalVATAmountLocal = isset($vatDetails['totalVATLocal']) ? $vatDetails['totalVATLocal'] : 0;
+                $totalVATAmountRpt = isset($vatDetails['totalVATRpt']) ? $vatDetails['totalVATRpt'] : 0;
+            
+                $supplierInvoiceVAT += (($totalVATAmount / $value->supplierInvoiceAmount) * $value->supplierPaymentAmount);
+                $supplierInvoiceVATLocal += (($totalVATAmountLocal / $value->localAmount) * $value->paymentLocalAmount);
+                $supplierInvoiceVATRpt += (($totalVATAmountRpt / $value->comRptAmount) * $value->paymentComRptAmount);
+
+            } else if ($value->supplier_invoice->documentType == 1) {
+                $supplierInvoiceVAT += (($value->supplier_invoice->VATAmount / $value->supplierInvoiceAmount) * $value->supplierPaymentAmount);
+                $supplierInvoiceVATLocal += (($value->supplier_invoice->VATAmountLocal / $value->localAmount) * $value->paymentLocalAmount);
+                $supplierInvoiceVATRpt += (($value->supplier_invoice->VATAmountRpt / $value->comRptAmount) * $value->paymentComRptAmount);
+            }                                    
+        }
+
+        return ['supplierInvoiceVAT' => $supplierInvoiceVAT, 'supplierInvoiceVATLocal' => $supplierInvoiceVATLocal, 'supplierInvoiceVATRpt' => $supplierInvoiceVATRpt];
+    }
 }

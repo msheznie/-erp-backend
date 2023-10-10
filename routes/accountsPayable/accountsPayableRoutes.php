@@ -179,7 +179,6 @@ Route::group([],function (){
     Route::post('addMonthlyAdditionDetails', 'MonthlyAdditionDetailAPIController@addMonthlyAdditionDetails')->name('Add monthly addition details');
     Route::get('getMonthlyAdditionAudit', 'MonthlyAdditionsMasterAPIController@getMonthlyAdditionAudit')->name('Get monthly addition audit');
 
-    Route::resource('expense_claim_details', 'ExpenseClaimDetailsAPIController');
     Route::resource('monthly_additions_masters', 'MonthlyAdditionsMasterAPIController');
 });
 
@@ -189,3 +188,29 @@ Route::group([],function (){
     Route::get('getChequePrintingFormData', 'BankLedgerAPIController@getChequePrintingFormData')->name('Get cheque printing form data');
     Route::get('revertChequePrint', 'BankLedgerAPIController@revertChequePrint')->name('Revert cheque print');
 });
+
+//Reports
+
+//Supplier Ledger Report
+Route::group([],function (){
+    Route::get('getAPFilterData', 'AccountsPayableReportAPIController@getAPFilterData')->name('Get account payable filter data');
+    Route::post('validateAPReport', 'AccountsPayableReportAPIController@validateAPReport')->name('Validate account payable report');
+    Route::post('generateAPReport', 'AccountsPayableReportAPIController@generateAPReport')->name('Generate account payable report');
+    Route::post('exportAPReport', 'AccountsPayableReportAPIController@exportReport')->name('Export account payable report');
+    Route::post('sentSupplierLedger', 'AccountsPayableReportAPIController@sentSupplierLedger')->name('Sent supplier ledger');
+    Route::get('getJournalVoucherMasterRecord', 'JvMasterAPIController@getJournalVoucherMasterRecord')->name('Get journal voucher master record');
+});
+
+//Supplier Statement Report
+Route::group([],function (){
+    Route::post('sentSupplierStatement', 'AccountsPayableReportAPIController@sentSupplierStatement')->name('Sent supplier statement');
+});
+
+//Advance Payment Request
+Route::group([],function (){
+    Route::post('generateAdvancePaymentRequestReport', 'PoAdvancePaymentAPIController@generateAdvancePaymentRequestReport')->name('Generate advance payment request report');
+    Route::post('exportAdvancePaymentRequestReport', 'PoAdvancePaymentAPIController@exportAdvancePaymentRequestReport')->name('Export advance payment request report');
+    Route::get('getAdvancePaymentRequestStatusHistory', 'ProcumentOrderAPIController@getAdvancePaymentRequestStatusHistory')->name('Get advance payment request status history');
+});
+
+
