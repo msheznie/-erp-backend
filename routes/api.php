@@ -333,8 +333,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('company_finance_periods', 'CompanyFinancePeriodAPIController');
             Route::resource('customer_invoices', 'CustomerInvoiceAPIController');
             Route::resource('accounts_receivable_ledgers', 'AccountsReceivableLedgerAPIController');
-      
-            Route::get('getAllFinancePeriodForYear', 'CompanyFinancePeriodAPIController@getAllFinancePeriodForYear')->name("Get All Finance Period For Year");
             
             Route::resource('item_issue_types', 'ItemIssueTypeAPIController');
 
