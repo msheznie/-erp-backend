@@ -213,4 +213,28 @@ Route::group([],function (){
     Route::get('getAdvancePaymentRequestStatusHistory', 'ProcumentOrderAPIController@getAdvancePaymentRequestStatusHistory')->name('Get advance payment request status history');
 });
 
+//Review
+
+//Supplier Invoice
+Route::group([],function (){
+    Route::post('checkPaymentStatusSIPrint', 'BookInvSuppMasterAPIController@checkPaymentStatusSIPrint')->name('Check payment status supplier invoice print');
+    Route::get('getPurchaseOrdersLikedWithSi', 'BookInvSuppMasterAPIController@getPurchaseOrdersLikedWithSi')->name('Get purchase orders liked with supplier invoice');
+    Route::post('getSupplierInvoiceAmend', 'BookInvSuppMasterAPIController@getSupplierInvoiceAmend')->name('Get supplier invoice amend');
+    Route::resource('supplierInvoiceAmendHistoryCRUD', 'BookInvSuppMasterRefferedBackAPIController');
+    Route::get('getSIDetailDirectAmendHistory', 'DirectInvoiceDetailsRefferedBackAPIController@getSIDetailDirectAmendHistory')->name('Get SI detail direct amend history');
+    Route::get('getSIDetailGRVAmendHistory', 'BookInvSuppDetRefferedBackAPIController@getSIDetailGRVAmendHistory')->name('Get SI detail GRV amend history');
+    Route::get('getFilteredDirectCustomerInvoice', 'BookInvSuppMasterAPIController@getFilteredDirectCustomerInvoice')->name('Get filtered direct customer invoice');
+    Route::get('supplierInvoiceTaxPercentage', 'BookInvSuppMasterAPIController@supplierInvoiceTaxPercentage')->name('Supplier invoice tax percentage');
+    Route::get('getGRVDetailsForSupplierInvoice', 'SupplierInvoiceItemDetailAPIController@getGRVDetailsForSupplierInvoice')->name('Get grv details for supplier invoice');
+    Route::post('deleteAllSIDirectItemDetail', 'SupplierInvoiceDirectItemAPIController@deleteAllSIDirectItemDetail')->name('Delete all si direct item detail');
+    Route::resource('supplier_invoice_direct_items', 'SupplierInvoiceDirectItemAPIController');
+    Route::post('validateDirectItemWithAssetExpense', 'ExpenseAssetAllocationAPIController@validateDirectItemWithAssetExpense')->name('Validate direct item with asset expense');
+    Route::post('amendSupplierInvoiceReview', 'BookInvSuppMasterAPIController@amendSupplierInvoiceReview')->name('Amend supplier invoice review');
+    Route::get('getRetentionPercentage', 'SupplierMasterAPIController@getRetentionPercentage')->name('Get retention percentage');
+    Route::get('checkSelectedSupplierIsActive', 'SupplierAssignedAPIController@checkSelectedSupplierIsActive')->name('Check selected supplier is active');
+    Route::post('deleteAllSIDirectDetail', 'DirectInvoiceDetailsAPIController@deleteAllSIDirectDetail')->name('Delete all si direct detail');
+    Route::post('getPaymentVoucherPendingAmountDetails', 'PaySupplierInvoiceMasterAPIController@getPaymentVoucherPendingAmountDetails')->name('Get payment voucher pending amount details');
+    Route::post('getAllPaymentVoucherAmendHistory', 'PaySupplierInvoiceMasterReferbackAPIController@getAllPaymentVoucherAmendHistory')->name('Get all payment voucher amend history');
+});
+
 
