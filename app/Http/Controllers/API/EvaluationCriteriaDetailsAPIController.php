@@ -669,8 +669,11 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
     public function getEvaluationDetailById(Request $request)
     {
         $input = $request->all();
-        return EvaluationCriteriaDetails::with(['evaluation_criteria_score_config'])->where('id',$input['evaluationId'])->first();
-
+        if($input['isMasterCriteria'] == 1){
+            return EvaluationCriteriaMasterDetails::with(['evaluation_criteria_master', 'evaluation_criteria_score_config'])->where('id',$input['evaluationId'])->first();
+        } else {
+            return EvaluationCriteriaDetails::with(['evaluation_criteria_score_config'])->where('id',$input['evaluationId'])->first();
+        }
     }
 
     public function editEvaluationCriteria(Request $request)
