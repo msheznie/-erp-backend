@@ -1615,7 +1615,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                     $input['VATAmount'] = $supplierInvoiceVAT;
                     $input['VATAmountLocal'] = $supplierInvoiceVATLocal;
                     $input['VATAmountRpt'] = $supplierInvoiceVATRpt;
-                    $input['VATPercentage'] = ($supplierInvoiceVAT / $input['supplierPaymentAmount']) * 100;
+                    $input['VATPercentage'] = ($input['supplierPaymentAmount'] > 0) ? (($supplierInvoiceVAT / $input['supplierPaymentAmount']) * 100) : 0;
 
                 }
             }
