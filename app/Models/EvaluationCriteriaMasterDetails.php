@@ -168,7 +168,7 @@ class EvaluationCriteriaMasterDetails extends Model
 
     public function child()
     {
-        return $this->hasMany('App\Models\EvaluationCriteriaDetails', 'parent_id', 'id');
+        return $this->hasMany('App\Models\EvaluationCriteriaMasterDetails', 'parent_id', 'id');
     }
 
     public function evaluation_criteria_score_config()
