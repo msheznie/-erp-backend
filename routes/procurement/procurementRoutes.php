@@ -171,3 +171,12 @@ Route::group([], function() {
     Route::post('exportExcelSavingReport', 'ReportAPIController@exportExcelSavingReport')->name('Export Excel SavingReport');
 });
 
+//Report Spent Analysis Report
+Route::group([], function() {
+    Route::post('reportSpentAnalysisHeader', 'ProcumentOrderAPIController@reportSpentAnalysisHeader')->name('Report Spent Analysis Header');
+    Route::get('reportSpentAnalysisBySupplierFilter', 'ProcumentOrderAPIController@reportSpentAnalysisBySupplierFilter')->name('Report Spent Analysis By Supplier Filter');
+    Route::post('reportSpentAnalysis', 'ProcumentOrderAPIController@reportSpentAnalysis')->name('Report Spent Analysis');
+    Route::post('reportSpentAnalysisExport', 'ProcumentOrderAPIController@reportSpentAnalysisExport')->name('Report Spent Analysis Export');
+
+});
+
