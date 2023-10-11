@@ -1021,13 +1021,6 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
         $parentId = $input['parentId'];
         if($level == 1){
             return ['success' => true, 'message' => 'Success'];
-            /*$result = EvaluationCriteriaMasterDetails::where('level',1)->sum('weightage');
-            $total = $result + $weightage;
-            if($total>100){
-                 return ['success' => false, 'message' => 'Total weightage cannot exceed 100 percent'];
-            } else {
-                return ['success' => true, 'message' => 'Success'];
-            }*/
         } else {
             $result = EvaluationCriteriaMasterDetails::where('parent_id',$parentId)->where('level',$level)->sum('weightage');
             $parent = EvaluationCriteriaMasterDetails::where('id',$parentId)->first();
