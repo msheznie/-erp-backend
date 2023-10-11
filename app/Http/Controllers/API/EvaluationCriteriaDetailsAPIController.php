@@ -810,6 +810,10 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
             return $this->editEvaluationMasterCriteria($request);
         }
 
+        if(isset($input['criteriaMasterStatusEdit']) && $input['criteriaMasterStatusEdit'] == true){
+           return $this->criteriaMasterStatusChange($input['isChecked'], $input['masterCriteriaId']);
+        }
+
         if($input['level'] == 1){
             if($input['critera_type_id'] !=1) {
                 if(!isset($input['weightage']) || empty($input['weightage']) || $input['weightage']<= 0){
@@ -873,6 +877,24 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
             Log::error($this->failed($e));
             return ['success' => false, 'message' => $e];
         }
+    }
+
+    private function criteriaMasterStatusChange($isChecked, $masterCriteriaId){
+        try {
+            $dataMaster['is_active'] = $isChecked;
+            $evaluationMaster = EvaluationCriteriaMaster::find($masterCriteriaId);
+            $result = $evaluationMaster->update($dataMaster);
+            if($result){
+                return ['success' => true, 'message' => 'Successfully updated'];
+            } else {
+                return ['success' => false, 'message' => 'Unexpected Error'];
+            }
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($this->failed($e));
+            return ['success' => false, 'message' => $e];
+        }
+
     }
 
     public function editEvaluationMasterCriteria(Request $request)
