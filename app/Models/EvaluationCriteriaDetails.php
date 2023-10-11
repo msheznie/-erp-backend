@@ -193,5 +193,9 @@ class EvaluationCriteriaDetails extends Model
         return $this->hasMany('App\Models\BidSubmissionDetail', 'evaluation_detail_id', 'id');
     }
 
+    public function evaluation_criteria_master()
+    {
+        //return $this->belongsTo('App\Models\EvaluationCriteriaMaster', 'evaluation_criteria_master_id', 'id');
+    }
     
 }

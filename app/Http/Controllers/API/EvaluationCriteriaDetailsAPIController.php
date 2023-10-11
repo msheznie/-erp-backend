@@ -610,6 +610,8 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
                                     }]);
                                 }]);
         }])->where('tender_id',$input['tenderMasterId'])->where('level',1)->where('critera_type_id',$input['critera_type_id'])->get();
+
+        $data['criteriaMaster'] = EvaluationCriteriaMaster::where('is_active', 1)->get();
         return $data;
     }
 
