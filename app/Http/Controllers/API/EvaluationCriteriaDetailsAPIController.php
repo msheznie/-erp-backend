@@ -681,6 +681,10 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
         $input = $this->convertArrayToSelectedValue($request->all(), array( 'answer_type_id'));
         $employee = \Helper::getEmployeeInfo();
 
+        if(isset($input['evaluation_criteria_master_id']) && $input['evaluation_criteria_master_id'] != 0){
+            return $this->editEvaluationMasterCriteria($request);
+        }
+
         if($input['level'] == 1){
             if($input['critera_type_id'] !=1) {
                 if(!isset($input['weightage']) || empty($input['weightage']) || $input['weightage']<= 0){
@@ -724,6 +728,83 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
             $data['updated_by'] = $employee->employeeSystemID;
 
             $evaluationDetails = EvaluationCriteriaDetails::find($input['id']);
+            $result = $evaluationDetails->update($data);
+
+            if($result){
+
+                if($input['is_final_level'] == 1 && $input['critera_type_id'] == 2 && ($input['answer_type_id'] == 4 || $input['answer_type_id'] == 5) ){
+                    $config = EvaluationCriteriaScoreConfig::where('criteria_detail_id',$input['id'])->first();
+                    if(empty($config)){
+                        return ['success' => false, 'message' => 'At least one score configuration is required'];
+                    }
+                }
+
+
+                DB::commit();
+                return ['success' => true, 'message' => 'Successfully updated'];
+            }
+        }catch (\Exception $e) {
+            DB::rollback();
+            Log::error($this->failed($e));
+            return ['success' => false, 'message' => $e];
+        }
+    }
+
+    public function editEvaluationMasterCriteria(Request $request)
+    {
+        $input = $this->convertArrayToSelectedValue($request->all(), array( 'answer_type_id'));
+        $employee = \Helper::getEmployeeInfo();
+
+        if($input['level'] == 1){
+            if($input['critera_type_id'] !=1) {
+                if(!isset($input['weightage']) || empty($input['weightage']) || $input['weightage']<= 0){
+                    return ['success' => false, 'message' => 'Weightage is required'];
+                }
+
+                if(!isset($input['passing_weightage']) || empty($input['passing_weightage']) || $input['passing_weightage'] <= 0){
+                    return ['success' => false, 'message' => 'Passing weightage is required'];
+                }
+            }
+        }
+
+        if($input['is_final_level'] == 1){
+            if(!isset($input['answer_type_id']) || empty($input['answer_type_id'])){
+                return ['success' => false, 'message' => 'Answer Type is required'];
+            }
+        }
+
+        $chkDuplicate =  EvaluationCriteriaMasterDetails::where('evaluation_criteria_master_id',$input['evaluation_criteria_master_id'])->where('id','!=',$input['id'])->where('description',$input['description'])->where('level',$input['level'])->first();
+
+        if(!empty($chkDuplicate)){
+            return ['success' => false, 'message' => 'Description cannot be duplicated'];
+        }
+
+        DB::beginTransaction();
+        try {
+            if($input['is_final_level'] == 1 && $input['critera_type_id'] == 2  && ($input['answer_type_id'] == 1 || $input['answer_type_id'] == 3)){
+                $data['max_value'] = $input['max_value'];
+            }
+
+            $data['description'] = $input['description'];
+            if(isset($input['answer_type_id'])){
+                $data['answer_type_id'] = $input['answer_type_id'];
+            }
+            if(!empty($input['weightage'])){
+                $data['weightage'] = $input['weightage'];
+            }
+            if(!empty($input['passing_weightage'])) {
+                $data['passing_weightage'] = $input['passing_weightage'];
+            }
+            $data['updated_by'] = $employee->employeeSystemID;
+
+            if(isset($input['evaluation_criteria_master']['name'])){
+                $dataMaster['name'] = $input['evaluation_criteria_master']['name'];
+                $dataMaster['is_active'] = $input['evaluation_criteria_master']['is_active'];
+                $evaluationMaster = EvaluationCriteriaMaster::find($input['evaluation_criteria_master_id']);
+                $evaluationMaster->update($dataMaster);
+            }
+
+            $evaluationDetails = EvaluationCriteriaMasterDetails::find($input['id']);
             $result = $evaluationDetails->update($data);
 
             if($result){
@@ -819,6 +900,11 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
     public function validateWeightageEdit(Request $request)
     {
         $input = $request->all();
+
+        if(isset($input['evaluation_criteria_master_id']) && $input['evaluation_criteria_master_id'] != 0){
+            return $this->validateWeightageMasterEdit($request);
+        }
+
         if($input['level'] == 1){
             $result = EvaluationCriteriaDetails::where('tender_id',$input['tender_id'])->where('level',1)->where('id','!=',$input['id'])->sum('weightage');
             $total = $result + $input['weightage'];
@@ -834,6 +920,36 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
                 ->sum('weightage');
 
             $parent = EvaluationCriteriaDetails::where('id',$input['parent_id'])->first();
+
+            $total = $result + $input['weightage'];
+
+            if($total>$parent['weightage']){
+                return ['success' => false, 'message' => 'Total Child Weightage cannot exceed '.$parent['weightage']];
+            }else{
+                return ['success' => true, 'message' => 'Success'];
+            }
+        }
+
+    }
+
+    private function validateWeightageMasterEdit(Request $request)
+    {
+        $input = $request->all();
+        if($input['level'] == 1){
+            $result = EvaluationCriteriaMasterDetails::where('evaluation_criteria_master_id',$input['evaluation_criteria_master_id'])->where('level',1)->where('id','!=',$input['id'])->sum('weightage');
+            $total = $result + $input['weightage'];
+            if($total>100){
+                return ['success' => false, 'message' => 'Total weightage cannot exceed 100 percent'];
+            } else {
+                return ['success' => true, 'message' => 'Success'];
+            }
+        } else {
+            $result = EvaluationCriteriaMasterDetails::where('evaluation_criteria_master_id',$input['evaluation_criteria_master_id'])
+                ->where('parent_id',$input['parent_id'])->where('level',$input['level'])
+                ->where('id','!=',$input['id'])
+                ->sum('weightage');
+
+            $parent = EvaluationCriteriaMasterDetails::where('id',$input['parent_id'])->first();
 
             $total = $result + $input['weightage'];
 
