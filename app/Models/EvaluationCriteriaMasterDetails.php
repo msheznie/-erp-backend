@@ -6,7 +6,7 @@ use Eloquent as Model;
 
 /**
  * @SWG\Definition(
- *      definition="EvaluationCriteriaDetails",
+ *      definition="EvaluationCriteriaMasterDetails",
  *      required={""},
  *      @SWG\Property(
  *          property="id",
@@ -15,8 +15,8 @@ use Eloquent as Model;
  *          format="int32"
  *      ),
  *      @SWG\Property(
- *          property="tender_id",
- *          description="tender_id",
+ *          property="evaluation_criteria_master_id",
+ *          description="evaluation_criteria_master_id",
  *          type="integer",
  *          format="int32"
  *      ),
@@ -99,19 +99,16 @@ use Eloquent as Model;
  *      )
  * )
  */
-class EvaluationCriteriaDetails extends Model
+class EvaluationCriteriaMasterDetails extends Model
 {
 
-    public $table = 'srm_evaluation_criteria_details';
+    public $table = 'srm_evaluation_criteria_master_details';
     
     const CREATED_AT = 'created_at';
     const UPDATED_AT = 'updated_at';
 
-    protected $appends = ['active'];
-
-
     public $fillable = [
-        'tender_id',
+        'evaluation_criteria_master_id',
         'parent_id',
         'description',
         'critera_type_id',
@@ -134,7 +131,7 @@ class EvaluationCriteriaDetails extends Model
      */
     protected $casts = [
         'id' => 'integer',
-        'tender_id' => 'integer',
+        'evaluation_criteria_master_id' => 'integer',
         'parent_id' => 'integer',
         'description' => 'string',
         'critera_type_id' => 'integer',
@@ -156,12 +153,8 @@ class EvaluationCriteriaDetails extends Model
      * @var array
      */
     public static $rules = [
-        
-    ];
 
-    public function getActiveAttribute(){
-        return false;
-    }
+    ];
 
     public function evaluation_criteria_type()
     {
@@ -175,7 +168,7 @@ class EvaluationCriteriaDetails extends Model
 
     public function child()
     {
-        return $this->hasMany('App\Models\EvaluationCriteriaDetails', 'parent_id', 'id');
+        return $this->hasMany('App\Models\EvaluationCriteriaMasterDetails', 'parent_id', 'id');
     }
 
     public function evaluation_criteria_score_config()
@@ -195,7 +188,6 @@ class EvaluationCriteriaDetails extends Model
 
     public function evaluation_criteria_master()
     {
-        //return $this->belongsTo('App\Models\EvaluationCriteriaMaster', 'evaluation_criteria_master_id', 'id');
+        return $this->belongsTo('App\Models\EvaluationCriteriaMaster', 'evaluation_criteria_master_id', 'id');
     }
-    
 }
