@@ -415,7 +415,16 @@ class BidSubmissionMasterAPIController extends AppBaseController
         $companyId = $request['companyId'];
         $tenderId = $request['tenderId'];
         $type = $request['type']; 
-        $isNegotiation = $request['isNegotiation'];
+        $isNegotiation = $request['isNegotiation'];  
+
+        $request->merge([
+            'tenderMasterId' => $tenderId,
+            'companySystemID' => $companyId,
+        ]);
+        
+
+        $commonAttachmentExists = self::getIsExistCommonAttachment($request); 
+
 
         $tender = TenderMaster::select('id','document_type')
         ->withCount(['criteriaDetails',  
@@ -470,7 +479,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
             $query = $query->whereNotIn('id', $bidSubmissionMasterIds);
         }
     
-        if($type == 2)
+        if($type == 2 && $commonAttachmentExists > 0)
         {
             $query = $query->where('doc_verifiy_status',1);
         }
@@ -1379,4 +1388,10 @@ class BidSubmissionMasterAPIController extends AppBaseController
             $query->where('critera_type_id', 2);
          }])->where('id', $tenderId)->first();
     }
+
+    
+   public function getIsExistCommonAttachment(Request $request)
+   {
+       return $this->bidSubmissionMasterRepository->getIsExistCommonAttachment($request);
+   }
 }
