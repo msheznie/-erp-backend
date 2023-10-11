@@ -3930,6 +3930,13 @@ class BudgetMasterAPIController extends AppBaseController
 
 
         return \DataTables::eloquent($uploadBudgets)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('id', $input['order'][0]['dir']);
+                    }
+                }
+            })
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->make(true);

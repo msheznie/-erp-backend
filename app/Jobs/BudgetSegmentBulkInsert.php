@@ -92,7 +92,7 @@ class BudgetSegmentBulkInsert implements ShouldQueue
             $year = $startYear;
             $month = $startMonth;
 
-            $template = ReportTemplate::where('description', $templateName)->first();
+            $template = ReportTemplate::where('description', $templateName)->where('companySystemID', $uploadedCompany)->first();
 
             $worksheet->removeRow(1, 7);
 
