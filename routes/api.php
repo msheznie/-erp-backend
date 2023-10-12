@@ -232,8 +232,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('srp_erp_document_attachments', 'SrpErpDocumentAttachmentsAPIController');
             Route::get('get_srp_erp_document_attachments', 'SrpErpDocumentAttachmentsAPIController@geDocumentAttachments');
 
-            Route::resource('sme-attachment', 'AttachmentSMEAPIController');
-
             Route::post('getAllSupplierMasterApproval', 'SupplierMasterAPIController@getAllSupplierMasterApproval');
             Route::post('getAllCustomerMasterApproval', 'CustomerMasterAPIController@getAllCustomerMasterApproval');
             Route::post('getAllChartOfAccountApproval', 'ChartOfAccountAPIController@getAllChartOfAccountApproval');
@@ -432,7 +430,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('expense_claims', 'ExpenseClaimAPIController');
             Route::resource('expense_claim_types', 'ExpenseClaimTypeAPIController');
             Route::resource('expense_claim_categories', 'ExpenseClaimCategoriesAPIController');
-            Route::post('getExpenseClaimByCompany', 'ExpenseClaimAPIController@getExpenseClaimByCompany');
             Route::get('getPaymentStatusHistory', 'ExpenseClaimAPIController@getPaymentStatusHistory');
             Route::get('getDetailsByExpenseClaim', 'ExpenseClaimDetailsAPIController@getDetailsByExpenseClaim');
             Route::get('preCheckECDetailEdit', 'ExpenseClaimDetailsAPIController@preCheckECDetailEdit');
