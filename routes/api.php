@@ -70,6 +70,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             require __DIR__.'/../routes/supplierManagement/supplierManagementRoutes.php';
             require __DIR__.'/../routes/sourcingManagement/sourcingManagementRoutes.php';
             require __DIR__.'/../routes/logistics/logisticsRoutes.php';
+            require __DIR__.'/../routes/navigation/navigationRoutes.php';
 
             Route::post('downloadBudgetTemplate', 'BudgetMasterAPIController@downloadBudgetTemplate')->name("Download budget template");
             Route::post('getBudgetUploads', 'BudgetMasterAPIController@getBudgetUploads')->name("Get upload budgets");
@@ -169,9 +170,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             /** Company Navigation Menu access*/
             
-            Route::get('getCompanyNavigation', 'CompanyNavigationMenusAPIController@getCompanyNavigation');
             Route::resource('company_navigation_menuses', 'CompanyNavigationMenusAPIController');
-            Route::resource('assignCompanyNavigation', 'CompanyNavigationMenusAPIController');
             /** Company user group*/
             Route::post('getUserGroupByCompanyDatatable', 'UserGroupAPIController@getUserGroupByCompanyDatatable');
             Route::resource('userGroups', 'UserGroupAPIController');
