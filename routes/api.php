@@ -447,9 +447,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::get('customerRecieptDetailsRecords', 'CustomerReceivePaymentDetailAPIController@customerRecieptDetailsRecords');
 
-            // Matching
-            Route::get('getPaymentVoucherMatchItems', 'PaySupplierInvoiceMasterAPIController@getPaymentVoucherMatchItems');
-
+        
             Route::get('getRVPaymentVoucherMatchItems', 'PaySupplierInvoiceMasterAPIController@getRVPaymentVoucherMatchItems');
 
             Route::post('updatePrintChequeItems', 'BankLedgerAPIController@updatePrintChequeItems');
