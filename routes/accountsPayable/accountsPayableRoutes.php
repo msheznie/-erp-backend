@@ -242,4 +242,8 @@ Route::group([],function (){
     Route::get('getPaymentVoucherMatchItems', 'PaySupplierInvoiceMasterAPIController@getPaymentVoucherMatchItems')->name('Get payment voucher match items');
 });
 
-
+//Expense Claim
+Route::group([],function (){
+    Route::post('getExpenseClaimByCompany', 'ExpenseClaimAPIController@getExpenseClaimByCompany')->name('Get expense claim by company');
+    Route::resource('sme-attachment', 'AttachmentSMEAPIController');
+});
