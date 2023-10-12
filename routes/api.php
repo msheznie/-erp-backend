@@ -70,14 +70,13 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             require __DIR__.'/../routes/supplierManagement/supplierManagementRoutes.php';
             require __DIR__.'/../routes/sourcingManagement/sourcingManagementRoutes.php';
             require __DIR__.'/../routes/logistics/logisticsRoutes.php';
+            require __DIR__.'/../routes/navigation/navigationRoutes.php';
 
             Route::post('downloadBudgetTemplate', 'BudgetMasterAPIController@downloadBudgetTemplate')->name("Download budget template");
             Route::post('getBudgetUploads', 'BudgetMasterAPIController@getBudgetUploads')->name("Get upload budgets");
 
 
             Route::post('getAllEmployees', 'EmployeeAPIController@getAllEmployees');
-
-            Route::resource('employee_navigations', 'EmployeeNavigationAPIController');
 
             Route::resource('navigation_menuses', 'NavigationMenusAPIController');
 
@@ -169,17 +168,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             /** Company Navigation Menu access*/
             
-            Route::get('getCompanyNavigation', 'CompanyNavigationMenusAPIController@getCompanyNavigation');
             Route::resource('company_navigation_menuses', 'CompanyNavigationMenusAPIController');
-            Route::resource('assignCompanyNavigation', 'CompanyNavigationMenusAPIController');
             /** Company user group*/
-            Route::post('getUserGroupByCompanyDatatable', 'UserGroupAPIController@getUserGroupByCompanyDatatable');
-            Route::resource('userGroups', 'UserGroupAPIController');
-            Route::get('getUserGroup', 'UserGroupAPIController@getUserGroup');
-            Route::post('getUserGroupEmployeesDatatable', 'EmployeeNavigationAPIController@getUserGroupEmployeesByCompanyDatatable');
-
-            Route::resource('assignUserGroupNavigation', 'UserGroupAssignAPIController');
-            Route::get('getUserGroupNavigation', 'UserGroupAssignAPIController@getUserGroupNavigation');
             Route::get('getAllCompanies', 'CompanyAPIController@getAllCompanies');
             Route::resource('user_group_assigns', 'UserGroupAssignAPIController');
                         
@@ -661,7 +651,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::post('getEmployeeMasterView', 'EmployeeAPIController@getEmployeeMasterView');
             Route::post('confirmEmployeePasswordReset', 'EmployeeAPIController@confirmEmployeePasswordReset');
-            Route::get('getEmployeeMasterData', 'EmployeeAPIController@getEmployeeMasterData');
             
             Route::resource('bank_account_reffered_backs', 'BankAccountRefferedBackAPIController');
             
