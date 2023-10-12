@@ -652,6 +652,7 @@ class PaySupplierInvoiceMaster extends Model
         'bankAccountBalance',
         'payment_mode',
         'advanceAccountSystemID',
+        'applyVAT',
         'AdvanceAccount',
     ];
 
@@ -767,6 +768,7 @@ class PaySupplierInvoiceMaster extends Model
         'modifiedUser' => 'string',
         'modifiedPc' => 'string',
         'bankAccountBalance' => 'float',
+        'applyVAT' => 'integer',
         'payment_mode' => 'integer'
     ];
 

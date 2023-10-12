@@ -76,7 +76,6 @@ Route::group([], function(){
     Route::post('createFixedAssetCosting', 'FixedAssetMasterAPIController@create')->name("Create Fixed Asset Costing");
     Route::get('downloadAssetTemplate', 'FixedAssetMasterAPIController@downloadAssetTemplate')->name("Download Asset Template");
     Route::post('assetCostingUpload', 'FixedAssetMasterAPIController@assetCostingUpload')->name("Asset Costing Upload");
-    Route::post('genearetBarcode', 'BarcodeConfigurationAPIController@genearetBarcode')->name("Generate Barcode");
     Route::get('getAssetCostingMaster', 'FixedAssetMasterAPIController@getAssetCostingMaster')->name("Get Asset Costing Master");
     Route::resource('asset_warranties', 'AssetWarrantyAPIController');
     Route::post('getWarranty', 'AssetWarrantyAPIController@getWarranty')->name("Get asset warranty");

@@ -378,6 +378,9 @@
 
     <br>
 
+    {{$directTraSubTotal=0}}
+    {{$numberFormatting=empty($request->currency) ? 2 : $request->currency->DecimalPlaces}}
+
     <div class="row">
         @if($request->linePdoinvoiceDetails)
 
@@ -728,7 +731,7 @@
                 <th style="text-align: center">Grand Total</th>
             </tr>
             </thead>
-            <tbody>
+            <tbody>                
                 <tr style="border-top: 2px solid #333 !important;border-bottom: 2px solid #333 !important;background-color: white">
 
 

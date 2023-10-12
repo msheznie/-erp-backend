@@ -1850,6 +1850,7 @@ class AccountsPayableReportAPIController extends AppBaseController
             $roundedExchangeGL = round($result->exchangeGL, $decimal);
 
             if (abs($result->balanceAmount - $roundedExchangeGL) < 0.00001) {
+
                 unset($results[$index]);
             }
         }

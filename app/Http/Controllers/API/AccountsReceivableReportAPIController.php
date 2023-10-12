@@ -6676,13 +6676,13 @@ AND erp_generalledger.documentTransAmount > 0 AND erp_generalledger.supplierCode
                 qry_ProformaClientApproval_CustomerInvoices.myApprovedDate,
             IF
                 (
-                ( description = \"Not Approved\" AND ( clientapprovedDate IS NULL OR clientapprovedDate = \"\" ) ) 
+                ( description = \"Not Approved\" AND ( DATE_FORMAT( clientapprovedDate, \"%d/%m/%Y\" ) IS NULL OR DATE_FORMAT( clientapprovedDate, \"%d/%m/%Y\" ) = \"\" ) ) 
                 AND ( myApprovedDate IS NULL OR myApprovedDate = \"\" ),
                 \"Not Approved\",
             IF
                 (
                 description = \"Not Approved\" 
-                AND ( clientapprovedDate IS NULL OR clientapprovedDate = \"\" ) 
+                AND ( DATE_FORMAT( clientapprovedDate, \"%d/%m/%Y\" ) IS NULL OR DATE_FORMAT( clientapprovedDate, \"%d/%m/%Y\" ) = \"\" ) 
                 AND ( myApprovedDate IS NOT NULL OR myApprovedDate <> \"\" ),
                 \"Approved\",
                 description 
