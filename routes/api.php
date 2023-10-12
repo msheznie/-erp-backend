@@ -319,8 +319,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::resource('accounts_payable_ledgers', 'AccountsPayableLedgerAPIController');
 
-            Route::post('exportNavigationeport', 'UserGroupAssignAPIController@exportNavigationeport');
-
             Route::get('getFRFilterData', 'FinancialReportAPIController@getFRFilterData');
             Route::get('getUtilizationFilterFormData', 'FinancialReportAPIController@getUtilizationFilterFormData');
             Route::post('getSubsidiaryCompanies', 'FinancialReportAPIController@getSubsidiaryCompanies');
