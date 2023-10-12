@@ -3506,6 +3506,7 @@ WHERE
             $checked = $request['checked'];
             $rang_id = $request['rang_id'];
             $type = $request['type'];
+            $isNegotiation = $request['isNegotiation'];
 
             if ($type == 1) {
                 $update =  CommercialBidRankingItems::where('tender_id', $tenderId)->update(['status' => $checked]);
@@ -3529,7 +3530,7 @@ WHERE
                 }
             }
 
-            $bidMasterId = $this->getCommercialBids($tenderId);
+            $bidMasterId = $this->getCommercialBids($tenderId,$isNegotiation);
 
             $line_item_values =  CommercialBidRankingItems::where('tender_id', $tenderId)->where('status', 1)->get();
             $this->updateLineItem($bidMasterId, $line_item_values, $tenderId);
