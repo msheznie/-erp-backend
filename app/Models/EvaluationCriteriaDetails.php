@@ -123,6 +123,7 @@ class EvaluationCriteriaDetails extends Model
         'min_value',
         'max_value',
         'sort_order',
+        'evaluation_criteria_master_id',
         'created_by',
         'updated_by'
     ];
@@ -146,6 +147,7 @@ class EvaluationCriteriaDetails extends Model
         'min_value' => 'float',
         'max_value' => 'float',
         'sort_order' => 'integer',
+        'evaluation_criteria_master_id' => 'integer',
         'created_by' => 'integer',
         'updated_by' => 'integer'
     ];

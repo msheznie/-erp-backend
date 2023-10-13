@@ -10,6 +10,7 @@ use App\Models\EvaluationCriteriaMasterDetails;
 use App\Models\EvaluationCriteriaScoreConfig;
 use App\Models\EvaluationCriteriaType;
 use App\Models\TenderCriteriaAnswerType;
+use App\Models\TenderMaster;
 use App\Repositories\EvaluationCriteriaDetailsRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -451,7 +452,6 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
         DB::beginTransaction();
         try {
             foreach ($results as $result) {
-                $id = $result->id;
                 $evaluationCriteriaMasterId = $result->evaluation_criteria_master_id;
                 $parentId = $result->parent_id;
                 $description = $result->description;
@@ -881,6 +881,14 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
 
     private function criteriaMasterStatusChange($isChecked, $masterCriteriaId){
         try {
+            $tenderMasterPublishedCount = TenderMaster::whereHas('criteriaDetails', function ($query) use ($masterCriteriaId) {
+                $query->where('evaluation_criteria_master_id', $masterCriteriaId);
+            })->where('published_yn', 0)->count();
+
+            if ($tenderMasterPublishedCount > 0 && $isChecked == false) {
+                return ['success' => false, 'message' => 'Technical evaluation criteria already used'];
+            }
+
             $dataMaster['is_active'] = $isChecked;
             $evaluationMaster = EvaluationCriteriaMaster::find($masterCriteriaId);
             $result = $evaluationMaster->update($dataMaster);
