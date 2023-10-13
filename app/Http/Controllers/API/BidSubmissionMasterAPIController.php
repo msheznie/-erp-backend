@@ -438,8 +438,8 @@ class BidSubmissionMasterAPIController extends AppBaseController
         }])
         ->where('id', $tenderId)
         ->where('company_id', $companyId) 
-        ->first(); 
-
+        ->first();  
+        
         if($tender->document_type != 0)
         { 
             if($tender->document_attachments_count == 0){ 
@@ -450,6 +450,10 @@ class BidSubmissionMasterAPIController extends AppBaseController
                 $this->updateTechnicalEvalStaus($tenderId);
             }
             
+        }
+
+        if($commonAttachmentExists == 0){ 
+            $this->updateBidSubmission($tenderId);
         }
 
         $tenderBidNegotiations = TenderBidNegotiation::select('bid_submission_master_id_new')

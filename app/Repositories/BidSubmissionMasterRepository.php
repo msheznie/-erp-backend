@@ -43,12 +43,12 @@ class BidSubmissionMasterRepository extends BaseRepository
         $tenderMasterId = $input['tenderMasterId'];
         $companySystemID = $input['companySystemID'];
 
-        return  DocumentAttachments::select('attachmentID')
+         return DocumentAttachments::select('attachmentID')
         ->where('companySystemID',$companySystemID)   
         ->where('documentSystemCode',$tenderMasterId)
         ->whereIn('documentSystemID',[108,113])
         ->where('attachmentType',2)
         ->where('envelopType',3)
-        ->count(); 
+        ->count();   
     }
 }
