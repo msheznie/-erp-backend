@@ -1218,6 +1218,12 @@ WHERE
             $input['bank_account_id'] = null;
         }
 
+        // Check Total Technical weightage
+        $result = EvaluationCriteriaDetails::where('tender_id', $input['id'])->where('level',1)->sum('weightage');
+        if($result >100){
+            return ['success' => false, 'message' => 'Total technical weightage cannot exceed 100 percent'];
+        }
+
         DB::beginTransaction();
 
         try {
