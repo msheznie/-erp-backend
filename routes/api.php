@@ -144,9 +144,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::resource('finance_item_category_masters', 'FinanceItemCategoryMasterAPIController');
 
-            Route::post('getAllReasonCodeMaster', 'ReasonCodeMasterAPIController@getAllReasonCodeMaster');
-            Route::post('updateReasonCodeMaster', 'ReasonCodeMasterAPIController@update');
-            Route::get('getAllGLCodesForReasonMaster', 'ReasonCodeMasterAPIController@getAllGLCodes');
             Route::get('reasonCodeMasterRecordSalesReturn/{id}', 'ReasonCodeMasterAPIController@reasonCodeMasterRecordSalesReturn');
 
             Route::resource('example_table_templates', 'ExampleTableTemplateAPIController');
