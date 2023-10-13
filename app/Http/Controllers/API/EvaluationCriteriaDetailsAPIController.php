@@ -310,7 +310,7 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
                 return $item['id'];
             }, $input['selectedData']);
 
-            return $this->pullFromMasterEvaluationCriteria($idArray, $input['tenderMasterId']);
+            return $this->pullFromMasterEvaluationCriteria($request, $idArray, $input['tenderMasterId']);
 
         } else {
             $sort = EvaluationCriteriaDetails::where('tender_id',$input['tenderMasterId'])->where('level',$input['level'])->where('parent_id',$input['parent_id'])->orderBy('sort_order', 'desc')->first();
@@ -445,8 +445,9 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
 
     }
 
-    public function pullFromMasterEvaluationCriteria($ids, $tenderId)
+    public function pullFromMasterEvaluationCriteria($request, $ids, $tenderId)
     {
+        $input = $this->convertArrayToSelectedValue($request->all(), array('critera_type_id', 'answer_type_id'));
         $results = EvaluationCriteriaMasterDetails::whereIn('evaluation_criteria_master_id', $ids)->get();
         $employee = \Helper::getEmployeeInfo();
         DB::beginTransaction();
@@ -544,15 +545,15 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
                                 EvaluationCriteriaDetails::where('id',$result['id'])->update($ans);
                                 $x++;
                             }
-                        }else{
+                        } else {
                             return ['success' => false, 'message' => 'At least one score configuration is required'];
                         }
                     }
-
-                    DB::commit();
-                    return ['success' => true, 'message' => 'Successfully created'];
                 }
             }
+
+            DB::commit();
+            return ['success' => true, 'message' => 'Successfully created'];
         }catch (\Exception $e) {
             DB::rollback();
             Log::error($this->failed($e));
