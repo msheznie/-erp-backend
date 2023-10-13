@@ -398,7 +398,7 @@ class ReportTemplateAPIController extends AppBaseController
                             foreach ($templates as $template) {
                                 foreach ($template->details as $detail) {
                                     foreach ($detail->gllink as $gllink) {
-                                        if($gllink->glCode )
+                                        if($gllink->glCode)
                                         {
                                             if($gllink->chartofaccount->isActive)
                                             {
