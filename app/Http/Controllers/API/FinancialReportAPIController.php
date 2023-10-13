@@ -52,6 +52,7 @@ use App\helper\CreateExcel;
 use App\Models\Employee;
 use Illuminate\Support\Facades\Storage;
 use App\Models\SystemGlCodeScenarioDetail;
+
 ini_set('max_execution_time', 500);
 
 class FinancialReportAPIController extends AppBaseController
@@ -3708,8 +3709,8 @@ srp_erp_ioubookingmaster.approvedYN = 1
                         glAccountType,
                         glAccountTypeID,
                         documentLocalCurrencyID,
-                        IF((SUM( documentLocalAmount))<0,0,(SUM(documentLocalAmount))) AS documentLocalAmountDebit,
-                        IF((SUM( documentLocalAmount))<0,(SUM(documentLocalAmount*-1)),0) AS documentLocalAmountCredit,
+                        SUM(IF(documentLocalAmount >= 0, documentLocalAmount, 0)) AS documentLocalAmountDebit,
+                        SUM(IF(documentLocalAmount < 0, -documentLocalAmount, 0)) AS documentLocalAmountCredit,
                         documentRptCurrencyID,
                         SUM(IF(documentRptAmount >= 0, documentRptAmount, 0)) AS documentRptAmountDebit,
                         SUM(IF(documentRptAmount < 0, -documentRptAmount, 0)) AS documentRptAmountCredit
@@ -6869,6 +6870,7 @@ GROUP BY
                             $fromDate = Carbon::parse($financeYear->bigginingDate)->format('Y-m-d');
                             $toDate = Carbon::parse($period->dateTo)->format('Y-m-d');
                         }
+
                         $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') >= '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') <= '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
     $currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && (chartofaccounts.controlAccounts = 'BSL' OR chartofaccounts.controlAccounts = 'BSE'),$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
                     } else if ($request->accountType == 1) {
@@ -6886,10 +6888,16 @@ GROUP BY
                 }
                 if ($val->shortCode == 'LYYTD') {
                     if ($request->accountType == 2) {
+                        
                         if ($request->dateType == 2) {
                             $fromDate = Carbon::parse($financeYear->bigginingDate)->subYear()->format('Y-m-d');
                             $toDate = Carbon::parse($period->dateTo)->subYear()->format('Y-m-d');
                         }
+                        else if ($request->dateType == 1) {
+                            $toDate = Carbon::parse($toDate)->subYear()->format('Y-m-d');
+                            $fromDate = Carbon::parse($fromDate)->subYear()->format('Y-m-d');
+                        }
+
                         $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') >= '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') <= '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
     $currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && (chartofaccounts.controlAccounts = 'BSL' OR chartofaccounts.controlAccounts = 'BSE'),$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
                     } else if ($request->accountType == 1) {

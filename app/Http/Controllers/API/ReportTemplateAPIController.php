@@ -369,7 +369,7 @@ class ReportTemplateAPIController extends AppBaseController
         $input = $request->all();
         $input = array_except($input, ['template_type', 'Actions', 'DT_Row_Index']);
         $input = $this->convertArrayToValue($input);
-
+        
         /** @var ReportTemplate $reportTemplate */
         $reportTemplate = $this->reportTemplateRepository->findWithoutFail($id);
 
@@ -388,13 +388,22 @@ class ReportTemplateAPIController extends AppBaseController
                     if ($input['isDefault'] != $isDefault->isDefault) {
                         if ($input['reportID'] == 1 || $input['reportID'] == 2) {
                             $templates = ReportTemplate::with(['details' => function ($query) {
-                                $query->with(['gllink']);
+                                $query->with(['gllink'=>function($query){
+                                    $query->with(['chartofaccount']);
+                                }]);
                             }])->where('reportID', $input['reportID'])->where('isDefault', 1)->get();
                             $isCOA = false;
                             foreach ($templates as $template) {
                                 foreach ($template->details as $detail) {
                                     foreach ($detail->gllink as $gllink) {
+                                        if($gllink->glCode && $gllink->chartofaccount->isActive)
+                                        {
+                                            $isCOA = true;
+                                            break;
+
+                                        }
                                         $isCOA = true;
+                                        break;
                                     }
                                 }
                             }
@@ -471,6 +480,24 @@ class ReportTemplateAPIController extends AppBaseController
             if (empty($reportTemplate)) {
                 return $this->sendError('Report Template not found');
             }
+            if($reportTemplate->isDefault)
+            {
+                return $this->sendError('Its a default report template, cannot be deleted!');
+            }
+
+            $templates = ReportTemplate::with(['details' => function ($query) {
+                $query->with(['gllink']);
+            }])->where('companyReportTemplateID', $id)->first();
+            foreach ($templates->details as $detail) {
+                foreach ($detail->gllink as $gllink) {
+                    if($gllink->glCode)
+                    {
+                        return $this->sendError('Connot be deleted! GL code is linked to this template');
+                    }
+
+                }
+            }
+           
 
             $checkReportInBudget = BudgetMaster::where('templateMasterID', $id)
                                                ->first();

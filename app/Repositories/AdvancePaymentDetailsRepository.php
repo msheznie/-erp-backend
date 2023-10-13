@@ -27,6 +27,7 @@ class AdvancePaymentDetailsRepository extends BaseRepository
         'purchaseOrderCode',
         'comments',
         'paymentAmount',
+        'amountBeforeVAT',
         'supplierTransCurrencyID',
         'supplierTransER',
         'supplierDefaultCurrencyID',

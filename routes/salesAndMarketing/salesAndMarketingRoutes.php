@@ -128,4 +128,55 @@ Route::group([], function () {
     Route::get('getSalesPersonTargetDetails', 'SalesPersonTargetAPIController@getSalesPersonTargetDetails')->name("Get sales person target details");
     Route::get('checkSalesPersonLastTarget', 'SalesPersonTargetAPIController@checkSalesPersonLastTarget')->name("Check sales person last target");
     Route::resource('salesPersonTargets', 'SalesPersonTargetAPIController');
+
+});
+
+//Reports
+
+//Quotation
+Route::group([], function () { 
+
+    Route::post('getSalesMarketFilterData', 'SalesMarketingReportAPIController@getSalesMarketFilterData')->name("Get sales market filter data");
+    Route::post('getSubcategoriesBymainCategories', 'FinanceItemCategorySubAPIController@getSubcategoriesBymainCategories')->name("Get sub categories by main categories");
+    Route::post('validateSalesMarketReport', 'SalesMarketingReportAPIController@validateReport')->name("Validate sales market report");
+    Route::post('generateSalesMarketReport', 'SalesMarketingReportAPIController@generateReport')->name("Generate sales market report");
+    Route::post('exportSalesMarketReport', 'SalesMarketingReportAPIController@exportReport')->name("Export sales market report");
+
+});
+
+//Sales Order To Receipt Report
+Route::group([], function () { 
+
+    Route::get('reportSoToReceiptFilterOptions', 'SalesMarketingReportAPIController@reportSoToReceiptFilterOptions')->name("Report sales order to receipt filter options");
+    Route::get('getCompanyReportingCurrencyCode', 'CurrencyMasterAPIController@getCompanyReportingCurrencyCode')->name("Get company reporting currency code");
+    Route::post('reportSoToReceipt', 'SalesMarketingReportAPIController@reportSoToReceipt')->name("Report sales order to receipt");
+    Route::post('exportSoToReceiptReport', 'SalesMarketingReportAPIController@exportSoToReceiptReport')->name("Export sales order to receipt report");
+
+});
+
+//Sales Analysis Report
+Route::group([], function () { 
+
+    Route::get('getSalesAnalysisFilterData', 'SalesMarketingReportAPIController@getSalesAnalysisFilterData')->name("Get sales analysis filter data");
+
+});
+
+//Review
+
+//Quotation
+Route::group([], function () { 
+
+    Route::post('getOrderDetailsForSQ', 'QuotationMasterAPIController@getOrderDetailsForSQ')->name("Get order details for sales quotation");
+    Route::post('cancelQuatation', 'QuotationMasterAPIController@cancelQuatation')->name("Cancel quotation");
+    Route::post('closeQuatation', 'QuotationMasterAPIController@closeQuatation')->name("Close quotation");
+    Route::post('checkItemExists','QuotationMasterAPIController@checkItemExists')->name("Check item exists");
+    Route::post('getCIMasterAmendHistory', 'CustomerInvoiceDirectRefferedbackAPIController@getCIMasterAmendHistory')->name("Get customer invoice master amend history");
+    Route::resource('customerInvoiceRefferedbacksCRUD', 'CustomerInvoiceDirectRefferedbackAPIController');
+    Route::get('getCIDetailsForAmendHistory', 'CustomerInvoiceDirectDetRefferedbackAPIController@getCIDetailsForAmendHistory')->name("Get CI details for amend history");
+    Route::get('getFilteredGRV', 'GRVMasterAPIController@getFilteredGRV')->name("Get Filtered GRV");
+    Route::get('salesQuotationForCustomerInvoice','QuotationMasterAPIController@salesQuotationForCustomerInvoice')->name("Sales Quotation For Customer Invoice");
+    Route::get('getSalesQuotationDetailForInvoice','QuotationDetailsAPIController@getSalesQuotationDetailForInvoice')->name("Get Sales Quotation Detail For Invoice");
+    Route::get('getSQHDetailsHistory', 'QuotationDetailsRefferedbackAPIController@getSQHDetailsHistory')->name("Get SQ details history");
+    Route::get('downloadQuotationItemUploadTemplate','QuotationMasterAPIController@downloadQuotationItemUploadTemplate')->name("Download quotation item upload template");
+
 });

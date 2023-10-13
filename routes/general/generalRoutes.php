@@ -81,3 +81,5 @@ Route::post('getAllocatedEmployeesForExpense', 'ExpenseEmployeeAllocationAPICont
 Route::get('getCurrentUserInfo', 'UserAPIController@getCurrentUserInfo')->name("Get Current User Info");
 
 Route::get('sme-attachment/{id}/{docID}/{companyID}', 'AttachmentSMEAPIController@show')->name('Show attachment sme');
+
+Route::get('getAllFinancePeriodForYear', 'CompanyFinancePeriodAPIController@getAllFinancePeriodForYear')->name("Get All Finance Period For Year");

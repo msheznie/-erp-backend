@@ -11,7 +11,9 @@ use App\Http\Controllers\AppBaseController;
 use App\Models\AssetRequestDetail;
 use App\Models\ERPAssetTransfer;
 use App\Models\ErpLocation;
+use App\Models\AssetRequest;
 use App\Models\DepartmentMaster;
+use App\Models\SMEPayAsset;
 use App\Models\FixedAssetMaster;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
@@ -135,6 +137,7 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
                     ->where('pr_created_yn','!=',1)
                     ->get();
                     
+                $assetRequest = AssetRequest::find($value['erp_fa_fa_asset_request_id']);
                 if (count($erpAsset) > 0) {
                     return $this->sendError('Same asset cannot be link multiple times');
                 }
@@ -145,6 +148,7 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
                     $query->where('company_id', $value['company_id'])
                         ->where('approved_yn', 0);
                 })
+                ->orderby('id','desc')
                 ->first();  
                 if(!empty($assetExistUnApproved->assetTransferMaster)){ 
                     return $this->sendError('Asset already pulled to unapproved document '.$assetExistUnApproved->assetTransferMaster->document_code);  
@@ -156,9 +160,14 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
                         ->where('returnStatus', 0);
                 })
                 ->where('receivedYN','=','1')
-                ->first(); 
+                ->orderby('id','desc')
+                ->first();
                 if(!empty($assetExistUnApproved)){ 
-                    return $this->sendError('Asset already acknowledged');  
+                    if($assetRequest->type == 1) {
+                        $msg ='The asset '.$assetExistUnApproved->assetMaster->faCode.' has already been assigned to '.$assetExistUnApproved->assetRequestMaster->employee->Ename1.'. Are you sure you want to transfer it to '.$assetRequest->employee->Ename1.'';
+                        return $this->sendResponse(['id' => false], $msg);
+
+                    }
                 }
                 
 
@@ -171,7 +180,7 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
                     'company_id' => $value['company_id'],
                     'created_user_id' => \Helper::getEmployeeSystemID(),
                     'itemCodeSystem' => $value['itemCodeSystem'],
-                    'departmentSystemID' => (isset($value['type'][0]) && $value['type'][0] == 4 && isset($value['department'])) ? $value['department']['departmentSystemID'] : NULL
+                    'departmentSystemID' => (isset($value['type'][0]) && $value['type'][0] == 4 && isset($assetRequest)) ? $assetRequest->departmentSystemID : NULL
                 ];
             }
             $this->eRPAssetTransferDetailRepository->insert($data);
@@ -541,7 +550,7 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
         $input = $request->all();
         $companyID = $input['companyID'];
         $assetID = $input['assetID'];
-        $data['assetLocation'] = FixedAssetMaster::select('faID', 'empID')
+        $data['assetLocation'] = FixedAssetMaster::with('assignedEmployee')
             ->where('faID', $assetID)
             ->where('companySystemID', $companyID)->first();
 
@@ -560,5 +569,27 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
             $q->select(['DepartmentDescription','departmentSystemID']);
         }])->first();
         return $this->sendResponse($deparment, 'Department reterived');
+    }
+
+    public function UpdateReturnStatus(Request $request) {
+
+        if($request->input('assetTrasnferDetailID')) {
+            $assetTransferDetail = ERPAssetTransferDetail::find($request->input('assetTrasnferDetailID'));
+            if($assetTransferDetail) {
+                $payAssetsObj = SMEPayAsset::where('Erp_faID',$assetTransferDetail->fa_master_id)->update(['returnStatus' => $request->input('status')]);
+            }
+
+        }else {
+            $items = $request->input('items');
+
+            foreach($items as $item) {
+                $payAssetsObj = SMEPayAsset::where('Erp_faID',$item['assetDropTransferID'])->update(['returnStatus' => $request->input('status')]);
+            }
+    
+        }
+
+
+        return $this->sendResponse([], 'data reterived');
+
     }
 }
