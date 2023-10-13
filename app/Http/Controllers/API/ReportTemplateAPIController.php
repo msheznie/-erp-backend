@@ -392,18 +392,28 @@ class ReportTemplateAPIController extends AppBaseController
                                     $query->with(['chartofaccount']);
                                 }]);
                             }])->where('reportID', $input['reportID'])->where('isDefault', 1)->get();
+
+
                             $isCOA = false;
                             foreach ($templates as $template) {
                                 foreach ($template->details as $detail) {
                                     foreach ($detail->gllink as $gllink) {
-                                        if($gllink->glCode && $gllink->chartofaccount->isActive)
+                                        if($gllink->glCode)
+                                        {
+                                            if($gllink->chartofaccount->isActive)
+                                            {
+                                                $isCOA = true;
+                                                break;
+                                            }
+                                          
+
+                                        }
+                                        else
                                         {
                                             $isCOA = true;
                                             break;
-
                                         }
-                                        $isCOA = true;
-                                        break;
+                                    
                                     }
                                 }
                             }
