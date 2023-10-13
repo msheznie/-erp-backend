@@ -47,4 +47,9 @@ class EvaluationCriteriaMaster extends Model
         return $this->belongsTo('App\Models\EvaluationCriteriaType', 'critera_type_id', 'id');
     }
 
+    public function evaluation_criteria_details()
+    {
+        return $this->hasMany('App\Models\EvaluationCriteriaDetails', 'evaluation_criteria_master_id', 'id');
+    }
+
 }

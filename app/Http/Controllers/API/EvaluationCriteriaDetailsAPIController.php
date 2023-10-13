@@ -741,7 +741,10 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
     public function getEvaluationCriteriaMasterDetails(Request $request)
     {
         $input = $request->all();
-        $data['criteriaDetail'] = EvaluationCriteriaMasterDetails::with(['evaluation_criteria_master', 'evaluation_criteria_type','tender_criteria_answer_type','child'=> function($q){
+        $data['criteriaDetail'] = EvaluationCriteriaMasterDetails::with(['evaluation_criteria_master',
+            'evaluation_criteria_master.evaluation_criteria_details.tender_master' => function ($query) {
+               $query->where('published_yn', 0);
+        }, 'evaluation_criteria_type','tender_criteria_answer_type','child'=> function($q){
                                 $q->with(['evaluation_criteria_type','tender_criteria_answer_type','child' => function($q){
                                     $q->with(['evaluation_criteria_type','tender_criteria_answer_type','child' => function($q){
                                         $q->with(['evaluation_criteria_type','tender_criteria_answer_type']);

@@ -197,7 +197,12 @@ class EvaluationCriteriaDetails extends Model
 
     public function evaluation_criteria_master()
     {
-        //return $this->belongsTo('App\Models\EvaluationCriteriaMaster', 'evaluation_criteria_master_id', 'id');
+        return $this->belongsTo('App\Models\EvaluationCriteriaMaster', 'evaluation_criteria_master_id', 'id');
+    }
+
+    public function tender_master()
+    {
+        return $this->belongsTo('App\Models\TenderMaster', 'tender_id', 'id');
     }
     
 }
