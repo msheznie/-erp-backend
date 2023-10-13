@@ -31,6 +31,7 @@ use App\Models\SupplierRegistrationLink;
 use App\Repositories\TenderMasterRepository;
 use App\Services\SRMService;
 use LDAP\Result;
+use Illuminate\Http\JsonResponse;
 
 use function Doctrine\Common\Cache\Psr6\get;
 
@@ -421,10 +422,8 @@ class BidSubmissionMasterAPIController extends AppBaseController
             'tenderMasterId' => $tenderId,
             'companySystemID' => $companyId,
         ]);
-        
 
-        $commonAttachmentExists = self::getIsExistCommonAttachment($request); 
-
+        $commonAttachmentExists = self::getIsExistCommonAttachment($request);  
 
         $tender = TenderMaster::select('id','document_type')
         ->withCount(['criteriaDetails',  
@@ -1395,7 +1394,12 @@ class BidSubmissionMasterAPIController extends AppBaseController
 
     
    public function getIsExistCommonAttachment(Request $request)
-   {
-       return $this->bidSubmissionMasterRepository->getIsExistCommonAttachment($request);
+   { 
+       $existCommonAttachment = $this->bidSubmissionMasterRepository->getIsExistCommonAttachment($request);
+       if(!$existCommonAttachment['status']){
+        return $this->sendError($existCommonAttachment['message'], 500);
+       }
+
+       return $existCommonAttachment['data'];
    }
 }
