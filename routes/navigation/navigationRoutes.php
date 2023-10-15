@@ -21,3 +21,9 @@ Route::group([], function(){
     Route::resource('employee_navigations', 'EmployeeNavigationAPIController');
     Route::get('getUserGroup', 'UserGroupAPIController@getUserGroup')->name('Get user group');
 });
+
+//User Group Assign
+Route::group([], function(){
+    Route::get('getUserGroupNavigation', 'UserGroupAssignAPIController@getUserGroupNavigation')->name('Get user group navigation');
+    Route::resource('assignUserGroupNavigation', 'UserGroupAssignAPIController');
+});

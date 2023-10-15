@@ -170,8 +170,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             
             Route::resource('company_navigation_menuses', 'CompanyNavigationMenusAPIController');
             /** Company user group*/
-            Route::resource('assignUserGroupNavigation', 'UserGroupAssignAPIController');
-            Route::get('getUserGroupNavigation', 'UserGroupAssignAPIController@getUserGroupNavigation');
             Route::get('getAllCompanies', 'CompanyAPIController@getAllCompanies');
             Route::resource('user_group_assigns', 'UserGroupAssignAPIController');
                         
