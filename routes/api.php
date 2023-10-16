@@ -244,9 +244,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('validateReport', 'ReportAPIController@validateReport');
             Route::post('exportReport', 'ReportAPIController@exportReport');
 
-            Route::post('assetRegisterDrillDown', 'AssetManagementReportAPIController@getAssetRegisterSummaryDrillDownQRY');
-            Route::post('exportAssetRegisterSummaryDrillDown', 'AssetManagementReportAPIController@getAssetRegisterSummaryDrillDownExport');
-
             Route::post('approveProcurementOrder', 'ProcumentOrderAPIController@approveProcurementOrder');
             
             
@@ -573,7 +570,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('period_masters', 'PeriodMasterAPIController');
             Route::resource('salary_process_masters', 'SalaryProcessMasterAPIController');
             Route::resource('salary_process_employment_types', 'SalaryProcessEmploymentTypesAPIController');
-            Route::get('getAssetCostingViewByFaID/{id}', 'FixedAssetMasterAPIController@getAssetCostingViewByFaID');
             Route::get('downloadPrItemUploadTemplate', 'PurchaseRequestAPIController@downloadPrItemUploadTemplate');
 
             Route::resource('hrms_chart_of_accounts', 'HRMSChartOfAccountsAPIController');
