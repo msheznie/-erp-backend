@@ -27,3 +27,8 @@ Route::group([], function(){
     Route::get('getUserGroupNavigation', 'UserGroupAssignAPIController@getUserGroupNavigation')->name('Get user group navigation');
     Route::resource('assignUserGroupNavigation', 'UserGroupAssignAPIController');
 });
+
+//Navigation Report
+Route::group([], function(){
+    Route::post('exportNavigationeport', 'UserGroupAssignAPIController@exportNavigationeport')->name('Export navigation report');
+});
