@@ -372,3 +372,10 @@ Route::group([], function() {
     Route::get('supplierBusinessSubCategoryDestroyCheck/{id}', 'SupplierCategorySubAPIController@destroyCheck')->name("Validate supplier business sub category can delete");
     Route::resource('supplierBusinessSubCategories', 'SupplierCategorySubAPIController');
 });
+
+//Reason Code Master
+Route::group([],function (){
+    Route::post('getAllReasonCodeMaster', 'ReasonCodeMasterAPIController@getAllReasonCodeMaster')->name("Get all reason code master");
+    Route::post('updateReasonCodeMaster', 'ReasonCodeMasterAPIController@update')->name("Update reason code master");
+    Route::get('getAllGLCodesForReasonMaster', 'ReasonCodeMasterAPIController@getAllGLCodes')->name("Get all gl codes for reason master");
+});
