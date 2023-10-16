@@ -798,7 +798,7 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
     public function getEvaluationDetailById(Request $request)
     {
         $input = $request->all();
-        if($input['isMasterCriteria'] == 1){
+        if(isset($input['isMasterCriteria']) && $input['isMasterCriteria'] == 1){
             return EvaluationCriteriaMasterDetails::with(['evaluation_criteria_master', 'evaluation_criteria_score_config'])->where('id',$input['evaluationId'])->first();
         } else {
             return EvaluationCriteriaDetails::with(['evaluation_criteria_score_config'])->where('id',$input['evaluationId'])->first();
@@ -810,7 +810,7 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
         $input = $this->convertArrayToSelectedValue($request->all(), array( 'answer_type_id'));
         $employee = \Helper::getEmployeeInfo();
 
-        if(isset($input['evaluation_criteria_master_id']) && $input['evaluation_criteria_master_id'] != 0){
+        if(isset($input['eidtMasterCriteria'])&& isset($input['evaluation_criteria_master_id']) && $input['evaluation_criteria_master_id'] != 0){
             return $this->editEvaluationMasterCriteria($request);
         }
 
@@ -930,6 +930,12 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
             if(!isset($input['answer_type_id']) || empty($input['answer_type_id'])){
                 return ['success' => false, 'message' => 'Answer Type is required'];
             }
+        }
+
+        $chkDuplicateName =  EvaluationCriteriaMaster::where('id','!=',$input['evaluation_criteria_master']['id'])->where('name',$input['evaluation_criteria_master']['name'])->first();
+
+        if(!empty($chkDuplicateName)){
+            return ['success' => false, 'message' => 'Name cannot be duplicated'];
         }
 
         $chkDuplicate =  EvaluationCriteriaMasterDetails::where('evaluation_criteria_master_id',$input['evaluation_criteria_master_id'])->where('id','!=',$input['id'])->where('description',$input['description'])->where('level',$input['level'])->first();
