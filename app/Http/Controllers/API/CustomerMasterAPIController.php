@@ -810,7 +810,19 @@ class CustomerMasterAPIController extends AppBaseController
         $companySystemID = $request['companySystemID'];
         $selectedCompanySystemID = $request['selectedCompanySystemID'];
 
-        $customerCompanies = CustomerAssigned::where('companySystemID', $selectedCompanySystemID)
+        if(isset($request['selectedAssetDisposalType']) && $request['selectedAssetDisposalType'] == 6) {
+            $customerCompanies = CustomerAssigned::where('companySystemID', $selectedCompanySystemID)
+            ->with(['company', 'customer_master' => function ($query) use ($companySystemID) {
+                $query->select('customerCodeSystem');
+            }])
+            ->whereHas('customer_master', function($query) use ($companySystemID){
+                $query->where('isCustomerActive', 1);
+            })
+            ->where('isAssigned', -1)
+            ->orderBy('customerAssignedID', 'DESC')
+            ->get();
+        }else {
+            $customerCompanies = CustomerAssigned::where('companySystemID', $selectedCompanySystemID)
             ->with(['company', 'customer_master' => function ($query) use ($companySystemID) {
                 $query->select('customerCodeSystem', 'companyLinkedToSystemID')
                       ->where('companyLinkedToSystemID', $companySystemID);
@@ -822,6 +834,8 @@ class CustomerMasterAPIController extends AppBaseController
             ->where('isAssigned', -1)
             ->orderBy('customerAssignedID', 'DESC')
             ->get();
+        }
+
 
 
         return $this->sendResponse($customerCompanies->toArray(), 'customer companies retrieved successfully');
