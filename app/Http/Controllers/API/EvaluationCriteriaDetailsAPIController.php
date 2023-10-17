@@ -1163,7 +1163,7 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        if(isset($input['evaluation_criteria_master_id']) && $input['evaluation_criteria_master_id'] != 0){
+        if(isset($input['eidtMasterCriteria']) && isset($input['evaluation_criteria_master_id']) && $input['evaluation_criteria_master_id'] != 0){
             return $this->validateWeightageMasterEdit($request);
         }
 
