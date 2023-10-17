@@ -722,8 +722,12 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        if($input['tenderMasterId'] == null) {
-            return $this->getEvaluationCriteriaMasterDetails($request);
+        if(isset($request['tenderMasterId']) && $request['tenderMasterId'] == null) {
+            if(isset($request['loadMasterCriteria']) &&  $request['loadMasterCriteria'] == true){
+                return $this->getEvaluationCriteriaMaster($request);
+            } else if(isset($input['loadMasterCriteriaDetails']) && $input['loadMasterCriteriaDetails'] == true){
+                return $this->getEvaluationCriteriaMasterDetails($request);
+            }
         }
 
         $data['criteriaDetail'] = EvaluationCriteriaDetails::with(['evaluation_criteria_type','tender_criteria_answer_type','child'=> function($q){
@@ -750,13 +754,54 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
                                         $q->with(['evaluation_criteria_type','tender_criteria_answer_type']);
                                     }]);
                                 }]);
-        }])->where('level',1)->where('critera_type_id',$input['critera_type_id'])->get();
+        }])->where('level',1)->where('critera_type_id',$input['critera_type_id'])->where('evaluation_criteria_master_id', $input['evaluationCriteriaMasterId'])->get();
         return $data;
+    }
+
+    public function getEvaluationCriteriaMaster(Request $request)
+    {
+        $input = $request->all();
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $request['companyId'];
+        $tenderMaster = EvaluationCriteriaMaster::with(['evaluation_criteria_details.tender_master' => function ($query) {
+            $query->where('published_yn', 0);
+        }])->where('company_id', $companyId);
+        $search = $request->input('search.value');
+        if ($search) {
+            $tenderMaster = $tenderMaster->where(function ($query) use ($search) {
+                $query->where('name', 'LIKE', "%{$search}%");
+            });
+        }
+        return \DataTables::eloquent($tenderMaster)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('id', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
     }
 
     public function deleteEvaluationCriteria(Request $request)
     {
         $input = $request->all();
+
+        if(isset($request['isMasterCriteria']) && $request['isMasterCriteria']){
+            $this->deleteEvaluationCriteriaMaster($request);
+        }
+
+        if(isset($request['isMasterCriteriaDetails']) && $request['isMasterCriteriaDetails']){
+            $this->deleteEvaluationCriteriaMasterDetails($request);
+        }
+
         DB::beginTransaction();
         try {
             $evaluationDetails = EvaluationCriteriaDetails::find($input['id']);
@@ -783,6 +828,66 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
                     EvaluationCriteriaScoreConfig::where('criteria_detail_id',$val2['id'])->delete();
                 }
             }
+            if($result){
+                DB::commit();
+                return ['success' => true, 'message' => 'Successfully deleted', 'data' => $result];
+            }
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($this->failed($e));
+            return ['success' => false, 'message' => $e];
+        }
+    }
+
+    public function deleteEvaluationCriteriaMasterDetails(Request $request)
+    {
+        DB::beginTransaction();
+        try {
+            $evaluationDetails = EvaluationCriteriaMasterDetails::find($request['id']);
+            $result = $evaluationDetails->delete();
+            EvaluationCriteriaScoreConfig::where('criteria_detail_id',$request['id'])->delete();
+            $levelTwo = EvaluationCriteriaMasterDetails::where('parent_id',$request['id'])->get();
+            if(!empty($levelTwo)){
+                foreach ($levelTwo as $val2){
+                    $levelThree = EvaluationCriteriaMasterDetails::where('parent_id',$val2['id'])->get();
+                    if(!empty($levelThree)){
+                        foreach ($levelThree as $val3){
+                            $levelfour = EvaluationCriteriaMasterDetails::where('parent_id',$val3['id'])->get();
+                            if(!empty($levelfour)){
+                                foreach ($levelfour as $val4){
+                                    EvaluationCriteriaMasterDetails::where('id',$val4['id'])->delete();
+                                    EvaluationCriteriaScoreConfig::where('criteria_detail_id',$val4['id'])->delete();
+                                }
+                            }
+                            EvaluationCriteriaMasterDetails::where('id',$val3['id'])->delete();
+                            EvaluationCriteriaScoreConfig::where('criteria_detail_id',$val3['id'])->delete();
+                        }
+                    }
+                    EvaluationCriteriaMasterDetails::where('id',$val2['id'])->delete();
+                    EvaluationCriteriaScoreConfig::where('criteria_detail_id',$val2['id'])->delete();
+                }
+            }
+            if($result){
+                DB::commit();
+                return ['success' => true, 'message' => 'Successfully deleted', 'data' => $result];
+            }
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($this->failed($e));
+            return ['success' => false, 'message' => $e];
+        }
+    }
+
+    public function deleteEvaluationCriteriaMaster(Request $request)
+    {
+        $input = $request->all();
+        DB::beginTransaction();
+        try {
+            $evaluationMaster = EvaluationCriteriaMaster::find($input['id']);
+            $evaluationMaster->delete();
+
+            $result = EvaluationCriteriaMasterDetails::where('evaluation_criteria_master_id', $input['id']);
+            $result->delete();
             if($result){
                 DB::commit();
                 return ['success' => true, 'message' => 'Successfully deleted', 'data' => $result];
@@ -1058,7 +1163,7 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        if(isset($input['evaluation_criteria_master_id']) && $input['evaluation_criteria_master_id'] != 0){
+        if(isset($input['eidtMasterCriteria']) && isset($input['evaluation_criteria_master_id']) && $input['evaluation_criteria_master_id'] != 0){
             return $this->validateWeightageMasterEdit($request);
         }
 
