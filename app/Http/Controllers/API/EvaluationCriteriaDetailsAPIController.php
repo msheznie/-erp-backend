@@ -798,6 +798,10 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
             $this->deleteEvaluationCriteriaMaster($request);
         }
 
+        if(isset($request['isMasterCriteriaDetails']) && $request['isMasterCriteriaDetails']){
+            $this->deleteEvaluationCriteriaMasterDetails($request);
+        }
+
         DB::beginTransaction();
         try {
             $evaluationDetails = EvaluationCriteriaDetails::find($input['id']);
@@ -821,6 +825,45 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
                         }
                     }
                     EvaluationCriteriaDetails::where('id',$val2['id'])->delete();
+                    EvaluationCriteriaScoreConfig::where('criteria_detail_id',$val2['id'])->delete();
+                }
+            }
+            if($result){
+                DB::commit();
+                return ['success' => true, 'message' => 'Successfully deleted', 'data' => $result];
+            }
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($this->failed($e));
+            return ['success' => false, 'message' => $e];
+        }
+    }
+
+    public function deleteEvaluationCriteriaMasterDetails(Request $request)
+    {
+        DB::beginTransaction();
+        try {
+            $evaluationDetails = EvaluationCriteriaMasterDetails::find($request['id']);
+            $result = $evaluationDetails->delete();
+            EvaluationCriteriaScoreConfig::where('criteria_detail_id',$request['id'])->delete();
+            $levelTwo = EvaluationCriteriaMasterDetails::where('parent_id',$request['id'])->get();
+            if(!empty($levelTwo)){
+                foreach ($levelTwo as $val2){
+                    $levelThree = EvaluationCriteriaMasterDetails::where('parent_id',$val2['id'])->get();
+                    if(!empty($levelThree)){
+                        foreach ($levelThree as $val3){
+                            $levelfour = EvaluationCriteriaMasterDetails::where('parent_id',$val3['id'])->get();
+                            if(!empty($levelfour)){
+                                foreach ($levelfour as $val4){
+                                    EvaluationCriteriaMasterDetails::where('id',$val4['id'])->delete();
+                                    EvaluationCriteriaScoreConfig::where('criteria_detail_id',$val4['id'])->delete();
+                                }
+                            }
+                            EvaluationCriteriaMasterDetails::where('id',$val3['id'])->delete();
+                            EvaluationCriteriaScoreConfig::where('criteria_detail_id',$val3['id'])->delete();
+                        }
+                    }
+                    EvaluationCriteriaMasterDetails::where('id',$val2['id'])->delete();
                     EvaluationCriteriaScoreConfig::where('criteria_detail_id',$val2['id'])->delete();
                 }
             }
