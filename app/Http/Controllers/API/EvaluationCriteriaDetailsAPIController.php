@@ -793,6 +793,11 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
     public function deleteEvaluationCriteria(Request $request)
     {
         $input = $request->all();
+
+        if(isset($request['isMasterCriteria']) && $request['isMasterCriteria']){
+            $this->deleteEvaluationCriteriaMaster($request);
+        }
+
         DB::beginTransaction();
         try {
             $evaluationDetails = EvaluationCriteriaDetails::find($input['id']);
@@ -819,6 +824,27 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
                     EvaluationCriteriaScoreConfig::where('criteria_detail_id',$val2['id'])->delete();
                 }
             }
+            if($result){
+                DB::commit();
+                return ['success' => true, 'message' => 'Successfully deleted', 'data' => $result];
+            }
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error($this->failed($e));
+            return ['success' => false, 'message' => $e];
+        }
+    }
+
+    public function deleteEvaluationCriteriaMaster(Request $request)
+    {
+        $input = $request->all();
+        DB::beginTransaction();
+        try {
+            $evaluationMaster = EvaluationCriteriaMaster::find($input['id']);
+            $evaluationMaster->delete();
+
+            $result = EvaluationCriteriaMasterDetails::where('evaluation_criteria_master_id', $input['id']);
+            $result->delete();
             if($result){
                 DB::commit();
                 return ['success' => true, 'message' => 'Successfully deleted', 'data' => $result];
