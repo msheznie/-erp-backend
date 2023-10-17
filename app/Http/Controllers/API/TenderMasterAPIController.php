@@ -3952,11 +3952,11 @@ WHERE
             $bidSubmissionMasterIds = [];
         }
 
-        $negotiationCode = TenderMaster::select('negotiation_code')->where('id', $tenderId)->first();
+        $getNegotiationCode = TenderMaster::select('negotiation_code')->where('id', $tenderId)->first();
 
-        $tender = TenderMaster::where('id', $tenderId)->with(['ranking_supplier' => function ($q) use($bidSubmissionMasterIds, $negotiationCode) {
-            if($negotiationCode != '' OR $negotiationCode != null){
-                $q->whereIn('bid_id', $bidSubmissionMasterIds);
+        $tender = TenderMaster::where('id', $tenderId)->with(['ranking_supplier' => function ($q) use($bidSubmissionMasterIds, $getNegotiationCode) {
+            if($getNegotiationCode->negotiation_code != '' OR $getNegotiationCode->negotiation_code != null){
+               $q->whereIn('bid_id', $bidSubmissionMasterIds);
             }
             $q->where('award', 1)->with('supplier');
         }])->first();
