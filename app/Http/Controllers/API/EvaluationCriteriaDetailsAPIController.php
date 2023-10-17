@@ -725,7 +725,7 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
         if(isset($request['tenderMasterId']) && $request['tenderMasterId'] == null) {
             if(isset($request['loadMasterCriteria']) &&  $request['loadMasterCriteria'] == true){
                 return $this->getEvaluationCriteriaMaster($request);
-            } else{
+            } else if(isset($input['loadMasterCriteriaDetails']) && $input['loadMasterCriteriaDetails'] == true){
                 return $this->getEvaluationCriteriaMasterDetails($request);
             }
         }
@@ -754,7 +754,7 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
                                         $q->with(['evaluation_criteria_type','tender_criteria_answer_type']);
                                     }]);
                                 }]);
-        }])->where('level',1)->where('critera_type_id',$input['critera_type_id'])->get();
+        }])->where('level',1)->where('critera_type_id',$input['critera_type_id'])->where('evaluation_criteria_master_id', $input['evaluationCriteriaMasterId'])->get();
         return $data;
     }
 
