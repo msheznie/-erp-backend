@@ -722,8 +722,12 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        if($input['tenderMasterId'] == null) {
-            return $this->getEvaluationCriteriaMasterDetails($request);
+        if(isset($request['tenderMasterId']) && $request['tenderMasterId'] == null) {
+            if(isset($request['loadMasterCriteria']) &&  $request['loadMasterCriteria'] == true){
+                return $this->getEvaluationCriteriaMaster($request);
+            } else{
+                return $this->getEvaluationCriteriaMasterDetails($request);
+            }
         }
 
         $data['criteriaDetail'] = EvaluationCriteriaDetails::with(['evaluation_criteria_type','tender_criteria_answer_type','child'=> function($q){
@@ -752,6 +756,36 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
                                 }]);
         }])->where('level',1)->where('critera_type_id',$input['critera_type_id'])->get();
         return $data;
+    }
+
+    public function getEvaluationCriteriaMaster(Request $request)
+    {
+        $input = $request->all();
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $companyId = $request['companyId'];
+        $tenderMaster = EvaluationCriteriaMaster::where('company_id', $companyId);
+        $search = $request->input('search.value');
+        if ($search) {
+            $tenderMaster = $tenderMaster->where(function ($query) use ($search) {
+                $query->where('name', 'LIKE', "%{$search}%");
+            });
+        }
+        return \DataTables::eloquent($tenderMaster)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('id', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
     }
 
     public function deleteEvaluationCriteria(Request $request)
