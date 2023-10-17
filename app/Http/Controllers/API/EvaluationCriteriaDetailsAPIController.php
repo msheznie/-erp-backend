@@ -768,7 +768,9 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
         }
 
         $companyId = $request['companyId'];
-        $tenderMaster = EvaluationCriteriaMaster::where('company_id', $companyId);
+        $tenderMaster = EvaluationCriteriaMaster::with(['evaluation_criteria_details.tender_master' => function ($query) {
+            $query->where('published_yn', 0);
+        }])->where('company_id', $companyId);
         $search = $request->input('search.value');
         if ($search) {
             $tenderMaster = $tenderMaster->where(function ($query) use ($search) {
