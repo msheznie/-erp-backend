@@ -517,7 +517,7 @@ class PosAPIController extends AppBaseController
             $isPos = isset($input['is_pos']) ? $input['is_pos']: 0;
 
             if($isPos == 1) {
-                $employee = Employee::selectRaw('employees.employeeSystemID as id,empID as system_code,empName As name,empUserName As user_name,empEmail As email, empActive as is_active')
+                $employee = Employee::selectRaw('employees.employeeSystemID as id,empID as system_code,empName As name,empUserName As user_name,empEmail As email, empActive as is_active, discharegedYN as isDischarged')
                     ->join('srp_erp_employeenavigation', 'employees.employeeSystemID', '=', 'srp_erp_employeenavigation.employeeSystemID')
                     ->join('srp_erp_navigationusergroupsetup', 'srp_erp_employeenavigation.userGroupID', '=', 'srp_erp_navigationusergroupsetup.userGroupID')
                     ->where('srp_erp_navigationusergroupsetup.navigationMenuID', 371)
