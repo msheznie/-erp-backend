@@ -3941,7 +3941,23 @@ WHERE
     public function getAwardedFormData(Request $request)
     {
         $tenderId = $request['tenderMasterId'];
-        $tender = TenderMaster::where('id', $tenderId)->with(['ranking_supplier' => function ($q) {
+
+        $tenderBidNegotiations = TenderBidNegotiation::select('bid_submission_master_id_new')
+            ->where('tender_id', $tenderId)
+            ->get();
+
+        if ($tenderBidNegotiations->count() > 0) {
+            $bidSubmissionMasterIds = $tenderBidNegotiations->pluck('bid_submission_master_id_new')->toArray();
+        } else {
+            $bidSubmissionMasterIds = [];
+        }
+
+        $getNegotiationCode = TenderMaster::select('negotiation_code')->where('id', $tenderId)->first();
+
+        $tender = TenderMaster::where('id', $tenderId)->with(['ranking_supplier' => function ($q) use($bidSubmissionMasterIds, $getNegotiationCode) {
+            if($getNegotiationCode->negotiation_code != '' OR $getNegotiationCode->negotiation_code != null){
+               $q->whereIn('bid_id', $bidSubmissionMasterIds);
+            }
             $q->where('award', 1)->with('supplier');
         }])->first();
 
