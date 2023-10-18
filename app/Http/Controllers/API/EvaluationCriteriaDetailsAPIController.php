@@ -485,7 +485,6 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
             'parent_id' => $parentId,
             'level' => $level,
             'critera_type_id' => $result->critera_type_id,
-            'max_value' => $result->max_value,
             'evaluation_criteria_master_id' => $evaluationCriteriaMasterId,
         ];
 
@@ -602,14 +601,12 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
             if(!empty($chkDuplicateName)){
                 return ['success' => false, 'message' => 'Name cannot be duplicated'];
             }
+        }
 
-            $chkDuplicate =  EvaluationCriteriaMasterDetails::where('description',$input['description'])
-                ->where('level',$input['level'])
-                ->first();
+        $chkDuplicate =  EvaluationCriteriaMasterDetails::where('evaluation_criteria_master_id',$input['evaluationCriteriaMasterId'])->where('description',$input['description'])->where('level',$input['level'])->first();
 
-            if(!empty($chkDuplicate)){
-                return ['success' => false, 'message' => 'Description cannot be duplicated'];
-            }
+        if(!empty($chkDuplicate)){
+            return ['success' => false, 'message' => 'Description cannot be duplicated'];
         }
 
         DB::beginTransaction();
