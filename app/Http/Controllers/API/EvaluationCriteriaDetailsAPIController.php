@@ -1177,9 +1177,11 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
 
             if($total>$parent['weightage']){
                 return ['success' => false, 'message' => 'Total Child Weightage cannot exceed '.$parent['weightage']];
-            }else{
+            } else{
                 return ['success' => true, 'message' => 'Success'];
             }
+        } else {
+            return ['success' => true, 'message' => 'Success'];
         }
 
     }
