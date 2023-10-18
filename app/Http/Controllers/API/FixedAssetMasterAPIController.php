@@ -2219,7 +2219,7 @@ class FixedAssetMasterAPIController extends AppBaseController
         })->count();
 
         if($depAsset > 0){
-            return $this->sendError('You cannot return back to amend this asset costing,Depreciation has been run for the particular asset');
+            return $this->sendError('This asset cannot be returned back to amend. Monthly Depreciation has already been generated for this asset');
         }
 
         $emailBody = '<p>' . $masterData->faCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
