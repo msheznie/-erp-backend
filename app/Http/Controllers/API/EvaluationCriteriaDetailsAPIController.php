@@ -602,14 +602,12 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
             if(!empty($chkDuplicateName)){
                 return ['success' => false, 'message' => 'Name cannot be duplicated'];
             }
+        }
 
-            $chkDuplicate =  EvaluationCriteriaMasterDetails::where('description',$input['description'])
-                ->where('level',$input['level'])
-                ->first();
+        $chkDuplicate =  EvaluationCriteriaMasterDetails::where('evaluation_criteria_master_id',$input['evaluationCriteriaMasterId'])->where('description',$input['description'])->where('level',$input['level'])->first();
 
-            if(!empty($chkDuplicate)){
-                return ['success' => false, 'message' => 'Description cannot be duplicated'];
-            }
+        if(!empty($chkDuplicate)){
+            return ['success' => false, 'message' => 'Description cannot be duplicated'];
         }
 
         DB::beginTransaction();
@@ -773,9 +771,11 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
         }
 
         $companyId = $request['companyId'];
+
         $tenderMaster = EvaluationCriteriaMaster::with(['evaluation_criteria_details.tender_master' => function ($query) {
             $query->where('confirmed_yn', 0);
         }])->where('company_id', $companyId);
+
         $search = $request->input('search.value');
         if ($search) {
             $tenderMaster = $tenderMaster->where(function ($query) use ($search) {
@@ -923,8 +923,12 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
             return $this->editEvaluationMasterCriteria($request);
         }
 
-        if(isset($input['criteriaMasterStatusEdit']) && $input['criteriaMasterStatusEdit'] == true){
+        if(isset($input['criteriaMasterStatusEdit']) && $input['criteriaMasterStatusEdit'] == true && !isset($input['isDeleteMaster'])){
            return $this->criteriaMasterStatusChange($input['isChecked'], $input['masterCriteriaId']);
+        }
+
+        if(isset($input['criteriaMasterStatusEdit']) && $input['criteriaMasterStatusEdit'] == true && $input['isDeleteMaster'] == true){
+           return $this->criteriaDelete($input['masterCriteriaId']);
         }
 
         if($input['level'] == 1){
@@ -994,11 +998,13 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
 
     private function criteriaMasterStatusChange($isChecked, $masterCriteriaId){
         try {
-            $tenderMasterPublishedCount = TenderMaster::whereHas('criteriaDetails', function ($query) use ($masterCriteriaId) {
-                $query->where('evaluation_criteria_master_id', $masterCriteriaId);
-            })->where('published_yn', 0)->count();
+            $evaluationCriteriaMasterDetails = EvaluationCriteriaDetails::where('evaluation_criteria_master_id', $masterCriteriaId)
+                ->pluck('tender_id')
+                ->toArray();
 
-            if ($tenderMasterPublishedCount > 0 && $isChecked == false) {
+            $tenderMasterPublishedCount = TenderMaster::select('id')->whereIn('id', $evaluationCriteriaMasterDetails)->where('confirmed_yn', 0)->count();
+
+            if ($tenderMasterPublishedCount > 0) {
                 return ['success' => false, 'message' => 'Technical evaluation criteria already used'];
             }
 
@@ -1016,6 +1022,20 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
             return ['success' => false, 'message' => $e];
         }
 
+    }
+
+    private function criteriaDelete($masterCriteriaId){
+        $evaluationCriteriaMasterDetails = EvaluationCriteriaDetails::where('evaluation_criteria_master_id', $masterCriteriaId)
+            ->pluck('tender_id')
+            ->toArray();
+
+        $tenderMasterPublishedCount = TenderMaster::select('id')->whereIn('id', $evaluationCriteriaMasterDetails)->where('confirmed_yn', 0)->count();
+
+        if ($tenderMasterPublishedCount > 0) {
+            return ['success' => false, 'message' => 'Technical evaluation criteria already used'];
+        } else {
+            return ['success' => true, 'message' => 'Technical evaluation criteria not used'];
+        }
     }
 
     public function editEvaluationMasterCriteria(Request $request)
