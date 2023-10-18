@@ -475,6 +475,7 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
     {
         $evaluationCriteriaMasterId = $result->evaluation_criteria_master_id;
         $level = $result->level;
+
         $parentId = $result->parent_id;
 
         if ($level > 1) {
@@ -505,61 +506,14 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
 
         $data['is_final_level'] = $result->is_final_level;
 
-        if ($result->is_final_level == 1 && $result->critera_type_id == 2 && $result->answer_type_id == 2) {
-            $this->insertScoreConfig($data, $input, $employee);
-        }
-
         $criteriaDetail = EvaluationCriteriaDetails::create($data);
 
-        if ($criteriaDetail) {
-            $this->updateMinMaxValues($criteriaDetail, $result);
-            //$this->insertAdditionalScoreConfig($criteriaDetail, $input, $employee);
-            $parentMap[$result->id] = $criteriaDetail->id;
+        if ($result->is_final_level == 1 && $result->critera_type_id == 2) {
+            EvaluationCriteriaScoreConfig::where('criteria_detail_id', $result->id)->update(['criteria_detail_id' => $criteriaDetail->id]);
         }
-    }
 
-    private function insertScoreConfig($data, $input, $employee)
-    {
-        $datayes = [
-            'criteria_detail_id' => $data['id'],
-            'label' => $input['yes_label'],
-            'score' => $input['yes_value'],
-            'created_by' => $employee->employeeSystemID,
-        ];
-
-        $datano = [
-            'criteria_detail_id' => $data['id'],
-            'label' => $input['no_label'],
-            'score' => $input['no_value'],
-            'created_by' => $employee->employeeSystemID,
-        ];
-
-        EvaluationCriteriaScoreConfig::create($datayes);
-        EvaluationCriteriaScoreConfig::create($datano);
-    }
-
-    private function updateMinMaxValues($criteriaDetail, $result)
-    {
-        if ($result->is_final_level == 1 && $result->critera_type_id == 2 && $result->answer_type_id == 2) {
-            $criteriaDetails = EvaluationCriteriaScoreConfig::where('criteria_detail_id', $criteriaDetail->id)->get();
-
-            $minAns = null;
-            $maxAns = null;
-
-            foreach ($criteriaDetails as $detail) {
-                $score = $detail->score;
-                if ($minAns === null || $score < $minAns) {
-                    $minAns = $score;
-                }
-                if ($maxAns === null || $score > $maxAns) {
-                    $maxAns = $score;
-                }
-            }
-
-            $criteriaDetail->update([
-                'min_value' => $minAns,
-                'max_value' => $maxAns,
-            ]);
+        if ($criteriaDetail) {
+            $parentMap[$result->id] = $criteriaDetail->id;
         }
     }
 
@@ -1211,15 +1165,7 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
             return $this->validateWeightageMasterEdit($request);
         }
 
-        if($input['level'] == 1){
-            $result = EvaluationCriteriaDetails::where('tender_id',$input['tender_id'])->where('level',1)->where('id','!=',$input['id'])->sum('weightage');
-            $total = $result + $input['weightage'];
-            if($total>100){
-                return ['success' => false, 'message' => 'Total weightage cannot exceed 100 percent'];
-            } else {
-                return ['success' => true, 'message' => 'Success'];
-            }
-        } else {
+        if($input['level'] != 1){
             $result = EvaluationCriteriaDetails::where('tender_id',$input['tender_id'])
                 ->where('parent_id',$input['parent_id'])->where('level',$input['level'])
                 ->where('id','!=',$input['id'])
