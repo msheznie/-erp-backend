@@ -737,7 +737,7 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
                                 }]);
         }])->where('tender_id',$input['tenderMasterId'])->where('level',1)->where('critera_type_id',$input['critera_type_id'])->get();
 
-        $data['criteriaMaster'] = EvaluationCriteriaMaster::select('id', 'name', 'is_active')->with(['evaluation_criteria_details'])
+        $data['criteriaMaster'] = EvaluationCriteriaMaster::select('id', 'name', 'is_active')
             ->where('is_active', 1)
             ->whereDoesntHave('evaluation_criteria_details', function ($query) use($request) {
                 $query->where('tender_id', '=', $request['tenderMasterId']);
