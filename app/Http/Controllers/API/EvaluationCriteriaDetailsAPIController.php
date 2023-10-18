@@ -485,6 +485,7 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
             'parent_id' => $parentId,
             'level' => $level,
             'critera_type_id' => $result->critera_type_id,
+            'max_value' => $result->max_value,
             'evaluation_criteria_master_id' => $evaluationCriteriaMasterId,
         ];
 
