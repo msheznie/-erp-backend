@@ -721,7 +721,7 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
     public function getEvaluationCriteriaDetails(Request $request)
     {
         $input = $request->all();
-
+        $tenderId = $input['tenderMasterId'];
         if(isset($request['tenderMasterId']) && $request['tenderMasterId'] == null) {
             if(isset($request['loadMasterCriteria']) &&  $request['loadMasterCriteria'] == true){
                 return $this->getEvaluationCriteriaMaster($request);
@@ -738,7 +738,12 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
                                 }]);
         }])->where('tender_id',$input['tenderMasterId'])->where('level',1)->where('critera_type_id',$input['critera_type_id'])->get();
 
-        $data['criteriaMaster'] = EvaluationCriteriaMaster::where('is_active', 1)->get();
+        $data['criteriaMaster'] = EvaluationCriteriaMaster::with(['evaluation_criteria_details'])
+            ->where('is_active', 1)
+            ->whereDoesntHave('evaluation_criteria_details', function ($query) use($tenderId) {
+                $query->where('tender_id', '=', $tenderId);
+            })
+            ->get();
         return $data;
     }
 
