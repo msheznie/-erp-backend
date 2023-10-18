@@ -303,9 +303,11 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
         $is_final_level = 0;
         $sort_order = 1;
 
-        if($input['tenderMasterId'] == null){
-           return $this->addMasterEvaluationCriteria($request);
-        } else if(isset($input['pullFromMaster']) && $input['pullFromMaster'] == true){
+        if($input['tenderMasterId'] == null && isset($input['level']) && $input['level'] !== 0){
+           return $this->addMasterEvaluationCriteriaDetail($request);
+        } else if(isset($input['level']) && $input['level'] === 0) {
+            return $this->addMasterEvaluationCriteria($request);
+        }else if(isset($input['pullFromMaster']) && $input['pullFromMaster'] == true){
             $idArray = array_map(function ($item) {
                 return $item['id'];
             }, $input['selectedData']);
@@ -561,7 +563,7 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
         }
     }
 
-    private function addMasterEvaluationCriteria(Request $request)
+    private function addMasterEvaluationCriteriaDetail(Request $request)
     {
         $input = $this->convertArrayToSelectedValue($request->all(), array('critera_type_id', 'answer_type_id'));
         $employee = \Helper::getEmployeeInfo();
@@ -710,6 +712,35 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
                 DB::commit();
                 return ['success' => true, 'message' => 'Successfully created'];
                 }
+        }catch (\Exception $e) {
+            DB::rollback();
+            Log::error($this->failed($e));
+            return ['success' => false, 'message' => $e];
+        }
+    }
+
+    private function addMasterEvaluationCriteria(Request $request)
+    {
+        $input = $this->convertArrayToSelectedValue($request->all(), array('critera_type_id', 'answer_type_id'));
+        $employee = \Helper::getEmployeeInfo();
+
+        if($input['level'] == 0){
+            $chkDuplicateName =  EvaluationCriteriaMaster::where('name',$input['name'])->first();
+
+            if(!empty($chkDuplicateName)){
+                return ['success' => false, 'message' => 'Name cannot be duplicated'];
+            }
+        }
+
+        DB::beginTransaction();
+        try {
+            $data_master['name'] = $input['name'];
+            $data_master['is_active'] = '1';
+            $data_master['company_id'] = $input['companySystemID'];
+            $data_master['created_by'] = $employee->employeeSystemID;
+            EvaluationCriteriaMaster::create($data_master);
+            DB::commit();
+            return ['success' => true, 'message' => 'Successfully created'];
         }catch (\Exception $e) {
             DB::rollback();
             Log::error($this->failed($e));
