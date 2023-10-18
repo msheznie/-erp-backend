@@ -569,7 +569,6 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
         $employee = \Helper::getEmployeeInfo();
         $is_final_level = 0;
         $sort_order = 1;
-        $evaluationCriteriaMasterId = 0;
         $sort = EvaluationCriteriaMasterDetails::where('level',$input['level'])->where('parent_id',$input['parent_id'])->orderBy('sort_order', 'desc')->first();
         if(!empty($sort)){
             $sort_order = $sort['sort_order'] + 1;
@@ -599,32 +598,16 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
         }
 
         if($input['level'] == 1){
-            $chkDuplicateName =  EvaluationCriteriaMaster::where('name',$input['name'])->first();
+            $chkDuplicate =  EvaluationCriteriaMasterDetails::where('evaluation_criteria_master_id',$input['evaluationCriteriaMasterId'])->where('description',$input['description'])->where('level',$input['level'])->first();
 
-            if(!empty($chkDuplicateName)){
-                return ['success' => false, 'message' => 'Name cannot be duplicated'];
+            if(!empty($chkDuplicate)){
+                return ['success' => false, 'message' => 'Description cannot be duplicated'];
             }
-        }
-
-        $chkDuplicate =  EvaluationCriteriaMasterDetails::where('evaluation_criteria_master_id',$input['evaluationCriteriaMasterId'])->where('description',$input['description'])->where('level',$input['level'])->first();
-
-        if(!empty($chkDuplicate)){
-            return ['success' => false, 'message' => 'Description cannot be duplicated'];
         }
 
         DB::beginTransaction();
         try {
-            if($input['level'] == 1){
-                $data_master['name'] = $input['name'];
-                $data_master['is_active'] = '1';
-                $data_master['company_id'] = $input['companySystemID'];
-                $data_master['created_by'] = $employee->employeeSystemID;
-                $resultMaster = EvaluationCriteriaMaster::create($data_master);
-                $evaluationCriteriaMasterId = $resultMaster->id;
-            } else if ($input['evaluationCriteriaMasterId'] != 0){
-                $evaluationCriteriaMasterId = $input['evaluationCriteriaMasterId'];
-            }
-
+            $evaluationCriteriaMasterId = $input['evaluationCriteriaMasterId'];
             $data['description'] = $input['description'];
             $data['evaluation_criteria_master_id'] = $evaluationCriteriaMasterId;
             $data['parent_id'] = $input['parent_id'];
@@ -1193,12 +1176,17 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
     {
         $input = $request->all();
         $weightage = $input['weightage'];
-
         $level  = isset($input['level']) ? $input['level'] : null;
-
         $parentId = $input['parentId'];
+
         if($level == 1){
-            return ['success' => true, 'message' => 'Success'];
+            $result = EvaluationCriteriaMasterDetails::where('evaluation_criteria_master_id',$input['evaluationCriteriaMasterId'])->where('level',1)->sum('weightage');
+            $total = $result + $weightage;
+            if($total>100){
+                return ['success' => false, 'message' => 'Total weightage cannot exceed 100 percent'];
+            } else {
+                return ['success' => true, 'message' => 'Success'];
+            }
         } else {
             $result = EvaluationCriteriaMasterDetails::where('parent_id',$parentId)->where('level',$level)->sum('weightage');
             $parent = EvaluationCriteriaMasterDetails::where('id',$parentId)->first();
