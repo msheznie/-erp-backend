@@ -432,7 +432,9 @@ class ChartOfAccountsAssignedAPIController extends AppBaseController
             ->where('isBank', 0)
             ->where('isAssigned', -1)
             ->where('isActive', 1)
-            ->whereDoesntHave('project');
+            ->whereDoesntHave('project',function($q) use ($projectID) {
+                $q->where('projectID',$projectID);
+            });
         $items = $items->get();
 
         if (empty($items)) {
