@@ -721,11 +721,10 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
     public function getEvaluationCriteriaDetails(Request $request)
     {
         $input = $request->all();
-        $tenderId = $input['tenderMasterId'];
         if(isset($request['tenderMasterId']) && $request['tenderMasterId'] == null) {
             if(isset($request['loadMasterCriteria']) &&  $request['loadMasterCriteria'] == true){
                 return $this->getEvaluationCriteriaMaster($request);
-            } else if(isset($input['loadMasterCriteriaDetails']) && $input['loadMasterCriteriaDetails'] == true){
+            } else if(isset($request['loadMasterCriteriaDetails']) && $request['loadMasterCriteriaDetails'] == true){
                 return $this->getEvaluationCriteriaMasterDetails($request);
             }
         }
@@ -740,8 +739,8 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
 
         $data['criteriaMaster'] = EvaluationCriteriaMaster::select('id', 'name', 'is_active')->with(['evaluation_criteria_details'])
             ->where('is_active', 1)
-            ->whereDoesntHave('evaluation_criteria_details', function ($query) use($tenderId) {
-                $query->where('tender_id', '=', $tenderId);
+            ->whereDoesntHave('evaluation_criteria_details', function ($query) use($request) {
+                $query->where('tender_id', '=', $request['tenderMasterId']);
             })
             ->get();
         return $data;
@@ -774,7 +773,7 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
 
         $companyId = $request['companyId'];
         $tenderMaster = EvaluationCriteriaMaster::with(['evaluation_criteria_details.tender_master' => function ($query) {
-            $query->where('published_yn', 0);
+            $query->where('confirmed_yn', 0);
         }])->where('company_id', $companyId);
         $search = $request->input('search.value');
         if ($search) {
@@ -800,11 +799,11 @@ class EvaluationCriteriaDetailsAPIController extends AppBaseController
         $input = $request->all();
 
         if(isset($request['isMasterCriteria']) && $request['isMasterCriteria']){
-            $this->deleteEvaluationCriteriaMaster($request);
+            return $this->deleteEvaluationCriteriaMaster($request);
         }
 
         if(isset($request['isMasterCriteriaDetails']) && $request['isMasterCriteriaDetails']){
-            $this->deleteEvaluationCriteriaMasterDetails($request);
+            return $this->deleteEvaluationCriteriaMasterDetails($request);
         }
 
         DB::beginTransaction();
