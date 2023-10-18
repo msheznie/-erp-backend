@@ -619,7 +619,17 @@ class EmployeesDepartmentAPIController extends AppBaseController
 
         $selectedSegments = (isset($input['selectedSegments']) && !empty($input['selectedSegments'])) ? collect($input['selectedSegments'])->pluck('serviceLineSystemID')->toArray() : [];
 
-        $statusID = (isset($input['statusID']) && is_array($input['statusID'])) ? $input['statusID'][0] : $input['statusID'];
+        // $statusID = (isset($input['statusID']) && is_array($input['statusID'])) ? $input['statusID'][0] : $input['statusID'];
+        if (isset($input['statusID'])) {
+            if (is_array($input['statusID'])) {
+                $statusID = isset($input['statusID'][0]) ? $input['statusID'][0] : 1;
+            } else {
+                $statusID = $input['statusID'];
+            }
+        } else {
+            $statusID = 1;
+        }
+
         $levelStatusID = (isset($input['levelStatusID']) && is_array($input['levelStatusID'])) ? $input['levelStatusID'][0] : $input['levelStatusID'];
 
         $approvalMatrixData = DepartmentMaster::select('DepartmentDescription', 'departmentSystemID')

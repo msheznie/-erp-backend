@@ -289,6 +289,12 @@ class PaySupplierInvoiceDetail extends Model
         'createdUserSystemID',
         'createdUserID',
         'createdPcID',
+        'VATAmount',
+        'VATAmountRpt',
+        'VATAmountLocal',
+        'VATPercentage',
+        'vatMasterCategoryID',
+        'vatSubCategoryID',
         'timeStamp',
         'purchaseOrderID'
     ];
@@ -333,6 +339,12 @@ class PaySupplierInvoiceDetail extends Model
         'paymentSupplierDefaultAmount' => 'float',
         'paymentLocalAmount' => 'float',
         'paymentComRptAmount' => 'float',
+        'VATAmount' => 'float',
+        'VATAmountRpt' => 'float',
+        'VATAmountLocal' => 'float',
+        'VATPercentage' => 'float',
+        'vatMasterCategoryID' => 'integer',
+        'vatSubCategoryID' => 'integer',
         'timesReferred' => 'integer',
         'isRetention' => 'boolean',
         'modifiedUserID' => 'string',
@@ -355,6 +367,11 @@ class PaySupplierInvoiceDetail extends Model
     public function payment_master()
     {
         return $this->hasOne('App\Models\PaySupplierInvoiceMaster', 'PayMasterAutoId', 'PayMasterAutoId');
+    }
+
+    public function supplier_invoice()
+    {
+        return $this->hasOne('App\Models\BookInvSuppMaster', 'bookingSuppMasInvAutoID', 'bookingInvSystemCode');
     }
 
     public function matching_master()

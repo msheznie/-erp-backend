@@ -35,6 +35,8 @@ class TenantByKey
                 echo "Unauthorized Access";
             }
 
+            $api_key = isset($api_key) ? $api_key : null;
+
             // get tenant details by api key in request
             $tenant = Tenant::whereApiKey($api_key)->first();
             if (!empty($tenant)) {

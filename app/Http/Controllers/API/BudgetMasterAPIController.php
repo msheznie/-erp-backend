@@ -16,9 +16,11 @@
  */
 namespace App\Http\Controllers\API;
 
+use App\helper\CreateExcel;
 use App\Http\Requests\API\CreateBudgetMasterAPIRequest;
 use App\Http\Requests\API\UpdateBudgetMasterAPIRequest;
 use App\Jobs\AddBudgetDetails;
+use App\Jobs\BudgetSegmentBulkInsert;
 use App\Models\BudgetConsumedData;
 use App\Models\DirectPaymentDetails;
 use App\Models\DirectInvoiceDetails;
@@ -52,6 +54,7 @@ use App\Models\PurchaseOrderDetails;
 use App\Models\SegmentMaster;
 use App\Models\TemplatesGLCode;
 use App\Models\TemplatesMaster;
+use App\Models\UploadBudgets;
 use App\Models\Year;
 use App\Models\YesNoSelection;
 use App\helper\BudgetConsumptionService;
@@ -61,12 +64,14 @@ use App\Traits\AuditTrial;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
- use Carbon\Carbon;
- use Carbon\CarbonPeriod;
-
+use Carbon\Carbon;
+use Carbon\CarbonPeriod;
+use PHPExcel_IOFactory;
 /**
  * Class BudgetMasterController
  * @package App\Http\Controllers\API
@@ -634,7 +639,7 @@ class BudgetMasterAPIController extends AppBaseController
                                             ->on('erp_budjetdetails.chartOfAccountID', '=', 'ppo.financeGLcodePLSystemID');
                                     });
 
-       
+
         $reportData = $reportData->leftJoin(DB::raw('(SELECT
                                 erp_budgetadjustment.companySystemID,
                                 erp_budgetadjustment.serviceLineSystemID,
@@ -839,7 +844,7 @@ class BudgetMasterAPIController extends AppBaseController
     public function budgetGLCodeWiseDetails(Request $request)
     {
         $input = $request->all();
-        
+
         $result = $this->budgetGLCodeWiseDetailsData($input);
 
         return $this->sendResponse($result, 'details retrieved successfully');
@@ -1039,7 +1044,7 @@ class BudgetMasterAPIController extends AppBaseController
                                                              })
                                                             ->with(['supplier_invoice_master'])
                                                             ->get();
-            
+
             $pendingSupplierItemInvoiceAmount1 = SupplierInvoiceDirectItem::whereHas('master', function($query) use ($input) {
                                                                 $query->where('approved', 0)
                                                                       ->where('cancelYN', 0)
@@ -1382,7 +1387,7 @@ class BudgetMasterAPIController extends AppBaseController
                     //                                                     erp_companyreporttemplatelinks.templateDetailID as templatesDetailsAutoID,
                     //                                                     erp_companyreporttemplatelinks.templateMasterID,
                     //                                                     erp_companyreporttemplatelinks.glAutoID as chartOfAccountSystemID,
-                    //                                                     erp_companyreporttemplatelinks.glCode 
+                    //                                                     erp_companyreporttemplatelinks.glCode
                     //                                                     FROM
                     //                                                     erp_companyreporttemplatelinks
                     //                                                     WHERE erp_companyreporttemplatelinks.templateMasterID =' . $input['templatesMasterAutoID'] . ' AND erp_companyreporttemplatelinks.templateDetailID = ' . $input['templateDetailID'] . ' AND erp_companyreporttemplatelinks.glAutoID is not null) as tem_gl'),
@@ -1603,7 +1608,7 @@ class BudgetMasterAPIController extends AppBaseController
                                                             })
                                                             ->with(['supplier_invoice_master'])
                                                             ->get();
-            
+
             $pendingSupplierItemInvoiceAmount1 = SupplierInvoiceDirectItem::whereHas('master', function($query) use ($input) {
                                                                 $query->where('approved', 0)
                                                                       ->where('cancelYN', 0)
@@ -2097,7 +2102,7 @@ class BudgetMasterAPIController extends AppBaseController
                     //                                                     erp_companyreporttemplatelinks.templateDetailID as templatesDetailsAutoID,
                     //                                                     erp_companyreporttemplatelinks.templateMasterID,
                     //                                                     erp_companyreporttemplatelinks.glAutoID as chartOfAccountSystemID,
-                    //                                                     erp_companyreporttemplatelinks.glCode 
+                    //                                                     erp_companyreporttemplatelinks.glCode
                     //                                                     FROM
                     //                                                     erp_companyreporttemplatelinks
                     //                                                     WHERE erp_companyreporttemplatelinks.templateMasterID =' . $input['templatesMasterAutoID'] . ' AND erp_companyreporttemplatelinks.templateDetailID = ' . $input['templateDetailID'] . ' AND erp_companyreporttemplatelinks.glAutoID is not null) as tem_gl'),
@@ -2708,7 +2713,7 @@ class BudgetMasterAPIController extends AppBaseController
                                                         })
                                                         ->with(['supplier_invoice_master'])
                                                         ->get();
-        
+
         $pendingSupplierItemInvoiceAmount1 = SupplierInvoiceDirectItem::whereHas('master', function($query) use ($dataParam) {
                                                             $query->where('approved', 0)
                                                                   ->where('cancelYN', 0)
@@ -3170,7 +3175,7 @@ class BudgetMasterAPIController extends AppBaseController
 
                 if (count($templatTypes) == 2) {
                     $reportTemplates = ReportTemplate::whereIn('companyReportTemplateID', $templateIDs)
-                                                 ->where('isActive', 1) 
+                                                 ->where('isActive', 1)
                                                  ->get();
                 } else {
                     if (in_array(1,$templatTypes)) {
@@ -3179,7 +3184,7 @@ class BudgetMasterAPIController extends AppBaseController
                                 $reportTemplates[] = $value->template_master;
                             }
                         }
-                        
+
                         $pandlTemplates = ReportTemplate::where('isActive', 1)
                                                  ->where('companySystemID', $companyId)
                                                  ->where('reportID', 2)
@@ -3192,7 +3197,7 @@ class BudgetMasterAPIController extends AppBaseController
                                 $reportTemplates[] = $value->template_master;
                             }
                         }
-                        
+
                         $pandlTemplates = ReportTemplate::where('isActive', 1)
                                                  ->where('companySystemID', $companyId)
                                                  ->where('reportID', 1)
@@ -3239,12 +3244,12 @@ class BudgetMasterAPIController extends AppBaseController
 
         if (!$cutOffUpdatePolicy) {
             return $this->sendError("You cannot update budget cutoff period");
-        }        
+        }
 
         $input['cutOffPeriod'] = ($input['cutOffPeriod']) ? $input['cutOffPeriod'] : 0;
 
         BudgetMaster::where('budgetmasterID', $input['budgetmasterID'])->update(['cutOffPeriod' => $input['cutOffPeriod']]);
-        
+
         return $this->sendResponse([], 'updated successfully');
     }
 
@@ -3683,11 +3688,12 @@ class BudgetMasterAPIController extends AppBaseController
 
         $purchaseRequests = PurchaseRequest::selectRaw('purchaseRequestID as documentSystemCode, documentSystemID, purchaseRequestCode as documentCode, budgetYear, comments, createdDateTime, cancelledYN, manuallyClosed, refferedBackYN, PRConfirmedYN as confirmedYN, approved, prClosedYN as closedYN, financeCategory, serviceLineSystemID, location, priority, createdUserSystemID, "" as amount, 0 as typeID, 0 as rcmActivated,"" as referenceNumber, "" as expectedDeliveryDate, "" as confirmedDate, "" as approvedDate, "" as sentToSupplier, "" as grvRecieved, "" as invoicedBooked, "" as supplierID, "" as supplierTransactionCurrencyID, "" as poType_N, 0 as selected, purchaseRequestID')
                                            ->with(['financeCategory', 'segment', 'location', 'priority','created_by', 'document_by', 'budget_transfer_addition'])
+                                           ->with(['financeCategory', 'segment', 'location', 'priority','created_by', 'document_by', 'budget_transfer_addition'])
                                            ->where('companySystemID', $input['companySystemID'])
                                            ->where('cancelledYN', 0)
                                            ->where('approved', 0)
                                            ->where('budgetBlockYN', -1);
-        
+
         $search = $request->input('search.value');
         // if ($search) {
         //     $search = str_replace("\\", "\\\\", $search);
@@ -3696,7 +3702,7 @@ class BudgetMasterAPIController extends AppBaseController
         //             ->orWhere('comments', 'LIKE', "%{$search}%");
         //     });
 
-        
+
         // }
 
         $purchaseOrders = ProcumentOrder::selectRaw('purchaseOrderID as documentSystemCode, documentSystemID, purchaseOrderCode as documentCode, budgetYear, poTypeID as typeID, rcmActivated, referenceNumber, expectedDeliveryDate, narration as comments,createdDateTime, poConfirmedDate as confirmedDate, approvedDate, poCancelledYN as cancelledYN, manuallyClosed, refferedBackYN, poConfirmedYN as confirmedYN, approved, sentToSupplier, grvRecieved, invoicedBooked, "" as closedYN, financeCategory, serviceLineSystemID, "" as location, "" as priority, createdUserSystemID, poTotalSupplierTransactionCurrency as amount, supplierID, supplierTransactionCurrencyID, poType_N, 0 as selected, purchaseOrderID')
@@ -3781,6 +3787,185 @@ class BudgetMasterAPIController extends AppBaseController
         ->addIndexColumn()
         ->make(true);
 
+
+    }
+
+    public function downloadBudgetTemplate(Request $request){
+
+        $file_type = $request->type;
+
+        $templateMasterID = $request->templateMasterID;
+        $companyFinanceYearID = $request->companyFinanceYearID;
+        $companySystemID = $request->companySystemID;
+        $sentNotificationAt = $request->sentNotificationAt;
+
+        $templateData = [
+            "companySystemID" => $companySystemID,
+            "companyFinanceYearID" => $companyFinanceYearID
+        ];
+
+        $templateName = "download_template.budget_template";
+        $fileName = 'budget_template';
+        $path = 'general-ledger/transactions/budget-template/excel/';
+
+        $company = Company::with(['reportingcurrency', 'localcurrency'])->find($companySystemID);
+
+        $segments = SegmentMaster::where('isActive', 1)->where('companySystemID', $templateData['companySystemID'])->get();
+
+        $glCOdes = ReportTemplateDetails::with(['gllink'])
+            ->where('companySystemID', $templateData['companySystemID'])
+            ->where('companyReportTemplateID', $templateMasterID)
+            ->orderBy('sortOrder')
+            ->get();
+
+
+        foreach ($glCOdes as $key => $value) {
+            $value->sortOrderOfTopLevel = \Helper::headerCategoryOfReportTemplate($value->detID)['sortOrder'];
+        }
+
+        $glCOdesSorted = collect($glCOdes)->sortBy('sortOrderOfTopLevel');
+
+        $templateMaster = ReportTemplate::find($templateMasterID);
+        $financeYearMaster = CompanyFinanceYear::find($companyFinanceYearID);
+
+        $companyCode = isset($company->CompanyID) ? $company->CompanyID: null;
+
+        $beginDate = $financeYearMaster->bigginingDate;
+        $beginDate = date('d/m/Y', strtotime($beginDate));
+
+        $endDate = $financeYearMaster->endingDate;
+        $endDate = date('d/m/Y', strtotime($endDate));
+
+        $output = array(
+            'segments' => $segments,
+            'company' => $company,
+            'templateDetails' => $glCOdesSorted->values()->all(),
+            'sentNotificationAt' => $sentNotificationAt,
+            'templateMaster' => $templateMaster,
+            'financeYearMaster' => $financeYearMaster,
+            'companyCode'=>$companyCode,
+            'beginDate' => $beginDate,
+            'endDate' => $endDate
+        );
+
+        $basePath = CreateExcel::loadView($output,$file_type,$fileName,$path,$templateName);
+
+        if($basePath == '')
+        {
+            return $this->sendError('Unable to export excel');
+        }
+        else
+        {
+            return $this->sendResponse($basePath, trans('custom.success_export'));
+        }
+    }
+
+    public function uploadBudgets(Request $request) {
+
+        $input = $request->all();
+        $excelUpload = $input['excelUploadBudget'];
+        $input = array_except($request->all(), 'excelUploadBudget');
+        $input = $this->convertArrayToValue($input);
+
+        $decodeFile = base64_decode($excelUpload[0]['file']);
+        $originalFileName = $excelUpload[0]['filename'];
+        $extension = $excelUpload[0]['filetype'];
+        $size = $excelUpload[0]['size'];
+
+        $allowedExtensions = ['xlsx','xls'];
+
+        if (!in_array($extension, $allowedExtensions))
+        {
+            return $this->sendError('This type of file not allow to upload.you can only upload .xlsx (or) .xls',500);
+        }
+
+        if ($size > 20000000) {
+            return $this->sendError('The maximum size allow to upload is 20 MB',500);
+        }
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $uploadArray = array(
+            'companySystemID' => $input['companySystemID'],
+            'uploadComment' => $input['uploadComment'],
+            'uploadedDate' => \Helper::currentDateTime(),
+            'uploadedBy' => $employee->empID,
+            'uploadStatus' => -1
+        );
+
+        $uploadBudget = UploadBudgets::create($uploadArray);
+
+
+        $db = isset($request->db) ? $request->db : "";
+
+        $disk = 'local';
+
+        Storage::disk($disk)->put($originalFileName, $decodeFile);
+
+        $objPHPExcel = PHPExcel_IOFactory::load(Storage::disk($disk)->path($originalFileName));
+
+        $uploadData = ['objPHPExcel' => $objPHPExcel,
+            'uploadBudget' => $uploadBudget,
+            'employee' => $employee,
+            'uploadedCompany' =>  $input['companySystemID'],
+        ];
+
+        BudgetSegmentBulkInsert::dispatch($db, $uploadData);
+
+
+        return $this->sendResponse([], 'Budget upload successfully');
+    }
+
+    public function getBudgetUploads(Request $request) {
+
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $uploadBudgets = UploadBudgets::where('companySystemID', $input['companyId'])->with('uploaded_by')->select('*');
+
+
+        return \DataTables::eloquent($uploadBudgets)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('id', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+    public function deleteBudgetUploads(Request $request){
+
+        $input = $request->all();
+
+        $budgetUploadID = $input['budgetUploadID'];
+
+        $uploadBudget = UploadBudgets::find($budgetUploadID);
+
+        if($uploadBudget->uploadStatus == -1) {
+            return $this->sendError('Upload in progress. Cannot be deleted.');
+        }
+
+            $isBudgetMaster = BudgetMaster::where('budgetUploadID', $budgetUploadID)->where('confirmedYN', 1)->orWhere('approvedYN', 1)->first();
+            if (empty($isBudgetMaster)) {
+                $budgetMasters = BudgetMaster::where('budgetUploadID', $budgetUploadID)->get();
+                foreach ($budgetMasters as $budgetMaster) {
+                    Budjetdetails::where('budgetmasterID', $budgetMaster->budgetmasterID)->delete();
+                }
+                BudgetMaster::where('budgetUploadID', $budgetUploadID)->delete();
+                UploadBudgets::where('id', $budgetUploadID)->delete();
+                return $this->sendResponse([], 'Budget upload deleted successfully');
+            } else {
+                return $this->sendError('The Budget details have already been saved. Cannot be deleted.');
+            }
 
     }
 

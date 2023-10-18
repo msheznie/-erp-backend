@@ -834,7 +834,8 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
             $assetCost = $assetCost->where(function ($query) use ($search) {
-                $query->where('faCode', 'LIKE', "%{$search}%");
+                $query->where('depCode', 'LIKE', "%{$search}%")
+                    ->orWhere('employees.empName', 'LIKE', "%{$search}%");
             });
         }
 
@@ -899,7 +900,8 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
             $assetCost = $assetCost->where(function ($query) use ($search) {
-                $query->where('depCode', 'LIKE', "%{$search}%");
+                $query->where('depCode', 'LIKE', "%{$search}%")
+                    ->orWhere('employees.empName', 'LIKE', "%{$search}%");
             });
         }
 

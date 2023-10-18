@@ -4571,6 +4571,7 @@ class Helper
                                 $assetTransferDetailsItems = ERPAssetTransferDetail::where('erp_fa_fa_asset_transfer_id',$input['id'])->get();
                                 if(isset($assetTransferDetailsItems)) {
                                     foreach($assetTransferDetailsItems as $assetTransferDetailItem) {
+
                                         $fxedAsset = FixedAssetMaster::where('faID',$assetTransferDetailItem->fa_master_id)->first();
                                         if($fxedAsset->selectedForDisposal) {
                                             DB::rollback();
@@ -4589,8 +4590,19 @@ class Helper
                                         if($input['type'] == 3) {
                                                 $fxedAsset->empID = $assetTransferDetailItem->to_emp_id;
                                         }
+
+                                        if($input['type'] == 4 || $input['type'] == 3) {
+                                                $assetTransferDetailItem->receivedYN = 1;
+                                                $assetTransferDetailItem->save();
+                                        }
                                         
-                                        if($input['type'] == 4 && isset($assetTransferDetailItem->department)) {
+                                        if($input['type'] == 1) {
+                                                $fxedAsset->empID = ($assetTransferDetailItem->assetRequestMaster) ? $assetTransferDetailItem->assetRequestMaster->emp_id : null;
+                                                $assetTransferDetailItem->to_emp_id = ($assetTransferDetailItem->assetRequestMaster) ? $assetTransferDetailItem->assetRequestMaster->emp_id : null;
+                                                $assetTransferDetailItem->save();
+                                        }
+                                        
+                                        if($input['type'] == 4 && isset($assetTransferDetailItem->department)) {                                        
                                             $fxedAsset->departmentSystemID = $assetTransferDetailItem->department->departmentSystemID;
                                             $fxedAsset->departmentID = $assetTransferDetailItem->department->DepartmentID;
                                         }
