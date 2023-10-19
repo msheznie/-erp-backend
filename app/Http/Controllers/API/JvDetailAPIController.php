@@ -350,8 +350,10 @@ class JvDetailAPIController extends AppBaseController
             $contract = Contract::select('ContractNumber', 'isRequiredStamp', 'paymentInDaysForJob')
                 ->where('contractUID', $input['contractUID'])
                 ->first();
-
-            $input['clientContractID'] = $contract['ContractNumber'];
+            
+            if(!empty($contract)) {
+                $input['clientContractID'] = $contract['ContractNumber'];
+            }   
 
         }
 
