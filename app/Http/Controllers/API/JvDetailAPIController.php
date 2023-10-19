@@ -351,7 +351,7 @@ class JvDetailAPIController extends AppBaseController
                 ->where('contractUID', $input['contractUID'])
                 ->first();
             
-            if($contract != null) {
+            if(!empty($contract)) {
                 $input['clientContractID'] = $contract['ContractNumber'];
             }   
 
