@@ -208,7 +208,7 @@ class FixedAssetDepreciationMaster extends Model
         'createdUserID' => 'string',
         'createdUserSystemID' => 'integer',
         'createdPCID' => 'string',
-        'is_false' => 'boolean'
+        'is_cancel' => 'integer'
     ];
 
     /**
