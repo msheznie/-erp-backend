@@ -899,7 +899,8 @@ class PurchaseOrderMasterRefferedHistory extends Model
         'supCategoryICVMasterID',
         'supCategorySubICVID',
         'rcmActivated',
-        'approval_remarks'
+        'approval_remarks',
+        'vat_number',
     ];
 
     /**

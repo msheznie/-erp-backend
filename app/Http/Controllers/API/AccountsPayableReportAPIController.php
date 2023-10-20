@@ -1829,20 +1829,28 @@ class AccountsPayableReportAPIController extends AppBaseController
             $chartOfAccount = GeneralLedger::where('documentSystemCode', $result->documentSystemCode)->where('chartOfAccountSystemID', $exchangeGainLossAccount)->where('companySystemID', $result->companySystemID)->where('documentType', NULL)->where('matchDocumentMasterAutoID', "!=", NULL)->first();
             if(!empty($chartOfAccount)) {
                 if ($currency == 1) {
+                    $currencyMaster = CurrencyMaster::find($chartOfAccount->documentTransCurrencyID);
+                    $decimal = $currencyMaster->DecimalPlaces;
                     $result->exchangeGL = $chartOfAccount->documentTransAmount;
                 } else if ($currency == 2) {
+                    $currencyMaster = CurrencyMaster::find($chartOfAccount->documentLocalCurrencyID);
                     $result->exchangeGL = $chartOfAccount->documentLocalAmount;
+                    $decimal = $currencyMaster->DecimalPlaces;
                 } else {
+                    $currencyMaster = CurrencyMaster::find($chartOfAccount->documentRptCurrencyID);
                     $result->exchangeGL = $chartOfAccount->documentRptAmount;
+                    $decimal = $currencyMaster->DecimalPlaces;
                 }
             }
             else {
                 $result->exchangeGL = 0;
+                $decimal = 3;
             }
 
-            $dif = $result->balanceAmount - round($result->exchangeGL,2);
+            $roundedExchangeGL = round($result->exchangeGL, $decimal);
 
-            if ($dif == 0) {
+            if (abs($result->balanceAmount - $roundedExchangeGL) < 0.00001) {
+
                 unset($results[$index]);
             }
         }
