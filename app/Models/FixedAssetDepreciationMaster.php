@@ -170,7 +170,8 @@ class FixedAssetDepreciationMaster extends Model
         'createdUserSystemID',
         'createdPCID',
         'timeStamp',
-        'is_acc_dep'
+        'is_acc_dep',
+        'is_cancel'
     ];
 
     /**
@@ -206,7 +207,8 @@ class FixedAssetDepreciationMaster extends Model
         'approvedByUserSystemID' => 'integer',
         'createdUserID' => 'string',
         'createdUserSystemID' => 'integer',
-        'createdPCID' => 'string'
+        'createdPCID' => 'string',
+        'is_cancel' => 'integer'
     ];
 
     /**
