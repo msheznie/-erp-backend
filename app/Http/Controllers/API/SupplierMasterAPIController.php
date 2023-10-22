@@ -35,6 +35,7 @@ use App\Models\PaySupplierInvoiceMaster;
 use App\Models\SegmentMaster;
 use App\Models\SupplierAssigned;
 use App\Models\SupplierBusinessCategoryAssign;
+use App\Models\SupplierCategoryMaster;
 use App\Models\SupplierCategorySub;
 use App\Models\SupplierCurrency;
 use App\Models\RegisteredSupplierCurrency;
@@ -484,50 +485,61 @@ class SupplierMasterAPIController extends AppBaseController
      *
      * @return Response
      */
-    public function getBusinessCategoriesBySupplier(Request $request){
+    public function getAssignBusinessCategoriesBySupplier(Request $request){
         $supplierId = $request['supplierId'];
-        
         $supplier = SupplierMaster::where('supplierCodeSystem',$supplierId)->first();
-        
         $data = [];
-        
         if ($supplier) {
-            
             $supplierBusinessCategories = DB::table('supplierbusinesscategoryassign')
                 ->select('suppliercategorymaster.supCategoryMasterID','suppliercategorymaster.categoryName','supplierbusinesscategoryassign.supplierBusinessCategoryAssignID')
                 ->leftJoin('suppliercategorymaster','supplierbusinesscategoryassign.supCategoryMasterID','=','suppliercategorymaster.supCategoryMasterID')
                 ->where('supplierbusinesscategoryassign.supplierID', $supplierId)->get();
-            
             foreach ($supplierBusinessCategories as $supplierBusinessCategory){
-                
                 $supplierBusinessSubCategory = DB::table('suppliersubcategoryassign')
-                    ->select('suppliersubcategoryassign.supplierSubCategoryAssignID','suppliercategorysub.categoryName')
+                    ->select('suppliercategorysub.categoryName')
                     ->leftJoin('suppliercategorysub','suppliersubcategoryassign.supSubCategoryID','=','suppliercategorysub.supCategorySubID')
                     ->where('suppliersubcategoryassign.supplierID', $supplierId)
                     ->where('suppliercategorysub.supMasterCategoryID', $supplierBusinessCategory->supCategoryMasterID)->first();
-                
                 if($supplierBusinessSubCategory){
-                    
                     $temp = [
                         "businessCategoryID" => $supplierBusinessCategory->supplierBusinessCategoryAssignID, 
-                        "businessCategoryName" => $supplierBusinessCategory->categoryName, 
-                        "businessSubCategoryID" => $supplierBusinessSubCategory->supplierSubCategoryAssignID, 
+                        "businessCategoryName" => $supplierBusinessCategory->categoryName,
                         "businessSubCategoryName" => $supplierBusinessSubCategory->categoryName
                     ];
                 }
                 else{
-                    
                     $temp = [
                         "businessCategoryID" => $supplierBusinessCategory->supplierBusinessCategoryAssignID,
                         "businessCategoryName" => $supplierBusinessCategory->categoryName,
-                        "businessSubCategoryID" => null,
                         "businessSubCategoryName" => null
                     ];
                 }
-                
                 $data[] = $temp;
             }
         }
+        return $this->sendResponse($data, 'Supplier business category retrieved successfully');
+    }
+
+    public function getBusinessCategoriesBySupplier(Request $request){
+
+        $supplierId = 200;
+        $supplier = SupplierMaster::where('supplierCodeSystem', $supplierId)->first();
+
+        $businessCategories = [];
+        $businessSubCategories = [];
+        
+        if($supplier){
+            $tempData = SupplierBusinessCategoryAssign::where('supplierID',$supplierId)->pluck('supCategoryMasterID');
+            $businessCategories = SupplierCategoryMaster::whereNotIn('supCategoryMasterID',$tempData)->where('isActive',1)->get();
+
+            $tempData = SupplierSubCategoryAssign::where('supplierID',$supplierId)->pluck('supSubCategoryID');
+            $businessSubCategories = SupplierCategorySub::whereNotIn('supCategorySubID',$tempData)->where('isActive',1)->get();
+        }
+        
+        $data = [
+            'businessCategories' => $businessCategories,
+            'businessSubCategories' => $businessSubCategories
+        ];
 
         return $this->sendResponse($data, 'Supplier business category retrieved successfully');
     }

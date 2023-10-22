@@ -47,7 +47,7 @@ class SupplierBusinessCategoryAssign extends Model
 
     public $table = 'supplierbusinesscategoryassign';
 
-    protected $primaryKey = 'supplierSubCategoryAssignID';
+    protected $primaryKey = 'supplierBusinessCategoryAssignID';
 
     const CREATED_AT = 'timestamp';
     const UPDATED_AT = null;

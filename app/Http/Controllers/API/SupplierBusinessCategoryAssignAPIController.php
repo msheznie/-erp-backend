@@ -8,6 +8,7 @@ use App\Models\SupplierBusinessCategoryAssign;
 use App\Repositories\SupplierBusinessCategoryAssignRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -284,15 +285,23 @@ class SupplierBusinessCategoryAssignAPIController extends AppBaseController
      */
     public function destroy($id)
     {
-        /** @var SupplierBusinessCategoryAssign $supplierBusinessCategoryAssign */
-        $supplierBusinessCategoryAssign = $this->supplierBusinessCategoryAssignRepository->findWithoutFail($id);
+        $supplierBusinessCategoryAssign = $this->supplierBusinessCategoryAssignRepository->find($id);
 
         if (empty($supplierBusinessCategoryAssign)) {
             return $this->sendError('Supplier Business Category Assign not found');
         }
 
+        $supplierBusinessSubCategories = DB::table('suppliercategorysub')
+            ->where('supMasterCategoryID',$supplierBusinessCategoryAssign->supCategoryMasterID)
+            ->pluck('supCategorySubID');
+
+        DB::table('suppliersubcategoryassign')
+            ->where('supplierID',$supplierBusinessCategoryAssign->supplierID)
+            ->whereIn('supSubCategoryID', $supplierBusinessSubCategories)
+            ->delete();
+
         $supplierBusinessCategoryAssign->delete();
 
-        return $this->sendSuccess('Supplier Business Category Assign deleted successfully');
+        return $this->sendResponse([],'Supplier Business Category Assign deleted successfully');
     }
 }
