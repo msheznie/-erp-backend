@@ -18,7 +18,7 @@ Route::group([], function(){
 	Route::get('getItemsOptionsSupplierCatalog', 'SupplierCatalogMasterAPIController@getItemsOptionsSupplierCatalog')->name("Get item option for supplier catalog");
 	Route::get('getBankMemoBySupplierCurrency', 'BankMemoSupplierAPIController@getBankMemoBySupplierCurrency')->name("Bank memo by supplier currency");
 	Route::get('contactDetailsBySupplier', 'SupplierContactDetailsAPIController@getContactDetailsBySupplier')->name("Contact details by supplier");
-	Route::get('subcategoriesBySupplier', 'SupplierMasterAPIController@getSubcategoriesBySupplier')->name("Sub categoreis by supplier");
+	Route::get('businessCategoriesBySupplier', 'SupplierMasterAPIController@getBusinessCategoriesBySupplier')->name("Business categories by supplier");
 	Route::get('subCategoriesByMasterCategory', 'SupplierCategorySubAPIController@getSubCategoriesByMasterCategory')->name("Supplier sub categoreis by master category");
 	Route::get('subICVCategoriesByMasterCategory', 'SupplierCategoryICVMasterAPIController@subICVCategoriesByMasterCategory')->name("Supplier sub ICV categoreis by master category");
 	Route::get('generateSupplierExternalLink', 'SupplierMasterAPIController@generateSupplierExternalLink')->name("Generate supplier external link");

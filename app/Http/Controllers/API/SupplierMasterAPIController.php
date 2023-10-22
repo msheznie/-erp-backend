@@ -34,6 +34,7 @@ use App\Models\ProcumentOrder;
 use App\Models\PaySupplierInvoiceMaster;
 use App\Models\SegmentMaster;
 use App\Models\SupplierAssigned;
+use App\Models\SupplierBusinessCategoryAssign;
 use App\Models\SupplierCategorySub;
 use App\Models\SupplierCurrency;
 use App\Models\RegisteredSupplierCurrency;
@@ -476,29 +477,59 @@ class SupplierMasterAPIController extends AppBaseController
     }
 
     /**
-     * get sub categories by supplier.
-     * POST /getSubcategoriesBySupplier
+     * get business categories by supplier.
+     * POST /getBusinessCategoriesBySupplier
      *
      * @param Request $request
      *
      * @return Response
      */
-    public function getSubcategoriesBySupplier(Request $request)
-    {
-
+    public function getBusinessCategoriesBySupplier(Request $request){
         $supplierId = $request['supplierId'];
-        $supplier = SupplierMaster::where('supplierCodeSystem', '=', $supplierId)
-            ->first();
+        
+        $supplier = SupplierMaster::where('supplierCodeSystem',$supplierId)->first();
+        
+        $data = [];
+        
         if ($supplier) {
-            $suppliersubcategory = DB::table('suppliersubcategoryassign')
-                ->leftJoin('suppliercategorysub', 'suppliersubcategoryassign.supSubCategoryID', '=', 'suppliercategorysub.supCategorySubID')
-                ->where('supplierID', $supplierId)
-                ->orderBy('supplierSubCategoryAssignID', 'DESC')->get();
-        } else {
-            $suppliersubcategory = [];
+            
+            $supplierBusinessCategories = DB::table('supplierbusinesscategoryassign')
+                ->select('suppliercategorymaster.supCategoryMasterID','suppliercategorymaster.categoryName','supplierbusinesscategoryassign.supplierBusinessCategoryAssignID')
+                ->leftJoin('suppliercategorymaster','supplierbusinesscategoryassign.supCategoryMasterID','=','suppliercategorymaster.supCategoryMasterID')
+                ->where('supplierbusinesscategoryassign.supplierID', $supplierId)->get();
+            
+            foreach ($supplierBusinessCategories as $supplierBusinessCategory){
+                
+                $supplierBusinessSubCategory = DB::table('suppliersubcategoryassign')
+                    ->select('suppliersubcategoryassign.supplierSubCategoryAssignID','suppliercategorysub.categoryName')
+                    ->leftJoin('suppliercategorysub','suppliersubcategoryassign.supSubCategoryID','=','suppliercategorysub.supCategorySubID')
+                    ->where('suppliersubcategoryassign.supplierID', $supplierId)
+                    ->where('suppliercategorysub.supMasterCategoryID', $supplierBusinessCategory->supCategoryMasterID)->first();
+                
+                if($supplierBusinessSubCategory){
+                    
+                    $temp = [
+                        "businessCategoryID" => $supplierBusinessCategory->supplierBusinessCategoryAssignID, 
+                        "businessCategoryName" => $supplierBusinessCategory->categoryName, 
+                        "businessSubCategoryID" => $supplierBusinessSubCategory->supplierSubCategoryAssignID, 
+                        "businessSubCategoryName" => $supplierBusinessSubCategory->categoryName
+                    ];
+                }
+                else{
+                    
+                    $temp = [
+                        "businessCategoryID" => $supplierBusinessCategory->supplierBusinessCategoryAssignID,
+                        "businessCategoryName" => $supplierBusinessCategory->categoryName,
+                        "businessSubCategoryID" => null,
+                        "businessSubCategoryName" => null
+                    ];
+                }
+                
+                $data[] = $temp;
+            }
         }
 
-        return $this->sendResponse($suppliersubcategory, 'Supplier Category Subs retrieved successfully');
+        return $this->sendResponse($data, 'Supplier business category retrieved successfully');
     }
 
 

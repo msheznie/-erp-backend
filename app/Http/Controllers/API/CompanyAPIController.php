@@ -146,9 +146,6 @@ class CompanyAPIController extends AppBaseController
         $country = CountryMaster::orderBy('countryName', 'asc')
             ->get();
 
-        /** Supplier category  */
-        $supplierCategory = SupplierCategoryMaster::where('isActive',1)->orderBy('categoryName', 'asc')->get();
-
         /** Currency Master */
         $currencyMaster = CurrencyMaster::orderBy('CurrencyName', 'asc')
                                           ->get();
@@ -207,7 +204,6 @@ class CompanyAPIController extends AppBaseController
             'liabilityAccount' => $liabilityAccount,
             'assetAndLiaAccount' => $assetAndLiabilityAccount,
             'country' => $country,
-            'supplierCategoryMaster' => $supplierCategory,
             'currencyMaster' => $currencyMaster,
             'supplierImportance' => $supplierImportance,
             'supplierNature' => $supplierNature,

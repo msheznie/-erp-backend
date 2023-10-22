@@ -1285,3 +1285,6 @@ if (env("LOG_ENABLE", false)) {
 /*
  * End external related routes
  */
+
+
+Route::resource('supplier_business_category_assigns', 'SupplierBusinessCategoryAssignAPIController');
