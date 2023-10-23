@@ -41,8 +41,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string nameOnPaymentCheque
  * @property float creditLimit
  * @property float creditPeriod
- * @property integer supCategoryMasterID
- * @property integer supCategorySubID
  * @property string registrationNumber
  * @property string registrationExprity
  * @property string approvedby
@@ -108,9 +106,7 @@ class SupplierMaster extends Model
         'nameOnPaymentCheque',
         'creditLimit',
         'creditPeriod',
-        'supCategoryMasterID',
         'interCompanyYN',
-        'supCategorySubID',
         'registrationNumber',
         'registrationExprity',
         'approvedby',
@@ -201,8 +197,6 @@ class SupplierMaster extends Model
         'nameOnPaymentCheque' => 'string',
         'creditLimit' => 'float',
         'creditPeriod' => 'float',
-        'supCategoryMasterID' => 'integer',
-        'supCategorySubID' => 'integer',
         'registrationNumber' => 'string',
         'registrationExprity' => 'string',
         'approvedby' => 'string',
