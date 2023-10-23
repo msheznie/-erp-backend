@@ -6,6 +6,7 @@ use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
 use App\Models\FixedAssetDepreciationPeriod;
 use App\Models\FixedAssetMaster;
+use App\Jobs\ProcessDepreciation;
 use App\Repositories\FixedAssetDepreciationMasterRepository;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
@@ -104,19 +105,21 @@ class CreateDepreciation implements ShouldQueue
                         $faCounts = 1;
 
                         $faMaster->chunk($chunkSize)->each(function ($chunk) use ($db, $depMasterAutoID, $depMaster, $depDate, &$faCounts, $chunkDataSizeCounts) {
-                            DepreciationSubJobs::dispatch($db, $chunk->all(), $depMasterAutoID, $depMaster, $depDate,$faCounts, $chunkDataSizeCounts);
+                            ProcessDepreciation::dispatch($db, $chunk, $depMasterAutoID, $depMaster, $depDate,$faCounts, $chunkDataSizeCounts)->onQueue('single');
                             $faCounts++;
                         });
                     }
-
                     DB::commit();
                     Log::info('Depreciation End');
-
                 }
             } catch (\Exception $e) {
                 DB::rollBack();
                 Log::error($this->failed($e));
+                DB::beginTransaction();
+
                 JobErrorLogService::storeError($this->dataBase, $depMaster->documentSystemID, $depMasterAutoID, $this->tag, 2, $this->failed($e), "-****----Line No----:".$e->getLine()."-****----File Name----:".$e->getFile());
+                $fixedAssetDepreciationMasterUpdate = $faDepMaster->update(['isDepProcessingYN' => 1], $depMasterAutoID);
+                DB::commit();
             }
         }
     }

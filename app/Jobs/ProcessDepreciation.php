@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\helper\CommonJobService;
 use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
+use App\Models\FixedAssetDepreciationMaster;
 use App\Models\FixedAssetDepreciationPeriod;
 use App\Repositories\FixedAssetDepreciationMasterRepository;
 use App\Services\JobErrorLogService;
@@ -16,22 +17,37 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Contracts\Queue\ShouldQueue;
 
-class DepreciationSubJobs
+class ProcessDepreciation implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
     public $dispatch_db;
     public $outputChunkData;
     public $outputData;
+    public $depMasterAutoID;
+    public $depMaster;
+    public $depDate;
+    public $chunkDataSizeCounts;
+    public $faCounts;
 
-
+    /**
+     * Create a new job instance.
+     *
+     * @return void
+     */
     public function __construct($dispatch_db, $outputData, $depMasterAutoID, $depMaster, $depDate, $faCounts, $chunkDataSizeCounts)
     {
-        if(env('IS_MULTI_TENANCY',false)){
-            self::onConnection('database_main');
+        if(env('QUEUE_DRIVER_CHANGE','database') == 'database'){
+            if(env('IS_MULTI_TENANCY',false)){
+                self::onConnection('database_main');
+            }else{
+                self::onConnection('database');
+            }
         }else{
-            self::onConnection('database');
+            self::onConnection(env('QUEUE_DRIVER_CHANGE','database'));
         }
+
         $this->dispatch_db = $dispatch_db;
         $this->outputData = $outputData;
         $this->depMasterAutoID = $depMasterAutoID;
@@ -41,8 +57,12 @@ class DepreciationSubJobs
         $this->chunkDataSizeCounts = $chunkDataSizeCounts;
     }
 
-
-    public function handle(fixedAssetDepreciationMasterRepository $faDepMaster)
+    /**
+     * Execute the job.
+     *
+     * @return void
+     */
+    public function handle()
     {
         ini_set('max_execution_time', 21600);
         ini_set('memory_limit', -1);
@@ -54,10 +74,11 @@ class DepreciationSubJobs
         $faCounts = $this->faCounts;
         $chunkDataSizeCounts = $this->chunkDataSizeCounts;
 
-
+        Log::info('Depreciation x');
         CommonJobService::db_switch($db);
         DB::beginTransaction();
         try {
+            $counter = FixedAssetDepreciationMaster::find($depMasterAutoID);
             $finalData = [];
 
             foreach ($output as $val) {
@@ -195,13 +216,19 @@ class DepreciationSubJobs
                 }
             }
 
+            $counter->increment('counter');
+
+            $counter->save();
+
+            $newCounterValue = $counter->counter;
+
             $depDetail = FixedAssetDepreciationPeriod::selectRaw('SUM(depAmountLocal) as depAmountLocal, SUM(depAmountRpt) as depAmountRpt')->OfDepreciation($depMasterAutoID)->first();
             if ($depDetail) {
-                if ($faCounts == $chunkDataSizeCounts) {
+                if ($newCounterValue == $chunkDataSizeCounts) {
                     Log::info('Depreciation processing');
-                    $fixedAssetDepreciationMasters = $faDepMaster->update(['depAmountLocal' => $depDetail->depAmountLocal, 'depAmountRpt' => $depDetail->depAmountRpt, 'isDepProcessingYN' => 1], $depMasterAutoID);
+                    $fixedAssetDepreciationMasters = FixedAssetDepreciationMaster::where('depMasterAutoID', $depMasterAutoID)->update(['depAmountLocal' => $depDetail->depAmountLocal, 'depAmountRpt' => $depDetail->depAmountRpt, 'isDepProcessingYN' => 1]);
                 } else {
-                    $fixedAssetDepreciationMasters = $faDepMaster->update(['depAmountLocal' => $depDetail->depAmountLocal, 'depAmountRpt' => $depDetail->depAmountRpt], $depMasterAutoID);
+                    $fixedAssetDepreciationMasters = FixedAssetDepreciationMaster::where('depMasterAutoID', $depMasterAutoID)->update(['depAmountLocal' => $depDetail->depAmountLocal, 'depAmountRpt' => $depDetail->depAmountRpt]);
                 }
             }
             DB::commit();
