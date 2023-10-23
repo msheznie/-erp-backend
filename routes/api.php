@@ -693,6 +693,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('postPosTaxMapping', 'ShiftDetailsAPIController@postPosTaxMapping');
             Route::post('postPosPayMapping', 'ShiftDetailsAPIController@postPosPayMapping');
             Route::post('postPosEntries', 'ShiftDetailsAPIController@postPosEntries');
+            Route::post('insufficientItems', 'ShiftDetailsAPIController@insufficientItems');
 
             Route::resource('currency_denominations', 'CurrencyDenominationAPIController');
             Route::resource('shift_details', 'ShiftDetailsAPIController');
