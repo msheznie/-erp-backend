@@ -571,7 +571,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('period_masters', 'PeriodMasterAPIController');
             Route::resource('salary_process_masters', 'SalaryProcessMasterAPIController');
             Route::resource('salary_process_employment_types', 'SalaryProcessEmploymentTypesAPIController');
-            Route::get('downloadPrItemUploadTemplate', 'PurchaseRequestAPIController@downloadPrItemUploadTemplate');
 
             Route::resource('hrms_chart_of_accounts', 'HRMSChartOfAccountsAPIController');
             Route::resource('hrms_department_masters', 'HRMSDepartmentMasterAPIController');
