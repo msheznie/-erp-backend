@@ -23,3 +23,11 @@ Route::group([],function (){
     Route::get('downloadPrItemUploadTemplate', 'PurchaseRequestAPIController@downloadPrItemUploadTemplate')->name("Download pr item upload template");
 });
 
+//Order Inquiry
+Route::group([],function (){
+    Route::get('getPOSuppliers', 'SupplierMasterAPIController@getPOSuppliers')->name("Get po suppliers");
+    Route::post('validateReport', 'ReportAPIController@validateReport')->name("Validate report");
+    Route::post('generateReport', 'ReportAPIController@generateReport')->name("Generate report");
+    Route::post('exportReport', 'ReportAPIController@exportReport')->name("Export report");
+});
+
