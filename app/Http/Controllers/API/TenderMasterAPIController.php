@@ -4073,7 +4073,7 @@ WHERE
 
             $supplierDetails = SupplierRegistrationLink::select('id', 'name', 'email')->whereIn('id', $bidSubmittedSuppliers)->get();
             
-            if (sizeof($supplierDetails) > 0) {
+            if (sizeof($supplierDetails) > 0 && $tender->document_type === 0) {
                 foreach ($supplierDetails as $bid) {
                     $name = $bid->name;
                     $company = $tender->company->CompanyName;
