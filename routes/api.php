@@ -87,7 +87,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('checkUser', 'UserAPIController@checkUser');
 
             Route::get('getPOSuppliers', 'SupplierMasterAPIController@getPOSuppliers');
-            Route::get('getRetentionPercentage', 'SupplierMasterAPIController@getRetentionPercentage');
             Route::get('getSuppliersByCompany', 'SupplierMasterAPIController@getSuppliersByCompany');
             Route::post('getAllRegisteredSupplierApproval', 'SupplierMasterAPIController@getAllRegisteredSupplierApproval');
 
@@ -110,7 +109,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::get('getCompanyReportingCurrency', 'CurrencyMasterAPIController@getCompanyReportingCurrency');
             Route::get('getCompanyLocalCurrencyCode', 'CurrencyMasterAPIController@getCompanyLocalCurrencyCode');
-            Route::get('checkSelectedSupplierIsActive', 'SupplierAssignedAPIController@checkSelectedSupplierIsActive');
             Route::resource('users', 'UserAPIController');
             Route::resource('supplier_category_masters', 'SupplierCategoryMasterAPIController');
 
@@ -276,11 +274,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('po_payment_terms', 'PoPaymentTermsAPIController');
             Route::resource('po_advance_payments', 'PoAdvancePaymentAPIController');
 
-            Route::get('reportSpentAnalysisBySupplierFilter', 'ProcumentOrderAPIController@reportSpentAnalysisBySupplierFilter');
-            Route::post('reportSpentAnalysis', 'ProcumentOrderAPIController@reportSpentAnalysis');
-            Route::post('reportSpentAnalysisExport', 'ProcumentOrderAPIController@reportSpentAnalysisExport');
             Route::post('reportSpentAnalysisDrilldownExport', 'ProcumentOrderAPIController@reportSpentAnalysisDrilldownExport');
-            Route::post('reportSpentAnalysisHeader', 'ProcumentOrderAPIController@reportSpentAnalysisHeader');
             Route::post('reportPoEmployeePerformance', 'ProcumentOrderAPIController@reportPoEmployeePerformance');
             
             Route::post('reportPrToGrv', 'PurchaseRequestAPIController@reportPrToGrv');
@@ -289,7 +283,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('reportPoToPayment', 'ProcumentOrderAPIController@reportPoToPayment');
             Route::post('exportPoToPaymentReport', 'ProcumentOrderAPIController@exportPoToPaymentReport');
             Route::get('reportPoToPaymentFilterOptions', 'ProcumentOrderAPIController@reportPoToPaymentFilterOptions');
-            Route::get('getReportSavingFliterData', 'ProcumentOrderAPIController@getReportSavingFliterData');
 
             Route::get('reportPrToGrvFilterOptions', 'PurchaseRequestAPIController@reportPrToGrvFilterOptions');
 
@@ -385,9 +378,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('getAllDocumentApprovalTest', 'DocumentApprovedAPIController@getAllDocumentApproval');
             //Route::get('getTotalCountOfApproval', 'DocumentApprovedAPIController@getTotalCountOfApproval');
 
-            // Payment Voucher
-            Route::post('getPaymentVoucherPendingAmountDetails', 'PaySupplierInvoiceMasterAPIController@getPaymentVoucherPendingAmountDetails');
-
             Route::get('getAllApprovalDocuments', 'DocumentMasterAPIController@getAllApprovalDocuments');
             Route::post('getAllInvReclassificationByCompany', 'InventoryReclassificationAPIController@getAllInvReclassificationByCompany');
             
@@ -455,13 +445,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('logistic_shipping_modes', 'LogisticShippingModeAPIController');
             Route::resource('logistic_statuses', 'LogisticStatusAPIController');
 
-            Route::post('getSupplierInvoiceAmend', 'BookInvSuppMasterAPIController@getSupplierInvoiceAmend');
-            Route::post('amendSupplierInvoiceReview', 'BookInvSuppMasterAPIController@amendSupplierInvoiceReview');
-            Route::post('checkPaymentStatusSIPrint', 'BookInvSuppMasterAPIController@checkPaymentStatusSIPrint');
-            Route::get('supplierInvoiceTaxPercentage', 'BookInvSuppMasterAPIController@supplierInvoiceTaxPercentage');
             Route::get('customerRecieptDetailsRecords', 'CustomerReceivePaymentDetailAPIController@customerRecieptDetailsRecords');
-
-            Route::post('deleteAllSIDirectDetail', 'DirectInvoiceDetailsAPIController@deleteAllSIDirectDetail');
 
             // Matching
             Route::get('getPaymentVoucherMatchItems', 'PaySupplierInvoiceMasterAPIController@getPaymentVoucherMatchItems');
@@ -515,13 +499,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('standardJvExcelUpload', 'JvMasterAPIController@standardJvExcelUpload');
             Route::post('approvalPreCheckJV', 'JvMasterAPIController@approvalPreCheckJV');
 
-            Route::resource('supplierInvoiceAmendHistoryCRUD', 'BookInvSuppMasterRefferedBackAPIController');
             Route::resource('bookInvSuppDetRefferedbacks', 'BookInvSuppDetRefferedBackAPIController');
             Route::resource('DirectInvoiceDetRefferedbacks', 'DirectInvoiceDetailsRefferedBackAPIController');
-            Route::get('getSIDetailGRVAmendHistory', 'BookInvSuppDetRefferedBackAPIController@getSIDetailGRVAmendHistory');
-            Route::get('getSIDetailDirectAmendHistory', 'DirectInvoiceDetailsRefferedBackAPIController@getSIDetailDirectAmendHistory');
-
-
 
             Route::get('getAllcompaniesByDepartment', 'DocumentApprovedAPIController@getAllcompaniesByDepartment');
 
@@ -621,7 +600,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('hrms_chart_of_accounts', 'HRMSChartOfAccountsAPIController');
             Route::resource('hrms_department_masters', 'HRMSDepartmentMasterAPIController');
 
-            Route::post('getAllPaymentVoucherAmendHistory', 'PaySupplierInvoiceMasterReferbackAPIController@getAllPaymentVoucherAmendHistory');
             Route::resource('advance_payment_referbacks', 'AdvancePaymentReferbackAPIController');
             Route::resource('direct_payment_referbacks', 'DirectPaymentReferbackAPIController');
 
@@ -843,13 +821,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('approveHRMSDocument', 'LeaveDocumentApprovedAPIController@approveHRMSDocument');
             Route::post('referBackHRMSDocument', 'LeaveDocumentApprovedAPIController@referBackHRMSDocument');
 
-            Route::get('getFilteredDirectCustomerInvoice', 'BookInvSuppMasterAPIController@getFilteredDirectCustomerInvoice');
-
             Route::post('addBudgetAdjustment', 'BudgetAdjustmentAPIController@addBudgetAdjustment');            
             
             Route::get('getUserCountData', 'EmployeeAPIController@getUserCountData');
-            Route::post('getItemSavingReport', 'ReportAPIController@getItemSavingReport');
-            Route::post('exportExcelSavingReport', 'ReportAPIController@exportExcelSavingReport');
 
             Route::resource('customer_invoice_trackings', 'CustomerInvoiceTrackingAPIController');
 
@@ -1121,10 +1095,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('vat_return_filling_details', 'VatReturnFillingDetailAPIController');
 
             Route::resource('supplier_invoice_item_details', 'SupplierInvoiceItemDetailAPIController');
-            Route::get('getGRVDetailsForSupplierInvoice', 'SupplierInvoiceItemDetailAPIController@getGRVDetailsForSupplierInvoice');
 
             Route::post('checkAssetAllocation', 'ExpenseAssetAllocationAPIController@checkAssetAllocation');
-            Route::post('validateDirectItemWithAssetExpense', 'ExpenseAssetAllocationAPIController@validateDirectItemWithAssetExpense');
 
             Route::resource('appointments', 'AppointmentAPIController');
             Route::resource('appointment_details', 'AppointmentDetailsAPIController');
@@ -1137,8 +1109,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('elimination_ledgers', 'EliminationLedgerAPIController');
 
             Route::resource('inter_company_stock_transfers', 'InterCompanyStockTransferAPIController');
-            Route::resource('supplier_invoice_direct_items', 'SupplierInvoiceDirectItemAPIController');
-            Route::post('deleteAllSIDirectItemDetail', 'SupplierInvoiceDirectItemAPIController@deleteAllSIDirectItemDetail');
          
             Route::resource('employee_ledgers', 'EmployeeLedgerAPIController');
             Route::resource('srp_erp_pay_shift_employees', 'SrpErpPayShiftEmployeesAPIController');
@@ -1157,8 +1127,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('removeCriteriaConfig', 'EvaluationCriteriaScoreConfigAPIController@removeCriteriaConfig');
             Route::post('addEvaluationCriteriaConfig', 'EvaluationCriteriaScoreConfigAPIController@addEvaluationCriteriaConfig');
             Route::post('updateCriteriaScore', 'EvaluationCriteriaScoreConfigAPIController@updateCriteriaScore');
-          
-            Route::post('getAllocatedEmployeesForExpense', 'ExpenseEmployeeAllocationAPIController@getAllocatedEmployeesForExpense');
 
             Route::resource('job_error_logs', 'JobErrorLogAPIController');
             Route::get('checkConfigurationExit', 'BarcodeConfigurationAPIController@checkConfigurationExit');
@@ -1227,10 +1195,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             // erp_language
             Route::resource('erp_language_master', 'ERPLanguageMasterAPIController');
             Route::post('store-employee-language', 'ERPLanguageMasterAPIController@storeEmployeeLanguage');
-
-
-            Route::get('getPurchaseOrdersLikedWithSi', 'BookInvSuppMasterAPIController@getPurchaseOrdersLikedWithSi');
-
 
             Route::resource('tax_ledgers', 'TaxLedgerAPIController');
             Route::resource('employee_designations', 'EmployeeDesignationAPIController');
