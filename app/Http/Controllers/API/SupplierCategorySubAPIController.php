@@ -13,6 +13,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateSupplierCategorySubAPIRequest;
 use App\Http\Requests\API\UpdateSupplierCategorySubAPIRequest;
+use App\Models\SupplierCategoryMaster;
 use App\Models\SupplierCategorySub;
 use App\Models\SupplierMaster;
 use App\Models\SupplierSubCategoryAssign;
@@ -61,16 +62,12 @@ class SupplierCategorySubAPIController extends AppBaseController
         return $this->sendResponse($supplierCategorySubs->toArray(), 'Supplier Category Subs retrieved successfully');
     }
 
-    public function addSubCategoryToSupplier(Request $request){
+    public function getSubCategoriesByMasterCategory(Request $request){
+        $businessCategoryID = $request['businessCategoryID'];
+        $businessSubCategories = SupplierCategorySub::where('supMasterCategoryID',$businessCategoryID)->where('isActive',1)->get();
 
-        $supplierSubCategory = new SupplierSubCategoryAssign();
-
-        $supplierSubCategory->supplierID = $request['supplierId'];
-        $supplierSubCategory->supSubCategoryID = $request['subCategoryId'];
-        $supplierSubCategory->save();
-        return $this->sendResponse($supplierSubCategory, 'Supplier Category Subs added successfully');
+        return $this->sendResponse($businessSubCategories, 'Sub category retrieved successfully');
     }
-
 
     /**
      * Store a newly created SupplierCategorySub in storage.

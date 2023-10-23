@@ -20,6 +20,7 @@ Route::group([], function(){
 	Route::get('contactDetailsBySupplier', 'SupplierContactDetailsAPIController@getContactDetailsBySupplier')->name("Contact details by supplier");
 	Route::get('assignBusinessCategoriesBySupplier', 'SupplierMasterAPIController@getAssignBusinessCategoriesBySupplier')->name("Assign Business categories by supplier");
 	Route::get('businessCategoriesBySupplier', 'SupplierMasterAPIController@getBusinessCategoriesBySupplier')->name("Business categories by supplier");
+    Route::get('subCategoriesByMasterCategory', 'SupplierCategorySubAPIController@getSubCategoriesByMasterCategory')->name("Sub categories by master category");
 	Route::get('subICVCategoriesByMasterCategory', 'SupplierCategoryICVMasterAPIController@subICVCategoriesByMasterCategory')->name("Supplier sub ICV categoreis by master category");
 	Route::get('generateSupplierExternalLink', 'SupplierMasterAPIController@generateSupplierExternalLink')->name("Generate supplier external link");
 	Route::get('getSupplierMasterAudit', 'SupplierMasterAPIController@getSupplierMasterAudit')->name("Get supplier master audit");
@@ -36,7 +37,7 @@ Route::group([], function(){
 	Route::post('addBulkMemos', 'BankMemoSupplierAPIController@addBulkMemos')->name("Add bulk supplier currency memos");
 	Route::post('deleteBankMemo', 'BankMemoSupplierAPIController@deleteBankMemo')->name("Delete bank memo");
 	Route::post('addBulkPayeeMemos', 'BankMemoPayeeAPIController@addBulkPayeeMemos')->name("Add bulk payee memos");
-	Route::post('addSubCategoryToSupplier', 'SupplierCategorySubAPIController@addSubCategoryToSupplier')->name("Add sub categoreis to supplier");
+	Route::post('addBusinessCategoryToSupplier', 'SupplierMasterAPIController@addBusinessCategoryToSupplier')->name("Add business categories to supplier");
 	Route::post('srmRegistrationLinkHistoryView', 'SupplierMasterAPIController@srmRegistrationLinkHistoryView')->name("SRM registration link create history");
 	Route::post('srmRegistrationLink', 'SupplierMasterAPIController@srmRegistrationLink')->name("Generate SRM registration link");
 	Route::post('exportSupplierMaster', 'SupplierMasterAPIController@exportSupplierMaster')->name("Export suppliers list to excel");

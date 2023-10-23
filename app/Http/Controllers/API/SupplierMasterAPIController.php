@@ -522,26 +522,37 @@ class SupplierMasterAPIController extends AppBaseController
 
     public function getBusinessCategoriesBySupplier(Request $request){
 
-        $supplierId = 200;
+        $supplierId = $request['supplierId'];
         $supplier = SupplierMaster::where('supplierCodeSystem', $supplierId)->first();
 
         $businessCategories = [];
-        $businessSubCategories = [];
         
         if($supplier){
             $tempData = SupplierBusinessCategoryAssign::where('supplierID',$supplierId)->pluck('supCategoryMasterID');
             $businessCategories = SupplierCategoryMaster::whereNotIn('supCategoryMasterID',$tempData)->where('isActive',1)->get();
-
-            $tempData = SupplierSubCategoryAssign::where('supplierID',$supplierId)->pluck('supSubCategoryID');
-            $businessSubCategories = SupplierCategorySub::whereNotIn('supCategorySubID',$tempData)->where('isActive',1)->get();
         }
-        
-        $data = [
-            'businessCategories' => $businessCategories,
-            'businessSubCategories' => $businessSubCategories
-        ];
 
-        return $this->sendResponse($data, 'Supplier business category retrieved successfully');
+        return $this->sendResponse($businessCategories, 'Supplier business category retrieved successfully');
+    }
+
+    public function addBusinessCategoryToSupplier(Request $request){
+        $businessCategoryID = $request['businessCategoryID'];
+        $businessSubCategoryID = $request['businessSubCategoryID'];
+        $supplierID = $request['supplierID'];
+        
+        $businessCategoryAssign = new SupplierBusinessCategoryAssign();
+        $businessCategoryAssign->supplierID = $supplierID;
+        $businessCategoryAssign->supCategoryMasterID = $businessCategoryID;
+        $businessCategoryAssign->save();
+        
+        if(isset($businessSubCategoryID)){
+            $businessSubCategoryAssign = new SupplierSubCategoryAssign();
+            $businessSubCategoryAssign->supplierID = $supplierID;
+            $businessSubCategoryAssign->supSubCategoryID = $businessSubCategoryID;
+            $businessSubCategoryAssign->save();
+        }
+
+        return $this->sendResponse([], 'Supplier business category added successfully');
     }
 
 
