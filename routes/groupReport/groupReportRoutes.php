@@ -15,3 +15,11 @@ Route::group([],function (){
     Route::post('assetRegisterDrillDown', 'AssetManagementReportAPIController@getAssetRegisterSummaryDrillDownQRY')->name("Get asset register summary drill down");
     Route::post('exportAssetRegisterSummaryDrillDown', 'AssetManagementReportAPIController@getAssetRegisterSummaryDrillDownExport')->name("Get asset register summary drill down export");
 });
+
+//Procurement
+
+//Open Requests
+Route::group([],function (){
+    Route::get('downloadPrItemUploadTemplate', 'PurchaseRequestAPIController@downloadPrItemUploadTemplate')->name("Download pr item upload template");
+});
+
