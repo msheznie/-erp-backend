@@ -17,6 +17,7 @@ use App\Models\DocumentMaster;
 use App\Models\ProcumentOrder;
 use App\Models\PurchaseOrderDetails;
 use App\Models\PurchaseRequest;
+use App\Models\SupplierRegistrationLink;
 use App\Models\TenderBidNegotiation;
 use App\Models\TenderNegotiation;
 use App\Models\EmployeesDepartment;
@@ -4062,7 +4063,31 @@ WHERE
             $dataEmail['emailAlertMessage'] = $body;
             $sendEmail = \Email::sendEmailErp($dataEmail);
 
-            DB::commit();
+            $bidSubmittedSuppliers = BidSubmissionMaster::select('supplier_registration_id')
+                ->where('tender_id', $tenderId)
+                ->where('supplier_registration_id', '!=', $tender->ranking_supplier->supplier->id)
+                ->groupBy('supplier_registration_id')
+                ->get()
+                ->pluck('supplier_registration_id')
+                ->toArray();
+
+            $supplierDetails = SupplierRegistrationLink::select('id', 'name', 'email')->whereIn('id', $bidSubmittedSuppliers)->get();
+            
+            if (sizeof($supplierDetails) > 0) {
+                foreach ($supplierDetails as $bid) {
+                    $name = $bid->name;
+                    $company = $tender->company->CompanyName;
+                    $documentType = $this->getDocumentType($tender->document_type);
+                    $body = "Hi $name <br><br> Thank you for your participation in our tender process. We appreciate the effort and time you invested in your proposal. After careful consideration, we regret to inform you that your bid has not been selected for award.  <br><br>  We received several competitive proposals, making our decision a challenging one. We hope for future opportunities to collaborate. <br><br> Thank you once again for your interest in working with us. <br><br> Best Regards,<br>$company.";
+                    $dataEmail['empEmail'] = $bid->email;
+                    $dataEmail['companySystemID'] = $tender->company_id;
+                    $dataEmail['alertMessage'] = "$documentType Award";
+                    $dataEmail['emailAlertMessage'] = $body;
+                    $sendEmail = \Email::sendEmailErp($dataEmail);
+                }
+            }
+
+           DB::commit();
             return $this->sendResponse($tender, 'Email Send successfully');
         } catch (\Exception $e) {
             DB::rollback();
