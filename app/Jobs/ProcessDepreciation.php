@@ -66,7 +66,10 @@ class ProcessDepreciation implements ShouldQueue
     {
         ini_set('max_execution_time', 21600);
         ini_set('memory_limit', -1);
+        Log::info('Depreciation sub');
         $db = $this->dispatch_db;
+        CommonJobService::db_switch($db);
+  
         $output = $this->outputData;
         $depMasterAutoID = $this->depMasterAutoID;
         $depMaster = $this->depMaster;
@@ -74,8 +77,6 @@ class ProcessDepreciation implements ShouldQueue
         $faCounts = $this->faCounts;
         $chunkDataSizeCounts = $this->chunkDataSizeCounts;
 
-        Log::info('Depreciation x');
-        CommonJobService::db_switch($db);
         DB::beginTransaction();
         try {
             $counter = FixedAssetDepreciationMaster::find($depMasterAutoID);
@@ -128,84 +129,68 @@ class ProcessDepreciation implements ShouldQueue
                         $data['depAmountRpt'] = $monthlyRpt;
                     }
 
-                   // if (round($depAmountRpt, 2) == 0 && round($depAmountLocal, 2) == 0) {
-                        $count = count($val->depperiod_period);
+                    $count = count($val->depperiod_period);
 
-                        if($count == 0)
+                    if($count == 0)
+                    {
+                        $dep_start_date = $val->dateDEP;
+                    }
+                    else
+                    {   
+                        $offset = $count - 1;
+                        $time = strtotime($val->depperiod_period[$offset]->depForFYperiodStartDate);
+                        $dep_start_date = date("Y-m-d h:i:s", strtotime("+1 month", $time));
+
+                    }
+
+                    $dateDEP = Carbon::parse($dep_start_date);
+                    $dateDEP1 = Carbon::parse($dep_start_date);
+
+                    if ($dateDEP->lessThanOrEqualTo($depDate)) {
+
+                        $life_time_month = ($val->depMonth * 12) - 1;
+
+                        $life_time_period = $dateDEP->addMonths($life_time_month);
+
+
+                        if ($life_time_period < $depDate) // if deprecetion running month greater than deprecetion start month then different month is life time
                         {
-                            $dep_start_date = $val->dateDEP;
-                        }
-                        else
-                        {   
-                            $offset = $count - 1;
-                            $time = strtotime($val->depperiod_period[$offset]->depForFYperiodStartDate);
-                            $dep_start_date = date("Y-m-d h:i:s", strtotime("+1 month", $time));
+
+                            $differentMonths = CarbonPeriod::create($dateDEP1->format('Y-m-d'), '1 month', $life_time_period->format('Y-m-d'));
+
+                        } else {
+                            $differentMonths = CarbonPeriod::create($dateDEP1->format('Y-m-d'), '1 month', $depDate->format('Y-m-d'));
 
                         }
 
-                        $dateDEP = Carbon::parse($dep_start_date);
-                        $dateDEP1 = Carbon::parse($dep_start_date);
 
-                        if ($dateDEP->lessThanOrEqualTo($depDate)) {
+                        if ($differentMonths) {
+                            foreach ($differentMonths as $dt) {
 
-                            $life_time_month = ($val->depMonth * 12) - 1;
+                                $companyFinanceYearID = CompanyFinanceYear::ofCompany($depMaster->companySystemID)->where('bigginingDate', '<=', $dt)->where('endingDate', '>=', $dt->format('Y-m-d'))->first();
+                                if ($companyFinanceYearID) {
 
-                            $life_time_period = $dateDEP->addMonths($life_time_month);
+                                    $data['FYID'] = $companyFinanceYearID->companyFinanceYearID;
+                                    $data['depForFYStartDate'] = $companyFinanceYearID->bigginingDate;
+                                    $data['depForFYEndDate'] = $companyFinanceYearID->endingDate;
+                                    $companyFinancePeriodID1 = CompanyFinancePeriod::ofCompany($depMaster->companySystemID)->ofDepartment(9)->where('dateFrom', '<=', $dt)->where('dateTo', '>=', $dt->format('Y-m-d'))->first();
+                                    $periodDate = Carbon::parse($companyFinancePeriodID1->dateFrom);
 
+                                    $data['depMonth'] = $periodDate->format('m');
+                                    $data['depMonthYear'] = $periodDate->format('m/Y');
+                                    $data['FYperiodID'] = $companyFinancePeriodID1->companyFinancePeriodID;
+                                    $data['depForFYperiodStartDate'] = $companyFinancePeriodID1->dateFrom;
+                                    $data['depForFYperiodEndDate'] = $companyFinancePeriodID1->dateTo;
+                                    $data['timestamp'] = NOW();
 
-                            if ($life_time_period < $depDate) // if deprecetion running month greater than deprecetion start month then different month is life time
-                            {
-
-                                $differentMonths = CarbonPeriod::create($dateDEP1->format('Y-m-d'), '1 month', $life_time_period->format('Y-m-d'));
-
-                            } else {
-                                $differentMonths = CarbonPeriod::create($dateDEP1->format('Y-m-d'), '1 month', $depDate->format('Y-m-d'));
-
-                            }
-
-
-                            if ($differentMonths) {
-                                foreach ($differentMonths as $dt) {
-
-                                    $companyFinanceYearID = CompanyFinanceYear::ofCompany($depMaster->companySystemID)->where('bigginingDate', '<=', $dt)->where('endingDate', '>=', $dt->format('Y-m-d'))->first();
-                                    if ($companyFinanceYearID) {
-
-                                        $data['FYID'] = $companyFinanceYearID->companyFinanceYearID;
-                                        $data['depForFYStartDate'] = $companyFinanceYearID->bigginingDate;
-                                        $data['depForFYEndDate'] = $companyFinanceYearID->endingDate;
-                                        $companyFinancePeriodID1 = CompanyFinancePeriod::ofCompany($depMaster->companySystemID)->ofDepartment(9)->where('dateFrom', '<=', $dt)->where('dateTo', '>=', $dt->format('Y-m-d'))->first();
-                                        $periodDate = Carbon::parse($companyFinancePeriodID1->dateFrom);
-
-                                        $data['depMonth'] = $periodDate->format('m');
-                                        $data['depMonthYear'] = $periodDate->format('m/Y');
-                                        $data['FYperiodID'] = $companyFinancePeriodID1->companyFinancePeriodID;
-                                        $data['depForFYperiodStartDate'] = $companyFinancePeriodID1->dateFrom;
-                                        $data['depForFYperiodEndDate'] = $companyFinancePeriodID1->dateTo;
-                                        $data['timestamp'] = NOW();
-
-                                        array_push($finalData, $data);
-                                    }
+                                    array_push($finalData, $data);
                                 }
-
-
                             }
 
+
                         }
-                  //  } 
-                    
-                    
-                    // else {
-                    //     if (round($nbvRpt, 2) != 0 && round($nbvLocal, 2) != 0) {
-                    //         $data['FYID'] = $depMaster->companyFinanceYearID;
-                    //         $data['depForFYStartDate'] = $depMaster->FYBiggin;
-                    //         $data['depForFYEndDate'] = $depMaster->FYEnd;
-                    //         $data['FYperiodID'] = $depMaster->companyFinancePeriodID;
-                    //         $data['depForFYperiodStartDate'] = $depMaster->FYPeriodDateFrom;
-                    //         $data['depForFYperiodEndDate'] = $depMaster->FYPeriodDateTo;
-                    //         $data['timestamp'] = NOW();
-                    //         array_push($finalData, $data);
-                    //     }
-                    // }
+
+                    }
                 }
 
             }
