@@ -68,17 +68,18 @@ class ProcessDepreciation implements ShouldQueue
         ini_set('memory_limit', -1);
         Log::useFiles(storage_path() . '/logs/depreciation_jobs.log');
         $db = $this->dispatch_db;
-        CommonJobService::db_switch($db);
-  
-        $output = $this->outputData;
-        $depMasterAutoID = $this->depMasterAutoID;
-        $depMaster = $this->depMaster;
-        $depDate = $this->depDate;
-        $faCounts = $this->faCounts;
-        $chunkDataSizeCounts = $this->chunkDataSizeCounts;
-
         DB::beginTransaction();
         try {
+            Log::info($db);
+            CommonJobService::db_switch($db);
+      
+            $output = $this->outputData;
+            $depMasterAutoID = $this->depMasterAutoID;
+            $depMaster = $this->depMaster;
+            $depDate = $this->depDate;
+            $faCounts = $this->faCounts;
+            $chunkDataSizeCounts = $this->chunkDataSizeCounts;
+
             $counter = FixedAssetDepreciationMaster::find($depMasterAutoID);
             $finalData = [];
 
