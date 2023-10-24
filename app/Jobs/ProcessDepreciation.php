@@ -26,7 +26,6 @@ class ProcessDepreciation implements ShouldQueue
     public $outputChunkData;
     public $outputData;
     public $depMasterAutoID;
-    public $depMaster;
     public $depDate;
     public $chunkDataSizeCounts;
     public $faCounts;
@@ -36,7 +35,7 @@ class ProcessDepreciation implements ShouldQueue
      *
      * @return void
      */
-    public function __construct($dispatch_db, $outputData, $depMasterAutoID, $depMaster, $depDate, $faCounts, $chunkDataSizeCounts)
+    public function __construct($dispatch_db, $outputData, $depMasterAutoID, $depDate, $faCounts, $chunkDataSizeCounts)
     {
         if(env('QUEUE_DRIVER_CHANGE','database') == 'database'){
             if(env('IS_MULTI_TENANCY',false)){
@@ -51,7 +50,6 @@ class ProcessDepreciation implements ShouldQueue
         $this->dispatch_db = $dispatch_db;
         $this->outputData = $outputData;
         $this->depMasterAutoID = $depMasterAutoID;
-        $this->depMaster = $depMaster;
         $this->depDate = $depDate;
         $this->faCounts = $faCounts;
         $this->chunkDataSizeCounts = $chunkDataSizeCounts;
@@ -75,12 +73,11 @@ class ProcessDepreciation implements ShouldQueue
       
             $output = $this->outputData;
             $depMasterAutoID = $this->depMasterAutoID;
-            $depMaster = $this->depMaster;
             $depDate = $this->depDate;
             $faCounts = $this->faCounts;
             $chunkDataSizeCounts = $this->chunkDataSizeCounts;
 
-            $counter = FixedAssetDepreciationMaster::find($depMasterAutoID);
+            $depMaster = FixedAssetDepreciationMaster::find($depMasterAutoID);
             $finalData = [];
 
             foreach ($output as $val) {
@@ -203,11 +200,11 @@ class ProcessDepreciation implements ShouldQueue
                 }
             }
 
-            $counter->increment('counter');
+            $depMaster->increment('counter');
 
-            $counter->save();
+            $depMaster->save();
 
-            $newCounterValue = $counter->counter;
+            $newCounterValue = $depMaster->counter;
 
             $depDetail = FixedAssetDepreciationPeriod::selectRaw('SUM(depAmountLocal) as depAmountLocal, SUM(depAmountRpt) as depAmountRpt')->OfDepreciation($depMasterAutoID)->first();
             if ($depDetail) {
