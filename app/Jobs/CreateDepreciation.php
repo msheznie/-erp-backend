@@ -108,6 +108,8 @@ class CreateDepreciation implements ShouldQueue
                             ProcessDepreciation::dispatch($db, $chunk, $depMasterAutoID, $depMaster, $depDate,$faCounts, $chunkDataSizeCounts)->onQueue('single');
                             $faCounts++;
                         });
+                    } else {
+                        $fixedAssetDepreciationMasterUpdate = $faDepMaster->update(['isDepProcessingYN' => 1], $depMasterAutoID);
                     }
                     DB::commit();
                     Log::info('Depreciation End');
