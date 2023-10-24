@@ -1656,7 +1656,7 @@ class ShiftDetailsAPIController extends AppBaseController
 
                 //sales returns
                 $netTotGLSr = DB::table('pos_source_salesreturn')
-                    ->selectRaw('SUM(pos_source_salesreturn.netTotal) as amount, pos_source_salesreturn.isRefund as isRefund, pos_source_salesreturn.shiftID as shiftId')
+                    ->selectRaw('SUM(pos_source_salesreturn.netTotal) as amount, pos_source_salesreturn.isRefund as isRefund, pos_source_salesreturn.shiftID as shiftId, pos_source_salesreturn.invoiceID as invoiceID')
                     ->where('pos_source_salesreturn.shiftID', $shiftId)
                     ->groupBy('pos_source_salesreturn.isRefund')
                     ->groupBy('pos_source_salesreturn.shiftID')
@@ -1682,8 +1682,8 @@ class ShiftDetailsAPIController extends AppBaseController
                     ->where('itemassigned.companySystemID', $shiftDetails->companyID)
                     ->get();
 
-
             }
+
             if ($isPostGroupBy == 1) {
 
                 $bankGL = DB::table('pos_source_invoice')
@@ -1787,6 +1787,7 @@ class ShiftDetailsAPIController extends AppBaseController
                     'shiftId' => $gl->shiftId,
                     'documentSystemId' => 110,
                     'documentCode' => $documentCode,
+                    'invoiceID' => $gl->invoiceID,
                     'glCode' => $gl->glCode,
                     'logId' => $logs['id'],
                     'amount' => $gl->amount,
@@ -1806,6 +1807,7 @@ class ShiftDetailsAPIController extends AppBaseController
                         'shiftId' => $gl->shiftId,
                         'documentSystemId' => 110,
                         'documentCode' => $documentCode,
+                        'invoiceID' => $gl->invoiceID,
                         'glCode' => $gl->plGLCode,
                         'logId' => $logs['id'],
                         'amount' => $gl->amount * -1,
@@ -1817,6 +1819,7 @@ class ShiftDetailsAPIController extends AppBaseController
                             'shiftId' => $gl->shiftId,
                             'documentSystemId' => 110,
                             'documentCode' => $documentCode,
+                            'invoiceID' => $gl->invoiceID,
                             'glCode' => $gl->plGLCode,
                             'logId' => $logs['id'],
                             'amount' => $gl->amount,
@@ -1828,6 +1831,7 @@ class ShiftDetailsAPIController extends AppBaseController
                             'shiftId' => $gl->shiftId,
                             'documentSystemId' => 110,
                             'documentCode' => $documentCode,
+                            'invoiceID' => $gl->invoiceID,
                             'glCode' => $gl->bsGLCode,
                             'logId' => $logs['id'],
                             'amount' => $gl->amount,
@@ -1849,6 +1853,7 @@ class ShiftDetailsAPIController extends AppBaseController
                         $documentCode = ('GPOS\\' . str_pad($gl->shiftId, 6, '0', STR_PAD_LEFT));
                         $refundGLArray1[] = array(
                             'shiftId' => $gl->shiftId,
+                            'invoiceID' => $gl->invoiceID,
                             'documentSystemId' => 112,
                             'documentCode' => $documentCode,
                             'glCode' => $glCode->GLCode,
@@ -1864,6 +1869,7 @@ class ShiftDetailsAPIController extends AppBaseController
                     if ($glCode) {
                         $refundGLArray2[] = array(
                             'shiftId' => $gl->shiftId,
+                            'invoiceID' => $gl->invoiceID,
                             'documentSystemId' => 110,
                             'documentCode' => $documentCode,
                             'glCode' => $glCode->GLCode,
@@ -1886,6 +1892,7 @@ class ShiftDetailsAPIController extends AppBaseController
                 $documentCode = ('GPOS\\' . str_pad($gl->shiftId, 6, '0', STR_PAD_LEFT));
                 $bankGLArray[] = array(
                     'shiftId' => $gl->shiftId,
+                    'invoiceID' => $gl->invoiceID,
                     'documentSystemId' => 110,
                     'documentCode' => $documentCode,
                     'glCode' => $gl->glCode,
@@ -1900,6 +1907,7 @@ class ShiftDetailsAPIController extends AppBaseController
                 $documentCode = ('GPOS\\' . str_pad($gl->shiftId, 6, '0', STR_PAD_LEFT));
                 $itemGLArray[] = array(
                     'shiftId' => $gl->shiftId,
+                    'invoiceID' => $gl->invoiceID,
                     'documentSystemId' => 110,
                     'documentCode' => $documentCode,
                     'glCode' => $gl->glCode,
@@ -1914,6 +1922,7 @@ class ShiftDetailsAPIController extends AppBaseController
                 $documentCode = ('GPOS\\' . str_pad($gl->shiftId, 6, '0', STR_PAD_LEFT));
                 $taxGLArray[] = array(
                     'shiftId' => $gl->shiftId,
+                    'invoiceID' => $gl->invoiceID,
                     'documentSystemId' => 110,
                     'documentCode' => $documentCode,
                     'glCode' => $gl->outputVatGLCode,
@@ -1928,6 +1937,7 @@ class ShiftDetailsAPIController extends AppBaseController
             foreach ($invItems as $item) {
                 $itemArray[] = array(
                     'shiftId' => $item->shiftId,
+                    'invoiceID' => $gl->invoiceID,
                     'itemAutoId' => $item->itemID,
                     'uom' => $item->uom,
                     'qty' => $item->qty,
@@ -1943,6 +1953,7 @@ class ShiftDetailsAPIController extends AppBaseController
             foreach ($bankItems as $item) {
                 $bankArray[] = array(
                     'shiftId' => $item->shiftId,
+                    'invoiceID' => $gl->invoiceID,
                     'bankAccId' => $item->bankID,
                     'logId' => $logs->id,
                     'isReturnYN' => 0,
@@ -1965,6 +1976,7 @@ class ShiftDetailsAPIController extends AppBaseController
                 if ($gl->categoryID == 1) {
                     $costGLArray = [
                         'shiftId' => $gl->shiftId,
+                        'invoiceID' => $gl->invoiceID,
                         'documentSystemId' => 110,
                         'documentCode' => $documentCode,
                         'glCode' => $gl->plGLCode,
@@ -1975,6 +1987,7 @@ class ShiftDetailsAPIController extends AppBaseController
                     if ($gl->glYN == -1) {
                         $inventoryGLArray = [
                             'shiftId' => $gl->shiftId,
+                            'invoiceID' => $gl->invoiceID,
                             'documentSystemId' => 110,
                             'documentCode' => $documentCode,
                             'glCode' => $gl->plGLCode,
@@ -1985,6 +1998,7 @@ class ShiftDetailsAPIController extends AppBaseController
                     } else {
                         $inventoryGLArray = [
                             'shiftId' => $gl->shiftId,
+                            'invoiceID' => $gl->invoiceID,
                             'documentSystemId' => 110,
                             'documentCode' => $documentCode,
                             'glCode' => $gl->bsGLCode,
@@ -2155,6 +2169,7 @@ class ShiftDetailsAPIController extends AppBaseController
                 $documentCode = ('RPOS\\' . str_pad($gl->shiftId, 6, '0', STR_PAD_LEFT));
                 $taxGLArray1[] = array(
                     'shiftId' => $gl->shiftId,
+                    'invoiceID' => $gl->invoiceID,
                     'documentSystemId' => 111,
                     'documentCode' => $documentCode,
                     'glCode' => $gl->outputVatGLCode,
@@ -2170,6 +2185,7 @@ class ShiftDetailsAPIController extends AppBaseController
                 $documentCode = ('RPOS\\' . str_pad($gl->shiftId, 6, '0', STR_PAD_LEFT));
                 $taxGLArray2[] = array(
                     'shiftId' => $gl->shiftId,
+                    'invoiceID' => $gl->invoiceID,
                     'documentSystemId' => 111,
                     'documentCode' => $documentCode,
                     'glCode' => $gl->outputVatGLCode,
@@ -2186,6 +2202,7 @@ class ShiftDetailsAPIController extends AppBaseController
                 $documentCode = ('RPOS\\' . str_pad($gl->shiftId, 6, '0', STR_PAD_LEFT));
                 $bankGLArray[] = array(
                     'shiftId' => $gl->shiftId,
+                    'invoiceID' => $gl->invoiceID,
                     'documentSystemId' => 111,
                     'documentCode' => $documentCode,
                     'glCode' => $gl->glCode,
@@ -2200,6 +2217,7 @@ class ShiftDetailsAPIController extends AppBaseController
                 $documentCode = ('RPOS\\' . str_pad($gl->shiftId, 6, '0', STR_PAD_LEFT));
                 $itemGLArray[] = array(
                     'shiftId' => $gl->shiftId,
+                    'invoiceID' => $gl->invoiceID,
                     'documentSystemId' => 111,
                     'documentCode' => $documentCode,
                     'glCode' => $gl->glCode,
@@ -2213,6 +2231,7 @@ class ShiftDetailsAPIController extends AppBaseController
             foreach ($invItems as $item) {
                 $itemArray[] = array(
                     'shiftId' => $item->shiftId,
+                    'invoiceID' => $gl->invoiceID,
                     'itemAutoId' => $item->itemID,
                     'uom' => $item->uom,
                     'qty' => $item->qty,
@@ -2227,6 +2246,7 @@ class ShiftDetailsAPIController extends AppBaseController
             foreach ($bankItems as $item) {
                 $bankArray[] = array(
                     'shiftId' => $item->shiftId,
+                    'invoiceID' => $gl->invoiceID,
                     'bankAccId' => $item->bankID,
                     'logId' => $logs->id,
                     'isReturnYN' => 0,
@@ -2249,6 +2269,7 @@ class ShiftDetailsAPIController extends AppBaseController
                 if ($gl->categoryID == 1) {
                     $costGLArray = [
                         'shiftId' => $gl->shiftId,
+                        'invoiceID' => $gl->invoiceID,
                         'documentSystemId' => 111,
                         'documentCode' => $documentCode,
                         'glCode' => $gl->plGLCode,
@@ -2259,6 +2280,7 @@ class ShiftDetailsAPIController extends AppBaseController
                     if ($gl->glYN == -1) {
                         $inventoryGLArray = [
                             'shiftId' => $gl->shiftId,
+                            'invoiceID' => $gl->invoiceID,
                             'documentSystemId' => 111,
                             'documentCode' => $documentCode,
                             'glCode' => $gl->plGLCode,
@@ -2269,6 +2291,7 @@ class ShiftDetailsAPIController extends AppBaseController
                     } else {
                         $inventoryGLArray = [
                             'shiftId' => $gl->shiftId,
+                            'invoiceID' => $gl->invoiceID,
                             'documentSystemId' => 111,
                             'documentCode' => $documentCode,
                             'glCode' => $gl->bsGLCode,
@@ -2283,7 +2306,7 @@ class ShiftDetailsAPIController extends AppBaseController
             }
         }
 
-         $logs = POSFinanceLog::where('shiftId', $shiftId)->update(['status' => 2]);
+//         $logs = POSFinanceLog::where('shiftId', $shiftId)->update(['status' => 2]);
 
 
 
