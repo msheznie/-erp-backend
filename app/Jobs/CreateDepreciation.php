@@ -104,7 +104,9 @@ class CreateDepreciation implements ShouldQueue
                         $chunkDataSizeCounts = ceil($totalDataSize / $chunkSize);
                         $faCounts = 1;
 
+                        Log::info('Depreciation asset count'.count($faMaster));
                         $faMaster->chunk($chunkSize)->each(function ($chunk) use ($db, $depMasterAutoID, $depMaster, $depDate, &$faCounts, $chunkDataSizeCounts) {
+                            Log::info($chunk);
                             ProcessDepreciation::dispatch($db, $chunk, $depMasterAutoID, $depMaster, $depDate,$faCounts, $chunkDataSizeCounts)->onQueue('single');
                             $faCounts++;
                         });
