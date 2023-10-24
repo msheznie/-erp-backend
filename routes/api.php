@@ -287,11 +287,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('company_policy_categories', 'CompanyPolicyCategoryAPIController');
             
             Route::post('exportPoEmployeePerformance', 'ProcumentOrderAPIController@exportPoEmployeePerformance');
-
-            Route::post('reportOrderStatus', 'PurchaseOrderStatusAPIController@reportOrderStatus');
-            Route::get('reportOrderStatusFilterOptions', 'PurchaseOrderStatusAPIController@reportOrderStatusFilterOptions');
-            Route::post('reportOrderStatusPreCheck', 'PurchaseOrderStatusAPIController@reportOrderStatusPreCheck');
-            Route::post('exportReportOrderStatus', 'PurchaseOrderStatusAPIController@exportReportOrderStatus');
          
             Route::resource('g_r_v_types', 'GRVTypesAPIController');
             Route::resource('budget_consumed_datas', 'BudgetConsumedDataAPIController');
