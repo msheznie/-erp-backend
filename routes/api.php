@@ -86,7 +86,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('user/companies', 'UserAPIController@userCompanies');
             Route::get('checkUser', 'UserAPIController@checkUser');
 
-            Route::get('getPOSuppliers', 'SupplierMasterAPIController@getPOSuppliers');
             Route::get('getSuppliersByCompany', 'SupplierMasterAPIController@getSuppliersByCompany');
             Route::post('getAllRegisteredSupplierApproval', 'SupplierMasterAPIController@getAllRegisteredSupplierApproval');
 
@@ -240,10 +239,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::post('approveChartOfAccount', 'ChartOfAccountAPIController@approveChartOfAccount');
             Route::post('rejectChartOfAccount', 'ChartOfAccountAPIController@rejectChartOfAccount');
-
-            Route::post('generateReport', 'ReportAPIController@generateReport');
-            Route::post('validateReport', 'ReportAPIController@validateReport');
-            Route::post('exportReport', 'ReportAPIController@exportReport');
 
             Route::post('approveProcurementOrder', 'ProcumentOrderAPIController@approveProcurementOrder');
             
