@@ -91,7 +91,8 @@ class CreateDepreciation implements ShouldQueue
                         ->isApproved()
                         ->assetType(1)
                         ->orderBy('faID', 'desc')
-                        ->get();
+                        ->get()
+                        ->toArray();
 
                     $db = $this->dataBase;
 
@@ -104,17 +105,11 @@ class CreateDepreciation implements ShouldQueue
                         $chunkDataSizeCounts = ceil($totalDataSize / $chunkSize);
                         $faCounts = 1;
 
-                        Log::info('Depreciation asset count '.count($faMaster));
-                        $outputChunkData = collect($faMaster)->chunk($chunkSize);
 
-                        $reportCount = 1;
-
-                        foreach ($outputChunkData as $key1 => $output1) {
-                            Log::info('$output1');
-                            Log::info($output1);
-                            ProcessDepreciation::dispatch($db, $output1, $depMasterAutoID, $depMaster, $depDate,$faCounts, count($outputChunkData))->onQueue('single');
+                        collect($faMaster)->chunk($chunkSize)->each(function ($chunk) use ($db, $depMasterAutoID, $depMaster, $depDate, &$faCounts, $chunkDataSizeCounts) {
+                            ProcessDepreciation::dispatch($db, $chunk, $depMasterAutoID, $depMaster, $depDate,$faCounts, $chunkDataSizeCounts)->onQueue('single');
                             $faCounts++;
-                        }
+                        });
                     } else {
                         $fixedAssetDepreciationMasterUpdate = $faDepMaster->update(['isDepProcessingYN' => 1], $depMasterAutoID);
                     }

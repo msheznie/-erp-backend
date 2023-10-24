@@ -66,7 +66,7 @@ class ProcessDepreciation implements ShouldQueue
     {
         ini_set('max_execution_time', 21600);
         ini_set('memory_limit', -1);
-        Log::info('Depreciation sub');
+        Log::useFiles(storage_path() . '/logs/depreciation_jobs.log');
         $db = $this->dispatch_db;
         CommonJobService::db_switch($db);
   
@@ -83,9 +83,10 @@ class ProcessDepreciation implements ShouldQueue
             $finalData = [];
 
             foreach ($output as $val) {
+                $val = (object) $val;
                 $amount_local = 0;
-                $depAmountRpt = count($val->depperiod_by) > 0 ? $val->depperiod_by[0]->depAmountRpt : 0;
-                $depAmountLocal = count($val->depperiod_by) > 0 ? $val->depperiod_by[0]->depAmountLocal : 0;
+                $depAmountRpt = count($val->depperiod_by) > 0 ? $val->depperiod_by[0]['depAmountRpt'] : 0;
+                $depAmountLocal = count($val->depperiod_by) > 0 ? $val->depperiod_by[0]['depAmountLocal'] : 0;
                 $nbvLocal = $val->COSTUNIT - $depAmountLocal;
                 $nbvRpt = $val->costUnitRpt - $depAmountRpt;
                 $monthlyLocal = (($val->COSTUNIT - $val->salvage_value) * ($val->DEPpercentage / 100)) / 12;
@@ -138,7 +139,7 @@ class ProcessDepreciation implements ShouldQueue
                     else
                     {   
                         $offset = $count - 1;
-                        $time = strtotime($val->depperiod_period[$offset]->depForFYperiodStartDate);
+                        $time = strtotime($val->depperiod_period[$offset]['depForFYperiodStartDate']);
                         $dep_start_date = date("Y-m-d h:i:s", strtotime("+1 month", $time));
 
                     }
@@ -210,7 +211,6 @@ class ProcessDepreciation implements ShouldQueue
             $depDetail = FixedAssetDepreciationPeriod::selectRaw('SUM(depAmountLocal) as depAmountLocal, SUM(depAmountRpt) as depAmountRpt')->OfDepreciation($depMasterAutoID)->first();
             if ($depDetail) {
                 if ($newCounterValue == $chunkDataSizeCounts) {
-                    Log::info('Depreciation processing');
                     $fixedAssetDepreciationMasters = FixedAssetDepreciationMaster::where('depMasterAutoID', $depMasterAutoID)->update(['depAmountLocal' => $depDetail->depAmountLocal, 'depAmountRpt' => $depDetail->depAmountRpt, 'isDepProcessingYN' => 1]);
                 } else {
                     $fixedAssetDepreciationMasters = FixedAssetDepreciationMaster::where('depMasterAutoID', $depMasterAutoID)->update(['depAmountLocal' => $depDetail->depAmountLocal, 'depAmountRpt' => $depDetail->depAmountRpt]);
@@ -224,7 +224,7 @@ class ProcessDepreciation implements ShouldQueue
             Log::info('Error Line No: ' . $e->getLine());
             Log::info('Error Line No: ' . $e->getFile());
             Log::info($e->getMessage());
-            Log::info('---- GL  End with Error-----' . date('H:i:s'));
+            Log::info('---- Dep  End with Error-----' . date('H:i:s'));
         }
 
     }
