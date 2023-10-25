@@ -661,15 +661,27 @@ class ShiftDetailsAPIController extends AppBaseController
                     }
                 }
             }
-        }
+        }   
+
+            $isInsufficientExist = false;
 
             $qtyArray = POSItemGLEntries::where('shiftId', $shiftId)->get();
-            return $this->sendResponse($qtyArray, "Insufficient quantities retrieved successfully");
+            foreach ($qtyArray as $gl) {
+                if($gl->insufficientQty > 0)
+                {
+                    $isInsufficientExist = true;
+                    break;
+                }
+            }
+
+            $data['output'] = $qtyArray;
+            $data['isExist'] = $isInsufficientExist;
+            return $this->sendResponse($data, "Insufficient quantities retrieved successfully");
 
     }
 
     public function postGLEntries(Request $request){
-
+        
         $shiftId = $request->shiftId;
         $db = isset($request->db) ? $request->db : "";
 
@@ -1398,6 +1410,7 @@ class ShiftDetailsAPIController extends AppBaseController
                     if ($input['bookingDate'] > $curentDate) {
                         return $this->sendResponse('e', 'Document date cannot be greater than current date');
                     }
+
                     $customerInvoiceDirects = $this->customerInvoiceDirectRepository->create($input);
                     $items = DB::table('pos_source_menusalesitems')
                         ->selectRaw('pos_source_menusalesitems.*')
@@ -1406,6 +1419,7 @@ class ShiftDetailsAPIController extends AppBaseController
                         ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
                         ->where('pos_source_menusalesitems.menuSalesID', $invoice->menuSalesID)
                         ->get();
+
                     foreach ($items as $item) {
                         /* $amount = $request['amount'];
                $comments = $request['comments'];*/
@@ -1530,6 +1544,8 @@ class ShiftDetailsAPIController extends AppBaseController
                     \Illuminate\Support\Facades\DB::commit();
                 }
                 \Illuminate\Support\Facades\DB::commit();
+
+                
             }
             catch (\Exception $exception) {
                 \Illuminate\Support\Facades\DB::rollback();
@@ -2615,4 +2631,92 @@ class ShiftDetailsAPIController extends AppBaseController
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
 
+    public function getPosMismatchEntries(Request $request)
+    {
+        $input = $request->all();
+        $data = [];
+        $output = DB::table('pos_gl_entries')
+        ->selectRaw('case when sum(amount) < 0 then 0 else sum(amount) end as Amount,COUNT(*) as count')
+        ->where('shiftId',$input['shiftId']);
+
+        $data['invoiceEntries'] = DB::table('pos_gl_entries')
+        ->selectRaw('sum(amount) as Amount,COUNT(pos_gl_entries.shiftId) as count,pos_source_menusalesmaster.invoiceCode,pos_gl_entries.invoiceID,pos_gl_entries.shiftid')
+        ->join('pos_source_menusalesmaster', 'pos_source_menusalesmaster.menuSalesID', '=', 'pos_gl_entries.invoiceID')
+        ->where('pos_gl_entries.shiftId',$input['shiftId'])
+        ->groupBy('invoiceID')
+        ->get();
+        $data['shifEntries'] = $output->get();
+       $data['isMismatch'] = $output->first()->Amount==0?true:false;
+
+        return $this->sendResponse($data, 'Record retrieved successfully');
+
+    }
+
+    public function getPosMissMatchData(Request $request)
+    {   
+        $input = $request->all();
+        $data = [];
+
+        $data['data'] = DB::table('pos_gl_entries')
+        ->selectRaw('chartofaccounts.AccountDescription,pos_gl_entries.amount')
+        ->join('chartofaccounts', 'chartofaccounts.chartOfAccountSystemID', '=', 'pos_gl_entries.glCode')
+        ->where('chartofaccounts.primaryCompanySystemID',$input['companyId'])
+        ->where('shiftId',$input['shiftId'])
+        ->where('invoiceID',$input['invoiceId'])
+        ->get();
+
+        $data['glCodes'] = ChartOfAccount::where('primaryCompanySystemID',$input['companyId'])->select(DB::raw("chartOfAccountSystemID,CONCAT(AccountCode, ' | ' ,AccountDescription) as name"))
+        ->get();
+
+     
+        return $this->sendResponse($data, 'Record retrieved successfully');
+
+    }
+
+    public function updatePosMismatch(Request $request)
+    {
+        $input = $request->all();
+
+        $sum = DB::table('pos_gl_entries')
+        ->selectRaw('sum(amount) as Amount,documentSystemId,documentCode,logId')
+        ->where('shiftid',$input['shiftid'])
+        ->where('invoiceID',$input['invoiceId'])
+        ->first();
+        if($sum->Amount < 0)
+        {
+            $amount = abs($sum->Amount);
+        }
+        else
+        {
+            $amount = -abs($sum->Amount);
+        }
+
+        $itemGLArraySR[] = array(
+            'shiftId' => $input['shiftid'],
+            'documentSystemId' => $sum->documentSystemId,
+            'documentCode' => $sum->documentCode,
+            'invoiceID' => $input['invoiceId'],
+            'glCode' => $input['code'],
+            'logId' => $sum->logId,
+            'amount' => $amount,
+        );
+
+
+
+        POSGLEntries::insert($itemGLArraySR);
+        return $this->sendResponse($sum, 'Record retrieved successfully');
+
+    }
+
+    public function getGlMatchEntries(Request $request)
+    {
+        $input = $request->all();
+        $data = DB::table('pos_source_menusalesmaster')
+        ->selectRaw('(sum(grossAmount) - sum(discountAmount)) + sum(totalTaxAmount) as Amount,count(*) as count')
+        ->where('shiftID',$input['shiftId'])
+        ->get();
+        
+        return $this->sendResponse($data, 'Record retrieved successfully');
+
+    }
 }

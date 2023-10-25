@@ -940,4 +940,34 @@ class PosAPIController extends AppBaseController
             return $this->sendError($exception->getMessage());
         }
     }
+
+    public function getAllShiftsGPOS(Request $request){
+
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $shifts = POSSOURCEShiftDetails::where('posType', 1)
+            ->leftjoin('warehousemaster', 'warehousemaster.wareHouseSystemCode', '=', 'pos_source_shiftdetails.wareHouseID')
+            ->leftjoin('pos_source_menusalesmaster', 'pos_source_menusalesmaster.shiftID', '=', 'pos_source_shiftdetails.shiftID')
+            ->select('pos_source_shiftdetails.shiftID', 'pos_source_shiftdetails.createdUserName', 'pos_source_shiftdetails.startTime', 'pos_source_shiftdetails.endTime', 'warehousemaster.wareHouseDescription')
+            ->selectRaw('SUM(pos_source_menusalesmaster.grossTotal) as totalBillAmount')
+            ->selectRaw('COUNT(pos_source_menusalesmaster.shiftID) as noOfBills')->groupBy('pos_source_menusalesmaster.shiftID');
+
+        return \DataTables::eloquent($shifts)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('shiftID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
 }
