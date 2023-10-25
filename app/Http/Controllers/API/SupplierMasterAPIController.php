@@ -495,41 +495,53 @@ class SupplierMasterAPIController extends AppBaseController
                 ->leftJoin('suppliercategorymaster','supplierbusinesscategoryassign.supCategoryMasterID','=','suppliercategorymaster.supCategoryMasterID')
                 ->where('supplierbusinesscategoryassign.supplierID', $supplierId)->get();
             foreach ($supplierBusinessCategories as $supplierBusinessCategory){
-                $supplierBusinessSubCategory = DB::table('suppliersubcategoryassign')
-                    ->select('suppliercategorysub.categoryName')
+                $supplierBusinessSubCategories = DB::table('suppliersubcategoryassign')
+                    ->select('suppliersubcategoryassign.supplierSubCategoryAssignID','suppliercategorysub.categoryName')
                     ->leftJoin('suppliercategorysub','suppliersubcategoryassign.supSubCategoryID','=','suppliercategorysub.supCategorySubID')
                     ->where('suppliersubcategoryassign.supplierID', $supplierId)
-                    ->where('suppliercategorysub.supMasterCategoryID', $supplierBusinessCategory->supCategoryMasterID)->first();
-                if($supplierBusinessSubCategory){
-                    $temp = [
-                        "businessCategoryID" => $supplierBusinessCategory->supplierBusinessCategoryAssignID, 
-                        "businessCategoryName" => $supplierBusinessCategory->categoryName,
-                        "businessSubCategoryName" => $supplierBusinessSubCategory->categoryName
-                    ];
+                    ->where('suppliercategorysub.supMasterCategoryID', $supplierBusinessCategory->supCategoryMasterID)->get();
+                if(count($supplierBusinessSubCategories) > 0){
+                    foreach ($supplierBusinessSubCategories as $supplierBusinessSubCategory) {
+                        $temp = [
+                            "businessCategoryAssignID" => $supplierBusinessCategory->supplierBusinessCategoryAssignID,
+                            "businessCategoryName" => $supplierBusinessCategory->categoryName,
+                            "businessSubCategoryAssignID" => $supplierBusinessSubCategory->supplierSubCategoryAssignID,
+                            "businessSubCategoryName" => $supplierBusinessSubCategory->categoryName
+                        ];
+                        $data[] = $temp;
+                    }
                 }
                 else{
                     $temp = [
-                        "businessCategoryID" => $supplierBusinessCategory->supplierBusinessCategoryAssignID,
+                        "businessCategoryAssignID" => $supplierBusinessCategory->supplierBusinessCategoryAssignID,
                         "businessCategoryName" => $supplierBusinessCategory->categoryName,
+                        "businessSubCategoryAssignID" => 0,
                         "businessSubCategoryName" => null
                     ];
+                    $data[] = $temp;
                 }
-                $data[] = $temp;
             }
         }
         return $this->sendResponse($data, 'Supplier business category retrieved successfully');
     }
 
     public function getBusinessCategoriesBySupplier(Request $request){
-
         $supplierId = $request['supplierId'];
         $supplier = SupplierMaster::where('supplierCodeSystem', $supplierId)->first();
 
         $businessCategories = [];
         
         if($supplier){
-            $tempData = SupplierBusinessCategoryAssign::where('supplierID',$supplierId)->pluck('supCategoryMasterID');
-            $businessCategories = SupplierCategoryMaster::whereNotIn('supCategoryMasterID',$tempData)->where('isActive',1)->get();
+            $assignMasterCategories = SupplierBusinessCategoryAssign::where('supplierID',$supplierId)->pluck('supCategoryMasterID');
+            $removeMasterCategoryList = [];
+            foreach ($assignMasterCategories as $assignMasterCategory){
+                $subCategoriesRelatedToMasterCategory = SupplierCategorySub::where('supMasterCategoryID',$assignMasterCategory)->pluck('supCategorySubID');
+                $assignSubCategories = SupplierSubCategoryAssign::whereIn('supSubCategoryID',$subCategoriesRelatedToMasterCategory)->where('supplierID',$supplierId)->count();
+                if($assignSubCategories == count($subCategoriesRelatedToMasterCategory)){
+                    $removeMasterCategoryList[] = $assignMasterCategory;
+                }
+            }
+            $businessCategories = SupplierCategoryMaster::whereNotIn('supCategoryMasterID',$removeMasterCategoryList)->where('isActive',1)->get();
         }
 
         return $this->sendResponse($businessCategories, 'Supplier business category retrieved successfully');
@@ -537,19 +549,30 @@ class SupplierMasterAPIController extends AppBaseController
 
     public function addBusinessCategoryToSupplier(Request $request){
         $businessCategoryID = $request['businessCategoryID'];
-        $businessSubCategoryID = $request['businessSubCategoryID'];
+        $businessSubCategoryIDS = $request['businessSubCategoryID'];
         $supplierID = $request['supplierID'];
         
-        $businessCategoryAssign = new SupplierBusinessCategoryAssign();
-        $businessCategoryAssign->supplierID = $supplierID;
-        $businessCategoryAssign->supCategoryMasterID = $businessCategoryID;
-        $businessCategoryAssign->save();
-        
-        if(isset($businessSubCategoryID)){
-            $businessSubCategoryAssign = new SupplierSubCategoryAssign();
-            $businessSubCategoryAssign->supplierID = $supplierID;
-            $businessSubCategoryAssign->supSubCategoryID = $businessSubCategoryID;
-            $businessSubCategoryAssign->save();
+        $businessCategoryAssignCheck = SupplierBusinessCategoryAssign::where('supplierID',$supplierID)->where('supCategoryMasterID',$businessCategoryID)->first();
+        if(!$businessCategoryAssignCheck){
+            $businessCategoryAssign = new SupplierBusinessCategoryAssign();
+            $businessCategoryAssign->supplierID = $supplierID;
+            $businessCategoryAssign->supCategoryMasterID = $businessCategoryID;
+            $businessCategoryAssign->save();
+        }
+        else{
+            if (!isset($businessSubCategoryIDS)) {
+                return $this->sendError('The selected main category is already assigned, Please select sub category or new main category',500);
+            }
+        }
+
+        if (isset($businessSubCategoryIDS)) {
+            $ids = collect($businessSubCategoryIDS)->pluck('id');
+            foreach ($ids as $id) {
+                $businessSubCategoryAssign = new SupplierSubCategoryAssign();
+                $businessSubCategoryAssign->supplierID = $supplierID;
+                $businessSubCategoryAssign->supSubCategoryID = $id;
+                $businessSubCategoryAssign->save();
+            }
         }
 
         return $this->sendResponse([], 'Supplier business category added successfully');

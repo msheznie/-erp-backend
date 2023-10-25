@@ -45,9 +45,9 @@ Route::group([], function(){
 	Route::post('supplierReOpen', 'SupplierMasterAPIController@supplierReOpen')->name("Supplier master re open");
 	Route::post('validateSupplierAmend', 'SupplierMasterAPIController@validateSupplierAmend')->name("Validate supplier amend");
 	Route::post('referBackHistoryBySupplierMaster', 'SupplierMasterRefferedBackAPIController@referBackHistoryBySupplierMaster')->name("Referback history by supplier");
+    Route::post('removeSupplierBusinessCategory', 'SupplierBusinessCategoryAssignAPIController@removeSupplierBusinessCategory')->name("Remove supplier business category");
 
-    Route::resource('supplier_bc_assigns', 'SupplierBusinessCategoryAssignAPIController');
-	Route::resource('supplier_catalog_masters', 'SupplierCatalogMasterAPIController');
+    Route::resource('supplier_catalog_masters', 'SupplierCatalogMasterAPIController');
 	Route::resource('supplier/masters', 'SupplierMasterAPIController', ['names' => 'Supplier master']);
 	Route::resource('supplier_catalog_details', 'SupplierCatalogDetailAPIController');
 	Route::resource('bank_memo_suppliers', 'BankMemoSupplierAPIController');
