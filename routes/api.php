@@ -252,7 +252,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('po_advance_payments', 'PoAdvancePaymentAPIController');
 
             Route::post('reportSpentAnalysisDrilldownExport', 'ProcumentOrderAPIController@reportSpentAnalysisDrilldownExport');
-            Route::post('reportPoEmployeePerformance', 'ProcumentOrderAPIController@reportPoEmployeePerformance');
             
             Route::post('reportPrToGrv', 'PurchaseRequestAPIController@reportPrToGrv');
             Route::post('exportPrToGrvReport', 'PurchaseRequestAPIController@exportPrToGrvReport');
@@ -285,8 +284,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('address_types', 'AddressTypeAPIController');
             
             Route::resource('company_policy_categories', 'CompanyPolicyCategoryAPIController');
-            
-            Route::post('exportPoEmployeePerformance', 'ProcumentOrderAPIController@exportPoEmployeePerformance');
          
             Route::resource('g_r_v_types', 'GRVTypesAPIController');
             Route::resource('budget_consumed_datas', 'BudgetConsumedDataAPIController');
