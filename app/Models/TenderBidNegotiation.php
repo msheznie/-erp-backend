@@ -33,4 +33,8 @@ class TenderBidNegotiation extends Model
         'created_at' => 'date',
         'updated_at' => 'date'
     ];
+
+    public function tender_negotiation_area(){
+        return $this->hasOne('App\Models\TenderNegotiationArea', 'tender_negotiation_id', 'tender_negotiation_id');
+    }
 }
