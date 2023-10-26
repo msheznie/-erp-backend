@@ -698,7 +698,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('getPosMissMatchData', 'ShiftDetailsAPIController@getPosMissMatchData');
             Route::post('updatePosMismatch', 'ShiftDetailsAPIController@updatePosMismatch');
             Route::post('getGlMatchEntries', 'ShiftDetailsAPIController@getGlMatchEntries');
-            
+            Route::post('exportInsufficientItems', 'ShiftDetailsAPIController@exportInsufficientItems');
+
             Route::resource('currency_denominations', 'CurrencyDenominationAPIController');
             Route::resource('shift_details', 'ShiftDetailsAPIController');
             Route::get('getPosCustomerSearch', 'CustomerMasterAPIController@getPosCustomerSearch');
@@ -1153,6 +1154,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('getAllInvoicesRPos', 'POS\PosAPIController@getAllInvoicesRPos');
             Route::post('getRPOSInvoiceData', 'POS\PosAPIController@getRPOSInvoiceData');
             Route::post('getAllShiftsGPOS', 'POS\PosAPIController@getAllShiftsGPOS');
+            Route::post('getAllBills', 'POS\PosAPIController@getAllBills');
 
             Route::post('generateGeneralLedgerReportPDF', 'FinancialReportAPIController@pdfExportReport');
             Route::post('generateFinancialTrialBalanceReportPDF', 'FinancialReportAPIController@pdfExportReport');
