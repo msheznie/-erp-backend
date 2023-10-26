@@ -472,6 +472,27 @@ class FixedAssetMasterAPIController extends AppBaseController
 
         $input['COSTUNIT'] = floatval($input['COSTUNIT']);
 
+        if(isset($input['isCurrencySame']) && $input['isCurrencySame']==true){
+
+            if(isset($input['costUnitRpt'])){
+                if($input['costUnitRpt'] > 0){
+                    $input['COSTUNIT'] = $input['costUnitRpt'];
+                }
+            }
+
+            if(isset($input['accumulated_depreciation_amount_rpt'])){
+                if($input['accumulated_depreciation_amount_rpt'] > 0){
+                    $input['accumulated_depreciation_amount_lcl'] = $input['accumulated_depreciation_amount_rpt'];
+                }
+            }
+
+            if(isset($input['salvage_value_rpt'])){
+                if($input['salvage_value_rpt']> 0){
+                    $input['salvage_value'] = $input['salvage_value_rpt'];
+                }
+            }
+        }
+        
         if(doubleval($input['salvage_value_rpt']) >  (doubleval($input['costUnitRpt']))) {
             return $this->sendError("Salvage Value Cannot be greater than Unit Price", 500);
         }
@@ -960,17 +981,17 @@ class FixedAssetMasterAPIController extends AppBaseController
 
             if(isset($input['isCurrencySame']) && $input['isCurrencySame'] == true) {
                 if (isset($input['costUnitRpt'])) {
-                    if($input['costUnitRpt']) {
+                    if($input['costUnitRpt'] > 0 || $input['COSTUNIT'] != $input['costUnitRpt']) {
                         $input['COSTUNIT'] = $input['costUnitRpt'];
                     }
                 }
                 if (isset($input['salvage_value_rpt'])) {
-                    if($input['salvage_value_rpt']) {
+                    if($input['salvage_value_rpt'] > 0 || $input['salvage_value'] != $input['salvage_value_rpt']) {
                         $input['salvage_value'] = $input['salvage_value_rpt'];
                     }
                 }
                 if (isset($input['accumulated_depreciation_amount_rpt'])) {
-                    if($input['accumulated_depreciation_amount_rpt']){
+                    if($input['accumulated_depreciation_amount_rpt'] > 0 || $input['accumulated_depreciation_amount_lcl'] != $input['accumulated_depreciation_amount_rpt']){
                         $input['accumulated_depreciation_amount_lcl'] = $input['accumulated_depreciation_amount_rpt'];
                     }
                 }
