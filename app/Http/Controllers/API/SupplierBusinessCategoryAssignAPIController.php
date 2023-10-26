@@ -5,6 +5,8 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateSupplierBusinessCategoryAssignAPIRequest;
 use App\Http\Requests\API\UpdateSupplierBusinessCategoryAssignAPIRequest;
 use App\Models\SupplierBusinessCategoryAssign;
+use App\Models\SupplierCategorySub;
+use App\Models\SupplierSubCategoryAssign;
 use App\Repositories\SupplierBusinessCategoryAssignRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -285,22 +287,30 @@ class SupplierBusinessCategoryAssignAPIController extends AppBaseController
      */
     public function destroy($id)
     {
+        return $this->sendResponse([],'Supplier Business Category Assign deleted successfully');
+        
         $supplierBusinessCategoryAssign = $this->supplierBusinessCategoryAssignRepository->find($id);
 
-        if (empty($supplierBusinessCategoryAssign)) {
-            return $this->sendError('Supplier Business Category Assign not found');
-        }
-
-        $supplierBusinessSubCategories = DB::table('suppliercategorysub')
-            ->where('supMasterCategoryID',$supplierBusinessCategoryAssign->supCategoryMasterID)
-            ->pluck('supCategorySubID');
-
-        DB::table('suppliersubcategoryassign')
-            ->where('supplierID',$supplierBusinessCategoryAssign->supplierID)
-            ->whereIn('supSubCategoryID', $supplierBusinessSubCategories)
-            ->delete();
-
         $supplierBusinessCategoryAssign->delete();
+
+        return $this->sendResponse([],'Supplier Business Category Assign deleted successfully');
+    }
+    
+    public function removeSupplierBusinessCategory(Request $request){
+        
+        $businessCategoryAssignID = $request['mainCategoryAssignID'];
+        $businessSubCategoryAssignID = $request['subCategoryAssignID'];
+        
+        $businessCategoryAssign = SupplierBusinessCategoryAssign::where('supplierBusinessCategoryAssignID',$businessCategoryAssignID)->first();
+        $subCategories = SupplierCategorySub::where('supMasterCategoryID',$businessCategoryAssign->supCategoryMasterID)->pluck('supCategorySubID');
+        $businessSubCategoryAssignCount = SupplierSubCategoryAssign::whereIn('supSubCategoryID',$subCategories)->where('supplierID',$businessCategoryAssign->supplierID)->count();
+        if($businessSubCategoryAssignCount <= 1){
+            $businessCategoryAssign->delete();
+        }
+        
+        if($businessSubCategoryAssignID != 0){
+            SupplierSubCategoryAssign::where('supplierSubCategoryAssignID',$businessSubCategoryAssignID)->delete();
+        }
 
         return $this->sendResponse([],'Supplier Business Category Assign deleted successfully');
     }
