@@ -60,6 +60,7 @@ class POSItemGLEntries extends Model
 
     public $fillable = [
         'shiftId',
+        'invoiceID',
         'itemAutoId',
         'uom',
         'qty',

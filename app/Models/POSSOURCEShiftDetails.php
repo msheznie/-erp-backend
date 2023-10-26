@@ -449,5 +449,13 @@ class POSSOURCEShiftDetails extends Model
         'wareHouseID' => 'required'
     ];
 
-    
+    public function warehouse()
+    {
+        return $this->belongsTo('App\Models\WarehouseMaster','wareHouseID','wareHouseSystemCode');
+    }
+
+    public function menuSalesMasters()
+    {
+        return $this->hasMany(POSSourceMenuSalesMaster::class, 'shiftID', 'shiftID');
+    }
 }

@@ -654,7 +654,12 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('postPosTaxMapping', 'ShiftDetailsAPIController@postPosTaxMapping');
             Route::post('postPosPayMapping', 'ShiftDetailsAPIController@postPosPayMapping');
             Route::post('postPosEntries', 'ShiftDetailsAPIController@postPosEntries');
-
+            Route::post('insufficientItems', 'ShiftDetailsAPIController@insufficientItems');
+            Route::post('getPosMismatchEntries', 'ShiftDetailsAPIController@getPosMismatchEntries');
+            Route::post('getPosMissMatchData', 'ShiftDetailsAPIController@getPosMissMatchData');
+            Route::post('updatePosMismatch', 'ShiftDetailsAPIController@updatePosMismatch');
+            Route::post('getGlMatchEntries', 'ShiftDetailsAPIController@getGlMatchEntries');
+            
             Route::resource('currency_denominations', 'CurrencyDenominationAPIController');
             Route::resource('shift_details', 'ShiftDetailsAPIController');
             Route::get('getPosCustomerSearch', 'CustomerMasterAPIController@getPosCustomerSearch');
@@ -1101,12 +1106,14 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('postCashFlowPulledItems', 'CashFlowReportAPIController@postCashFlowPulledItems');
             Route::post('postCashFlowPulledItemsForProceeds', 'CashFlowReportAPIController@postCashFlowPulledItemsForProceeds');
             Route::get('getCashFlowReportData', 'CashFlowReportAPIController@getCashFlowReportData');
+            Route::post('getAllShiftsRPOS', 'POS\PosAPIController@getAllShiftsRPOS');
             Route::post('getAllInvoicesPos', 'POS\PosAPIController@getAllInvoicesPos');
             Route::post('getPosInvoiceData', 'POS\PosAPIController@getPosInvoiceData');
             Route::post('getAllInvoicesPosReturn', 'POS\PosAPIController@getAllInvoicesPosReturn');
             Route::post('getPosInvoiceReturnData', 'POS\PosAPIController@getPosInvoiceReturnData');
             Route::post('getAllInvoicesRPos', 'POS\PosAPIController@getAllInvoicesRPos');
             Route::post('getRPOSInvoiceData', 'POS\PosAPIController@getRPOSInvoiceData');
+            Route::post('getAllShiftsGPOS', 'POS\PosAPIController@getAllShiftsGPOS');
 
             Route::post('generateGeneralLedgerReportPDF', 'FinancialReportAPIController@pdfExportReport');
             Route::post('generateFinancialTrialBalanceReportPDF', 'FinancialReportAPIController@pdfExportReport');
