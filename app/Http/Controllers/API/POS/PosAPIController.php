@@ -969,4 +969,34 @@ class PosAPIController extends AppBaseController
             ->with('orderCondition', $sort)
             ->make(true);
     }
+
+    public function getAllBills(Request $request){
+
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+        $shiftDetails = POSSOURCEShiftDetails::where('shiftID',$input['shiftId'])->first();
+
+        if($shiftDetails->posType == 1) {
+            $bills = POSInvoiceSource::with(['wareHouseMaster'])->where('shiftID', $input['shiftId']);
+        } else if ($shiftDetails->posType == 2){
+            $bills = POSSourceMenuSalesMaster::with(['wareHouseMaster'])->where('shiftID', $input['shiftId']);
+        }
+
+        return \DataTables::eloquent($bills)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('shiftID', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+  }
 }

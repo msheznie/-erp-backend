@@ -12,6 +12,7 @@
  */
 namespace App\Http\Controllers\API;
 
+use App\helper\CreateExcel;
 use App\helper\inventory;
 use App\helper\ItemTracking;
 use App\helper\TaxService;
@@ -627,21 +628,66 @@ class ShiftDetailsAPIController extends AppBaseController
     public function insufficientItems(Request $request){
 
         $shiftId = $request->shiftId;
-        $isPostGroupBy = $request->isPostGroupBy;
-        $db = isset($request->db) ? $request->db : "";
+
+        return $this->getAllInsufficientItems($shiftId);
+
+    }
+
+    public function exportInsufficientItems(Request $request){
+
+        $shiftId = $request->shiftId;
+
+        $items = POSItemGLEntries::where('shiftId', $shiftId)->get();
+        $data = array();
+        $x = 0;
+        foreach ($items  as $val) {
+            if($val->insufficientQty > 0) {
+                $x++;
+                $data[$x]['Item Code'] = $val->primaryCode;
+                $data[$x]['Qty Needed'] = $val->qty;
+                $data[$x]['Available Qty'] = $val->availableQty;
+                $data[$x]['Insufficient Qty'] = $val->insufficientQty;
+                $data[$x]['Warehouse'] = $val->wareHouseDescription;
+            }
+        }
+        $shiftDetails = POSSOURCEShiftDetails::where('shiftID',$shiftId)->first();
+
+        $companyMaster = Company::find(isset($shiftDetails->companyID)?$shiftDetails->companyID:null);
+        $companyCode = isset($companyMaster->CompanyID)?$companyMaster->CompanyID:'common';
+        $detail_array = array(
+            'company_code'=>$companyCode,
+        );
+
+        $fileName = 'Insufficent_Items';
+        $path = 'pos/sales_transaction/excel/';
+        $type = 'xls';
+        $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
+
+        if($basePath == '')
+        {
+            return $this->sendError('Unable to export excel');
+        }
+        else
+        {
+            return $this->sendResponse($basePath, trans('custom.success_export'));
+        }
+
+    }
 
 
+    public function getAllInsufficientItems($shiftId){
         $isInsufficient = 0;
 
         $shiftDetails = POSSOURCEShiftDetails::where('shiftID',$shiftId)->first();
         $qtyArray = array();
 
         $invItemsPLBS = DB::table('pos_source_invoicedetail')
-            ->selectRaw('pos_source_invoicedetail.qty * itemassigned.wacValueLocal as amount, pos_source_invoice.invoiceID as invoiceID, pos_source_invoice.shiftID as shiftId, pos_source_invoice.companyID as companyID, pos_source_invoicedetail.itemAutoID as itemID, itemmaster.financeCategorySub as financeCategorySub,  financeitemcategorysub.financeGLcodebBSSystemID as bsGLCode, financeitemcategorysub.financeGLcodePLSystemID as plGLCode, itemmaster.financeCategoryMaster as categoryID, pos_source_invoicedetail.qty as qty, itemassigned.wacValueLocal as price, pos_source_invoicedetail.UOMID as uom, pos_source_invoice.wareHouseAutoID as wareHouseID, financeitemcategorysub.includePLForGRVYN as glYN')
+            ->selectRaw('pos_source_invoicedetail.qty * itemassigned.wacValueLocal as amount, pos_source_invoice.invoiceID as invoiceID, pos_source_invoice.shiftID as shiftId, pos_source_invoice.companyID as companyID, pos_source_invoicedetail.itemAutoID as itemID, itemmaster.financeCategorySub as financeCategorySub,  financeitemcategorysub.financeGLcodebBSSystemID as bsGLCode, financeitemcategorysub.financeGLcodePLSystemID as plGLCode, itemmaster.financeCategoryMaster as categoryID, pos_source_invoicedetail.qty as qty, itemassigned.wacValueLocal as price, pos_source_invoicedetail.UOMID as uom, pos_source_invoice.wareHouseAutoID as wareHouseID, financeitemcategorysub.includePLForGRVYN as glYN, warehousemaster.wareHouseDescription')
             ->join('pos_source_invoice', 'pos_source_invoice.invoiceID', '=', 'pos_source_invoicedetail.invoiceID')
             ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'pos_source_invoicedetail.itemAutoID')
             ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
             ->join('itemassigned', 'itemassigned.itemCodeSystem', '=', 'itemmaster.itemCodeSystem')
+            ->join('warehousemaster', 'warehousemaster.wareHouseSystemCode', '=', 'pos_source_invoice.wareHouseAutoID')
             ->where('pos_source_invoice.shiftID', $shiftId)
             ->where('itemassigned.companySystemID', $shiftDetails->companyID)
             ->where('pos_source_invoice.isCreditSales', 0)
@@ -661,24 +707,23 @@ class ShiftDetailsAPIController extends AppBaseController
                     }
                 }
             }
-        }   
+        }
 
-            $isInsufficientExist = false;
+        $isInsufficientExist = false;
 
-            $qtyArray = POSItemGLEntries::where('shiftId', $shiftId)->get();
-            foreach ($qtyArray as $gl) {
-                if($gl->insufficientQty > 0)
-                {
-                    $isInsufficientExist = true;
-                    break;
-                }
+        $qtyArray = POSItemGLEntries::where('shiftId', $shiftId)->get();
+        foreach ($qtyArray as $gl) {
+            if($gl->insufficientQty > 0)
+            {
+                $isInsufficientExist = true;
+                break;
             }
+        }
 
-            $data['output'] = $qtyArray;
-            $data['isExist'] = $isInsufficientExist;
-            return $this->sendResponse($data, "Insufficient quantities retrieved successfully");
-
-    }
+        $data['output'] = $qtyArray;
+        $data['isExist'] = $isInsufficientExist;
+        return $this->sendResponse($data, "Insufficient quantities retrieved successfully");
+     }
 
     public function postGLEntries(Request $request){
         
@@ -1561,6 +1606,9 @@ class ShiftDetailsAPIController extends AppBaseController
                 TaxLedgerInsert::dispatch($masterData, $taxLedgerData, $db);
             }
         }
+
+        $logs = POSFinanceLog::where('shiftId', $shiftId)->update(['status' => 2]);
+
     }
 
     public function postPosEntries(Request $request){
@@ -2322,7 +2370,6 @@ class ShiftDetailsAPIController extends AppBaseController
             }
         }
 
-//         $logs = POSFinanceLog::where('shiftId', $shiftId)->update(['status' => 2]);
 
 
 
