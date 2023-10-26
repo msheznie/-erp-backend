@@ -2635,18 +2635,40 @@ class ShiftDetailsAPIController extends AppBaseController
     {
         $input = $request->all();
         $data = [];
-        $output = DB::table('pos_gl_entries')
-        ->selectRaw('case when sum(amount) < 0 then 0 else sum(amount) end as Amount,COUNT(*) as count')
-        ->where('shiftId',$input['shiftId']);
 
-        $data['invoiceEntries'] = DB::table('pos_gl_entries')
-        ->selectRaw('sum(amount) as Amount,COUNT(pos_gl_entries.shiftId) as count,pos_source_menusalesmaster.invoiceCode,pos_gl_entries.invoiceID,pos_gl_entries.shiftid')
-        ->join('pos_source_menusalesmaster', 'pos_source_menusalesmaster.menuSalesID', '=', 'pos_gl_entries.invoiceID')
-        ->where('pos_gl_entries.shiftId',$input['shiftId'])
-        ->groupBy('invoiceID')
-        ->get();
+        $shiftDetails = POSSOURCEShiftDetails::where('shiftID',$input['shiftId'])->first();
+        $output = DB::table('pos_gl_entries')
+            ->selectRaw('case when sum(amount) <= 0 then 0 else sum(amount) end as Amount,COUNT(*) as count')
+            ->having('count', '>', 0)
+            ->where('shiftId', $input['shiftId']);
+
+        if($shiftDetails->posType == 1) {
+
+            $data['invoiceEntries'] = DB::table('pos_gl_entries')
+                ->selectRaw('sum(amount) as Amount,COUNT(pos_gl_entries.shiftId) as count,pos_source_invoice.invoiceCode,pos_gl_entries.invoiceID,pos_gl_entries.shiftid')
+                ->join('pos_source_invoice', 'pos_source_invoice.invoiceID', '=', 'pos_gl_entries.invoiceID')
+                ->where('pos_gl_entries.shiftId', $input['shiftId'])
+                ->groupBy('invoiceID')
+                ->get();
+        }
+        else if ($shiftDetails->posType == 2) {
+
+            $data['invoiceEntries'] = DB::table('pos_gl_entries')
+                ->selectRaw('sum(amount) as Amount,COUNT(pos_gl_entries.shiftId) as count,pos_source_menusalesmaster.invoiceCode,pos_gl_entries.invoiceID,pos_gl_entries.shiftid')
+                ->join('pos_source_menusalesmaster', 'pos_source_menusalesmaster.menuSalesID', '=', 'pos_gl_entries.invoiceID')
+                ->where('pos_gl_entries.shiftId', $input['shiftId'])
+                ->groupBy('invoiceID')
+                ->get();
+        }
         $data['shifEntries'] = $output->get();
-       $data['isMismatch'] = $output->first()->Amount==0?true:false;
+
+        if(!empty($output->first())) {
+            $data['isMismatch'] = $output->first()->Amount == 0 ? true : false;
+        }
+        else {
+            $data['isMismatch'] = true;
+        }
+
 
         return $this->sendResponse($data, 'Record retrieved successfully');
 
@@ -2711,11 +2733,22 @@ class ShiftDetailsAPIController extends AppBaseController
     public function getGlMatchEntries(Request $request)
     {
         $input = $request->all();
-        $data = DB::table('pos_source_menusalesmaster')
-        ->selectRaw('(sum(grossAmount) - sum(discountAmount)) + sum(totalTaxAmount) as Amount,count(*) as count')
-        ->where('shiftID',$input['shiftId'])
-        ->get();
-        
+
+        $shiftDetails = POSSOURCEShiftDetails::where('shiftID',$input['shiftId'])->first();
+
+        if($shiftDetails->posType == 1) {
+            $data = DB::table('pos_source_invoice')
+                ->selectRaw('sum(netTotal) as Amount, count(*) as count')
+                ->where('shiftID', $input['shiftId'])
+                ->get();
+        }
+
+        else if($shiftDetails->posType == 2) {
+            $data = DB::table('pos_source_menusalesmaster')
+                ->selectRaw('(sum(grossAmount) - sum(discountAmount)) + sum(totalTaxAmount) as Amount,count(*) as count')
+                ->where('shiftID', $input['shiftId'])
+                ->get();
+        }
         return $this->sendResponse($data, 'Record retrieved successfully');
 
     }
