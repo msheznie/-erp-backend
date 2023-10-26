@@ -31,3 +31,11 @@ Route::group([],function (){
     Route::post('exportReport', 'ReportAPIController@exportReport')->name("Export report");
 });
 
+//Order Status Report
+Route::group([],function (){
+    Route::get('reportOrderStatusFilterOptions', 'PurchaseOrderStatusAPIController@reportOrderStatusFilterOptions')->name("Report order status filter options");
+    Route::post('reportOrderStatusPreCheck', 'PurchaseOrderStatusAPIController@reportOrderStatusPreCheck')->name("Report order status pre check");
+    Route::post('reportOrderStatus', 'PurchaseOrderStatusAPIController@reportOrderStatus')->name("Report order status");
+    Route::post('exportReportOrderStatus', 'PurchaseOrderStatusAPIController@exportReportOrderStatus')->name("Export report order status");
+});
+
