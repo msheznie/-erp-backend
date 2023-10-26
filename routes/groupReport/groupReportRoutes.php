@@ -39,3 +39,9 @@ Route::group([],function (){
     Route::post('exportReportOrderStatus', 'PurchaseOrderStatusAPIController@exportReportOrderStatus')->name("Export report order status");
 });
 
+//Employee Performance
+Route::group([],function (){
+    Route::post('reportPoEmployeePerformance', 'ProcumentOrderAPIController@reportPoEmployeePerformance')->name("Report po employee performance");
+    Route::post('exportPoEmployeePerformance', 'ProcumentOrderAPIController@exportPoEmployeePerformance')->name("Export po employee performance");
+});
+
