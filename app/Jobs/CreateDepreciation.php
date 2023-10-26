@@ -6,6 +6,7 @@ use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
 use App\Models\FixedAssetDepreciationPeriod;
 use App\Models\FixedAssetMaster;
+use App\Jobs\ProcessDepreciation;
 use App\Repositories\FixedAssetDepreciationMasterRepository;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
@@ -90,7 +91,8 @@ class CreateDepreciation implements ShouldQueue
                         ->isApproved()
                         ->assetType(1)
                         ->orderBy('faID', 'desc')
-                        ->get();
+                        ->get()
+                        ->toArray();
 
                     $db = $this->dataBase;
 
@@ -103,20 +105,25 @@ class CreateDepreciation implements ShouldQueue
                         $chunkDataSizeCounts = ceil($totalDataSize / $chunkSize);
                         $faCounts = 1;
 
-                        $faMaster->chunk($chunkSize)->each(function ($chunk) use ($db, $depMasterAutoID, $depMaster, $depDate, &$faCounts, $chunkDataSizeCounts) {
-                            DepreciationSubJobs::dispatch($db, $chunk->all(), $depMasterAutoID, $depMaster, $depDate,$faCounts, $chunkDataSizeCounts);
+
+                        collect($faMaster)->chunk($chunkSize)->each(function ($chunk) use ($db, $depMasterAutoID, $depDate, &$faCounts, $chunkDataSizeCounts) {
+                            ProcessDepreciation::dispatch($db, $chunk, $depMasterAutoID, $depDate,$faCounts, $chunkDataSizeCounts)->onQueue('single');
                             $faCounts++;
                         });
+                    } else {
+                        $fixedAssetDepreciationMasterUpdate = $faDepMaster->update(['isDepProcessingYN' => 1], $depMasterAutoID);
                     }
-
                     DB::commit();
                     Log::info('Depreciation End');
-
                 }
             } catch (\Exception $e) {
                 DB::rollBack();
                 Log::error($this->failed($e));
+                DB::beginTransaction();
+
                 JobErrorLogService::storeError($this->dataBase, $depMaster->documentSystemID, $depMasterAutoID, $this->tag, 2, $this->failed($e), "-****----Line No----:".$e->getLine()."-****----File Name----:".$e->getFile());
+                $fixedAssetDepreciationMasterUpdate = $faDepMaster->update(['isDepProcessingYN' => 1], $depMasterAutoID);
+                DB::commit();
             }
         }
     }
