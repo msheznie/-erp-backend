@@ -1825,7 +1825,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
     public function updateReceiptVoucherMatching(Request $request)
     {
         $input = $request->all();
-        $input = array_except($input, ['created_by', 'BPVsupplierID', 'company', 'confirmed_by', 'modified_by','localcurrency','rptcurrency','customer','supplier']);
+        $input = array_except($input, ['created_by', 'BPVsupplierID', 'company', 'confirmed_by', 'modified_by','localcurrency','rptcurrency','customer','supplier','payment_voucher']);        
         $input = $this->convertArrayToValue($input);
 
         $employee = \Helper::getEmployeeInfo();
