@@ -1250,6 +1250,7 @@ class ShiftDetailsAPIController extends AppBaseController
                     \Illuminate\Support\Facades\DB::commit();
 
                 }
+                $logs = POSFinanceLog::where('shiftId', $shiftId)->update(['status' => 2]);
 
                 \Illuminate\Support\Facades\DB::commit();
 
@@ -1273,7 +1274,9 @@ class ShiftDetailsAPIController extends AppBaseController
                 $taxLedgerData = null;
                 TaxLedgerInsert::dispatch($masterData, $taxLedgerData, $db);
             }
-        } else if ($shiftDetails->posType == 2){
+        }
+
+        else if ($shiftDetails->posType == 2){
             $logged_user = \Helper::getEmployeeSystemID();
 
             $masterData = ['documentSystemID' => 111, 'autoID' => $shiftId, 'companySystemID' => $shiftDetails->companyID, 'employeeSystemID' => $logged_user, 'companyID' => $shiftDetails->companyCode];
@@ -1588,6 +1591,8 @@ class ShiftDetailsAPIController extends AppBaseController
 
                     \Illuminate\Support\Facades\DB::commit();
                 }
+                $logs = POSFinanceLog::where('shiftId', $shiftId)->update(['status' => 2]);
+
                 \Illuminate\Support\Facades\DB::commit();
 
                 
@@ -1607,7 +1612,6 @@ class ShiftDetailsAPIController extends AppBaseController
             }
         }
 
-        $logs = POSFinanceLog::where('shiftId', $shiftId)->update(['status' => 2]);
 
     }
 
@@ -2369,9 +2373,6 @@ class ShiftDetailsAPIController extends AppBaseController
 
             }
         }
-
-
-
 
 
         return $this->sendResponse([$logs], "Invoice Posting successfull");
