@@ -2728,16 +2728,17 @@ class ShiftDetailsAPIController extends AppBaseController
 
     }
 
-    public function getPosMissMatchData(Request $request)
+    public function getPosMisMatchData(Request $request)
     {   
         $input = $request->all();
         $data = [];
 
         $data['data'] = DB::table('pos_gl_entries')
-        ->selectRaw('chartofaccounts.AccountDescription,pos_gl_entries.amount')
+        ->selectRaw('chartofaccounts.AccountDescription,pos_gl_entries.amount, pos_source_shiftdetails.transactionCurrencyDecimalPlaces')
         ->join('chartofaccounts', 'chartofaccounts.chartOfAccountSystemID', '=', 'pos_gl_entries.glCode')
+        ->leftjoin('pos_source_shiftdetails', 'pos_source_shiftdetails.shiftID', '=', 'pos_gl_entries.shiftID')
         ->where('chartofaccounts.primaryCompanySystemID',$input['companyId'])
-        ->where('shiftId',$input['shiftId'])
+        ->where('pos_gl_entries.shiftId',$input['shiftId'])
         ->where('invoiceID',$input['invoiceId'])
         ->get();
 
