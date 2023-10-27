@@ -1627,9 +1627,9 @@ class ShiftDetailsAPIController extends AppBaseController
         $isInsufficient = 0;
 
         $shiftDetails = POSSOURCEShiftDetails::where('shiftID',$shiftId)->first();
-        $isAlreadyPosted = POSFinanceLog::where('shiftID',$shiftId)->first();
+        $logs = POSFinanceLog::where('shiftID',$shiftId)->first();
 
-        if(!empty($isAlreadyPosted)) {
+        if(empty($logs)) {
 
             $postedShifts = POSFinanceLog::groupBy('shiftId')->where('status', 2)->get();
             $postedShifts = collect($postedShifts)->pluck('shiftId');
