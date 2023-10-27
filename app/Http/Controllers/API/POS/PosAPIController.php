@@ -701,7 +701,7 @@ class PosAPIController extends AppBaseController
                 ->leftjoin('warehousemaster', 'warehousemaster.wareHouseSystemCode', '=', 'pos_source_shiftdetails.wareHouseID')
                 ->leftjoin('pos_source_menusalesmaster', 'pos_source_menusalesmaster.shiftID', '=', 'pos_source_shiftdetails.shiftID')
                 ->whereIn('pos_source_shiftdetails.shiftID', $postedShifts)
-                ->select('pos_source_shiftdetails.shiftID', 'pos_source_shiftdetails.createdUserName', 'pos_source_shiftdetails.startTime', 'pos_source_shiftdetails.endTime', 'warehousemaster.wareHouseDescription')
+                ->select('pos_source_shiftdetails.shiftID', 'pos_source_shiftdetails.createdUserName', 'pos_source_shiftdetails.startTime', 'pos_source_shiftdetails.endTime', 'warehousemaster.wareHouseDescription', 'pos_source_shiftdetails.transactionCurrencyDecimalPlaces')
                 ->selectRaw('SUM(pos_source_menusalesmaster.grossTotal) as totalBillAmount')
                 ->selectRaw('COUNT(pos_source_menusalesmaster.shiftID) as noOfBills')->groupBy('pos_source_menusalesmaster.shiftID');
         } else {
@@ -709,7 +709,7 @@ class PosAPIController extends AppBaseController
                 ->leftjoin('warehousemaster', 'warehousemaster.wareHouseSystemCode', '=', 'pos_source_shiftdetails.wareHouseID')
                 ->leftjoin('pos_source_menusalesmaster', 'pos_source_menusalesmaster.shiftID', '=', 'pos_source_shiftdetails.shiftID')
                 ->whereNotIn('pos_source_shiftdetails.shiftID', $postedShifts)
-                ->select('pos_source_shiftdetails.shiftID', 'pos_source_shiftdetails.createdUserName', 'pos_source_shiftdetails.startTime', 'pos_source_shiftdetails.endTime', 'warehousemaster.wareHouseDescription')
+                ->select('pos_source_shiftdetails.shiftID', 'pos_source_shiftdetails.createdUserName', 'pos_source_shiftdetails.startTime', 'pos_source_shiftdetails.endTime', 'warehousemaster.wareHouseDescription', 'pos_source_shiftdetails.transactionCurrencyDecimalPlaces')
                 ->selectRaw('SUM(pos_source_menusalesmaster.grossTotal) as totalBillAmount')
                 ->selectRaw('COUNT(pos_source_menusalesmaster.shiftID) as noOfBills')->groupBy('pos_source_menusalesmaster.shiftID');
         }
@@ -745,7 +745,7 @@ class PosAPIController extends AppBaseController
                 ->leftjoin('warehousemaster', 'warehousemaster.wareHouseSystemCode', '=', 'pos_source_shiftdetails.wareHouseID')
                 ->leftjoin('pos_source_menusalesmaster', 'pos_source_menusalesmaster.shiftID', '=', 'pos_source_shiftdetails.shiftID')
                 ->whereIn('pos_source_shiftdetails.shiftID', $postedShifts)
-                ->select('pos_source_shiftdetails.shiftID', 'pos_source_shiftdetails.createdUserName', 'pos_source_shiftdetails.startTime', 'pos_source_shiftdetails.endTime', 'warehousemaster.wareHouseDescription')
+                ->select('pos_source_shiftdetails.shiftID', 'pos_source_shiftdetails.createdUserName', 'pos_source_shiftdetails.startTime', 'pos_source_shiftdetails.endTime', 'warehousemaster.wareHouseDescription', 'pos_source_shiftdetails.transactionCurrencyDecimalPlaces')
                 ->selectRaw('SUM(pos_source_menusalesmaster.grossTotal) as totalBillAmount')
                 ->selectRaw('COUNT(pos_source_menusalesmaster.shiftID) as noOfBills')->groupBy('pos_source_menusalesmaster.shiftID');
         } else {
@@ -754,7 +754,7 @@ class PosAPIController extends AppBaseController
                 ->leftjoin('warehousemaster', 'warehousemaster.wareHouseSystemCode', '=', 'pos_source_shiftdetails.wareHouseID')
                 ->leftjoin('pos_source_menusalesmaster', 'pos_source_menusalesmaster.shiftID', '=', 'pos_source_shiftdetails.shiftID')
                 ->whereNotIn('pos_source_shiftdetails.shiftID', $postedShifts)
-                ->select('pos_source_shiftdetails.shiftID', 'pos_source_shiftdetails.createdUserName', 'pos_source_shiftdetails.startTime', 'pos_source_shiftdetails.endTime', 'warehousemaster.wareHouseDescription')
+                ->select('pos_source_shiftdetails.shiftID', 'pos_source_shiftdetails.createdUserName', 'pos_source_shiftdetails.startTime', 'pos_source_shiftdetails.endTime', 'warehousemaster.wareHouseDescription', 'pos_source_shiftdetails.transactionCurrencyDecimalPlaces')
                 ->selectRaw('SUM(pos_source_menusalesmaster.grossTotal) as totalBillAmount')
                 ->selectRaw('COUNT(pos_source_menusalesmaster.shiftID) as noOfBills')->groupBy('pos_source_menusalesmaster.shiftID');
         }

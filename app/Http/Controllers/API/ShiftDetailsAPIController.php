@@ -915,6 +915,7 @@ class ShiftDetailsAPIController extends AppBaseController
                         ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
                         ->where('pos_source_invoicedetail.invoiceID', $invoice->invoiceID)
                         ->get();
+
                     foreach ($items as $item) {
                         $input2 = ['customerCatalogDetailID' => 0, 'customerCatalogMasterID' => 0, 'itemCode' => $item->itemAutoID, 'qtyIssued' => $item->qty, 'issueCostLocal' => $item->companyLocalAmount, 'issueCostRpt' => $item->companyReportingAmount, 'qtyIssuedDefaultMeasure' => $item->qty, 'sellingCost' => $item->companyLocalAmount, 'sellingCostAfterMargin' => $item->companyLocalAmount, 'sellingCostAfterMarginLocal' => $item->companyLocalAmount, 'sellingCostAfterMarginRpt' => $item->companyReportingAmount, 'sellingCurrencyER' => $item->transactionExchangeRate, 'sellingCurrencyID' => $item->transactionCurrencyID];
 
@@ -1468,6 +1469,7 @@ class ShiftDetailsAPIController extends AppBaseController
                         ->where('pos_source_menusalesitems.menuSalesID', $invoice->menuSalesID)
                         ->get();
 
+
                     foreach ($items as $item) {
                         /* $amount = $request['amount'];
                $comments = $request['comments'];*/
@@ -1625,755 +1627,758 @@ class ShiftDetailsAPIController extends AppBaseController
         $isInsufficient = 0;
 
         $shiftDetails = POSSOURCEShiftDetails::where('shiftID',$shiftId)->first();
+        $isAlreadyPosted = POSFinanceLog::where('shiftID',$shiftId)->first();
 
-        $postedShifts = POSFinanceLog::groupBy('shiftId')->where('status', 2)->get();
-        $postedShifts = collect($postedShifts)->pluck('shiftId');
+        if(!empty($isAlreadyPosted)) {
 
-        POSGLEntries::where('shiftId', $shiftId)->delete();
-        POSItemGLEntries::where('shiftId', $shiftId)->delete();
-        POSBankGLEntries::where('shiftId', $shiftId)->delete();
-        POSTaxGLEntries::where('shiftId', $shiftId)->delete();
+            $postedShifts = POSFinanceLog::groupBy('shiftId')->where('status', 2)->get();
+            $postedShifts = collect($postedShifts)->pluck('shiftId');
 
-        POSGLEntries::whereIn('shiftId', $postedShifts)->delete();
-        POSItemGLEntries::whereIn('shiftId', $postedShifts)->delete();
-        POSBankGLEntries::whereIn('shiftId', $postedShifts)->delete();
-        POSTaxGLEntries::whereIn('shiftId', $postedShifts)->delete();
+            POSGLEntries::where('shiftId', $shiftId)->delete();
+            POSItemGLEntries::where('shiftId', $shiftId)->delete();
+            POSBankGLEntries::where('shiftId', $shiftId)->delete();
+            POSTaxGLEntries::where('shiftId', $shiftId)->delete();
 
-
-        if($shiftDetails->posType == 1) {
-
-            $hasItems = POSInvoiceSource::where('shiftId', $shiftId)->get();
-            $hasItemsSR = POSSourceSalesReturn::where('shiftId', $shiftId)->get();
-            if ($hasItems->isEmpty() && $hasItemsSR->isEmpty()) {
-                return $this->sendError('Invoices not found');
-            }
-
-            $shiftLogArray = [
-                'startTime' => $shiftDetails->startTime,
-                'endTime' => $shiftDetails->endTime,
-                'status' => 1,
-                'postGroupByYN' => 0,
-                'shiftId' => $shiftId
-            ];
-            $logs = POSFinanceLog::create($shiftLogArray);
-
-            $bankGLArray = array();
-            $itemGLArray = array();
-            $taxGLArray = array();
-            $itemArray = array();
-            $bankArray = array();
-            $refundGLArray1 = array();
-            $refundGLArray2 = array();
-            $itemGLArraySR = array();
-
-            if ($isPostGroupBy == 0) {
-
-                $bankGL = DB::table('pos_source_invoice')
-                    ->selectRaw('SUM(pos_source_invoice.netTotal) as amount, pos_source_invoice.invoiceID as invoiceID, pos_source_invoicepayments.GLCode as glCode, pos_source_invoice.shiftID as shiftId, pos_source_invoice.companyID as companyID')
-                    ->join('pos_source_invoicepayments', 'pos_source_invoicepayments.invoiceID', '=', 'pos_source_invoice.invoiceID')
-                    ->where('pos_source_invoice.shiftID', $shiftId)
-                    ->groupBy('pos_source_invoice.shiftID')
-                    ->groupBy('pos_source_invoice.invoiceID')
-                    ->groupBy('pos_source_invoicepayments.GLCode')
-                    ->where('pos_source_invoice.isCreditSales', 0)
-                    ->get();
+            POSGLEntries::whereIn('shiftId', $postedShifts)->delete();
+            POSItemGLEntries::whereIn('shiftId', $postedShifts)->delete();
+            POSBankGLEntries::whereIn('shiftId', $postedShifts)->delete();
+            POSTaxGLEntries::whereIn('shiftId', $postedShifts)->delete();
 
 
-                $invItems = DB::table('pos_source_invoicedetail')
-                    ->selectRaw('pos_source_invoicedetail.companyLocalAmount as amount, pos_source_invoice.invoiceID as invoiceID, pos_source_invoice.shiftID as shiftId, pos_source_invoice.companyID as companyID, pos_source_invoicedetail.itemAutoID as itemID, itemmaster.financeCategorySub as financeCategorySub, financeitemcategorysub.financeGLcodeRevenueSystemID as glCode, itemmaster.financeCategoryMaster as categoryID, financeitemcategorysub.financeGLcodebBSSystemID as bsGLCode, financeitemcategorysub.financeGLcodePLSystemID as plGLCode, financeitemcategorysub.includePLForGRVYN as glYN, pos_source_invoicedetail.qty as qty, pos_source_invoicedetail.price as price, pos_source_invoicedetail.UOMID as uom, pos_source_invoice.wareHouseAutoID as wareHouseID')
-                    ->join('pos_source_invoice', 'pos_source_invoice.invoiceID', '=', 'pos_source_invoicedetail.invoiceID')
-                    ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'pos_source_invoicedetail.itemAutoID')
-                    ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
-                    ->where('pos_source_invoice.shiftID', $shiftId)
-                    ->where('pos_source_invoice.isCreditSales', 0)
-                    ->get();
+            if ($shiftDetails->posType == 1) {
+
+                $hasItems = POSInvoiceSource::where('shiftId', $shiftId)->get();
+                $hasItemsSR = POSSourceSalesReturn::where('shiftId', $shiftId)->get();
+                if ($hasItems->isEmpty() && $hasItemsSR->isEmpty()) {
+                    return $this->sendError('Invoices not found');
+                }
+
+                $shiftLogArray = [
+                    'startTime' => $shiftDetails->startTime,
+                    'endTime' => $shiftDetails->endTime,
+                    'status' => 1,
+                    'postGroupByYN' => 0,
+                    'shiftId' => $shiftId
+                ];
+                $logs = POSFinanceLog::create($shiftLogArray);
+
+                $bankGLArray = array();
+                $itemGLArray = array();
+                $taxGLArray = array();
+                $itemArray = array();
+                $bankArray = array();
+                $refundGLArray1 = array();
+                $refundGLArray2 = array();
+                $itemGLArraySR = array();
+
+                if ($isPostGroupBy == 0) {
+
+                    $bankGL = DB::table('pos_source_invoice')
+                        ->selectRaw('SUM(pos_source_invoice.netTotal) as amount, pos_source_invoice.invoiceID as invoiceID, pos_source_invoicepayments.GLCode as glCode, pos_source_invoice.shiftID as shiftId, pos_source_invoice.companyID as companyID')
+                        ->join('pos_source_invoicepayments', 'pos_source_invoicepayments.invoiceID', '=', 'pos_source_invoice.invoiceID')
+                        ->where('pos_source_invoice.shiftID', $shiftId)
+                        ->groupBy('pos_source_invoice.shiftID')
+                        ->groupBy('pos_source_invoice.invoiceID')
+                        ->groupBy('pos_source_invoicepayments.GLCode')
+                        ->where('pos_source_invoice.isCreditSales', 0)
+                        ->get();
 
 
-                $invItemsPLBS = DB::table('pos_source_invoicedetail')
-                    ->selectRaw('pos_source_invoicedetail.qty * itemassigned.wacValueLocal as amount, pos_source_invoice.invoiceID as invoiceID, pos_source_invoice.shiftID as shiftId, pos_source_invoice.companyID as companyID, pos_source_invoicedetail.itemAutoID as itemID, itemmaster.financeCategorySub as financeCategorySub,  financeitemcategorysub.financeGLcodebBSSystemID as bsGLCode, financeitemcategorysub.financeGLcodePLSystemID as plGLCode, itemmaster.financeCategoryMaster as categoryID, pos_source_invoicedetail.qty as qty, itemassigned.wacValueLocal as price, pos_source_invoicedetail.UOMID as uom, pos_source_invoice.wareHouseAutoID as wareHouseID, financeitemcategorysub.includePLForGRVYN as glYN')
-                    ->join('pos_source_invoice', 'pos_source_invoice.invoiceID', '=', 'pos_source_invoicedetail.invoiceID')
-                    ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'pos_source_invoicedetail.itemAutoID')
-                    ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
-                    ->join('itemassigned', 'itemassigned.itemCodeSystem', '=', 'itemmaster.itemCodeSystem')
-                    ->where('pos_source_invoice.shiftID', $shiftId)
-                    ->where('itemassigned.companySystemID', $shiftDetails->companyID)
-                    ->where('pos_source_invoice.isCreditSales', 0)
-                    ->get();
+                    $invItems = DB::table('pos_source_invoicedetail')
+                        ->selectRaw('pos_source_invoicedetail.companyLocalAmount as amount, pos_source_invoice.invoiceID as invoiceID, pos_source_invoice.shiftID as shiftId, pos_source_invoice.companyID as companyID, pos_source_invoicedetail.itemAutoID as itemID, itemmaster.financeCategorySub as financeCategorySub, financeitemcategorysub.financeGLcodeRevenueSystemID as glCode, itemmaster.financeCategoryMaster as categoryID, financeitemcategorysub.financeGLcodebBSSystemID as bsGLCode, financeitemcategorysub.financeGLcodePLSystemID as plGLCode, financeitemcategorysub.includePLForGRVYN as glYN, pos_source_invoicedetail.qty as qty, pos_source_invoicedetail.price as price, pos_source_invoicedetail.UOMID as uom, pos_source_invoice.wareHouseAutoID as wareHouseID')
+                        ->join('pos_source_invoice', 'pos_source_invoice.invoiceID', '=', 'pos_source_invoicedetail.invoiceID')
+                        ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'pos_source_invoicedetail.itemAutoID')
+                        ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
+                        ->where('pos_source_invoice.shiftID', $shiftId)
+                        ->where('pos_source_invoice.isCreditSales', 0)
+                        ->get();
 
 
-                $taxItems = DB::table('pos_source_invoicedetail')
-                    ->selectRaw('pos_source_taxledger.amount as amount, pos_source_invoice.invoiceID as invoiceID, pos_source_invoice.shiftID as shiftId, pos_source_invoice.companyID as companyID, pos_source_invoicedetail.itemAutoID as itemID, itemmaster.financeCategorySub as financeCategorySub, financeitemcategorysub.financeGLcodeRevenueSystemID as glCode, pos_source_taxledger.amount as taxAmount, pos_source_taxledger.taxMasterID as taxMasterID, erp_taxmaster_new.outputVatGLAccountAutoID as outputVatGLCode')
-                    ->join('pos_source_invoice', 'pos_source_invoice.invoiceID', '=', 'pos_source_invoicedetail.invoiceID')
-                    ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'pos_source_invoicedetail.itemAutoID')
-                    ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
-                    ->join('pos_source_taxledger', 'pos_source_taxledger.documentDetailAutoID', '=', 'pos_source_invoicedetail.invoiceDetailsID')
-                    ->join('erp_taxmaster_new', 'erp_taxmaster_new.taxMasterAutoID', '=', 'pos_source_taxledger.taxMasterID')
-                    ->where('pos_source_invoice.shiftID', $shiftId)
-                    ->where('pos_source_invoice.isCreditSales', 0)
-                    ->get();
+                    $invItemsPLBS = DB::table('pos_source_invoicedetail')
+                        ->selectRaw('pos_source_invoicedetail.qty * itemassigned.wacValueLocal as amount, pos_source_invoice.invoiceID as invoiceID, pos_source_invoice.shiftID as shiftId, pos_source_invoice.companyID as companyID, pos_source_invoicedetail.itemAutoID as itemID, itemmaster.financeCategorySub as financeCategorySub,  financeitemcategorysub.financeGLcodebBSSystemID as bsGLCode, financeitemcategorysub.financeGLcodePLSystemID as plGLCode, itemmaster.financeCategoryMaster as categoryID, pos_source_invoicedetail.qty as qty, itemassigned.wacValueLocal as price, pos_source_invoicedetail.UOMID as uom, pos_source_invoice.wareHouseAutoID as wareHouseID, financeitemcategorysub.includePLForGRVYN as glYN')
+                        ->join('pos_source_invoice', 'pos_source_invoice.invoiceID', '=', 'pos_source_invoicedetail.invoiceID')
+                        ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'pos_source_invoicedetail.itemAutoID')
+                        ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
+                        ->join('itemassigned', 'itemassigned.itemCodeSystem', '=', 'itemmaster.itemCodeSystem')
+                        ->where('pos_source_invoice.shiftID', $shiftId)
+                        ->where('itemassigned.companySystemID', $shiftDetails->companyID)
+                        ->where('pos_source_invoice.isCreditSales', 0)
+                        ->get();
 
-                $bankItems = DB::table('pos_source_invoice')
-                    ->selectRaw('SUM(pos_source_invoice.netTotal) as amount, pos_source_invoice.invoiceID as invoiceID, pos_source_paymentglconfigdetail.erp_bank_acc_id as bankID, pos_source_invoicepayments.GLCode as glCode, pos_source_invoice.shiftID as shiftId, pos_source_invoice.companyID as companyID, pos_source_invoicepayments.paymentConfigDetailID as payDetailID')
-                    ->join('pos_source_invoicepayments', 'pos_source_invoicepayments.invoiceID', '=', 'pos_source_invoice.invoiceID')
-                    ->join('pos_source_paymentglconfigdetail', 'pos_source_paymentglconfigdetail.ID', '=', 'pos_source_invoicepayments.paymentConfigDetailID')
-                    ->where('pos_source_invoice.shiftID', $shiftId)
-                    ->where('pos_source_invoice.isCreditSales', 0)
-                    ->groupBy('pos_source_invoice.shiftID')
-                    ->groupBy('pos_source_invoice.invoiceID')
-                    ->get();
+
+                    $taxItems = DB::table('pos_source_invoicedetail')
+                        ->selectRaw('pos_source_taxledger.amount as amount, pos_source_invoice.invoiceID as invoiceID, pos_source_invoice.shiftID as shiftId, pos_source_invoice.companyID as companyID, pos_source_invoicedetail.itemAutoID as itemID, itemmaster.financeCategorySub as financeCategorySub, financeitemcategorysub.financeGLcodeRevenueSystemID as glCode, pos_source_taxledger.amount as taxAmount, pos_source_taxledger.taxMasterID as taxMasterID, erp_taxmaster_new.outputVatGLAccountAutoID as outputVatGLCode')
+                        ->join('pos_source_invoice', 'pos_source_invoice.invoiceID', '=', 'pos_source_invoicedetail.invoiceID')
+                        ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'pos_source_invoicedetail.itemAutoID')
+                        ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
+                        ->join('pos_source_taxledger', 'pos_source_taxledger.documentDetailAutoID', '=', 'pos_source_invoicedetail.invoiceDetailsID')
+                        ->join('erp_taxmaster_new', 'erp_taxmaster_new.taxMasterAutoID', '=', 'pos_source_taxledger.taxMasterID')
+                        ->where('pos_source_invoice.shiftID', $shiftId)
+                        ->where('pos_source_invoice.isCreditSales', 0)
+                        ->get();
+
+                    $bankItems = DB::table('pos_source_invoice')
+                        ->selectRaw('SUM(pos_source_invoice.netTotal) as amount, pos_source_invoice.invoiceID as invoiceID, pos_source_paymentglconfigdetail.erp_bank_acc_id as bankID, pos_source_invoicepayments.GLCode as glCode, pos_source_invoice.shiftID as shiftId, pos_source_invoice.companyID as companyID, pos_source_invoicepayments.paymentConfigDetailID as payDetailID')
+                        ->join('pos_source_invoicepayments', 'pos_source_invoicepayments.invoiceID', '=', 'pos_source_invoice.invoiceID')
+                        ->join('pos_source_paymentglconfigdetail', 'pos_source_paymentglconfigdetail.ID', '=', 'pos_source_invoicepayments.paymentConfigDetailID')
+                        ->where('pos_source_invoice.shiftID', $shiftId)
+                        ->where('pos_source_invoice.isCreditSales', 0)
+                        ->groupBy('pos_source_invoice.shiftID')
+                        ->groupBy('pos_source_invoice.invoiceID')
+                        ->get();
+
+                    //sales returns
+                    $netTotGLSr = DB::table('pos_source_salesreturn')
+                        ->selectRaw('SUM(pos_source_salesreturn.netTotal) as amount, pos_source_salesreturn.isRefund as isRefund, pos_source_salesreturn.shiftID as shiftId, pos_source_salesreturn.invoiceID as invoiceID')
+                        ->where('pos_source_salesreturn.shiftID', $shiftId)
+                        ->groupBy('pos_source_salesreturn.isRefund')
+                        ->groupBy('pos_source_salesreturn.shiftID')
+                        ->get();
+
+
+                    $invItemsSr = DB::table('pos_source_salesreturndetails')
+                        ->selectRaw('pos_source_salesreturndetails.companyLocalAmount as amount, pos_source_salesreturn.invoiceID as invoiceID, pos_source_salesreturn.shiftID as shiftId, pos_source_salesreturn.companyID as companyID, pos_source_salesreturndetails.itemAutoID as itemID, itemmaster.financeCategorySub as financeCategorySub, financeitemcategorysub.financeGLcodeRevenueSystemID as glCode, itemmaster.financeCategoryMaster as categoryID, financeitemcategorysub.financeGLcodebBSSystemID as bsGLCode, financeitemcategorysub.financeGLcodePLSystemID as plGLCode, financeitemcategorysub.includePLForGRVYN as glYN, pos_source_salesreturndetails.qty as qty, pos_source_salesreturndetails.price as price, pos_source_salesreturndetails.UOMID as uom, pos_source_salesreturn.wareHouseAutoID as wareHouseID')
+                        ->join('pos_source_salesreturn', 'pos_source_salesreturn.invoiceID', '=', 'pos_source_salesreturndetails.invoiceID')
+                        ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'pos_source_salesreturndetails.itemAutoID')
+                        ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
+                        ->where('pos_source_salesreturn.shiftID', $shiftId)
+                        ->get();
+
+
+                    $invItemsPLBSSr = DB::table('pos_source_salesreturndetails')
+                        ->selectRaw('pos_source_salesreturndetails.qty * itemassigned.wacValueLocal as amount, pos_source_salesreturn.invoiceID as invoiceID, pos_source_salesreturn.shiftID as shiftId, pos_source_salesreturn.companyID as companyID, pos_source_salesreturndetails.itemAutoID as itemID, itemmaster.financeCategorySub as financeCategorySub,  financeitemcategorysub.financeGLcodebBSSystemID as bsGLCode, financeitemcategorysub.financeGLcodePLSystemID as plGLCode, itemmaster.financeCategoryMaster as categoryID, pos_source_salesreturndetails.qty as qty, itemassigned.wacValueLocal as price, pos_source_salesreturndetails.UOMID as uom, pos_source_salesreturn.wareHouseAutoID as wareHouseID, financeitemcategorysub.includePLForGRVYN as glYN')
+                        ->join('pos_source_salesreturn', 'pos_source_salesreturn.invoiceID', '=', 'pos_source_salesreturndetails.invoiceID')
+                        ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'pos_source_salesreturndetails.itemAutoID')
+                        ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
+                        ->join('itemassigned', 'itemassigned.itemCodeSystem', '=', 'itemmaster.itemCodeSystem')
+                        ->where('pos_source_salesreturn.shiftID', $shiftId)
+                        ->where('itemassigned.companySystemID', $shiftDetails->companyID)
+                        ->get();
+
+                }
+
+                if ($isPostGroupBy == 1) {
+
+                    $bankGL = DB::table('pos_source_invoice')
+                        ->selectRaw('SUM(pos_source_invoice.netTotal) as amount, pos_source_invoice.invoiceID as invoiceID, pos_source_invoicepayments.GLCode as glCode, pos_source_invoice.shiftID as shiftId, pos_source_invoice.companyID as companyID')
+                        ->join('pos_source_invoicepayments', 'pos_source_invoicepayments.invoiceID', '=', 'pos_source_invoice.invoiceID')
+                        ->where('pos_source_invoice.shiftID', $shiftId)
+                        ->groupBy('pos_source_invoice.shiftID')
+                        ->groupBy('pos_source_invoicepayments.GLCode')
+                        ->groupBy('pos_source_invoice.invoiceID')
+                        ->where('pos_source_invoice.isCreditSales', 0)
+                        ->get();
+
+
+                    $invItems = DB::table('pos_source_invoicedetail')
+                        ->selectRaw('SUM(pos_source_invoicedetail.companyLocalAmount) as amount, pos_source_invoice.invoiceID as invoiceID, pos_source_invoice.shiftID as shiftId, pos_source_invoice.companyID as companyID, pos_source_invoicedetail.itemAutoID as itemID, itemmaster.financeCategorySub as financeCategorySub, financeitemcategorysub.financeGLcodeRevenueSystemID as glCode, itemmaster.financeCategoryMaster as categoryID, financeitemcategorysub.financeGLcodebBSSystemID as bsGLCode, financeitemcategorysub.financeGLcodePLSystemID as plGLCode, financeitemcategorysub.includePLForGRVYN as glYN, pos_source_invoicedetail.qty as qty, pos_source_invoicedetail.price as price, pos_source_invoicedetail.UOMID as uom, pos_source_invoice.wareHouseAutoID as wareHouseID')
+                        ->join('pos_source_invoice', 'pos_source_invoice.invoiceID', '=', 'pos_source_invoicedetail.invoiceID')
+                        ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'pos_source_invoicedetail.itemAutoID')
+                        ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
+                        ->where('pos_source_invoice.shiftID', $shiftId)
+                        ->groupBy('pos_source_invoice.shiftID')
+                        ->where('pos_source_invoice.isCreditSales', 0)
+                        ->get();
+
+
+                    $invItemsPLBS = DB::table('pos_source_invoicedetail')
+                        ->selectRaw('SUM(itemassigned.wacValueLocal * pos_source_invoicedetail.qty) as amount, pos_source_invoice.invoiceID as invoiceID, pos_source_invoice.shiftID as shiftId, pos_source_invoice.companyID as companyID, pos_source_invoicedetail.itemAutoID as itemID, itemmaster.financeCategorySub as financeCategorySub,  financeitemcategorysub.financeGLcodebBSSystemID as bsGLCode, financeitemcategorysub.financeGLcodePLSystemID as plGLCode, itemmaster.financeCategoryMaster as categoryID, pos_source_invoicedetail.qty as qty, itemassigned.wacValueLocal as price, pos_source_invoicedetail.UOMID as uom, pos_source_invoice.wareHouseAutoID as wareHouseID, financeitemcategorysub.includePLForGRVYN as glYN')
+                        ->join('pos_source_invoice', 'pos_source_invoice.invoiceID', '=', 'pos_source_invoicedetail.invoiceID')
+                        ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'pos_source_invoicedetail.itemAutoID')
+                        ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
+                        ->join('itemassigned', 'itemassigned.itemCodeSystem', '=', 'itemmaster.itemCodeSystem')
+                        ->where('pos_source_invoice.shiftID', $shiftId)
+                        ->groupBy('pos_source_invoice.shiftID')
+                        ->where('itemassigned.companySystemID', $shiftDetails->companyID)
+                        ->where('pos_source_invoice.isCreditSales', 0)
+                        ->get();
+
+
+                    $taxItems = DB::table('pos_source_invoicedetail')
+                        ->selectRaw('SUM(pos_source_taxledger.amount) as amount, pos_source_invoice.invoiceID as invoiceID, pos_source_invoice.shiftID as shiftId, pos_source_invoice.companyID as companyID, pos_source_invoicedetail.itemAutoID as itemID, itemmaster.financeCategorySub as financeCategorySub, financeitemcategorysub.financeGLcodeRevenueSystemID as glCode, SUM(pos_source_taxledger.amount) as taxAmount, pos_source_taxledger.taxMasterID as taxMasterID, erp_taxmaster_new.outputVatGLAccountAutoID as outputVatGLCode')
+                        ->join('pos_source_invoice', 'pos_source_invoice.invoiceID', '=', 'pos_source_invoicedetail.invoiceID')
+                        ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'pos_source_invoicedetail.itemAutoID')
+                        ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
+                        ->join('pos_source_taxledger', 'pos_source_taxledger.documentDetailAutoID', '=', 'pos_source_invoicedetail.invoiceDetailsID')
+                        ->join('erp_taxmaster_new', 'erp_taxmaster_new.taxMasterAutoID', '=', 'pos_source_taxledger.taxMasterID')
+                        ->where('pos_source_invoice.shiftID', $shiftId)
+                        ->groupBy('pos_source_invoice.shiftID')
+                        ->groupBy('pos_source_invoice.invoiceID')
+                        ->where('pos_source_invoice.isCreditSales', 0)
+                        ->get();
+
+
+                    $bankItems = DB::table('pos_source_invoice')
+                        ->selectRaw('SUM(pos_source_invoice.netTotal) as amount, pos_source_invoice.invoiceID as invoiceID, pos_source_paymentglconfigdetail.erp_bank_acc_id as bankID, pos_source_invoicepayments.GLCode as glCode, pos_source_invoice.shiftID as shiftId, pos_source_invoice.companyID as companyID, pos_source_invoicepayments.paymentConfigDetailID as payDetailID')
+                        ->join('pos_source_invoicepayments', 'pos_source_invoicepayments.invoiceID', '=', 'pos_source_invoice.invoiceID')
+                        ->join('pos_source_paymentglconfigdetail', 'pos_source_paymentglconfigdetail.ID', '=', 'pos_source_invoicepayments.paymentConfigDetailID')
+                        ->where('pos_source_invoice.shiftID', $shiftId)
+                        ->groupBy('pos_source_invoice.shiftID')
+                        ->groupBy('pos_source_invoice.invoiceID')
+                        ->where('pos_source_invoice.isCreditSales', 0)
+                        ->get();
+
+
+                    //sales returns
+                    $netTotGLSr = DB::table('pos_source_salesreturn')
+                        ->selectRaw('SUM(pos_source_salesreturn.netTotal) as amount, pos_source_salesreturn.isRefund as isRefund,pos_source_salesreturn.shiftID as shiftId')
+                        ->where('pos_source_salesreturn.shiftID', $shiftId)
+                        ->groupBy('pos_source_salesreturn.isRefund')
+                        ->groupBy('pos_source_salesreturn.shiftID')
+                        ->get();
+
+
+                    $invItemsSr = DB::table('pos_source_salesreturndetails')
+                        ->selectRaw('pos_source_salesreturndetails.companyLocalAmount as amount, pos_source_salesreturn.invoiceID as invoiceID, pos_source_salesreturn.shiftID as shiftId, pos_source_salesreturn.companyID as companyID, pos_source_salesreturndetails.itemAutoID as itemID, itemmaster.financeCategorySub as financeCategorySub, financeitemcategorysub.financeGLcodeRevenueSystemID as glCode, itemmaster.financeCategoryMaster as categoryID, financeitemcategorysub.financeGLcodebBSSystemID as bsGLCode, financeitemcategorysub.financeGLcodePLSystemID as plGLCode, financeitemcategorysub.includePLForGRVYN as glYN, pos_source_salesreturndetails.qty as qty, pos_source_salesreturndetails.price as price, pos_source_salesreturndetails.UOMID as uom, pos_source_salesreturn.wareHouseAutoID as wareHouseID')
+                        ->join('pos_source_salesreturn', 'pos_source_salesreturn.invoiceID', '=', 'pos_source_salesreturndetails.invoiceID')
+                        ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'pos_source_salesreturndetails.itemAutoID')
+                        ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
+                        ->where('pos_source_salesreturn.shiftID', $shiftId)
+                        ->groupBy('pos_source_invoice.shiftID')
+                        ->get();
+
+
+                    $invItemsPLBSSr = DB::table('pos_source_salesreturndetails')
+                        ->selectRaw('pos_source_salesreturndetails.qty * itemassigned.wacValueLocal as amount, pos_source_salesreturn.invoiceID as invoiceID, pos_source_salesreturn.shiftID as shiftId, pos_source_salesreturn.companyID as companyID, pos_source_salesreturndetails.itemAutoID as itemID, itemmaster.financeCategorySub as financeCategorySub,  financeitemcategorysub.financeGLcodebBSSystemID as bsGLCode, financeitemcategorysub.financeGLcodePLSystemID as plGLCode, itemmaster.financeCategoryMaster as categoryID, pos_source_salesreturndetails.qty as qty, itemassigned.wacValueLocal as price, pos_source_salesreturndetails.UOMID as uom, pos_source_salesreturn.wareHouseAutoID as wareHouseID, financeitemcategorysub.includePLForGRVYN as glYN')
+                        ->join('pos_source_salesreturn', 'pos_source_salesreturn.invoiceID', '=', 'pos_source_salesreturndetails.invoiceID')
+                        ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'pos_source_salesreturndetails.itemAutoID')
+                        ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
+                        ->join('itemassigned', 'itemassigned.itemCodeSystem', '=', 'itemmaster.itemCodeSystem')
+                        ->where('pos_source_salesreturn.shiftID', $shiftId)
+                        ->where('itemassigned.companySystemID', $shiftDetails->companyID)
+                        ->groupBy('pos_source_invoice.shiftID')
+                        ->get();
+
+                }
+
 
                 //sales returns
-                $netTotGLSr = DB::table('pos_source_salesreturn')
-                    ->selectRaw('SUM(pos_source_salesreturn.netTotal) as amount, pos_source_salesreturn.isRefund as isRefund, pos_source_salesreturn.shiftID as shiftId, pos_source_salesreturn.invoiceID as invoiceID')
-                    ->where('pos_source_salesreturn.shiftID', $shiftId)
-                    ->groupBy('pos_source_salesreturn.isRefund')
-                    ->groupBy('pos_source_salesreturn.shiftID')
-                    ->get();
+                foreach ($invItemsSr as $gl) {
 
-
-                $invItemsSr = DB::table('pos_source_salesreturndetails')
-                    ->selectRaw('pos_source_salesreturndetails.companyLocalAmount as amount, pos_source_salesreturn.invoiceID as invoiceID, pos_source_salesreturn.shiftID as shiftId, pos_source_salesreturn.companyID as companyID, pos_source_salesreturndetails.itemAutoID as itemID, itemmaster.financeCategorySub as financeCategorySub, financeitemcategorysub.financeGLcodeRevenueSystemID as glCode, itemmaster.financeCategoryMaster as categoryID, financeitemcategorysub.financeGLcodebBSSystemID as bsGLCode, financeitemcategorysub.financeGLcodePLSystemID as plGLCode, financeitemcategorysub.includePLForGRVYN as glYN, pos_source_salesreturndetails.qty as qty, pos_source_salesreturndetails.price as price, pos_source_salesreturndetails.UOMID as uom, pos_source_salesreturn.wareHouseAutoID as wareHouseID')
-                    ->join('pos_source_salesreturn', 'pos_source_salesreturn.invoiceID', '=', 'pos_source_salesreturndetails.invoiceID')
-                    ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'pos_source_salesreturndetails.itemAutoID')
-                    ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
-                    ->where('pos_source_salesreturn.shiftID', $shiftId)
-                    ->get();
-
-
-                $invItemsPLBSSr = DB::table('pos_source_salesreturndetails')
-                    ->selectRaw('pos_source_salesreturndetails.qty * itemassigned.wacValueLocal as amount, pos_source_salesreturn.invoiceID as invoiceID, pos_source_salesreturn.shiftID as shiftId, pos_source_salesreturn.companyID as companyID, pos_source_salesreturndetails.itemAutoID as itemID, itemmaster.financeCategorySub as financeCategorySub,  financeitemcategorysub.financeGLcodebBSSystemID as bsGLCode, financeitemcategorysub.financeGLcodePLSystemID as plGLCode, itemmaster.financeCategoryMaster as categoryID, pos_source_salesreturndetails.qty as qty, itemassigned.wacValueLocal as price, pos_source_salesreturndetails.UOMID as uom, pos_source_salesreturn.wareHouseAutoID as wareHouseID, financeitemcategorysub.includePLForGRVYN as glYN')
-                    ->join('pos_source_salesreturn', 'pos_source_salesreturn.invoiceID', '=', 'pos_source_salesreturndetails.invoiceID')
-                    ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'pos_source_salesreturndetails.itemAutoID')
-                    ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
-                    ->join('itemassigned', 'itemassigned.itemCodeSystem', '=', 'itemmaster.itemCodeSystem')
-                    ->where('pos_source_salesreturn.shiftID', $shiftId)
-                    ->where('itemassigned.companySystemID', $shiftDetails->companyID)
-                    ->get();
-
-            }
-
-            if ($isPostGroupBy == 1) {
-
-                $bankGL = DB::table('pos_source_invoice')
-                    ->selectRaw('SUM(pos_source_invoice.netTotal) as amount, pos_source_invoice.invoiceID as invoiceID, pos_source_invoicepayments.GLCode as glCode, pos_source_invoice.shiftID as shiftId, pos_source_invoice.companyID as companyID')
-                    ->join('pos_source_invoicepayments', 'pos_source_invoicepayments.invoiceID', '=', 'pos_source_invoice.invoiceID')
-                    ->where('pos_source_invoice.shiftID', $shiftId)
-                    ->groupBy('pos_source_invoice.shiftID')
-                    ->groupBy('pos_source_invoicepayments.GLCode')
-                    ->groupBy('pos_source_invoice.invoiceID')
-                    ->where('pos_source_invoice.isCreditSales', 0)
-                    ->get();
-
-
-                $invItems = DB::table('pos_source_invoicedetail')
-                    ->selectRaw('SUM(pos_source_invoicedetail.companyLocalAmount) as amount, pos_source_invoice.invoiceID as invoiceID, pos_source_invoice.shiftID as shiftId, pos_source_invoice.companyID as companyID, pos_source_invoicedetail.itemAutoID as itemID, itemmaster.financeCategorySub as financeCategorySub, financeitemcategorysub.financeGLcodeRevenueSystemID as glCode, itemmaster.financeCategoryMaster as categoryID, financeitemcategorysub.financeGLcodebBSSystemID as bsGLCode, financeitemcategorysub.financeGLcodePLSystemID as plGLCode, financeitemcategorysub.includePLForGRVYN as glYN, pos_source_invoicedetail.qty as qty, pos_source_invoicedetail.price as price, pos_source_invoicedetail.UOMID as uom, pos_source_invoice.wareHouseAutoID as wareHouseID')
-                    ->join('pos_source_invoice', 'pos_source_invoice.invoiceID', '=', 'pos_source_invoicedetail.invoiceID')
-                    ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'pos_source_invoicedetail.itemAutoID')
-                    ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
-                    ->where('pos_source_invoice.shiftID', $shiftId)
-                    ->groupBy('pos_source_invoice.shiftID')
-                    ->where('pos_source_invoice.isCreditSales', 0)
-                    ->get();
-
-
-                $invItemsPLBS = DB::table('pos_source_invoicedetail')
-                    ->selectRaw('SUM(itemassigned.wacValueLocal * pos_source_invoicedetail.qty) as amount, pos_source_invoice.invoiceID as invoiceID, pos_source_invoice.shiftID as shiftId, pos_source_invoice.companyID as companyID, pos_source_invoicedetail.itemAutoID as itemID, itemmaster.financeCategorySub as financeCategorySub,  financeitemcategorysub.financeGLcodebBSSystemID as bsGLCode, financeitemcategorysub.financeGLcodePLSystemID as plGLCode, itemmaster.financeCategoryMaster as categoryID, pos_source_invoicedetail.qty as qty, itemassigned.wacValueLocal as price, pos_source_invoicedetail.UOMID as uom, pos_source_invoice.wareHouseAutoID as wareHouseID, financeitemcategorysub.includePLForGRVYN as glYN')
-                    ->join('pos_source_invoice', 'pos_source_invoice.invoiceID', '=', 'pos_source_invoicedetail.invoiceID')
-                    ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'pos_source_invoicedetail.itemAutoID')
-                    ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
-                    ->join('itemassigned', 'itemassigned.itemCodeSystem', '=', 'itemmaster.itemCodeSystem')
-                    ->where('pos_source_invoice.shiftID', $shiftId)
-                    ->groupBy('pos_source_invoice.shiftID')
-                    ->where('itemassigned.companySystemID', $shiftDetails->companyID)
-                    ->where('pos_source_invoice.isCreditSales', 0)
-                    ->get();
-
-
-                $taxItems = DB::table('pos_source_invoicedetail')
-                    ->selectRaw('SUM(pos_source_taxledger.amount) as amount, pos_source_invoice.invoiceID as invoiceID, pos_source_invoice.shiftID as shiftId, pos_source_invoice.companyID as companyID, pos_source_invoicedetail.itemAutoID as itemID, itemmaster.financeCategorySub as financeCategorySub, financeitemcategorysub.financeGLcodeRevenueSystemID as glCode, SUM(pos_source_taxledger.amount) as taxAmount, pos_source_taxledger.taxMasterID as taxMasterID, erp_taxmaster_new.outputVatGLAccountAutoID as outputVatGLCode')
-                    ->join('pos_source_invoice', 'pos_source_invoice.invoiceID', '=', 'pos_source_invoicedetail.invoiceID')
-                    ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'pos_source_invoicedetail.itemAutoID')
-                    ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
-                    ->join('pos_source_taxledger', 'pos_source_taxledger.documentDetailAutoID', '=', 'pos_source_invoicedetail.invoiceDetailsID')
-                    ->join('erp_taxmaster_new', 'erp_taxmaster_new.taxMasterAutoID', '=', 'pos_source_taxledger.taxMasterID')
-                    ->where('pos_source_invoice.shiftID', $shiftId)
-                    ->groupBy('pos_source_invoice.shiftID')
-                    ->groupBy('pos_source_invoice.invoiceID')
-                    ->where('pos_source_invoice.isCreditSales', 0)
-                    ->get();
-
-
-                $bankItems = DB::table('pos_source_invoice')
-                    ->selectRaw('SUM(pos_source_invoice.netTotal) as amount, pos_source_invoice.invoiceID as invoiceID, pos_source_paymentglconfigdetail.erp_bank_acc_id as bankID, pos_source_invoicepayments.GLCode as glCode, pos_source_invoice.shiftID as shiftId, pos_source_invoice.companyID as companyID, pos_source_invoicepayments.paymentConfigDetailID as payDetailID')
-                    ->join('pos_source_invoicepayments', 'pos_source_invoicepayments.invoiceID', '=', 'pos_source_invoice.invoiceID')
-                    ->join('pos_source_paymentglconfigdetail', 'pos_source_paymentglconfigdetail.ID', '=', 'pos_source_invoicepayments.paymentConfigDetailID')
-                    ->where('pos_source_invoice.shiftID', $shiftId)
-                    ->groupBy('pos_source_invoice.shiftID')
-                    ->groupBy('pos_source_invoice.invoiceID')
-                    ->where('pos_source_invoice.isCreditSales', 0)
-                    ->get();
-
-
-                //sales returns
-                $netTotGLSr = DB::table('pos_source_salesreturn')
-                    ->selectRaw('SUM(pos_source_salesreturn.netTotal) as amount, pos_source_salesreturn.isRefund as isRefund,pos_source_salesreturn.shiftID as shiftId')
-                    ->where('pos_source_salesreturn.shiftID', $shiftId)
-                    ->groupBy('pos_source_salesreturn.isRefund')
-                    ->groupBy('pos_source_salesreturn.shiftID')
-                    ->get();
-
-
-                $invItemsSr = DB::table('pos_source_salesreturndetails')
-                    ->selectRaw('pos_source_salesreturndetails.companyLocalAmount as amount, pos_source_salesreturn.invoiceID as invoiceID, pos_source_salesreturn.shiftID as shiftId, pos_source_salesreturn.companyID as companyID, pos_source_salesreturndetails.itemAutoID as itemID, itemmaster.financeCategorySub as financeCategorySub, financeitemcategorysub.financeGLcodeRevenueSystemID as glCode, itemmaster.financeCategoryMaster as categoryID, financeitemcategorysub.financeGLcodebBSSystemID as bsGLCode, financeitemcategorysub.financeGLcodePLSystemID as plGLCode, financeitemcategorysub.includePLForGRVYN as glYN, pos_source_salesreturndetails.qty as qty, pos_source_salesreturndetails.price as price, pos_source_salesreturndetails.UOMID as uom, pos_source_salesreturn.wareHouseAutoID as wareHouseID')
-                    ->join('pos_source_salesreturn', 'pos_source_salesreturn.invoiceID', '=', 'pos_source_salesreturndetails.invoiceID')
-                    ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'pos_source_salesreturndetails.itemAutoID')
-                    ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
-                    ->where('pos_source_salesreturn.shiftID', $shiftId)
-                    ->groupBy('pos_source_invoice.shiftID')
-                    ->get();
-
-
-                $invItemsPLBSSr = DB::table('pos_source_salesreturndetails')
-                    ->selectRaw('pos_source_salesreturndetails.qty * itemassigned.wacValueLocal as amount, pos_source_salesreturn.invoiceID as invoiceID, pos_source_salesreturn.shiftID as shiftId, pos_source_salesreturn.companyID as companyID, pos_source_salesreturndetails.itemAutoID as itemID, itemmaster.financeCategorySub as financeCategorySub,  financeitemcategorysub.financeGLcodebBSSystemID as bsGLCode, financeitemcategorysub.financeGLcodePLSystemID as plGLCode, itemmaster.financeCategoryMaster as categoryID, pos_source_salesreturndetails.qty as qty, itemassigned.wacValueLocal as price, pos_source_salesreturndetails.UOMID as uom, pos_source_salesreturn.wareHouseAutoID as wareHouseID, financeitemcategorysub.includePLForGRVYN as glYN')
-                    ->join('pos_source_salesreturn', 'pos_source_salesreturn.invoiceID', '=', 'pos_source_salesreturndetails.invoiceID')
-                    ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'pos_source_salesreturndetails.itemAutoID')
-                    ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
-                    ->join('itemassigned', 'itemassigned.itemCodeSystem', '=', 'itemmaster.itemCodeSystem')
-                    ->where('pos_source_salesreturn.shiftID', $shiftId)
-                    ->where('itemassigned.companySystemID', $shiftDetails->companyID)
-                    ->groupBy('pos_source_invoice.shiftID')
-                    ->get();
-
-            }
-
-
-            //sales returns
-            foreach ($invItemsSr as $gl) {
-
-                $documentCode = ('GPOS\\' . str_pad($gl->shiftId, 6, '0', STR_PAD_LEFT));
-                $itemGLArraySR[] = array(
-                    'shiftId' => $gl->shiftId,
-                    'documentSystemId' => 110,
-                    'documentCode' => $documentCode,
-                    'invoiceID' => $gl->invoiceID,
-                    'glCode' => $gl->glCode,
-                    'logId' => $logs['id'],
-                    'amount' => $gl->amount,
-                    'isReturnYN' => 1
-                );
-
-            }
-
-            POSGLEntries::insert($itemGLArraySR);
-
-
-            foreach ($invItemsPLBSSr as $gl) {
-
-                $documentCode = ('GPOS\\' . str_pad($gl->shiftId, 6, '0', STR_PAD_LEFT));
-                if ($gl->categoryID == 1) {
-                    $costGLArrayRefund = [
+                    $documentCode = ('GPOS\\' . str_pad($gl->shiftId, 6, '0', STR_PAD_LEFT));
+                    $itemGLArraySR[] = array(
                         'shiftId' => $gl->shiftId,
                         'documentSystemId' => 110,
                         'documentCode' => $documentCode,
                         'invoiceID' => $gl->invoiceID,
-                        'glCode' => $gl->plGLCode,
+                        'glCode' => $gl->glCode,
                         'logId' => $logs['id'],
-                        'amount' => $gl->amount * -1,
+                        'amount' => $gl->amount,
                         'isReturnYN' => 1
-                    ];
-                    POSGLEntries::insert($costGLArrayRefund);
-                    if ($gl->glYN == -1) {
-                        $inventoryGLArrayRefund = [
+                    );
+
+                }
+
+                POSGLEntries::insert($itemGLArraySR);
+
+
+                foreach ($invItemsPLBSSr as $gl) {
+
+                    $documentCode = ('GPOS\\' . str_pad($gl->shiftId, 6, '0', STR_PAD_LEFT));
+                    if ($gl->categoryID == 1) {
+                        $costGLArrayRefund = [
                             'shiftId' => $gl->shiftId,
                             'documentSystemId' => 110,
                             'documentCode' => $documentCode,
                             'invoiceID' => $gl->invoiceID,
                             'glCode' => $gl->plGLCode,
                             'logId' => $logs['id'],
-                            'amount' => $gl->amount,
+                            'amount' => $gl->amount * -1,
                             'isReturnYN' => 1
                         ];
-                        POSGLEntries::insert($inventoryGLArrayRefund);
-                    } else {
-                        $inventoryGLArrayRefund = [
-                            'shiftId' => $gl->shiftId,
-                            'documentSystemId' => 110,
-                            'documentCode' => $documentCode,
-                            'invoiceID' => $gl->invoiceID,
-                            'glCode' => $gl->bsGLCode,
-                            'logId' => $logs['id'],
-                            'amount' => $gl->amount,
-                            'isReturnYN' => 1
-                        ];
-                        POSGLEntries::insert($inventoryGLArrayRefund);
+                        POSGLEntries::insert($costGLArrayRefund);
+                        if ($gl->glYN == -1) {
+                            $inventoryGLArrayRefund = [
+                                'shiftId' => $gl->shiftId,
+                                'documentSystemId' => 110,
+                                'documentCode' => $documentCode,
+                                'invoiceID' => $gl->invoiceID,
+                                'glCode' => $gl->plGLCode,
+                                'logId' => $logs['id'],
+                                'amount' => $gl->amount,
+                                'isReturnYN' => 1
+                            ];
+                            POSGLEntries::insert($inventoryGLArrayRefund);
+                        } else {
+                            $inventoryGLArrayRefund = [
+                                'shiftId' => $gl->shiftId,
+                                'documentSystemId' => 110,
+                                'documentCode' => $documentCode,
+                                'invoiceID' => $gl->invoiceID,
+                                'glCode' => $gl->bsGLCode,
+                                'logId' => $logs['id'],
+                                'amount' => $gl->amount,
+                                'isReturnYN' => 1
+                            ];
+                            POSGLEntries::insert($inventoryGLArrayRefund);
+                        }
+
+
                     }
-
-
                 }
-            }
 
 
-            foreach ($netTotGLSr as $gl) {
+                foreach ($netTotGLSr as $gl) {
 
-                if ($gl->isRefund == 0) {
-                    $glCode = POSSOURCEPaymentGlConfigDetail::where('paymentConfigMasterID', 2)->first();
-                    if ($glCode) {
+                    if ($gl->isRefund == 0) {
+                        $glCode = POSSOURCEPaymentGlConfigDetail::where('paymentConfigMasterID', 2)->first();
+                        if ($glCode) {
+                            $documentCode = ('GPOS\\' . str_pad($gl->shiftId, 6, '0', STR_PAD_LEFT));
+                            $refundGLArray1[] = array(
+                                'shiftId' => $gl->shiftId,
+                                'invoiceID' => $gl->invoiceID,
+                                'documentSystemId' => 112,
+                                'documentCode' => $documentCode,
+                                'glCode' => $glCode->GLCode,
+                                'logId' => $logs['id'],
+                                'amount' => $gl->amount * -1,
+                                'isReturnYN' => 1
+                            );
+                        }
+                    }
+                    if ($gl->isRefund == 1) {
                         $documentCode = ('GPOS\\' . str_pad($gl->shiftId, 6, '0', STR_PAD_LEFT));
-                        $refundGLArray1[] = array(
-                            'shiftId' => $gl->shiftId,
-                            'invoiceID' => $gl->invoiceID,
-                            'documentSystemId' => 112,
-                            'documentCode' => $documentCode,
-                            'glCode' => $glCode->GLCode,
-                            'logId' => $logs['id'],
-                            'amount' => $gl->amount * -1,
-                            'isReturnYN' => 1
-                        );
+                        $glCode = POSSOURCEPaymentGlConfigDetail::where('paymentConfigMasterID', 2)->first();
+                        if ($glCode) {
+                            $refundGLArray2[] = array(
+                                'shiftId' => $gl->shiftId,
+                                'invoiceID' => $gl->invoiceID,
+                                'documentSystemId' => 110,
+                                'documentCode' => $documentCode,
+                                'glCode' => $glCode->GLCode,
+                                'logId' => $logs['id'],
+                                'amount' => $gl->amount * -1,
+                                'isReturnYN' => 1
+                            );
+                        }
                     }
+
+
                 }
-                if ($gl->isRefund == 1) {
+                POSGLEntries::insert($refundGLArray1);
+                POSGLEntries::insert($refundGLArray2);
+
+                //end of sr
+
+                foreach ($bankGL as $gl) {
+
                     $documentCode = ('GPOS\\' . str_pad($gl->shiftId, 6, '0', STR_PAD_LEFT));
-                    $glCode = POSSOURCEPaymentGlConfigDetail::where('paymentConfigMasterID', 2)->first();
-                    if ($glCode) {
-                        $refundGLArray2[] = array(
-                            'shiftId' => $gl->shiftId,
-                            'invoiceID' => $gl->invoiceID,
-                            'documentSystemId' => 110,
-                            'documentCode' => $documentCode,
-                            'glCode' => $glCode->GLCode,
-                            'logId' => $logs['id'],
-                            'amount' => $gl->amount * -1,
-                            'isReturnYN' => 1
-                        );
-                    }
-                }
-
-
-            }
-            POSGLEntries::insert($refundGLArray1);
-            POSGLEntries::insert($refundGLArray2);
-
-            //end of sr
-
-            foreach ($bankGL as $gl) {
-
-                $documentCode = ('GPOS\\' . str_pad($gl->shiftId, 6, '0', STR_PAD_LEFT));
-                $bankGLArray[] = array(
-                    'shiftId' => $gl->shiftId,
-                    'invoiceID' => $gl->invoiceID,
-                    'documentSystemId' => 110,
-                    'documentCode' => $documentCode,
-                    'glCode' => $gl->glCode,
-                    'logId' => $logs['id'],
-                    'amount' => $gl->amount
-                );
-
-            }
-
-            foreach ($invItems as $gl) {
-
-                $documentCode = ('GPOS\\' . str_pad($gl->shiftId, 6, '0', STR_PAD_LEFT));
-                $itemGLArray[] = array(
-                    'shiftId' => $gl->shiftId,
-                    'invoiceID' => $gl->invoiceID,
-                    'documentSystemId' => 110,
-                    'documentCode' => $documentCode,
-                    'glCode' => $gl->glCode,
-                    'logId' => $logs['id'],
-                    'amount' => $gl->amount * -1
-                );
-
-            }
-
-            foreach ($taxItems as $gl) {
-
-                $documentCode = ('GPOS\\' . str_pad($gl->shiftId, 6, '0', STR_PAD_LEFT));
-                $taxGLArray[] = array(
-                    'shiftId' => $gl->shiftId,
-                    'invoiceID' => $gl->invoiceID,
-                    'documentSystemId' => 110,
-                    'documentCode' => $documentCode,
-                    'glCode' => $gl->outputVatGLCode,
-                    'logId' => $logs['id'],
-                    'amount' => $gl->taxAmount * -1
-                );
-
-            }
-
-            POSTaxGLEntries::insert($taxGLArray);
-
-            foreach ($invItems as $item) {
-                $itemArray[] = array(
-                    'shiftId' => $item->shiftId,
-                    'invoiceID' => $gl->invoiceID,
-                    'itemAutoId' => $item->itemID,
-                    'uom' => $item->uom,
-                    'qty' => $item->qty,
-                    'isReturnYN' => 0,
-                    'wareHouseId' => $item->wareHouseID
-                );
-
-            }
-
-            POSItemGLEntries::insert($itemArray);
-
-
-            foreach ($bankItems as $item) {
-                $bankArray[] = array(
-                    'shiftId' => $item->shiftId,
-                    'invoiceID' => $gl->invoiceID,
-                    'bankAccId' => $item->bankID,
-                    'logId' => $logs->id,
-                    'isReturnYN' => 0,
-                    'amount' => $item->amount
-                );
-
-            }
-            POSBankGLEntries::insert($bankArray);
-
-
-            POSGLEntries::insert($bankGLArray);
-            POSGLEntries::insert($itemGLArray);
-            POSGLEntries::insert($taxGLArray);
-
-
-            $qtyArray = array();
-            foreach ($invItemsPLBS as $gl) {
-
-                $documentCode = ('GPOS\\' . str_pad($gl->shiftId, 6, '0', STR_PAD_LEFT));
-                if ($gl->categoryID == 1) {
-                    $costGLArray = [
+                    $bankGLArray[] = array(
                         'shiftId' => $gl->shiftId,
                         'invoiceID' => $gl->invoiceID,
                         'documentSystemId' => 110,
                         'documentCode' => $documentCode,
-                        'glCode' => $gl->plGLCode,
+                        'glCode' => $gl->glCode,
                         'logId' => $logs['id'],
                         'amount' => $gl->amount
-                    ];
-                    POSGLEntries::insert($costGLArray);
-                    if ($gl->glYN == -1) {
-                        $inventoryGLArray = [
+                    );
+
+                }
+
+                foreach ($invItems as $gl) {
+
+                    $documentCode = ('GPOS\\' . str_pad($gl->shiftId, 6, '0', STR_PAD_LEFT));
+                    $itemGLArray[] = array(
+                        'shiftId' => $gl->shiftId,
+                        'invoiceID' => $gl->invoiceID,
+                        'documentSystemId' => 110,
+                        'documentCode' => $documentCode,
+                        'glCode' => $gl->glCode,
+                        'logId' => $logs['id'],
+                        'amount' => $gl->amount * -1
+                    );
+
+                }
+
+                foreach ($taxItems as $gl) {
+
+                    $documentCode = ('GPOS\\' . str_pad($gl->shiftId, 6, '0', STR_PAD_LEFT));
+                    $taxGLArray[] = array(
+                        'shiftId' => $gl->shiftId,
+                        'invoiceID' => $gl->invoiceID,
+                        'documentSystemId' => 110,
+                        'documentCode' => $documentCode,
+                        'glCode' => $gl->outputVatGLCode,
+                        'logId' => $logs['id'],
+                        'amount' => $gl->taxAmount * -1
+                    );
+
+                }
+
+                POSTaxGLEntries::insert($taxGLArray);
+
+                foreach ($invItems as $item) {
+                    $itemArray[] = array(
+                        'shiftId' => $item->shiftId,
+                        'invoiceID' => $gl->invoiceID,
+                        'itemAutoId' => $item->itemID,
+                        'uom' => $item->uom,
+                        'qty' => $item->qty,
+                        'isReturnYN' => 0,
+                        'wareHouseId' => $item->wareHouseID
+                    );
+
+                }
+
+                POSItemGLEntries::insert($itemArray);
+
+
+                foreach ($bankItems as $item) {
+                    $bankArray[] = array(
+                        'shiftId' => $item->shiftId,
+                        'invoiceID' => $gl->invoiceID,
+                        'bankAccId' => $item->bankID,
+                        'logId' => $logs->id,
+                        'isReturnYN' => 0,
+                        'amount' => $item->amount
+                    );
+
+                }
+                POSBankGLEntries::insert($bankArray);
+
+
+                POSGLEntries::insert($bankGLArray);
+                POSGLEntries::insert($itemGLArray);
+                POSGLEntries::insert($taxGLArray);
+
+
+                $qtyArray = array();
+                foreach ($invItemsPLBS as $gl) {
+
+                    $documentCode = ('GPOS\\' . str_pad($gl->shiftId, 6, '0', STR_PAD_LEFT));
+                    if ($gl->categoryID == 1) {
+                        $costGLArray = [
                             'shiftId' => $gl->shiftId,
                             'invoiceID' => $gl->invoiceID,
                             'documentSystemId' => 110,
                             'documentCode' => $documentCode,
                             'glCode' => $gl->plGLCode,
                             'logId' => $logs['id'],
-                            'amount' => $gl->amount * -1
+                            'amount' => $gl->amount
                         ];
-                        POSGLEntries::insert($inventoryGLArray);
-                    } else {
-                        $inventoryGLArray = [
-                            'shiftId' => $gl->shiftId,
-                            'invoiceID' => $gl->invoiceID,
-                            'documentSystemId' => 110,
-                            'documentCode' => $documentCode,
-                            'glCode' => $gl->bsGLCode,
-                            'logId' => $logs['id'],
-                            'amount' => $gl->amount * -1
-                        ];
-                        POSGLEntries::insert($inventoryGLArray);
+                        POSGLEntries::insert($costGLArray);
+                        if ($gl->glYN == -1) {
+                            $inventoryGLArray = [
+                                'shiftId' => $gl->shiftId,
+                                'invoiceID' => $gl->invoiceID,
+                                'documentSystemId' => 110,
+                                'documentCode' => $documentCode,
+                                'glCode' => $gl->plGLCode,
+                                'logId' => $logs['id'],
+                                'amount' => $gl->amount * -1
+                            ];
+                            POSGLEntries::insert($inventoryGLArray);
+                        } else {
+                            $inventoryGLArray = [
+                                'shiftId' => $gl->shiftId,
+                                'invoiceID' => $gl->invoiceID,
+                                'documentSystemId' => 110,
+                                'documentCode' => $documentCode,
+                                'glCode' => $gl->bsGLCode,
+                                'logId' => $logs['id'],
+                                'amount' => $gl->amount * -1
+                            ];
+                            POSGLEntries::insert($inventoryGLArray);
+                        }
+
+
                     }
 
+                }
+            }
+
+            if ($shiftDetails->posType == 2) {
+                $hasItems = POSSourceMenuSalesMaster::where('shiftId', $shiftId)->get();
+                if ($hasItems->isEmpty()) {
+                    return $this->sendError('Invoices not found');
+                }
+                $shiftLogArray = [
+                    'startTime' => $shiftDetails->startTime,
+                    'endTime' => $shiftDetails->endTime,
+                    'status' => 1,
+                    'postGroupByYN' => 0,
+                    'shiftId' => $shiftId
+                ];
+                $logs = POSFinanceLog::create($shiftLogArray);
+
+                $bankGLArray = array();
+                $itemGLArray = array();
+                $taxGLArray1 = array();
+                $taxGLArray2 = array();
+                $itemArray = array();
+                $bankArray = array();
+
+                if ($isPostGroupBy == 0) {
+
+                    $bankGL = DB::table('pos_source_menusalesmaster')
+                        ->selectRaw('SUM(pos_source_menusalesmaster.cashReceivedAmount) as amount, pos_source_menusalesmaster.menuSalesID as invoiceID, pos_source_menusalespayments.GLCode as glCode, pos_source_menusalesmaster.shiftID as shiftId, pos_source_menusalesmaster.companyID as companyID')
+                        ->join('pos_source_menusalespayments', 'pos_source_menusalespayments.menuSalesID', '=', 'pos_source_menusalesmaster.menuSalesID')
+                        ->where('pos_source_menusalesmaster.shiftID', $shiftId)
+                        ->groupBy('pos_source_menusalesmaster.shiftID')
+                        ->groupBy('pos_source_menusalesmaster.menuSalesID')
+                        ->groupBy('pos_source_menusalespayments.GLCode')
+                        ->where('pos_source_menusalesmaster.isCreditSales', 0)
+                        ->get();
+
+
+                    $invItems = DB::table('pos_source_menusalesitems')
+                        ->selectRaw('pos_source_menusalesitems.menuSalesPrice as amount, pos_source_menusalesmaster.menuSalesID as invoiceID, pos_source_menusalesmaster.shiftID as shiftId, pos_source_menusalesmaster.companyID as companyID, pos_source_menusalesitemdetails.itemAutoID as itemID, pos_source_menusalesitems.revenueGLAutoID as glCode,  itemmaster.financeCategoryMaster as categoryID, financeitemcategorysub.financeGLcodebBSSystemID as bsGLCode, financeitemcategorysub.financeGLcodePLSystemID as plGLCode, financeitemcategorysub.includePLForGRVYN as glYN, pos_source_menusalesitemdetails.qty as qty, pos_source_menusalesitemdetails.cost as price, pos_source_menusalesitemdetails.UOMID as uom, pos_source_menusalesmaster.wareHouseAutoID as wareHouseID')
+                        ->join('pos_source_menusalesmaster', 'pos_source_menusalesmaster.menuSalesID', '=', 'pos_source_menusalesitems.menuSalesID')
+                        ->join('pos_source_menusalesitemdetails', 'pos_source_menusalesitemdetails.menuSalesItemID', '=', 'pos_source_menusalesitems.menuSalesItemID')
+                        ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'pos_source_menusalesitemdetails.itemAutoID')
+                        ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
+                        ->where('pos_source_menusalesmaster.shiftID', $shiftId)
+                        ->where('pos_source_menusalesmaster.isCreditSales', 0)
+                        ->get();
+
+                    $invItemsPLBS = DB::table('pos_source_menusalesitems')
+                        ->selectRaw('pos_source_menusalesitemdetails.qty * itemassigned.wacValueLocal as amount, pos_source_menusalesmaster.menuSalesID as invoiceID, pos_source_menusalesmaster.shiftID as shiftId, pos_source_menusalesmaster.companyID as companyID, pos_source_menusalesitemdetails.itemAutoID as itemID, pos_source_menusalesitems.revenueGLAutoID as glCode,  itemmaster.financeCategoryMaster as categoryID, financeitemcategorysub.financeGLcodebBSSystemID as bsGLCode, financeitemcategorysub.financeGLcodePLSystemID as plGLCode, financeitemcategorysub.includePLForGRVYN as glYN, pos_source_menusalesitemdetails.qty as qty, pos_source_menusalesitemdetails.cost as price, pos_source_menusalesitemdetails.UOMID as uom, pos_source_menusalesmaster.wareHouseAutoID as wareHouseID')
+                        ->join('pos_source_menusalesmaster', 'pos_source_menusalesmaster.menuSalesID', '=', 'pos_source_menusalesitems.menuSalesID')
+                        ->join('pos_source_menusalesitemdetails', 'pos_source_menusalesitemdetails.menuSalesItemID', '=', 'pos_source_menusalesitems.menuSalesItemID')
+                        ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'pos_source_menusalesitemdetails.itemAutoID')
+                        ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
+                        ->join('itemassigned', 'itemassigned.itemCodeSystem', '=', 'itemmaster.itemCodeSystem')
+                        ->where('pos_source_menusalesmaster.shiftID', $shiftId)
+                        ->where('itemassigned.companySystemID', $shiftDetails->companyID)
+                        ->where('pos_source_menusalesmaster.isCreditSales', 0)
+                        ->get();
+
+
+                    $taxItems = DB::table('pos_source_menusalesmaster')
+                        ->selectRaw('pos_source_menusalesmaster.menuSalesID as invoiceID, pos_source_menusalesmaster.shiftID as shiftId, pos_source_menusalesmaster.companyID as companyID, pos_source_menusalesoutlettaxes.taxAmount as taxAmount, erp_taxmaster_new.outputVatGLAccountAutoID as outputVatGLCode')
+                        ->join('pos_source_menusalesoutlettaxes', 'pos_source_menusalesoutlettaxes.menuSalesID', '=', 'pos_source_menusalesmaster.menuSalesID')
+                        ->join('erp_taxmaster_new', 'erp_taxmaster_new.taxMasterAutoID', '=', 'pos_source_menusalesoutlettaxes.taxMasterID')
+                        ->where('pos_source_menusalesmaster.shiftID', $shiftId)
+                        ->where('pos_source_menusalesmaster.isCreditSales', 0)
+                        ->get();
+
+                    $taxItems2 = DB::table('pos_source_menusalesmaster')
+                        ->selectRaw('pos_source_menusalesmaster.menuSalesID as invoiceID, pos_source_menusalesmaster.shiftID as shiftId, pos_source_menusalesmaster.companyID as companyID, pos_source_menusalestaxes.taxAmount as taxAmount, erp_taxmaster_new.outputVatGLAccountAutoID as outputVatGLCode')
+                        ->join('pos_source_menusalestaxes', 'pos_source_menusalestaxes.menuSalesID', '=', 'pos_source_menusalesmaster.menuSalesID')
+                        ->join('erp_taxmaster_new', 'erp_taxmaster_new.taxMasterAutoID', '=', 'pos_source_menusalestaxes.taxMasterID')
+                        ->where('pos_source_menusalesmaster.shiftID', $shiftId)
+                        ->where('pos_source_menusalesmaster.isCreditSales', 0)
+                        ->get();
+
+                    $bankItems = DB::table('pos_source_menusalesmaster')
+                        ->selectRaw('SUM(pos_source_menusalesmaster.cashReceivedAmount) as amount, pos_source_menusalesmaster.menuSalesID as invoiceID, pos_source_paymentglconfigdetail.erp_bank_acc_id as bankID, pos_source_menusalespayments.GLCode as glCode, pos_source_menusalesmaster.shiftID as shiftId, pos_source_menusalesmaster.companyID as companyID, pos_source_menusalespayments.paymentConfigDetailID as payDetailID')
+                        ->join('pos_source_menusalespayments', 'pos_source_menusalespayments.menuSalesID', '=', 'pos_source_menusalesmaster.menuSalesID')
+                        ->join('pos_source_paymentglconfigdetail', 'pos_source_paymentglconfigdetail.ID', '=', 'pos_source_menusalespayments.paymentConfigDetailID')
+                        ->where('pos_source_menusalesmaster.shiftID', $shiftId)
+                        ->groupBy('pos_source_menusalesmaster.menuSalesID')
+                        ->groupBy('pos_source_menusalesmaster.shiftID')
+                        ->where('pos_source_menusalesmaster.isCreditSales', 0)
+                        ->get();
 
                 }
-
-            }
-        }
-
-        if($shiftDetails->posType == 2) {
-            $hasItems = POSSourceMenuSalesMaster::where('shiftId', $shiftId)->get();
-            if($hasItems->isEmpty()) {
-                return $this->sendError('Invoices not found');
-            }
-            $shiftLogArray = [
-                'startTime' => $shiftDetails->startTime,
-                'endTime' => $shiftDetails->endTime,
-                'status' => 1,
-                'postGroupByYN' => 0,
-                'shiftId' => $shiftId
-            ];
-            $logs = POSFinanceLog::create($shiftLogArray);
-
-            $bankGLArray = array();
-            $itemGLArray = array();
-            $taxGLArray1 = array();
-            $taxGLArray2 = array();
-            $itemArray = array();
-            $bankArray = array();
-
-            if ($isPostGroupBy == 0) {
-
-                $bankGL = DB::table('pos_source_menusalesmaster')
-                    ->selectRaw('SUM(pos_source_menusalesmaster.cashReceivedAmount) as amount, pos_source_menusalesmaster.menuSalesID as invoiceID, pos_source_menusalespayments.GLCode as glCode, pos_source_menusalesmaster.shiftID as shiftId, pos_source_menusalesmaster.companyID as companyID')
-                    ->join('pos_source_menusalespayments', 'pos_source_menusalespayments.menuSalesID', '=', 'pos_source_menusalesmaster.menuSalesID')
-                    ->where('pos_source_menusalesmaster.shiftID', $shiftId)
-                    ->groupBy('pos_source_menusalesmaster.shiftID')
-                    ->groupBy('pos_source_menusalesmaster.menuSalesID')
-                    ->groupBy('pos_source_menusalespayments.GLCode')
-                    ->where('pos_source_menusalesmaster.isCreditSales', 0)
-                    ->get();
+                if ($isPostGroupBy == 1) {
+                    $bankGL = DB::table('pos_source_menusalesmaster')
+                        ->selectRaw('SUM(pos_source_menusalesmaster.cashReceivedAmount) as amount, pos_source_menusalesmaster.menuSalesID as invoiceID, pos_source_menusalespayments.GLCode as glCode, pos_source_menusalesmaster.shiftID as shiftId, pos_source_menusalesmaster.companyID as companyID')
+                        ->join('pos_source_menusalespayments', 'pos_source_menusalespayments.menuSalesID', '=', 'pos_source_menusalesmaster.menuSalesID')
+                        ->where('pos_source_menusalesmaster.shiftID', $shiftId)
+                        ->groupBy('pos_source_menusalesmaster.menuSalesID')
+                        ->groupBy('pos_source_menusalesmaster.shiftID')
+                        ->groupBy('pos_source_invoicepayments.GLCode')
+                        ->where('pos_source_menusalesmaster.isCreditSales', 0)
+                        ->get();
 
 
-                $invItems = DB::table('pos_source_menusalesitems')
-                    ->selectRaw('pos_source_menusalesitems.menuSalesPrice as amount, pos_source_menusalesmaster.menuSalesID as invoiceID, pos_source_menusalesmaster.shiftID as shiftId, pos_source_menusalesmaster.companyID as companyID, pos_source_menusalesitemdetails.itemAutoID as itemID, pos_source_menusalesitems.revenueGLAutoID as glCode,  itemmaster.financeCategoryMaster as categoryID, financeitemcategorysub.financeGLcodebBSSystemID as bsGLCode, financeitemcategorysub.financeGLcodePLSystemID as plGLCode, financeitemcategorysub.includePLForGRVYN as glYN, pos_source_menusalesitemdetails.qty as qty, pos_source_menusalesitemdetails.cost as price, pos_source_menusalesitemdetails.UOMID as uom, pos_source_menusalesmaster.wareHouseAutoID as wareHouseID')
-                    ->join('pos_source_menusalesmaster', 'pos_source_menusalesmaster.menuSalesID', '=', 'pos_source_menusalesitems.menuSalesID')
-                    ->join('pos_source_menusalesitemdetails', 'pos_source_menusalesitemdetails.menuSalesItemID', '=', 'pos_source_menusalesitems.menuSalesItemID')
-                    ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'pos_source_menusalesitemdetails.itemAutoID')
-                    ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
-                    ->where('pos_source_menusalesmaster.shiftID', $shiftId)
-                    ->where('pos_source_menusalesmaster.isCreditSales', 0)
-                    ->get();
+                    $invItems = DB::table('pos_source_menusalesitems')
+                        ->selectRaw('SUM(pos_source_menusalesitems.menuSalesPrice) as amount, pos_source_menusalesmaster.menuSalesID as invoiceID, pos_source_menusalesmaster.shiftID as shiftId, pos_source_menusalesmaster.companyID as companyID, pos_source_menusalesitemdetails.itemAutoID as itemID, pos_source_menusalesitems.revenueGLAutoID as glCode,  itemmaster.financeCategoryMaster as categoryID, financeitemcategorysub.financeGLcodebBSSystemID as bsGLCode, financeitemcategorysub.financeGLcodePLSystemID as plGLCode, financeitemcategorysub.includePLForGRVYN as glYN, pos_source_menusalesitemdetails.qty as qty, pos_source_menusalesitemdetails.cost as price, pos_source_menusalesitemdetails.UOMID as uom,pos_source_menusalesmaster.wareHouseAutoID as wareHouseID')
+                        ->join('pos_source_menusalesmaster', 'pos_source_menusalesmaster.menuSalesID', '=', 'pos_source_menusalesitems.menuSalesID')
+                        ->join('pos_source_menusalesitemdetails', 'pos_source_menusalesitemdetails.menuSalesItemID', '=', 'pos_source_menusalesitems.menuSalesItemID')
+                        ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'pos_source_menusalesitemdetails.itemAutoID')
+                        ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
+                        ->where('pos_source_menusalesmaster.shiftID', $shiftId)
+                        ->groupBy('pos_source_menusalesmaster.shiftID')
+                        ->where('pos_source_menusalesmaster.isCreditSales', 0)
+                        ->get();
 
-                $invItemsPLBS = DB::table('pos_source_menusalesitems')
-                    ->selectRaw('pos_source_menusalesitemdetails.qty * itemassigned.wacValueLocal as amount, pos_source_menusalesmaster.menuSalesID as invoiceID, pos_source_menusalesmaster.shiftID as shiftId, pos_source_menusalesmaster.companyID as companyID, pos_source_menusalesitemdetails.itemAutoID as itemID, pos_source_menusalesitems.revenueGLAutoID as glCode,  itemmaster.financeCategoryMaster as categoryID, financeitemcategorysub.financeGLcodebBSSystemID as bsGLCode, financeitemcategorysub.financeGLcodePLSystemID as plGLCode, financeitemcategorysub.includePLForGRVYN as glYN, pos_source_menusalesitemdetails.qty as qty, pos_source_menusalesitemdetails.cost as price, pos_source_menusalesitemdetails.UOMID as uom, pos_source_menusalesmaster.wareHouseAutoID as wareHouseID')
-                    ->join('pos_source_menusalesmaster', 'pos_source_menusalesmaster.menuSalesID', '=', 'pos_source_menusalesitems.menuSalesID')
-                    ->join('pos_source_menusalesitemdetails', 'pos_source_menusalesitemdetails.menuSalesItemID', '=', 'pos_source_menusalesitems.menuSalesItemID')
-                    ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'pos_source_menusalesitemdetails.itemAutoID')
-                    ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
-                    ->join('itemassigned', 'itemassigned.itemCodeSystem', '=', 'itemmaster.itemCodeSystem')
-                    ->where('pos_source_menusalesmaster.shiftID', $shiftId)
-                    ->where('itemassigned.companySystemID', $shiftDetails->companyID)
-                    ->where('pos_source_menusalesmaster.isCreditSales', 0)
-                    ->get();
-
-
-                $taxItems = DB::table('pos_source_menusalesmaster')
-                    ->selectRaw('pos_source_menusalesmaster.menuSalesID as invoiceID, pos_source_menusalesmaster.shiftID as shiftId, pos_source_menusalesmaster.companyID as companyID, pos_source_menusalesoutlettaxes.taxAmount as taxAmount, erp_taxmaster_new.outputVatGLAccountAutoID as outputVatGLCode')
-                    ->join('pos_source_menusalesoutlettaxes', 'pos_source_menusalesoutlettaxes.menuSalesID', '=', 'pos_source_menusalesmaster.menuSalesID')
-                    ->join('erp_taxmaster_new', 'erp_taxmaster_new.taxMasterAutoID', '=', 'pos_source_menusalesoutlettaxes.taxMasterID')
-                    ->where('pos_source_menusalesmaster.shiftID', $shiftId)
-                    ->where('pos_source_menusalesmaster.isCreditSales', 0)
-                    ->get();
-
-                $taxItems2 = DB::table('pos_source_menusalesmaster')
-                    ->selectRaw('pos_source_menusalesmaster.menuSalesID as invoiceID, pos_source_menusalesmaster.shiftID as shiftId, pos_source_menusalesmaster.companyID as companyID, pos_source_menusalestaxes.taxAmount as taxAmount, erp_taxmaster_new.outputVatGLAccountAutoID as outputVatGLCode')
-                    ->join('pos_source_menusalestaxes', 'pos_source_menusalestaxes.menuSalesID', '=', 'pos_source_menusalesmaster.menuSalesID')
-                    ->join('erp_taxmaster_new', 'erp_taxmaster_new.taxMasterAutoID', '=', 'pos_source_menusalestaxes.taxMasterID')
-                    ->where('pos_source_menusalesmaster.shiftID', $shiftId)
-                    ->where('pos_source_menusalesmaster.isCreditSales', 0)
-                    ->get();
-
-                $bankItems = DB::table('pos_source_menusalesmaster')
-                    ->selectRaw('SUM(pos_source_menusalesmaster.cashReceivedAmount) as amount, pos_source_menusalesmaster.menuSalesID as invoiceID, pos_source_paymentglconfigdetail.erp_bank_acc_id as bankID, pos_source_menusalespayments.GLCode as glCode, pos_source_menusalesmaster.shiftID as shiftId, pos_source_menusalesmaster.companyID as companyID, pos_source_menusalespayments.paymentConfigDetailID as payDetailID')
-                    ->join('pos_source_menusalespayments', 'pos_source_menusalespayments.menuSalesID', '=', 'pos_source_menusalesmaster.menuSalesID')
-                    ->join('pos_source_paymentglconfigdetail', 'pos_source_paymentglconfigdetail.ID', '=', 'pos_source_menusalespayments.paymentConfigDetailID')
-                    ->where('pos_source_menusalesmaster.shiftID', $shiftId)
-                    ->groupBy('pos_source_menusalesmaster.menuSalesID')
-                    ->groupBy('pos_source_menusalesmaster.shiftID')
-                    ->where('pos_source_menusalesmaster.isCreditSales', 0)
-                    ->get();
-
-            }
-            if ($isPostGroupBy == 1) {
-                $bankGL = DB::table('pos_source_menusalesmaster')
-                    ->selectRaw('SUM(pos_source_menusalesmaster.cashReceivedAmount) as amount, pos_source_menusalesmaster.menuSalesID as invoiceID, pos_source_menusalespayments.GLCode as glCode, pos_source_menusalesmaster.shiftID as shiftId, pos_source_menusalesmaster.companyID as companyID')
-                    ->join('pos_source_menusalespayments', 'pos_source_menusalespayments.menuSalesID', '=', 'pos_source_menusalesmaster.menuSalesID')
-                    ->where('pos_source_menusalesmaster.shiftID', $shiftId)
-                    ->groupBy('pos_source_menusalesmaster.menuSalesID')
-                    ->groupBy('pos_source_menusalesmaster.shiftID')
-                    ->groupBy('pos_source_invoicepayments.GLCode')
-                    ->where('pos_source_menusalesmaster.isCreditSales', 0)
-                    ->get();
+                    $invItemsPLBS = DB::table('pos_source_menusalesitems')
+                        ->selectRaw('pos_source_menusalesitemdetails.qty * itemassigned.wacValueLocal as amount, pos_source_menusalesmaster.menuSalesID as invoiceID, pos_source_menusalesmaster.shiftID as shiftId, pos_source_menusalesmaster.companyID as companyID, pos_source_menusalesitemdetails.itemAutoID as itemID, pos_source_menusalesitems.revenueGLAutoID as glCode,  itemmaster.financeCategoryMaster as categoryID, financeitemcategorysub.financeGLcodebBSSystemID as bsGLCode, financeitemcategorysub.financeGLcodePLSystemID as plGLCode, financeitemcategorysub.includePLForGRVYN as glYN, pos_source_menusalesitemdetails.qty as qty, pos_source_menusalesitemdetails.cost as price, pos_source_menusalesitemdetails.UOMID as uom, pos_source_menusalesmaster.wareHouseAutoID as wareHouseID')
+                        ->join('pos_source_menusalesmaster', 'pos_source_menusalesmaster.menuSalesID', '=', 'pos_source_menusalesitems.menuSalesID')
+                        ->join('pos_source_menusalesitemdetails', 'pos_source_menusalesitemdetails.menuSalesItemID', '=', 'pos_source_menusalesitems.menuSalesItemID')
+                        ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'pos_source_menusalesitemdetails.itemAutoID')
+                        ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
+                        ->join('itemassigned', 'itemassigned.itemCodeSystem', '=', 'itemmaster.itemCodeSystem')
+                        ->where('pos_source_menusalesmaster.shiftID', $shiftId)
+                        ->where('itemassigned.companySystemID', $shiftDetails->companyID)
+                        ->groupBy('pos_source_menusalesmaster.shiftID')
+                        ->where('pos_source_menusalesmaster.isCreditSales', 0)
+                        ->get();
 
 
-                $invItems = DB::table('pos_source_menusalesitems')
-                    ->selectRaw('SUM(pos_source_menusalesitems.menuSalesPrice) as amount, pos_source_menusalesmaster.menuSalesID as invoiceID, pos_source_menusalesmaster.shiftID as shiftId, pos_source_menusalesmaster.companyID as companyID, pos_source_menusalesitemdetails.itemAutoID as itemID, pos_source_menusalesitems.revenueGLAutoID as glCode,  itemmaster.financeCategoryMaster as categoryID, financeitemcategorysub.financeGLcodebBSSystemID as bsGLCode, financeitemcategorysub.financeGLcodePLSystemID as plGLCode, financeitemcategorysub.includePLForGRVYN as glYN, pos_source_menusalesitemdetails.qty as qty, pos_source_menusalesitemdetails.cost as price, pos_source_menusalesitemdetails.UOMID as uom,pos_source_menusalesmaster.wareHouseAutoID as wareHouseID')
-                    ->join('pos_source_menusalesmaster', 'pos_source_menusalesmaster.menuSalesID', '=', 'pos_source_menusalesitems.menuSalesID')
-                    ->join('pos_source_menusalesitemdetails', 'pos_source_menusalesitemdetails.menuSalesItemID', '=', 'pos_source_menusalesitems.menuSalesItemID')
-                    ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'pos_source_menusalesitemdetails.itemAutoID')
-                    ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
-                    ->where('pos_source_menusalesmaster.shiftID', $shiftId)
-                    ->groupBy('pos_source_menusalesmaster.shiftID')
-                    ->where('pos_source_menusalesmaster.isCreditSales', 0)
-                    ->get();
+                    $taxItems = DB::table('pos_source_menusalesmaster')
+                        ->selectRaw('pos_source_menusalesmaster.menuSalesID as invoiceID, pos_source_menusalesmaster.shiftID as shiftId, pos_source_menusalesmaster.companyID as companyID, SUM(pos_source_menusalesoutlettaxes.taxAmount) as taxAmount, erp_taxmaster_new.outputVatGLAccountAutoID as outputVatGLCode')
+                        ->join('pos_source_menusalesoutlettaxes', 'pos_source_menusalesoutlettaxes.menuSalesID', '=', 'pos_source_menusalesmaster.menuSalesID')
+                        ->join('erp_taxmaster_new', 'erp_taxmaster_new.taxMasterAutoID', '=', 'pos_source_menusalesoutlettaxes.taxMasterID')
+                        ->where('pos_source_menusalesmaster.shiftID', $shiftId)
+                        ->groupBy('pos_source_menusalesmaster.shiftID')
+                        ->where('pos_source_menusalesmaster.isCreditSales', 0)
+                        ->get();
 
-                $invItemsPLBS = DB::table('pos_source_menusalesitems')
-                    ->selectRaw('pos_source_menusalesitemdetails.qty * itemassigned.wacValueLocal as amount, pos_source_menusalesmaster.menuSalesID as invoiceID, pos_source_menusalesmaster.shiftID as shiftId, pos_source_menusalesmaster.companyID as companyID, pos_source_menusalesitemdetails.itemAutoID as itemID, pos_source_menusalesitems.revenueGLAutoID as glCode,  itemmaster.financeCategoryMaster as categoryID, financeitemcategorysub.financeGLcodebBSSystemID as bsGLCode, financeitemcategorysub.financeGLcodePLSystemID as plGLCode, financeitemcategorysub.includePLForGRVYN as glYN, pos_source_menusalesitemdetails.qty as qty, pos_source_menusalesitemdetails.cost as price, pos_source_menusalesitemdetails.UOMID as uom, pos_source_menusalesmaster.wareHouseAutoID as wareHouseID')
-                    ->join('pos_source_menusalesmaster', 'pos_source_menusalesmaster.menuSalesID', '=', 'pos_source_menusalesitems.menuSalesID')
-                    ->join('pos_source_menusalesitemdetails', 'pos_source_menusalesitemdetails.menuSalesItemID', '=', 'pos_source_menusalesitems.menuSalesItemID')
-                    ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'pos_source_menusalesitemdetails.itemAutoID')
-                    ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
-                    ->join('itemassigned', 'itemassigned.itemCodeSystem', '=', 'itemmaster.itemCodeSystem')
-                    ->where('pos_source_menusalesmaster.shiftID', $shiftId)
-                    ->where('itemassigned.companySystemID', $shiftDetails->companyID)
-                    ->groupBy('pos_source_menusalesmaster.shiftID')
-                    ->where('pos_source_menusalesmaster.isCreditSales', 0)
-                    ->get();
+                    $taxItems2 = DB::table('pos_source_menusalesmaster')
+                        ->selectRaw('pos_source_menusalesmaster.menuSalesID as invoiceID, pos_source_menusalesmaster.shiftID as shiftId, pos_source_menusalesmaster.companyID as companyID, SUM(pos_source_menusalestaxes.taxAmount) as taxAmount, erp_taxmaster_new.outputVatGLAccountAutoID as outputVatGLCode')
+                        ->join('pos_source_menusalestaxes', 'pos_source_menusalestaxes.menuSalesID', '=', 'pos_source_menusalesmaster.menuSalesID')
+                        ->join('erp_taxmaster_new', 'erp_taxmaster_new.taxMasterAutoID', '=', 'pos_source_menusalestaxes.taxMasterID')
+                        ->where('pos_source_menusalesmaster.shiftID', $shiftId)
+                        ->groupBy('pos_source_menusalesmaster.shiftID')
+                        ->where('pos_source_menusalesmaster.isCreditSales', 0)
+                        ->get();
 
+                    $bankItems = DB::table('pos_source_menusalesmaster')
+                        ->selectRaw('SUM(pos_source_menusalesmaster.cashReceivedAmount) as amount, pos_source_menusalesmaster.menuSalesID as invoiceID, pos_source_paymentglconfigdetail.erp_bank_acc_id as bankID, pos_source_menusalespayments.GLCode as glCode, pos_source_menusalesmaster.shiftID as shiftId, pos_source_menusalesmaster.companyID as companyID, pos_source_menusalespayments.paymentConfigDetailID as payDetailID')
+                        ->join('pos_source_menusalespayments', 'pos_source_menusalespayments.menuSalesID', '=', 'pos_source_menusalesmaster.menuSalesID')
+                        ->join('pos_source_paymentglconfigdetail', 'pos_source_paymentglconfigdetail.ID', '=', 'pos_source_menusalespayments.paymentConfigDetailID')
+                        ->where('pos_source_menusalesmaster.shiftID', $shiftId)
+                        ->groupBy('pos_source_menusalesmaster.menuSalesID')
+                        ->groupBy('pos_source_menusalesmaster.shiftID')
+                        ->where('pos_source_menusalesmaster.isCreditSales', 0)
+                        ->get();
+                }
 
-                $taxItems = DB::table('pos_source_menusalesmaster')
-                    ->selectRaw('pos_source_menusalesmaster.menuSalesID as invoiceID, pos_source_menusalesmaster.shiftID as shiftId, pos_source_menusalesmaster.companyID as companyID, SUM(pos_source_menusalesoutlettaxes.taxAmount) as taxAmount, erp_taxmaster_new.outputVatGLAccountAutoID as outputVatGLCode')
-                    ->join('pos_source_menusalesoutlettaxes', 'pos_source_menusalesoutlettaxes.menuSalesID', '=', 'pos_source_menusalesmaster.menuSalesID')
-                    ->join('erp_taxmaster_new', 'erp_taxmaster_new.taxMasterAutoID', '=', 'pos_source_menusalesoutlettaxes.taxMasterID')
-                    ->where('pos_source_menusalesmaster.shiftID', $shiftId)
-                    ->groupBy('pos_source_menusalesmaster.shiftID')
-                    ->where('pos_source_menusalesmaster.isCreditSales', 0)
-                    ->get();
+                foreach ($taxItems as $gl) {
 
-                $taxItems2 = DB::table('pos_source_menusalesmaster')
-                    ->selectRaw('pos_source_menusalesmaster.menuSalesID as invoiceID, pos_source_menusalesmaster.shiftID as shiftId, pos_source_menusalesmaster.companyID as companyID, SUM(pos_source_menusalestaxes.taxAmount) as taxAmount, erp_taxmaster_new.outputVatGLAccountAutoID as outputVatGLCode')
-                    ->join('pos_source_menusalestaxes', 'pos_source_menusalestaxes.menuSalesID', '=', 'pos_source_menusalesmaster.menuSalesID')
-                    ->join('erp_taxmaster_new', 'erp_taxmaster_new.taxMasterAutoID', '=', 'pos_source_menusalestaxes.taxMasterID')
-                    ->where('pos_source_menusalesmaster.shiftID', $shiftId)
-                    ->groupBy('pos_source_menusalesmaster.shiftID')
-                    ->where('pos_source_menusalesmaster.isCreditSales', 0)
-                    ->get();
-
-                $bankItems = DB::table('pos_source_menusalesmaster')
-                    ->selectRaw('SUM(pos_source_menusalesmaster.cashReceivedAmount) as amount, pos_source_menusalesmaster.menuSalesID as invoiceID, pos_source_paymentglconfigdetail.erp_bank_acc_id as bankID, pos_source_menusalespayments.GLCode as glCode, pos_source_menusalesmaster.shiftID as shiftId, pos_source_menusalesmaster.companyID as companyID, pos_source_menusalespayments.paymentConfigDetailID as payDetailID')
-                    ->join('pos_source_menusalespayments', 'pos_source_menusalespayments.menuSalesID', '=', 'pos_source_menusalesmaster.menuSalesID')
-                    ->join('pos_source_paymentglconfigdetail', 'pos_source_paymentglconfigdetail.ID', '=', 'pos_source_menusalespayments.paymentConfigDetailID')
-                    ->where('pos_source_menusalesmaster.shiftID', $shiftId)
-                    ->groupBy('pos_source_menusalesmaster.menuSalesID')
-                    ->groupBy('pos_source_menusalesmaster.shiftID')
-                    ->where('pos_source_menusalesmaster.isCreditSales', 0)
-                    ->get();
-            }
-
-            foreach ($taxItems as $gl) {
-
-                $documentCode = ('RPOS\\' . str_pad($gl->shiftId, 6, '0', STR_PAD_LEFT));
-                $taxGLArray1[] = array(
-                    'shiftId' => $gl->shiftId,
-                    'invoiceID' => $gl->invoiceID,
-                    'documentSystemId' => 111,
-                    'documentCode' => $documentCode,
-                    'glCode' => $gl->outputVatGLCode,
-                    'logId' => $logs['id'],
-                    'amount' => $gl->taxAmount * -1
-                );
-
-            }
-            POSTaxGLEntries::insert($taxGLArray1);
-
-            foreach ($taxItems2 as $gl) {
-
-                $documentCode = ('RPOS\\' . str_pad($gl->shiftId, 6, '0', STR_PAD_LEFT));
-                $taxGLArray2[] = array(
-                    'shiftId' => $gl->shiftId,
-                    'invoiceID' => $gl->invoiceID,
-                    'documentSystemId' => 111,
-                    'documentCode' => $documentCode,
-                    'glCode' => $gl->outputVatGLCode,
-                    'logId' => $logs['id'],
-                    'amount' => $gl->taxAmount * -1
-                );
-
-            }
-
-            POSTaxGLEntries::insert($taxGLArray2);
-
-            foreach ($bankGL as $gl) {
-
-                $documentCode = ('RPOS\\' . str_pad($gl->shiftId, 6, '0', STR_PAD_LEFT));
-                $bankGLArray[] = array(
-                    'shiftId' => $gl->shiftId,
-                    'invoiceID' => $gl->invoiceID,
-                    'documentSystemId' => 111,
-                    'documentCode' => $documentCode,
-                    'glCode' => $gl->glCode,
-                    'logId' => $logs['id'],
-                    'amount' => $gl->amount
-                );
-
-            }
-
-            foreach ($invItems as $gl) {
-
-                $documentCode = ('RPOS\\' . str_pad($gl->shiftId, 6, '0', STR_PAD_LEFT));
-                $itemGLArray[] = array(
-                    'shiftId' => $gl->shiftId,
-                    'invoiceID' => $gl->invoiceID,
-                    'documentSystemId' => 111,
-                    'documentCode' => $documentCode,
-                    'glCode' => $gl->glCode,
-                    'logId' => $logs['id'],
-                    'amount' => $gl->amount * -1
-                );
-
-            }
-
-
-            foreach ($invItems as $item) {
-                $itemArray[] = array(
-                    'shiftId' => $item->shiftId,
-                    'invoiceID' => $gl->invoiceID,
-                    'itemAutoId' => $item->itemID,
-                    'uom' => $item->uom,
-                    'qty' => $item->qty,
-                    'isReturnYN' => 0,
-                );
-
-            }
-
-            POSItemGLEntries::insert($itemArray);
-
-
-            foreach ($bankItems as $item) {
-                $bankArray[] = array(
-                    'shiftId' => $item->shiftId,
-                    'invoiceID' => $gl->invoiceID,
-                    'bankAccId' => $item->bankID,
-                    'logId' => $logs->id,
-                    'isReturnYN' => 0,
-                    'amount' => $item->amount
-                );
-
-            }
-            POSBankGLEntries::insert($bankArray);
-
-
-            POSGLEntries::insert($bankGLArray);
-            POSGLEntries::insert($itemGLArray);
-            POSGLEntries::insert($taxGLArray1);
-            POSGLEntries::insert($taxGLArray2);
-
-
-            foreach ($invItemsPLBS as $gl) {
-
-                $documentCode = ('RPOS\\' . str_pad($gl->shiftId, 6, '0', STR_PAD_LEFT));
-                if ($gl->categoryID == 1) {
-                    $costGLArray = [
+                    $documentCode = ('RPOS\\' . str_pad($gl->shiftId, 6, '0', STR_PAD_LEFT));
+                    $taxGLArray1[] = array(
                         'shiftId' => $gl->shiftId,
                         'invoiceID' => $gl->invoiceID,
                         'documentSystemId' => 111,
                         'documentCode' => $documentCode,
-                        'glCode' => $gl->plGLCode,
+                        'glCode' => $gl->outputVatGLCode,
+                        'logId' => $logs['id'],
+                        'amount' => $gl->taxAmount * -1
+                    );
+
+                }
+                POSTaxGLEntries::insert($taxGLArray1);
+
+                foreach ($taxItems2 as $gl) {
+
+                    $documentCode = ('RPOS\\' . str_pad($gl->shiftId, 6, '0', STR_PAD_LEFT));
+                    $taxGLArray2[] = array(
+                        'shiftId' => $gl->shiftId,
+                        'invoiceID' => $gl->invoiceID,
+                        'documentSystemId' => 111,
+                        'documentCode' => $documentCode,
+                        'glCode' => $gl->outputVatGLCode,
+                        'logId' => $logs['id'],
+                        'amount' => $gl->taxAmount * -1
+                    );
+
+                }
+
+                POSTaxGLEntries::insert($taxGLArray2);
+
+                foreach ($bankGL as $gl) {
+
+                    $documentCode = ('RPOS\\' . str_pad($gl->shiftId, 6, '0', STR_PAD_LEFT));
+                    $bankGLArray[] = array(
+                        'shiftId' => $gl->shiftId,
+                        'invoiceID' => $gl->invoiceID,
+                        'documentSystemId' => 111,
+                        'documentCode' => $documentCode,
+                        'glCode' => $gl->glCode,
                         'logId' => $logs['id'],
                         'amount' => $gl->amount
-                    ];
-                    POSGLEntries::insert($costGLArray);
-                    if ($gl->glYN == -1) {
-                        $inventoryGLArray = [
+                    );
+
+                }
+
+                foreach ($invItems as $gl) {
+
+                    $documentCode = ('RPOS\\' . str_pad($gl->shiftId, 6, '0', STR_PAD_LEFT));
+                    $itemGLArray[] = array(
+                        'shiftId' => $gl->shiftId,
+                        'invoiceID' => $gl->invoiceID,
+                        'documentSystemId' => 111,
+                        'documentCode' => $documentCode,
+                        'glCode' => $gl->glCode,
+                        'logId' => $logs['id'],
+                        'amount' => $gl->amount * -1
+                    );
+
+                }
+
+
+                foreach ($invItems as $item) {
+                    $itemArray[] = array(
+                        'shiftId' => $item->shiftId,
+                        'invoiceID' => $gl->invoiceID,
+                        'itemAutoId' => $item->itemID,
+                        'uom' => $item->uom,
+                        'qty' => $item->qty,
+                        'isReturnYN' => 0,
+                    );
+
+                }
+
+                POSItemGLEntries::insert($itemArray);
+
+
+                foreach ($bankItems as $item) {
+                    $bankArray[] = array(
+                        'shiftId' => $item->shiftId,
+                        'invoiceID' => $gl->invoiceID,
+                        'bankAccId' => $item->bankID,
+                        'logId' => $logs->id,
+                        'isReturnYN' => 0,
+                        'amount' => $item->amount
+                    );
+
+                }
+                POSBankGLEntries::insert($bankArray);
+
+
+                POSGLEntries::insert($bankGLArray);
+                POSGLEntries::insert($itemGLArray);
+                POSGLEntries::insert($taxGLArray1);
+                POSGLEntries::insert($taxGLArray2);
+
+
+                foreach ($invItemsPLBS as $gl) {
+
+                    $documentCode = ('RPOS\\' . str_pad($gl->shiftId, 6, '0', STR_PAD_LEFT));
+                    if ($gl->categoryID == 1) {
+                        $costGLArray = [
                             'shiftId' => $gl->shiftId,
                             'invoiceID' => $gl->invoiceID,
                             'documentSystemId' => 111,
                             'documentCode' => $documentCode,
                             'glCode' => $gl->plGLCode,
                             'logId' => $logs['id'],
-                            'amount' => $gl->amount * -1
+                            'amount' => $gl->amount
                         ];
-                        POSGLEntries::insert($inventoryGLArray);
-                    } else {
-                        $inventoryGLArray = [
-                            'shiftId' => $gl->shiftId,
-                            'invoiceID' => $gl->invoiceID,
-                            'documentSystemId' => 111,
-                            'documentCode' => $documentCode,
-                            'glCode' => $gl->bsGLCode,
-                            'logId' => $logs['id'],
-                            'amount' => $gl->amount * -1
-                        ];
-                        POSGLEntries::insert($inventoryGLArray);
+                        POSGLEntries::insert($costGLArray);
+                        if ($gl->glYN == -1) {
+                            $inventoryGLArray = [
+                                'shiftId' => $gl->shiftId,
+                                'invoiceID' => $gl->invoiceID,
+                                'documentSystemId' => 111,
+                                'documentCode' => $documentCode,
+                                'glCode' => $gl->plGLCode,
+                                'logId' => $logs['id'],
+                                'amount' => $gl->amount * -1
+                            ];
+                            POSGLEntries::insert($inventoryGLArray);
+                        } else {
+                            $inventoryGLArray = [
+                                'shiftId' => $gl->shiftId,
+                                'invoiceID' => $gl->invoiceID,
+                                'documentSystemId' => 111,
+                                'documentCode' => $documentCode,
+                                'glCode' => $gl->bsGLCode,
+                                'logId' => $logs['id'],
+                                'amount' => $gl->amount * -1
+                            ];
+                            POSGLEntries::insert($inventoryGLArray);
+                        }
+
                     }
 
                 }
-
             }
         }
-
 
         return $this->sendResponse([$logs], "Invoice Posting successfull");
 
@@ -2686,14 +2691,15 @@ class ShiftDetailsAPIController extends AppBaseController
 
         $shiftDetails = POSSOURCEShiftDetails::where('shiftID',$input['shiftId'])->first();
         $output = DB::table('pos_gl_entries')
-            ->selectRaw('case when sum(amount) <= 0 then 0 else sum(amount) end as Amount,COUNT(*) as count')
+            ->selectRaw('case when sum(amount) <= 0 then 0 else sum(amount) end as Amount,COUNT(DISTINCT pos_gl_entries.invoiceID) as count, pos_source_shiftdetails.transactionCurrencyDecimalPlaces')
+            ->leftjoin('pos_source_shiftdetails', 'pos_source_shiftdetails.shiftID', '=', 'pos_gl_entries.shiftID')
             ->having('count', '>', 0)
-            ->where('shiftId', $input['shiftId']);
+            ->where('pos_gl_entries.shiftId', $input['shiftId']);
 
         if($shiftDetails->posType == 1) {
 
             $data['invoiceEntries'] = DB::table('pos_gl_entries')
-                ->selectRaw('sum(amount) as Amount,COUNT(pos_gl_entries.shiftId) as count,pos_source_invoice.invoiceCode,pos_gl_entries.invoiceID,pos_gl_entries.shiftid')
+                ->selectRaw('sum(amount) as Amount,COUNT(pos_gl_entries.shiftId) as count,pos_source_invoice.invoiceCode,pos_gl_entries.invoiceID,pos_gl_entries.shiftid, pos_source_invoice.transactionCurrencyDecimalPlaces')
                 ->join('pos_source_invoice', 'pos_source_invoice.invoiceID', '=', 'pos_gl_entries.invoiceID')
                 ->where('pos_gl_entries.shiftId', $input['shiftId'])
                 ->groupBy('invoiceID')
@@ -2702,7 +2708,7 @@ class ShiftDetailsAPIController extends AppBaseController
         else if ($shiftDetails->posType == 2) {
 
             $data['invoiceEntries'] = DB::table('pos_gl_entries')
-                ->selectRaw('sum(amount) as Amount,COUNT(pos_gl_entries.shiftId) as count,pos_source_menusalesmaster.invoiceCode,pos_gl_entries.invoiceID,pos_gl_entries.shiftid')
+                ->selectRaw('sum(amount) as Amount,COUNT(pos_gl_entries.shiftId) as count,pos_source_menusalesmaster.invoiceCode,pos_gl_entries.invoiceID,pos_gl_entries.shiftid,pos_source_menusalesmaster.transactionCurrencyDecimalPlaces')
                 ->join('pos_source_menusalesmaster', 'pos_source_menusalesmaster.menuSalesID', '=', 'pos_gl_entries.invoiceID')
                 ->where('pos_gl_entries.shiftId', $input['shiftId'])
                 ->groupBy('invoiceID')
@@ -2786,14 +2792,14 @@ class ShiftDetailsAPIController extends AppBaseController
 
         if($shiftDetails->posType == 1) {
             $data = DB::table('pos_source_invoice')
-                ->selectRaw('sum(netTotal) as Amount, count(*) as count')
+                ->selectRaw('sum(netTotal) as Amount, count(*) as count, transactionCurrencyDecimalPlaces')
                 ->where('shiftID', $input['shiftId'])
                 ->get();
         }
 
         else if($shiftDetails->posType == 2) {
             $data = DB::table('pos_source_menusalesmaster')
-                ->selectRaw('(sum(grossAmount) - sum(discountAmount)) + sum(totalTaxAmount) as Amount,count(*) as count')
+                ->selectRaw('(sum(grossAmount) - sum(discountAmount)) + sum(totalTaxAmount) as Amount,count(*) as count, transactionCurrencyDecimalPlaces')
                 ->where('shiftID', $input['shiftId'])
                 ->get();
         }
