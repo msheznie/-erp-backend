@@ -1001,6 +1001,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
         // checking document matched in depreciation
         
         $maxDepAsset = FixedAssetDepreciationMaster::where('companySystemID',$masterData->companySystemID)
+                                                  ->where('is_acc_dep','=',0)
                                                   ->where('depMasterAutoID','>',$id)
                                                   ->count();
 
@@ -1022,7 +1023,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
 
             if($isMonthlyExists)
             {
-                return $this->sendError('You cannot return back to amend !There are is monthly depreciation created for this accumalted depreciation asset. ');
+                return $this->sendError('You cannot return back to amend ! This asset already has monthly depreciation processed against it. ');
 
             }
 

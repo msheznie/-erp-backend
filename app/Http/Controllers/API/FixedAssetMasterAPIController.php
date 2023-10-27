@@ -474,7 +474,7 @@ class FixedAssetMasterAPIController extends AppBaseController
             $is_pending_job_exist = FixedAssetDepreciationMaster::where('approved','=',0)->where('is_acc_dep','=',0)->where('is_cancel','=',0)->where('companySystemID' ,'=', $input['companySystemID'])->count();
             if($is_pending_job_exist > 0)
             {
-                return $this->sendError('There are Monthly Depreciation pending for confirmation and approval, thus this asset creation cannot be processed', 599);
+                return $this->sendError('There are Monthly Depreciation pending for confirmation and approval, thus this asset creation cannot be processed', 500);
 
             }
 
@@ -838,6 +838,18 @@ class FixedAssetMasterAPIController extends AppBaseController
 
         if (empty($fixedAssetMaster)) {
             return $this->sendError('Fixed Asset Master not found');
+        }
+        $accumulated_amount = $input['accumulated_depreciation_amount_rpt'];
+
+        if($input['assetType'] == 1  && ($accumulated_amount > 0 && $accumulated_amount != null) )
+        {
+            $is_pending_job_exist = FixedAssetDepreciationMaster::where('approved','=',0)->where('is_acc_dep','=',0)->where('is_cancel','=',0)->where('companySystemID' ,'=', $input['companySystemID'])->count();
+            if($is_pending_job_exist > 0)
+            {
+                return $this->sendError('There are Monthly Depreciation pending for confirmation and approval, thus this asset creation cannot be processed', 500);
+
+            }
+
         }
 
         if(isset($input['assetType']) && $input['assetType'] == 1){
@@ -2239,23 +2251,38 @@ class FixedAssetMasterAPIController extends AppBaseController
         $masterData = $this->fixedAssetMasterRepository->findWithoutFail($id);
         if (empty($masterData)) {
             return $this->sendError('Fixed Asset Master not found');
-        }
+        }   
+
+        $accumulated_amount = $masterData->accumulated_depreciation_amount_rpt;
+
 
         if ($masterData->confirmedYN == 0) {
             return $this->sendError('You cannot return back to amend this asset costing, it is not confirmed');
         }
 
         $isAccDepExists = FixedAssetDepreciationPeriod::where('faID',$id)->whereHas('master_by', function ($q) {
-           $q->where('is_acc_dep',1)->where('confirmedYN',0);
+           $q->where('is_acc_dep',1)
+                ->where('confirmedYN','=',0)
+                ->where('is_cancel',0);
         });
 
         $isMonthlyExists = FixedAssetDepreciationPeriod::where('faID',$id)->whereHas('master_by', function ($q) {
             $q->where('is_acc_dep',0);
         })->count();
 
-        if($isMonthlyExists == 0 && $isAccDepExists->exists())
-        {
-            $depId = $isAccDepExists->first()->depMasterAutoID;
+            if($masterData->assetType == 1 && $isMonthlyExists > 0 )
+            {
+                return $this->sendError('This asset cannot be returned back to amend. Monthly Depreciation has already been generated for this asset');
+
+            }
+            
+            if(!$isAccDepExists->exists() && $masterData->assetType == 1 && ($accumulated_amount > 0 && $accumulated_amount != null) )
+            {
+                return $this->sendError('This asset cannot be returned back to amend. An approved accumulated depreciation document is linked with this asset. Refer-back the Acc. depreciation and try again'); 
+            }
+
+     
+
 
             $emailBody = '<p>' . $masterData->faCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
             $emailSubject = $masterData->faCode . ' has been return back to amend';
@@ -2331,7 +2358,12 @@ class FixedAssetMasterAPIController extends AppBaseController
                 $masterData->postedDate = null;
                 $masterData->save();
                 
-                FixedAssetDepreciationMaster::where('depMasterAutoID', $depId)->update(['is_cancel'=>-1]);
+                if($masterData->assetType == 1)
+                {
+                    $depId = $isAccDepExists->first()->depMasterAutoID;
+                    FixedAssetDepreciationMaster::where('depMasterAutoID', $depId)->update(['is_cancel'=>-1]);
+
+                }
                 AuditTrial::createAuditTrial($masterData->documentSystemID,$id,$input['returnComment'],'returned back to amend');
     
                 DB::commit();
@@ -2340,12 +2372,8 @@ class FixedAssetMasterAPIController extends AppBaseController
                 DB::rollBack();
                 return $this->sendError($exception->getMessage());
             }
-        }
-        else
-        {
-            return $this->sendError('You cannot return back to amend this asset costing,There is no accumalted depreciation or month depreciation running on this asset');
-
-        }
+        
+      
 
         // checking document matched in depreciation
         // $depAsset = FixedAssetDepreciationPeriod::ofAsset($id)->whereHas('master_by', function ($q) {
