@@ -839,18 +839,23 @@ class FixedAssetMasterAPIController extends AppBaseController
         if (empty($fixedAssetMaster)) {
             return $this->sendError('Fixed Asset Master not found');
         }
-        $accumulated_amount = $input['accumulated_depreciation_amount_rpt'];
-
-        if($input['assetType'] == 1  && ($accumulated_amount > 0 && $accumulated_amount != null) )
+     
+        if(isset($input['accumulated_depreciation_amount_rpt']))
         {
-            $is_pending_job_exist = FixedAssetDepreciationMaster::where('approved','=',0)->where('is_acc_dep','=',0)->where('is_cancel','=',0)->where('companySystemID' ,'=', $input['companySystemID'])->count();
-            if($is_pending_job_exist > 0)
+            $accumulated_amount = $input['accumulated_depreciation_amount_rpt'];
+
+            if($input['assetType'] == 1  && ($accumulated_amount > 0 && $accumulated_amount != null) )
             {
-                return $this->sendError('There are Monthly Depreciation pending for confirmation and approval, thus this asset creation cannot be processed', 500);
-
+                $is_pending_job_exist = FixedAssetDepreciationMaster::where('approved','=',0)->where('is_acc_dep','=',0)->where('is_cancel','=',0)->where('companySystemID' ,'=', $input['companySystemID'])->count();
+                if($is_pending_job_exist > 0)
+                {
+                    return $this->sendError('There are Monthly Depreciation pending for confirmation and approval, thus this asset creation cannot be processed', 500);
+    
+                }
+    
             }
-
         }
+
 
         if(isset($input['assetType']) && $input['assetType'] == 1){
             if(empty($input['depMonth']) || $input['depMonth'] == 0){
