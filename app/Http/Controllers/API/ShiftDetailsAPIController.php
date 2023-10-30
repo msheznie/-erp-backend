@@ -2691,7 +2691,7 @@ class ShiftDetailsAPIController extends AppBaseController
 
         $shiftDetails = POSSOURCEShiftDetails::where('shiftID',$input['shiftId'])->first();
         $output = DB::table('pos_gl_entries')
-            ->selectRaw('case when sum(amount) <= 0 then 0 else sum(amount) end as Amount,COUNT(DISTINCT pos_gl_entries.invoiceID) as count, pos_source_shiftdetails.transactionCurrencyDecimalPlaces')
+            ->selectRaw('sum(amount) as Amount,COUNT(DISTINCT pos_gl_entries.invoiceID) as count, pos_source_shiftdetails.transactionCurrencyDecimalPlaces')
             ->leftjoin('pos_source_shiftdetails', 'pos_source_shiftdetails.shiftID', '=', 'pos_gl_entries.shiftID')
             ->having('count', '>', 0)
             ->where('pos_gl_entries.shiftId', $input['shiftId']);
