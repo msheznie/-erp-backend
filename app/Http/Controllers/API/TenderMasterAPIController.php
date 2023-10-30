@@ -4371,7 +4371,16 @@ WHERE
         }]);
 
         if (array_key_exists('tenderNegotiationSatus', $input) && isset($input['tenderNegotiationSatus'])) {
+            if ($input['tenderNegotiationSatus'] == 3) {
+                $query->whereHas('tenderMaster', function ($q) {
+                    $q->where('is_negotiation_closed', 1);
+                });
+            } else {
                 $query->where('status', $input['tenderNegotiationSatus']);
+                $query->whereHas('tenderMaster', function ($q) {
+                    $q->where('is_negotiation_closed', 0);
+                });
+            }
         }
 
         
