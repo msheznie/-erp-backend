@@ -469,16 +469,16 @@ class FixedAssetMasterAPIController extends AppBaseController
         $input = array_except($request->all(), 'itemImage');    
         $accumulated_amount = $input['accumulated_depreciation_amount_rpt'];
 
-        if($input['assetType'] == 1  && ($accumulated_amount > 0 && $accumulated_amount != null) )
-        {
-            $is_pending_job_exist = FixedAssetDepreciationMaster::where('approved','=',0)->where('is_acc_dep','=',0)->where('is_cancel','=',0)->where('companySystemID' ,'=', $input['companySystemID'])->count();
-            if($is_pending_job_exist > 0)
-            {
-                return $this->sendError('There are Monthly Depreciation pending for confirmation and approval, thus this asset creation cannot be processed', 500);
+        // if($input['assetType'] == 1  && ($accumulated_amount > 0 && $accumulated_amount != null) )
+        // {
+        //     $is_pending_job_exist = FixedAssetDepreciationMaster::where('approved','=',0)->where('is_acc_dep','=',0)->where('is_cancel','=',0)->where('companySystemID' ,'=', $input['companySystemID'])->count();
+        //     if($is_pending_job_exist > 0)
+        //     {
+        //         return $this->sendError('There are Monthly Depreciation pending for confirmation and approval, thus this asset creation cannot be processed', 500);
 
-            }
+        //     }
 
-        }
+        // }
         $input = $this->convertArrayToValue($input);
         
         $input['COSTUNIT'] = floatval($input['COSTUNIT']);
@@ -2270,7 +2270,7 @@ class FixedAssetMasterAPIController extends AppBaseController
             $q->where('is_acc_dep',0);
         })->count();
 
-            if($masterData->assetType == 1 && $isMonthlyExists > 0 )
+            if($isMonthlyExists > 0 )
             {
                 return $this->sendError('This asset cannot be returned back to amend. Monthly Depreciation has already been generated for this asset');
 
@@ -2358,10 +2358,12 @@ class FixedAssetMasterAPIController extends AppBaseController
                 $masterData->postedDate = null;
                 $masterData->save();
                 
-                if($masterData->assetType == 1)
+                if($masterData->assetType == 1 && ($accumulated_amount > 0 && $accumulated_amount != null))
                 {
                     $depId = $isAccDepExists->first()->depMasterAutoID;
                     FixedAssetDepreciationMaster::where('depMasterAutoID', $depId)->update(['is_cancel'=>-1]);
+
+                    FixedAssetDepreciationPeriod::where('depMasterAutoID', $depId)->delete();
 
                 }
                 AuditTrial::createAuditTrial($masterData->documentSystemID,$id,$input['returnComment'],'returned back to amend');
