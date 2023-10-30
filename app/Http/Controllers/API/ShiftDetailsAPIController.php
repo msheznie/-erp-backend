@@ -709,7 +709,10 @@ class ShiftDetailsAPIController extends AppBaseController
 
         }
 
-        foreach ($invItemsPLBS as $gl) {
+        if ($invItemsPLBS->count() > 0) {
+
+
+            foreach ($invItemsPLBS as $gl) {
 
                 $itemArray[] = array(
                     'shiftId' => $gl->shiftId,
@@ -721,23 +724,27 @@ class ShiftDetailsAPIController extends AppBaseController
                 );
 
 
-            $isItemGL = POSItemGLEntries::with(['warehouse'])->where('shiftId', $shiftId)->first();
-            if(empty($isItemGL))
-            {
-                POSItemGLEntries::insert($itemArray);
-            }
+                $isItemGL = POSItemGLEntries::with(['warehouse'])->where('shiftId', $shiftId)->first();
+                if (empty($isItemGL)) {
+                    POSItemGLEntries::insert($itemArray);
+                }
 
-            $sumQty = ErpItemLedger::where('itemSystemCode', $gl->itemID)->where('companySystemID',$shiftDetails->companyID)->where('wareHouseSystemCode', $gl->wareHouseID)->sum('inOutQty');
-            $item = ItemMaster::where('itemCodeSystem', $gl->itemID)->where('primaryCompanySystemID',$shiftDetails->companyID)->first();
-            if($item) {
-                if ($item->financeCategoryMaster == 1) {
-                    if ($gl->qty > $sumQty) {
-                        $remQty = $gl->qty - $sumQty;
-                        POSItemGLEntries::where('shiftId', $gl->shiftId)->where('itemAutoId', $gl->itemID)->update(['insufficientQty' => $remQty, 'availableQty' => $sumQty, 'primaryCode' => $item->primaryCode]);
-                        $isInsufficient = 1;
+                $sumQty = ErpItemLedger::where('itemSystemCode', $gl->itemID)->where('companySystemID', $shiftDetails->companyID)->where('wareHouseSystemCode', $gl->wareHouseID)->sum('inOutQty');
+                $item = ItemMaster::where('itemCodeSystem', $gl->itemID)->where('primaryCompanySystemID', $shiftDetails->companyID)->first();
+                if ($item) {
+                    if ($item->financeCategoryMaster == 1) {
+                        if ($gl->qty > $sumQty) {
+                            $remQty = $gl->qty - $sumQty;
+                            POSItemGLEntries::where('shiftId', $gl->shiftId)->where('itemAutoId', $gl->itemID)->update(['insufficientQty' => $remQty, 'availableQty' => $sumQty, 'primaryCode' => $item->primaryCode]);
+                            $isInsufficient = 1;
+                        }
                     }
                 }
             }
+        }
+
+        else {
+            return $this->sendError("Items are not linked properly");
         }
 
         $isInsufficientExist = false;
