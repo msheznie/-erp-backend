@@ -72,6 +72,7 @@ class CreateDepreciation implements ShouldQueue
                 Log::info('Depreciation ID - '.$depMasterAutoID);
 
                 if($depMaster) {
+                    Log::info('Depreciation Query Started');
                     $depDate = Carbon::parse($depMaster->FYPeriodDateTo);
                     $faMaster = FixedAssetMaster::with(['depperiod_by' => function ($query) {
                         $query->selectRaw('SUM(depAmountRpt) as depAmountRpt,SUM(depAmountLocal) as depAmountLocal,faID');
@@ -94,6 +95,7 @@ class CreateDepreciation implements ShouldQueue
                         ->get()
                         ->toArray();
 
+                    Log::info('Depreciation Query End');
                     $db = $this->dataBase;
 
                     $depAmountRptTotal = 0;
@@ -106,7 +108,9 @@ class CreateDepreciation implements ShouldQueue
                         $faCounts = 1;
 
 
+                        Log::info('Depreciation chunk strat');
                         collect($faMaster)->chunk($chunkSize)->each(function ($chunk) use ($db, $depMasterAutoID, $depDate, &$faCounts, $chunkDataSizeCounts) {
+                            Log::info('Depreciation chunk count - '.$faCounts);
                             ProcessDepreciation::dispatch($db, $chunk, $depMasterAutoID, $depDate,$faCounts, $chunkDataSizeCounts)->onQueue('single');
                             $faCounts++;
                         });
