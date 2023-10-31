@@ -346,7 +346,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             //Route::get('getTotalCountOfApproval', 'DocumentApprovedAPIController@getTotalCountOfApproval');
 
             Route::get('getAllApprovalDocuments', 'DocumentMasterAPIController@getAllApprovalDocuments');
-            Route::post('getAllInvReclassificationByCompany', 'InventoryReclassificationAPIController@getAllInvReclassificationByCompany');
             
             Route::get('getJobsByContractAndCustomer', 'CustomerMasterAPIController@getJobsByContractAndCustomer');
 
@@ -355,13 +354,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('ticket_masters', 'TicketMasterAPIController');
             Route::resource('field_masters', 'FieldMasterAPIController');
             Route::resource('inv_reclassification_details', 'InventoryReclassificationDetailAPIController');
-            Route::resource('inv_reclassifications', 'InventoryReclassificationAPIController');
-            Route::get('getInvReclassificationAudit', 'InventoryReclassificationAPIController@getInvReclassificationAudit');
             
-            Route::get('getItemsOptionForReclassification', 'InventoryReclassificationAPIController@getItemsOptionForReclassification');
-            Route::get('getItemsByReclassification', 'InventoryReclassificationDetailAPIController@getItemsByReclassification');
 
-            Route::post('invRecalssificationReopen', 'InventoryReclassificationAPIController@invRecalssificationReopen');
 
             Route::resource('item_client_reference', 'ItemClientReferenceNumberMasterAPIController');
 
@@ -372,9 +366,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('ticket_masters', 'TicketMasterAPIController');
 
             Route::resource('field_masters', 'FieldMasterAPIController');
-            Route::resource('inv_reclassification_details', 'InventoryReclassificationDetailAPIController');
 
-            Route::resource('inv_reclassifications', 'InventoryReclassificationAPIController');
 
             Route::resource('item_client_reference', 'ItemClientReferenceNumberMasterAPIController');
 
