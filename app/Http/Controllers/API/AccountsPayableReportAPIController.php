@@ -27,6 +27,7 @@ namespace App\Http\Controllers\API;
 use App\helper\Helper;
 use App\Http\Controllers\AppBaseController;
 use App\Models\AccountsPayableLedger;
+use App\Models\BookInvSuppDet;
 use App\Models\BookInvSuppMaster;
 use App\Models\ChartOfAccount;
 use App\Models\CountryMaster;
@@ -645,6 +646,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 if ($reportTypeID == 'UGRVD' || $reportTypeID == 'UGRVS') { //Unbilled Detail
 
                     $output = $this->getUnbilledDetailQRY($request);
+
                     if ($reportTypeID == 'UGRVD') {
                         if ($output) {
                             foreach ($output as $val) {
@@ -4378,13 +4380,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 finalUnbilled.supplierCode,
                 finalUnbilled.supplierName,
                 finalUnbilled.localAmount AS documentLocalAmount,
-                finalUnbilled.rptAmount AS documentRptAmount,
-            IF
-                ( finalUnbilled.matchedLocalAmount IS NULL, 0, finalUnbilled.matchedLocalAmount ) AS matchedLocalAmount,
-            IF
-                ( finalUnbilled.matchedRptAmount IS NULL, 0, finalUnbilled.matchedRptAmount ) AS matchedRptAmount,
-                round( ( finalUnbilled.localAmount - ( IF ( finalUnbilled.matchedLocalAmount IS NULL, 0, finalUnbilled.matchedLocalAmount ) ) ), 3 ) AS balanceLocalAmount,
-                round( ( finalUnbilled.rptAmount - ( IF ( finalUnbilled.matchedRptAmount IS NULL, 0, finalUnbilled.matchedRptAmount ) ) ), 2 ) AS balanceRptAmount 
+                finalUnbilled.rptAmount AS documentRptAmount
             FROM
                 (
             SELECT
@@ -4515,7 +4511,24 @@ class AccountsPayableReportAPIController extends AppBaseController
                 ) <>0 ) as final 
                 INNER JOIN suppliermaster ON suppliermaster.supplierCodeSystem = final.supplierID
                 WHERE supplierID IN (' . join(',', $supplierSystemID) . ')' . $countryFilter . ' ' . $supplierGroup;
-        return \DB::select($qry);
+
+        $results = \DB::select($qry);
+
+        foreach ($results as $index => $result) {
+            $result->matchedLocalAmount = BookInvSuppDet::where('grvAutoID', $result->documentSystemCode)->where('companySystemID', $result->companySystemID)->where('supplierID', $result->supplierID)->sum('totLocalAmount');
+
+            $result->matchedRptAmount = BookInvSuppDet::where('grvAutoID', $result->documentSystemCode)->where('companySystemID', $result->companySystemID)->where('supplierID', $result->supplierID)->sum('totRptAmount');
+
+
+            $result->balanceLocalAmount = $result->documentLocalAmount - $result->matchedLocalAmount;
+            $result->balanceRptAmount = $result->documentRptAmount - $result->matchedRptAmount;
+
+            if (abs($result->balanceLocalAmount) < 0.00001 || abs($result->balanceRptAmount) < 0.00001) {
+                unset($results[$index]);
+            }
+        }
+
+        return $results;
     }
 
     function getUnbilledLogisticsDetailQRY($request)
