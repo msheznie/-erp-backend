@@ -647,7 +647,7 @@ class ShiftDetailsAPIController extends AppBaseController
                 $data[$x]['Qty Needed'] = $val->qty;
                 $data[$x]['Available Qty'] = $val->availableQty;
                 $data[$x]['Insufficient Qty'] = $val->insufficientQty;
-                $data[$x]['Warehouse'] = $val->wareHouseDescription;
+                $data[$x]['Warehouse'] = isset($val->warehouse->wareHouseDescription) ? $val->warehouse->wareHouseDescription : null;
             }
         }
         $shiftDetails = POSSOURCEShiftDetails::where('shiftID',$shiftId)->first();
@@ -680,38 +680,70 @@ class ShiftDetailsAPIController extends AppBaseController
 
         $shiftDetails = POSSOURCEShiftDetails::where('shiftID',$shiftId)->first();
         $qtyArray = array();
+        if($shiftDetails->posType == 1) {
+            $invItemsPLBS = DB::table('pos_source_invoicedetail')
+                ->selectRaw('pos_source_invoicedetail.qty * itemassigned.wacValueLocal as amount, pos_source_invoice.invoiceID as invoiceID, pos_source_invoice.shiftID as shiftId, pos_source_invoice.companyID as companyID, pos_source_invoicedetail.itemAutoID as itemID, itemmaster.financeCategorySub as financeCategorySub,  financeitemcategorysub.financeGLcodebBSSystemID as bsGLCode, financeitemcategorysub.financeGLcodePLSystemID as plGLCode, itemmaster.financeCategoryMaster as categoryID, SUM(pos_source_invoicedetail.qty) as qty, itemassigned.wacValueLocal as price, pos_source_invoicedetail.UOMID as uom, pos_source_invoice.wareHouseAutoID as wareHouseID, financeitemcategorysub.includePLForGRVYN as glYN, warehousemaster.wareHouseDescription')
+                ->join('pos_source_invoice', 'pos_source_invoice.invoiceID', '=', 'pos_source_invoicedetail.invoiceID')
+                ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'pos_source_invoicedetail.itemAutoID')
+                ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
+                ->join('itemassigned', 'itemassigned.itemCodeSystem', '=', 'itemmaster.itemCodeSystem')
+                ->join('warehousemaster', 'warehousemaster.wareHouseSystemCode', '=', 'pos_source_invoice.wareHouseAutoID')
+                ->where('pos_source_invoice.shiftID', $shiftId)
+                ->where('itemassigned.companySystemID', $shiftDetails->companyID)
+                ->where('pos_source_invoice.isCreditSales', 0)
+                ->groupBy('itemID')
+                ->get();
+        } else if ($shiftDetails->posType == 2){
+            $invItemsPLBS = DB::table('pos_source_menusalesitemdetails')
+                ->selectRaw('pos_source_menusalesitemdetails.qty * itemassigned.wacValueLocal as amount, pos_source_menusalesmaster.menuSalesID as menuSalesID, pos_source_menusalesmaster.shiftID as shiftId, pos_source_menusalesmaster.companyID as companyID, pos_source_menusalesitemdetails.itemAutoID as itemID, itemmaster.financeCategorySub as financeCategorySub,  financeitemcategorysub.financeGLcodebBSSystemID as bsGLCode, financeitemcategorysub.financeGLcodePLSystemID as plGLCode, itemmaster.financeCategoryMaster as categoryID, SUM(pos_source_menusalesitemdetails.qty) as qty, itemassigned.wacValueLocal as price, pos_source_menusalesitemdetails.UOMID as uom, pos_source_menusalesmaster.wareHouseAutoID as wareHouseID, financeitemcategorysub.includePLForGRVYN as glYN, warehousemaster.wareHouseDescription')
+                ->join('pos_source_menusalesmaster', 'pos_source_menusalesmaster.menuSalesID', '=', 'pos_source_menusalesitemdetails.menuSalesID')
+                ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'pos_source_menusalesitemdetails.itemAutoID')
+                ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
+                ->join('itemassigned', 'itemassigned.itemCodeSystem', '=', 'itemmaster.itemCodeSystem')
+                ->join('warehousemaster', 'warehousemaster.wareHouseSystemCode', '=', 'pos_source_menusalesmaster.wareHouseAutoID')
+                ->where('pos_source_menusalesmaster.shiftID', $shiftId)
+                ->where('itemassigned.companySystemID', $shiftDetails->companyID)
+                ->where('pos_source_menusalesmaster.isCreditSales', 0)
+                ->groupBy('itemID')
+                ->get();
 
-        $invItemsPLBS = DB::table('pos_source_invoicedetail')
-            ->selectRaw('pos_source_invoicedetail.qty * itemassigned.wacValueLocal as amount, pos_source_invoice.invoiceID as invoiceID, pos_source_invoice.shiftID as shiftId, pos_source_invoice.companyID as companyID, pos_source_invoicedetail.itemAutoID as itemID, itemmaster.financeCategorySub as financeCategorySub,  financeitemcategorysub.financeGLcodebBSSystemID as bsGLCode, financeitemcategorysub.financeGLcodePLSystemID as plGLCode, itemmaster.financeCategoryMaster as categoryID, pos_source_invoicedetail.qty as qty, itemassigned.wacValueLocal as price, pos_source_invoicedetail.UOMID as uom, pos_source_invoice.wareHouseAutoID as wareHouseID, financeitemcategorysub.includePLForGRVYN as glYN, warehousemaster.wareHouseDescription')
-            ->join('pos_source_invoice', 'pos_source_invoice.invoiceID', '=', 'pos_source_invoicedetail.invoiceID')
-            ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'pos_source_invoicedetail.itemAutoID')
-            ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
-            ->join('itemassigned', 'itemassigned.itemCodeSystem', '=', 'itemmaster.itemCodeSystem')
-            ->join('warehousemaster', 'warehousemaster.wareHouseSystemCode', '=', 'pos_source_invoice.wareHouseAutoID')
-            ->where('pos_source_invoice.shiftID', $shiftId)
-            ->where('itemassigned.companySystemID', $shiftDetails->companyID)
-            ->where('pos_source_invoice.isCreditSales', 0)
-            ->get();
+        }
+        
 
         foreach ($invItemsPLBS as $gl) {
 
+                $itemArray[] = array(
+                    'shiftId' => $gl->shiftId,
+                    'itemAutoId' => $gl->itemID,
+                    'uom' => $gl->uom,
+                    'qty' => $gl->qty,
+                    'isReturnYN' => 0,
+                    'wareHouseId' => $gl->wareHouseID
+                );
 
-            $sumQty = ErpItemLedger::where('itemSystemCode', $gl->itemID)->where('companySystemID',$shiftDetails->companyID)->where('wareHouseSystemCode', $gl->wareHouseID)->sum('inOutQty');
-            $item = ItemMaster::where('itemCodeSystem', $gl->itemID)->where('primaryCompanySystemID',$shiftDetails->companyID)->first();
-            if($item) {
-                if ($item->financeCategoryMaster == 1) {
-                    if ($gl->qty > $sumQty) {
-                        $remQty = $gl->qty - $sumQty;
-                        POSItemGLEntries::where('shiftId', $gl->shiftId)->where('itemAutoId', $gl->itemID)->update(['insufficientQty' => $remQty, 'availableQty' => $sumQty, 'primaryCode' => $item->primaryCode]);
-                        $isInsufficient = 1;
+
+                $isItemGL = POSItemGLEntries::with(['warehouse'])->where('shiftId', $shiftId)->first();
+                if (empty($isItemGL)) {
+                    POSItemGLEntries::insert($itemArray);
+                }
+
+                $sumQty = ErpItemLedger::where('itemSystemCode', $gl->itemID)->where('companySystemID', $shiftDetails->companyID)->where('wareHouseSystemCode', $gl->wareHouseID)->sum('inOutQty');
+                $item = ItemMaster::where('itemCodeSystem', $gl->itemID)->where('primaryCompanySystemID', $shiftDetails->companyID)->first();
+                if ($item) {
+                    if ($item->financeCategoryMaster == 1) {
+                        if ($gl->qty > $sumQty) {
+                            $remQty = $gl->qty - $sumQty;
+                            POSItemGLEntries::where('shiftId', $gl->shiftId)->where('itemAutoId', $gl->itemID)->update(['insufficientQty' => $remQty, 'availableQty' => $sumQty, 'primaryCode' => $item->primaryCode]);
+                            $isInsufficient = 1;
+                        }
                     }
                 }
             }
-        }
+
 
         $isInsufficientExist = false;
 
-        $qtyArray = POSItemGLEntries::where('shiftId', $shiftId)->get();
+        $qtyArray = POSItemGLEntries::with(['warehouse'])->where('shiftId', $shiftId)->get();
         foreach ($qtyArray as $gl) {
             if($gl->insufficientQty > 0)
             {
