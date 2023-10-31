@@ -708,11 +708,9 @@ class ShiftDetailsAPIController extends AppBaseController
                 ->get();
 
         }
+        
 
-        if ($invItemsPLBS->count() > 0) {
-
-
-            foreach ($invItemsPLBS as $gl) {
+        foreach ($invItemsPLBS as $gl) {
 
                 $itemArray[] = array(
                     'shiftId' => $gl->shiftId,
@@ -741,11 +739,7 @@ class ShiftDetailsAPIController extends AppBaseController
                     }
                 }
             }
-        }
 
-        else {
-            return $this->sendError("Items are not linked properly");
-        }
 
         $isInsufficientExist = false;
 
