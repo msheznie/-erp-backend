@@ -530,7 +530,11 @@ class ShiftDetailsAPIController extends AppBaseController
                 ->get();
         }
 
-        $customers = CustomerAssigned::selectRaw('customerCodeSystem as value,CONCAT(CutomerCode, " | " ,CustomerName) as label')->where('companySystemID', $companySystemID)->get();
+
+        $customers = CustomerAssigned::selectRaw('customerassigned.customerCodeSystem as value,CONCAT(customerassigned.CutomerCode, " | " ,customerassigned.CustomerName) as label')->where('companySystemID', $companySystemID)
+            ->leftJoin('pos_source_customermaster', 'customerCodeSystem', '=', 'erp_customer_master_id')
+            ->whereNull('pos_source_customermaster.erp_customer_master_id')
+            ->get();
 
 
         $posTaxes = DB::table('pos_source_taxmaster')
@@ -602,6 +606,12 @@ class ShiftDetailsAPIController extends AppBaseController
 
         $cusPOSId = $request->cusPOSId;
         $cusERPId = $request->cusERPId;
+
+        $isExist = POSSOURCECustomerMaster::where('erp_customer_master_id', $cusERPId)->first();
+        if(!empty($isExist)){
+            return $this->sendError("ERP customer is already linked");
+        }
+
         $output = POSSOURCECustomerMaster::where('customerAutoID', $cusPOSId)->update(['erp_customer_master_id' => $cusERPId]);
 
         return $this->sendResponse($output, "Shift Details retrieved successfully");
