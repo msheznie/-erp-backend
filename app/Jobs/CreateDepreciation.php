@@ -75,9 +75,35 @@ class CreateDepreciation implements ShouldQueue
                     Log::info('Depreciation Query Started');
                     $chunkSize = 100;
                     $totalChunks = 0;
+                    $chunkDataSizeCounts = 0;
                     $faCounts = 1;
                     $db = $this->dataBase;
                     $depDate = Carbon::parse($depMaster->FYPeriodDateTo);
+                    $checkTotalRec = $faMaster = FixedAssetMaster::with(['depperiod_by' => function ($query) {
+                        $query->selectRaw('SUM(depAmountRpt) as depAmountRpt,SUM(depAmountLocal) as depAmountLocal,faID');
+                        $query->whereHas('master_by', function ($query) {
+                            $query->where('approved', -1);
+                        });
+                        $query->groupBy('faID');
+                    },'depperiod_period'])
+                        ->where(function($q) use($depDate){
+                            $q->isDisposed()
+                                ->orWhere(function ($q1) use($depDate){
+                                    $q1->disposed(-1)
+                                        ->WhereDate('disposedDate','>',$depDate);
+                                });
+                        })
+                        ->ofCompany([$depMaster->companySystemID])
+                        ->isApproved()
+                        ->assetType(1)
+                        ->orderBy('faID', 'desc')
+                        ->paginate($chunkSize);
+
+                    if ($checkTotalRec) {
+                        $chunkDataSizeCounts = ceil($checkTotalRec->total / $chunkSize);
+                    }
+
+
                     $faMaster = FixedAssetMaster::with(['depperiod_by' => function ($query) {
                         $query->selectRaw('SUM(depAmountRpt) as depAmountRpt,SUM(depAmountLocal) as depAmountLocal,faID');
                         $query->whereHas('master_by', function ($query) {
@@ -96,9 +122,8 @@ class CreateDepreciation implements ShouldQueue
                         ->isApproved()
                         ->assetType(1)
                         ->orderBy('faID', 'desc')
-                        ->chunk($chunkSize, function ($results, $chunkNumber) use (&$totalChunks, $db, $depMasterAutoID, $depDate, &$faCounts) {
-                            $totalChunks = $chunkNumber; // Update the total chunks count for each chunk
-                            ProcessDepreciation::dispatch($db, collect($results)->toArray(), $depMasterAutoID, $depDate,$faCounts, $totalChunks)->onQueue('single');
+                        ->chunk($chunkSize, function ($results, $chunkNumber) use (&$totalChunks, $db, $depMasterAutoID, $depDate, &$faCounts, &$chunkDataSizeCounts) {
+                            ProcessDepreciation::dispatch($db, collect($results)->toArray(), $depMasterAutoID, $depDate,$faCounts, $chunkDataSizeCounts)->onQueue('single');
                             $faCounts++;
                         });
                         // ->get()
