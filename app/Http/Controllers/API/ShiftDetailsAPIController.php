@@ -738,11 +738,9 @@ class ShiftDetailsAPIController extends AppBaseController
                 $item = ItemMaster::where('itemCodeSystem', $gl->itemID)->where('primaryCompanySystemID', $shiftDetails->companyID)->first();
                 if ($item) {
                     if ($item->financeCategoryMaster == 1) {
-                        if ($gl->qty > $sumQty) {
                             $remQty = $gl->qty - $sumQty;
                             POSInsufficientItems::where('shiftId', $gl->shiftId)->where('itemAutoId', $gl->itemID)->update(['insufficientQty' => $remQty, 'availableQty' => $sumQty, 'primaryCode' => $item->primaryCode]);
                             $isInsufficient = 1;
-                        }
                     }
                 }
             }
