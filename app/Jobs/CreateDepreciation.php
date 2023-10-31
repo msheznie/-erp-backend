@@ -100,7 +100,8 @@ class CreateDepreciation implements ShouldQueue
                         ->paginate($chunkSize);
 
                     if ($checkTotalRec) {
-                        $chunkDataSizeCounts = ceil($checkTotalRec->total / $chunkSize);
+                        $totalRec = collect($checkTotalRec)->toArray()['total'];
+                        $chunkDataSizeCounts = ceil($totalRec / $chunkSize);
                     }
 
 
