@@ -64,10 +64,7 @@ class SupplierCategorySubAPIController extends AppBaseController
 
     public function getSubCategoriesByMasterCategory(Request $request){
         $businessCategoryID = $request['businessCategoryID'];
-        $businessSubCategories = SupplierCategorySub::where('supMasterCategoryID',$businessCategoryID)->pluck('supCategorySubID');
-        $assignSubCategories = SupplierSubCategoryAssign::whereIn('supSubCategoryID',$businessSubCategories)->where('supplierID',$request['supplierID'])->pluck('supSubCategoryID');
-        $businessSubCategories = array_diff($businessSubCategories->toArray(),$assignSubCategories->toArray());
-        $businessSubCategories = SupplierCategorySub::whereIn('supCategorySubID',$businessSubCategories)->where('isActive',1)->get();
+        $businessSubCategories = SupplierCategorySub::where('supMasterCategoryID',$businessCategoryID)->where('isActive',1)->get();
         return $this->sendResponse($businessSubCategories, 'Sub category retrieved successfully');
     }
 

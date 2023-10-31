@@ -525,26 +525,16 @@ class SupplierMasterAPIController extends AppBaseController
         return $this->sendResponse($data, 'Supplier business category retrieved successfully');
     }
 
-    public function getBusinessCategoriesBySupplier(Request $request){
-        $supplierId = $request['supplierId'];
-        $supplier = SupplierMaster::where('supplierCodeSystem', $supplierId)->first();
-
-        $businessCategories = [];
-        
-        if($supplier){
-            $assignMasterCategories = SupplierBusinessCategoryAssign::where('supplierID',$supplierId)->pluck('supCategoryMasterID');
-            $removeMasterCategoryList = [];
-            foreach ($assignMasterCategories as $assignMasterCategory){
-                $subCategoriesRelatedToMasterCategory = SupplierCategorySub::where('supMasterCategoryID',$assignMasterCategory)->pluck('supCategorySubID');
-                $assignSubCategories = SupplierSubCategoryAssign::whereIn('supSubCategoryID',$subCategoriesRelatedToMasterCategory)->where('supplierID',$supplierId)->count();
-                if($assignSubCategories == count($subCategoriesRelatedToMasterCategory)){
-                    $removeMasterCategoryList[] = $assignMasterCategory;
-                }
-            }
-            $businessCategories = SupplierCategoryMaster::whereNotIn('supCategoryMasterID',$removeMasterCategoryList)->where('isActive',1)->get();
-        }
-
+    public function getBusinessCategoriesBySupplier(){
+        $businessCategories = SupplierCategoryMaster::where('isActive',1)->get();
         return $this->sendResponse($businessCategories, 'Supplier business category retrieved successfully');
+    }
+
+    public function createSupplierSubCategoryAssignRecord($supplierID,$supSubCategoryID){
+        $businessSubCategoryAssign = new SupplierSubCategoryAssign();
+        $businessSubCategoryAssign->supplierID = $supplierID;
+        $businessSubCategoryAssign->supSubCategoryID = $supSubCategoryID;
+        $businessSubCategoryAssign->save();
     }
 
     public function addBusinessCategoryToSupplier(Request $request){
@@ -560,24 +550,37 @@ class SupplierMasterAPIController extends AppBaseController
             $businessCategoryAssign->save();
         }
         else{
-            if (!isset($businessSubCategoryIDS)) {
-                return $this->sendError('The selected main category is already assigned, Please select sub category or new main category',500);
+            if(empty($businessSubCategoryIDS)){
+                return $this->sendError('This main category has already been added',500);
             }
         }
 
-        if (isset($businessSubCategoryIDS)) {
+        if (!empty($businessSubCategoryIDS)) {
             $ids = collect($businessSubCategoryIDS)->pluck('id');
-            foreach ($ids as $id) {
-                $businessSubCategoryAssign = new SupplierSubCategoryAssign();
-                $businessSubCategoryAssign->supplierID = $supplierID;
-                $businessSubCategoryAssign->supSubCategoryID = $id;
-                $businessSubCategoryAssign->save();
+            if($ids->count() > 1){
+                $businessSubCategoryAssignIDs = SupplierSubCategoryAssign::where('supplierID',$supplierID)->whereIn('supSubCategoryID',$ids)->pluck('supSubCategoryID');
+                $emptyIDs = array_diff($ids->toArray(),$businessSubCategoryAssignIDs->toArray());
+                if(count($emptyIDs) > 0){
+                    foreach ($emptyIDs as $id) {
+                        $this->createSupplierSubCategoryAssignRecord($supplierID,$id);
+                    }
+                }
+                else{
+                    return $this->sendError('These subcategories have already been added',500);
+                }
+            }
+            else{
+                $businessSubCategoryAssignCheck = SupplierSubCategoryAssign::where('supplierID',$supplierID)->where('supSubCategoryID',$ids->first())->first();
+                if(!$businessSubCategoryAssignCheck){
+                    $this->createSupplierSubCategoryAssignRecord($supplierID,$ids->first());
+                }
+                else{
+                    return $this->sendError('This subcategory has already been added',500);
+                }
             }
         }
-
         return $this->sendResponse([], 'Supplier business category added successfully');
     }
-
 
     /**
      * Store a newly created SupplierMaster in storage.

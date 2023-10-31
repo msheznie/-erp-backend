@@ -648,7 +648,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('postPosEntries', 'ShiftDetailsAPIController@postPosEntries');
             Route::post('insufficientItems', 'ShiftDetailsAPIController@insufficientItems');
             Route::post('getPosMismatchEntries', 'ShiftDetailsAPIController@getPosMismatchEntries');
-            Route::post('getPosMissMatchData', 'ShiftDetailsAPIController@getPosMissMatchData');
+            Route::post('getPosMisMatchData', 'ShiftDetailsAPIController@getPosMisMatchData');
             Route::post('updatePosMismatch', 'ShiftDetailsAPIController@updatePosMismatch');
             Route::post('getGlMatchEntries', 'ShiftDetailsAPIController@getGlMatchEntries');
             Route::post('exportInsufficientItems', 'ShiftDetailsAPIController@exportInsufficientItems');

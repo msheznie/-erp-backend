@@ -1695,7 +1695,17 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
                             $creditAmount = $val['credit_amount'];
                         }
                         if (isset($val['project']) && $val['project'] != '') {
-                            $projectID = $val['project'];
+                            $peoject_details = array_map('trim', explode('-', $val['project']));
+                            if(is_array($peoject_details) && sizeof($peoject_details) == 2) {
+                                $project = ErpProjectMaster::where('projectCode', $peoject_details[0])
+                                        ->where('description', $peoject_details[1])
+                                        ->where('companySystemID', $jvMasterData->companySystemID)
+                                        ->first();
+                                $projectID = $project['id'];
+                            } else{
+                                $projectID = null;
+                            }
+                            
                         }
 
                         if(!$is_failed)
@@ -1739,7 +1749,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
             } else {
                 return $this->sendError('No Records found!', 500);
             }
-            
+
             if (count($finalData) > 0) {
                 foreach (array_chunk($finalData, 500) as $t) {
                     JvDetail::insert($t);
