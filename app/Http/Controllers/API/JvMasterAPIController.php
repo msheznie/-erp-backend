@@ -1695,17 +1695,14 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
                             $creditAmount = $val['credit_amount'];
                         }
                         if (isset($val['project']) && $val['project'] != '') {
-                            $peoject_details = array_map('trim', explode('-', $val['project']));
-                            if(is_array($peoject_details) && sizeof($peoject_details) == 2) {
-                                $project = ErpProjectMaster::where('projectCode', $peoject_details[0])
-                                        ->where('description', $peoject_details[1])
-                                        ->where('companySystemID', $jvMasterData->companySystemID)
-                                        ->first();
+                            $project = ErpProjectMaster::whereRaw("CONCAT(projectCode, '-', description) = ?", [$val['project']])
+                                    ->where('companySystemID', $jvMasterData->companySystemID)
+                                    ->first();
+                            if(!empty($project)){
                                 $projectID = $project['id'];
-                            } else{
+                            }else {
                                 $projectID = null;
-                            }
-                            
+                            }    
                         }
 
                         if(!$is_failed)

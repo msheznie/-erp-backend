@@ -54,6 +54,8 @@ use App\Repositories\UserRepository;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Response;
+use App\Models\CompanyPolicyMaster;
+use App\Models\ErpProjectMaster;
 
 /**
  * Class JvDetailController
@@ -984,6 +986,11 @@ GROUP BY
         if (empty($jvMaster)) {
             return $this->sendError('Journal Voucher not found');
         }
+
+        $checkProjectSelectionPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
+				->where('companySystemID', $input['companySystemID'])
+				->first();
+
         $x = 0;
         foreach ($jvMaster->detail as $item){
             $decimal = 2;
@@ -992,6 +999,14 @@ GROUP BY
             }
             $data[$x]['GL Code'] = $item->glAccount;
             $data[$x]['GL Description'] = $item->glAccountDescription;
+            if ($checkProjectSelectionPolicy->isYesNO == 1) {
+                $project = ErpProjectMaster::find($item->detail_project_id);
+                if(!empty($project)) {
+                    $data[$x]['Project'] = $project->projectCode . ' - ' .  $project->description;
+                }else{
+                    $data[$x]['Project'] = '';
+                }       
+            }
             $data[$x]['Department'] = $item->segment?$item->segment->ServiceLineDes:'-';
             $data[$x]['Contract'] = $item->clientContractID;
             $data[$x]['Comment'] = $item->comments;
