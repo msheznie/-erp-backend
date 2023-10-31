@@ -106,7 +106,6 @@ class ProcessDepreciationQuery implements ShouldQueue
                 $fixedAssetDepreciationMasterUpdate = FixedAssetDepreciationMaster::where('depMasterAutoID', $depMasterAutoID)->update(['isDepProcessingYN' => 1]);
             }
             DB::commit();
-            Log::info('Depreciation End');
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error($this->failed($e));
