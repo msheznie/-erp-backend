@@ -73,6 +73,10 @@ class CreateDepreciation implements ShouldQueue
 
                 if($depMaster) {
                     Log::info('Depreciation Query Started');
+                    $chunkSize = 100;
+                    $totalChunks = 0;
+                    $faCounts = 1;
+                    $db = $this->dataBase;
                     $depDate = Carbon::parse($depMaster->FYPeriodDateTo);
                     $faMaster = FixedAssetMaster::with(['depperiod_by' => function ($query) {
                         $query->selectRaw('SUM(depAmountRpt) as depAmountRpt,SUM(depAmountLocal) as depAmountLocal,faID');
@@ -92,32 +96,34 @@ class CreateDepreciation implements ShouldQueue
                         ->isApproved()
                         ->assetType(1)
                         ->orderBy('faID', 'desc')
-                        ->limit(10)
-                        ->get()
-                        ->toArray();
+                        ->chunk($chunkSize, function ($results, $chunkNumber) use (&$totalChunks, $db, $depMasterAutoID, $depDate, &$faCounts) {
+                            $totalChunks = $chunkNumber; // Update the total chunks count for each chunk
+                            ProcessDepreciation::dispatch($db, collect($results)->toArray(), $depMasterAutoID, $depDate,$faCounts, $totalChunks)->onQueue('single');
+                            $faCounts++;
+                        });
+                        // ->get()
+                        // ->toArray();
 
                     Log::info('Depreciation Query End');
-                    $db = $this->dataBase;
 
                     $depAmountRptTotal = 0;
                     $depAmountLocalTotal = 0;
 
-                    if (count($faMaster) > 0) {
-                        $chunkSize = 100;
-                        $totalDataSize = count($faMaster);
-                        $chunkDataSizeCounts = ceil($totalDataSize / $chunkSize);
-                        $faCounts = 1;
+                    // if (count($faMaster) > 0) {
+                    //     $totalDataSize = count($faMaster);
+                    //     $chunkDataSizeCounts = ceil($totalDataSize / $chunkSize);
+                    //     $faCounts = 1;
 
 
-                        Log::info('Depreciation chunk strat');
-                        collect($faMaster)->chunk($chunkSize)->each(function ($chunk) use ($db, $depMasterAutoID, $depDate, &$faCounts, $chunkDataSizeCounts) {
-                            Log::info('Depreciation chunk count - '.$faCounts);
-                            ProcessDepreciation::dispatch($db, $chunk, $depMasterAutoID, $depDate,$faCounts, $chunkDataSizeCounts)->onQueue('single');
-                            $faCounts++;
-                        });
-                    } else {
+                    //     Log::info('Depreciation chunk strat');
+                    //     collect($faMaster)->chunk($chunkSize)->each(function ($chunk) use ($db, $depMasterAutoID, $depDate, &$faCounts, $chunkDataSizeCounts) {
+                    //         Log::info('Depreciation chunk count - '.$faCounts);
+                    //         ProcessDepreciation::dispatch($db, $chunk, $depMasterAutoID, $depDate,$faCounts, $chunkDataSizeCounts)->onQueue('single');
+                    //         $faCounts++;
+                    //     });
+                    // } else {
                         $fixedAssetDepreciationMasterUpdate = FixedAssetDepreciationMaster::where('depMasterAutoID', $depMasterAutoID)->update(['isDepProcessingYN' => 1]);
-                    }
+                    // }
                     DB::commit();
                     Log::info('Depreciation End');
                 }
