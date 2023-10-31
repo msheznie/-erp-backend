@@ -92,6 +92,7 @@ class CreateDepreciation implements ShouldQueue
                         ->isApproved()
                         ->assetType(1)
                         ->orderBy('faID', 'desc')
+                        ->limit(10)
                         ->get()
                         ->toArray();
 
