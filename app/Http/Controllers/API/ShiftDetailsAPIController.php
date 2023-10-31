@@ -55,6 +55,7 @@ use App\Models\OutletUsers;
 use App\Models\POSBankGLEntries;
 use App\Models\POSFinanceLog;
 use App\Models\POSGLEntries;
+use App\Models\POSInsufficientItems;
 use App\Models\POSInvoiceSource;
 use App\Models\POSItemGLEntries;
 use App\Models\POSSOURCECustomerMaster;
@@ -700,7 +701,6 @@ class ShiftDetailsAPIController extends AppBaseController
                 ->join('warehousemaster', 'warehousemaster.wareHouseSystemCode', '=', 'pos_source_invoice.wareHouseAutoID')
                 ->where('pos_source_invoice.shiftID', $shiftId)
                 ->where('itemassigned.companySystemID', $shiftDetails->companyID)
-                ->where('pos_source_invoice.isCreditSales', 0)
                 ->groupBy('itemID')
                 ->get();
         } else if ($shiftDetails->posType == 2){
@@ -713,13 +713,11 @@ class ShiftDetailsAPIController extends AppBaseController
                 ->join('warehousemaster', 'warehousemaster.wareHouseSystemCode', '=', 'pos_source_menusalesmaster.wareHouseAutoID')
                 ->where('pos_source_menusalesmaster.shiftID', $shiftId)
                 ->where('itemassigned.companySystemID', $shiftDetails->companyID)
-                ->where('pos_source_menusalesmaster.isCreditSales', 0)
                 ->groupBy('itemID')
                 ->get();
 
         }
         
-
         foreach ($invItemsPLBS as $gl) {
 
                 $itemArray[] = array(
@@ -727,14 +725,13 @@ class ShiftDetailsAPIController extends AppBaseController
                     'itemAutoId' => $gl->itemID,
                     'uom' => $gl->uom,
                     'qty' => $gl->qty,
-                    'isReturnYN' => 0,
                     'wareHouseId' => $gl->wareHouseID
                 );
 
 
-                $isItemGL = POSItemGLEntries::with(['warehouse'])->where('shiftId', $shiftId)->first();
+                $isItemGL = POSInsufficientItems::with(['warehouse'])->where('shiftId', $shiftId)->first();
                 if (empty($isItemGL)) {
-                    POSItemGLEntries::insert($itemArray);
+                    POSInsufficientItems::insert($itemArray);
                 }
 
                 $sumQty = ErpItemLedger::where('itemSystemCode', $gl->itemID)->where('companySystemID', $shiftDetails->companyID)->where('wareHouseSystemCode', $gl->wareHouseID)->sum('inOutQty');
@@ -743,7 +740,7 @@ class ShiftDetailsAPIController extends AppBaseController
                     if ($item->financeCategoryMaster == 1) {
                         if ($gl->qty > $sumQty) {
                             $remQty = $gl->qty - $sumQty;
-                            POSItemGLEntries::where('shiftId', $gl->shiftId)->where('itemAutoId', $gl->itemID)->update(['insufficientQty' => $remQty, 'availableQty' => $sumQty, 'primaryCode' => $item->primaryCode]);
+                            POSInsufficientItems::where('shiftId', $gl->shiftId)->where('itemAutoId', $gl->itemID)->update(['insufficientQty' => $remQty, 'availableQty' => $sumQty, 'primaryCode' => $item->primaryCode]);
                             $isInsufficient = 1;
                         }
                     }
@@ -753,7 +750,7 @@ class ShiftDetailsAPIController extends AppBaseController
 
         $isInsufficientExist = false;
 
-        $qtyArray = POSItemGLEntries::with(['warehouse'])->where('shiftId', $shiftId)->get();
+        $qtyArray = POSInsufficientItems::with(['warehouse'])->where('shiftId', $shiftId)->get();
         foreach ($qtyArray as $gl) {
             if($gl->insufficientQty > 0)
             {
