@@ -6,8 +6,8 @@ use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
 use App\Models\FixedAssetDepreciationPeriod;
 use App\Models\FixedAssetMaster;
+use App\Models\FixedAssetDepreciationMaster;
 use App\Jobs\ProcessDepreciation;
-use App\Repositories\FixedAssetDepreciationMasterRepository;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Bus\Queueable;
@@ -53,7 +53,7 @@ class CreateDepreciation implements ShouldQueue
      *
      * @return void
      */
-    public function handle(fixedAssetDepreciationMasterRepository $faDepMaster)
+    public function handle()
     {
 
         ini_set('max_execution_time', 21600);
@@ -63,7 +63,7 @@ class CreateDepreciation implements ShouldQueue
         Log::useFiles(storage_path() . '/logs/depreciation_jobs.log');
 
         $depMasterAutoID = $this->depAutoID;
-        $depMaster = $faDepMaster->find($depMasterAutoID);
+        $depMaster = FixedAssetDepreciationMaster::find($depMasterAutoID);
 
         if($depMaster && !$depMaster->is_acc_dep) {
             DB::beginTransaction();
@@ -111,7 +111,7 @@ class CreateDepreciation implements ShouldQueue
                             $faCounts++;
                         });
                     } else {
-                        $fixedAssetDepreciationMasterUpdate = $faDepMaster->update(['isDepProcessingYN' => 1], $depMasterAutoID);
+                        $fixedAssetDepreciationMasterUpdate = FixedAssetDepreciationMaster::where('depMasterAutoID', $depMasterAutoID)->update(['isDepProcessingYN' => 1]);
                     }
                     DB::commit();
                     Log::info('Depreciation End');
@@ -122,7 +122,7 @@ class CreateDepreciation implements ShouldQueue
                 DB::beginTransaction();
 
                 JobErrorLogService::storeError($this->dataBase, $depMaster->documentSystemID, $depMasterAutoID, $this->tag, 2, $this->failed($e), "-****----Line No----:".$e->getLine()."-****----File Name----:".$e->getFile());
-                $fixedAssetDepreciationMasterUpdate = $faDepMaster->update(['isDepProcessingYN' => 1], $depMasterAutoID);
+                $fixedAssetDepreciationMasterUpdate = FixedAssetDepreciationMaster::where('depMasterAutoID', $depMasterAutoID)->update(['isDepProcessingYN' => 1]);
                 DB::commit();
             }
         }

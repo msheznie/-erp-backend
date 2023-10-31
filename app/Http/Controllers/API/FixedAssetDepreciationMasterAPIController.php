@@ -355,7 +355,8 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
                 $fixedAssetDepreciationMasters = $this->fixedAssetDepreciationMasterRepository->create($input);
 
                 if ($fixedAssetDepreciationMasters) {
-                    CreateDepreciation::dispatch($fixedAssetDepreciationMasters->depMasterAutoID, $dataBase);
+                    $depMasterAutoID = $fixedAssetDepreciationMasters->depMasterAutoID;
+                    CreateDepreciation::dispatch($depMasterAutoID, $dataBase);
                 }
 
                 DB::commit();
