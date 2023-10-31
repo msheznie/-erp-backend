@@ -2734,8 +2734,8 @@ class ShiftDetailsAPIController extends AppBaseController
             ->selectRaw('sum(amount) as Amount,COUNT(DISTINCT pos_gl_entries.invoiceID) as count, pos_source_shiftdetails.transactionCurrencyDecimalPlaces')
             ->leftjoin('pos_source_shiftdetails', 'pos_source_shiftdetails.shiftID', '=', 'pos_gl_entries.shiftID')
             ->having('count', '>', 0)
-            ->where('pos_gl_entries.shiftId', $input['shiftId'])
-            ->first();
+            ->where('pos_gl_entries.shiftId', $input['shiftId']);
+
 
         if($shiftDetails->posType == 1) {
 
@@ -2757,8 +2757,10 @@ class ShiftDetailsAPIController extends AppBaseController
         }
         $data['shifEntries'] = $output->get();
 
-        if(!empty($output)) {
-                $data['isMismatch'] = $output->Amount == 0 ? true : false;
+        $outputMisMatch = $output->first();
+
+        if(!empty($outputMisMatch)) {
+                $data['isMismatch'] = $outputMisMatch->Amount == 0 ? true : false;
         }
         else {
             $data['isMismatch'] = true;
