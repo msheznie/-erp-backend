@@ -648,7 +648,7 @@ class ShiftDetailsAPIController extends AppBaseController
 
         $shiftId = $request->shiftId;
 
-        $items = POSItemGLEntries::where('shiftId', $shiftId)->get();
+        $items = POSInsufficientItems::where('shiftId', $shiftId)->get();
         $data = array();
         $x = 0;
         foreach ($items  as $val) {
@@ -669,7 +669,7 @@ class ShiftDetailsAPIController extends AppBaseController
             'company_code'=>$companyCode,
         );
 
-        $fileName = 'Insufficent_Items';
+        $fileName = 'Inventory Availability';
         $path = 'pos/sales_transaction/excel/';
         $type = 'xls';
         $basePath = CreateExcel::process($data,$type,$fileName,$path,$detail_array);
@@ -2756,7 +2756,11 @@ class ShiftDetailsAPIController extends AppBaseController
         $data['shifEntries'] = $output->get();
 
         if(!empty($output->first())) {
-            $data['isMismatch'] = $output->first()->Amount == 0 ? true : false;
+            if(isset($output->first()->Amount)) {
+                $data['isMismatch'] = $output->first()->Amount == 0 ? true : false;
+            } else {
+                $data['isMismatch'] = true;
+            }
         }
         else {
             $data['isMismatch'] = true;
