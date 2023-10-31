@@ -341,8 +341,8 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
                 }
 
                 $depDate = Carbon::parse($input['FYPeriodDateTo']);
-                $datares = [];
-                // $faMaster = FixedAssetMaster::with(['depperiod_by' => function ($query) {
+                // $datares = [];
+                // return $faMaster = FixedAssetMaster::with(['depperiod_by' => function ($query) {
                 //         $query->selectRaw('SUM(depAmountRpt) as depAmountRpt,SUM(depAmountLocal) as depAmountLocal,faID');
                 //         $query->whereHas('master_by', function ($query) {
                 //             $query->where('approved', -1);
@@ -361,14 +361,10 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
                 //         ->assetType(1)
                 //         ->orderBy('faID', 'desc')
 
-                //         ->limit(20)
-                //         ->chunk(10, function ($results) {
-                //             $datares[] = $results;
-                //         });
+                //         ->paginate(100);
                 
                 // $datares = []; // Initialize the datares array before using it
                 //     $totalChunks = 0; // Initialize the total chunks count
-
                 //     DocumentMaster::chunk(20, function ($results, $chunkNumber) use (&$datares, &$totalChunks) {
                 //         $totalChunks = $chunkNumber; // Update the total chunks count for each chunk
                 //         $datares[] = $results;
