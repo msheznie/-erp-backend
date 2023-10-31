@@ -259,8 +259,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
                // $count_assest = count($assest_fixds);
                $count_assest = 1;
 
-      
-          
+            
                if($count_assest > 0)
                {    
 
@@ -340,7 +339,46 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
                 if ($lastSerial) {
                     $lastSerialNumber = intval($lastSerial->serialNo) + 1;
                 }
-    
+
+                $depDate = Carbon::parse($input['FYPeriodDateTo']);
+                $datares = [];
+                // $faMaster = FixedAssetMaster::with(['depperiod_by' => function ($query) {
+                //         $query->selectRaw('SUM(depAmountRpt) as depAmountRpt,SUM(depAmountLocal) as depAmountLocal,faID');
+                //         $query->whereHas('master_by', function ($query) {
+                //             $query->where('approved', -1);
+                //         });
+                //         $query->groupBy('faID');
+                //     },'depperiod_period'])
+                //         ->where(function($q) use($depDate){
+                //             $q->isDisposed()
+                //                 ->orWhere(function ($q1) use($depDate){
+                //                     $q1->disposed(-1)
+                //                         ->WhereDate('disposedDate','>',$depDate);
+                //                 });
+                //         })
+                //         ->ofCompany([$input['companySystemID']])
+                //         ->isApproved()
+                //         ->assetType(1)
+                //         ->orderBy('faID', 'desc')
+
+                //         ->limit(20)
+                //         ->chunk(10, function ($results) {
+                //             $datares[] = $results;
+                //         });
+                
+                // $datares = []; // Initialize the datares array before using it
+                //     $totalChunks = 0; // Initialize the total chunks count
+
+                //     DocumentMaster::chunk(20, function ($results, $chunkNumber) use (&$datares, &$totalChunks) {
+                //         $totalChunks = $chunkNumber; // Update the total chunks count for each chunk
+                //         $datares[] = $results;
+                //     });
+
+                //     return [
+                //         'datares' => $datares, // Return the data from the last chunk
+                //         'totalChunks' => $totalChunks, // Add 1 to the totalChunks to get the actual count
+                //     ];
+                                    
                 $documentCode = ($company->CompanyID . '\\' . $finYear . '\\' . $documentMaster->documentID . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
                 $input['depCode'] = $documentCode;
                 $input['serialNo'] = $lastSerialNumber;
