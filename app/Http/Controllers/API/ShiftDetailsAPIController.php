@@ -738,11 +738,9 @@ class ShiftDetailsAPIController extends AppBaseController
                 $item = ItemMaster::where('itemCodeSystem', $gl->itemID)->where('primaryCompanySystemID', $shiftDetails->companyID)->first();
                 if ($item) {
                     if ($item->financeCategoryMaster == 1) {
-                        if ($gl->qty > $sumQty) {
                             $remQty = $gl->qty - $sumQty;
                             POSInsufficientItems::where('shiftId', $gl->shiftId)->where('itemAutoId', $gl->itemID)->update(['insufficientQty' => $remQty, 'availableQty' => $sumQty, 'primaryCode' => $item->primaryCode]);
                             $isInsufficient = 1;
-                        }
                     }
                 }
             }
@@ -2738,6 +2736,7 @@ class ShiftDetailsAPIController extends AppBaseController
             ->having('count', '>', 0)
             ->where('pos_gl_entries.shiftId', $input['shiftId']);
 
+
         if($shiftDetails->posType == 1) {
 
             $data['invoiceEntries'] = DB::table('pos_gl_entries')
@@ -2758,12 +2757,10 @@ class ShiftDetailsAPIController extends AppBaseController
         }
         $data['shifEntries'] = $output->get();
 
-        if(!empty($output->first())) {
-            if(isset($output->first()->Amount)) {
-                $data['isMismatch'] = $output->first()->Amount == 0 ? true : false;
-            } else {
-                $data['isMismatch'] = true;
-            }
+        $outputMisMatch = $output->first();
+
+        if(!empty($outputMisMatch)) {
+                $data['isMismatch'] = $outputMisMatch->Amount == 0 ? true : false;
         }
         else {
             $data['isMismatch'] = true;
@@ -2846,7 +2843,7 @@ class ShiftDetailsAPIController extends AppBaseController
 
         else if($shiftDetails->posType == 2) {
             $data = DB::table('pos_source_menusalesmaster')
-                ->selectRaw('((sum(grossAmount) - sum(discountAmount)) +  COALESCE(SUM(totalTaxAmount), 0)) as Amount,count(*) as count, transactionCurrencyDecimalPlaces')
+                ->selectRaw('(sum(grossAmount) - sum(discountAmount)) as Amount,count(*) as count, transactionCurrencyDecimalPlaces')
                 ->where('shiftID', $input['shiftId'])
                 ->get();
         }
