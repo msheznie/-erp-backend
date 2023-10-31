@@ -73,7 +73,7 @@ class CreateDepreciation implements ShouldQueue
 
                 if($depMaster) {
                     Log::info('Depreciation Query Started');
-                    $chunkSize = 100;
+                    $chunkSize = 1000;
                     $totalChunks = 0;
                     $chunkDataSizeCounts = 0;
                     $faCounts = 1;
@@ -97,14 +97,11 @@ class CreateDepreciation implements ShouldQueue
                         ->isApproved()
                         ->assetType(1)
                         ->orderBy('faID', 'desc')
-                        ->paginate($chunkSize);
+                        ->count();
 
-                    if ($checkTotalRec) {
-                        $totalRec = collect($checkTotalRec)->toArray()['total'];
-                        $chunkDataSizeCounts = ceil($totalRec / $chunkSize);
-                    }
+                    $chunkDataSizeCounts = ceil($checkTotalRec / $chunkSize);
 
-
+                    Log::info('chunkCount - '.$this->chunkDataSizeCounts);
                     $faMaster = FixedAssetMaster::with(['depperiod_by' => function ($query) {
                         $query->selectRaw('SUM(depAmountRpt) as depAmountRpt,SUM(depAmountLocal) as depAmountLocal,faID');
                         $query->whereHas('master_by', function ($query) {
