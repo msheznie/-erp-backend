@@ -223,7 +223,8 @@ class CustomerInvoiceDirectDetail extends Model
         'VATAmount',
         'VATAmountLocal',
         'VATAmountRpt',
-        'glSystemID'
+        'glSystemID',
+        'isDiscount'
     ];
 
     /**
@@ -273,7 +274,9 @@ class CustomerInvoiceDirectDetail extends Model
         'VATAmount' => 'float',
         'VATAmountLocal' => 'float',
         'VATAmountRpt' => 'float',
-        'glSystemID' => 'integer'
+        'glSystemID' => 'integer',
+        'isDiscount' => 'integer'
+
     ];
 
     /**
