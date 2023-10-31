@@ -150,117 +150,116 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
         DB::beginTransaction();
         try {
 
-            $is_pending_job_exist = FixedAssetDepreciationMaster::where('approved','=',0)->where('companySystemID' ,'=', $input['companySystemID'])->count();
-
+            $is_pending_job_exist = FixedAssetDepreciationMaster::where('approved','=',0)->where('is_cancel','=',0)->where('companySystemID' ,'=', $input['companySystemID'])->count();
 
             if($is_pending_job_exist == 0)
             {
 
                 $doc_date = CompanyFinancePeriod::where('companyFinancePeriodID',$input['companyFinancePeriodID'])->select('dateTo')->first();
                 $to_date = $doc_date->dateTo;
-                // $depeciatedAssets = FixedAssetMaster::whereHas('depperiod_by',function($query)use ($to_date){
-                //     $query->where('depForFYperiodEndDate','=',$to_date);
-                //  })
-                // ->WhereDate('dateDEP','<',$to_date)
-                // ->ofCompany([$input['companySystemID']])
-                // ->assetType(1)
-                // ->where('approved',-1)
-                // ->count();
+                $depeciatedAssets = FixedAssetMaster::whereHas('depperiod_by',function($query)use ($to_date){
+                    $query->where('depForFYperiodEndDate','=',$to_date);
+                 })
+                ->WhereDate('dateDEP','<',$to_date)
+                ->ofCompany([$input['companySystemID']])
+                ->assetType(1)
+                ->where('approved',-1)
+                ->count();
 
-                // if(($depeciatedAssets) > 0 && $input['depAssets'])
-                // {
-                //     return $this->sendError('Depreciation will be processed only for the assets for which no depreciation has been recorded for the selected year and month', 300,['type' => 'depreciatedAssets']);
-                // }   
+                if(($depeciatedAssets) > 0 && $input['depAssets'])
+                {
+                    return $this->sendError('Depreciation will be processed only for the assets for which no depreciation has been recorded for the selected year and month', 300,['type' => 'depreciatedAssets']);
+                }   
                 
-                // $disposelMaster = AssetDisposalMaster::selectRaw("erp_fa_asset_disposalmaster.disposalDocumentCode,erp_fa_asset_master.faID,erp_fa_asset_disposalmaster.assetdisposalMasterAutoID,erp_fa_asset_disposaldetail.faCode")
-                //                 ->join('erp_fa_asset_disposaldetail', 'erp_fa_asset_disposaldetail.assetdisposalMasterAutoID', '=', 'erp_fa_asset_disposalmaster.assetdisposalMasterAutoID')
-                //                 ->join('erp_fa_asset_master', 'erp_fa_asset_master.faID', '=', 'erp_fa_asset_disposaldetail.faID')
-                //                 ->where(function($query) {
-                //                     $query->where('erp_fa_asset_disposalmaster.confirmedYN', 0)
-                //                             ->orWhere('erp_fa_asset_disposalmaster.approvedYN', 0);
-                //                 })
-                //                 ->where('erp_fa_asset_master.dateDEP','<',$doc_date->dateTo)
-                //                 ->where('erp_fa_asset_master.approved','=',-1)
-                //                 ->where('erp_fa_asset_master.assetType','=', 1)
-                //                 ->where('erp_fa_asset_master.companySystemID','=', $input['companySystemID']);
+                $disposelMaster = AssetDisposalMaster::selectRaw("erp_fa_asset_disposalmaster.disposalDocumentCode,erp_fa_asset_master.faID,erp_fa_asset_disposalmaster.assetdisposalMasterAutoID,erp_fa_asset_disposaldetail.faCode")
+                                ->join('erp_fa_asset_disposaldetail', 'erp_fa_asset_disposaldetail.assetdisposalMasterAutoID', '=', 'erp_fa_asset_disposalmaster.assetdisposalMasterAutoID')
+                                ->join('erp_fa_asset_master', 'erp_fa_asset_master.faID', '=', 'erp_fa_asset_disposaldetail.faID')
+                                ->where(function($query) {
+                                    $query->where('erp_fa_asset_disposalmaster.confirmedYN', 0)
+                                            ->orWhere('erp_fa_asset_disposalmaster.approvedYN', 0);
+                                })
+                                ->where('erp_fa_asset_master.dateDEP','<',$doc_date->dateTo)
+                                ->where('erp_fa_asset_master.approved','=',-1)
+                                ->where('erp_fa_asset_master.assetType','=', 1)
+                                ->where('erp_fa_asset_master.companySystemID','=', $input['companySystemID']);
 
-                //              //   GUTech\\2023\\FADS000006
-                // $futureDates = AssetDisposalMaster::selectRaw("erp_fa_asset_disposalmaster.disposalDocumentCode,erp_fa_asset_master.faID,erp_fa_asset_disposalmaster.assetdisposalMasterAutoID,erp_fa_asset_disposaldetail.faCode")
-                // ->join('erp_fa_asset_disposaldetail', 'erp_fa_asset_disposaldetail.assetdisposalMasterAutoID', '=', 'erp_fa_asset_disposalmaster.assetdisposalMasterAutoID')
-                // ->join('erp_fa_asset_master', 'erp_fa_asset_master.faID', '=', 'erp_fa_asset_disposaldetail.faID')
-                // ->where('erp_fa_asset_disposalmaster.disposalDocumentDate','>',$doc_date->dateTo)
-                // //->where('erp_fa_asset_disposalmaster.approvedYN','=',-1)
-                // ->where('erp_fa_asset_master.approved','=',-1)
-                // ->where('erp_fa_asset_master.assetType','=', 1)
-                // ->where('erp_fa_asset_master.companySystemID','=', $input['companySystemID']);
+                             //   GUTech\\2023\\FADS000006
+                $futureDates = AssetDisposalMaster::selectRaw("erp_fa_asset_disposalmaster.disposalDocumentCode,erp_fa_asset_master.faID,erp_fa_asset_disposalmaster.assetdisposalMasterAutoID,erp_fa_asset_disposaldetail.faCode")
+                ->join('erp_fa_asset_disposaldetail', 'erp_fa_asset_disposaldetail.assetdisposalMasterAutoID', '=', 'erp_fa_asset_disposalmaster.assetdisposalMasterAutoID')
+                ->join('erp_fa_asset_master', 'erp_fa_asset_master.faID', '=', 'erp_fa_asset_disposaldetail.faID')
+                ->where('erp_fa_asset_disposalmaster.disposalDocumentDate','>',$doc_date->dateTo)
+                //->where('erp_fa_asset_disposalmaster.approvedYN','=',-1)
+                ->where('erp_fa_asset_master.approved','=',-1)
+                ->where('erp_fa_asset_master.assetType','=', 1)
+                ->where('erp_fa_asset_master.companySystemID','=', $input['companySystemID']);
                 
-                // $disposelMaster = $disposelMaster->get()->toArray();
-                // $futureDates = $futureDates->get()->toArray();
-                // $disposlaMerge = array_merge ($disposelMaster, $futureDates);
-                // $disposlaUnique =   array_unique($disposlaMerge,SORT_REGULAR);
+                $disposelMaster = $disposelMaster->get()->toArray();
+                $futureDates = $futureDates->get()->toArray();
+                $disposlaMerge = array_merge ($disposelMaster, $futureDates);
+                $disposlaUnique =   array_unique($disposlaMerge,SORT_REGULAR);
 
-                // if(count($disposlaUnique) > 0 && $input['dispose'])
-                // {
-                //     $body = '';
+                if(count($disposlaUnique) > 0 && $input['dispose'])
+                {
+                    $body = '';
                   
-                //     $body .= '<table style="width:100%;border: 1px solid black;border-collapse: collapse;">
-                //     <thead>
-                //         <tr>
-                //             <th style="text-align: center;border: 1px solid black;">Disposal Code</th> 
-                //             <th style="text-align: center;border: 1px solid black;">Asset Code</th>
-                //         </tr>
-                //     </thead>';
-                //     $body .= '<tbody>';
-                //     foreach ($disposlaUnique as $val) {
+                    $body .= '<table style="width:100%;border: 1px solid black;border-collapse: collapse;">
+                    <thead>
+                        <tr>
+                            <th style="text-align: center;border: 1px solid black;">Disposal Code</th> 
+                            <th style="text-align: center;border: 1px solid black;">Asset Code</th>
+                        </tr>
+                    </thead>';
+                    $body .= '<tbody>';
+                    foreach ($disposlaUnique as $val) {
                         
-                //         $body .= '<tr>
-                //             <td style="text-align:center;border: 1px solid black;">' . $val['disposalDocumentCode'] . '</td>  
-                //             <td style="text-align:center;border: 1px solid black;">' . $val['faCode'] . '</td>  
-                //         </tr>';
+                        $body .= '<tr>
+                            <td style="text-align:center;border: 1px solid black;">' . $val['disposalDocumentCode'] . '</td>  
+                            <td style="text-align:center;border: 1px solid black;">' . $val['faCode'] . '</td>  
+                        </tr>';
                     
-                //     }
-                //     $body .= '</tbody>
-                //     </table>';
+                    }
+                    $body .= '</tbody>
+                    </table>';
 
 
-                //     return $this->sendError("The following assets will not be added to depreciation as they are linked to Disposal </br></br>  $body  </br> Are you sure you want to proceed ?", 300,['type' => 'dispoasalAsset']);
+                    return $this->sendError("The following assets will not be added to depreciation as they are linked to Disposal </br></br>  $body  </br> Are you sure you want to proceed ?", 300,['type' => 'dispoasalAsset']);
 
-                // }
+                }
 
-               //  $unconfirmedAssest = $this->getAssests($doc_date->dateTo,0,$input['companySystemID']);
+                $unconfirmedAssest = $this->getAssests($doc_date->dateTo,0,$input['companySystemID']);
 
-               //  if(count($unconfirmedAssest) > 0 && $input['unConfirm'])
-               //  {
-               //      return $this->sendError('There  are assets to be approved. Are you sure you want to proceed ?', 300,['type' => 'UnconfirmAsset']);
-               //  }    
+                if(count($unconfirmedAssest) > 0 && $input['unConfirm'])
+                {
+                    return $this->sendError('There  are assets to be approved. Are you sure you want to proceed ?', 300,['type' => 'UnconfirmAsset']);
+                }    
                 
-               //  $assest_fixds =  $this->getAssests($doc_date->dateTo,-1,$input['companySystemID']);
+                $assest_fixds =  $this->getAssests($doc_date->dateTo,-1,$input['companySystemID']);
            
-               //  foreach($assest_fixds as $key=>$val)
-               //  {
-               //      $cos_unit = $val->COSTUNIT;
-               //      $dep_amount = $val->depperiod_by;
+                foreach($assest_fixds as $key=>$val)
+                {
+                    $cos_unit = $val->COSTUNIT;
+                    $dep_amount = $val->depperiod_by;
 
                   
-               //      if(isset($dep_amount) && !empty($dep_amount) && count($dep_amount) > 0)
-               //      {
+                    if(isset($dep_amount) && !empty($dep_amount) && count($dep_amount) > 0)
+                    {
                       
-               //          $dep_local_amount = $dep_amount[0]->depAmountLocal;
-               //          if($cos_unit == $dep_local_amount ||$cos_unit < $dep_local_amount )
-               //          {
-               //              unset($assest_fixds[$key]);
-               //          }
+                        $dep_local_amount = $dep_amount[0]->depAmountLocal;
+                        if($cos_unit == $dep_local_amount ||$cos_unit < $dep_local_amount )
+                        {
+                            unset($assest_fixds[$key]);
+                        }
                     
-               //      }
+                    }
 
               
-               //  }  
+                }  
          
             
-               // $count_assest = count($assest_fixds);
-               $count_assest = 1;
+               $count_assest = count($assest_fixds);
 
-            
+      
+          
                if($count_assest > 0)
                {    
 
@@ -340,46 +339,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
                 if ($lastSerial) {
                     $lastSerialNumber = intval($lastSerial->serialNo) + 1;
                 }
-
-                $depDate = Carbon::parse($input['FYPeriodDateTo']);
-                $datares = [];
-                // $faMaster = FixedAssetMaster::with(['depperiod_by' => function ($query) {
-                //         $query->selectRaw('SUM(depAmountRpt) as depAmountRpt,SUM(depAmountLocal) as depAmountLocal,faID');
-                //         $query->whereHas('master_by', function ($query) {
-                //             $query->where('approved', -1);
-                //         });
-                //         $query->groupBy('faID');
-                //     },'depperiod_period'])
-                //         ->where(function($q) use($depDate){
-                //             $q->isDisposed()
-                //                 ->orWhere(function ($q1) use($depDate){
-                //                     $q1->disposed(-1)
-                //                         ->WhereDate('disposedDate','>',$depDate);
-                //                 });
-                //         })
-                //         ->ofCompany([$input['companySystemID']])
-                //         ->isApproved()
-                //         ->assetType(1)
-                //         ->orderBy('faID', 'desc')
-
-                //         ->paginate(100);
-                
-                // if ($faMaster) {
-                //     return collect($faMaster)->toArray()['total'];
-                // }
-
-                // $datares = []; // Initialize the datares array before using it
-                //     $totalChunks = 0; // Initialize the total chunks count
-                //     DocumentMaster::chunk(20, function ($results, $chunkNumber) use (&$datares, &$totalChunks) {
-                //         $totalChunks = $chunkNumber; // Update the total chunks count for each chunk
-                //         $datares[] = $results;
-                //     });
-
-                //     return [
-                //         'datares' => $datares, // Return the data from the last chunk
-                //         'totalChunks' => $totalChunks, // Add 1 to the totalChunks to get the actual count
-                //     ];
-                                    
+    
                 $documentCode = ($company->CompanyID . '\\' . $finYear . '\\' . $documentMaster->documentID . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT));
                 $input['depCode'] = $documentCode;
                 $input['serialNo'] = $lastSerialNumber;
@@ -394,8 +354,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
                 $fixedAssetDepreciationMasters = $this->fixedAssetDepreciationMasterRepository->create($input);
 
                 if ($fixedAssetDepreciationMasters) {
-                    $depMasterAutoID = $fixedAssetDepreciationMasters->depMasterAutoID;
-                    CreateDepreciation::dispatch($depMasterAutoID, $dataBase);
+                    CreateDepreciation::dispatch($fixedAssetDepreciationMasters->depMasterAutoID, $dataBase);
                 }
 
                 DB::commit();
@@ -1023,7 +982,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
     public function amendAssetDepreciationReview(Request $request)
     {
         $input = $request->all();
-
+        
         $id = isset($input['id'])?$input['id']:0;
 
         $employee = \Helper::getEmployeeInfo();
@@ -1040,12 +999,34 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
 
 
         // checking document matched in depreciation
+        
         $maxDepAsset = FixedAssetDepreciationMaster::where('companySystemID',$masterData->companySystemID)
+                                                  ->where('is_acc_dep','=',0)
                                                   ->where('depMasterAutoID','>',$id)
                                                   ->count();
 
-        if($maxDepAsset > 0){
-            return $this->sendError('You cannot return back to amend this asset depreciation.You can reverse only the last depreciation. ');
+        if(!$masterData->is_acc_dep)
+        {
+            if($maxDepAsset > 0)
+            {
+                return $this->sendError('You cannot return back to amend this asset depreciation.You can reverse only the last depreciation. ');
+            }
+        }
+        
+        if($masterData->is_acc_dep)
+        {
+            $faID = FixedAssetDepreciationPeriod::where('depMasterAutoID',$id)->select('faID')->first();
+
+            $isMonthlyExists = FixedAssetDepreciationPeriod::ofAsset($faID->faID)->whereHas('master_by', function ($q) {
+                $q->where('is_acc_dep', 0);
+            })->exists();
+
+            if($isMonthlyExists)
+            {
+                return $this->sendError('You cannot return back to amend ! This asset already has monthly depreciation processed against it. ');
+
+            }
+
         }
 
         $emailBody = '<p>' . $masterData->faCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';

@@ -28,6 +28,7 @@ class ProcessDepreciationQuery implements ShouldQueue
     protected $depMasterAutoID;
     protected $chunkDataSizeCounts;
     protected $depDate;
+    private $tag = "asset-depreciation";
     /**
      * Create a new job instance.
      *
@@ -69,38 +70,57 @@ class ProcessDepreciationQuery implements ShouldQueue
 
         $depMasterAutoID = $this->depMasterAutoID;
         $chunkDataSizeCounts = $this->chunkDataSizeCounts;
+        
+        DB::beginTransaction();
         $depMaster = FixedAssetDepreciationMaster::find($depMasterAutoID);
+        try {
+            $perPage = 100; // Items per page
+            $page = $this->page; // Page number 
+            $faMaster = FixedAssetMaster::with(['depperiod_by' => function ($query) {
+                            $query->selectRaw('SUM(depAmountRpt) as depAmountRpt,SUM(depAmountLocal) as depAmountLocal,faID');
+                            $query->whereHas('master_by', function ($query) {
+                                $query->where('approved', -1);
+                            });
+                            $query->groupBy('faID');
+                        },'depperiod_period'])
+                            ->where(function($q) use($depDate){
+                                $q->isDisposed()
+                                    ->orWhere(function ($q1) use($depDate){
+                                        $q1->disposed(-1)
+                                            ->WhereDate('disposedDate','>',$depDate);
+                                    });
+                            })
+                            ->ofCompany([$depMaster->companySystemID])
+                            ->isApproved()
+                            ->assetType(1)
+                            ->orderBy('faID', 'desc')
+                            ->skip(($page - 1) * $perPage) // Skip the items on previous pages
+                            ->take($perPage) 
+                            ->get()
+                            ->toArray();
 
-        $perPage = 100; // Items per page
-        $page = $this->page; // Page number (2 for the second page)
-        $faMaster = FixedAssetMaster::with(['depperiod_by' => function ($query) {
-                        $query->selectRaw('SUM(depAmountRpt) as depAmountRpt,SUM(depAmountLocal) as depAmountLocal,faID');
-                        $query->whereHas('master_by', function ($query) {
-                            $query->where('approved', -1);
-                        });
-                        $query->groupBy('faID');
-                    },'depperiod_period'])
-                        ->where(function($q) use($depDate){
-                            $q->isDisposed()
-                                ->orWhere(function ($q1) use($depDate){
-                                    $q1->disposed(-1)
-                                        ->WhereDate('disposedDate','>',$depDate);
-                                });
-                        })
-                        ->ofCompany([$depMaster->companySystemID])
-                        ->isApproved()
-                        ->assetType(1)
-                        ->orderBy('faID', 'desc')
-                        ->skip(($page - 1) * $perPage) // Skip the items on previous pages
-                        ->take($perPage) 
-                        ->get()
-                        ->toArray();
+             if (count($faMaster) > 0) {
+                $faCounts = 1;
+                ProcessDepreciation::dispatch($db, $faMaster, $depMasterAutoID, $depDate,$faCounts, $chunkDataSizeCounts)->onQueue('single');
+            } else {
+                $fixedAssetDepreciationMasterUpdate = FixedAssetDepreciationMaster::where('depMasterAutoID', $depMasterAutoID)->update(['isDepProcessingYN' => 1]);
+            }
+            DB::commit();
+                Log::info('Depreciation End');
+            }
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error($this->failed($e));
+            DB::beginTransaction();
 
-         if (count($faMaster) > 0) {
-            $faCounts = 1;
-            ProcessDepreciation::dispatch($db, $faMaster, $depMasterAutoID, $depDate,$faCounts, $chunkDataSizeCounts)->onQueue('single');
-        } else {
+            JobErrorLogService::storeError($this->dataBase, $depMaster->documentSystemID, $depMasterAutoID, $this->tag, 2, $this->failed($e), "-****----Line No----:".$e->getLine()."-****----File Name----:".$e->getFile());
             $fixedAssetDepreciationMasterUpdate = FixedAssetDepreciationMaster::where('depMasterAutoID', $depMasterAutoID)->update(['isDepProcessingYN' => 1]);
+            DB::commit();
         }
+    }
+
+    public function failed($exception)
+    {
+        return $exception->getMessage();
     }
 }
