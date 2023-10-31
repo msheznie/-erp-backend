@@ -101,7 +101,7 @@ class CreateDepreciation implements ShouldQueue
 
                     $chunkDataSizeCounts = ceil($checkTotalRec / $chunkSize);
 
-                    Log::info('chunkCount - '.$this->chunkDataSizeCounts);
+                    Log::info('chunkCount - '.$chunkDataSizeCounts);
                     $faMaster = FixedAssetMaster::with(['depperiod_by' => function ($query) {
                         $query->selectRaw('SUM(depAmountRpt) as depAmountRpt,SUM(depAmountLocal) as depAmountLocal,faID');
                         $query->whereHas('master_by', function ($query) {
