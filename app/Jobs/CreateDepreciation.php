@@ -122,7 +122,7 @@ class CreateDepreciation implements ShouldQueue
                     //         $faCounts++;
                     //     });
                     // } else {
-                        $fixedAssetDepreciationMasterUpdate = FixedAssetDepreciationMaster::where('depMasterAutoID', $depMasterAutoID)->update(['isDepProcessingYN' => 1]);
+                        // $fixedAssetDepreciationMasterUpdate = FixedAssetDepreciationMaster::where('depMasterAutoID', $depMasterAutoID)->update(['isDepProcessingYN' => 1]);
                     // }
                     DB::commit();
                     Log::info('Depreciation End');
