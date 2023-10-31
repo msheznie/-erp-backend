@@ -805,6 +805,7 @@ class ShiftDetailsAPIController extends AppBaseController
                         ->join('serviceline', 'serviceline.serviceLineSystemID', '=', 'pos_source_shiftdetails.segmentID')
                         ->where('pos_source_shiftdetails.shiftID', $shiftId)
                         ->first();
+
                     if ($segments) {
                         $serviceLineSystemID = $segments->segmentID;
                         $serviceLineCode = $segments->serviceLineCode;
@@ -1357,6 +1358,8 @@ class ShiftDetailsAPIController extends AppBaseController
                         ->join('serviceline', 'serviceline.serviceLineSystemID', '=', 'pos_source_shiftdetails.segmentID')
                         ->where('pos_source_shiftdetails.shiftID', $shiftId)
                         ->first();
+
+
                     if($segments){
                         $serviceLineSystemID = $segments->segmentID;
                         $serviceLineCode = $segments->serviceLineCode;
@@ -1553,8 +1556,8 @@ class ShiftDetailsAPIController extends AppBaseController
 
                         $addToCusInvDetails['custInvoiceDirectID'] = $custInvoiceDirectAutoID;
                         $addToCusInvDetails['companyID'] = $master->companyID;
-                        /*  $addToCusInvDetails['serviceLineSystemID'] = $serviceLine->serviceLineSystemID;*/
-                        /*        $addToCusInvDetails['serviceLineCode'] = $serviceLine->ServiceLineCode;*/
+                        $addToCusInvDetails['serviceLineSystemID'] = $serviceLineSystemID;
+                        $addToCusInvDetails['serviceLineCode'] = $serviceLineCode;
                         $addToCusInvDetails['customerID'] = $master->customerID;
                         if($chartOfAccount){
                             $addToCusInvDetails['glSystemID'] = $chartOfAccount->chartOfAccountSystemID;
