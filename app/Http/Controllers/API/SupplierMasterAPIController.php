@@ -417,7 +417,7 @@ class SupplierMasterAPIController extends AppBaseController
         $supplierMasters = DB::table('erp_documentapproved')
             ->select('suppliermaster.*', 'erp_documentapproved.documentApprovedID',
                 'rollLevelOrder', 'currencymaster.CurrencyCode',
-                'suppliercategorymaster.categoryName', 'approvalLevelID', 'documentSystemCode')
+                'supplier_categories.category', 'approvalLevelID', 'documentSystemCode')
             ->join('employeesdepartments', function ($query) use ($companyID, $empID) {
                 $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')->
                 on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')->
@@ -441,7 +441,7 @@ class SupplierMasterAPIController extends AppBaseController
                         });
                     });
             })
-            ->leftJoin('suppliercategorymaster', 'suppliercategorymaster.supCategoryMasterID', '=', 'suppliermaster.supCategoryMasterID')
+            ->leftJoin('supplier_categories', 'supplier_categories.id', '=', 'suppliermaster.supplier_category_id')
             ->leftJoin('currencymaster', 'suppliermaster.currency', '=', 'currencymaster.currencyID')
             ->where('erp_documentapproved.approvedYN', 0)
             ->where('erp_documentapproved.rejectedYN', 0)
@@ -716,14 +716,6 @@ class SupplierMasterAPIController extends AppBaseController
 
         $id = $input['supplierCodeSystem'];
 
-        $subCategories = SupplierSubCategoryAssign::where('supplierID',$id)->pluck('supSubCategoryID');
-        foreach ($subCategories as $subCategoryID){
-            $subCategory = SupplierCategorySub::where('supCategorySubID',$subCategoryID)->first();
-            if($subCategory->supMasterCategoryID != $input['supCategoryMasterID']){
-                return $this->sendError('Please remove the already added sub categories before changing to a new Business Category.');
-            }
-        }
-
         $input = array_except($input, ['supplierConfirmedEmpID', 'supplierConfirmedEmpSystemID',
             'supplierConfirmedEmpName', 'supplierConfirmedDate', 'final_approved_by', 'blocked_by']);
         $input = $this->convertArrayToValue($input);
@@ -859,12 +851,12 @@ class SupplierMasterAPIController extends AppBaseController
                     $input['blockedReason'] = null;
                 }
 
-                $supplierMaster = $this->supplierMasterRepository->update(array_only($input,['isLCCYN','isSMEYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','supCategoryMasterID','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','retentionPercentage','supplierImportanceID','supplierNatureID','supplierTypeID','supplier_category_id','supplier_group_id','jsrsNo','jsrsExpiry', 'isBlocked', 'blockedReason', 'blockedBy', 'blockedDate','advanceAccountSystemID','AdvanceAccount', 'liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount', 'isActive', 'supplierName', 'linkCustomerYN', 'linkCustomerID', 'nameOnPaymentCheque', 'registrationExprity']), $id);
-                SupplierAssigned::where('supplierCodeSytem',$id)->update(array_only($input,['isLCCYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','supCategoryMasterID','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','supplierImportanceID','supplierNatureID','supplierTypeID','supplier_category_id','supplier_group_id','jsrsNo','jsrsExpiry', 'isBlocked', 'blockedReason', 'blockedBy', 'blockedDate','advanceAccountSystemID','AdvanceAccount', 'liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount', 'isActive', 'supplierName', 'nameOnPaymentCheque', 'registrationExprity']));
+                $supplierMaster = $this->supplierMasterRepository->update(array_only($input,['isLCCYN','isSMEYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','retentionPercentage','supplierImportanceID','supplierNatureID','supplierTypeID','supplier_category_id','supplier_group_id','jsrsNo','jsrsExpiry', 'isBlocked', 'blockedReason', 'blockedBy', 'blockedDate','advanceAccountSystemID','AdvanceAccount', 'liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount', 'isActive', 'supplierName', 'linkCustomerYN', 'linkCustomerID', 'nameOnPaymentCheque', 'registrationExprity']), $id);
+                SupplierAssigned::where('supplierCodeSytem',$id)->update(array_only($input,['isLCCYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','supplierImportanceID','supplierNatureID','supplierTypeID','supplier_category_id','supplier_group_id','jsrsNo','jsrsExpiry', 'isBlocked', 'blockedReason', 'blockedBy', 'blockedDate','advanceAccountSystemID','AdvanceAccount', 'liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount', 'isActive', 'supplierName', 'nameOnPaymentCheque', 'registrationExprity']));
                 // user activity log table
                 if($supplierMaster){
-                    $old_array = array_only($supplierMasterOld,['isLCCYN','isSMEYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','supCategoryMasterID','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','supplierImportanceID','supplierNatureID','supplierTypeID','jsrsNo','jsrsExpiry', 'isBlocked', 'blockedReason', 'blockedBy', 'blockedDate','advanceAccountSystemID','AdvanceAccount', 'liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount', 'isActive', 'supplierName', 'linkCustomerYN', 'linkCustomerID', 'nameOnPaymentCheque', 'registrationExprity']);
-                    $modified_array = array_only($input,['isLCCYN','isSMEYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','supCategoryMasterID','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','supplierImportanceID','supplierNatureID','supplierTypeID','jsrsNo','jsrsExpiry', 'isBlocked', 'blockedReason', 'blockedBy', 'blockedDate','advanceAccountSystemID','AdvanceAccount', 'liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount', 'isActive', 'supplierName', 'linkCustomerYN', 'linkCustomerID', 'nameOnPaymentCheque', 'registrationExprity']);
+                    $old_array = array_only($supplierMasterOld,['isLCCYN','isSMEYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','supplierImportanceID','supplierNatureID','supplierTypeID','jsrsNo','jsrsExpiry', 'isBlocked', 'blockedReason', 'blockedBy', 'blockedDate','advanceAccountSystemID','AdvanceAccount', 'liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount', 'isActive', 'supplierName', 'linkCustomerYN', 'linkCustomerID', 'nameOnPaymentCheque', 'registrationExprity']);
+                    $modified_array = array_only($input,['isLCCYN','isSMEYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','supplierImportanceID','supplierNatureID','supplierTypeID','jsrsNo','jsrsExpiry', 'isBlocked', 'blockedReason', 'blockedBy', 'blockedDate','advanceAccountSystemID','AdvanceAccount', 'liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount', 'isActive', 'supplierName', 'linkCustomerYN', 'linkCustomerID', 'nameOnPaymentCheque', 'registrationExprity']);
 
                     // update in to user log table
                     foreach ($old_array as $key => $old){
