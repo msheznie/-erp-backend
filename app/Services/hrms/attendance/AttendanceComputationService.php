@@ -378,7 +378,7 @@ class AttendanceComputationService
         if ($this->dayType != 1) {
             return; //if holiday or weekend no need to compute the earl out hours
         }
-
+ 
         if (!$this->isShiftHoursSet) {
             return false;
         }
