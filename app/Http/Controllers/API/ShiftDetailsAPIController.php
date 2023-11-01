@@ -2811,7 +2811,14 @@ class ShiftDetailsAPIController extends AppBaseController
         $outputMisMatch = $output->first();
 
         if(!empty($outputMisMatch)) {
-                $data['isMismatch'] = $outputMisMatch->Amount == 0 ? true : false;
+
+            if(abs($outputMisMatch->Amount) < 0.00001){
+                $data['isMismatch'] = true;
+            }
+            else {
+                $data['isMismatch'] = false;
+            }
+
         }
         else {
             $data['isMismatch'] = true;
