@@ -74,6 +74,7 @@ use App\Models\ShiftDetails;
 use App\Models\StockTransfer;
 use App\Models\Taxdetail;
 use App\Models\TaxVatCategories;
+use App\Models\Unit;
 use App\Models\VatSubCategoryType;
 use App\Models\WarehouseMaster;
 use App\Repositories\CustomerInvoiceDirectRepository;
@@ -765,6 +766,7 @@ class ShiftDetailsAPIController extends AppBaseController
     public function postGLEntries(Request $request){
         
         $shiftId = $request->shiftId;
+
         $db = isset($request->db) ? $request->db : "";
 
         $shiftDetails = POSSOURCEShiftDetails::where('shiftID',$shiftId)->first();
@@ -1510,7 +1512,7 @@ class ShiftDetailsAPIController extends AppBaseController
 
                     $customerInvoiceDirects = $this->customerInvoiceDirectRepository->create($input);
                     $items = DB::table('pos_source_menusalesitems')
-                        ->selectRaw('pos_source_menusalesitems.*')
+                        ->selectRaw('pos_source_menusalesitems.*, itemmaster.unit as unit')
                         ->join('pos_source_menusalesitemdetails', 'pos_source_menusalesitemdetails.menuSalesItemID', '=', 'pos_source_menusalesitems.menuSalesItemID')
                         ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'pos_source_menusalesitemdetails.itemAutoID')
                         ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
@@ -1574,22 +1576,24 @@ class ShiftDetailsAPIController extends AppBaseController
                         $addToCusInvDetails['comments'] = $master->comments;
                         $addToCusInvDetails['invoiceAmountCurrency'] = $master->custTransactionCurrencyID;
                         $addToCusInvDetails['invoiceAmountCurrencyER'] = 1;
-                        /* $addToCusInvDetails['unitOfMeasure'] = $unitID;
-                         $addToCusInvDetails['invoiceQty'] = $qty;*/
-                        $addToCusInvDetails['unitCost'] = $item->menuCost;
-                        $addToCusInvDetails['invoiceAmount'] = $item->salesPriceAfterDiscount;
+
+                        $addToCusInvDetails['unitCost'] = $item->menuSalesPrice;
+                        $addToCusInvDetails['salesPrice'] = $item->menuSalesPrice;
+                        $addToCusInvDetails['invoiceAmount'] = $item->transactionAmount;
 
                         $addToCusInvDetails['localCurrency'] = $master->localCurrencyID;
                         $addToCusInvDetails['localCurrencyER'] = $master->localCurrencyER;
 
                         $addToCusInvDetails['comRptCurrency'] = $master->companyReportingCurrencyID;
                         $addToCusInvDetails['comRptCurrencyER'] = $master->companyReportingER;
-                        $addToCusInvDetails["comRptAmount"] = $item->salesPriceAfterDiscount / $master->companyReportingER; // \Helper::roundValue($MyRptAmount);
-                        $addToCusInvDetails["localAmount"] = $item->salesPriceAfterDiscount; // \Helper::roundValue($MyLocalAmount);
-                        if ($master->isPerforma == 0) {
-                            $addToCusInvDetails['unitOfMeasure'] = 7;
-                            $addToCusInvDetails['invoiceQty'] = 1;
-                        }
+                        $addToCusInvDetails["comRptAmount"] = $item->companyReportingAmount;
+                        $addToCusInvDetails["localAmount"] = $item->companyLocalAmount;
+
+                        $addToCusInvDetails['unitOfMeasure'] = $item->unit;
+                        $addToCusInvDetails['invoiceQty'] = $item->qty;
+                        $addToCusInvDetails['VATAmount'] = $item->totalMenuTaxAmount;
+                        $addToCusInvDetails['VATAmountLocal'] = $item->totalMenuTaxAmount / $master->localCurrencyER;
+                        $addToCusInvDetails['VATAmountRpt'] = $item->totalMenuTaxAmount / $master->companyReportingER;
 
                         if ($master->isVatEligible) {
                             $vatDetails = TaxService::getDefaultVAT($master->companySystemID, $master->customerID, 0);
@@ -1741,7 +1745,7 @@ class ShiftDetailsAPIController extends AppBaseController
                         ->where('pos_source_invoice.isCreditSales', 0)
                         ->get();
 
-
+                    
                     $invItemsPLBS = DB::table('pos_source_invoicedetail')
                         ->selectRaw('pos_source_invoicedetail.qty * itemassigned.wacValueLocal as amount, pos_source_invoice.invoiceID as invoiceID, pos_source_invoice.shiftID as shiftId, pos_source_invoice.companyID as companyID, pos_source_invoicedetail.itemAutoID as itemID, itemmaster.financeCategorySub as financeCategorySub,  financeitemcategorysub.financeGLcodebBSSystemID as bsGLCode, financeitemcategorysub.financeGLcodePLSystemID as plGLCode, itemmaster.financeCategoryMaster as categoryID, pos_source_invoicedetail.qty as qty, itemassigned.wacValueLocal as price, pos_source_invoicedetail.UOMID as uom, pos_source_invoice.wareHouseAutoID as wareHouseID, financeitemcategorysub.includePLForGRVYN as glYN')
                         ->join('pos_source_invoice', 'pos_source_invoice.invoiceID', '=', 'pos_source_invoicedetail.invoiceID')
@@ -2241,6 +2245,7 @@ class ShiftDetailsAPIController extends AppBaseController
                         ->groupBy('pos_source_menusalesmaster.shiftID')
                         ->where('pos_source_menusalesmaster.isCreditSales', 0)
                         ->get();
+
 
                     $invItemsPLBS = DB::table('pos_source_menusalesitems')
                         ->selectRaw('pos_source_menusalesitemdetails.qty * itemassigned.wacValueLocal as amount, pos_source_menusalesmaster.menuSalesID as invoiceID, pos_source_menusalesmaster.shiftID as shiftId, pos_source_menusalesmaster.companyID as companyID, pos_source_menusalesitemdetails.itemAutoID as itemID, pos_source_menusalesitems.revenueGLAutoID as glCode,  itemmaster.financeCategoryMaster as categoryID, financeitemcategorysub.financeGLcodebBSSystemID as bsGLCode, financeitemcategorysub.financeGLcodePLSystemID as plGLCode, financeitemcategorysub.includePLForGRVYN as glYN, pos_source_menusalesitemdetails.qty as qty, pos_source_menusalesitemdetails.cost as price, pos_source_menusalesitemdetails.UOMID as uom, pos_source_menusalesmaster.wareHouseAutoID as wareHouseID')
