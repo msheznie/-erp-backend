@@ -68,7 +68,7 @@ class ProcessDepreciation implements ShouldQueue
         $db = $this->dispatch_db;
         DB::beginTransaction();
         try {
-            Log::info($db);
+           
             CommonJobService::db_switch($db);
       
             $output = $this->outputData;

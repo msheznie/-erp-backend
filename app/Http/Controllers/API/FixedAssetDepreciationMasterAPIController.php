@@ -152,7 +152,6 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
 
             $is_pending_job_exist = FixedAssetDepreciationMaster::where('approved','=',0)->where('companySystemID' ,'=', $input['companySystemID'])->count();
 
-
             if($is_pending_job_exist == 0)
             {
 
@@ -983,7 +982,7 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
     public function amendAssetDepreciationReview(Request $request)
     {
         $input = $request->all();
-
+        
         $id = isset($input['id'])?$input['id']:0;
 
         $employee = \Helper::getEmployeeInfo();
@@ -1000,12 +999,34 @@ class FixedAssetDepreciationMasterAPIController extends AppBaseController
 
 
         // checking document matched in depreciation
+        
         $maxDepAsset = FixedAssetDepreciationMaster::where('companySystemID',$masterData->companySystemID)
+                                                  ->where('is_acc_dep','=',0)
                                                   ->where('depMasterAutoID','>',$id)
                                                   ->count();
 
-        if($maxDepAsset > 0){
-            return $this->sendError('You cannot return back to amend this asset depreciation.You can reverse only the last depreciation. ');
+        if(!$masterData->is_acc_dep)
+        {
+            if($maxDepAsset > 0)
+            {
+                return $this->sendError('You cannot return back to amend this asset depreciation.You can reverse only the last depreciation. ');
+            }
+        }
+        
+        if($masterData->is_acc_dep)
+        {
+            $faID = FixedAssetDepreciationPeriod::where('depMasterAutoID',$id)->select('faID')->first();
+
+            $isMonthlyExists = FixedAssetDepreciationPeriod::ofAsset($faID->faID)->whereHas('master_by', function ($q) {
+                $q->where('is_acc_dep', 0);
+            })->exists();
+
+            if($isMonthlyExists)
+            {
+                return $this->sendError('You cannot return back to amend ! This asset already has monthly depreciation processed against it. ');
+
+            }
+
         }
 
         $emailBody = '<p>' . $masterData->faCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
