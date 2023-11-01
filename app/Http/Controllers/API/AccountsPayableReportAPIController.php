@@ -4534,7 +4534,7 @@ class AccountsPayableReportAPIController extends AppBaseController
             }
         }
 
-        return $results;
+        return array_values($results);
     }
 
     function getUnbilledLogisticsDetailQRY($request)
@@ -4828,7 +4828,7 @@ class AccountsPayableReportAPIController extends AppBaseController
             }
         }
 
-        return $results;
+        return array_values($results);
     }
 
 
@@ -5075,7 +5075,7 @@ class AccountsPayableReportAPIController extends AppBaseController
             }
         }
 
-        return $results;
+        return array_values($results);
     }
 
     function getSupplierBalanceStatementReconcileQRY($request)
