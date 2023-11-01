@@ -74,7 +74,6 @@ use App\Models\ShiftDetails;
 use App\Models\StockTransfer;
 use App\Models\Taxdetail;
 use App\Models\TaxVatCategories;
-use App\Models\Unit;
 use App\Models\VatSubCategoryType;
 use App\Models\WarehouseMaster;
 use App\Repositories\CustomerInvoiceDirectRepository;
@@ -1745,7 +1744,7 @@ class ShiftDetailsAPIController extends AppBaseController
                         ->where('pos_source_invoice.isCreditSales', 0)
                         ->get();
 
-                    
+
                     $invItemsPLBS = DB::table('pos_source_invoicedetail')
                         ->selectRaw('pos_source_invoicedetail.qty * itemassigned.wacValueLocal as amount, pos_source_invoice.invoiceID as invoiceID, pos_source_invoice.shiftID as shiftId, pos_source_invoice.companyID as companyID, pos_source_invoicedetail.itemAutoID as itemID, itemmaster.financeCategorySub as financeCategorySub,  financeitemcategorysub.financeGLcodebBSSystemID as bsGLCode, financeitemcategorysub.financeGLcodePLSystemID as plGLCode, itemmaster.financeCategoryMaster as categoryID, pos_source_invoicedetail.qty as qty, itemassigned.wacValueLocal as price, pos_source_invoicedetail.UOMID as uom, pos_source_invoice.wareHouseAutoID as wareHouseID, financeitemcategorysub.includePLForGRVYN as glYN')
                         ->join('pos_source_invoice', 'pos_source_invoice.invoiceID', '=', 'pos_source_invoicedetail.invoiceID')
