@@ -786,9 +786,17 @@ class ShiftDetailsAPIController extends AppBaseController
                     ->get();
                 foreach ($invoices as $invoice) {
 
-                    $companyFinanceYear = CompanyFinanceYear::where('bigginingDate', "<", $invoice->invoiceDate)->where('endingDate', ">", $invoice->invoiceDate)->where('companySystemID', $shiftDetails->companyID)->first();
+                    $companyFinanceYear = CompanyFinanceYear::where('bigginingDate', "<=", $invoice->invoiceDate)->where('endingDate', ">=", $invoice->invoiceDate)->where('companySystemID', $shiftDetails->companyID)->where('isActive', -1)->first();
 
-                    $companyFinancePeriod = CompanyFinancePeriod::where('dateFrom', "<", $invoice->invoiceDate)->where('dateTo', ">", $invoice->invoiceDate)->where('companySystemID', $shiftDetails->companyID)->first();
+                    $companyFinancePeriod = CompanyFinancePeriod::where('dateFrom', "<=", $invoice->invoiceDate)->where('dateTo', ">=", $invoice->invoiceDate)->where('companySystemID', $shiftDetails->companyID)->where('isActive', -1)->first();
+
+                    if (!isset($companyFinancePeriod->companyFinancePeriodID) || is_null($companyFinancePeriod->companyFinancePeriodID)) {
+                        return $this->sendError('Financial period is not found or inactive', 500);
+                    }
+
+                    if (!isset($companyFinancePeriod->companyFinanceYearID) || is_null($companyFinancePeriod->companyFinanceYearID)) {
+                        return $this->sendError('Financial year is not found or inactive', 500);
+                    }
 
                     $customerID = null;
                     $serviceLineSystemID = null;
@@ -1331,16 +1339,16 @@ class ShiftDetailsAPIController extends AppBaseController
                     ->get();
                 foreach ($invoices as $invoice) {
 
-                    $companyFinanceYear = CompanyFinanceYear::where('bigginingDate', "<", $invoice->menuSalesDate)->where('endingDate', ">", $invoice->menuSalesDate)->where('companySystemID', $shiftDetails->companyID)->first();
+                    $companyFinanceYear = CompanyFinanceYear::where('bigginingDate', "<=", $invoice->menuSalesDate)->where('endingDate', ">=", $invoice->menuSalesDate)->where('companySystemID', $shiftDetails->companyID)->where('isActive', -1)->first();
 
-                    $companyFinancePeriod = CompanyFinancePeriod::where('dateFrom', "<", $invoice->menuSalesDate)->where('dateTo', ">", $invoice->menuSalesDate)->where('companySystemID', $shiftDetails->companyID)->first();
+                    $companyFinancePeriod = CompanyFinancePeriod::where('dateFrom', "<=", $invoice->menuSalesDate)->where('dateTo', ">=", $invoice->menuSalesDate)->where('companySystemID', $shiftDetails->companyID)->where('isActive', -1)->first();
 
                     if (!isset($companyFinancePeriod->companyFinancePeriodID) || is_null($companyFinancePeriod->companyFinancePeriodID)) {
-                        return $this->sendError('Financial period is not found', 500);
+                        return $this->sendError('Financial period is not found or inactive', 500);
                     }
 
                     if (!isset($companyFinancePeriod->companyFinanceYearID) || is_null($companyFinancePeriod->companyFinanceYearID)) {
-                        return $this->sendError('Financial year is not found', 500);
+                        return $this->sendError('Financial year is not found or inactive', 500);
                     }
 
                     $customerID = null;
