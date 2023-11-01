@@ -4380,7 +4380,13 @@ class AccountsPayableReportAPIController extends AppBaseController
                 finalUnbilled.supplierCode,
                 finalUnbilled.supplierName,
                 finalUnbilled.localAmount AS documentLocalAmount,
-                finalUnbilled.rptAmount AS documentRptAmount
+                finalUnbilled.rptAmount AS documentRptAmount,
+                   IF
+                ( finalUnbilled.matchedLocalAmount IS NULL, 0, finalUnbilled.matchedLocalAmount ) AS matchedLocalAmount,
+            IF
+                ( finalUnbilled.matchedRptAmount IS NULL, 0, finalUnbilled.matchedRptAmount ) AS matchedRptAmount,
+                round( ( finalUnbilled.localAmount - ( IF ( finalUnbilled.matchedLocalAmount IS NULL, 0, finalUnbilled.matchedLocalAmount ) ) ), 3 ) AS balanceLocalAmount,
+                round( ( finalUnbilled.rptAmount - ( IF ( finalUnbilled.matchedRptAmount IS NULL, 0, finalUnbilled.matchedRptAmount ) ) ), 2 ) AS balanceRptAmount 
             FROM
                 (
             SELECT
