@@ -2317,13 +2317,14 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
         $id = $request['id'];
         $master = CustomerInvoiceDirect::select('customerID', 'companySystemID')->where('custInvoiceDirectAutoID', $id)->first();
-        $PerformaMaster = PerformaMaster::with(['ticket' => function ($query) {
+        $PerformaMaster = PerformaMaster::with(['performaTemp' => function ($q) {
+            $q->where('isDiscount',1);
+        },'ticket' => function ($query) {
             $query->with(['rig']);
         }])->where('companySystemID', $master->companySystemID)
             ->where('customerSystemID', $master->customerID)
             ->where('performaStatus', 0)
             ->where('PerformaOpConfirmed', 1);
-
         $search = $request->input('search.value');
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
@@ -2372,6 +2373,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             return $this->sendResponse('e', 'Already pulled');
         }
 
+
         /*get bank check bank details from performaDetails*/
         $bankAccountDetails = PerformaDetails::select('currencyID', 'bankID', 'accountID')->where('companyID', $master->companyID)->where('performaMasterID', $performaMasterID)->first();
 
@@ -2385,7 +2387,6 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
            if (!empty($detailsAlreadyExist)) {
                return $this->sendResponse('e', 'Already a proforma added to this customer invoice');
            }*/
-
         $contract = Contract::select('contractUID', 'isRequiredStamp', 'paymentInDaysForJob', 'contractType')
             ->where('CompanyID', $master->companyID)
             ->where('ContractNumber', $performa->contractID)
@@ -2448,7 +2449,6 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             foreach ($updatedInvoiceNo as $updateInvoice) {
                 $serviceLine = SegmentMaster::select('serviceLineSystemID')->where('ServiceLineCode', $updateInvoice->serviceLine)->first();
                 $chartOfAccount = ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'chartOfAccountSystemID')->where('AccountCode', $updateInvoice->financeGLcode)->first();
-
                 $companyCurrencyConversion = \Helper::currencyConversion($master->companySystemID, $myCurr, $myCurr, $updateInvoice->totAmount);
                 $companyCurrencyConversionVAT = \Helper::currencyConversion($master->companySystemID, $myCurr, $myCurr, $updateInvoice->totalVatAmount);
                 /*    trasToLocER,trasToRptER,transToBankER,reportingAmount,localAmount,documentAmount,bankAmount*/
@@ -2494,6 +2494,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 $addToCusInvDetails[$x]['clientContractID'] = $updateInvoice->contractID;
                 $addToCusInvDetails[$x]['contractID'] = $contract->contractUID;
                 $addToCusInvDetails[$x]['performaMasterID'] = $performaMasterID;
+                $addToCusInvDetails[$x]['isDiscount'] = $updateInvoice->isDiscount;
+
                 $x++;
             }
 
