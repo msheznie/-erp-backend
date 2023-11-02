@@ -714,7 +714,7 @@ class ShiftDetailsAPIController extends AppBaseController
                 ->get();
         } else if ($shiftDetails->posType == 2){
             $invItemsPLBS = DB::table('pos_source_menusalesitems')
-                ->selectRaw('(pos_source_menusalesitemdetails.qty * itemassigned.wacValueLocal * pos_source_menusalesitems.qty) as amount, pos_source_menusalesmaster.menuSalesID as invoiceID, pos_source_menusalesmaster.shiftID as shiftId, pos_source_menusalesmaster.companyID as companyID, pos_source_menusalesitemdetails.itemAutoID as itemID, pos_source_menusalesitems.revenueGLAutoID as glCode,  itemmaster.financeCategoryMaster as categoryID, financeitemcategorysub.financeGLcodebBSSystemID as bsGLCode, financeitemcategorysub.financeGLcodePLSystemID as plGLCode, financeitemcategorysub.includePLForGRVYN as glYN, (pos_source_menusalesitemdetails.qty * pos_source_menusalesitems.qty) as qty, (pos_source_menusalesitemdetails.cost * pos_source_menusalesitems.qty) as price, pos_source_menusalesitemdetails.UOMID as uom, pos_source_menusalesmaster.wareHouseAutoID as wareHouseID')
+                ->selectRaw('(pos_source_menusalesitemdetails.qty * itemassigned.wacValueLocal * pos_source_menusalesitems.qty) as amount, pos_source_menusalesmaster.menuSalesID as invoiceID, pos_source_menusalesmaster.shiftID as shiftId, pos_source_menusalesmaster.companyID as companyID, pos_source_menusalesitemdetails.itemAutoID as itemID, pos_source_menusalesitems.revenueGLAutoID as glCode,  itemmaster.financeCategoryMaster as categoryID, financeitemcategorysub.financeGLcodebBSSystemID as bsGLCode, financeitemcategorysub.financeGLcodePLSystemID as plGLCode, financeitemcategorysub.includePLForGRVYN as glYN, SUM(pos_source_menusalesitemdetails.qty * pos_source_menusalesitems.qty) as qty, SUM(pos_source_menusalesitemdetails.cost * pos_source_menusalesitems.qty) as price, pos_source_menusalesitemdetails.UOMID as uom, pos_source_menusalesmaster.wareHouseAutoID as wareHouseID')
                 ->join('pos_source_menusalesmaster', 'pos_source_menusalesmaster.menuSalesID', '=', 'pos_source_menusalesitems.menuSalesID')
                 ->join('pos_source_menusalesitemdetails', 'pos_source_menusalesitemdetails.menuSalesItemID', '=', 'pos_source_menusalesitems.menuSalesItemID')
                 ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'pos_source_menusalesitemdetails.itemAutoID')
@@ -2811,7 +2811,7 @@ class ShiftDetailsAPIController extends AppBaseController
         if($shiftDetails->posType == 1) {
 
             $data['invoiceEntries'] = DB::table('pos_gl_entries')
-                ->selectRaw('sum(amount) as Amount,COUNT(pos_gl_entries.shiftId) as count,pos_source_invoice.invoiceCode,pos_gl_entries.invoiceID,pos_gl_entries.shiftid, pos_source_invoice.transactionCurrencyDecimalPlaces')
+                ->selectRaw('CASE WHEN abs(sum(amount)) < 0.001 THEN 0 ELSE sum(amount) END as Amount, COUNT(pos_gl_entries.shiftId) as count,pos_source_invoice.invoiceCode,pos_gl_entries.invoiceID,pos_gl_entries.shiftid, pos_source_invoice.transactionCurrencyDecimalPlaces')
                 ->join('pos_source_invoice', 'pos_source_invoice.invoiceID', '=', 'pos_gl_entries.invoiceID')
                 ->where('pos_gl_entries.shiftId', $input['shiftId'])
                 ->groupBy('invoiceID')
@@ -2820,7 +2820,7 @@ class ShiftDetailsAPIController extends AppBaseController
         else if ($shiftDetails->posType == 2) {
 
             $data['invoiceEntries'] = DB::table('pos_gl_entries')
-                ->selectRaw('sum(amount) as Amount,COUNT(pos_gl_entries.shiftId) as count,pos_source_menusalesmaster.invoiceCode,pos_gl_entries.invoiceID,pos_gl_entries.shiftid,pos_source_menusalesmaster.transactionCurrencyDecimalPlaces')
+                ->selectRaw('CASE WHEN abs(sum(amount)) < 0.001 THEN 0 ELSE sum(amount) END as Amount, COUNT(pos_gl_entries.shiftId) as count,pos_source_menusalesmaster.invoiceCode,pos_gl_entries.invoiceID,pos_gl_entries.shiftid,pos_source_menusalesmaster.transactionCurrencyDecimalPlaces')
                 ->join('pos_source_menusalesmaster', 'pos_source_menusalesmaster.menuSalesID', '=', 'pos_gl_entries.invoiceID')
                 ->where('pos_gl_entries.shiftId', $input['shiftId'])
                 ->groupBy('invoiceID')
@@ -2832,7 +2832,7 @@ class ShiftDetailsAPIController extends AppBaseController
 
         if(!empty($outputMisMatch)) {
 
-            if(abs($outputMisMatch->Amount) < 0.00001){
+            if(abs($outputMisMatch->Amount) < 0.001){
                 $data['isMismatch'] = true;
             }
             else {
