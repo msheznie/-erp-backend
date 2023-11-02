@@ -1285,15 +1285,11 @@ class ShiftDetailsAPIController extends AppBaseController
 
                     }
 
-                    $documentApproved = DocumentApproved::where('documentSystemCode', $customerInvoiceDirects->custInvoiceDirectAutoID)->where('documentSystemID', 20)->first();
-
-                    $customerInvoiceDirects["approvalLevelID"] = 14;
-                    $customerInvoiceDirects["documentApprovedID"] = $documentApproved->documentApprovedID;
-                    $customerInvoiceDirects["documentSystemCode"] = $customerInvoiceDirects->custInvoiceDirectAutoID;
-                    $customerInvoiceDirects["rollLevelOrder"] = 1;
-                    $approve = \Helper::approveDocument($customerInvoiceDirects);
-                    if (!$approve["success"]) {
-                        return $this->sendError($approve["message"]);
+                    $documentApproveds = DocumentApproved::where('documentSystemCode', $customerInvoiceDirects->custInvoiceDirectAutoID)->where('documentSystemID', 20)->get();
+                    foreach ($documentApproveds as $documentApproved) {
+                        $documentApproved["approvedComments"] = "Approved by GPOS";
+                        $documentApproved["db"] = $db;
+                        \Helper::approveDocumentForApi($documentApproved);
                     }
 
                     if (!$resVat['status']) {
@@ -1638,18 +1634,13 @@ class ShiftDetailsAPIController extends AppBaseController
 
                     }
 
-                    $documentApproved = DocumentApproved::where('documentSystemCode', $customerInvoiceDirects->custInvoiceDirectAutoID)->where('documentSystemID', 20)->first();
+                    $documentApproveds = DocumentApproved::where('documentSystemCode', $customerInvoiceDirects->custInvoiceDirectAutoID)->where('documentSystemID', 20)->get();
 
-                    $customerInvoiceDirects["approvalLevelID"] = 14;
-                    $customerInvoiceDirects["documentApprovedID"] = $documentApproved->documentApprovedID;
-                    $customerInvoiceDirects["documentSystemCode"] = $customerInvoiceDirects->custInvoiceDirectAutoID;
-                    $customerInvoiceDirects["rollLevelOrder"] = 1;
-                    $approve = \Helper::approveDocument($customerInvoiceDirects);
-                    if (!$approve["success"]) {
-                        return $this->sendError($approve["message"]);
+                    foreach ($documentApproveds as $documentApproved) {
+                        $documentApproved["approvedComments"] = "Approved by RPOS";
+                        $documentApproved["db"] = $db;
+                        \Helper::approveDocumentForApi($documentApproved);
                     }
-
-
                     \Illuminate\Support\Facades\DB::commit();
                 }
                 $logs = POSFinanceLog::where('shiftId', $shiftId)->update(['status' => 2]);
