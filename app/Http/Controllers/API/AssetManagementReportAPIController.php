@@ -92,119 +92,127 @@ class AssetManagementReportAPIController extends AppBaseController
 
     public function validateReport(Request $request)
     {
-        $reportID = $request->reportID;
-        switch ($reportID) {
-            case 'AMAR':
-                $validator = '';
-                if ($request->reportTypeID == 'ARD') { // Asset Register Detail
+       
+        try {
+
+            $reportID = $request->reportID;
+            switch ($reportID) {
+                case 'AMAR':
+                    $validator = '';
+                    if ($request->reportTypeID == 'ARD') { // Asset Register Detail
+                        $validator = \Validator::make($request->all(), [
+                            'reportTypeID' => 'required',
+                            'fromDate' => 'required',
+                            'assetCategory' => 'required',
+                            'typeID' => 'required'
+                        ]);
+                    } else if ($request->reportTypeID == 'ARS') { // Asset Register Summary
+                        $validator = \Validator::make($request->all(), [
+                            'reportTypeID' => 'required',
+                            'financePeriod' => 'required',
+                            'financeYear' => 'required',
+                            'assetCategory' => 'required',
+                            'currencyID' => 'required',
+                            'typeID' => 'required'
+                        ]);
+                    } else if ($request->reportTypeID == 'ARD2') { // Asset Register Detail 2
+                        $validator = \Validator::make($request->all(), [
+                            'reportTypeID' => 'required',
+                            'fromMonth' => 'required',
+                            'toMonth' => 'required',
+                            'year' => 'required',
+                            'assetCategory' => 'required',
+                            'currencyID' => 'required',
+                            'typeID' => 'required'
+                        ]);
+                    } else if ($request->reportTypeID == 'ARD3') { // Asset Register Detail 3
+                        $validator = \Validator::make($request->all(), [
+                            'reportTypeID' => 'required',
+                            'fromDate' => 'required',
+                            'assetCategory' => 'required',
+                            'currencyID' => 'required',
+                            'typeID' => 'required'
+                        ]);
+                    }else if ($request->reportTypeID == 'ARGD') { // Asset Register Grouped Detail
                     $validator = \Validator::make($request->all(), [
                         'reportTypeID' => 'required',
                         'fromDate' => 'required',
                         'assetCategory' => 'required',
                         'typeID' => 'required'
                     ]);
-                } else if ($request->reportTypeID == 'ARS') { // Asset Register Summary
+                }
+    
+                    if ($validator->fails()) {
+                        return $this->sendError($validator->messages(), 422);
+                    }
+                    break;
+                case 'AMAA':
                     $validator = \Validator::make($request->all(), [
+                        'fromDate' => 'required',
+                        'toDate' => 'required|date|after_or_equal:fromDate',
                         'reportTypeID' => 'required',
-                        'financePeriod' => 'required',
-                        'financeYear' => 'required',
-                        'assetCategory' => 'required',
-                        'currencyID' => 'required',
-                        'typeID' => 'required'
                     ]);
-                } else if ($request->reportTypeID == 'ARD2') { // Asset Register Detail 2
+    
+                    if ($validator->fails()) {
+                        return $this->sendError($validator->messages(), 422);
+                    }
+                    break;
+                case 'AMAD':
                     $validator = \Validator::make($request->all(), [
                         'reportTypeID' => 'required',
-                        'fromMonth' => 'required',
-                        'toMonth' => 'required',
+                        'fromDate' => 'required',
+                        'toDate' => 'required|date|after_or_equal:fromDate'
+                    ]);
+    
+                    if ($validator->fails()) {
+                        return $this->sendError($validator->messages(), 422);
+                    }
+                    break;
+                case 'AMADR':
+                    $validator = \Validator::make($request->all(), [
+                        'reportTypeID' => 'required',
                         'year' => 'required',
-                        'assetCategory' => 'required',
-                        'currencyID' => 'required',
-                        'typeID' => 'required'
+                        'month' => 'required',
+                        'currencyID' => 'required'
                     ]);
-                } else if ($request->reportTypeID == 'ARD3') { // Asset Register Detail 3
+    
+                    if ($validator->fails()) {
+                        return $this->sendError($validator->messages(), 422);
+                    }
+                    break;
+                case 'AMACWIP':
                     $validator = \Validator::make($request->all(), [
                         'reportTypeID' => 'required',
                         'fromDate' => 'required',
-                        'assetCategory' => 'required',
-                        'currencyID' => 'required',
-                        'typeID' => 'required'
+                        'toDate' => 'required|date|after_or_equal:fromDate',
+                        'currencyID' => 'required'
                     ]);
-                }else if ($request->reportTypeID == 'ARGD') { // Asset Register Grouped Detail
-                $validator = \Validator::make($request->all(), [
-                    'reportTypeID' => 'required',
-                    'fromDate' => 'required',
-                    'assetCategory' => 'required',
-                    'typeID' => 'required'
-                ]);
+    
+                    if ($validator->fails()) {
+                        return $this->sendError($validator->messages(), 422);
+                    }
+                    break;
+                 case 'AEA':
+                    $validator = \Validator::make($request->all(), [
+                        'fromDate' => 'required',
+                        'toDate' => 'required|date|after_or_equal:fromDate',
+                        'currencyID' => 'required',
+                        'glAccounts' => 'required',
+                        'assets' => 'required',
+                    ]);
+    
+                    if ($validator->fails()) {
+                        return $this->sendError($validator->messages(), 422);
+                    }
+                    break;
+                default:
+                    return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.report_id')]));
             }
 
-                if ($validator->fails()) {
-                    return $this->sendError($validator->messages(), 422);
-                }
-                break;
-            case 'AMAA':
-                $validator = \Validator::make($request->all(), [
-                    'fromDate' => 'required',
-                    'toDate' => 'required|date|after_or_equal:fromDate',
-                    'reportTypeID' => 'required',
-                ]);
-
-                if ($validator->fails()) {
-                    return $this->sendError($validator->messages(), 422);
-                }
-                break;
-            case 'AMAD':
-                $validator = \Validator::make($request->all(), [
-                    'reportTypeID' => 'required',
-                    'fromDate' => 'required',
-                    'toDate' => 'required|date|after_or_equal:fromDate'
-                ]);
-
-                if ($validator->fails()) {
-                    return $this->sendError($validator->messages(), 422);
-                }
-                break;
-            case 'AMADR':
-                $validator = \Validator::make($request->all(), [
-                    'reportTypeID' => 'required',
-                    'year' => 'required',
-                    'month' => 'required',
-                    'currencyID' => 'required'
-                ]);
-
-                if ($validator->fails()) {
-                    return $this->sendError($validator->messages(), 422);
-                }
-                break;
-            case 'AMACWIP':
-                $validator = \Validator::make($request->all(), [
-                    'reportTypeID' => 'required',
-                    'fromDate' => 'required',
-                    'toDate' => 'required|date|after_or_equal:fromDate',
-                    'currencyID' => 'required'
-                ]);
-
-                if ($validator->fails()) {
-                    return $this->sendError($validator->messages(), 422);
-                }
-                break;
-             case 'AEA':
-                $validator = \Validator::make($request->all(), [
-                    'fromDate' => 'required',
-                    'toDate' => 'required|date|after_or_equal:fromDate',
-                    'currencyID' => 'required',
-                    'glAccounts' => 'required',
-                    'assets' => 'required',
-                ]);
-
-                if ($validator->fails()) {
-                    return $this->sendError($validator->messages(), 422);
-                }
-                break;
-            default:
-                return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.report_id')]));
+        } catch (\Exception $exception) {
+            return $this->sendError($exception->getMessage());
         }
+ 
     }
 
     /*generate report according to each report id*/
