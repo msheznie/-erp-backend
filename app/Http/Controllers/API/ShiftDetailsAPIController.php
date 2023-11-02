@@ -82,6 +82,7 @@ use App\Repositories\ShiftDetailsRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\Log;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use DB;
@@ -1637,16 +1638,29 @@ class ShiftDetailsAPIController extends AppBaseController
                     }
 
                     $documentApproveds = DocumentApproved::where('documentSystemCode', $customerInvoiceDirects->custInvoiceDirectAutoID)->where('documentSystemID', 20)->get();
-
+                    Log::useFiles(storage_path() . '/logs/approval_setup.log');
+                    $documentApproval = array();
                     foreach ($documentApproveds as $documentApproved) {
-                        $documentApproved["approvedComments"] = "Approved by RPOS";
-                        $documentApproved["db"] = $db;
-                        $approve = \Helper::approveDocument($documentApproved);
+
+                        $documentApproval["approvalLevelID"] = $documentApproved->approvalLevelID;
+                        $documentApproval["documentApprovedID"] = $documentApproved->documentApprovedID;
+                        $documentApproval["documentSystemCode"] = $customerInvoiceDirects->custInvoiceDirectAutoID;
+                        $documentApproval["documentSystemID"] = 20;
+                        $documentApproval["companySystemID"] = $customerInvoiceDirects->companySystemID;
+                        $documentApproval["approvedComments"] = "Approved by RPOS";
+                        $documentApproval["rollLevelOrder"] = $documentApproved->rollLevelOrder;
+                        $documentApproval["db"] = $db;
+
+
+                        $approve = \Helper::approveDocument($documentApproval);
                         if (!$approve["success"]) {
                             return $this->sendError($approve["message"]);
                         }
+                        Log::info('---- Doc Approval -----' . $documentApproveds);
 
                     }
+
+
                     \Illuminate\Support\Facades\DB::commit();
                 }
                 $logs = POSFinanceLog::where('shiftId', $shiftId)->update(['status' => 2]);
