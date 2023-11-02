@@ -2020,6 +2020,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             }
 
         ])->findWithoutFail($id);
+        
 
         if (empty($customerInvoiceDirect)) {
             return $this->sendError('Customer Invoice Direct not found', 500);
@@ -2037,6 +2038,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             ->exists();
 
         $customerInvoiceDirect->isVATEligible = TaxService::checkCompanyVATEligible($customerInvoiceDirect->companySystemID);
+        
         return $this->sendResponse($customerInvoiceDirect, 'Customer Invoice Direct retrieved successfully');
     }
 
@@ -2469,8 +2471,8 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 $addToCusInvDetails[$x]['unitOfMeasure'] = 7;
                 $addToCusInvDetails[$x]['invoiceQty'] = 1;
                 $addToCusInvDetails[$x]['unitCost'] = 1;
-                $addToCusInvDetails[$x]['invoiceAmount'] = round($updateInvoice->totAmount, $transDecimalPlace);
-                $addToCusInvDetails[$x]['VATAmount'] = round($updateInvoice->totalVatAmount, $transDecimalPlace);
+                $addToCusInvDetails[$x]['invoiceAmount'] = $updateInvoice->totAmount;
+                $addToCusInvDetails[$x]['VATAmount'] = $updateInvoice->totalVatAmount;
                 $addToCusInvDetails[$x]['VATAmountLocal'] = \Helper::roundValue($companyCurrencyConversionVAT['localAmount']);
                 $addToCusInvDetails[$x]['VATAmountRpt'] = \Helper::roundValue($companyCurrencyConversionVAT['reportingAmount']);
                 $vatPercentage = 0;
