@@ -1594,9 +1594,9 @@ class ShiftDetailsAPIController extends AppBaseController
 
                         $addToCusInvDetails['unitOfMeasure'] = $item->unit;
                         $addToCusInvDetails['invoiceQty'] = $item->qty;
-                        $addToCusInvDetails['VATAmount'] = $item->totalMenuTaxAmount * $item->qty;
-                        $addToCusInvDetails['VATAmountLocal'] = $item->totalMenuTaxAmount * $item->qty / $master->localCurrencyER;
-                        $addToCusInvDetails['VATAmountRpt'] = $item->totalMenuTaxAmount * $item->qty / $master->companyReportingER;
+                        $addToCusInvDetails['VATAmount'] = $item->totalMenuTaxAmount;
+                        $addToCusInvDetails['VATAmountLocal'] = $item->totalMenuTaxAmount / $master->localCurrencyER;
+                        $addToCusInvDetails['VATAmountRpt'] = $item->totalMenuTaxAmount / $master->companyReportingER;
 
                         if ($master->isVatEligible) {
                             $vatDetails = TaxService::getDefaultVAT($master->companySystemID, $master->customerID, 0);
