@@ -1289,6 +1289,7 @@ class ShiftDetailsAPIController extends AppBaseController
                     $documentApproveds = DocumentApproved::where('documentSystemCode', $customerInvoiceDirects->custInvoiceDirectAutoID)->where('documentSystemID', 20)->get();
                     foreach ($documentApproveds as $documentApproved) {
                         $documentApproved["approvedComments"] = "Approved by GPOS";
+                        $documentApproved["db"] = $db;
                         $approve = \Helper::approveDocument($documentApproved);
                         if (!$approve["success"]) {
                             return $this->sendError($approve["message"]);
@@ -1648,6 +1649,7 @@ class ShiftDetailsAPIController extends AppBaseController
                         $documentApproval["companySystemID"] = $customerInvoiceDirects->companySystemID;
                         $documentApproval["approvedComments"] = "Approved by RPOS";
                         $documentApproval["rollLevelOrder"] = $documentApproved->rollLevelOrder;
+                        $documentApproval["db"] = $db;
 
 
                         $approve = \Helper::approveDocument($documentApproval);
