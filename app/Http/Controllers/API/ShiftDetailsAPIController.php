@@ -696,6 +696,9 @@ class ShiftDetailsAPIController extends AppBaseController
         $isInsufficient = 0;
 
         $shiftDetails = POSSOURCEShiftDetails::where('shiftID',$shiftId)->first();
+
+        POSInsufficientItems::where('shiftId', $shiftId)->delete();
+
         $qtyArray = array();
         if($shiftDetails->posType == 1) {
             $invItemsPLBS = DB::table('pos_source_invoicedetail')
@@ -719,8 +722,9 @@ class ShiftDetailsAPIController extends AppBaseController
                 ->join('itemassigned', 'itemassigned.itemCodeSystem', '=', 'itemmaster.itemCodeSystem')
                 ->where('pos_source_menusalesmaster.shiftID', $shiftId)
                 ->where('itemassigned.companySystemID', $shiftDetails->companyID)
+                ->groupBy('itemID')
                 ->get();
-
+            
         }
         
         foreach ($invItemsPLBS as $gl) {
@@ -734,10 +738,7 @@ class ShiftDetailsAPIController extends AppBaseController
                 );
 
 
-                $isItemGL = POSInsufficientItems::with(['warehouse'])->where('shiftId', $shiftId)->first();
-                if (empty($isItemGL)) {
                     POSInsufficientItems::insert($itemArray);
-                }
 
                 $sumQty = ErpItemLedger::where('itemSystemCode', $gl->itemID)->where('companySystemID', $shiftDetails->companyID)->where('wareHouseSystemCode', $gl->wareHouseID)->sum('inOutQty');
                 $item = ItemMaster::where('itemCodeSystem', $gl->itemID)->where('primaryCompanySystemID', $shiftDetails->companyID)->first();
