@@ -2471,7 +2471,14 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 $addToCusInvDetails[$x]['unitOfMeasure'] = 7;
                 $addToCusInvDetails[$x]['invoiceQty'] = 1;
                 $addToCusInvDetails[$x]['unitCost'] = 1;
-                $addToCusInvDetails[$x]['invoiceAmount'] = $updateInvoice->totAmount;
+                $addToCusInvDetails[$x]['isDiscount'] = $updateInvoice->isDiscount;
+                if($updateInvoice->isDiscount) {
+                    $addToCusInvDetails[$x]['invoiceAmount'] = -$updateInvoice->totAmount;
+
+                }else {
+                    $addToCusInvDetails[$x]['invoiceAmount'] = $updateInvoice->totAmount;
+
+                }
                 $addToCusInvDetails[$x]['VATAmount'] = $updateInvoice->totalVatAmount;
                 $addToCusInvDetails[$x]['VATAmountLocal'] = \Helper::roundValue($companyCurrencyConversionVAT['localAmount']);
                 $addToCusInvDetails[$x]['VATAmountRpt'] = \Helper::roundValue($companyCurrencyConversionVAT['reportingAmount']);
@@ -2489,14 +2496,23 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
                 $addToCusInvDetails[$x]['localCurrency'] = $master->localCurrencyID;
                 $addToCusInvDetails[$x]['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
-                $addToCusInvDetails[$x]['localAmount'] = \Helper::roundValue($companyCurrencyConversion['localAmount']);
+                if($updateInvoice->isDiscount) { 
+                    $addToCusInvDetails[$x]['localAmount'] = -$companyCurrencyConversion['localAmount'];
+                }else {
+                    $addToCusInvDetails[$x]['localAmount'] = $companyCurrencyConversion['localAmount'];
+                }
                 $addToCusInvDetails[$x]['comRptCurrency'] = $master->companyReportingCurrencyID;
                 $addToCusInvDetails[$x]['comRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
-                $addToCusInvDetails[$x]['comRptAmount'] = \Helper::roundValue($companyCurrencyConversion['reportingAmount']);
+                if($updateInvoice->isDiscount) { 
+                    $addToCusInvDetails[$x]['comRptAmount'] = -$companyCurrencyConversion['reportingAmount'];
+
+                }else {
+                    $addToCusInvDetails[$x]['comRptAmount'] = $companyCurrencyConversion['reportingAmount'];
+
+                }
                 $addToCusInvDetails[$x]['clientContractID'] = $updateInvoice->contractID;
                 $addToCusInvDetails[$x]['contractID'] = $contract->contractUID;
                 $addToCusInvDetails[$x]['performaMasterID'] = $performaMasterID;
-                $addToCusInvDetails[$x]['isDiscount'] = $updateInvoice->isDiscount;
 
                 $x++;
             }
