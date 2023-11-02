@@ -1289,7 +1289,10 @@ class ShiftDetailsAPIController extends AppBaseController
                     foreach ($documentApproveds as $documentApproved) {
                         $documentApproved["approvedComments"] = "Approved by GPOS";
                         $documentApproved["db"] = $db;
-                        \Helper::approveDocumentForApi($documentApproved);
+                        $approve = \Helper::approveDocument($documentApproved);
+                        if (!$approve["success"]) {
+                            return $this->sendError($approve["message"]);
+                        }
                     }
 
                     if (!$resVat['status']) {
@@ -1332,7 +1335,6 @@ class ShiftDetailsAPIController extends AppBaseController
 
 
             \Illuminate\Support\Facades\DB::beginTransaction();
-
             try {
                 $invoices = DB::table('pos_source_menusalesmaster')
                     ->selectRaw('pos_source_menusalesmaster.*')
@@ -1639,7 +1641,11 @@ class ShiftDetailsAPIController extends AppBaseController
                     foreach ($documentApproveds as $documentApproved) {
                         $documentApproved["approvedComments"] = "Approved by RPOS";
                         $documentApproved["db"] = $db;
-                        \Helper::approveDocumentForApi($documentApproved);
+                        $approve = \Helper::approveDocument($documentApproved);
+                        if (!$approve["success"]) {
+                            return $this->sendError($approve["message"]);
+                        }
+
                     }
                     \Illuminate\Support\Facades\DB::commit();
                 }
