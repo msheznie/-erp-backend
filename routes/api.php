@@ -219,7 +219,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('srp_erp_document_attachments', 'SrpErpDocumentAttachmentsAPIController');
             Route::get('get_srp_erp_document_attachments', 'SrpErpDocumentAttachmentsAPIController@geDocumentAttachments');
 
-            Route::post('getAllSupplierMasterApproval', 'SupplierMasterAPIController@getAllSupplierMasterApproval');
             Route::post('getAllCustomerMasterApproval', 'CustomerMasterAPIController@getAllCustomerMasterApproval');
             Route::post('getAllChartOfAccountApproval', 'ChartOfAccountAPIController@getAllChartOfAccountApproval');
 
@@ -229,7 +228,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::post('approveSupplier', 'SupplierMasterAPIController@approveSupplier');
             Route::post('approveRegisteredSupplier', 'SupplierMasterAPIController@approveRegisteredSupplier');
-            Route::post('rejectSupplier', 'SupplierMasterAPIController@rejectSupplier');
             Route::post('rejectRegisteredSupplier', 'SupplierMasterAPIController@rejectRegisteredSupplier');
 
             Route::post('getAllItemsMasterApproval', 'ItemMasterAPIController@getAllItemsMasterApproval')->name("Get All Items Master Approval");

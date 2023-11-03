@@ -380,3 +380,10 @@ Route::group([],function (){
     Route::post('updateReasonCodeMaster', 'ReasonCodeMasterAPIController@update')->name("Update reason code master");
     Route::get('getAllGLCodesForReasonMaster', 'ReasonCodeMasterAPIController@getAllGLCodes')->name("Get all gl codes for reason master");
 });
+
+//Supplier
+Route::group([],function (){
+    Route::post('getAllSupplierMasterApproval', 'SupplierMasterAPIController@getAllSupplierMasterApproval')->name("Get all supplier master approval");
+    Route::post('rejectSupplier', 'SupplierMasterAPIController@rejectSupplier')->name("Reject Supplier");
+    
+});
