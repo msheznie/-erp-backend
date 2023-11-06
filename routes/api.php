@@ -221,7 +221,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::post('getAllSupplierMasterApproval', 'SupplierMasterAPIController@getAllSupplierMasterApproval');
             Route::post('getAllCustomerMasterApproval', 'CustomerMasterAPIController@getAllCustomerMasterApproval');
-            Route::post('getAllChartOfAccountApproval', 'ChartOfAccountAPIController@getAllChartOfAccountApproval');
+       
 
             Route::resource('procument_order_details', 'ProcumentOrderDetailAPIController');
             
@@ -236,7 +236,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('rejectCustomer', 'CustomerMasterAPIController@rejectCustomer');
 
             Route::post('approveChartOfAccount', 'ChartOfAccountAPIController@approveChartOfAccount');
-            Route::post('rejectChartOfAccount', 'ChartOfAccountAPIController@rejectChartOfAccount');
 
             Route::post('approveProcurementOrder', 'ProcumentOrderAPIController@approveProcurementOrder');
             

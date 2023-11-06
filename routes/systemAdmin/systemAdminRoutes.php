@@ -387,3 +387,13 @@ Route::group([],function (){
 Route::group([],function (){
     Route::post('getAllItemsMasterApproval', 'ItemMasterAPIController@getAllItemsMasterApproval')->name("Get All Items Master Approval");
 });
+
+
+//Chart of Account
+Route::group([],function (){
+	Route::post('getAllChartOfAccountApproval', 'ChartOfAccountAPIController@getAllChartOfAccountApproval')->name("Get All Chart OF Account Approval");
+	Route::post('rejectChartOfAccount', 'ChartOfAccountAPIController@rejectChartOfAccount')->name("Reject Chart OF Account");
+
+});
+
+
