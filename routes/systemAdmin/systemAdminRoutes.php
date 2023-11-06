@@ -393,3 +393,9 @@ Route::group([],function (){
     Route::post('getAllSupplierMasterApproval', 'SupplierMasterAPIController@getAllSupplierMasterApproval')->name("Get all supplier master approval");
     Route::post('rejectSupplier', 'SupplierMasterAPIController@rejectSupplier')->name("Reject Supplier");
 });
+
+//Customer
+Route::group([],function (){
+    Route::post('getAllCustomerMasterApproval', 'CustomerMasterAPIController@getAllCustomerMasterApproval')->name("Get all customer master approval");
+    Route::post('rejectCustomer', 'CustomerMasterAPIController@rejectCustomer')->name("Reject Customer");
+});
