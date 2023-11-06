@@ -219,8 +219,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('srp_erp_document_attachments', 'SrpErpDocumentAttachmentsAPIController');
             Route::get('get_srp_erp_document_attachments', 'SrpErpDocumentAttachmentsAPIController@geDocumentAttachments');
 
-            Route::post('getAllChartOfAccountApproval', 'ChartOfAccountAPIController@getAllChartOfAccountApproval');
-
             Route::resource('procument_order_details', 'ProcumentOrderDetailAPIController');
             
             Route::post('updatePoPaymentTermsLogistic', 'PoAdvancePaymentAPIController@updatePoPaymentTermsLogistic');
@@ -232,7 +230,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('approveCustomer', 'CustomerMasterAPIController@approveCustomer');
 
             Route::post('approveChartOfAccount', 'ChartOfAccountAPIController@approveChartOfAccount');
-            Route::post('rejectChartOfAccount', 'ChartOfAccountAPIController@rejectChartOfAccount');
 
             Route::post('approveProcurementOrder', 'ProcumentOrderAPIController@approveProcurementOrder');
             
