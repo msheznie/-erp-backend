@@ -229,9 +229,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('approveSupplier', 'SupplierMasterAPIController@approveSupplier');
             Route::post('approveRegisteredSupplier', 'SupplierMasterAPIController@approveRegisteredSupplier');
             Route::post('rejectRegisteredSupplier', 'SupplierMasterAPIController@rejectRegisteredSupplier');
-
-            Route::post('getAllItemsMasterApproval', 'ItemMasterAPIController@getAllItemsMasterApproval')->name("Get All Items Master Approval");
-
+            
             Route::post('approveCustomer', 'CustomerMasterAPIController@approveCustomer');
             Route::post('rejectCustomer', 'CustomerMasterAPIController@rejectCustomer');
 
