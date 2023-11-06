@@ -17,6 +17,7 @@ use App\Models\DocumentMaster;
 use App\Models\ProcumentOrder;
 use App\Models\PurchaseOrderDetails;
 use App\Models\PurchaseRequest;
+use App\Models\SupplierRegistrationLink;
 use App\Models\TenderBidNegotiation;
 use App\Models\TenderNegotiation;
 use App\Models\EmployeesDepartment;
@@ -4062,7 +4063,31 @@ WHERE
             $dataEmail['emailAlertMessage'] = $body;
             $sendEmail = \Email::sendEmailErp($dataEmail);
 
-            DB::commit();
+            $bidSubmittedSuppliers = BidSubmissionMaster::select('supplier_registration_id')
+                ->where('tender_id', $tenderId)
+                ->where('supplier_registration_id', '!=', $tender->ranking_supplier->supplier->id)
+                ->groupBy('supplier_registration_id')
+                ->get()
+                ->pluck('supplier_registration_id')
+                ->toArray();
+
+            $supplierDetails = SupplierRegistrationLink::select('id', 'name', 'email')->whereIn('id', $bidSubmittedSuppliers)->get();
+            
+            if (sizeof($supplierDetails) > 0 && $tender->document_type === 0) {
+                foreach ($supplierDetails as $bid) {
+                    $name = $bid->name;
+                    $company = $tender->company->CompanyName;
+                    $documentType = $this->getDocumentType($tender->document_type);
+                    $body = "Hi $name <br><br> Thank you for your participation in our tender process. We appreciate the effort and time you invested in your proposal. After careful consideration, we regret to inform you that your bid has not been selected for award.  <br><br>  We received several competitive proposals, making our decision a challenging one. We hope for future opportunities to collaborate. <br><br> Thank you once again for your interest in working with us. <br><br> Best Regards,<br>$company.";
+                    $dataEmail['empEmail'] = $bid->email;
+                    $dataEmail['companySystemID'] = $tender->company_id;
+                    $dataEmail['alertMessage'] = "$documentType Regret";
+                    $dataEmail['emailAlertMessage'] = $body;
+                    $sendEmail = \Email::sendEmailErp($dataEmail);
+                }
+            }
+
+           DB::commit();
             return $this->sendResponse($tender, 'Email Send successfully');
         } catch (\Exception $e) {
             DB::rollback();
@@ -4335,7 +4360,7 @@ WHERE
         $query = TenderNegotiation::select('srm_tender_master_id','status','approved_yn','confirmed_yn','comments','started_by','no_to_approve','currencyId','id')->with(['area' => function ($query)  use ($input) {
             $query->select('pricing_schedule','technical_evaluation','tender_documents','id','tender_negotiation_id');
         },'tenderMaster' => function ($q) use ($input){ 
-            $q->select('title','description','currency_id','envelop_type_id','tender_code','stage','bid_opening_date','technical_bid_opening_date','commerical_bid_opening_date','tender_type_id','id');
+            $q->select('title','description','currency_id','envelop_type_id','tender_code','stage','bid_opening_date','technical_bid_opening_date','commerical_bid_opening_date','tender_type_id','id', 'is_negotiation_closed');
             $q->with(['currency' => function ($c) use ($input) {
                 $c->select('CurrencyName','currencyID','CurrencyCode');
             },'tender_type' => function ($t) {
@@ -4346,7 +4371,16 @@ WHERE
         }]);
 
         if (array_key_exists('tenderNegotiationSatus', $input) && isset($input['tenderNegotiationSatus'])) {
+            if ($input['tenderNegotiationSatus'] == 3) {
+                $query->whereHas('tenderMaster', function ($q) {
+                    $q->where('is_negotiation_closed', 1);
+                });
+            } else {
                 $query->where('status', $input['tenderNegotiationSatus']);
+                $query->whereHas('tenderMaster', function ($q) {
+                    $q->where('is_negotiation_closed', 0);
+                });
+            }
         }
 
         
