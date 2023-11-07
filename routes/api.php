@@ -87,7 +87,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('checkUser', 'UserAPIController@checkUser');
 
             Route::get('getSuppliersByCompany', 'SupplierMasterAPIController@getSuppliersByCompany');
-            Route::post('getAllRegisteredSupplierApproval', 'SupplierMasterAPIController@getAllRegisteredSupplierApproval');
 
             Route::resource('registered_supplier_currencies', 'RegisteredSupplierCurrencyAPIController');
             Route::resource('registered_bank_memo_suppliers', 'RegisteredBankMemoSupplierAPIController');
@@ -224,8 +223,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('updatePoPaymentTermsLogistic', 'PoAdvancePaymentAPIController@updatePoPaymentTermsLogistic');
 
             Route::post('approveSupplier', 'SupplierMasterAPIController@approveSupplier');
-            Route::post('approveRegisteredSupplier', 'SupplierMasterAPIController@approveRegisteredSupplier');
-            Route::post('rejectRegisteredSupplier', 'SupplierMasterAPIController@rejectRegisteredSupplier');
             
             Route::post('approveCustomer', 'CustomerMasterAPIController@approveCustomer');
 

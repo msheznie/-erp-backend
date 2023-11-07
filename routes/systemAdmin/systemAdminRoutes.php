@@ -388,14 +388,12 @@ Route::group([],function (){
     Route::post('getAllItemsMasterApproval', 'ItemMasterAPIController@getAllItemsMasterApproval')->name("Get All Items Master Approval");
 });
 
-
 //Chart of Account
 Route::group([],function (){
 	Route::post('getAllChartOfAccountApproval', 'ChartOfAccountAPIController@getAllChartOfAccountApproval')->name("Get All Chart OF Account Approval");
 	Route::post('rejectChartOfAccount', 'ChartOfAccountAPIController@rejectChartOfAccount')->name("Reject Chart OF Account");
 
 });
-
 
 //Supplier
 Route::group([],function (){
@@ -407,4 +405,11 @@ Route::group([],function (){
 Route::group([],function (){
     Route::post('getAllCustomerMasterApproval', 'CustomerMasterAPIController@getAllCustomerMasterApproval')->name("Get all customer master approval");
     Route::post('rejectCustomer', 'CustomerMasterAPIController@rejectCustomer')->name("Reject Customer");
+});
+
+//Registered Supplier
+Route::group([],function (){
+    Route::post('getAllRegisteredSupplierApproval', 'SupplierMasterAPIController@getAllRegisteredSupplierApproval')->name("Get all registered supplier approval");
+    Route::post('approveRegisteredSupplier', 'SupplierMasterAPIController@approveRegisteredSupplier')->name("Approve registered supplier");
+    Route::post('rejectRegisteredSupplier', 'SupplierMasterAPIController@rejectRegisteredSupplier')->name("Reject registered supplier");
 });
