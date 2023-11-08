@@ -1833,6 +1833,8 @@ WHERE
                             $invDetail_arr['localCurrencyER'] = $quotationMaster->companyLocalExchangeRate;
                             $invDetail_arr['reportingCurrencyID'] = $quotationMaster->companyReportingCurrencyID;
                             $invDetail_arr['reportingCurrencyER'] = $quotationMaster->companyReportingExchangeRate;
+                            $invDetail_arr['part_no'] = $item->secondaryItemCode;
+
 
                             $invDetail_arr['itemUnitOfMeasure'] = $new['unitOfMeasureID'];
                             $invDetail_arr['unitOfMeasureIssued'] = $new['unitOfMeasureID'];
