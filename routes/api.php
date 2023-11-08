@@ -244,14 +244,11 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::post('reportSpentAnalysisDrilldownExport', 'ProcumentOrderAPIController@reportSpentAnalysisDrilldownExport');
             
-            Route::post('reportPrToGrv', 'PurchaseRequestAPIController@reportPrToGrv');
-            Route::post('exportPrToGrvReport', 'PurchaseRequestAPIController@exportPrToGrvReport');
 
             Route::post('reportPoToPayment', 'ProcumentOrderAPIController@reportPoToPayment');
             Route::post('exportPoToPaymentReport', 'ProcumentOrderAPIController@exportPoToPaymentReport');
             Route::get('reportPoToPaymentFilterOptions', 'ProcumentOrderAPIController@reportPoToPaymentFilterOptions');
 
-            Route::get('reportPrToGrvFilterOptions', 'PurchaseRequestAPIController@reportPrToGrvFilterOptions');
 
             Route::get('exchangerate', 'ApprovalLevelAPIController@confirmDocTest');
 
