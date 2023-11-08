@@ -316,7 +316,17 @@ class TenderMaster extends Model
         'tender_edit_version_id',
         'is_negotiation_started',
         'tender_edit_confirm_id',
-        'negotiation_published'
+        'negotiation_published',
+        'negotiation_code',
+        'negotiation_serial_no',
+        'is_negotiation_closed',
+        'negotiation_commercial_ranking_line_item_status',
+        'negotiation_commercial_ranking_comment',
+        'negotiation_combined_ranking_status',
+        'negotiation_award_comment',
+        'negotiation_is_awarded',
+        'negotiation_doc_verify_comment',
+        'negotiation_doc_verify_status'
     ];
     /**
      * The attributes that should be casted to native types.
@@ -389,7 +399,17 @@ class TenderMaster extends Model
         'published_at' => 'datetime',
         'document_type' => 'integer',
         'is_negotiation_started'=> 'integer',
-        'negotiation_published'=> 'integer'
+        'negotiation_published'=> 'integer',
+        'negotiation_code'=> 'string',
+        'negotiation_serial_no'=> 'integer',
+        'is_negotiation_closed'=> 'integer',
+        'negotiation_commercial_ranking_line_item_status' => 'integer',
+        'negotiation_commercial_ranking_comment' => 'string',
+        'negotiation_combined_ranking_status' => 'integer',
+        'negotiation_award_comment' => 'string',
+        'negotiation_is_awarded' => 'integer',
+        'negotiation_doc_verify_comment' => 'string',
+        'negotiation_doc_verify_status'  => 'integer'
     ];
 
     /**

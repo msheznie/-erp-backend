@@ -97,7 +97,8 @@ class BidEvaluationSelection extends Model
         'status',
         'tender_id',
         'updated_by',
-        'remarks'
+        'remarks',
+        'is_negotiation'
     ];
 
     /**
@@ -112,7 +113,8 @@ class BidEvaluationSelection extends Model
         'id' => 'integer',
         'status' => 'integer',
         'tender_id' => 'integer',
-        'updated_by' => 'integer'
+        'updated_by' => 'integer',
+        'is_negotiation' => 'integer'
     ];
 
     /**
