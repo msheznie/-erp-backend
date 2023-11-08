@@ -389,7 +389,7 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
                             $this->sendSupplierEmailInvitation($email, $companyName, $urlString, $tenderId, $companyId, 1, $rfx);
                         } else if ($isExist['STATUS'] === 0){
                             $loginUrl = env('SRM_LINK') . $isExist['token'] . '/' . $apiKey;
-                            $updateRec['token_expiry_date_time'] = Carbon::now()->addHours(48);
+                            $updateRec['token_expiry_date_time'] = Carbon::now()->addHours(96);
                             $isUpdated = SupplierRegistrationLink::where('id', $isExist['id'])->update($updateRec);
                             if($isUpdated){
                                 $this->sendSupplierEmailInvitation($email, $companyName, $loginUrl, $tenderId, $companyId, 1, $rfx);
@@ -472,7 +472,7 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
                         ->update(['mail_sent' => 1, 'registration_link_id' => $isExist['id']]);
                 } elseif ($isExist['STATUS'] === 0) {
                     $loginUrl = env('SRM_LINK') . $isExist['token'] . '/' . $apiKey;
-                    $updateRec['token_expiry_date_time'] = Carbon::now()->addHours(48);
+                    $updateRec['token_expiry_date_time'] = Carbon::now()->addHours(96);
                     $isUpdated = SupplierRegistrationLink::where('id', $isExist['id'])->update($updateRec);
                     if($isUpdated){
                         $this->sendSupplierEmailInvitation($email, $companyName, $loginUrl, $tenderId, $companySystemId, 1, $rfx);
@@ -520,7 +520,7 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
         } else {
             Mail::to($emailFormatted)->send(new EmailForQueuing("Registration Link", "Dear Supplier," . "<br /><br />" . "
             You are invited to participate in a new ".$docType.", " . $tenderMaster['title'] . ".
-            Please find the below link to register at " . $companyName . " supplier portal. It will expire in 48 hours. " . "<br /><br />" . "Click Here: " . "</b><a href='" . $loginUrl . "'>" . $loginUrl . "</a><br /><br />" . " Thank You" . "<br /><br /><b>"));
+            Please find the below link to register at " . $companyName . " supplier portal. It will expire in 96 hours. " . "<br /><br />" . "Click Here: " . "</b><a href='" . $loginUrl . "'>" . $loginUrl . "</a><br /><br />" . " Thank You" . "<br /><br /><b>"));
         }
     }
     public function getNotSentEmail(Request $request){ 
