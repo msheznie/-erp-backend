@@ -52,16 +52,20 @@ class ItemWACTriggerJob implements ShouldQueue
 
 
             $queryResult = DB::table('itemassigned')
-                ->select('itemassigned.itemCodeSystem', 'latest_erp.wacLocal')
-                ->join(DB::raw('(SELECT itemLedgerAutoID, itemSystemCode, wacLocal FROM erp_itemledger WHERE (itemSystemCode, itemLedgerAutoID) IN (SELECT itemSystemCode, MAX(itemLedgerAutoID) FROM erp_itemledger GROUP BY itemSystemCode)) as latest_erp'), function ($join) {
-                    $join->on('itemassigned.itemCodeSystem', '=', 'latest_erp.itemSystemCode');
-                })->where('itemassigned.isActive', 1)->where('itemassigned.isAssigned', -1)->where('itemassigned.companySystemID', $integrationKey->company_id)
+                ->select('itemCodeSystem', 'companySystemID')->where('itemassigned.isActive', 1)->where('itemassigned.isAssigned', -1)->where('itemassigned.companySystemID', $integrationKey->company_id)
                 ->get();
 
+
             $data = $queryResult->map(function ($item) {
+
+                $data = array('companySystemID' => $item->companySystemID,
+                    'itemCodeSystem' => $item->itemCodeSystem,
+                    'wareHouseId' => null);
+
+                $itemCurrentCostAndQty = \Inventory::itemCurrentCostAndQty($data);
                 return [
                     'itemAutoID' => $item->itemCodeSystem,
-                    'wacAmount' => $item->wacLocal,
+                    'wacAmount' => $itemCurrentCostAndQty['wacValueLocal'],
                 ];
             });
 
