@@ -78,9 +78,7 @@ class ItemWACTriggerJob implements ShouldQueue
                 ];
                 $res = $client->request('POST', $integrationKey->api_external_url . '/update_item_wac_amount', [
                     'headers' => $headers,
-                    'json' => [
-                        'data' => $result
-                    ]
+                    'json' =>  $result
                 ]);
                 $json = $res->getBody();
 
