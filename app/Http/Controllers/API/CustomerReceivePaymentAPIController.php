@@ -447,6 +447,10 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             return $this->sendError('Receipt Voucher not found');
         }
 
+        if(empty($input['projectID'])){
+            $input['projectID'] = null;
+        }
+
         $documentCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($customerReceivePayment->custTransactionCurrencyID);
 
         $input['payment_type_id'] = isset($input['paymentType'][0]) ?  $input['paymentType'][0]: $input['paymentType'];
