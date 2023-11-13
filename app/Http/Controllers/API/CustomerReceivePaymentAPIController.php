@@ -2654,8 +2654,8 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 $join->on('erp_bankledger.documentSystemCode', '=', 'erp_customerreceivepayment.custReceivePaymentAutoID');
                 $join->on('erp_bankledger.companySystemID', '=', 'erp_customerreceivepayment.companySystemID');
                 $join->on('erp_bankledger.documentSystemID', '=', 'erp_customerreceivepayment.documentSystemID');
-            })
-            ->where('erp_customerreceivepayment.documentSystemID', $input['documentId'])->distinct();
+            })->distinct()
+            ->where('erp_customerreceivepayment.documentSystemID', $input['documentId']);
 
         if (array_key_exists('confirmedYN', $input)) {
             if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
