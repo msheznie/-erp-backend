@@ -253,10 +253,7 @@
                     </b><br>
                     
                     <b>Contract / PO No : 
-                            @if(!empty($request->invoicedetails) )
-                            {{isset($request->invoicedetails[0]->clientContractID)?$request->invoicedetails[0]->clientContractID:''}}
-                        @endif
-                        @if($request->line_poNumber && isset($request->item_invoice) && $request->item_invoice)
+                        @if($request->line_poNumber)
                             {{$request->PONumber}}
                         @endif
                     </b>
