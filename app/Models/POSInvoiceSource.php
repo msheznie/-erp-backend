@@ -644,7 +644,9 @@ class POSInvoiceSource extends Model
     public static $rules = [
         
     ];
-
+    public function wareHouseMaster(){
+        return $this->hasOne(WarehouseMaster::class, 'wareHouseSystemCode', 'wareHouseAutoID');
+    }
     public function invoiceDetailSource(){ 
         return $this->hasMany('App\Models\POSInvoiceSourceDetail', 'invoiceID', 'invoiceID');
     }

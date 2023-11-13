@@ -466,10 +466,21 @@ class FixedAssetMasterAPIController extends AppBaseController
         $input = $request->all();
         $itemImgaeArr = $input['itemImage'];
         $itemPicture = $input['itemPicture'];
-        $input = array_except($request->all(), 'itemImage');
+        $input = array_except($request->all(), 'itemImage');    
+        $accumulated_amount = $input['accumulated_depreciation_amount_rpt'];
 
+        // if($input['assetType'] == 1  && ($accumulated_amount > 0 && $accumulated_amount != null) )
+        // {
+        //     $is_pending_job_exist = FixedAssetDepreciationMaster::where('approved','=',0)->where('is_acc_dep','=',0)->where('is_cancel','=',0)->where('companySystemID' ,'=', $input['companySystemID'])->count();
+        //     if($is_pending_job_exist > 0)
+        //     {
+        //         return $this->sendError('There are Monthly Depreciation pending for confirmation and approval, thus this asset creation cannot be processed', 500);
+
+        //     }
+
+        // }
         $input = $this->convertArrayToValue($input);
-
+        
         $input['COSTUNIT'] = floatval($input['COSTUNIT']);
 
         if(isset($input['isCurrencySame']) && $input['isCurrencySame']==true){
@@ -828,6 +839,23 @@ class FixedAssetMasterAPIController extends AppBaseController
         if (empty($fixedAssetMaster)) {
             return $this->sendError('Fixed Asset Master not found');
         }
+     
+        if(isset($input['accumulated_depreciation_amount_rpt']))
+        {
+            $accumulated_amount = $input['accumulated_depreciation_amount_rpt'];
+
+            if($input['assetType'] == 1  && ($accumulated_amount > 0 && $accumulated_amount != null) )
+            {
+                $is_pending_job_exist = FixedAssetDepreciationMaster::where('approved','=',0)->where('is_acc_dep','=',0)->where('is_cancel','=',0)->where('companySystemID' ,'=', $input['companySystemID'])->count();
+                if($is_pending_job_exist > 0)
+                {
+                    return $this->sendError('There are Monthly Depreciation pending for confirmation and approval, thus this asset creation cannot be processed', 500);
+    
+                }
+    
+            }
+        }
+
 
         if(isset($input['assetType']) && $input['assetType'] == 1){
             if(empty($input['depMonth']) || $input['depMonth'] == 0){
@@ -2228,103 +2256,140 @@ class FixedAssetMasterAPIController extends AppBaseController
         $masterData = $this->fixedAssetMasterRepository->findWithoutFail($id);
         if (empty($masterData)) {
             return $this->sendError('Fixed Asset Master not found');
-        }
+        }   
+
+        $accumulated_amount = $masterData->accumulated_depreciation_amount_rpt;
+
 
         if ($masterData->confirmedYN == 0) {
             return $this->sendError('You cannot return back to amend this asset costing, it is not confirmed');
         }
 
+        $isAccDepExists = FixedAssetDepreciationPeriod::where('faID',$id)->whereHas('master_by', function ($q) {
+           $q->where('is_acc_dep',1)
+                ->where('confirmedYN','=',0)
+                ->where('is_cancel',0);
+        });
 
-        // checking document matched in depreciation
-        $depAsset = FixedAssetDepreciationPeriod::ofAsset($id)->whereHas('master_by', function ($q) {
+        $isMonthlyExists = FixedAssetDepreciationPeriod::where('faID',$id)->whereHas('master_by', function ($q) {
+            $q->where('is_acc_dep',0);
         })->count();
 
-        if($depAsset > 0){
-            return $this->sendError('You cannot return back to amend this asset costing,Depreciation has been run for the particular asset');
-        }
+            if($isMonthlyExists > 0 )
+            {
+                return $this->sendError('This asset cannot be returned back to amend. Monthly Depreciation has already been generated for this asset');
 
-        $emailBody = '<p>' . $masterData->faCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
-        $emailSubject = $masterData->faCode . ' has been return back to amend';
-
-        DB::beginTransaction();
-        try {
-
-            //sending email to relevant party
-            if ($masterData->confirmedYN == 1) {
-                $emails[] = array('empSystemID' => $masterData->confirmedByEmpSystemID,
-                    'companySystemID' => $masterData->companySystemID,
-                    'docSystemID' => $masterData->documentSystemID,
-                    'alertMessage' => $emailSubject,
-                    'emailAlertMessage' => $emailBody,
-                    'docSystemCode' => $id);
+            }
+            
+            if(!$isAccDepExists->exists() && $masterData->assetType == 1 && ($accumulated_amount > 0 && $accumulated_amount != null) )
+            {
+                return $this->sendError('This asset cannot be returned back to amend. An approved accumulated depreciation document is linked with this asset. Refer-back the Acc. depreciation and try again'); 
             }
 
-            $documentApproval = DocumentApproved::where('companySystemID', $masterData->companySystemID)
-                ->where('documentSystemCode', $id)
-                ->where('documentSystemID', $masterData->documentSystemID)
-                ->get();
+     
 
-            foreach ($documentApproval as $da) {
-                if ($da->approvedYN == -1) {
-                    $emails[] = array('empSystemID' => $da->employeeSystemID,
+
+            $emailBody = '<p>' . $masterData->faCode . ' has been return back to amend by ' . $employee->empName . ' due to below reason.</p><p>Comment : ' . $input['returnComment'] . '</p>';
+            $emailSubject = $masterData->faCode . ' has been return back to amend';
+    
+            DB::beginTransaction();
+            try {
+    
+                //sending email to relevant party
+                if ($masterData->confirmedYN == 1) {
+                    $emails[] = array('empSystemID' => $masterData->confirmedByEmpSystemID,
                         'companySystemID' => $masterData->companySystemID,
                         'docSystemID' => $masterData->documentSystemID,
                         'alertMessage' => $emailSubject,
                         'emailAlertMessage' => $emailBody,
                         'docSystemCode' => $id);
                 }
+    
+                $documentApproval = DocumentApproved::where('companySystemID', $masterData->companySystemID)
+                    ->where('documentSystemCode', $id)
+                    ->where('documentSystemID', $masterData->documentSystemID)
+                    ->get();
+    
+                foreach ($documentApproval as $da) {
+                    if ($da->approvedYN == -1) {
+                        $emails[] = array('empSystemID' => $da->employeeSystemID,
+                            'companySystemID' => $masterData->companySystemID,
+                            'docSystemID' => $masterData->documentSystemID,
+                            'alertMessage' => $emailSubject,
+                            'emailAlertMessage' => $emailBody,
+                            'docSystemCode' => $id);
+                    }
+                }
+    
+                $sendEmail = \Email::sendEmail($emails);
+                if (!$sendEmail["success"]) {
+                    return $this->sendError($sendEmail["message"], 500);
+                }
+    
+                //deleting from approval table
+                $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+                    ->where('companySystemID', $masterData->companySystemID)
+                    ->where('documentSystemID', $masterData->documentSystemID)
+                    ->delete();
+    
+                //deleting from general ledger table
+                $deleteGLData = GeneralLedger::where('documentSystemCode', $id)
+                    ->where('companySystemID', $masterData->companySystemID)
+                    ->where('documentSystemID', $masterData->documentSystemID)
+                    ->delete();
+    
+                // delete asset costing
+                if(is_null($masterData->docOriginSystemCode)){
+                    $fixedAssetCosting = FixedAssetCost::ofFixedAsset($id)->delete();
+                }
+    
+                //deleting budget consumption
+                $deletebudgetData = BudgetConsumedData::where('documentSystemCode', $id)
+                    ->where('companySystemID', $masterData->companySystemID)
+                    ->where('documentSystemID', $masterData->documentSystemID)
+                    ->delete();
+    
+                // updating fields
+                $masterData->confirmedYN = 0;
+                $masterData->confirmedByEmpSystemID = null;
+                $masterData->confirmedByEmpID = null;
+                $masterData->confirmedDate = null;
+                $masterData->RollLevForApp_curr = 1;
+    
+                $masterData->approved = 0;
+                $masterData->approvedByUserSystemID = null;
+                $masterData->approvedByUserID = null;
+                $masterData->approvedDate = null;
+                $masterData->postedDate = null;
+                $masterData->save();
+                
+                if($masterData->assetType == 1 && ($accumulated_amount > 0 && $accumulated_amount != null))
+                {
+                    $depId = $isAccDepExists->first()->depMasterAutoID;
+                    FixedAssetDepreciationMaster::where('depMasterAutoID', $depId)->update(['is_cancel'=>-1]);
+
+                    FixedAssetDepreciationPeriod::where('depMasterAutoID', $depId)->delete();
+
+                }
+                AuditTrial::createAuditTrial($masterData->documentSystemID,$id,$input['returnComment'],'returned back to amend');
+    
+                DB::commit();
+                return $this->sendResponse($masterData->toArray(), 'Asset costing amend saved successfully');
+            } catch (\Exception $exception) {
+                DB::rollBack();
+                return $this->sendError($exception->getMessage());
             }
+        
+      
 
-            $sendEmail = \Email::sendEmail($emails);
-            if (!$sendEmail["success"]) {
-                return $this->sendError($sendEmail["message"], 500);
-            }
+        // checking document matched in depreciation
+        // $depAsset = FixedAssetDepreciationPeriod::ofAsset($id)->whereHas('master_by', function ($q) {
+        // })->count();
 
-            //deleting from approval table
-            $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
-                ->where('companySystemID', $masterData->companySystemID)
-                ->where('documentSystemID', $masterData->documentSystemID)
-                ->delete();
+        // if($depAsset > 0){
+        //     return $this->sendError('You cannot return back to amend this asset costing,Depreciation has been run for the particular asset');
+        // }
 
-            //deleting from general ledger table
-            $deleteGLData = GeneralLedger::where('documentSystemCode', $id)
-                ->where('companySystemID', $masterData->companySystemID)
-                ->where('documentSystemID', $masterData->documentSystemID)
-                ->delete();
-
-            // delete asset costing
-            if(is_null($masterData->docOriginSystemCode)){
-                $fixedAssetCosting = FixedAssetCost::ofFixedAsset($id)->delete();
-            }
-
-            //deleting budget consumption
-            $deletebudgetData = BudgetConsumedData::where('documentSystemCode', $id)
-                ->where('companySystemID', $masterData->companySystemID)
-                ->where('documentSystemID', $masterData->documentSystemID)
-                ->delete();
-
-            // updating fields
-            $masterData->confirmedYN = 0;
-            $masterData->confirmedByEmpSystemID = null;
-            $masterData->confirmedByEmpID = null;
-            $masterData->confirmedDate = null;
-            $masterData->RollLevForApp_curr = 1;
-
-            $masterData->approved = 0;
-            $masterData->approvedByUserSystemID = null;
-            $masterData->approvedByUserID = null;
-            $masterData->approvedDate = null;
-            $masterData->postedDate = null;
-            $masterData->save();
-
-            AuditTrial::createAuditTrial($masterData->documentSystemID,$id,$input['returnComment'],'returned back to amend');
-
-            DB::commit();
-            return $this->sendResponse($masterData->toArray(), 'Asset costing amend saved successfully');
-        } catch (\Exception $exception) {
-            DB::rollBack();
-            return $this->sendError($exception->getMessage());
-        }
     }
 
     public function assetCostingRemove(Request $request){

@@ -83,3 +83,4 @@ Route::get('getCurrentUserInfo', 'UserAPIController@getCurrentUserInfo')->name("
 Route::get('sme-attachment/{id}/{docID}/{companyID}', 'AttachmentSMEAPIController@show')->name('Show attachment sme');
 
 Route::get('getAllFinancePeriodForYear', 'CompanyFinancePeriodAPIController@getAllFinancePeriodForYear')->name("Get All Finance Period For Year");
+Route::post('postGLEntries', 'ShiftDetailsAPIController@postGLEntries');

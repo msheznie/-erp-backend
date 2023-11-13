@@ -454,11 +454,13 @@ class GeneralLedgerAPIController extends AppBaseController
 
     public function getNotApprovedGlData($documentSystemID, $autoID, $companySystemID)
     {
+        $company = Company::where('companySystemID', $companySystemID)->first();
         $masterModel = [
             'employeeSystemID' => \Helper::getEmployeeSystemID(),
             'autoID' => $autoID,
             'documentSystemID' => $documentSystemID,
-            'companySystemID' => $companySystemID
+            'companySystemID' => $companySystemID,
+            'companyID' => $company->CompanyID
         ];
 
         $result = [];

@@ -60,10 +60,12 @@ class POSItemGLEntries extends Model
 
     public $fillable = [
         'shiftId',
+        'invoiceID',
         'itemAutoId',
         'uom',
         'qty',
-        'isReturnYN'
+        'isReturnYN',
+        'wareHouseId'
     ];
 
     /**
@@ -89,5 +91,8 @@ class POSItemGLEntries extends Model
         
     ];
 
-    
+    public function warehouse(){
+        return $this->belongsTo('App\Models\WarehouseMaster', 'wareHouseId', 'wareHouseSystemCode');
+    }
+
 }

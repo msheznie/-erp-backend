@@ -13,6 +13,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateSupplierCategoryMasterAPIRequest;
 use App\Http\Requests\API\UpdateSupplierCategoryMasterAPIRequest;
+use App\Models\SupplierBusinessCategoryAssign;
 use App\Models\SupplierCategoryMaster;
 use App\Models\SupplierCategorySub;
 use App\Models\SupplierMaster;
@@ -212,9 +213,9 @@ class SupplierCategoryMasterAPIController extends AppBaseController
             return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.supplier_business_category')]));
         }
 
-        $supplierMaster = SupplierMaster::where('supCategoryMasterID', $id)->first();
+        $supplierCategoryAssign = SupplierBusinessCategoryAssign::where('supCategoryMasterID', $id)->first();
 
-        if ($supplierMaster) {
+        if ($supplierCategoryAssign) {
             return $this->sendError("This category has already been pulled to Supplier Master, cannot be deleted");
         }
 
@@ -272,7 +273,7 @@ class SupplierCategoryMasterAPIController extends AppBaseController
         $successMessages = null;
         $amendable = null;
 
-        $supplierMaster = SupplierMaster::where('supCategoryMasterID', $input['id'])->first();
+        $supplierMaster = SupplierBusinessCategoryAssign::where('supCategoryMasterID', $input['id'])->first();
 
         if ($supplierMaster) {
             $errorMessages = "cannot be amended. Since, it has been used in supplier master";
