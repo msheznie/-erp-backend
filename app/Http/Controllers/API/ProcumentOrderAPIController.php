@@ -6654,69 +6654,75 @@ group by purchaseOrderID,companySystemID) as pocountfnal
 
     public function getDocumentTracingData(Request $request)
     {
-        $input = $request->all();
-        if (!isset($input['documentSystemID'])) {
-            return $this->sendError("Document System ID not found");
-        }
+        try{
 
-        $tracingData = [];
-        switch ($input['documentSystemID']) {
-            case 2:
-            case 5:
-            case 52:
-                $tracingData[] = $this->getPurchaseOrderTracingData($input['id']);
-                break;
-            case 3:
-                $tracingData[] = $this->getGrvTracingData($input['id']);
-                break;
-            case 11:
-                $tracingData[] = $this->getSupplierInvoiceTracingData($input['id']);
-                break;
-            case 1:
-                $tracingData[][] = $this->getPurchaseRequestTracingData($input['id'], 'pr');
-                break;
-            case 9:
-                $tracingData[][] = $this->getMaterialRequestTracingData($input['id']);
-                break;
-            case 67:
-                $tracingData[][] = $this->getQuotationTracingData($input['id'], $input['documentSystemID']);
-                break;
-            case 68:
-                $tracingData[] = $this->getSalesOrderTracingData($input['id']);
-                break;
-            case 71:
-                $tracingData[] = $this->getDeliveryOrderTracingData($input['id']);
-                break;
-            case 20:
-                $tracingData[] = $this->getCustomerInvoiceTracingData($input['id']);
-                break;
-            case 21:
-                $tracingData = $this->getReciptVoucherTracingData($input['id']);
-                break;
-            case 87:
-                $tracingData[] = $this->getSalesReturnTracingData($input['id']);
-                break;
-            case 70:
-                $tracingData[] = $this->getReciptMatchingTracingData($input['id']);
-                break;
-            case 19:
-                $tracingData[] = $this->getCreditNoteTracingData($input['id']);
-                break;
-            case 4:
-                $tracingData[] = $this->getPaymentVoucherTracingData($input['id']);
-                break;
-            case 15:
-                $tracingData[] = $this->getDebitNoteTracingData($input['id']);
-                break;
-            case 103:
-                $tracingData[] = $this->getAssetTransferTracingData($input['id']);
-                break;
-            default:
-                # code...
-                break;
-        }
+            $input = $request->all();
+            if (!isset($input['documentSystemID'])) {
+                return $this->sendError("Document System ID not found");
+            }
 
-        return $this->sendResponse($tracingData, 'Document tracing data retrived successfully');
+            $tracingData = [];
+            switch ($input['documentSystemID']) {
+                case 2:
+                case 5:
+                case 52:
+                    $tracingData[] = $this->getPurchaseOrderTracingData($input['id']);
+                    break;
+                case 3:
+                    $tracingData[] = $this->getGrvTracingData($input['id']);
+                    break;
+                case 11:
+                    $tracingData[] = $this->getSupplierInvoiceTracingData($input['id']);
+                    break;
+                case 1:
+                    $tracingData[][] = $this->getPurchaseRequestTracingData($input['id'], 'pr');
+                    break;
+                case 9:
+                    $tracingData[][] = $this->getMaterialRequestTracingData($input['id']);
+                    break;
+                case 67:
+                    $tracingData[][] = $this->getQuotationTracingData($input['id'], $input['documentSystemID']);
+                    break;
+                case 68:
+                    $tracingData[] = $this->getSalesOrderTracingData($input['id']);
+                    break;
+                case 71:
+                    $tracingData[] = $this->getDeliveryOrderTracingData($input['id']);
+                    break;
+                case 20:
+                    $tracingData[] = $this->getCustomerInvoiceTracingData($input['id']);
+                    break;
+                case 21:
+                    $tracingData = $this->getReciptVoucherTracingData($input['id']);
+                    break;
+                case 87:
+                    $tracingData[] = $this->getSalesReturnTracingData($input['id']);
+                    break;
+                case 70:
+                    $tracingData[] = $this->getReciptMatchingTracingData($input['id']);
+                    break;
+                case 19:
+                    $tracingData[] = $this->getCreditNoteTracingData($input['id']);
+                    break;
+                case 4:
+                    $tracingData[] = $this->getPaymentVoucherTracingData($input['id']);
+                    break;
+                case 15:
+                    $tracingData[] = $this->getDebitNoteTracingData($input['id']);
+                    break;
+                case 103:
+                    $tracingData[] = $this->getAssetTransferTracingData($input['id']);
+                    break;
+                default:
+                    # code...
+                    break;
+            }
+
+            return $this->sendResponse($tracingData, 'Document tracing data retrived successfully');
+
+        }  catch (\Exception $exception) {
+            return $this->sendError($exception->getMessage(), 500);
+        }
     }
 
 
