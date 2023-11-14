@@ -690,7 +690,11 @@ class CustomerInvoiceGlService
                         $data['glCode'] = $taxGL->AccountCode;
                         $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                         $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-                        $data['clientContractID'] = $detOne->clientContractID;
+                        if (!empty($detOne) && property_exists($detOne, 'clientContractID')) {
+                            $data['clientContractID'] = $detOne->clientContractID;
+                        } else {
+                            $data['clientContractID'] = null;
+                        }
                         $data['supplierCodeSystem'] = $masterData->customerID;
 
                         if ($masterData->isPerforma == 1) {
