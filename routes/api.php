@@ -102,6 +102,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
                     Route::post('getAssetDepPeriodsByID', 'FixedAssetDepreciationPeriodAPIController@getAssetDepPeriodsByID');
                     Route::post('exportAssetMaster', 'FixedAssetMasterAPIController@exportAssetMaster');
                     Route::post('deleteBudgetUploads', 'BudgetMasterAPIController@deleteBudgetUploads')->name("Delete budget uploads");
+                    Route::post('generateFRReport', 'FinancialReportAPIController@generateFRReport');
                 });
             });
 
@@ -291,7 +292,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('getAFRFilterChartOfAccounts', 'FinancialReportAPIController@getAFRFilterChartOfAccounts');
             Route::post('validateFRReport', 'FinancialReportAPIController@validateFRReport');
             Route::post('validatePUReport', 'FinancialReportAPIController@validatePUReport');
-            Route::post('generateFRReport', 'FinancialReportAPIController@generateFRReport');
             Route::post('generateprojectUtilizationReport', 'FinancialReportAPIController@generateprojectUtilizationReport');
 
             Route::post('generateEmployeeLedgerReport', 'FinancialReportAPIController@generateEmployeeLedgerReport');
