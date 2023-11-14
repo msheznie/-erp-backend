@@ -3556,7 +3556,7 @@ class BudgetMasterAPIController extends AppBaseController
             $search = str_replace("\\", "\\\\", $search);
             $budgets = $budgets->where(function ($query) use ($search) {
                 $query->where('ServiceLineDes', 'like', "%{$search}%")
-                      ->orWhere('templateDescription', 'like', "%{$search}%");
+                      ->orWhere('erp_companyreporttemplate.description', 'like', "%{$search}%");
             });
         }
 
