@@ -514,8 +514,13 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 $_post['serviceLineCode'] = isset($segment->ServiceLineCode) ? $segment->ServiceLineCode : null;
             }
 
-
-            $_post['custTransactionCurrencyID'] = $input['custTransactionCurrencyID'];
+            if(isset($input['custTransactionCurrencyID'])){
+                $_post['custTransactionCurrencyID'] = $input['custTransactionCurrencyID'];
+            }
+            else{
+                return $this->sendError('Please select a Currency', 500);
+            }
+            
             $_post['bankID'] = $input['bankID'];
             $_post['bankAccountID'] = $input['bankAccountID'];
 
