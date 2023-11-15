@@ -281,6 +281,10 @@ class CustomerInvoiceGlService
 
                             $taxLedgerData['outputVatGLAccountID'] = $taxGL['chartOfAccountSystemID'];
                         }
+                       $data = Self::proccessDirectInvoice($masterModel,$masterData,$masterDocumentDate,$empID,$data,$finalData);
+                       $finalData = $data['finalData'];
+                       $taxLedgerData = $data['taxLedgerData'];
+
                     } else {
                         Log::info('Customer Invoice VAT GL Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
                         Log::info('Output Vat GL Account not assigned to company' . date('H:i:s'));
@@ -291,16 +295,17 @@ class CustomerInvoiceGlService
                 }
             }
 
+
         }
         elseif ($masterData->isPerforma == 3) { // From Deivery Note
             $customer = CustomerMaster::find($masterData->customerID);
             $chartOfAccount = ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'catogaryBLorPLID', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $masterData->customerGLSystemID)->first();
             $unbilledhartOfAccount = ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'catogaryBLorPLID', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $customer->custUnbilledAccountSystemID)->first();
-
+    
             $time = Carbon::now();
             
             $revenue = CustomerInvoiceItemDetails::selectRaw("SUM(qtyIssuedDefaultMeasure * sellingCostAfterMargin) as transAmount,SUM(qtyIssuedDefaultMeasure * sellingCostAfterMarginLocal) as localAmount, SUM(qtyIssuedDefaultMeasure * sellingCostAfterMarginRpt) as rptAmount,financeGLcodeRevenueSystemID,financeGLcodeRevenue,localCurrencyID,localCurrencyER,reportingCurrencyER,reportingCurrencyID")->WHERE('custInvoiceDirectAutoID', $masterModel["autoID"])->whereNotNull('financeGLcodeRevenueSystemID')->where('financeGLcodeRevenueSystemID', '>', 0)->groupBy('financeGLcodeRevenueSystemID')->get();
-
+    
             if ($chartOfAccount) {
                 $data['companySystemID'] = $masterData->companySystemID;
                 $data['companyID'] = $masterData->companyID;
@@ -320,35 +325,35 @@ class CustomerInvoiceGlService
                 $data['documentFinalApprovedDate'] = $masterData->approvedDate;
                 $data['documentFinalApprovedBy'] = $masterData->approvedByUserID;
                 $data['documentFinalApprovedByEmpSystemID'] = $masterData->approvedByUserSystemID;
-
+    
                 $data['serviceLineSystemID'] = $masterData->serviceLineSystemID;
                 $data['serviceLineCode'] = $masterData->serviceLineCode;
-
+    
                 // from customer invoice master table
                 $data['chartOfAccountSystemID'] = $chartOfAccount->chartOfAccountSystemID;
                 $data['glCode'] = $chartOfAccount->AccountCode;
                 $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                 $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-
+    
                 $data['documentNarration'] = $masterData->comments;
                 $data['clientContractID'] = 'X';
                 $data['contractUID'] = 159;
                 $data['supplierCodeSystem'] = $masterData->customerID;
-
+    
                 $data['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
                 $data['documentTransCurrencyER'] = $masterData->custTransactionCurrencyER;
                 $data['documentTransAmount'] = $masterData->bookingAmountTrans + $masterData->VATAmount;
-
+    
                 $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                 $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
                 $data['documentLocalAmount'] = $masterData->bookingAmountLocal + $masterData->VATAmountLocal;
-
+    
                 $data['documentRptCurrencyID'] = $masterData->companyReportingCurrencyID;
                 $data['documentRptCurrencyER'] = $masterData->companyReportingER;
                 $data['documentRptAmount'] = $masterData->bookingAmountRpt + $masterData->VATAmountRpt;
-
+    
                 $data['documentType'] = 11;
-
+    
                 $data['createdUserSystemID'] = $empID->empID;
                 $data['createdDateTime'] = $time;
                 $data['createdUserID'] = $empID->employeeSystemID;
@@ -356,7 +361,7 @@ class CustomerInvoiceGlService
                 $data['timestamp'] = $time;
                 array_push($finalData, $data);
             }
-
+    
             if ($unbilledhartOfAccount) {
                 $data['companySystemID'] = $masterData->companySystemID;
                 $data['companyID'] = $masterData->companyID;
@@ -377,35 +382,35 @@ class CustomerInvoiceGlService
                 $data['documentFinalApprovedDate'] = $masterData->approvedDate;
                 $data['documentFinalApprovedBy'] = $masterData->approvedByUserID;
                 $data['documentFinalApprovedByEmpSystemID'] = $masterData->approvedByUserSystemID;
-
+    
                 $data['serviceLineSystemID'] = $masterData->serviceLineSystemID;
                 $data['serviceLineCode'] = $masterData->serviceLineCode;
-
+    
                 // from customer invoice master table
                 $data['chartOfAccountSystemID'] = $unbilledhartOfAccount->chartOfAccountSystemID;
                 $data['glCode'] = $unbilledhartOfAccount->AccountCode;
                 $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                 $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-
+    
                 $data['documentNarration'] = $masterData->comments;
                 $data['clientContractID'] = 'X';
                 $data['contractUID'] = 159;
                 $data['supplierCodeSystem'] = $masterData->customerID;
-
+    
                 $data['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
                 $data['documentTransCurrencyER'] = $masterData->custTransactionCurrencyER;
                 $data['documentTransAmount'] = (ABS($masterData->bookingAmountTrans) + ABS($masterData->VATAmount)) * -1;
-
+    
                 $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
                 $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
                 $data['documentLocalAmount'] = (ABS($masterData->bookingAmountLocal) + ABS($masterData->VATAmountLocal)) * -1;
-
+    
                 $data['documentRptCurrencyID'] = $masterData->companyReportingCurrencyID;
                 $data['documentRptCurrencyER'] = $masterData->companyReportingER;
                 $data['documentRptAmount'] = (ABS($masterData->bookingAmountRpt) + ABS($masterData->VATAmountRpt)) * -1;
-
+    
                 $data['documentType'] = 11;
-
+    
                 $data['createdUserSystemID'] = $empID->empID;
                 $data['createdDateTime'] = $time;
                 $data['createdUserID'] = $empID->employeeSystemID;
@@ -413,41 +418,41 @@ class CustomerInvoiceGlService
                 $data['timestamp'] = $time;
                 // array_push($finalData, $data);
             }
-
+    
             if ($revenue) {
-
+    
                 foreach ($revenue as $item) {
-
+    
                     $data['chartOfAccountSystemID'] = $item->financeGLcodeRevenueSystemID;
                     $data['glCode'] = $item->financeGLcodeRevenue;
                     $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                     $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-
+    
                     $data['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
                     $data['documentTransCurrencyER'] = $masterData->custTransactionCurrencyER;
                     $data['documentTransAmount'] = ABS($item->transAmount) * -1;
-
+    
                     $data['documentLocalCurrencyID'] = $item->localCurrencyID;
                     $data['documentLocalCurrencyER'] = $item->localCurrencyER;
                     $data['documentLocalAmount'] = ABS($item->localAmount) * -1;
-
+    
                     $data['documentRptCurrencyID'] = $item->reportingCurrencyID;
                     $data['documentRptCurrencyER'] = $item->reportingCurrencyER;
                     $data['documentRptAmount'] = ABS($item->rptAmount) * -1;
-
+    
                     array_push($finalData, $data);
                 }
-
+    
             }
-
-
+    
+    
             $erp_taxdetail = Taxdetail::where('companySystemID', $masterData->companySystemID)
                 ->where('documentSystemCode', $masterData->custInvoiceDirectAutoID)
                 ->where('documentSystemID', 20)
                 ->get();
-
+    
             if (!empty($erp_taxdetail)) {
-
+    
                 $taxConfigData = TaxService::getOutputVATGLAccount($masterModel["companySystemID"]);
                 if (!empty($taxConfigData)) {
                     $taxGL = ChartOfAccountsAssigned::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'catogaryBLorPLID', 'chartOfAccountSystemID')
@@ -456,20 +461,20 @@ class CustomerInvoiceGlService
                         ->first();
                     if (!empty($taxGL)) {
                         foreach ($erp_taxdetail as $tax) {
-
+    
                             $data['serviceLineSystemID'] = 24;
                             $data['serviceLineCode'] = 'X';
-
+    
                             // from customer invoice master table
                             $data['chartOfAccountSystemID'] = $taxGL['chartOfAccountSystemID'];
                             $data['glCode'] = $taxGL->AccountCode;
                             $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                             $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-
+    
                             $data['documentNarration'] = $tax->taxDescription;
                             $data['clientContractID'] = 'X';
                             $data['supplierCodeSystem'] = $masterData->customerID;
-
+    
                             $data['documentTransCurrencyID'] = $tax->currency;
                             $data['documentTransCurrencyER'] = $tax->currencyER;
                             $data['documentTransAmount'] = ABS($tax->amount) * -1;
@@ -480,7 +485,7 @@ class CustomerInvoiceGlService
                             $data['documentRptCurrencyER'] = $tax->rptCurrencyER;
                             $data['documentRptAmount'] = ABS($tax->rptAmount) * -1;
                             array_push($finalData, $data);
-
+    
                             $taxLedgerData['outputVatGLAccountID'] = $taxGL['chartOfAccountSystemID'];
                         }
                     } else {
@@ -491,8 +496,8 @@ class CustomerInvoiceGlService
                     Log::info('Customer Invoice VAT GL Entry IssuesId :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
                     Log::info('Output Vat GL Account not configured' . date('H:i:s'));
                 }
-
-
+    
+    
                 $taxConfigData2 = TaxService::getOutputVATTransferGLAccount($masterModel["companySystemID"]);
                 if (!empty($taxConfigData2)) {
                     $taxGL = ChartOfAccountsAssigned::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'catogaryBLorPLID', 'chartOfAccountSystemID')
@@ -501,20 +506,20 @@ class CustomerInvoiceGlService
                         ->first();
                     if (!empty($taxGL)) {
                         foreach ($erp_taxdetail as $tax) {
-
+    
                             $data['serviceLineSystemID'] = 24;
                             $data['serviceLineCode'] = 'X';
-
+    
                             // from customer invoice master table
                             $data['chartOfAccountSystemID'] = $taxGL['chartOfAccountSystemID'];
                             $data['glCode'] = $taxGL->AccountCode;
                             $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
                             $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-
+    
                             $data['documentNarration'] = $tax->taxDescription;
                             $data['clientContractID'] = 'X';
                             $data['supplierCodeSystem'] = $masterData->customerID;
-
+    
                             $data['documentTransCurrencyID'] = $tax->currency;
                             $data['documentTransCurrencyER'] = $tax->currencyER;
                             $data['documentTransAmount'] = ABS($tax->amount);
@@ -525,7 +530,7 @@ class CustomerInvoiceGlService
                             $data['documentRptCurrencyER'] = $tax->rptCurrencyER;
                             $data['documentRptAmount'] = ABS($tax->rptAmount);
                             // array_push($finalData, $data);
-
+    
                             $taxLedgerData['outputVatTransferGLAccountID'] = $taxGL['chartOfAccountSystemID'];
                         }
                     } else {
@@ -537,214 +542,220 @@ class CustomerInvoiceGlService
                     Log::info('Output Vat GL Account not configured' . date('H:i:s'));
                 }
             }
-
         }
         else {
-            $detOne = CustomerInvoiceDirectDetail::with(['contract'])->where('custInvoiceDirectID', $masterModel["autoID"])->first();
-            $detail = CustomerInvoiceDirectDetail::selectRaw("sum(comRptAmount) as comRptAmount, comRptCurrency, sum(localAmount) as localAmount , localCurrencyER, localCurrency, sum(invoiceAmount) as invoiceAmount, invoiceAmountCurrencyER, invoiceAmountCurrency,comRptCurrencyER, customerID, clientContractID, comments, glSystemID,   serviceLineSystemID,serviceLineCode, sum(VATAmount) as VATAmount, sum(VATAmountLocal) as VATAmountLocal, sum(VATAmountRpt) as VATAmountRpt, sum(VATAmount*invoiceQty) as VATAmountTotal, sum(VATAmountLocal*invoiceQty) as VATAmountLocalTotal, sum(VATAmountRpt*invoiceQty) as VATAmountRptTotal")->with(['contract'])->WHERE('custInvoiceDirectID', $masterModel["autoID"])->groupBy('custInvDirDetAutoID')->get();
-            $company = Company::select('masterComapanyID')->where('companySystemID', $masterData->companySystemID)->first();
-            $chartOfAccount = ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'catogaryBLorPLID', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $masterData->customerGLSystemID)->first();
-
-            $date = new Carbon($masterData->bookingDate);
-            $time = Carbon::now();
-
-            $segmentWiseDetail = CustomerInvoiceDirectDetail::selectRaw("sum(comRptAmount) as comRptAmount, comRptCurrency, sum(localAmount) as localAmount , localCurrencyER, localCurrency, sum(invoiceAmount) as invoiceAmount, invoiceAmountCurrencyER, invoiceAmountCurrency,comRptCurrencyER, customerID, clientContractID, comments, glSystemID,   serviceLineSystemID,serviceLineCode, sum(VATAmount) as VATAmount, sum(VATAmountLocal) as VATAmountLocal, sum(VATAmountRpt) as VATAmountRpt, sum(VATAmount*invoiceQty) as VATAmountTotal, sum(VATAmountLocal*invoiceQty) as VATAmountLocalTotal, sum(VATAmountRpt*invoiceQty) as VATAmountRptTotal")->with(['contract'])->WHERE('custInvoiceDirectID', $masterModel["autoID"])->groupBy('serviceLineSystemID', 'clientContractID')->get();
-
-            
-            $data['companySystemID'] = $masterData->companySystemID;
-            $data['companyID'] = $masterData->companyID;
-            $data['masterCompanyID'] = $company->masterComapanyID;
-            $data['documentID'] = "INV";
-            $data['documentSystemID'] = $masterData->documentSystemiD;
-            $data['documentSystemCode'] = $masterData->custInvoiceDirectAutoID;
-            $data['documentCode'] = $masterData->bookingInvCode;
-            //$data['documentDate'] = ($masterData->isPerforma == 1) ? $time : $masterData->bookingDate;
-            $data['documentDate'] = $masterDocumentDate;
-            $data['documentYear'] = \Helper::dateYear($masterDocumentDate);
-            $data['documentMonth'] = \Helper::dateMonth($masterDocumentDate);
-            $data['invoiceNumber'] = $masterData->customerInvoiceNo;
-            $data['invoiceDate'] = $masterData->customerInvoiceDate;
-            $data['documentConfirmedDate'] = $masterData->confirmedDate;
-            $data['documentConfirmedBy'] = $masterData->confirmedByEmpID;
-            $data['documentConfirmedByEmpSystemID'] = $masterData->confirmedByEmpSystemID;
-            $data['documentFinalApprovedDate'] = $masterData->approvedDate;
-            $data['documentFinalApprovedBy'] = $masterData->approvedByUserID;
-            $data['documentFinalApprovedByEmpSystemID'] = $masterData->approvedByUserSystemID;
-
-
-            // from customer invoice master table
-            $data['chartOfAccountSystemID'] = $chartOfAccount->chartOfAccountSystemID;
-            $data['glCode'] = $chartOfAccount->AccountCode;
-            $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
-            $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-
-            $data['documentNarration'] = $masterData->comments;
-            $data['supplierCodeSystem'] = $masterData->customerID;
-            $data['documentType'] = 11;
-            $data['createdUserSystemID'] = $empID->empID;
-            $data['createdDateTime'] = $time;
-            $data['createdUserID'] = $empID->employeeSystemID;
-            $data['createdUserPC'] = getenv('COMPUTERNAME');
-            $data['timestamp'] = $time;
-            
-            if ($masterData->isPerforma == 1) {
-                $data['serviceLineSystemID'] = $detOne->serviceLineSystemID;
-                $data['serviceLineCode'] = $detOne->serviceLineCode;
-                $data['clientContractID'] = $detOne->clientContractID;
-                $data['contractUID'] = $detOne->contract ? $detOne->contract->contractUID : 0;
-
-                $data['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
-                $data['documentTransCurrencyER'] = $masterData->custTransactionCurrencyER;
-                $data['documentTransAmount'] = $masterData->bookingAmountTrans + $masterData->VATAmount;
-                $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
-                $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
-                $data['documentLocalAmount'] = $masterData->bookingAmountLocal + $masterData->VATAmountLocal;
-                $data['documentRptCurrencyID'] = $masterData->companyReportingCurrencyID;
-                $data['documentRptCurrencyER'] = $masterData->companyReportingER;
-                $data['documentRptAmount'] = $masterData->bookingAmountRpt + $masterData->VATAmountRpt;
-                array_push($finalData, $data);
-            } else {
-                foreach ($segmentWiseDetail as $item) {
-                    $data['serviceLineSystemID'] = $item->serviceLineSystemID;
-                    $data['serviceLineCode'] = $item->serviceLineCode;
-                    $data['clientContractID'] = $item->clientContractID;
-                    $data['contractUID'] = $item->contract ? $item->contract->contractUID : 0;
-
-                    $data['documentTransCurrencyID'] = $item->invoiceAmountCurrency;
-                    $data['documentTransCurrencyER'] = $item->invoiceAmountCurrencyER;
-                    $data['documentTransAmount'] = $item->invoiceAmount + $item->VATAmountTotal;
-                    $data['documentLocalCurrencyID'] = $item->localCurrency;
-
-                    $data['documentLocalCurrencyER'] = $item->localCurrencyER;
-                    $data['documentLocalAmount'] = $item->localAmount + $item->VATAmountLocalTotal;
-                    $data['documentRptCurrencyID'] = $item->comRptCurrency;
-                    $data['documentRptCurrencyER'] = $item->comRptCurrencyER;
-                    $data['documentRptAmount'] = $item->comRptAmount + $item->VATAmountRptTotal;
-                    
-                    array_push($finalData, $data);
-                }
-            }
-
-
-            if (!empty($detail)) {
-                foreach ($detail as $item) {
-                    $chartOfAccount = ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'catogaryBLorPLID', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $item->glSystemID)->first();
-
-                    $data['companySystemID'] = $masterData->companySystemID;
-                    $data['companyID'] = $masterData->companyID;
-                    $data['documentSystemID'] = $masterData->documentSystemiD;
-                    $data['documentSystemCode'] = $masterData->custInvoiceDirectAutoID;
-                    $data['documentCode'] = $masterData->bookingInvCode;
-                    $data['documentDate'] = $masterDocumentDate;
-                    $data['documentYear'] = \Helper::dateYear($masterDocumentDate);
-                    $data['documentMonth'] = \Helper::dateMonth($masterDocumentDate);
-                    $data['invoiceNumber'] = $masterData->customerInvoiceNo;
-                    $data['invoiceDate'] = $masterData->customerInvoiceDate;
-                    $data['documentConfirmedDate'] = $masterData->confirmedDate;
-                    $data['documentConfirmedBy'] = $masterData->confirmedByEmpID;
-                    $data['masterCompanyID'] = $company->masterComapanyID;
-
-                    $data['serviceLineSystemID'] = $item->serviceLineSystemID;
-                    $data['serviceLineCode'] = $item->serviceLineCode;
-
-                    // from customer invoice master table
-                    $data['chartOfAccountSystemID'] = $item->glSystemID;
-                    $data['glCode'] = $chartOfAccount->AccountCode;
-                    $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
-                    $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-
-                    $data['documentNarration'] = $item->comments;
-                    $data['clientContractID'] = $item->clientContractID;
-                    $data['supplierCodeSystem'] = $item->customerID;
-
-                    $data['documentTransCurrencyID'] = $item->invoiceAmountCurrency;
-                    $data['documentTransCurrencyER'] = $item->invoiceAmountCurrencyER;
-                    $data['documentTransAmount'] = (($masterData->isPerforma == 1) ? ($item->invoiceAmount - $item->VATAmount) : $item->invoiceAmount) * -1;
-                    $data['documentLocalCurrencyID'] = $item->localCurrency;
-
-                    $data['documentLocalCurrencyER'] = $item->localCurrencyER;
-                    $data['documentLocalAmount'] = (($masterData->isPerforma == 1) ? ($item->localAmount - $item->VATAmountLocal) : $item->localAmount) * -1;
-                    $data['documentRptCurrencyID'] = $item->comRptCurrency;
-                    $data['documentRptCurrencyER'] = $item->comRptCurrencyER;
-                    $data['documentRptAmount'] = (($masterData->isPerforma == 1) ? ($item->comRptAmount - $item->VATAmountRpt) : $item->comRptAmount) * -1;
-                    array_push($finalData, $data);
-                }
-            }
-
-            $erp_taxdetail = Taxdetail::where('companySystemID', $masterData->companySystemID)
-                ->where('documentSystemCode', $masterData->custInvoiceDirectAutoID)
-                ->where('documentSystemID', 20)
-                ->get();
-            if (!empty($erp_taxdetail)) {
-
-                // Input VAT control
-                $taxConfigData = TaxService::getOutputVATGLAccount($masterModel["companySystemID"]);
-                if (!empty($taxConfigData)) {
-                    $taxGL = ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'catogaryBLorPLID', 'chartOfAccountSystemID')
-                        ->where('chartOfAccountSystemID', $taxConfigData->outputVatGLAccountAutoID)
-                        ->first();
-
-                    if (!empty($taxGL)) {
-                        // from customer invoice master table
-                        $data['chartOfAccountSystemID'] = $taxGL['chartOfAccountSystemID'];
-                        $data['glCode'] = $taxGL->AccountCode;
-                        $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
-                        $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-                        $data['clientContractID'] = $detOne->clientContractID;
-                        $data['supplierCodeSystem'] = $masterData->customerID;
-
-                        if ($masterData->isPerforma == 1) {
-                            foreach ($erp_taxdetail as $tax) {
-                                $data['serviceLineSystemID'] = 24;
-                                $data['serviceLineCode'] = 'X';
-                                $data['documentNarration'] = $tax->taxDescription;
-                                $data['documentTransCurrencyID'] = $tax->currency;
-                                $data['documentTransCurrencyER'] = $tax->currencyER;
-                                $data['documentTransAmount'] = $tax->amount * -1;
-                                $data['documentLocalCurrencyID'] = $tax->localCurrencyID;
-                                $data['documentLocalCurrencyER'] = $tax->localCurrencyER;
-                                $data['documentLocalAmount'] = $tax->localAmount * -1;
-                                $data['documentRptCurrencyID'] = $tax->rptCurrencyID;
-                                $data['documentRptCurrencyER'] = $tax->rptCurrencyER;
-                                $data['documentRptAmount'] = $tax->rptAmount * -1;
-                                array_push($finalData, $data);
-
-                                $taxLedgerData['outputVatGLAccountID'] = $taxGL['chartOfAccountSystemID'];
-                            }
-                        } else {
-                            foreach ($segmentWiseDetail as $item) {
-                                $data['serviceLineSystemID'] = $item->serviceLineSystemID;
-                                $data['serviceLineCode'] = $item->serviceLineCode;
-                                $data['clientContractID'] = $item->clientContractID;
-                                $data['contractUID'] = $item->contract ? $item->contract->contractUID : 0;
-                                $data['documentNarration'] = "";
-                                $data['documentTransCurrencyID'] = $item->invoiceAmountCurrency;
-                                $data['documentTransCurrencyER'] = $item->invoiceAmountCurrencyER;
-                                $data['documentTransAmount'] = $item->VATAmountTotal * -1;
-                                $data['documentLocalCurrencyID'] = $item->localCurrency;
-
-                                $data['documentLocalCurrencyER'] = $item->localCurrencyER;
-                                $data['documentLocalAmount'] = $item->VATAmountLocalTotal * -1;
-                                $data['documentRptCurrencyID'] = $item->comRptCurrency;
-                                $data['documentRptCurrencyER'] = $item->comRptCurrencyER;
-                                $data['documentRptAmount'] = $item->VATAmountRptTotal * -1;
-                                
-                                array_push($finalData, $data);
-                                $taxLedgerData['outputVatGLAccountID'] = $taxGL['chartOfAccountSystemID'];
-                            }
-                        }
-                    } else {
-                        Log::info('Customer Invoice VAT GL Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
-                        Log::info('Output Vat GL Account not assigned to company' . date('H:i:s'));
-                    }
-                } else {
-                    Log::info('Customer Invoice VAT GL Entry IssuesId :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
-                    Log::info('Output Vat GL Account not configured' . date('H:i:s'));
-                }
-            }
+            $data = Self::proccessDirectInvoice($masterModel,$masterData,$masterDocumentDate,$empID,$data,$finalData);
+            $finalData = $data['finalData'];
+            $taxLedgerData = $data['taxLedgerData'];
         }
 
         return ['status' => true, 'message' => 'success', 'data' => ['finalData' => $finalData, 'taxLedgerData' => $taxLedgerData]];
 
     }
+
+
+    public static function proccessDirectInvoice($masterModel,$masterData,$masterDocumentDate,$empID,$data,$finalData) {
+        $detOne = CustomerInvoiceDirectDetail::with(['contract'])->where('custInvoiceDirectID', $masterModel["autoID"])->first();
+        $detail = CustomerInvoiceDirectDetail::selectRaw("sum(comRptAmount) as comRptAmount, comRptCurrency, sum(localAmount) as localAmount , localCurrencyER, localCurrency, sum(invoiceAmount) as invoiceAmount, invoiceAmountCurrencyER, invoiceAmountCurrency,comRptCurrencyER, customerID, clientContractID, comments, glSystemID,   serviceLineSystemID,serviceLineCode, sum(VATAmount) as VATAmount, sum(VATAmountLocal) as VATAmountLocal, sum(VATAmountRpt) as VATAmountRpt, sum(VATAmount*invoiceQty) as VATAmountTotal, sum(VATAmountLocal*invoiceQty) as VATAmountLocalTotal, sum(VATAmountRpt*invoiceQty) as VATAmountRptTotal")->with(['contract'])->WHERE('custInvoiceDirectID', $masterModel["autoID"])->groupBy('custInvDirDetAutoID')->get();
+        $company = Company::select('masterComapanyID')->where('companySystemID', $masterData->companySystemID)->first();
+        $chartOfAccount = ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'catogaryBLorPLID', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $masterData->customerGLSystemID)->first();
+
+        $date = new Carbon($masterData->bookingDate);
+        $time = Carbon::now();
+
+        $segmentWiseDetail = CustomerInvoiceDirectDetail::selectRaw("sum(comRptAmount) as comRptAmount, comRptCurrency, sum(localAmount) as localAmount , localCurrencyER, localCurrency, sum(invoiceAmount) as invoiceAmount, invoiceAmountCurrencyER, invoiceAmountCurrency,comRptCurrencyER, customerID, clientContractID, comments, glSystemID,   serviceLineSystemID,serviceLineCode, sum(VATAmount) as VATAmount, sum(VATAmountLocal) as VATAmountLocal, sum(VATAmountRpt) as VATAmountRpt, sum(VATAmount*invoiceQty) as VATAmountTotal, sum(VATAmountLocal*invoiceQty) as VATAmountLocalTotal, sum(VATAmountRpt*invoiceQty) as VATAmountRptTotal")->with(['contract'])->WHERE('custInvoiceDirectID', $masterModel["autoID"])->groupBy('serviceLineSystemID', 'clientContractID')->get();
+
+        $data['companySystemID'] = $masterData->companySystemID;
+        $data['companyID'] = $masterData->companyID;
+        $data['masterCompanyID'] = $company->masterComapanyID;
+        $data['documentID'] = "INV";
+        $data['documentSystemID'] = $masterData->documentSystemiD;
+        $data['documentSystemCode'] = $masterData->custInvoiceDirectAutoID;
+        $data['documentCode'] = $masterData->bookingInvCode;
+        //$data['documentDate'] = ($masterData->isPerforma == 1) ? $time : $masterData->bookingDate;
+        $data['documentDate'] = $masterDocumentDate;
+        $data['documentYear'] = \Helper::dateYear($masterDocumentDate);
+        $data['documentMonth'] = \Helper::dateMonth($masterDocumentDate);
+        $data['invoiceNumber'] = $masterData->customerInvoiceNo;
+        $data['invoiceDate'] = $masterData->customerInvoiceDate;
+        $data['documentConfirmedDate'] = $masterData->confirmedDate;
+        $data['documentConfirmedBy'] = $masterData->confirmedByEmpID;
+        $data['documentConfirmedByEmpSystemID'] = $masterData->confirmedByEmpSystemID;
+        $data['documentFinalApprovedDate'] = $masterData->approvedDate;
+        $data['documentFinalApprovedBy'] = $masterData->approvedByUserID;
+        $data['documentFinalApprovedByEmpSystemID'] = $masterData->approvedByUserSystemID;
+
+
+        // from customer invoice master table
+        $data['chartOfAccountSystemID'] = $chartOfAccount->chartOfAccountSystemID;
+        $data['glCode'] = $chartOfAccount->AccountCode;
+        $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+        $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+
+        $data['documentNarration'] = $masterData->comments;
+        $data['supplierCodeSystem'] = $masterData->customerID;
+        $data['documentType'] = 11;
+        $data['createdUserSystemID'] = $empID->empID;
+        $data['createdDateTime'] = $time;
+        $data['createdUserID'] = $empID->employeeSystemID;
+        $data['createdUserPC'] = getenv('COMPUTERNAME');
+        $data['timestamp'] = $time;
+        
+        if ($masterData->isPerforma == 1) {
+            $data['serviceLineSystemID'] = $detOne->serviceLineSystemID;
+            $data['serviceLineCode'] = $detOne->serviceLineCode;
+            $data['clientContractID'] = $detOne->clientContractID;
+            $data['contractUID'] = $detOne->contract ? $detOne->contract->contractUID : 0;
+
+            $data['documentTransCurrencyID'] = $masterData->custTransactionCurrencyID;
+            $data['documentTransCurrencyER'] = $masterData->custTransactionCurrencyER;
+            $data['documentTransAmount'] = $masterData->bookingAmountTrans + $masterData->VATAmount;
+            $data['documentLocalCurrencyID'] = $masterData->localCurrencyID;
+            $data['documentLocalCurrencyER'] = $masterData->localCurrencyER;
+            $data['documentLocalAmount'] = $masterData->bookingAmountLocal + $masterData->VATAmountLocal;
+            $data['documentRptCurrencyID'] = $masterData->companyReportingCurrencyID;
+            $data['documentRptCurrencyER'] = $masterData->companyReportingER;
+            $data['documentRptAmount'] = $masterData->bookingAmountRpt + $masterData->VATAmountRpt;
+            array_push($finalData, $data);
+        } else {
+            foreach ($segmentWiseDetail as $item) {
+                $data['serviceLineSystemID'] = $item->serviceLineSystemID;
+                $data['serviceLineCode'] = $item->serviceLineCode;
+                $data['clientContractID'] = $item->clientContractID;
+                $data['contractUID'] = $item->contract ? $item->contract->contractUID : 0;
+
+                $data['documentTransCurrencyID'] = $item->invoiceAmountCurrency;
+                $data['documentTransCurrencyER'] = $item->invoiceAmountCurrencyER;
+                $data['documentTransAmount'] = $item->invoiceAmount + $item->VATAmountTotal;
+                $data['documentLocalCurrencyID'] = $item->localCurrency;
+
+                $data['documentLocalCurrencyER'] = $item->localCurrencyER;
+                $data['documentLocalAmount'] = $item->localAmount + $item->VATAmountLocalTotal;
+                $data['documentRptCurrencyID'] = $item->comRptCurrency;
+                $data['documentRptCurrencyER'] = $item->comRptCurrencyER;
+                $data['documentRptAmount'] = $item->comRptAmount + $item->VATAmountRptTotal;
+                array_push($finalData, $data);
+            }
+        }
+
+
+        if (!empty($detail)) {
+            foreach ($detail as $item) {
+                $chartOfAccount = ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'catogaryBLorPLID', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $item->glSystemID)->first();
+
+                $data['companySystemID'] = $masterData->companySystemID;
+                $data['companyID'] = $masterData->companyID;
+                $data['documentSystemID'] = $masterData->documentSystemiD;
+                $data['documentSystemCode'] = $masterData->custInvoiceDirectAutoID;
+                $data['documentCode'] = $masterData->bookingInvCode;
+                $data['documentDate'] = $masterDocumentDate;
+                $data['documentYear'] = \Helper::dateYear($masterDocumentDate);
+                $data['documentMonth'] = \Helper::dateMonth($masterDocumentDate);
+                $data['invoiceNumber'] = $masterData->customerInvoiceNo;
+                $data['invoiceDate'] = $masterData->customerInvoiceDate;
+                $data['documentConfirmedDate'] = $masterData->confirmedDate;
+                $data['documentConfirmedBy'] = $masterData->confirmedByEmpID;
+                $data['masterCompanyID'] = $company->masterComapanyID;
+
+                $data['serviceLineSystemID'] = $item->serviceLineSystemID;
+                $data['serviceLineCode'] = $item->serviceLineCode;
+
+                // from customer invoice master table
+                $data['chartOfAccountSystemID'] = $item->glSystemID;
+                $data['glCode'] = $chartOfAccount->AccountCode;
+                $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+
+                $data['documentNarration'] = $item->comments;
+                $data['clientContractID'] = $item->clientContractID;
+                $data['supplierCodeSystem'] = $item->customerID;
+
+                $data['documentTransCurrencyID'] = $item->invoiceAmountCurrency;
+                $data['documentTransCurrencyER'] = $item->invoiceAmountCurrencyER;
+                $data['documentTransAmount'] = (($masterData->isPerforma == 1) ? ($item->invoiceAmount - $item->VATAmount) : $item->invoiceAmount) * -1;
+                $data['documentLocalCurrencyID'] = $item->localCurrency;
+
+                $data['documentLocalCurrencyER'] = $item->localCurrencyER;
+                $data['documentLocalAmount'] = (($masterData->isPerforma == 1) ? ($item->localAmount - $item->VATAmountLocal) : $item->localAmount) * -1;
+                $data['documentRptCurrencyID'] = $item->comRptCurrency;
+                $data['documentRptCurrencyER'] = $item->comRptCurrencyER;
+                $data['documentRptAmount'] = (($masterData->isPerforma == 1) ? ($item->comRptAmount - $item->VATAmountRpt) : $item->comRptAmount) * -1;
+                array_push($finalData, $data);
+            }
+        }
+
+        $erp_taxdetail = Taxdetail::where('companySystemID', $masterData->companySystemID)
+            ->where('documentSystemCode', $masterData->custInvoiceDirectAutoID)
+            ->where('documentSystemID', 20)
+            ->get();
+        if (!empty($erp_taxdetail)) {
+
+            // Input VAT control
+            $taxConfigData = TaxService::getOutputVATGLAccount($masterModel["companySystemID"]);
+            if (!empty($taxConfigData)) {
+                $taxGL = ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'catogaryBLorPLID', 'chartOfAccountSystemID')
+                    ->where('chartOfAccountSystemID', $taxConfigData->outputVatGLAccountAutoID)
+                    ->first();
+
+                if (!empty($taxGL)) {
+                    // from customer invoice master table
+                    $data['chartOfAccountSystemID'] = $taxGL['chartOfAccountSystemID'];
+                    $data['glCode'] = $taxGL->AccountCode;
+                    $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                    $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                    $data['clientContractID'] = $detOne->clientContractID;
+                    $data['supplierCodeSystem'] = $masterData->customerID;
+
+                    if ($masterData->isPerforma == 1) {
+                        foreach ($erp_taxdetail as $tax) {
+                            $data['serviceLineSystemID'] = 24;
+                            $data['serviceLineCode'] = 'X';
+                            $data['documentNarration'] = $tax->taxDescription;
+                            $data['documentTransCurrencyID'] = $tax->currency;
+                            $data['documentTransCurrencyER'] = $tax->currencyER;
+                            $data['documentTransAmount'] = $tax->amount * -1;
+                            $data['documentLocalCurrencyID'] = $tax->localCurrencyID;
+                            $data['documentLocalCurrencyER'] = $tax->localCurrencyER;
+                            $data['documentLocalAmount'] = $tax->localAmount * -1;
+                            $data['documentRptCurrencyID'] = $tax->rptCurrencyID;
+                            $data['documentRptCurrencyER'] = $tax->rptCurrencyER;
+                            $data['documentRptAmount'] = $tax->rptAmount * -1;
+                            array_push($finalData, $data);
+
+                            $taxLedgerData['outputVatGLAccountID'] = $taxGL['chartOfAccountSystemID'];
+                        }
+                    } else {
+                        foreach ($segmentWiseDetail as $item) {
+                            $data['serviceLineSystemID'] = $item->serviceLineSystemID;
+                            $data['serviceLineCode'] = $item->serviceLineCode;
+                            $data['clientContractID'] = $item->clientContractID;
+                            $data['contractUID'] = $item->contract ? $item->contract->contractUID : 0;
+                            $data['documentNarration'] = "";
+                            $data['documentTransCurrencyID'] = $item->invoiceAmountCurrency;
+                            $data['documentTransCurrencyER'] = $item->invoiceAmountCurrencyER;
+                            $data['documentTransAmount'] = $item->VATAmountTotal * -1;
+                            $data['documentLocalCurrencyID'] = $item->localCurrency;
+
+                            $data['documentLocalCurrencyER'] = $item->localCurrencyER;
+                            $data['documentLocalAmount'] = $item->VATAmountLocalTotal * -1;
+                            $data['documentRptCurrencyID'] = $item->comRptCurrency;
+                            $data['documentRptCurrencyER'] = $item->comRptCurrencyER;
+                            $data['documentRptAmount'] = $item->VATAmountRptTotal * -1;
+                            
+                            array_push($finalData, $data);
+                            $taxLedgerData['outputVatGLAccountID'] = $taxGL['chartOfAccountSystemID'];
+                            return ['finalData' => $finalData, 'taxLedgerData' => $taxLedgerData];
+                        }
+                    }
+                } else {
+                    Log::info('Customer Invoice VAT GL Entry Issues Id :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
+                    Log::info('Output Vat GL Account not assigned to company' . date('H:i:s'));
+                }
+            } else {
+                Log::info('Customer Invoice VAT GL Entry IssuesId :' . $masterModel["autoID"] . ', date :' . date('H:i:s'));
+                Log::info('Output Vat GL Account not configured' . date('H:i:s'));
+            }
+        }
+    }
+
 }

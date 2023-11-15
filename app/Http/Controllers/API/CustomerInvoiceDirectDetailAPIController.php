@@ -548,7 +548,13 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
             $input['invoiceAmountCurrency'] = $master->custTransactionCurrencyID;
             $input['invoiceAmountCurrencyER'] = 1;
             $totalAmount = ($input['unitCost'] != ''?$input['unitCost']:0) * ($input['invoiceQty'] != ''?$input['invoiceQty']:0);
+
             $input['invoiceAmount'] = round($totalAmount, $decimal);
+
+            if($master->isPerforma == 2) {
+                $input['invoiceAmount'] = round($input['salesPrice']);
+            }
+
             /**/
                $MyRptAmount = 0;
                if ($master->custTransactionCurrencyID == $master->companyReportingCurrencyID) {
@@ -648,6 +654,7 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
         }
 
         DB::beginTransaction();
+
 
         try {
             $x=CustomerInvoiceDirectDetail::where('custInvDirDetAutoID', $detail->custInvDirDetAutoID)->update($input);
