@@ -595,7 +595,11 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
             if ($input['by'] === 'VATPercentage') {
               $input["VATAmount"] = $input['unitCost'] * $input["VATPercentage"] / 100;
             } else if ($input['by'] === 'VATAmount') {
-              $input["VATPercentage"] = ($input["VATAmount"] / $input['unitCost']) * 100;
+                if($input['unitCost'] != 0){
+                    $input["VATPercentage"] = ($input["VATAmount"] / $input['unitCost']) * 100;
+                } else {
+                    $input["VATPercentage"] = 0;
+                }
             }
         } else {
             if ($input['VATPercentage'] != 0) {
