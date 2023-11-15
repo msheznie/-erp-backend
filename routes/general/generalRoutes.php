@@ -1,5 +1,10 @@
 <?php
 
+Route::group(['middleware' => 'max_memory_limit'], function () {
+    Route::group(['middleware' => 'max_execution_limit'], function () {
+        Route::post('masterBulkUpload', 'CustomerMasterAPIController@masterBulkUpload')->name("Master data bulk upload");
+    });
+});
 
 Route::resource('document_attachments', 'DocumentAttachmentsAPIController');  
 Route::resource('document_attachment_types', 'DocumentAttachmentTypeAPIController');
@@ -9,7 +14,6 @@ Route::resource('expense_employee_allocations', 'ExpenseEmployeeAllocationAPICon
 
 Route::get('downloadTemplate', 'CustomerMasterAPIController@downloadTemplate')->name('Master data bulk upload template');
 Route::get('getExampleTableData', 'ExampleTableTemplateAPIController@getExampleTableData')->name("Get example table for upload");
-Route::post('masterBulkUpload', 'CustomerMasterAPIController@masterBulkUpload')->name("Master data bulk upload");
 Route::post('getUserActivityLog', 'UserActivityLogAPIController@getViewLog')->name("Get user Activity log");
 
 Route::get('getSearchCustomerByCompany', 'CustomerMasterAPIController@getSearchCustomerByCompany')->name("Get Search Customer By Company");
