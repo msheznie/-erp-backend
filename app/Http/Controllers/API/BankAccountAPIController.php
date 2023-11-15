@@ -621,9 +621,14 @@ class BankAccountAPIController extends AppBaseController
     {
 
         $input =  (object)$request->all();
-
+        
         $currency = $this->convertArrayToSelectedValue($request->all(), array('bank_currency','document_currency'));
-        $bank_currency = $currency['bank_currency'];
+        if(!empty($currency) && isset($currency['bank_currency'])){
+            $bank_currency = $currency['bank_currency'];
+        }else{
+            return $this->sendError('Please select a Currency', 500);
+        }
+        
         $document_currency = $currency['document_currency'];
         $bankBalance = $this->getBankAccountBalanceSummery($input);
 
