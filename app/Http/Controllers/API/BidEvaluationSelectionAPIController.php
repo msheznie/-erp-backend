@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateBidEvaluationSelectionAPIRequest;
 use App\Http\Requests\API\UpdateBidEvaluationSelectionAPIRequest;
 use App\Models\BidEvaluationSelection;
+use App\Models\TenderBidNegotiation;
 use App\Repositories\BidEvaluationSelectionRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -133,6 +134,7 @@ class BidEvaluationSelectionAPIController extends AppBaseController
         $details['description'] = $input['description'];
         $details['bids'] = json_encode($bids);
         $details['created_by'] = \Helper::getEmployeeSystemID();
+        $details['is_negotiation'] = $input['isNegotiation'];
 
         $bidEvaluationSelection = $this->bidEvaluationSelectionRepository->create($details);
 
@@ -386,6 +388,7 @@ class BidEvaluationSelectionAPIController extends AppBaseController
     {
         $input = $request->all();
         $tenderId = $input['tenderId'];
+        $isNegotiation = $request['isNegotiation'];
 
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
@@ -393,8 +396,7 @@ class BidEvaluationSelectionAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-
-        $query = BidEvaluationSelection::with('created_by')->where('tender_id', $tenderId);
+        $query = BidEvaluationSelection::with('created_by')->where('tender_id', $tenderId)->where('is_negotiation', $isNegotiation);
 
         $search = $request->input('search.value');
         if ($search) {

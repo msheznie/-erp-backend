@@ -418,5 +418,8 @@ class PurchaseRequest extends Model
         ->addSelect($as.".locationName as ".$columnAs);
 
 }
+    public function tender_purchase_request(){
+        return $this->hasOne(TenderPurchaseRequest::class,'purchase_request_id','purchaseRequestID');
+    }
 
 }
