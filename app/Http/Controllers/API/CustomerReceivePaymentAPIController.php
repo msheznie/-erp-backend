@@ -181,7 +181,10 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
         $input['documentType'] = isset($input['documentType']) ? $input['documentType'] : 0;
         $input['companySystemID'] = isset($input['companySystemID']) ? $input['companySystemID'] : 0;
-        
+
+        if(!isset($input['paymentType'])){
+            return $this->sendError("Payment Mode is required", 500);
+        }
         $input['payment_type_id'] = $input['paymentType'];
         unset($input['paymentType']);
 
