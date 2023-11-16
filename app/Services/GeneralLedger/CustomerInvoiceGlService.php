@@ -757,6 +757,8 @@ class CustomerInvoiceGlService
 
     public static function generateCustomerDirectInvoiceDetailsGL($masterData,$finalData,$masterDocumentDate) {
         $_customerInvoiceDirectDetails = CustomerInvoiceDirectDetail::where('custInvoiceDirectID',$masterData->custInvoiceDirectAutoID)->get();
+        $chartOfAccount = ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'catogaryBLorPLID', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $masterData->customerGLSystemID)->first();
+        $_masterGLAccount = collect($finalData)->where('chartOfAccountSystemID',$chartOfAccount->chartOfAccountSystemID)->first();
         foreach ($_customerInvoiceDirectDetails as $item) {
             if($item->chartOfAccount->controlAccountsSystemID == 2 || $item->chartOfAccount->controlAccountsSystemID == 4 || $item->chartOfAccount->controlAccountsSystemID == 5) {
                 $data['serviceLineSystemID'] = $item->serviceLineSystemID;
@@ -783,9 +785,9 @@ class CustomerInvoiceGlService
                 $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                 array_push($finalData, $data);
 
-                $finalData[0]['documentTransAmount'] -= ($item->invoiceAmount + $item->VATAmountTotal);
-                $finalData[0]['documentLocalAmount'] -= ($item->localAmount + $item->VATAmountLocalTotal);
-                $finalData[0]['documentRptAmount'] -= ($item->comRptAmount + $item->VATAmountRptTotal);
+                $_masterGLAccount['documentTransAmount'] -= ($item->invoiceAmount + $item->VATAmountTotal);
+                $_masterGLAccount['documentLocalAmount'] -= ($item->localAmount + $item->VATAmountLocalTotal);
+                $_masterGLAccount['documentRptAmount'] -= ($item->comRptAmount + $item->VATAmountRptTotal);
                 
             }else{
                 $data['serviceLineSystemID'] = $item->serviceLineSystemID;
@@ -811,12 +813,20 @@ class CustomerInvoiceGlService
                 $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
                 array_push($finalData, $data);
 
-                $finalData[0]['documentTransAmount'] += $item->invoiceAmount + $item->VATAmountTotal;
-                $finalData[0]['documentLocalAmount'] += $item->localAmount + $item->VATAmountLocalTotal;
-                $finalData[0]['documentRptAmount'] += $item->comRptAmount + $item->VATAmountRptTotal;  
+                $_masterGLAccount['documentTransAmount'] += $item->invoiceAmount + $item->VATAmountTotal;
+                $_masterGLAccount['documentLocalAmount'] += $item->localAmount + $item->VATAmountLocalTotal;
+                $_masterGLAccount['documentRptAmount'] += $item->comRptAmount + $item->VATAmountRptTotal;  
             }
 
+
+
         }
+
+        $index = collect($finalData)->search(function($data) use ($chartOfAccount) {
+            return $data['chartOfAccountSystemID'] === $chartOfAccount->chartOfAccountSystemID;
+        });
+
+        $finalData[$index] = $_masterGLAccount;
 
         return $finalData;
 
