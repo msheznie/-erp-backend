@@ -4808,16 +4808,18 @@ WHERE
 
     public static function getTotalAfterGL($invoice) {
             $total = 0;
-            $_customerInvoiceDirectDetails = CustomerInvoiceDirectDetail::where('custInvoiceDirectID',$invoice->custInvoiceDirectAutoID)->get();
+            $_customerInvoiceDirectDetails = CustomerInvoiceDirectDetail::with(['chart_Of_account'])->where('custInvoiceDirectID',$invoice->custInvoiceDirectAutoID)->get();
             $total = $invoice->bookingAmountTrans;
-            if(isset($_customerInvoiceDirectDetails) && $invoice->isPerforma == 2) {
+            if(count($_customerInvoiceDirectDetails) > 0 && $invoice->isPerforma == 2) {
                 foreach ($_customerInvoiceDirectDetails as $item) {
-                    if($item->chartOfAccount->controlAccountsSystemID == 2 || $item->chartOfAccount->controlAccountsSystemID == 4 || $item->chartOfAccount->controlAccountsSystemID == 5) {
-                        $total -= ($item->invoiceAmount + $item->VATAmountTotal);
-                    }else{
-                        $total += ($item->invoiceAmount + $item->VATAmountTotal);
+
+                    if(isset($item->chart_Of_account)) {
+                        if($item->chart_Of_account->controlAccountsSystemID == 2 || $item->chart_Of_account->controlAccountsSystemID == 4 || $item->chart_Of_account->controlAccountsSystemID == 5) {
+                            $total -= ($item->invoiceAmount + $item->VATAmountTotal);
+                        }else{
+                            $total += ($item->invoiceAmount + $item->VATAmountTotal);
+                        }
                     }
-        
                 }
             }
 

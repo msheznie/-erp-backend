@@ -291,7 +291,7 @@ class CustomerInvoiceDirectDetail extends Model
         return $this->belongsTo('App\Models\Unit', 'unitOfMeasure', 'UnitID');
     }
 
-    public function chartOfAccount() {
+    public function chart_Of_account() {
         return $this->belongsTo('App\Models\ChartOfAccount', 'glSystemID','chartOfAccountSystemID' );
     }
 
