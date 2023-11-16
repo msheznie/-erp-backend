@@ -2136,7 +2136,11 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         $invMaster = $this->customerInvoiceDirectRepository->customerInvoiceListQuery($request, $input, $search, $customerID);
 
+
         return \DataTables::of($invMaster)
+                ->addColumn('total', function($inv) {
+                    return $this->getTotalAfterGL($inv);
+                })
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
@@ -4800,5 +4804,23 @@ WHERE
         CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->update($vatAmount);
 
         return ['status' => true];
+    }
+
+    public static function getTotalAfterGL($invoice) {
+            $total = 0;
+            $_customerInvoiceDirectDetails = CustomerInvoiceDirectDetail::where('custInvoiceDirectID',$invoice->custInvoiceDirectAutoID)->get();
+            $total = $invoice->bookingAmountTrans;
+            if(isset($_customerInvoiceDirectDetails) && $invoice->isPerforma == 2) {
+                foreach ($_customerInvoiceDirectDetails as $item) {
+                    if($item->chartOfAccount->controlAccountsSystemID == 2 || $item->chartOfAccount->controlAccountsSystemID == 4 || $item->chartOfAccount->controlAccountsSystemID == 5) {
+                        $total -= ($item->invoiceAmount + $item->VATAmountTotal);
+                    }else{
+                        $total += ($item->invoiceAmount + $item->VATAmountTotal);
+                    }
+        
+                }
+            }
+
+           return $total;
     }
 }
