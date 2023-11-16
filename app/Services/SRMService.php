@@ -329,21 +329,28 @@ class SRMService
     public function getSupplierInvitationInfo(Request $request)
     {
         $invitationToken = $request->input('extra.token');
-        $data = $this->supplierService->getTokenData($invitationToken);
+        $data = $this->supplierService->checkValidTokenData($invitationToken);
 
-        if (!$data) {
+        if ($data == 1) {
             return [
                 'success' => false,
-                'message' => "Invalid Token",
+                'message' => "Sorry, This link has already been expired",
                 'data' => null
             ];
+        } else if ($data == 2) {
+            return [
+                'success' => false,
+                'message' => "Sorry, This link has already been used",
+                'data' => null
+            ];
+        } else {
+            $dataSupplier = $this->supplierService->getTokenData($invitationToken);
+            return [
+                'success' => true,
+                'message' => 'Valid Invitation Link',
+                'data' => $dataSupplier
+            ];
         }
-
-        return [
-            'success' => true,
-            'message' => 'Valid Invitation Link',
-            'data' => $data
-        ];
     }
 
     public function updateSupplierInvitation(Request $request)
