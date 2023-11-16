@@ -758,8 +758,7 @@ class CustomerInvoiceGlService
     public static function generateCustomerDirectInvoiceDetailsGL($masterData,$finalData,$masterDocumentDate) {
         $_customerInvoiceDirectDetails = CustomerInvoiceDirectDetail::where('custInvoiceDirectID',$masterData->custInvoiceDirectAutoID)->get();
         foreach ($_customerInvoiceDirectDetails as $item) {
-            
-            if($item->chartOfAccount->controlAccountsSystemID != 1 || $item->chartOfAccount->controlAccountsSystemID != 3) {
+            if($item->chartOfAccount->controlAccountsSystemID == 2 || $item->chartOfAccount->controlAccountsSystemID == 4 || $item->chartOfAccount->controlAccountsSystemID == 5) {
                 $data['serviceLineSystemID'] = $item->serviceLineSystemID;
                 $data['serviceLineCode'] = $item->serviceLineCode;
                 $data['clientContractID'] = 'X';
