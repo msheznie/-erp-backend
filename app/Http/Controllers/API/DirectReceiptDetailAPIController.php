@@ -428,6 +428,9 @@ class DirectReceiptDetailAPIController extends AppBaseController
         }
 
 
+        if ($master->projectID) {
+            $inputData['detail_project_id'] = $master->projectID;
+        }
 
 
         $inputData['directReceiptAutoID'] = $directReceiptAutoID;
@@ -488,6 +491,12 @@ class DirectReceiptDetailAPIController extends AppBaseController
 
         if($master->confirmedYN){
             return $this->sendError('You cannot update detail, this document already confirmed', 500);
+        }
+
+        if(isset($input['detail_project_id'])){
+            $input['detail_project_id'] = $input['detail_project_id'];
+        } else {
+            $input['detail_project_id'] = null;
         }
 
         if ($input['contractUID'] != $detail->contractUID) {
