@@ -3398,7 +3398,10 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $customerInvoiceLogistic = $customerInvoiceLogistic->toArray();
             $customerInvoice['customerInvoiceLogistic'] = $customerInvoiceLogistic;
         }
-
+        
+        if(!isset($secondaryBankAccount)){
+            return $this->sendError('Bank account not found.');
+        }
 
         $array = array('type'=>$type,'request' => $customerInvoice, 'secondaryBankAccount' => $secondaryBankAccount);
         $time = strtotime("now");
