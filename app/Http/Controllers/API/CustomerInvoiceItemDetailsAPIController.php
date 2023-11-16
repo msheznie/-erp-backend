@@ -675,7 +675,7 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
             if ($input['by'] === 'discountPercentage') {
               $input["discountAmount"] = $input['salesPrice'] * $input["discountPercentage"] / 100;
             } else if ($input['by'] === 'discountAmount') {
-                if($input['salesPrice'] != 0){
+                if($input['salesPrice'] > 0){
                     $input["discountPercentage"] = ($input["discountAmount"] / $input['salesPrice']) * 100;
                 } else {
                     $input["discountPercentage"] = 0;
@@ -685,7 +685,7 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
             if ($input['discountPercentage'] != 0) {
               $input["discountAmount"] = $input['salesPrice'] * $input["discountPercentage"] / 100;
             } else {
-                if($input['salesPrice'] != 0){
+                if($input['salesPrice'] > 0){
                     $input["discountPercentage"] = ($input["discountAmount"] / $input['salesPrice']) * 100;
                 } else {
                     $input["discountPercentage"] = 0;
@@ -705,7 +705,7 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
             if ($input['by'] === 'VATPercentage') {
               $input["VATAmount"] = $input['sellingCostAfterMargin'] * $input["VATPercentage"] / 100;
             } else if ($input['by'] === 'VATAmount') {
-                if($input['sellingCostAfterMargin'] != 0){
+                if($input['sellingCostAfterMargin'] > 0){
                     $input["VATPercentage"] = ($input["VATAmount"] / $input['sellingCostAfterMargin']) * 100;
                 } else {
                     $input["VATPercentage"] = 0;
@@ -715,7 +715,7 @@ class CustomerInvoiceItemDetailsAPIController extends AppBaseController
             if ($input['VATPercentage'] != 0) {
               $input["VATAmount"] = $input['sellingCostAfterMargin'] * $input["VATPercentage"] / 100;
             } else {
-                if($input['sellingCostAfterMargin'] != 0){
+                if($input['sellingCostAfterMargin'] > 0){
                     $input["VATPercentage"] = ($input["VATAmount"] / $input['sellingCostAfterMargin']) * 100;
                 } else {
                     $input["VATPercentage"] = 0;
