@@ -2904,8 +2904,11 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         $id = $request->get('id');
         $type = $request->get('type');
-        
+
         $master = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $id)->first();
+        if (!$master) {
+            return $this->sendError("Customer invoice not found");
+        }
         $companySystemID = $master->companySystemID;
         $localCurrencyER = $master->localCurrencyER;
 
