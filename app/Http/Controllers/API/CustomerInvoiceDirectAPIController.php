@@ -468,6 +468,19 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $detail = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $id)->get();
         }
 
+        if($isPerforma == 2) {
+            $_glSelectionItems = CustomerInvoiceDirectDetail::where('custInvoiceDirectID',$id)->get();
+
+            if($_glSelectionItems) {
+                foreach($_glSelectionItems as $_glSelectionItem) {
+                    if(!isset($_glSelectionItem->serviceLineCode)) {
+                        return $this->sendError('Please select a Segment in GL Selection', 500);
+                    }
+                }
+
+            }
+        }
+
         if(isset($detail[0])) {
             $qo_master = QuotationMaster::find($detail[0]['quotationMasterID']);
             $details = CustomerInvoiceItemDetails::where('quotationMasterID',$detail[0]['quotationMasterID'])->get();
