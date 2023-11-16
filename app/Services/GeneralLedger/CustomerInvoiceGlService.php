@@ -759,7 +759,7 @@ class CustomerInvoiceGlService
         $_customerInvoiceDirectDetails = CustomerInvoiceDirectDetail::where('custInvoiceDirectID',$masterData->custInvoiceDirectAutoID)->get();
         foreach ($_customerInvoiceDirectDetails as $item) {
             
-            if($item->chartOfAccount->controlAccount->itemLedgerShymbol == '-') {
+            if($item->chartOfAccount->controlAccountsSystemID != 1 || $item->chartOfAccount->controlAccountsSystemID != 3) {
                 $data['serviceLineSystemID'] = $item->serviceLineSystemID;
                 $data['serviceLineCode'] = $item->serviceLineCode;
                 $data['clientContractID'] = 'X';
