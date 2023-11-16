@@ -299,14 +299,17 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
 
         $details = CustomerInvoiceDirectDetail::select(DB::raw("IFNULL(SUM(invoiceAmount),0) as bookingAmountTrans"), DB::raw("IFNULL(SUM(localAmount),0) as bookingAmountLocal"), DB::raw("IFNULL(SUM(comRptAmount),0) as bookingAmountRpt"))->where('custInvoiceDirectID', $masterID)->first()->toArray();
 
-
         /* selectRaw*/
         CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $masterID)->update($details);
-        
-        $resVat = $this->updateTotalVAT($customerInvoiceDirectDetail->custInvoiceDirectID);
-        if (!$resVat['status']) {
-           return $this->sendError($resVat['message']); 
-        } 
+
+        $master =  CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $masterID)->first();
+        if($master->isPerforma != 2) {
+            $resVat = $this->updateTotalVAT($customerInvoiceDirectDetail->custInvoiceDirectID);
+            if (!$resVat['status']) {
+                return $this->sendError($resVat['message']); 
+             } 
+        }
+
 
         return $this->sendResponse($id, 'Customer Invoice Direct Detail deleted successfully');
     }
@@ -469,6 +472,7 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
             // return $this->sendError('Please delete tax details to continue');
         }
 
+
         $validateVATCategories = TaxService::validateVatCategoriesInDocumentDetails($master->documentSystemiD, $master->companySystemID, $id, $input, $master->customerID, $master->isPerforma);
 
         if (!$validateVATCategories['status']) {
@@ -549,6 +553,12 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
             $input['invoiceAmountCurrencyER'] = 1;
             $totalAmount = ($input['unitCost'] != ''?$input['unitCost']:0) * ($input['invoiceQty'] != ''?$input['invoiceQty']:0);
             $input['invoiceAmount'] = round($totalAmount, $decimal);
+            
+            if($master->isPerforma == 2) {
+                $totalAmount = $input['salesPrice'];
+                $input['invoiceAmount'] = round($input['salesPrice'], $decimal);
+            }
+
             /**/
                $MyRptAmount = 0;
                if ($master->custTransactionCurrencyID == $master->companyReportingCurrencyID) {
@@ -655,10 +665,12 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
 
             CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $detail->custInvoiceDirectID)->update($allDetail);
 
-            $resVat = $this->updateTotalVAT($master->custInvoiceDirectAutoID);
-            if (!$resVat['status']) {
-               return $this->sendError($resVat['message']); 
-            } 
+            if($master->isPerforma != 2) {
+                $resVat = $this->updateTotalVAT($master->custInvoiceDirectAutoID);
+                if (!$resVat['status']) {
+                   return $this->sendError($resVat['message']); 
+                } 
+            }
 
             DB::commit();
             return $this->sendResponse('s', 'successfully created');

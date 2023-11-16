@@ -468,6 +468,19 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $detail = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $id)->get();
         }
 
+        if($isPerforma == 2) {
+            $_glSelectionItems = CustomerInvoiceDirectDetail::where('custInvoiceDirectID',$id)->get();
+
+            if($_glSelectionItems) {
+                foreach($_glSelectionItems as $_glSelectionItem) {
+                    if(!isset($_glSelectionItem->serviceLineCode)) {
+                        return $this->sendError('Please select a Segment in GL Selection', 500);
+                    }
+                }
+
+            }
+        }
+
         if(isset($detail[0])) {
             $qo_master = QuotationMaster::find($detail[0]['quotationMasterID']);
             $details = CustomerInvoiceItemDetails::where('quotationMasterID',$detail[0]['quotationMasterID'])->get();
@@ -2125,7 +2138,11 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         $invMaster = $this->customerInvoiceDirectRepository->customerInvoiceListQuery($request, $input, $search, $customerID);
 
+
         return \DataTables::of($invMaster)
+                ->addColumn('total', function($inv) {
+                    return $this->getTotalAfterGL($inv);
+                })
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
@@ -4807,5 +4824,23 @@ WHERE
         CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->update($vatAmount);
 
         return ['status' => true];
+    }
+
+    public static function getTotalAfterGL($invoice) {
+            $total = 0;
+            $_customerInvoiceDirectDetails = CustomerInvoiceDirectDetail::where('custInvoiceDirectID',$invoice->custInvoiceDirectAutoID)->get();
+            $total = $invoice->bookingAmountTrans;
+            if(isset($_customerInvoiceDirectDetails) && $invoice->isPerforma == 2) {
+                foreach ($_customerInvoiceDirectDetails as $item) {
+                    if($item->chartOfAccount->controlAccountsSystemID == 2 || $item->chartOfAccount->controlAccountsSystemID == 4 || $item->chartOfAccount->controlAccountsSystemID == 5) {
+                        $total -= ($item->invoiceAmount + $item->VATAmountTotal);
+                    }else{
+                        $total += ($item->invoiceAmount + $item->VATAmountTotal);
+                    }
+        
+                }
+            }
+
+           return $total;
     }
 }

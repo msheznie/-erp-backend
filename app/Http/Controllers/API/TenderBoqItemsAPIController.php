@@ -310,6 +310,7 @@ class TenderBoqItemsAPIController extends AppBaseController
     public function addTenderBoqItems(Request $request)
     {
         $input = $request->all();
+
         $employee = \Helper::getEmployeeInfo();
         $is_disabled = 0;
         if(!isset($input['item_name']) || empty($input['item_name'])){
@@ -331,8 +332,15 @@ class TenderBoqItemsAPIController extends AppBaseController
         $exist = TenderBoqItems::where('item_name',$input['item_name'])
             ->where('main_work_id',$input['main_work_id'])->first();
 
+        $d['purchase_request_id'] = '';
         if(!empty($exist)){
-            return ['success' => false, 'message' => 'Item already exist'];
+            if( isset($input['origin']) && ($input['origin'] == 1 || $input['origin'] == 2)){
+                $input['qty'] = $input['qty'] + $exist->qty;
+                $d['purchase_request_id'] = isset($input['purchaseRequestID']) ? $input['purchaseRequestID'] . ',' . $exist->purchase_request_id : $exist->purchase_request_id;
+                $exist->delete();
+            } else {
+                return ['success' => false, 'message' => 'Item already exist'];
+            }
         }
 
 
@@ -349,6 +357,14 @@ class TenderBoqItemsAPIController extends AppBaseController
             $data['qty']=$input['qty'];
             $data['tender_id']=$input['tender_id'];
             $data['created_by'] = $employee->employeeSystemID;
+            if($d['purchase_request_id'] != ''){
+                $data['purchase_request_id'] = $d['purchase_request_id'];
+            } else {
+                $data['purchase_request_id'] = isset($input['purchaseRequestID']) ? $input['purchaseRequestID'] : '';
+            }
+
+            $data['item_primary_code'] = isset($input['itemPrimaryCode']) ? $input['itemPrimaryCode'] : '';
+            $data['origin'] = isset($input['origin']) ? $input['origin'] : '';
 
             $result = TenderBoqItems::create($data);
          
