@@ -45,3 +45,19 @@ Route::group([],function (){
     Route::post('exportPoEmployeePerformance', 'ProcumentOrderAPIController@exportPoEmployeePerformance')->name("Export po employee performance");
 });
 
+//General Ledger
+
+//Financials
+Route::group([],function (){
+    Route::get('getFRFilterData', 'FinancialReportAPIController@getFRFilterData')->name("Get financial report filter data");
+    Route::post('validateFRReport', 'FinancialReportAPIController@validateFRReport')->name("Validate financial report");
+    Route::post('getSubsidiaryCompanies', 'FinancialReportAPIController@getSubsidiaryCompanies')->name("Get subsidiary companies");
+    Route::group(['middleware' => ['max_memory_limit', 'max_execution_limit']], function () { 
+        Route::post('generateFRReport', 'FinancialReportAPIController@generateFRReport')->name("Generate financial report");
+    });
+    Route::post('exportFinanceReport', 'FinancialReportAPIController@exportFinanceReport')->name("Export financial report");
+    Route::post('exportFinanceReportPDF', 'FinancialReportAPIController@pdfExportReport')->name("Export financial report pdf");
+    Route::post('reportTemplateGLDrillDown', 'FinancialReportAPIController@reportTemplateGLDrillDown')->name("Report template gl drill down");
+    Route::post('reportTemplateGLDrillDownExport', 'FinancialReportAPIController@reportTemplateGLDrillDownExport')->name("Export report template gl drill down");
+});
+
