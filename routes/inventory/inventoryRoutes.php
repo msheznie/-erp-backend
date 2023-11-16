@@ -404,4 +404,17 @@ Route::post('cancelGRV', 'GRVMasterAPIController@cancelGRV')->name('Cancel GRV')
 Route::post('reverseGRV', 'GRVMasterAPIController@reverseGRV')->name('Reverse GRV');
 });
 
+//Inventory Classification
+Route::group([], function () {
+    Route::post('getAllInvReclassificationByCompany', 'InventoryReclassificationAPIController@getAllInvReclassificationByCompany')->name('Get All Inventory Reclasification By Company');
+    Route::post('invRecalssificationReopen', 'InventoryReclassificationAPIController@invRecalssificationReopen')->name('Inventory Recalssification Reopen');
+    
+    Route::get('getInvReclassificationAudit', 'InventoryReclassificationAPIController@getInvReclassificationAudit')->name('Get Inventory Reclasification Audit');
+    Route::get('getItemsOptionForReclassification', 'InventoryReclassificationAPIController@getItemsOptionForReclassification')->name('Get Items Option For Inventory Reclassification');
+    Route::get('getItemsByReclassification', 'InventoryReclassificationDetailAPIController@getItemsByReclassification')->name('Get Items By Inventory Reclassification');
+
+    Route::resource('inv_reclassifications', 'InventoryReclassificationAPIController');
+    Route::resource('inv_reclassification_details', 'InventoryReclassificationDetailAPIController');
+
+});
 

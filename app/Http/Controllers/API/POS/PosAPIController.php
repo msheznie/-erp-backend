@@ -73,12 +73,14 @@ class PosAPIController extends AppBaseController
             $customerCategories = CustomerMasterCategory::whereHas('category_assigned', function($query) use($company_id){
                 $query->where('companySystemID',$company_id);
                 $query->where('isAssigned',1);
-                $query->where('isActive',1);
-            })->get();
+            })->with(['category_assigned' => function ($q) use($company_id) {
+                $q->where('companySystemID',$company_id);
+                $q->where('isAssigned',1);
+            }])->get();
 
             $customerCategoryArray = array();
             foreach ($customerCategories as $item) {
-                $data = array('id' => $item->categoryID, 'party_type' => 1, 'description' => $item->categoryDescription);
+                $data = array('id' => $item->categoryID, 'party_type' => 1, 'description' => $item->categoryDescription, 'isActive' => isset($item->category_assigned[0]->isActive) ? $item->category_assigned[0]->isActive : false);
                 array_push($customerCategoryArray, $data);
             }
 
@@ -137,11 +139,10 @@ class PosAPIController extends AppBaseController
            "" as is_auto,"" as is_card,chartofaccounts.isBank as is_bank,"" as is_cash,"" as is_default_bank,"" as bank_name,"" as bank_branch,"" as bank_short_code,"" as bank_swift_code,"" as bank_cheque_number,
            "" as bank_account_number, "" as bank_currency_id,"" as bank_currency_code, "" as bank_currency_decimal,"" as is_deleted,"" as deleted_userID,"" as deleted_dateTime,
            confirmedYN as is_confirmed,confirmedEmpDate as confirmed_date,confirmedEmpID as confirmedbyEmpID,confirmedEmpName as confirmed_user_name,isApproved as is_approved,approvedDate as approved_date,
-           approvedBySystemID as approvedbyEmpID,approvedBy as approved_user_name,approvedComment as approved_comment')
+           approvedBySystemID as approvedbyEmpID,approvedBy as approved_user_name,approvedComment as approved_comment, chartofaccountsassigned.isActive as isActive')
                 ->join('chartofaccountsassigned', 'chartofaccountsassigned.chartOfAccountSystemID', '=', 'chartofaccounts.chartOfAccountSystemID')
                 ->where('chartofaccountsassigned.companySystemID', '=', $company_id)
                 ->where('chartofaccountsassigned.isAssigned', '=', -1)
-                ->where('chartofaccountsassigned.isActive', '=', 1)
                 ->where('chartofaccounts.chartOfAccountSystemID', '!=', '')
                 ->where('chartofaccounts.AccountCode', '!=', '')
                 ->where('chartofaccounts.AccountDescription', '!=', '')
@@ -366,12 +367,11 @@ class PosAPIController extends AppBaseController
             $company_id = $request->get('company_id');
             $input = $request->all();
             $financeItemCategorySub = FinanceItemCategorySub::selectRaw('financeitemcategorysub.itemCategorySubID As id,financeitemcategorysub.categoryDescription As description,itemCategoryID As master_id ,
-            financeitemcategorysub.financeGLcodeRevenueSystemID as revenue_gl,financeitemcategorysub.financeGLcodePLSystemID as cost_gl')
+            financeitemcategorysub.financeGLcodeRevenueSystemID as revenue_gl,financeitemcategorysub.financeGLcodePLSystemID as cost_gl, financeitemcategorysubassigned.isActive as isActive')
                 ->join('financeitemcategorysubassigned', 'financeitemcategorysubassigned.itemCategorySubID', '=', 'financeitemcategorysub.itemCategorySubID')
                 ->where('financeitemcategorysub.itemCategorySubID', '!=', '')
                 ->where('financeitemcategorysub.categoryDescription', '!=', '')
                 ->where('financeitemcategorysubassigned.companySystemID', '=', $company_id)
-                ->where('financeitemcategorysubassigned.isActive', '=', 1)
                 ->where('financeitemcategorysubassigned.isAssigned', '=', -1);
 
                 if(isset($input['category_id'])){
@@ -403,7 +403,7 @@ class PosAPIController extends AppBaseController
             vatSubCategory as vat_sub_category_id,itemmaster.isActive as is_active,itemApprovedComment as comment, "" as is_sub_item_exist,"" as is_sub_item_applicable,
             "" as local_currency_id,"" as local_currency,"" as local_exchange_rate,"" as local_selling_price,"" as local_decimal_place,
             "" as reporting_currency_id,"" as reporting_currency,"" as reporting_exchange_rate,"" as reporting_selling_price,"" as reporting_decimal_place,
-            "" as is_deleted,"" as deleted_by,"" as deleted_date_time,itemmaster.pos_type')
+            "" as is_deleted,"" as deleted_by,"" as deleted_date_time,itemmaster.pos_type, itemassigned.isActive')
                 ->join('financeitemcategorymaster', 'financeitemcategorymaster.itemCategoryID', '=', 'itemmaster.financeCategoryMaster')
                 ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
                 ->join('units', 'units.UnitID', '=', 'itemmaster.unit')
@@ -412,7 +412,6 @@ class PosAPIController extends AppBaseController
                 ->join('itemassigned', 'itemassigned.itemCodeSystem', '=', 'itemmaster.itemCodeSystem')
                 ->where('itemassigned.companySystemID', '=', $company_id)
                 ->where('itemassigned.isAssigned', '=', -1)
-                ->where('itemassigned.isActive', '=', 1)
                 ->where('primaryCode', '!=', '')
                 ->where('itemmaster.documentID', '!=', '')
                 ->where('itemmaster.financeCategoryMaster', '!=', '')
@@ -530,7 +529,7 @@ class PosAPIController extends AppBaseController
             $isPos = isset($input['is_pos']) ? $input['is_pos']: 0;
 
             if($isPos == 1) {
-                $employee = Employee::selectRaw('employees.employeeSystemID as id,empID as system_code,empName As name,empUserName As user_name,empEmail As email, empActive as is_active')
+                $employee = Employee::selectRaw('employees.employeeSystemID as id,empID as system_code,empName As name,empUserName As user_name,empEmail As email, empActive as is_active, discharegedYN as isDischarged')
                     ->join('srp_erp_employeenavigation', 'employees.employeeSystemID', '=', 'srp_erp_employeenavigation.employeeSystemID')
                     ->join('srp_erp_navigationusergroupsetup', 'srp_erp_employeenavigation.userGroupID', '=', 'srp_erp_navigationusergroupsetup.userGroupID')
                     ->where('srp_erp_navigationusergroupsetup.navigationMenuID', 371)
@@ -959,7 +958,8 @@ class PosAPIController extends AppBaseController
                                                             customermaster.creditLimit as customerCreditLimit,
                                                             customermaster.isCustomerActive,
                                                             customermaster.primaryCompanySystemID,
-                                                            customermaster.primaryCompanyID 
+                                                            customermaster.primaryCompanyID,
+                                                            customerassigned.isActive as isActive
                                                         ')
                                                 ->join('customerassigned', 'customerassigned.customerCodeSystem', '=', 'customermaster.customerCodeSystem')
                                                 ->join('countrymaster', 'countrymaster.countryID', '=', 'customermaster.customerCountry')
@@ -969,7 +969,6 @@ class PosAPIController extends AppBaseController
                                                 ->where('customermaster.customerCodeSystem', '!=', '')
                                                 ->where('isCustomerActive', '=', 1)
                                                 ->where('customerassigned.companySystemID', '=', $company_id)
-                                                ->where('customerassigned.isActive', '=', 1)
                                                 ->where('customerassigned.isAssigned', '=', -1);
 
             if (isset($input['customer_id'])) {

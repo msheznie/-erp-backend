@@ -126,7 +126,8 @@ class PerformaDetails extends Model
         'bankID',
         'accountID',
         'paymentPeriodDays',
-        'timestamp'
+        'timestamp',
+        'isDiscount'
     ];
 
     /**
@@ -150,7 +151,9 @@ class PerformaDetails extends Model
         'vendorCode' => 'string',
         'bankID' => 'integer',
         'accountID' => 'integer',
-        'paymentPeriodDays' => 'integer'
+        'paymentPeriodDays' => 'integer',
+        'isDiscount'  => 'integer'
+
     ];
 
     /**
@@ -166,6 +169,10 @@ class PerformaDetails extends Model
     public function freebillingmaster()
     {
         return $this->belongsTo('App\Models\FreeBillingMasterPerforma','performaMasterID',  'performaMasterID');
+    }
+
+    public function PerformaTemp() {
+        return $this->belongsTo('App\Models\PerformaTemp','performaMasterID',  'performaMasterID');
     }
 
 

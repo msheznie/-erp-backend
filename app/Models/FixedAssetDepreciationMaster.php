@@ -157,6 +157,7 @@ class FixedAssetDepreciationMaster extends Model
         'refferedBackYN',
         'RollLevForApp_curr',
         'isDepProcessingYN',
+        'counter',
         'confirmedYN',
         'confirmedByEmpSystemID',
         'confirmedByEmpID',
@@ -170,7 +171,8 @@ class FixedAssetDepreciationMaster extends Model
         'createdUserSystemID',
         'createdPCID',
         'timeStamp',
-        'is_acc_dep'
+        'is_acc_dep',
+        'is_cancel'
     ];
 
     /**
@@ -197,6 +199,7 @@ class FixedAssetDepreciationMaster extends Model
         'refferedBackYN' => 'integer',
         'RollLevForApp_curr' => 'integer',
         'isDepProcessingYN' => 'integer',
+        'counter' => 'integer',
         'confirmedYN' => 'integer',
         'confirmedByEmpSystemID' => 'integer',
         'confirmedByEmpID' => 'string',
@@ -206,7 +209,8 @@ class FixedAssetDepreciationMaster extends Model
         'approvedByUserSystemID' => 'integer',
         'createdUserID' => 'string',
         'createdUserSystemID' => 'integer',
-        'createdPCID' => 'string'
+        'createdPCID' => 'string',
+        'is_cancel' => 'integer'
     ];
 
     /**

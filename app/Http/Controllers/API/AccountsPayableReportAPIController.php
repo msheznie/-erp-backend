@@ -27,6 +27,7 @@ namespace App\Http\Controllers\API;
 use App\helper\Helper;
 use App\Http\Controllers\AppBaseController;
 use App\Models\AccountsPayableLedger;
+use App\Models\BookInvSuppDet;
 use App\Models\BookInvSuppMaster;
 use App\Models\ChartOfAccount;
 use App\Models\CountryMaster;
@@ -645,6 +646,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 if ($reportTypeID == 'UGRVD' || $reportTypeID == 'UGRVS') { //Unbilled Detail
 
                     $output = $this->getUnbilledDetailQRY($request);
+
                     if ($reportTypeID == 'UGRVD') {
                         if ($output) {
                             foreach ($output as $val) {
@@ -2944,10 +2946,10 @@ class AccountsPayableReportAPIController extends AppBaseController
             $c = 1;
             foreach ($aging as $val) {
                 if ($count == $c) {
-                    $agingField .= "if(grandFinal.ageDays > " . $through . ",if(grandFinal.balanceAmount > 0,grandFinal.balanceAmount,0),0) as `" . $val . "`,";
+                    $agingField .= "if(grandFinal.ageDays > " . $through . ",if(grandFinal.balanceAmount < 0,grandFinal.balanceAmount,0),0) as `" . $val . "`,";
                 } else {
                     $list = explode("-", $val);
-                    $agingField .= "if(grandFinal.ageDays >= " . $list[0] . " AND grandFinal.ageDays <= " . $list[1] . ",if(grandFinal.balanceAmount > 0,grandFinal.balanceAmount,0),0) as `" . $val . "`,";
+                    $agingField .= "if(grandFinal.ageDays >= " . $list[0] . " AND grandFinal.ageDays <= " . $list[1] . ",if(grandFinal.balanceAmount < 0,grandFinal.balanceAmount,0),0) as `" . $val . "`,";
                 }
                 $c++;
             }
@@ -2966,21 +2968,21 @@ class AccountsPayableReportAPIController extends AppBaseController
             $balanceAmountQry = "IFNULL(round( finalAgingDetail.balanceAmountTrans, finalAgingDetail.documentTransDecimalPlaces ),0) AS balanceAmount";
             $decimalPlaceQry = "finalAgingDetail.documentTransDecimalPlaces AS balanceDecimalPlaces";
             $whereQry = "round( finalAgingDetail.balanceAmountTrans, finalAgingDetail.documentTransDecimalPlaces  )";
-            $unAllocatedAmountQry = "if(finalAgingDetail.balanceAmountTrans<0,finalAgingDetail.balanceAmountTrans,0) as unAllocatedAmount";
+            $unAllocatedAmountQry = "if(finalAgingDetail.balanceAmountTrans>0,finalAgingDetail.balanceAmountTrans,0) as unAllocatedAmount";
         } else if ($currency == 2) {
             $currencyQry = "finalAgingDetail.localCurrencyCode AS documentCurrency";
             $invoiceAmountQry = "IFNULL(round( finalAgingDetail.documentAmountLocal, finalAgingDetail.documentLocalDecimalPlaces ),0) AS invoiceAmount";
             $balanceAmountQry = "IFNULL(round( finalAgingDetail.balanceAmountLocal, finalAgingDetail.documentLocalDecimalPlaces ),0) AS balanceAmount";
             $decimalPlaceQry = "finalAgingDetail.documentLocalDecimalPlaces AS balanceDecimalPlaces";
             $whereQry = "round( finalAgingDetail.balanceAmountLocal, finalAgingDetail.documentLocalDecimalPlaces  )";
-            $unAllocatedAmountQry = "if(finalAgingDetail.balanceAmountLocal<0,finalAgingDetail.balanceAmountLocal,0) as unAllocatedAmount";
+            $unAllocatedAmountQry = "if(finalAgingDetail.balanceAmountLocal>0,finalAgingDetail.balanceAmountLocal,0) as unAllocatedAmount";
         } else {
             $currencyQry = "finalAgingDetail.rptCurrencyCode AS documentCurrency";
             $invoiceAmountQry = "IFNULL(round( finalAgingDetail.documentAmountRpt, finalAgingDetail.documentRptDecimalPlaces ),0) AS invoiceAmount";
             $balanceAmountQry = "IFNULL(round( finalAgingDetail.balanceAmountRpt, finalAgingDetail.documentRptDecimalPlaces ),0) AS balanceAmount";
             $decimalPlaceQry = "finalAgingDetail.documentRptDecimalPlaces AS balanceDecimalPlaces";
             $whereQry = "round( finalAgingDetail.balanceAmountRpt, finalAgingDetail.documentRptDecimalPlaces)";
-            $unAllocatedAmountQry = "if(finalAgingDetail.balanceAmountRpt<0,finalAgingDetail.balanceAmountRpt,0) as unAllocatedAmount";
+            $unAllocatedAmountQry = "if(finalAgingDetail.balanceAmountRpt>0,finalAgingDetail.balanceAmountRpt,0) as unAllocatedAmount";
         }
 
         $output = \DB::select('SELECT *,' . $agingField . ' FROM (SELECT
@@ -3282,10 +3284,10 @@ class AccountsPayableReportAPIController extends AppBaseController
             $c = 1;
             foreach ($aging as $val) {
                 if ($count == $c) {
-                    $agingField .= "SUM(if(grandFinal.ageDays > " . $through . ",if(grandFinal.balanceAmount > 0,grandFinal.balanceAmount,0),0)) as `" . $val . "`,";
+                    $agingField .= "SUM(if(grandFinal.ageDays > " . $through . ",if(grandFinal.balanceAmount < 0,grandFinal.balanceAmount,0),0)) as `" . $val . "`,";
                 } else {
                     $list = explode("-", $val);
-                    $agingField .= "SUM(if(grandFinal.ageDays >= " . $list[0] . " AND grandFinal.ageDays <= " . $list[1] . ",if(grandFinal.balanceAmount > 0,grandFinal.balanceAmount,0),0)) as `" . $val . "`,";
+                    $agingField .= "SUM(if(grandFinal.ageDays >= " . $list[0] . " AND grandFinal.ageDays <= " . $list[1] . ",if(grandFinal.balanceAmount < 0,grandFinal.balanceAmount,0),0)) as `" . $val . "`,";
                 }
                 $c++;
             }
@@ -3304,21 +3306,21 @@ class AccountsPayableReportAPIController extends AppBaseController
             $balanceAmountQry = "IFNULL(round( finalAgingDetail.balanceAmountTrans, finalAgingDetail.documentTransDecimalPlaces ),0) AS balanceAmount";
             $decimalPlaceQry = "finalAgingDetail.documentTransDecimalPlaces AS balanceDecimalPlaces";
             $whereQry = "round( finalAgingDetail.balanceAmountTrans, finalAgingDetail.documentTransDecimalPlaces )";
-            $unAllocatedAmountQry = "if(finalAgingDetail.balanceAmountTrans<0,finalAgingDetail.balanceAmountTrans,0) as unAllocatedAmount";
+            $unAllocatedAmountQry = "if(finalAgingDetail.balanceAmountTrans>0,finalAgingDetail.balanceAmountTrans,0) as unAllocatedAmount";
         } else if ($currency == 2) {
             $currencyQry = "finalAgingDetail.localCurrencyCode AS documentCurrency";
             $invoiceAmountQry = "IFNULL(round( finalAgingDetail.documentAmountLocal, finalAgingDetail.documentLocalDecimalPlaces ),0) AS invoiceAmount";
             $balanceAmountQry = "IFNULL(round( finalAgingDetail.balanceAmountLocal, finalAgingDetail.documentLocalDecimalPlaces ),0) AS balanceAmount";
             $decimalPlaceQry = "finalAgingDetail.documentLocalDecimalPlaces AS balanceDecimalPlaces";
             $whereQry = "round( finalAgingDetail.balanceAmountLocal, finalAgingDetail.documentLocalDecimalPlaces )";
-            $unAllocatedAmountQry = "if(finalAgingDetail.balanceAmountLocal<0,finalAgingDetail.balanceAmountLocal,0) as unAllocatedAmount";
+            $unAllocatedAmountQry = "if(finalAgingDetail.balanceAmountLocal>0,finalAgingDetail.balanceAmountLocal,0) as unAllocatedAmount";
         } else {
             $currencyQry = "finalAgingDetail.rptCurrencyCode AS documentCurrency";
             $invoiceAmountQry = "IFNULL(round( finalAgingDetail.documentAmountRpt, finalAgingDetail.documentRptDecimalPlaces ),0) AS invoiceAmount";
             $balanceAmountQry = "IFNULL(round( finalAgingDetail.balanceAmountRpt, finalAgingDetail.documentRptDecimalPlaces ),0) AS balanceAmount";
             $decimalPlaceQry = "finalAgingDetail.documentRptDecimalPlaces AS balanceDecimalPlaces";
             $whereQry = "round( finalAgingDetail.balanceAmountRpt, finalAgingDetail.documentRptDecimalPlaces )";
-            $unAllocatedAmountQry = "if(finalAgingDetail.balanceAmountRpt<0,finalAgingDetail.balanceAmountRpt,0) as unAllocatedAmount";
+            $unAllocatedAmountQry = "if(finalAgingDetail.balanceAmountRpt>0,finalAgingDetail.balanceAmountRpt,0) as unAllocatedAmount";
         }
 
         $output = \DB::select('SELECT *,SUM(grandFinal.unAllocatedAmount) as unAllocatedAmount,' . $agingField . ' FROM (SELECT
@@ -4379,7 +4381,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 finalUnbilled.supplierName,
                 finalUnbilled.localAmount AS documentLocalAmount,
                 finalUnbilled.rptAmount AS documentRptAmount,
-            IF
+                   IF
                 ( finalUnbilled.matchedLocalAmount IS NULL, 0, finalUnbilled.matchedLocalAmount ) AS matchedLocalAmount,
             IF
                 ( finalUnbilled.matchedRptAmount IS NULL, 0, finalUnbilled.matchedRptAmount ) AS matchedRptAmount,
@@ -4515,7 +4517,24 @@ class AccountsPayableReportAPIController extends AppBaseController
                 ) <>0 ) as final 
                 INNER JOIN suppliermaster ON suppliermaster.supplierCodeSystem = final.supplierID
                 WHERE supplierID IN (' . join(',', $supplierSystemID) . ')' . $countryFilter . ' ' . $supplierGroup;
-        return \DB::select($qry);
+
+        $results = \DB::select($qry);
+
+        foreach ($results as $index => $result) {
+            $result->matchedLocalAmount = BookInvSuppDet::where('grvAutoID', $result->documentSystemCode)->where('companySystemID', $result->companySystemID)->where('supplierID', $result->supplierID)->sum('totLocalAmount');
+
+            $result->matchedRptAmount = BookInvSuppDet::where('grvAutoID', $result->documentSystemCode)->where('companySystemID', $result->companySystemID)->where('supplierID', $result->supplierID)->sum('totRptAmount');
+
+
+            $result->balanceLocalAmount = $result->documentLocalAmount - $result->matchedLocalAmount;
+            $result->balanceRptAmount = $result->documentRptAmount - $result->matchedRptAmount;
+
+            if (abs($result->balanceLocalAmount) < 0.00001 || abs($result->balanceRptAmount) < 0.00001) {
+                unset($results[$index]);
+            }
+        }
+
+        return array_values($results);
     }
 
     function getUnbilledLogisticsDetailQRY($request)
@@ -4792,7 +4811,24 @@ class AccountsPayableReportAPIController extends AppBaseController
                 ) <>0 ) as final 
                 INNER JOIN suppliermaster ON suppliermaster.supplierCodeSystem = final.supplierID
                 WHERE supplierID IN (' . join(',', $supplierSystemID) . ')' . $countryFilter . ' ' . $supplierGroup . ') as agingFinal';
-        return \DB::select($qry);
+
+        $results = \DB::select($qry);
+
+        foreach ($results as $index => $result) {
+            $result->matchedLocalAmount = BookInvSuppDet::where('grvAutoID', $result->documentSystemCode)->where('companySystemID', $result->companySystemID)->where('supplierID', $result->supplierID)->sum('totLocalAmount');
+
+            $result->matchedRptAmount = BookInvSuppDet::where('grvAutoID', $result->documentSystemCode)->where('companySystemID', $result->companySystemID)->where('supplierID', $result->supplierID)->sum('totRptAmount');
+
+
+            $result->balanceLocalAmount = $result->documentLocalAmount - $result->matchedLocalAmount;
+            $result->balanceRptAmount = $result->documentRptAmount - $result->matchedRptAmount;
+
+            if (abs($result->balanceLocalAmount) < 0.00001 || abs($result->balanceRptAmount) < 0.00001) {
+                unset($results[$index]);
+            }
+        }
+
+        return array_values($results);
     }
 
 
@@ -4834,6 +4870,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 agingFinal.documentSystemID,
                 agingFinal.documentID,
                 agingFinal.documentCode,
+                agingFinal.documentSystemCode,
                 agingFinal.documentDate,
                 agingFinal.supplierID,
                 agingFinal.supplierCode,
@@ -4877,6 +4914,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 finalUnbilled.documentSystemID,
                 finalUnbilled.documentID,
                 finalUnbilled.documentCode,
+                finalUnbilled.documentSystemCode,
                 docDate.documentDate,
                 finalUnbilled.supplierID,
                 finalUnbilled.supplierCode,
@@ -5021,7 +5059,23 @@ class AccountsPayableReportAPIController extends AppBaseController
                 INNER JOIN suppliermaster ON suppliermaster.supplierCodeSystem = final.supplierID
                 WHERE supplierID IN (' . join(',', $supplierSystemID) . ')' . $countryFilter . ') as agingFinal ' . $supplierGroup;
 
-        return \DB::select($qry);
+        $results = \DB::select($qry);
+
+        foreach ($results as $index => $result) {
+            $result->matchedLocalAmount = BookInvSuppDet::where('grvAutoID', $result->documentSystemCode)->where('companySystemID', $result->companySystemID)->where('supplierID', $result->supplierID)->sum('totLocalAmount');
+
+            $result->matchedRptAmount = BookInvSuppDet::where('grvAutoID', $result->documentSystemCode)->where('companySystemID', $result->companySystemID)->where('supplierID', $result->supplierID)->sum('totRptAmount');
+
+
+            $result->balanceLocalAmount = $result->documentLocalAmount - $result->matchedLocalAmount;
+            $result->balanceRptAmount = $result->documentRptAmount - $result->matchedRptAmount;
+
+            if (abs($result->balanceLocalAmount) < 0.00001 || abs($result->balanceRptAmount) < 0.00001) {
+                unset($results[$index]);
+            }
+        }
+
+        return array_values($results);
     }
 
     function getSupplierBalanceStatementReconcileQRY($request)

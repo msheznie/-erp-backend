@@ -224,6 +224,7 @@ Route::post('getTenderEditMasterFullApproved', 'TenderMasterAPIController@getTen
 Route::post('rejectTenderEditDocument', 'TenderEditLogMasterAPIController@rejectTenderEditDocument');
 
 Route::post('startTenderNegotiation', 'TenderMasterAPIController@startTenderNegotiation');
+Route::post('closeTenderNegotiation', 'TenderMasterAPIController@closeTenderNegotiation');
 Route::post('getFormDataTenderNegotiation', 'TenderNegotiationController@getFormData');
 
 Route::resource('tender_negotiation', 'TenderNegotiationController');
@@ -245,7 +246,9 @@ Route::post('tenderNegotiationApprovalsGetEmployees', 'TenderNegotiationApproval
 Route::post('publishNegotiation', 'TenderNegotiationApprovalController@publishNegotiation');
 Route::resource('calendar_dates_detail_edit_logs', 'CalendarDatesDetailEditLogAPIController');
 Route::resource('procument_activity_edit_logs', 'ProcumentActivityEditLogAPIController');
+
 Route::post('getTenderFilterData', 'TenderMasterAPIController@getTenderFilterData')->name("Get tender filter data");
+
 Route::post('approveBidOpening', 'TenderMasterAPIController@approveBidOpening');
 
 Route::post('addAllSuppliersToNegotiation', 'SupplierTenderNegotiationController@addAllSuppliersToNegotiation');
@@ -254,6 +257,8 @@ Route::post('deleteAllSuppliersFromNegotiation', 'SupplierTenderNegotiationContr
 
 
 Route::post('saveTenderNegotiationDetails', 'TenderNegotiationController@saveTenderNegotiationDetails');
+Route::get('getTenderPr', 'TenderMasterAPIController@getTenderPr');
+Route::get('getPurchaseRequestDetails', 'TenderMasterAPIController@getPurchaseRequestDetails');
 
 Route::group(['prefix' => 'srm'], function (){
         
@@ -266,4 +271,6 @@ Route::group(['prefix' => 'srm'], function (){
 Route::post('get_all_document_attachment_type', 'DocumentAttachmentTypeController@getAllDocumentAttachmentTypes')->name("Get all document attachment types");
 Route::resource('document_attachment_type', 'DocumentAttachmentTypeController');
 Route::post('remove_document_attachment_type', 'DocumentAttachmentTypeController@removeDocumentAttachmentType')->name("Remove document attachment type");
+Route::post('getTenderNegotiationList', 'TenderMasterAPIController@getTenderNegotiationList')->name("Get tender negotiation list");
+Route::post('getIsExistCommonAttachment', 'BidSubmissionMasterAPIController@getIsExistCommonAttachment');
 

@@ -57,7 +57,7 @@ class CreateAccumulatedDepreciation implements ShouldQueue
             $unit_salvage_val = doubleval($faMaster->costUnitRpt) -doubleval($faMaster->salvage_value_rpt);
 
 
-            if($accumulated_amount > 0 && $accumulated_amount != null) {
+            if($accumulated_amount > 0 && $accumulated_amount != null && $faMaster->assetType == 1) {
                 if(doubleval($accumulated_amount) <=  $unit_salvage_val) {
                     $accumulated_year = date('Y', strtotime($accumulated_date));
                     $accumulated_month= date('m', strtotime($accumulated_date));

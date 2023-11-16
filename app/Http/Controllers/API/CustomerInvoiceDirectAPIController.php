@@ -468,6 +468,19 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $detail = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $id)->get();
         }
 
+        if($isPerforma == 2) {
+            $_glSelectionItems = CustomerInvoiceDirectDetail::where('custInvoiceDirectID',$id)->get();
+
+            if($_glSelectionItems) {
+                foreach($_glSelectionItems as $_glSelectionItem) {
+                    if(!isset($_glSelectionItem->serviceLineCode)) {
+                        return $this->sendError('Please select a Segment in GL Selection', 500);
+                    }
+                }
+
+            }
+        }
+
         if(isset($detail[0])) {
             $qo_master = QuotationMaster::find($detail[0]['quotationMasterID']);
             $details = CustomerInvoiceItemDetails::where('quotationMasterID',$detail[0]['quotationMasterID'])->get();
@@ -2020,6 +2033,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             }
 
         ])->findWithoutFail($id);
+        
 
         if (empty($customerInvoiceDirect)) {
             return $this->sendError('Customer Invoice Direct not found', 500);
@@ -2037,6 +2051,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             ->exists();
 
         $customerInvoiceDirect->isVATEligible = TaxService::checkCompanyVATEligible($customerInvoiceDirect->companySystemID);
+        
         return $this->sendResponse($customerInvoiceDirect, 'Customer Invoice Direct retrieved successfully');
     }
 
@@ -2123,7 +2138,11 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         $invMaster = $this->customerInvoiceDirectRepository->customerInvoiceListQuery($request, $input, $search, $customerID);
 
+
         return \DataTables::of($invMaster)
+                ->addColumn('total', function($inv) {
+                    return $this->getTotalAfterGL($inv);
+                })
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
@@ -2317,13 +2336,14 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
         $id = $request['id'];
         $master = CustomerInvoiceDirect::select('customerID', 'companySystemID')->where('custInvoiceDirectAutoID', $id)->first();
-        $PerformaMaster = PerformaMaster::with(['ticket' => function ($query) {
+        $PerformaMaster = PerformaMaster::with(['performaTemp' => function ($q) {
+            $q->where('isDiscount',1);
+        },'ticket' => function ($query) {
             $query->with(['rig']);
         }])->where('companySystemID', $master->companySystemID)
             ->where('customerSystemID', $master->customerID)
             ->where('performaStatus', 0)
             ->where('PerformaOpConfirmed', 1);
-
         $search = $request->input('search.value');
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
@@ -2372,6 +2392,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             return $this->sendResponse('e', 'Already pulled');
         }
 
+
         /*get bank check bank details from performaDetails*/
         $bankAccountDetails = PerformaDetails::select('currencyID', 'bankID', 'accountID')->where('companyID', $master->companyID)->where('performaMasterID', $performaMasterID)->first();
 
@@ -2385,7 +2406,6 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
            if (!empty($detailsAlreadyExist)) {
                return $this->sendResponse('e', 'Already a proforma added to this customer invoice');
            }*/
-
         $contract = Contract::select('contractUID', 'isRequiredStamp', 'paymentInDaysForJob', 'contractType')
             ->where('CompanyID', $master->companyID)
             ->where('ContractNumber', $performa->contractID)
@@ -2448,7 +2468,6 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             foreach ($updatedInvoiceNo as $updateInvoice) {
                 $serviceLine = SegmentMaster::select('serviceLineSystemID')->where('ServiceLineCode', $updateInvoice->serviceLine)->first();
                 $chartOfAccount = ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'chartOfAccountSystemID')->where('AccountCode', $updateInvoice->financeGLcode)->first();
-
                 $companyCurrencyConversion = \Helper::currencyConversion($master->companySystemID, $myCurr, $myCurr, $updateInvoice->totAmount);
                 $companyCurrencyConversionVAT = \Helper::currencyConversion($master->companySystemID, $myCurr, $myCurr, $updateInvoice->totalVatAmount);
                 /*    trasToLocER,trasToRptER,transToBankER,reportingAmount,localAmount,documentAmount,bankAmount*/
@@ -2469,8 +2488,15 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 $addToCusInvDetails[$x]['unitOfMeasure'] = 7;
                 $addToCusInvDetails[$x]['invoiceQty'] = 1;
                 $addToCusInvDetails[$x]['unitCost'] = 1;
-                $addToCusInvDetails[$x]['invoiceAmount'] = round($updateInvoice->totAmount, $transDecimalPlace);
-                $addToCusInvDetails[$x]['VATAmount'] = round($updateInvoice->totalVatAmount, $transDecimalPlace);
+                $addToCusInvDetails[$x]['isDiscount'] = $updateInvoice->isDiscount;
+                if($updateInvoice->isDiscount) {
+                    $addToCusInvDetails[$x]['invoiceAmount'] = -$updateInvoice->totAmount;
+
+                }else {
+                    $addToCusInvDetails[$x]['invoiceAmount'] = $updateInvoice->totAmount;
+
+                }
+                $addToCusInvDetails[$x]['VATAmount'] = $updateInvoice->totalVatAmount;
                 $addToCusInvDetails[$x]['VATAmountLocal'] = \Helper::roundValue($companyCurrencyConversionVAT['localAmount']);
                 $addToCusInvDetails[$x]['VATAmountRpt'] = \Helper::roundValue($companyCurrencyConversionVAT['reportingAmount']);
                 $vatPercentage = 0;
@@ -2487,13 +2513,24 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
                 $addToCusInvDetails[$x]['localCurrency'] = $master->localCurrencyID;
                 $addToCusInvDetails[$x]['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
-                $addToCusInvDetails[$x]['localAmount'] = \Helper::roundValue($companyCurrencyConversion['localAmount']);
+                if($updateInvoice->isDiscount) { 
+                    $addToCusInvDetails[$x]['localAmount'] = -$companyCurrencyConversion['localAmount'];
+                }else {
+                    $addToCusInvDetails[$x]['localAmount'] = $companyCurrencyConversion['localAmount'];
+                }
                 $addToCusInvDetails[$x]['comRptCurrency'] = $master->companyReportingCurrencyID;
                 $addToCusInvDetails[$x]['comRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
-                $addToCusInvDetails[$x]['comRptAmount'] = \Helper::roundValue($companyCurrencyConversion['reportingAmount']);
+                if($updateInvoice->isDiscount) { 
+                    $addToCusInvDetails[$x]['comRptAmount'] = -$companyCurrencyConversion['reportingAmount'];
+
+                }else {
+                    $addToCusInvDetails[$x]['comRptAmount'] = $companyCurrencyConversion['reportingAmount'];
+
+                }
                 $addToCusInvDetails[$x]['clientContractID'] = $updateInvoice->contractID;
                 $addToCusInvDetails[$x]['contractID'] = $contract->contractUID;
                 $addToCusInvDetails[$x]['performaMasterID'] = $performaMasterID;
+
                 $x++;
             }
 
@@ -4787,5 +4824,23 @@ WHERE
         CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->update($vatAmount);
 
         return ['status' => true];
+    }
+
+    public static function getTotalAfterGL($invoice) {
+            $total = 0;
+            $_customerInvoiceDirectDetails = CustomerInvoiceDirectDetail::where('custInvoiceDirectID',$invoice->custInvoiceDirectAutoID)->get();
+            $total = $invoice->bookingAmountTrans;
+            if(isset($_customerInvoiceDirectDetails) && $invoice->isPerforma == 2) {
+                foreach ($_customerInvoiceDirectDetails as $item) {
+                    if($item->chartOfAccount->controlAccountsSystemID == 2 || $item->chartOfAccount->controlAccountsSystemID == 4 || $item->chartOfAccount->controlAccountsSystemID == 5) {
+                        $total -= ($item->invoiceAmount + $item->VATAmountTotal);
+                    }else{
+                        $total += ($item->invoiceAmount + $item->VATAmountTotal);
+                    }
+        
+                }
+            }
+
+           return $total;
     }
 }
