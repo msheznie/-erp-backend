@@ -1639,10 +1639,10 @@ class ShiftDetailsAPIController extends AppBaseController
 
                     if($menuID != $item->menuID) {
                         $addToCusInvItemDetails['sellingCost'] = $item->transactionAmount;
-                        $addToCusInvItemDetails['sellingCostAfterMargin'] = $item->menuSalesPrice + $item->totalMenuTaxAmount;
-                        $addToCusInvItemDetails['sellingTotal'] = $item->menuSalesPrice + $item->totalMenuTaxAmount;
-                        $addToCusInvItemDetails['sellingCostAfterMarginLocal'] = $item->menuSalesPrice + $item->totalMenuTaxAmount;
-                        $addToCusInvItemDetails['sellingCostAfterMarginRpt'] = ($item->menuSalesPrice + $item->totalMenuTaxAmount) / $item->companyReportingExchangeRate;
+                        $addToCusInvItemDetails['sellingCostAfterMargin'] = $item->menuSalesPrice;
+                        $addToCusInvItemDetails['sellingTotal'] = $item->menuSalesPrice;
+                        $addToCusInvItemDetails['sellingCostAfterMarginLocal'] = $item->menuSalesPrice;
+                        $addToCusInvItemDetails['sellingCostAfterMarginRpt'] = $item->menuSalesPrice / $item->companyReportingExchangeRate;
                         $addToCusInvItemDetails['salesPrice'] = $item->menuSalesPrice;
 
                         if(!empty($item->totalMenuTaxAmount)) {
@@ -1683,7 +1683,9 @@ class ShiftDetailsAPIController extends AppBaseController
 
                         CustomerInvoiceItemDetails::create($addToCusInvItemDetails);
 
+
                         $details = CustomerInvoiceItemDetails::select(DB::raw("SUM(sellingCostAfterMargin) as bookingAmountTrans"), DB::raw("SUM(sellingCostAfterMarginLocal) as bookingAmountLocal"), DB::raw("SUM(sellingCostAfterMarginRpt) as bookingAmountRpt"))->where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->first()->toArray();
+
 
                         $details = array_filter($details, function ($key) {
                             return $key !== 'issueCostTrans' && $key !== 'issueCostTransTotal';
@@ -1691,14 +1693,15 @@ class ShiftDetailsAPIController extends AppBaseController
 
                         CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->update($details);
 
+                        $resVat = $this->updateVatFromSalesQuotation($custInvoiceDirectAutoID);
+                        if (!$resVat['status']) {
+                            return $this->sendError($resVat['message']);
+                        }
+
                         $menuID = $item->menuID;
 
                     }
 
-                    $resVat = $this->updateTotalVAT($customerInvoiceDirects->custInvoiceDirectAutoID);
-                    if (!$resVat['status']) {
-                        return $this->sendError($resVat['message']);
-                    }
                     $params = array('autoID' => $customerInvoiceDirects->custInvoiceDirectAutoID,
                         'company' => $customerInvoiceDirects->companySystemID,
                         'document' => $customerInvoiceDirects->documentSystemiD,
@@ -1767,6 +1770,7 @@ class ShiftDetailsAPIController extends AppBaseController
     }
 
 
+
     public function updateTotalVAT($custInvoiceDirectAutoID)
     {
         $invoiceDetails = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $custInvoiceDirectAutoID)
@@ -1814,7 +1818,7 @@ class ShiftDetailsAPIController extends AppBaseController
             return ['status' => false, 'message' => 'Customer Invoice not found.'];
         }
 
-        $invoiceDetail = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $custInvoiceDirectAutoID)->first();
+        $invoiceDetail = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->first();
 
         if (empty($invoiceDetail)) {
             return ['status' => false, 'message' => 'Invoice Details not found.'];
@@ -1823,7 +1827,7 @@ class ShiftDetailsAPIController extends AppBaseController
         $totalAmount = 0;
         $decimal = \Helper::getCurrencyDecimalPlace($master->custTransactionCurrencyID);
 
-        $totalDetail = CustomerInvoiceDirectDetail::select(\Illuminate\Support\Facades\DB::raw("SUM(invoiceAmount) as amount"))->where('custInvoiceDirectID', $custInvoiceDirectAutoID)->first();
+        $totalDetail = CustomerInvoiceItemDetails::select(\Illuminate\Support\Facades\DB::raw("SUM(sellingTotal) as amount"))->where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->first();
         if (!empty($totalDetail)) {
             $totalAmount = $totalDetail->amount;
         }
@@ -1919,7 +1923,6 @@ class ShiftDetailsAPIController extends AppBaseController
 
         return ['status' => true];
     }
-
     public function postPosEntries(Request $request){
 
         $shiftId = $request->shiftId;
@@ -2699,6 +2702,31 @@ class ShiftDetailsAPIController extends AppBaseController
 
     }
 
+    public function updateVatEligibilityOfCustomerInvoice($custInvoiceDirectAutoID)
+    {
+        $doDetailData = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)
+            ->groupBy('quotationMasterID')
+            ->get();
+
+        $quMasterIds = $doDetailData->pluck('quotationMasterID');
+
+        $quotaionVatEligibleCheck = QuotationMaster::whereIn('quotationMasterID', $quMasterIds)
+            ->where('vatRegisteredYN', 1)
+            ->where('customerVATEligible', 1)
+            ->first();
+        $vatRegisteredYN = 0;
+        $customerVATEligible = 0;
+        if ($quotaionVatEligibleCheck) {
+            $customerVATEligible = 1;
+            $vatRegisteredYN = 1;
+        }
+
+        $updateRes = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)
+            ->update(['vatRegisteredYN' => $vatRegisteredYN, 'customerVATEligible' => $customerVATEligible]);
+
+        return ['status' => true];
+    }
+
     public function updateVatFromSalesQuotation($custInvoiceDirectAutoID)
     {
         $invoiceDetails = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)
@@ -2709,11 +2737,7 @@ class ShiftDetailsAPIController extends AppBaseController
         $invoice = CustomerInvoiceDirect::find($custInvoiceDirectAutoID);
 
         foreach ($invoiceDetails as $key => $value) {
-            if ($invoice->isPerforma == 2 || $invoice->isPerforma == 5) {
-                $totalVATAmount += $value->qtyIssued * $value->VATAmount;
-            } else {
-                $totalVATAmount += $value->qtyIssued * ((isset($value->sales_quotation_detail->VATAmount) && !is_null($value->sales_quotation_detail->VATAmount)) ? $value->sales_quotation_detail->VATAmount : 0);
-            }
+                $totalVATAmount += $value->VATAmount;
         }
 
         $taxDelete = Taxdetail::where('documentSystemCode', $custInvoiceDirectAutoID)
