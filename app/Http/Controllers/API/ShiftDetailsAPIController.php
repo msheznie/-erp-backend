@@ -1392,8 +1392,37 @@ class ShiftDetailsAPIController extends AppBaseController
                         ->where('pos_source_menusalesmaster.menuSalesID', $invoice->menuSalesID)
                         ->first();
 
+                    if(!empty($bank)){
+                        $bankID = $bank->bankID;
+                        $bankAccountID = $bank->bankAccountID;
 
-                    $input = ['bookingDate' => $invoice->menuSalesDate, 'comments' => "Inv Created by RPOS System. Bill No: ".$invoice->invoiceCode, 'companyFinancePeriodID' => $companyFinancePeriod->companyFinancePeriodID, 'companyFinanceYearID' => $companyFinanceYear->companyFinanceYearID, 'companyID' => $shiftDetails->companyID, 'custTransactionCurrencyID' => $companyCurrency->localcurrency->currencyID, 'customerID' => $customerID, 'date_of_supply' => $invoice->menuSalesDate, 'invoiceDueDate' => $invoice->menuSalesDate, 'isPerforma' => 2, 'serviceLineSystemID' => $serviceLineSystemID,'serviceLineCode' => $serviceLineCode, 'wareHouseSystemCode' => $wareHouseID, 'customerInvoiceNo' => $invoice->invoiceCode, 'bankAccountID' => $bank->bankAccountID, 'bankID' => $bank->bankID];
+                    }else {
+                        $bank = BankAssign::select('bankmasterAutoID')
+                            ->where('companySystemID', $shiftDetails->companyID)
+                            ->where('isDefault', -1)
+                            ->first();
+                        if(!empty($bank)) {
+                            $bankID = $bank->bankmasterAutoID;
+                        } else {
+                            return $this->sendError('Default bank not assigned to the company', 500);
+                        }
+
+
+                        $bankAccount = BankAccount::where('companySystemID', $shiftDetails->companyID)
+                            ->where('bankmasterAutoID', $bank->bankmasterAutoID)
+                            ->where('isDefault', 1)
+                            ->where('accountCurrencyID', $companyCurrency->localcurrency->currencyID)
+                            ->first();
+                        if (!empty($bankAccount)) {
+                            $bankAccountID = $bankAccount->bankAccountAutoID;
+                        } else {
+                            return $this->sendError('Bank default account not assigned to the bank', 500);
+                        }
+
+                    }
+
+
+                    $input = ['bookingDate' => $invoice->menuSalesDate, 'comments' => "Inv Created by RPOS System. Bill No: ".$invoice->invoiceCode, 'companyFinancePeriodID' => $companyFinancePeriod->companyFinancePeriodID, 'companyFinanceYearID' => $companyFinanceYear->companyFinanceYearID, 'companyID' => $shiftDetails->companyID, 'custTransactionCurrencyID' => $companyCurrency->localcurrency->currencyID, 'customerID' => $customerID, 'date_of_supply' => $invoice->menuSalesDate, 'invoiceDueDate' => $invoice->menuSalesDate, 'isPerforma' => 2, 'serviceLineSystemID' => $serviceLineSystemID,'serviceLineCode' => $serviceLineCode, 'wareHouseSystemCode' => $wareHouseID, 'customerInvoiceNo' => $invoice->invoiceCode, 'bankAccountID' => $bankID, 'bankID' => $bankAccountID];
 
 
                     if (isset($input['isPerforma']) && $input['isPerforma'] == 2) {
@@ -1422,14 +1451,12 @@ class ShiftDetailsAPIController extends AppBaseController
                     $companyfinanceperiod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
                     $FYPeriodDateFrom = $companyfinanceperiod->dateFrom;
                     $FYPeriodDateTo = $companyfinanceperiod->dateTo;
-                    $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
+                    $customer = CustomerMaster::where('customerCodeSystem',  $input['customerID'])->first();
 
                     if(empty($customer)){
                         return $this->sendError('Customer not found', 500);
 
                     }
-                    $myCurr = $input['custTransactionCurrencyID'];
-
 
                     /*exchange added*/
                     $input['custTransactionCurrencyER'] = $invoice->transactionExchangeRate;
@@ -1438,22 +1465,7 @@ class ShiftDetailsAPIController extends AppBaseController
                     $input['localCurrencyID'] = $invoice->companyLocalCurrencyID;
                     $input['localCurrencyER'] = $invoice->companyLocalExchangeRate;
 
-                    $bank = BankAssign::select('bankmasterAutoID')
-                        ->where('companySystemID', $input['companyID'])
-                        ->where('isDefault', -1)
-                        ->first();
-                    if ($bank) {
-                        $input['bankID'] = $bank->bankmasterAutoID;
-                        $bankAccount = BankAccount::where('companySystemID', $input['companyID'])
-                            ->where('bankmasterAutoID', $bank->bankmasterAutoID)
-                            ->where('isDefault', 1)
-                            ->where('accountCurrencyID', $myCurr)
-                            ->first();
-                        if ($bankAccount) {
-                            $input['bankAccountID'] = $bankAccount->bankAccountAutoID;
-                        }
 
-                    }
 
                     if (isset($input['isPerforma']) && ($input['isPerforma'] == 2 || $input['isPerforma'] == 3 || $input['isPerforma'] == 4 || $input['isPerforma'] == 5)) {
                         $serviceLine = isset($input['serviceLineSystemID']) ? $input['serviceLineSystemID'] : 0;
@@ -1507,6 +1519,7 @@ class ShiftDetailsAPIController extends AppBaseController
                     $input['customerGLCode'] = $customer->custGLaccount;
                     $input['customerGLSystemID'] = $customer->custGLAccountSystemID;
                     $input['documentType'] = 11;
+                    $input['isPOS'] = 1;
                     $input['createdUserID'] = \Helper::getEmployeeID();
                     $input['createdPcID'] = getenv('COMPUTERNAME');
                     $input['modifiedUser'] = \Helper::getEmployeeID();
@@ -1522,7 +1535,7 @@ class ShiftDetailsAPIController extends AppBaseController
 
                     $customerInvoiceDirects = $this->customerInvoiceDirectRepository->create($input);
                     $items = DB::table('pos_source_menusalesitems')
-                        ->selectRaw('pos_source_menusalesitems.*, itemmaster.unit as unit, pos_source_menusalesitemdetails.itemAutoID as itemAutoID, itemmaster.primaryItemCode as itemPrimaryCode, itemmaster.itemDescription as itemDescription, pos_source_menusalesitemdetails.warehouseAutoID as warehouseAutoID, itemmaster.financeCategoryMaster as itemFinanceCategoryID, itemmaster.financeCategorySub as itemFinanceCategorySubID, pos_source_menusalesitemdetails.cost as cost, pos_source_menusalesitemdetails.qty as itemQty, pos_source_menusalesitemdetails.UOMID as uomID')
+                        ->selectRaw('pos_source_menusalesitems.*, itemmaster.unit as unit, pos_source_menusalesitemdetails.itemAutoID as itemAutoID, itemmaster.primaryCode as itemPrimaryCode, itemmaster.itemDescription as itemDescription, pos_source_menusalesitemdetails.warehouseAutoID as warehouseAutoID, itemmaster.financeCategoryMaster as itemFinanceCategoryID, itemmaster.financeCategorySub as itemFinanceCategorySubID, pos_source_menusalesitemdetails.cost as cost, pos_source_menusalesitemdetails.qty as itemQty, pos_source_menusalesitemdetails.UOMID as uomID')
                         ->join('pos_source_menusalesitemdetails', 'pos_source_menusalesitemdetails.menuSalesItemID', '=', 'pos_source_menusalesitems.menuSalesItemID')
                         ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'pos_source_menusalesitemdetails.itemAutoID')
                         ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
@@ -1791,7 +1804,7 @@ class ShiftDetailsAPIController extends AppBaseController
                         $documentApproval["rollLevelOrder"] = $documentApproved->rollLevelOrder;
                         $documentApproval["db"] = $db;
 
-
+//
 //                        $approve = \Helper::approveDocument($documentApproval);
 //                        if (!$approve["success"]) {
 //                            return $this->sendError($approve["message"]);
