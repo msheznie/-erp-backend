@@ -4156,6 +4156,9 @@ WHERE
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->addColumn('Actions', 'Actions', "Actions")
+            ->addColumn('total', function($inv) {
+                return $this->getTotalAfterGL($inv);
+            })
             //->addColumn('Index', 'Index', "Index")
             ->make(true);
     }
@@ -4238,6 +4241,9 @@ WHERE
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->addColumn('Actions', 'Actions', "Actions")
+            ->addColumn('total', function($inv) {
+                return $this->getTotalAfterGL($inv);
+            })
             //->addColumn('Index', 'Index', "Index")
             ->make(true);
     }
