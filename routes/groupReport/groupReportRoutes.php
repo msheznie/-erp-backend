@@ -61,3 +61,10 @@ Route::group([],function (){
     Route::post('reportTemplateGLDrillDownExport', 'FinancialReportAPIController@reportTemplateGLDrillDownExport')->name("Export report template gl drill down");
 });
 
+//General Ledger
+Route::group([],function (){
+    Route::get('getAFRFilterChartOfAccounts', 'FinancialReportAPIController@getAFRFilterChartOfAccounts')->name("Get afr filter chart of accounts");
+    Route::post('exportFRReport', 'FinancialReportAPIController@exportReport')->name("Export fr report");
+    Route::post('generateGeneralLedgerReportPDF', 'FinancialReportAPIController@pdfExportReport')->name("Generate general ledger report pdf");
+});
+

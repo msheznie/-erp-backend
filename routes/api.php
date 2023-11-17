@@ -286,14 +286,12 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('accounts_payable_ledgers', 'AccountsPayableLedgerAPIController');
 
             Route::get('getUtilizationFilterFormData', 'FinancialReportAPIController@getUtilizationFilterFormData');
-            Route::get('getAFRFilterChartOfAccounts', 'FinancialReportAPIController@getAFRFilterChartOfAccounts');
             Route::post('validatePUReport', 'FinancialReportAPIController@validatePUReport');
             Route::post('generateprojectUtilizationReport', 'FinancialReportAPIController@generateprojectUtilizationReport');
 
             Route::post('generateEmployeeLedgerReport', 'FinancialReportAPIController@generateEmployeeLedgerReport');
 
             Route::post('getTBUnmatchedData', 'FinancialReportAPIController@getTBUnmatchedData');
-            Route::post('exportFRReport', 'FinancialReportAPIController@exportReport');
             Route::post('downloadProjectUtilizationReport', 'FinancialReportAPIController@downloadProjectUtilizationReport');
             Route::post('downloadEmployeeLedgerReport', 'FinancialReportAPIController@downloadEmployeeLedgerReport');
 
@@ -1085,7 +1083,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('getAllShiftsGPOS', 'POS\PosAPIController@getAllShiftsGPOS');
             Route::post('getAllBills', 'POS\PosAPIController@getAllBills');
 
-            Route::post('generateGeneralLedgerReportPDF', 'FinancialReportAPIController@pdfExportReport');
             Route::post('generateFinancialTrialBalanceReportPDF', 'FinancialReportAPIController@pdfExportReport');
 
             Route::resource('envelop_types', 'EnvelopTypeAPIController');
