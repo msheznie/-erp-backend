@@ -1385,7 +1385,44 @@ class ShiftDetailsAPIController extends AppBaseController
 
                     $companyCurrency = \Helper::companyCurrency($shiftDetails->companyID);
 
-                    $input = ['bookingDate' => $invoice->menuSalesDate, 'comments' => "Inv Created by RPOS System. Bill No: ".$invoice->invoiceCode, 'companyFinancePeriodID' => $companyFinancePeriod->companyFinancePeriodID, 'companyFinanceYearID' => $companyFinanceYear->companyFinanceYearID, 'companyID' => $shiftDetails->companyID, 'custTransactionCurrencyID' => $companyCurrency->localcurrency->currencyID, 'customerID' => $customerID, 'date_of_supply' => $invoice->menuSalesDate, 'invoiceDueDate' => $invoice->menuSalesDate, 'isPerforma' => 0, 'serviceLineSystemID' => $serviceLineSystemID,'serviceLineCode' => $serviceLineCode, 'wareHouseSystemCode' => $wareHouseID, 'customerInvoiceNo' => $invoice->invoiceCode, 'bankAccountID' => 1, 'bankID' => 2];
+                    $bank = DB::table('pos_source_menusalesmaster')
+                        ->selectRaw('erp_bankaccount.bankAccountAutoID as bankAccountID, erp_bankaccount.bankmasterAutoID as bankID')
+                        ->join('pos_source_menusalespayments', 'pos_source_menusalespayments.menuSalesID', '=', 'pos_source_menusalesmaster.menuSalesID')
+                        ->join('erp_bankaccount', 'erp_bankaccount.chartOfAccountSystemID', '=', 'pos_source_menusalespayments.GLCode')
+                        ->where('pos_source_menusalesmaster.menuSalesID', $invoice->menuSalesID)
+                        ->first();
+
+                    if(!empty($bank)){
+                        $bankID = $bank->bankID;
+                        $bankAccountID = $bank->bankAccountID;
+
+                    }else {
+                        $bank = BankAssign::select('bankmasterAutoID')
+                            ->where('companySystemID', $shiftDetails->companyID)
+                            ->where('isDefault', -1)
+                            ->first();
+                        if(!empty($bank)) {
+                            $bankID = $bank->bankmasterAutoID;
+                        } else {
+                            return $this->sendError('Default bank not assigned to the company', 500);
+                        }
+
+
+                        $bankAccount = BankAccount::where('companySystemID', $shiftDetails->companyID)
+                            ->where('bankmasterAutoID', $bank->bankmasterAutoID)
+                            ->where('isDefault', 1)
+                            ->where('accountCurrencyID', $companyCurrency->localcurrency->currencyID)
+                            ->first();
+                        if (!empty($bankAccount)) {
+                            $bankAccountID = $bankAccount->bankAccountAutoID;
+                        } else {
+                            return $this->sendError('Bank default account not assigned to the bank', 500);
+                        }
+
+                    }
+
+
+                    $input = ['bookingDate' => $invoice->menuSalesDate, 'comments' => "Inv Created by RPOS System. Bill No: ".$invoice->invoiceCode, 'companyFinancePeriodID' => $companyFinancePeriod->companyFinancePeriodID, 'companyFinanceYearID' => $companyFinanceYear->companyFinanceYearID, 'companyID' => $shiftDetails->companyID, 'custTransactionCurrencyID' => $companyCurrency->localcurrency->currencyID, 'customerID' => $customerID, 'date_of_supply' => $invoice->menuSalesDate, 'invoiceDueDate' => $invoice->menuSalesDate, 'isPerforma' => 2, 'serviceLineSystemID' => $serviceLineSystemID,'serviceLineCode' => $serviceLineCode, 'wareHouseSystemCode' => $wareHouseID, 'customerInvoiceNo' => $invoice->invoiceCode, 'bankAccountID' => $bankID, 'bankID' => $bankAccountID];
 
 
                     if (isset($input['isPerforma']) && $input['isPerforma'] == 2) {
@@ -1414,39 +1451,21 @@ class ShiftDetailsAPIController extends AppBaseController
                     $companyfinanceperiod = CompanyFinancePeriod::where('companyFinancePeriodID', $input['companyFinancePeriodID'])->first();
                     $FYPeriodDateFrom = $companyfinanceperiod->dateFrom;
                     $FYPeriodDateTo = $companyfinanceperiod->dateTo;
-                    $customer = CustomerMaster::where('customerCodeSystem', $input['customerID'])->first();
+                    $customer = CustomerMaster::where('customerCodeSystem',  $input['customerID'])->first();
 
                     if(empty($customer)){
                         return $this->sendError('Customer not found', 500);
 
                     }
-                    $myCurr = $input['custTransactionCurrencyID'];
 
-                    $companyCurrency = \Helper::companyCurrency($company['companySystemID']);
-                    $companyCurrencyConversion = \Helper::currencyConversion($company['companySystemID'], $myCurr, $myCurr, 0);
                     /*exchange added*/
-                    $input['custTransactionCurrencyER'] = 1;
-                    $input['companyReportingCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
-                    $input['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
-                    $input['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;
-                    $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                    $input['custTransactionCurrencyER'] = $invoice->transactionExchangeRate;
+                    $input['companyReportingCurrencyID'] = $invoice->companyReportingCurrencyID;
+                    $input['companyReportingER'] = $invoice->companyReportingExchangeRate;
+                    $input['localCurrencyID'] = $invoice->companyLocalCurrencyID;
+                    $input['localCurrencyER'] = $invoice->companyLocalExchangeRate;
 
-                    $bank = BankAssign::select('bankmasterAutoID')
-                        ->where('companySystemID', $input['companyID'])
-                        ->where('isDefault', -1)
-                        ->first();
-                    if ($bank) {
-                        $input['bankID'] = $bank->bankmasterAutoID;
-                        $bankAccount = BankAccount::where('companySystemID', $input['companyID'])
-                            ->where('bankmasterAutoID', $bank->bankmasterAutoID)
-                            ->where('isDefault', 1)
-                            ->where('accountCurrencyID', $myCurr)
-                            ->first();
-                        if ($bankAccount) {
-                            $input['bankAccountID'] = $bankAccount->bankAccountAutoID;
-                        }
 
-                    }
 
                     if (isset($input['isPerforma']) && ($input['isPerforma'] == 2 || $input['isPerforma'] == 3 || $input['isPerforma'] == 4 || $input['isPerforma'] == 5)) {
                         $serviceLine = isset($input['serviceLineSystemID']) ? $input['serviceLineSystemID'] : 0;
@@ -1500,6 +1519,7 @@ class ShiftDetailsAPIController extends AppBaseController
                     $input['customerGLCode'] = $customer->custGLaccount;
                     $input['customerGLSystemID'] = $customer->custGLAccountSystemID;
                     $input['documentType'] = 11;
+                    $input['isPOS'] = 1;
                     $input['createdUserID'] = \Helper::getEmployeeID();
                     $input['createdPcID'] = getenv('COMPUTERNAME');
                     $input['modifiedUser'] = \Helper::getEmployeeID();
@@ -1514,8 +1534,13 @@ class ShiftDetailsAPIController extends AppBaseController
                     }
 
                     $customerInvoiceDirects = $this->customerInvoiceDirectRepository->create($input);
+                    $custInvoiceDirectAutoID = $customerInvoiceDirects->custInvoiceDirectAutoID;
+                    $companySystemID = $shiftDetails->companyID;
+
+                    $master = CustomerInvoiceDirect::select('*')->where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->first();
+
                     $items = DB::table('pos_source_menusalesitems')
-                        ->selectRaw('pos_source_menusalesitems.*, itemmaster.unit as unit')
+                        ->selectRaw('pos_source_menusalesitems.*, itemmaster.unit as unit, pos_source_menusalesitemdetails.itemAutoID as itemAutoID, itemmaster.primaryCode as itemPrimaryCode, itemmaster.itemDescription as itemDescription, pos_source_menusalesitemdetails.warehouseAutoID as warehouseAutoID, itemmaster.financeCategoryMaster as itemFinanceCategoryID, itemmaster.financeCategorySub as itemFinanceCategorySubID, pos_source_menusalesitemdetails.cost as cost, pos_source_menusalesitemdetails.qty as itemQty, pos_source_menusalesitemdetails.UOMID as uomID')
                         ->join('pos_source_menusalesitemdetails', 'pos_source_menusalesitemdetails.menuSalesItemID', '=', 'pos_source_menusalesitems.menuSalesItemID')
                         ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'pos_source_menusalesitemdetails.itemAutoID')
                         ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
@@ -1524,53 +1549,93 @@ class ShiftDetailsAPIController extends AppBaseController
 
 
                     foreach ($items as $item) {
-                        /* $amount = $request['amount'];
-               $comments = $request['comments'];*/
-                        $companySystemID = $shiftDetails->companyID;
-                        /* $contractID = $request['contractID'];*/
-                        $custInvoiceDirectAutoID = $customerInvoiceDirects->custInvoiceDirectAutoID;
-                        $glCode = $item->revenueGLAutoID;
-                        /* $qty = $request['qty'];*/
-                        /* $serviceLineSystemID = $request['serviceLineSystemID'];
-                         $unitCost = $request['unitCost'];
-                         $unitID = $request['unitID'];*/
+
+                        $addToCusInvItemDetails['custInvoiceDirectAutoID'] = $custInvoiceDirectAutoID;
+                        $addToCusInvItemDetails['itemCodeSystem'] = $item->itemAutoID;
+                        $addToCusInvItemDetails['itemPrimaryCode'] = $item->itemPrimaryCode;
+                        $addToCusInvItemDetails['itemDescription'] = $item->itemDescription;
+                        $addToCusInvItemDetails['itemUnitOfMeasure'] = $item->unit;
+                        $addToCusInvItemDetails['unitOfMeasureIssued'] = $item->unit;
+                        $addToCusInvItemDetails['convertionMeasureVal'] = $item->unit;
+                        $addToCusInvItemDetails['qtyIssued'] = $item->itemQty;
+                        $addToCusInvItemDetails['qtyIssuedDefaultMeasure'] = $item->itemQty;
 
 
-                        /*this*/
+                        $data = array('companySystemID' => $master->companySystemID,
+                            'itemCodeSystem' => $item->itemAutoID,
+                            'wareHouseId' => $item->warehouseAutoID);
 
+                        $itemCurrentCostAndQty = inventory::itemCurrentCostAndQty($data);
 
-                        /*get master*/
-                        $master = CustomerInvoiceDirect::select('*')->where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->first();
-                        $bookingInvCode = $master->bookingInvCode;
-                        /*selectedPerformaMaster*/
+                        $addToCusInvItemDetails['currentStockQty'] =  $itemCurrentCostAndQty['currentStockQty'];
+                        $addToCusInvItemDetails['currentWareHouseStockQty'] = $itemCurrentCostAndQty['currentWareHouseStockQty'];
+                        $addToCusInvItemDetails['currentStockQtyInDamageReturn'] = $itemCurrentCostAndQty['currentStockQtyInDamageReturn'];
+                        $addToCusInvItemDetails['comments'] = $master->comments;
+                        $addToCusInvItemDetails['itemFinanceCategoryID'] = $item->itemFinanceCategoryID;
+                        $addToCusInvItemDetails['itemFinanceCategorySubID'] = $item->itemFinanceCategorySubID;
 
-
-                        $tax = Taxdetail::where('documentSystemCode', $custInvoiceDirectAutoID)
-                            ->where('companySystemID', $master->companySystemID)
-                            ->where('documentSystemID', $master->documentSystemiD)
+                        $financeItemCategorySubAssigned = FinanceItemcategorySubAssigned::where('companySystemID', $companySystemID)
+                            ->where('mainItemCategoryID', $addToCusInvItemDetails['itemFinanceCategoryID'])
+                            ->where('itemCategorySubID', $addToCusInvItemDetails['itemFinanceCategorySubID'])
                             ->first();
-                        if (!empty($tax)) {
-                            // return $this->sendError('Please delete tax details to continue !');
-                        }
 
-                        $myCurr = $master->custTransactionCurrencyID;
-                        /*currencyID*/
-
-                        //$companyCurrency = \Helper::companyCurrency($myCurr);
-                        $decimal = \Helper::getCurrencyDecimalPlace($myCurr);
-                        $x = 0;
+                        $addToCusInvItemDetails['financeGLcodebBS'] = $financeItemCategorySubAssigned->financeGLcodebBS;
+                        $addToCusInvItemDetails['financeGLcodebBSSystemID'] = $financeItemCategorySubAssigned->financeGLcodebBSSystemID;
+                        $addToCusInvItemDetails['financeGLcodePLSystemID'] = $financeItemCategorySubAssigned->financeGLcodePLSystemID;
+                        $addToCusInvItemDetails['financeGLcodePL'] = $financeItemCategorySubAssigned->financeGLcodePL;
+                        $addToCusInvItemDetails['financeGLcodeRevenueSystemID'] = $financeItemCategorySubAssigned->financeGLcodeRevenueSystemID;
+                        $addToCusInvItemDetails['financeGLcodeRevenue'] = $financeItemCategorySubAssigned->financeGLcodeRevenue;
 
 
-                        /*$serviceLine = SegmentMaster::select('serviceLineSystemID', 'ServiceLineCode')->where('serviceLineSystemID', $serviceLineSystemID)->first();*/
-                        $chartOfAccount = ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $glCode)->first();
-                        $totalAmount = 0; //$unitCost * $qty;
+                        $addToCusInvItemDetails['localCurrencyID'] = $item->companyLocalCurrencyID;
+                        $addToCusInvItemDetails['localCurrencyER'] = $item->companyLocalExchangeRate;
+                        $addToCusInvItemDetails['issueCostLocal'] = $item->cost;
+                        $addToCusInvItemDetails['issueCostLocalTotal'] = $item->cost * $item->itemQty;
+                        $addToCusInvItemDetails['reportingCurrencyID'] = $item->companyReportingCurrency;
+                        $addToCusInvItemDetails['reportingCurrencyER'] = $item->companyReportingExchangeRate;
+                        $addToCusInvItemDetails['issueCostRpt'] = $item->cost / $item->companyReportingExchangeRate;
+                        $addToCusInvItemDetails['issueCostRptTotal'] = $item->cost * $item->itemQty / $item->companyReportingExchangeRate;
+                        $addToCusInvItemDetails['sellingCurrencyID'] = $item->transactionCurrencyID;
+                        $addToCusInvItemDetails['sellingCurrencyER'] = $item->transactionExchangeRate;
+
+
+                        $addToCusInvItemDetails['sellingCost'] = 0;
+                        $addToCusInvItemDetails['sellingCostAfterMargin'] = 0;
+                        $addToCusInvItemDetails['sellingTotal'] = 0;
+                        $addToCusInvItemDetails['sellingCostAfterMarginLocal'] = 0;
+                        $addToCusInvItemDetails['sellingCostAfterMarginRpt'] = 0;
+                        $addToCusInvItemDetails['salesPrice'] = 0;
+                        $addToCusInvItemDetails['VATPercentage'] = 0;
+                        $addToCusInvItemDetails['VATApplicableOn'] = 0;
+                        $addToCusInvItemDetails['vatMasterCategoryID'] = 0;
+                        $addToCusInvItemDetails['vatSubCategoryID'] = 0;
+                        $addToCusInvItemDetails['VATAmount'] = 0;
+                        $addToCusInvItemDetails['VATAmountLocal'] = 0;
+                        $addToCusInvItemDetails['VATAmountRpt'] = 0;
+
+                        CustomerInvoiceItemDetails::create($addToCusInvItemDetails);
+
+                    }
+
+
+                    //gl-selection tab
+
+                    $msItems = DB::table('pos_source_menusalesitems')
+                        ->selectRaw('pos_source_menusalesitems.*')
+                        ->where('pos_source_menusalesitems.menuSalesID', $invoice->menuSalesID)
+                        ->get();
+
+                    //for revenue-gl
+                    foreach ($msItems as $item) {
+
+                        $chartOfAccount = ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $item->revenueGLAutoID)->first();
 
                         $addToCusInvDetails['custInvoiceDirectID'] = $custInvoiceDirectAutoID;
                         $addToCusInvDetails['companyID'] = $master->companyID;
                         $addToCusInvDetails['serviceLineSystemID'] = $serviceLineSystemID;
                         $addToCusInvDetails['serviceLineCode'] = $serviceLineCode;
                         $addToCusInvDetails['customerID'] = $master->customerID;
-                        if($chartOfAccount){
+                        if ($chartOfAccount) {
                             $addToCusInvDetails['glSystemID'] = $chartOfAccount->chartOfAccountSystemID;
                             $addToCusInvDetails['glCode'] = $chartOfAccount->AccountCode;
                             $addToCusInvDetails['glCodeDes'] = $chartOfAccount->AccountDescription;
@@ -1578,48 +1643,121 @@ class ShiftDetailsAPIController extends AppBaseController
                         }
                         $addToCusInvDetails['comments'] = $master->comments;
                         $addToCusInvDetails['invoiceAmountCurrency'] = $master->custTransactionCurrencyID;
-                        $addToCusInvDetails['invoiceAmountCurrencyER'] = 1;
+                        $addToCusInvDetails['invoiceAmountCurrencyER'] = $master->localCurrencyER;
 
                         $addToCusInvDetails['unitCost'] = $item->menuSalesPrice * $item->qty;
                         $addToCusInvDetails['salesPrice'] = $item->menuSalesPrice * $item->qty;
-                        $addToCusInvDetails['invoiceAmount'] = $item->transactionAmount * $item->qty;
+                        $addToCusInvDetails['invoiceAmount'] = $item->menuSalesPrice * $item->qty;
 
                         $addToCusInvDetails['localCurrency'] = $master->localCurrencyID;
                         $addToCusInvDetails['localCurrencyER'] = $master->localCurrencyER;
 
                         $addToCusInvDetails['comRptCurrency'] = $master->companyReportingCurrencyID;
                         $addToCusInvDetails['comRptCurrencyER'] = $master->companyReportingER;
-                        $addToCusInvDetails["comRptAmount"] = $item->companyReportingAmount * $item->qty;
-                        $addToCusInvDetails["localAmount"] = $item->companyLocalAmount * $item->qty;
+                        $addToCusInvDetails["comRptAmount"] = ($item->menuSalesPrice / $master->companyReportingER) * $item->qty;
+                        $addToCusInvDetails["localAmount"] = $item->menuSalesPrice * $item->qty;
 
-                        $addToCusInvDetails['unitOfMeasure'] = $item->unit;
+                        $addToCusInvDetails['unitOfMeasure'] = 0;
                         $addToCusInvDetails['invoiceQty'] = $item->qty;
-                        $addToCusInvDetails['VATAmount'] = $item->totalMenuTaxAmount;
-                        $addToCusInvDetails['VATAmountLocal'] = $item->totalMenuTaxAmount / $master->localCurrencyER;
-                        $addToCusInvDetails['VATAmountRpt'] = $item->totalMenuTaxAmount / $master->companyReportingER;
-
-                        if ($master->isVatEligible) {
-                            $vatDetails = TaxService::getDefaultVAT($master->companySystemID, $master->customerID, 0);
-                            $addToCusInvDetails['vatMasterCategoryID'] = $vatDetails['vatMasterCategoryID'];
-                            $addToCusInvDetails['vatSubCategoryID'] = $vatDetails['vatSubCategoryID'];
-                            $addToCusInvDetails['VATPercentage'] = $vatDetails['percentage'];
-                        }
-
-                        /**/
-
 
                         CustomerInvoiceDirectDetail::create($addToCusInvDetails);
-                        $details = CustomerInvoiceDirectDetail::select(DB::raw("SUM(invoiceAmount) as bookingAmountTrans"), DB::raw("SUM(localAmount) as bookingAmountLocal"), DB::raw("SUM(comRptAmount) as bookingAmountRpt"))->where('custInvoiceDirectID', $custInvoiceDirectAutoID)->first()->toArray();
-
-                        CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->update($details);
-
-
                     }
 
-                    $resVat = $this->updateTotalVAT($customerInvoiceDirects->custInvoiceDirectAutoID);
-                    if (!$resVat['status']) {
-                        return $this->sendError($resVat['message']);
+
+                    $taxItems = DB::table('pos_source_menusalesmaster')
+                        ->selectRaw('pos_source_menusalesmaster.menuSalesID as invoiceID, pos_source_menusalesmaster.shiftID as shiftId, pos_source_menusalesmaster.companyID as companyID, SUM(pos_source_menusalestaxes.taxAmount) as taxAmount, erp_taxmaster_new.outputVatGLAccountAutoID as outputVatGLCode')
+                        ->join('pos_source_menusalestaxes', 'pos_source_menusalestaxes.menuSalesID', '=', 'pos_source_menusalesmaster.menuSalesID')
+                        ->join('pos_source_taxmaster', 'pos_source_taxmaster.taxMasterAutoID', '=', 'pos_source_menusalestaxes.taxMasterID')
+                        ->join('erp_taxmaster_new', 'erp_taxmaster_new.taxMasterAutoID', '=', 'pos_source_taxmaster.erp_tax_master_id')
+                        ->where('pos_source_menusalesmaster.menuSalesID',  $invoice->menuSalesID)
+                        ->groupBy('pos_source_menusalestaxes.GLCode')
+                        ->get();
+
+
+                    //for tax-gl
+                    foreach ($taxItems as $item) {
+
+                        $chartOfAccount = ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $item->outputVatGLCode)->first();
+
+                        $addToCusInvDetails['custInvoiceDirectID'] = $custInvoiceDirectAutoID;
+                        $addToCusInvDetails['companyID'] = $master->companyID;
+                        $addToCusInvDetails['serviceLineSystemID'] = $serviceLineSystemID;
+                        $addToCusInvDetails['serviceLineCode'] = $serviceLineCode;
+                        $addToCusInvDetails['customerID'] = $master->customerID;
+                        if ($chartOfAccount) {
+                            $addToCusInvDetails['glSystemID'] = $chartOfAccount->chartOfAccountSystemID;
+                            $addToCusInvDetails['glCode'] = $chartOfAccount->AccountCode;
+                            $addToCusInvDetails['glCodeDes'] = $chartOfAccount->AccountDescription;
+                            $addToCusInvDetails['accountType'] = $chartOfAccount->catogaryBLorPL;
+                        }
+                        $addToCusInvDetails['comments'] = $master->comments;
+                        $addToCusInvDetails['invoiceAmountCurrency'] = $master->custTransactionCurrencyID;
+                        $addToCusInvDetails['invoiceAmountCurrencyER'] = $master->localCurrencyER;
+
+                        $addToCusInvDetails['unitCost'] = $item->taxAmount;
+                        $addToCusInvDetails['salesPrice'] = $item->taxAmount;
+                        $addToCusInvDetails['invoiceAmount'] = $item->taxAmount;
+
+                        $addToCusInvDetails['localCurrency'] = $master->localCurrencyID;
+                        $addToCusInvDetails['localCurrencyER'] = $master->localCurrencyER;
+
+                        $addToCusInvDetails['comRptCurrency'] = $master->companyReportingCurrencyID;
+                        $addToCusInvDetails['comRptCurrencyER'] = $master->companyReportingER;
+                        $addToCusInvDetails["comRptAmount"] = $item->taxAmount / $master->companyReportingCurrencyID;
+                        $addToCusInvDetails["localAmount"] = $item->taxAmount;
+
+                        $addToCusInvDetails['unitOfMeasure'] = 0;
+                        $addToCusInvDetails['invoiceQty'] = 1;
+
+                        CustomerInvoiceDirectDetail::create($addToCusInvDetails);
                     }
+
+
+                    $serviceItems = DB::table('pos_source_menusalesmaster')
+                        ->selectRaw('pos_source_menusalesmaster.menuSalesID as menuSalesID, pos_source_menusalesmaster.shiftID as shiftId, pos_source_menusalesmaster.companyID as companyID, SUM(pos_source_menusalesservicecharge.serviceChargeAmount) as serviceChargeAmount, pos_source_menusalesservicecharge.GLAutoID as glCode')
+                        ->join('pos_source_menusalesservicecharge', 'pos_source_menusalesservicecharge.menuSalesID', '=', 'pos_source_menusalesmaster.menuSalesID')
+                        ->where('pos_source_menusalesmaster.menuSalesID',  $invoice->menuSalesID)
+                        ->groupBy('pos_source_menusalesservicecharge.GLAutoID')
+                        ->get();
+
+                    foreach ($serviceItems as $item) {
+
+                        $chartOfAccount = ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $item->glCode)->first();
+
+                        $addToCusInvDetails['custInvoiceDirectID'] = $custInvoiceDirectAutoID;
+                        $addToCusInvDetails['companyID'] = $master->companyID;
+                        $addToCusInvDetails['serviceLineSystemID'] = $serviceLineSystemID;
+                        $addToCusInvDetails['serviceLineCode'] = $serviceLineCode;
+                        $addToCusInvDetails['customerID'] = $master->customerID;
+                        if ($chartOfAccount) {
+                            $addToCusInvDetails['glSystemID'] = $chartOfAccount->chartOfAccountSystemID;
+                            $addToCusInvDetails['glCode'] = $chartOfAccount->AccountCode;
+                            $addToCusInvDetails['glCodeDes'] = $chartOfAccount->AccountDescription;
+                            $addToCusInvDetails['accountType'] = $chartOfAccount->catogaryBLorPL;
+                        }
+                        $addToCusInvDetails['comments'] = $master->comments;
+                        $addToCusInvDetails['invoiceAmountCurrency'] = $master->custTransactionCurrencyID;
+                        $addToCusInvDetails['invoiceAmountCurrencyER'] = $master->localCurrencyER;
+
+                        $addToCusInvDetails['unitCost'] = $item->serviceChargeAmount;
+                        $addToCusInvDetails['salesPrice'] = $item->serviceChargeAmount;
+                        $addToCusInvDetails['invoiceAmount'] = $item->serviceChargeAmount;
+
+                        $addToCusInvDetails['localCurrency'] = $master->localCurrencyID;
+                        $addToCusInvDetails['localCurrencyER'] = $master->localCurrencyER;
+
+                        $addToCusInvDetails['comRptCurrency'] = $master->companyReportingCurrencyID;
+                        $addToCusInvDetails['comRptCurrencyER'] = $master->companyReportingER;
+                        $addToCusInvDetails["comRptAmount"] = $item->serviceChargeAmount / $master->companyReportingCurrencyID;
+                        $addToCusInvDetails["localAmount"] = $item->serviceChargeAmount;
+
+                        $addToCusInvDetails['unitOfMeasure'] = 0;
+                        $addToCusInvDetails['invoiceQty'] = 1;
+
+                        CustomerInvoiceDirectDetail::create($addToCusInvDetails);
+                    }
+
+
                     $params = array('autoID' => $customerInvoiceDirects->custInvoiceDirectAutoID,
                         'company' => $customerInvoiceDirects->companySystemID,
                         'document' => $customerInvoiceDirects->documentSystemiD,
@@ -1651,11 +1789,11 @@ class ShiftDetailsAPIController extends AppBaseController
                         $documentApproval["rollLevelOrder"] = $documentApproved->rollLevelOrder;
                         $documentApproval["db"] = $db;
 
-
-                        $approve = \Helper::approveDocument($documentApproval);
-                        if (!$approve["success"]) {
-                            return $this->sendError($approve["message"]);
-                        }
+//
+//                        $approve = \Helper::approveDocument($documentApproval);
+//                        if (!$approve["success"]) {
+//                            return $this->sendError($approve["message"]);
+//                        }
                         Log::info('---- Doc Approval -----' . $documentApproveds);
 
                     }
@@ -1686,6 +1824,7 @@ class ShiftDetailsAPIController extends AppBaseController
 
 
     }
+
 
 
     public function updateTotalVAT($custInvoiceDirectAutoID)
@@ -1735,7 +1874,7 @@ class ShiftDetailsAPIController extends AppBaseController
             return ['status' => false, 'message' => 'Customer Invoice not found.'];
         }
 
-        $invoiceDetail = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $custInvoiceDirectAutoID)->first();
+        $invoiceDetail = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->first();
 
         if (empty($invoiceDetail)) {
             return ['status' => false, 'message' => 'Invoice Details not found.'];
@@ -1744,7 +1883,7 @@ class ShiftDetailsAPIController extends AppBaseController
         $totalAmount = 0;
         $decimal = \Helper::getCurrencyDecimalPlace($master->custTransactionCurrencyID);
 
-        $totalDetail = CustomerInvoiceDirectDetail::select(\Illuminate\Support\Facades\DB::raw("SUM(invoiceAmount) as amount"))->where('custInvoiceDirectID', $custInvoiceDirectAutoID)->first();
+        $totalDetail = CustomerInvoiceItemDetails::select(\Illuminate\Support\Facades\DB::raw("SUM(sellingTotal) as amount"))->where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->first();
         if (!empty($totalDetail)) {
             $totalAmount = $totalDetail->amount;
         }
@@ -1840,7 +1979,6 @@ class ShiftDetailsAPIController extends AppBaseController
 
         return ['status' => true];
     }
-
     public function postPosEntries(Request $request){
 
         $shiftId = $request->shiftId;
@@ -2620,6 +2758,31 @@ class ShiftDetailsAPIController extends AppBaseController
 
     }
 
+    public function updateVatEligibilityOfCustomerInvoice($custInvoiceDirectAutoID)
+    {
+        $doDetailData = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)
+            ->groupBy('quotationMasterID')
+            ->get();
+
+        $quMasterIds = $doDetailData->pluck('quotationMasterID');
+
+        $quotaionVatEligibleCheck = QuotationMaster::whereIn('quotationMasterID', $quMasterIds)
+            ->where('vatRegisteredYN', 1)
+            ->where('customerVATEligible', 1)
+            ->first();
+        $vatRegisteredYN = 0;
+        $customerVATEligible = 0;
+        if ($quotaionVatEligibleCheck) {
+            $customerVATEligible = 1;
+            $vatRegisteredYN = 1;
+        }
+
+        $updateRes = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)
+            ->update(['vatRegisteredYN' => $vatRegisteredYN, 'customerVATEligible' => $customerVATEligible]);
+
+        return ['status' => true];
+    }
+
     public function updateVatFromSalesQuotation($custInvoiceDirectAutoID)
     {
         $invoiceDetails = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)
@@ -2630,11 +2793,7 @@ class ShiftDetailsAPIController extends AppBaseController
         $invoice = CustomerInvoiceDirect::find($custInvoiceDirectAutoID);
 
         foreach ($invoiceDetails as $key => $value) {
-            if ($invoice->isPerforma == 2 || $invoice->isPerforma == 5) {
-                $totalVATAmount += $value->qtyIssued * $value->VATAmount;
-            } else {
-                $totalVATAmount += $value->qtyIssued * ((isset($value->sales_quotation_detail->VATAmount) && !is_null($value->sales_quotation_detail->VATAmount)) ? $value->sales_quotation_detail->VATAmount : 0);
-            }
+                $totalVATAmount += $value->VATAmount;
         }
 
         $taxDelete = Taxdetail::where('documentSystemCode', $custInvoiceDirectAutoID)
