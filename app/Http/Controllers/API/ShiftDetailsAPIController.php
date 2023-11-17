@@ -2468,6 +2468,7 @@ class ShiftDetailsAPIController extends AppBaseController
                 $taxGLArray2 = array();
                 $itemArray = array();
                 $bankArray = array();
+                $serviceArray = array();
 
                 if ($isPostGroupBy == 0) {
 
@@ -2533,6 +2534,16 @@ class ShiftDetailsAPIController extends AppBaseController
                         ->where('pos_source_menusalesmaster.isCreditSales', 0)
                         ->get();
 
+                    $serviceItems = DB::table('pos_source_menusalesmaster')
+                        ->selectRaw('pos_source_menusalesmaster.menuSalesID as invoiceID, pos_source_menusalesmaster.shiftID as shiftId, pos_source_menusalesmaster.companyID as companyID, SUM(pos_source_menusalesservicecharge.serviceChargeAmount) as serviceChargeAmount, pos_source_menusalesservicecharge.GLAutoID as glCode')
+                        ->join('pos_source_menusalesservicecharge', 'pos_source_menusalesservicecharge.menuSalesID', '=', 'pos_source_menusalesmaster.menuSalesID')
+                        ->where('pos_source_menusalesmaster.shiftID', $shiftId)
+                        ->where('pos_source_menusalesmaster.isCreditSales', 0)
+                        ->groupBy('pos_source_menusalesservicecharge.GLAutoID')
+                        ->get();
+
+
+
                 }
                 if ($isPostGroupBy == 1) {
                     $bankGL = DB::table('pos_source_menusalesmaster')
@@ -2592,6 +2603,15 @@ class ShiftDetailsAPIController extends AppBaseController
                         ->where('pos_source_menusalesmaster.isCreditSales', 0)
                         ->get();
 
+                    $serviceItems = DB::table('pos_source_menusalesmaster')
+                        ->selectRaw('pos_source_menusalesmaster.menuSalesID as invoiceID, pos_source_menusalesmaster.shiftID as shiftId, pos_source_menusalesmaster.companyID as companyID, SUM(pos_source_menusalesservicecharge.serviceChargeAmount) as serviceChargeAmount, pos_source_menusalesservicecharge.GLAutoID as glCode')
+                        ->join('pos_source_menusalesservicecharge', 'pos_source_menusalesservicecharge.menuSalesID', '=', 'pos_source_menusalesmaster.menuSalesID')
+                        ->where('pos_source_menusalesmaster.shiftID', $shiftId)
+                        ->where('pos_source_menusalesmaster.isCreditSales', 0)
+                        ->groupBy('pos_source_menusalesservicecharge.GLAutoID')
+                        ->groupBy('pos_source_menusalesmaster.shiftID')
+                        ->get();
+
                     $bankItems = DB::table('pos_source_menusalesmaster')
                         ->selectRaw('SUM(pos_source_menusalesmaster.cashReceivedAmount) as amount, pos_source_menusalesmaster.menuSalesID as invoiceID, pos_source_paymentglconfigdetail.erp_bank_acc_id as bankID, pos_source_menusalespayments.GLCode as glCode, pos_source_menusalesmaster.shiftID as shiftId, pos_source_menusalesmaster.companyID as companyID, pos_source_menusalespayments.paymentConfigDetailID as payDetailID')
                         ->join('pos_source_menusalespayments', 'pos_source_menusalespayments.menuSalesID', '=', 'pos_source_menusalesmaster.menuSalesID')
@@ -2601,6 +2621,19 @@ class ShiftDetailsAPIController extends AppBaseController
                         ->groupBy('pos_source_menusalesmaster.shiftID')
                         ->where('pos_source_menusalesmaster.isCreditSales', 0)
                         ->get();
+                }
+
+                foreach ($serviceItems as $gl) {
+                    $documentCode = ('RPOS\\' . str_pad($gl->shiftId, 6, '0', STR_PAD_LEFT));
+                    $serviceArray[] = array(
+                        'shiftId' => $gl->shiftId,
+                        'invoiceID' => $gl->invoiceID,
+                        'documentSystemId' => 111,
+                        'documentCode' => $documentCode,
+                        'glCode' => $gl->glCode,
+                        'logId' => $logs['id'],
+                        'amount' => $gl->serviceChargeAmount * -1
+                    );
                 }
 
                 foreach ($taxItems as $gl) {
@@ -2700,6 +2733,7 @@ class ShiftDetailsAPIController extends AppBaseController
                 POSGLEntries::insert($itemGLArray);
                 POSGLEntries::insert($taxGLArray1);
                 POSGLEntries::insert($taxGLArray2);
+                POSGLEntries::insert($serviceArray);
 
 
                 foreach ($invItemsPLBS as $gl) {
