@@ -756,69 +756,69 @@ class CustomerInvoiceGlService
 
 
     public static function generateCustomerDirectInvoiceDetailsGL($masterData,$finalData,$masterDocumentDate) {
-        $_customerInvoiceDirectDetails = CustomerInvoiceDirectDetail::where('custInvoiceDirectID',$masterData->custInvoiceDirectAutoID)->get();
+        $_customerInvoiceDirectDetails = CustomerInvoiceDirectDetail::with(['chart_Of_account'])->where('custInvoiceDirectID',$masterData->custInvoiceDirectAutoID)->get();
         $chartOfAccount = ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'catogaryBLorPLID', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $masterData->customerGLSystemID)->first();
         $_masterGLAccount = collect($finalData)->where('chartOfAccountSystemID',$chartOfAccount->chartOfAccountSystemID)->first();
         foreach ($_customerInvoiceDirectDetails as $item) {
-            if($item->chartOfAccount->controlAccountsSystemID == 2 || $item->chartOfAccount->controlAccountsSystemID == 4 || $item->chartOfAccount->controlAccountsSystemID == 5) {
-                $data['serviceLineSystemID'] = $item->serviceLineSystemID;
-                $data['serviceLineCode'] = $item->serviceLineCode;
-                $data['clientContractID'] = 'X';
-                $data['contractUID'] = $item->contract ? $item->contract->contractUID : 0;           
-                $data['documentNarration'] = $item->glCodeDes;
-                $data['documentTransCurrencyID'] = $item->invoiceAmountCurrency;
-                $data['documentTransCurrencyER'] = $item->invoiceAmountCurrencyER;
-                $data['documentTransAmount'] = $item->invoiceAmount + $item->VATAmountTotal;
-                $data['documentLocalCurrencyID'] = $item->localCurrency;
+            if($item->chart_Of_account) {
+                if($item->chart_Of_account->controlAccountsSystemID == 2 || $item->chart_Of_account->controlAccountsSystemID == 4 || $item->chart_Of_account->controlAccountsSystemID == 5) {
+                    $data['serviceLineSystemID'] = $item->serviceLineSystemID;
+                    $data['serviceLineCode'] = $item->serviceLineCode;
+                    $data['clientContractID'] = 'X';
+                    $data['contractUID'] = $item->contract ? $item->contract->contractUID : 0;           
+                    $data['documentNarration'] = $item->glCodeDes;
+                    $data['documentTransCurrencyID'] = $item->invoiceAmountCurrency;
+                    $data['documentTransCurrencyER'] = $item->invoiceAmountCurrencyER;
+                    $data['documentTransAmount'] = $item->invoiceAmount + $item->VATAmountTotal;
+                    $data['documentLocalCurrencyID'] = $item->localCurrency;
+        
+                    $data['documentLocalCurrencyER'] = $item->localCurrencyER;
+                    $data['documentLocalAmount'] = $item->localAmount + $item->VATAmountLocalTotal;
+                    $data['documentRptCurrencyID'] = $item->comRptCurrency;
+                    $data['documentRptCurrencyER'] = $item->comRptCurrencyER;
+                    $data['documentRptAmount'] = $item->comRptAmount + $item->VATAmountRptTotal;
+                    $data['supplierCodeSystem'] = $masterData->customerID;
+                    $data['chartOfAccountSystemID'] = $item->chart_Of_account->chartOfAccountSystemID;
+                    $data['documentDate'] = $masterDocumentDate;
+                    $data['glCode'] = $item->chart_Of_account->AccountCode;
+                    $data['documentSystemID'] = $masterData->documentSystemiD;
+                    $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                    $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                    array_push($finalData, $data);
     
-                $data['documentLocalCurrencyER'] = $item->localCurrencyER;
-                $data['documentLocalAmount'] = $item->localAmount + $item->VATAmountLocalTotal;
-                $data['documentRptCurrencyID'] = $item->comRptCurrency;
-                $data['documentRptCurrencyER'] = $item->comRptCurrencyER;
-                $data['documentRptAmount'] = $item->comRptAmount + $item->VATAmountRptTotal;
-                $data['supplierCodeSystem'] = $masterData->customerID;
-                $data['chartOfAccountSystemID'] = $item->chartOfAccount->chartOfAccountSystemID;
-                $data['documentDate'] = $masterDocumentDate;
-                $data['glCode'] = $item->chartOfAccount->AccountCode;
-                $data['documentSystemID'] = $masterData->documentSystemiD;
-                $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
-                $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-                array_push($finalData, $data);
-
-                $_masterGLAccount['documentTransAmount'] -= ($item->invoiceAmount + $item->VATAmountTotal);
-                $_masterGLAccount['documentLocalAmount'] -= ($item->localAmount + $item->VATAmountLocalTotal);
-                $_masterGLAccount['documentRptAmount'] -= ($item->comRptAmount + $item->VATAmountRptTotal);
-                
-            }else{
-                $data['serviceLineSystemID'] = $item->serviceLineSystemID;
-                $data['serviceLineCode'] = $item->serviceLineCode;
-                $data['clientContractID'] = 'X';
-                $data['contractUID'] = $item->contract ? $item->contract->contractUID : 0;           
-                $data['documentNarration'] = $item->glCodeDes;
-                $data['documentTransCurrencyID'] = $item->invoiceAmountCurrency;
-                $data['documentTransCurrencyER'] = $item->invoiceAmountCurrencyER;
-                $data['documentTransAmount'] = -($item->invoiceAmount + $item->VATAmountTotal);
-                $data['documentLocalCurrencyID'] = $item->localCurrency;
-                $data['documentSystemID'] = $masterData->documentSystemiD;
-                $data['documentLocalCurrencyER'] = $item->localCurrencyER;
-                $data['documentLocalAmount'] = -($item->localAmount + $item->VATAmountLocalTotal);
-                $data['documentRptCurrencyID'] = $item->comRptCurrency;
-                $data['documentRptCurrencyER'] = $item->comRptCurrencyER;
-                $data['documentRptAmount'] = -($item->comRptAmount + $item->VATAmountRptTotal);
-                $data['supplierCodeSystem'] = $masterData->customerID;
-                $data['chartOfAccountSystemID'] = $item->chartOfAccount->chartOfAccountSystemID;
-                $data['documentDate'] = $masterDocumentDate;
-                $data['glCode'] = $item->chartOfAccount->AccountCode;
-                $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
-                $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
-                array_push($finalData, $data);
-
-                $_masterGLAccount['documentTransAmount'] += $item->invoiceAmount + $item->VATAmountTotal;
-                $_masterGLAccount['documentLocalAmount'] += $item->localAmount + $item->VATAmountLocalTotal;
-                $_masterGLAccount['documentRptAmount'] += $item->comRptAmount + $item->VATAmountRptTotal;  
-            }
-
-
+                    $_masterGLAccount['documentTransAmount'] -= ($item->invoiceAmount + $item->VATAmountTotal);
+                    $_masterGLAccount['documentLocalAmount'] -= ($item->localAmount + $item->VATAmountLocalTotal);
+                    $_masterGLAccount['documentRptAmount'] -= ($item->comRptAmount + $item->VATAmountRptTotal);
+                    
+                }else{
+                    $data['serviceLineSystemID'] = $item->serviceLineSystemID;
+                    $data['serviceLineCode'] = $item->serviceLineCode;
+                    $data['clientContractID'] = 'X';
+                    $data['contractUID'] = $item->contract ? $item->contract->contractUID : 0;           
+                    $data['documentNarration'] = $item->glCodeDes;
+                    $data['documentTransCurrencyID'] = $item->invoiceAmountCurrency;
+                    $data['documentTransCurrencyER'] = $item->invoiceAmountCurrencyER;
+                    $data['documentTransAmount'] = -($item->invoiceAmount + $item->VATAmountTotal);
+                    $data['documentLocalCurrencyID'] = $item->localCurrency;
+                    $data['documentSystemID'] = $masterData->documentSystemiD;
+                    $data['documentLocalCurrencyER'] = $item->localCurrencyER;
+                    $data['documentLocalAmount'] = -($item->localAmount + $item->VATAmountLocalTotal);
+                    $data['documentRptCurrencyID'] = $item->comRptCurrency;
+                    $data['documentRptCurrencyER'] = $item->comRptCurrencyER;
+                    $data['documentRptAmount'] = -($item->comRptAmount + $item->VATAmountRptTotal);
+                    $data['supplierCodeSystem'] = $masterData->customerID;
+                    $data['chartOfAccountSystemID'] = $item->chart_Of_account->chartOfAccountSystemID;
+                    $data['documentDate'] = $masterDocumentDate;
+                    $data['glCode'] = $item->chart_Of_account->AccountCode;
+                    $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                    $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+                    array_push($finalData, $data);
+    
+                    $_masterGLAccount['documentTransAmount'] += $item->invoiceAmount + $item->VATAmountTotal;
+                    $_masterGLAccount['documentLocalAmount'] += $item->localAmount + $item->VATAmountLocalTotal;
+                    $_masterGLAccount['documentRptAmount'] += $item->comRptAmount + $item->VATAmountRptTotal;  
+                }
+            }           
 
         }
 

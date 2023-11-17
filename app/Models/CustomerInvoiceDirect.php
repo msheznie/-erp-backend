@@ -617,7 +617,7 @@ class CustomerInvoiceDirect extends Model
         'vatRegisteredYN' => 'integer',
         'customerVATEligible' => 'integer',
         'date_of_supply' => 'string',
-        'isPOS' => 'integer'
+        'isPOS' =>'integer'
     ];
 
     /**
