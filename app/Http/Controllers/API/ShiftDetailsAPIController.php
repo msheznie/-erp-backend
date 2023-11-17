@@ -1788,12 +1788,11 @@ class ShiftDetailsAPIController extends AppBaseController
                         $documentApproval["approvedComments"] = "Approved by RPOS";
                         $documentApproval["rollLevelOrder"] = $documentApproved->rollLevelOrder;
                         $documentApproval["db"] = $db;
-
-//
-//                        $approve = \Helper::approveDocument($documentApproval);
-//                        if (!$approve["success"]) {
-//                            return $this->sendError($approve["message"]);
-//                        }
+                        
+                        $approve = \Helper::approveDocument($documentApproval);
+                        if (!$approve["success"]) {
+                            return $this->sendError($approve["message"]);
+                        }
                         Log::info('---- Doc Approval -----' . $documentApproveds);
 
                     }
