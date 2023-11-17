@@ -1534,6 +1534,11 @@ class ShiftDetailsAPIController extends AppBaseController
                     }
 
                     $customerInvoiceDirects = $this->customerInvoiceDirectRepository->create($input);
+                    $custInvoiceDirectAutoID = $customerInvoiceDirects->custInvoiceDirectAutoID;
+                    $companySystemID = $shiftDetails->companyID;
+
+                    $master = CustomerInvoiceDirect::select('*')->where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->first();
+
                     $items = DB::table('pos_source_menusalesitems')
                         ->selectRaw('pos_source_menusalesitems.*, itemmaster.unit as unit, pos_source_menusalesitemdetails.itemAutoID as itemAutoID, itemmaster.primaryCode as itemPrimaryCode, itemmaster.itemDescription as itemDescription, pos_source_menusalesitemdetails.warehouseAutoID as warehouseAutoID, itemmaster.financeCategoryMaster as itemFinanceCategoryID, itemmaster.financeCategorySub as itemFinanceCategorySubID, pos_source_menusalesitemdetails.cost as cost, pos_source_menusalesitemdetails.qty as itemQty, pos_source_menusalesitemdetails.UOMID as uomID')
                         ->join('pos_source_menusalesitemdetails', 'pos_source_menusalesitemdetails.menuSalesItemID', '=', 'pos_source_menusalesitems.menuSalesItemID')
@@ -1544,11 +1549,6 @@ class ShiftDetailsAPIController extends AppBaseController
 
 
                     foreach ($items as $item) {
-
-                        $companySystemID = $shiftDetails->companyID;
-                        $custInvoiceDirectAutoID = $customerInvoiceDirects->custInvoiceDirectAutoID;
-
-                        $master = CustomerInvoiceDirect::select('*')->where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->first();
 
                         $addToCusInvItemDetails['custInvoiceDirectAutoID'] = $custInvoiceDirectAutoID;
                         $addToCusInvItemDetails['itemCodeSystem'] = $item->itemAutoID;
@@ -1614,21 +1614,6 @@ class ShiftDetailsAPIController extends AppBaseController
                         $addToCusInvItemDetails['VATAmountRpt'] = 0;
 
                         CustomerInvoiceItemDetails::create($addToCusInvItemDetails);
-
-
-                        $details = CustomerInvoiceItemDetails::select(DB::raw("SUM(sellingCostAfterMargin) as bookingAmountTrans"), DB::raw("SUM(sellingCostAfterMarginLocal) as bookingAmountLocal"), DB::raw("SUM(sellingCostAfterMarginRpt) as bookingAmountRpt"))->where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->first()->toArray();
-
-
-                        $details = array_filter($details, function ($key) {
-                            return $key !== 'issueCostTrans' && $key !== 'issueCostTransTotal';
-                        }, ARRAY_FILTER_USE_KEY);
-
-                        CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->update($details);
-
-                        $resVat = $this->updateVatFromSalesQuotation($custInvoiceDirectAutoID);
-                        if (!$resVat['status']) {
-                            return $this->sendError($resVat['message']);
-                        }
 
                     }
 
