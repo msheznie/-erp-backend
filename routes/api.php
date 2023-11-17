@@ -260,12 +260,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('alerts', 'AlertAPIController');
             Route::resource('access_tokens', 'AccessTokensAPIController');
             Route::resource('users_log_histories', 'UsersLogHistoryAPIController');
-
-
-            Route::resource('addresses', 'AddressAPIController');
-            Route::post('getAllAddresses', 'AddressAPIController@getAllAddresses');
-            Route::get('getAddressFormData', 'AddressAPIController@getAddressFormData');
-
+            
             Route::resource('address_types', 'AddressTypeAPIController');
             
             Route::resource('company_policy_categories', 'CompanyPolicyCategoryAPIController');
