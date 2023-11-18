@@ -69,18 +69,29 @@ class ItemWACTriggerJob implements ShouldQueue
                 ];
             });
 
-            $result = ['itemWacArray' => $data];
+            $jsonData = json_encode([
+                'multipart' => [
+                    [
+                        'name' => 'itemWacArray',
+                        'contents' => $data->toArray(),
+                    ],
+                ],
+            ]);
 
             $client = new Client();
                 $headers = [
                     'content-type' => 'application/json',
                     'Authorization' => 'ERP ' . $integrationKey->api_external_key
                 ];
-                $res = $client->request('POST', $integrationKey->api_external_url . '/update_item_wac_amount', [
-                    'headers' => $headers,
-                    'json' =>  $result
-                ]);
-                $json = $res->getBody();
+
+
+
+            $response = $client->post( $integrationKey->api_external_url . '/update_item_wac_amount', [
+                'headers' => $headers,
+                'json' => $jsonData
+            ]);
+
+                $json = $response->getBody();
 
                 Log::info('API guzzle: ' . $json);
             }
