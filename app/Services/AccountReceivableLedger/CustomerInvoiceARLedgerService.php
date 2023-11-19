@@ -102,17 +102,10 @@ class CustomerInvoiceARLedgerService
                 array_push($finalData, $data);
             }else{
                 if ($masterData->isPerforma == 0) {
-                    $detail = CustomerInvoiceDirectDetail::selectRaw("sum(comRptAmount) as comRptAmount, comRptCurrency, sum(localAmount) as localAmount , localCurrencyER, localCurrency, sum(invoiceAmount) as invoiceAmount, invoiceAmountCurrencyER, invoiceAmountCurrency,comRptCurrencyER, customerID, clientContractID, comments, glSystemID,   serviceLineSystemID,serviceLineCode, sum(VATAmount) as VATAmount, sum(VATAmountLocal) as VATAmountLocal, sum(VATAmountRpt) as VATAmountRpt, sum(VATAmount*invoiceQty) as VATAmountTotal, sum(VATAmountLocal*invoiceQty) as VATAmountLocalTotal, sum(VATAmountRpt*invoiceQty) as VATAmountRptTotal")->with(['contract'])->WHERE('custInvoiceDirectID', $masterModel["autoID"])->groupBy('serviceLineSystemID')->get();
-
-
-                    foreach ($detail as $item) {
-                        $data['serviceLineSystemID'] = $item->serviceLineSystemID;
-                        $data['serviceLineCode'] = $item->serviceLineCode;
-                        
-                        $data['custInvoiceAmount'] = ABS($item->invoiceAmount + $item->VATAmountTotal);
-                        $data['localAmount'] = \Helper::roundValue(ABS($item->localAmount + $item->VATAmountLocalTotal));
-                        $data['comRptAmount'] = \Helper::roundValue(ABS($item->comRptAmount + $item->VATAmountRptTotal));
-                        array_push($finalData, $data);
+                    $data = self::performDirectInvoiceDetails($masterModel);
+                    
+                    if(isset($data['detailsArray'])) {
+                        $finalData = array_merge($finalData,$data['detailsArray']);
                     }
                 } else {
                     $data['custInvoiceAmount'] = ABS($masterData->invoicedetails[0]->transAmount + $taxTrans);
@@ -121,8 +114,30 @@ class CustomerInvoiceARLedgerService
                     array_push($finalData, $data);
                 }
             }
+
+            if($masterData->isPerforma == 2) {
+                if(isset($data['detailsArray'])) {
+                    $finalData = array_merge($finalData,$data['detailsArray']);
+                }
+            }
         }
 
         return ['status' => true, 'message' => 'success', 'data' => ['finalData' => $finalData]];
 	}
+
+    public static function performDirectInvoiceDetails($masterModel){
+        $detail = CustomerInvoiceDirectDetail::selectRaw("sum(comRptAmount) as comRptAmount, comRptCurrency, sum(localAmount) as localAmount , localCurrencyER, localCurrency, sum(invoiceAmount) as invoiceAmount, invoiceAmountCurrencyER, invoiceAmountCurrency,comRptCurrencyER, customerID, clientContractID, comments, glSystemID,   serviceLineSystemID,serviceLineCode, sum(VATAmount) as VATAmount, sum(VATAmountLocal) as VATAmountLocal, sum(VATAmountRpt) as VATAmountRpt, sum(VATAmount*invoiceQty) as VATAmountTotal, sum(VATAmountLocal*invoiceQty) as VATAmountLocalTotal, sum(VATAmountRpt*invoiceQty) as VATAmountRptTotal")->with(['contract'])->WHERE('custInvoiceDirectID', $masterModel["autoID"])->groupBy('serviceLineSystemID')->get();
+        $detailsArray = [];
+
+                    foreach ($detail as $item) {
+                        $data['serviceLineSystemID'] = $item->serviceLineSystemID;
+                        $data['serviceLineCode'] = $item->serviceLineCode;
+                        
+                        $data['custInvoiceAmount'] = ABS($item->invoiceAmount + $item->VATAmountTotal);
+                        $data['localAmount'] = \Helper::roundValue(ABS($item->localAmount + $item->VATAmountLocalTotal));
+                        $data['comRptAmount'] = \Helper::roundValue(ABS($item->comRptAmount + $item->VATAmountRptTotal));
+                        array_push($detailsArray, $data);
+                    }
+        return $detailsArray;
+    }
 }
