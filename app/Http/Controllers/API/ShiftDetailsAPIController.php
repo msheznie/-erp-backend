@@ -1557,8 +1557,8 @@ class ShiftDetailsAPIController extends AppBaseController
                         $addToCusInvItemDetails['itemUnitOfMeasure'] = $item->unit;
                         $addToCusInvItemDetails['unitOfMeasureIssued'] = $item->unit;
                         $addToCusInvItemDetails['convertionMeasureVal'] = $item->unit;
-                        $addToCusInvItemDetails['qtyIssued'] = $item->itemQty;
-                        $addToCusInvItemDetails['qtyIssuedDefaultMeasure'] = $item->itemQty;
+                        $addToCusInvItemDetails['qtyIssued'] = $item->itemQty * $item->qty;
+                        $addToCusInvItemDetails['qtyIssuedDefaultMeasure'] = $item->itemQty * $item->qty;
 
 
                         $data = array('companySystemID' => $master->companySystemID,
@@ -1590,11 +1590,11 @@ class ShiftDetailsAPIController extends AppBaseController
                         $addToCusInvItemDetails['localCurrencyID'] = $item->companyLocalCurrencyID;
                         $addToCusInvItemDetails['localCurrencyER'] = $item->companyLocalExchangeRate;
                         $addToCusInvItemDetails['issueCostLocal'] = $item->cost;
-                        $addToCusInvItemDetails['issueCostLocalTotal'] = $item->cost * $item->itemQty;
+                        $addToCusInvItemDetails['issueCostLocalTotal'] = $item->cost * $item->itemQty * $item->qty;
                         $addToCusInvItemDetails['reportingCurrencyID'] = $item->companyReportingCurrency;
                         $addToCusInvItemDetails['reportingCurrencyER'] = $item->companyReportingExchangeRate;
                         $addToCusInvItemDetails['issueCostRpt'] = $item->cost / $item->companyReportingExchangeRate;
-                        $addToCusInvItemDetails['issueCostRptTotal'] = $item->cost * $item->itemQty / $item->companyReportingExchangeRate;
+                        $addToCusInvItemDetails['issueCostRptTotal'] = $item->cost * $item->itemQty * $item->qty / $item->companyReportingExchangeRate;
                         $addToCusInvItemDetails['sellingCurrencyID'] = $item->transactionCurrencyID;
                         $addToCusInvItemDetails['sellingCurrencyER'] = $item->transactionExchangeRate;
 
