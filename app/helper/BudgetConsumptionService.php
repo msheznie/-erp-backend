@@ -5949,20 +5949,7 @@ class BudgetConsumptionService
 							}
 						}
 						
-						// $isAssets = true;
-						// $fixedCOmmitedAmount = 0;
-						// $fixed_assets =  FixedAssetMaster::where('costglCodeSystemID',$detail->chartOfAccountID)->where('docOriginDocumentSystemID',3)->get();
-						// if($fixed_assets)
-						// {
-						
-						// 	foreach($fixed_assets as $asset)
-						// 	{
-						// 			if($asset->approved == -1)
-						// 			{
-						// 				$fixedCOmmitedAmount += $asset->COSTUNIT;
-						// 			}
-						// 	}
-						// }
+
 					
 						$totalCommitedAmount = $notRecivedPoNonFixedAsset->remainingAmount + $notRecivedPoNonFixedAsset->receivedAmount;
 						$commited_amount = $totalCommitedAmount - $fixedCOmmitedAmount;
@@ -5970,12 +5957,7 @@ class BudgetConsumptionService
 						$currencyConversionRptAmount = \Helper::currencyConversion($detail->companySystemID, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $commited_amount);
 						$committedAmount += $currencyConversionRptAmount['reportingAmount'];
 							
-						// $consumAssetamount = BudgetConsumedData::selectRaw('SUM(consumedRptAmount) as amount')
-						// 					->where('chartOfAccountID', $detail->chartOfAccountID)
-						// 					->where('documentSystemID',22)
-						// 					->groupBy('chartOfAccountID')->first();
-
-			            //$actuallConsumptionAmount +=  $consumAssetamount->amount;							
+							
 					}
 					else
 					{
