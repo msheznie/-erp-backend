@@ -2935,6 +2935,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $customerInvoice = $this->customerInvoiceDirectRepository->getAudit2($id);
         }
 
+        if (!$customerInvoice) {
+            return $this->sendError("Customer invoice not found");
+        }
         $accountIBAN = '';
         if ($customerInvoice && $customerInvoice->bankAccount) {
             $accountIBAN = $customerInvoice->bankAccount['accountIBAN#'];
