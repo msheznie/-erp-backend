@@ -269,13 +269,11 @@
                         @endif
                     </b><br>
 
-                    <b>رقم العقد/أمر الشراء : @if(!empty($request->invoicedetails) )
-                            {{isset($request->invoicedetails[0]->clientContractID)?$request->invoicedetails[0]->clientContractID:''}}
-                        @endif
-                        @if($request->line_poNumber && isset($request->item_invoice) && $request->item_invoice)
+                    <b>رقم العقد/أمر الشراء : 
+                        @if($request->line_poNumber)
                             {{$request->PONumber}}
                         @endif
-
+                        
                     </b>
 
                 </td>
