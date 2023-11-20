@@ -6051,33 +6051,33 @@ class BudgetConsumptionService
                                     ->get();
 
 
-        // $data2 = PurchaseOrderDetails::whereHas('order', function ($q) use ($dataParam) {
-        //                                     $q->where('companySystemID', $dataParam['companySystemID'])
-        //                                     ->where('serviceLineSystemID', $dataParam['serviceLineSystemID'])
-        //                                     ->where('approved', 0)
-        //                                     ->where('poCancelledYN', 0)
-        //                                     ->where(function($query) {
-        //                                         $query->where('projectID', 0)
-        //                                               ->orWhereNull('projectID');
-        //                                     });
-        //                             })
-        //                             ->where('budgetYear', $dataParam['Year'])
-        //                             ->where('itemFinanceCategoryID', 3)
-        //                             ->whereIn('financeGLcodebBSSystemID', $glIds)
-        //                             ->whereNotNull('financeGLcodebBSSystemID')
-        //                             // ->join(DB::raw('(SELECT
-        //                             //                 erp_companyreporttemplatelinks.templateDetailID as templatesDetailsAutoID,
-        //                             //                 erp_companyreporttemplatelinks.templateMasterID,
-        //                             //                 erp_companyreporttemplatelinks.glAutoID as chartOfAccountSystemID,
-        //                             //                 erp_companyreporttemplatelinks.glCode 
-        //                             //                 FROM
-        //                             //                 erp_companyreporttemplatelinks
-        //                             //                 WHERE erp_companyreporttemplatelinks.templateMasterID =' . $dataParam['templatesMasterAutoID'] . ' AND erp_companyreporttemplatelinks.templateDetailID = ' . $dataParam['templateDetailID'] . ' AND erp_companyreporttemplatelinks.glAutoID is not null) as tem_gl'),
-        //                             // function ($join) {
-        //                             //     $join->on('erp_purchaseorderdetails.financeGLcodebBSSystemID', '=', 'tem_gl.chartOfAccountSystemID');
-        //                             // })
-        //                             ->with(['order'])
-        //                             ->get();
+        $data2 = PurchaseOrderDetails::whereHas('order', function ($q) use ($dataParam) {
+                                            $q->where('companySystemID', $dataParam['companySystemID'])
+                                            ->where('serviceLineSystemID', $dataParam['serviceLineSystemID'])
+                                            ->where('approved', 0)
+                                            ->where('poCancelledYN', 0)
+                                            ->where(function($query) {
+                                                $query->where('projectID', 0)
+                                                      ->orWhereNull('projectID');
+                                            });
+                                    })
+                                    ->where('budgetYear', $dataParam['Year'])
+                                    ->where('itemFinanceCategoryID', 3)
+                                    ->whereIn('financeGLcodebBSSystemID', $glIds)
+                                    ->whereNotNull('financeGLcodebBSSystemID')
+                                    // ->join(DB::raw('(SELECT
+                                    //                 erp_companyreporttemplatelinks.templateDetailID as templatesDetailsAutoID,
+                                    //                 erp_companyreporttemplatelinks.templateMasterID,
+                                    //                 erp_companyreporttemplatelinks.glAutoID as chartOfAccountSystemID,
+                                    //                 erp_companyreporttemplatelinks.glCode 
+                                    //                 FROM
+                                    //                 erp_companyreporttemplatelinks
+                                    //                 WHERE erp_companyreporttemplatelinks.templateMasterID =' . $dataParam['templatesMasterAutoID'] . ' AND erp_companyreporttemplatelinks.templateDetailID = ' . $dataParam['templateDetailID'] . ' AND erp_companyreporttemplatelinks.glAutoID is not null) as tem_gl'),
+                                    // function ($join) {
+                                    //     $join->on('erp_purchaseorderdetails.financeGLcodebBSSystemID', '=', 'tem_gl.chartOfAccountSystemID');
+                                    // })
+                                    ->with(['order'])
+                                    ->get();
 
 
         $pendingDirectGRV1 = GRVDetails::whereHas('grv_master', function ($q) use ($dataParam) {
