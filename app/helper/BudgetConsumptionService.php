@@ -3592,35 +3592,7 @@ class BudgetConsumptionService
 	{
 		$poMaster = ProcumentOrder::selectRaw('MONTH(createdDateTime) as month, purchaseOrderCode,documentID,documentSystemID, financeCategory')->find($documentSystemCode);
 		$budgetConsumeData = array();
-        // if ($poMaster->financeCategory == 3) {
-        //     $poDetail = \DB::select('SELECT SUM(erp_purchaseorderdetails.GRVcostPerUnitLocalCur*segment_allocated_items.allocatedQty) as GRVcostPerUnitLocalCur,SUM(erp_purchaseorderdetails.GRVcostPerUnitComRptCur*segment_allocated_items.allocatedQty) as GRVcostPerUnitComRptCur,erp_purchaseorderdetails.companyReportingCurrencyID,erp_purchaseorderdetails.financeGLcodePLSystemID,erp_purchaseorderdetails.financeGLcodePL,erp_purchaseorderdetails.companyID,erp_purchaseorderdetails.companySystemID,serviceline.serviceLineSystemID,serviceline.serviceLineCode,erp_purchaseordermaster.budgetYear,erp_purchaseorderdetails.localCurrencyID, erp_purchaseordermaster.projectID, erp_purchaseorderdetails.detail_project_id FROM erp_purchaseorderdetails INNER JOIN erp_purchaseordermaster ON erp_purchaseordermaster.purchaseOrderID = erp_purchaseorderdetails.purchaseOrderMasterID  INNER JOIN segment_allocated_items ON erp_purchaseordermaster.documentSystemID = segment_allocated_items.documentSystemID AND erp_purchaseorderdetails.purchaseOrderDetailsID = segment_allocated_items.documentDetailAutoID INNER JOIN serviceline ON serviceline.serviceLineSystemID = segment_allocated_items.serviceLineSystemID WHERE erp_purchaseorderdetails.itemFinanceCategoryID != 3 AND erp_purchaseorderdetails.purchaseOrderMasterID = ' . $documentSystemCode . ' AND erp_purchaseordermaster.poType_N IN(1,2,3,4,5) GROUP BY erp_purchaseorderdetails.companySystemID,segment_allocated_items.serviceLineSystemID,erp_purchaseorderdetails.budgetYear,erp_purchaseorderdetails.detail_project_id');
-        //     if (!empty($poDetail)) {
-        //         foreach ($poDetail as $value) {
-        //             $budgetConsumeData[] = array(
-        //                 "companySystemID" => $value->companySystemID,
-        //                 "companyID" => $value->companyID,
-        //                 "serviceLineSystemID" => $value->serviceLineSystemID,
-        //                 "serviceLineCode" => $value->serviceLineCode,
-        //                 "documentSystemID" => $poMaster["documentSystemID"],
-        //                 "documentID" => $poMaster["documentID"],
-        //                 "documentSystemCode" => $documentSystemCode,
-        //                 "documentCode" => $poMaster["purchaseOrderCode"],
-        //                 "chartOfAccountID" => 9,
-        //                 "GLCode" => 10000,
-        //                 "year" => $value->budgetYear,
-        //                 "companyFinanceYearID" => CompanyFinanceYear::financeYearID($value->budgetYear, $value->companySystemID),
-        //                 "month" => $poMaster["month"],
-        //                 "consumedLocalCurrencyID" => $value->localCurrencyID,
-        //                 "consumedLocalAmount" => $value->GRVcostPerUnitLocalCur,
-        //                 "consumedRptCurrencyID" => $value->companyReportingCurrencyID,
-        //                 "consumedRptAmount" => $value->GRVcostPerUnitComRptCur,
-        //                 "projectID" => $value->detail_project_id,
-        //                 "timestamp" => date('d/m/Y H:i:s A')
-        //             );
-        //         }
-        //         $budgetConsume = BudgetConsumedData::insert($budgetConsumeData);
-        //     }
-        // } else {
+
             $poDetail = \DB::select('SELECT SUM(erp_purchaseorderdetails.GRVcostPerUnitLocalCur*segment_allocated_items.allocatedQty) as GRVcostPerUnitLocalCur,SUM(erp_purchaseorderdetails.GRVcostPerUnitComRptCur*segment_allocated_items.allocatedQty) as GRVcostPerUnitComRptCur,erp_purchaseorderdetails.companyReportingCurrencyID,erp_purchaseorderdetails.financeGLcodePLSystemID,erp_purchaseorderdetails.financeGLcodePL,erp_purchaseorderdetails.companyID,erp_purchaseorderdetails.companySystemID,serviceline.serviceLineSystemID,serviceline.serviceLineCode,erp_purchaseordermaster.budgetYear,erp_purchaseorderdetails.localCurrencyID, erp_purchaseordermaster.projectID, erp_purchaseorderdetails.detail_project_id FROM erp_purchaseorderdetails INNER JOIN erp_purchaseordermaster ON erp_purchaseordermaster.purchaseOrderID = erp_purchaseorderdetails.purchaseOrderMasterID INNER JOIN segment_allocated_items ON erp_purchaseordermaster.documentSystemID = segment_allocated_items.documentSystemID AND erp_purchaseorderdetails.purchaseOrderDetailsID = segment_allocated_items.documentDetailAutoID INNER JOIN serviceline ON serviceline.serviceLineSystemID = segment_allocated_items.serviceLineSystemID WHERE erp_purchaseorderdetails.purchaseOrderMasterID = ' . $documentSystemCode . ' AND erp_purchaseordermaster.poType_N IN(1,2,3,4,5) GROUP BY erp_purchaseorderdetails.companySystemID,segment_allocated_items.serviceLineSystemID,erp_purchaseorderdetails.financeGLcodePLSystemID,erp_purchaseorderdetails.budgetYear,erp_purchaseorderdetails.detail_project_id');
             if (!empty($poDetail)) {
                 foreach ($poDetail as $value) {
@@ -3650,7 +3622,7 @@ class BudgetConsumptionService
                 }
                 $budgetConsume = BudgetConsumedData::insert($budgetConsumeData);
             }
-        //}
+      
 
         return ['status' => true];
 	}
