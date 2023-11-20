@@ -476,6 +476,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                     if(!isset($_glSelectionItem->serviceLineCode)) {
                         return $this->sendError('Please select a Segment in GL Selection', 500);
                     }
+                    if(!isset($_glSelectionItem->invoiceAmount) || $_glSelectionItem->invoiceAmount == 0) {
+                        return $this->sendError('Amount is required in GL Selection', 500);
+                    }
                 }
 
             }
