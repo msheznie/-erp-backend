@@ -2756,6 +2756,7 @@ WHERE
 
         $data['master']['disable_date'] = $is_date_disable;
         $data['master']['is_comm_date_disable'] = $is_comm_date_disable;
+        $data['master']['tender_bids'] = $this->getTenderBits($request);
 
         $documentTypes = TenderDocumentTypeAssign::with(['document_type'])->where('tender_id', $tenderMasterId)->get();
         $docTypeArr = array();
@@ -2768,6 +2769,38 @@ WHERE
         }
         $data['documentTypes'] = $docTypeArr;
         return $data;
+    }
+
+    private function getTenderBits(Request $request)
+    {
+        $input = $request->all();
+        $companyId = $request['companySystemID'];
+        $tenderId = $request['tenderMasterId'];
+        $isNegotiation = $request['isNegotiation'];
+
+        $request->merge([
+            'tenderMasterId' => $tenderId,
+            'companySystemID' => $companyId,
+        ]);
+
+        $tenderBidNegotiations = TenderBidNegotiation::select('bid_submission_master_id_new')
+            ->where('tender_id', $tenderId)
+            ->get();
+
+        if ($tenderBidNegotiations->count() > 0) {
+            $bidSubmissionMasterIds = $tenderBidNegotiations->pluck('bid_submission_master_id_new')->toArray();
+        } else {
+            $bidSubmissionMasterIds = [];
+        }
+
+        $query = BidSubmissionMaster::where('status', 1)->where('bidSubmittedYN', 1)->where('tender_id', $tenderId);
+
+        if ($isNegotiation == 1) {
+            $query = $query->whereIn('id', $bidSubmissionMasterIds);
+        } else {
+            $query = $query->whereNotIn('id', $bidSubmissionMasterIds);
+        }
+        return $query->count();
     }
 
     public function tenderCommiteApproveal(Request $request)
