@@ -1777,6 +1777,7 @@ class ShiftDetailsAPIController extends AppBaseController
                         ->selectRaw('pos_source_menusalesmaster.menuSalesID as menuSalesID, pos_source_menusalesmaster.shiftID as shiftId, pos_source_menusalesmaster.companyID as companyID, pos_source_menusalesmaster.promotionDiscountAmount as promotionAmount, pos_source_menusalesmaster.promotionGLCode as glCode')
                         ->where('pos_source_menusalesmaster.menuSalesID',  $invoice->menuSalesID)
                         ->where('pos_source_menusalesmaster.isWastage', 0)
+                        ->whereNotNull('pos_source_menusalesmaster.promotionGLCode')
                         ->get();
 
                     foreach ($promotionItems as $item) {
@@ -2528,6 +2529,7 @@ class ShiftDetailsAPIController extends AppBaseController
                 $itemArray = array();
                 $bankArray = array();
                 $serviceArray = array();
+                $promotionArray = array();
 
                 if ($isPostGroupBy == 0) {
 
@@ -2623,6 +2625,7 @@ class ShiftDetailsAPIController extends AppBaseController
                         ->where('pos_source_menusalesmaster.shiftID', $shiftId)
                         ->where('pos_source_menusalesmaster.isCreditSales', 0)
                         ->where('pos_source_menusalesmaster.isWastage', 0)
+                        ->whereNotNull('pos_source_menusalesmaster.promotionGLCode')
                         ->get();
 
 
@@ -2723,7 +2726,7 @@ class ShiftDetailsAPIController extends AppBaseController
 
                 foreach ($promotionItems as $gl) {
                     $documentCode = ('RPOS\\' . str_pad($gl->shiftId, 6, '0', STR_PAD_LEFT));
-                    $serviceArray[] = array(
+                    $promotionArray[] = array(
                         'shiftId' => $gl->shiftId,
                         'invoiceID' => $gl->invoiceID,
                         'documentSystemId' => 111,
@@ -2840,6 +2843,7 @@ class ShiftDetailsAPIController extends AppBaseController
                 POSGLEntries::insert($taxGLArray1);
                 POSGLEntries::insert($taxGLArray2);
                 POSGLEntries::insert($serviceArray);
+                POSGLEntries::insert($promotionArray);
 
 
                 foreach ($invItemsPLBS as $gl) {
