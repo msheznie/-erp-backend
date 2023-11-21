@@ -97,32 +97,29 @@ class CustomerInvoiceARLedgerService
                 $data['comRptAmount'] = \Helper::roundValue(ABS($masterData->bookingAmountRpt + $taxRpt));
                 array_push($finalData, $data);
             }else if($masterData->isPerforma == 2) {
-                $processData = self::performDirectInvoiceDetails($masterModel);
+                $processData = self::performDirectInvoiceDetails($masterModel,$data);
                 $data['custInvoiceAmount'] = ABS($masterData->bookingAmountTrans + $taxTrans+$processData['_documentTransAmount']);
                 $data['localAmount'] = \Helper::roundValue(ABS($masterData->bookingAmountLocal + $taxLocal+$processData['_documentLocalAmount']));
                 $data['comRptAmount'] = \Helper::roundValue(ABS($masterData->bookingAmountRpt + $taxRpt+$processData['_documentRptAmount']));
-                array_push($finalData, $data);
 
                 if(isset($processData['detailsArray'])) {
-                    $finalData = array_merge($finalData,$processData['detailsArray']);
+                    array_push($finalData, $data);
                 }
             }else if( $masterData->isPerforma == 1){
                 $data['custInvoiceAmount'] = ABS($masterData->invoicedetails[0]->transAmount);
                 $data['localAmount'] = \Helper::roundValue(ABS($masterData->invoicedetails[0]->localAmount));
                 $data['comRptAmount'] = \Helper::roundValue(ABS($masterData->invoicedetails[0]->rptAmount));
                 array_push($finalData, $data);
-            }else{
-                if ($masterData->isPerforma == 0) {
-                    $processData = self::performDirectInvoiceDetails($masterModel);
-                    if(isset($processData['detailsArray'])) {
-                        $finalData = array_merge($finalData,$processData['detailsArray']);
-                    }
-                } else {
-                    $data['custInvoiceAmount'] = ABS($masterData->invoicedetails[0]->transAmount + $taxTrans);
-                    $data['localAmount'] = \Helper::roundValue(ABS($masterData->invoicedetails[0]->localAmount + $taxLocal));
-                    $data['comRptAmount'] = \Helper::roundValue(ABS($masterData->invoicedetails[0]->rptAmount + $taxRpt));
-                    array_push($finalData, $data);
+            }else if ($masterData->isPerforma == 0) {
+                $processData = self::performDirectInvoiceDetails($masterModel,$data);
+                if(isset($processData['detailsArray'])) {
+                    $finalData = array_merge($finalData,$processData['detailsArray']);
                 }
+            }else {
+                $data['custInvoiceAmount'] = ABS($masterData->invoicedetails[0]->transAmount + $taxTrans);
+                $data['localAmount'] = \Helper::roundValue(ABS($masterData->invoicedetails[0]->localAmount + $taxLocal));
+                $data['comRptAmount'] = \Helper::roundValue(ABS($masterData->invoicedetails[0]->rptAmount + $taxRpt));
+                array_push($finalData, $data);
             }
 
             
@@ -131,7 +128,7 @@ class CustomerInvoiceARLedgerService
         return ['status' => true, 'message' => 'success', 'data' => ['finalData' => $finalData]];
 	}
 
-    public static function performDirectInvoiceDetails($masterModel){
+    public static function performDirectInvoiceDetails($masterModel,$data){
         $_customerInvoiceDirectDetails = CustomerInvoiceDirectDetail::with(['chart_Of_account'])->where('custInvoiceDirectID', $masterModel["autoID"])->get();
         $detailsArray = [];
         $_documentTransAmount = 0; 
