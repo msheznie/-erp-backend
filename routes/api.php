@@ -76,6 +76,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('downloadBudgetTemplate', 'BudgetMasterAPIController@downloadBudgetTemplate')->name("Download budget template");
             Route::post('getBudgetUploads', 'BudgetMasterAPIController@getBudgetUploads')->name("Get upload budgets");
 
+            Route::post('downloadCITemplate', 'CustomerInvoiceDirectAPIController@downloadCITemplate')->name("Download ci template");
+
 
             Route::post('getAllEmployees', 'EmployeeAPIController@getAllEmployees');
 
