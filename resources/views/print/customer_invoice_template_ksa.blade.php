@@ -271,7 +271,7 @@
 
                     <b>رقم العقد/أمر الشراء : 
                         @if($request->line_poNumber)
-                            {{$request->PONumber}}
+                            <span dir="ltr">{{$request->PONumber}}</span>
                         @endif
                         
                     </b>
