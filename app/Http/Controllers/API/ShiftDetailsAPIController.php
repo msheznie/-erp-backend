@@ -1634,12 +1634,12 @@ class ShiftDetailsAPIController extends AppBaseController
 
                             $chartOfAccount = ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $item->revenueGLAutoID)->first();
                         if($item->promotionGLCode != null) {
-                            $totAfterDiscount = $item->menuSalesPrice - (($item->discount / $item->menuTotal) * $item->menuSalesPrice);
+                            $totAfterDiscount = ($item->menuSalesPrice * $item->qty) - (($item->discount / $item->menuTotal) * ($item->menuSalesPrice * $item->qty));
                         }
                         else {
-                            $totAfterDiscount = $item->menuSalesPrice - (($item->discount / $item->menuTotal) * $item->menuSalesPrice);
+                            $totAfterDiscount = ($item->menuSalesPrice * $item->qty) - (($item->discount / $item->menuTotal) * ($item->menuSalesPrice * $item->qty));
 
-                            $totAfterDiscount = $totAfterDiscount - (($item->promotionAmount / $item->menuTotal) * $item->menuSalesPrice);
+                            $totAfterDiscount = $totAfterDiscount - (($item->promotionAmount / $item->menuTotal) * ($item->menuSalesPrice * $item->qty));
                         }
 
                             $addToCusInvDetails['custInvoiceDirectID'] = $custInvoiceDirectAutoID;
@@ -2786,10 +2786,10 @@ class ShiftDetailsAPIController extends AppBaseController
 
                     if($gl->menuTotal != 0) {
                         if ($gl->promotionGLCode != null) {
-                            $amount = $gl->menuSalesPrice - (($gl->discount / $gl->menuTotal) * $gl->menuSalesPrice);
+                            $amount = ($gl->menuSalesPrice * $gl->qty) - (($gl->discount / $gl->menuTotal) * ($gl->menuSalesPrice * $gl->qty));
                         } else {
-                            $amount = $gl->menuSalesPrice - (($gl->discount / $gl->menuTotal) * $gl->menuSalesPrice);
-                            $amount = $amount - (($gl->promotionAmount / $gl->menuTotal) * $gl->menuSalesPrice);
+                            $amount = ($gl->menuSalesPrice * $gl->qty) - (($gl->discount / $gl->menuTotal) * ($gl->menuSalesPrice * $gl->qty));
+                            $amount = $amount - (($gl->promotionAmount / $gl->menuTotal) * ($gl->menuSalesPrice * $gl->qty));
                         }
 
                         $documentCode = ('RPOS\\' . str_pad($gl->shiftId, 6, '0', STR_PAD_LEFT));
