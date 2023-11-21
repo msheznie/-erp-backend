@@ -832,12 +832,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('fcm_tokens', 'FcmTokenAPIController');
             Route::resource('user_activity_logs', 'UserActivityLogAPIController');
 
-            Route::get('getICFilterFormData', 'FinancialReportAPIController@getICFilterFormData');
-            Route::post('validateICReport', 'FinancialReportAPIController@validateICReport');
-            Route::post('generateICReport', 'FinancialReportAPIController@generateICReport');
-            Route::post('exportICReport', 'FinancialReportAPIController@exportICReport');
-            Route::post('getICDrillDownData', 'FinancialReportAPIController@getICDrillDownData');
-
             Route::resource('mobile_no_pools', 'MobileNoPoolAPIController');
             Route::post('getAllMobileNo', 'MobileNoPoolAPIController@getAllMobileNo');
 
