@@ -2811,12 +2811,11 @@ class ShiftDetailsAPIController extends AppBaseController
                         ->where('pos_source_menusalesitems.menuSalesID', $gl->invoiceID)
                         ->sum(DB::raw('pos_source_menusalesitems.menuSalesPrice * pos_source_menusalesitems.qty'));
 
-
                     if ($sumMenuSales != 0) {
                         if ($gl->promotionGLCode != null) {
-                            $amount = $gl->menuSalesPrice * $gl->qty - (($gl->discount / $sumMenuSales) * ($gl->menuSalesPrice * $gl->qty));
+                            $amount = (($gl->menuSalesPrice - $gl->discountAmount) * $gl->qty) - (($gl->discount / $sumMenuSales) * ($gl->menuSalesPrice * $gl->qty));
                         } else {
-                            $amount = ($gl->menuSalesPrice * $gl->qty) - (($gl->discount / $sumMenuSales) * ($gl->menuSalesPrice * $gl->qty));
+                            $amount = (($gl->menuSalesPrice - $gl->discountAmount)* $gl->qty) - (($gl->discount / $sumMenuSales) * ($gl->menuSalesPrice * $gl->qty));
                             $amount = $amount - (($gl->promotionAmount / $sumMenuSales) * ($gl->menuSalesPrice * $gl->qty));
                         }
 
