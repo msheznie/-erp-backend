@@ -189,3 +189,12 @@ Route::group([], function() {
 
 });
 
+//Masters
+
+//Purchase Address
+Route::group([], function() {
+    Route::post('getAllAddresses', 'AddressAPIController@getAllAddresses')->name('Get all addresses');
+    Route::get('getAddressFormData', 'AddressAPIController@getAddressFormData')->name('Get address form data');
+
+    Route::resource('addresses', 'AddressAPIController');
+});
