@@ -67,20 +67,14 @@
     <tr>
         <td colspan="1"></td>
         <td colspan="16"> <b>Contract / PO No : 
-                                @if(!empty($request->invoicedetails) )
-                                    {{isset($request->invoicedetails[0]->clientContractID)?$request->invoicedetails[0]->clientContractID:''}}
-                                @endif
-                                @if($request->line_poNumber && isset($request->item_invoice) && $request->item_invoice)
+                                @if($request->line_poNumber)
                                     {{$request->PONumber}}
                                 @endif
                             </b></td>
-        <td colspan="8"> <b>رقم العقد/أمر الشراء : @if(!empty($request->invoicedetails) )
-                                    {{isset($request->invoicedetails[0]->clientContractID)?$request->invoicedetails[0]->clientContractID:''}}
-                                @endif
-                                @if($request->line_poNumber && isset($request->item_invoice) && $request->item_invoice)
+        <td colspan="8"> <b>رقم العقد/أمر الشراء : 
+                                @if($request->line_poNumber)
                                     {{$request->PONumber}}
                                 @endif
-
                             </b></td>
     </tr>
 

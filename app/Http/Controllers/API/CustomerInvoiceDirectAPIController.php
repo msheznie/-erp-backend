@@ -476,6 +476,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                     if(!isset($_glSelectionItem->serviceLineCode)) {
                         return $this->sendError('Please select a Segment in GL Selection', 500);
                     }
+                    if(!isset($_glSelectionItem->invoiceAmount) || $_glSelectionItem->invoiceAmount == 0) {
+                        return $this->sendError('Amount is required in GL Selection', 500);
+                    }
                 }
 
             }
@@ -2932,6 +2935,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $customerInvoice = $this->customerInvoiceDirectRepository->getAudit2($id);
         }
 
+        if (!$customerInvoice) {
+            return $this->sendError("Customer invoice not found");
+        }
         $accountIBAN = '';
         if ($customerInvoice && $customerInvoice->bankAccount) {
             $accountIBAN = $customerInvoice->bankAccount['accountIBAN#'];
@@ -4167,6 +4173,9 @@ WHERE
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->addColumn('Actions', 'Actions', "Actions")
+            ->addColumn('total', function($inv) {
+                return $this->getTotalAfterGL($inv);
+            })
             //->addColumn('Index', 'Index', "Index")
             ->make(true);
     }
@@ -4249,6 +4258,9 @@ WHERE
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->addColumn('Actions', 'Actions', "Actions")
+            ->addColumn('total', function($inv) {
+                return $this->getTotalAfterGL($inv);
+            })
             //->addColumn('Index', 'Index', "Index")
             ->make(true);
     }
@@ -4845,7 +4857,7 @@ WHERE
                 foreach ($_customerInvoiceDirectDetails as $item) {
 
                     if(isset($item->chart_Of_account)) {
-                        if($item->chart_Of_account->controlAccountsSystemID == 2 || $item->chart_Of_account->controlAccountsSystemID == 4 || $item->chart_Of_account->controlAccountsSystemID == 5) {
+                        if($item->chart_Of_account->controlAccountsSystemID == 2 || $item->chart_Of_account->controlAccountsSystemID == 5) {
                             $total -= ($item->invoiceAmount + $item->VATAmountTotal);
                         }else{
                             $total += ($item->invoiceAmount + $item->VATAmountTotal);
