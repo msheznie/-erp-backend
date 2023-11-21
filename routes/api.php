@@ -102,7 +102,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
                     Route::post('getAssetDepPeriodsByID', 'FixedAssetDepreciationPeriodAPIController@getAssetDepPeriodsByID');
                     Route::post('exportAssetMaster', 'FixedAssetMasterAPIController@exportAssetMaster');
                     Route::post('deleteBudgetUploads', 'BudgetMasterAPIController@deleteBudgetUploads')->name("Delete budget uploads");
-                    Route::post('generateFRReport', 'FinancialReportAPIController@generateFRReport');
                 });
             });
 
@@ -286,24 +285,17 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::resource('accounts_payable_ledgers', 'AccountsPayableLedgerAPIController');
 
-            Route::get('getFRFilterData', 'FinancialReportAPIController@getFRFilterData');
             Route::get('getUtilizationFilterFormData', 'FinancialReportAPIController@getUtilizationFilterFormData');
-            Route::post('getSubsidiaryCompanies', 'FinancialReportAPIController@getSubsidiaryCompanies');
             Route::get('getAFRFilterChartOfAccounts', 'FinancialReportAPIController@getAFRFilterChartOfAccounts');
-            Route::post('validateFRReport', 'FinancialReportAPIController@validateFRReport');
             Route::post('validatePUReport', 'FinancialReportAPIController@validatePUReport');
             Route::post('generateprojectUtilizationReport', 'FinancialReportAPIController@generateprojectUtilizationReport');
 
             Route::post('generateEmployeeLedgerReport', 'FinancialReportAPIController@generateEmployeeLedgerReport');
 
-            Route::post('exportFinanceReport', 'FinancialReportAPIController@exportFinanceReport');
             Route::post('getTBUnmatchedData', 'FinancialReportAPIController@getTBUnmatchedData');
             Route::post('exportFRReport', 'FinancialReportAPIController@exportReport');
             Route::post('downloadProjectUtilizationReport', 'FinancialReportAPIController@downloadProjectUtilizationReport');
             Route::post('downloadEmployeeLedgerReport', 'FinancialReportAPIController@downloadEmployeeLedgerReport');
-
-            Route::post('reportTemplateGLDrillDown', 'FinancialReportAPIController@reportTemplateGLDrillDown');
-            Route::post('reportTemplateGLDrillDownExport', 'FinancialReportAPIController@reportTemplateGLDrillDownExport');
 
             Route::get('getNotifications', 'UserAPIController@getNotifications');
             Route::post('updateNotification', 'UserAPIController@updateNotification');
@@ -1095,7 +1087,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::post('generateGeneralLedgerReportPDF', 'FinancialReportAPIController@pdfExportReport');
             Route::post('generateFinancialTrialBalanceReportPDF', 'FinancialReportAPIController@pdfExportReport');
-            Route::post('exportFinanceReportPDF', 'FinancialReportAPIController@pdfExportReport');
 
             Route::resource('envelop_types', 'EnvelopTypeAPIController');
             Route::resource('evaluation_types', 'EvaluationTypeAPIController');
