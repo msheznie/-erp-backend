@@ -5956,7 +5956,11 @@ class BudgetConsumptionService
 			->where('chartOfAccountID', $detail->chartOfAccountID)
 			->where('documentSystemID',22)
 			->groupBy('chartOfAccountID')->first();
-			$actuallConsumptionAmount = $consumAssetamount->amount;
+			if($consumAssetamount)
+			{
+				$actuallConsumptionAmount = $consumAssetamount->amount;
+
+			}
 		}
 		
          $pendingDocumentAmount = self::pendingAmountForSummaryReport($detail->toArray(), [$detail->chartOfAccountID]);
@@ -6340,20 +6344,25 @@ class BudgetConsumptionService
 
 
         $data = [];
-
-		foreach ($fixed_assets as $key => $value) {
-            $temp = [];
-            $temp['companyID'] = $value->companyID;
-            $temp['serviceLine'] = $value->serviceLineCode;
-            $temp['financeGLcodePL'] = $value->COSTGLCODE;
-            $temp['budgetYear'] = Carbon::parse($value->documentDate)->format('Y');
-            $temp['documentCode'] = $value->faCode;
-            $temp['documentSystemCode'] = $value->docOrigin;
-            $temp['documentSystemID'] = $value->documentSystemID;
-            $temp['lineTotal'] = $value->costUnitRpt;
-
-            $data[] = $temp;
-        }
+		if($dataParam['chartOfAccountID'] == 3)
+		{
+			foreach ($fixed_assets as $key => $value) {
+				$temp = [];
+				$temp['companyID'] = $value->companyID;
+				$temp['serviceLine'] = $value->serviceLineCode;
+				$temp['financeGLcodePL'] = $value->COSTGLCODE;
+				$temp['budgetYear'] = Carbon::parse($value->documentDate)->format('Y');
+				$temp['documentCode'] = $value->faCode;
+				$temp['documentSystemCode'] = $value->docOrigin;
+				$temp['documentSystemID'] = $value->documentSystemID;
+				$temp['lineTotal'] = $value->costUnitRpt;
+	
+				$data[] = $temp;
+			}
+	
+		}
+		else
+		{
 
         foreach ($pendingDebitNoteAmount as $key => $value) {
             $temp = [];
@@ -6529,7 +6538,7 @@ class BudgetConsumptionService
             $data[] = $temp;
         }
 
-
+	}
         $pendingAmount = array_sum(collect($data)->pluck('lineTotal')->toArray());
 
         return ['data' => $data, 'pendingAmount' => $pendingAmount];
