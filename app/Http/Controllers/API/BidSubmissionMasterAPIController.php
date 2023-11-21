@@ -487,7 +487,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
         {
             $query = $query->where('doc_verifiy_status',1);
         }
-        
+
         if(isset($loadSupplier) && $loadSupplier){
             $query = $query->groupBy('srm_bid_submission_master.supplier_registration_id');
         }
