@@ -6344,7 +6344,7 @@ class BudgetConsumptionService
 
 
         $data = [];
-		if($dataParam['chartOfAccountID'] == 3)
+		if($dataParam['controlAccountsSystemID'] == 3)
 		{
 			foreach ($fixed_assets as $key => $value) {
 				$temp = [];
