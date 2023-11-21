@@ -2558,14 +2558,17 @@ class ShiftDetailsAPIController extends AppBaseController
 
                     // revenue gl code
                     $revItems = DB::table('pos_source_menusalesitems')
-                        ->selectRaw('pos_source_menusalesitems.*')
-                        ->selectRaw('pos_source_menusalesitems.*, pos_source_menusalesmaster.discountAmount as discount, pos_source_menusalesmaster.promotionDiscountAmount as promotionAmount, pos_source_menusalesmaster.promotionGLCode as promotionGLCode, SUM(pos_source_menusalesitems.menuSalesPrice * pos_source_menusalesitems.qty) as menuTotal, pos_source_menusalesmaster.shiftID as shiftId, pos_source_menusalesmaster.menuSalesID as invoiceID')
+                        ->selectRaw('pos_source_menusalesitems.*, pos_source_menusalesmaster.discountAmount as discount, pos_source_menusalesmaster.promotionDiscountAmount as promotionAmount, pos_source_menusalesmaster.promotionGLCode as promotionGLCode, pos_source_menusalesmaster.shiftID as shiftId, pos_source_menusalesmaster.menuSalesID as invoiceID')
                         ->join('pos_source_menusalesmaster', 'pos_source_menusalesmaster.menuSalesID', '=', 'pos_source_menusalesitems.menuSalesID')
                         ->where('pos_source_menusalesmaster.shiftID', $shiftId)
                         ->where('pos_source_menusalesmaster.isCreditSales', 0)
                         ->where('pos_source_menusalesmaster.isWastage', 0)
-                        ->groupBy('pos_source_menusalesmaster.menuSalesID')
+                        ->groupBy('pos_source_menusalesitems.menuSalesID')
+                        ->groupBy('pos_source_menusalesitems.menuID')
                         ->get();
+
+
+
 
 
                     $invItemsBS = DB::table('pos_source_menusalesitems')
@@ -2803,12 +2806,18 @@ class ShiftDetailsAPIController extends AppBaseController
 
                 foreach ($revItems as $gl) {
 
-                    if ($gl->menuTotal != 0) {
+
+                    $sumMenuSales = DB::table('pos_source_menusalesitems')
+                        ->where('pos_source_menusalesitems.menuSalesID', $gl->invoiceID)
+                        ->sum(DB::raw('pos_source_menusalesitems.menuSalesPrice * pos_source_menusalesitems.qty'));
+
+
+                    if ($sumMenuSales != 0) {
                         if ($gl->promotionGLCode != null) {
-                            $amount = ($gl->menuSalesPrice * $gl->qty) - (($gl->discount / $gl->menuTotal) * ($gl->menuSalesPrice * $gl->qty));
+                            $amount = $gl->menuSalesPrice * $gl->qty - (($gl->discount / $sumMenuSales) * ($gl->menuSalesPrice * $gl->qty));
                         } else {
-                            $amount = ($gl->menuSalesPrice * $gl->qty) - (($gl->discount / $gl->menuTotal) * ($gl->menuSalesPrice * $gl->qty));
-                            $amount = $amount - (($gl->promotionAmount / $gl->menuTotal) * ($gl->menuSalesPrice * $gl->qty));
+                            $amount = ($gl->menuSalesPrice * $gl->qty) - (($gl->discount / $sumMenuSales) * ($gl->menuSalesPrice * $gl->qty));
+                            $amount = $amount - (($gl->promotionAmount / $sumMenuSales) * ($gl->menuSalesPrice * $gl->qty));
                         }
 
 
