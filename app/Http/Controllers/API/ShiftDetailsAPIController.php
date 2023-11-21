@@ -1621,25 +1621,33 @@ class ShiftDetailsAPIController extends AppBaseController
                     //gl-selection tab
 
                     $msItems = DB::table('pos_source_menusalesitems')
-                        ->selectRaw('pos_source_menusalesitems.*, pos_source_menusalesmaster.discountAmount as discount, pos_source_menusalesmaster.promotionDiscountAmount as promotionAmount, pos_source_menusalesmaster.promotionGLCode as promotionGLCode, SUM(pos_source_menusalesitems.menuSalesPrice * pos_source_menusalesitems.qty) as menuTotal')
+                        ->selectRaw('pos_source_menusalesitems.*, pos_source_menusalesmaster.discountAmount as discount, pos_source_menusalesmaster.promotionDiscountAmount as promotionAmount, pos_source_menusalesmaster.promotionGLCode as promotionGLCode')
                         ->join('pos_source_menusalesmaster', 'pos_source_menusalesmaster.menuSalesID', '=', 'pos_source_menusalesitems.menuSalesID')
                         ->where('pos_source_menusalesitems.menuSalesID', $invoice->menuSalesID)
                         ->where('pos_source_menusalesmaster.isWastage', 0)
+                        ->groupBy('pos_source_menusalesitems.menuSalesID')
+                        ->groupBy('pos_source_menusalesitems.menuID')
                         ->get();
 
                     //for revenue-gl
                     foreach ($msItems as $item) {
 
-                        if($item->menuTotal != 0) {
+                        $sumMenuSales = DB::table('pos_source_menusalesitems')
+                            ->where('pos_source_menusalesitems.menuSalesID', $invoice->menuSalesID)
+                            ->sum(DB::raw('pos_source_menusalesitems.menuSalesPrice * pos_source_menusalesitems.qty'));
+
+                        if($sumMenuSales != 0) {
 
                             $chartOfAccount = ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $item->revenueGLAutoID)->first();
-                        if($item->promotionGLCode != null) {
-                            $totAfterDiscount = ($item->menuSalesPrice * $item->qty) - (($item->discount / $item->menuTotal) * ($item->menuSalesPrice * $item->qty));
-                        }
-                        else {
-                            $totAfterDiscount = ($item->menuSalesPrice * $item->qty) - (($item->discount / $item->menuTotal) * ($item->menuSalesPrice * $item->qty));
 
-                            $totAfterDiscount = $totAfterDiscount - (($item->promotionAmount / $item->menuTotal) * ($item->menuSalesPrice * $item->qty));
+                        if($item->promotionGLCode != null) {
+
+                            $totAfterDiscount = (($item->menuSalesPrice - $item->discountAmount) * $item->qty) - (($item->discount / $sumMenuSales) * ($item->menuSalesPrice * $item->qty));
+                            }
+                            else {
+                            $totAfterDiscount = ($item->menuSalesPrice - $item->discountAmount) * $item->qty) - (($item->discount / $sumMenuSales) * ($item->menuSalesPrice * $item->qty));
+
+                            $totAfterDiscount = $totAfterDiscount - (($item->promotionAmount / $sumMenuSales) * ($item->menuSalesPrice * $item->qty));
                         }
 
                             $addToCusInvDetails['custInvoiceDirectID'] = $custInvoiceDirectAutoID;
