@@ -1621,25 +1621,33 @@ class ShiftDetailsAPIController extends AppBaseController
                     //gl-selection tab
 
                     $msItems = DB::table('pos_source_menusalesitems')
-                        ->selectRaw('pos_source_menusalesitems.*, pos_source_menusalesmaster.discountAmount as discount, pos_source_menusalesmaster.promotionDiscountAmount as promotionAmount, pos_source_menusalesmaster.promotionGLCode as promotionGLCode, SUM(pos_source_menusalesitems.menuSalesPrice * pos_source_menusalesitems.qty) as menuTotal')
+                        ->selectRaw('pos_source_menusalesitems.*, pos_source_menusalesmaster.discountAmount as discount, pos_source_menusalesmaster.promotionDiscountAmount as promotionAmount, pos_source_menusalesmaster.promotionGLCode as promotionGLCode')
                         ->join('pos_source_menusalesmaster', 'pos_source_menusalesmaster.menuSalesID', '=', 'pos_source_menusalesitems.menuSalesID')
                         ->where('pos_source_menusalesitems.menuSalesID', $invoice->menuSalesID)
                         ->where('pos_source_menusalesmaster.isWastage', 0)
+                        ->groupBy('pos_source_menusalesitems.menuSalesID')
+                        ->groupBy('pos_source_menusalesitems.menuID')
                         ->get();
 
                     //for revenue-gl
                     foreach ($msItems as $item) {
 
-                        if($item->menuTotal != 0) {
+                        $sumMenuSales = DB::table('pos_source_menusalesitems')
+                            ->where('pos_source_menusalesitems.menuSalesID', $invoice->menuSalesID)
+                            ->sum(DB::raw('pos_source_menusalesitems.menuSalesPrice * pos_source_menusalesitems.qty'));
+
+                        if($sumMenuSales != 0) {
 
                             $chartOfAccount = ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $item->revenueGLAutoID)->first();
-                        if($item->promotionGLCode != null) {
-                            $totAfterDiscount = ($item->menuSalesPrice * $item->qty) - (($item->discount / $item->menuTotal) * ($item->menuSalesPrice * $item->qty));
-                        }
-                        else {
-                            $totAfterDiscount = ($item->menuSalesPrice * $item->qty) - (($item->discount / $item->menuTotal) * ($item->menuSalesPrice * $item->qty));
 
-                            $totAfterDiscount = $totAfterDiscount - (($item->promotionAmount / $item->menuTotal) * ($item->menuSalesPrice * $item->qty));
+                        if($item->promotionGLCode != null) {
+
+                            $totAfterDiscount = (($item->menuSalesPrice - $item->discountAmount) * $item->qty) - (($item->discount / $sumMenuSales) * ($item->menuSalesPrice * $item->qty));
+                            }
+                            else {
+                            $totAfterDiscount = ($item->menuSalesPrice - $item->discountAmount) * $item->qty) - (($item->discount / $sumMenuSales) * ($item->menuSalesPrice * $item->qty));
+
+                            $totAfterDiscount = $totAfterDiscount - (($item->promotionAmount / $sumMenuSales) * ($item->menuSalesPrice * $item->qty));
                         }
 
                             $addToCusInvDetails['custInvoiceDirectID'] = $custInvoiceDirectAutoID;
@@ -2530,6 +2538,8 @@ class ShiftDetailsAPIController extends AppBaseController
                 $bankArray = array();
                 $serviceArray = array();
                 $promotionArray = array();
+                $costGLArray = array();
+                $inventoryGLArray = array();
 
                 if ($isPostGroupBy == 0) {
 
@@ -2556,16 +2566,34 @@ class ShiftDetailsAPIController extends AppBaseController
 
                     // revenue gl code
                     $revItems = DB::table('pos_source_menusalesitems')
-                        ->selectRaw('pos_source_menusalesitems.*')
-                        ->selectRaw('pos_source_menusalesitems.*, pos_source_menusalesmaster.discountAmount as discount, pos_source_menusalesmaster.promotionDiscountAmount as promotionAmount, pos_source_menusalesmaster.promotionGLCode as promotionGLCode, SUM(pos_source_menusalesitems.menuSalesPrice * pos_source_menusalesitems.qty) as menuTotal, pos_source_menusalesmaster.shiftID as shiftId, pos_source_menusalesmaster.menuSalesID as invoiceID')
+                        ->selectRaw('pos_source_menusalesitems.*, pos_source_menusalesmaster.discountAmount as discount, pos_source_menusalesmaster.promotionDiscountAmount as promotionAmount, pos_source_menusalesmaster.promotionGLCode as promotionGLCode, pos_source_menusalesmaster.shiftID as shiftId, pos_source_menusalesmaster.menuSalesID as invoiceID')
                         ->join('pos_source_menusalesmaster', 'pos_source_menusalesmaster.menuSalesID', '=', 'pos_source_menusalesitems.menuSalesID')
                         ->where('pos_source_menusalesmaster.shiftID', $shiftId)
                         ->where('pos_source_menusalesmaster.isCreditSales', 0)
                         ->where('pos_source_menusalesmaster.isWastage', 0)
+                        ->groupBy('pos_source_menusalesitems.menuSalesID')
+                        ->groupBy('pos_source_menusalesitems.menuID')
                         ->get();
 
 
-                    $invItemsPLBS = DB::table('pos_source_menusalesitems')
+
+
+
+                    $invItemsBS = DB::table('pos_source_menusalesitems')
+                        ->selectRaw('SUM(pos_source_menusalesitemdetails.qty * pos_source_menusalesitemdetails.cost * pos_source_menusalesitems.qty) as amount, pos_source_menusalesmaster.menuSalesID as invoiceID, pos_source_menusalesmaster.shiftID as shiftId, pos_source_menusalesmaster.companyID as companyID, pos_source_menusalesitemdetails.itemAutoID as itemID, pos_source_menusalesitems.revenueGLAutoID as glCode,  itemmaster.financeCategoryMaster as categoryID, financeitemcategorysub.financeGLcodebBSSystemID as bsGLCode, financeitemcategorysub.financeGLcodePLSystemID as plGLCode, financeitemcategorysub.includePLForGRVYN as glYN, (pos_source_menusalesitemdetails.qty * pos_source_menusalesitems.qty) as qty, (pos_source_menusalesitemdetails.cost * pos_source_menusalesitems.qty) as price, pos_source_menusalesitemdetails.UOMID as uom, pos_source_menusalesmaster.wareHouseAutoID as wareHouseID')
+                        ->join('pos_source_menusalesmaster', 'pos_source_menusalesmaster.menuSalesID', '=', 'pos_source_menusalesitems.menuSalesID')
+                        ->join('pos_source_menusalesitemdetails', 'pos_source_menusalesitemdetails.menuSalesItemID', '=', 'pos_source_menusalesitems.menuSalesItemID')
+                        ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'pos_source_menusalesitemdetails.itemAutoID')
+                        ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
+                        ->join('itemassigned', 'itemassigned.itemCodeSystem', '=', 'itemmaster.itemCodeSystem')
+                        ->where('pos_source_menusalesmaster.shiftID', $shiftId)
+                        ->where('itemassigned.companySystemID', $shiftDetails->companyID)
+                        ->where('pos_source_menusalesmaster.isCreditSales', 0)
+                        ->groupBy('financeitemcategorysub.financeGLcodebBSSystemID')
+                        ->groupBy('pos_source_menusalesitemdetails.menuSalesID')
+                        ->get();
+
+                    $invItemsPL = DB::table('pos_source_menusalesitems')
                         ->selectRaw('SUM(pos_source_menusalesitemdetails.qty * pos_source_menusalesitemdetails.cost * pos_source_menusalesitems.qty) as amount, pos_source_menusalesmaster.menuSalesID as invoiceID, pos_source_menusalesmaster.shiftID as shiftId, pos_source_menusalesmaster.companyID as companyID, pos_source_menusalesitemdetails.itemAutoID as itemID, pos_source_menusalesitems.revenueGLAutoID as glCode,  itemmaster.financeCategoryMaster as categoryID, financeitemcategorysub.financeGLcodebBSSystemID as bsGLCode, financeitemcategorysub.financeGLcodePLSystemID as plGLCode, financeitemcategorysub.includePLForGRVYN as glYN, (pos_source_menusalesitemdetails.qty * pos_source_menusalesitems.qty) as qty, (pos_source_menusalesitemdetails.cost * pos_source_menusalesitems.qty) as price, pos_source_menusalesitemdetails.UOMID as uom, pos_source_menusalesmaster.wareHouseAutoID as wareHouseID')
                         ->join('pos_source_menusalesmaster', 'pos_source_menusalesmaster.menuSalesID', '=', 'pos_source_menusalesitems.menuSalesID')
                         ->join('pos_source_menusalesitemdetails', 'pos_source_menusalesitemdetails.menuSalesItemID', '=', 'pos_source_menusalesitems.menuSalesItemID')
@@ -2576,7 +2604,7 @@ class ShiftDetailsAPIController extends AppBaseController
                         ->where('itemassigned.companySystemID', $shiftDetails->companyID)
                         ->where('pos_source_menusalesmaster.isCreditSales', 0)
                         ->groupBy('financeitemcategorysub.financeGLcodePLSystemID')
-                        ->groupBy('financeitemcategorysub.financeGLcodebBSSystemID')
+                        ->groupBy('pos_source_menusalesitemdetails.menuSalesID')
                         ->get();
 
 
@@ -2627,7 +2655,6 @@ class ShiftDetailsAPIController extends AppBaseController
                         ->where('pos_source_menusalesmaster.isWastage', 0)
                         ->whereNotNull('pos_source_menusalesmaster.promotionGLCode')
                         ->get();
-
 
 
                 }
@@ -2787,13 +2814,19 @@ class ShiftDetailsAPIController extends AppBaseController
 
                 foreach ($revItems as $gl) {
 
-                    if($gl->menuTotal != 0) {
+
+                    $sumMenuSales = DB::table('pos_source_menusalesitems')
+                        ->where('pos_source_menusalesitems.menuSalesID', $gl->invoiceID)
+                        ->sum(DB::raw('pos_source_menusalesitems.menuSalesPrice * pos_source_menusalesitems.qty'));
+
+                    if ($sumMenuSales != 0) {
                         if ($gl->promotionGLCode != null) {
-                            $amount = ($gl->menuSalesPrice * $gl->qty) - (($gl->discount / $gl->menuTotal) * ($gl->menuSalesPrice * $gl->qty));
+                            $amount = (($gl->menuSalesPrice - $gl->discountAmount) * $gl->qty) - (($gl->discount / $sumMenuSales) * ($gl->menuSalesPrice * $gl->qty));
                         } else {
-                            $amount = ($gl->menuSalesPrice * $gl->qty) - (($gl->discount / $gl->menuTotal) * ($gl->menuSalesPrice * $gl->qty));
-                            $amount = $amount - (($gl->promotionAmount / $gl->menuTotal) * ($gl->menuSalesPrice * $gl->qty));
+                            $amount = (($gl->menuSalesPrice - $gl->discountAmount)* $gl->qty) - (($gl->discount / $sumMenuSales) * ($gl->menuSalesPrice * $gl->qty));
+                            $amount = $amount - (($gl->promotionAmount / $sumMenuSales) * ($gl->menuSalesPrice * $gl->qty));
                         }
+
 
                         $documentCode = ('RPOS\\' . str_pad($gl->shiftId, 6, '0', STR_PAD_LEFT));
                         $itemGLArray[] = array(
@@ -2846,11 +2879,10 @@ class ShiftDetailsAPIController extends AppBaseController
                 POSGLEntries::insert($promotionArray);
 
 
-                foreach ($invItemsPLBS as $gl) {
-
+                foreach ($invItemsPL as $gl) {
                     $documentCode = ('RPOS\\' . str_pad($gl->shiftId, 6, '0', STR_PAD_LEFT));
                     if ($gl->categoryID == 1) {
-                        $costGLArray = [
+                        $costGLArray[] = array(
                             'shiftId' => $gl->shiftId,
                             'invoiceID' => $gl->invoiceID,
                             'documentSystemId' => 111,
@@ -2858,10 +2890,16 @@ class ShiftDetailsAPIController extends AppBaseController
                             'glCode' => $gl->plGLCode,
                             'logId' => $logs['id'],
                             'amount' => $gl->amount
-                        ];
-                        POSGLEntries::insert($costGLArray);
+                        );
+                    }
+                }
+                POSGLEntries::insert($costGLArray);
+
+                foreach ($invItemsBS as $gl) {
+                    if ($gl->categoryID == 1) {
+                        $documentCode = ('RPOS\\' . str_pad($gl->shiftId, 6, '0', STR_PAD_LEFT));
                         if ($gl->glYN == -1) {
-                            $inventoryGLArray = [
+                            $inventoryGLArray[] = array(
                                 'shiftId' => $gl->shiftId,
                                 'invoiceID' => $gl->invoiceID,
                                 'documentSystemId' => 111,
@@ -2869,10 +2907,9 @@ class ShiftDetailsAPIController extends AppBaseController
                                 'glCode' => $gl->plGLCode,
                                 'logId' => $logs['id'],
                                 'amount' => $gl->amount * -1
-                            ];
-                            POSGLEntries::insert($inventoryGLArray);
+                            );
                         } else {
-                            $inventoryGLArray = [
+                            $inventoryGLArray[] = array(
                                 'shiftId' => $gl->shiftId,
                                 'invoiceID' => $gl->invoiceID,
                                 'documentSystemId' => 111,
@@ -2880,13 +2917,13 @@ class ShiftDetailsAPIController extends AppBaseController
                                 'glCode' => $gl->bsGLCode,
                                 'logId' => $logs['id'],
                                 'amount' => $gl->amount * -1
-                            ];
-                            POSGLEntries::insert($inventoryGLArray);
+                            );
                         }
-
                     }
 
                 }
+                POSGLEntries::insert($inventoryGLArray);
+
             }
         }
 
