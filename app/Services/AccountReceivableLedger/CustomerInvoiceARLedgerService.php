@@ -102,9 +102,7 @@ class CustomerInvoiceARLedgerService
                 $data['localAmount'] = \Helper::roundValue(ABS($masterData->bookingAmountLocal + $taxLocal+$processData['_documentLocalAmount']));
                 $data['comRptAmount'] = \Helper::roundValue(ABS($masterData->bookingAmountRpt + $taxRpt+$processData['_documentRptAmount']));
 
-                if(isset($processData['detailsArray'])) {
-                    array_push($finalData, $data);
-                }
+                array_push($finalData, $data);
             }else if( $masterData->isPerforma == 1){
                 $data['custInvoiceAmount'] = ABS($masterData->invoicedetails[0]->transAmount);
                 $data['localAmount'] = \Helper::roundValue(ABS($masterData->invoicedetails[0]->localAmount));
