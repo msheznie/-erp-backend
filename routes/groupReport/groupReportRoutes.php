@@ -68,3 +68,9 @@ Route::group([],function (){
     Route::post('generateGeneralLedgerReportPDF', 'FinancialReportAPIController@pdfExportReport')->name("Generate general ledger report pdf");
 });
 
+//Trial Balance
+Route::group([],function (){
+    Route::post('generateFinancialTrialBalanceReportPDF', 'FinancialReportAPIController@pdfExportReport')->name("Generate financial trial balance report pdf");
+    Route::post('getTBUnmatchedData', 'FinancialReportAPIController@getTBUnmatchedData')->name("Get tb unmatched data");
+});
+

@@ -286,7 +286,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::post('generateEmployeeLedgerReport', 'FinancialReportAPIController@generateEmployeeLedgerReport');
 
-            Route::post('getTBUnmatchedData', 'FinancialReportAPIController@getTBUnmatchedData');
             Route::post('downloadProjectUtilizationReport', 'FinancialReportAPIController@downloadProjectUtilizationReport');
             Route::post('downloadEmployeeLedgerReport', 'FinancialReportAPIController@downloadEmployeeLedgerReport');
 
@@ -1077,8 +1076,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('getRPOSInvoiceData', 'POS\PosAPIController@getRPOSInvoiceData');
             Route::post('getAllShiftsGPOS', 'POS\PosAPIController@getAllShiftsGPOS');
             Route::post('getAllBills', 'POS\PosAPIController@getAllBills');
-
-            Route::post('generateFinancialTrialBalanceReportPDF', 'FinancialReportAPIController@pdfExportReport');
 
             Route::resource('envelop_types', 'EnvelopTypeAPIController');
             Route::resource('evaluation_types', 'EvaluationTypeAPIController');
