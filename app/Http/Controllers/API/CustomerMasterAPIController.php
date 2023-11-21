@@ -445,6 +445,12 @@ class CustomerMasterAPIController extends AppBaseController
         if($input['custUnbilledAccountSystemID'] == 0){
             return $this->sendError('Unbilled Receivable Account field is required.');
         }
+
+        if(isset($input['customer_registration_no']) && $input['customer_registration_no']){
+            if(!$input['customer_registration_expiry_date']){
+                return $this->sendError('Registration expiry date is required.');
+            }
+        }
    
         $id = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
