@@ -1665,17 +1665,17 @@ class ShiftDetailsAPIController extends AppBaseController
                             $addToCusInvDetails['invoiceAmountCurrency'] = $master->custTransactionCurrencyID;
                             $addToCusInvDetails['invoiceAmountCurrencyER'] = $master->localCurrencyER;
 
-                            $addToCusInvDetails['unitCost'] = $totAfterDiscount * $item->qty;
-                            $addToCusInvDetails['salesPrice'] = $totAfterDiscount * $item->qty;
-                            $addToCusInvDetails['invoiceAmount'] = $totAfterDiscount * $item->qty;
+                            $addToCusInvDetails['unitCost'] = $totAfterDiscount;
+                            $addToCusInvDetails['salesPrice'] = $totAfterDiscount;
+                            $addToCusInvDetails['invoiceAmount'] = $totAfterDiscount;
 
                             $addToCusInvDetails['localCurrency'] = $master->localCurrencyID;
                             $addToCusInvDetails['localCurrencyER'] = $master->localCurrencyER;
 
                             $addToCusInvDetails['comRptCurrency'] = $master->companyReportingCurrencyID;
                             $addToCusInvDetails['comRptCurrencyER'] = $master->companyReportingER;
-                            $addToCusInvDetails["comRptAmount"] = ($totAfterDiscount / $master->companyReportingER) * $item->qty;
-                            $addToCusInvDetails["localAmount"] = $totAfterDiscount * $item->qty;
+                            $addToCusInvDetails["comRptAmount"] = ($totAfterDiscount / $master->companyReportingER);
+                            $addToCusInvDetails["localAmount"] = $totAfterDiscount;
 
                             $addToCusInvDetails['unitOfMeasure'] = 0;
                             $addToCusInvDetails['invoiceQty'] = $item->qty;
