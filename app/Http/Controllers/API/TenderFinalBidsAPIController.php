@@ -363,8 +363,8 @@ class TenderFinalBidsAPIController extends AppBaseController
     public function getFinalBidsReport(Request $request)
     {
         $tenderId = $request->get('id');
-        $isNegotiation = $request->get('isNegotiation');
-
+        $tenderMaster= TenderMaster::select('title', 'tender_code', 'stage', 'negotiation_code', 'bid_opening_date', 'technical_bid_opening_date', 'commerical_bid_opening_date', 'award_comment', 'negotiation_award_comment', 'negotiation_code')->where('id', $tenderId)->first();
+        $isNegotiation = 0;
         $tenderBidNegotiations = TenderBidNegotiation::select('bid_submission_master_id_new')
             ->where('tender_id', $tenderId)
             ->get();
@@ -381,14 +381,14 @@ class TenderFinalBidsAPIController extends AppBaseController
             ->where('srm_tender_final_bids.status',1)
             ->where('srm_tender_final_bids.tender_id', $tenderId);
 
-        if ($isNegotiation == 1) {
+        if ($tenderMaster->negotiation_code != null || $tenderMaster->negotiation_code != '') {
+            $isNegotiation = 1;
             $query = $query->whereIn('srm_bid_submission_master.id', $bidSubmissionMasterIds);
         } else {
             $query = $query->whereNotIn('srm_bid_submission_master.id', $bidSubmissionMasterIds);
         }
 
         $awardSummary = $query->orderBy('srm_tender_final_bids.total_weightage','desc')->get();
-        $tenderMaster= TenderMaster::select('title', 'tender_code', 'stage', 'negotiation_code', 'bid_opening_date', 'technical_bid_opening_date', 'commerical_bid_opening_date', 'award_comment', 'negotiation_award_comment')->where('id', $tenderId)->first();
         $time = strtotime("now");
         $fileName = 'Supplier_Ranking_Summary' . $time . '.pdf';
         $order = array('awardSummary' => $awardSummary, 'tenderMaster' => $tenderMaster, 'isNegotiation' => $isNegotiation);
