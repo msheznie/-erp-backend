@@ -3153,7 +3153,7 @@ class ShiftDetailsAPIController extends AppBaseController
         if($shiftDetails->posType == 1) {
 
             $data['invoiceEntries'] = DB::table('pos_gl_entries')
-                ->selectRaw('CASE WHEN abs(sum(amount)) < 0.001 THEN 0 ELSE sum(amount) END as Amount, COUNT(pos_gl_entries.shiftId) as count,pos_source_invoice.invoiceCode,pos_gl_entries.invoiceID,pos_gl_entries.shiftid, pos_source_invoice.transactionCurrencyDecimalPlaces')
+                ->selectRaw('CASE WHEN abs(ROUND(sum(amount), 3)) < 0.001 THEN 0 ELSE ROUND(sum(amount), 3) END as Amount, COUNT(pos_gl_entries.shiftId) as count,pos_source_invoice.invoiceCode,pos_gl_entries.invoiceID,pos_gl_entries.shiftid, pos_source_invoice.transactionCurrencyDecimalPlaces')
                 ->join('pos_source_invoice', 'pos_source_invoice.invoiceID', '=', 'pos_gl_entries.invoiceID')
                 ->where('pos_gl_entries.shiftId', $input['shiftId'])
                 ->groupBy('invoiceID')
@@ -3162,7 +3162,7 @@ class ShiftDetailsAPIController extends AppBaseController
         else if ($shiftDetails->posType == 2) {
 
             $data['invoiceEntries'] = DB::table('pos_gl_entries')
-                ->selectRaw('CASE WHEN abs(sum(amount)) < 0.001 THEN 0 ELSE sum(amount) END as Amount, COUNT(pos_gl_entries.shiftId) as count,pos_source_menusalesmaster.invoiceCode,pos_gl_entries.invoiceID,pos_gl_entries.shiftid,pos_source_menusalesmaster.transactionCurrencyDecimalPlaces')
+                ->selectRaw('CASE WHEN abs(ROUND(sum(amount), 3)) < 0.001 THEN 0 ELSE ROUND(sum(amount), 3) END as Amount, COUNT(pos_gl_entries.shiftId) as count,pos_source_menusalesmaster.invoiceCode,pos_gl_entries.invoiceID,pos_gl_entries.shiftid,pos_source_menusalesmaster.transactionCurrencyDecimalPlaces')
                 ->join('pos_source_menusalesmaster', 'pos_source_menusalesmaster.menuSalesID', '=', 'pos_gl_entries.invoiceID')
                 ->where('pos_gl_entries.shiftId', $input['shiftId'])
                 ->groupBy('invoiceID')
