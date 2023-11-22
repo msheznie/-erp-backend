@@ -1741,6 +1741,7 @@ class ShiftDetailsAPIController extends AppBaseController
                         ->where('pos_source_menusalesmaster.menuSalesID',  $invoice->menuSalesID)
                         ->where('pos_source_menusalesmaster.isWastage', 0)
                         ->groupBy('pos_source_menusalesservicecharge.GLAutoID')
+                        ->groupBy('pos_source_menusalesmaster.menuSalesID')
                         ->get();
 
                     foreach ($serviceItems as $item) {
@@ -2646,6 +2647,7 @@ class ShiftDetailsAPIController extends AppBaseController
                         ->where('pos_source_menusalesmaster.isCreditSales', 0)
                         ->where('pos_source_menusalesmaster.isWastage', 0)
                         ->groupBy('pos_source_menusalesservicecharge.GLAutoID')
+                        ->groupBy('pos_source_menusalesmaster.menuSalesID')
                         ->get();
 
                     $promotionItems = DB::table('pos_source_menusalesmaster')
@@ -2725,6 +2727,7 @@ class ShiftDetailsAPIController extends AppBaseController
                         ->where('pos_source_menusalesmaster.isCreditSales', 0)
                         ->groupBy('pos_source_menusalesservicecharge.GLAutoID')
                         ->groupBy('pos_source_menusalesmaster.shiftID')
+                        ->groupBy('pos_source_menusalesmaster.menuSalesID')
                         ->get();
 
                     $bankItems = DB::table('pos_source_menusalesmaster')
