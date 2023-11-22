@@ -503,9 +503,9 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
 
     public function sendSupplierEmailInvitation($email, $companyName, $loginUrl, $tenderId, $companySystemId, $type, $rfx)
     {
-        $docType = 'tender';
+        $docType = 'Tender';
         $emailFormatted = email::emailAddressFormat($email);
-        $tenderMaster = TenderMaster::select('title')
+        $tenderMaster = TenderMaster::select('title','description')
             ->where('id', $tenderId)
             ->where('company_id', $companySystemId)
             ->first();
@@ -514,9 +514,15 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
         }
 
         if ($type == 1) {
-            Mail::to($emailFormatted)->send(new EmailForQueuing("Registration Link", "Dear Supplier," . "<br /><br />" . "
-            You are invited to participate in a new ".$docType.", " . $tenderMaster['title'] . ".
-            Please find the link below to login to the supplier portal. " . "<br /><br />" . "Click Here: " . "</b><a href='" . $loginUrl . "'>" . $loginUrl . "</a><br /><br />" . " Thank You" . "<br /><br /><b>"));
+            Mail::to($emailFormatted)->send(new EmailForQueuing(" ".$docType." Invitation link", "Dear Supplier," . "<br /><br />" . "
+            “I trust this message finds you well." . "<br /><br />" . "
+            We are in the process of inviting reputable suppliers to participate in a ".$docType." for an upcoming project. Your company's outstanding reputation and capabilities have led us to extend this invitation to you." . "<br /><br />" . "
+            If your company is interested in participating in the ".$docType." process, please click on the link below." . "<br /><br />" . "
+            " . "<b>" . " ".$docType." Title :" . "</b> " . $tenderMaster['title'] . "<br /><br />" . "
+            " . "<b>" . " ".$docType." Description :" . "</b> " . $tenderMaster['description'] . "<br /><br />" . "
+            " . "<b>" . "Link :" . "</b> " . "<a href='" . $loginUrl . "'>" . $loginUrl . "</a><br /><br />" . "
+            If you have any initial inquiries or require further information, feel free to reach out to us." . "<br /><br />" . "
+            Thank you for considering this invitation. We look forward to the possibility of collaborating with your esteemed company.”" . "<br /><br />"));
         } else {
             Mail::to($emailFormatted)->send(new EmailForQueuing("Registration Link", "Dear Supplier," . "<br /><br />" . "
             You are invited to participate in a new ".$docType.", " . $tenderMaster['title'] . ".
