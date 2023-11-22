@@ -12,7 +12,7 @@
     <tbody>
     <tr>
         <td colspan="9">
-            <h4 style="text-align: center;">Supplier Ranking Summary</h4>
+            <h4 style="text-align: center;">Supplier Ranking Summary Report</h4>
         </td>
     </tr>
     <tr>
