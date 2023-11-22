@@ -1642,10 +1642,10 @@ class ShiftDetailsAPIController extends AppBaseController
 
                         if($item->promotionGLCode != null) {
 
-                            $totAfterDiscount = (($item->menuSalesPrice - $item->discountAmount) * $item->qty) - (($item->discount / $sumMenuSales) * ($item->menuSalesPrice * $item->qty));
+                            $totAfterDiscount = (($item->menuSalesPrice * $item->qty) - $item->discountAmount) - (($item->discount / $sumMenuSales) * ($item->menuSalesPrice * $item->qty));
                             }
                             else {
-                            $totAfterDiscount = (($item->menuSalesPrice - $item->discountAmount) * $item->qty) - (($item->discount / $sumMenuSales) * ($item->menuSalesPrice * $item->qty));
+                            $totAfterDiscount = (($item->menuSalesPrice * $item->qty) - $item->discountAmount) - (($item->discount / $sumMenuSales) * ($item->menuSalesPrice * $item->qty));
 
                             $totAfterDiscount = $totAfterDiscount - (($item->promotionAmount / $sumMenuSales) * ($item->menuSalesPrice * $item->qty));
                         }
@@ -2824,9 +2824,9 @@ class ShiftDetailsAPIController extends AppBaseController
 
                     if ($sumMenuSales != 0) {
                         if ($gl->promotionGLCode != null) {
-                            $amount = (($gl->menuSalesPrice - $gl->discountAmount) * $gl->qty) - (($gl->discount / $sumMenuSales) * ($gl->menuSalesPrice * $gl->qty));
+                            $amount = (($gl->menuSalesPrice * $gl->qty) - $gl->discountAmount ) - (($gl->discount / $sumMenuSales) * ($gl->menuSalesPrice * $gl->qty));
                         } else {
-                            $amount = (($gl->menuSalesPrice - $gl->discountAmount)* $gl->qty) - (($gl->discount / $sumMenuSales) * ($gl->menuSalesPrice * $gl->qty));
+                            $amount = (($gl->menuSalesPrice * $gl->qty) - $gl->discountAmount) - (($gl->discount / $sumMenuSales) * ($gl->menuSalesPrice * $gl->qty));
                             $amount = $amount - (($gl->promotionAmount / $sumMenuSales) * ($gl->menuSalesPrice * $gl->qty));
                         }
 
