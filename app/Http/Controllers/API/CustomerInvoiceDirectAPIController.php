@@ -4902,7 +4902,7 @@ WHERE
                 foreach ($_customerInvoiceDirectDetails as $item) {
 
                     if(isset($item->chart_Of_account)) {
-                        if($item->chart_Of_account->controlAccountsSystemID == 2 || $item->chart_Of_account->controlAccountsSystemID == 5) {
+                        if($item->chart_Of_account->controlAccountsSystemID == 2 || $item->chart_Of_account->controlAccountsSystemID == 5 || $item->chart_Of_account->controlAccountsSystemID == 3) {
                             $total -= ($item->invoiceAmount + $item->VATAmountTotal);
                         }else{
                             $total += ($item->invoiceAmount + $item->VATAmountTotal);

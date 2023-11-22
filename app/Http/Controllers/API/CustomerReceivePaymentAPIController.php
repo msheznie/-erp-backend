@@ -1083,7 +1083,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
 
                         $_customerInvoiceDirectDetails = CustomerInvoiceDirectDetail::with(['chart_Of_account'])->where('custInvoiceDirectID', $customerInvoiceMaster["custInvoiceDirectAutoID"])->get();
                         foreach ($_customerInvoiceDirectDetails as $item) {
-                            if($item->chart_Of_account->controlAccountsSystemID == 2 || $item->chart_Of_account->controlAccountsSystemID == 5) {
+                            if($item->chart_Of_account->controlAccountsSystemID == 2 || $item->chart_Of_account->controlAccountsSystemID == 5 || $item->chart_Of_account->controlAccountsSystemID == 3) {
                                 $_documentTransAmount -= ($item->invoiceAmount + $item->VATAmountTotal);
                                 $_documentLocalAmount -= ($item->localAmount + $item->VATAmountLocalTotal);
                                 $_documentRptAmount -= ($item->comRptAmount + $item->VATAmountRptTotal);
