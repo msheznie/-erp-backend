@@ -83,22 +83,20 @@ class RPOSSalesGlService
 {
 	public static function processEntry($masterModel)
 	{
-		$data = [];
+        Log::useFiles(storage_path() . '/logs/cash_rpos_jobs.log');
+
+        $data = [];
         $taxLedgerData = [];
         $finalData = [];
         $empID = Employee::find($masterModel['employeeSystemID']);
 
         $glEntries = POSGLEntries::where('shiftId', $masterModel["autoID"])->get();
 
-
-
         foreach($glEntries as $gl) {
             $invItems = DB::table('pos_source_menusalesmaster')
                 ->selectRaw('pos_source_menusalesmaster.*')
                 ->where('pos_source_menusalesmaster.shiftID', $masterModel["autoID"])
                 ->first();
-
-            if(!empty($invItems)) {
 
                 $glCodes = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $gl->glCode)->first();
 
@@ -145,7 +143,7 @@ class RPOSSalesGlService
                 $data['timestamp'] = \Helper::currentDateTime();
                 $data['supplierCodeSystem'] = null;
                 array_push($finalData, $data);
-            }
+
         }
 	
         return ['status' => true, 'message' => 'success', 'data' => ['finalData' => $finalData, 'taxLedgerData' => $taxLedgerData]];
