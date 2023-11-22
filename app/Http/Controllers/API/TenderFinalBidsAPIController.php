@@ -369,10 +369,10 @@ class TenderFinalBidsAPIController extends AppBaseController
             ->where('tender_id', $tenderId)
             ->get();
 
+        $bidSubmissionMasterIds = [];
+
         if ($tenderBidNegotiations->count() > 0) {
             $bidSubmissionMasterIds = $tenderBidNegotiations->pluck('bid_submission_master_id_new')->toArray();
-        } else {
-            $bidSubmissionMasterIds = [];
         }
 
         $query = TenderFinalBids::selectRaw('srm_tender_final_bids.id,srm_tender_final_bids.status,srm_tender_final_bids.supplier_id,srm_tender_final_bids.com_weightage,srm_tender_final_bids.tech_weightage,srm_tender_final_bids.total_weightage,srm_tender_final_bids.bid_id,srm_bid_submission_master.bidSubmittedDatetime,srm_supplier_registration_link.name,srm_bid_submission_master.bidSubmissionCode,srm_bid_submission_master.line_item_total,srm_tender_final_bids.award, srm_tender_final_bids.combined_ranking')
