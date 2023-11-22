@@ -5954,6 +5954,7 @@ class BudgetConsumptionService
 		{
 			$consumAssetamount = BudgetConsumedData::selectRaw('SUM(consumedRptAmount) as amount')
 			->where('chartOfAccountID', $detail->chartOfAccountID)
+			->where('serviceLineSystemID', $detail->serviceLineSystemID)
 			->where('documentSystemID',22)
 			->groupBy('chartOfAccountID')->first();
 			if($consumAssetamount)
@@ -5962,7 +5963,6 @@ class BudgetConsumptionService
 
 			}
 		}
-		
          $pendingDocumentAmount = self::pendingAmountForSummaryReport($detail->toArray(), [$detail->chartOfAccountID]);
 		
         return ['pendingDocumentAmount' => $pendingDocumentAmount['pendingAmount'], 'actuallConsumptionAmount' => $actuallConsumptionAmount, 'committedAmount' => $committedAmount];
