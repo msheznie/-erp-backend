@@ -90,12 +90,18 @@ class RPOSSalesGlService
         $finalData = [];
         $empID = Employee::find($masterModel['employeeSystemID']);
 
-        $glEntries = POSGLEntries::where('shiftId', $masterModel["autoID"])->get();
+        $glEntries = DB::table('pos_gl_entries')
+            ->selectRaw('pos_gl_entries.*, SUM(amount) as totAmount')
+            ->where('pos_gl_entries.shiftID', $masterModel["autoID"])
+            ->groupBy('pos_gl_entries.glCode')
+            ->groupBy('pos_gl_entries.invoiceID')
+            ->get();
 
         foreach($glEntries as $gl) {
             $invItems = DB::table('pos_source_menusalesmaster')
                 ->selectRaw('pos_source_menusalesmaster.*')
                 ->where('pos_source_menusalesmaster.shiftID', $masterModel["autoID"])
+                ->where('pos_source_menusalesmaster.menuSalesID', $gl->invoiceID)
                 ->first();
 
                 $glCodes = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $gl->glCode)->first();
@@ -134,12 +140,18 @@ class RPOSSalesGlService
                 }
                 $data['glAccountType'] = ChartOfAccount::getGlAccountType($gl->glCode);
                 $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($gl->glCode);
+            if (!empty($invItems)) {
+                $data['documentTransCurrencyID'] = $invItems->companyLocalCurrencyID;
+                $data['documentTransCurrencyER'] = $invItems->companyLocalExchangeRate;
+                $data['documentTransAmount'] = $gl->totAmount;
                 $data['documentLocalCurrencyID'] = $invItems->companyLocalCurrencyID;
                 $data['documentLocalCurrencyER'] = $invItems->companyLocalExchangeRate;
-                $data['documentLocalAmount'] = $gl->amount;
+                $data['documentLocalAmount'] = $gl->totAmount;
                 $data['documentRptCurrencyID'] = $invItems->companyReportingCurrencyID;
                 $data['documentRptCurrencyER'] = $invItems->companyReportingExchangeRate;
-                $data['documentRptAmount'] = $gl->amount / $invItems->companyReportingExchangeRate;
+                $data['documentRptAmount'] = $gl->totAmount / $invItems->companyReportingExchangeRate;
+                $data['documentNarration'] = "Bill No: ". $invItems->invoiceCode;
+            }
                 $data['timestamp'] = \Helper::currentDateTime();
                 $data['supplierCodeSystem'] = null;
                 array_push($finalData, $data);
