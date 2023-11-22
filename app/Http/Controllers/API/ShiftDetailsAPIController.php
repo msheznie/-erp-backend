@@ -1645,7 +1645,7 @@ class ShiftDetailsAPIController extends AppBaseController
                             $totAfterDiscount = (($item->menuSalesPrice - $item->discountAmount) * $item->qty) - (($item->discount / $sumMenuSales) * ($item->menuSalesPrice * $item->qty));
                             }
                             else {
-                            $totAfterDiscount = ($item->menuSalesPrice - $item->discountAmount) * $item->qty) - (($item->discount / $sumMenuSales) * ($item->menuSalesPrice * $item->qty));
+                            $totAfterDiscount = (($item->menuSalesPrice - $item->discountAmount) * $item->qty) - (($item->discount / $sumMenuSales) * ($item->menuSalesPrice * $item->qty));
 
                             $totAfterDiscount = $totAfterDiscount - (($item->promotionAmount / $sumMenuSales) * ($item->menuSalesPrice * $item->qty));
                         }
