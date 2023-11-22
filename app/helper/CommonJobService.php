@@ -49,6 +49,8 @@ class CommonJobService
                     return storage_path() . '/logs/travel_request_service.log';
             case 'return-to-work':
                 return storage_path() . '/logs/return_to_work_service.log';
+            case 'item-wac-amount':
+                return storage_path() . '/logs/item_wac_amount_service.log';
 
         }
     }
