@@ -197,8 +197,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             //confirmation
             Route::post('confirmDocument', 'PurchaseRequestAPIController@confirmDocument');
-
-            Route::get('getGRVBasedPODropdowns', 'ProcumentOrderAPIController@getGRVBasedPODropdowns');
             
             Route::resource('priorities', 'PriorityAPIController');
 
@@ -213,9 +211,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('document_approveds', 'DocumentApprovedAPIController');
 
             Route::resource('procument_order_details', 'ProcumentOrderDetailAPIController');
-
-            Route::resource('poPaymentTermsRequestCRUD', 'PoAdvancePaymentAPIController');
-
+            
             Route::resource('srp_erp_document_attachments', 'SrpErpDocumentAttachmentsAPIController');
             Route::get('get_srp_erp_document_attachments', 'SrpErpDocumentAttachmentsAPIController@geDocumentAttachments');
 
@@ -800,7 +796,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::post('getSupplierCatalogDetailBySupplierItem', 'SupplierCatalogMasterAPIController@getSupplierCatalogDetailBySupplierItem');
             
-            Route::post('getSupplierCatalogDetailBySupplierItemForPo', 'SupplierCatalogMasterAPIController@getSupplierCatalogDetailBySupplierItemForPo');
             Route::get('getDashboardDepartment', 'DashboardWidgetMasterAPIController@getDashboardDepartment');
             Route::get('getDashboardWidget', 'DashboardWidgetMasterAPIController@getDashboardWidget');
             Route::post('getCustomWidgetGraphData', 'DashboardWidgetMasterAPIController@getCustomWidgetGraphData');

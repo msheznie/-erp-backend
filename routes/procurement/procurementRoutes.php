@@ -108,7 +108,6 @@ Route::group([], function() {
     Route::get('getAllStatusByPurchaseOrder', 'PurchaseOrderStatusAPIController@getAllStatusByPurchaseOrder')->name('Get all status by purchase order');
     Route::get('destroyPreCheck', 'PurchaseOrderStatusAPIController@destroyPreCheck')->name('destroy precheck');
     Route::get('ProcurementOrderAudit', 'ProcumentOrderAPIController@ProcurementOrderAudit')->name('Procurement order audit');
-    Route::get('getPurchaseOrderDetailForGRV', 'PurchaseOrderDetailsAPIController@getPurchaseOrderDetailForGRV')->name('Get purchase order detail for grv');
     Route::get('getLogisticPrintDetail', 'PoAdvancePaymentAPIController@getLogisticPrintDetail')->name('Get logistic print detail');
     Route::get('procumentOrderTotals', 'ProcumentOrderAPIController@procumentOrderTotals')->name('Procurement order totals');
 
@@ -146,7 +145,6 @@ Route::group([], function() {
     Route::post('currencyConvert', 'CurrencyConversionAPIController@currencyConvert')->name('Currency convert');
     Route::post('storePoPaymentTermsLogistic', 'PoAdvancePaymentAPIController@storePoPaymentTermsLogistic')->name('Store procurement order payment terms logistic');
     Route::post('purchaseOrderStatusesSendEmail', 'PurchaseOrderStatusAPIController@purchaseOrderStatusesSendEmail')->name('Purchase order statuses send email');
-    Route::post('storeGRVDetailsFromPO', 'GRVDetailsAPIController@storeGRVDetailsFromPO')->name('Store grv details from procurement order');
     Route::post('purchaseOrderValidateItem', 'PurchaseOrderDetailsAPIController@purchaseOrderValidateItem')->name('Procurement order validate item');
     Route::post('purchaseOrderDetailsAddAllItems', 'PurchaseOrderDetailsAPIController@purchaseOrderDetailsAddAllItems')->name('Procurement order add all item');
 
@@ -189,3 +187,10 @@ Route::group([], function() {
 
 });
 
+//Review
+
+//Procurement Order
+Route::group([], function() {
+    Route::post('getSupplierCatalogDetailBySupplierItemForPo', 'SupplierCatalogMasterAPIController@getSupplierCatalogDetailBySupplierItemForPo')->name('Get supplier catalog detail by supplier item for pro');
+    Route::get('getGRVBasedPODropdowns', 'ProcumentOrderAPIController@getGRVBasedPODropdowns')->name('Get grv based po dropdowns');
+});
