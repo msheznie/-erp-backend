@@ -110,7 +110,7 @@ class POSItemLedgerInsert implements ShouldQueue
 
                                 }
                                 $invItems = DB::table('pos_source_menusalesitemdetails')
-                                    ->selectRaw('pos_source_menusalesitems.*, (pos_source_menusalesitemdetails.qty * pos_source_menusalesitemdetails.cost * pos_source_menusalesitems.qty) as amount,pos_source_menusalesmaster.wareHouseAutoID as wareHouseID')
+                                    ->selectRaw('pos_source_menusalesitems.*, (pos_source_menusalesitemdetails.cost * pos_source_menusalesitems.qty) as amount,pos_source_menusalesmaster.wareHouseAutoID as wareHouseID')
                                     ->join('pos_source_menusalesmaster', 'pos_source_menusalesmaster.menuSalesID', '=', 'pos_source_menusalesitemdetails.menuSalesID')
                                     ->join('pos_source_menusalesitems', 'pos_source_menusalesitems.menuSalesID', '=', 'pos_source_menusalesmaster.menuSalesID')
                                     ->where('pos_source_menusalesmaster.shiftID', $masterModel["autoID"])
