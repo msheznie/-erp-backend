@@ -754,13 +754,12 @@ class ShiftDetailsAPIController extends AppBaseController
 
         $isInsufficientExist = false;
 
-        $qtyArray = POSInsufficientItems::with(['warehouse'])->where('shiftId', $shiftId)->get();
-        foreach ($qtyArray as $gl) {
-            if($gl->insufficientQty > 0)
-            {
-                $isInsufficientExist = true;
-                break;
-            }
+        $qtyArray = POSInsufficientItems::with(['warehouse'])->where('shiftId', $shiftId)->where('insufficientQty', '>', 0)->get();
+
+        $qtyArrayLength = count($qtyArray);
+
+        if ($qtyArrayLength > 0) {
+            $isInsufficientExist = true;
         }
 
         $data['output'] = $qtyArray;
