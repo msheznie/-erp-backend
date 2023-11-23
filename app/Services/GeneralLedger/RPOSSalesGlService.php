@@ -104,7 +104,6 @@ class RPOSSalesGlService
                 ->where('pos_source_menusalesmaster.menuSalesID', $gl->invoiceID)
                 ->first();
 
-                $glCodes = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $gl->glCode)->first();
 
                 $sourceDetails = POSSOURCEShiftDetails::where("shiftId", $masterModel["autoID"])->select('transactionCurrency')->first();
                 $currency = CurrencyMaster::where("CurrencyCode", $sourceDetails->transactionCurrency)->first();
@@ -134,10 +133,13 @@ class RPOSSalesGlService
                 $data['createdUserSystemID'] = $empID->employeeSystemID;
                 $data['createdUserPC'] = gethostname();
                 $data['chartOfAccountSystemID'] = $gl->glCode;
-                if ($glCodes) {
+            $glCodes = ChartOfAccount::find($data['chartOfAccountSystemID']);
+            if (!empty($glCodes)) {
                     $glCode = $glCodes->AccountCode;
                     $data['glCode'] = $glCode;
-                }
+            } else {
+                return ['status' => false, 'message' => 'error chart of account not found', 'data' => ['finalData' => $finalData, 'taxLedgerData' => $taxLedgerData]];
+            }
                 $data['glAccountType'] = ChartOfAccount::getGlAccountType($gl->glCode);
                 $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($gl->glCode);
             if (!empty($invItems)) {
@@ -151,6 +153,9 @@ class RPOSSalesGlService
                 $data['documentRptCurrencyER'] = $invItems->companyReportingExchangeRate;
                 $data['documentRptAmount'] = $gl->totAmount / $invItems->companyReportingExchangeRate;
                 $data['documentNarration'] = "Bill No: ". $invItems->invoiceCode;
+            }
+            else {
+                return ['status' => false, 'message' => 'error bill was not found', 'data' => ['finalData' => $finalData, 'taxLedgerData' => $taxLedgerData]];
             }
                 $data['timestamp'] = \Helper::currentDateTime();
                 $data['supplierCodeSystem'] = null;
