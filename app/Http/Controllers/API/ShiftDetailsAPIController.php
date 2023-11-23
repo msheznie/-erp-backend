@@ -3205,7 +3205,7 @@ class ShiftDetailsAPIController extends AppBaseController
         ->where('invoiceID',$input['invoiceId'])
         ->get();
 
-        $data['glCodes'] = ChartOfAccount::where('primaryCompanySystemID',$input['companyId'])->select(DB::raw("chartOfAccountSystemID,CONCAT(AccountCode, ' | ' ,AccountDescription) as name"))
+        $data['glCodes'] = ChartOfAccountsAssigned::where('companySystemID', $input['companyId'])->where('isActive', 1)->where('isAssigned', -1)->select(DB::raw("chartOfAccountSystemID,CONCAT(AccountCode, ' | ' ,AccountDescription) as name"))
         ->get();
 
      
