@@ -476,6 +476,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                     if(!isset($_glSelectionItem->serviceLineCode)) {
                         return $this->sendError('Please select a Segment in GL Selection', 500);
                     }
+                    if(!isset($_glSelectionItem->invoiceAmount) || $_glSelectionItem->invoiceAmount == 0) {
+                        return $this->sendError('Amount is required in GL Selection', 500);
+                    }
                 }
 
             }
@@ -2123,6 +2126,51 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
 
+    public function downloadCITemplate(Request $request){
+
+        $file_type = $request->type;
+
+        $companySystemID = $request->companySystemID;
+        $sentNotificationAt = $request->sentNotificationAt;
+
+
+
+        $templateName = "download_template.ci_template";
+        $fileName = 'customer_invoice_template';
+        $path = 'accounts-receivable/transactions/customer-invoice-template/excel/';
+
+        $isProjectBase = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
+        ->where('companySystemID', $companySystemID)
+        ->where('isYesNO', 1)
+        ->exists();
+
+
+        $isVATEligible = TaxService::checkCompanyVATEligible($companySystemID);
+
+        $company = Company::with(['reportingcurrency', 'localcurrency'])->find($companySystemID);
+
+
+        $output = array(
+            'company' => $company,
+            'companyCode' =>$company->companyShortCode,
+            'sentNotificationAt' => $sentNotificationAt,
+            'isProjectBase' => $isProjectBase,
+            'isVATEligible' => $isVATEligible,
+   
+        );
+
+        $basePath = CreateExcel::loadView($output,$file_type,$fileName,$path,$templateName);
+
+        if($basePath == '')
+        {
+            return $this->sendError('Unable to export excel');
+        }
+        else
+        {
+            return $this->sendResponse($basePath, trans('custom.success_export'));
+        }
+    }
+
     public function getCustomerInvoiceMasterView(Request $request)
     {
         $input = $request->all();
@@ -2932,6 +2980,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $customerInvoice = $this->customerInvoiceDirectRepository->getAudit2($id);
         }
 
+        if (!$customerInvoice) {
+            return $this->sendError("Customer invoice not found");
+        }
         $accountIBAN = '';
         if ($customerInvoice && $customerInvoice->bankAccount) {
             $accountIBAN = $customerInvoice->bankAccount['accountIBAN#'];
@@ -4851,7 +4902,7 @@ WHERE
                 foreach ($_customerInvoiceDirectDetails as $item) {
 
                     if(isset($item->chart_Of_account)) {
-                        if($item->chart_Of_account->controlAccountsSystemID == 2 || $item->chart_Of_account->controlAccountsSystemID == 5) {
+                        if($item->chart_Of_account->controlAccountsSystemID == 2 || $item->chart_Of_account->controlAccountsSystemID == 5 || $item->chart_Of_account->controlAccountsSystemID == 3) {
                             $total -= ($item->invoiceAmount + $item->VATAmountTotal);
                         }else{
                             $total += ($item->invoiceAmount + $item->VATAmountTotal);

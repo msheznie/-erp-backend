@@ -527,7 +527,8 @@ class CustomerInvoiceDirectDetailAPIController extends AppBaseController
 
         $input['invoiceQty']= ($input['invoiceQty'] != ''?$input['invoiceQty']:0);
         $input['salesPrice']= ($input['salesPrice'] != '' ? $input['salesPrice'] : 0);
-
+        
+        $input['salesPrice'] = floatval($input['salesPrice'] );
 
         if(isset($input['by']) && ($input['by'] == 'discountPercentage' || $input['by'] == 'discountAmountLine')){
             if ($input['by'] === 'discountPercentage') {

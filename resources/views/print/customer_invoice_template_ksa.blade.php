@@ -269,13 +269,11 @@
                         @endif
                     </b><br>
 
-                    <b>رقم العقد/أمر الشراء : @if(!empty($request->invoicedetails) )
-                            {{isset($request->invoicedetails[0]->clientContractID)?$request->invoicedetails[0]->clientContractID:''}}
+                    <b>رقم العقد/أمر الشراء : 
+                        @if($request->line_poNumber)
+                            <span dir="ltr">{{$request->PONumber}}</span>
                         @endif
-                        @if($request->line_poNumber && isset($request->item_invoice) && $request->item_invoice)
-                            {{$request->PONumber}}
-                        @endif
-
+                        
                     </b>
 
                 </td>
@@ -468,7 +466,7 @@
                     {{$x=1}}
                     {{$directTraSubTotal=0}}
                     {{$numberFormatting=empty($request->currency) ? 2 : $request->currency->DecimalPlaces}}
-
+                    @if (isset($request->profomaDetailData))
                     @foreach ($request->profomaDetailData as $item)
                         @if ($item->total != 0)
                             {{$directTraSubTotal +=$item->total}}
@@ -486,6 +484,7 @@
                             {{ $x++ }}
                         @endif
                     @endforeach
+                    @endif
                     </tbody>
 
                     <tbody>

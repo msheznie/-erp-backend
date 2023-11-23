@@ -194,3 +194,13 @@ Route::group([], function() {
     Route::post('getSupplierCatalogDetailBySupplierItemForPo', 'SupplierCatalogMasterAPIController@getSupplierCatalogDetailBySupplierItemForPo')->name('Get supplier catalog detail by supplier item for pro');
     Route::get('getGRVBasedPODropdowns', 'ProcumentOrderAPIController@getGRVBasedPODropdowns')->name('Get grv based po dropdowns');
 });
+
+//Masters
+
+//Purchase Address
+Route::group([], function() {
+    Route::post('getAllAddresses', 'AddressAPIController@getAllAddresses')->name('Get all addresses');
+    Route::get('getAddressFormData', 'AddressAPIController@getAddressFormData')->name('Get address form data');
+
+    Route::resource('addresses', 'AddressAPIController');
+});
