@@ -3262,7 +3262,7 @@ class ShiftDetailsAPIController extends AppBaseController
 
         else if($shiftDetails->posType == 2) {
             $data = DB::table('pos_source_menusalesmaster')
-                ->selectRaw('(sum(grossAmount) - sum(discountAmount)) as Amount,count(*) as count, transactionCurrencyDecimalPlaces')
+                ->selectRaw('(sum(grossTotal)) as Amount,count(*) as count, transactionCurrencyDecimalPlaces')
                 ->where('shiftID', $input['shiftId'])
                 ->get();
         }
