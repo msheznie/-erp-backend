@@ -805,9 +805,16 @@ class SRMService
         $kycFormDetails = SupplierRegistrationLink::where('uuid', $request->input('supplier_uuid'))
             ->first();
         $id = $kycFormDetails->id;
+        $isApprovalAmmend = $request->has('approvalAmmend') ? $request->input('approvalAmmend') : 0;
         $companySystemID = $kycFormDetails->company_id;
         $documentSystemID = 107;
         $timesReferred = $kycFormDetails->timesReferred;
+
+
+        if($isApprovalAmmend == 1){ 
+            $update['approved_yn'] = 0;
+            SupplierRegistrationLink::where('uuid',$request->input('supplier_uuid'))->update($update);
+        }
 
         $fetchDocumentApproved = DocumentApproved::where('documentSystemCode', $id)
             ->where('companySystemID', $companySystemID)
