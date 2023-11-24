@@ -5804,8 +5804,8 @@ class BudgetConsumptionService
 	public static function getCommitedConsumedAmount($detail, $DLBCPolicy, $departmentsWiseCheck = false)
     {
        
-			
-		  $consumedAmountOfPO = BudgetConsumedData::with(['purchase_order' => function ($query) use($detail){
+	
+	    $consumedAmountOfPO = BudgetConsumedData::with(['purchase_order' => function ($query) use($detail){
 
 												$query->with(['grv_details'=>function($query){
 													$query->select('grvDetailsID','grvAutoID','purchaseOrderMastertID','purchaseOrderDetailsID')->with(['grv_master'=>function($query){
@@ -5834,12 +5834,15 @@ class BudgetConsumptionService
 											})
 											->orderBy('budgetConsumedDataAutoID','desc')
                                             ->get();
-
+		$tot = 0;
         $committedAmount = 0;
         $partiallyReceivedAmount = 0;
 		$assetConsumingAmount = 0;
 		$isAssets = false;
 		$actuallConsumptionAmount = 0;
+		$fixedCOmmitedAmount = 0;
+		$grv_details = [];									
+
         foreach ($consumedAmountOfPO as $key => $value) {
             if (isset($value->purchase_order->grvRecieved) && $value->purchase_order->grvRecieved == 0 && $detail->controlAccountsSystemID != 3) {
                 $committedAmount += $value->consumedRptAmount;
@@ -5896,40 +5899,39 @@ class BudgetConsumptionService
 					if($notRecivedPoNonFixedAsset->itemFinanceCategoryID == 3)
 					{
 						$isAssets = true;
-						$fixedCOmmitedAmount = 0;
+						$totalCommitedAmount = 0;
 						if(isset($value->purchase_order->grv_details))
 						{
 							$grvDetails =  $value->purchase_order->grv_details;
 							foreach($grvDetails as $grv)
 							{
-								$fixed_assets =  FixedAssetMaster::where('costglCodeSystemID',$detail->chartOfAccountID)
-																  ->where('docOriginDocumentSystemID',3)
-																  ->where('docOriginSystemCode',$grv->grv_master->grvAutoID)->get();
-	
-								if($fixed_assets)
+								if (!in_array($grv->grv_master->grvAutoID, $grv_details))
 								{
-								
-									foreach($fixed_assets as $asset)
-									{
-											if($asset->approved == -1)
+									$fixed_assets =  FixedAssetMaster::where('costglCodeSystemID',$detail->chartOfAccountID)
+									->where('docOriginDocumentSystemID',3)
+									->where('docOriginSystemCode',$grv->grv_master->grvAutoID)->get();
+
+										if($fixed_assets)
+										{
+										
+											foreach($fixed_assets as $asset)
 											{
-												$fixedCOmmitedAmount += $asset->COSTUNIT;
+												if($asset->approved == -1)
+												{
+													$fixedCOmmitedAmount += $asset->COSTUNIT;
+												}
 											}
-									}
+										}
+									array_push($grv_details,$grv->grv_master->grvAutoID);
 								}
-	
+								
 							}
 						}
 						
 
-					
 						$totalCommitedAmount = $notRecivedPoNonFixedAsset->remainingAmount + $notRecivedPoNonFixedAsset->receivedAmount;
-						$commited_amount = $totalCommitedAmount - $fixedCOmmitedAmount;
+						$tot+=$totalCommitedAmount;
 
-						$currencyConversionRptAmount = \Helper::currencyConversion($detail->companySystemID, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $commited_amount);
-						$committedAmount += $currencyConversionRptAmount['reportingAmount'];
-							
-							
 					}
 					else
 					{
@@ -5945,6 +5947,8 @@ class BudgetConsumptionService
                 }
             }
         }
+
+
 		if(!$isAssets){
 
 			$actuallConsumptionAmount = $detail->consumed_amount - $committedAmount;
@@ -5952,6 +5956,11 @@ class BudgetConsumptionService
 		}
 		else
 		{
+			$commited_amount = $tot - $fixedCOmmitedAmount;
+			$commited_amount = $commited_amount < 1?0:$commited_amount;							
+			$currencyConversionRptAmount = \Helper::currencyConversion($detail->companySystemID, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $commited_amount);
+			$committedAmount = $currencyConversionRptAmount['reportingAmount'];
+
 			$consumAssetamount = BudgetConsumedData::selectRaw('SUM(consumedRptAmount) as amount')
 			->where('chartOfAccountID', $detail->chartOfAccountID)
 			->where('serviceLineSystemID', $detail->serviceLineSystemID)
