@@ -466,7 +466,7 @@
                     {{$x=1}}
                     {{$directTraSubTotal=0}}
                     {{$numberFormatting=empty($request->currency) ? 2 : $request->currency->DecimalPlaces}}
-
+                    @if (isset($request->profomaDetailData))
                     @foreach ($request->profomaDetailData as $item)
                         @if ($item->total != 0)
                             {{$directTraSubTotal +=$item->total}}
@@ -484,6 +484,7 @@
                             {{ $x++ }}
                         @endif
                     @endforeach
+                    @endif
                     </tbody>
 
                     <tbody>

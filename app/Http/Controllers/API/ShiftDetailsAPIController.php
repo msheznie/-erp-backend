@@ -754,13 +754,12 @@ class ShiftDetailsAPIController extends AppBaseController
 
         $isInsufficientExist = false;
 
-        $qtyArray = POSInsufficientItems::with(['warehouse'])->where('shiftId', $shiftId)->get();
-        foreach ($qtyArray as $gl) {
-            if($gl->insufficientQty > 0)
-            {
-                $isInsufficientExist = true;
-                break;
-            }
+        $qtyArray = POSInsufficientItems::with(['warehouse'])->where('shiftId', $shiftId)->where('insufficientQty', '>', 0)->get();
+
+        $qtyArrayLength = count($qtyArray);
+
+        if ($qtyArrayLength > 0) {
+            $isInsufficientExist = true;
         }
 
         $data['output'] = $qtyArray;
@@ -1589,12 +1588,12 @@ class ShiftDetailsAPIController extends AppBaseController
 
                         $addToCusInvItemDetails['localCurrencyID'] = $item->companyLocalCurrencyID;
                         $addToCusInvItemDetails['localCurrencyER'] = $item->companyLocalExchangeRate;
-                        $addToCusInvItemDetails['issueCostLocal'] = $item->cost;
-                        $addToCusInvItemDetails['issueCostLocalTotal'] = $item->cost * $item->itemQty * $item->qty;
+                        $addToCusInvItemDetails['issueCostLocal'] = $item->cost / $item->itemQty;
+                        $addToCusInvItemDetails['issueCostLocalTotal'] = $item->cost * $item->qty;
                         $addToCusInvItemDetails['reportingCurrencyID'] = $item->companyReportingCurrency;
                         $addToCusInvItemDetails['reportingCurrencyER'] = $item->companyReportingExchangeRate;
-                        $addToCusInvItemDetails['issueCostRpt'] = $item->cost / $item->companyReportingExchangeRate;
-                        $addToCusInvItemDetails['issueCostRptTotal'] = $item->cost * $item->itemQty * $item->qty / $item->companyReportingExchangeRate;
+                        $addToCusInvItemDetails['issueCostRpt'] = ($item->cost / $item->itemQty) / $item->companyReportingExchangeRate;
+                        $addToCusInvItemDetails['issueCostRptTotal'] = $item->cost * $item->qty / $item->companyReportingExchangeRate;
                         $addToCusInvItemDetails['sellingCurrencyID'] = $item->transactionCurrencyID;
                         $addToCusInvItemDetails['sellingCurrencyER'] = $item->transactionExchangeRate;
 
@@ -1665,17 +1664,17 @@ class ShiftDetailsAPIController extends AppBaseController
                             $addToCusInvDetails['invoiceAmountCurrency'] = $master->custTransactionCurrencyID;
                             $addToCusInvDetails['invoiceAmountCurrencyER'] = $master->localCurrencyER;
 
-                            $addToCusInvDetails['unitCost'] = $totAfterDiscount * $item->qty;
-                            $addToCusInvDetails['salesPrice'] = $totAfterDiscount * $item->qty;
-                            $addToCusInvDetails['invoiceAmount'] = $totAfterDiscount * $item->qty;
+                            $addToCusInvDetails['unitCost'] = $totAfterDiscount;
+                            $addToCusInvDetails['salesPrice'] = $totAfterDiscount;
+                            $addToCusInvDetails['invoiceAmount'] = $totAfterDiscount;
 
                             $addToCusInvDetails['localCurrency'] = $master->localCurrencyID;
                             $addToCusInvDetails['localCurrencyER'] = $master->localCurrencyER;
 
                             $addToCusInvDetails['comRptCurrency'] = $master->companyReportingCurrencyID;
                             $addToCusInvDetails['comRptCurrencyER'] = $master->companyReportingER;
-                            $addToCusInvDetails["comRptAmount"] = ($totAfterDiscount / $master->companyReportingER) * $item->qty;
-                            $addToCusInvDetails["localAmount"] = $totAfterDiscount * $item->qty;
+                            $addToCusInvDetails["comRptAmount"] = ($totAfterDiscount / $master->companyReportingER);
+                            $addToCusInvDetails["localAmount"] = $totAfterDiscount;
 
                             $addToCusInvDetails['unitOfMeasure'] = 0;
                             $addToCusInvDetails['invoiceQty'] = $item->qty;
@@ -2545,11 +2544,11 @@ class ShiftDetailsAPIController extends AppBaseController
                 if ($isPostGroupBy == 0) {
 
                     $bankGL = DB::table('pos_source_menusalesmaster')
-                        ->selectRaw('SUM(pos_source_menusalesmaster.cashReceivedAmount) as amount, pos_source_menusalesmaster.menuSalesID as invoiceID, pos_source_menusalespayments.GLCode as glCode, pos_source_menusalesmaster.shiftID as shiftId, pos_source_menusalesmaster.companyID as companyID')
+                        ->selectRaw('SUM(pos_source_menusalespayments.amount) as amount, pos_source_menusalesmaster.menuSalesID as invoiceID, pos_source_menusalespayments.GLCode as glCode, pos_source_menusalesmaster.shiftID as shiftId, pos_source_menusalesmaster.companyID as companyID')
                         ->join('pos_source_menusalespayments', 'pos_source_menusalespayments.menuSalesID', '=', 'pos_source_menusalesmaster.menuSalesID')
                         ->where('pos_source_menusalesmaster.shiftID', $shiftId)
-                        ->groupBy('pos_source_menusalesmaster.shiftID')
-                        ->groupBy('pos_source_menusalesmaster.menuSalesID')
+                        ->groupBy('pos_source_menusalespayments.menuSalesID')
+                        ->groupBy('pos_source_menusalespayments.paymentConfigMasterID')
                         ->groupBy('pos_source_menusalespayments.GLCode')
                         ->where('pos_source_menusalesmaster.isCreditSales', 0)
                         ->where('pos_source_menusalesmaster.isWastage', 0)
@@ -2581,7 +2580,7 @@ class ShiftDetailsAPIController extends AppBaseController
 
 
                     $invItemsBS = DB::table('pos_source_menusalesitems')
-                        ->selectRaw('SUM(pos_source_menusalesitemdetails.qty * pos_source_menusalesitemdetails.cost * pos_source_menusalesitems.qty) as amount, pos_source_menusalesmaster.menuSalesID as invoiceID, pos_source_menusalesmaster.shiftID as shiftId, pos_source_menusalesmaster.companyID as companyID, pos_source_menusalesitemdetails.itemAutoID as itemID, pos_source_menusalesitems.revenueGLAutoID as glCode,  itemmaster.financeCategoryMaster as categoryID, financeitemcategorysub.financeGLcodebBSSystemID as bsGLCode, financeitemcategorysub.financeGLcodePLSystemID as plGLCode, financeitemcategorysub.includePLForGRVYN as glYN, (pos_source_menusalesitemdetails.qty * pos_source_menusalesitems.qty) as qty, (pos_source_menusalesitemdetails.cost * pos_source_menusalesitems.qty) as price, pos_source_menusalesitemdetails.UOMID as uom, pos_source_menusalesmaster.wareHouseAutoID as wareHouseID')
+                        ->selectRaw('SUM(pos_source_menusalesitemdetails.cost * pos_source_menusalesitems.qty) as amount, pos_source_menusalesmaster.menuSalesID as invoiceID, pos_source_menusalesmaster.shiftID as shiftId, pos_source_menusalesmaster.companyID as companyID, pos_source_menusalesitemdetails.itemAutoID as itemID, pos_source_menusalesitems.revenueGLAutoID as glCode,  itemmaster.financeCategoryMaster as categoryID, financeitemcategorysub.financeGLcodebBSSystemID as bsGLCode, financeitemcategorysub.financeGLcodePLSystemID as plGLCode, financeitemcategorysub.includePLForGRVYN as glYN, (pos_source_menusalesitemdetails.qty * pos_source_menusalesitems.qty) as qty, (pos_source_menusalesitemdetails.cost * pos_source_menusalesitems.qty) as price, pos_source_menusalesitemdetails.UOMID as uom, pos_source_menusalesmaster.wareHouseAutoID as wareHouseID')
                         ->join('pos_source_menusalesmaster', 'pos_source_menusalesmaster.menuSalesID', '=', 'pos_source_menusalesitems.menuSalesID')
                         ->join('pos_source_menusalesitemdetails', 'pos_source_menusalesitemdetails.menuSalesItemID', '=', 'pos_source_menusalesitems.menuSalesItemID')
                         ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'pos_source_menusalesitemdetails.itemAutoID')
@@ -2595,7 +2594,7 @@ class ShiftDetailsAPIController extends AppBaseController
                         ->get();
 
                     $invItemsPL = DB::table('pos_source_menusalesitems')
-                        ->selectRaw('SUM(pos_source_menusalesitemdetails.qty * pos_source_menusalesitemdetails.cost * pos_source_menusalesitems.qty) as amount, pos_source_menusalesmaster.menuSalesID as invoiceID, pos_source_menusalesmaster.shiftID as shiftId, pos_source_menusalesmaster.companyID as companyID, pos_source_menusalesitemdetails.itemAutoID as itemID, pos_source_menusalesitems.revenueGLAutoID as glCode,  itemmaster.financeCategoryMaster as categoryID, financeitemcategorysub.financeGLcodebBSSystemID as bsGLCode, financeitemcategorysub.financeGLcodePLSystemID as plGLCode, financeitemcategorysub.includePLForGRVYN as glYN, (pos_source_menusalesitemdetails.qty * pos_source_menusalesitems.qty) as qty, (pos_source_menusalesitemdetails.cost * pos_source_menusalesitems.qty) as price, pos_source_menusalesitemdetails.UOMID as uom, pos_source_menusalesmaster.wareHouseAutoID as wareHouseID')
+                        ->selectRaw('SUM(pos_source_menusalesitemdetails.cost * pos_source_menusalesitems.qty) as amount, pos_source_menusalesmaster.menuSalesID as invoiceID, pos_source_menusalesmaster.shiftID as shiftId, pos_source_menusalesmaster.companyID as companyID, pos_source_menusalesitemdetails.itemAutoID as itemID, pos_source_menusalesitems.revenueGLAutoID as glCode,  itemmaster.financeCategoryMaster as categoryID, financeitemcategorysub.financeGLcodebBSSystemID as bsGLCode, financeitemcategorysub.financeGLcodePLSystemID as plGLCode, financeitemcategorysub.includePLForGRVYN as glYN, (pos_source_menusalesitemdetails.qty * pos_source_menusalesitems.qty) as qty, (pos_source_menusalesitemdetails.cost * pos_source_menusalesitems.qty) as price, pos_source_menusalesitemdetails.UOMID as uom, pos_source_menusalesmaster.wareHouseAutoID as wareHouseID')
                         ->join('pos_source_menusalesmaster', 'pos_source_menusalesmaster.menuSalesID', '=', 'pos_source_menusalesitems.menuSalesID')
                         ->join('pos_source_menusalesitemdetails', 'pos_source_menusalesitemdetails.menuSalesItemID', '=', 'pos_source_menusalesitems.menuSalesItemID')
                         ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'pos_source_menusalesitemdetails.itemAutoID')
@@ -2849,7 +2848,7 @@ class ShiftDetailsAPIController extends AppBaseController
                 foreach ($invItems as $item) {
                     $itemArray[] = array(
                         'shiftId' => $item->shiftId,
-                        'invoiceID' => $gl->invoiceID,
+                        'invoiceID' => $item->invoiceID,
                         'itemAutoId' => $item->itemID,
                         'uom' => $item->uom,
                         'qty' => $item->qty,
@@ -2864,7 +2863,7 @@ class ShiftDetailsAPIController extends AppBaseController
                 foreach ($bankItems as $item) {
                     $bankArray[] = array(
                         'shiftId' => $item->shiftId,
-                        'invoiceID' => $gl->invoiceID,
+                        'invoiceID' => $item->invoiceID,
                         'bankAccId' => $item->bankID,
                         'logId' => $logs->id,
                         'isReturnYN' => 0,
@@ -3153,7 +3152,7 @@ class ShiftDetailsAPIController extends AppBaseController
         if($shiftDetails->posType == 1) {
 
             $data['invoiceEntries'] = DB::table('pos_gl_entries')
-                ->selectRaw('CASE WHEN abs(sum(amount)) < 0.001 THEN 0 ELSE sum(amount) END as Amount, COUNT(pos_gl_entries.shiftId) as count,pos_source_invoice.invoiceCode,pos_gl_entries.invoiceID,pos_gl_entries.shiftid, pos_source_invoice.transactionCurrencyDecimalPlaces')
+                ->selectRaw('CASE WHEN abs(ROUND(sum(amount), 3)) < 0.001 THEN 0 ELSE ROUND(sum(amount), 3) END as Amount, COUNT(pos_gl_entries.shiftId) as count,pos_source_invoice.invoiceCode,pos_gl_entries.invoiceID,pos_gl_entries.shiftid, pos_source_invoice.transactionCurrencyDecimalPlaces')
                 ->join('pos_source_invoice', 'pos_source_invoice.invoiceID', '=', 'pos_gl_entries.invoiceID')
                 ->where('pos_gl_entries.shiftId', $input['shiftId'])
                 ->groupBy('invoiceID')
@@ -3162,7 +3161,7 @@ class ShiftDetailsAPIController extends AppBaseController
         else if ($shiftDetails->posType == 2) {
 
             $data['invoiceEntries'] = DB::table('pos_gl_entries')
-                ->selectRaw('CASE WHEN abs(sum(amount)) < 0.001 THEN 0 ELSE sum(amount) END as Amount, COUNT(pos_gl_entries.shiftId) as count,pos_source_menusalesmaster.invoiceCode,pos_gl_entries.invoiceID,pos_gl_entries.shiftid,pos_source_menusalesmaster.transactionCurrencyDecimalPlaces')
+                ->selectRaw('CASE WHEN abs(ROUND(sum(amount), 3)) < 0.001 THEN 0 ELSE ROUND(sum(amount), 3) END as Amount, COUNT(pos_gl_entries.shiftId) as count,pos_source_menusalesmaster.invoiceCode,pos_gl_entries.invoiceID,pos_gl_entries.shiftid,pos_source_menusalesmaster.transactionCurrencyDecimalPlaces')
                 ->join('pos_source_menusalesmaster', 'pos_source_menusalesmaster.menuSalesID', '=', 'pos_gl_entries.invoiceID')
                 ->where('pos_gl_entries.shiftId', $input['shiftId'])
                 ->groupBy('invoiceID')
@@ -3205,7 +3204,7 @@ class ShiftDetailsAPIController extends AppBaseController
         ->where('invoiceID',$input['invoiceId'])
         ->get();
 
-        $data['glCodes'] = ChartOfAccount::where('primaryCompanySystemID',$input['companyId'])->select(DB::raw("chartOfAccountSystemID,CONCAT(AccountCode, ' | ' ,AccountDescription) as name"))
+        $data['glCodes'] = ChartOfAccountsAssigned::where('companySystemID', $input['companyId'])->where('isActive', 1)->where('isAssigned', -1)->select(DB::raw("chartOfAccountSystemID,CONCAT(AccountCode, ' | ' ,AccountDescription) as name"))
         ->get();
 
      
