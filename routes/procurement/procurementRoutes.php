@@ -180,3 +180,21 @@ Route::group([], function() {
 
 });
 
+//Report Pr to grv
+Route::group([], function() {
+    Route::get('reportPrToGrvFilterOptions', 'PurchaseRequestAPIController@reportPrToGrvFilterOptions')->name('Report Filter Options');
+    Route::post('reportPrToGrv', 'PurchaseRequestAPIController@reportPrToGrv')->name('Report PR To Grv');
+    Route::post('exportPrToGrvReport', 'PurchaseRequestAPIController@exportPrToGrvReport')->name('Export PR To Grv');
+
+
+});
+
+//Masters
+
+//Purchase Address
+Route::group([], function() {
+    Route::post('getAllAddresses', 'AddressAPIController@getAllAddresses')->name('Get all addresses');
+    Route::get('getAddressFormData', 'AddressAPIController@getAddressFormData')->name('Get address form data');
+
+    Route::resource('addresses', 'AddressAPIController');
+});

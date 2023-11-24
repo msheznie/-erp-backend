@@ -445,6 +445,12 @@ class CustomerMasterAPIController extends AppBaseController
         if($input['custUnbilledAccountSystemID'] == 0){
             return $this->sendError('Unbilled Receivable Account field is required.');
         }
+
+        if(isset($input['customer_registration_no']) && $input['customer_registration_no']){
+            if(!$input['customer_registration_expiry_date']){
+                return $this->sendError('Registration expiry date is required.');
+            }
+        }
    
         $id = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
@@ -548,7 +554,7 @@ class CustomerMasterAPIController extends AppBaseController
                     if ($validator->fails()) {
                         return $this->sendError($validator->messages(), 422);
                     }
-                    $customerMasters = $this->customerMasterRepository->update(array_only($input,['creditLimit','creditDays','consignee_address','consignee_contact_no','consignee_name','payment_terms','vatEligible','vatNumber','vatPercentage', 'customerSecondLanguage', 'reportTitleSecondLanguage', 'addressOneSecondLanguage', 'addressTwoSecondLanguage','customerShortCode','CustomerName','ReportTitle','customerAddress1','customerAddress2','customerCategoryID','interCompanyYN','customerCountry','customerCity','isCustomerActive','custGLAccountSystemID','custUnbilledAccountSystemID', 'companyLinkedToSystemID', 'companyLinkedTo']), $customerId);
+                    $customerMasters = $this->customerMasterRepository->update(array_only($input,['customer_registration_expiry_date','customer_registration_no','creditLimit','creditDays','consignee_address','consignee_contact_no','consignee_name','payment_terms','vatEligible','vatNumber','vatPercentage', 'customerSecondLanguage', 'reportTitleSecondLanguage', 'addressOneSecondLanguage', 'addressTwoSecondLanguage','customerShortCode','CustomerName','ReportTitle','customerAddress1','customerAddress2','customerCategoryID','interCompanyYN','customerCountry','customerCity','isCustomerActive','custGLAccountSystemID','custUnbilledAccountSystemID', 'companyLinkedToSystemID', 'companyLinkedTo']), $customerId);
                     CustomerAssigned::where('customerCodeSystem',$customerId)->update(array_only($input,['creditLimit','creditDays','consignee_address','consignee_contact_no','consignee_name','payment_terms','vatEligible','vatNumber','vatPercentage','customerShortCode','CustomerName','ReportTitle','customerAddress1','customerAddress2','customerCategoryID','customerCountry','customerCity','custGLAccountSystemID','custUnbilledAccountSystemID']));
                     // user activity log table
                     if($customerMasters){
@@ -805,7 +811,19 @@ class CustomerMasterAPIController extends AppBaseController
         $companySystemID = $request['companySystemID'];
         $selectedCompanySystemID = $request['selectedCompanySystemID'];
 
-        $customerCompanies = CustomerAssigned::where('companySystemID', $selectedCompanySystemID)
+        if(isset($request['selectedAssetDisposalType']) && $request['selectedAssetDisposalType'] == 6) {
+            $customerCompanies = CustomerAssigned::where('companySystemID', $selectedCompanySystemID)
+            ->with(['company', 'customer_master' => function ($query) use ($companySystemID) {
+                $query->select('customerCodeSystem');
+            }])
+            ->whereHas('customer_master', function($query) use ($companySystemID){
+                $query->where('isCustomerActive', 1);
+            })
+            ->where('isAssigned', -1)
+            ->orderBy('customerAssignedID', 'DESC')
+            ->get();
+        }else {
+            $customerCompanies = CustomerAssigned::where('companySystemID', $selectedCompanySystemID)
             ->with(['company', 'customer_master' => function ($query) use ($companySystemID) {
                 $query->select('customerCodeSystem', 'companyLinkedToSystemID')
                       ->where('companyLinkedToSystemID', $companySystemID);
@@ -817,6 +835,8 @@ class CustomerMasterAPIController extends AppBaseController
             ->where('isAssigned', -1)
             ->orderBy('customerAssignedID', 'DESC')
             ->get();
+        }
+
 
 
         return $this->sendResponse($customerCompanies->toArray(), 'customer companies retrieved successfully');

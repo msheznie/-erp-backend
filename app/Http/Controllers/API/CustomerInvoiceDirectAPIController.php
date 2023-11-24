@@ -468,6 +468,22 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $detail = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $id)->get();
         }
 
+        if($isPerforma == 2) {
+            $_glSelectionItems = CustomerInvoiceDirectDetail::where('custInvoiceDirectID',$id)->get();
+
+            if($_glSelectionItems) {
+                foreach($_glSelectionItems as $_glSelectionItem) {
+                    if(!isset($_glSelectionItem->serviceLineCode)) {
+                        return $this->sendError('Please select a Segment in GL Selection', 500);
+                    }
+                    if(!isset($_glSelectionItem->invoiceAmount) || $_glSelectionItem->invoiceAmount == 0) {
+                        return $this->sendError('Amount is required in GL Selection', 500);
+                    }
+                }
+
+            }
+        }
+
         if(isset($detail[0])) {
             $qo_master = QuotationMaster::find($detail[0]['quotationMasterID']);
             $details = CustomerInvoiceItemDetails::where('quotationMasterID',$detail[0]['quotationMasterID'])->get();
@@ -514,8 +530,13 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 $_post['serviceLineCode'] = isset($segment->ServiceLineCode) ? $segment->ServiceLineCode : null;
             }
 
-
-            $_post['custTransactionCurrencyID'] = $input['custTransactionCurrencyID'];
+            if(isset($input['custTransactionCurrencyID'])){
+                $_post['custTransactionCurrencyID'] = $input['custTransactionCurrencyID'];
+            }
+            else{
+                return $this->sendError('Please select a Currency', 500);
+            }
+            
             $_post['bankID'] = $input['bankID'];
             $_post['bankAccountID'] = $input['bankAccountID'];
 
@@ -2020,6 +2041,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             }
 
         ])->findWithoutFail($id);
+        
 
         if (empty($customerInvoiceDirect)) {
             return $this->sendError('Customer Invoice Direct not found', 500);
@@ -2037,6 +2059,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             ->exists();
 
         $customerInvoiceDirect->isVATEligible = TaxService::checkCompanyVATEligible($customerInvoiceDirect->companySystemID);
+        
         return $this->sendResponse($customerInvoiceDirect, 'Customer Invoice Direct retrieved successfully');
     }
 
@@ -2103,6 +2126,51 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         return $this->sendResponse($output, 'Record retrieved successfully');
     }
 
+    public function downloadCITemplate(Request $request){
+
+        $file_type = $request->type;
+
+        $companySystemID = $request->companySystemID;
+        $sentNotificationAt = $request->sentNotificationAt;
+
+
+
+        $templateName = "download_template.ci_template";
+        $fileName = 'customer_invoice_template';
+        $path = 'accounts-receivable/transactions/customer-invoice-template/excel/';
+
+        $isProjectBase = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
+        ->where('companySystemID', $companySystemID)
+        ->where('isYesNO', 1)
+        ->exists();
+
+
+        $isVATEligible = TaxService::checkCompanyVATEligible($companySystemID);
+
+        $company = Company::with(['reportingcurrency', 'localcurrency'])->find($companySystemID);
+
+
+        $output = array(
+            'company' => $company,
+            'companyCode' =>$company->companyShortCode,
+            'sentNotificationAt' => $sentNotificationAt,
+            'isProjectBase' => $isProjectBase,
+            'isVATEligible' => $isVATEligible,
+   
+        );
+
+        $basePath = CreateExcel::loadView($output,$file_type,$fileName,$path,$templateName);
+
+        if($basePath == '')
+        {
+            return $this->sendError('Unable to export excel');
+        }
+        else
+        {
+            return $this->sendResponse($basePath, trans('custom.success_export'));
+        }
+    }
+
     public function getCustomerInvoiceMasterView(Request $request)
     {
         $input = $request->all();
@@ -2123,7 +2191,11 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         $invMaster = $this->customerInvoiceDirectRepository->customerInvoiceListQuery($request, $input, $search, $customerID);
 
+
         return \DataTables::of($invMaster)
+                ->addColumn('total', function($inv) {
+                    return $this->getTotalAfterGL($inv);
+                })
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
@@ -2317,13 +2389,14 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
         $id = $request['id'];
         $master = CustomerInvoiceDirect::select('customerID', 'companySystemID')->where('custInvoiceDirectAutoID', $id)->first();
-        $PerformaMaster = PerformaMaster::with(['ticket' => function ($query) {
+        $PerformaMaster = PerformaMaster::with(['performaTemp' => function ($q) {
+            $q->where('isDiscount',1);
+        },'ticket' => function ($query) {
             $query->with(['rig']);
         }])->where('companySystemID', $master->companySystemID)
             ->where('customerSystemID', $master->customerID)
             ->where('performaStatus', 0)
             ->where('PerformaOpConfirmed', 1);
-
         $search = $request->input('search.value');
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
@@ -2372,6 +2445,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             return $this->sendResponse('e', 'Already pulled');
         }
 
+
         /*get bank check bank details from performaDetails*/
         $bankAccountDetails = PerformaDetails::select('currencyID', 'bankID', 'accountID')->where('companyID', $master->companyID)->where('performaMasterID', $performaMasterID)->first();
 
@@ -2385,7 +2459,6 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
            if (!empty($detailsAlreadyExist)) {
                return $this->sendResponse('e', 'Already a proforma added to this customer invoice');
            }*/
-
         $contract = Contract::select('contractUID', 'isRequiredStamp', 'paymentInDaysForJob', 'contractType')
             ->where('CompanyID', $master->companyID)
             ->where('ContractNumber', $performa->contractID)
@@ -2448,7 +2521,6 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             foreach ($updatedInvoiceNo as $updateInvoice) {
                 $serviceLine = SegmentMaster::select('serviceLineSystemID')->where('ServiceLineCode', $updateInvoice->serviceLine)->first();
                 $chartOfAccount = ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'chartOfAccountSystemID')->where('AccountCode', $updateInvoice->financeGLcode)->first();
-
                 $companyCurrencyConversion = \Helper::currencyConversion($master->companySystemID, $myCurr, $myCurr, $updateInvoice->totAmount);
                 $companyCurrencyConversionVAT = \Helper::currencyConversion($master->companySystemID, $myCurr, $myCurr, $updateInvoice->totalVatAmount);
                 /*    trasToLocER,trasToRptER,transToBankER,reportingAmount,localAmount,documentAmount,bankAmount*/
@@ -2469,8 +2541,15 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 $addToCusInvDetails[$x]['unitOfMeasure'] = 7;
                 $addToCusInvDetails[$x]['invoiceQty'] = 1;
                 $addToCusInvDetails[$x]['unitCost'] = 1;
-                $addToCusInvDetails[$x]['invoiceAmount'] = round($updateInvoice->totAmount, $transDecimalPlace);
-                $addToCusInvDetails[$x]['VATAmount'] = round($updateInvoice->totalVatAmount, $transDecimalPlace);
+                $addToCusInvDetails[$x]['isDiscount'] = $updateInvoice->isDiscount;
+                if($updateInvoice->isDiscount) {
+                    $addToCusInvDetails[$x]['invoiceAmount'] = -$updateInvoice->totAmount;
+
+                }else {
+                    $addToCusInvDetails[$x]['invoiceAmount'] = $updateInvoice->totAmount;
+
+                }
+                $addToCusInvDetails[$x]['VATAmount'] = $updateInvoice->totalVatAmount;
                 $addToCusInvDetails[$x]['VATAmountLocal'] = \Helper::roundValue($companyCurrencyConversionVAT['localAmount']);
                 $addToCusInvDetails[$x]['VATAmountRpt'] = \Helper::roundValue($companyCurrencyConversionVAT['reportingAmount']);
                 $vatPercentage = 0;
@@ -2487,13 +2566,24 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
                 $addToCusInvDetails[$x]['localCurrency'] = $master->localCurrencyID;
                 $addToCusInvDetails[$x]['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
-                $addToCusInvDetails[$x]['localAmount'] = \Helper::roundValue($companyCurrencyConversion['localAmount']);
+                if($updateInvoice->isDiscount) { 
+                    $addToCusInvDetails[$x]['localAmount'] = -$companyCurrencyConversion['localAmount'];
+                }else {
+                    $addToCusInvDetails[$x]['localAmount'] = $companyCurrencyConversion['localAmount'];
+                }
                 $addToCusInvDetails[$x]['comRptCurrency'] = $master->companyReportingCurrencyID;
                 $addToCusInvDetails[$x]['comRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
-                $addToCusInvDetails[$x]['comRptAmount'] = \Helper::roundValue($companyCurrencyConversion['reportingAmount']);
+                if($updateInvoice->isDiscount) { 
+                    $addToCusInvDetails[$x]['comRptAmount'] = -$companyCurrencyConversion['reportingAmount'];
+
+                }else {
+                    $addToCusInvDetails[$x]['comRptAmount'] = $companyCurrencyConversion['reportingAmount'];
+
+                }
                 $addToCusInvDetails[$x]['clientContractID'] = $updateInvoice->contractID;
                 $addToCusInvDetails[$x]['contractID'] = $contract->contractUID;
                 $addToCusInvDetails[$x]['performaMasterID'] = $performaMasterID;
+
                 $x++;
             }
 
@@ -2862,8 +2952,11 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         $id = $request->get('id');
         $type = $request->get('type');
-        
+
         $master = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $id)->first();
+        if (!$master) {
+            return $this->sendError("Customer invoice not found");
+        }
         $companySystemID = $master->companySystemID;
         $localCurrencyER = $master->localCurrencyER;
 
@@ -2887,6 +2980,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $customerInvoice = $this->customerInvoiceDirectRepository->getAudit2($id);
         }
 
+        if (!$customerInvoice) {
+            return $this->sendError("Customer invoice not found");
+        }
         $accountIBAN = '';
         if ($customerInvoice && $customerInvoice->bankAccount) {
             $accountIBAN = $customerInvoice->bankAccount['accountIBAN#'];
@@ -3356,7 +3452,10 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             $customerInvoiceLogistic = $customerInvoiceLogistic->toArray();
             $customerInvoice['customerInvoiceLogistic'] = $customerInvoiceLogistic;
         }
-
+        
+        if(!isset($secondaryBankAccount)){
+            return $this->sendError('Bank account not found.');
+        }
 
         $array = array('type'=>$type,'request' => $customerInvoice, 'secondaryBankAccount' => $secondaryBankAccount);
         $time = strtotime("now");
@@ -4119,6 +4218,9 @@ WHERE
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->addColumn('Actions', 'Actions', "Actions")
+            ->addColumn('total', function($inv) {
+                return $this->getTotalAfterGL($inv);
+            })
             //->addColumn('Index', 'Index', "Index")
             ->make(true);
     }
@@ -4201,6 +4303,9 @@ WHERE
             ->addIndexColumn()
             ->with('orderCondition', $sort)
             ->addColumn('Actions', 'Actions', "Actions")
+            ->addColumn('total', function($inv) {
+                return $this->getTotalAfterGL($inv);
+            })
             //->addColumn('Index', 'Index', "Index")
             ->make(true);
     }
@@ -4787,5 +4892,25 @@ WHERE
         CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->update($vatAmount);
 
         return ['status' => true];
+    }
+
+    public static function getTotalAfterGL($invoice) {
+            $total = 0;
+            $_customerInvoiceDirectDetails = CustomerInvoiceDirectDetail::with(['chart_Of_account'])->where('custInvoiceDirectID',$invoice->custInvoiceDirectAutoID)->get();
+            $total = $invoice->bookingAmountTrans;
+            if(count($_customerInvoiceDirectDetails) > 0 && $invoice->isPerforma == 2) {
+                foreach ($_customerInvoiceDirectDetails as $item) {
+
+                    if(isset($item->chart_Of_account)) {
+                        if($item->chart_Of_account->controlAccountsSystemID == 2 || $item->chart_Of_account->controlAccountsSystemID == 5 || $item->chart_Of_account->controlAccountsSystemID == 3) {
+                            $total -= ($item->invoiceAmount + $item->VATAmountTotal);
+                        }else{
+                            $total += ($item->invoiceAmount + $item->VATAmountTotal);
+                        }
+                    }
+                }
+            }
+
+           return $total;
     }
 }

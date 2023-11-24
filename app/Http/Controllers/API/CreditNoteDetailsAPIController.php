@@ -318,6 +318,9 @@ class CreditNoteDetailsAPIController extends AppBaseController
 
         $chartOfAccount = ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $glCode)->first();
 
+        if ($master->projectID) {
+            $inputData['detail_project_id'] = $master->projectID;
+        }
 
         $inputData['creditNoteAutoID'] = $creditNoteAutoID;
         $inputData['companyID'] = $master->companyID;
@@ -427,6 +430,12 @@ class CreditNoteDetailsAPIController extends AppBaseController
         if($input['serviceLineSystemID'] == 0){
             $input['serviceLineSystemID'] = null;
             $input['serviceLineCode'] = null;
+        }
+
+        if(isset($input['detail_project_id'])){
+            $input['detail_project_id'] = $input['detail_project_id'];
+        } else {
+            $input['detail_project_id'] = null;
         }
 
         if ($master->FYBiggin) {

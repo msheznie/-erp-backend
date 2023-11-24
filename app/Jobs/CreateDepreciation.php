@@ -6,7 +6,8 @@ use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
 use App\Models\FixedAssetDepreciationPeriod;
 use App\Models\FixedAssetMaster;
-use App\Repositories\FixedAssetDepreciationMasterRepository;
+use App\Models\FixedAssetDepreciationMaster;
+use App\Jobs\ProcessDepreciation;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Bus\Queueable;
@@ -52,7 +53,7 @@ class CreateDepreciation implements ShouldQueue
      *
      * @return void
      */
-    public function handle(fixedAssetDepreciationMasterRepository $faDepMaster)
+    public function handle()
     {
 
         ini_set('max_execution_time', 21600);
@@ -62,7 +63,7 @@ class CreateDepreciation implements ShouldQueue
         Log::useFiles(storage_path() . '/logs/depreciation_jobs.log');
 
         $depMasterAutoID = $this->depAutoID;
-        $depMaster = $faDepMaster->find($depMasterAutoID);
+        $depMaster = FixedAssetDepreciationMaster::find($depMasterAutoID);
 
         if($depMaster && !$depMaster->is_acc_dep) {
             DB::beginTransaction();
@@ -71,8 +72,14 @@ class CreateDepreciation implements ShouldQueue
                 Log::info('Depreciation ID - '.$depMasterAutoID);
 
                 if($depMaster) {
+                    Log::info('Depreciation Query Started');
+                    $chunkSize = 100;
+                    $totalChunks = 0;
+                    $chunkDataSizeCounts = 0;
+                    $faCounts = 1;
+                    $db = $this->dataBase;
                     $depDate = Carbon::parse($depMaster->FYPeriodDateTo);
-                    $faMaster = FixedAssetMaster::with(['depperiod_by' => function ($query) {
+                    $checkTotalRec = $faMaster = FixedAssetMaster::with(['depperiod_by' => function ($query) {
                         $query->selectRaw('SUM(depAmountRpt) as depAmountRpt,SUM(depAmountLocal) as depAmountLocal,faID');
                         $query->whereHas('master_by', function ($query) {
                             $query->where('approved', -1);
@@ -90,33 +97,25 @@ class CreateDepreciation implements ShouldQueue
                         ->isApproved()
                         ->assetType(1)
                         ->orderBy('faID', 'desc')
-                        ->get();
+                        ->count();
 
-                    $db = $this->dataBase;
+                    $chunkDataSizeCounts = ceil($checkTotalRec / $chunkSize);
 
-                    $depAmountRptTotal = 0;
-                    $depAmountLocalTotal = 0;
+                    Log::info('chunkCount - '.$chunkDataSizeCounts);
 
-                    if (count($faMaster) > 0) {
-                        $chunkSize = 100;
-                        $totalDataSize = count($faMaster);
-                        $chunkDataSizeCounts = ceil($totalDataSize / $chunkSize);
-                        $faCounts = 1;
-
-                        $faMaster->chunk($chunkSize)->each(function ($chunk) use ($db, $depMasterAutoID, $depMaster, $depDate, &$faCounts, $chunkDataSizeCounts) {
-                            DepreciationSubJobs::dispatch($db, $chunk->all(), $depMasterAutoID, $depMaster, $depDate,$faCounts, $chunkDataSizeCounts);
-                            $faCounts++;
-                        });
+                    for ($i = 1; $i <= $chunkDataSizeCounts; $i++) {
+                        ProcessDepreciationQuery::dispatch($i, $db, $depMasterAutoID, $depDate, $chunkDataSizeCounts)->onQueue('single');
                     }
-
                     DB::commit();
-                    Log::info('Depreciation End');
-
                 }
             } catch (\Exception $e) {
                 DB::rollBack();
                 Log::error($this->failed($e));
+                DB::beginTransaction();
+
                 JobErrorLogService::storeError($this->dataBase, $depMaster->documentSystemID, $depMasterAutoID, $this->tag, 2, $this->failed($e), "-****----Line No----:".$e->getLine()."-****----File Name----:".$e->getFile());
+                $fixedAssetDepreciationMasterUpdate = FixedAssetDepreciationMaster::where('depMasterAutoID', $depMasterAutoID)->update(['isDepProcessingYN' => 1]);
+                DB::commit();
             }
         }
     }

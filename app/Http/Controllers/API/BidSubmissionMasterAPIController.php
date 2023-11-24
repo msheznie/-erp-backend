@@ -11,7 +11,9 @@ use App\Models\DocumentAttachments;
 use App\Models\PricingScheduleDetail;
 use App\Models\PricingScheduleMaster;
 use App\Models\ScheduleBidFormatDetails;
+use App\Models\TenderBidNegotiation;
 use App\Models\TenderMaster;
+use App\Models\TenderNegotiationArea;
 use App\Repositories\BidSubmissionMasterRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -27,6 +29,10 @@ use App\Models\EvaluationCriteriaScoreConfig;
 use App\Models\BidBoq;
 use App\Models\SupplierRegistrationLink;
 use App\Repositories\TenderMasterRepository;
+use App\Services\SRMService;
+use LDAP\Result;
+use Illuminate\Http\JsonResponse;
+
 use function Doctrine\Common\Cache\Psr6\get;
 
 /**
@@ -410,6 +416,14 @@ class BidSubmissionMasterAPIController extends AppBaseController
         $companyId = $request['companyId'];
         $tenderId = $request['tenderId'];
         $type = $request['type']; 
+        $isNegotiation = $request['isNegotiation'];  
+
+        $request->merge([
+            'tenderMasterId' => $tenderId,
+            'companySystemID' => $companyId,
+        ]);
+
+        $commonAttachmentExists = self::getIsExistCommonAttachment($request);  
 
         $tender = TenderMaster::select('id','document_type')
         ->withCount(['criteriaDetails',  
@@ -423,8 +437,8 @@ class BidSubmissionMasterAPIController extends AppBaseController
         }])
         ->where('id', $tenderId)
         ->where('company_id', $companyId) 
-        ->first(); 
-
+        ->first();  
+        
         if($tender->document_type != 0)
         { 
             if($tender->document_attachments_count == 0){ 
@@ -437,9 +451,21 @@ class BidSubmissionMasterAPIController extends AppBaseController
             
         }
 
+        if($commonAttachmentExists == 0){ 
+            $this->updateBidSubmission($tenderId);
+        }
 
-    
-        $query = BidSubmissionMaster::with(['tender:id,document_type','SupplierRegistrationLink','bidSubmissionDetail' => function($query){
+        $tenderBidNegotiations = TenderBidNegotiation::select('bid_submission_master_id_new')
+            ->where('tender_id', $tenderId)
+            ->get();
+
+        if ($tenderBidNegotiations->count() > 0) {
+            $bidSubmissionMasterIds = $tenderBidNegotiations->pluck('bid_submission_master_id_new')->toArray();
+        } else {
+            $bidSubmissionMasterIds = [];
+        }
+
+        $query = BidSubmissionMaster::with(['tender:id,document_type','SupplierRegistrationLink', 'TenderBidNegotiation.tender_negotiation_area','bidSubmissionDetail' => function($query){
                 $query->whereHas('srm_evaluation_criteria_details.evaluation_criteria_type', function ($query) {
                     $query->where('id', 1);
                 });
@@ -449,8 +475,14 @@ class BidSubmissionMasterAPIController extends AppBaseController
                 ->where('attachmentType',2)  
                 ->where('envelopType',3);
         }])->where('status', 1)->where('bidSubmittedYN', 1)->where('tender_id', $tenderId);
+
+        if ($isNegotiation == 1) {
+            $query = $query->whereIn('id', $bidSubmissionMasterIds);
+        } else {
+            $query = $query->whereNotIn('id', $bidSubmissionMasterIds);
+        }
     
-        if($type == 2)
+        if($type == 2 && $commonAttachmentExists > 0)
         {
             $query = $query->where('doc_verifiy_status',1);
         }
@@ -655,12 +687,13 @@ class BidSubmissionMasterAPIController extends AppBaseController
         $input = $request->all();
         $details = $input['extraParams'];
         $tenderId = $details['tenderId'];
+        $isNegotiation = $details['isNegotiation'];
 
 
 
         $bid_master_ids = BidEvaluationSelection::where('tender_id',$tenderId)->pluck('bids');
         $temp = [];
-
+        $bidSubmissionMasterIds = [];
         foreach($bid_master_ids as $bid)
         {
             foreach(json_decode($bid,true) as $val)
@@ -670,11 +703,28 @@ class BidSubmissionMasterAPIController extends AppBaseController
 
         }
 
+        $tenderBidNegotiations = TenderBidNegotiation::select('bid_submission_master_id_new')
+            ->where('tender_id', $tenderId)
+            ->get();
+
+        if ($tenderBidNegotiations->count() > 0) {
+            $bidSubmissionMasterIds = $tenderBidNegotiations->pluck('bid_submission_master_id_new')->toArray();
+        } else {
+            $bidSubmissionMasterIds = [];
+        }
 
         $query = $this->bidSubmissionMasterRepository
         ->join('srm_supplier_registration_link', 'srm_bid_submission_master.supplier_registration_id', '=', 'srm_supplier_registration_link.id')
         ->select('srm_bid_submission_master.id as id','srm_bid_submission_master.bidSubmittedDatetime as submitted_date','srm_supplier_registration_link.name as supplier_name','srm_bid_submission_master.bidSubmissionCode')
-        ->where('bidSubmittedYN', 1)->where('tender_id', $tenderId)->where('doc_verifiy_status',1)->orderBy('id')->get()->toArray();
+        ->where('bidSubmittedYN', 1)->where('tender_id', $tenderId)->where('doc_verifiy_status',1);
+
+        if ($isNegotiation == 1) {
+            $query = $query->whereIn('srm_bid_submission_master.id', $bidSubmissionMasterIds);
+        } else {
+            $query = $query->whereNotIn('srm_bid_submission_master.id', $bidSubmissionMasterIds);
+        }
+
+        $query = $query->orderBy('id')->get()->toArray();
 
         foreach($query as $key=>$val)
         {
@@ -756,23 +806,33 @@ class BidSubmissionMasterAPIController extends AppBaseController
     public function BidSummaryExportReport(Request $request)
     {
         $tenderId = $request->get('id');
+        $isNegotiation = $request->get('isNegotiation');
         $documentTypeInfo = TenderMaster::select('document_type')->where('id',$tenderId)->first();
 
         $documentType = $documentTypeInfo->document_type;
         $documentSystemID = $documentType==0?108:113;
 
-        $bidData = TenderMaster::with(['srm_bid_submission_master' => function($query) use($tenderId){
+        $tenderBidNegotiations = TenderBidNegotiation::select('bid_submission_master_id_new')
+            ->where('tender_id', $tenderId)
+            ->get();
+
+        $bidData = TenderMaster::with(['srm_bid_submission_master' => function($query) use($tenderId, $isNegotiation, $tenderBidNegotiations){
             $query->where('status', 1);
+            if ($tenderBidNegotiations->count() > 0) {
+                $bidSubmissionMasterIds = $tenderBidNegotiations->pluck('bid_submission_master_id_new')->toArray();
+
+                if ($isNegotiation == 1) {
+                    $query->whereIn('id', $bidSubmissionMasterIds);
+                } else {
+                    $query->whereNotIn('id', $bidSubmissionMasterIds);
+                }
+            }
         }, 'srm_bid_submission_master.SupplierRegistrationLink', 'srm_bid_submission_master.BidDocumentVerification',
             'DocumentAttachments' => function($query) use($tenderId,$documentSystemID){
             $query->with(['bid_verify'])->where('documentSystemCode', $tenderId)->where('documentSystemID', $documentSystemID)
                 ->where('attachmentType', 2)->where('envelopType',3);
         }])->where('id', $tenderId)
             ->get();
-
-         
-
-
 
         $resultTable = BidSubmissionMaster::select('id')->where('tender_id', $tenderId)
             ->where('status', 1)
@@ -797,7 +857,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
 
         $time = strtotime("now");
         $fileName = 'Bid_Opening_Summary' . $time . '.pdf';
-        $order = array('bidData' => $bidData, 'attachments' => $arr,'count' => $count,'documentType' => $documentType);
+        $order = array('bidData' => $bidData, 'attachments' => $arr,'count' => $count,'documentType' => $documentType, 'isNegotiation' => $isNegotiation);
         $html = view('print.bid_summary_print', $order);
         $pdf = \App::make('dompdf.wrapper');
         $pdf->loadHTML($html);
@@ -818,8 +878,12 @@ class BidSubmissionMasterAPIController extends AppBaseController
 
         $companyId = $request['companyId'];
         $tenderId = $request['tenderId'];
+        $isNegotiation = $request['isNegotiation'];
 
-        $technicalCount = $this->getTechnicalCount($tenderId);     
+        $technicalCount = $this->getTechnicalCount($tenderId);      
+        $bidSubmissionMasterIds = SRMService::getNegotiationBids($tenderId);
+
+
         if($technicalCount->technical_count == 0)
         {
             $query = BidSubmissionMaster::selectRaw("'' as weightage,srm_bid_submission_master.id,srm_bid_submission_master.bidSubmittedDatetime,srm_bid_submission_master.tender_id,srm_supplier_registration_link.name,'' as bid_id,srm_bid_submission_master.commercial_verify_status,srm_bid_submission_master.bidSubmissionCode,srm_tender_master.technical_passing_weightage as passing_weightage")
@@ -829,6 +893,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
             ->where('srm_bid_submission_master.bidSubmittedYN', 1)
             ->where('srm_bid_submission_master.tender_id', $tenderId)
             ->where('srm_bid_submission_master.doc_verifiy_status','!=', 2);
+         
         }
         else
         {
@@ -843,8 +908,11 @@ class BidSubmissionMasterAPIController extends AppBaseController
             ->where('srm_bid_submission_master.status', 1)
             ->where('srm_bid_submission_master.bidSubmittedYN', 1)
             ->where('srm_bid_submission_master.doc_verifiy_status','!=', 2)
-            ->where('srm_bid_submission_master.tender_id', $tenderId);
+            ->where('srm_bid_submission_master.tender_id', $tenderId); 
         }
+        
+        $isNegotiation == 1 ? $query->whereIn('srm_bid_submission_master.id', $bidSubmissionMasterIds)
+        : $query->whereNotIn('srm_bid_submission_master.id', $bidSubmissionMasterIds);
     
 
         $search = $request->input('search.value');
@@ -971,54 +1039,65 @@ class BidSubmissionMasterAPIController extends AppBaseController
     public function getSupplierItemList(Request $request)
     {
         $tenderId = $request['tenderMasterId'];
+        $isNegotiation = $request['isNegotiation'];
 
         $technicalCount = $this->getTechnicalCount($tenderId); 
-
-        if($technicalCount->technical_count != 0)
-        {
+        $bidSubmissionMasterIds = SRMService::getNegotiationBids($tenderId);
+        if ($technicalCount->technical_count != 0) {
             $queryResult = BidSubmissionMaster::selectRaw("
-            SUM((srm_bid_submission_detail.eval_result/100)*srm_tender_master.technical_weightage) as weightage, 
-            srm_bid_submission_master.id, 
-            srm_supplier_registration_link.name,
-            srm_tender_master.technical_passing_weightage as passing_weightage,
-            srm_bid_submission_master.bidSubmissionCode")
+                SUM((srm_bid_submission_detail.eval_result/100)*srm_tender_master.technical_weightage) as weightage, 
+                srm_bid_submission_master.id as id, 
+                srm_supplier_registration_link.name,
+                srm_tender_master.technical_passing_weightage as passing_weightage,
+                srm_bid_submission_master.bidSubmissionCode")
                 ->join('srm_supplier_registration_link', 'srm_supplier_registration_link.id', '=', 'srm_bid_submission_master.supplier_registration_id')
                 ->join('srm_tender_master', 'srm_tender_master.id', '=', 'srm_bid_submission_master.tender_id')
                 ->join('srm_bid_submission_detail', 'srm_bid_submission_detail.bid_master_id', '=', 'srm_bid_submission_master.id')
                 ->join('srm_evaluation_criteria_details', 'srm_evaluation_criteria_details.id', '=', 'srm_bid_submission_detail.evaluation_detail_id')
                 ->havingRaw('weightage >= passing_weightage')
                 ->groupBy('srm_bid_submission_master.id')
-                ->where('srm_evaluation_criteria_details.critera_type_id', 2)
-                ->where('srm_bid_submission_master.status', 1)
-                ->where('srm_bid_submission_master.bidSubmittedYN', 1)
-                ->where('srm_bid_submission_master.tender_id', $tenderId)
-                ->orderBy('srm_bid_submission_master.id', 'desc')
-                ->get();
-        }
-        else
-        {
+                ->where('srm_evaluation_criteria_details.critera_type_id', 2);
+        
+            if ($isNegotiation == 1) {
+                $queryResult->whereIn('srm_bid_submission_master.id', $bidSubmissionMasterIds);
+            } else {
+                $queryResult->whereNotIn('srm_bid_submission_master.id', $bidSubmissionMasterIds);
+            }
+
+            $queryResult->where('srm_bid_submission_master.status', 1)
+            ->where('srm_bid_submission_master.bidSubmittedYN', 1)
+            ->where('srm_bid_submission_master.tender_id', $tenderId)
+            ->orderBy('srm_bid_submission_master.id', 'desc');
+
+        } else {
             $queryResult = BidSubmissionMaster::selectRaw("
-            srm_bid_submission_master.id, 
-            srm_supplier_registration_link.name,
-            srm_bid_submission_master.bidSubmissionCode")
+                srm_bid_submission_master.id, 
+                srm_supplier_registration_link.name,
+                srm_bid_submission_master.bidSubmissionCode")
                 ->join('srm_supplier_registration_link', 'srm_supplier_registration_link.id', '=', 'srm_bid_submission_master.supplier_registration_id')
                 ->join('srm_tender_master', 'srm_tender_master.id', '=', 'srm_bid_submission_master.tender_id')
                 ->groupBy('srm_bid_submission_master.id')
-                ->where('srm_bid_submission_master.status', 1)
-                ->where('srm_bid_submission_master.bidSubmittedYN', 1)
-                ->where('srm_bid_submission_master.tender_id', $tenderId)
-                ->where('srm_bid_submission_master.doc_verifiy_status', 1)
-                ->orderBy('srm_bid_submission_master.id', 'desc')
-                ->get();
+                ->where('srm_bid_submission_master.status', 1);
+        
+            if ($isNegotiation == 1) {
+                $queryResult->whereIn('srm_bid_submission_master.id', $bidSubmissionMasterIds);
+            } else {
+                $queryResult->whereNotIn('srm_bid_submission_master.id', $bidSubmissionMasterIds);
+                  
+            }
 
+           $queryResult->where('srm_bid_submission_master.bidSubmittedYN', 1)
+            ->where('srm_bid_submission_master.tender_id', $tenderId)
+            ->where('srm_bid_submission_master.doc_verifiy_status', 1)
+            ->orderBy('srm_bid_submission_master.id', 'desc');
         }
-
-
+        
+        $queryResultArray = $queryResult->get()->toArray(); 
                 
         $selctedItems = [];
 
-        foreach($queryResult as $supplier) {
-            $data = ["id" => $supplier->id, "itemName" => $supplier->bidSubmissionCode.'|'.$supplier->name];
+        foreach($queryResultArray as $supplier) {
+            $data = ["id" => $supplier['id'], "itemName" => $supplier['bidSubmissionCode'].'|'.$supplier['name']];
             array_push($selctedItems,$data);
         }   
 
@@ -1029,7 +1108,7 @@ class BidSubmissionMasterAPIController extends AppBaseController
             ->where('is_disabled', 0)
             ->get()
             ->toArray();
-        return $this->sendResponse(['supplierList'=> $queryResult, 'itemList' => $itemListIsEnableFalse,'selectedItems'=>$selctedItems], 'Data retrieved successfully');
+        return $this->sendResponse(['supplierList'=> $queryResultArray, 'itemList' => $itemListIsEnableFalse,'selectedItems'=>$selctedItems], 'Data retrieved successfully');
     }
 
     public function generateSupplierItemReportTableView(Request $request)
@@ -1312,4 +1391,15 @@ class BidSubmissionMasterAPIController extends AppBaseController
             $query->where('critera_type_id', 2);
          }])->where('id', $tenderId)->first();
     }
+
+    
+   public function getIsExistCommonAttachment(Request $request)
+   { 
+       $existCommonAttachment = $this->bidSubmissionMasterRepository->getIsExistCommonAttachment($request);
+       if(!$existCommonAttachment['status']){
+        return $this->sendError($existCommonAttachment['message'], 500);
+       }
+
+       return $existCommonAttachment['data'];
+   }
 }

@@ -13,6 +13,7 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateSupplierCategorySubAPIRequest;
 use App\Http\Requests\API\UpdateSupplierCategorySubAPIRequest;
+use App\Models\SupplierCategoryMaster;
 use App\Models\SupplierCategorySub;
 use App\Models\SupplierMaster;
 use App\Models\SupplierSubCategoryAssign;
@@ -61,44 +62,11 @@ class SupplierCategorySubAPIController extends AppBaseController
         return $this->sendResponse($supplierCategorySubs->toArray(), 'Supplier Category Subs retrieved successfully');
     }
 
-
     public function getSubCategoriesByMasterCategory(Request $request){
-
-        $supplierId = $request['supplierId'];
-        $supplier = SupplierMaster::where('supplierCodeSystem','=',$supplierId)->first();
-
-        if($supplier){
-            $supMasterCategoryID = $supplier['supCategoryMasterID']; //493;
-            $supplierCategorySubs = SupplierCategorySub::where('supMasterCategoryID','=',$supMasterCategoryID)->where('isActive',1)->get();
-        }else{
-            $supplierCategorySubs = [];
-        }
-
-        return $this->sendResponse($supplierCategorySubs, 'Supplier Category Subs retrieved successfully');
+        $businessCategoryID = $request['businessCategoryID'];
+        $businessSubCategories = SupplierCategorySub::where('supMasterCategoryID',$businessCategoryID)->where('isActive',1)->get();
+        return $this->sendResponse($businessSubCategories, 'Sub category retrieved successfully');
     }
-
-    public function addSubCategoryToSupplier(Request $request){
-
-        $supplierSubCategory = new SupplierSubCategoryAssign();
-
-        $supplierSubCategory->supplierID = $request['supplierId'];
-        $supplierSubCategory->supSubCategoryID = $request['subCategoryId'];
-        $supplierSubCategory->save();
-        return $this->sendResponse($supplierSubCategory, 'Supplier Category Subs added successfully');
-    }
-
-    public function removeSubCategoryToSupplier(Request $request){
-
-        $supplierSubCategory = SupplierSubCategoryAssign::where('supplierSubCategoryAssignID',$request['supplierSubCategoryAssignID'])->first();
-
-        if (empty($supplierSubCategory)) {
-            return $this->sendError('Supplier Category Sub not found');
-        }
-
-        $supplierSubCategory->delete();
-        return $this->sendResponse($supplierSubCategory, 'Supplier Category Subs deleted successfully');
-    }
-
 
     /**
      * Store a newly created SupplierCategorySub in storage.

@@ -59,6 +59,7 @@ class POSBankGLEntries extends Model
 
     public $fillable = [
         'shiftId',
+        'invoiceID',
         'bankAccId',
         'logId',
         'isReturnYN',
