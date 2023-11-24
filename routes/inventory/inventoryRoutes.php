@@ -60,7 +60,6 @@ Route::group([], function () {
     Route::get('getGRVDetailsAmendHistory', 'GrvDetailsRefferedbackAPIController@getGRVDetailsAmendHistory')->name("Get GRV Details Amend History");
     Route::get('goodReceiptVoucherAudit', 'GRVMasterAPIController@goodReceiptVoucherAudit')->name("Good Receipt Voucher Audit");
     Route::get('segment/projects', 'ProcumentOrderAPIController@getProjectsBySegment')->name("Get Projects By Segment");
-    Route::get('getAllFinancePeriod', 'CompanyFinancePeriodAPIController@getAllFinancePeriod')->name("Get All Finance Period");
     Route::get('getBinLocationsByWarehouse', 'GRVMasterAPIController@getBinLocationsByWarehouse')->name("Get Bin Locations By Warehouse");
     Route::get('getItemsByGRVMaster', 'GRVDetailsAPIController@getItemsByGRVMaster')->name("Get Items By GRV Master");
     Route::get('getLogisticsItemsByGRV', 'PoAdvancePaymentAPIController@loadPoPaymentTermsLogisticForGRV')->name("Load Po Payment Terms Logistic For GRV");

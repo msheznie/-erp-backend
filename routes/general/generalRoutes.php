@@ -46,8 +46,7 @@ Route::post('rejectProcurementOrder', 'ProcumentOrderAPIController@rejectProcure
 Route::get('getDocumentTracingData', 'ProcumentOrderAPIController@getDocumentTracingData')->name('Get document tracing data');
 Route::get('checkBudgetShowPolicy', 'BudgetMasterAPIController@checkBudgetShowPolicy')->name('Check budget show policy');
 
-Route::get('checkUserGroupAccessRights', 'UserGroupAssignAPIController@checkUserGroupAccessRights');
-Route::get('getGRVFormData', 'GRVMasterAPIController@getGRVFormData')->name('Get grv form data');
+Route::get('checkUserGroupAccessRights', 'UserGroupAssignAPIController@checkUserGroupAccessRights'); //!! Do not add route name to this route !!
 Route::get('getAllFinancePeriod', 'CompanyFinancePeriodAPIController@getAllFinancePeriod')->name('Get all finance period');
 Route::get('getSearchSupplierByCompany', 'SupplierMasterAPIController@getSearchSupplierByCompany')->name('Get search supplier by company');
 
