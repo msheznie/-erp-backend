@@ -243,12 +243,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('po_advance_payments', 'PoAdvancePaymentAPIController');
 
             Route::post('reportSpentAnalysisDrilldownExport', 'ProcumentOrderAPIController@reportSpentAnalysisDrilldownExport');
-            
-
-            Route::post('reportPoToPayment', 'ProcumentOrderAPIController@reportPoToPayment');
-            Route::post('exportPoToPaymentReport', 'ProcumentOrderAPIController@exportPoToPaymentReport');
-            Route::get('reportPoToPaymentFilterOptions', 'ProcumentOrderAPIController@reportPoToPaymentFilterOptions');
-
 
             Route::get('exchangerate', 'ApprovalLevelAPIController@confirmDocTest');
 

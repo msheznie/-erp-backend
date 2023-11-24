@@ -187,6 +187,13 @@ Route::group([], function() {
 
 });
 
+//Report Po to payment
+Route::group([], function() {
+    Route::get('reportPoToPaymentFilterOptions', 'ProcumentOrderAPIController@reportPoToPaymentFilterOptions')->name('Report po to payment filter options');
+    Route::post('reportPoToPayment', 'ProcumentOrderAPIController@reportPoToPayment')->name('Report po to payment');
+    Route::post('exportPoToPaymentReport', 'ProcumentOrderAPIController@exportPoToPaymentReport')->name('Export po to payment report');
+});
+
 //Review
 
 //Procurement Order
