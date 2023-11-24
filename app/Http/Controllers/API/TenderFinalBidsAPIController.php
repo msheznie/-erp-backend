@@ -6,6 +6,7 @@ use App\Http\Requests\API\CreateTenderFinalBidsAPIRequest;
 use App\Http\Requests\API\UpdateTenderFinalBidsAPIRequest;
 use App\Models\BidSubmissionMaster;
 use App\Models\DocumentAttachments;
+use App\Models\SrmTenderBidEmployeeDetails;
 use App\Models\TenderBidNegotiation;
 use App\Models\TenderFinalBids;
 use App\Repositories\TenderFinalBidsRepository;
@@ -396,6 +397,25 @@ class TenderFinalBidsAPIController extends AppBaseController
         $pdf = \App::make('dompdf.wrapper');
         $pdf->loadHTML($html);
         return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
+    }
+
+    public function getTenderAwardingReport(Request $request)
+    {
+        $tenderId = $request->get('id');
+        $tenderMaster = TenderMaster::where('id', $tenderId)->with(['ranking_supplier' => function ($q) {
+            $q->where('award', 1)->with('supplier');
+        }])->first();
+
+        $employeeDetails = SrmTenderBidEmployeeDetails::where('tender_id', $tenderId)->with('employee')->get();
+
+        $time = strtotime("now");
+        $fileName = 'Minutes_of_Tender_Awarding' . $time . '.pdf';
+        $order = array('tenderMaster' => $tenderMaster, 'employeeDetails' => $employeeDetails);
+        $html = view('print.minutes_of_tender_awarding_print', $order);
+        $pdf = \App::make('dompdf.wrapper');
+        $pdf->loadHTML($html);
+        return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
+
     }
 
 
