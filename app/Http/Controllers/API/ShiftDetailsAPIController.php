@@ -754,13 +754,12 @@ class ShiftDetailsAPIController extends AppBaseController
 
         $isInsufficientExist = false;
 
-        $qtyArray = POSInsufficientItems::with(['warehouse'])->where('shiftId', $shiftId)->get();
-        foreach ($qtyArray as $gl) {
-            if($gl->insufficientQty > 0)
-            {
-                $isInsufficientExist = true;
-                break;
-            }
+        $qtyArray = POSInsufficientItems::with(['warehouse'])->where('shiftId', $shiftId)->where('insufficientQty', '>', 0)->get();
+
+        $qtyArrayLength = count($qtyArray);
+
+        if ($qtyArrayLength > 0) {
+            $isInsufficientExist = true;
         }
 
         $data['output'] = $qtyArray;
@@ -2545,11 +2544,11 @@ class ShiftDetailsAPIController extends AppBaseController
                 if ($isPostGroupBy == 0) {
 
                     $bankGL = DB::table('pos_source_menusalesmaster')
-                        ->selectRaw('SUM(pos_source_menusalesmaster.cashReceivedAmount) as amount, pos_source_menusalesmaster.menuSalesID as invoiceID, pos_source_menusalespayments.GLCode as glCode, pos_source_menusalesmaster.shiftID as shiftId, pos_source_menusalesmaster.companyID as companyID')
+                        ->selectRaw('SUM(pos_source_menusalespayments.amount) as amount, pos_source_menusalesmaster.menuSalesID as invoiceID, pos_source_menusalespayments.GLCode as glCode, pos_source_menusalesmaster.shiftID as shiftId, pos_source_menusalesmaster.companyID as companyID')
                         ->join('pos_source_menusalespayments', 'pos_source_menusalespayments.menuSalesID', '=', 'pos_source_menusalesmaster.menuSalesID')
                         ->where('pos_source_menusalesmaster.shiftID', $shiftId)
-                        ->groupBy('pos_source_menusalesmaster.shiftID')
-                        ->groupBy('pos_source_menusalesmaster.menuSalesID')
+                        ->groupBy('pos_source_menusalespayments.menuSalesID')
+                        ->groupBy('pos_source_menusalespayments.paymentConfigMasterID')
                         ->groupBy('pos_source_menusalespayments.GLCode')
                         ->where('pos_source_menusalesmaster.isCreditSales', 0)
                         ->where('pos_source_menusalesmaster.isWastage', 0)
