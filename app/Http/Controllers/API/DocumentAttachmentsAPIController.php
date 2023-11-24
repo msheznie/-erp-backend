@@ -1070,6 +1070,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
         }
         $sort = 'asc';
         $id = $request['id'];
+        $envelopType = $request['envelopType'];
 
         if($this->getOldBidSubmissonCode($id) != null){
             $id = $this->getOldBidSubmissonCode($id);
@@ -1080,7 +1081,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
 
         $documentSystemId = $documentType->document_type == 0 ? 108:113;
 
-        $query = DocumentAttachments::with('bid_verify')->where('documentSystemCode', $id)->where('documentSystemID', $documentSystemId)->where('attachmentType',0)->where('envelopType',3);
+        $query = DocumentAttachments::with('bid_verify')->where('documentSystemCode', $id)->where('documentSystemID', $documentSystemId)->where('attachmentType',0)->where('envelopType', $envelopType);
 
        // return $this->sendResponse($query, 'Tender Masters retrieved successfully');
 
