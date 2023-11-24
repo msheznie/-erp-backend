@@ -74,3 +74,12 @@ Route::group([],function (){
     Route::post('getTBUnmatchedData', 'FinancialReportAPIController@getTBUnmatchedData')->name("Get tb unmatched data");
 });
 
+//Inter Company Report
+Route::group([],function (){
+    Route::get('getICFilterFormData', 'FinancialReportAPIController@getICFilterFormData')->name("Get inter company filter form data");
+    Route::post('validateICReport', 'FinancialReportAPIController@validateICReport')->name("Validate inter company report");
+    Route::post('generateICReport', 'FinancialReportAPIController@generateICReport')->name("Generate inter company report");
+    Route::post('exportICReport', 'FinancialReportAPIController@exportICReport')->name("Export inter company report");
+    Route::post('getICDrillDownData', 'FinancialReportAPIController@getICDrillDownData')->name("Get inter company drill down data");
+});
+
