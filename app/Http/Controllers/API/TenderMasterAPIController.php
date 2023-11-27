@@ -2656,6 +2656,8 @@ WHERE
         $companySystemID = $input['companySystemID'];
         $is_date_disable = false;
         $is_comm_date_disable = false;
+        $is_emp_approval_active = false;
+
         $data['master'] = TenderMaster::with(['procument_activity', 'confirmed_by', 'tender_type', 'envelop_type', 'evaluation_type'])
                                         ->withCount(['criteriaDetails', 
                                             'criteriaDetails AS go_no_go_count' => function ($query) {
@@ -2752,10 +2754,18 @@ WHERE
             $is_date_disable = true;
         }
 
+        if(isset($data['master']) && isset($data['master']['bid_submission_closing_date'])) {
+            $bidClosingDate  = Carbon::parse($data['master']['bid_submission_closing_date']);
+            $currentDateTime = Carbon::now();
+            if ($currentDateTime->gte($bidClosingDate)) {
+                $is_emp_approval_active = true;
+            }
+        }
 
 
         $data['master']['disable_date'] = $is_date_disable;
         $data['master']['is_comm_date_disable'] = $is_comm_date_disable;
+        $data['master']['is_emp_approval_active'] = $is_emp_approval_active;
 
         $documentTypes = TenderDocumentTypeAssign::with(['document_type'])->where('tender_id', $tenderMasterId)->get();
         $docTypeArr = array();
