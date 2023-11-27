@@ -2092,6 +2092,18 @@ WHERE
     public function tenderMasterPublish(Request $request)
     {
         $input = $request->all();
+        $tenderTitle = $input['title'];
+        $tenderDescription = $input['description'];
+        $companyId = $input['company_id'];
+
+        $apiKey = $request->input('api_key');
+        $loginUrl = env('SRM_LINK');
+        $urlArray = explode('/', $loginUrl);
+        $urlArray = array_filter($urlArray);
+        array_pop($urlArray);
+
+        $urlString = implode('//', $urlArray) . '/';
+
         $employee = \Helper::getEmployeeInfo();
         DB::beginTransaction();
         try {
@@ -2101,6 +2113,7 @@ WHERE
             $result = TenderMaster::where('id', $input['id'])->update($att);
 
             if ($result) {
+                $this->openTenderSupplierEmailInvitation($tenderTitle, $tenderDescription, $companyId, $urlString);
                 DB::commit();
                 return ['success' => true, 'message' => 'Successfully Published'];
             }
@@ -2108,6 +2121,32 @@ WHERE
             DB::rollback();
             Log::error($this->failed($e));
             return ['success' => false, 'message' => $e];
+        }
+    }
+
+    public function openTenderSupplierEmailInvitation($tenderTitle, $tenderDescription, $companyId, $urlString){
+
+        $getFullyApprovedSupplierList = SupplierRegistrationLink::join('supplierassigned', 'supplierCodeSytem', '=', 'supplier_master_id')
+            ->whereNotNull('supplier_master_id')
+            ->where('supplierassigned.companySystemID', $companyId)
+            ->select('email')
+            ->distinct()
+            ->get();
+
+        foreach ($getFullyApprovedSupplierList as $SupplierList){
+
+            $docType = 'Tender';
+            $emailFormatted = email::emailAddressFormat($SupplierList['email']);
+
+            Mail::to($emailFormatted)->send(new EmailForQueuing(" ".$docType." Invitation link", "Dear Supplier," . "<br /><br />" . "
+            “I trust this message finds you well." . "<br /><br />" . "
+            We are in the process of inviting reputable suppliers to participate in a ".$docType." for an upcoming project. Your company's outstanding reputation and capabilities have led us to extend this invitation to you." . "<br /><br />" . "
+            If your company is interested in participating in the ".$docType." process, please click on the link below." . "<br /><br />" . "
+            " . "<b>" . " ".$docType." Title :" . "</b> " . $tenderTitle . "<br /><br />" . "
+            " . "<b>" . " ".$docType." Description :" . "</b> " . $tenderDescription . "<br /><br />" . "
+            " . "<b>" . "Link :" . "</b> " . "<a href='" . $urlString . "'>" . $urlString . "</a><br /><br />" . "
+            If you have any initial inquiries or require further information, feel free to reach out to us." . "<br /><br />" . "
+            Thank you for considering this invitation. We look forward to the possibility of collaborating with your esteemed company.”" . "<br /><br />"));
         }
     }
 
@@ -2765,7 +2804,11 @@ WHERE
 
         $data['master']['disable_date'] = $is_date_disable;
         $data['master']['is_comm_date_disable'] = $is_comm_date_disable;
+<<<<<<< HEAD
         $data['master']['is_emp_approval_active'] = $is_emp_approval_active;
+=======
+        $data['master']['tender_bids'] = $this->getTenderBits($request);
+>>>>>>> 22f3e5e6adef6901f279b90847383749409e96af
 
         $documentTypes = TenderDocumentTypeAssign::with(['document_type'])->where('tender_id', $tenderMasterId)->get();
         $docTypeArr = array();
@@ -2778,6 +2821,38 @@ WHERE
         }
         $data['documentTypes'] = $docTypeArr;
         return $data;
+    }
+
+    private function getTenderBits(Request $request)
+    {
+        $input = $request->all();
+        $companyId = $request['companySystemID'];
+        $tenderId = $request['tenderMasterId'];
+        $isNegotiation = $request['isNegotiation'];
+
+        $request->merge([
+            'tenderMasterId' => $tenderId,
+            'companySystemID' => $companyId,
+        ]);
+
+        $tenderBidNegotiations = TenderBidNegotiation::select('bid_submission_master_id_new')
+            ->where('tender_id', $tenderId)
+            ->get();
+
+        if ($tenderBidNegotiations->count() > 0) {
+            $bidSubmissionMasterIds = $tenderBidNegotiations->pluck('bid_submission_master_id_new')->toArray();
+        } else {
+            $bidSubmissionMasterIds = [];
+        }
+
+        $query = BidSubmissionMaster::where('status', 1)->where('bidSubmittedYN', 1)->where('tender_id', $tenderId);
+
+        if ($isNegotiation == 1) {
+            $query = $query->whereIn('id', $bidSubmissionMasterIds);
+        } else {
+            $query = $query->whereNotIn('id', $bidSubmissionMasterIds);
+        }
+        return $query->count();
     }
 
     public function tenderCommiteApproveal(Request $request)
