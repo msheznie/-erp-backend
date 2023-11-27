@@ -3,12 +3,24 @@
         border: 1px solid black;
         border-collapse: collapse;
     }
+    #footer {
+        position: fixed;
+        left: 0px;
+        bottom: 0px;
+        right: 0px;
+        height: 0px;
+        font-size: 10px;
+    }
+    .pagenum:after {
+        content: counter(page);
+    }
 </style>
 
 <table style="width:100%; font-size: 12px;">
     <tbody>
     <tr>
         <td colspan="4">
+            <img src="{{$company->logo_url}}" class="container">
             <h4 style="text-align: center;">Minutes of Tender Awarding Report</h4>
         </td>
     </tr>
@@ -57,4 +69,16 @@
     </tbody>
 </table>
 
-
+<div id="footer">
+    <table style="width:100%;">
+        <tr>
+            <td style="width:50%;font-size: 10px;vertical-align: bottom;">
+                <span>Printed Date & Time : {{date("d-M-y, h:i:s A")}}</span><br>
+                <span>Printed By : {{$employeeData->empName}}</span>
+            </td>
+            <td style="width:50%; text-align: center;font-size: 10px;vertical-align: bottom;">
+                <span style="float: right;">Page <span class="pagenum"></span></span><br>
+            </td>
+        </tr>
+    </table>
+</div>

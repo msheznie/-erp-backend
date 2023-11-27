@@ -2,16 +2,20 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\Helper;
 use App\Http\Requests\API\CreateTenderFinalBidsAPIRequest;
 use App\Http\Requests\API\UpdateTenderFinalBidsAPIRequest;
 use App\Models\BidSubmissionMaster;
+use App\Models\Company;
 use App\Models\DocumentAttachments;
+use App\Models\Employee;
 use App\Models\SrmTenderBidEmployeeDetails;
 use App\Models\TenderBidNegotiation;
 use App\Models\TenderFinalBids;
 use App\Repositories\TenderFinalBidsRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use Illuminate\Support\Facades\Auth;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
@@ -402,15 +406,20 @@ class TenderFinalBidsAPIController extends AppBaseController
     public function getTenderAwardingReport(Request $request)
     {
         $tenderId = $request->get('id');
+        $employeeID = $request->get('userID');
         $tenderMaster = TenderMaster::where('id', $tenderId)->with(['ranking_supplier' => function ($q) {
             $q->where('award', 1)->with('supplier');
         }])->first();
 
         $employeeDetails = SrmTenderBidEmployeeDetails::where('tender_id', $tenderId)->with('employee')->get();
 
+        $company = Company::where('companySystemID', $tenderMaster->company_id)->first();
+
+        $employeeData = Employee::where('employeeSystemID',$employeeID)->first();
+
         $time = strtotime("now");
         $fileName = 'Minutes_of_Tender_Awarding' . $time . '.pdf';
-        $order = array('tenderMaster' => $tenderMaster, 'employeeDetails' => $employeeDetails);
+        $order = array('tenderMaster' => $tenderMaster, 'employeeDetails' => $employeeDetails, 'company' => $company, 'employeeData' => $employeeData);
         $html = view('print.minutes_of_tender_awarding_print', $order);
         $pdf = \App::make('dompdf.wrapper');
         $pdf->loadHTML($html);
