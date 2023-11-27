@@ -984,11 +984,25 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
     {
         $input = $request->all();
         $disk = Helper::policyWiseDisk($input['companySystemID'], 'public');
-        if ($exists = Storage::disk($disk)->exists('standard_jv_template/standard_jv_upload_template.xlsx')) {
-            return Storage::disk($disk)->download('standard_jv_template/standard_jv_upload_template.xlsx', 'standard_jv_upload_template.xlsx');
+
+        $checkProjectSelectionPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
+				->where('companySystemID', $input['companySystemID'])
+				->first();
+
+        if ($checkProjectSelectionPolicy->isYesNO == 0) {
+            if ($exists = Storage::disk($disk)->exists('standard_jv_template/standard_jv_upload_template.xlsx')) {
+                return Storage::disk($disk)->download('standard_jv_template/standard_jv_upload_template.xlsx', 'standard_jv_upload_template.xlsx');
+            } else{
+                return $this->sendError('Attachments not found', 500);
+            }
         } else {
-            return $this->sendError('Attachments not found', 500);
+            if ($exists = Storage::disk($disk)->exists('standard_jv_template/standard_jv_upload_with_project_template.xlsx')) {
+                return Storage::disk($disk)->download('standard_jv_template/standard_jv_upload_with_project_template.xlsx', 'standard_jv_upload_with_project_template.xlsx');
+            } else{
+                return $this->sendError('Attachments not found', 500);
+            }
         }
+        
     }
 
     public function getJournalVoucherMasterApproval(Request $request)
@@ -1589,9 +1603,17 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
                 }
             }
 
-            $record = \Excel::selectSheets('Sheet1')->load(Storage::disk('local')->url('app/' . $originalFileName), function ($reader) {
-            })->select(array('gl_account', 'gl_account_description', 'department', 'client_contract', 'comments', 'debit_amount', 'credit_amount'))->get()->toArray();
+            $checkProjectSelectionPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
+				->where('companySystemID', $input['companySystemID'])
+				->first();
 
+            if ($checkProjectSelectionPolicy->isYesNO == 0) {
+                $record = \Excel::selectSheets('Sheet1')->load(Storage::disk('local')->url('app/' . $originalFileName), function ($reader) {
+                })->select(array('gl_account', 'gl_account_description', 'department', 'client_contract', 'comments', 'debit_amount', 'credit_amount'))->get()->toArray();
+            } else {
+                $record = \Excel::selectSheets('Sheet1')->load(Storage::disk('local')->url('app/' . $originalFileName), function ($reader) {
+                })->select(array('gl_account', 'gl_account_description', 'project', 'department', 'client_contract', 'comments', 'debit_amount', 'credit_amount'))->get()->toArray();
+            }
 
             $count = 0;
             $valid = 0;
@@ -1613,6 +1635,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
                     $contractUID = null;
                     $debitAmount = 0;
                     $creditAmount = 0;
+                    $projectID = null;
                     $is_failed = false;
                     $line_nu++;
                     if (isset($val['gl_account']) && !is_null($val['gl_account'])) {
@@ -1671,6 +1694,16 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
                         if ($val['credit_amount'] != '') {
                             $creditAmount = $val['credit_amount'];
                         }
+                        if (isset($val['project']) && $val['project'] != '') {
+                            $project = ErpProjectMaster::whereRaw("CONCAT(projectCode, '-', description) = ?", [$val['project']])
+                                    ->where('companySystemID', $jvMasterData->companySystemID)
+                                    ->first();
+                            if(!empty($project)){
+                                $projectID = $project['id'];
+                            }else {
+                                $projectID = null;
+                            }    
+                        }
 
                         if(!$is_failed)
                         {
@@ -1698,6 +1731,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
                             $data['createdUserSystemID'] = \Helper::getEmployeeSystemID();
                             $data['createdDateTime'] = NOW();
                             $data['timeStamp'] = NOW();
+                            $data['detail_project_id'] = $projectID;
                             $finalData[] = $data;
                         }
                         else
@@ -1712,7 +1746,7 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
             } else {
                 return $this->sendError('No Records found!', 500);
             }
-            
+
             if (count($finalData) > 0) {
                 foreach (array_chunk($finalData, 500) as $t) {
                     JvDetail::insert($t);

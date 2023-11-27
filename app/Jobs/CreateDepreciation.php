@@ -104,7 +104,7 @@ class CreateDepreciation implements ShouldQueue
                     Log::info('chunkCount - '.$chunkDataSizeCounts);
 
                     for ($i = 1; $i <= $chunkDataSizeCounts; $i++) {
-                        ProcessDepreciationQuery::dispatch($i, $db, $depMasterAutoID, $depDate, $chunkDataSizeCounts);
+                        ProcessDepreciationQuery::dispatch($i, $db, $depMasterAutoID, $depDate, $chunkDataSizeCounts)->onQueue('single');
                     }
                     DB::commit();
                 }

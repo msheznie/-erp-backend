@@ -356,6 +356,11 @@ class PerformaMaster extends Model
     ];
 
 
+    public function performaTemp()
+    {
+        return $this->hasMany('App\Models\PerformaTemp', 'performaMasterID', 'PerformaMasterID');
+    }
+
     public function ticket()
     {
         return $this->belongsTo('App\Models\TicketMaster', 'ticketNo', 'ticketidAtuto');

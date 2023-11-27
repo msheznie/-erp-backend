@@ -76,6 +76,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Jobs\UnbilledGRVInsert;
 use App\Jobs\TaxLedgerInsert;
+use App\Models\POSSOURCEShiftDetails;
+use App\Models\CurrencyMaster;
 
 class RPOSSalesGlService
 {
@@ -88,12 +90,18 @@ class RPOSSalesGlService
 
         $glEntries = POSGLEntries::where('shiftId', $masterModel["autoID"])->get();
 
+
+
         foreach($glEntries as $gl) {
             $invItems = DB::table('pos_source_menusalesmaster')
                 ->selectRaw('pos_source_menusalesmaster.*')
                 ->where('pos_source_menusalesmaster.shiftID', $masterModel["autoID"])
                 ->first();
             $glCodes = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $gl->glCode)->first();
+
+            $sourceDetails = POSSOURCEShiftDetails::where("shiftId", $masterModel["autoID"])->select('transactionCurrency')->first();
+            $currency = CurrencyMaster::where("CurrencyCode", $sourceDetails->transactionCurrency)->first();
+            $data['documentTransCurrencyID'] = $currency->currencyID;
 
             $data['companySystemID'] = $masterModel['companySystemID'];
             $data['companyID'] = $masterModel["companyID"];
@@ -132,6 +140,7 @@ class RPOSSalesGlService
             $data['documentRptCurrencyER'] = $invItems->companyReportingExchangeRate;
             $data['documentRptAmount'] = $gl->amount / $invItems->companyReportingExchangeRate;
             $data['timestamp'] = \Helper::currentDateTime();
+            $data['supplierCodeSystem'] = null;
             array_push($finalData, $data);
         }
 	
