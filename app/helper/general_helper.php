@@ -111,6 +111,7 @@ use App\Models\DirectInvoiceDetails;
 use App\Models\BookInvSuppDet;
 use App\Models\SupplierInvoiceDirectItem;
 use App\Models\CurrencyMaster;
+use App\Models\DocumentAttachments;
 
 class Helper
 {
@@ -3286,17 +3287,42 @@ class Helper
                                         $pushNotificationUserIds = [];
                                         $pushNotificationArray = [];
                                         $document = Models\DocumentMaster::where('documentSystemID', $documentApproved->documentSystemID)->first();
-
+                                        $file = []; 
                                         
                                         if($params["document"] == 117 )
                                         {
-                                            $document->documentDescription = $sorceDocument->type == 1?'Edit request':'Amend request';
+                                            $document->documentDescription = $sorceDocument->type == 1?'Edit request':'Amend request'; 
                                         }
 
                                         if($params["document"] == 118 )
-                                        {
-                                            $document->documentDescription = $sorceDocument->type == 1?'Edit confirm request':'Amend confirm request';
-                                        }
+                                        { 
+                                            $document->documentDescription = $sorceDocument->type == 1?'Edit confirm request':'Amend confirm request'; 
+                                            $companySystemId = $documentApproved->companySystemID;
+                                            
+                                            $amendmentsList = DocumentModifyRequest::select('id','documentSystemCode','document_master_id')
+                                            ->with(['documentAttachments'=> function ($q) use ($companySystemId){ 
+                                                $q->select('documentSystemCode','attachmentID','originalFileName','path')
+                                                ->where('companySystemID',$companySystemId)
+                                                ->where('documentSystemID',108)
+                                                ->where('attachmentType',3);
+                                            }])
+                                            ->whereHas('documentAttachments', function($q2) use ($companySystemId) {
+                                                $q2->where('companySystemID',$companySystemId)
+                                                ->where('documentSystemID',108)
+                                                ->where('attachmentType',3);
+                                            })
+                                            ->where('id',$params['autoID'])
+                                            ->where('companySystemID',$companySystemId)
+                                            ->first();
+            
+                                            if(!empty($amendmentsList)){  
+                                                $documentAttachments = $amendmentsList->documentAttachments;
+                                                    foreach ($documentAttachments as $amendments){
+                                                        $file[$amendments->originalFileName] = Helper::getFileUrlFromS3($amendments->path);
+                                                    }     
+                                            }
+                                        } 
+ 
                                         
                                         $approvedDocNameBody = $document->documentDescription . ' <b>' . $documentApproved->documentCode . '</b>';
 
@@ -3312,9 +3338,17 @@ class Helper
                                         //     $body = '<p>' . $approvedDocNameBody . ' is pending for your approval. <br><br><a href="' . $redirectUrl . '">Click here to approve</a></p>';
                                         // }
 
-
                                         $redirectUrl =  self::checkDomai();
-                                        $body = '<p>' . $approvedDocNameBody . ' is pending for your approval. <br><br><a href="' . $redirectUrl . '">Click here to approve</a></p>';
+
+                                        $body = '<p>' . $approvedDocNameBody . ' is pending for your approval. <br><br>';
+
+                                        if ($params["document"] == 117) {
+                                            $ammendComment = self::getDocumentModifyRequestDetails($params['autoID']);
+                                            $ammendText = '<b>Amended Comment :</b> ' . $ammendComment['description'] . '<br>';
+                                            $body .= $ammendText;
+                                        }
+
+                                        $body .= '<a href="' . $redirectUrl . '">Click here to approve</a></p>';
 
                                         $subject = "Pending " . $document->documentDescription . " approval " . $documentApproved->documentCode;
                                         $pushNotificationMessage = $document->documentDescription . " " . $documentApproved->documentCode . " is pending for your approval.";
@@ -3326,7 +3360,8 @@ class Helper
                                                     'docSystemID' => $documentApproved->documentSystemID,
                                                     'alertMessage' => $subject,
                                                     'emailAlertMessage' => $body,
-                                                    'docSystemCode' => $documentApproved->documentSystemCode
+                                                    'docSystemCode' => $documentApproved->documentSystemCode,
+                                                    'attachmentList'=> $file
                                                 );
 
                                                 $pushNotificationUserIds[] = $da->employee->employeeSystemID;
@@ -8816,6 +8851,15 @@ class Helper
         $retentionAmountToFixed = round($retentionAmount,$decimalPlaces);
         $bookInvSuppMaster->retentionAmount = $retentionAmountToFixed;
         $bookInvSuppMaster->save();
+    }
+
+    public static function getDocumentModifyRequestDetails($autoID)
+    { 
+        $doucumentModifyComment = DocumentModifyRequest::select('description')
+        ->where('id',$autoID)
+        ->first();
+
+        return $doucumentModifyComment;
     }
 
 }
