@@ -9,6 +9,11 @@ Route::group([], function(){
     Route::post('approveJournalVoucher', 'JvMasterAPIController@approveJournalVoucher')->name("Approve JV");
     Route::post('rejectJournalVoucher', 'JvMasterAPIController@rejectJournalVoucher')->name("Reject JV");;
     Route::post('approvalPreCheckJV', 'JvMasterAPIController@approvalPreCheckJV')->name("Approve Pre Check JV");
+    Route::post('getJournalVoucherAmendHistory', 'JvMasterReferredbackAPIController@getJournalVoucherAmendHistory')->name("Get JV amend history");
+    Route::resource('jvMasterReferredbacks', 'JvMasterReferredbackAPIController');
+    Route::get('getJVDetailAmendHistory', 'JvDetailsReferredbackAPIController@getJVDetailAmendHistory')->name("Get JV detail amend history");
+    Route::get('getCompanyReportingCurrency', 'CurrencyMasterAPIController@getCompanyReportingCurrency')->name("Get company reporting currency");
+    Route::get('getGLForJournalVoucherDirect', 'ChartOfAccountsAssignedAPIController@getGLForJournalVoucherDirect')->name("Get gl for JV direct");
     
 
     //budgets

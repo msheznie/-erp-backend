@@ -108,7 +108,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
                 });
             });
 
-            Route::get('getCompanyReportingCurrency', 'CurrencyMasterAPIController@getCompanyReportingCurrency');
             Route::get('getCompanyLocalCurrencyCode', 'CurrencyMasterAPIController@getCompanyLocalCurrencyCode');
             Route::resource('users', 'UserAPIController');
             Route::resource('supplier_category_masters', 'SupplierCategoryMasterAPIController');
@@ -342,10 +341,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('performa_masters', 'PerformaMasterAPIController');
             Route::resource('rig_masters', 'RigMasterAPIController');
 
-
-            Route::get('getGLForJournalVoucherDirect', 'ChartOfAccountsAssignedAPIController@getGLForJournalVoucherDirect');
-
-
             Route::post('getglDetails','ChartOfAccountsAssignedAPIController@getglDetails');
 
             //Logistic Configuration Master
@@ -410,17 +405,12 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('journalVoucherDeleteAllAJ', 'JvDetailAPIController@journalVoucherDeleteAllAJ');
             Route::post('journalVoucherDeleteAllPOAJ', 'JvDetailAPIController@journalVoucherDeleteAllPOAJ');
             Route::post('journalVoucherDeleteAllDetails', 'JvDetailAPIController@journalVoucherDeleteAllDetails');
-            Route::post('getJournalVoucherMasterApproval', 'JvMasterAPIController@getJournalVoucherMasterApproval');
-            Route::post('getApprovedJournalVoucherForCurrentUser', 'JvMasterAPIController@getApprovedJournalVoucherForCurrentUser');
             Route::get('exportStandardJVFormat', 'JvMasterAPIController@exportStandardJVFormat');
-            Route::post('approveJournalVoucher', 'JvMasterAPIController@approveJournalVoucher');
-            Route::post('rejectJournalVoucher', 'JvMasterAPIController@rejectJournalVoucher');
             Route::post('journalVoucherReopen', 'JvMasterAPIController@journalVoucherReopen');
             Route::post('getJournalVoucherAmend', 'JvMasterAPIController@getJournalVoucherAmend');
             Route::post('amendJournalVoucherReview', 'JvMasterAPIController@amendJournalVoucherReview');
             Route::post('journalVoucherBudgetUpload', 'JvMasterAPIController@journalVoucherBudgetUpload');
             Route::post('standardJvExcelUpload', 'JvMasterAPIController@standardJvExcelUpload');
-            Route::post('approvalPreCheckJV', 'JvMasterAPIController@approvalPreCheckJV');
 
             Route::resource('bookInvSuppDetRefferedbacks', 'BookInvSuppDetRefferedBackAPIController');
             Route::resource('DirectInvoiceDetRefferedbacks', 'DirectInvoiceDetailsRefferedBackAPIController');
@@ -529,10 +519,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::resource('debitNoteDetailsRefferedbacks', 'DebitNoteDetailsRefferedbackAPIController');
 
-            Route::resource('jvMasterReferredbacks', 'JvMasterReferredbackAPIController');
             Route::resource('jvDetailsReferredbacks', 'JvDetailsReferredbackAPIController');
-            Route::post('getJournalVoucherAmendHistory', 'JvMasterReferredbackAPIController@getJournalVoucherAmendHistory');
-            Route::get('getJVDetailAmendHistory', 'JvDetailsReferredbackAPIController@getJVDetailAmendHistory');
 
             Route::resource('asset_capitalization_referreds', 'AssetCapitalizationReferredAPIController');
             Route::post('getAllCapitalizationAmendHistory', 'AssetCapitalizationReferredAPIController@getAllCapitalizationAmendHistory');
