@@ -2804,11 +2804,8 @@ WHERE
 
         $data['master']['disable_date'] = $is_date_disable;
         $data['master']['is_comm_date_disable'] = $is_comm_date_disable;
-<<<<<<< HEAD
         $data['master']['is_emp_approval_active'] = $is_emp_approval_active;
-=======
         $data['master']['tender_bids'] = $this->getTenderBits($request);
->>>>>>> 22f3e5e6adef6901f279b90847383749409e96af
 
         $documentTypes = TenderDocumentTypeAssign::with(['document_type'])->where('tender_id', $tenderMasterId)->get();
         $docTypeArr = array();
