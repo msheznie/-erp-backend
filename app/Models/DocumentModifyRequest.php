@@ -243,5 +243,9 @@ class DocumentModifyRequest extends Model
         'type' => 'required'
     ];
 
+    public function documentAttachments(){ 
+        return $this->hasMany('App\Models\DocumentAttachments','documentSystemCode','documentSystemCode');
+    }
+
     
 }
