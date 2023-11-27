@@ -3398,14 +3398,14 @@ class Helper
                                         }
 
                                         
-/* 
+
                                         $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, 1);
 
                                         $webPushData = [
                                             'title' => $pushNotificationMessage,
                                             'body' => '',
                                             'url' => $redirectUrl,
-                                        ]; */
+                                        ];
 
                                         // WebPushNotificationService::sendNotification($webPushData, 1, $pushNotificationUserIds);
 
