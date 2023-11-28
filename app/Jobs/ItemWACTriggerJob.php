@@ -43,6 +43,7 @@ class ItemWACTriggerJob implements ShouldQueue
     public function handle()
     {
         Log::useFiles( CommonJobService::get_specific_log_file('item-wac-amount') );
+        try {
 
         CommonJobService::db_switch($this->tenantDb);
 
@@ -85,6 +86,18 @@ class ItemWACTriggerJob implements ShouldQueue
                 Log::info('API guzzle: ' . $json);
             }
             Log::info('API Triggering Completed');
+        }
+        catch (\Exception $e){
+            Log::error($this->failed($e));
+            Log::info('Error Line No: ' . $e->getLine());
+            Log::info('Error Line No: ' . $e->getFile());
+            Log::info($e->getMessage());
+            Log::info('---- Item Wac Trigger End with Error-----' . date('H:i:s'));
+        }
 
+    }
+    public function failed($exception)
+    {
+        return $exception->getMessage();
     }
 }
