@@ -2129,6 +2129,7 @@ WHERE
         $getFullyApprovedSupplierList = SupplierRegistrationLink::join('supplierassigned', 'supplierCodeSytem', '=', 'supplier_master_id')
             ->whereNotNull('supplier_master_id')
             ->where('supplierassigned.companySystemID', $companyId)
+            ->where('supplierassigned.isActive', 1)
             ->select('email')
             ->distinct()
             ->get();
