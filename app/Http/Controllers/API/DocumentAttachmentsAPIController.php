@@ -1089,7 +1089,11 @@ class DocumentAttachmentsAPIController extends AppBaseController
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
             $query = $query->where(function ($query) use ($search) {
-                    $query->where('originalFileName', 'like', "%{$search}%");
+                $query->where('originalFileName', 'like', "%{$search}%")
+                    ->orWhere('attachmentDescription', 'like', "%{$search}%")
+                    ->orWhereHas('document_parent', function ($query) use ($search) {
+                        $query->where('attachmentDescription', 'like', "%{$search}%");
+                    });
             });
         }
 
