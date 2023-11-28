@@ -285,11 +285,11 @@ class APIController extends Controller
                             foreach ($val2->controls as $val3) {
                                 foreach ($val3->field->values as $key1 => $val4) {
                                     if ($val3->form_field_id == 1) { //Category 
-                                        $category = SupplierCategoryMaster::select('categoryDescription', 'categoryCode')->where('supCategoryMasterID', $val4->value)->first();
-                                        $val4->value = $category['categoryDescription'];
+                                        $category = SupplierCategoryMaster::select('categoryDescription', 'categoryCode','categoryName')->where('supCategoryMasterID', $val4->value)->first();
+                                        $val4->value = $category['categoryName'];
                                     } else if ($val3->form_field_id == 2) { // Sub Category 
-                                        $subCategory = SupplierCategorySub::select('categoryDescription', 'subCategoryCode')->where('supCategorySubID', $val4->value)->first();
-                                        $val4->value = $subCategory['categoryDescription'];
+                                        $subCategory = SupplierCategorySub::select('categoryDescription', 'subCategoryCode','categoryName')->where('supCategorySubID', $val4->value)->first();
+                                        $val4->value = $subCategory['categoryName'];
                                     } else if ($val3->form_field_id == 28) { // Preferred Functional Currency
                                         $currency = CurrencyMaster::select('CurrencyCode', 'CurrencyName')->where('currencyID', $val4->value)->first();
                                         $val4->value = $currency['CurrencyName'] . ' (' . $currency['CurrencyCode'] . ')';
