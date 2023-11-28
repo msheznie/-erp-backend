@@ -2095,6 +2095,7 @@ WHERE
         $tenderTitle = $input['title'];
         $tenderDescription = $input['description'];
         $companyId = $input['company_id'];
+        $tenderType = $input['tender_type_id'];
 
         $apiKey = $request->input('api_key');
         $loginUrl = env('SRM_LINK');
@@ -2113,8 +2114,10 @@ WHERE
             $result = TenderMaster::where('id', $input['id'])->update($att);
 
             if ($result) {
-                $this->openTenderSupplierEmailInvitation($tenderTitle, $tenderDescription, $companyId, $urlString);
                 DB::commit();
+                if ($tenderType == 1) {
+                    $this->openTenderSupplierEmailInvitation($tenderTitle, $tenderDescription, $companyId, $urlString);
+                }
                 return ['success' => true, 'message' => 'Successfully Published'];
             }
         } catch (\Exception $e) {
