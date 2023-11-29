@@ -49,6 +49,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('posMappingRequest', 'POS\PosAPIController@handleRequest');
         Route::post('pull_supplier_master', 'POS\PosAPIController@pullSupplierMaster');
         Route::post('pull_customer_master', 'POS\PosAPIController@pullCustomerMaster');
+        Route::post('fetch_item_wac_amount', 'POS\PosAPIController@fetchItemWacAmount');
     });
 
     Route::group(['middleware' => 'auth:api'], function () {
