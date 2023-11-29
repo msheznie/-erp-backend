@@ -2096,6 +2096,7 @@ WHERE
         $tenderDescription = $input['description'];
         $companyId = $input['company_id'];
         $tenderType = $input['tender_type_id'];
+        $documentType = $input['document_type'];
 
         $apiKey = $request->input('api_key');
         $loginUrl = env('SRM_LINK');
@@ -2115,7 +2116,7 @@ WHERE
 
             if ($result) {
                 DB::commit();
-                if ($tenderType == 1) {
+                if ($tenderType == 1 && $documentType == 0) {
                     $this->openTenderSupplierEmailInvitation($tenderTitle, $tenderDescription, $companyId, $urlString);
                 }
                 return ['success' => true, 'message' => 'Successfully Published'];

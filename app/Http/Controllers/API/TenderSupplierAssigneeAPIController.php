@@ -514,6 +514,11 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
         }
 
         if ($type == 1) {
+            if($rfx){
+                Mail::to($emailFormatted)->send(new EmailForQueuing("Registration Link", "Dear Supplier," . "<br /><br />" . "
+            You are invited to participate in a new ".$docType.", " . $tenderMaster['title'] . ".
+            Please find the link below to login to the supplier portal. " . "<br /><br />" . "Click Here: " . "</b><a href='" . $loginUrl . "'>" . $loginUrl . "</a><br /><br />" . " Thank You" . "<br /><br /><b>"));
+            }else{
             Mail::to($emailFormatted)->send(new EmailForQueuing(" ".$docType." Invitation link", "Dear Supplier," . "<br /><br />" . "
             “I trust this message finds you well." . "<br /><br />" . "
             We are in the process of inviting reputable suppliers to participate in a ".$docType." for an upcoming project. Your company's outstanding reputation and capabilities have led us to extend this invitation to you." . "<br /><br />" . "
@@ -523,6 +528,7 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
             " . "<b>" . "Link :" . "</b> " . "<a href='" . $loginUrl . "'>" . $loginUrl . "</a><br /><br />" . "
             If you have any initial inquiries or require further information, feel free to reach out to us." . "<br /><br />" . "
             Thank you for considering this invitation. We look forward to the possibility of collaborating with your esteemed company.”" . "<br /><br />"));
+            }
         } else {
             Mail::to($emailFormatted)->send(new EmailForQueuing("Registration Link", "Dear Supplier," . "<br /><br />" . "
             You are invited to participate in a new ".$docType.", " . $tenderMaster['title'] . ".
