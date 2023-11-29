@@ -25,6 +25,7 @@ namespace App\Http\Controllers\API;
 
 use App\Constants\ContractMasterType;
 use App\helper\CreateExcel;
+use App\helper\CustomerInvoiceService;
 use App\helper\Helper;
 use App\helper\TaxService;
 use App\Http\Controllers\AppBaseController;
@@ -90,10 +91,14 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\Storage;
 use App\helper\ItemTracking;
+use App\Jobs\CustomerInvoiceUpload;
 use App\Models\CustomerContactDetails;
 use App\Models\CustomerInvoiceLogistic;
 use App\Models\DeliveryTermsMaster;
+use App\Models\LogUploadCustomerInvoice;
 use App\Models\PortMaster;
+use App\Models\UploadCustomerInvoice;
+use PHPExcel_IOFactory;
 use Exception;
 use PHPExcel_Worksheet_Drawing;
 /**
@@ -2169,6 +2174,133 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         {
             return $this->sendResponse($basePath, trans('custom.success_export'));
         }
+    }
+
+    public function uploadCustomerInvoice(Request $request) {
+        $input = $request->all();
+        $excelUpload = $input['excelUploadCustomerInvoice'];
+        $input = array_except($request->all(), 'excelUploadCustomerInvoice');
+        $input = $this->convertArrayToValue($input);
+
+        $decodeFile = base64_decode($excelUpload[0]['file']);
+        $originalFileName = $excelUpload[0]['filename'];
+        $extension = $excelUpload[0]['filetype'];
+        $size = $excelUpload[0]['size'];
+
+        $allowedExtensions = ['xlsx','xls'];
+
+        if (!in_array($extension, $allowedExtensions))
+        {
+            return $this->sendError('This type of file not allow to upload.you can only upload .xlsx (or) .xls',500);
+        }
+
+        if ($size > 20000000) {
+            return $this->sendError('The maximum size allow to upload is 20 MB',500);
+        }
+
+        $employee = \Helper::getEmployeeInfo();
+
+        $uploadArray = array(
+            'companySystemID' => $input['companySystemID'],
+            'uploadComment' => $input['uploadComment'],
+            'uploadedDate' => \Helper::currentDateTime(),
+            'uploadedBy' => $employee->empID,
+            'uploadStatus' => -1
+        );
+
+        $uploadCustomerInvoice = UploadCustomerInvoice::create($uploadArray);
+
+        $uploadLogArray = array(
+            'companySystemID' => $input['companySystemID'],
+            'customerInvoiceUploadID' => $uploadCustomerInvoice->id,
+        );
+
+        $logUploadCustomerInvoice = LogUploadCustomerInvoice::create($uploadLogArray);
+
+
+
+        $db = isset($request->db) ? $request->db : "";
+
+        $disk = 'local';
+
+        Storage::disk($disk)->put($originalFileName, $decodeFile);
+
+        $objPHPExcel = PHPExcel_IOFactory::load(Storage::disk($disk)->path($originalFileName));
+
+        $uploadData = ['objPHPExcel' => $objPHPExcel,
+            'uploadCustomerInvoice' => $uploadCustomerInvoice,
+            'logUploadCustomerInvoice' => $logUploadCustomerInvoice,
+            'employee' => $employee,
+            'uploadedCompany' =>  $input['companySystemID'],
+        ];
+
+    //    return $CustomerInvoiceCreate = CustomerInvoiceService::customerInvoiceCreate($uploadData);
+
+
+        CustomerInvoiceUpload::dispatch($db, $uploadData);
+
+        // BudgetSegmentBulkInsert::dispatch($db, $uploadData);
+
+
+        return $this->sendResponse([], 'Budget upload successfully');
+
+    }
+
+    public function getCustomerInvoiceUploads(Request $request) {
+
+        $input = $request->all();
+
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $uploadCustomerInvoice = UploadCustomerInvoice::where('companySystemID', $input['companyId'])->with('uploaded_by','log')->select('*');
+
+
+        return \DataTables::eloquent($uploadCustomerInvoice)
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        $query->orderBy('id', $input['order'][0]['dir']);
+                    }
+                }
+            })
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->make(true);
+    }
+
+    public function deleteCustomerInvoiceUploads(Request $request){
+
+        $input = $request->all();
+
+        $customerInvoiceUploadID = $input['customerInvoiceUploadID'];
+
+        $uploadBudget = UploadCustomerInvoice::find($customerInvoiceUploadID);
+
+        if($uploadBudget->uploadStatus == -1) {
+            return $this->sendError('Upload in progress. Cannot be deleted.');
+        }
+
+        UploadCustomerInvoice::where('id', $customerInvoiceUploadID)->delete();
+        return $this->sendResponse([], 'customer invoice upload deleted successfully');
+
+
+        // $isBudgetMaster = BudgetMaster::where('customerInvoiceUploadID', $customerInvoiceUploadID)->where('confirmedYN', 1)->orWhere('approvedYN', 1)->first();
+        // if (empty($isBudgetMaster)) {
+        //     $budgetMasters = BudgetMaster::where('customerInvoiceUploadID', $customerInvoiceUploadID)->get();
+        //     foreach ($budgetMasters as $budgetMaster) {
+        //         Budjetdetails::where('budgetmasterID', $budgetMaster->budgetmasterID)->delete();
+        //     }
+        //     BudgetMaster::where('customerInvoiceUploadID', $customerInvoiceUploadID)->delete();
+        //     UploadBudgets::where('id', $customerInvoiceUploadID)->delete();
+        //     return $this->sendResponse([], 'Budget upload deleted successfully');
+        // } else {
+        //     return $this->sendError('The Budget details have already been saved. Cannot be deleted.');
+        // }
+
     }
 
     public function getCustomerInvoiceMasterView(Request $request)

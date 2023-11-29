@@ -77,6 +77,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('getBudgetUploads', 'BudgetMasterAPIController@getBudgetUploads')->name("Get upload budgets");
 
             Route::post('downloadCITemplate', 'CustomerInvoiceDirectAPIController@downloadCITemplate')->name("Download ci template");
+            Route::post('getCustomerInvoiceUploads', 'CustomerInvoiceDirectAPIController@getCustomerInvoiceUploads')->name("Get upload customer invoice");
 
 
             Route::post('getAllEmployees', 'EmployeeAPIController@getAllEmployees');
@@ -100,10 +101,12 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::group(['middleware' => 'max_memory_limit'], function () {
                 Route::group(['middleware' => 'max_execution_limit'], function () {
                     Route::post('uploadBudgets', 'BudgetMasterAPIController@uploadBudgets')->name("Upload budgets");
+                    Route::post('uploadCustomerInvoice', 'CustomerInvoiceDirectAPIController@uploadCustomerInvoice')->name("Upload customer invoice");
                     Route::resource('fixed_asset_depreciation_masters', 'FixedAssetDepreciationMasterAPIController');
                     Route::post('getAssetDepPeriodsByID', 'FixedAssetDepreciationPeriodAPIController@getAssetDepPeriodsByID');
                     Route::post('exportAssetMaster', 'FixedAssetMasterAPIController@exportAssetMaster');
                     Route::post('deleteBudgetUploads', 'BudgetMasterAPIController@deleteBudgetUploads')->name("Delete budget uploads");
+                    Route::post('deleteCustomerInvoiceUploads', 'CustomerInvoiceDirectAPIController@deleteCustomerInvoiceUploads')->name("Delete budget uploads");
                 });
             });
 
@@ -1233,3 +1236,7 @@ if (env("LOG_ENABLE", false)) {
 /*
  * End external related routes
  */
+
+Route::resource('upload_customer_invoices', 'UploadCustomerInvoiceAPIController');
+
+Route::resource('log_upload_customer_invoices', 'LogUploadCustomerInvoiceAPIController');
