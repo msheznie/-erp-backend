@@ -388,7 +388,7 @@ class PosAPIController extends AppBaseController
         }
     }
     
-    public function getItemMaster($company_id){
+    public function getItemMasters($company_id){
         $data = ItemMaster::selectRaw('itemmaster.itemCodeSystem as id, primaryCode as system_code, itemmaster.documentID as document_id, 
             (case when itemmaster.secondaryItemCode = "" or isnull(itemmaster.secondaryItemCode) then primaryCode else itemmaster.secondaryItemCode end) as secondary_code, "" as image,(case when itemShortDescription = "" or isnull(itemShortDescription) then itemmaster.itemDescription else itemShortDescription end) as name,itemmaster.itemDescription as description,
             itemmaster.financeCategoryMaster as category_id, financeitemcategorymaster.categoryDescription as category_description, itemmaster.financeCategorySub as sub_category_id, "" as sub_sub_category_id, itemmaster.barcode as barcode, financeitemcategorymaster.categoryDescription as finance_category, itemmaster.secondaryItemCode as part_number, unit as unit_id, units.UnitShortCode as unit_description, "" as reorder_point, "" as maximum_qty,
@@ -425,7 +425,7 @@ class PosAPIController extends AppBaseController
 
             $company_id = $request->get('company_id');
             
-            $items = $this->getItemMaster($company_id);
+            $items = $this->getItemMasters($company_id);
 
             DB::commit();
             return $this->sendResponse($items, 'Data Retrieved successfully');
@@ -1042,7 +1042,7 @@ class PosAPIController extends AppBaseController
         try {
             $company_id = $request->get('company_id');
 
-            $items = $this->getItemMaster($company_id);
+            $items = $this->getItemMasters($company_id);
 
             $data = $items->map(function ($item) use ($company_id) {
                 $data = array(
