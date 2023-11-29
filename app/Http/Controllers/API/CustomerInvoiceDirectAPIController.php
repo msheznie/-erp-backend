@@ -2240,7 +2240,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
 
 
-        return $this->sendResponse([], 'Budget upload successfully');
+        return $this->sendResponse([], 'Customer Invoice uploaded successfully');
 
     }
 
