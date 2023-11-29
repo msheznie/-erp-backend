@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API\POS;
 
+use App\helper\inventory;
 use App\Http\Controllers\AppBaseController;
 use App\Models\Company;
 use App\Models\CustomerMasterCategory;
@@ -386,16 +387,9 @@ class PosAPIController extends AppBaseController
             return $this->sendError($exception->getMessage());
         }
     }
-
-    public function pullItem(Request $request)
-    {
-        DB::beginTransaction();
-        try {
-
-            $company_id = $request->get('company_id');
-
-
-            $items = ItemMaster::selectRaw('itemmaster.itemCodeSystem as id, primaryCode as system_code, itemmaster.documentID as document_id, 
+    
+    public function getItemMaster($company_id){
+        $data = ItemMaster::selectRaw('itemmaster.itemCodeSystem as id, primaryCode as system_code, itemmaster.documentID as document_id, 
             (case when itemmaster.secondaryItemCode = "" or isnull(itemmaster.secondaryItemCode) then primaryCode else itemmaster.secondaryItemCode end) as secondary_code, "" as image,(case when itemShortDescription = "" or isnull(itemShortDescription) then itemmaster.itemDescription else itemShortDescription end) as name,itemmaster.itemDescription as description,
             itemmaster.financeCategoryMaster as category_id, financeitemcategorymaster.categoryDescription as category_description, itemmaster.financeCategorySub as sub_category_id, "" as sub_sub_category_id, itemmaster.barcode as barcode, financeitemcategorymaster.categoryDescription as finance_category, itemmaster.secondaryItemCode as part_number, unit as unit_id, units.UnitShortCode as unit_description, "" as reorder_point, "" as maximum_qty,
             rev.chartOfAccountSystemID as revenue_gl,rev.AccountDescription as revenue_description,
@@ -404,23 +398,34 @@ class PosAPIController extends AppBaseController
             "" as local_currency_id,"" as local_currency,"" as local_exchange_rate,"" as local_selling_price,"" as local_decimal_place,
             "" as reporting_currency_id,"" as reporting_currency,"" as reporting_exchange_rate,"" as reporting_selling_price,"" as reporting_decimal_place,
             "" as is_deleted,"" as deleted_by,"" as deleted_date_time,itemmaster.pos_type, itemassigned.isActive')
-                ->join('financeitemcategorymaster', 'financeitemcategorymaster.itemCategoryID', '=', 'itemmaster.financeCategoryMaster')
-                ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
-                ->join('units', 'units.UnitID', '=', 'itemmaster.unit')
-                ->leftJoin('chartofaccounts as rev', 'rev.chartOfAccountSystemID', '=', 'financeitemcategorysub.financeGLcodeRevenueSystemID')
-                ->leftJoin('chartofaccounts as cost', 'cost.chartOfAccountSystemID', '=', 'financeitemcategorysub.financeGLcodePLSystemID')
-                ->join('itemassigned', 'itemassigned.itemCodeSystem', '=', 'itemmaster.itemCodeSystem')
-                ->where('itemassigned.companySystemID', '=', $company_id)
-                ->where('itemassigned.isAssigned', '=', -1)
-                ->where('primaryCode', '!=', '')
-                ->where('itemmaster.documentID', '!=', '')
-                ->where('itemmaster.financeCategoryMaster', '!=', '')
-                ->where('itemmaster.financeCategorySub', '!=', '')
-                ->where('itemmaster.itemDescription', '!=', '')
-                ->where('financeitemcategorymaster.categoryDescription', '!=', '')
-                ->where('units.UnitShortCode', '!=', '')
-                // ->where('itemmaster.financeCategoryMaster', '!=', 3)
-                ->get();
+            ->join('financeitemcategorymaster', 'financeitemcategorymaster.itemCategoryID', '=', 'itemmaster.financeCategoryMaster')
+            ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
+            ->join('units', 'units.UnitID', '=', 'itemmaster.unit')
+            ->leftJoin('chartofaccounts as rev', 'rev.chartOfAccountSystemID', '=', 'financeitemcategorysub.financeGLcodeRevenueSystemID')
+            ->leftJoin('chartofaccounts as cost', 'cost.chartOfAccountSystemID', '=', 'financeitemcategorysub.financeGLcodePLSystemID')
+            ->join('itemassigned', 'itemassigned.itemCodeSystem', '=', 'itemmaster.itemCodeSystem')
+            ->where('itemassigned.companySystemID', '=', $company_id)
+            ->where('itemassigned.isAssigned', '=', -1)
+            ->where('primaryCode', '!=', '')
+            ->where('itemmaster.documentID', '!=', '')
+            ->where('itemmaster.financeCategoryMaster', '!=', '')
+            ->where('itemmaster.financeCategorySub', '!=', '')
+            ->where('itemmaster.itemDescription', '!=', '')
+            ->where('financeitemcategorymaster.categoryDescription', '!=', '')
+            ->where('units.UnitShortCode', '!=', '')
+            // ->where('itemmaster.financeCategoryMaster', '!=', 3)
+            ->get();
+        return $data;
+    }
+
+    public function pullItem(Request $request)
+    {
+        DB::beginTransaction();
+        try {
+
+            $company_id = $request->get('company_id');
+            
+            $items = $this->getItemMaster($company_id);
 
             DB::commit();
             return $this->sendResponse($items, 'Data Retrieved successfully');
@@ -1030,4 +1035,34 @@ class PosAPIController extends AppBaseController
             ->with('orderCondition', $sort)
             ->make(true);
   }
+
+    public function fetchItemWacAmount(Request $request)
+    {
+        DB::beginTransaction();
+        try {
+            $company_id = $request->get('company_id');
+
+            $items = $this->getItemMaster($company_id);
+
+            $data = $items->map(function ($item) use ($company_id) {
+                $data = array(
+                    'companySystemID' => $company_id,
+                    'itemCodeSystem' => $item->id,
+                    'wareHouseId' => null
+                );
+
+                $InventoryData = Inventory::itemCurrentCostAndQty($data);
+                return [
+                    'itemAutoID' => $item->id,
+                    'companyWacAmount' => $InventoryData['wacValueLocal'],
+                ];
+            });
+
+            DB::commit();
+            return $this->sendResponse($data, 'Data Retreived Sucessfully!');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError("No records fetched!");
+        }
+    }
 }
