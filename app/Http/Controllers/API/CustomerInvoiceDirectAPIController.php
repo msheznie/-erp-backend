@@ -2234,12 +2234,10 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             'uploadedCompany' =>  $input['companySystemID'],
         ];
 
-    //    return $CustomerInvoiceCreate = CustomerInvoiceService::customerInvoiceCreate($uploadData);
 
 
         CustomerInvoiceUpload::dispatch($db, $uploadData);
 
-        // BudgetSegmentBulkInsert::dispatch($db, $uploadData);
 
 
         return $this->sendResponse([], 'Budget upload successfully');
@@ -2288,18 +2286,6 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         return $this->sendResponse([], 'customer invoice upload deleted successfully');
 
 
-        // $isBudgetMaster = BudgetMaster::where('customerInvoiceUploadID', $customerInvoiceUploadID)->where('confirmedYN', 1)->orWhere('approvedYN', 1)->first();
-        // if (empty($isBudgetMaster)) {
-        //     $budgetMasters = BudgetMaster::where('customerInvoiceUploadID', $customerInvoiceUploadID)->get();
-        //     foreach ($budgetMasters as $budgetMaster) {
-        //         Budjetdetails::where('budgetmasterID', $budgetMaster->budgetmasterID)->delete();
-        //     }
-        //     BudgetMaster::where('customerInvoiceUploadID', $customerInvoiceUploadID)->delete();
-        //     UploadBudgets::where('id', $customerInvoiceUploadID)->delete();
-        //     return $this->sendResponse([], 'Budget upload deleted successfully');
-        // } else {
-        //     return $this->sendError('The Budget details have already been saved. Cannot be deleted.');
-        // }
 
     }
 

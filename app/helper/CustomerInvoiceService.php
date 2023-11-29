@@ -724,22 +724,18 @@ class CustomerInvoiceService
 
         $request = $DirectInvoiceDetailData;
         $companySystemID = $request['companySystemID'];
-        /* $contractID = $request['contractID'];*/
         $custInvoiceDirectAutoID = $request['custInvoiceDirectAutoID'];
         $glCode = $request['glCode'];
-        /* $qty = $request['qty'];*/
-        /* $serviceLineSystemID = $request['serviceLineSystemID'];
-         $unitCost = $request['unitCost'];
-         $unitID = $request['unitID'];*/
 
 
-        /*this*/
 
 
-        /*get master*/
+
+
+  
         $master = CustomerInvoiceDirect::select('*')->where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->first();
         $bookingInvCode = $master->bookingInvCode;
-        /*selectedPerformaMaster*/
+   
 
 
         $tax = Taxdetail::where('documentSystemCode', $custInvoiceDirectAutoID)
@@ -747,25 +743,21 @@ class CustomerInvoiceService
             ->where('documentSystemID', $master->documentSystemiD)
             ->first();
         if (!empty($tax)) {
-            // return $this->sendError('Please delete tax details to continue !');
+
         }
 
         $myCurr = $master->custTransactionCurrencyID;
         /*currencyID*/
 
-        //$companyCurrency = \Helper::companyCurrency($myCurr);
         $decimal = \Helper::getCurrencyDecimalPlace($myCurr);
         $x = 0;
 
 
-        /*$serviceLine = SegmentMaster::select('serviceLineSystemID', 'ServiceLineCode')->where('serviceLineSystemID', $serviceLineSystemID)->first();*/
         $chartOfAccount = ChartOfAccount::select('AccountCode', 'AccountDescription', 'catogaryBLorPL', 'chartOfAccountSystemID')->where('chartOfAccountSystemID', $glCode)->first();
         
 
         $addToCusInvDetails['custInvoiceDirectID'] = $custInvoiceDirectAutoID;
         $addToCusInvDetails['companyID'] = $master->companyID;
-        /*  $addToCusInvDetails['serviceLineSystemID'] = $serviceLine->serviceLineSystemID;*/
-        /*        $addToCusInvDetails['serviceLineCode'] = $serviceLine->ServiceLineCode;*/
         $addToCusInvDetails['customerID'] = $master->customerID;
         $addToCusInvDetails['glSystemID'] = $chartOfAccount->chartOfAccountSystemID;
         $addToCusInvDetails['glCode'] = $chartOfAccount->AccountCode;
@@ -897,7 +889,7 @@ class CustomerInvoiceService
             ->first();
 
         if (!empty($tax)) {
-            // return $this->sendError('Please delete tax details to continue');
+
         }
 
 
@@ -982,7 +974,6 @@ class CustomerInvoiceService
         $input['unitCost'] = $input['salesPrice'] - $input["discountAmountLine"];
         if ($input['invoiceQty'] != $detail->invoiceQty || $input['unitCost'] != $detail->unitCost) {
             $myCurr = $master->custTransactionCurrencyID;               /*currencyID*/
-            //$companyCurrency = \Helper::companyCurrency($myCurr);
             $decimal = \Helper::getCurrencyDecimalPlace($myCurr);
 
             $input['invoiceAmountCurrency'] = $master->custTransactionCurrencyID;
