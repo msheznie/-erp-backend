@@ -2621,9 +2621,6 @@ class BudgetConsumptionService
 									 	$query->whereNull('projectID')
 									 		  ->orWhere('projectID', 0);
 									 })
-									 ->when(($budgetFormData['documentSystemID'] == 22), function($query) use ($budgetFormData) {
-										$query->where('documentSystemID',22);
-									})
 									 ->when(($budgetFormData['departmentWiseCheckBudgetPolicy'] == true), function($query) use ($budgetFormData) {
 									 	$query->groupBy('chartOfAccountID', 'serviceLineSystemID');
 									 })
