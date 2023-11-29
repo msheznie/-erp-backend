@@ -30,6 +30,7 @@ use App\Models\POSSTAGInvoice;
 use App\Models\POSSTAGInvoiceDetail;
 use App\Models\SupplierMaster;
 use App\Services\POSService;
+use InfyOm\Generator\Utils\ResponseUtil;
 
 class PosAPIController extends AppBaseController
 {
@@ -1044,7 +1045,7 @@ class PosAPIController extends AppBaseController
 
             $items = $this->getItemMasters($company_id);
 
-            $data = $items->map(function ($item) use ($company_id) {
+            $itemData = $items->map(function ($item) use ($company_id) {
                 $data = array(
                     'companySystemID' => $company_id,
                     'itemCodeSystem' => $item->id,
@@ -1059,10 +1060,19 @@ class PosAPIController extends AppBaseController
             });
 
             DB::commit();
-            return $this->sendResponse($data, 'Data Retreived Sucessfully!');
+            return \Response::json([
+                "type" => "success",
+                "status" => 200,
+                "message" => "Data Retreived Sucessfully!",
+                "data" => $itemData
+            ]);
         } catch (\Exception $exception) {
             DB::rollBack();
-            return $this->sendError("No records fetched!");
+            return \Response::json([
+                "type" => "error", 
+                "status" => 404, 
+                "message" => "No records fetched!"
+            ]);
         }
     }
 }
