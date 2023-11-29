@@ -1051,10 +1051,10 @@ class PosAPIController extends AppBaseController
                     'wareHouseId' => null
                 );
 
-                $InventoryData = Inventory::itemCurrentCostAndQty($data);
+                $inventoryData = Inventory::itemCurrentCostAndQty($data);
                 return [
                     'itemAutoID' => $item->id,
-                    'companyWacAmount' => $InventoryData['wacValueLocal'],
+                    'companyWacAmount' => $inventoryData['wacValueLocal'],
                 ];
             });
 
