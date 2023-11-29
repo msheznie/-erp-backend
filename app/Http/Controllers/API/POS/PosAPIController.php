@@ -30,7 +30,6 @@ use App\Models\POSSTAGInvoice;
 use App\Models\POSSTAGInvoiceDetail;
 use App\Models\SupplierMaster;
 use App\Services\POSService;
-use InfyOm\Generator\Utils\ResponseUtil;
 
 class PosAPIController extends AppBaseController
 {
