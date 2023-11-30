@@ -2236,8 +2236,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
 
 
-        // CustomerInvoiceUpload::dispatch($db, $uploadData);
-        return $CustomerInvoiceCreate = CustomerInvoiceService::customerInvoiceCreate($db,$uploadData);
+        CustomerInvoiceUpload::dispatch($db, $uploadData);
 
 
         return $this->sendResponse([], 'Customer Invoice uploaded successfully');
