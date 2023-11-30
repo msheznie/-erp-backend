@@ -175,19 +175,24 @@
     </tbody>
 </table>
 <div class="footer">
-    <table style="width:100%; border: none">
-        <tr>
+    <table style="width:100%; border: none;">
+        <tr style="border: none;">
+            <td colspan="3" style="width:100%; border: none;">
+                <hr style="background-color: black">
+            </td>
+        </tr>
+        <tr style="border: none;">
             <td style="width:33%;font-size: 10px;vertical-align: top; border: none;">
                 <span class="white-space-pre-line font-weight-bold"></span>
             </td>
             <td style="width:33%; text-align: center;font-size: 10px;vertical-align: top; border: none;">
-                <span style="text-align: center; border: none;">Page <span class="pagenum"></span></span><br>
+                <span style="text-align: center">Page <span class="pagenum"></span></span><br>
                 @if ($tenderCompany->company)
                     {{$tenderCompany->company->CompanyName}}
                 @endif
             </td>
             <td style="width:33%;font-size: 10px;vertical-align: top; border: none;">
-                <span style="margin-left: 50%; border: none;">Printed Date : {{date("d-M-y", strtotime(now()))}}</span>
+                <span style="margin-left: 50%;">Printed Date : {{date("d-M-y", strtotime(now()))}}</span>
             </td>
         </tr>
     </table>
