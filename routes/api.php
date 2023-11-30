@@ -434,20 +434,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('fixed_asset_insurance_details', 'FixedAssetInsuranceDetailAPIController');
 
             Route::resource('budget_masters', 'BudgetMasterAPIController');
-            Route::post('getBudgetsByCompany', 'BudgetMasterAPIController@getBudgetsByCompany');
             Route::post('updateCutOffPeriod', 'BudgetMasterAPIController@updateCutOffPeriod');
             Route::post('budgetReferBack', 'BudgetMasterAPIController@budgetReferBack');
             Route::post('budgetReopen', 'BudgetMasterAPIController@budgetReopen');
-            Route::post('getBudgetApprovedByUser', 'BudgetMasterAPIController@getBudgetApprovedByUser');
-            Route::post('getBudgetApprovalByUser', 'BudgetMasterAPIController@getBudgetApprovalByUser');
             Route::get('getBudgetAudit', 'BudgetMasterAPIController@getBudgetAudit');
-            Route::post('reportBudgetGLCodeWise', 'BudgetMasterAPIController@reportBudgetGLCodeWise');
-            Route::post('budgetGLCodeWiseDetails', 'BudgetMasterAPIController@budgetGLCodeWiseDetails');
-            Route::post('exportBudgetGLCodeWise', 'BudgetMasterAPIController@exportBudgetGLCodeWise');
-            Route::post('exportBudgetTemplateCategoryWise', 'BudgetMasterAPIController@exportBudgetTemplateCategoryWise');
-            Route::post('exportBudgetGLCodeWiseDetails', 'BudgetMasterAPIController@exportBudgetGLCodeWiseDetails');
-            Route::post('reportBudgetTemplateCategoryWise', 'BudgetMasterAPIController@reportBudgetTemplateCategoryWise');
-            Route::get('getBudgetFormData', 'BudgetMasterAPIController@getBudgetFormData');
             Route::get('downloadBudgetUploadTemplate', 'BudgetMasterAPIController@downloadBudgetUploadTemplate');
 
             Route::post('syncGlBudget', 'BudjetdetailsAPIController@syncGlBudget');
@@ -714,8 +704,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('employee_department_delegations', 'employeeDepartmentDelegationAPIController');
             Route::post('approveHRMSDocument', 'LeaveDocumentApprovedAPIController@approveHRMSDocument');
             Route::post('referBackHRMSDocument', 'LeaveDocumentApprovedAPIController@referBackHRMSDocument');
-
-            Route::post('addBudgetAdjustment', 'BudgetAdjustmentAPIController@addBudgetAdjustment');            
             
             Route::get('getUserCountData', 'EmployeeAPIController@getUserCountData');
 
