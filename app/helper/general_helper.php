@@ -3344,7 +3344,7 @@ class Helper
 
                                         if ($params["document"] == 117) {
                                             $ammendComment = self::getDocumentModifyRequestDetails($params['autoID']);
-                                            $ammendText = '<b>Amended Comment :</b> ' . $ammendComment['description'] . '<br>';
+                                            $ammendText = '<b>Comment :</b> ' . $ammendComment['description'] . '<br>';
                                             $body .= $ammendText;
                                         }
 
@@ -4349,7 +4349,7 @@ class Helper
                 })
                     ->groupBy('employeeSystemID')
                     ->exists();
-
+                
                 if (!$checkUserHasApprovalAccess) {
                     if (($input["documentSystemID"] == 9 && ($isConfirmed && $isConfirmed->isFromPortal == 0)) || $input["documentSystemID"] != 9) {
                         return ['success' => false, 'message' => 'You do not have access to approve this document.'];
