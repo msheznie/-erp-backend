@@ -36,18 +36,17 @@
                 <tr style="border: none">
                     <td style="border: none; text-align: left">
                     @if($tenderCompany->company)
-                        <img style="margin-top: 15px" src="{{$tenderCompany->company->logo_url}}" width="180px" height="80px">
+                        <img style="margin-top: 15px" src="{{$tenderCompany->company->logo_url}}" width="140px" height="100px">
                             @if($tenderCompany->company)
-                                <p style="font-size: 24px;font-weight: 400; margin-top: -70px; margin-left: 200px"> {{$tenderCompany->company->CompanyName}}</p>
+                                <p style="font-size: 24px;font-weight: 400; margin-top: -80px; margin-left: 150px"> {{$tenderCompany->company->CompanyName}}</p>
                             @endif
                         <br />
-                            <p style="font-size: 18px;font-weight: 400; margin-top: -50px; margin-left: 200px"> Supplier Ranking Summary Report </p>
+                            <p style="font-size: 18px;font-weight: 400; margin-top: -60px; margin-left: 150px"> Supplier Ranking Summary Report </p>
                     </td>
                     @endif
                     </td>
                 </tr>
             </table>
-
         </td>
     </tr>
     <tr>
