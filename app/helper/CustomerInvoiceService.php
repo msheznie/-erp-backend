@@ -12,12 +12,14 @@ use App\Models\Company;
 use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
 use App\Models\CompanyPolicyMaster;
+use App\Models\Contract;
 use App\Models\CurrencyMaster;
 use App\Models\CustomerAssigned;
 use App\Models\CustomerCurrency;
 use App\Models\CustomerInvoiceDirect;
 use App\Models\CustomerInvoiceDirectDetail;
 use App\Models\CustomerMaster;
+use App\Models\DocumentApproved;
 use App\Models\Employee;
 use App\Models\EmployeesDepartment;
 use App\Models\ErpProjectMaster;
@@ -43,7 +45,7 @@ class CustomerInvoiceService
         $this->customerInvoiceDirectRepository = $customerInvoiceDirectRepo;
     }
 
-	public static function customerInvoiceCreate($uploadData)
+	public static function customerInvoiceCreate($db,$uploadData)
 	{
         
         $customerInvoiceDirectRepo = app()->make(CustomerInvoiceDirectRepository::class);
@@ -51,6 +53,7 @@ class CustomerInvoiceService
         // Instantiate CustomerInvoiceService with the repository as an argument
         $CustomerInvoiceService = new CustomerInvoiceService($customerInvoiceDirectRepo);
 
+        $db = isset($db) ? $db : "";
 
         ini_set('max_execution_time', 21600);
         ini_set('memory_limit', -1);
@@ -345,6 +348,9 @@ class CustomerInvoiceService
                 }
 
             }
+            if($confirmedBy == null) {
+                $confirmedEmployee = $employee;
+            }
 
             if ($approvedBy != null){
                 $approvedEmployee = Employee::where('empID',$approvedBy)
@@ -599,6 +605,50 @@ class CustomerInvoiceService
                     $updateDirectInvoiceDetails = $CustomerInvoiceService->updateDirectInvoice($customerInvoiceDirectDetails);
 
                 }
+
+                               
+                $params = array('autoID' => $customerInvoiceDirects->custInvoiceDirectAutoID,
+                    'company' => $customerInvoiceDirects->companySystemID,
+                    'document' => $customerInvoiceDirects->documentSystemiD,
+                    'confirmedBy' => $confirmedEmployee->employeeSystemID,
+                    'segment' => '',
+                    'category' => '',
+                    'amount' => ''
+                );
+
+                //checking whether document approved table has a data for the same document
+                $docExist = DocumentApproved::where('documentSystemID', $params["document"])->where('documentSystemCode', $params["autoID"])->first();
+                if (!$docExist) {
+                    $confirm = \Helper::confirmDocument($params);
+                    if (!$confirm["success"]) {
+
+                        $errorMsg = $confirm["message"];
+                        UploadCustomerInvoice::where('id', $uploadCustomerInvoice->id)->update(['uploadStatus' => 0]);
+                        LogUploadCustomerInvoice::where('id', $logUploadCustomerInvoice->id)->update(['is_failed' => 1,'error_line'=>$excelRow, 'log_message' => $errorMsg]);
+                        return ['status' => false];
+
+                    } else {
+                        $documentApproveds = DocumentApproved::where('documentSystemCode', $customerInvoiceDirects->custInvoiceDirectAutoID)->where('documentSystemID', 20)->get();
+                        foreach ($documentApproveds as $documentApproved) {
+                            $documentApproved["approvedComments"] = "Invoice created from customer invoice upload";
+                            $documentApproved["db"] = $db;
+                            $documentApproved["approvedBy"] = $approvedEmployee->employeeSystemID;
+                            $approve = \Helper::approveDocument($documentApproved);
+
+                            if (!$approve["success"]) {
+                                
+                                $errorMsg = $approve["message"];
+                                UploadCustomerInvoice::where('id', $uploadCustomerInvoice->id)->update(['uploadStatus' => 0]);
+                                LogUploadCustomerInvoice::where('id', $logUploadCustomerInvoice->id)->update(['is_failed' => 1,'error_line'=>$excelRow, 'log_message' => $errorMsg]);
+                                return ['status' => false];
+                            }
+                        }
+                    }
+                }
+
+
+
+                
             } 
 
         }
@@ -874,13 +924,13 @@ class CustomerInvoiceService
 
 
         if (empty($detail)) {
-            return $this->sendError('Customer Invoice Direct Detail not found');
+            return ['status' => false,'message'=> 'Customer Invoice Direct Detail not found'];
         }
 
         $master = CustomerInvoiceDirect::select('*')->where('custInvoiceDirectAutoID', $detail->custInvoiceDirectID)->first();
 
         if (empty($master)) {
-            return $this->sendError('Customer Invoice Direct not found');
+            return ['status' => false,'message'=> 'Customer Invoice Direct not found'];
         }
 
         $tax = Taxdetail::where('documentSystemCode', $detail->custInvoiceDirectID)
@@ -896,7 +946,7 @@ class CustomerInvoiceService
         $validateVATCategories = TaxService::validateVatCategoriesInDocumentDetails($master->documentSystemiD, $master->companySystemID, $id, $input, $master->customerID, $master->isPerforma);
 
         if (!$validateVATCategories['status']) {
-            return $this->sendError($validateVATCategories['message'], 500, array('type' => 'vat'));
+            return ['status' => false,'message'=> $validateVATCategories['message']];
         } else {
             $input['vatMasterCategoryID'] = $validateVATCategories['vatMasterCategoryID'];        
             $input['vatSubCategoryID'] = $validateVATCategories['vatSubCategoryID'];        
@@ -914,21 +964,21 @@ class CustomerInvoiceService
             if (!empty($contract)) {
                 if($contract->contractStatus != 6){
                     if ($contract->paymentInDaysForJob <= 0) {
-                        return $this->sendError('Payment Period is not updated in the contract. Please update and try again');
+                        return ['status' => false,'message'=> 'Payment Period is not updated in the contract. Please update and try again'];
                     }
                 }
             } else {
-                return $this->sendError('Contract not exist.');
+                return ['status' => false,'message'=> 'Contract not exist.'];
 
             }
         }
 
         if (isset($input["discountPercentage"]) && $input["discountPercentage"] > 100) {
-            return $this->sendError('Discount Percentage cannot be greater than 100 percentage');
+            return ['status' => false,'message'=> 'Discount Percentage cannot be greater than 100 percentage.'];
         }
 
         if (isset($input["discountAmountLine"]) && isset($input['salesPrice']) && $input['discountAmountLine'] > $input['salesPrice']) {
-            return $this->sendError('Discount amount cannot be greater than sales price');
+            return ['status' => false,'message'=> 'Discount amount cannot be greater than sales price.'];
         }
 
         if ($input['serviceLineSystemID'] != $detail->serviceLineSystemID) {

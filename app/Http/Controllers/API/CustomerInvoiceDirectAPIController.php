@@ -2239,7 +2239,6 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         CustomerInvoiceUpload::dispatch($db, $uploadData);
 
 
-
         return $this->sendResponse([], 'Customer Invoice uploaded successfully');
 
     }
