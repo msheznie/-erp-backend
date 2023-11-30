@@ -6,13 +6,48 @@
     .bit-tender-summary-report {
         font-size: 12px;
     }
+    .footer {
+        position: absolute;
+    }
+
+    .footer {
+        bottom: 0;
+        height: 100px;
+    }
+
+    .footer {
+        width: 100%;
+        text-align: center;
+        position: fixed;
+        font-size: 10px;
+        padding-top: -20px;
+    }
+
+    .pagenum:before {
+        content: counter(page);
+    }
 </style>
 
 <table style="width:100%" class="bit-tender-summary-report">
     <tbody>
     <tr>
-        <td colspan="9">
-            <h4 style="text-align: center;">Supplier Ranking Summary Report</h4>
+        <td colspan="9" style="text-align: center">
+            <table style="border: none;width: 100%">
+                <tr style="border: none">
+                    <td style="border: none; text-align: left">
+                    @if($tenderCompany->company)
+                        <img style="margin-top: 15px" src="{{$tenderCompany->company->logo_url}}" width="180px" height="80px">
+                            @if($tenderCompany->company)
+                                <p style="font-size: 24px;font-weight: 400; margin-top: -70px; margin-left: 200px"> {{$tenderCompany->company->CompanyName}}</p>
+                            @endif
+                        <br />
+                            <p style="font-size: 18px;font-weight: 400; margin-top: -50px; margin-left: 200px"> Supplier Ranking Summary Report </p>
+                    </td>
+                    @endif
+                    </td>
+                </tr>
+            </table>
+
         </td>
     </tr>
     <tr>
@@ -43,7 +78,7 @@
             <td colspan="4">
                 @if ($tenderMaster->stage == 1)
                     @if ($tenderMaster->bid_opening_date && $isNegotiation == 0)
-                        {{\Carbon\Carbon::parse($tenderMaster->bid_opening_date)->format('d/m/Y')}}
+                        {{\Carbon\Carbon::parse($tenderMaster->bid_opening_date)->format('d/m/Y h:i A')}}
                     @endif
                     @if (empty($tenderMaster->bid_opening_date) || $isNegotiation == 1)
                         -
@@ -60,7 +95,7 @@
             <td colspan="8">
                 @if ($tenderMaster->stage == 1)
                     @if ($tenderMaster->bid_opening_date && $isNegotiation == 0)
-                        {{\Carbon\Carbon::parse($tenderMaster->bid_opening_date)->format('d/m/Y')}}
+                        {{\Carbon\Carbon::parse($tenderMaster->bid_opening_date)->format('d/m/Y h:i A')}}
                     @endif
                     @if (empty($tenderMaster->bid_opening_date) || $isNegotiation == 1)
                         -
@@ -73,7 +108,7 @@
             <td><strong>Technical Bid Opening Date:</strong></td>
             <td colspan="2">
                 @if ($tenderMaster->technical_bid_opening_date)
-                    {{\Carbon\Carbon::parse($tenderMaster->technical_bid_opening_date)->format('d/m/Y')}}
+                    {{\Carbon\Carbon::parse($tenderMaster->technical_bid_opening_date)->format('d/m/Y h:i A')}}
                 @endif
 
                 @if (empty($tenderMaster->technical_bid_opening_date))
@@ -84,7 +119,7 @@
             <td colspan="4">
 
                 @if ($tenderMaster->commerical_bid_opening_date)
-                    {{\Carbon\Carbon::parse($tenderMaster->commerical_bid_opening_date)->format('d/m/Y')}}
+                    {{\Carbon\Carbon::parse($tenderMaster->commerical_bid_opening_date)->format('d/m/Y h:i A')}}
                 @endif
                 @if (empty($tenderMaster->commerical_bid_opening_date))
                     -
@@ -139,3 +174,21 @@
     @endforeach
     </tbody>
 </table>
+<div class="footer">
+    <table style="width:100%; border: none">
+        <tr>
+            <td style="width:33%;font-size: 10px;vertical-align: top; border: none;">
+                <span class="white-space-pre-line font-weight-bold"></span>
+            </td>
+            <td style="width:33%; text-align: center;font-size: 10px;vertical-align: top; border: none;">
+                <span style="text-align: center; border: none;">Page <span class="pagenum"></span></span><br>
+                @if ($tenderCompany->company)
+                    {{$tenderCompany->company->CompanyName}}
+                @endif
+            </td>
+            <td style="width:33%;font-size: 10px;vertical-align: top; border: none;">
+                <span style="margin-left: 50%; border: none;">Printed Date : {{date("d-M-y", strtotime(now()))}}</span>
+            </td>
+        </tr>
+    </table>
+</div>
