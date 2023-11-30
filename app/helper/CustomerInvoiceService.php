@@ -646,21 +646,6 @@ class CustomerInvoiceService
                     }
                 }
 
-                // $documentApproveds = DocumentApproved::where('documentSystemCode', $customerInvoiceDirects->custInvoiceDirectAutoID)->where('documentSystemID', 20)->get();
-                // foreach ($documentApproveds as $documentApproved) {
-                //     $documentApproved["approvedComments"] = "Invoice created from customer invoice upload";
-                //     $documentApproved["db"] = $db;
-                //     $documentApproved["approvedBy"] = $approvedEmployee->employeeSystemID;
-                //     $approve = \Helper::approveDocument($documentApproved);
-
-                //     if (!$approve["success"]) {
-                        
-                //         $errorMsg = $approve["message"];
-                //         UploadCustomerInvoice::where('id', $uploadCustomerInvoice->id)->update(['uploadStatus' => 0]);
-                //         LogUploadCustomerInvoice::where('id', $logUploadCustomerInvoice->id)->update(['is_failed' => 1,'error_line'=>$excelRow, 'log_message' => $errorMsg]);
-                //         return ['status' => false];
-                //     }
-                // }
 
 
                 
