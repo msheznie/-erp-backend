@@ -387,34 +387,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('referBackCapitalization', 'AssetCapitalizationAPIController@referBackCapitalization');
             Route::post('deleteAllAssetCapitalizationDet', 'AssetCapitalizationDetailAPIController@deleteAllAssetCapitalizationDet');
 
-            Route::resource('journalVoucherCRUD', 'JvMasterAPIController');
-            Route::resource('jv_details', 'JvDetailAPIController');
-            Route::get('getJournalVoucherMasterFormData', 'JvMasterAPIController@getJournalVoucherMasterFormData');
-            Route::post('getJournalVoucherMasterView', 'JvMasterAPIController@getJournalVoucherMasterView');
-            Route::post('copyJV', 'JvMasterAPIController@copyJV');
-            Route::get('getJournalVoucherDetails', 'JvDetailAPIController@getJournalVoucherDetails');
-            Route::get('getJournalVoucherContracts', 'JvDetailAPIController@getJournalVoucherContracts');
-            Route::post('journalVoucherSalaryJVDetailStore', 'JvDetailAPIController@journalVoucherSalaryJVDetailStore');
-            Route::post('generateAllocation', 'JvDetailAPIController@generateAllocation');
-            Route::get('journalVoucherForSalaryJVMaster', 'JvMasterAPIController@journalVoucherForSalaryJVMaster');
-            Route::get('journalVoucherForSalaryJVDetail', 'JvMasterAPIController@journalVoucherForSalaryJVDetail');
-            Route::post('journalVoucherDeleteAllSJ', 'JvDetailAPIController@journalVoucherDeleteAllSJ');
-            Route::post('jvDetailsExportToCSV', 'JvDetailAPIController@jvDetailsExportToCSV');
-            Route::get('journalVoucherForAccrualJVMaster', 'JvMasterAPIController@journalVoucherForAccrualJVMaster');
-            Route::get('journalVoucherForAccrualJVDetail', 'JvMasterAPIController@journalVoucherForAccrualJVDetail');
-            Route::post('journalVoucherForPOAccrualJVDetail', 'JvMasterAPIController@journalVoucherForPOAccrualJVDetail');
-            Route::post('exportJournalVoucherForPOAccrualJVDetail', 'JvMasterAPIController@exportJournalVoucherForPOAccrualJVDetail');
-            Route::post('journalVoucherAccrualJVDetailStore', 'JvDetailAPIController@journalVoucherAccrualJVDetailStore');
             Route::post('journalVoucherPOAccrualJVDetailStore', 'JvDetailAPIController@journalVoucherPOAccrualJVDetailStore');
-            Route::post('journalVoucherDeleteAllAJ', 'JvDetailAPIController@journalVoucherDeleteAllAJ');
-            Route::post('journalVoucherDeleteAllPOAJ', 'JvDetailAPIController@journalVoucherDeleteAllPOAJ');
-            Route::post('journalVoucherDeleteAllDetails', 'JvDetailAPIController@journalVoucherDeleteAllDetails');
-            Route::get('exportStandardJVFormat', 'JvMasterAPIController@exportStandardJVFormat');
-            Route::post('journalVoucherReopen', 'JvMasterAPIController@journalVoucherReopen');
-            Route::post('getJournalVoucherAmend', 'JvMasterAPIController@getJournalVoucherAmend');
-            Route::post('amendJournalVoucherReview', 'JvMasterAPIController@amendJournalVoucherReview');
+
             Route::post('journalVoucherBudgetUpload', 'JvMasterAPIController@journalVoucherBudgetUpload');
-            Route::post('standardJvExcelUpload', 'JvMasterAPIController@standardJvExcelUpload');
 
             Route::resource('bookInvSuppDetRefferedbacks', 'BookInvSuppDetRefferedBackAPIController');
             Route::resource('DirectInvoiceDetRefferedbacks', 'DirectInvoiceDetailsRefferedBackAPIController');
