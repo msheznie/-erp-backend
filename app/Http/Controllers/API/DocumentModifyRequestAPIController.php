@@ -366,8 +366,8 @@ class DocumentModifyRequestAPIController extends AppBaseController
 
     public function approveEditDocument(Request $request)
     {
-        $input = $request->all();
-      
+        $input = $request->all(); 
+
         if(isset($input['reference_document_id']) && $input['reference_document_id'])
         {
             $currentDate = Carbon::now()->format('Y-m-d H:i:s');
@@ -387,7 +387,7 @@ class DocumentModifyRequestAPIController extends AppBaseController
             }
 
             return $this->sendResponse(array(), $approve["message"]);
-        }
+        } 
 
     }
 }

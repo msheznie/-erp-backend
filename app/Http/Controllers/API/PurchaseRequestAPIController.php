@@ -88,6 +88,9 @@ use App\Jobs\GenerateMaterialRequestItem;
 use App\Models\MaterielRequestDetails;
 use App\helper\CreateExcel;
 use App\Repositories\PurchaseRequestDetailsRepository;
+use App\Models\DocumentModifyRequest;
+use App\Repositories\DocumentApprovedRepository;
+use App\Repositories\DocumentModifyRequestRepository;
 /**
  * Class PurchaseRequestController
  * @package App\Http\Controllers\API
@@ -2002,13 +2005,32 @@ class PurchaseRequestAPIController extends AppBaseController
      */
     public function approvePurchaseRequest(Request $request)
     {
-        $approve = \Helper::approveDocument($request);
-        if (!$approve["success"]) {
-            return $this->sendError($approve["message"]);
-        } else {
-            $more_data = ( array_key_exists('data', $approve) )? $approve['data']: [];
-            return $this->sendResponse($more_data, $approve["message"]);
+        if($request->input('documentSystemID') && ($request->input('documentSystemID') == 117 || $request->input('documentSystemID') == 118) ){ 
+            $id = $request->input('documentSystemCode');
+            $documentModifyRequestRepo = app(DocumentModifyRequestRepository::class); 
+            $controller = new DocumentModifyRequestAPIController($documentModifyRequestRepo); 
+
+            $documentApprovedRepo = app(DocumentApprovedRepository::class); 
+            $documentApprovedController = new DocumentApprovedAPIController($documentApprovedRepo);
+            
+            $tenderData = $documentApprovedController->getTenderData($id); 
+
+            $requestData = $request->all();  
+            $requestData['reference_document_id'] = 108;
+            $requestData['bid_submission_opening_date'] = $tenderData->tenderMaster->bid_submission_opening_date; 
+            $request->merge($requestData);  
+            $result = $controller->approveEditDocument($request);
+            return $result;
+        }else { 
+            $approve = \Helper::approveDocument($request);
+            if (!$approve["success"]) {
+                return $this->sendError($approve["message"]);
+            } else {
+                $more_data = ( array_key_exists('data', $approve) )? $approve['data']: [];
+                return $this->sendResponse($more_data, $approve["message"]);
+            }
         }
+        
     }
 
     /**
