@@ -34,6 +34,7 @@ class PosApi
                     $request->request->add(['company_id' => $third_party_key->company_id]);
                     $request->request->add(['api_external_key' => $third_party_key->api_external_key]);
                     $request->request->add(['api_external_url' => $third_party_key->api_external_url]);
+                    $request->request->add(['third_party_system_id' => $third_party_key->third_party_system_id]);
                 }
                 else
                 {
