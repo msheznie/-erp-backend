@@ -368,7 +368,12 @@ class TenderFinalBidsAPIController extends AppBaseController
     public function getFinalBidsReport(Request $request)
     {
         $tenderId = $request->get('id');
-        $tenderMaster= TenderMaster::select('title', 'tender_code', 'stage', 'negotiation_code', 'bid_opening_date', 'technical_bid_opening_date', 'commerical_bid_opening_date', 'award_comment', 'negotiation_award_comment', 'negotiation_code')->where('id', $tenderId)->first();
+        $tenderMaster= TenderMaster::select('title', 'tender_code', 'stage', 'negotiation_code', 'bid_opening_date', 'technical_bid_opening_date', 'commerical_bid_opening_date', 'award_comment', 'negotiation_award_comment', 'negotiation_code')
+            ->where('id', $tenderId)
+            ->first();
+
+        $tenderCompany = TenderMaster::with('company')->where('id', $tenderId)->first();
+
         $isNegotiation = 0;
         $tenderBidNegotiations = TenderBidNegotiation::select('bid_submission_master_id_new')
             ->where('tender_id', $tenderId)
@@ -396,7 +401,7 @@ class TenderFinalBidsAPIController extends AppBaseController
         $awardSummary = $query->orderBy('srm_tender_final_bids.total_weightage','desc')->get();
         $time = strtotime("now");
         $fileName = 'Supplier_Ranking_Summary' . $time . '.pdf';
-        $order = array('awardSummary' => $awardSummary, 'tenderMaster' => $tenderMaster, 'isNegotiation' => $isNegotiation);
+        $order = array('awardSummary' => $awardSummary, 'tenderMaster' => $tenderMaster, 'isNegotiation' => $isNegotiation, 'tenderCompany' => $tenderCompany);
         $html = view('print.final_bid_summary_print', $order);
         $pdf = \App::make('dompdf.wrapper');
         $pdf->loadHTML($html);
