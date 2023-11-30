@@ -388,7 +388,7 @@ class PosAPIController extends AppBaseController
         }
     }
     
-    public function getItemMasters($company_id){
+    public function getItemMasters($company_id, $third_party_system_id){
         $data = ItemMaster::selectRaw('itemmaster.itemCodeSystem as id, primaryCode as system_code, itemmaster.documentID as document_id, 
             (case when itemmaster.secondaryItemCode = "" or isnull(itemmaster.secondaryItemCode) then primaryCode else itemmaster.secondaryItemCode end) as secondary_code, "" as image,(case when itemShortDescription = "" or isnull(itemShortDescription) then itemmaster.itemDescription else itemShortDescription end) as name,itemmaster.itemDescription as description,
             itemmaster.financeCategoryMaster as category_id, financeitemcategorymaster.categoryDescription as category_description, itemmaster.financeCategorySub as sub_category_id, "" as sub_sub_category_id, itemmaster.barcode as barcode, financeitemcategorymaster.categoryDescription as finance_category, itemmaster.secondaryItemCode as part_number, unit as unit_id, units.UnitShortCode as unit_description, "" as reorder_point, "" as maximum_qty,
@@ -412,9 +412,17 @@ class PosAPIController extends AppBaseController
             ->where('itemmaster.financeCategorySub', '!=', '')
             ->where('itemmaster.itemDescription', '!=', '')
             ->where('financeitemcategorymaster.categoryDescription', '!=', '')
-            ->where('units.UnitShortCode', '!=', '')
+            ->where('units.UnitShortCode', '!=', '');
             // ->where('itemmaster.financeCategoryMaster', '!=', 3)
-            ->get();
+
+
+        if ($third_party_system_id == 1) {
+            $data = $data->whereIn('itemmaster.pos_type', [1,3]);
+        } else if ($third_party_system_id == 2) {
+            $data = $data->whereIn('itemmaster.pos_type', [2,3]);
+        }
+
+        $data = $data->get();
         return $data;
     }
 
@@ -424,8 +432,9 @@ class PosAPIController extends AppBaseController
         try {
 
             $company_id = $request->get('company_id');
-            
-            $items = $this->getItemMasters($company_id);
+            $third_party_system_id = $request->get('third_party_system_id');
+
+            $items = $this->getItemMasters($company_id, $third_party_system_id);
 
             DB::commit();
             return $this->sendResponse($items, 'Data Retrieved successfully');
@@ -1041,8 +1050,9 @@ class PosAPIController extends AppBaseController
         DB::beginTransaction();
         try {
             $company_id = $request->get('company_id');
+            $third_party_system_id = $request->get('third_party_system_id');
 
-            $items = $this->getItemMasters($company_id);
+            $items = $this->getItemMasters($company_id, $third_party_system_id);
 
             $itemData = $items->map(function ($item) use ($company_id) {
                 $data = array(
