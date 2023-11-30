@@ -64,7 +64,7 @@ class CustomerInvoiceUpload implements ShouldQueue
 
             
             $uploadCustomerInvoice = $uploadData['uploadCustomerInvoice'];
-            $CustomerInvoiceCreate = CustomerInvoiceService::customerInvoiceCreate($uploadData);
+            $CustomerInvoiceCreate = CustomerInvoiceService::customerInvoiceCreate($db,$uploadData);
 
 
 
