@@ -2439,7 +2439,7 @@ class ShiftDetailsAPIController extends AppBaseController
                 foreach ($invItems as $item) {
                     $itemArray[] = array(
                         'shiftId' => $item->shiftId,
-                        'invoiceID' => $gl->invoiceID,
+                        'invoiceID' => $item->invoiceID,
                         'itemAutoId' => $item->itemID,
                         'uom' => $item->uom,
                         'qty' => $item->qty,
@@ -2455,7 +2455,7 @@ class ShiftDetailsAPIController extends AppBaseController
                 foreach ($bankItems as $item) {
                     $bankArray[] = array(
                         'shiftId' => $item->shiftId,
-                        'invoiceID' => $gl->invoiceID,
+                        'invoiceID' => $item->invoiceID,
                         'bankAccId' => $item->bankID,
                         'logId' => $logs->id,
                         'isReturnYN' => 0,
