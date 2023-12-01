@@ -591,65 +591,81 @@ class CustomerInvoiceService
                 'VATPercentage'=>$VATPercentage,
                 'discountPercentage'=>$discountPercentage,
             ];
-            
-            $directInvoiceHeader = $CustomerInvoiceService->createDirectInvoiceHeader($DirectInvoiceHeaderData);
 
-            if ($directInvoiceHeader['status']) {
-                $customerInvoiceDirects = $directInvoiceHeader['data'];
-                $DirectInvoiceDetailData['custInvoiceDirectAutoID'] = $customerInvoiceDirects->custInvoiceDirectAutoID;
+            DB::beginTransaction();
+            try {
 
-                $createDirectInvoiceDetails = $CustomerInvoiceService->createDirectInvoiceDetails($DirectInvoiceDetailData);
-                
-                if($createDirectInvoiceDetails['status']){
-                    $customerInvoiceDirectDetails = $createDirectInvoiceDetails['data'];
-                    $updateDirectInvoiceDetails = $CustomerInvoiceService->updateDirectInvoice($customerInvoiceDirectDetails);
+                $directInvoiceHeader = $CustomerInvoiceService->createDirectInvoiceHeader($DirectInvoiceHeaderData);
 
-                }
+                if ($directInvoiceHeader['status']) {
+                    $customerInvoiceDirects = $directInvoiceHeader['data'];
+                    $DirectInvoiceDetailData['custInvoiceDirectAutoID'] = $customerInvoiceDirects->custInvoiceDirectAutoID;
 
-                               
-                $params = array('autoID' => $customerInvoiceDirects->custInvoiceDirectAutoID,
-                    'company' => $customerInvoiceDirects->companySystemID,
-                    'document' => $customerInvoiceDirects->documentSystemiD,
-                    'confirmedBy' => $confirmedEmployee->employeeSystemID,
-                    'segment' => '',
-                    'category' => '',
-                    'amount' => ''
-                );
+                    $createDirectInvoiceDetails = $CustomerInvoiceService->createDirectInvoiceDetails($DirectInvoiceDetailData);
 
-                //checking whether document approved table has a data for the same document
-                $docExist = DocumentApproved::where('documentSystemID', $params["document"])->where('documentSystemCode', $params["autoID"])->first();
-                if (!$docExist) {
-                    $confirm = \Helper::confirmDocument($params);
-                    if (!$confirm["success"]) {
+                    if($createDirectInvoiceDetails['status']){
+                        $customerInvoiceDirectDetails = $createDirectInvoiceDetails['data'];
+                        $updateDirectInvoiceDetails = $CustomerInvoiceService->updateDirectInvoice($customerInvoiceDirectDetails);
 
-                        $errorMsg = $confirm["message"];
-                        UploadCustomerInvoice::where('id', $uploadCustomerInvoice->id)->update(['uploadStatus' => 0]);
-                        LogUploadCustomerInvoice::where('id', $logUploadCustomerInvoice->id)->update(['is_failed' => 1,'error_line'=>$excelRow, 'log_message' => $errorMsg]);
-                        return ['status' => false];
+                    }
 
-                    } else {
-                        $documentApproveds = DocumentApproved::where('documentSystemCode', $customerInvoiceDirects->custInvoiceDirectAutoID)->where('documentSystemID', 20)->get();
-                        foreach ($documentApproveds as $documentApproved) {
-                            $documentApproved["approvedComments"] = "Invoice created from customer invoice upload";
-                            $documentApproved["db"] = $db;
-                            $documentApproved["approvedBy"] = $approvedEmployee->employeeSystemID;
-                            $approve = \Helper::approveDocument($documentApproved);
 
-                            if (!$approve["success"]) {
-                                
-                                $errorMsg = $approve["message"];
-                                UploadCustomerInvoice::where('id', $uploadCustomerInvoice->id)->update(['uploadStatus' => 0]);
-                                LogUploadCustomerInvoice::where('id', $logUploadCustomerInvoice->id)->update(['is_failed' => 1,'error_line'=>$excelRow, 'log_message' => $errorMsg]);
-                                return ['status' => false];
+                    $params = array('autoID' => $customerInvoiceDirects->custInvoiceDirectAutoID,
+                        'company' => $customerInvoiceDirects->companySystemID,
+                        'document' => $customerInvoiceDirects->documentSystemiD,
+                        'confirmedBy' => $confirmedEmployee->employeeSystemID,
+                        'segment' => '',
+                        'category' => '',
+                        'amount' => ''
+                    );
+
+                    //checking whether document approved table has a data for the same document
+                    $docExist = DocumentApproved::where('documentSystemID', $params["document"])->where('documentSystemCode', $params["autoID"])->first();
+                    if (!$docExist) {
+                        $confirm = \Helper::confirmDocument($params);
+                        if (!$confirm["success"]) {
+
+                            $errorMsg = $confirm["message"];
+                            UploadCustomerInvoice::where('id', $uploadCustomerInvoice->id)->update(['uploadStatus' => 0]);
+                            LogUploadCustomerInvoice::where('id', $logUploadCustomerInvoice->id)->update(['is_failed' => 1,'error_line'=>$excelRow, 'log_message' => $errorMsg]);
+                            return ['status' => false];
+
+                        } else {
+                            $documentApproveds = DocumentApproved::where('documentSystemCode', $customerInvoiceDirects->custInvoiceDirectAutoID)->where('documentSystemID', 20)->get();
+                            foreach ($documentApproveds as $documentApproved) {
+                                $documentApproved["approvedComments"] = "Invoice created from customer invoice upload";
+                                $documentApproved["db"] = $db;
+                                $documentApproved["approvedBy"] = $approvedEmployee->employeeSystemID;
+                                $approve = \Helper::approveDocument($documentApproved);
+
+                                if (!$approve["success"]) {
+
+                                    $errorMsg = $approve["message"];
+                                    UploadCustomerInvoice::where('id', $uploadCustomerInvoice->id)->update(['uploadStatus' => 0]);
+                                    LogUploadCustomerInvoice::where('id', $logUploadCustomerInvoice->id)->update(['is_failed' => 1,'error_line'=>$excelRow, 'log_message' => $errorMsg]);
+                                    return ['status' => false];
+                                }
                             }
                         }
                     }
                 }
 
+                DB::commit();
+
+            } catch (\Exception $e) {
+                DB::rollback();
+
+                DB::beginTransaction();
+                try {
+                    UploadCustomerInvoice::where('id', $uploadCustomerInvoice->id)->update(['uploadStatus' => 0]);
+                    DB::commit();
+                } catch (\Exception $e){
+                    UploadCustomerInvoice::where('id', $uploadCustomerInvoice->id)->update(['uploadStatus' => 0]);
+                    DB::commit();
+                }
+            }
 
 
-                
-            } 
 
         }
 
@@ -1154,7 +1170,7 @@ class CustomerInvoiceService
             if($master->isPerforma != 2) {
                 $resVat = $this->updateTotalVAT($master->custInvoiceDirectAutoID);
                 if (!$resVat['status']) {
-                   return $this->sendError($resVat['message']); 
+                    return ['status' => false, 'message' => $resVat['message']];
                 } 
             }
 
