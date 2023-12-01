@@ -36,7 +36,7 @@ class POSInsufficientItems extends Model
         'shiftId' => 'integer',
         'itemAutoId' => 'integer',
         'uom' => 'integer',
-        'qty' => 'integer',
+        'qty' => 'double',
         'wareHouseId' => 'integer',
         'availableQty' => 'integer',
         'primaryCode' => 'string'
