@@ -171,16 +171,18 @@
                     <img src="{{$company->logo_url}}" width="180px" height="60px" class="container">
                 @endif
             </td>
-            <td valign="bottom" style="width: 80%; border: none">
+            <td valign="top" style="width: 80%; border: none">
                 @if($company)
                     <span style="font-size: 26px;font-weight: 400"> {{$company->CompanyName}}</span>
                 @endif
-            </td>
-        </tr>
-        <tr>
-            <td style="border: none"></td>
-            <td style="border: none;font-size: 18px;font-weight: 400">
-                <span>Minutes of Tender Awarding Report</span>
+                    <br>
+                    <table style="border: none">
+                        <tr>
+                            <td width="100px" style="border: none">
+                                <span style="font-size: 18px;font-weight: 400">Minutes of Tender Awarding Report</span>
+                            </td>
+                        </tr>
+                    </table>
             </td>
         </tr>
     </table>
