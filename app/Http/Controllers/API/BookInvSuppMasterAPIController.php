@@ -780,6 +780,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                     {
                         $input['retentionPercentage'] = 0;
                     }
+                    
                     $input['retentionVatAmount'] = $vatTrans['totalVAT'] *  $input['retentionPercentage'] / 100;
             }
             if ($input['documentType'] == 3) {
