@@ -526,7 +526,8 @@ class CustomerInvoiceDirect extends Model
         'customerVATEligible',
         'approvedByUserID',
         'date_of_supply',
-        'isPOS'
+        'isPOS',
+        'isUpload'
     ];
 
     /**
@@ -617,7 +618,8 @@ class CustomerInvoiceDirect extends Model
         'vatRegisteredYN' => 'integer',
         'customerVATEligible' => 'integer',
         'date_of_supply' => 'string',
-        'isPOS' =>'integer'
+        'isPOS' =>'integer',
+        'isPOS' =>'isUpload'
     ];
 
     /**

@@ -49,6 +49,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
         Route::post('posMappingRequest', 'POS\PosAPIController@handleRequest');
         Route::post('pull_supplier_master', 'POS\PosAPIController@pullSupplierMaster');
         Route::post('pull_customer_master', 'POS\PosAPIController@pullCustomerMaster');
+        Route::post('fetch_item_wac_amount', 'POS\PosAPIController@fetchItemWacAmount');
     });
 
     Route::group(['middleware' => 'auth:api'], function () {
@@ -78,6 +79,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('getBudgetUploads', 'BudgetMasterAPIController@getBudgetUploads')->name("Get upload budgets");
 
             Route::post('downloadCITemplate', 'CustomerInvoiceDirectAPIController@downloadCITemplate')->name("Download ci template");
+            Route::post('getCustomerInvoiceUploads', 'CustomerInvoiceDirectAPIController@getCustomerInvoiceUploads')->name("Get upload customer invoice");
 
 
             Route::post('getAllEmployees', 'EmployeeAPIController@getAllEmployees');
@@ -101,10 +103,12 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::group(['middleware' => 'max_memory_limit'], function () {
                 Route::group(['middleware' => 'max_execution_limit'], function () {
                     Route::post('uploadBudgets', 'BudgetMasterAPIController@uploadBudgets')->name("Upload budgets");
+                    Route::post('uploadCustomerInvoice', 'CustomerInvoiceDirectAPIController@uploadCustomerInvoice')->name("Upload customer invoice");
                     Route::resource('fixed_asset_depreciation_masters', 'FixedAssetDepreciationMasterAPIController');
                     Route::post('getAssetDepPeriodsByID', 'FixedAssetDepreciationPeriodAPIController@getAssetDepPeriodsByID');
                     Route::post('exportAssetMaster', 'FixedAssetMasterAPIController@exportAssetMaster');
                     Route::post('deleteBudgetUploads', 'BudgetMasterAPIController@deleteBudgetUploads')->name("Delete budget uploads");
+                    Route::post('deleteCustomerInvoiceUploads', 'CustomerInvoiceDirectAPIController@deleteCustomerInvoiceUploads')->name("Delete budget uploads");
                 });
             });
 
@@ -383,34 +387,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('referBackCapitalization', 'AssetCapitalizationAPIController@referBackCapitalization');
             Route::post('deleteAllAssetCapitalizationDet', 'AssetCapitalizationDetailAPIController@deleteAllAssetCapitalizationDet');
 
-            Route::resource('journalVoucherCRUD', 'JvMasterAPIController');
-            Route::resource('jv_details', 'JvDetailAPIController');
-            Route::get('getJournalVoucherMasterFormData', 'JvMasterAPIController@getJournalVoucherMasterFormData');
-            Route::post('getJournalVoucherMasterView', 'JvMasterAPIController@getJournalVoucherMasterView');
-            Route::post('copyJV', 'JvMasterAPIController@copyJV');
-            Route::get('getJournalVoucherDetails', 'JvDetailAPIController@getJournalVoucherDetails');
-            Route::get('getJournalVoucherContracts', 'JvDetailAPIController@getJournalVoucherContracts');
-            Route::post('journalVoucherSalaryJVDetailStore', 'JvDetailAPIController@journalVoucherSalaryJVDetailStore');
-            Route::post('generateAllocation', 'JvDetailAPIController@generateAllocation');
-            Route::get('journalVoucherForSalaryJVMaster', 'JvMasterAPIController@journalVoucherForSalaryJVMaster');
-            Route::get('journalVoucherForSalaryJVDetail', 'JvMasterAPIController@journalVoucherForSalaryJVDetail');
-            Route::post('journalVoucherDeleteAllSJ', 'JvDetailAPIController@journalVoucherDeleteAllSJ');
-            Route::post('jvDetailsExportToCSV', 'JvDetailAPIController@jvDetailsExportToCSV');
-            Route::get('journalVoucherForAccrualJVMaster', 'JvMasterAPIController@journalVoucherForAccrualJVMaster');
-            Route::get('journalVoucherForAccrualJVDetail', 'JvMasterAPIController@journalVoucherForAccrualJVDetail');
-            Route::post('journalVoucherForPOAccrualJVDetail', 'JvMasterAPIController@journalVoucherForPOAccrualJVDetail');
-            Route::post('exportJournalVoucherForPOAccrualJVDetail', 'JvMasterAPIController@exportJournalVoucherForPOAccrualJVDetail');
-            Route::post('journalVoucherAccrualJVDetailStore', 'JvDetailAPIController@journalVoucherAccrualJVDetailStore');
             Route::post('journalVoucherPOAccrualJVDetailStore', 'JvDetailAPIController@journalVoucherPOAccrualJVDetailStore');
-            Route::post('journalVoucherDeleteAllAJ', 'JvDetailAPIController@journalVoucherDeleteAllAJ');
-            Route::post('journalVoucherDeleteAllPOAJ', 'JvDetailAPIController@journalVoucherDeleteAllPOAJ');
-            Route::post('journalVoucherDeleteAllDetails', 'JvDetailAPIController@journalVoucherDeleteAllDetails');
-            Route::get('exportStandardJVFormat', 'JvMasterAPIController@exportStandardJVFormat');
-            Route::post('journalVoucherReopen', 'JvMasterAPIController@journalVoucherReopen');
-            Route::post('getJournalVoucherAmend', 'JvMasterAPIController@getJournalVoucherAmend');
-            Route::post('amendJournalVoucherReview', 'JvMasterAPIController@amendJournalVoucherReview');
+
             Route::post('journalVoucherBudgetUpload', 'JvMasterAPIController@journalVoucherBudgetUpload');
-            Route::post('standardJvExcelUpload', 'JvMasterAPIController@standardJvExcelUpload');
 
             Route::resource('bookInvSuppDetRefferedbacks', 'BookInvSuppDetRefferedBackAPIController');
             Route::resource('DirectInvoiceDetRefferedbacks', 'DirectInvoiceDetailsRefferedBackAPIController');
@@ -1136,3 +1115,7 @@ if (env("LOG_ENABLE", false)) {
 /*
  * End external related routes
  */
+
+Route::resource('upload_customer_invoices', 'UploadCustomerInvoiceAPIController');
+
+Route::resource('log_upload_customer_invoices', 'LogUploadCustomerInvoiceAPIController');

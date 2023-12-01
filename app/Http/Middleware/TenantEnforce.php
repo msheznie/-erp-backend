@@ -66,6 +66,7 @@ class TenantEnforce
             'api/v1/store-employee-language',
             'api/v1/postEmployeeFromPortal',
             'api/v1/uploadBudgets',
+            'api/v1/uploadCustomerInvoice',
 
         ];
 

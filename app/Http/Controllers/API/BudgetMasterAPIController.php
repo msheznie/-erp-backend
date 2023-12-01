@@ -952,8 +952,7 @@ class BudgetMasterAPIController extends AppBaseController
         } else if ($input['type'] == 2) {
             $glIds = [$input['chartOfAccountID']];
 
-            $fixed_assets =  FixedAssetMaster::where('docOriginDocumentSystemID',3)
-                            ->where('companySystemID', $input['companySystemID'])
+            $fixed_assets =  FixedAssetMaster::where('companySystemID', $input['companySystemID'])
                             ->where('serviceLineSystemID', $input['serviceLineSystemID'])
                             ->whereIn('costglCodeSystemID', $glIds)
                             ->where('approved', 0)
@@ -1575,8 +1574,7 @@ class BudgetMasterAPIController extends AppBaseController
 
             $glIds = collect($glData)->pluck('glAutoID')->toArray();
 
-            $fixed_assets =  FixedAssetMaster::where('docOriginDocumentSystemID',3)
-                            ->where('companySystemID', $input['companySystemID'])
+            $fixed_assets =  FixedAssetMaster::where('companySystemID', $input['companySystemID'])
                             ->where('serviceLineSystemID', $input['serviceLineSystemID'])
                             ->whereIn('costglCodeSystemID', $glIds)
                             ->where('approved', 0)
