@@ -368,6 +368,7 @@ class TenderFinalBidsAPIController extends AppBaseController
     public function getFinalBidsReport(Request $request)
     {
         $tenderId = $request->get('id');
+        $employeeID = $request->get('userID');
         $tenderMaster= TenderMaster::select('title', 'tender_code', 'stage', 'negotiation_code', 'bid_opening_date', 'technical_bid_opening_date', 'commerical_bid_opening_date', 'award_comment', 'negotiation_award_comment', 'negotiation_code')
             ->where('id', $tenderId)
             ->first();
@@ -398,14 +399,16 @@ class TenderFinalBidsAPIController extends AppBaseController
             $query = $query->whereNotIn('srm_bid_submission_master.id', $bidSubmissionMasterIds);
         }
 
+        $employeeData = Employee::where('employeeSystemID',$employeeID)->first();
+
         $awardSummary = $query->orderBy('srm_tender_final_bids.total_weightage','desc')->get();
         $time = strtotime("now");
         $fileName = 'Supplier_Ranking_Summary' . $time . '.pdf';
-        $order = array('awardSummary' => $awardSummary, 'tenderMaster' => $tenderMaster, 'isNegotiation' => $isNegotiation, 'tenderCompany' => $tenderCompany);
+        $order = array('awardSummary' => $awardSummary, 'tenderMaster' => $tenderMaster, 'isNegotiation' => $isNegotiation, 'tenderCompany' => $tenderCompany, 'employeeData' => $employeeData);
         $html = view('print.final_bid_summary_print', $order);
         $pdf = \App::make('dompdf.wrapper');
         $pdf->loadHTML($html);
-        return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
+        return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream($fileName);
     }
 
     public function getTenderAwardingReport(Request $request)
@@ -445,7 +448,7 @@ class TenderFinalBidsAPIController extends AppBaseController
         $html = view('print.minutes_of_tender_awarding_print', $order);
         $pdf = \App::make('dompdf.wrapper');
         $pdf->loadHTML($html);
-        return $pdf->setPaper('a4', 'landscape')->setWarnings(false)->stream($fileName);
+        return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream($fileName);
 
     }
 

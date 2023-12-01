@@ -1,54 +1,194 @@
-<style>
-    table, th, td {
-        border: 1px solid black;
-        border-collapse: collapse;
-    }
-    .bit-tender-summary-report {
-        font-size: 12px;
-    }
-    .footer {
-        position: absolute;
-    }
+<html>
+<head>
+    <title>Supplier Ranking Summary Report</title>
+    <style>
+        @page {
+            margin-left: 30px;
+            margin-right: 30px;
+            margin-top: 30px;
+        }
 
-    .footer {
-        bottom: 0;
-        height: 100px;
-    }
+        .footer {
+            position: absolute;
+        }
 
-    .footer {
-        width: 100%;
-        text-align: center;
-        position: fixed;
-        font-size: 10px;
-        padding-top: -20px;
-    }
+        .footer {
+            bottom: 0;
+            height: 100px;
+        }
 
-    .pagenum:before {
-        content: counter(page);
-    }
-</style>
+        .footer {
+            width: 100%;
+            text-align: center;
+            position: fixed;
+            font-size: 10px;
+            padding-top: -20px;
+        }
 
+        body {
+            font-size: 12px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+        }
+
+        h3 {
+            font-size: 24.5px;
+        }
+
+        h6 {
+            font-size: 14px;
+        }
+
+        h6, h3 {
+            margin-top: 0px;
+            margin-bottom: 0px;
+            font-family: inherit;
+            font-weight: bold;
+            line-height: 1.2;
+            color: inherit;
+        }
+
+        table > tbody > tr > td {
+            font-size: 11.5px;
+        }
+
+        .font-weight-bold {
+            font-weight: 700 !important;
+        }
+
+
+
+        .font-weight-bold {
+            font-weight: 700 !important;
+        }
+
+        .table thead th {
+            vertical-align: bottom;
+            border-bottom: 2px solid #c2cfd6;
+        }
+
+        table.table-bordered {
+            border: 1px solid #000;
+        }
+
+        .table th, .table td {
+            padding: 6.4px !important;
+        }
+
+        table.table-bordered {
+            border-collapse: collapse;
+        }
+
+        table.table-bordered, .table-bordered th, .table-bordered td {
+            border: 1px solid #e2e3e5;
+        }
+
+        table > thead > tr > th {
+            font-size: 11.5px;
+        }
+
+        hr {
+            margin-top: 16px;
+            margin-bottom: 16px;
+            border: 0;
+            border-top: 1px solid
+        }
+
+        hr {
+            -webkit-box-sizing: content-box;
+            box-sizing: content-box;
+            height: 0;
+            overflow: visible;
+        }
+        .pagenum:before {
+            content: counter(page);
+        }
+        .content {
+            margin-bottom: 45px;
+        }
+        .container
+        {
+            display: block;
+            max-width:230px;
+            max-height:95px;
+            width: auto;
+            height: auto;
+        }
+
+        .table_height
+        {
+            max-height: 60px !important;
+        }
+
+        table, th, td {
+            border: 1px solid black;
+            border-collapse: collapse;
+        }
+
+    </style>
+</head>
+<body>
+<div class="footer">
+    <table style="width:100%; border: none">
+        <tr>
+            <td width="40%" style="border: none"><span
+                        class="font-weight-bold">Printed By :</span> {{$employeeData->empName}}
+            </td>
+        </tr>
+    </table>
+    <table style="width:100%; border: none">
+        <tr>
+            <td style="border: none"><span class="font-weight-bold">Printed Date & Time :</span>{{date('d/m/Y h:i A')}}</span><br></td>
+        </tr>
+        <tr>
+            &nbsp;
+        </tr>
+    </table>
+    <table style="width:100%; border: none">
+        <tr>
+            <td colspan="3" style="width:100%; border: none">
+                <hr style="background-color: black">
+            </td>
+        </tr>
+        <tr>
+            <td style="width:33%;font-size: 10px;vertical-align: top; border: none; border: none">
+            </td>
+            <td style="width:33%; text-align: center;font-size: 10px;vertical-align: top; border: none">
+                <span style="text-align: center">Page <span class="pagenum"></span></span><br>
+                @if ($tenderCompany->company)
+                    {{$tenderCompany->company->CompanyName}}
+                @endif
+            </td>
+            <td style="width:33%;font-size: 10px;vertical-align: top; border: none">
+            </td>
+        </tr>
+    </table>
+</div>
+<div class="card-body content" id="print-section">
+    <table style="width: 100%; border: none" class="table_height">
+        <tr style="width: 100%; border: none">
+            <td valign="top" style="width: 20%; border: none">
+                @if($tenderCompany->company)
+                    <img src="{{$tenderCompany->company->logo_url}}" width="180px" height="60px" class="container">
+                @endif
+            </td>
+            <td valign="bottom" style="width: 80%; border: none">
+                @if($tenderCompany->company)
+                    <span style="font-size: 26px;font-weight: 400"> {{$tenderCompany->company->CompanyName}}</span>
+                @endif
+            </td>
+        </tr>
+        <tr>
+            <td style="border: none"></td>
+            <td style="border: none;font-size: 18px;font-weight: 400">
+                <span>Supplier Ranking Summary Report</span>
+            </td>
+        </tr>
+    </table>
+    <hr style="color: #d3d9df">
+    <br>
+    <br>
 <table style="width:100%" class="bit-tender-summary-report">
     <tbody>
-    <tr>
-        <td colspan="9" style="text-align: center">
-            <table style="border: none;width: 100%">
-                <tr style="border: none">
-                    <td style="border: none; text-align: left">
-                    @if($tenderCompany->company)
-                        <img style="margin-top: 15px" src="{{$tenderCompany->company->logo_url}}" width="120px" height="100px">
-                            @if($tenderCompany->company)
-                                <p style="font-size: 24px;font-weight: 400; margin-top: -80px; margin-left: 125px"> {{$tenderCompany->company->CompanyName}}</p>
-                            @endif
-                        <br />
-                            <p style="font-size: 18px;font-weight: 400; margin-top: -60px; margin-left: 125px"> Supplier Ranking Summary Report </p>
-                    </td>
-                    @endif
-                    </td>
-                </tr>
-            </table>
-        </td>
-    </tr>
     <tr>
         <td><strong>Tender Code:</strong></td>
         <td colspan="2">{{ $tenderMaster->tender_code }}</td>
@@ -139,6 +279,7 @@
     </tr>
     </tbody>
 </table>
+    <br/>
 <table style="width:100%" class="bit-tender-summary-report">
     <tr>
         <td style="text-align: center;"><strong>Sr. No</strong></td>
@@ -154,15 +295,15 @@
     <tbody>
     @foreach ($awardSummary as $item)
         <tr>
-            <td>{{ $loop->index+1 }}</td>
+            <td style="text-align: center;">{{ $loop->index+1 }}</td>
             <td>{{ $item->bidSubmissionCode }}</td>
-            <td>{{ \Carbon\Carbon::parse($item->bidSubmittedDatetime)->format('d/m/Y') }}</td>
-            <td>{{ $item->name }}</td>
+            <td style="text-align: center;width: 140px">{{ \Carbon\Carbon::parse($item->bidSubmittedDatetime)->format('d/m/Y h:i A') }}</td>
+            <td style="text-align: center;">{{ $item->name }}</td>
             <td style="text-align: right;">{{ $item->com_weightage }}</td>
             <td style="text-align: right;">{{ $item->tech_weightage }}</td>
             <td style="text-align: right;">{{ $item->total_weightage }}</td>
             <td style="text-align: center;">{{ $item->combined_ranking }}</td>
-            <td>
+            <td style="text-align: center;">
               @if ($item->award == 1)
                   Awarded
               @else
@@ -173,26 +314,4 @@
     @endforeach
     </tbody>
 </table>
-<div class="footer">
-    <table style="width:100%; border: none;">
-        <tr style="border: none;">
-            <td colspan="3" style="width:100%; border: none;">
-                <hr style="background-color: black">
-            </td>
-        </tr>
-        <tr style="border: none;">
-            <td style="width:33%;font-size: 10px;vertical-align: top; border: none;">
-                <span class="white-space-pre-line font-weight-bold"></span>
-            </td>
-            <td style="width:33%; text-align: center;font-size: 10px;vertical-align: top; border: none;">
-                <span style="text-align: center">Page <span class="pagenum"></span></span><br>
-                @if ($tenderCompany->company)
-                    {{$tenderCompany->company->CompanyName}}
-                @endif
-            </td>
-            <td style="width:33%;font-size: 10px;vertical-align: top; border: none;">
-                <span style="margin-left: 50%;">Printed Date : {{date("d-M-y", strtotime(now()))}}</span>
-            </td>
-        </tr>
-    </table>
 </div>
