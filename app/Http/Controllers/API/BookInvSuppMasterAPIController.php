@@ -776,6 +776,10 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
             if ($input['documentType'] == 0) {
                     $vatTrans = TaxService::processPoBasedSupllierInvoiceVAT($input['bookingSuppMasInvAutoID']);
+                    if(!is_numeric($input['retentionPercentage']))
+                    {
+                        $input['retentionPercentage'] = 0;
+                    }
                     $input['retentionVatAmount'] = $vatTrans['totalVAT'] *  $input['retentionPercentage'] / 100;
             }
             if ($input['documentType'] == 3) {
