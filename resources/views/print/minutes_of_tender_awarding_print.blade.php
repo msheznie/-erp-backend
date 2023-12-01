@@ -171,25 +171,20 @@
                     <img src="{{$company->logo_url}}" width="180px" height="60px" class="container">
                 @endif
             </td>
-            <td valign="top" style="width: 80%; border: none">
+            <td valign="bottom" style="width: 80%; border: none">
                 @if($company)
-                    <span style="font-size: 24px;font-weight: 400"> {{$company->CompanyName}}</span>
+                    <span style="font-size: 26px;font-weight: 400"> {{$company->CompanyName}}</span>
                 @endif
+            </td>
+        </tr>
+        <tr>
+            <td style="border: none"></td>
+            <td style="border: none;font-size: 18px;font-weight: 400">
+                <span>Minutes of Tender Awarding Report</span>
             </td>
         </tr>
     </table>
     <hr style="color: #d3d9df">
-
-    <table style="width: 100%;" class="table_height">
-        <tr style="width: 100%">
-
-            <div>
-                <span style="font-size: 18px;text-align: center;">
-                        <h4 style="text-align: center;">Minutes of Tender Awarding Report</h4>
-                </span>
-            </div>
-        </tr>
-    </table>
     <br>
     <br>
     <table style="width:100%; font-size: 12px;">
@@ -258,8 +253,8 @@
         <tbody>
         @foreach ($employeeDetails as $item)
             <tr><td>{{ $item->employee->empID }} | {{$item->employee->empName}}</td>
-                <td>{{ \Carbon\Carbon::parse($item->updated_at)->format('d/m/Y h:i A') }}</td>
-                <td>
+                <td style="text-align: center;">{{ \Carbon\Carbon::parse($item->updated_at)->format('d/m/Y h:i A') }}</td>
+                <td style="text-align: center;">
                     @if ($item->tender_award_commite_mem_status == 1)
                         Approved
                     @else
