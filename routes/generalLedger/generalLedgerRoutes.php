@@ -20,6 +20,8 @@ Route::group([], function(){
     //budgets
     Route::post('getBudgetApprovedByUser', 'BudgetMasterAPIController@getBudgetApprovedByUser')->name("Get pending for approval - Budget");
     Route::post('getBudgetApprovalByUser', 'BudgetMasterAPIController@getBudgetApprovalByUser')->name("Get approved - Budget");
+    Route::post('addBudgetAdjustment', 'BudgetAdjustmentAPIController@addBudgetAdjustment')->name("Add budget adjustment");
+
 
     //budget transfers
     Route::post('getBudgetTransferApprovalByUser', 'BudgetTransferFormAPIController@getBudgetTransferApprovalByUser')->name("Get pending for approval - Budget trasfer");
