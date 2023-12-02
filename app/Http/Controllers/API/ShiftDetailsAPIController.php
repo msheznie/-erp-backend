@@ -1724,7 +1724,7 @@ class ShiftDetailsAPIController extends AppBaseController
 
                         $addToCusInvDetails['comRptCurrency'] = $master->companyReportingCurrencyID;
                         $addToCusInvDetails['comRptCurrencyER'] = $master->companyReportingER;
-                        $addToCusInvDetails["comRptAmount"] = $item->taxAmount / $master->companyReportingCurrencyID;
+                        $addToCusInvDetails["comRptAmount"] = $item->taxAmount / $master->companyReportingER;
                         $addToCusInvDetails["localAmount"] = $item->taxAmount;
 
                         $addToCusInvDetails['unitOfMeasure'] = 0;
@@ -1771,7 +1771,7 @@ class ShiftDetailsAPIController extends AppBaseController
 
                         $addToCusInvDetails['comRptCurrency'] = $master->companyReportingCurrencyID;
                         $addToCusInvDetails['comRptCurrencyER'] = $master->companyReportingER;
-                        $addToCusInvDetails["comRptAmount"] = $item->serviceChargeAmount / $master->companyReportingCurrencyID;
+                        $addToCusInvDetails["comRptAmount"] = $item->serviceChargeAmount / $master->companyReportingER;
                         $addToCusInvDetails["localAmount"] = $item->serviceChargeAmount;
 
                         $addToCusInvDetails['unitOfMeasure'] = 0;
@@ -1816,7 +1816,7 @@ class ShiftDetailsAPIController extends AppBaseController
 
                         $addToCusInvDetails['comRptCurrency'] = $master->companyReportingCurrencyID;
                         $addToCusInvDetails['comRptCurrencyER'] = $master->companyReportingER;
-                        $addToCusInvDetails["comRptAmount"] = $item->promotionAmount / $master->companyReportingCurrencyID;
+                        $addToCusInvDetails["comRptAmount"] = $item->promotionAmount / $master->companyReportingER;
                         $addToCusInvDetails["localAmount"] = $item->promotionAmount;
 
                         $addToCusInvDetails['unitOfMeasure'] = 0;
