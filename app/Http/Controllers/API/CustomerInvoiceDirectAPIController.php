@@ -2241,9 +2241,13 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             'employee' => $employee,
             'uploadedCompany' =>  $input['companySystemID'],
         ];
-
-
-//         $CustomerInvoiceCreate = CustomerInvoiceService::customerInvoiceCreate($db,$uploadData);
+        // DB::beginTransaction();
+        // try {
+        //     $customerInvoiceCreate = CustomerInvoiceService::customerInvoiceCreate($db,$uploadData);
+        // } catch (\Exception $e) {
+        //     DB::rollback();
+        //     return $e->getMessage().'-'.$e->getLine();
+        // }
 
         CustomerInvoiceUpload::dispatch($db, $uploadData);
 

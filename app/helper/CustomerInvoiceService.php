@@ -71,10 +71,9 @@ class CustomerInvoiceService
         $highestRow = $sheet->getHighestRow();
         $highestColumn = $sheet->getHighestColumn();
         $detailRows = [];
-
+        $rowNumber = 1;
         for ($row = $startRow; $row <= $highestRow; ++$row) {
             $rowData = [];
-
             for ($col = 'A'; $col <= $highestColumn; ++$col) {
                 $cellValue = $sheet->getCell($col . $row)->getValue();
 
@@ -94,21 +93,24 @@ class CustomerInvoiceService
                 
                 $rowData[] = $cellValue;
             }
+
+            $rowData[] = $rowNumber;
             $detailRows[] = $rowData;
+            $rowNumber ++;
         }
         
         $excelRow = 10;
         $errorMsg = "";
         $errorEnabled = false;
 
-        foreach($detailRows as $detailValue){
-            $excelRow++;
-            $invoiceNo = $detailValue[6]; 
+        $detailRows = collect($detailRows)->groupBy(6);
+        foreach($detailRows as $invoiceNo => $detailValue){
             if($invoiceNo != null){
                 $ifExistCustomerInvoiceDirect = CustomerInvoiceDirect::where('customerInvoiceNo',$invoiceNo)->first();
                 if($ifExistCustomerInvoiceDirect){
                     $errorMsg = "Customer Invoice No $invoiceNo already exist.";
-                    return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
+                    $rowData = collect($detailValue)->first();
+                    return ['status' => false, 'message' => $errorMsg, 'excelRow' => isset($rowData[20]) ? $rowData[20] : ""];
 
                 }
             }
@@ -116,466 +118,482 @@ class CustomerInvoiceService
 
         $excelRow = 10;
         $errorMsg = "";
-        foreach($detailRows as $value){
-            $excelRow++;
-
-            // HEADER DETAILS
-            $cutomerCode = $value[0]; //mandatory
-            $crNumber = $value[1];  //mandatory
-            $currency = $value[2];  //mandatory
-            $headerComments = $value[3]; //mandatory
-            $documentDate = $value[4]; //mandatory
-            $invoiceDueDate = $value[5]; //mandatory
-            $customerInvoiceNo = $value[6]; //mandatory
-            $bank = $value[7]; //mandatory
-            $accountNo = $value[8]; //mandatory
-            $confirmedBy = $value[9]; 
-            $approvedBy = $value[10];
-            
-
-            //Check Customer Code & CR Number both have value
-            if($cutomerCode == null && $crNumber == null){
-                $errorMsg = "In the fields Customer Code & CR Number. At least one of the field should have a value.";
-                return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
-
-            }
-
-            //Check Customer Active for cutomerCode
-            if($cutomerCode != null && $crNumber != null){
-                $customerMasters = CustomerMaster::where('CutomerCode',$cutomerCode)
-                ->where('customer_registration_no',$crNumber)
-                ->where('approvedYN',1)
-                ->first();
-
-                if(!$customerMasters){
-                    $errorMsg = "Active cutomer not found for the customer code $cutomerCode & CR Number $crNumber";
-                    return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
-                }
-            } elseif ($cutomerCode != null){
-                $customerMasters = CustomerMaster::where('CutomerCode',$cutomerCode)
-                ->where('approvedYN',1)
-                ->first();
-
-                if(!$customerMasters){
-                    $errorMsg = "Active cutomer not found for the customer code $cutomerCode";
-                    return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
-                }
-            } elseif ($crNumber != null){
-                $customerMasters = CustomerMaster::where('customer_registration_no',$crNumber)
-                ->where('approvedYN',1)
-                ->first();
+        foreach($detailRows as $ciData){
+            $cutomerCode = ""; //mandatory
+            $crNumber = "";  //mandatory
+            $currency = "";  //mandatory
+            $headerComments = ""; //mandatory
+            $documentDate = ""; //mandatory
+            $invoiceDueDate = ""; //mandatory
+            $customerInvoiceNo = ""; //mandatory
+            $bank = ""; //mandatory
+            $accountNo = ""; //mandatory
+            $confirmedBy = ""; 
+            $approvedBy = "";
+            $approvedEmployee = null;
+            if (count($ciData) > 0) {
+                $value = $ciData[0];
+                // HEADER DETAILS
+                $cutomerCode = $value[0]; //mandatory
+                $crNumber = $value[1];  //mandatory
+                $currency = $value[2];  //mandatory
+                $headerComments = $value[3]; //mandatory
+                $documentDate = $value[4]; //mandatory
+                $invoiceDueDate = $value[5]; //mandatory
+                $customerInvoiceNo = $value[6]; //mandatory
+                $bank = $value[7]; //mandatory
+                $accountNo = $value[8]; //mandatory
+                $confirmedBy = $value[9]; 
+                $approvedBy = $value[10];
+                $excelRow = $value[20];
                 
-                if(!$customerMasters){
-                    $errorMsg = "Active cutomer not found for the customer registration number $crNumber";
+
+                //Check Customer Code & CR Number both have value
+                if($cutomerCode == null && $crNumber == null){
+                    $errorMsg = "In the fields Customer Code & CR Number. At least one of the field should have a value.";
                     return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
-                }
-            }
 
-            //Check Currency for Currency code
-            if($currency == null){
-                $errorMsg = "Currency field can not be null.";
-                return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
-            }
-
-            if($currency != null){
-                $currencyMaster = CurrencyMaster::where('CurrencyCode',$currency)
-                ->first();
-
-                if(!$currencyMaster){
-                    $errorMsg = "Currency master not found for the currency code $currency";
-                    return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                 }
 
-                //check customer assigned currency
-                if($customerMasters && $currencyMaster){
-                    // return $customerMasters;
-                    $customerCurrency = CustomerCurrency::where('customerCode',$customerMasters->CutomerCode)
-                                                            ->where('currencyID',$currencyMaster->currencyID)
-                                                            ->where('isAssigned',-1)
-                                                            ->first();
+                //Check Customer Active for cutomerCode
+                if($cutomerCode != null && $crNumber != null){
+                    $customerMasters = CustomerMaster::where('CutomerCode',$cutomerCode)
+                    ->where('customer_registration_no',$crNumber)
+                    ->where('approvedYN',1)
+                    ->first();
 
-                    if(!$customerCurrency){
-                        $errorMsg = "Currency $currency is not assigned to the customer $customerMasters->customerCode";
+                    if(!$customerMasters){
+                        $errorMsg = "Active cutomer not found for the customer code $cutomerCode & CR Number $crNumber";
+                        return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
+                    }
+                } elseif ($cutomerCode != null){
+                    $customerMasters = CustomerMaster::where('CutomerCode',$cutomerCode)
+                    ->where('approvedYN',1)
+                    ->first();
+
+                    if(!$customerMasters){
+                        $errorMsg = "Active cutomer not found for the customer code $cutomerCode";
+                        return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
+                    }
+                } elseif ($crNumber != null){
+                    $customerMasters = CustomerMaster::where('customer_registration_no',$crNumber)
+                    ->where('approvedYN',1)
+                    ->first();
+                    
+                    if(!$customerMasters){
+                        $errorMsg = "Active cutomer not found for the customer registration number $crNumber";
                         return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                     }
                 }
 
-            }
-
-            
-            //Check headerComments
-            if($headerComments == null){
-                $errorMsg = "Header comments field can not be null.";
-                return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
-            }
-
-            //Check documentDate  //Check Active Financial Period
-            if($documentDate == null){
-                $errorMsg = "Document Date field can not be null.";
-                return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
-            }
-            
-            if($documentDate != null){
-
-                try{
-                    $documentDate = Carbon::parse($documentDate)->format('Y-m-d') . ' 00:00:00';
-                }
-                catch (\Exception $e){
-
-                    $errorMsg = "Invalid Document date format  $documentDate.";
-                    return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
-
-                }
-
-                $companyFinanceYear = Helper::companyFinanceYear($uploadedCompany, 0);
-
-                $CompanyFinancePeriod = CompanyFinancePeriod::where('companySystemID', '=', $uploadedCompany)
-                                        ->where('companyFinanceYearID', $companyFinanceYear[0]['companyFinanceYearID'])
-                                        ->where('departmentSystemID', 4)
-                                        ->where('isActive', -1)
-                                        ->where('isCurrent', -1)
-                                        ->first();
-
-                $fromDate = Carbon::parse($CompanyFinancePeriod->dateFrom);
-                $toDate = Carbon::parse($CompanyFinancePeriod->dateTo);
-                $checkDate = Carbon::parse($documentDate);
-
-                if (!$checkDate->between($fromDate, $toDate)) {
-                    $errorMsg = "The financial period for the  Document date $documentDate  is not active.";
-                    return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
-                }
-            }
-
-            //Check invoiceDueDate
-            if($invoiceDueDate == null){
-                $errorMsg = "invoice Due Date field can not be null.";
-                return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
-            }
-            
-            if($invoiceDueDate != null){
-                try{
-                    $invoiceDueDate = Carbon::parse($invoiceDueDate)->format('Y-m-d') . ' 00:00:00';
-                }
-                catch (\Exception $e){
-
-                    $errorMsg = "Invalid Invoice Due Date format  $invoiceDueDate.";
-                    return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
-                }
-            }
-
-            //customerInvoiceNo
-            if($customerInvoiceNo == null){
-                $errorMsg = "customerInvoiceNo field can not be null.";
-                return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
-            }
-
-            //bank
-            if($bank == null){
-                $errorMsg = "Bank field can not be null.";
-                return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
-            }
-
-            if($bank != null){
-                $bankMaster = BankAssign::where('bankShortCode',$bank)->first();
-                if(!$bankMaster){
-                    $errorMsg = "Bank not found for bank code $bank.";
+                //Check Currency for Currency code
+                if($currency == null){
+                    $errorMsg = "Currency field can not be null.";
                     return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                 }
 
-                if($bankMaster){
-                    //Account No
-                    if($accountNo == null){
-                        $errorMsg = "Account No field can not be null.";
+                if($currency != null){
+                    $currencyMaster = CurrencyMaster::where('CurrencyCode',$currency)
+                    ->first();
+
+                    if(!$currencyMaster){
+                        $errorMsg = "Currency master not found for the currency code $currency";
                         return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                     }
 
-                    if($accountNo != null){
-                        $account = BankAccount::where('AccountNo',$accountNo)
-                                                ->where('bankmasterAutoID',$bankMaster->bankmasterAutoID)
-                                                ->first();
-                        if(!$account){
-                            $errorMsg = "Bank Account not found for bank code $bank & Account No $accountNo.";
+                    //check customer assigned currency
+                    if($customerMasters && $currencyMaster){
+                        // return $customerMasters;
+                        $customerCurrency = CustomerCurrency::where('customerCode',$customerMasters->CutomerCode)
+                                                                ->where('currencyID',$currencyMaster->currencyID)
+                                                                ->where('isAssigned',-1)
+                                                                ->first();
+
+                        if(!$customerCurrency){
+                            $errorMsg = "Currency $currency is not assigned to the customer $customerMasters->customerCode";
                             return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                         }
                     }
+
                 }
 
-            }
-
-            if ($confirmedBy != null){
-                $confirmedEmployee = Employee::where('empID',$confirmedBy)
-                                                ->where('empActive',1)
-                                                ->first();
-                if(!$confirmedEmployee){
-                    $errorMsg = "Active employee not found for Confirmed By $confirmedBy.";
-                    return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
-                }
-
-            }
-            if($confirmedBy == null) {
-                $confirmedEmployee = $employee;
-            }
-
-            if ($approvedBy != null){
-                $approvedEmployee = Employee::where('empID',$approvedBy)
-                                    ->where('empActive',1)
-                                    ->first();
-
-                if(!$approvedEmployee){
-                    $errorMsg = "Active employee not found for Approved By $approvedBy.";
-                    return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
-                }
-
-                //Check Approval Acces
-                $approvalAccess = EmployeesDepartment::where('employeeID',$approvedEmployee->empID)
-                                                        ->where('documentSystemID',18)
-                                                        ->where('companySystemID',$uploadedCompany)
-                                                        ->where('isActive',1)
-                                                        ->first();
                 
-                if(!$approvalAccess){
-                    $errorMsg = "Approver $approvedBy not found in approval list.";
+                //Check headerComments
+                if($headerComments == null){
+                    $errorMsg = "Header comments field can not be null.";
                     return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                 }
-            }
 
-            if($approvedBy == null){
-                $approvedEmployee = $employee;
-
-                //Check Approval Acces
-                $approvalAccess = EmployeesDepartment::where('employeeID',$employee->empID)
-                                                        ->where('documentSystemID',18)
-                                                        ->where('companySystemID',$uploadedCompany)
-                                                        ->where('isActive',1)
-                                                        ->first();
+                //Check documentDate  //Check Active Financial Period
+                if($documentDate == null){
+                    $errorMsg = "Document Date field can not be null.";
+                    return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
+                }
                 
-                if(!$approvalAccess){
-                    $errorMsg = "Uploaded employee $employee->empID not found in approval list.";
+                if($documentDate != null){
+
+                    try{
+                        $documentDate = Carbon::parse($documentDate)->format('Y-m-d') . ' 00:00:00';
+                    }
+                    catch (\Exception $e){
+
+                        $errorMsg = "Invalid Document date format  $documentDate.";
+                        return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
+
+                    }
+
+                    $companyFinanceYear = Helper::companyFinanceYear($uploadedCompany, 0);
+
+                    $CompanyFinancePeriod = CompanyFinancePeriod::where('companySystemID', '=', $uploadedCompany)
+                                            ->where('companyFinanceYearID', $companyFinanceYear[0]['companyFinanceYearID'])
+                                            ->where('departmentSystemID', 4)
+                                            ->where('isActive', -1)
+                                            ->where('isCurrent', -1)
+                                            ->first();
+
+                    $fromDate = Carbon::parse($CompanyFinancePeriod->dateFrom);
+                    $toDate = Carbon::parse($CompanyFinancePeriod->dateTo);
+                    $checkDate = Carbon::parse($documentDate);
+
+                    if (!$checkDate->between($fromDate, $toDate)) {
+                        $errorMsg = "The financial period for the  Document date $documentDate  is not active.";
+                        return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
+                    }
+                }
+
+                //Check invoiceDueDate
+                if($invoiceDueDate == null){
+                    $errorMsg = "invoice Due Date field can not be null.";
                     return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                 }
-            }
+                
+                if($invoiceDueDate != null){
+                    try{
+                        $invoiceDueDate = Carbon::parse($invoiceDueDate)->format('Y-m-d') . ' 00:00:00';
+                    }
+                    catch (\Exception $e){
 
+                        $errorMsg = "Invalid Invoice Due Date format  $invoiceDueDate.";
+                        return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
+                    }
+                }
 
-            //DETAIL LEVEL DATA
-            $glCode = $value[11]; //mandatory
-            $project = $value[12];  
-            $segment = $value[13];  //mandatory
-            $detailComments = $value[14];
-            $UOM = $value[15]; //mandatory
-            $Qty = $value[16]; //mandatory
-            $salesPrice = $value[17]; //mandatory
-            $discountAmount = $value[18]; 
-            $vatAmount = $value[19];
-
-            if($Qty != null){
-                if (!is_numeric($Qty)) {
-                    $errorMsg = "QTY should be numeric.";
+                //customerInvoiceNo
+                if($customerInvoiceNo == null){
+                    $errorMsg = "customerInvoiceNo field can not be null.";
                     return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                 }
-            } elseif($salesPrice != null) {
-                if (!is_numeric($salesPrice)) {
-                    $errorMsg = "Sales Price should be numeric.";
-                    return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
-                }
-            } elseif($discountAmount != null) {
-                if (!is_numeric($discountAmount)) {
-                    $errorMsg = "Discount Amount should be numeric.";
-                    return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
-                }
-            } elseif($vatAmount != null) {
-                if (!is_numeric($vatAmount)) {
-                    $errorMsg = "VAT Amount should be numeric.";
-                    return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
-                }
-            }
 
-            if($glCode == null){
-                $errorMsg = "GL Account field can not be null.";
-                return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
-            }
+                //bank
+                if($bank == null){
+                    $errorMsg = "Bank field can not be null.";
+                    return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
+                }
 
-            if($glCode != null){
-                $chartOfAccounts = ChartOfAccountsAssigned::where('AccountCode',$glCode)
-                                                    ->where('companySystemID', $uploadedCompany)
-                                                    ->where('isAssigned', -1)
-                                                    ->where('isActive', 1)
+                if($bank != null){
+                    $bankMaster = BankAssign::where('bankShortCode',$bank)->first();
+                    if(!$bankMaster){
+                        $errorMsg = "Bank not found for bank code $bank.";
+                        return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
+                    }
+
+                    if($bankMaster){
+                        //Account No
+                        if($accountNo == null){
+                            $errorMsg = "Account No field can not be null.";
+                            return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
+                        }
+
+                        if($accountNo != null){
+                            $account = BankAccount::where('AccountNo',$accountNo)
+                                                    ->where('bankmasterAutoID',$bankMaster->bankmasterAutoID)
                                                     ->first();
+                            if(!$account){
+                                $errorMsg = "Bank Account not found for bank code $bank & Account No $accountNo.";
+                                return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
+                            }
+                        }
+                    }
 
-                if(!$chartOfAccounts){
-                    $errorMsg = "Chart Of Account not found for the GL Code $glCode.";
-                    return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                 }
-            }
 
-
-            if($project != null){
-                $projectExist = ErpProjectMaster::where('projectCode',$project)
+                if ($confirmedBy != null){
+                    $confirmedEmployee = Employee::where('empID',$confirmedBy)
+                                                    ->where('empActive',1)
                                                     ->first();
-                
-                if(!$projectExist){
-                    $project= null;
-                    $errorMsg = "Project master not for the Project Code $project.";
-                    return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
-                } else {
-                    $project= $projectExist->id;
+                    if(!$confirmedEmployee){
+                        $errorMsg = "Active employee not found for Confirmed By $confirmedBy.";
+                        return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
+                    }
+
                 }
-            }  else {
-                $project= null;
-            }
-
-            if($segment == null){
-                $errorMsg = "Segment field can not be null.";
-                return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
-            }
-
-            if($segment != null){
-                $segmentExist = SegmentMaster::where('ServiceLineCode',$segment)
-                                                ->where('companySystemID',$uploadedCompany)
-                                                ->where('isActive',1)
-                                                ->where('isDeleted',0)
-                                                ->first();
-
-                if(!$segmentExist){
-                    $errorMsg = "Active Segment master not for the Segment Code $segment.";
-                    return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
+                if($confirmedBy == null) {
+                    $confirmedEmployee = $employee;
                 }
-            }
 
-            if($UOM == null){
-                $errorMsg = "UOM field can not be null.";
-                return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
-            }
+                if ($approvedBy != null){
+                    $approvedEmployee = Employee::where('empID',$approvedBy)
+                                        ->where('empActive',1)
+                                        ->first();
 
-            if($UOM != null){
-                $UOMExist = Unit::where('UnitShortCode',$UOM)
-                                ->where('is_active',1)
-                                ->first();
+                    if(!$approvedEmployee){
+                        $errorMsg = "Active employee not found for Approved By $approvedBy.";
+                        return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
+                    }
 
-                if(!$UOMExist){
-                    $errorMsg = "Active UOM master not for the UOM Short Code $UOM.";
-                    return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
+                    //Check Approval Acces
+                    $approvalAccess = EmployeesDepartment::where('employeeID',$approvedEmployee->empID)
+                                                            ->where('documentSystemID',18)
+                                                            ->where('companySystemID',$uploadedCompany)
+                                                            ->where('isActive',1)
+                                                            ->first();
+                    
+                    if(!$approvalAccess){
+                        $errorMsg = "Approver $approvedBy not found in approval list.";
+                        return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
+                    }
                 }
-            }
 
-            
-            if($Qty == null){
-                $errorMsg = "Quantity field can not be null.";
-                return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
-            }
+                if($approvedBy == null){
+                    $approvedEmployee = $employee;
 
-            if($salesPrice == null){
-                $errorMsg = "Sales Price field can not be null.";
-                return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
-            }
+                    //Check Approval Acces
+                    $approvalAccess = EmployeesDepartment::where('employeeID',$employee->empID)
+                                                            ->where('documentSystemID',18)
+                                                            ->where('companySystemID',$uploadedCompany)
+                                                            ->where('isActive',1)
+                                                            ->first();
+                    
+                    if(!$approvalAccess){
+                        $errorMsg = "Uploaded employee $employee->empID not found in approval list.";
+                        return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
+                    }
+                }
 
-            if($vatAmount != null){
-                $by = 'vatAmount';
-                $VATPercentage = 0;
-            } else {
-                $by = 'VATPercentage';
-                $vatAmount = 0;
-                $VATPercentage = 0;
-            }
-
-            if($discountAmount != null){
-                $byDiscount = 'discountAmountLine';
-                $discountPercentage = 0;
-            } else {
-                $byDiscount = 'discountPercentage';
-                $discountAmount = 0;
-                $discountPercentage = 0;
-            }
-
-            
-
-            $DirectInvoiceHeaderData = [
-                'bookingDate'=>$documentDate,
-                'comments'=>$headerComments,
-                'companyFinancePeriodID'=>$CompanyFinancePeriod->companyFinancePeriodID,
-                'companyFinanceYearID'=>$companyFinanceYear[0]['companyFinanceYearID'],
-                'companyID'=>$uploadedCompany,
-                'custTransactionCurrencyID'=>$customerCurrency->currencyID,
-                'customerID'=>$customerMasters->customerCodeSystem,
-                'invoiceDueDate'=>$invoiceDueDate,
-                'date_of_supply'=>$documentDate,
-                'isPerforma'=>0,
-                'isUpload'=>1,
-                'excelRow'=>$excelRow,
-                'bankID'=>$bankMaster->bankAssignedAutoID,
-                'bankAccountID'=>$account->bankAccountAutoID,
-                'customerInvoiceNo'=>$customerInvoiceNo,
-                'uploadCustomerInvoice'=>$uploadCustomerInvoice->id,
-                'logUploadCustomerInvoice'=>$logUploadCustomerInvoice->id
-            ];
-
-            $DirectInvoiceDetailData = [
-                'glCode'=>$chartOfAccounts->chartOfAccountSystemID,
-                'project'=>$project,
-                'comments'=>$detailComments,
-                'segment'=>$segmentExist->serviceLineSystemID,
-                'companySystemID'=>$uploadedCompany,
-                'UOM'=>$UOMExist->UnitID,
-                'Qty'=>$Qty,
-                'salesPrice'=>$salesPrice,
-                'discountAmountLine'=>$discountAmount,
-                'vatAmount'=>$vatAmount,
-                'by'=>$by,
-                'VATPercentage'=>$VATPercentage,
-                'discountPercentage'=>$discountPercentage,
-                'excelRow'=>$excelRow,
-            ];
+                $DirectInvoiceHeaderData = [
+                    'bookingDate'=> $documentDate,
+                    'comments'=> $headerComments,
+                    'companyFinancePeriodID'=> $CompanyFinancePeriod->companyFinancePeriodID,
+                    'companyFinanceYearID'=> $companyFinanceYear[0]['companyFinanceYearID'],
+                    'companyID'=> $uploadedCompany,
+                    'custTransactionCurrencyID'=> $customerCurrency->currencyID,
+                    'customerID'=> $customerMasters->customerCodeSystem,
+                    'invoiceDueDate'=> $invoiceDueDate,
+                    'date_of_supply'=> $documentDate,
+                    'isPerforma'=> 0,
+                    'isUpload'=> 1,
+                    'excelRow'=> $excelRow,
+                    'bankID'=> $bankMaster->bankAssignedAutoID,
+                    'bankAccountID'=> $account->bankAccountAutoID,
+                    'customerInvoiceNo'=> $customerInvoiceNo,
+                    'uploadCustomerInvoice'=> $uploadCustomerInvoice->id,
+                    'logUploadCustomerInvoice'=> $logUploadCustomerInvoice->id
+                ];
 
                 $directInvoiceHeader = $CustomerInvoiceService->createDirectInvoiceHeader($DirectInvoiceHeaderData);
 
                 if ($directInvoiceHeader['status']) {
-                    $customerInvoiceDirects = $directInvoiceHeader['data'];
-                    $DirectInvoiceDetailData['custInvoiceDirectAutoID'] = $customerInvoiceDirects->custInvoiceDirectAutoID;
+                    foreach ($ciData as $deatilKey => $value) {
+                        //DETAIL LEVEL DATA
+                        $glCode = $value[11]; //mandatory
+                        $project = $value[12];  
+                        $segment = $value[13];  //mandatory
+                        $detailComments = $value[14];
+                        $UOM = $value[15]; //mandatory
+                        $Qty = $value[16]; //mandatory
+                        $salesPrice = $value[17]; //mandatory
+                        $discountAmount = $value[18]; 
+                        $vatAmount = $value[19];
+                        $excelRow = $value[20];
 
-                    $createDirectInvoiceDetails = $CustomerInvoiceService->createDirectInvoiceDetails($DirectInvoiceDetailData);
+                        if($Qty != null){
+                            if (!is_numeric($Qty)) {
+                                $errorMsg = "QTY should be numeric.";
+                                return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
+                            }
+                        } elseif($salesPrice != null) {
+                            if (!is_numeric($salesPrice)) {
+                                $errorMsg = "Sales Price should be numeric.";
+                                return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
+                            }
+                        } elseif($discountAmount != null) {
+                            if (!is_numeric($discountAmount)) {
+                                $errorMsg = "Discount Amount should be numeric.";
+                                return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
+                            }
+                        } elseif($vatAmount != null) {
+                            if (!is_numeric($vatAmount)) {
+                                $errorMsg = "VAT Amount should be numeric.";
+                                return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
+                            }
+                        }
 
-                    if($createDirectInvoiceDetails['status']){
-                        $customerInvoiceDirectDetails = $createDirectInvoiceDetails['data'];
-                        $customerInvoiceDirectDetails['excelRow'] = $excelRow;
-                        $updateDirectInvoiceDetails = $CustomerInvoiceService->updateDirectInvoice($customerInvoiceDirectDetails);
-
-                    }
-
-
-                    $params = array('autoID' => $customerInvoiceDirects->custInvoiceDirectAutoID,
-                        'company' => $customerInvoiceDirects->companySystemID,
-                        'document' => $customerInvoiceDirects->documentSystemiD,
-                        'confirmedBy' => $confirmedEmployee->employeeSystemID,
-                        'employee_id' => $confirmedEmployee->employeeSystemID,
-                        'segment' => '',
-                        'category' => '',
-                        'amount' => ''
-                    );
-
-                    //checking whether document approved table has a data for the same document
-                    $docExist = DocumentApproved::where('documentSystemID', $params["document"])->where('documentSystemCode', $params["autoID"])->first();
-                    if (!$docExist) {
-                        $confirm = \Helper::confirmDocument($params);
-                        if (!$confirm["success"]) {
-
-                            $errorMsg = $confirm["message"];
+                        if($glCode == null){
+                            $errorMsg = "GL Account field can not be null.";
                             return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
+                        }
 
+                        if($glCode != null){
+                            $chartOfAccounts = ChartOfAccountsAssigned::where('AccountCode',$glCode)
+                                                                ->where('companySystemID', $uploadedCompany)
+                                                                ->where('isAssigned', -1)
+                                                                ->where('isActive', 1)
+                                                                ->first();
+
+                            if(!$chartOfAccounts){
+                                $errorMsg = "Chart Of Account not found for the GL Code $glCode.";
+                                return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
+                            }
+                        }
+
+
+                        if($project != null){
+                            $projectExist = ErpProjectMaster::where('projectCode',$project)
+                                                                ->first();
+                            
+                            if(!$projectExist){
+                                $project= null;
+                                $errorMsg = "Project master not for the Project Code $project.";
+                                return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
+                            } else {
+                                $project= $projectExist->id;
+                            }
+                        }  else {
+                            $project= null;
+                        }
+
+                        if($segment == null){
+                            $errorMsg = "Segment field can not be null.";
+                            return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
+                        }
+
+                        if($segment != null){
+                            $segmentExist = SegmentMaster::where('ServiceLineCode',$segment)
+                                                            ->where('companySystemID',$uploadedCompany)
+                                                            ->where('isActive',1)
+                                                            ->where('isDeleted',0)
+                                                            ->first();
+
+                            if(!$segmentExist){
+                                $errorMsg = "Active Segment master not for the Segment Code $segment.";
+                                return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
+                            }
+                        }
+
+                        if($UOM == null){
+                            $errorMsg = "UOM field can not be null.";
+                            return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
+                        }
+
+                        if($UOM != null){
+                            $UOMExist = Unit::where('UnitShortCode',$UOM)
+                                            ->where('is_active',1)
+                                            ->first();
+
+                            if(!$UOMExist){
+                                $errorMsg = "Active UOM master not for the UOM Short Code $UOM.";
+                                return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
+                            }
+                        }
+
+                        
+                        if($Qty == null){
+                            $errorMsg = "Quantity field can not be null.";
+                            return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
+                        }
+
+                        if($salesPrice == null){
+                            $errorMsg = "Sales Price field can not be null.";
+                            return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
+                        }
+
+                        if($vatAmount != null){
+                            $by = 'vatAmount';
+                            $VATPercentage = 0;
                         } else {
-                            $documentApproveds = DocumentApproved::where('documentSystemCode', $customerInvoiceDirects->custInvoiceDirectAutoID)->where('documentSystemID', 20)->get();
-                            foreach ($documentApproveds as $documentApproved) {
-                                $documentApproved["approvedComments"] = "Invoice created from customer invoice upload";
-                                $documentApproved["db"] = $db;
-                                $documentApproved["approvedBy"] = $approvedEmployee->employeeSystemID;
-                                $approve = \Helper::approveDocument($documentApproved);
+                            $by = 'VATPercentage';
+                            $vatAmount = 0;
+                            $VATPercentage = 0;
+                        }
 
-                                if (!$approve["success"]) {
-                                    $errorMsg = $approve['message'];
-                                    return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
+                        if($discountAmount != null){
+                            $byDiscount = 'discountAmountLine';
+                            $discountPercentage = 0;
+                        } else {
+                            $byDiscount = 'discountPercentage';
+                            $discountAmount = 0;
+                            $discountPercentage = 0;
+                        }
+
+                        $DirectInvoiceDetailData = [
+                            'glCode'=>$chartOfAccounts->chartOfAccountSystemID,
+                            'project'=>$project,
+                            'comments'=>$detailComments,
+                            'segment'=>$segmentExist->serviceLineSystemID,
+                            'companySystemID'=>$uploadedCompany,
+                            'UOM'=>$UOMExist->UnitID,
+                            'Qty'=>$Qty,
+                            'salesPrice'=>$salesPrice,
+                            'discountAmountLine'=>$discountAmount,
+                            'vatAmount'=>$vatAmount,
+                            'by'=>$by,
+                            'VATPercentage'=>$VATPercentage,
+                            'discountPercentage'=>$discountPercentage,
+                            'excelRow'=>$excelRow,
+                        ];
+
+                        $customerInvoiceDirects = $directInvoiceHeader['data'];
+                        $DirectInvoiceDetailData['custInvoiceDirectAutoID'] = $customerInvoiceDirects->custInvoiceDirectAutoID;
+
+                        $createDirectInvoiceDetails = $CustomerInvoiceService->createDirectInvoiceDetails($DirectInvoiceDetailData);
+
+                        if($createDirectInvoiceDetails['status']){
+                            $customerInvoiceDirectDetails = $createDirectInvoiceDetails['data'];
+                            $customerInvoiceDirectDetails['excelRow'] = $excelRow;
+                            $updateDirectInvoiceDetails = $CustomerInvoiceService->updateDirectInvoice($customerInvoiceDirectDetails);
+
+                        }
+
+                        $params = array('autoID' => $customerInvoiceDirects->custInvoiceDirectAutoID,
+                            'company' => $customerInvoiceDirects->companySystemID,
+                            'document' => $customerInvoiceDirects->documentSystemiD,
+                            'confirmedBy' => $confirmedEmployee->employeeSystemID,
+                            'employee_id' => $confirmedEmployee->employeeSystemID,
+                            'segment' => '',
+                            'category' => '',
+                            'amount' => ''
+                        );
+
+                        //checking whether document approved table has a data for the same document
+                        $docExist = DocumentApproved::where('documentSystemID', $params["document"])->where('documentSystemCode', $params["autoID"])->first();
+                        if (!$docExist) {
+                            $confirm = \Helper::confirmDocument($params);
+                            if (!$confirm["success"]) {
+
+                                $errorMsg = $confirm["message"];
+                                return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
+
+                            } else {
+                                $documentApproveds = DocumentApproved::where('documentSystemCode', $customerInvoiceDirects->custInvoiceDirectAutoID)->where('documentSystemID', 20)->get();
+                                foreach ($documentApproveds as $documentApproved) {
+                                    $documentApproved["approvedComments"] = "Invoice created from customer invoice upload";
+                                    $documentApproved["db"] = $db;
+                                    $documentApproved["fromUpload"] = true;
+                                    $documentApproved["approvedBy"] = $approvedEmployee->employeeSystemID;
+                                    $approve = \Helper::approveDocument($documentApproved);
+
+                                    if (!$approve["success"]) {
+                                        $errorMsg = $approve['message'];
+                                        return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
+                                    }
                                 }
                             }
                         }
                     }
+                } else {
+                    return ['status' => false, 'message' => $directInvoiceHeader['message']];
                 }
+            }
         }
 
         UploadCustomerInvoice::where('id', $uploadCustomerInvoice->id)->update(['uploadStatus' => 1]);
@@ -650,8 +668,7 @@ class CustomerInvoiceService
         $input['FYPeriodDateTo'] = $FYPeriodDateTo;
 
         $input['invoiceDueDate'] = Carbon::parse($input['invoiceDueDate'])->format('d-m-Y') . ' 00:00:00';
-
-        $input['bookingDate'] = Carbon::parse($input['bookingDate'])->format('d-m-Y') . ' 00:00:00';
+        $input['bookingDate'] = Carbon::parse($input['bookingDate']);
         $input['date_of_supply'] = Carbon::parse($input['date_of_supply'])->format('d-m-Y') . ' 00:00:00';
         $input['customerInvoiceDate'] = $input['bookingDate'];
         $input['companySystemID'] = $input['companyID'];
@@ -667,11 +684,10 @@ class CustomerInvoiceService
         $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
 
 
-        $curentDate = Carbon::parse(now())->format('d-m-Y') . ' 00:00:00';
+        $curentDate = Carbon::now();
         if ($input['bookingDate'] > $curentDate) {
             $errorMsg = "Document date cannot be greater than current date.";
             return ['status' => false, 'message' => $errorMsg, 'excelRow' => $input['excelRow']];
-
         }
         if (($input['bookingDate'] >= $FYPeriodDateFrom) && ($input['bookingDate'] <= $FYPeriodDateTo)) {
             $customerInvoiceDirects = $this->customerInvoiceDirectRepository->create($input);
@@ -693,12 +709,6 @@ class CustomerInvoiceService
         $companySystemID = $request['companySystemID'];
         $custInvoiceDirectAutoID = $request['custInvoiceDirectAutoID'];
         $glCode = $request['glCode'];
-
-
-
-
-
-
   
         $master = CustomerInvoiceDirect::select('*')->where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->first();
         $bookingInvCode = $master->bookingInvCode;
@@ -802,21 +812,17 @@ class CustomerInvoiceService
 
         $addToCusInvDetails["VATPercentage"] = ($request["vatAmount"] / $addToCusInvDetails['unitCost']) * 100;
 
-        /**/
+        $createdData = CustomerInvoiceDirectDetail::create($addToCusInvDetails);
+        $details = CustomerInvoiceDirectDetail::select(DB::raw("SUM(invoiceAmount) as bookingAmountTrans"), DB::raw("SUM(localAmount) as bookingAmountLocal"), DB::raw("SUM(comRptAmount) as bookingAmountRpt"))->where('custInvoiceDirectID', $custInvoiceDirectAutoID)->first()->toArray();
 
+        CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->update($details);
 
-
-            $createdData = CustomerInvoiceDirectDetail::create($addToCusInvDetails);
-            $details = CustomerInvoiceDirectDetail::select(DB::raw("SUM(invoiceAmount) as bookingAmountTrans"), DB::raw("SUM(localAmount) as bookingAmountLocal"), DB::raw("SUM(comRptAmount) as bookingAmountRpt"))->where('custInvoiceDirectID', $custInvoiceDirectAutoID)->first()->toArray();
-
-            CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->update($details);
-
-            if($createdData){
-                return ['status' => true,'data'=>$createdData];
-            } else {
-                $errorMsg = "Error Occured !.";
-                return ['status' => false, 'message' => $errorMsg, 'excelRow' => $request['excelRow']];
-            }
+        if($createdData){
+            return ['status' => true,'data'=>$createdData];
+        } else {
+            $errorMsg = "Error Occured !.";
+            return ['status' => false, 'message' => $errorMsg, 'excelRow' => $request['excelRow']];
+        }
 
     }
 
@@ -1058,26 +1064,32 @@ class CustomerInvoiceService
             unset($input['exempt_vat_portion']);
         }
 
+        $excelRow = $input['excelRow'];
+        if (isset($input['excelRow'])) {
+            unset($input['excelRow']);
+        }
 
-            $inputArray = json_decode(json_encode($input), true);
-            $x=CustomerInvoiceDirectDetail::where('custInvDirDetAutoID', $detail->custInvDirDetAutoID)->update($inputArray);
-            $allDetail = CustomerInvoiceDirectDetail::select(DB::raw("IFNULL(SUM(invoiceAmount),0) as bookingAmountTrans"), DB::raw("IFNULL(SUM(localAmount),0) as bookingAmountLocal"), DB::raw("IFNULL(SUM(comRptAmount),0) as bookingAmountRpt"))->where('custInvoiceDirectID', $detail->custInvoiceDirectID)->first()->toArray();
+        $inputArray = json_decode(json_encode($input), true);
 
-            CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $detail->custInvoiceDirectID)->update($allDetail);
 
-            if($master->isPerforma != 2) {
-                $resVat = $this->updateTotalVAT($master->custInvoiceDirectAutoID);
-                if (!$resVat['status']) {
-                    $errorMsg = $resVat['message'];
-                    return ['status' => false, 'message' => $errorMsg, 'excelRow' => $input['excelRow']];
-                } 
-            }
-            if($x){
-                return ['status' => true];
-            } else {
-                $errorMsg = "Error Occured While Udpating the Customer Invoice Direct Details";
-                return ['status' => false, 'message' => $errorMsg, 'excelRow' => $input['excelRow']];
-            }
+        $x=CustomerInvoiceDirectDetail::where('custInvDirDetAutoID', $detail->custInvDirDetAutoID)->update($inputArray);
+        $allDetail = CustomerInvoiceDirectDetail::select(DB::raw("IFNULL(SUM(invoiceAmount),0) as bookingAmountTrans"), DB::raw("IFNULL(SUM(localAmount),0) as bookingAmountLocal"), DB::raw("IFNULL(SUM(comRptAmount),0) as bookingAmountRpt"))->where('custInvoiceDirectID', $detail->custInvoiceDirectID)->first()->toArray();
+
+        CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $detail->custInvoiceDirectID)->update($allDetail);
+
+        if($master->isPerforma != 2) {
+            $resVat = $this->updateTotalVAT($master->custInvoiceDirectAutoID);
+            if (!$resVat['status']) {
+                $errorMsg = $resVat['message'];
+                return ['status' => false, 'message' => $errorMsg, 'excelRow' => $excelRow];
+            } 
+        }
+        if($x){
+            return ['status' => true];
+        } else {
+            $errorMsg = "Error Occured While Udpating the Customer Invoice Direct Details";
+            return ['status' => false, 'message' => $errorMsg, 'excelRow' => $excelRow];
+        }
 
     }
 
