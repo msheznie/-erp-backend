@@ -1590,7 +1590,7 @@ class ShiftDetailsAPIController extends AppBaseController
                         $addToCusInvItemDetails['localCurrencyER'] = $item->companyLocalExchangeRate;
                         $addToCusInvItemDetails['issueCostLocal'] = $item->cost / $item->itemQty;
                         $addToCusInvItemDetails['issueCostLocalTotal'] = $item->cost * $item->qty;
-                        $addToCusInvItemDetails['reportingCurrencyID'] = $item->companyReportingCurrency;
+                        $addToCusInvItemDetails['reportingCurrencyID'] = $item->companyReportingCurrencyID;
                         $addToCusInvItemDetails['reportingCurrencyER'] = $item->companyReportingExchangeRate;
                         $addToCusInvItemDetails['issueCostRpt'] = ($item->cost / $item->itemQty) / $item->companyReportingExchangeRate;
                         $addToCusInvItemDetails['issueCostRptTotal'] = $item->cost * $item->qty / $item->companyReportingExchangeRate;
