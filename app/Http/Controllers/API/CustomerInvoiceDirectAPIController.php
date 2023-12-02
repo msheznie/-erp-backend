@@ -2068,6 +2068,14 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         return $this->sendResponse($customerInvoiceDirect, 'Customer Invoice Direct retrieved successfully');
     }
 
+    public function getCIUploadStatus(Request $request)
+    {
+        $companyId = $request['companyId'];
+        $output = UploadCustomerInvoice::where('companySystemID',$companyId)
+                                                ->where('uploadStatus',-1)->count();
+        return $this->sendResponse($output, 'Record retrieved successfully');
+
+    }
 
     public function getINVFormData(Request $request)
     {
@@ -2241,13 +2249,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             'employee' => $employee,
             'uploadedCompany' =>  $input['companySystemID'],
         ];
-        // DB::beginTransaction();
-        // try {
-        //     $customerInvoiceCreate = CustomerInvoiceService::customerInvoiceCreate($db,$uploadData);
-        // } catch (\Exception $e) {
-        //     DB::rollback();
-        //     return $e->getMessage().'-'.$e->getLine();
-        // }
+
 
         CustomerInvoiceUpload::dispatch($db, $uploadData);
 

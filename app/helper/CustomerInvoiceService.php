@@ -449,6 +449,7 @@ class CustomerInvoiceService
 
                         if($project != null){
                             $projectExist = ErpProjectMaster::where('projectCode',$project)
+                                                                ->where('companySystemID',$uploadedCompany)
                                                                 ->first();
                             
                             if(!$projectExist){
@@ -530,6 +531,7 @@ class CustomerInvoiceService
                             'project'=>$project,
                             'comments'=>$detailComments,
                             'segment'=>$segmentExist->serviceLineSystemID,
+                            'segmentCode'=>$segmentExist->ServiceLineCode,
                             'companySystemID'=>$uploadedCompany,
                             'UOM'=>$UOMExist->UnitID,
                             'Qty'=>$Qty,
@@ -554,42 +556,46 @@ class CustomerInvoiceService
 
                         }
 
-                        $params = array('autoID' => $customerInvoiceDirects->custInvoiceDirectAutoID,
-                            'company' => $customerInvoiceDirects->companySystemID,
-                            'document' => $customerInvoiceDirects->documentSystemiD,
-                            'confirmedBy' => $confirmedEmployee->employeeSystemID,
-                            'employee_id' => $confirmedEmployee->employeeSystemID,
-                            'segment' => '',
-                            'category' => '',
-                            'amount' => ''
-                        );
 
-                        //checking whether document approved table has a data for the same document
-                        $docExist = DocumentApproved::where('documentSystemID', $params["document"])->where('documentSystemCode', $params["autoID"])->first();
-                        if (!$docExist) {
-                            $confirm = \Helper::confirmDocument($params);
-                            if (!$confirm["success"]) {
+                    }
 
-                                $errorMsg = $confirm["message"];
-                                return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
+                    $directInvoiceHeaderData = $directInvoiceHeader['data'];
+                    $params = array('autoID' => $directInvoiceHeaderData->custInvoiceDirectAutoID,
+                        'company' => $directInvoiceHeaderData->companySystemID,
+                        'document' => $directInvoiceHeaderData->documentSystemiD,
+                        'confirmedBy' => $confirmedEmployee->employeeSystemID,
+                        'employee_id' => $confirmedEmployee->employeeSystemID,
+                        'segment' => '',
+                        'category' => '',
+                        'amount' => ''
+                    );
 
-                            } else {
-                                $documentApproveds = DocumentApproved::where('documentSystemCode', $customerInvoiceDirects->custInvoiceDirectAutoID)->where('documentSystemID', 20)->get();
-                                foreach ($documentApproveds as $documentApproved) {
-                                    $documentApproved["approvedComments"] = "Invoice created from customer invoice upload";
-                                    $documentApproved["db"] = $db;
-                                    $documentApproved["fromUpload"] = true;
-                                    $documentApproved["approvedBy"] = $approvedEmployee->employeeSystemID;
-                                    $approve = \Helper::approveDocument($documentApproved);
+                    //checking whether document approved table has a data for the same document
+                    $docExist = DocumentApproved::where('documentSystemID', $params["document"])->where('documentSystemCode', $params["autoID"])->first();
+                    if (!$docExist) {
+                        $confirm = \Helper::confirmDocument($params);
+                        if (!$confirm["success"]) {
 
-                                    if (!$approve["success"]) {
-                                        $errorMsg = $approve['message'];
-                                        return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
-                                    }
+                            $errorMsg = $confirm["message"];
+                            return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
+
+                        } else {
+                            $documentApproveds = DocumentApproved::where('documentSystemCode', $directInvoiceHeaderData->custInvoiceDirectAutoID)->where('documentSystemID', 20)->get();
+                            foreach ($documentApproveds as $documentApproved) {
+                                $documentApproved["approvedComments"] = "Invoice created from customer invoice upload";
+                                $documentApproved["db"] = $db;
+                                $documentApproved["fromUpload"] = true;
+                                $documentApproved["approvedBy"] = $approvedEmployee->employeeSystemID;
+                                $approve = \Helper::approveDocument($documentApproved);
+
+                                if (!$approve["success"]) {
+                                    $errorMsg = $approve['message'];
+                                    return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                                 }
                             }
                         }
                     }
+
                 } else {
                     return ['status' => false, 'message' => $directInvoiceHeader['message']];
                 }
@@ -741,6 +747,7 @@ class CustomerInvoiceService
         $addToCusInvDetails['glCodeDes'] = $chartOfAccount->AccountDescription;
         $addToCusInvDetails['accountType'] = $chartOfAccount->catogaryBLorPL;
         $addToCusInvDetails['serviceLineSystemID'] = $request['segment'];
+        $addToCusInvDetails['serviceLineCode'] = $request['segmentCode'];
 
         if($request['comments'] != null){
             $addToCusInvDetails['comments'] = $request['comments'];
@@ -758,9 +765,7 @@ class CustomerInvoiceService
         $addToCusInvDetails['VATAmount'] = $request['vatAmount'];
         $addToCusInvDetails['discountAmountLine'] = $request['discountAmountLine'];
 
-        if($request['project'] != null){
-            $addToCusInvDetails['projectID'] = $request['project'];
-        }
+        $addToCusInvDetails['projectID'] = $request['project'];
 
 
         $addToCusInvDetails['localCurrency'] = $master->localCurrencyID;
