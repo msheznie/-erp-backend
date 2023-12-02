@@ -2178,6 +2178,14 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
     public function uploadCustomerInvoice(Request $request) {
         $input = $request->all();
+        if($input['uploadComment']== ''){
+            return $this->sendError('Description is required',500);
+        }
+
+        if($input['excelUploadCustomerInvoice']== null){
+            return $this->sendError('Please Select a File',500);
+        }
+
         $excelUpload = $input['excelUploadCustomerInvoice'];
         $input = array_except($request->all(), 'excelUploadCustomerInvoice');
         $input = $this->convertArrayToValue($input);
@@ -2235,6 +2243,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         ];
 
 
+//         $CustomerInvoiceCreate = CustomerInvoiceService::customerInvoiceCreate($db,$uploadData);
 
         CustomerInvoiceUpload::dispatch($db, $uploadData);
 
