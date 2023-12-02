@@ -502,13 +502,30 @@ class CustomerInvoiceService
                             $errorMsg = "Quantity field can not be null.";
                             return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                         }
+                        if($Qty != null){
+                            if(0 > $Qty){
+                                $errorMsg = "Quantity can not have negative value.";
+                                return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
+                            }
+                        }
 
                         if($salesPrice == null){
                             $errorMsg = "Sales Price field can not be null.";
                             return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                         }
+                        if($salesPrice != null){
+                            if( 0 > $salesPrice){
+                                $errorMsg = "Sales Price can not have negative value.";
+                                return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
+                            }
+                        }
 
                         if($vatAmount != null){
+
+                            if( 0 > $vatAmount){
+                                $errorMsg = "Vat Amount can not have negative value.";
+                                return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
+                            }
                             $by = 'vatAmount';
                             $VATPercentage = 0;
                         } else {
@@ -518,6 +535,10 @@ class CustomerInvoiceService
                         }
 
                         if($discountAmount != null){
+                            if( 0 > $discountAmount){
+                                $errorMsg = "Discount Amount can not have negative value.";
+                                return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
+                            }
                             $byDiscount = 'discountAmountLine';
                             $discountPercentage = 0;
                         } else {
