@@ -6,6 +6,12 @@
                     <tr></tr>
                     <tr>
                         <th colspan="15">
+                            Instructions to Populate Data
+                        </th>
+                    </tr>
+
+                    <tr>
+                        <th colspan="15">
                             "M" refers to Mandatory field. If mandatory field is empty in any row, the upload will not be successful
                         </th>
                     </tr>
@@ -18,6 +24,10 @@
                         <th colspan="15">
                             If you want to add multiple details to a single invoice use Customer invoice number column and repeat the same invoice number multiple times to have more than one details in a single invoice
                         </th>
+                    </tr>
+                    <tr>
+                        <th colspan="15">
+                            The invoice header details will be extracted from the initial invoice in the upload template for invoices containing multiple line items.                        </th>
                     </tr>
                     <tr>
                         <th colspan="15">

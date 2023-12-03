@@ -5183,9 +5183,9 @@ class Helper
                             SendEmailForDocument::approvedDocument($input);
                         }
 
-                        $notifyConfirm = (isset($input['fromUpload']) && $input['fromUpload']) ? false : true;
+                        $notifyApprove = (isset($input['fromUpload']) && $input['fromUpload']) ? false : true;
 
-                        if ($notifyConfirm) {
+                        if ($notifyApprove) {
                             $sendEmail = \Email::sendEmail($emails);
 
                           

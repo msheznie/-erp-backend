@@ -999,6 +999,10 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('hrms_designations', 'HrmsDesignationAPIController');
             Route::resource('hrms_employee_managers', 'HrmsEmployeeManagerAPIController');
             Route::resource('finance_category_serials', 'FinanceCategorySerialAPIController');
+
+            Route::resource('upload_customer_invoices', 'UploadCustomerInvoiceAPIController');
+            Route::resource('log_upload_customer_invoices', 'LogUploadCustomerInvoiceAPIController');
+            Route::resource('customer_invoice_upload_details', 'CustomerInvoiceUploadDetailAPIController');
         });
     });
 
@@ -1104,6 +1108,3 @@ if (env("LOG_ENABLE", false)) {
  * End external related routes
  */
 
-Route::resource('upload_customer_invoices', 'UploadCustomerInvoiceAPIController');
-
-Route::resource('log_upload_customer_invoices', 'LogUploadCustomerInvoiceAPIController');

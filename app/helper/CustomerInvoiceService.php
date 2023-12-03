@@ -18,6 +18,7 @@ use App\Models\CustomerAssigned;
 use App\Models\CustomerCurrency;
 use App\Models\CustomerInvoiceDirect;
 use App\Models\CustomerInvoiceDirectDetail;
+use App\Models\CustomerInvoiceUploadDetail;
 use App\Models\CustomerMaster;
 use App\Models\DocumentApproved;
 use App\Models\Employee;
@@ -67,7 +68,7 @@ class CustomerInvoiceService
         $uploadedCompany = $uploadData['uploadedCompany'];
 
         $sheet  = $objPHPExcel->getActiveSheet();
-        $startRow = 11;
+        $startRow = 13;
         $highestRow = $sheet->getHighestRow();
         $highestColumn = $sheet->getHighestColumn();
         $detailRows = [];
@@ -99,7 +100,7 @@ class CustomerInvoiceService
             $rowNumber ++;
         }
         
-        $excelRow = 10;
+        $excelRow = 12;
         $errorMsg = "";
         $errorEnabled = false;
 
@@ -116,7 +117,7 @@ class CustomerInvoiceService
             }
         }
 
-        $excelRow = 10;
+        $excelRow = 12;
         $errorMsg = "";
         foreach($detailRows as $ciData){
             $cutomerCode = ""; //mandatory
@@ -163,7 +164,7 @@ class CustomerInvoiceService
                     ->first();
 
                     if(!$customerMasters){
-                        $errorMsg = "Active cutomer not found for the customer code $cutomerCode & CR Number $crNumber";
+                        $errorMsg = "Active customer not found for the customer code $cutomerCode & CR Number $crNumber";
                         return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                     }
                 } elseif ($cutomerCode != null){
@@ -172,7 +173,7 @@ class CustomerInvoiceService
                     ->first();
 
                     if(!$customerMasters){
-                        $errorMsg = "Active cutomer not found for the customer code $cutomerCode";
+                        $errorMsg = "Active customer not found for the customer code $cutomerCode";
                         return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                     }
                 } elseif ($crNumber != null){
@@ -181,7 +182,7 @@ class CustomerInvoiceService
                     ->first();
                     
                     if(!$customerMasters){
-                        $errorMsg = "Active cutomer not found for the customer registration number $crNumber";
+                        $errorMsg = "Active customer not found for the customer registration number $crNumber";
                         return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                     }
                 }
@@ -334,6 +335,7 @@ class CustomerInvoiceService
                 if ($approvedBy != null){
                     $approvedEmployee = Employee::where('empID',$approvedBy)
                                         ->where('empActive',1)
+                                        ->where('discharegedYN',0)
                                         ->first();
 
                     if(!$approvedEmployee){
@@ -346,8 +348,9 @@ class CustomerInvoiceService
                                                             ->where('documentSystemID',18)
                                                             ->where('companySystemID',$uploadedCompany)
                                                             ->where('isActive',1)
+                                                            ->where('removedYN',0)
                                                             ->first();
-                    
+
                     if(!$approvalAccess){
                         $errorMsg = "Approver $approvedBy not found in approval list.";
                         return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
@@ -362,6 +365,7 @@ class CustomerInvoiceService
                                                             ->where('documentSystemID',18)
                                                             ->where('companySystemID',$uploadedCompany)
                                                             ->where('isActive',1)
+                                                            ->where('removedYN',0)
                                                             ->first();
                     
                     if(!$approvalAccess){
@@ -453,14 +457,14 @@ class CustomerInvoiceService
                                                                 ->first();
                             
                             if(!$projectExist){
-                                $project= null;
-                                $errorMsg = "Project master not for the Project Code $project.";
+                                $errorMsg = "Project master not found for the Project Code $project.";
                                 return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
-                            } else {
-                                $project= $projectExist->id;
                             }
-                        }  else {
-                            $project= null;
+                        }
+                        if($project == null){
+                            $project = null;
+                        } else {
+                            $project = $projectExist->id;
                         }
 
                         if($segment == null){
@@ -476,7 +480,7 @@ class CustomerInvoiceService
                                                             ->first();
 
                             if(!$segmentExist){
-                                $errorMsg = "Active Segment master not for the Segment Code $segment.";
+                                $errorMsg = "Active Segment master not found for the Segment Code $segment.";
                                 return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                             }
                         }
@@ -492,7 +496,7 @@ class CustomerInvoiceService
                                             ->first();
 
                             if(!$UOMExist){
-                                $errorMsg = "Active UOM master not for the UOM Short Code $UOM.";
+                                $errorMsg = "Active UOM master not found for the UOM Short Code $UOM.";
                                 return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                             }
                         }
@@ -621,6 +625,13 @@ class CustomerInvoiceService
                 } else {
                     return ['status' => false, 'message' => $directInvoiceHeader['message']];
                 }
+
+                $CIUploadDetailData['companySystemID']= $uploadedCompany;
+                $CIUploadDetailData['customerInvoiceUploadID']= $uploadCustomerInvoice->id;
+                $CIUploadDetailData['custInvoiceDirectID'] = $customerInvoiceDirects->custInvoiceDirectAutoID;
+
+                $createCIUploadDetail = CustomerInvoiceUploadDetail::create($CIUploadDetailData);
+
             }
         }
 
