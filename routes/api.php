@@ -1107,3 +1107,5 @@ if (env("LOG_ENABLE", false)) {
 Route::resource('upload_customer_invoices', 'UploadCustomerInvoiceAPIController');
 
 Route::resource('log_upload_customer_invoices', 'LogUploadCustomerInvoiceAPIController');
+
+Route::resource('customer_invoice_upload_details', 'CustomerInvoiceUploadDetailAPIController');
