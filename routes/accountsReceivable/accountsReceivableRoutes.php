@@ -10,6 +10,7 @@
 Route::group([], function () {
 
     Route::get('getINVFormData', 'CustomerInvoiceDirectAPIController@getINVFormData')->name("Get INV Form Data");
+    Route::get('getCIUploadStatus', 'CustomerInvoiceDirectAPIController@getCIUploadStatus')->name("Get CI Upload Status");
     Route::post('getCustomerInvoiceApproval', 'CustomerInvoiceDirectAPIController@getCustomerInvoiceApproval')->name("Get Customer Invoice Approval");
     Route::post('getApprovedCustomerInvoiceForCurrentUser', 'CustomerInvoiceDirectAPIController@getApprovedCustomerInvoiceForCurrentUser')->name("Get Approved Customer Invoice For Current User");
     Route::post('approveCustomerInvoice', 'CustomerInvoiceDirectAPIController@approveCustomerInvoice')->name("Approve Customer Invoice");

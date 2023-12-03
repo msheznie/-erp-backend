@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\helper\CommonJobService;
 use App\helper\CustomerInvoiceService;
+use App\Models\LogUploadCustomerInvoice;
 use App\Models\UploadCustomerInvoice;
 use App\Services\WebPushNotificationService;
 use Illuminate\Bus\Queueable;
@@ -13,7 +14,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
-
+use App\Exceptions\CustomerInvoiceException;
 class CustomerInvoiceUpload implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -62,28 +63,55 @@ class CustomerInvoiceUpload implements ShouldQueue
         try {
             Log::info('Customer Invoice Bulk Insert Started');
 
-            
+
             $uploadCustomerInvoice = $uploadData['uploadCustomerInvoice'];
+            $logUploadCustomerInvoice = $uploadData['logUploadCustomerInvoice'];
             $CustomerInvoiceCreate = CustomerInvoiceService::customerInvoiceCreate($db,$uploadData);
 
+            if(!$CustomerInvoiceCreate['status']){
+                $errorMsg = $CustomerInvoiceCreate['message'];
+                $excelRow = $CustomerInvoiceCreate['excelRow'];
+                throw new CustomerInvoiceException($errorMsg, $excelRow);
+            } else {
+                UploadCustomerInvoice::where('id', $uploadCustomerInvoice->id)->update(['uploadStatus' => 1]);
+            }
 
 
             DB::commit();
 
-        } catch (\Exception $e) {
+        } catch (CustomerInvoiceException $e) {
             DB::rollback();
-            Log::info('Error Line No: ' . $e->getLine());
-            Log::info('Error Line No: ' . $e->getFile());
-            Log::info($e->getMessage());
-            Log::info('---- Customer Invoicet Bulk Insert Error-----' . date('H:i:s'));
+            $errorMessage = $e->getMessage();
+            $excelRow = $e->getExcelRow();
+
             DB::beginTransaction();
             try {
                 UploadCustomerInvoice::where('id', $uploadCustomerInvoice->id)->update(['uploadStatus' => 0]);
+                LogUploadCustomerInvoice::where('id', $logUploadCustomerInvoice->id)->update([
+                    'is_failed' => 1,
+                    'error_line' => $excelRow,
+                    'log_message' => $errorMessage
+                ]);
                 DB::commit();
-            } catch (\Exception $e){
-                UploadCustomerInvoice::where('id', $uploadCustomerInvoice->id)->update(['uploadStatus' => 0]);
-                DB::commit();
+            } catch (\Exception $innerException) {
+                // Log the inner exception
+                Log::error('Inner Exception caught: ' . $innerException->getMessage());
+                Log::error('Inner Exception Line No: ' . $innerException->getLine());
+                Log::error('Inner Exception File: ' . $innerException->getFile());
+                Log::error('Inner Exception Stack Trace: ' . $innerException->getTraceAsString());
+
+                // Rollback in case of an exception during rollback
+                DB::rollBack();
             }
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error('Exception caught: ' . $e->getMessage());
+            Log::error('Error Line No: ' . $e->getLine());
+            Log::error('Error File: ' . $e->getFile());
+            Log::error('Stack Trace: ' . $e->getTraceAsString());
+            Log::error('---- Customer Invoice Bulk Insert Error ----- ' . date('H:i:s'));
+
         }
 
     }

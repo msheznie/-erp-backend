@@ -4270,7 +4270,8 @@ class Helper
 
                     
                 // get current employee detail
-                $empInfo = self::getEmployeeInfo();
+                $empInfo = (isset($input['fromUpload']) && $input['fromUpload']) ? self::getEmployeeInfoByEmployeeID($input['approvedBy']) : self::getEmployeeInfo();
+
                 $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; // Model name
                 $isConfirmed = $namespacedModel::find($input["documentSystemCode"]);
                 if (!$isConfirmed[$docInforArr["confirmedYN"]]) { // check document is confirmed or not
@@ -4483,7 +4484,10 @@ class Helper
                                 $customerInvoiceDirect = CustomerInvoiceDirect::find($input["documentSystemCode"]);
                                 if ($customerInvoiceDirect->isPerforma == 0 || $customerInvoiceDirect->isPerforma == 2) {
                                     $object = new ChartOfAccountValidationService();
-                                    $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $input["documentSystemCode"], $input["companySystemID"]);
+
+                                    $uploadEmployeeID = (isset($input['fromUpload']) && $input['fromUpload']) ? $input['approvedBy'] : null;
+
+                                    $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $input["documentSystemCode"], $input["companySystemID"], $uploadEmployeeID);
 
                                     if (isset($result) && !empty($result["accountCodes"])) {
                                         return ['success' => false, 'message' => $result["errorMsg"]];
@@ -5207,6 +5211,7 @@ class Helper
             //$data = ['documentSystemCode' => $input['documentSystemCode'],'documentSystemID' => $input['documentSystemID']];
             //RollBackApproval::dispatch($data);
             Log::error($e->getMessage());
+            Log::error($e->getFile());
 
 
             $msg = 'Error Occurred';
@@ -5919,6 +5924,19 @@ class Helper
                 $l->select(['languageID','languageShortCode','icon']);
             }]);
         }])->find($user->employee_id);
+
+        return $employee;
+    }
+
+    public static function getEmployeeInfoByEmployeeID($employee_id)
+    {
+        $employee = Models\Employee::with(['profilepic', 'user_data' => function($query) {
+            $query->select('uuid', 'employee_id');
+        },'language' => function ($q) {
+            $q->with(['language' => function ($l) {
+                $l->select(['languageID','languageShortCode','icon']);
+            }]);
+        }])->find($employee_id);
 
         return $employee;
     }
