@@ -587,6 +587,7 @@ class CustomerInvoiceService
                         'confirmedBy' => $confirmedEmployee->employeeSystemID,
                         'employee_id' => $confirmedEmployee->employeeSystemID,
                         'segment' => '',
+                        'fromUpload' => true,
                         'category' => '',
                         'amount' => ''
                     );

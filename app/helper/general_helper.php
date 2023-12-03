@@ -154,15 +154,16 @@ class Helper
         $redirectUrl =  env("ERP_APPROVE_URL"); //ex: change url to https://*.pl.uat-gears-int.com/#/approval/erp
 
         if (env('IS_MULTI_TENANCY') == true) {
+            if (isset($_SERVER['HTTP_HOST'])) {
+                $url = $_SERVER['HTTP_HOST'];
+                $url_array = explode('.', $url);
+                $subDomain = $url_array[0];
 
-            $url = $_SERVER['HTTP_HOST'];
-            $url_array = explode('.', $url);
-            $subDomain = $url_array[0];
+                $tenantDomain = (isset(explode('-', $subDomain)[0])) ? explode('-', $subDomain)[0] : "";
 
-            $tenantDomain = (isset(explode('-', $subDomain)[0])) ? explode('-', $subDomain)[0] : "";
-
-            $search = '*';
-            $redirectUrl = str_replace($search, $tenantDomain, $redirectUrl);
+                $search = '*';
+                $redirectUrl = str_replace($search, $tenantDomain, $redirectUrl);
+            }
         }
 
         return $redirectUrl;
@@ -2405,14 +2406,18 @@ class Helper
                             SendEmailForDocument::approvedDocument($input);
                         }
 
-                        $sendEmail = \Email::sendEmail($emails);
+                        $notifyConfirm = (isset($input['fromUpload']) && $input['fromUpload']) ? false : true;
 
+                        if ($notifyConfirm) {
+                            $sendEmail = \Email::sendEmail($emails);
 
-                        if (!$sendEmail["success"]) {
-                            return ['success' => false, 'message' => $sendEmail["message"]];
+                            if (!$sendEmail["success"]) {
+                                return ['success' => false, 'message' => $sendEmail["message"]];
+                            }
+
+                            $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, 1, $dataBase);
                         }
 
-                        $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, 1, $dataBase);
 
                         $webPushData = [
                             'title' => $pushNotificationMessage,
@@ -5177,15 +5182,20 @@ class Helper
                              Log::info('approvedDocument function called in side general helper');
                             SendEmailForDocument::approvedDocument($input);
                         }
-                        
-                        $sendEmail = \Email::sendEmail($emails);
 
-                      
-                        if (!$sendEmail["success"]) {
-                            return ['success' => false, 'message' => $sendEmail["message"]];
+                        $notifyConfirm = (isset($input['fromUpload']) && $input['fromUpload']) ? false : true;
+
+                        if ($notifyConfirm) {
+                            $sendEmail = \Email::sendEmail($emails);
+
+                          
+                            if (!$sendEmail["success"]) {
+                                return ['success' => false, 'message' => $sendEmail["message"]];
+                            }
+
+                            $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, 1, $dataBase);
+
                         }
-
-                        $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, 1, $dataBase);
                         
                         $webPushData = [
                             'title' => $pushNotificationMessage,
