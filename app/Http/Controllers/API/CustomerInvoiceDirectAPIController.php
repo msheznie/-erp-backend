@@ -2292,7 +2292,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         $uploadBudget = UploadCustomerInvoice::find($customerInvoiceUploadID);
 
-        if($uploadBudget->uploadStatus == -1) {
+        if($uploadBudget && !empty($uploadBudget) && $uploadBudget->uploadStatus == -1) {
             return $this->sendError('Upload in progress. Cannot be deleted.');
         }
 
