@@ -72,7 +72,7 @@ class CustomerInvoiceService
         $highestRow = $sheet->getHighestRow();
         $highestColumn = $sheet->getHighestColumn();
         $detailRows = [];
-        $rowNumber = 1;
+        $rowNumber = 13;
         for ($row = $startRow; $row <= $highestRow; ++$row) {
             $rowData = [];
             for ($col = 'A'; $col <= $highestColumn; ++$col) {
@@ -88,7 +88,7 @@ class CustomerInvoiceService
                         $year = date('Y', $unixTimestamp);
 
                         // Format it as MM/DD/YYYY
-                        $cellValue = sprintf('%02d-%02d-%04d', $month, $day, $year);
+                        $cellValue = sprintf('%02d/%02d/%04d', $month, $day, $year);
                     }
                 }
                 
@@ -100,7 +100,7 @@ class CustomerInvoiceService
             $rowNumber ++;
         }
         
-        $excelRow = 12;
+        $excelRow = 13;
         $errorMsg = "";
         $errorEnabled = false;
 
@@ -117,7 +117,7 @@ class CustomerInvoiceService
             }
         }
 
-        $excelRow = 12;
+        $excelRow = 13;
         $errorMsg = "";
         foreach($detailRows as $ciData){
             $cutomerCode = ""; //mandatory
@@ -167,7 +167,7 @@ class CustomerInvoiceService
                         $errorMsg = "Active customer not found for the customer code $cutomerCode & CR Number $crNumber";
                         return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                     }
-                } elseif ($cutomerCode != null){
+                } elseif ($cutomerCode != null ){
                     $customerMasters = CustomerMaster::where('CutomerCode',$cutomerCode)
                     ->where('approvedYN',1)
                     ->first();
@@ -234,7 +234,7 @@ class CustomerInvoiceService
                 if($documentDate != null){
 
                     try{
-                        $documentDate = Carbon::parse($documentDate)->format('Y-m-d') . ' 00:00:00';
+                        $documentDate = Carbon::parse($documentDate)->format('d/m/Y');
                     }
                     catch (\Exception $e){
 
@@ -270,7 +270,7 @@ class CustomerInvoiceService
                 
                 if($invoiceDueDate != null){
                     try{
-                        $invoiceDueDate = Carbon::parse($invoiceDueDate)->format('Y-m-d') . ' 00:00:00';
+                        $invoiceDueDate = Carbon::parse($invoiceDueDate)->format('d/m/Y');
                     }
                     catch (\Exception $e){
 
@@ -310,7 +310,7 @@ class CustomerInvoiceService
                                                     ->where('bankmasterAutoID',$bankMaster->bankmasterAutoID)
                                                     ->first();
                             if(!$account){
-                                $errorMsg = "Bank Account not found for bank code $bank & Account No $accountNo.";
+                                $errorMsg = "The Bank Account No $accountNo not found for the bank code $bank .";
                                 return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                             }
                         }
@@ -410,27 +410,6 @@ class CustomerInvoiceService
                         $vatAmount = $value[19];
                         $excelRow = $value[20];
 
-                        if($Qty != null){
-                            if (!is_numeric($Qty)) {
-                                $errorMsg = "QTY should be numeric.";
-                                return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
-                            }
-                        } elseif($salesPrice != null) {
-                            if (!is_numeric($salesPrice)) {
-                                $errorMsg = "Sales Price should be numeric.";
-                                return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
-                            }
-                        } elseif($discountAmount != null) {
-                            if (!is_numeric($discountAmount)) {
-                                $errorMsg = "Discount Amount should be numeric.";
-                                return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
-                            }
-                        } elseif($vatAmount != null) {
-                            if (!is_numeric($vatAmount)) {
-                                $errorMsg = "VAT Amount should be numeric.";
-                                return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
-                            }
-                        }
 
                         if($glCode == null){
                             $errorMsg = "GL Account field can not be null.";
@@ -507,10 +486,16 @@ class CustomerInvoiceService
                             return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                         }
                         if($Qty != null){
-                            if(0 > $Qty){
-                                $errorMsg = "Quantity can not have negative value.";
+                            if (is_numeric($Qty)) {
+                                if(0 > $Qty){
+                                    $errorMsg = "Quantity can not have negative value.";
+                                    return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
+                                }
+                            } else {
+                                $errorMsg = "Quantity $Qty is not a numeric value.";
                                 return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                             }
+
                         }
 
                         if($salesPrice == null){
@@ -518,18 +503,48 @@ class CustomerInvoiceService
                             return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                         }
                         if($salesPrice != null){
-                            if( 0 > $salesPrice){
-                                $errorMsg = "Sales Price can not have negative value.";
+                            if (is_numeric($salesPrice)) {
+                                if( 0 > $salesPrice){
+                                    $errorMsg = "Sales Price can not have negative value.";
+                                    return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
+                                }
+                            } else {
+                                $errorMsg = "Sales Price $salesPrice is not a numeric value.";
                                 return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                             }
+
+                        }
+
+                        if($discountAmount != null){
+                            if (is_numeric($discountAmount)) {
+                                if( 0 > $discountAmount){
+                                    $errorMsg = "Discount Amount can not have negative value.";
+                                    return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
+                                }
+                            } else {
+                                $errorMsg = "Discount Amount $discountAmount is not a numeric value.";
+                                return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
+                            }
+
+                            $byDiscount = 'discountAmountLine';
+                            $discountPercentage = 0;
+                        } else {
+                            $byDiscount = 'discountPercentage';
+                            $discountAmount = 0;
+                            $discountPercentage = 0;
                         }
 
                         if($vatAmount != null){
-
-                            if( 0 > $vatAmount){
-                                $errorMsg = "Vat Amount can not have negative value.";
+                            if (is_numeric($vatAmount)) {
+                                if( 0 > $vatAmount){
+                                    $errorMsg = "Vat Amount can not have negative value.";
+                                    return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
+                                }
+                            } else {
+                                $errorMsg = "Vat Amount $vatAmount is not a numeric value.";
                                 return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                             }
+
                             $by = 'vatAmount';
                             $VATPercentage = 0;
                         } else {
@@ -538,18 +553,7 @@ class CustomerInvoiceService
                             $VATPercentage = 0;
                         }
 
-                        if($discountAmount != null){
-                            if( 0 > $discountAmount){
-                                $errorMsg = "Discount Amount can not have negative value.";
-                                return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
-                            }
-                            $byDiscount = 'discountAmountLine';
-                            $discountPercentage = 0;
-                        } else {
-                            $byDiscount = 'discountPercentage';
-                            $discountAmount = 0;
-                            $discountPercentage = 0;
-                        }
+
 
                         $DirectInvoiceDetailData = [
                             'glCode'=>$chartOfAccounts->chartOfAccountSystemID,
@@ -706,9 +710,9 @@ class CustomerInvoiceService
         $input['FYPeriodDateFrom'] = $FYPeriodDateFrom;
         $input['FYPeriodDateTo'] = $FYPeriodDateTo;
 
-        $input['invoiceDueDate'] = Carbon::parse($input['invoiceDueDate'])->format('d-m-Y') . ' 00:00:00';
+        $input['invoiceDueDate'] = Carbon::parse($input['invoiceDueDate']);
         $input['bookingDate'] = Carbon::parse($input['bookingDate']);
-        $input['date_of_supply'] = Carbon::parse($input['date_of_supply'])->format('d-m-Y') . ' 00:00:00';
+        $input['date_of_supply'] = Carbon::parse($input['date_of_supply']);
         $input['customerInvoiceDate'] = $input['bookingDate'];
         $input['companySystemID'] = $input['companyID'];
         $input['companyID'] = $company['CompanyID'];
