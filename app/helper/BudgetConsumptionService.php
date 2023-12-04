@@ -277,6 +277,10 @@ class BudgetConsumptionService
 			case 22:
 				$masterData = FixedAssetMaster::with(['company_by'])->find($documentSystemCode);
 
+				if ($masterData->docOriginDocumentSystemID == 3 && $checkBudgetWhileApprove) {
+					return ['status' => true, 'data' => []];
+				}
+
 				$budgetFormData['companySystemID'] = $masterData->companySystemID;
 				$documentLevelCheckBudget = true;
 				$budgetFormData['financeCategory'] = 0;
@@ -3760,7 +3764,7 @@ class BudgetConsumptionService
 
 		$budgetConsumeData = array();
         if ($faMaster) {
-            if ($faMaster->costglCodeSystemID != "") {
+            if ($faMaster->costglCodeSystemID != "" && $faMaster->docOriginDocumentSystemID != 3) {
 
             	$companyData = Company::find($faMaster->companySystemID);
 
