@@ -230,17 +230,14 @@ class CustomerInvoiceService
                     $errorMsg = "Document Date field can not be null.";
                     return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                 }
-                
+
                 if($documentDate != null){
 
-                    try{
-                        $documentDate = Carbon::parse($documentDate)->format('d/m/Y');
-                    }
-                    catch (\Exception $e){
-
-                        $errorMsg = "Invalid Document date format  $documentDate.";
-                        return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
-
+                    try {
+                        $documentDate = Carbon::parse(trim($documentDate))->format('d/m/Y');
+                    } catch (\Exception $e) {
+                        $errorMsg = "Invalid Invoice Document Date format  $documentDate.";
+                        return ['status' => false, 'message' => $errorMsg, 'excelRow' => $excelRow];
                     }
 
                     $companyFinanceYear = Helper::companyFinanceYear($uploadedCompany, 0);
@@ -267,16 +264,16 @@ class CustomerInvoiceService
                     $errorMsg = "invoice Due Date field can not be null.";
                     return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                 }
-                
-                if($invoiceDueDate != null){
-                    try{
-                        $invoiceDueDate = Carbon::parse($invoiceDueDate)->format('d/m/Y');
-                    }
-                    catch (\Exception $e){
 
+                if ($invoiceDueDate != null) {
+
+                    try {
+                        $invoiceDueDate = Carbon::parse(trim($invoiceDueDate))->format('d/m/Y');
+                    } catch (\Exception $e) {
                         $errorMsg = "Invalid Invoice Due Date format  $invoiceDueDate.";
-                        return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
+                        return ['status' => false, 'message' => $errorMsg, 'excelRow' => $excelRow];
                     }
+
                 }
 
                 //customerInvoiceNo
@@ -810,8 +807,48 @@ class CustomerInvoiceService
 
         $addToCusInvDetails['comRptCurrency'] = $master->companyReportingCurrencyID;
         $addToCusInvDetails['comRptCurrencyER'] = $master->companyReportingER;
-        $addToCusInvDetails["comRptAmount"] = 0; // \Helper::roundValue($MyRptAmount);
-        $addToCusInvDetails["localAmount"] = 0; // \Helper::roundValue($MyLocalAmount);
+//        $addToCusInvDetails["comRptAmount"] = 0; // \Helper::roundValue($MyRptAmount);
+//        $addToCusInvDetails["localAmount"] = 0; // \Helper::roundValue($MyLocalAmount);
+        $totalAmount = ($addToCusInvDetails['unitCost'] != ''?$addToCusInvDetails['unitCost']:0) * ($addToCusInvDetails['invoiceQty'] != ''?$addToCusInvDetails['invoiceQty']:0);
+
+        $MyRptAmount = 0;
+        if ($master->custTransactionCurrencyID == $master->companyReportingCurrencyID) {
+            $MyRptAmount = $totalAmount;
+        } else {
+            if ($master->companyReportingER > $master->custTransactionCurrencyER) {
+                if ($master->companyReportingER > 1) {
+                    $MyRptAmount = ($totalAmount / $master->companyReportingER);
+                } else {
+                    $MyRptAmount = ($totalAmount * $master->companyReportingER);
+                }
+            } else {
+                if ($master->companyReportingER > 1) {
+                    $MyRptAmount = ($totalAmount * $master->companyReportingER);
+                } else {
+                    $MyRptAmount = ($totalAmount / $master->companyReportingER);
+                }
+            }
+        }
+        $addToCusInvDetails["comRptAmount"] =   \Helper::roundValue($MyRptAmount);
+        if ($master->custTransactionCurrencyID == $master->localCurrencyID) {
+            $MyLocalAmount = $totalAmount;
+        } else {
+            if ($master->localCurrencyER > $master->custTransactionCurrencyER) {
+                if ($master->localCurrencyER > 1) {
+                    $MyLocalAmount = ($totalAmount / $master->localCurrencyER);
+                } else {
+                    $MyLocalAmount = ($totalAmount * $master->localCurrencyER);
+                }
+            } else {
+                if ($master->localCurrencyER > 1) {
+                    $MyLocalAmount = ($totalAmount * $master->localCurrencyER);
+                } else {
+                    $MyLocalAmount = ($totalAmount / $master->localCurrencyER);
+                }
+            }
+        }
+        $addToCusInvDetails["localAmount"] =  \Helper::roundValue($MyLocalAmount);
+
 
         if ($master->isVatEligible) {
             $vatDetails = TaxService::getDefaultVAT($master->companySystemID, $master->customerID, 0);
