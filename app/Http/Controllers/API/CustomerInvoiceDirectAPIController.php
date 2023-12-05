@@ -2299,26 +2299,31 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             return $this->sendError('Upload in progress. Cannot be deleted.');
         }
 
-        if($uploadCustomerInvoiceObj->uploadStatus == 1) {
-            $customerInvoiceUploadDetailsIds = CustomerInvoiceUploadDetail::where('customerInvoiceUploadID',$uploadCustomerInvoiceObj->id)->pluck('custInvoiceDirectID')->toArray();
+        DB::beginTransaction();
+        try {
+            if($uploadCustomerInvoiceObj->uploadStatus == 1) {
+                $customerInvoiceUploadDetailsIds = CustomerInvoiceUploadDetail::where('customerInvoiceUploadID',$uploadCustomerInvoiceObj->id)->pluck('custInvoiceDirectID')->toArray();
 
-            $validateInvoiceToDelete = $this->validateInvoiceToDelete($customerInvoiceUploadDetailsIds);
-            if(isset($validateInvoiceToDelete['status']) && !$validateInvoiceToDelete['status'])
-                return $this->sendError($validateInvoiceToDelete['message']);
-            $customerInvoiceUploadDetails = CustomerInvoiceUploadDetail::where('customerInvoiceUploadID',$uploadCustomerInvoiceObj->id)->get();
+                $validateInvoiceToDelete = $this->validateInvoiceToDelete($customerInvoiceUploadDetailsIds);
+                if(isset($validateInvoiceToDelete['status']) && !$validateInvoiceToDelete['status'])
+                    return $this->sendError($validateInvoiceToDelete['message']);
+                $customerInvoiceUploadDetails = CustomerInvoiceUploadDetail::where('customerInvoiceUploadID',$uploadCustomerInvoiceObj->id)->get();
 
-            foreach ($customerInvoiceUploadDetails as $customerInvoiceUploadDetail) {
-                $deleteCustomerInvoice  = CustomerInvoiceService::deleteCustomerInvoice($customerInvoiceUploadDetail);
-                if(isset($deleteCustomerInvoice['status']) && !$deleteCustomerInvoice['status'])
-                    return $this->sendError($deleteCustomerInvoice['message']);
+                foreach ($customerInvoiceUploadDetails as $customerInvoiceUploadDetail) {
+                    $deleteCustomerInvoice  = CustomerInvoiceService::deleteCustomerInvoice($customerInvoiceUploadDetail);
+                    if(isset($deleteCustomerInvoice['status']) && !$deleteCustomerInvoice['status'])
+                        return $this->sendError($deleteCustomerInvoice['message']);
+                }
+
             }
 
+            UploadCustomerInvoice::where('id', $customerInvoiceUploadID)->delete();
+            DB::commit();
+            return $this->sendResponse([], 'customer invoice upload deleted successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
         }
-
-        UploadCustomerInvoice::where('id', $customerInvoiceUploadID)->delete();
-        return $this->sendResponse([], 'customer invoice upload deleted successfully');
-
-
 
     }
 

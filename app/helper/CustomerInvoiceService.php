@@ -1342,51 +1342,43 @@ class CustomerInvoiceService
         if (empty($masterData)) {
             return ['status' => false, 'message' => 'Customer Invoice not found'];
         }
+        
+        //deleting from approval table
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+            ->where('companySystemID', $masterData->companySystemID)
+            ->where('documentSystemID', $masterData->documentSystemiD)
+            ->delete();
 
-        DB::beginTransaction();
-        try {
+        //deleting from general ledger table
+        $deleteGLData = GeneralLedger::where('documentSystemCode', $id)
+            ->where('companySystemID', $masterData->companySystemID)
+            ->where('documentSystemID', $masterData->documentSystemiD)
+            ->delete();
 
-            //deleting from approval table
-            $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
-                ->where('companySystemID', $masterData->companySystemID)
-                ->where('documentSystemID', $masterData->documentSystemiD)
-                ->delete();
+        //deleting records from accounts receivable
+        $deleteARData = AccountsReceivableLedger::where('documentCodeSystem', $id)
+            ->where('companySystemID', $masterData->companySystemID)
+            ->where('documentSystemID', $masterData->documentSystemiD)
+            ->delete();
 
-            //deleting from general ledger table
-            $deleteGLData = GeneralLedger::where('documentSystemCode', $id)
-                ->where('companySystemID', $masterData->companySystemID)
-                ->where('documentSystemID', $masterData->documentSystemiD)
-                ->delete();
-
-            //deleting records from accounts receivable
-            $deleteARData = AccountsReceivableLedger::where('documentCodeSystem', $id)
-                ->where('companySystemID', $masterData->companySystemID)
-                ->where('documentSystemID', $masterData->documentSystemiD)
-                ->delete();
-
-            //deleting records from tax ledger
-            $deleteTaxLedgerData = TaxLedger::where('documentMasterAutoID', $id)
-                ->where('companySystemID', $masterData->companySystemID)
-                ->where('documentSystemID', $masterData->documentSystemiD)
-                ->delete();
+        //deleting records from tax ledger
+        $deleteTaxLedgerData = TaxLedger::where('documentMasterAutoID', $id)
+            ->where('companySystemID', $masterData->companySystemID)
+            ->where('documentSystemID', $masterData->documentSystemiD)
+            ->delete();
 
 
-            TaxLedgerDetail::where('documentMasterAutoID', $id)
-                ->where('companySystemID', $masterData->companySystemID)
-                ->where('documentSystemID', $masterData->documentSystemiD)
-                ->delete();
+        TaxLedgerDetail::where('documentMasterAutoID', $id)
+            ->where('companySystemID', $masterData->companySystemID)
+            ->where('documentSystemID', $masterData->documentSystemiD)
+            ->delete();
 
-            $masterData->invoicedetail()->delete();
-            $masterData->delete();
+        $masterData->invoicedetail()->delete();
+        $masterData->delete();
 
-            DB::commit();
-            return ['status' => true, 'message' => 'Customer Invoice deleted successfully'];
+        return ['status' => true, 'message' => 'Customer Invoice deleted successfully'];
 
-        } catch (\Exception $exception) {
-            DB::rollBack();
-            return ['status' => false, 'message' => $exception->getMessage()];
 
-        }
     }
 
 }
