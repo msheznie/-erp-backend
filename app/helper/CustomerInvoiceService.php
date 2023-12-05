@@ -810,7 +810,7 @@ class CustomerInvoiceService
 //        $addToCusInvDetails["comRptAmount"] = 0; // \Helper::roundValue($MyRptAmount);
 //        $addToCusInvDetails["localAmount"] = 0; // \Helper::roundValue($MyLocalAmount);
         $totalAmount = ($addToCusInvDetails['unitCost'] != ''?$addToCusInvDetails['unitCost']:0) * ($addToCusInvDetails['invoiceQty'] != ''?$addToCusInvDetails['invoiceQty']:0);
-
+        $totalAmount = $totalAmount - $addToCusInvDetails['VATAmount'] - $addToCusInvDetails['discountAmountLine'];
         $MyRptAmount = 0;
         if ($master->custTransactionCurrencyID == $master->companyReportingCurrencyID) {
             $MyRptAmount = $totalAmount;
