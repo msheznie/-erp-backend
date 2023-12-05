@@ -37,6 +37,8 @@ use Illuminate\Support\Facades\Validator;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
 use App\Exceptions\CustomerInvoiceException;
+use App\Models\ApprovalLevel;
+use App\Models\DocumentMaster;
 
 class CustomerInvoiceService
 {
@@ -357,16 +359,49 @@ class CustomerInvoiceService
                         return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                     }
 
+                    $document = DocumentMaster::where('documentSystemID', 18)->first();
+
+                    // get approval rolls
+                    $approvalLevel = ApprovalLevel::with('approvalrole' )
+                                                    ->where('companySystemID', $uploadedCompany)
+                                                    ->where('documentSystemID', 18)
+                                                    ->where('departmentSystemID', $document["departmentSystemID"])
+                                                    ->where('isActive', -1)
+                                                    ->first();
+
+                    $approvalGroupID = [];
+                    if($approvalLevel){
+                        if ($approvalLevel->approvalrole) {
+                            foreach ($approvalLevel->approvalrole as $val) {
+                                if ($val->approvalGroupID) {
+                                    $approvalGroupID[] = array('approvalGroupID' => $val->approvalGroupID);
+                                } else {
+                                    $errorMsg = "'Please set the approval group.";
+                                    return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
+                                }
+                            }
+                        }
+                    } else {
+                        $errorMsg = "No approval setup created for this document.";
+                        return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
+                    }
+
+                     $approvalGroupID;
+
                     //Check Approval Acces
-                    $approvalAccess = EmployeesDepartment::where('employeeID',$approvedEmployee->empID)
-                                                            ->where('documentSystemID',18)
-                                                            ->where('companySystemID',$uploadedCompany)
-                                                            ->where('isActive',1)
-                                                            ->where('removedYN',0)
-                                                            ->first();
+                     $approvalAccess = EmployeesDepartment::where('employeeGroupID', $approvalGroupID)
+                                        ->whereHas('employee', function ($q) {
+                                            $q->where('discharegedYN', 0);
+                                        })
+                                        ->where('companySystemID', $uploadedCompany)
+                                        ->where('employeeID',$approvedEmployee->empID)
+                                        ->where('documentSystemID', 18)
+                                        ->where('isActive', 1)
+                                        ->where('removedYN', 0)
+                                        ->first();
 
                     if(!$approvalAccess){
-                        $errorMsg = "Approver $approvedBy not found in approval list.";
+                        $errorMsg = "Approver $approvedBy does not have approval access.";
                         return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                     }
                 }
@@ -375,15 +410,50 @@ class CustomerInvoiceService
                     $approvedEmployee = $employee;
 
                     //Check Approval Acces
-                    $approvalAccess = EmployeesDepartment::where('employeeID',$employee->empID)
-                                                            ->where('documentSystemID',18)
-                                                            ->where('companySystemID',$uploadedCompany)
-                                                            ->where('isActive',1)
-                                                            ->where('removedYN',0)
-                                                            ->first();
-                    
+ 
+                    $document = DocumentMaster::where('documentSystemID', 18)->first();
+
+                    // get approval rolls
+                    $approvalLevel = ApprovalLevel::with('approvalrole' )
+                                                    ->where('companySystemID', $uploadedCompany)
+                                                    ->where('documentSystemID', 18)
+                                                    ->where('departmentSystemID', $document["departmentSystemID"])
+                                                    ->where('isActive', -1)
+                                                    ->first();
+
+                    $approvalGroupID = [];
+                    if($approvalLevel){
+                        if ($approvalLevel->approvalrole) {
+                            foreach ($approvalLevel->approvalrole as $val) {
+                                if ($val->approvalGroupID) {
+                                    $approvalGroupID[] = array('approvalGroupID' => $val->approvalGroupID);
+                                } else {
+                                    $errorMsg = "'Please set the approval group.";
+                                    return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
+                                }
+                            }
+                        }
+                    } else {
+                        $errorMsg = "No approval setup created for this document.";
+                        return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
+                    }
+
+                     $approvalGroupID;
+
+                    //Check Approval Acces
+                     $approvalAccess = EmployeesDepartment::where('employeeGroupID', $approvalGroupID)
+                                        ->whereHas('employee', function ($q) {
+                                            $q->where('discharegedYN', 0);
+                                        })
+                                        ->where('companySystemID', $uploadedCompany)
+                                        ->where('employeeID',$approvedEmployee->empID)
+                                        ->where('documentSystemID', 18)
+                                        ->where('isActive', 1)
+                                        ->where('removedYN', 0)
+                                        ->first();
+
                     if(!$approvalAccess){
-                        $errorMsg = "Uploaded employee $employee->empID not found in approval list.";
+                        $errorMsg = "Uploaded employee $employee->empID does not have approval access.";
                         return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                     }
                 }
