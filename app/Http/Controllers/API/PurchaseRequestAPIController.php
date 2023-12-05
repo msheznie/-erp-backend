@@ -2018,6 +2018,7 @@ class PurchaseRequestAPIController extends AppBaseController
             $requestData = $request->all();  
             $requestData['reference_document_id'] = 108;
             $requestData['bid_submission_opening_date'] = $tenderData->tenderMaster->bid_submission_opening_date; 
+            $requestData['id'] = $tenderData->tenderMaster->id; 
             $request->merge($requestData);  
             $result = $controller->approveEditDocument($request);
             return $result;

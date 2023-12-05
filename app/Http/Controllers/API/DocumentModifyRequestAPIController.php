@@ -345,6 +345,7 @@ class DocumentModifyRequestAPIController extends AppBaseController
 
                 DB::commit();
                 if (!$confirm["success"]) {
+                    DB::rollback();
                     return ['success' => false, 'message' => $confirm["message"]];
                 } else {
                     return ['success' => true, 'message' => 'Tender modify request sent successfully'];
