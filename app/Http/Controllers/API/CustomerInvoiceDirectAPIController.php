@@ -2330,16 +2330,15 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
     public function validateInvoiceToDelete($customerInvoiceUploadDetailsIds,$uploadCustomerInvoiceObj):array
     {
 
-        $isFailedProcessExists = UploadCustomerInvoice::where('uploadStatus',0)->where('companySystemID',$uploadCustomerInvoiceObj->companySystemID)->get();
+        $isFailedProcessExists = UploadCustomerInvoice::where('uploadStatus',0)->where('companySystemID',$uploadCustomerInvoiceObj->companySystemID)->orderBy('id', 'DESC')->first();
         $lastCustomerInvoice = CustomerInvoiceDirect::orderBy('custInvoiceDirectAutoID', 'DESC')->where('companySystemID', $uploadCustomerInvoiceObj->companySystemID)->select('custInvoiceDirectAutoID')->first();
-
-        if(!in_array($lastCustomerInvoice->custInvoiceDirectAutoID,$customerInvoiceUploadDetailsIds)) {
+        if(!in_array($lastCustomerInvoice->custInvoiceDirectAutoID,$customerInvoiceUploadDetailsIds))
             return ['status' => false , 'message' => 'Additional Invoices had been created after the upload. Cannot delete the uploaded invoices'];
-        }
 
-        if(count($isFailedProcessExists) > 0) {
-            return ['status' => false , 'message' => 'There is a failed customer invoice to be delete'];
-        }
+
+        if(isset($isFailedProcessExists) > 0 && ($isFailedProcessExists->id > $uploadCustomerInvoiceObj->id))
+             return ['status' => false , 'message' => 'There is a failed customer invoice to be delete'];
+
 
         return ['status' => true, 'message' => ''];
     }
