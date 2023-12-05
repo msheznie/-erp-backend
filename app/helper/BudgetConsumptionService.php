@@ -5966,11 +5966,11 @@ class BudgetConsumptionService
 			$currencyConversionRptAmount = \Helper::currencyConversion($detail->companySystemID, $value->purchase_order->supplierTransactionCurrencyID, $value->purchase_order->supplierTransactionCurrencyID, $commited_amount);
 			$committedAmount = $currencyConversionRptAmount['reportingAmount'];
 
-			$consumAssetamount = BudgetConsumedData::selectRaw('SUM(consumedRptAmount) as amount')
-			->where('chartOfAccountID', $detail->chartOfAccountID)
+			$consumAssetamount = FixedAssetMaster::selectRaw('SUM(costUnitRpt) as amount')
+			->where('costglCodeSystemID', $detail->chartOfAccountID)
 			->where('serviceLineSystemID', $detail->serviceLineSystemID)
-			->where('documentSystemID',22)
-			->groupBy('chartOfAccountID')->first();
+			->where('approved',-1)
+			->groupBy('costglCodeSystemID')->first();
 			if($consumAssetamount)
 			{
 				$actuallConsumptionAmount = $consumAssetamount->amount;

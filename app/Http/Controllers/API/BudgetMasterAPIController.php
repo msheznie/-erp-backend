@@ -863,6 +863,17 @@ class BudgetMasterAPIController extends AppBaseController
 
         if ($input['type'] == 1) {
 
+        if($input['controlAccountsSystemID'] == 3)
+        {
+                $data = FixedAssetMaster::selectRaw('DATE_FORMAT(documentDate, "%Y") as year,companyID,serviceLineCode,COSTGLCODE as GLCode,documentSystemID,documentID,faCode as documentCode,faID as documentSystemCode,costUnitRpt as consumedRptAmount, costUnitRpt as actualConsumption')
+                ->where('costglCodeSystemID', $input['chartOfAccountID'])
+                ->where('serviceLineSystemID', $input['serviceLineSystemID'])
+                ->where('approved',-1)
+                ->get();
+     
+         }
+         else
+         {
             $data = BudgetConsumedData::where('companySystemID', $input['companySystemID'])
                                     ->where('serviceLineSystemID', $input['serviceLineSystemID'])
                                     ->when($chartOfAccountControl->controlAccountsSystemID != 3,function($query){
@@ -947,7 +958,7 @@ class BudgetMasterAPIController extends AppBaseController
 
                 $value->actualConsumption = $actualConsumption;
             }
-
+         }
             $total = array_sum(collect($data)->pluck('actualConsumption')->toArray());
         } else if ($input['type'] == 2) {
             $glIds = [$input['chartOfAccountID']];
@@ -2267,6 +2278,27 @@ class BudgetMasterAPIController extends AppBaseController
 
             $total = array_sum(collect($data)->pluck('committedAmount')->toArray());
         } else if ($input['type'] == 6) {
+
+         if($input['controlAccountsSystemID'] == 3)
+         {
+                       
+            $glData = ReportTemplateLinks::where('templateMasterID', $input['templatesMasterAutoID'])
+            ->where('templateDetailID', $input['templateDetailID'])
+            ->whereNotNull('glAutoID')->get();
+
+            $glIds = collect($glData)->pluck('glAutoID')->toArray();
+
+                    $data = FixedAssetMaster::selectRaw('DATE_FORMAT(documentDate, "%Y") as year,companyID,serviceLineCode,COSTGLCODE as GLCode,documentSystemID,documentID,faCode as documentCode,faID as documentSystemCode,costUnitRpt as consumedRptAmount, costUnitRpt as actualConsumption')
+                    ->whereIn('costglCodeSystemID', $glIds)
+                    ->where('serviceLineSystemID', $input['serviceLineSystemID'])
+                    ->where('approved',-1)
+                    ->get();
+
+         
+         }
+         else
+         {
+
             $data = BudgetConsumedData::where('companySystemID', $input['companySystemID'])
                                     ->where('serviceLineSystemID', $input['serviceLineSystemID'])
                                     ->where('companyFinanceYearID', $input['companyFinanceYearID'])
@@ -2375,7 +2407,7 @@ class BudgetMasterAPIController extends AppBaseController
 
                 $value->actualConsumption = $actualConsumption;
             }
-
+         }
             $total = array_sum(collect($data)->pluck('actualConsumption')->toArray());
         }
 
@@ -2454,12 +2486,13 @@ class BudgetMasterAPIController extends AppBaseController
             ->get();
 
         foreach ($reportData as $data) {
+
             $glData = ReportTemplateLinks::where('templateMasterID', $budgetMaster->templateMasterID)
                                             ->where('templateDetailID', $data['templateDetailID'])
                                             ->whereNotNull('glAutoID')->get();
 
             $glIds = collect($glData)->pluck('glAutoID')->toArray();
-
+            
 
             $data->committedAmount = $this->getGlCodeWiseCommitedBudgetAmount($data, $glIds, $DLBCPolicy);
 
@@ -2771,6 +2804,23 @@ class BudgetMasterAPIController extends AppBaseController
 
     public function getGlCodeWiseActualConsumption($dataParam, $glIds, $DLBCPolicy)
     {
+        $final_data = [];
+
+        if($dataParam['controlAccountsSystemID'] == 3)
+        {
+            $data1 = FixedAssetMaster::selectRaw('SUM(costUnitRpt) as actualConsumption')
+			->whereIn('costglCodeSystemID', $glIds)
+			->where('serviceLineSystemID', $dataParam['serviceLineSystemID'])
+			->where('approved',-1)
+			->first();
+            if($data1)
+            {
+                array_push($final_data,$data1);
+
+            }
+        }
+    else
+    {
         $data = BudgetConsumedData::where('companySystemID', $dataParam['companySystemID'])
                                     ->where('serviceLineSystemID', $dataParam['serviceLineSystemID'])
                                     ->when($dataParam['controlAccountsSystemID'] != 3,function($query){
@@ -2850,9 +2900,11 @@ class BudgetMasterAPIController extends AppBaseController
             }
 
             $value->actualConsumption = $actualConsumption;
-        }
+            array_push($final_data,$value);
 
-        return array_sum(collect($data)->pluck('actualConsumption')->toArray());
+        }
+    }
+        return array_sum(collect($final_data)->pluck('actualConsumption')->toArray());
     }
 
     public function getGlCodeWisePendingDocAmount($dataParam, $glIds, $DLBCPolicy)
