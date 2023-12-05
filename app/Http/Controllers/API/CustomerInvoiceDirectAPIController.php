@@ -2336,7 +2336,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             return ['status' => false , 'message' => 'Additional Invoices had been created after the upload. Cannot delete the uploaded invoices'];
 
 
-        if(isset($isFailedProcessExists) > 0 && ($isFailedProcessExists->id > $uploadCustomerInvoiceObj->id))
+        if($isFailedProcessExists && ($isFailedProcessExists->id > $uploadCustomerInvoiceObj->id))
              return ['status' => false , 'message' => 'There is a failed customer invoice to be delete'];
 
 
