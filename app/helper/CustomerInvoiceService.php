@@ -41,9 +41,12 @@ use AWS\CRT\HTTP\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
 use App\Exceptions\CustomerInvoiceException;
+use App\Models\ApprovalLevel;
+use App\Models\DocumentMaster;
 
 class CustomerInvoiceService
 {
@@ -99,7 +102,7 @@ class CustomerInvoiceService
                         $cellValue = sprintf('%02d/%02d/%04d', $month, $day, $year);
                     }
                 }
-                
+
                 $rowData[] = $cellValue;
             }
 
@@ -240,13 +243,20 @@ class CustomerInvoiceService
                 }
 
                 if($documentDate != null){
+//                    $errorMsg = "Invalid Invoice Document Date format  $documentDate.";
+//                    return ['status' => false, 'message' => $errorMsg, 'excelRow' => $excelRow];
 
-                    try {
-                        $documentDate = Carbon::parse(trim($documentDate))->format('d/m/Y');
-                    } catch (\Exception $e) {
+                    $validator = Validator::make(['date' => $documentDate], [
+                        'date' => 'date_format:d/m/Y',
+                    ]);
+
+                    if ($validator->fails()) {
                         $errorMsg = "Invalid Invoice Document Date format  $documentDate.";
                         return ['status' => false, 'message' => $errorMsg, 'excelRow' => $excelRow];
                     }
+
+                    $documentDateBeforeFormat = $documentDate;
+                    $documentDate = \Carbon\Carbon::createFromFormat('d/m/Y', $documentDate);
 
                     $companyFinanceYear = Helper::companyFinanceYear($uploadedCompany, 0);
 
@@ -262,7 +272,12 @@ class CustomerInvoiceService
                     $checkDate = Carbon::parse($documentDate);
 
                     if (!$checkDate->between($fromDate, $toDate)) {
-                        $errorMsg = "The financial period for the  Document date $documentDate  is not active.";
+                        $errorMsg = "The financial period for the  Document date $documentDateBeforeFormat  is not active.";
+                        return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
+                    }
+                    $curentDate = Carbon::now();
+                    if ($checkDate > $curentDate) {
+                        $errorMsg = "Document date $documentDateBeforeFormat cannot be greater than current date.";
                         return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                     }
                 }
@@ -275,12 +290,16 @@ class CustomerInvoiceService
 
                 if ($invoiceDueDate != null) {
 
-                    try {
-                        $invoiceDueDate = Carbon::parse(trim($invoiceDueDate))->format('d/m/Y');
-                    } catch (\Exception $e) {
+                    $validator = Validator::make(['date' => $invoiceDueDate], [
+                        'date' => 'date_format:d/m/Y',
+                    ]);
+
+                    if ($validator->fails()) {
                         $errorMsg = "Invalid Invoice Due Date format  $invoiceDueDate.";
                         return ['status' => false, 'message' => $errorMsg, 'excelRow' => $excelRow];
                     }
+                    $invoiceDueDateBeforeFormat = $invoiceDueDate;
+                    $invoiceDueDate = \Carbon\Carbon::createFromFormat('d/m/Y', $invoiceDueDate);
 
                 }
 
@@ -348,16 +367,49 @@ class CustomerInvoiceService
                         return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                     }
 
+                    $document = DocumentMaster::where('documentSystemID', 18)->first();
+
+                    // get approval rolls
+                    $approvalLevel = ApprovalLevel::with('approvalrole' )
+                                                    ->where('companySystemID', $uploadedCompany)
+                                                    ->where('documentSystemID', 18)
+                                                    ->where('departmentSystemID', $document["departmentSystemID"])
+                                                    ->where('isActive', -1)
+                                                    ->first();
+
+                    $approvalGroupID = [];
+                    if($approvalLevel){
+                        if ($approvalLevel->approvalrole) {
+                            foreach ($approvalLevel->approvalrole as $val) {
+                                if ($val->approvalGroupID) {
+                                    $approvalGroupID[] = array('approvalGroupID' => $val->approvalGroupID);
+                                } else {
+                                    $errorMsg = "'Please set the approval group.";
+                                    return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
+                                }
+                            }
+                        }
+                    } else {
+                        $errorMsg = "No approval setup created for this document.";
+                        return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
+                    }
+
+                     $approvalGroupID;
+
                     //Check Approval Acces
-                    $approvalAccess = EmployeesDepartment::where('employeeID',$approvedEmployee->empID)
-                                                            ->where('documentSystemID',18)
-                                                            ->where('companySystemID',$uploadedCompany)
-                                                            ->where('isActive',1)
-                                                            ->where('removedYN',0)
-                                                            ->first();
+                     $approvalAccess = EmployeesDepartment::where('employeeGroupID', $approvalGroupID)
+                                        ->whereHas('employee', function ($q) {
+                                            $q->where('discharegedYN', 0);
+                                        })
+                                        ->where('companySystemID', $uploadedCompany)
+                                        ->where('employeeID',$approvedEmployee->empID)
+                                        ->where('documentSystemID', 18)
+                                        ->where('isActive', 1)
+                                        ->where('removedYN', 0)
+                                        ->first();
 
                     if(!$approvalAccess){
-                        $errorMsg = "Approver $approvedBy not found in approval list.";
+                        $errorMsg = "Approver $approvedBy does not have approval access.";
                         return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                     }
                 }
@@ -366,15 +418,50 @@ class CustomerInvoiceService
                     $approvedEmployee = $employee;
 
                     //Check Approval Acces
-                    $approvalAccess = EmployeesDepartment::where('employeeID',$employee->empID)
-                                                            ->where('documentSystemID',18)
-                                                            ->where('companySystemID',$uploadedCompany)
-                                                            ->where('isActive',1)
-                                                            ->where('removedYN',0)
-                                                            ->first();
-                    
+ 
+                    $document = DocumentMaster::where('documentSystemID', 18)->first();
+
+                    // get approval rolls
+                    $approvalLevel = ApprovalLevel::with('approvalrole' )
+                                                    ->where('companySystemID', $uploadedCompany)
+                                                    ->where('documentSystemID', 18)
+                                                    ->where('departmentSystemID', $document["departmentSystemID"])
+                                                    ->where('isActive', -1)
+                                                    ->first();
+
+                    $approvalGroupID = [];
+                    if($approvalLevel){
+                        if ($approvalLevel->approvalrole) {
+                            foreach ($approvalLevel->approvalrole as $val) {
+                                if ($val->approvalGroupID) {
+                                    $approvalGroupID[] = array('approvalGroupID' => $val->approvalGroupID);
+                                } else {
+                                    $errorMsg = "'Please set the approval group.";
+                                    return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
+                                }
+                            }
+                        }
+                    } else {
+                        $errorMsg = "No approval setup created for this document.";
+                        return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
+                    }
+
+                     $approvalGroupID;
+
+                    //Check Approval Acces
+                     $approvalAccess = EmployeesDepartment::where('employeeGroupID', $approvalGroupID)
+                                        ->whereHas('employee', function ($q) {
+                                            $q->where('discharegedYN', 0);
+                                        })
+                                        ->where('companySystemID', $uploadedCompany)
+                                        ->where('employeeID',$approvedEmployee->empID)
+                                        ->where('documentSystemID', 18)
+                                        ->where('isActive', 1)
+                                        ->where('removedYN', 0)
+                                        ->first();
+
                     if(!$approvalAccess){
-                        $errorMsg = "Uploaded employee $employee->empID not found in approval list.";
+                        $errorMsg = "Uploaded employee $employee->empID does not have approval access.";
                         return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                     }
                 }
@@ -732,11 +819,7 @@ class CustomerInvoiceService
         $input['modifiedUserSystemID'] = \Helper::getEmployeeSystemID();
 
 
-        $curentDate = Carbon::now();
-        if ($input['bookingDate'] > $curentDate) {
-            $errorMsg = "Document date cannot be greater than current date.";
-            return ['status' => false, 'message' => $errorMsg, 'excelRow' => $input['excelRow']];
-        }
+
         if (($input['bookingDate'] >= $FYPeriodDateFrom) && ($input['bookingDate'] <= $FYPeriodDateTo)) {
             $customerInvoiceDirects = $this->customerInvoiceDirectRepository->create($input);
             return ['status' => true,'data'=>$customerInvoiceDirects];
@@ -818,7 +901,7 @@ class CustomerInvoiceService
 //        $addToCusInvDetails["comRptAmount"] = 0; // \Helper::roundValue($MyRptAmount);
 //        $addToCusInvDetails["localAmount"] = 0; // \Helper::roundValue($MyLocalAmount);
         $totalAmount = ($addToCusInvDetails['unitCost'] != ''?$addToCusInvDetails['unitCost']:0) * ($addToCusInvDetails['invoiceQty'] != ''?$addToCusInvDetails['invoiceQty']:0);
-        $totalAmount = $totalAmount - $addToCusInvDetails['VATAmount'] - $addToCusInvDetails['discountAmountLine'];
+        $totalAmount = $totalAmount - $addToCusInvDetails['discountAmountLine'];
         $MyRptAmount = 0;
         if ($master->custTransactionCurrencyID == $master->companyReportingCurrencyID) {
             $MyRptAmount = $totalAmount;

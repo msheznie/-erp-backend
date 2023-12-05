@@ -111,7 +111,12 @@ class CustomerInvoiceUpload implements ShouldQueue
             Log::error('Error File: ' . $e->getFile());
             Log::error('Stack Trace: ' . $e->getTraceAsString());
             Log::error('---- Customer Invoice Bulk Insert Error ----- ' . date('H:i:s'));
-
+            UploadCustomerInvoice::where('id', $uploadCustomerInvoice->id)->update(['uploadStatus' => 0]);
+            LogUploadCustomerInvoice::where('id', $logUploadCustomerInvoice->id)->update([
+                'is_failed' => 1,
+                'error_line' => $e->getLine(),
+                'log_message' => $e->getMessage()
+            ]);
         }
 
     }
