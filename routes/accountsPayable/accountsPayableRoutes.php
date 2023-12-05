@@ -237,4 +237,13 @@ Route::group([],function (){
     Route::post('getAllPaymentVoucherAmendHistory', 'PaySupplierInvoiceMasterReferbackAPIController@getAllPaymentVoucherAmendHistory')->name('Get all payment voucher amend history');
 });
 
+//Payment Voucher Matching
+Route::group([],function (){
+    Route::get('getPaymentVoucherMatchItems', 'PaySupplierInvoiceMasterAPIController@getPaymentVoucherMatchItems')->name('Get payment voucher match items');
+});
 
+//Expense Claim
+Route::group([],function (){
+    Route::post('getExpenseClaimByCompany', 'ExpenseClaimAPIController@getExpenseClaimByCompany')->name('Get expense claim by company');
+    Route::resource('sme-attachment', 'AttachmentSMEAPIController');
+});

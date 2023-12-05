@@ -18,8 +18,9 @@ Route::group([], function(){
 	Route::get('getItemsOptionsSupplierCatalog', 'SupplierCatalogMasterAPIController@getItemsOptionsSupplierCatalog')->name("Get item option for supplier catalog");
 	Route::get('getBankMemoBySupplierCurrency', 'BankMemoSupplierAPIController@getBankMemoBySupplierCurrency')->name("Bank memo by supplier currency");
 	Route::get('contactDetailsBySupplier', 'SupplierContactDetailsAPIController@getContactDetailsBySupplier')->name("Contact details by supplier");
-	Route::get('subcategoriesBySupplier', 'SupplierMasterAPIController@getSubcategoriesBySupplier')->name("Sub categoreis by supplier");
-	Route::get('subCategoriesByMasterCategory', 'SupplierCategorySubAPIController@getSubCategoriesByMasterCategory')->name("Supplier sub categoreis by master category");
+	Route::get('assignBusinessCategoriesBySupplier', 'SupplierMasterAPIController@getAssignBusinessCategoriesBySupplier')->name("Assign Business categories by supplier");
+	Route::get('businessCategoriesBySupplier', 'SupplierMasterAPIController@getBusinessCategoriesBySupplier')->name("Business categories by supplier");
+    Route::get('subCategoriesByMasterCategory', 'SupplierCategorySubAPIController@getSubCategoriesByMasterCategory')->name("Sub categories by master category");
 	Route::get('subICVCategoriesByMasterCategory', 'SupplierCategoryICVMasterAPIController@subICVCategoriesByMasterCategory')->name("Supplier sub ICV categoreis by master category");
 	Route::get('generateSupplierExternalLink', 'SupplierMasterAPIController@generateSupplierExternalLink')->name("Generate supplier external link");
 	Route::get('getSupplierMasterAudit', 'SupplierMasterAPIController@getSupplierMasterAudit')->name("Get supplier master audit");
@@ -36,8 +37,7 @@ Route::group([], function(){
 	Route::post('addBulkMemos', 'BankMemoSupplierAPIController@addBulkMemos')->name("Add bulk supplier currency memos");
 	Route::post('deleteBankMemo', 'BankMemoSupplierAPIController@deleteBankMemo')->name("Delete bank memo");
 	Route::post('addBulkPayeeMemos', 'BankMemoPayeeAPIController@addBulkPayeeMemos')->name("Add bulk payee memos");
-	Route::post('addSubCategoryToSupplier', 'SupplierCategorySubAPIController@addSubCategoryToSupplier')->name("Add sub categoreis to supplier");
-	Route::post('removeSubCategoryToSupplier', 'SupplierCategorySubAPIController@removeSubCategoryToSupplier')->name("Remove supplier sub category");
+	Route::post('addBusinessCategoryToSupplier', 'SupplierMasterAPIController@addBusinessCategoryToSupplier')->name("Add business categories to supplier");
 	Route::post('srmRegistrationLinkHistoryView', 'SupplierMasterAPIController@srmRegistrationLinkHistoryView')->name("SRM registration link create history");
 	Route::post('srmRegistrationLink', 'SupplierMasterAPIController@srmRegistrationLink')->name("Generate SRM registration link");
 	Route::post('exportSupplierMaster', 'SupplierMasterAPIController@exportSupplierMaster')->name("Export suppliers list to excel");
@@ -45,8 +45,9 @@ Route::group([], function(){
 	Route::post('supplierReOpen', 'SupplierMasterAPIController@supplierReOpen')->name("Supplier master re open");
 	Route::post('validateSupplierAmend', 'SupplierMasterAPIController@validateSupplierAmend')->name("Validate supplier amend");
 	Route::post('referBackHistoryBySupplierMaster', 'SupplierMasterRefferedBackAPIController@referBackHistoryBySupplierMaster')->name("Referback history by supplier");
+    Route::post('removeSupplierBusinessCategory', 'SupplierBusinessCategoryAssignAPIController@removeSupplierBusinessCategory')->name("Remove supplier business category");
 
-	Route::resource('supplier_catalog_masters', 'SupplierCatalogMasterAPIController');
+    Route::resource('supplier_catalog_masters', 'SupplierCatalogMasterAPIController');
 	Route::resource('supplier/masters', 'SupplierMasterAPIController', ['names' => 'Supplier master']);
 	Route::resource('supplier_catalog_details', 'SupplierCatalogDetailAPIController');
 	Route::resource('bank_memo_suppliers', 'BankMemoSupplierAPIController');
@@ -371,4 +372,44 @@ Route::group([], function() {
     Route::post('validateSupplierBusinessSubCategoryAmend', 'SupplierCategorySubAPIController@validateSupplierBusinessSubCategoryAmend')->name("Validate supplier business sub category amend");
     Route::get('supplierBusinessSubCategoryDestroyCheck/{id}', 'SupplierCategorySubAPIController@destroyCheck')->name("Validate supplier business sub category can delete");
     Route::resource('supplierBusinessSubCategories', 'SupplierCategorySubAPIController');
+});
+
+//Reason Code Master
+Route::group([],function (){
+    Route::post('getAllReasonCodeMaster', 'ReasonCodeMasterAPIController@getAllReasonCodeMaster')->name("Get all reason code master");
+    Route::post('updateReasonCodeMaster', 'ReasonCodeMasterAPIController@update')->name("Update reason code master");
+    Route::get('getAllGLCodesForReasonMaster', 'ReasonCodeMasterAPIController@getAllGLCodes')->name("Get all gl codes for reason master");
+});
+
+//Approvals
+
+//Item
+Route::group([],function (){
+    Route::post('getAllItemsMasterApproval', 'ItemMasterAPIController@getAllItemsMasterApproval')->name("Get All Items Master Approval");
+});
+
+//Chart of Account
+Route::group([],function (){
+	Route::post('getAllChartOfAccountApproval', 'ChartOfAccountAPIController@getAllChartOfAccountApproval')->name("Get All Chart OF Account Approval");
+	Route::post('rejectChartOfAccount', 'ChartOfAccountAPIController@rejectChartOfAccount')->name("Reject Chart OF Account");
+
+});
+
+//Supplier
+Route::group([],function (){
+    Route::post('getAllSupplierMasterApproval', 'SupplierMasterAPIController@getAllSupplierMasterApproval')->name("Get all supplier master approval");
+    Route::post('rejectSupplier', 'SupplierMasterAPIController@rejectSupplier')->name("Reject Supplier");
+});
+
+//Customer
+Route::group([],function (){
+    Route::post('getAllCustomerMasterApproval', 'CustomerMasterAPIController@getAllCustomerMasterApproval')->name("Get all customer master approval");
+    Route::post('rejectCustomer', 'CustomerMasterAPIController@rejectCustomer')->name("Reject Customer");
+});
+
+//Registered Supplier
+Route::group([],function (){
+    Route::post('getAllRegisteredSupplierApproval', 'SupplierMasterAPIController@getAllRegisteredSupplierApproval')->name("Get all registered supplier approval");
+    Route::post('approveRegisteredSupplier', 'SupplierMasterAPIController@approveRegisteredSupplier')->name("Approve registered supplier");
+    Route::post('rejectRegisteredSupplier', 'SupplierMasterAPIController@rejectRegisteredSupplier')->name("Reject registered supplier");
 });

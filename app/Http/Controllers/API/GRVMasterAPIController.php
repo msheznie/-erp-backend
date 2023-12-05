@@ -174,6 +174,10 @@ class GRVMasterAPIController extends AppBaseController
             }
         }
 
+        if (!isset($input['grvLocation'])) {
+            return $this->sendError('Location not found', 500);
+        }
+
         $warehouse = WarehouseMaster::where("wareHouseSystemCode", $input['grvLocation'])
                                     ->where('companySystemID', $input['companySystemID'])
                                     ->first();

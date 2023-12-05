@@ -479,6 +479,10 @@ class BookInvSuppMaster extends Model
         return $this->belongsTo('App\Models\SupplierMaster', 'supplierID', 'supplierCodeSystem');
     }
 
+    public function employeeLedger() {
+        return $this->belongsTo('App\Models\EmployeeLedger', 'bookingSuppMasInvAutoID', 'documentSystemCode');
+    }
+
     public function approved_by()
     {
         return $this->hasMany('App\Models\DocumentApproved', 'documentSystemCode', 'bookingSuppMasInvAutoID');

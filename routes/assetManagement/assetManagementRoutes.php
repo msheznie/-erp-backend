@@ -183,5 +183,8 @@ Route::group([], function(){
 
 });
 
-
+//Report - CWIP Movement
+Route::group([], function(){
+    Route::post('assetCWIPDrillDown', 'AssetManagementReportAPIController@assetCWIPDrillDown')->name('Asset cwip drill down');
+});
 

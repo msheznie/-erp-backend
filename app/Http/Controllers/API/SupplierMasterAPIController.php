@@ -34,6 +34,8 @@ use App\Models\ProcumentOrder;
 use App\Models\PaySupplierInvoiceMaster;
 use App\Models\SegmentMaster;
 use App\Models\SupplierAssigned;
+use App\Models\SupplierBusinessCategoryAssign;
+use App\Models\SupplierCategoryMaster;
 use App\Models\SupplierCategorySub;
 use App\Models\SupplierCurrency;
 use App\Models\RegisteredSupplierCurrency;
@@ -415,7 +417,7 @@ class SupplierMasterAPIController extends AppBaseController
         $supplierMasters = DB::table('erp_documentapproved')
             ->select('suppliermaster.*', 'erp_documentapproved.documentApprovedID',
                 'rollLevelOrder', 'currencymaster.CurrencyCode',
-                'suppliercategorymaster.categoryName', 'approvalLevelID', 'documentSystemCode')
+                'supplier_categories.category', 'approvalLevelID', 'documentSystemCode')
             ->join('employeesdepartments', function ($query) use ($companyID, $empID) {
                 $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')->
                 on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')->
@@ -439,7 +441,7 @@ class SupplierMasterAPIController extends AppBaseController
                         });
                     });
             })
-            ->leftJoin('suppliercategorymaster', 'suppliercategorymaster.supCategoryMasterID', '=', 'suppliermaster.supCategoryMasterID')
+            ->leftJoin('supplier_categories', 'supplier_categories.id', '=', 'suppliermaster.supplier_category_id')
             ->leftJoin('currencymaster', 'suppliermaster.currency', '=', 'currencymaster.currencyID')
             ->where('erp_documentapproved.approvedYN', 0)
             ->where('erp_documentapproved.rejectedYN', 0)
@@ -476,31 +478,109 @@ class SupplierMasterAPIController extends AppBaseController
     }
 
     /**
-     * get sub categories by supplier.
-     * POST /getSubcategoriesBySupplier
+     * get business categories by supplier.
+     * POST /getBusinessCategoriesBySupplier
      *
      * @param Request $request
      *
      * @return Response
      */
-    public function getSubcategoriesBySupplier(Request $request)
-    {
-
+    public function getAssignBusinessCategoriesBySupplier(Request $request){
         $supplierId = $request['supplierId'];
-        $supplier = SupplierMaster::where('supplierCodeSystem', '=', $supplierId)
-            ->first();
+        $supplier = SupplierMaster::where('supplierCodeSystem',$supplierId)->first();
+        $data = [];
         if ($supplier) {
-            $suppliersubcategory = DB::table('suppliersubcategoryassign')
-                ->leftJoin('suppliercategorysub', 'suppliersubcategoryassign.supSubCategoryID', '=', 'suppliercategorysub.supCategorySubID')
-                ->where('supplierID', $supplierId)
-                ->orderBy('supplierSubCategoryAssignID', 'DESC')->get();
-        } else {
-            $suppliersubcategory = [];
+            $supplierBusinessCategories = DB::table('supplierbusinesscategoryassign')
+                ->select('suppliercategorymaster.supCategoryMasterID','suppliercategorymaster.categoryName','supplierbusinesscategoryassign.supplierBusinessCategoryAssignID')
+                ->leftJoin('suppliercategorymaster','supplierbusinesscategoryassign.supCategoryMasterID','=','suppliercategorymaster.supCategoryMasterID')
+                ->where('supplierbusinesscategoryassign.supplierID', $supplierId)->get();
+            foreach ($supplierBusinessCategories as $supplierBusinessCategory){
+                $supplierBusinessSubCategories = DB::table('suppliersubcategoryassign')
+                    ->select('suppliersubcategoryassign.supplierSubCategoryAssignID','suppliercategorysub.categoryName')
+                    ->leftJoin('suppliercategorysub','suppliersubcategoryassign.supSubCategoryID','=','suppliercategorysub.supCategorySubID')
+                    ->where('suppliersubcategoryassign.supplierID', $supplierId)
+                    ->where('suppliercategorysub.supMasterCategoryID', $supplierBusinessCategory->supCategoryMasterID)->get();
+                if(count($supplierBusinessSubCategories) > 0){
+                    foreach ($supplierBusinessSubCategories as $supplierBusinessSubCategory) {
+                        $temp = [
+                            "businessCategoryAssignID" => $supplierBusinessCategory->supplierBusinessCategoryAssignID,
+                            "businessCategoryName" => $supplierBusinessCategory->categoryName,
+                            "businessSubCategoryAssignID" => $supplierBusinessSubCategory->supplierSubCategoryAssignID,
+                            "businessSubCategoryName" => $supplierBusinessSubCategory->categoryName
+                        ];
+                        $data[] = $temp;
+                    }
+                }
+                else{
+                    $temp = [
+                        "businessCategoryAssignID" => $supplierBusinessCategory->supplierBusinessCategoryAssignID,
+                        "businessCategoryName" => $supplierBusinessCategory->categoryName,
+                        "businessSubCategoryAssignID" => 0,
+                        "businessSubCategoryName" => null
+                    ];
+                    $data[] = $temp;
+                }
+            }
         }
-
-        return $this->sendResponse($suppliersubcategory, 'Supplier Category Subs retrieved successfully');
+        return $this->sendResponse($data, 'Supplier business category retrieved successfully');
     }
 
+    public function getBusinessCategoriesBySupplier(){
+        $businessCategories = SupplierCategoryMaster::where('isActive',1)->get();
+        return $this->sendResponse($businessCategories, 'Supplier business category retrieved successfully');
+    }
+
+    public function createSupplierSubCategoryAssignRecord($supplierID,$supSubCategoryID){
+        $businessSubCategoryAssign = new SupplierSubCategoryAssign();
+        $businessSubCategoryAssign->supplierID = $supplierID;
+        $businessSubCategoryAssign->supSubCategoryID = $supSubCategoryID;
+        $businessSubCategoryAssign->save();
+    }
+
+    public function addBusinessCategoryToSupplier(Request $request){
+        $businessCategoryID = $request['businessCategoryID'];
+        $businessSubCategoryIDS = $request['businessSubCategoryID'];
+        $supplierID = $request['supplierID'];
+        
+        $businessCategoryAssignCheck = SupplierBusinessCategoryAssign::where('supplierID',$supplierID)->where('supCategoryMasterID',$businessCategoryID)->first();
+        if(!$businessCategoryAssignCheck){
+            $businessCategoryAssign = new SupplierBusinessCategoryAssign();
+            $businessCategoryAssign->supplierID = $supplierID;
+            $businessCategoryAssign->supCategoryMasterID = $businessCategoryID;
+            $businessCategoryAssign->save();
+        }
+        else{
+            if(empty($businessSubCategoryIDS)){
+                return $this->sendError('This main category has already been added',500);
+            }
+        }
+
+        if (!empty($businessSubCategoryIDS)) {
+            $ids = collect($businessSubCategoryIDS)->pluck('id');
+            if($ids->count() > 1){
+                $businessSubCategoryAssignIDs = SupplierSubCategoryAssign::where('supplierID',$supplierID)->whereIn('supSubCategoryID',$ids)->pluck('supSubCategoryID');
+                $emptyIDs = array_diff($ids->toArray(),$businessSubCategoryAssignIDs->toArray());
+                if(count($emptyIDs) > 0){
+                    foreach ($emptyIDs as $id) {
+                        $this->createSupplierSubCategoryAssignRecord($supplierID,$id);
+                    }
+                }
+                else{
+                    return $this->sendError('These subcategories have already been added',500);
+                }
+            }
+            else{
+                $businessSubCategoryAssignCheck = SupplierSubCategoryAssign::where('supplierID',$supplierID)->where('supSubCategoryID',$ids->first())->first();
+                if(!$businessSubCategoryAssignCheck){
+                    $this->createSupplierSubCategoryAssignRecord($supplierID,$ids->first());
+                }
+                else{
+                    return $this->sendError('This subcategory has already been added',500);
+                }
+            }
+        }
+        return $this->sendResponse([], 'Supplier business category added successfully');
+    }
 
     /**
      * Store a newly created SupplierMaster in storage.
@@ -636,16 +716,8 @@ class SupplierMasterAPIController extends AppBaseController
 
         $id = $input['supplierCodeSystem'];
 
-        $subCategories = SupplierSubCategoryAssign::where('supplierID',$id)->pluck('supSubCategoryID');
-        foreach ($subCategories as $subCategoryID){
-            $subCategory = SupplierCategorySub::where('supCategorySubID',$subCategoryID)->first();
-            if($subCategory->supMasterCategoryID != $input['supCategoryMasterID']){
-                return $this->sendError('Please remove the already added sub categories before changing to a new Business Category.');
-            }
-        }
-
         $input = array_except($input, ['supplierConfirmedEmpID', 'supplierConfirmedEmpSystemID',
-            'supplierConfirmedEmpName', 'supplierConfirmedDate', 'final_approved_by', 'blocked_by']);
+            'supplierConfirmedEmpName', 'supplierConfirmedDate', 'final_approved_by', 'blocked_by','companySystemID']);
         $input = $this->convertArrayToValue($input);
         $employee = \Helper::getEmployeeInfo();
         $input['modifiedPc'] = gethostname();
@@ -779,12 +851,12 @@ class SupplierMasterAPIController extends AppBaseController
                     $input['blockedReason'] = null;
                 }
 
-                $supplierMaster = $this->supplierMasterRepository->update(array_only($input,['isLCCYN','isSMEYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','supCategoryMasterID','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','retentionPercentage','supplierImportanceID','supplierNatureID','supplierTypeID','supplier_category_id','supplier_group_id','jsrsNo','jsrsExpiry', 'isBlocked', 'blockedReason', 'blockedBy', 'blockedDate','advanceAccountSystemID','AdvanceAccount', 'liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount', 'isActive', 'supplierName', 'linkCustomerYN', 'linkCustomerID', 'nameOnPaymentCheque', 'registrationExprity']), $id);
-                SupplierAssigned::where('supplierCodeSytem',$id)->update(array_only($input,['isLCCYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','supCategoryMasterID','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','supplierImportanceID','supplierNatureID','supplierTypeID','supplier_category_id','supplier_group_id','jsrsNo','jsrsExpiry', 'isBlocked', 'blockedReason', 'blockedBy', 'blockedDate','advanceAccountSystemID','AdvanceAccount', 'liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount', 'isActive', 'supplierName', 'nameOnPaymentCheque', 'registrationExprity']));
+                $supplierMaster = $this->supplierMasterRepository->update(array_only($input,['isLCCYN','isSMEYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','retentionPercentage','supplierImportanceID','supplierNatureID','supplierTypeID','supplier_category_id','supplier_group_id','jsrsNo','jsrsExpiry', 'isBlocked', 'blockedReason', 'blockedBy', 'blockedDate','advanceAccountSystemID','AdvanceAccount', 'liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount', 'isActive', 'supplierName', 'linkCustomerYN', 'linkCustomerID', 'nameOnPaymentCheque', 'registrationExprity']), $id);
+                SupplierAssigned::where('supplierCodeSytem',$id)->update(array_only($input,['isLCCYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','supplierImportanceID','supplierNatureID','supplierTypeID','supplier_category_id','supplier_group_id','jsrsNo','jsrsExpiry', 'isBlocked', 'blockedReason', 'blockedBy', 'blockedDate','advanceAccountSystemID','AdvanceAccount', 'liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount', 'isActive', 'supplierName', 'nameOnPaymentCheque', 'registrationExprity']));
                 // user activity log table
                 if($supplierMaster){
-                    $old_array = array_only($supplierMasterOld,['isLCCYN','isSMEYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','supCategoryMasterID','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','supplierImportanceID','supplierNatureID','supplierTypeID','jsrsNo','jsrsExpiry', 'isBlocked', 'blockedReason', 'blockedBy', 'blockedDate','advanceAccountSystemID','AdvanceAccount', 'liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount', 'isActive', 'supplierName', 'linkCustomerYN', 'linkCustomerID', 'nameOnPaymentCheque', 'registrationExprity']);
-                    $modified_array = array_only($input,['isLCCYN','isSMEYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','supCategoryMasterID','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','supplierImportanceID','supplierNatureID','supplierTypeID','jsrsNo','jsrsExpiry', 'isBlocked', 'blockedReason', 'blockedBy', 'blockedDate','advanceAccountSystemID','AdvanceAccount', 'liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount', 'isActive', 'supplierName', 'linkCustomerYN', 'linkCustomerID', 'nameOnPaymentCheque', 'registrationExprity']);
+                    $old_array = array_only($supplierMasterOld,['isLCCYN','isSMEYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','supplierImportanceID','supplierNatureID','supplierTypeID','jsrsNo','jsrsExpiry', 'isBlocked', 'blockedReason', 'blockedBy', 'blockedDate','advanceAccountSystemID','AdvanceAccount', 'liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount', 'isActive', 'supplierName', 'linkCustomerYN', 'linkCustomerID', 'nameOnPaymentCheque', 'registrationExprity']);
+                    $modified_array = array_only($input,['isLCCYN','isSMEYN','supCategoryICVMasterID','supCategorySubICVID','address','fax','registrationNumber','supEmail','webAddress','telephone','creditLimit','creditPeriod','vatEligible','vatNumber','vatPercentage','supplierImportanceID','supplierNatureID','supplierTypeID','jsrsNo','jsrsExpiry', 'isBlocked', 'blockedReason', 'blockedBy', 'blockedDate','advanceAccountSystemID','AdvanceAccount', 'liabilityAccountSysemID', 'liabilityAccount', 'UnbilledGRVAccountSystemID', 'UnbilledGRVAccount', 'isActive', 'supplierName', 'linkCustomerYN', 'linkCustomerID', 'nameOnPaymentCheque', 'registrationExprity']);
 
                     // update in to user log table
                     foreach ($old_array as $key => $old){

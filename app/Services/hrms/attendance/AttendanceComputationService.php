@@ -37,7 +37,7 @@ class AttendanceComputationService
     public $normalDayData = ['true_false' => 0, 'hours' => 0, 'realTime' => 0];
     public $weekendData = ['true_false' => 0, 'hours' => 0, 'realTime' => 0];
     public $holidayData = ['true_false' => 0, 'hours' => 0, 'realTime' => 0];
-
+    public $calcClockOut = 0;
 
     //supporting values
     public $isFlexibleHourBaseComputation = false;
@@ -71,7 +71,7 @@ class AttendanceComputationService
         $this->confIsFlexibleHourBaseComputation();
 
         if ($this->dayType == 1) {
-            $this->calculateActualWorkingHours();
+            $this->calculateShiftHours();
         }
 
         $this->calculateWorkedHours();
@@ -104,7 +104,7 @@ class AttendanceComputationService
         }
     }
 
-    public function calculateActualWorkingHours()
+    public function calculateShiftHours()
     {
         if (empty($this->onDutyTime) || empty($this->offDutyTime)) {
             return false;
@@ -171,12 +171,35 @@ class AttendanceComputationService
         $hours = $totWorkingHours_obj->format('%h');
         $minutes = $totWorkingHours_obj->format('%i');
         $this->totalWorkingHours = ($hours * 60) + $minutes;
+        
+        $this->calculateRealTime();
+        $this->calculateOfficialWorkTime();
+    }
 
+    public function calculateRealTime(){
         if ($this->totalWorkingHours && $this->shiftHours) {
             $realtime = $this->shiftHours / $this->totalWorkingHours;
             $this->realTime = round($realtime, 1);
-            $this->officialWorkTime = ($this->totalWorkingHours > $this->shiftHours) ? $this->shiftHours : $this->totalWorkingHours;
         }
+    }
+
+    public function calculateOfficialWorkTime(){
+        if (empty($this->onDutyTime) || empty($this->offDutyTime)) {
+            return false;
+        }
+
+        $t3 = ($this->isShiftHoursSet && ($this->offDutyTime <= $this->clockOut))
+            ? new DateTime($this->offDutyTime)
+            : new DateTime($this->clockOut);
+
+        $t4 = ($this->isShiftHoursSet && ($this->onDutyTime >= $this->clockIn))
+            ? new DateTime($this->onDutyTime)
+            : new DateTime($this->clockIn);
+
+        $officialWorkTimeObj = $t3->diff($t4);
+        $hours = $officialWorkTimeObj->format('%h');
+        $minutes = $officialWorkTimeObj->format('%i');
+        $this->officialWorkTime = ($hours * 60) + $minutes;    
     }
 
     public function openShiftCalculateWorkedHours()
@@ -232,12 +255,9 @@ class AttendanceComputationService
 
         $this->isClockInOutSet = true;
 
-        $t1 = ($this->isShiftHoursSet && ($this->offDutyTime <= $this->clockOut))
-            ? new DateTime($this->offDutyTime)
-            : new DateTime($this->clockOut);
-
-        $t2 = ($this->isShiftHoursSet && ($this->onDutyTime >= $this->clockIn))
-            ? new DateTime($this->onDutyTime)
+        $t1 = new DateTime($this->clockOut);
+        $t2 = ($this->isShiftHoursSet && ($this->flexibleHourFrom >= $this->clockIn))
+            ? new DateTime($this->flexibleHourFrom)
             : new DateTime($this->clockIn);
 
         $totWorkingHours_obj = $t1->diff($t2);
@@ -245,11 +265,8 @@ class AttendanceComputationService
         $minutes = $totWorkingHours_obj->format('%i');
         $this->totalWorkingHours = ($hours * 60) + $minutes;
 
-        if ($this->totalWorkingHours && $this->shiftHours) {
-            $realtime = $this->shiftHours / $this->totalWorkingHours;
-            $this->realTime = round($realtime, 1);
-            $this->officialWorkTime = ($this->totalWorkingHours > $this->shiftHours) ? $this->shiftHours : $this->totalWorkingHours;
-        }
+        $this->calculateRealTime();
+        $this->calculateOfficialWorkTime();
     }
 
     public function generalComputation()
@@ -282,15 +299,10 @@ class AttendanceComputationService
         }
 
         $flexibleHrFrom_dt = new DateTime($this->flexibleHourFrom);
-        $flexibleHrTo_dt = new DateTime($this->flexibleHourTo);
-
-        if ($flexibleHrTo_dt->format('H:i:s') > $this->onDuty_dt->format('H:i:s')) {
-            $this->gracePeriod = 0;
-        }
-
+        $this->gracePeriod = 0;
+        
         $clockIn_dt = new DateTime($this->clockIn);
-        $clockIn_dt2 = new DateTime($this->clockIn);
-
+        
         if ($clockIn_dt->format('H:i:s') < $flexibleHrFrom_dt->format('H:i:s')) {
             $clockIn_dt = $flexibleHrFrom_dt;
             $this->clockIn = $this->flexibleHourFrom;
@@ -299,7 +311,7 @@ class AttendanceComputationService
 
         $this->flxLateHourComputation();
         $this->earlyHourComputation($clockIn_dt, $this->clockOut_dt);
-        $this->overTimeComputation($clockIn_dt2, $this->clockOut_dt);
+        $this->overTimeComputation($clockIn_dt, $this->clockOut_dt);
     }
 
     private function getOnDutyTempTime()
@@ -366,15 +378,16 @@ class AttendanceComputationService
         if ($this->dayType != 1) {
             return; //if holiday or weekend no need to compute the earl out hours
         }
-
+ 
         if (!$this->isShiftHoursSet) {
             return false;
         }
 
-        $clockIn_dt->modify("+{$this->shiftHours} minutes");
+        $this->calcClockOut = clone $clockIn_dt;
+        $this->calcClockOut->modify("+{$this->shiftHours} minutes");
 
-        if ($clockIn_dt > $clockOut_dt) {
-            $interval = $clockIn_dt->diff($clockOut_dt);
+        if ($this->calcClockOut > $clockOut_dt) {
+            $interval = $this->calcClockOut->diff($clockOut_dt);
             $hours = ($interval->format('%h') != 0) ? $interval->format('%h') : 0;
             $minutes = ($interval->format('%i') != 0) ? $interval->format('%i') : 0;
             $this->earlyHours = $hours * 60 + $minutes;
@@ -392,7 +405,7 @@ class AttendanceComputationService
             return; //if shift hours not defined
         }
 
-        if ($this->clockOut <= $this->offDutyTime) {
+        if ($clockOut_dt_ot <= $this->calcClockOut) {
             return true;
         }
 
@@ -413,8 +426,14 @@ class AttendanceComputationService
     // flexible hour validation
     public function flxValidations()
     {
-        if (empty($this->flexibleHourFrom) || empty($this->flexibleHourTo)) {
-            $msg = 'flexible hour to is required';
+        if (empty($this->flexibleHourFrom) ) {
+            $msg = 'Flexible hour from is required';
+            Log::error($msg . $this->log_suffix(__LINE__));
+            return false;
+        }
+
+        if (empty($this->flexibleHourTo) ) {
+            $msg = 'Flexible hour to is required';
             Log::error($msg . $this->log_suffix(__LINE__));
             return false;
         }
@@ -423,15 +442,15 @@ class AttendanceComputationService
         $flexibleHrFrom_dt = new DateTime($this->flexibleHourFrom);
         $flexibleHrTo_dt = new DateTime($this->flexibleHourTo);
 
-        if ($flexibleHrFrom_dt->format('H:i:s') >= $onDuty_dt->format('H:i:s')) {
-            $msg = 'flexible Hour From Should be less than On Duty Time';
+        if ($flexibleHrFrom_dt->format('H:i:s') > $onDuty_dt->format('H:i:s')) {
+            $msg = 'Flexible hour from cannot be greater than on duty time';
             Log::error($msg . $this->log_suffix(__LINE__));
 
             return false;
         }
 
         if ($flexibleHrTo_dt->format('H:i:s') < $onDuty_dt->format('H:i:s')) {
-            $msg = 'flexible hour to cannot be less than On Duty Time';
+            $msg = 'Flexible hour to cannot be less than on duty time';
             Log::error($msg . $this->log_suffix(__LINE__));
             return false;
         }
@@ -473,6 +492,7 @@ class AttendanceComputationService
     {
         if ($this->isFlexibleHour == 1 && $this->flexibleHourFrom != null) {
             $this->isFlexibleHourBaseComputation = true;
+            $this->gracePeriod = 0;
         }
     }
 
