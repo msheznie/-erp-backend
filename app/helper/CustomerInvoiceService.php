@@ -1334,90 +1334,17 @@ class CustomerInvoiceService
         return ['status' => true];
     }
 
-    public static function amendCustomerInvoice($customerInvoiceUploadDetails):array
+    public static function deleteCustomerInvoice($customerInvoiceUploadDetails):array
     {
 
         $id = $customerInvoiceUploadDetails->custInvoiceDirectID;
-        $employee = \Helper::getEmployeeInfo();
-        $emails = array();
-
         $masterData = CustomerInvoiceDirect::find($id);
         if (empty($masterData)) {
             return ['status' => false, 'message' => 'Customer Invoice not found'];
         }
 
-        if ($masterData->confirmedYN == 0) {
-            return ['status' => false, 'message' => 'You cannot return back to amend this Customer Invoice, it is not confirmed'];
-        }
-
-        if($masterData->isPerforma == 2){
-            $checkForInventoryItems = CustomerInvoiceItemDetails::where('itemFinanceCategoryID', 1)
-                ->where('custInvoiceDirectAutoID', $id)
-                ->first();
-
-            if ($checkForInventoryItems) {
-                return ['status' => false, 'message' => 'Selected customer invoice cannot be returned back to amend as the invoice is Item Sales Invoice, it contains inventory items'];
-
-            }
-        }elseif ($masterData->isPerforma == 4){
-            return ['status' => false, 'message' => 'Selected customer invoice cannot be returned back to amend as the invoice is From Sales Order'];
-
-        }elseif ($masterData->isPerforma == 5){
-            return ['status' => false, 'message' => 'Selected customer invoice cannot be returned back to amend as the invoice is From Quotation'];
-
-        }
-
-        // checking document matched in machmaster
-        $checkDetailExistMatch = CustomerReceivePaymentDetail::where('bookingInvCodeSystem', $id)
-            ->where('companySystemID', $masterData->companySystemID)
-            ->where('addedDocumentSystemID', $masterData->documentSystemiD)
-            ->first();
-
-        if ($checkDetailExistMatch) {
-            return ['status' => false, 'message' => 'Cannot return back to amend. Customer Invoice is added to receipt'];
-
-        }
-
-        $emailBody = '<p>' . $masterData->bookingInvCode . ' has been deleted by ' . $employee->empName . '</p>';
-        $emailSubject = $masterData->bookingInvCode . ' has been deleted';
         DB::beginTransaction();
         try {
-
-            //sending email to relevant party
-            if ($masterData->confirmedYN == 1) {
-                $emails[] = array('empSystemID' => $masterData->confirmedByEmpSystemID,
-                    'companySystemID' => $masterData->companySystemID,
-                    'docSystemID' => $masterData->documentSystemiD,
-                    'alertMessage' => $emailSubject,
-                    'emailAlertMessage' => $emailBody,
-                    'docSystemCode' => $id,
-                    'docCode' => $masterData->bookingInvCode
-                );
-            }
-
-            $documentApproval = DocumentApproved::where('companySystemID', $masterData->companySystemID)
-                ->where('documentSystemCode', $id)
-                ->where('documentSystemID', $masterData->documentSystemiD)
-                ->get();
-
-            foreach ($documentApproval as $da) {
-                if ($da->approvedYN == -1) {
-                    $emails[] = array('empSystemID' => $da->employeeSystemID,
-                        'companySystemID' => $masterData->companySystemID,
-                        'docSystemID' => $masterData->documentSystemiD,
-                        'alertMessage' => $emailSubject,
-                        'emailAlertMessage' => $emailBody,
-                        'docSystemCode' => $id,
-                        'docCode' => $masterData->bookingInvCode
-                    );
-                }
-            }
-
-            $sendEmail = \Email::sendEmail($emails);
-            if (!$sendEmail["success"]) {
-                return ['status' => false, 'message' => $sendEmail["message"]];
-
-            }
 
             //deleting from approval table
             $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
@@ -1448,21 +1375,6 @@ class CustomerInvoiceService
                 ->where('companySystemID', $masterData->companySystemID)
                 ->where('documentSystemID', $masterData->documentSystemiD)
                 ->delete();
-
-            // updating fields
-            $masterData->confirmedYN = 0;
-            $masterData->confirmedByEmpSystemID = null;
-            $masterData->confirmedByEmpID = null;
-            $masterData->confirmedByName = null;
-            $masterData->confirmedDate = null;
-            $masterData->RollLevForApp_curr = 1;
-
-            $masterData->approved = 0;
-            $masterData->approvedByUserSystemID = null;
-            $masterData->approvedByUserID = null;
-            $masterData->approvedDate = null;
-            $masterData->postedDate = null;
-            $masterData->save();
 
             $masterData->invoicedetail()->delete();
             $masterData->delete();

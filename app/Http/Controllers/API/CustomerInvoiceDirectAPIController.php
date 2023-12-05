@@ -2300,14 +2300,19 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
 
         if($uploadCustomerInvoiceObj->uploadStatus == 1) {
-            $customerInvoiceUploadDetails = CustomerInvoiceUploadDetail::where('customerInvoiceUploadID',$uploadCustomerInvoiceObj->id)->first();
-            $validateInvoiceToDelete =  $this->validateInvoiceToDelete($customerInvoiceUploadDetails);
+            $customerInvoiceUploadDetailsIds = CustomerInvoiceUploadDetail::where('customerInvoiceUploadID',$uploadCustomerInvoiceObj->id)->pluck('custInvoiceDirectID')->toArray();
+
+            $validateInvoiceToDelete = $this->validateInvoiceToDelete($customerInvoiceUploadDetailsIds);
             if(isset($validateInvoiceToDelete['status']) && !$validateInvoiceToDelete['status'])
                 return $this->sendError($validateInvoiceToDelete['message']);
+            $customerInvoiceUploadDetails = CustomerInvoiceUploadDetail::where('customerInvoiceUploadID',$uploadCustomerInvoiceObj->id)->get();
 
-           $deleteCustomerInvoice  = CustomerInvoiceService::amendCustomerInvoice($customerInvoiceUploadDetails);
-            if(isset($deleteCustomerInvoice['status']) && !$deleteCustomerInvoice['status'])
-                return $this->sendError($deleteCustomerInvoice['message']);
+            foreach ($customerInvoiceUploadDetails as $customerInvoiceUploadDetail) {
+                $deleteCustomerInvoice  = CustomerInvoiceService::deleteCustomerInvoice($customerInvoiceUploadDetail);
+                if(isset($deleteCustomerInvoice['status']) && !$deleteCustomerInvoice['status'])
+                    return $this->sendError($deleteCustomerInvoice['message']);
+            }
+
         }
 
         UploadCustomerInvoice::where('id', $customerInvoiceUploadID)->delete();
@@ -2317,18 +2322,19 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
     }
 
-    public function validateInvoiceToDelete($customerInvoiceUploadDetails) : array
+    public function validateInvoiceToDelete($customerInvoiceUploadDetailsIds):array
     {
 
         $isFailedProcessExists = UploadCustomerInvoice::where('uploadStatus',0)->get();
         $lastCustomerInvoice = CustomerInvoiceDirect::orderBy('custInvoiceDirectAutoID', 'DESC')->select('custInvoiceDirectAutoID')->first();
 
-        if($lastCustomerInvoice->custInvoiceDirectAutoID != $customerInvoiceUploadDetails->custInvoiceDirectID) {
+        if(!in_array($lastCustomerInvoice->custInvoiceDirectAutoID,$customerInvoiceUploadDetailsIds)) {
             return ['status' => false , 'message' => 'Additional Invoices had been created after the upload. Cannot delete the uploaded invoices'];
         }
 
+
         if(count($isFailedProcessExists) > 0) {
-            return ['status' => false , 'message' => 'There is a failed customer invoice to be delete'];
+            UploadCustomerInvoice::where('uploadStatus',0)->delete();
         }
 
         return ['status' => true, 'message' => ''];
