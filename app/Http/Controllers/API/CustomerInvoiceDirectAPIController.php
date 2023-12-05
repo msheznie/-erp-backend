@@ -33,6 +33,7 @@ use App\Http\Requests\API\CreateCustomerInvoiceDirectAPIRequest;
 use App\Http\Requests\API\UpdateCustomerInvoiceDirectAPIRequest;
 use App\Models\AccountsReceivableLedger;
 use App\Models\BankAccount;
+use App\Models\CustomerInvoiceUploadDetail;
 use App\Models\ErpProjectMaster;
 use App\Models\BankAssign;
 use App\Models\QuotationMaster;
@@ -100,7 +101,6 @@ use App\Models\PortMaster;
 use App\Models\UploadCustomerInvoice;
 use PHPExcel_IOFactory;
 use Exception;
-use PHPExcel_Worksheet_Drawing;
 /**
  * Class CustomerInvoiceDirectController
  * @package App\Http\Controllers\API
@@ -2289,11 +2289,25 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $input = $request->all();
 
         $customerInvoiceUploadID = $input['customerInvoiceUploadID'];
+        $uploadCustomerInvoiceObj = UploadCustomerInvoice::find($customerInvoiceUploadID);
 
-        $uploadBudget = UploadCustomerInvoice::find($customerInvoiceUploadID);
+        if(!isset($uploadCustomerInvoiceObj)) {
+            return self::sendError('Customer Invoice not found');
+        }
 
-        if($uploadBudget->uploadStatus == -1) {
+        if($uploadCustomerInvoiceObj->uploadStatus == -1) {
             return $this->sendError('Upload in progress. Cannot be deleted.');
+        }
+
+        if($uploadCustomerInvoiceObj->uploadStatus == 1) {
+            $customerInvoiceUploadDetails = CustomerInvoiceUploadDetail::where('customerInvoiceUploadID',$uploadCustomerInvoiceObj->id)->first();
+            $validateInvoiceToDelete =  self::validateInvoiceToDelete($customerInvoiceUploadDetails);
+            if(isset($validateInvoiceToDelete['status']) && !$validateInvoiceToDelete['status'])
+                return self::sendError($validateInvoiceToDelete['message']);
+
+           $deleteCustomerInvoice  = CustomerInvoiceService::amendCustomerInvoice($customerInvoiceUploadDetails);
+            if(isset($deleteCustomerInvoice['status']) && !$deleteCustomerInvoice['status'])
+                return self::sendError($deleteCustomerInvoice['message']);
         }
 
         UploadCustomerInvoice::where('id', $customerInvoiceUploadID)->delete();
@@ -2302,6 +2316,24 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
 
     }
+
+    public function validateInvoiceToDelete($customerInvoiceUploadDetails) : array
+    {
+
+        $isFailedProcessExists = UploadCustomerInvoice::where('uploadStatus',0)->get();
+        $lastCustomerInvoice = CustomerInvoiceDirect::orderBy('custInvoiceDirectAutoID', 'DESC')->select('custInvoiceDirectAutoID')->first();
+
+        if($lastCustomerInvoice->custInvoiceDirectAutoID != $customerInvoiceUploadDetails->custInvoiceDirectID) {
+            return ['status' => false , 'message' => 'Additional Invoices had been created after the upload. Cannot delete the uploaded invoices'];
+        }
+
+        if(count($isFailedProcessExists) > 0) {
+            return ['status' => false , 'message' => 'There is a failed customer invoice to be delete'];
+        }
+
+        return ['status' => true, 'message' => ''];
+    }
+
 
     public function getCustomerInvoiceMasterView(Request $request)
     {
