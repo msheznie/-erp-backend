@@ -113,8 +113,8 @@ Route::group([], function(){
     Route::get('checkBudgetAllocation', 'BudgetTransferFormDetailAPIController@checkBudgetAllocation')->name('Check budget allocation');
     Route::get('getDetailsByBudgetTransfer', 'BudgetTransferFormDetailAPIController@getDetailsByBudgetTransfer')->name('Get details by budget transfer');
     Route::get('getBudgetReviewTransferAddition', 'BudgetReviewTransferAdditionAPIController@getBudgetReviewTransferAddition')->name('Get budget review transfer additions');
-    Route::get('budget_transfer_amend/{id}', 'BudgetTransferFormRefferedBackAPIController@budgetTransferAmend');
-    Route::get('getDetailsByBudgetTransferAmend', 'BudgetTransferFormDetailRefferedBackAPIController@getDetailsByBudgetTransferAmend');
+    Route::get('budget_transfer_amend/{id}', 'BudgetTransferFormRefferedBackAPIController@budgetTransferAmend')->name('Budget transfer amend');
+    Route::get('getDetailsByBudgetTransferAmend', 'BudgetTransferFormDetailRefferedBackAPIController@getDetailsByBudgetTransferAmend')->name('Get details by budget transfer amend');
     Route::get('budget_addition_amend/{id}', 'BudgetAdditionRefferedBackAPIController@budget_addition_amend');
     Route::get('getDetailsByBudgetAdditionAmend', 'BudgetAdditionRefferedBackAPIController@getDetailsByBudgetAdditionAmend');
 
@@ -122,8 +122,8 @@ Route::group([], function(){
     Route::post('budgetTransferCreateFromReview', 'BudgetTransferFormAPIController@budgetTransferCreateFromReview')->name('Create Budget Transfer from review');
     Route::post('budgetTransferReopen', 'BudgetTransferFormAPIController@budgetTransferReopen')->name('Budget transfer reopen');
     Route::post('getBudgetTransferMasterByCompany', 'BudgetTransferFormAPIController@getBudgetTransferMasterByCompany')->name('Get budget master by company');
-    Route::post('amendBudgetTrasfer', 'BudgetTransferFormAPIController@amendBudgetTrasfer');
-    Route::post('getBudgetTransferAmendHistory', 'BudgetTransferFormRefferedBackAPIController@getBudgetTransferAmendHistory');
+    Route::post('amendBudgetTrasfer', 'BudgetTransferFormAPIController@amendBudgetTrasfer')->name('Amend budget transfer');
+    Route::post('getBudgetTransferAmendHistory', 'BudgetTransferFormRefferedBackAPIController@getBudgetTransferAmendHistory')->name('Get budget transfer amend history');
     Route::post('amendBudgetAddition', 'ErpBudgetAdditionAPIController@amendBudgetAddition');
     Route::post('getBudgetAdditionAmendHistory', 'BudgetAdditionRefferedBackAPIController@getBudgetAdditionAmendHistory');
 
@@ -206,7 +206,6 @@ Route::group([], function(){
     // contiungency Budget
 
     Route::resource('contingency_budget_plans', 'ContingencyBudgetPlanAPIController');
-    Route::get('contingency_budget_list', 'ContingencyBudgetPlanAPIController@budget_list')->name('Get Contigency Budget List');
     Route::get('contingencyBudgetAmend/{id}', 'ContingencyBudgetRefferedBackAPIController@contingencyBudgetAmend')->name('Get Contigency Budget');
 
     Route::get('getContingencyBudgetFormData', 'ContingencyBudgetPlanAPIController@getFormData') ->name('Get Contigency Budget From Data');

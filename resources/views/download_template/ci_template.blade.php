@@ -9,39 +9,40 @@
                             Instructions to Populate Data
                         </th>
                     </tr>
+                </head>
+                <tbody>
 
                     <tr>
-                        <th colspan="15">
+                        <td colspan="15">
                             "M" refers to Mandatory field. If mandatory field is empty in any row, the upload will not be successful
-                        </th>
+                        </td>
                     </tr>
                     <tr>
-                        <th colspan="15">
-                            Do not delete any of the columns in this excel sheet
-                        </th>
+                        <td colspan="15">
+                            Do not amend (delete, move, edit, rename) any of the columns or rows in the provided template
+                        </td>
                     </tr>
                     <tr>
-                        <th colspan="15">
-                            If you want to add multiple details to a single invoice use Customer invoice number column and repeat the same invoice number multiple times to have more than one details in a single invoice
-                        </th>
+                        <td colspan="15">
+                            To add multiple details to a single invoice use "Customer invoice number" column and repeat the same invoice number multiple times to have more than one details in a single invoice
+                        </td>
                     </tr>
                     <tr>
-                        <th colspan="15">
-                            The invoice header details will be extracted from the initial invoice in the upload template for invoices containing multiple line items.                        </th>
+                        <td colspan="15">
+                            The invoice header details will be extracted from the initial invoice in the upload template for invoices containing multiple line items.
+                        </td>
                     </tr>
                     <tr>
-                        <th colspan="15">
+                        <td colspan="15">
                             Confirmed by and Approved by columns are optional; if not updated, the system will automatically use the uploader's name.
-                        </th>
+                        </td>
                     </tr>
                     <tr>
-                        <th colspan="15">
+                        <td colspan="15">
                             In Customer Code, CR Number at least one field should have a value in any given row. Both fields cannot be blank. 
-                        </th>
+                        </td>
                     </tr>
-                        
-                    </tr>
-                </head>
+                </tbody>
             </table>
         </div>
     </div>

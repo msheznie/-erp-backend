@@ -1989,6 +1989,7 @@ class BudgetConsumptionService
 	 													 });
 	 										 }])
 	 										 ->where('approved', 0)
+	 										 ->whereNull('docOriginDocumentSystemID')
 	 										 ->when(in_array($budgetFormData['documentSystemID'], [22]), function($query) use ($budgetFormData) {
 	 										 	$query->where('faID', '!=' ,$budgetFormData['documentSystemCode']);
 	 										 })

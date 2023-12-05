@@ -2292,7 +2292,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $uploadCustomerInvoiceObj = UploadCustomerInvoice::find($customerInvoiceUploadID);
 
         if(!isset($uploadCustomerInvoiceObj)) {
-            return self::sendError('Customer Invoice not found');
+            return $this->sendError('Customer Invoice Upload details not found');
         }
 
         if($uploadCustomerInvoiceObj->uploadStatus == -1) {
@@ -2301,13 +2301,13 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
         if($uploadCustomerInvoiceObj->uploadStatus == 1) {
             $customerInvoiceUploadDetails = CustomerInvoiceUploadDetail::where('customerInvoiceUploadID',$uploadCustomerInvoiceObj->id)->first();
-            $validateInvoiceToDelete =  self::validateInvoiceToDelete($customerInvoiceUploadDetails);
+            $validateInvoiceToDelete =  $this->validateInvoiceToDelete($customerInvoiceUploadDetails);
             if(isset($validateInvoiceToDelete['status']) && !$validateInvoiceToDelete['status'])
-                return self::sendError($validateInvoiceToDelete['message']);
+                return $this->sendError($validateInvoiceToDelete['message']);
 
            $deleteCustomerInvoice  = CustomerInvoiceService::amendCustomerInvoice($customerInvoiceUploadDetails);
             if(isset($deleteCustomerInvoice['status']) && !$deleteCustomerInvoice['status'])
-                return self::sendError($deleteCustomerInvoice['message']);
+                return $this->sendError($deleteCustomerInvoice['message']);
         }
 
         UploadCustomerInvoice::where('id', $customerInvoiceUploadID)->delete();
