@@ -3,6 +3,7 @@
 namespace App\helper;
 
 use App\Http\Controllers\AppBaseController;
+use App\Models\AccountsReceivableLedger;
 use App\Models\BankAccount;
 use App\Models\BankAssign;
 use App\Models\BankMaster;
@@ -18,18 +19,25 @@ use App\Models\CustomerAssigned;
 use App\Models\CustomerCurrency;
 use App\Models\CustomerInvoiceDirect;
 use App\Models\CustomerInvoiceDirectDetail;
+use App\Models\CustomerInvoiceItemDetails;
 use App\Models\CustomerInvoiceUploadDetail;
 use App\Models\CustomerMaster;
+use App\Models\CustomerReceivePaymentDetail;
 use App\Models\DocumentApproved;
 use App\Models\Employee;
 use App\Models\EmployeesDepartment;
 use App\Models\ErpProjectMaster;
+use App\Models\GeneralLedger;
 use App\Models\LogUploadCustomerInvoice;
+use App\Models\TaxLedger;
+use App\Models\TaxLedgerDetail;
 use App\Repositories\CustomerInvoiceDirectRepository;
 use App\Models\SegmentMaster;
 use App\Models\Taxdetail;
 use App\Models\Unit;
 use App\Models\UploadCustomerInvoice;
+use App\Traits\AuditTrial;
+use AWS\CRT\HTTP\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -1326,7 +1334,51 @@ class CustomerInvoiceService
         return ['status' => true];
     }
 
+    public static function deleteCustomerInvoice($customerInvoiceUploadDetails):array
+    {
+
+        $id = $customerInvoiceUploadDetails->custInvoiceDirectID;
+        $masterData = CustomerInvoiceDirect::find($id);
+        if (empty($masterData)) {
+            return ['status' => false, 'message' => 'Customer Invoice not found'];
+        }
+        
+        //deleting from approval table
+        $deleteApproval = DocumentApproved::where('documentSystemCode', $id)
+            ->where('companySystemID', $masterData->companySystemID)
+            ->where('documentSystemID', $masterData->documentSystemiD)
+            ->delete();
+
+        //deleting from general ledger table
+        $deleteGLData = GeneralLedger::where('documentSystemCode', $id)
+            ->where('companySystemID', $masterData->companySystemID)
+            ->where('documentSystemID', $masterData->documentSystemiD)
+            ->delete();
+
+        //deleting records from accounts receivable
+        $deleteARData = AccountsReceivableLedger::where('documentCodeSystem', $id)
+            ->where('companySystemID', $masterData->companySystemID)
+            ->where('documentSystemID', $masterData->documentSystemiD)
+            ->delete();
+
+        //deleting records from tax ledger
+        $deleteTaxLedgerData = TaxLedger::where('documentMasterAutoID', $id)
+            ->where('companySystemID', $masterData->companySystemID)
+            ->where('documentSystemID', $masterData->documentSystemiD)
+            ->delete();
 
 
+        TaxLedgerDetail::where('documentMasterAutoID', $id)
+            ->where('companySystemID', $masterData->companySystemID)
+            ->where('documentSystemID', $masterData->documentSystemiD)
+            ->delete();
+
+        $masterData->invoicedetail()->delete();
+        $masterData->delete();
+
+        return ['status' => true, 'message' => 'Customer Invoice deleted successfully'];
+
+
+    }
 
 }

@@ -33,6 +33,7 @@ use App\Http\Requests\API\CreateCustomerInvoiceDirectAPIRequest;
 use App\Http\Requests\API\UpdateCustomerInvoiceDirectAPIRequest;
 use App\Models\AccountsReceivableLedger;
 use App\Models\BankAccount;
+use App\Models\CustomerInvoiceUploadDetail;
 use App\Models\ErpProjectMaster;
 use App\Models\BankAssign;
 use App\Models\QuotationMaster;
@@ -100,7 +101,6 @@ use App\Models\PortMaster;
 use App\Models\UploadCustomerInvoice;
 use PHPExcel_IOFactory;
 use Exception;
-use PHPExcel_Worksheet_Drawing;
 /**
  * Class CustomerInvoiceDirectController
  * @package App\Http\Controllers\API
@@ -2289,19 +2289,60 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $input = $request->all();
 
         $customerInvoiceUploadID = $input['customerInvoiceUploadID'];
+        $uploadCustomerInvoiceObj = UploadCustomerInvoice::find($customerInvoiceUploadID);
 
-        $uploadBudget = UploadCustomerInvoice::find($customerInvoiceUploadID);
+        if(!isset($uploadCustomerInvoiceObj)) {
+            return $this->sendError('Customer Invoice Upload details not found');
+        }
 
-        if($uploadBudget && !empty($uploadBudget) && $uploadBudget->uploadStatus == -1) {
+        if($uploadCustomerInvoiceObj->uploadStatus == -1) {
             return $this->sendError('Upload in progress. Cannot be deleted.');
         }
 
-        UploadCustomerInvoice::where('id', $customerInvoiceUploadID)->delete();
-        return $this->sendResponse([], 'customer invoice upload deleted successfully');
+        DB::beginTransaction();
+        try {
+            if($uploadCustomerInvoiceObj->uploadStatus == 1) {
+                $customerInvoiceUploadDetailsIds = CustomerInvoiceUploadDetail::where('customerInvoiceUploadID',$uploadCustomerInvoiceObj->id)->pluck('custInvoiceDirectID')->toArray();
 
+                $validateInvoiceToDelete = $this->validateInvoiceToDelete($customerInvoiceUploadDetailsIds,$uploadCustomerInvoiceObj);
+                if(isset($validateInvoiceToDelete['status']) && !$validateInvoiceToDelete['status'])
+                    return $this->sendError($validateInvoiceToDelete['message']);
+                $customerInvoiceUploadDetails = CustomerInvoiceUploadDetail::where('customerInvoiceUploadID',$uploadCustomerInvoiceObj->id)->get();
 
+                foreach ($customerInvoiceUploadDetails as $customerInvoiceUploadDetail) {
+                    $deleteCustomerInvoice  = CustomerInvoiceService::deleteCustomerInvoice($customerInvoiceUploadDetail);
+                    if(isset($deleteCustomerInvoice['status']) && !$deleteCustomerInvoice['status'])
+                        return $this->sendError($deleteCustomerInvoice['message']);
+                }
+
+            }
+
+            UploadCustomerInvoice::where('id', $customerInvoiceUploadID)->delete();
+            DB::commit();
+            return $this->sendResponse([], 'customer invoice upload deleted successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
 
     }
+
+    public function validateInvoiceToDelete($customerInvoiceUploadDetailsIds,$uploadCustomerInvoiceObj):array
+    {
+
+        $isFailedProcessExists = UploadCustomerInvoice::where('uploadStatus',0)->where('companySystemID',$uploadCustomerInvoiceObj->companySystemID)->orderBy('id', 'DESC')->first();
+        $lastCustomerInvoice = CustomerInvoiceDirect::orderBy('custInvoiceDirectAutoID', 'DESC')->where('companySystemID', $uploadCustomerInvoiceObj->companySystemID)->select('custInvoiceDirectAutoID')->first();
+        if(!in_array($lastCustomerInvoice->custInvoiceDirectAutoID,$customerInvoiceUploadDetailsIds))
+            return ['status' => false , 'message' => 'Additional Invoices had been created after the upload. Cannot delete the uploaded invoices'];
+
+
+        if(isset($isFailedProcessExists) > 0 && ($isFailedProcessExists->id > $uploadCustomerInvoiceObj->id))
+             return ['status' => false , 'message' => 'There is a failed customer invoice to be delete'];
+
+
+        return ['status' => true, 'message' => ''];
+    }
+
 
     public function getCustomerInvoiceMasterView(Request $request)
     {
