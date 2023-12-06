@@ -138,24 +138,24 @@ class CustomerInvoiceARLedgerService
                         $data['serviceLineSystemID'] = $item->serviceLineSystemID;
                         $data['serviceLineCode'] = $item->serviceLineCode;
                         
-                        $data['custInvoiceAmount'] = ABS($item->invoiceAmount + $item->VATAmountTotal);
-                        $data['localAmount'] = \Helper::roundValue(ABS($item->localAmount + $item->VATAmountLocalTotal));
-                        $data['comRptAmount'] = \Helper::roundValue(ABS($item->comRptAmount + $item->VATAmountRptTotal));
+                        $data['custInvoiceAmount'] = ABS($item->invoiceAmount + $item->VATAmount);
+                        $data['localAmount'] = \Helper::roundValue(ABS($item->localAmount + $item->VATAmountLocal));
+                        $data['comRptAmount'] = \Helper::roundValue(ABS($item->comRptAmount + $item->VATAmountRpt));
                         array_push($detailsArray, $data);
 
                         if($item->chart_Of_account->controlAccountsSystemID == 2 || $item->chart_Of_account->controlAccountsSystemID == 5 || $item->chart_Of_account->controlAccountsSystemID == 3) {
-                            $_documentTransAmount -= ($item->invoiceAmount + $item->VATAmountTotal);
-                            $_documentLocalAmount -= ($item->localAmount + $item->VATAmountLocalTotal);
-                            $_documentRptAmount -= ($item->comRptAmount + $item->VATAmountRptTotal);
+                            $_documentTransAmount -= ($item->invoiceAmount + $item->VATAmount);
+                            $_documentLocalAmount -= ($item->localAmount + $item->VATAmountLocal);
+                            $_documentRptAmount -= ($item->comRptAmount + $item->VATAmountRpt);
                             
                         }else if($item->chart_Of_account->controlAccountsSystemID == 4) {
-                            $_documentTransAmount += $item->invoiceAmount + $item->VATAmountTotal;
-                            $_documentLocalAmount += $item->localAmount + $item->VATAmountLocalTotal;
-                            $_documentRptAmount += $item->comRptAmount + $item->VATAmountRptTotal;  
+                            $_documentTransAmount += $item->invoiceAmount + $item->VATAmount;
+                            $_documentLocalAmount += $item->localAmount + $item->VATAmountLocal;
+                            $_documentRptAmount += $item->comRptAmount + $item->VATAmountRpt;
                         }else{
-                            $_documentTransAmount += $item->invoiceAmount + $item->VATAmountTotal;
-                            $_documentLocalAmount += $item->localAmount + $item->VATAmountLocalTotal;
-                            $_documentRptAmount += $item->comRptAmount + $item->VATAmountRptTotal;  
+                            $_documentTransAmount += $item->invoiceAmount + $item->VATAmount;
+                            $_documentLocalAmount += $item->localAmount + $item->VATAmountLocal;
+                            $_documentRptAmount += $item->comRptAmount + $item->VATAmountRpt;
                         }
                     }
         return ['detailsArray' => $detailsArray,'_documentTransAmount' => $_documentTransAmount,'_documentLocalAmount' => $_documentLocalAmount,'_documentRptAmount' =>$_documentRptAmount];
