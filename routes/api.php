@@ -74,10 +74,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             require __DIR__.'/../routes/navigation/navigationRoutes.php';
             require __DIR__.'/../routes/groupReport/groupReportRoutes.php';
             require __DIR__.'/../routes/generalLedger/generalLedgerRoutes.php';
-
-            Route::post('downloadBudgetTemplate', 'BudgetMasterAPIController@downloadBudgetTemplate')->name("Download budget template");
-            Route::post('getBudgetUploads', 'BudgetMasterAPIController@getBudgetUploads')->name("Get upload budgets");
-
+            
             Route::post('downloadCITemplate', 'CustomerInvoiceDirectAPIController@downloadCITemplate')->name("Download ci template");
             Route::post('getCustomerInvoiceUploads', 'CustomerInvoiceDirectAPIController@getCustomerInvoiceUploads')->name("Get upload customer invoice");
 
@@ -407,22 +404,9 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('amendAssetDepreciationReview', 'FixedAssetDepreciationMasterAPIController@amendAssetDepreciationReview');
 
             Route::resource('fixed_asset_insurance_details', 'FixedAssetInsuranceDetailAPIController');
-
-            Route::resource('budget_masters', 'BudgetMasterAPIController');
-            Route::post('updateCutOffPeriod', 'BudgetMasterAPIController@updateCutOffPeriod');
-            Route::post('budgetReferBack', 'BudgetMasterAPIController@budgetReferBack');
-            Route::post('budgetReopen', 'BudgetMasterAPIController@budgetReopen');
-            Route::get('getBudgetAudit', 'BudgetMasterAPIController@getBudgetAudit');
-            Route::get('downloadBudgetUploadTemplate', 'BudgetMasterAPIController@downloadBudgetUploadTemplate');
-
-            Route::post('syncGlBudget', 'BudjetdetailsAPIController@syncGlBudget');
-            Route::post('getBudgetDetailHistory', 'BudjetdetailsAPIController@getBudgetDetailHistory');
-
-
+            
             Route::post('deleteAllDisposalDetail', 'AssetDisposalDetailAPIController@deleteAllDisposalDetail');
-            Route::post('getBudgetTransferApprovedByUser', 'BudgetTransferFormAPIController@getBudgetTransferApprovedByUser');
             Route::post('budgetTransferCreateFromReview', 'BudgetTransferFormAPIController@budgetTransferCreateFromReview');
-            Route::post('getBudgetTransferApprovalByUser', 'BudgetTransferFormAPIController@getBudgetTransferApprovalByUser');
 
             Route::resource('budget_adjustments', 'BudgetAdjustmentAPIController');
             Route::resource('audit_trails', 'AuditTrailAPIController');
@@ -863,12 +847,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::post('getAssetVerificationAmendHistory', 'ERPAssetVerificationReferredbackAPIController@getAssetVerificationAmendHistory');
             Route::get('fetchAssetVerification/{id}', 'ERPAssetVerificationReferredbackAPIController@fetchAssetVerification');
             Route::post('fetchAssetVerificationDetailAmend', 'ERPAssetVerificationDetailReferredbackAPIController@fetchAssetVerificationDetailAmend');
-
-
-            Route::resource('budget_detail_comments', 'BudgetDetailCommentAPIController');
-            Route::post('getBudgetDetailComment', 'BudgetDetailCommentAPIController@getBudgetDetailComment');
-
-
+            
             /* Chart Of Account Scenario configuration */
             Route::resource('system_gl_code_scenarios', 'SystemGlCodeScenarioAPIController');
             Route::resource('system_gl_code_scenario_details', 'SystemGlCodeScenarioDetailAPIController');

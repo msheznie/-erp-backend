@@ -78,11 +78,18 @@ Route::group([], function(){
     Route::post('amendJournalVoucherReview', 'JvMasterAPIController@amendJournalVoucherReview')->name('JV Review');
     Route::post('journalVoucherBudgetUpload', 'JvMasterAPIController@journalVoucherBudgetUpload')->name('JV Budget Upload');
     Route::post('standardJvExcelUpload', 'JvMasterAPIController@standardJvExcelUpload')->name('JV excel upload');
+    Route::post('getBudgetUploads', 'BudgetMasterAPIController@getBudgetUploads')->name('Get upload budgets');
+    Route::post('downloadBudgetTemplate', 'BudgetMasterAPIController@downloadBudgetTemplate')->name('Download budget template');
+    Route::post('syncGlBudget', 'BudjetdetailsAPIController@syncGlBudget')->name('Sync gl budget');
+    Route::post('getBudgetDetailComment', 'BudgetDetailCommentAPIController@getBudgetDetailComment')->name('Get budget detail comment');
+    Route::post('getBudgetDetailHistory', 'BudjetdetailsAPIController@getBudgetDetailHistory')->name('Get budget detail history');
 
     //budgets
     Route::resource('budget_masters', 'BudgetMasterAPIController');
     Route::resource('budget_master_reffered_histories', 'BudgetMasterRefferedHistoryAPIController');
     Route::resource('budget_details_reffered_histories', 'BudgetDetailsRefferedHistoryAPIController');
+    Route::resource('budget_detail_comments', 'BudgetDetailCommentAPIController');
+    
 
     Route::get('getBudgetFormData', 'BudgetMasterAPIController@getBudgetFormData')->name('Get budget form data');
     Route::get('downloadBudgetUploadTemplate', 'BudgetMasterAPIController@downloadBudgetUploadTemplate')->name('Download budget upload template');
