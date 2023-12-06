@@ -765,7 +765,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	- 1 AS documentType 
+	- 1 AS documentType,
+	'' as tenderMasterId
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -826,7 +827,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	erp_purchaseordermaster.amended AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	- 1 AS documentType 
+	- 1 AS documentType,
+	'' as tenderMasterId
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -880,7 +882,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	erp_paysupplierinvoicemaster.invoiceType AS documentType 
+	erp_paysupplierinvoicemaster.invoiceType AS documentType,
+	'' as tenderMasterId
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -935,7 +938,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	erp_bookinvsuppmaster.documentType AS documentType 
+	erp_bookinvsuppmaster.documentType AS documentType,
+	'' as tenderMasterId
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -990,7 +994,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	erp_grvmaster.grvType AS documentType 
+	erp_grvmaster.grvType AS documentType,
+	'' as tenderMasterId
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -1045,7 +1050,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	erp_itemissuemaster.issueType AS documentType 
+	erp_itemissuemaster.issueType AS documentType,
+	'' as tenderMasterId
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -1098,7 +1104,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	'' AS documentType 
+	'' AS documentType,
+	'' as tenderMasterId
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -1150,7 +1157,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	'' AS documentType 
+	'' AS documentType,
+	'' as tenderMasterId
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -1204,7 +1212,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	'' AS documentType 
+	'' AS documentType,
+	'' as tenderMasterId
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -1256,7 +1265,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	'' AS documentType 
+	'' AS documentType,
+	'' as tenderMasterId
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -1310,7 +1320,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	'' AS documentType 
+	'' AS documentType,
+	'' as tenderMasterId 
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -1362,7 +1373,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	'' AS documentType 
+	'' AS documentType,
+	'' as tenderMasterId
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -1414,7 +1426,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	'' AS documentType 
+	'' AS documentType,
+	'' as tenderMasterId
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -1466,7 +1479,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	'' AS documentType 
+	'' AS documentType,
+	'' as tenderMasterId
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -1518,7 +1532,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	'' AS documentType 
+	'' AS documentType,
+	'' as tenderMasterId
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -1570,7 +1585,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	'' AS documentType 
+	'' AS documentType ,
+	'' as tenderMasterId
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -1622,7 +1638,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	'' AS documentType 
+	'' AS documentType,
+	'' as tenderMasterId
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -1675,7 +1692,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	'' AS documentType 
+	'' AS documentType,
+	'' as tenderMasterId
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -1724,7 +1742,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	erp_debitnote.documentType AS documentType 
+	erp_debitnote.documentType AS documentType,
+	'' as tenderMasterId 
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -1777,7 +1796,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	erp_custinvoicedirect.documentType AS documentType 
+	erp_custinvoicedirect.documentType AS documentType,
+	'' as tenderMasterId
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -1831,7 +1851,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	erp_delivery_order.orderType AS documentType 
+	erp_delivery_order.orderType AS documentType,
+	'' as tenderMasterId
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -1884,7 +1905,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	salesreturn.returnType AS documentType 
+	salesreturn.returnType AS documentType,
+	'' as tenderMasterId
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -1937,7 +1959,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	erp_creditnote.documentType AS documentType 
+	erp_creditnote.documentType AS documentType,
+	'' as tenderMasterId 
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -1989,7 +2012,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	erp_quotationmaster.quotationType AS documentType 
+	erp_quotationmaster.quotationType AS documentType,
+	'' as tenderMasterId
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -2042,7 +2066,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	erp_quotationmaster.quotationType AS documentType 
+	erp_quotationmaster.quotationType AS documentType,
+	'' as tenderMasterId
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -2095,7 +2120,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	erp_jvmaster.jvType AS documentType 
+	erp_jvmaster.jvType AS documentType,
+	'' as tenderMasterId
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -2157,7 +2183,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	'' AS documentType 
+	'' AS documentType,
+	'' as tenderMasterId
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -2208,7 +2235,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	'' AS documentType 
+	'' AS documentType,
+	'' as tenderMasterId
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -2259,7 +2287,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	'' AS documentType 
+	'' AS documentType,
+	'' as tenderMasterId
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -2312,7 +2341,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	'' AS documentType 
+	'' AS documentType,
+	'' as tenderMasterId
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -2363,7 +2393,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	'' AS documentType 
+	'' AS documentType,
+	'' as tenderMasterId
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -2414,7 +2445,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	'' AS documentType 
+	'' AS documentType,
+	'' as tenderMasterId
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -2465,7 +2497,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	'' AS documentType 
+	'' AS documentType,
+	'' as tenderMasterId
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -2518,7 +2551,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	erp_customerreceivepayment.documentType AS documentType
+	erp_customerreceivepayment.documentType AS documentType,
+	'' as tenderMasterId
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID
@@ -2570,7 +2604,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	'' AS documentType 
+	'' AS documentType,
+	'' as tenderMasterId
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -2620,7 +2655,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	0 AS documentType
+	0 AS documentType,
+	'' as tenderMasterId
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID
@@ -2669,7 +2705,8 @@ DATEDIFF(CURDATE(),erp_documentapproved.docConfirmedDate) as dueDays,
 	0 AS amended,
 	employeesdepartments.employeeID,
 	erp_documentapproved.approvedYN,
-	0 AS documentType
+	0 AS documentType,
+	'' as tenderMasterId
 FROM
 	erp_documentapproved
 	INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID
@@ -2717,7 +2754,8 @@ FROM
 		0 AS amended,
 		employeesdepartments.employeeID,
 		erp_documentapproved.approvedYN,
-		0 AS documentType 
+		0 AS documentType,
+		'' as tenderMasterId
 	FROM
 		erp_documentapproved
 		INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
@@ -3077,7 +3115,8 @@ FROM
 		1 AS amended,
 		emd.employeeID,
 		erp_documentapproved.approvedYN,
-		dmr.type AS documentType 
+		dmr.type AS documentType ,
+		tm.id as tenderMasterId
 	FROM
 		erp_documentapproved
 		JOIN document_modify_request dmr ON dmr.id = erp_documentapproved.documentSystemCode 
