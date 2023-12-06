@@ -29,7 +29,6 @@ Route::group([], function(){
 
     // Contingency Budgets
     Route::post('get_contingency_budget_approved', 'ContingencyBudgetPlanAPIController@get_contingency_budget_approved')->name("Get pending for approval - Contingency budget");
-    Route::post('get_contingency_budget_not_approved', 'ContingencyBudgetPlanAPIController@get_contingency_budget_not_approved')->name("Get pending for not approval - Contingency budget");
     Route::post('approve_contingency_budget', 'ContingencyBudgetPlanAPIController@approve_contingency_budget')->name("Approve Contingency budget");
     Route::post('reject_contingency_budget', 'ContingencyBudgetPlanAPIController@reject_contingency_budget')->name("Reject Contingency budget");
 
