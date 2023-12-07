@@ -4992,7 +4992,7 @@ class Helper
         
                                                     $description = "";
                                                     if(isset($circular['description'])){
-                                                        $description = "<b>Circular Description : </b>" . $description. "<br /><br />";
+                                                        $description = "<b>Circular Description : </b>" . $circular['description'] . "<br /><br />";
                                                     }
                                                 
                                                     $dataEmail['empEmail'] = $supplier->supplier_registration_link->email;
