@@ -653,9 +653,11 @@ FROM
 	srm_calendar_dates 
 	LEFT JOIN srm_calendar_dates_detail ON srm_calendar_dates_detail.calendar_date_id = srm_calendar_dates.id AND srm_calendar_dates_detail.tender_id = $tenderMasterId
 WHERE
-	srm_calendar_dates.company_id = $companySystemID
+	(srm_calendar_dates.company_id = $companySystemID OR srm_calendar_dates.company_id IS NULL)
 	and ISNULL(srm_calendar_dates_detail.from_date)
-	and ISNULL(srm_calendar_dates_detail.to_date)";
+	and ISNULL(srm_calendar_dates_detail.to_date)
+ORDER BY
+    CASE WHEN srm_calendar_dates.is_default IN (1, 2) THEN 0 ELSE 1 END, srm_calendar_dates.is_default, srm_calendar_dates.id";
 
         $data['edit_valid'] = false;
         $data['is_request_process'] = false;
@@ -711,15 +713,15 @@ WHERE
             $fromDate = $calenderDataDetail->from_date;
             $toDate = $calenderDataDetail->to_date;
             $calenderDate = CalendarDates::find($calenderDataDetail->calendar_date_id);
+
             $dataArray[$i]['id'] = $calenderDate->id;
             $dataArray[$i]['calendar_date'] = $calenderDate->calendar_date;
+            $dataArray[$i]['is_default'] = $calenderDate->is_default;
             $dataArray[$i]['company_id'] = $calenderDataDetail->company_id;
             $dataArray[$i]['from_date'] = $fromDate->format('Y-m-d H:i:s');
             $dataArray[$i]['to_date'] = isset($toDate) ? $toDate->format('Y-m-d H:i:s') : null;
             $dataArray[$i]['from_time'] = $calenderDataDetail->from_time;
             $dataArray[$i]['to_time'] = isset($toDate) ? $calenderDataDetail->to_time : null;
-
-
             $i++;
         }
 
@@ -729,6 +731,7 @@ WHERE
             ->join('srm_calendar_dates_detail', 'srm_calendar_dates_detail.calendar_date_id', '=', 'srm_calendar_dates.id')
             ->where('srm_calendar_dates_detail.tender_id', $tenderMasterId)
             ->where('srm_calendar_dates.company_id', $companySystemID)
+            ->orWhereNull('srm_calendar_dates.company_id')
             ->whereNull('srm_calendar_dates_detail.from_date')
             ->whereNull('srm_calendar_dates_detail.to_date')
             ->get();
@@ -956,41 +959,41 @@ WHERE
             return ['success' => false, 'message' => 'From date and time cannot be greater than the To date and time  for Document Sales'];
         }
 
-        if (!isset($input['pre_bid_clarification_start_time'])) {
+        /*if (!isset($input['pre_bid_clarification_start_time'])) {
             if (isset($input['pre_bid_clarification_start_date']) && $rfq) {
                 return ['success' => false, 'message' => 'Pre bid clarification from time is required'];
             } else if (!$rfq) {
                 return ['success' => false, 'message' => 'Pre bid clarification from time is required'];
             }
-        }
-        if (!isset($input['pre_bid_clarification_end_time'])) {
+        }*/
+        /*if (!isset($input['pre_bid_clarification_end_time'])) {
             if (isset($input['pre_bid_clarification_end_date']) && $rfq) {
                 return ['success' => false, 'message' => 'Pre bid clarification to time is required'];
             } elseif (!$rfq) {
                 return ['success' => false, 'message' => 'Pre bid clarification to time is required'];
             }
-        }
+        }*/
 
         if ((isset($pre_bid_clarification_start_date) && isset($pre_bid_clarification_end_date)) && (($pre_bid_clarification_start_date > $pre_bid_clarification_end_date))) {
             return ['success' => false, 'message' => 'From date and time cannot be greater than the To date and time  for Pre-bid Clarification'];
         }
 
 
-        if (!isset($input['site_visit_start_time'])) {
+        /*if (!isset($input['site_visit_start_time'])) {
             if (isset($input['site_visit_date']) && $rfq) {
                 return ['success' => false, 'message' => 'Site visit from time is required'];
             } elseif (!$rfq) {
                 return ['success' => false, 'message' => 'Site visit from time is required'];
             }
-        }
+        }*/
 
-        if (!isset($input['site_visit_end_time'])) {
+        /*if (!isset($input['site_visit_end_time'])) {
             if (isset($input['site_visit_end_date']) && $rfq) {
                 return ['success' => false, 'message' => 'Site visit to time is required'];
             } elseif (!$rfq) {
                 return ['success' => false, 'message' => 'Site visit to time is required'];
             }
-        }
+        }*/
 
         if (($site_visit_date > $site_visit_end_date)) {
             if (isset($input['site_visit_date']) && isset($input['site_visit_end_date'])) {
@@ -1632,6 +1635,39 @@ WHERE
                 }
 
                 foreach ($input['calendarDates'] as $calDate) {
+
+                    $calenderDateDetails = CalendarDates::find($calDate['id']);
+
+                    if (isset($input['document_sales_start_date'])) {
+                        $document_sales_start_time = ($input['document_sales_start_time']) ? new Carbon($input['document_sales_start_time']) : null;
+                        $document_sales_start_date = new Carbon($input['document_sales_start_date']);
+                        $document_sales_start_date = ($input['document_sales_start_time']) ? $document_sales_start_date->format('Y-m-d') . ' ' . $document_sales_start_time->format('H:i:s') : $document_sales_start_date->format('Y-m-d');
+                    } /*elseif ($calenderDateDetails->is_default == 1){
+                        return ['success' => false, 'message' => 'Pre-bid Clarification from date and time should greater than Document sale from date and time'];
+                    }*/
+
+
+                    if (isset($input['bid_submission_closing_time'])) {
+                        $bid_submission_closing_time =  ($input['bid_submission_closing_time']) ? new Carbon($input['bid_submission_closing_time']) : null;
+                        $bid_submission_closing_date = new Carbon($input['bid_submission_closing_date']);
+                        $bid_submission_closing_date = ($input['bid_submission_closing_time']) ? $bid_submission_closing_date->format('Y-m-d') . ' ' . $bid_submission_closing_time->format('H:i:s') : $bid_submission_closing_date->format('Y-m-d');
+                    } /*elseif ($input['bid_submission_closing_time'] == null && $calenderDateDetails->is_default == 2){
+                        return ['success' => false, 'message' => 'Pre-bid Clarification from date and time should less than Bid Submission to date and time'];
+                    }*/
+
+                    /*if ($calenderDateDetails->is_default == 1 && isset($document_sales_start_date) && $document_sales_start_date > $frm_date ) {
+                        return ['success' => false, 'message' => 'Pre-bid Clarification from date and time should greater than Document sale from date and time'];
+                    }
+
+                    if ($calenderDateDetails->is_default == 1 && isset($bid_submission_closing_date) && $frm_date > $bid_submission_closing_date ) {
+                        return ['success' => false, 'message' => 'Pre-bid Clarification from date and time should less than Bid Submission to date and time'];
+                    }*/
+
+
+                    /*if ($calenderDateDetails->is_default == 1 && isset($bid_submission_closing_date) &&  $to_date > $bid_submission_closing_date) {
+                        return ['success' => false, 'message' => 'Pre-bid Clarification to date and time should less than Bid Submission to date and time'];
+                    }*/
+
                     $fromTime = new Carbon($calDate['from_time']);
                     $frm_date = new Carbon($calDate['from_date']);
                     $frm_date = ($calDate['from_time']) ? $frm_date->format('Y-m-d') . ' ' . $fromTime->format('H:i:s') : $frm_date->format('Y-m-d');
@@ -1650,6 +1686,20 @@ WHERE
                     $calDt['created_by'] = $employee->employeeSystemID;
                     $calDt['created_at'] = Carbon::now();
                     CalendarDatesDetail::create($calDt);
+
+                    $tenderMaster = TenderMaster::find($input['id']);
+                    if($calenderDateDetails->is_default == 1){
+                        $tenderMaster->pre_bid_clarification_start_date = $frm_date;
+                        $tenderMaster->pre_bid_clarification_end_date = $to_date;
+                        $tenderMaster->save();
+                    }
+
+                    if($calenderDateDetails->is_default == 2){
+                        $tenderMaster->site_visit_date = $frm_date;
+                        $tenderMaster->site_visit_end_date = $to_date;
+                        $tenderMaster->save();
+                    }
+
                 }
                 return ['success' => true, 'message' => 'Successfully updated', 'data' => $input['addCalendarDates']];
             } else {
@@ -1697,11 +1747,11 @@ WHERE
                 'bank_account_id.required' => 'Bank Account is required.',
                 'document_sales_start_date.required' => 'Document Sales From Date is required.',
                 'document_sales_end_date.required' => 'Document Sales To Date is required.',
-                'pre_bid_clarification_start_date.required' => 'Pre-bid Clarification From Date.',
-                'pre_bid_clarification_end_date.required' => 'Pre-bid Clarification To Date.',
+                //'pre_bid_clarification_start_date.required' => 'Pre-bid Clarification From Date.',
+                //'pre_bid_clarification_end_date.required' => 'Pre-bid Clarification To Date.',
                 'bid_submission_closing_date.required' => 'Bid Submission To Date.',
-                'site_visit_date.required' => 'Site Visit From Date.',
-                'site_visit_end_date.required' => 'Site Visit To Date.',
+               // 'site_visit_date.required' => 'Site Visit From Date.',
+               // 'site_visit_end_date.required' => 'Site Visit To Date.',
                 'envelop_type_id.required' => 'Envelop Type is required.',
                 'stage.required' => 'Stage is required.',
             ];
@@ -1711,12 +1761,12 @@ WHERE
                 'bank_account_id' => 'required_with:tender_document_fee',
                 'document_sales_start_date' => 'required',
                 'document_sales_end_date' => 'required',
-                'pre_bid_clarification_start_date' => 'required',
-                'pre_bid_clarification_end_date' => 'required',
+                //'pre_bid_clarification_start_date' => 'required',
+                //'pre_bid_clarification_end_date' => 'required',
                 'pre_bid_clarification_method' => 'required',
                 'bid_submission_closing_date' => 'required',
-                'site_visit_date' => 'required',
-                'site_visit_end_date' => 'required',
+                //'site_visit_date' => 'required',
+                //'site_visit_end_date' => 'required',
                 'envelop_type_id' => 'required',
                 'evaluation_type_id' => 'required',
             ], $messages);
@@ -2487,7 +2537,28 @@ WHERE
     {
         DB::beginTransaction();
         try {
-            $calendarDatesDetail = CalendarDatesDetail::where('calendar_date_id', $request['calenderDateTypeId'])
+            $calenderDateTypeId = $request['calenderDateTypeId'];
+
+            if(isset($request['is_default'])){
+                $calendarDates = CalendarDates::select('id')->where('is_default', $request['is_default'])->first();
+                $calenderDateTypeId = $calendarDates->id;
+                $tenderMaster = TenderMaster::find($request['tenderMasterId']);
+
+                if($request['is_default'] == 1){
+                    $tenderMaster->pre_bid_clarification_start_date = null;
+                    $tenderMaster->pre_bid_clarification_end_date = null;
+                    $tenderMaster->save();
+                }
+
+                if($request['is_default'] == 2){
+                    $tenderMaster->site_visit_date = null;
+                    $tenderMaster->site_visit_end_date = null;
+                    $tenderMaster->save();
+                }
+            }
+
+            Log::info($calenderDateTypeId);
+            $calendarDatesDetail = CalendarDatesDetail::where('calendar_date_id', $calenderDateTypeId)
                 ->where('tender_id', $request['tenderMasterId'])
                 ->get();
 
@@ -2495,7 +2566,7 @@ WHERE
                 return $this->sendError('Calendar Date Type not found');
             }
 
-            $calendarDatesDetail = CalendarDatesDetail::where('calendar_date_id', $request['calenderDateTypeId'])
+            $calendarDatesDetail = CalendarDatesDetail::where('calendar_date_id', $calenderDateTypeId)
                 ->where('tender_id', $request['tenderMasterId'])
                 ->first();
 
