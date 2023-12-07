@@ -3338,7 +3338,7 @@ class Helper
                                         //     $body = '<p>' . $approvedDocNameBody . ' is pending for your approval. <br><br><a href="' . $redirectUrl . '">Click here to approve</a></p>';
                                         // }
 
-                                        $redirectUrl =  self::checkDomai();
+                                        $redirectUrl = ($params["document"] == 117 || $params["document"] == 118) ? self::checkDomainErp() : self::checkDomai();
 
                                         $body = '<p>' . $approvedDocNameBody . ' is pending for your approval. <br><br>';
 
@@ -8860,6 +8860,30 @@ class Helper
         ->first();
 
         return $doucumentModifyComment;
+    }
+
+    public static function checkDomainErp()
+    {
+
+        $redirectUrl =  env("ERP_APPROVE_URL"); //ex: change url to https://*.pl.uat-gears-int.com/#/approval/erp
+
+        if (env('IS_MULTI_TENANCY') == true) {
+
+            $url = $_SERVER['HTTP_HOST'];
+            $url_array = explode('.', $url);
+            $subDomain = $url_array[0];
+
+            $tenantDomain = (isset(explode('-', $subDomain)[0])) ? explode('-', $subDomain)[0] : "";
+
+            $search = '*';
+            $redirectUrl = str_replace($search, $tenantDomain.'-erp', $redirectUrl);
+        }
+
+        $lastSlashPos = strrpos($redirectUrl, '/');
+        $baseUrl = substr($redirectUrl, 0, $lastSlashPos + 1);
+        $redirectUrlNew = $baseUrl . 'all-document';
+
+        return $redirectUrlNew;
     }
 
 }
