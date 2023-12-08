@@ -972,41 +972,9 @@ ORDER BY
             return ['success' => false, 'message' => 'From date and time cannot be greater than the To date and time  for Document Sales'];
         }
 
-        /*if (!isset($input['pre_bid_clarification_start_time'])) {
-            if (isset($input['pre_bid_clarification_start_date']) && $rfq) {
-                return ['success' => false, 'message' => 'Pre bid clarification from time is required'];
-            } else if (!$rfq) {
-                return ['success' => false, 'message' => 'Pre bid clarification from time is required'];
-            }
-        }*/
-        /*if (!isset($input['pre_bid_clarification_end_time'])) {
-            if (isset($input['pre_bid_clarification_end_date']) && $rfq) {
-                return ['success' => false, 'message' => 'Pre bid clarification to time is required'];
-            } elseif (!$rfq) {
-                return ['success' => false, 'message' => 'Pre bid clarification to time is required'];
-            }
-        }*/
-
         if ((isset($pre_bid_clarification_start_date) && isset($pre_bid_clarification_end_date)) && (($pre_bid_clarification_start_date > $pre_bid_clarification_end_date))) {
             return ['success' => false, 'message' => 'From date and time cannot be greater than the To date and time  for Pre-bid Clarification'];
         }
-
-
-        /*if (!isset($input['site_visit_start_time'])) {
-            if (isset($input['site_visit_date']) && $rfq) {
-                return ['success' => false, 'message' => 'Site visit from time is required'];
-            } elseif (!$rfq) {
-                return ['success' => false, 'message' => 'Site visit from time is required'];
-            }
-        }*/
-
-        /*if (!isset($input['site_visit_end_time'])) {
-            if (isset($input['site_visit_end_date']) && $rfq) {
-                return ['success' => false, 'message' => 'Site visit to time is required'];
-            } elseif (!$rfq) {
-                return ['success' => false, 'message' => 'Site visit to time is required'];
-            }
-        }*/
 
         if (($site_visit_date > $site_visit_end_date)) {
             if (isset($input['site_visit_date']) && isset($input['site_visit_end_date'])) {
@@ -1038,19 +1006,19 @@ ORDER BY
             $bid_sub_date = $bid_submission_closing_date;
         }
 
-        if (isset($pre_bid_clarification_start_date) && ($document_sales_start_date > $pre_bid_clarification_start_date)) {
+        if (!$rfq && isset($pre_bid_clarification_start_date) && ($document_sales_start_date > $pre_bid_clarification_start_date)) {
             return ['success' => false, 'message' => 'Pre-bid Clarification from date and time should greater than document sale from date and time'];
         }
 
-        if (isset($pre_bid_clarification_start_date) && ($pre_bid_clarification_start_date > $bid_submission_closing_date)) {
+        if (!$rfq && isset($pre_bid_clarification_start_date) && ($pre_bid_clarification_start_date > $bid_submission_closing_date)) {
             return ['success' => false, 'message' => 'Pre-bid Clarification from date and time should less than bid submission to date and time'];
         }
 
-        if (isset($pre_bid_clarification_start_date) && ($pre_bid_clarification_end_date > $bid_submission_closing_date)) {
-            return ['success' => false, 'message' => 'Pre-bid Clarification to date and time should less than Bid Submission to date and time'];
+        if (!$rfq && isset($pre_bid_clarification_start_date) && ($pre_bid_clarification_end_date > $bid_submission_closing_date)) {
+            return ['success' => false, 'message' => 'Pre-bid Clarification to date and time should less than bid submission to date and time'];
         }
 
-        if ($document_sales_start_date > $bid_submission_opening_date) {
+        if (!$rfq && $document_sales_start_date > $bid_submission_opening_date) {
             return ['success' => false, 'message' => 'Bid submission from date and time should greater than document sales from date and time'];
         }
 
@@ -1671,18 +1639,14 @@ ORDER BY
                         $document_sales_start_time = ($input['document_sales_start_time']) ? new Carbon($input['document_sales_start_time']) : null;
                         $document_sales_start_date = new Carbon($input['document_sales_start_date']);
                         $document_sales_start_date = ($input['document_sales_start_time']) ? $document_sales_start_date->format('Y-m-d') . ' ' . $document_sales_start_time->format('H:i:s') : $document_sales_start_date->format('Y-m-d');
-                    } /*elseif ($calenderDateDetails->is_default == 1){
-                        return ['success' => false, 'message' => 'Pre-bid Clarification from date and time should greater than Document sale from date and time'];
-                    }*/
+                    }
 
 
                     if (isset($input['bid_submission_closing_time'])) {
                         $bid_submission_closing_time =  ($input['bid_submission_closing_time']) ? new Carbon($input['bid_submission_closing_time']) : null;
                         $bid_submission_closing_date = new Carbon($input['bid_submission_closing_date']);
                         $bid_submission_closing_date = ($input['bid_submission_closing_time']) ? $bid_submission_closing_date->format('Y-m-d') . ' ' . $bid_submission_closing_time->format('H:i:s') : $bid_submission_closing_date->format('Y-m-d');
-                    } /*elseif ($input['bid_submission_closing_time'] == null && $calenderDateDetails->is_default == 2){
-                        return ['success' => false, 'message' => 'Pre-bid Clarification from date and time should less than Bid Submission to date and time'];
-                    }*/
+                    }
 
 
                     $fromTime = new Carbon($calDate['from_time']);
@@ -1695,15 +1659,15 @@ ORDER BY
                         $to_date = ($calDate['to_time']) ? $to_date->format('Y-m-d') . ' ' . $toTime->format('H:i:s') : $to_date->format('Y-m-d');
                     }
 
-                    if ($calenderDateDetails->is_default == 1 && isset($document_sales_start_date) && $document_sales_start_date > $frm_date ) {
+                    if (!$rfq && $calenderDateDetails->is_default == 1 && isset($document_sales_start_date) && $document_sales_start_date > $frm_date ) {
                         return ['success' => false, 'message' => 'Pre-bid Clarification from date and time should greater than document sale from date and time'];
                     }
 
-                    if ($calenderDateDetails->is_default == 1 && isset($bid_submission_closing_date) && $frm_date > $bid_submission_closing_date ) {
+                    if (!$rfq && $calenderDateDetails->is_default == 1 && isset($bid_submission_closing_date) && $frm_date > $bid_submission_closing_date ) {
                         return ['success' => false, 'message' => 'Pre-bid Clarification from date and time should less than bid submission to date and time'];
                     }
 
-                    if ($calenderDateDetails->is_default == 1 && isset($bid_submission_closing_date) &&  $to_date > $bid_submission_closing_date) {
+                    if (!$rfq && $calenderDateDetails->is_default == 1 && isset($bid_submission_closing_date) &&  $to_date > $bid_submission_closing_date) {
                         return ['success' => false, 'message' => 'Pre-bid Clarification to date and time should less than Bid Submission to date and time'];
                     }
 
