@@ -170,7 +170,11 @@ class TenderCalendarDatesController extends AppBaseController
         } else {
             $sort = 'asc';
         }
-        $calendarDates = CalendarDates::with(['calendar_dates_detail'])->orderBy('id', $sort);
+        $calendarDates = CalendarDates::with(['calendar_dates_detail'])
+            ->where("company_id", $input['companyId'])
+            ->orWhere("is_default",'!=', 0)
+            ->orderByRaw('CASE WHEN is_default IN (1, 2) THEN 0 ELSE 1 END, is_default')
+            ->orderBy('id', $sort);
         $search = $request->input('search.value');
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
