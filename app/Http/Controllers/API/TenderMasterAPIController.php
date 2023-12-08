@@ -788,6 +788,24 @@ ORDER BY
             ->get();
         $data['tenderPurchaseRequestList'] = $tenderPurchaseRequestList;
 
+        //check prebid Clarification Added
+        $prebidclarificationDateId = CalendarDates::select('id')->where('is_default', 1)->first();
+        $prebidclarificationDateCount = CalendarDatesDetail::where('calendar_date_id', $prebidclarificationDateId->id)
+            ->where('tender_id', $tenderMasterId)
+            ->count();
+
+        $data['hasPreBidClarifications'] = $prebidclarificationDateCount;
+
+        //check Site Visit Date Added
+        $siteVisitDateId = CalendarDates::select('id')->where('is_default', 2)->first();
+        $siteVisitDateCount = CalendarDatesDetail::where('calendar_date_id', $siteVisitDateId->id)
+            ->where('tender_id', $tenderMasterId)
+            ->count();
+
+        $data['hasPreBidClarifications'] = $prebidclarificationDateCount;
+        $data['prebidclarificationDateId'] = $prebidclarificationDateId->id;
+        $data['hasSiteVisitDate'] = $siteVisitDateCount;
+        $data['siteVisitDateId'] = $siteVisitDateId->id;
         return $data;
     }
 
@@ -931,14 +949,9 @@ ORDER BY
             $site_visit_end_date = ($input['site_visit_end_time']) ? $site_visit_end_date->format('Y-m-d') . ' ' . $site_visit_end_time->format('H:i:s') : $site_visit_end_date->format('Y-m-d');
         }
 
-
-
-
-
         $currenctDate = Carbon::now();
 
         // vaidation lists
-
         if (!isset($input['document_sales_start_time'])) {
             if (isset($input['document_sales_start_date']) && $rfq) {
                 return ['success' => false, 'message' => 'Document sales from time is required'];
@@ -1025,6 +1038,21 @@ ORDER BY
             $bid_sub_date = $bid_submission_closing_date;
         }
 
+        if (isset($pre_bid_clarification_start_date) && ($document_sales_start_date > $pre_bid_clarification_start_date)) {
+            return ['success' => false, 'message' => 'Pre-bid Clarification from date and time should greater than document sale from date and time'];
+        }
+
+        if (isset($pre_bid_clarification_start_date) && ($pre_bid_clarification_start_date > $bid_submission_closing_date)) {
+            return ['success' => false, 'message' => 'Pre-bid Clarification from date and time should less than bid submission to date and time'];
+        }
+
+        if (isset($pre_bid_clarification_start_date) && ($pre_bid_clarification_end_date > $bid_submission_closing_date)) {
+            return ['success' => false, 'message' => 'Pre-bid Clarification to date and time should less than Bid Submission to date and time'];
+        }
+
+        if ($document_sales_start_date > $bid_submission_opening_date) {
+            return ['success' => false, 'message' => 'Bid submission from date and time should greater than document sales from date and time'];
+        }
 
         if (!is_null($input['stage']) || $input['stage'] != 0) {
 
@@ -1085,6 +1113,7 @@ ORDER BY
                     }
                 }
             }
+
 
 
             if (($input['stage'][0] == 2)) {
@@ -1655,18 +1684,6 @@ ORDER BY
                         return ['success' => false, 'message' => 'Pre-bid Clarification from date and time should less than Bid Submission to date and time'];
                     }*/
 
-                    /*if ($calenderDateDetails->is_default == 1 && isset($document_sales_start_date) && $document_sales_start_date > $frm_date ) {
-                        return ['success' => false, 'message' => 'Pre-bid Clarification from date and time should greater than Document sale from date and time'];
-                    }
-
-                    if ($calenderDateDetails->is_default == 1 && isset($bid_submission_closing_date) && $frm_date > $bid_submission_closing_date ) {
-                        return ['success' => false, 'message' => 'Pre-bid Clarification from date and time should less than Bid Submission to date and time'];
-                    }*/
-
-
-                    /*if ($calenderDateDetails->is_default == 1 && isset($bid_submission_closing_date) &&  $to_date > $bid_submission_closing_date) {
-                        return ['success' => false, 'message' => 'Pre-bid Clarification to date and time should less than Bid Submission to date and time'];
-                    }*/
 
                     $fromTime = new Carbon($calDate['from_time']);
                     $frm_date = new Carbon($calDate['from_date']);
@@ -1676,6 +1693,18 @@ ORDER BY
                         $toTime = new Carbon($calDate['to_time']);
                         $to_date = new Carbon($calDate['to_date']);
                         $to_date = ($calDate['to_time']) ? $to_date->format('Y-m-d') . ' ' . $toTime->format('H:i:s') : $to_date->format('Y-m-d');
+                    }
+
+                    if ($calenderDateDetails->is_default == 1 && isset($document_sales_start_date) && $document_sales_start_date > $frm_date ) {
+                        return ['success' => false, 'message' => 'Pre-bid Clarification from date and time should greater than document sale from date and time'];
+                    }
+
+                    if ($calenderDateDetails->is_default == 1 && isset($bid_submission_closing_date) && $frm_date > $bid_submission_closing_date ) {
+                        return ['success' => false, 'message' => 'Pre-bid Clarification from date and time should less than bid submission to date and time'];
+                    }
+
+                    if ($calenderDateDetails->is_default == 1 && isset($bid_submission_closing_date) &&  $to_date > $bid_submission_closing_date) {
+                        return ['success' => false, 'message' => 'Pre-bid Clarification to date and time should less than Bid Submission to date and time'];
                     }
 
                     $calDt['tender_id'] = $input['id'];
@@ -2557,7 +2586,6 @@ ORDER BY
                 }
             }
 
-            Log::info($calenderDateTypeId);
             $calendarDatesDetail = CalendarDatesDetail::where('calendar_date_id', $calenderDateTypeId)
                 ->where('tender_id', $request['tenderMasterId'])
                 ->get();
