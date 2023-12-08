@@ -2646,6 +2646,20 @@ ORDER BY
                         ->first();
                      $calenderDates =  CalendarDatesDetail::find($calendarDatesDetail->id);  
                      $calenderDates->update($data);
+
+                    $tenderMaster = TenderMaster::find($request['tenderMasterId']);
+                    if($calendarDatesDetail->is_default == 1){
+                        $tenderMaster->pre_bid_clarification_start_date = $data['from_date'];
+                        $tenderMaster->pre_bid_clarification_end_date = $data['to_date'];
+                        $tenderMaster->save();
+                    }
+
+                    if($calendarDatesDetail->is_default == 2){
+                        $tenderMaster->site_visit_date = $data['from_date'];
+                        $tenderMaster->site_visit_end_date = $data['to_date'];
+                        $tenderMaster->save();
+                    }
+
                     DB::commit();
                     return ['success' => true, 'message' => 'updated', 'data' => $calendarDatesDetail];
                 }
@@ -2655,6 +2669,20 @@ ORDER BY
                     ->first();
                 $calenderDates =  CalendarDatesDetail::find($calendarDatesDetail->id);  
                 $calenderDates->update($data);
+
+                $tenderMaster = TenderMaster::find($request['tenderMasterId']);
+                if($calendarDatesDetail->is_default == 1){
+                    $tenderMaster->pre_bid_clarification_start_date = $data['from_date'];
+                    $tenderMaster->pre_bid_clarification_end_date = $data['to_date'];
+                    $tenderMaster->save();
+                }
+
+                if($calendarDatesDetail->is_default == 2){
+                    $tenderMaster->site_visit_date = $data['from_date'];
+                    $tenderMaster->site_visit_end_date = $data['to_date'];
+                    $tenderMaster->save();
+                }
+
                 DB::commit();
                 return ['success' => true, 'message' => 'Successfully updated', 'data' => $calendarDatesDetail];
             }
