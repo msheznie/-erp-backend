@@ -3338,8 +3338,7 @@ class Helper
                                         //     $body = '<p>' . $approvedDocNameBody . ' is pending for your approval. <br><br><a href="' . $redirectUrl . '">Click here to approve</a></p>';
                                         // }
 
-                                        $redirectUrl = ($params["document"] == 117 || $params["document"] == 118) ? self::checkDomainErp() : self::checkDomai();
-
+                                        $redirectUrl = ($params["document"] == 117 || $params["document"] == 118 || $params["document"] == 107) ? self::checkDomainErp($params["document"],$documentApproved->documentSystemCode) : self::checkDomai();
                                         $body = '<p>' . $approvedDocNameBody . ' is pending for your approval. <br><br>';
 
                                         if ($params["document"] == 117) {
@@ -3399,13 +3398,13 @@ class Helper
 
                                         
 
-                                        $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, 1);
+                                        /*$jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, 1);
 
                                         $webPushData = [
                                             'title' => $pushNotificationMessage,
                                             'body' => '',
                                             'url' => $redirectUrl,
-                                        ];
+                                        ];*/
 
                                         // WebPushNotificationService::sendNotification($webPushData, 1, $pushNotificationUserIds);
 
@@ -8862,28 +8861,43 @@ class Helper
         return $doucumentModifyComment;
     }
 
-    public static function checkDomainErp()
+    public static function checkDomainErp($document,$id)
     {
-
         $redirectUrl =  env("ERP_APPROVE_URL"); //ex: change url to https://*.pl.uat-gears-int.com/#/approval/erp
 
-        if (env('IS_MULTI_TENANCY') == true) {
-
-            $url = $_SERVER['HTTP_HOST'];
-            $url_array = explode('.', $url);
-            $subDomain = $url_array[0];
-
-            $tenantDomain = (isset(explode('-', $subDomain)[0])) ? explode('-', $subDomain)[0] : "";
-
+        if($document == 107){
+            $tenantDomain = self::getSupplierRegDomain($id);
             $search = '*';
-            $redirectUrl = str_replace($search, $tenantDomain.'-erp', $redirectUrl);
+            $redirectUrl = str_replace($search, $tenantDomain, $redirectUrl);
+        }else {
+            if (env('IS_MULTI_TENANCY') == true) {
+
+                $url = $_SERVER['HTTP_HOST'];
+                $url_array = explode('.', $url);
+                $subDomain = $url_array[0];
+
+                $tenantDomain = (isset(explode('-', $subDomain)[0])) ? explode('-', $subDomain)[0] : "";
+
+                $search = '*';
+                $redirectUrl = str_replace($search, $tenantDomain.'-erp', $redirectUrl);
+            }
         }
+
 
         $lastSlashPos = strrpos($redirectUrl, '/');
         $baseUrl = substr($redirectUrl, 0, $lastSlashPos + 1);
         $redirectUrlNew = $baseUrl . 'all-document';
 
         return $redirectUrlNew;
+    }
+
+    public static function getSupplierRegDomain($id){
+        $supplierReg =  SupplierRegistrationLink::select('sub_domain')
+                ->where('id',$id)
+                ->first();
+
+        return $supplierReg['sub_domain'];
+
     }
 
 }

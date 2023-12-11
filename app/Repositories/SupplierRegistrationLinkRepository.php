@@ -47,6 +47,7 @@ class SupplierRegistrationLinkRepository extends BaseRepository
         $supplierRegistrationLink->updated_by = '';
         $supplierRegistrationLink->is_bid_tender =  ($request->input('is_bid_tender') == true ? 1:0);
         $supplierRegistrationLink->created_via =  1;
+        $supplierRegistrationLink->sub_domain = $request->input('domain');
         $result = $supplierRegistrationLink->save();
         if($result){ 
             return ['status' => true,'id' =>$supplierRegistrationLink->id];
