@@ -16,10 +16,9 @@ class EmpProfileCreateNotificationService
     private $notifyList;
     private $masterDet;
     private $documentCode;
-    private $dataType;
 
 
-    public function __construct($companyId, $id, $masterDet, $dataType)
+    public function __construct($companyId, $id, $masterDet)
     {
         $this->companyId = $companyId;
         $this->id = $id;
@@ -28,7 +27,6 @@ class EmpProfileCreateNotificationService
         $this->notifyList = [];
         $this->masterDet = $masterDet;
         $this->documentCode = '';
-        $this->dataType = $dataType;
     }
 
     function execute()
@@ -38,8 +36,10 @@ class EmpProfileCreateNotificationService
             return false;
         }
 
-        //$this->documentCode = $this->masterDet['documentCode'];
-        $this->documentCode = 123;
+        $columnValues = array_column($this->masterDet, 'ECode');
+        $this->documentCode = implode(',', $columnValues);
+
+        $this->insertToLogTb(['Document Code' => $this->documentCode, 'Message' => 'Master details not found', 'error']);
 
         $this->validateNotificationScenarioActive();
         if (!$this->isScenarioActive) {
@@ -140,19 +140,22 @@ class EmpProfileCreateNotificationService
 
     public function email_body()
     {
+        $this->insertToLogTb(['Count' => count($this->masterDet), 'Message' => '']);
         $str = "<br/>";
         $str = "<br/>A new Employee profile has been created for your further action as the following information:";
-
-        if($this->dataType == 'single')
+   if(count($this->masterDet) == 1)
         {
-            $str .= ".<br/><b> Date </b> : " . $this->masterDet['currentDate'];
-            $str .= ".<br/><b> Employee </b> : " . $this->masterDet['Ename2'];
-            $str .= ".<br/><b> Employment Type </b> : " . $this->masterDet['Description'];
-            $str .= ".<br/><b> Gender </b> : " . $this->masterDet['name'];
-            $str .= ".<br/><b> Country </b> : " . $this->masterDet['countryName'];
-            $str .= ".<br/><b> Grade </b> : " . $this->masterDet['gradeDescription'];
-            $str .="<br><br>Thank You";
-            return $str;
+            foreach ($this->masterDet as $key => $value) {
+                $str .= ".<br/><b> Date </b> : " . $value['currentDate'];
+                $str .= ".<br/><b> Employee </b> : " . $value['Ename2'];
+                $str .= ".<br/><b> Employment Type </b> : " . $value['Description'];
+                $str .= ".<br/><b> Gender </b> : " . $value['name'];
+                $str .= ".<br/><b> Country </b> : " . $value['countryName'];
+                $str .= ".<br/><b> Grade </b> : " . $value['gradeDescription'];
+                $str .="<br><br>Thank You";
+            }
+                return $str;
+            
         }
         else
         {
@@ -181,10 +184,11 @@ class EmpProfileCreateNotificationService
             }
 
             $str .= "</table><br><br>";
+     
             $str .= "Thank You";
             return $str;
 
-            
+
         }
     }
 

@@ -26,9 +26,8 @@ class EmpProfileCreateNotificationJob implements ShouldQueue
     public $id; 
     public $dbName;
     public $masterDetails;
-    public $dataType;
 
-    public function __construct($dbName, $companyId, $id, $masterDetails, $dataType)
+    public function __construct($dbName, $companyId, $id, $masterDetails)
     {
         if(env('IS_MULTI_TENANCY',false)){
             self::onConnection('database_main');
@@ -40,7 +39,6 @@ class EmpProfileCreateNotificationJob implements ShouldQueue
         $this->companyId = $companyId;
         $this->id = $id; 
         $this->masterDetails = $masterDetails; 
-        $this->dataType = $dataType; 
         
     }
 
@@ -61,7 +59,7 @@ class EmpProfileCreateNotificationJob implements ShouldQueue
             Log::info("Job triggered");
 
             CommonJobService::db_switch($this->dbName);
-            $obj = new EmpProfileCreateNotificationService($this->companyId, $this->id, $this->masterDetails, $this->dataType);
+            $obj = new EmpProfileCreateNotificationService($this->companyId, $this->id, $this->masterDetails);
             $obj->execute();
         }
     }
