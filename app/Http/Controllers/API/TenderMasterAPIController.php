@@ -14,6 +14,7 @@ use App\Models\CompanyDocumentAttachment;
 use App\Models\CurrencyMaster;
 use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
+use App\Models\Employee;
 use App\Models\ProcumentOrder;
 use App\Models\PurchaseOrderDetails;
 use App\Models\PurchaseRequest;
@@ -4798,5 +4799,86 @@ ORDER BY
             ->with('orderCondition', $sort)
             ->make(true);
     }
-    
+
+    public function getTenderBidOpeningReport(Request $request)
+    {
+        $tenderId = $request->get('id');
+        $employeeID = $request->get('userID');
+        $companyId = $request->get('companySystemID');
+        $isNegotiation = $request->get('isNegotiation');
+
+        $tenderBidNegotiations = TenderBidNegotiation::select('bid_submission_master_id_new')
+            ->where('tender_id', $tenderId)
+            ->get();
+
+        $bidSubmissionMasterIds = [];
+
+        if ($tenderBidNegotiations->count() > 0) {
+            $bidSubmissionMasterIds = $tenderBidNegotiations->pluck('bid_submission_master_id_new')->toArray();
+        }
+
+        $getNegotiationCode = TenderMaster::select('negotiation_code')->where('id', $tenderId)->first();
+
+        $tenderMaster = TenderMaster::where('id', $tenderId)->with(['ranking_supplier' => function ($q) use($bidSubmissionMasterIds, $getNegotiationCode) {
+            if($getNegotiationCode->negotiation_code != '' OR $getNegotiationCode->negotiation_code != null){
+                $q->whereIn('bid_id', $bidSubmissionMasterIds);
+            }
+            $q->where('award', 1)->with('supplier');
+        }])->first();
+
+        // Get Bids Count
+        $query = BidSubmissionMaster::where('status', 1)->where('bidSubmittedYN', 1)->where('tender_id', $tenderId);
+
+        if ($isNegotiation == 1) {
+            $query = $query->whereIn('id', $bidSubmissionMasterIds);
+        } else {
+            $query = $query->whereNotIn('id', $bidSubmissionMasterIds);
+        }
+        $tenderBids =  $query->count();
+
+        $tenderBidsSupplierList = $this->getTenderBitsSupplierNameList($companyId, $tenderId, 1, $isNegotiation, $bidSubmissionMasterIds);
+        $employeeDetails = SrmTenderBidEmployeeDetails::where('tender_id', $tenderId)->with('employee')->get();
+
+        $company = Company::where('companySystemID', $tenderMaster->company_id)->first();
+
+        $employeeData = Employee::where('employeeSystemID', $employeeID)->first();
+        $SrmTenderBidEmployeeDetails = SrmTenderBidEmployeeDetails::where('tender_id', $tenderId)->with('employee')->get();
+
+        $time = strtotime("now");
+        $fileName = 'Minutes_of_Bid_Opening' . $time . '.pdf';
+        $order = array('tenderMaster' => $tenderMaster, 'employeeDetails' => $employeeDetails, 'company' => $company, 'employeeData' => $employeeData, 'tenderBids' => $tenderBids, 'isNegotiation' => $isNegotiation, 'tenderBidsSupplierList' => $tenderBidsSupplierList, 'SrmTenderBidEmployeeDetails' => $SrmTenderBidEmployeeDetails);
+        $html = view('print.minutes_of_bid_opening_print', $order);
+        $pdf = \App::make('dompdf.wrapper');
+        $pdf->loadHTML($html);
+        return $pdf->setPaper('a4', 'portrait')->setWarnings(false)->stream($fileName);
+
+    }
+
+    public function getTenderBitsSupplierNameList($companyId, $tenderId, $loadSupplier, $isNegotiation, $bidSubmissionMasterIds)
+    {
+        $query = BidSubmissionMaster::with(['SupplierRegistrationLink', 'bidSubmissionDetail' => function($query){
+            $query->whereHas('srm_evaluation_criteria_details.evaluation_criteria_type', function ($query) {
+                $query->where('id', 1);
+            });
+        }])->withCount(['documents'=>function($q) use ($companyId){
+            $q->where('companySystemID',$companyId)
+                ->where('documentSystemID', 113)
+                ->where('attachmentType',2)
+                ->where('envelopType',3);
+        }])->where('status', 1)->where('bidSubmittedYN', 1)->where('tender_id', $tenderId);
+
+        if ($isNegotiation == 1) {
+            $query = $query->whereIn('id', $bidSubmissionMasterIds);
+        } else {
+            $query = $query->whereNotIn('id', $bidSubmissionMasterIds);
+        }
+
+        if( isset($loadSupplier) && $loadSupplier ){
+            $query = $query->groupBy('srm_bid_submission_master.supplier_registration_id');
+        }
+
+        return $query->get();
+
+    }
+
 } 
