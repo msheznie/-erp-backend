@@ -2836,10 +2836,60 @@ WHERE
 	AND employeesdepartments.employeeSystemID = $employeeSystemID 
 	AND employeesdepartments.isActive = 1 
 	AND employeesdepartments.removedYN = 0
-		) AS pendingSupplierRegistrationApprovals 
-        
-       
-        )t 
+		) AS pendingSupplierRegistrationApprovals
+		
+		 UNION ALL  
+		SELECT 
+		* 
+		FROM (
+		SELECT
+	DATEDIFF( CURDATE(), erp_documentapproved.docConfirmedDate ) AS dueDays,
+	erp_documentapproved.documentApprovedID,
+	erp_documentapproved.approvalLevelID,
+	erp_documentapproved.rollLevelOrder,
+	erp_approvallevel.noOfLevels AS NoOfLevels,
+	erp_documentapproved.companySystemID,
+	erp_documentapproved.companyID,
+	'' AS approval_remarks,
+	erp_documentapproved.documentSystemID,
+	erp_documentapproved.documentID,
+	erp_documentapproved.documentSystemCode,
+	erp_documentapproved.documentCode,
+	title AS narration,
+	erp_documentapproved.docConfirmedDate,
+	erp_documentapproved.approvedDate,
+	' ' AS confirmedEmployee,
+	'' AS SupplierOrCustomer,
+	0 AS DecimalPlaces,
+	'' AS DocumentCurrency,
+	'' AS DocumentValue,
+	0 AS amended,
+	employeesdepartments.employeeID,
+	erp_documentapproved.approvedYN,
+	0 AS documentType,
+	tm.id AS srmValue 
+	FROM 
+	erp_documentapproved
+	INNER JOIN `employeesdepartments` ON `erp_documentapproved`.`companySystemID` = `employeesdepartments`.`companySystemID`
+	AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
+	AND `erp_documentapproved`.`documentSystemID` = `employeesdepartments`.`documentSystemID` 
+	AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID 
+	INNER JOIN erp_approvallevel ON erp_approvallevel.approvalLevelID = erp_documentapproved.approvalLevelID
+	INNER JOIN employees em ON erp_documentapproved.docConfirmedByEmpSystemID = em.employeeSystemID 
+		INNER JOIN srm_tender_master tm ON erp_documentapproved.documentSystemCode = id AND erp_documentapproved.rollLevelOrder = RollLevForApp_curr
+		INNER JOIN currencymaster ON tm.currency_id = currencymaster.currencyID
+		Where
+		erp_documentapproved.approvedYN = 0 
+		AND erp_documentapproved.rejectedYN = 0 
+		AND tm.approved = 0 
+        $filter
+		AND tm.confirmed_yn = 1
+		AND erp_documentapproved.approvalGroupID > 0 
+		AND erp_documentapproved.documentSystemID IN ( 108,113 ) 
+		AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0
+		) as tenderPendingApprovals
+		 
+		 )t 
 			
 	INNER JOIN companymaster ON t.companySystemID = companymaster.companySystemID 
 	LEFT JOIN erp_documentmaster ON t.documentSystemID = erp_documentmaster.documentSystemID 

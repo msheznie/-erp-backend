@@ -3338,7 +3338,9 @@ class Helper
                                         //     $body = '<p>' . $approvedDocNameBody . ' is pending for your approval. <br><br><a href="' . $redirectUrl . '">Click here to approve</a></p>';
                                         // }
 
-                                        $redirectUrl = ($params["document"] == 117 || $params["document"] == 118 || $params["document"] == 107) ? self::checkDomainErp($params["document"],$documentApproved->documentSystemCode) : self::checkDomai();
+                                        $documentValues = [107,108,113,117,118]; // srm related documents.
+                                        $redirectUrl = (in_array($params["document"], $documentValues)) ? self::checkDomainErp($params["document"], $documentApproved->documentSystemCode) : self::checkDomai();
+
                                         $body = '<p>' . $approvedDocNameBody . ' is pending for your approval. <br><br>';
 
                                         if ($params["document"] == 117) {
