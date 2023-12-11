@@ -4841,12 +4841,20 @@ ORDER BY
 
         $company = Company::where('companySystemID', $tenderMaster->company_id)->first();
 
+        $SrmTenderBidEmployeeDetails = SrmTenderBidEmployeeDetails::with('employee')
+            ->where('tender_id', $tenderId)
+            ->where('status', 1)
+            ->get();
+
         $employeeData = Employee::where('employeeSystemID', $employeeID)->first();
-        $SrmTenderBidEmployeeDetails = SrmTenderBidEmployeeDetails::where('tender_id', $tenderId)->with('employee')->get();
+        //$SrmTenderBidEmployeeDetails = SrmTenderBidEmployeeDetails::where('tender_id', $tenderId)->with('employee')->get();
 
         $time = strtotime("now");
         $fileName = 'Minutes_of_Bid_Opening' . $time . '.pdf';
-        $order = array('tenderMaster' => $tenderMaster, 'employeeDetails' => $employeeDetails, 'company' => $company, 'employeeData' => $employeeData, 'tenderBids' => $tenderBids, 'isNegotiation' => $isNegotiation, 'tenderBidsSupplierList' => $tenderBidsSupplierList, 'SrmTenderBidEmployeeDetails' => $SrmTenderBidEmployeeDetails);
+        $order = array('tenderMaster' => $tenderMaster, 'employeeDetails' => $employeeDetails, 'company' => $company, 'employeeData' => $employeeData, 'tenderBids' => $tenderBids,
+            'isNegotiation' => $isNegotiation,
+            'tenderBidsSupplierList' => $tenderBidsSupplierList,
+            'SrmTenderBidEmployeeDetails' => $SrmTenderBidEmployeeDetails);
         $html = view('print.minutes_of_bid_opening_print', $order);
         $pdf = \App::make('dompdf.wrapper');
         $pdf->loadHTML($html);

@@ -192,11 +192,11 @@
     <table style="width:100%; font-size: 12px;">
         <tbody>
         <tr>
-            <td><strong>Tender Code:</strong></td>
+            <td style="width: 15%"><strong>Tender Code:</strong></td>
             <td>{{ $tenderMaster->tender_code }}</td>
-            <td><strong>Envelope:</strong></td>
+            <td style="width: 15%"><strong>Envelope:</strong></td>
             <td>{{ $tenderMaster->envelop_type->name }}</td>
-            <td><strong>Number of Alternative Solutions:</strong></td>
+            <td style="width: 20%"><strong>Number of Alternative Solutions:</strong></td>
             <td>{{ $tenderMaster->no_of_alternative_solutions }}</td>
         </tr>
         <tr>
@@ -275,7 +275,7 @@
         @foreach ($SrmTenderBidEmployeeDetails as $emp)
             <tr>
                 <td style="text-align: left;">{{$emp->employee->empID}} |  {{ $emp->employee->empFullName}}</td>
-                <td> &nbsp;{{ $item->SupplierRegistrationLink->name }}</td>
+                <td> &nbsp; {{\Carbon\Carbon::parse($emp->updated_at)->format('d/m/Y h:i A')}}</td>
                 @if ($emp->status != null)
                     <td> &nbsp;{{ $emp->status == 1 ? 'Approved' : 'Rejected'}}</td>
                 @endif
