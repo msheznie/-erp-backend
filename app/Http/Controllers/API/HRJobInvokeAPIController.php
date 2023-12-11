@@ -232,6 +232,7 @@ class HRJobInvokeAPIController extends AppBaseController
         $dataType = $input['type'];
         
         EmpProfileCreateNotificationJob::dispatch($dbName, $companyId, $id, $masterDetails, $dataType); 
+        
         return $this->sendResponse([], 'Employee profile creation notification scenario added to queue');
     }
 
