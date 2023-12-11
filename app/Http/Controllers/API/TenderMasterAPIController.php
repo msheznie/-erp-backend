@@ -988,6 +988,23 @@ ORDER BY
             return ['success' => false, 'message' => 'Bid submission from time is required'];
         }
 
+
+        if (isset($input['pre_bid_clarification_start_date']) && !isset(($input['pre_bid_clarification_start_time']))) {
+            return ['success' => false, 'message' => 'Pre-bid Clarification from time is required'];
+        }
+
+        if (isset($input['pre_bid_clarification_end_date']) && !isset(($input['pre_bid_clarification_end_time']))) {
+            return ['success' => false, 'message' => 'Pre-bid Clarification to time is required'];
+        }
+
+        if (isset($input['site_visit_date']) && !isset(($input['site_visit_start_time']))) {
+            return ['success' => false, 'message' => 'Site Visit from time is required'];
+        }
+
+        if (isset($input['site_visit_end_date']) && !isset(($input['site_visit_end_time']))) {
+            return ['success' => false, 'message' => 'Site Visit to time is required'];
+        }
+
         if (!isset(($input['bid_submission_closing_time']))) {
             return ['success' => false, 'message' => 'Bid submission to time is required'];
         }
