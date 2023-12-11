@@ -3400,13 +3400,13 @@ class Helper
 
                                         
 
-                                        /*$jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, 1);
+                                        $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, 1);
 
                                         $webPushData = [
                                             'title' => $pushNotificationMessage,
                                             'body' => '',
                                             'url' => $redirectUrl,
-                                        ];*/
+                                        ];
 
                                         // WebPushNotificationService::sendNotification($webPushData, 1, $pushNotificationUserIds);
 
@@ -5156,11 +5156,20 @@ class Helper
                                     // }
 
 
+                                    $documentValues = [107,108,113,117,118]; // srm related documents.
 
-
-                                    $redirectUrl =  self::checkDomai();
+                                    $redirectUrl = (in_array($input["documentSystemID"], $documentValues)) ? self::checkDomainErp($input["documentSystemID"], $currentApproved->documentSystemCode) : self::checkDomai();
                                     //$body = '<p>' . $approvedDocNameBody . ' is pending for your approval. <br><br><a href="' . $redirectUrl . '">Click here to approve</a></p>';   
-                                    $nextApprovalBody = '<p>' . $bodyName . ' Level ' . $currentApproved->rollLevelOrder . ' is approved and pending for your approval. <br><br><a href="' . $redirectUrl . '">Click here to approve</a></p>';
+                                    $nextApprovalBody = '<p>' . $bodyName . ' Level ' . $currentApproved->rollLevelOrder . ' is approved and pending for your approval. <br><br>';
+
+                                    if ($input["documentSystemID"] == 117)
+                                    {
+                                        $ammendComment = self::getDocumentModifyRequestDetails($input['documentSystemCode']);
+                                        $ammendText = '<b>Comment :</b> ' . $ammendComment['description'] . '<br>';
+                                        $nextApprovalBody .= $ammendText;
+                                    }
+
+                                    $nextApprovalBody .= '<a href="' . $redirectUrl . '">Click here to approve</a></p>';
 
                                     $nextApprovalSubject = $subjectName . " Level " . $currentApproved->rollLevelOrder . " is approved and pending for your approval";
                                     $nextApproveNameList = "";
