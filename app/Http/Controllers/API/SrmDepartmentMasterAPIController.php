@@ -130,7 +130,7 @@ class SrmDepartmentMasterAPIController extends AppBaseController
             ->where('description', '=', $input['description'])->first();
 
         if (!empty($departmentExist)) {
-            return $this->sendError('Department description \'' . $input['description'] . '\' is already exists.');
+            return $this->sendError('Department description \'' . $input['description'] . '\' already exists.');
         }
 
         $input['created_at'] = Carbon::now();
@@ -274,7 +274,7 @@ class SrmDepartmentMasterAPIController extends AppBaseController
             ->first();
 
         if (!empty($departmentExist)) {
-            return $this->sendError('Department description \'' . $input['description'] . '\' is already exists.');
+            return $this->sendError('Department description \'' . $input['description'] . '\' already exists.');
         }
 
         $input['updated_by'] = Helper::getEmployeeSystemID();
