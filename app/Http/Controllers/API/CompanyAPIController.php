@@ -146,10 +146,6 @@ class CompanyAPIController extends AppBaseController
         $country = CountryMaster::orderBy('countryName', 'asc')
             ->get();
 
-        /** Supplier category  */
-        $supplierCategory = SupplierCategoryMaster::orderBy('categoryDescription', 'asc')
-            ->get();
-
         /** Currency Master */
         $currencyMaster = CurrencyMaster::orderBy('CurrencyName', 'asc')
                                           ->get();
@@ -208,7 +204,6 @@ class CompanyAPIController extends AppBaseController
             'liabilityAccount' => $liabilityAccount,
             'assetAndLiaAccount' => $assetAndLiabilityAccount,
             'country' => $country,
-            'supplierCategoryMaster' => $supplierCategory,
             'currencyMaster' => $currencyMaster,
             'supplierImportance' => $supplierImportance,
             'supplierNature' => $supplierNature,
@@ -239,6 +234,10 @@ class CompanyAPIController extends AppBaseController
             if($dt->appearance_element_id == 2){
                 $dt->value = Helper::getFileUrlFromS3($dt->value);
             }
+            if($dt->appearance_element_id == 9){
+                $dt->value = Helper::getFileUrlFromS3($dt->value);
+            }
+
 
         }
 

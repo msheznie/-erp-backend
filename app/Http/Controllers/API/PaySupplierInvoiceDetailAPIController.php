@@ -21,6 +21,9 @@ use App\Models\AccountsPayableLedger;
 use App\Models\AdvancePaymentDetails;
 use App\Models\BankAssign;
 use App\Models\BookInvSuppDet;
+use App\Models\TaxVatCategories;
+use App\Models\DirectInvoiceDetails;
+use App\Models\SupplierInvoiceItemDetail;
 use App\Models\BookInvSuppMaster;
 use App\Models\EmployeeLedger;
 use App\Models\GeneralLedger;
@@ -32,6 +35,7 @@ use App\Repositories\PaySupplierInvoiceDetailRepository;
 use App\Repositories\UserRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
+use App\Models\DebitNote;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
@@ -524,16 +528,32 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             /** @var PaySupplierInvoiceDetail $paySupplierInvoiceDetail */
             $paySupplierInvoiceDetailDelete = $this->paySupplierInvoiceDetailRepository->findWithoutFail($id);
             $paySupplierInvoiceDetail = $this->paySupplierInvoiceDetailRepository->findWithoutFail($id);
+            $payMaster = PaySupplierInvoiceMaster::find($paySupplierInvoiceDetail->PayMasterAutoId);
+
             if (empty($paySupplierInvoiceDetail)) {
                 return $this->sendError('Pay Supplier Invoice Detail not found');
             }
 
-           
-            
-            $payMaster = PaySupplierInvoiceMaster::find($paySupplierInvoiceDetail->PayMasterAutoId);
+            if($paySupplierInvoiceDetail->documentID == 'PV' && $paySupplierInvoiceDetail->documentSystemID == 4){
+                $payMaster = PaySupplierInvoiceMaster::find($paySupplierInvoiceDetail->PayMasterAutoId);
 
-            if (empty($payMaster)) {
-                return $this->sendError('Payment voucher not found');
+                if (empty($payMaster)) {
+                    return $this->sendError('Payment voucher not found');
+                }
+                $isPaymentVoucher = true;
+            } else {
+                $isPaymentVoucher = false;
+            }
+
+            if($paySupplierInvoiceDetail->documentID == 'DN' && $paySupplierInvoiceDetail->documentSystemID == 15){
+                $payMaster = DebitNote::find($paySupplierInvoiceDetail->PayMasterAutoId);
+
+                if (empty($payMaster)) {
+                    return $this->sendError('Debit Note not found');
+                }
+                $isDebitNote = true;
+            } else {
+                $isDebitNote = false;
             }
 
             if ($paySupplierInvoiceDetail->matchingDocID == 0) {
@@ -546,9 +566,18 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             if(isset($matchDocumentMasterObj))
             {
                 $user_type = $matchDocumentMasterObj->user_type;
+
+                if(isset($matchDocumentMasterObj['matchedAmount'])) {
+                    $matchDocumentMasterObj['matchedAmount'] = $matchDocumentMasterObj->matchedAmount - $paySupplierInvoiceDetail->supplierPaymentAmount;
+                }
+
+                if(isset($matchDocumentMasterObj['matchingAmount'])) {
+                    $matchDocumentMasterObj['matchedAmount'] = $matchDocumentMasterObj->matchedAmount - $paySupplierInvoiceDetail->supplierPaymentAmount;
+                }
+                
+                $matchDocumentMasterObj->save();
             }
            
-
 
             if ($paySupplierInvoiceDetail->documentSystemID != 0) {
                 if ($paySupplierInvoiceDetail->matching_master && $paySupplierInvoiceDetail->matching_master->matchingConfirmedYN) {
@@ -563,7 +592,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             if($user_type == 1)
             {
                 $supplierPaidAmountSum = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, 
-                Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')->when(($payMaster->invoiceType != 6 && $payMaster->invoiceType != 7), function($query) {
+                Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')->when( ( ($isPaymentVoucher && ($payMaster->invoiceType != 6 && $payMaster->invoiceType != 7)) || ($isDebitNote && ($payMaster && $payMaster->type == 1)) ), function($query) {
                         $query->whereHas('payment_master', function($query) {
                             $query->where(function($query) {
                                 $query->where('invoiceType', '!=', 6)
@@ -582,7 +611,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             {
 
                 $supplierPaidAmountSum = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, 
-                Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')->when(($payMaster->invoiceType == 6 || $payMaster->invoiceType == 7), function($query) {
+                Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')->when( ( ($isPaymentVoucher && ($payMaster->invoiceType == 6 || $payMaster->invoiceType == 7)) || ($isDebitNote && ($payMaster && $payMaster->type == 2)) ), function($query) {
                 $query->whereHas('payment_master', function($query) {
                     $query->whereIn('invoiceType',[6,7]);
                 });
@@ -596,15 +625,14 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             }
             else
             {
-                
                 $supplierPaidAmountSum = PaySupplierInvoiceDetail::selectRaw('erp_paysupplierinvoicedetail.apAutoID, erp_paysupplierinvoicedetail.supplierInvoiceAmount, 
                        Sum(erp_paysupplierinvoicedetail.supplierPaymentAmount) AS SumOfsupplierPaymentAmount')
-                ->when(($payMaster->invoiceType == 6 || $payMaster->invoiceType == 7), function($query) {
+                ->when((($isPaymentVoucher && (isset($payMaster) && $payMaster->invoiceType == 6 || isset($payMaster) &&  $payMaster->invoiceType == 7)) || ($isDebitNote && (isset($payMaster) &&  $payMaster->type == 2))), function($query) {
                     $query->whereHas('payment_master', function($query) {
                         $query->whereIn('invoiceType',[6,7]);
                     });
                 })
-                ->when(($payMaster->invoiceType != 6 && $payMaster->invoiceType != 7), function($query) {
+                ->when((($isPaymentVoucher && ((isset($payMaster) &&  $payMaster->invoiceType != 6) && (isset($payMaster) &&  $payMaster->invoiceType != 7))) || ($isDebitNote && (isset($payMaster) &&  $payMaster->type == 1))), function($query) {
                     $query->whereHas('payment_master', function($query) {
                         $query->where(function($query) {
                             $query->where('invoiceType', '!=', 6)
@@ -639,9 +667,8 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                 $totalPaidAmount = ($machAmount * -1);
             }
 
-            
 
-            if ($payMaster->invoiceType == 6 || $payMaster->invoiceType == 7) {
+            if (isset($payMaster) &&  $payMaster->invoiceType == 6 || isset($payMaster) &&  $payMaster->invoiceType == 7) {
                 if ($paySupplierInvoiceDetail->addedDocumentSystemID == 11) {
                     if ($totalPaidAmount == 0) {
                         $updatePayment = EmployeeLedger::find($paySupplierInvoiceDetail->apAutoID)
@@ -670,8 +697,6 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                 }
             } else {
                 if ($paySupplierInvoiceDetail->addedDocumentSystemID == 11) {
-                    
-
                     if($user_type == 2)
                     {
                           if ($totalPaidAmount == 0) {
@@ -1318,6 +1343,53 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
                     unset($tempArray['isChecked']);
                     unset($tempArray['DecimalPlaces']);
                     unset($tempArray['CurrencyCode']);
+
+                    if ($matchDocumentMasterData->documentSystemID == 4 && $matchDocumentMasterData->PayMasterAutoId > 0) {
+                        $pvMasterData = PaySupplierInvoiceMaster::find($matchDocumentMasterData->PayMasterAutoId);
+
+                        if ($pvMasterData->invoiceType == 5 && $pvMasterData->applyVAT == 1) {
+                            $advancePaymentVATAmount = AdvancePaymentDetails::where('PayMasterAutoId', $matchDocumentMasterData->PayMasterAutoId)
+                                                                            ->sum('VATAmount');
+
+                            if ($advancePaymentVATAmount > 0) {
+                                $supplierInvoice = BookInvSuppMaster::find($tempArray['bookingInvSystemCode']);
+
+                                if ($supplierInvoice && $supplierInvoice->documentType == 0) {
+                                    $checkVATTypeOfSI = SupplierInvoiceItemDetail::select('vatMasterCategoryID', 'vatSubCategoryID')
+                                                                    ->where('bookingSuppMasInvAutoID', $tempArray["bookingInvSystemCode"])
+                                                                    ->whereNotNull('vatMasterCategoryID')
+                                                                    ->whereNotNull('vatSubCategoryID')
+                                                                    ->groupBy('vatMasterCategoryID', 'vatSubCategoryID')
+                                                                    ->get();
+
+                                    
+                                } else if ($supplierInvoice && $supplierInvoice->documentType == 1) {
+                                    $checkVATTypeOfSI = DirectInvoiceDetails::select('vatMasterCategoryID', 'vatSubCategoryID')
+                                                                    ->where('directInvoiceAutoID', $tempArray["bookingInvSystemCode"])
+                                                                    ->whereNotNull('vatMasterCategoryID')
+                                                                    ->whereNotNull('vatSubCategoryID')
+                                                                    ->groupBy('vatMasterCategoryID', 'vatSubCategoryID')
+                                                                    ->get();
+                                }
+
+                                if (isset($checkVATTypeOfSI) && count($checkVATTypeOfSI) == 1) {
+                                    $vatCategoryData = collect($checkVATTypeOfSI)->first();
+
+                                    $tempArray["vatMasterCategoryID"] = $vatCategoryData->vatMasterCategoryID;
+                                    $tempArray["vatSubCategoryID"] = $vatCategoryData->vatSubCategoryID;
+                                } else if (isset($checkVATTypeOfSI) && count($checkVATTypeOfSI) > 1) {
+                                    $companySystemID = $tempArray['companySystemID'];
+                                    $defaultVAT = TaxService::getDefaultVAT($tempArray['companySystemID']);
+
+                                    if ($defaultVAT) {
+                                        $tempArray['vatSubCategoryID'] = $defaultVAT['vatSubCategoryID'];
+                                        $tempArray['vatMasterCategoryID'] = $defaultVAT['vatMasterCategoryID'];
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     if ($tempArray) {
                         $paySupplierInvoiceDetails = $this->paySupplierInvoiceDetailRepository->create($tempArray);
                        
@@ -1339,7 +1411,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
             return $this->sendResponse('', 'Payment details saved successfully');
         } catch (\Exception $exception) {
             DB::rollBack();
-            return $this->sendError('Error Occurred');
+            return $this->sendError("Error Occurred");
         }
 
     }
@@ -1368,8 +1440,7 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
 
         $documentCurrencyDecimalPlace = \Helper::getCurrencyDecimalPlace($matchDocumentMasterData->supplierTransCurrencyID);
 
-       
-
+        
 
         if ($input['supplierPaymentAmount'] > $input['paymentBalancedAmount']) {
             return $this->sendError('Matching amount cannot be greater than balance amount', 500, ['type' => 'amountmismatch']);
@@ -1510,6 +1581,46 @@ class PaySupplierInvoiceDetailAPIController extends AppBaseController
         $input["paymentComRptAmount"] = \Helper::roundValue($conversionAmount["reportingAmount"]);
 
         unset($input['pomaster']);
+
+        if ($matchDocumentMasterData->documentSystemID == 4 && $matchDocumentMasterData->PayMasterAutoId > 0) {
+            $pvMasterData = PaySupplierInvoiceMaster::find($matchDocumentMasterData->PayMasterAutoId);
+
+            if ($pvMasterData->invoiceType == 5 && $pvMasterData->applyVAT == 1) {
+                $advancePaymentVATAmount = AdvancePaymentDetails::where('PayMasterAutoId', $matchDocumentMasterData->PayMasterAutoId)
+                                                                ->sum('VATAmount');
+
+
+                if ($advancePaymentVATAmount > 0) {
+                    $supplierInvoiceVAT = 0;
+                    $supplierInvoiceVATLocal = 0;
+                    $supplierInvoiceVATRpt = 0;
+                    $supplierInvoice = BookInvSuppMaster::find($input['bookingInvSystemCode']);
+
+                    if ($supplierInvoice && $supplierInvoice->documentType == 0) {
+                        $vatDetails = TaxService::processPoBasedSupllierInvoiceVAT($input['bookingInvSystemCode']);
+                        $totalVATAmount = isset($vatDetails['totalVAT']) ? $vatDetails['totalVAT'] : 0;
+                        $totalVATAmountLocal = isset($vatDetails['totalVATLocal']) ? $vatDetails['totalVATLocal'] : 0;
+                        $totalVATAmountRpt = isset($vatDetails['totalVATRpt']) ? $vatDetails['totalVATRpt'] : 0;
+                    
+                        $supplierInvoiceVAT = (($totalVATAmount / $input['supplierInvoiceAmount']) * $input['supplierPaymentAmount']);
+                        $supplierInvoiceVATLocal = (($totalVATAmountLocal / $input['localAmount']) * $input['paymentLocalAmount']);
+                        $supplierInvoiceVATRpt = (($totalVATAmountRpt / $input['comRptAmount']) * $input['paymentComRptAmount']);
+                        
+                    } else if ($supplierInvoice && $supplierInvoice->documentType == 1) {
+                        $supplierInvoiceVAT = (($supplierInvoice->VATAmount / $input['supplierInvoiceAmount']) * $input['supplierPaymentAmount']);
+                        $supplierInvoiceVATLocal = (($supplierInvoice->VATAmountLocal / $input['localAmount']) * $input['paymentLocalAmount']);
+                        $supplierInvoiceVATRpt = (($supplierInvoice->VATAmountRpt / $input['comRptAmount']) * $input['paymentComRptAmount']);
+                    }
+
+                    $input['VATAmount'] = $supplierInvoiceVAT;
+                    $input['VATAmountLocal'] = $supplierInvoiceVATLocal;
+                    $input['VATAmountRpt'] = $supplierInvoiceVATRpt;
+                    $input['VATPercentage'] = ($input['supplierPaymentAmount'] > 0) ? (($supplierInvoiceVAT / $input['supplierPaymentAmount']) * 100) : 0;
+
+                }
+            }
+        }
+
         $paySupplierInvoiceDetail = $this->paySupplierInvoiceDetailRepository->update($input, $input['payDetailAutoID']);
 
         if($user_type == 2)

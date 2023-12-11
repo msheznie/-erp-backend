@@ -555,7 +555,8 @@ class FixedAssetMaster extends Model
         'accumulated_depreciation_amount_rpt',
         'accumulated_depreciation_amount_lcl',
         'is_acc_dep',
-        'accumulated_depreciation_date'
+        'accumulated_depreciation_date',
+        'empID'
     ];
 
     /**
@@ -659,6 +660,7 @@ class FixedAssetMaster extends Model
         'postToGLCodeSystemID' => 'integer',
         'deleteComment' => 'string',
         'postToGLCode' => 'integer',
+        'empID' => 'integer'
     ];
 
     /**
@@ -820,6 +822,17 @@ class FixedAssetMaster extends Model
     }
 
     public function depperiod_by()
+    {
+        return $this->hasMany('App\Models\FixedAssetDepreciationPeriod', 'faID', 'faID');
+    }
+
+    
+    public function assignedEmployee()
+    {
+        return $this->belongsTo('App\Models\Employee', 'empID', 'employeeSystemID');
+    }
+
+    public function depperiod_period()
     {
         return $this->hasMany('App\Models\FixedAssetDepreciationPeriod', 'faID', 'faID');
     }

@@ -101,3 +101,62 @@ Route::group([], function () {
     Route::put('creditNoteReportingUpdate/{id}','CreditNoteAPIController@creditNoteReportingUpdate')->name("Credit Note Reporting Update");
     Route::put('updateCreditNote/{id}', 'CreditNoteAPIController@updateCurrency')->name("Update Currency");
 });
+
+//Receipt Voucher
+Route::group([], function () {
+    Route::post('recieptVoucherDataTable', 'CustomerReceivePaymentAPIController@recieptVoucherDataTable')->name("Receipt voucher data table");
+    Route::put('recieptVoucherLocalUpdate/{id}', 'CustomerReceivePaymentAPIController@recieptVoucherLocalUpdate')->name("Receipt voucher local update");
+    Route::put('recieptVoucherReportingUpdate/{id}','CustomerReceivePaymentAPIController@recieptVoucherReportingUpdate')->name("Receipt voucher reporting update");
+    Route::get('getADVPReceiptDetails', 'AdvanceReceiptDetailsAPIController@getADVPReceiptDetails')->name("Get adv receipt details");
+    Route::post('customerDirectVoucherDetails', 'DirectReceiptDetailAPIController@customerDirectVoucherDetails')->name("Customer direct voucher details");
+    Route::post('updateDirectReceiptVoucher', 'DirectReceiptDetailAPIController@updateDirectReceiptVoucher')->name("Update direct receipt voucher");
+    Route::post('updateCustomerReciept', 'CustomerReceivePaymentDetailAPIController@updateCustomerReciept')->name("Update customer receipt");
+    Route::put('customerReceivePaymentsUpdateCurrency/{id}','CustomerReceivePaymentAPIController@UpdateCurrency')->name("Update currency");
+    Route::get('directReceiptContractDropDown', 'DirectReceiptDetailAPIController@directReceiptContractDropDown')->name("Direct receipt contract dropdown");
+    Route::get('directRecieptDetailsRecords', 'DirectReceiptDetailAPIController@directRecieptDetailsRecords')->name("Direct receipt details record");
+    Route::post('getCustomerReceiptInvoices', 'AccountsReceivableLedgerAPIController@getCustomerReceiptInvoices')->name("Get customer receipt invoices");
+    Route::post('saveReceiptVoucherUnAllocationsDetails', 'CustomerReceivePaymentDetailAPIController@saveReceiptVoucherUnAllocationsDetails')->name("Save receipt voucher un allocations details");
+    Route::post('receiptVoucherReopen', 'CustomerReceivePaymentAPIController@receiptVoucherReopen')->name("Receipt voucher reopen");
+    Route::post('amendReceiptVoucher', 'CustomerReceivePaymentAPIController@amendReceiptVoucher')->name("Amend receipt voucher");
+    Route::post('getReceiptVoucherAmendHistory', 'CustomerReceivePaymentRefferedHistoryAPIController@getReceiptVoucherAmendHistory')->name("Get receipt voucher amend history");
+    Route::get('getRVDetailAmendHistory', 'CustReceivePaymentDetRefferedHistoryAPIController@getRVDetailAmendHistory')->name("Get rv detail amend history");
+    Route::get('getRVDetailDirectAmendHistory', 'DirectReceiptDetailsRefferedHistoryAPIController@getRVDetailDirectAmendHistory')->name("Get rv detail direct amend history");
+    Route::post('receiptVoucherCancel', 'CustomerReceivePaymentAPIController@receiptVoucherCancel')->name("Receipt voucher cancel");
+    Route::post('amendReceiptVoucherReview', 'CustomerReceivePaymentAPIController@amendReceiptVoucherReview')->name("Amend receipt voucher review");
+    Route::post('checkBRVDocumentActive', 'CustomerReceivePaymentAPIController@checkBRVDocumentActive')->name("Check brv document active");
+    Route::get('getADVPaymentForBRV', 'CustomerReceivePaymentAPIController@getADVPaymentForBRV')->name("Get adv payment for brv");
+    Route::post('deleteAllADVReceiptDetail', 'AdvanceReceiptDetailsAPIController@deleteAllADVReceiptDetail')->name("Delete all adv receipt detail");
+    Route::post('generatePdcForReceiptVoucher', 'CustomerReceivePaymentAPIController@generatePdcForReceiptVoucher')->name("Generate pdc for receipt voucher");
+
+    Route::resource('advance_receipt_details', 'AdvanceReceiptDetailsAPIController');
+    Route::resource('receiptVoucherAmendHistoryCRUD', 'CustomerReceivePaymentRefferedHistoryAPIController');
+    Route::resource('customer_receive_payments', 'CustomerReceivePaymentAPIController',['only' => ['store', 'show', 'update']]);
+    Route::resource('customer_receive_payment_details', 'CustomerReceivePaymentDetailAPIController',['only' => ['store', 'show', 'destroy']]);
+    Route::resource('direct_receipt_details', 'DirectReceiptDetailAPIController',['only' => ['show', 'destroy']]);
+});
+
+//Receipt Matching
+Route::group([],function(){
+    Route::post('getRVMatchDocumentMasterView', 'MatchDocumentMasterAPIController@getRVMatchDocumentMasterView')->name("Get rv match document master view");
+    Route::get('getReceiptVoucherMatchItems', 'MatchDocumentMasterAPIController@getReceiptVoucherMatchItems')->name("Get receipt voucher match items");
+    Route::post('updateReceiptVoucherMatching', 'MatchDocumentMasterAPIController@updateReceiptVoucherMatching')->name("Update receipt voucher matching");
+    Route::get('getReceiptVoucherMatchDetails', 'CustomerReceivePaymentDetailAPIController@getReceiptVoucherMatchDetails')->name("Get receipt voucher match details");
+    Route::post('updateReceiptVoucherMatchDetail', 'CustomerReceivePaymentDetailAPIController@updateReceiptVoucherMatchDetail')->name("Update receipt voucher match detail");
+    Route::post('receiptVoucherMatchingCancel', 'MatchDocumentMasterAPIController@receiptVoucherMatchingCancel')->name("Receipt voucher matching cancel");
+    Route::post('deleteAllRVMDetails', 'MatchDocumentMasterAPIController@deleteAllRVMDetails')->name("Delete all rv details");
+    Route::post('getReceiptVoucherPullingDetail', 'MatchDocumentMasterAPIController@getReceiptVoucherPullingDetail')->name("Get receipt voucher pulling detail");
+    Route::post('addReceiptVoucherMatchDetails', 'CustomerReceivePaymentDetailAPIController@addReceiptVoucherMatchDetails')->name("Add receipt voucher match details");
+});
+
+//Reports
+
+Route::group([],function(){
+    Route::get('getAcountReceivableFilterData', 'AccountsReceivableReportAPIController@getAcountReceivableFilterData')->name("Get account receivable filter data");
+    Route::post('validateARReport', 'AccountsReceivableReportAPIController@validateReport')->name("Validate account receivable report");
+    Route::post('generateARReport', 'AccountsReceivableReportAPIController@generateReport')->name("Generate account receivable report");
+    Route::post('exportARReport', 'AccountsReceivableReportAPIController@exportReport')->name("Export account receivable report");
+    Route::post('sentCustomerLedger', 'AccountsReceivableReportAPIController@sentCustomerLedger')->name("Sent customer ledger");
+    Route::post('sentCustomerStatement', 'AccountsReceivableReportAPIController@sentCustomerStatement')->name("Sent customer statement");
+    Route::get('getInvoiceTrackerReportFilterData', 'AccountsReceivableReportAPIController@getInvoiceTrackerReportFilterData')->name("Get invoice tracker report filter data");
+    Route::post('generateInvoiceTrackingReport', 'AccountsReceivableReportAPIController@generateInvoiceTrackingReport')->name("Generate invoice tracking report");
+});

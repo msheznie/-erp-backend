@@ -70,6 +70,7 @@ class POSGLEntries extends Model
 
     public $fillable = [
         'shiftId',
+        'invoiceID',
         'documentSystemId',
         'documentCode',
         'glCode',

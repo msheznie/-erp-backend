@@ -163,3 +163,29 @@ Route::group([], function() {
     Route::resource('purchase_order_categories', 'PurchaseOrderCategoryAPIController');
     
 });
+
+//Report Open Requests
+Route::group([], function() {
+    Route::get('getReportSavingFliterData', 'ProcumentOrderAPIController@getReportSavingFliterData')->name('Get Report Saving Fliter Data');
+    Route::post('getItemSavingReport', 'ReportAPIController@getItemSavingReport')->name('Get Item Saving Report');
+    Route::post('exportExcelSavingReport', 'ReportAPIController@exportExcelSavingReport')->name('Export Excel SavingReport');
+});
+
+//Report Spent Analysis Report
+Route::group([], function() {
+    Route::post('reportSpentAnalysisHeader', 'ProcumentOrderAPIController@reportSpentAnalysisHeader')->name('Report Spent Analysis Header');
+    Route::get('reportSpentAnalysisBySupplierFilter', 'ProcumentOrderAPIController@reportSpentAnalysisBySupplierFilter')->name('Report Spent Analysis By Supplier Filter');
+    Route::post('reportSpentAnalysis', 'ProcumentOrderAPIController@reportSpentAnalysis')->name('Report Spent Analysis');
+    Route::post('reportSpentAnalysisExport', 'ProcumentOrderAPIController@reportSpentAnalysisExport')->name('Report Spent Analysis Export');
+
+});
+
+//Report Pr to grv
+Route::group([], function() {
+    Route::get('reportPrToGrvFilterOptions', 'PurchaseRequestAPIController@reportPrToGrvFilterOptions')->name('Report Filter Options');
+    Route::post('reportPrToGrv', 'PurchaseRequestAPIController@reportPrToGrv')->name('Report PR To Grv');
+    Route::post('exportPrToGrvReport', 'PurchaseRequestAPIController@exportPrToGrvReport')->name('Export PR To Grv');
+
+
+});
+

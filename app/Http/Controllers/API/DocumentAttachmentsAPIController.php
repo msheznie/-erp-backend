@@ -24,6 +24,9 @@ use App\Models\CompanyPolicyMaster;
 use App\Models\DocumentAttachments;
 use App\Models\DocumentAttachmentType;
 use App\Models\DocumentMaster;
+use App\Models\SupplierTenderNegotiation;
+use App\Models\TenderBidNegotiation;
+use App\Models\TenderNegotiationArea;
 use App\Repositories\DocumentAttachmentsRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -38,6 +41,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Models\BidDocumentVerification;
 use App\Models\BidSubmissionMaster;
+use App\Models\TenderMaster;
 /**
  * Class DocumentAttachmentsController
  * @package App\Http\Controllers\API
@@ -1066,12 +1070,17 @@ class DocumentAttachmentsAPIController extends AppBaseController
         }
         $sort = 'asc';
         $id = $request['id'];
+
+        if($this->getOldBidSubmissonCode($id) != null){
+            $id = $this->getOldBidSubmissonCode($id);
+        }
+
         $tenderId = $request['tenderId'];
+        $documentType = TenderMaster::select('document_type')->where('id',$tenderId)->first();
 
+        $documentSystemId = $documentType->document_type == 0 ? 108:113;
 
-
-        
-        $query = DocumentAttachments::with('bid_verify')->where('documentSystemCode', $id)->where('documentSystemID', 108)->where('attachmentType',0)->where('envelopType',3);
+        $query = DocumentAttachments::with('bid_verify')->where('documentSystemCode', $id)->where('documentSystemID', $documentSystemId)->where('attachmentType',0)->where('envelopType',3);
 
        // return $this->sendResponse($query, 'Tender Masters retrieved successfully');
 
@@ -1176,6 +1185,7 @@ class DocumentAttachmentsAPIController extends AppBaseController
            // $comments = $input['comments'];
             $val = $input['data']['value'];
             $verify_id = $input['verify_id'];
+
             
             DB::beginTransaction();
             try {
@@ -1200,7 +1210,12 @@ class DocumentAttachmentsAPIController extends AppBaseController
           
             $input = $request->all();
             $id = $input['bid_id'];
-            $comments = $input['comments'];
+            $comments = '';
+            if(isset($input['comments']) && !empty($input['comments']))
+            {
+                $comments = $input['comments'];
+            }
+           
             $val = $input['type'];
             
             DB::beginTransaction();
@@ -1228,16 +1243,19 @@ class DocumentAttachmentsAPIController extends AppBaseController
             $input = $request->all();
             $details = $input['extraParams'];
             $tender_id = $details['tenderId'];
-            $id = $details['id'];
-      
+            $id = $request['id'];
+
+            if($this->getOldBidSubmissonCode($id) != null){
+                $id = $this->getOldBidSubmissonCode($id);
+            }
+
             DB::beginTransaction();
             try {
                 
-     
-
-                $results = DocumentAttachments::where('documentSystemCode',$id)->where('documentSystemID', 108)->where('envelopType',3)->count();
-
-
+                $documentType = TenderMaster::select('document_type')->where('id',$tender_id)->first();  
+                $documetSystemId = ($documentType->document_type) == 0 ? 108 : 113; 
+                $results = DocumentAttachments::where('documentSystemCode',$id)->where('documentSystemID', $documetSystemId)->where('envelopType',3)->count();   
+                
                 if($results == 0)
                 {
                     $bid_sub_data['doc_verifiy_yn'] = 1;
@@ -1245,9 +1263,10 @@ class DocumentAttachmentsAPIController extends AppBaseController
                     $bid_sub_data['doc_verifiy_date'] =  date('Y-m-d H:i:s');
                     $results = BidSubmissionMaster::where('id',$id)->update($bid_sub_data,$id);
                 }
-        
+                
+                $data['type'] = $documentType->document_type;
                 DB::commit();
-                return ['success' => true, 'message' => 'Successfully updated', 'data' => $results];
+                return ['success' => true, 'message' => 'Successfully updated', 'data' => $data];
             } catch (\Exception $e) {
                 DB::rollback();
                 Log::error($this->failed($e));
@@ -1256,5 +1275,23 @@ class DocumentAttachmentsAPIController extends AppBaseController
         }
 
 
+        private function getOldBidSubmissonCode($id){
+            $supplierTenderNegotiationsId = TenderBidNegotiation::select('bid_submission_master_id_old')->where('bid_submission_master_id_new', $id)
+                ->select('tender_id', 'bid_submission_master_id_old', 'tender_negotiation_id')
+                ->first();
+
+            if(isset($supplierTenderNegotiationsId)){
+                $TenderNegotiationArea = TenderNegotiationArea::select('tender_documents')
+                    ->where('tender_negotiation_id', $supplierTenderNegotiationsId
+                        ->tender_negotiation_id)->first();
+                if($TenderNegotiationArea->tender_documents == 0){
+                    $id = $supplierTenderNegotiationsId->bid_submission_master_id_old;
+                }
+
+                return $id;
+            }
+
+            return null;
+        }
 
 }

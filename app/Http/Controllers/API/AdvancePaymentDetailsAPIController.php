@@ -10,7 +10,9 @@ use App\Models\BookInvSuppDet;
 use App\Models\Company;
 use App\Models\MatchDocumentMaster;
 use App\Models\PaySupplierInvoiceMaster;
+use App\Models\TaxVatCategories;
 use App\Models\PoAdvancePayment;
+use App\Models\PurchaseOrderDetails;
 use App\Models\ProcumentOrder;
 use App\Repositories\AdvancePaymentDetailsRepository;
 use App\Repositories\PaySupplierInvoiceMasterRepository;
@@ -23,7 +25,10 @@ use Illuminate\Support\Facades\DB;
 use InfyOm\Generator\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
-
+use App\Models\SupplierAssigned;
+use App\Models\SupplierCurrency;
+use App\Models\SupplierMaster;
+use App\Models\BankAccount;
 /**
  * Class AdvancePaymentDetailsController
  * @package App\Http\Controllers\API
@@ -233,7 +238,11 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
         DB::beginTransaction();
         try {
             $input = $request->all();
-            $input = array_except($input, ['purchaseorder_by']);
+            $updateKey =isset($input['updateKey']) ? $input['updateKey'] : '';
+            $input = array_except($input, ['purchaseorder_by', 'subCategoryArray']);
+
+            $input = $this->convertArrayToValue($input);            
+
             /** @var AdvancePaymentDetails $advancePaymentDetails */
             $advancePaymentDetails = $this->advancePaymentDetailsRepository->findWithoutFail($id);
 
@@ -275,15 +284,63 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
                     return $this->sendError(trans('custom.payment_amount_cannot_be_greater_than_requested_amount'), 500, ['type' => 'amountmismatch']);
                 }
             }
-      
-           
+            
+            $paySupplierInvoiceMaster = $this->updatePVHeader($payMaster, $payMaster->companySystemID,$input["PayMasterAutoId"]);
+
+            $poData = ProcumentOrder::find($advancePaymentDetails->purchaseOrderID);
+            if ($updateKey == 'VAT') {
+                if ($input['VATAmount'] > $input["paymentAmount"]) {
+                    return $this->sendError("VAT Amount cannot be greater than Payment Amount", 500);
+                }
+
+                if ($poData && ($input['VATAmount'] > $poData->VATAmount)) {
+                    return $this->sendError("VAT Amount cannot be greater than PO total VAT", 500);
+                }
+                $input["VATPercentage"] = ($input["VATAmount"] / $input["paymentAmount"]) * 100;
+            } else if ($updateKey == 'percentage') {
+
+                if ($payMaster->advancePaymentTypeID == 0) {
+                    $input["VATAmount"] = ($input["VATPercentage"]/100) * $input["amountBeforeVAT"];
+                    $input["paymentAmount"] = $input['amountBeforeVAT'] + $input['VATAmount'];
+                } else {
+                    $input["VATAmount"] = ($input["VATPercentage"]/100) * $input["paymentAmount"];
+                }
+
+                if ($input['VATAmount'] > $input["paymentAmount"]) {
+                    return $this->sendError("VAT Amount cannot be greater than Payment Amount", 500);
+                }
+
+                if ($poData && ($input['VATAmount'] > $poData->VATAmount)) {
+                    return $this->sendError("VAT Amount cannot be greater than PO total VAT", 500);
+                }
+
+            } else {
+                if ($payMaster->applyVAT == 1 && $payMaster->advancePaymentTypeID == 1) {
+                    $advVAT = $poData ? (($poData->VATAmount / $poData->poTotalSupplierTransactionCurrency) * $input["paymentAmount"]) : 0;
+                    
+                    $input["VATAmount"] = $advVAT;
+                    $input["VATPercentage"] = ($input["VATAmount"] / $input["paymentAmount"]) * 100;
+                } else if ($payMaster->applyVAT == 1 && $payMaster->advancePaymentTypeID == 0) {
+                    $input["VATAmount"] = ($input["VATPercentage"]/100) * $input["amountBeforeVAT"];
+                    $input["paymentAmount"] = $input['amountBeforeVAT'] + $input['VATAmount'];
+                } else {
+                    $input["VATAmount"] = 0;
+                }
+            }
+
             $conversion = \Helper::convertAmountToLocalRpt(201, $id, $input["paymentAmount"]);
             $input['supplierDefaultAmount'] = $conversion['defaultAmount'];
             $input['localAmount'] = $conversion['localAmount'];
             $input['comRptAmount'] = $conversion['reportingAmount'];
             $input['supplierTransAmount'] = $input["paymentAmount"];
 
+            $conversionVAT = \Helper::convertAmountToLocalRpt(201, $id, $input["VATAmount"]);
+            $input["VATAmountLocal"] = $conversionVAT['localAmount'];
+            $input["VATAmountRpt"] = $conversionVAT['reportingAmount'];
             $advancePaymentDetails = $this->advancePaymentDetailsRepository->update($input, $id);
+
+
+            $this->updatePVDetail($paySupplierInvoiceMaster,$input['PayMasterAutoId']);
 
             if(isset($advancePayment))
             {
@@ -505,8 +562,24 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
                 return $this->sendError(trans('custom.you_cannot_delete_advance_payment_detail_this_document_already_confirmed'),500);
             }
 
+            $matchDocumentMasterAutoID = $advancePaymentDetails->matchingDocID;
+            
+            $payMaster = MatchDocumentMaster::find($matchDocumentMasterAutoID);
+
+            if (empty($payMaster)) {
+                return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.payment_voucher')]));
+            }
+
+            if($payMaster->matchingConfirmedYN){
+                return $this->sendError(trans('custom.you_cannot_delete_advance_payment_detail_this_document_already_confirmed'),500);
+            }
+
+            $payMaster['matchedAmount'] = $payMaster->matchedAmount - $advancePaymentDetails->paymentAmount;
+            $payMaster['matchingAmount'] = $payMaster->matchingAmount - $advancePaymentDetails->paymentAmount;
 
             $advancePaymentDetails->delete();
+            $payMaster->save();
+
 
             $advancePayment = PoAdvancePayment::find($advancePaymentDetails2->poAdvPaymentID);
 
@@ -558,10 +631,16 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
 
             /** @var AdvancePaymentDetails $advancePaymentDetails */
             $advancePaymentDetails = $this->advancePaymentDetailsRepository->findWhere(['matchingDocID' => $matchDocumentMasterAutoID]);
+            
+            $totalPaymentAmount = $this->advancePaymentDetailsRepository->findWhere(['matchingDocID' => $matchDocumentMasterAutoID])->sum('paymentAmount');
 
             if (empty($advancePaymentDetails)) {
                 return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.pay_supplier_invoice_detail')]));
             }
+
+            $payMaster['matchedAmount'] = $payMaster->matchedAmount - $totalPaymentAmount;
+            $payMaster['matchingAmount'] = $payMaster->matchingAmount - $totalPaymentAmount;
+            $payMaster->save();
 
             foreach ($advancePaymentDetails as $val) {
 
@@ -710,9 +789,55 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
                     unset($tempArray['poTotalSupplierTransactionCurrency']);
 
                     if ($tempArray) {
+                        $paySupplierInvoiceMaster = $this->updatePVHeader($payMaster, $new['companySystemID'],$input['PayMasterAutoId']);
+
+                        if ($payMaster->applyVAT == 1) {
+                            $poData = ProcumentOrder::find($new["purchaseOrderID"]);
+
+                            $advVAT = $poData ? (($poData->VATAmount / $poData->poTotalSupplierTransactionCurrency) * $tempArray["paymentAmount"]) : 0;
+
+                            $tempArray["VATAmount"] = $advVAT;
+
+                            $tempArray["VATPercentage"] = ($tempArray["VATAmount"] / $tempArray["paymentAmount"]) * 100;
+
+
+                            $checkVATTypeOfPO = PurchaseOrderDetails::select('vatMasterCategoryID', 'vatSubCategoryID')
+                                                                    ->where('purchaseOrderMasterID', $new["purchaseOrderID"])
+                                                                    ->whereNotNull('vatMasterCategoryID')
+                                                                    ->whereNotNull('vatSubCategoryID')
+                                                                    ->groupBy('vatMasterCategoryID', 'vatSubCategoryID')
+                                                                    ->get();
+
+                            if (count($checkVATTypeOfPO) == 1) {
+                                $vatCategoryData = collect($checkVATTypeOfPO)->first();
+
+                                $tempArray["vatMasterCategoryID"] = $vatCategoryData->vatMasterCategoryID;
+                                $tempArray["vatSubCategoryID"] = $vatCategoryData->vatSubCategoryID;
+                            } else if (count($checkVATTypeOfPO) > 1) {
+                                $companySystemID = $new['companySystemID'];
+                                $defaultVAT = TaxVatCategories::whereHas('tax', function ($q) use ($companySystemID) {
+                                                                $q->where('companySystemID', $companySystemID)
+                                                                    ->where('isActive', 1)
+                                                                    ->where('taxCategory', 2);
+                                                            })
+                                                            ->whereHas('main', function ($q) {
+                                                                $q->where('isActive', 1);
+                                                            })
+                                                            ->where('isActive', 1)
+                                                            ->where('isDefault', 1)
+                                                            ->first();
+
+                                if ($defaultVAT) {
+                                    $tempArray['vatSubCategoryID'] = $defaultVAT->taxVatSubCategoriesAutoID;
+                                    $tempArray['vatMasterCategoryID'] = $defaultVAT->mainCategory;
+                                }
+                            }
+                        }
+
+
                         $paySupplierInvoiceDetails = $this->advancePaymentDetailsRepository->create($tempArray);
-                        $conversion = \Helper::convertAmountToLocalRpt(201, $paySupplierInvoiceDetails->advancePaymentDetailAutoID, $new["BalanceAmount"]);
-                        AdvancePaymentDetails::where('advancePaymentDetailAutoID', $paySupplierInvoiceDetails->advancePaymentDetailAutoID)->update(['supplierDefaultAmount' => $conversion['defaultAmount'], 'localAmount' => $conversion['localAmount'], 'comRptAmount' => $conversion['reportingAmount']]);
+
+                        $this->updatePVDetail($paySupplierInvoiceMaster,$input['PayMasterAutoId']);
 
                         $advancePayment = PoAdvancePayment::find($new['poAdvPaymentID']);
 
@@ -757,34 +882,66 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
             $input = $request->all();
             $paysupplierMaster = PaySupplierInvoiceMaster::find($input['PayMasterAutoId']);
 
-           
+            $paySupplierInvoiceMaster = $this->updatePVHeader($paysupplierMaster, $input['companySystemID'],$input['PayMasterAutoId']);
 
+            $amountBeforeVAT = 0;
+            if ($paysupplierMaster->applyVAT == 1) {
+                $companySystemID = $paysupplierMaster->companySystemID;
+                $defaultVAT = TaxVatCategories::whereHas('tax', function ($q) use ($companySystemID) {
+                                                $q->where('companySystemID', $companySystemID)
+                                                    ->where('isActive', 1)
+                                                    ->where('taxCategory', 2);
+                                            })
+                                            ->whereHas('main', function ($q) {
+                                                $q->where('isActive', 1);
+                                            })
+                                            ->where('isActive', 1)
+                                            ->where('isDefault', 1)
+                                            ->first();
+
+                if ($defaultVAT) {
+                    $tempArray['vatSubCategoryID'] = $defaultVAT->taxVatSubCategoriesAutoID;
+                    $tempArray['vatMasterCategoryID'] = $defaultVAT->mainCategory;
+                    $tempArray['VATPercentage'] = $defaultVAT->percentage;
+                } else {
+                    DB::rollBack();
+                    return $this->sendError("Default VAT not configured");
+                }
+
+                $amountBeforeVAT = (isset($input['amountBeforeVAT']) ? $input['amountBeforeVAT'] : 0);
+
+                $tempArray['VATAmount'] = $amountBeforeVAT * ($tempArray['VATPercentage']/100);
+                $tempArray['amountBeforeVAT'] = $amountBeforeVAT;
+            } else {
+                $tempArray['VATAmount'] = 0;
+                $tempArray['amountBeforeVAT'] = 0;
+            }
+
+            $paymentAmount = ($paysupplierMaster->applyVAT == 1) ? ($amountBeforeVAT + $tempArray['VATAmount']) : $input['paymentAmount'];
 
 
             $tempArray['PayMasterAutoId'] = $input['PayMasterAutoId'];
             $tempArray['comments'] = $input['comment'];
-            $tempArray['paymentAmount'] = $input['paymentAmount'];
-            $tempArray['localAmount'] = $input['paymentAmount'];
+            $tempArray['paymentAmount'] = $paymentAmount;
+            $tempArray['localAmount'] = $paymentAmount;
             $tempArray['companySystemID'] = $input['companySystemID'];
             $tempArray['companyID'] = $paysupplierMaster->CompanyID;
             $tempArray['supplierTransCurrencyID'] = $paysupplierMaster->supplierTransCurrencyID;
             $tempArray['supplierTransER'] = $paysupplierMaster->supplierTransCurrencyER;
-            $tempArray['supplierDefaultCurrencyID'] = $paysupplierMaster->supplierDefCurrencyID;
-            $tempArray['supplierDefaultCurrencyER'] = $paysupplierMaster->supplierDefCurrencyER;
-            $tempArray['localCurrencyID'] = $paysupplierMaster->localCurrencyID;
-            $tempArray['localER'] = $paysupplierMaster->localCurrencyER;
-            $tempArray['comRptCurrencyID'] = $paysupplierMaster->companyRptCurrencyID;
-            $tempArray['comRptER'] = $paysupplierMaster->companyRptCurrencyER;
-            $tempArray['supplierDefaultAmount'] = $input['paymentAmount'];
-            $tempArray['supplierTransAmount'] = $input['paymentAmount'];
+            $tempArray['supplierDefaultCurrencyID'] = $paySupplierInvoiceMaster->supplierDefCurrencyID;
+            $tempArray['supplierDefaultCurrencyER'] = $paySupplierInvoiceMaster->supplierDefCurrencyER;
+            $tempArray['localCurrencyID'] = $paySupplierInvoiceMaster->localCurrencyID;
+            $tempArray['localER'] = $paySupplierInvoiceMaster->localCurrencyER;
+            $tempArray['comRptCurrencyID'] = $paySupplierInvoiceMaster->companyRptCurrencyID;
+            $tempArray['comRptER'] = $paySupplierInvoiceMaster->companyRptCurrencyER;
+            $tempArray['supplierDefaultAmount'] = $paymentAmount;
+            $tempArray['supplierTransAmount'] = $paymentAmount;
             $tempArray['comRptAmount'] = $paysupplierMaster->payAmountCompRpt;
 
-
-        
             $paySupplierInvoiceDetails = $this->advancePaymentDetailsRepository->create($tempArray);
-            $conversion = \Helper::convertAmountToLocalRpt(201, $paySupplierInvoiceDetails->advancePaymentDetailAutoID, $input["paymentAmount"]);
-            AdvancePaymentDetails::where('advancePaymentDetailAutoID', $paySupplierInvoiceDetails->advancePaymentDetailAutoID)->update(['supplierDefaultAmount' => $conversion['defaultAmount'], 'localAmount' => $conversion['localAmount'], 'comRptAmount' => $conversion['reportingAmount']]);
+            $this->updatePVDetail($paySupplierInvoiceMaster,$input['PayMasterAutoId']);
 
+ 
 
             DB::commit();
             return $this->sendResponse('', trans('custom.save', ['attribute' => trans('custom.payment_details')]));
@@ -792,6 +949,88 @@ class AdvancePaymentDetailsAPIController extends AppBaseController
             DB::rollBack();
             return $this->sendError($exception->getMessage());
         }
+    }
+    private function updatePVDetail($paySupplierInvoiceMaster,$id)
+    {
+        $detailLevelPayments = AdvancePaymentDetails::where('PayMasterAutoId',$id)->get();
+        foreach($detailLevelPayments as $payment)
+        {
+
+            AdvancePaymentDetails::where('advancePaymentDetailAutoID', $payment->advancePaymentDetailAutoID)->update(
+                [
+                'supplierDefaultCurrencyID' => $paySupplierInvoiceMaster->supplierDefCurrencyID,
+                'supplierDefaultCurrencyER' => $paySupplierInvoiceMaster->supplierDefCurrencyER,
+                'localCurrencyID' => $paySupplierInvoiceMaster->localCurrencyID,
+                'localER' => $paySupplierInvoiceMaster->localCurrencyER,
+                'comRptCurrencyID' => $paySupplierInvoiceMaster->companyRptCurrencyID,
+                'comRptER' => $paySupplierInvoiceMaster->companyRptCurrencyER,
+                ]);
+
+            $conversion = \Helper::convertAmountToLocalRpt(201, $payment->advancePaymentDetailAutoID, $payment->paymentAmount);
+            AdvancePaymentDetails::where('advancePaymentDetailAutoID', $payment->advancePaymentDetailAutoID)->update(
+                ['supplierDefaultAmount' => $conversion['defaultAmount'], 
+                'localAmount' => $conversion['localAmount'],
+                'comRptAmount' => $conversion['reportingAmount'], 
+                ]);
+
+            $conversionVAT = \Helper::convertAmountToLocalRpt(201, $payment->advancePaymentDetailAutoID, $payment->VATAmount);
+            AdvancePaymentDetails::where('advancePaymentDetailAutoID', $payment->advancePaymentDetailAutoID)->update(
+                ['VATAmountLocal' => $conversionVAT['localAmount'],
+                'VATAmountRpt' => $conversionVAT['reportingAmount'], 
+                ]);
+
+        }
+    }
+    private function updatePVHeader($paysupplierMaster,$companyId,$id)
+    {
+        if (isset($paysupplierMaster->BPVsupplierID) && !empty($paysupplierMaster->BPVsupplierID)) {
+            $supDetail = SupplierAssigned::where('supplierCodeSytem', $paysupplierMaster->BPVsupplierID)->where('companySystemID', $companyId)->first();
+
+            $supCurrency = SupplierCurrency::where('supplierCodeSystem', $paysupplierMaster->BPVsupplierID)->where('isAssigned', -1)->where('isDefault', -1)->first();
+
+            $masterArray['supplierTransCurrencyER'] = 1;
+            if ($supCurrency) {
+                $masterArray['supplierDefCurrencyID'] = $supCurrency->currencyID;
+                $currencyConversionDefaultMaster = \Helper::currencyConversion($companyId, $paysupplierMaster->supplierTransCurrencyID, $supCurrency->currencyID, 0);
+                if ($currencyConversionDefaultMaster) {
+                    $masterArray['supplierDefCurrencyER'] = $currencyConversionDefaultMaster['transToDocER'];
+                }
+            }
+            $supplier = SupplierMaster::find($paysupplierMaster->BPVsupplierID);
+            $masterArray['directPaymentPayee'] = $supplier->supplierName;
+        } else {
+            $masterArray['supplierTransCurrencyER'] = 1;
+            $masterArray['supplierDefCurrencyID'] = $paysupplierMaster->supplierTransCurrencyID;
+            $masterArray['supplierDefCurrencyER'] = 1;
+        }
+
+        
+        $bankAccount = BankAccount::find($paysupplierMaster->BPVAccount);
+        if ($bankAccount) {
+            $masterArray['BPVbankCurrency'] = $bankAccount->accountCurrencyID;
+            $currencyConversionDefaultMaster = \Helper::currencyConversion($companyId, $paysupplierMaster->supplierTransCurrencyID, $bankAccount->accountCurrencyID, 0);
+            if ($currencyConversionDefaultMaster) {
+                $masterArray['BPVbankCurrencyER'] = $currencyConversionDefaultMaster['transToDocER'];
+            }
+        }
+
+
+
+        $companyCurrency = \Helper::companyCurrency($companyId);
+        if ($companyCurrency) {
+            $masterArray['localCurrencyID'] = $companyCurrency->localcurrency->currencyID;
+            $masterArray['companyRptCurrencyID'] = $companyCurrency->reportingcurrency->currencyID;
+            $companyCurrencyConversion = \Helper::currencyConversion($companyId, $paysupplierMaster->supplierTransCurrencyID, $paysupplierMaster->supplierTransCurrencyID, 0);
+            if ($companyCurrencyConversion) {
+                $masterArray['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
+                $masterArray['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
+            }
+        }
+
+        $paySupplierInvoiceMaster = $this->paySupplierInvoiceMasterRepository->update($masterArray, $id);
+
+        return $paySupplierInvoiceMaster;
+
     }
 
     public function addADVPaymentDetailForDirectPay(Request $request)

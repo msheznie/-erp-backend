@@ -163,6 +163,7 @@ class AdvancePaymentDetails extends Model
         'purchaseOrderCode',
         'comments',
         'paymentAmount',
+        'amountBeforeVAT',
         'supplierTransCurrencyID',
         'supplierTransER',
         'supplierDefaultCurrencyID',
@@ -175,7 +176,13 @@ class AdvancePaymentDetails extends Model
         'supplierTransAmount',
         'localAmount',
         'comRptAmount',
+        'VATAmount',
+        'VATAmountRpt',
+        'VATAmountLocal',
         'timesReferred',
+        'VATPercentage',
+        'vatMasterCategoryID',
+        'vatSubCategoryID',
         'timeStamp'
     ];
 
@@ -194,6 +201,7 @@ class AdvancePaymentDetails extends Model
         'purchaseOrderCode' => 'string',
         'comments' => 'string',
         'paymentAmount' => 'float',
+        'amountBeforeVAT' => 'float',
         'supplierTransCurrencyID' => 'integer',
         'supplierTransER' => 'float',
         'supplierDefaultCurrencyID' => 'integer',
@@ -201,11 +209,17 @@ class AdvancePaymentDetails extends Model
         'localCurrencyID' => 'integer',
         'localER' => 'float',
         'comRptCurrencyID' => 'integer',
+        'vatMasterCategoryID' => 'integer',
+        'vatSubCategoryID' => 'integer',
         'comRptER' => 'float',
         'supplierDefaultAmount' => 'float',
         'supplierTransAmount' => 'float',
+        'VATAmount' => 'float',
+        'VATAmountRpt' => 'float',
+        'VATAmountLocal' => 'float',
         'localAmount' => 'float',
         'comRptAmount' => 'float',
+        'VATPercentage' => 'float',
         'timesReferred' => 'integer'
     ];
 

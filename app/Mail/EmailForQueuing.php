@@ -8,6 +8,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Support\Facades\Log;
 use Sichikawa\LaravelSendgridDriver\SendGrid;
+use App\Models\AppearanceSettings;
 
 class EmailForQueuing extends Mailable implements ShouldQueue
 {
@@ -19,17 +20,21 @@ class EmailForQueuing extends Mailable implements ShouldQueue
     public $to;
     public $mailAttachment;
     public $mailAttachmentList;
+    public $color;
+    public $text;
     /**
      * Create a new message instance.
      *
      * @return void
      */
-    public function __construct($subject, $content, $attachment = '', $attachmentList = [])
+    public function __construct($subject, $content, $attachment = '', $attachmentList = [],$color = '#C23C32',$text = 'GEARS')
     {
         $this->subject = $subject;
         $this->content = $content;
         $this->mailAttachment = $attachment;
         $this->mailAttachmentList = $attachmentList;
+        $this->color = $color;
+        $this->text = $text;
         if(env('IS_MULTI_TENANCY',false)){
             self::onConnection('database_main');
         }else{
@@ -44,7 +49,8 @@ class EmailForQueuing extends Mailable implements ShouldQueue
      */
     public function build()
     {
-       $mail = $this->view('email.default_email')
+
+       $mail = $this->view('email.default_email',['color' => $this->color,'text' => $this->text])
                     ->subject($this->subject)
                     ->sendgrid([
                         'personalizations' => [

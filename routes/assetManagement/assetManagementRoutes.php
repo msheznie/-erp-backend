@@ -33,7 +33,6 @@ Route::group([], function(){
 
 });
 
-
 //transaction - Asset Depreciation
 Route::group([], function() {
     Route::post('getAllDepreciationByCompany', 'FixedAssetDepreciationMasterAPIController@getAllDepreciationByCompany')->name('Get depreciation by company');
@@ -54,7 +53,11 @@ Route::group([], function() {
 Route::group([], function(){
     Route::post('getAllAllocationByCompany', 'FixedAssetMasterAPIController@getAllAllocationByCompany')->name("Get asset allocation");
     Route::get('getFAGrvDetailsByID', 'FixedAssetMasterAPIController@getFAGrvDetailsByID')->name("Get FAGrv Details");
+    Route::post('getAllocatedAssetsForExpense', 'ExpenseAssetAllocationAPIController@getAllocatedAssetsForExpense')->name("Get Allocated Assets For Expense");
+    Route::get('getCompanyAsset', 'ExpenseAssetAllocationAPIController@getCompanyAsset')->name('Get company asset');
+
     Route::resource('fixed_asset_masters', 'FixedAssetMasterAPIController');
+    Route::resource('expense_asset_allocations', 'ExpenseAssetAllocationAPIController');
 });
 
 
@@ -73,7 +76,6 @@ Route::group([], function(){
     Route::post('createFixedAssetCosting', 'FixedAssetMasterAPIController@create')->name("Create Fixed Asset Costing");
     Route::get('downloadAssetTemplate', 'FixedAssetMasterAPIController@downloadAssetTemplate')->name("Download Asset Template");
     Route::post('assetCostingUpload', 'FixedAssetMasterAPIController@assetCostingUpload')->name("Asset Costing Upload");
-    Route::post('genearetBarcode', 'BarcodeConfigurationAPIController@genearetBarcode')->name("Generate Barcode");
     Route::get('getAssetCostingMaster', 'FixedAssetMasterAPIController@getAssetCostingMaster')->name("Get Asset Costing Master");
     Route::resource('asset_warranties', 'AssetWarrantyAPIController');
     Route::post('getWarranty', 'AssetWarrantyAPIController@getWarranty')->name("Get asset warranty");
@@ -140,6 +142,12 @@ Route::group([], function(){
     Route::get('getAssetTransferMasterRecord', 'ERPAssetTransferAPIController@getAssetTransferMasterRecord')->name("Fetch Asset transfer Master Record");
     Route::post('assetTransferReopen', 'ERPAssetTransferAPIController@assetTransferReopen')->name("Reopen Asset transfer");
     Route::get('asset-request-details', 'AssetRequestDetailAPIController@getAssetRequestDetails')->name("Get Asset Request Details");
+    Route::post('getEmployeesToSelectDrpdwn', 'ERPAssetTransferAPIController@getEmployeesToSelectDrpdwn')->name("Get Employees to Direct to Employee type asset transfer");
+    Route::get('asset-employee-value','ERPAssetTransferDetailAPIController@getAssetEmployeeValue')->name('Get Asset Assigned Employee value');
+    Route::post('getDepartmentList','ERPAssetTransferDetailAPIController@getDepartmentList')->name('Get department list');
+    Route::post('getDepartmentOfAsset','ERPAssetTransferDetailAPIController@getDepartmentOfAsset')->name('Get department of asset');
+
+    
 });
 
 
@@ -156,5 +164,27 @@ Route::group([], function(){
         });
     });
 
+});
+
+
+//Report - Asset Insuarance
+Route::group([], function(){
+    Route::post('generateAssetInsuranceReport', 'FixedAssetMasterAPIController@generateAssetInsuranceReport')->name('Generate Asset Insurance Report');
+    Route::post('exportAssetInsuranceReport', 'FixedAssetMasterAPIController@exportAssetInsuranceReport')->name('Export Asset Insurance Report');
+
+});
+
+//Asset Management - Barcode Configuration
+Route::group([], function(){
+    Route::post('getAllBarCodeConf', 'BarcodeConfigurationAPIController@getAllBarCodeConf')->name('Get All Barcode Configuration');
+    Route::get('getBarcodeConfigurationFormData', 'BarcodeConfigurationAPIController@getBarcodeConfigurationFormData')->name('Get Barcode Configuration');
+    Route::resource('barcode_configurations', 'BarcodeConfigurationAPIController');
+
+
+});
+
+//Report - CWIP Movement
+Route::group([], function(){
+    Route::post('assetCWIPDrillDown', 'AssetManagementReportAPIController@assetCWIPDrillDown')->name('Asset cwip drill down');
 });
 

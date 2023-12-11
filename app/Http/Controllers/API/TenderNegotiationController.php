@@ -14,6 +14,7 @@ use App\Models\TenderFinalBids;
 use App\Models\TenderNegotiationArea;
 use App\Models\TenderNegotiation;
 use App\Models\BidSubmissionMaster;
+use App\Models\Company;
 use App\Models\SupplierTenderNegotiation;
 use App\Models\SrmTenderBidEmployeeDetails;
 use App\Models\YesNoSelection;
@@ -66,7 +67,7 @@ class TenderNegotiationController extends AppBaseController
         $tenderMaster = TenderMaster::find($input['srm_tender_master_id'])->select('min_approval_bid_opening')->first();
         $input['no_to_approve'] =  ($tenderMaster) ? $tenderMaster->min_approval_bid_opening :  0;
         $updateTenderMasterRecord = $this->updateTenderMasterRecord($input);
-
+   
         if(!isset($updateTenderMasterRecord)) {
             return $this->sendError('Tender Master not found!', 404);
         }
@@ -172,10 +173,14 @@ class TenderNegotiationController extends AppBaseController
 
     public function updateTenderMasterRecord($input) {
 
-        $tender = TenderMaster::where('id',$input['srm_tender_master_id'])->select('is_negotiation_started','id','currency_id')->first();
-
+        $tenderMaster = TenderMaster::select('is_negotiation_started','id','currency_id','negotiation_serial_no','negotiation_code','company_id');
+        $tenderList = $tenderMaster->get(); 
+        $tender = $tenderMaster->where('id',$input['srm_tender_master_id'])->first(); 
         if($tender) {
-            $tender->is_negotiation_started = 1;
+            $tender->is_negotiation_started = 1;   
+            $negotiationCode = $this->generateNegotiationSerial($input['companySystemID'],$tenderList);  
+            $tender->negotiation_code = $negotiationCode['code']; 
+            $tender->negotiation_serial_no = $negotiationCode['lastSerialNo']; 
             $tender->save();
             return $tender;
         }
@@ -196,7 +201,7 @@ class TenderNegotiationController extends AppBaseController
             $sort = 'desc';
         }
         $tenderId = $request['tenderId'];
-        $query = TenderFinalBids::select('id','status','award','bid_id','com_weightage','supplier_id','tender_id','total_weightage','tech_weightage')->with(['supplierTenderNegotiation' => function ($a) {
+        $query = TenderFinalBids::select('id','status','award','bid_id','com_weightage','supplier_id','tender_id','total_weightage','tech_weightage', 'combined_ranking')->with(['supplierTenderNegotiation' => function ($a) {
             $a->select('id','srm_bid_submission_master_id','bidSubmissionCode','tender_negotiation_id','suppliermaster_id');
         },'bid_submission_master' => function ($q) {
             $q->select('bidSubmittedDatetime','bidSubmissionCode','line_item_total','id','supplier_registration_id')->with(['SupplierRegistrationLink' => function ($s) {
@@ -449,6 +454,31 @@ class TenderNegotiationController extends AppBaseController
         }
 
         return ['status' => true,'message' =>'Area updated success'];  
+
+    }
+
+    public function generateNegotiationSerial($companyId,$tenderList){  
+        $company = Company::where('companySystemID', $companyId)->select('companySystemID', 'CompanyID')->first();
+
+        $tenderCollection = collect($tenderList); 
+        $tenderCollection = $tenderCollection->sortByDesc('negotiation_serial_no'); 
+        $firstNegotiation = $tenderCollection->first();   
+        $lastSerial = $firstNegotiation->negotiation_serial_no;   
+        $lastSerialNumber = 1;
+        if ($lastSerial) {
+            $lastSerialNumber = intval($lastSerial) + 1;
+        }
+
+
+       
+        $documentCode = 'NTNDR';
+
+        $code = ($company->CompanyID . '/' . $documentCode . '/' . str_pad($lastSerialNumber, 6, '0', STR_PAD_LEFT)); 
+        $data = [
+            'code'=>$code,
+            'lastSerialNo' => $lastSerialNumber
+        ];
+        return $data;
 
     }
 }

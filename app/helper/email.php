@@ -71,6 +71,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use App\Models\DocumentModifyRequest;
 use Response;
+use App\Models\AppearanceSettings;
 
 class email
 {
@@ -514,6 +515,20 @@ class email
 
             $data['emailAlertMessage'] = $temp;
 
+            $color = '#C23C32';
+            $colorObj= AppearanceSettings::where('appearance_system_id', 1)->where('appearance_element_id', 1)->first();
+            if($colorObj)
+            {
+                 $color = $colorObj->value;
+            }
+     
+            $text = 'GEARS';
+            $textObj= AppearanceSettings::where('appearance_system_id', 1)->where('appearance_element_id', 7)->first();
+            if($textObj)
+            {
+                 $text = $textObj->value;
+            }
+
             // IF Policy Send emails from Sendgrid is on -> send email through Sendgrid
             if ($data) {
                 $hasPolicy = CompanyPolicyMaster::where('companySystemID', $data['companySystemID'])
@@ -527,7 +542,7 @@ class email
                     if (isset($data['empEmail']) && $data['empEmail']) {
                         $data['empEmail'] = self::emailAddressFormat($data['empEmail']);
                         if ($data['empEmail']) {
-                            Mail::to($data['empEmail'])->send(new EmailForQueuing($data['alertMessage'], $data['emailAlertMessage'], $data['attachmentFileName']));
+                            Mail::to($data['empEmail'])->send(new EmailForQueuing($data['alertMessage'], $data['emailAlertMessage'], $data['attachmentFileName'],[],$color,$text));
                         }
                     }
                     Log::info('email sent success fully to :' . $data['empEmail']);
@@ -547,6 +562,21 @@ class email
     public static function sendEmailErp($data)
     {
         Log::info('Send Email Erp funtion start');
+
+        $color = '#C23C32';
+        $colorObj= AppearanceSettings::where('appearance_system_id', 1)->where('appearance_element_id', 1)->first();
+        if($colorObj)
+        {
+             $color = $colorObj->value;
+        }
+ 
+        $text = 'GEARS';
+        $textObj= AppearanceSettings::where('appearance_system_id', 1)->where('appearance_element_id', 7)->first();
+        if($textObj)
+        {
+             $text = $textObj->value;
+        }
+
         $hasPolicy = CompanyPolicyMaster::where('companySystemID', $data['companySystemID'])
             ->where('companyPolicyCategoryID', 37)
             ->where('isYesNO', 1)
@@ -558,7 +588,7 @@ class email
             if (isset($data['empEmail']) && $data['empEmail']) {
                 $data['empEmail'] = self::emailAddressFormat($data['empEmail']);
                 if ($data['empEmail']) {
-                    Mail::to($data['empEmail'])->send(new EmailForQueuing($data['alertMessage'], $data['emailAlertMessage'], $data['attachmentFileName'],$data['attachmentList']));
+                    Mail::to($data['empEmail'])->send(new EmailForQueuing($data['alertMessage'], $data['emailAlertMessage'], $data['attachmentFileName'],$data['attachmentList'],$color,$text));
                 }
             }
             Log::info('email sent success fully to - :' . $data['empEmail']);

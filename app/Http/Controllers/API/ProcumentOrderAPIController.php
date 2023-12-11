@@ -988,7 +988,7 @@ class ProcumentOrderAPIController extends AppBaseController
             $accountValidationArray = [];
             foreach ($poDetails as $key => $value) {
                 if (is_null($value->itemFinanceCategoryID)) {
-                    $accountValidationArray[] = "Finance category of " . $value->itemPrimaryCode . " not found";
+                    $accountValidationArray[3][] = "Finance category of " . $value->itemPrimaryCode . " not found";
                 } else {
                     switch ($value->itemFinanceCategoryID) {
                         case 1:
@@ -1027,6 +1027,11 @@ class ProcumentOrderAPIController extends AppBaseController
                 if (isset($accountValidationArray[2])) {
                     $itemsB = implode(", ", $accountValidationArray[2]);
                     $accountValidationErrrArray[] = "Expense account configuration is not done correctly. Activate includePLforGRVYN for the item(s) " . $itemsB;
+                }
+
+                if (isset($accountValidationArray[3])) {
+                    $itemsC = implode(", ", $accountValidationArray[3]);
+                    $accountValidationErrrArray[] = $itemsC;
                 }
                 return $this->sendError($accountValidationErrrArray, 420);
             }
@@ -1120,7 +1125,8 @@ class ProcumentOrderAPIController extends AppBaseController
 
             // return abs($poMasterSumDeducted - $paymentTotalSum['paymentTotalSum']);
 
-            $paymentTotalSumComp = round($paymentTotalSum['paymentTotalSum'], $supplierCurrencyDecimalPlace);
+            $paymentTotalSumComp = floatval(sprintf("%.".$supplierCurrencyDecimalPlace."f", $paymentTotalSum['paymentTotalSum']));
+
 
             if ($paymentTotalSumComp > 0) {
                 if (abs(($poMasterSumDeducted - $paymentTotalSumComp) / $paymentTotalSumComp) < 0.00001) {
@@ -1130,7 +1136,6 @@ class ProcumentOrderAPIController extends AppBaseController
             }
 
 
-   
             $poAdvancePaymentType = PoPaymentTerms::where("poID", $input['purchaseOrderID'])
                 ->get();
 
@@ -6903,7 +6908,7 @@ group by purchaseOrderID,companySystemID) as pocountfnal
         }
         $tracingData['documentSystemID'] = $purchaseRequest->documentSystemID;
         $tracingData['docAutoID'] = $purchaseRequest->purchaseRequestID;
-        $tracingData['title'] = "{Doc Code :} " . $purchaseRequest->purchaseRequestCode . " -- {Doc Date :} " . Carbon::parse($purchaseRequest->PRRequestedDate)->format('Y-m-d') . " -- {Currency :} " . $purchaseRequest->currency_by->CurrencyCode . "-- {Amount :} " . number_format($purchaseRequest->poTotalSupplierTransactionCurrency, $purchaseRequest->currency_by->DecimalPlaces) . $cancelStatus;
+        $tracingData['title'] = "{Doc Code :} " . $purchaseRequest->purchaseRequestCode . " -- {Doc Date :} " . Carbon::parse($purchaseRequest->PRRequestedDate)->format('Y-m-d') . " -- {Currency :} " . $purchaseRequest->currency_by ? $purchaseRequest->currency_by->CurrencyCode : "" . "-- {Amount :} " . number_format($purchaseRequest->poTotalSupplierTransactionCurrency, $purchaseRequest->currency_by ? $purchaseRequest->currency_by->DecimalPlaces : 2) . $cancelStatus;
 
 
         foreach ($poData as $keyPo => $valuePo) {

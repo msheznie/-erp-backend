@@ -51,6 +51,8 @@ use Illuminate\Support\Facades\DB;
 use App\helper\CreateExcel;
 use App\Models\Employee;
 use Illuminate\Support\Facades\Storage;
+use App\Models\SystemGlCodeScenarioDetail;
+
 ini_set('max_execution_time', 500);
 
 class FinancialReportAPIController extends AppBaseController
@@ -623,7 +625,7 @@ class FinancialReportAPIController extends AppBaseController
         $toDate = new Carbon($request->toDate);
         $toDate = $toDate->format('Y-m-d');
 
-
+        
             $companyID = $request->comapnyID;
 
             $companyCurrency = \Helper::companyCurrency($companyID);
@@ -646,7 +648,7 @@ class FinancialReportAPIController extends AppBaseController
             $typeID = (array)$input['typeID'];
             $typeID = collect($typeID)->pluck('id');
         }
-
+        
        $data = $this->getGeneralLedgerQueryData($fromDate,$toDate,$typeID,$companyID);
        $refAmounts = $this->getGeneralLedgerRefAmount();
 
@@ -2926,7 +2928,24 @@ srp_erp_ioubookingmaster.approvedYN = 1
 
                 $data = array();
                 if ($output) {
-                    $x = 0;
+                    if($request->glAccountTypeID == 1) {
+                        $data[0]['Document Code'] = '';
+                        $data[0]['Document Date'] = '';
+                        $data[0]['Document Narration'] = 'Opening Balance';
+
+                        if ($checkIsGroup->isGroup == 0) {
+                            $data[0]['Debit (Local Currency - ' . $currencyLocal . ')'] = round($request->openingBalance['openingBalDebitLocal'], $decimalPlaceLocal);
+                            $data[0]['Credit (Local Currency - ' . $currencyLocal . ')'] = round($request->openingBalance['openingBalCreditLocal'], $decimalPlaceLocal);
+                        }
+
+                        $data[0]['Debit (Reporting Currency - ' . $currencyRpt . ')'] = round($request->openingBalance['openingBalDebitRpt'], $decimalPlaceRpt);
+                        $data[0]['Credit (Reporting Currency - ' . $currencyRpt . ')'] = round($request->openingBalance['openingBalCreditRpt'], $decimalPlaceRpt);
+
+                        $x = 1;    
+                    } else {
+                        $x = 0;
+                    }
+                    
                     foreach ($output as $val) {
                         if ($request->reportSD == 'company_wise') {
                             $data[$x]['Company ID'] = $val->companyID;
@@ -3429,7 +3448,7 @@ srp_erp_ioubookingmaster.approvedYN = 1
                 $to_date = \Helper::dateFormat($request->toDate);
                 $from_date = \Helper::dateFormat($request->fromDate);
                 $cur = null;
-                $title = "Financial General Ledeger Details";
+                $title = "Financial General Ledger";
 
                 $companyCode = isset($companyCurrency->CompanyID)?$companyCurrency->CompanyID:'common';
 
@@ -3679,7 +3698,7 @@ srp_erp_ioubookingmaster.approvedYN = 1
         $serviceLines = join(',', array_map(function ($sl) {
             return $sl['serviceLineSystemID'];
         }, $request->selectedServicelines));
-
+   
         $query = 'SELECT
                         companySystemID,
                         companyID,
@@ -3690,11 +3709,11 @@ srp_erp_ioubookingmaster.approvedYN = 1
                         glAccountType,
                         glAccountTypeID,
                         documentLocalCurrencyID,
-                        IF((SUM( documentLocalAmount))<0,0,(SUM(documentLocalAmount))) AS documentLocalAmountDebit,
-                        IF((SUM( documentLocalAmount))<0,(SUM(documentLocalAmount*-1)),0) AS documentLocalAmountCredit,
+                        SUM(IF(documentLocalAmount >= 0, documentLocalAmount, 0)) AS documentLocalAmountDebit,
+                        SUM(IF(documentLocalAmount < 0, -documentLocalAmount, 0)) AS documentLocalAmountCredit,
                         documentRptCurrencyID,
-                        IF((SUM( documentRptAmount))<0,0,(SUM(documentRptAmount))) AS documentRptAmountDebit,
-                        IF((SUM( documentRptAmount))<0,(SUM(documentRptAmount*-1)),0) AS documentRptAmountCredit
+                        SUM(IF(documentRptAmount >= 0, documentRptAmount, 0)) AS documentRptAmountDebit,
+                        SUM(IF(documentRptAmount < 0, -documentRptAmount, 0)) AS documentRptAmountCredit
                     FROM
                         (
                     SELECT
@@ -4462,11 +4481,12 @@ srp_erp_ioubookingmaster.approvedYN = 1
 
         $dateQry = '';
         if ($chartOfAccount) {
-            if ($chartOfAccount->catogaryBLorPLID == 2) {
-                $dateQry = 'DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"';
-            } else {
-                $dateQry = 'DATE(erp_generalledger.documentDate) <= "' . $toDate . '" ';
-            }
+            // if ($chartOfAccount->catogaryBLorPLID == 2) {
+            //     $dateQry = 'DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"';
+            // } else {
+            //     $dateQry = 'DATE(erp_generalledger.documentDate) <= "' . $toDate . '" ';
+            // }
+            $dateQry = 'DATE(erp_generalledger.documentDate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '"';
         }
 
         $query = 'SELECT erp_generalledger.companyID,
@@ -6850,6 +6870,7 @@ GROUP BY
                             $fromDate = Carbon::parse($financeYear->bigginingDate)->format('Y-m-d');
                             $toDate = Carbon::parse($period->dateTo)->format('Y-m-d');
                         }
+
                         $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') >= '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') <= '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
     $currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && (chartofaccounts.controlAccounts = 'BSL' OR chartofaccounts.controlAccounts = 'BSE'),$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
                     } else if ($request->accountType == 1) {
@@ -6867,10 +6888,16 @@ GROUP BY
                 }
                 if ($val->shortCode == 'LYYTD') {
                     if ($request->accountType == 2) {
+                        
                         if ($request->dateType == 2) {
                             $fromDate = Carbon::parse($financeYear->bigginingDate)->subYear()->format('Y-m-d');
                             $toDate = Carbon::parse($period->dateTo)->subYear()->format('Y-m-d');
                         }
+                        else if ($request->dateType == 1) {
+                            $toDate = Carbon::parse($toDate)->subYear()->format('Y-m-d');
+                            $fromDate = Carbon::parse($fromDate)->subYear()->format('Y-m-d');
+                        }
+
                         $columnArray[$val->shortCode] = "IFNULL(SUM(if(DATE_FORMAT(documentDate,'%Y-%m-%d') >= '" . $fromDate . "' AND DATE_FORMAT(documentDate,'%Y-%m-%d') <= '" . $toDate . "',IF(chartofaccounts.catogaryBLorPL = 'PL',
     $currencyColumn * - 1,IF(chartofaccounts.catogaryBLorPL = 'BS' && (chartofaccounts.controlAccounts = 'BSL' OR chartofaccounts.controlAccounts = 'BSE'),$currencyColumn * - 1,$currencyColumn)), 0) ), 0 )";
                     } else if ($request->accountType == 1) {
@@ -8301,6 +8328,8 @@ GROUP BY
     }
 
     public function getGeneralLedgerQueryData($fromDate,$toDate,$typeID,$companyID) {
+
+        $exchangeGainLossAccount = SystemGlCodeScenarioDetail::getGlByScenario($companyID, 4 , 14);
         return DB::select('SELECT * FROM ( SELECT
         erp_bookinvsuppmaster.bookingDate AS documentDate,
         erp_bookinvsuppmaster.bookingInvCode AS documentCode,
@@ -8476,7 +8505,37 @@ GROUP BY
         7 IN (' . join(',', json_decode($typeID)) . ') AND
         erp_debitnote.companySystemID = "'.$companyID.'" AND
         erp_debitnote.approved = -1
-        ) AS t1');
+        ) AS t1
+        
+        UNION ALL
+        SELECT
+        erp_paysupplierinvoicemaster.BPVdate AS documentDate,
+        erp_paysupplierinvoicemaster.BPVcode AS documentCode,
+        "Exchange Gain or Loss" AS description,
+        erp_paysupplierinvoicemaster.directPaymentPayeeEmpID AS employeeID,
+        erp_generalledger.documentLocalAmount*-1 AS amountLocal,
+        erp_generalledger.documentRptAmount*-1 AS amountRpt,
+        srp_erp_pay_monthlydeductionmaster.monthlyDeductionCode AS referenceDoc,
+        srp_erp_pay_monthlydeductionmaster.dateMD AS referenceDocDate,
+        srp_erp_pay_monthlydeductionmaster.monthlyDeductionMasterID AS masterID,
+        currencymaster.DecimalPlaces AS localCurrencyDecimals,
+        currencymasterRpt.DecimalPlaces As rptCurrencyDecimals,
+        5 AS type
+    FROM
+        erp_paysupplierinvoicemaster
+        LEFT JOIN srp_erp_pay_monthlydeductionmaster ON erp_paysupplierinvoicemaster.PayMasterAutoId = srp_erp_pay_monthlydeductionmaster.pv_id
+        LEFT JOIN currencymaster ON erp_paysupplierinvoicemaster.localCurrencyID = currencymaster.currencyID
+        LEFT JOIN currencymaster AS currencymasterRpt ON erp_paysupplierinvoicemaster.companyRptCurrencyID = currencymasterRpt.currencyID
+        LEFT JOIN erp_generalledger ON erp_paysupplierinvoicemaster.PayMasterAutoId = erp_generalledger.documentSystemCode
+    WHERE
+        erp_paysupplierinvoicemaster.invoiceType = 6 AND 
+        DATE(erp_paysupplierinvoicemaster.BPVdate) BETWEEN "' . $fromDate . '" AND "' . $toDate . '" AND 
+        erp_paysupplierinvoicemaster.approved = -1 AND
+        5 IN (' . join(',', json_decode($typeID)) . ') AND
+        erp_paysupplierinvoicemaster.companySystemID = "'.$companyID.'" AND
+        erp_generalledger.documentSystemID = 4 AND 
+        erp_generalledger.chartOfAccountSystemID = "'.$exchangeGainLossAccount.'"
+        ');
     }
 
     public function getGeneralLedgerRefAmount() {

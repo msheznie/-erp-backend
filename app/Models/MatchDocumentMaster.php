@@ -387,7 +387,9 @@ class MatchDocumentMaster extends Model
         'user_type',
         'employee_id',
         'employeeGLCodeSystemID',
-        'employeeGLCode'
+        'employeeGLCode',
+        'companyFinanceYearID',
+        'companyFinancePeriodID',
     ];
 
     /**
@@ -474,6 +476,10 @@ class MatchDocumentMaster extends Model
 
     public function segment(){
         return $this->belongsTo('App\Models\SegmentMaster','serviceLineSystemID','serviceLineSystemID');
+    }
+    
+    public function payment_voucher(){
+        return $this->belongsTo('App\Models\PaySupplierInvoiceMaster','PayMasterAutoId','PayMasterAutoId')->where('documentSystemID', 4);
     }
 
     public function created_by()

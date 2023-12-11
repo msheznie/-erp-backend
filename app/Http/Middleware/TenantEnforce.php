@@ -43,6 +43,7 @@ class TenantEnforce
             'api/v1/updateGLEntries',
             'api/v1suppliers/registration/approvals/status',
             'api/v1/approveDocument',
+            'api/v1/postGLEntries',
             'api/v1/posMappingRequest',
             'api/v1/generateGeneralLedgerReportPDF',
             'api/v1/uploadItems',
@@ -62,7 +63,10 @@ class TenantEnforce
             'api/v1/postPosEntries',
             'api/v1/requestDetailsAddAllItems',
             'api/v1/materialIssuetDetailsAddAllItems',
-            'api/v1/postEmployeeFromPortal'
+            'api/v1/store-employee-language',
+            'api/v1/postEmployeeFromPortal',
+            'api/v1/uploadBudgets',
+
         ];
 
 

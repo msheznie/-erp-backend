@@ -222,6 +222,7 @@ class TaxLedger extends Model
         'localER',
         'comRptER',
         'localCurrencyID',
+        'matchDocumentMasterAutoID',
         'rptCurrencyID',
         'transCurrencyID',
         'isClaimable',
@@ -252,6 +253,7 @@ class TaxLedger extends Model
         'documentSystemID' => 'integer',
         'documentMasterAutoID' => 'integer',
         'documentFinalApprovedByEmpSystemID' => 'integer',
+        'matchDocumentMasterAutoID' => 'integer',
         'partyID' => 'integer',
         'documentCode' => 'string',
         'documentDate' => 'datetime',
@@ -297,6 +299,11 @@ class TaxLedger extends Model
 
     public function supplier(){
         return $this->belongsTo('App\Models\SupplierMaster', 'partyID','supplierCodeSystem');
+    }
+
+    public function employee()
+    {
+        return $this->belongsTo('App\Models\Employee', 'partyID', 'employeeSystemID');
     }
 
     public function document_master(){

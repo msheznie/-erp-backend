@@ -19,7 +19,8 @@ class TenantByKey
     public function handle(Request $request, Closure $next)
     {
         $dbRoutes = [
-            'api/v1/postEmployee'
+            'api/v1/postEmployee',
+            'api/v1/pull_company_details'
 //            'api/v1/post_supplier_invoice'
         ];
 
@@ -33,6 +34,8 @@ class TenantByKey
             } else {
                 echo "Unauthorized Access";
             }
+
+            $api_key = isset($api_key) ? $api_key : null;
 
             // get tenant details by api key in request
             $tenant = Tenant::whereApiKey($api_key)->first();

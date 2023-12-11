@@ -37,6 +37,8 @@ use App\Http\Requests\API\CreateBookInvSuppMasterAPIRequest;
 use App\Http\Requests\API\UpdateBookInvSuppMasterAPIRequest;
 use App\Models\AccountsPayableLedger;
 use App\Models\BudgetConsumedData;
+use App\Models\ChartOfAccount;
+use App\Models\CustomerMaster;
 use App\Models\EmployeeLedger;
 use App\Models\SupplierInvoiceDirectItem;
 use App\Models\BookInvSuppDet;
@@ -82,9 +84,11 @@ use App\Models\TaxMaster;
 use App\Models\UnbilledGrvGroupBy;
 use App\Models\YesNoSelection;
 use App\Models\YesNoSelectionForMinus;
+use App\Models\ExpenseAssetAllocation;
 use App\Repositories\BookInvSuppMasterRepository;
 use App\Repositories\SupplierInvoiceItemDetailRepository;
 use App\Repositories\ExpenseAssetAllocationRepository;
+use App\Services\ChartOfAccountValidationService;
 use App\Traits\AuditTrial;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -484,9 +488,17 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $input = $request->all();
         $input = array_except($input, ['created_by', 'confirmedByName', 'financeperiod_by', 'financeyear_by', 'supplier','employee',
             'confirmedByEmpID', 'confirmedDate', 'company', 'confirmed_by', 'confirmedByEmpSystemID','transactioncurrency','direct_customer_invoice']);
+        $directItems = $input['directItems'];
         $input = $this->convertArrayToValue($input);
-
         $employee = \Helper::getEmployeeInfo();
+
+        if(empty($input['retentionAmount'])){
+            $input['retentionAmount'] = 0;
+        }
+
+        if(empty($input['retentionPercentage'])){
+            $input['retentionPercentage'] = 0;
+        }
 
         /** @var BookInvSuppMaster $bookInvSuppMaster */
         $bookInvSuppMaster = $this->bookInvSuppMasterRepository->findWithoutFail($id);
@@ -710,14 +722,15 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
             if ($input['documentType'] == 4) {
                 $validatorSupp = \Validator::make($input, [
-                    'employeeID' => 'required|numeric|min:1',
+                    'employeeID' => 'required|numeric|min:0',
                 ]);
             } else {
                 $validatorSupp = \Validator::make($input, [
-                    'supplierID' => 'required|numeric|min:1',
+                    'supplierID' => 'required|numeric|min:0',
                 ]);
             }
 
+            
             if ($validatorSupp->fails()) {
                 return $this->sendError($validator->messages(), 422);
             }
@@ -771,6 +784,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
             }
 
             }
+
+            
             if ($input['documentType'] != 4 && $input['retentionAmount'] > 0) {
 
                 $isConfigured = SystemGlCodeScenario::find(13);
@@ -796,6 +811,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             }
 
             $checkItems = 0;
+
             if ($input['documentType'] == 1 || $input['documentType'] == 4) {
                 $checkItems = DirectInvoiceDetails::where('directInvoiceAutoID', $id)
                     ->count();
@@ -838,6 +854,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 }
 
             } 
+
+
 
             if ($checkItems > 0) {
                 $checkQuantity = DirectInvoiceDetails::where('directInvoiceAutoID', $id)
@@ -1165,6 +1183,21 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 }
             }
 
+            if($input['documentType'] == 1 || $input['documentType'] == 4) {
+                $directInvoiceItems = $directItems;
+                foreach ($directInvoiceItems as $directInvoiceItem) {
+                    $allocatedItems = ExpenseAssetAllocation::where('documentDetailID',$directInvoiceItem['directInvoiceDetailsID'])->where('documentSystemCode',$directInvoiceItem['directInvoiceAutoID'])->get();
+                    $total = 0;
+                    foreach($allocatedItems as $allocatedItem) {
+                        $total += $allocatedItem->amount;
+                        if(isset($directInvoiceItem['netAmount']) && $directInvoiceItem['netAmount'] < $total) {
+                            return $this->sendError("Detail amount cannot be less than allocated amount.",500);
+                        }
+                    }
+                }
+            }
+
+
             $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
             if ($error_count > 0) {
                 return $this->sendError("You cannot confirm this document.", 500, $confirm_error);
@@ -1289,6 +1322,15 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 $this->supplierInvoiceItemDetailRepository->updateSupplierInvoiceItemDetail($id);
             }
 
+            if ($input['documentType'] == 1 || $input['documentType'] == 3 || $input['documentType'] == 4) {
+                $object = new ChartOfAccountValidationService();
+                $result = $object->checkChartOfAccountStatus($input["documentSystemID"], $id, $input["companySystemID"]);
+
+                if (isset($result) && !empty($result["accountCodes"])) {
+                    return $this->sendError($result["errorMsg"]);
+                }
+            }
+
             $params = array(
                 'autoID' => $id,
                 'company' => $input["companySystemID"],
@@ -1298,6 +1340,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 'amount' => $input['bookingAmountTrans']
             );
             $confirm = \Helper::confirmDocument($params);
+
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"]);
             }
@@ -1762,6 +1805,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
                 }
             }
 
+    
+
             foreach ($directInvoiceDetails as $item) {
                 $updateItem = DirectInvoiceDetails::find($item['directInvoiceDetailsID']);
 
@@ -1801,6 +1846,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
                     $error_count++;
                 }
             }
+
 
             $confirm_error = array('type' => 'confirm_error', 'data' => $finalError);
             if ($error_count > 0) {

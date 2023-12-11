@@ -100,7 +100,7 @@ class PaymentVoucherGlService
 
         $exemptVatTotal = DirectPaymentDetails::selectRaw("SUM(vatAmount) as vatAmount, SUM(VATAmountLocal) as VATAmountLocal, SUM(VATAmountRpt) as VATAmountRpt")->WHERE('directPaymentAutoID', $masterModel["autoID"])->WHERE('vatSubCategoryID', 3)->first();
 
-        $ap = AdvancePaymentDetails::selectRaw("SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount,SUM(supplierTransAmount) as transAmount,localCurrencyID,comRptCurrencyID as reportingCurrencyID,supplierTransCurrencyID as transCurrencyID,comRptER as reportingCurrencyER,localER as localCurrencyER,supplierTransER as transCurrencyER")->WHERE('PayMasterAutoId', $masterModel["autoID"])->first();
+        $ap = AdvancePaymentDetails::selectRaw("SUM(localAmount) as localAmount, SUM(comRptAmount) as rptAmount,SUM(supplierTransAmount) as transAmount, SUM(VATAmountLocal) as VATAmountLocalTotal, SUM(VATAmountRpt) as VATAmountRptTotal,SUM(VATAmount) as VATAmountTotal,localCurrencyID,comRptCurrencyID as reportingCurrencyID,supplierTransCurrencyID as transCurrencyID,comRptER as reportingCurrencyER,localER as localCurrencyER,supplierTransER as transCurrencyER")->WHERE('PayMasterAutoId', $masterModel["autoID"])->first();
 
         $isBankCheck = DirectPaymentDetails::WHERE('directPaymentAutoID', $masterModel["autoID"])->WHERE('glCodeIsBank', 1)->first();
 
@@ -477,7 +477,55 @@ class PaymentVoucherGlService
                     $data['documentRptAmount'] = \Helper::roundValue($ap->rptAmount) * -1;
                     $data['timestamp'] = \Helper::currentDateTime();
                     array_push($finalData, $data);
+                    
+
+                    if ($masterData->invoiceType == 5 && $ap->VATAmountTotal > 0) {
+                        $taxData = TaxService::getInputVATTransferGLAccount($masterData->companySystemID);
+                        if (!empty($taxData)) {
+                            $chartOfAccountData = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $taxData->inputVatTransferGLAccountAutoID)
+                                ->where('companySystemID', $masterData->companySystemID)
+                                ->first();
+
+                            if (!empty($chartOfAccountData)) {
+                                $data['chartOfAccountSystemID'] = $chartOfAccountData->chartOfAccountSystemID;
+                                $data['glCode'] = $chartOfAccountData->AccountCode;
+                                $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                                $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+
+                                $data['documentTransAmount'] = \Helper::roundValue($ap->VATAmountTotal) * -1;
+                                $data['documentLocalAmount'] = \Helper::roundValue($ap->VATAmountLocalTotal) * -1;
+                                $data['documentRptAmount'] = \Helper::roundValue($ap->VATAmountRptTotal) * -1;
+
+                                array_push($finalData, $data);
+
+                                $taxLedgerData['inputVatTransferAccountID'] = $chartOfAccountData->chartOfAccountSystemID;
+                            } 
+                        } 
+
+                        $taxData2 = TaxService::getInputVATGLAccount($masterData->companySystemID);
+                        if (!empty($taxData2)) {
+                            $chartOfAccountData = ChartOfAccountsAssigned::where('chartOfAccountSystemID', $taxData2->inputVatGLAccountAutoID)
+                                ->where('companySystemID', $masterData->companySystemID)
+                                ->first();
+
+                            if (!empty($chartOfAccountData)) {
+                                $data['chartOfAccountSystemID'] = $chartOfAccountData->chartOfAccountSystemID;
+                                $data['glCode'] = $chartOfAccountData->AccountCode;
+                                $data['glAccountType'] = ChartOfAccount::getGlAccountType($data['chartOfAccountSystemID']);
+                                $data['glAccountTypeID'] = ChartOfAccount::getGlAccountTypeID($data['chartOfAccountSystemID']);
+
+                                $data['documentTransAmount'] = \Helper::roundValue($ap->VATAmountTotal);
+                                $data['documentLocalAmount'] = \Helper::roundValue($ap->VATAmountLocalTotal);
+                                $data['documentRptAmount'] = \Helper::roundValue($ap->VATAmountRptTotal);
+
+                                array_push($finalData, $data);
+
+                                $taxLedgerData['inputVatGLAccountID'] = $chartOfAccountData->chartOfAccountSystemID;
+                            } 
+                        } 
+                    }
                 }
+
             }
 
 

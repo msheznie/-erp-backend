@@ -16,6 +16,8 @@ use App\Models\DocumentApproved;
 use App\Models\DocumentMaster;
 use App\Models\DocumentReferedHistory;
 use App\Models\EmployeesDepartment;
+use App\Models\Employee;
+use App\Models\AssetRequest;
 use App\Models\ERPAssetTransferDetail;
 use App\Models\ERPAssetTransferDetailsRefferedback;
 use App\Models\FixedAssetMaster;
@@ -129,6 +131,7 @@ class ERPAssetTransferAPIController extends AppBaseController
         $input = $this->convertArrayToSelectedValue($input, ['type', 'serviceLineSystemID', 'location', 'prBelongsYear', 'budgetYear']);
         $data = array_only($input, ['type', 'serviceLineSystemID', 'location']);
         $company_id = $input['companyID'];
+       
         $messages = [
             'document_date.required' => 'Document date field is required.',
             'narration.required' => 'Narration field is required.',
@@ -137,18 +140,37 @@ class ERPAssetTransferAPIController extends AppBaseController
             'location.required' => 'Location No is required.',
             'serviceLineSystemID.required' => 'Segment is required.',
         ];
-        $validator = \Validator::make($input, [
-            'document_date' => 'required|date',
-            'narration' => 'required',
-            'reference_no' => 'required',
-            'type' => 'required',
-            'location' => 'required',
-            'serviceLineSystemID' => 'required',
-        ], $messages);
+
+        if(isset($input['type']) && $input['type'] == 4) {
+            $validator = \Validator::make($input, [
+                'document_date' => 'required|date',
+                'narration' => 'required',
+                'reference_no' => 'required',
+                'type' => 'required',
+            ], $messages);
+        }else if(isset($input['type']) && $input['type'] == 3) {
+            $validator = \Validator::make($input, [
+                'document_date' => 'required|date',
+                'narration' => 'required',
+                'reference_no' => 'required',
+                'type' => 'required',
+                'serviceLineSystemID' => 'required'
+            ], $messages);
+        }else {
+            $validator = \Validator::make($input, [
+                'document_date' => 'required|date',
+                'narration' => 'required',
+                'reference_no' => 'required',
+                'type' => 'required',
+                'location' => 'required',
+                'serviceLineSystemID' => 'required',
+            ], $messages);
+        }
 
         if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
         }
+
         $company = Company::where('companySystemID', $company_id)->first();
         $lastSerial = ERPAssetTransfer::where('company_id', $company_id)
             ->orderBy('serial_no', 'desc')
@@ -166,16 +188,24 @@ class ERPAssetTransferAPIController extends AppBaseController
                 $input['document_code'] = $assetRequestCode;
             }
             $input['type'] = $input['type'];
-            $input['serviceLineSystemID'] = $input['serviceLineSystemID'];
-            $segment = SegmentMaster::where('serviceLineSystemID', $input['serviceLineSystemID'])->first();
-            if ($segment) {
-                $input['serviceLineCode'] = $segment->ServiceLineCode;
+
+            if(isset($input['serviceLineSystemID'])) {
+                $input['serviceLineSystemID'] = $input['serviceLineSystemID'];
+                $segment = SegmentMaster::where('serviceLineSystemID', $input['serviceLineSystemID'])->first();
+                if ($segment) {
+                    $input['serviceLineCode'] = $segment->ServiceLineCode;
+                }
+            }else {
+                $input['serviceLineCode'] = NULL;
+                $input['serviceLineSystemID'] = NULL;
+
             }
+
             $input['reference_no'] = $input['reference_no'];
             $input['document_date'] = new Carbon($input['document_date']);
             $input['serial_no'] = $lastSerialNumber;
             $input['narration'] = $input['narration'];
-            $input['location'] = $input['location'];
+            $input['location'] = (isset($input['location'])) ? $input['location'] : NULL;
             $input['company_id'] = $company_id;
             $input['created_user_id'] = \Helper::getEmployeeSystemID();
             $input['prBelongsYear'] = $input['prBelongsYear'];
@@ -303,6 +333,8 @@ class ERPAssetTransferAPIController extends AppBaseController
             return $this->sendError('E R P Asset Transfer not found');
         }
 
+        
+
         $messages = [
             'document_date.required' => 'Document date field is required.',
             'narration.required' => 'Narration field is required.',
@@ -310,30 +342,61 @@ class ERPAssetTransferAPIController extends AppBaseController
             'reference_no.required' => 'Reference No is required.',
             'location.required' => 'Location is required.',
         ];
-        $validator = \Validator::make($input, [
-            'document_date' => 'required|date',
-            'narration' => 'required',
-            'reference_no' => 'required',
-            'type' => 'required',
-            'serviceLineSystemID' => 'required',
-            'location' => 'required',
-        ], $messages);
+
+        if(isset($input['type']) && $input['type'] == 4) {
+            $validator = \Validator::make($input, [
+                'document_date' => 'required|date',
+                'narration' => 'required',
+                'reference_no' => 'required',
+                'type' => 'required',
+            ], $messages);
+        }else if (isset($input['type']) && $input['type'] == 3) {
+            $validator = \Validator::make($input, [
+                'document_date' => 'required|date',
+                'narration' => 'required',
+                'reference_no' => 'required',
+                'type' => 'required',
+                'serviceLineSystemID' => 'required',
+            ], $messages);
+        }else {
+            $validator = \Validator::make($input, [
+                'document_date' => 'required|date',
+                'narration' => 'required',
+                'reference_no' => 'required',
+                'type' => 'required',
+                'location' => 'required',
+                'serviceLineSystemID' => 'required',
+            ], $messages);
+        }
 
         if ($validator->fails()) {
             return $this->sendError($validator->messages(), 422);
         }
 
-        $data['serviceLineSystemID'] = $input['serviceLineSystemID'];
-        $segment = SegmentMaster::where('serviceLineSystemID', $data['serviceLineSystemID'])->first();
-        if ($segment) {
-            $data['serviceLineCode'] = $segment->ServiceLineCode;
+        if(($input['type'] == 2  || $input['type'] == 1 || $input['type'] == 3) && $input['serviceLineSystemID'] == 0) {
+            return $this->sendError('Segment cannot be null. Select a segment and try again', 500);
+        }
+
+        if(($input['type'] == 2 || $input['type'] == 1) && $input['location'] == 0) {
+            return $this->sendError('Location required cannot be null. Select a location and try again', 500);
+        }
+
+        if(isset( $input['serviceLineSystemID'])) {
+            $data['serviceLineSystemID'] =  $input['serviceLineSystemID'];
+            $segment = SegmentMaster::where('serviceLineSystemID', $data['serviceLineSystemID'])->first();
+            if ($segment) {
+                $data['serviceLineCode'] = $segment->ServiceLineCode;
+            }
+        }else {
+            $data['serviceLineSystemID'] = NULL;
+            $data['serviceLineCode'] = NULL;
         }
 
         $data['prBelongsYear'] = $input['prBelongsYear'];
         $data['budgetYear'] = $input['budgetYear'];
 
         $data['type'] = $input['type'];
-        $data['location'] = $input['location'];
+        $data['location'] = isset($input['location']) ? $input['location'] : NULL;
         $data['reference_no'] = $input['reference_no'];
         $data['document_date'] = new Carbon($input['document_date']);
         $data['narration'] = $input['narration'];
@@ -850,9 +913,265 @@ class ERPAssetTransferAPIController extends AppBaseController
         $input = $request->all();
         $companyID = $input['companyId'];
         $assetID = $input['assetID'];
-        $data['acknowledgedYN'] = 1;
 
-        $data['assetRecords'] = ERPAssetTransferDetail::with(['assetTransferMaster' => function ($query) use ($companyID) {
+        $assetRequestValidation = $this->validateAssetRequest($input);
+
+        $data['data']['acknowledgedYN'] = 0;
+
+        if(!$assetRequestValidation['success']) {
+            $data['data']['assetCode'] = isset($assetRequestValidation['data'][0]->assetMaster) ? $assetRequestValidation['data'][0]->assetMaster->asset_code_concat : '-';
+            $data['data']['assetRecords'] = $assetRequestValidation['data'];
+            $data['data']['message'] = $assetRequestValidation['message'];
+            $data['data']['acknowledgedYN'] = 1;
+        }else {
+            $data['data'] = [];
+        }
+        return $data['data'];
+
+
+    }
+
+    public function validateAssetRequest($input) {
+        $companyID = $input['companyId'];
+        $assetID = $input['assetID'];
+        $assetRequestMasterID = $input['assetRequestMasterID'];
+        $assetRequest  = AssetRequest::select(['departmentSystemID','type','emp_id'])->where('id',$assetRequestMasterID)->first();
+        $fixedAsset = FixedAssetMaster::select(['LOCATION','departmentSystemID','empID'])->where('faID',$assetID)->first();
+
+        if($assetRequest->type == 1) {
+            return $this->requestForEmployeeValidation($assetID,$assetRequestMasterID,$assetRequest,$fixedAsset,$companyID);
+        }
+
+        if($assetRequest->type == 2) {
+           return $this->requestForDepartmentValidation($assetID,$assetRequestMasterID,$assetRequest,$fixedAsset,$companyID);
+        }
+
+        return ['success'=> false, 'message' => "Asset Request type not found"];
+
+    }
+
+    public function requestForEmployeeValidation($assetID,$assetRequestMasterID,$assetRequest,$fixedAsset,$companyID){
+        // check asset's previous request type
+        $isAssetAlreadyAssigned = ERPAssetTransferDetail::with(['assetTransferMaster' => function ($query) use ($companyID) {
+            $query->where('company_id', $companyID)
+                ->where('approved_yn', -1);
+        }, 'assetMaster', 'assetRequestDetail' => function ($q) {
+            $q->with(['createdUserID']);
+        }, 'smePayAsset'])
+            ->whereHas('assetTransferMaster', function ($query) use ($companyID) {
+                $query->where('company_id', $companyID)
+                    ->where('approved_yn', -1);
+            })->where('fa_master_id',$assetID)->orderby('id','desc')->first();
+
+        $data = $this->getDataOfAssetAcknowldged($assetID,$companyID);
+
+
+        if($isAssetAlreadyAssigned && $isAssetAlreadyAssigned->erp_fa_fa_asset_request_id) {
+            $assetRequestedAssigned  = AssetRequest::select(['departmentSystemID','type','emp_id'])->where('id',$isAssetAlreadyAssigned->erp_fa_fa_asset_request_id)->first();
+            if($assetRequestedAssigned) {
+                if($assetRequestedAssigned->type == 2) {
+                    if($isAssetAlreadyAssigned && $isAssetAlreadyAssigned->receivedYN == 0) {
+                        return ['success'=> false, 'message' => "Asset transferred to department and still not acknowledged",'data' => $data];
+                    }
+                }
+            }
+        }
+
+
+
+        // check wether the request is from the same employee of the asset assigned
+        if($fixedAsset->empID == $assetRequest->emp_id) {
+            // check wether the asset already assigned to the employee
+            $isAssetAlreadyAssignedForEmployee = ERPAssetTransferDetail::with(['assetTransferMaster' => function ($query) use ($companyID) {
+                $query->where('company_id', $companyID)
+                    ->where('approved_yn', -1);
+            }, 'assetMaster', 'assetRequestDetail' => function ($q) {
+                $q->with(['createdUserID']);
+            }, 'smePayAsset'])
+                ->whereHas('assetTransferMaster', function ($query) use ($companyID) {
+                    $query->where('company_id', $companyID)
+                        ->where('approved_yn', -1);
+                })->where('to_emp_id',$assetRequest->emp_id)->where('fa_master_id',$assetID)->orderby('id','desc')->first();
+            if(isset($isAssetAlreadyAssignedForEmployee)) {
+                if($isAssetAlreadyAssignedForEmployee->receivedYN == 1) {
+                    $data = ERPAssetTransferDetail::with(['assetTransferMaster' => function ($query) use ($companyID) {
+                        $query->where('company_id', $companyID)
+                            ->where('approved_yn', -1);
+                    }, 'assetMaster', 'assetRequestDetail' => function ($q) {
+                        $q->with(['createdUserID']);
+                    }, 'smePayAsset'])
+                        ->whereHas('assetTransferMaster', function ($query) use ($companyID) {
+                            $query->where('company_id', $companyID)
+                                ->where('approved_yn', -1);
+                        })
+                        ->where('fa_master_id', $assetID)
+                        ->where('to_emp_id',$assetRequest->emp_id)
+                        ->where('receivedYN', 1)
+                        ->get();
+                    return ['success'=> false, 'message' => "Asset transferred and acknowdged already for this employee",'data' => $data];
+                }else {
+                    $data2 = ERPAssetTransferDetail::with(['assetTransferMaster' => function ($query) use ($companyID) {
+                        $query->where('company_id', $companyID)
+                            ->where('approved_yn', -1);
+                    }, 'assetMaster', 'assetRequestDetail' => function ($q) {
+                        $q->with(['createdUserID']);
+                    }, 'smePayAsset'])
+                        ->whereHas('assetTransferMaster', function ($query) use ($companyID) {
+                            $query->where('company_id', $companyID)
+                                ->where('approved_yn', -1);
+                        })
+                        ->where('fa_master_id', $assetID)
+                        ->where('to_emp_id',$assetRequest->emp_id)
+                        ->where('receivedYN', 0)
+                        ->get();
+                    return ['success'=> false, 'message' => "Asset transferred and still not acknowledged for this employee",'data' => $data2];
+                }
+            }
+        }
+
+        // check wether the asset already assigned to any employee
+        $isAssetAlreadyAssigned = ERPAssetTransferDetail::with(['assetTransferMaster' => function ($query) use ($companyID) {
+            $query->where('company_id', $companyID)
+                ->where('approved_yn', -1);
+        }, 'assetMaster', 'assetRequestDetail' => function ($q) {
+            $q->with(['createdUserID']);
+        }, 'smePayAsset'])
+            ->whereHas('assetTransferMaster', function ($query) use ($companyID) {
+                $query->where('company_id', $companyID)
+                    ->where('approved_yn', -1);
+            })->where('fa_master_id',$assetID)->orderby('id','desc')->first();
+        if($isAssetAlreadyAssigned && $isAssetAlreadyAssigned->receivedYN == 0) {
+            $data = $this->getDataOfAssetNotAcknowldged($assetID,$companyID);
+            return ['success'=> false, 'message' => "Asset transferred and still not acknowledged",'data' => $data];
+        }
+
+        $isAssetAlreadyConfirmedToDepartment = ERPAssetTransferDetail::with(['assetTransferMaster' => function ($query) use ($companyID) {
+            $query->where('company_id', $companyID)
+                ->where('confirmed_yn', 1);
+        }, 'assetMaster', 'assetRequestDetail' => function ($q) {
+            $q->with(['createdUserID']);
+        }, 'smePayAsset'])
+            ->whereHas('assetTransferMaster', function ($query) use ($companyID) {
+                $query->where('company_id', $companyID)
+                    ->where('confirmed_yn', 1);
+            })->where('fa_master_id',$assetID)->orderby('id','desc')->first();
+        if($isAssetAlreadyConfirmedToDepartment && $isAssetAlreadyConfirmedToDepartment->receivedYN == 0) {
+            $dataNew = $this->getDataOfAssetConfirmed($assetID,$companyID);
+            return ['success'=> false, 'message' => "Asset transferred and still not acknowledged",'data' => $dataNew];
+        }
+
+        return ['success'=> true, 'message' => "Asset transferred successfully"];
+
+        
+    }
+
+    public function requestForDepartmentValidation($assetID,$assetRequestMasterID,$assetRequest,$fixedAsset,$companyID) {
+        // check asset's previous request type
+        $isAssetAlreadyAssigned = ERPAssetTransferDetail::with(['assetTransferMaster' => function ($query) use ($companyID) {
+            $query->where('company_id', $companyID)
+                ->where('approved_yn', -1);
+        }, 'assetMaster', 'assetRequestDetail' => function ($q) {
+            $q->with(['createdUserID']);
+        }, 'smePayAsset'])
+            ->whereHas('assetTransferMaster', function ($query) use ($companyID) {
+                $query->where('company_id', $companyID)
+                    ->where('approved_yn', -1);
+            })->where('fa_master_id',$assetID)->orderby('id','desc')->first();
+
+        $data = $this->getDataOfAssetNotAcknowldgedByEmployee($assetID,$companyID);
+        if($isAssetAlreadyAssigned) {
+            $assetRequestedAssigned  = AssetRequest::select(['departmentSystemID','type','emp_id'])->where('id',$isAssetAlreadyAssigned->erp_fa_fa_asset_request_id)->first();
+            if($assetRequestedAssigned) {
+                if($assetRequestedAssigned->type == 1) {
+                    if($isAssetAlreadyAssigned && $isAssetAlreadyAssigned->receivedYN == 0) {
+                        return ['success'=> false, 'message' => "Asset transferred to employee and still not acknowledged",'data' => $data];
+                    }
+                }
+            }
+        }
+
+        
+
+
+        // check wether the request is from the same department of the asset assigned
+        if($fixedAsset->departmentSystemID == $assetRequest->departmentSystemID) {
+            // check wether the asset already assigned to the department
+            $isAssetAlreadyAssignedForDepartment = ERPAssetTransferDetail::with(['assetTransferMaster' => function ($query) use ($companyID) {
+                $query->where('company_id', $companyID)
+                    ->where('approved_yn', -1);
+            }, 'assetMaster', 'assetRequestDetail' => function ($q) {
+                $q->with(['createdUserID']);
+            }, 'smePayAsset'])
+                ->whereHas('assetTransferMaster', function ($query) use ($companyID) {
+                    $query->where('company_id', $companyID)
+                        ->where('approved_yn', -1);
+                })->where('departmentSystemID',$assetRequest->departmentSystemID)->where('fa_master_id',$assetID)->orderby('id','desc')->first();
+            if(isset($isAssetAlreadyAssignedForDepartment)) {
+                $dataDepartment = $this->getDataOfAssetNotAcknowldgedByDepartment($assetID,$companyID,$assetRequest->departmentSystemID,$isAssetAlreadyAssignedForDepartment->receivedYN);
+
+                if($isAssetAlreadyAssignedForDepartment->receivedYN == 1) {
+                    return ['success'=> false, 'message' => "Asset already transferred to this department",'data' => $dataDepartment];
+                }else {
+                    return ['success'=> false, 'message' => "Asset transferred and still not acknowledged to this department",'data' => $dataDepartment];
+                }
+            }
+        }
+
+        // check wether the asset already assigned to any department
+        $isAssetAlreadyAssigned = ERPAssetTransferDetail::with(['assetTransferMaster' => function ($query) use ($companyID) {
+            $query->where('company_id', $companyID)
+                ->where('approved_yn', -1);
+        }, 'assetMaster', 'assetRequestDetail' => function ($q) {
+            $q->with(['createdUserID']);
+        }, 'smePayAsset'])
+            ->whereHas('assetTransferMaster', function ($query) use ($companyID) {
+                $query->where('company_id', $companyID)
+                    ->where('approved_yn', -1);
+            })->where('fa_master_id',$assetID)->orderby('id','desc')->first();
+        if($isAssetAlreadyAssigned && $isAssetAlreadyAssigned->receivedYN == 0) {
+            $data = $this->getDataOfAssetNotAcknowldged($assetID,$companyID);
+            return ['success'=> false, 'message' => "Asset transferred and still not acknowledged",'data' => $data];
+        }
+
+
+        $isAssetAlreadyConfirmedToDepartment = ERPAssetTransferDetail::with(['assetTransferMaster' => function ($query) use ($companyID) {
+            $query->where('company_id', $companyID)
+                ->where('confirmed_yn', 1);
+        }, 'assetMaster', 'assetRequestDetail' => function ($q) {
+            $q->with(['createdUserID']);
+        }, 'smePayAsset'])
+            ->whereHas('assetTransferMaster', function ($query) use ($companyID) {
+                $query->where('company_id', $companyID)
+                    ->where('confirmed_yn', 1);
+            })->where('fa_master_id',$assetID)->orderby('id','desc')->first();
+        if($isAssetAlreadyConfirmedToDepartment && $isAssetAlreadyConfirmedToDepartment->receivedYN == 0) {
+            $dataNew = $this->getDataOfAssetConfirmed($assetID,$companyID);
+            return ['success'=> false, 'message' => "Asset transferred and still not acknowledged",'data' => $dataNew];
+        }
+
+        return ['success'=> true, 'message' => "Asset Transferred successfully"];
+
+
+    }
+
+    public function getDataOfAssetConfirmed($assetID,$companyID) {
+        return ERPAssetTransferDetail::with(['assetTransferMaster' => function ($query) use ($companyID) {
+            $query->where('company_id', $companyID)
+                ->where('confirmed_yn', 1);
+        }, 'assetMaster', 'assetRequestDetail' => function ($q) {
+            $q->with(['createdUserID']);
+        }, 'smePayAsset'])
+            ->whereHas('assetTransferMaster', function ($query) use ($companyID) {
+                $query->where('company_id', $companyID)
+                    ->where('confirmed_yn', 1);
+            })
+            ->where('fa_master_id', $assetID)
+            ->where('receivedYN', 0)
+            ->get();
+    }
+
+    public function getDataOfAssetNotAcknowldged($assetID,$companyID) {
+        return ERPAssetTransferDetail::with(['assetTransferMaster' => function ($query) use ($companyID) {
             $query->where('company_id', $companyID)
                 ->where('approved_yn', -1);
         }, 'assetMaster', 'assetRequestDetail' => function ($q) {
@@ -862,31 +1181,79 @@ class ERPAssetTransferAPIController extends AppBaseController
                 $query->where('company_id', $companyID)
                     ->where('approved_yn', -1);
             })
-            ->whereHas('smePayAsset', function ($query) use ($companyID) {
-                $query->where('companyID', $companyID)
-                    ->where('returnStatus', 0);
+            ->where('fa_master_id', $assetID)
+            ->where('receivedYN', 0)
+            ->get();
+    }
+
+    public function getDataOfAssetNotAcknowldgedByEmployee($assetID,$companyID) {
+        return ERPAssetTransferDetail::with(['assetTransferMaster' => function ($query) use ($companyID) {
+            $query->where('company_id', $companyID)
+                ->where('approved_yn', -1);
+        }, 'assetMaster', 'assetRequestDetail' => function ($q) {
+            $q->with(['createdUserID']);
+        }, 'smePayAsset'])
+            ->whereHas('assetTransferMaster', function ($query) use ($companyID) {
+                $query->where('company_id', $companyID)
+                    ->where('approved_yn', -1);
+            })
+            ->where('fa_master_id', $assetID)
+            ->where('receivedYN', 0)
+            ->get();
+    }
+
+    public function getDataOfAssetNotAcknowldgedByDepartment($assetID,$companyID,$department,$receiveYn) {
+        return ERPAssetTransferDetail::with(['assetTransferMaster' => function ($query) use ($companyID) {
+            $query->where('company_id', $companyID)
+                ->where('approved_yn', -1);
+        }, 'assetMaster', 'assetRequestDetail' => function ($q) {
+            $q->with(['createdUserID']);
+        }, 'smePayAsset'])
+            ->whereHas('assetTransferMaster', function ($query) use ($companyID) {
+                $query->where('company_id', $companyID)
+                    ->where('approved_yn', -1);
+            })
+            ->where('fa_master_id', $assetID)
+            ->where('departmentSystemID', $department)
+            ->where('receivedYN', $receiveYn)
+            ->get();
+    }
+
+    
+    public function getDataOfAssetAcknowldged($assetID,$companyID) {
+        return ERPAssetTransferDetail::with(['assetTransferMaster' => function ($query) use ($companyID) {
+            $query->where('company_id', $companyID)
+                ->where('approved_yn', -1);
+        }, 'assetMaster', 'assetRequestDetail' => function ($q) {
+            $q->with(['createdUserID']);
+        }, 'smePayAsset'])
+            ->whereHas('assetTransferMaster', function ($query) use ($companyID) {
+                $query->where('company_id', $companyID)
+                    ->where('approved_yn', -1);
             })
             ->where('fa_master_id', $assetID)
             ->where('receivedYN', 1)
             ->get();
+    }
 
-        if (count($data['assetRecords']) == 0) {
-            $data['assetRecords'] = ERPAssetTransferDetail::with(['assetTransferMaster' => function ($query) use ($companyID) {
-                $query->where('company_id', $companyID)
-                    ->where('approved_yn', -1);
-            }, 'assetMaster'])
-                ->whereHas('assetTransferMaster', function ($query) use ($companyID) {
-                    $query->where('company_id', $companyID)
-                        ->where('approved_yn', -1);
-                })
-                ->where('fa_master_id', $assetID)
-                ->where('receivedYN', 0)
-                ->get();
-            $data['acknowledgedYN'] = 0;
-        }
-        
-        $data['assetCode'] = isset($data['assetRecords'][0]) ? $data['assetRecords'][0]->assetMaster->asset_code_concat : '-';
+    public function getEmployeesToSelectDrpdwn(Request $request) {
+        $input = $request->all();
+        $companyID = $input['companyID'];
 
-        return $data;
+        $toEmployeeList = Employee::where('empCompanySystemID',$companyID)->where('discharegedYN','!=',-1)->whereHas('hr_emp', function($q){
+            $q->where('isDischarged', 0)->where('empConfirmedYN', 1);
+        })->get();
+
+        $fromEmployeeList = Employee::where('empCompanySystemID',$companyID)->whereHas('hr_emp', function($q){
+            $q->where('empConfirmedYN', 1);
+        })->get();
+
+        $data = [
+            'to_employees' => $toEmployeeList,
+            'from_employees' => $fromEmployeeList
+        ];
+
+        return $this->sendResponse($data, 'Employee data reterived successfully');
+
     }
 }
