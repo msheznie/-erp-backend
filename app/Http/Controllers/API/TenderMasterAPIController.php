@@ -4847,8 +4847,7 @@ ORDER BY
             ->get();
 
         $employeeData = Employee::where('employeeSystemID', $employeeID)->first();
-        //$SrmTenderBidEmployeeDetails = SrmTenderBidEmployeeDetails::where('tender_id', $tenderId)->with('employee')->get();
-
+        
         $time = strtotime("now");
         $fileName = 'Minutes_of_Bid_Opening' . $time . '.pdf';
         $order = array('tenderMaster' => $tenderMaster, 'employeeDetails' => $employeeDetails, 'company' => $company, 'employeeData' => $employeeData, 'tenderBids' => $tenderBids,
