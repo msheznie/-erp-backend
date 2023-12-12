@@ -231,16 +231,11 @@ Route::group([], function(){
 Route::group([], function(){ 
 
     Route::resource('cash_flow_reports', 'CashFlowReportAPIController');
-
-    Route::get('getFRFilterData', 'FinancialReportAPIController@getFRFilterData')->name('Get FR Filter data');
     Route::get('getUtilizationFilterFormData', 'FinancialReportAPIController@getUtilizationFilterFormData')->name('Get Utilization filter form data');
-    Route::get('getAFRFilterChartOfAccounts', 'FinancialReportAPIController@getAFRFilterChartOfAccounts')->name('Get AFR Filter Chart of accounts');
     Route::get('getVATFilterFormData', 'VATReportAPIController@getVATFilterFormData')->name('Get VAT Filters form data');
     Route::get('getCashFlowFormData', 'CashFlowReportAPIController@getCashFlowFormData')->name('Get Cash flow form data');
     Route::get('getCashFlowReportData', 'CashFlowReportAPIController@getCashFlowReportData')->name('Get Cash flow report data');
-    
-    Route::post('validateFRReport', 'FinancialReportAPIController@validateFRReport')->name('Validate FR Report');
-    Route::post('generateFRReport', 'FinancialReportAPIController@generateFRReport')->name('Generate FR Report');
+
     Route::post('getSubsidiaryCompanies', 'FinancialReportAPIController@getSubsidiaryCompanies')->name('Get Subsidiary companies');
     Route::post('validatePUReport', 'FinancialReportAPIController@validatePUReport')->name('Validate PU Report');
     Route::post('generateprojectUtilizationReport', 'FinancialReportAPIController@generateprojectUtilizationReport')->name('Generate project utilization report');
