@@ -236,7 +236,6 @@ Route::group([], function(){
     Route::get('getCashFlowFormData', 'CashFlowReportAPIController@getCashFlowFormData')->name('Get Cash flow form data');
     Route::get('getCashFlowReportData', 'CashFlowReportAPIController@getCashFlowReportData')->name('Get Cash flow report data');
 
-    Route::post('getSubsidiaryCompanies', 'FinancialReportAPIController@getSubsidiaryCompanies')->name('Get Subsidiary companies');
     Route::post('validatePUReport', 'FinancialReportAPIController@validatePUReport')->name('Validate PU Report');
     Route::post('generateprojectUtilizationReport', 'FinancialReportAPIController@generateprojectUtilizationReport')->name('Generate project utilization report');
     Route::post('generateEmployeeLedgerReport', 'FinancialReportAPIController@generateEmployeeLedgerReport')->name('Generate Employee ledger report');
