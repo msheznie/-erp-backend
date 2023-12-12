@@ -45,6 +45,7 @@ Route::get('exportPaymentBankTransfer', 'PaymentBankTransferAPIController@export
 Route::get('BidSummaryReport', 'BidSubmissionMasterAPIController@BidSummaryExportReport');
 Route::get('SupplierRankingSummaryReport', 'TenderFinalBidsAPIController@getFinalBidsReport');
 Route::get('MinutesofTenderAwardingReport', 'TenderFinalBidsAPIController@getTenderAwardingReport');
+Route::get('MinutesofBidOpeningReport', 'TenderMasterAPIController@getTenderBidOpeningReport');
 Route::get('supplier-item-wise-report', 'BidSubmissionMasterAPIController@SupplierItemWiseExportReport');
 Route::post('schedule-wise-report', 'BidSubmissionMasterAPIController@SupplierSheduleWiseReport');
 Route::post('SupplierScheduleWiseExportReport', 'BidSubmissionMasterAPIController@SupplierScheduleWiseExportReport');
