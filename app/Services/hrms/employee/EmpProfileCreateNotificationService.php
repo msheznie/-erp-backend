@@ -161,24 +161,24 @@ class EmpProfileCreateNotificationService
         {
             $str .= "<br/><b> Date </b>: " . date('Y-m-d');
             $str .= "<br>";
-            $str .= "<table border='1' style='width:100%'>";
-            $str .= "<tr>";
-            $str .= "<th><b>#</b></th>";
-            $str .= "<th><b>Employee</b></th>";
-            $str .= "<th><b>Employment Type</b></th>";
-            $str .= "<th><b>Gender</b></th>";
-            $str .= "<th><b>Country</b></th>";
-            $str .= "<th><b>Grade</b></th>";
+            $str .= "<table style='border-collapse: collapse;border: 1px solid black;' style='width:100%'>";
+            $str .= "<tr style='border: 1px solid black;padding: 8px;'>";
+            $str .= "<th style='border: 1px solid black;padding: 8px;'><b>#</b></th>";
+            $str .= "<th style='border: 1px solid black;padding: 8px;'><b>Employee</b></th>";
+            $str .= "<th style='border: 1px solid black;padding: 8px;'><b>Employment Type</b></th>";
+            $str .= "<th style='border: 1px solid black;padding: 8px;'><b>Gender</b></th>";
+            $str .= "<th style='border: 1px solid black;padding: 8px;'><b>Country</b></th>";
+            $str .= "<th style='border: 1px solid black;padding: 8px;'><b>Grade</b></th>";
             $str .= "</tr>";
             $i = 1;
             foreach ($this->masterDet as $key => $value) {
-                $str .= "<tr>";
-                $str .= "<td>" . $i . "</td>";
-                $str .= "<td>" . $value['Ename2'] . "</td>";
-                $str .= "<td>" . $value['Description'] . "</td>";
-                $str .= "<td>" . $value['name'] . "</td>";
-                $str .= "<td>" . $value['countryName'] . "</td>";
-                $str .= "<td>" . $value['gradeDescription'] . "</td>";
+                $str .= "<tr style='border: 1px solid black;padding: 8px;'>";
+                $str .= "<td style='border: 1px solid black;padding: 8px;'>" . $i . "</td>";
+                $str .= "<td style='border: 1px solid black;padding: 8px;'>" . $value['Ename2'] . "</td>";
+                $str .= "<td style='border: 1px solid black;padding: 8px;'>" . $value['Description'] . "</td>";
+                $str .= "<td style='border: 1px solid black;padding: 8px;'>" . $value['name'] . "</td>";
+                $str .= "<td style='border: 1px solid black;padding: 8px;'>" . $value['countryName'] . "</td>";
+                $str .= "<td style='border: 1px solid black;padding: 8px;'>" . $value['gradeDescription'] . "</td>";
                 $str .= "</tr>";
                 $i++;
             }
