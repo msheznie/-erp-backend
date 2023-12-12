@@ -130,7 +130,7 @@ Route::group([], function(){
     Route::post('getBudgetTransferMasterByCompany', 'BudgetTransferFormAPIController@getBudgetTransferMasterByCompany')->name('Get budget master by company');
     Route::post('amendBudgetTrasfer', 'BudgetTransferFormAPIController@amendBudgetTrasfer')->name('Amend budget transfer');
     Route::post('getBudgetTransferAmendHistory', 'BudgetTransferFormRefferedBackAPIController@getBudgetTransferAmendHistory')->name('Get budget transfer amend history');
-    Route::post('amendBudgetAddition', 'ErpBudgetAdditionAPIController@amendBudgetAddition');
+    Route::post('amendBudgetAddition', 'ErpBudgetAdditionAPIController@amendBudgetAddition')->name('Amend budget addition');
     Route::post('getBudgetAdditionAmendHistory', 'BudgetAdditionRefferedBackAPIController@getBudgetAdditionAmendHistory');
 
     // Contingency Budgets
@@ -172,6 +172,8 @@ Route::group([], function(){
     Route::post('disposalReopen', 'AssetDisposalMasterAPIController@disposalReopen')->name('Asset dissposal reopen');
     Route::post('referBackDisposal', 'AssetDisposalMasterAPIController@referBackDisposal')->name('Refer back disposal');
     Route::post('amendAssetDisposalReview', 'AssetDisposalMasterAPIController@amendAssetDisposalReview')->name('Amend disposal review');
+    Route::post('budgetAdditionReopen', 'ErpBudgetAdditionAPIController@budgetAdditionReopen')->name('Budget addition re open');
+    Route::get('getBudgetAdditionAudit', 'ErpBudgetAdditionAPIController@getBudgetAdditionAudit')->name('Get budget addition audit');
 
     // console jv
     Route::resource('console_j_v_masters', 'ConsoleJVMasterAPIController');

@@ -278,9 +278,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
             Route::post('exportNavigationeport', 'UserGroupAssignAPIController@exportNavigationeport');
 
-            Route::post('exportFinanceReport', 'FinancialReportAPIController@exportFinanceReport');
-            Route::post('getTBUnmatchedData', 'FinancialReportAPIController@getTBUnmatchedData');
-            Route::post('exportFRReport', 'FinancialReportAPIController@exportReport');
             Route::get('getUtilizationFilterFormData', 'FinancialReportAPIController@getUtilizationFilterFormData');
             Route::post('validatePUReport', 'FinancialReportAPIController@validatePUReport');
             Route::post('generateprojectUtilizationReport', 'FinancialReportAPIController@generateprojectUtilizationReport');
@@ -842,8 +839,6 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::get('fetch-asset-transfer-master-amend/{id}', 'AssetTransferReferredbackAPIController@fetchAssetTransferMasterAmend');
             Route::get('get-employee-asset-transfer-details-amend/{id}', 'ERPAssetTransferDetailsRefferedbackAPIController@get_employee_asset_transfer_details_amend');
             Route::post('amendAssetVerification', 'AssetVerificationAPIController@amendAssetVerification');
-            Route::post('budgetAdditionReopen', 'ErpBudgetAdditionAPIController@budgetAdditionReopen');
-            Route::get('getBudgetAdditionAudit', 'ErpBudgetAdditionAPIController@getBudgetAdditionAudit');
             Route::post('getAssetVerificationAmendHistory', 'ERPAssetVerificationReferredbackAPIController@getAssetVerificationAmendHistory');
             Route::get('fetchAssetVerification/{id}', 'ERPAssetVerificationReferredbackAPIController@fetchAssetVerification');
             Route::post('fetchAssetVerificationDetailAmend', 'ERPAssetVerificationDetailReferredbackAPIController@fetchAssetVerificationDetailAmend');
