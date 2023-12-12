@@ -1032,7 +1032,7 @@ ORDER BY
             return ['success' => false, 'message' => 'Pre-bid Clarification from date and time should less than bid submission to date and time'];
         }
 
-        if (!$rfq && isset($pre_bid_clarification_start_date) && ($pre_bid_clarification_end_date > $bid_submission_closing_date)) {
+        if (!$rfq && isset($pre_bid_clarification_start_date) && ($pre_bid_clarification_end_date >= $bid_submission_closing_date)) {
             return ['success' => false, 'message' => 'Pre-bid Clarification to date and time should less than bid submission to date and time'];
         }
 
@@ -1196,7 +1196,7 @@ ORDER BY
                             return ['success' => false, 'message' => 'Commercial Bid Opening from date and time should be greater than technical bid from date and time'];
                         }
                     } else {
-                        if (!$rfq && ($technical_bid_closing_date > $commerical_bid_opening_date)) {
+                        if (!$rfq && ($technical_bid_closing_date >= $commerical_bid_opening_date)) {
                             return ['success' => false, 'message' => 'Commercial Bid Opening from date and time should be greater than technical bid to date and time'];
                         } elseif ($rfq && !is_null($input['commerical_bid_opening_date_time']) && !is_null($input['technical_bid_opening_date_time']) && ($technical_bid_closing_date > $commerical_bid_opening_date)) {
                             return ['success' => false, 'message' => 'Commercial Bid Opening from date and time should be greater than technical bid to date and time'];
