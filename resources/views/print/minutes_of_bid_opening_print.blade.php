@@ -275,12 +275,20 @@
         @foreach ($SrmTenderBidEmployeeDetails as $emp)
             <tr>
                 <td style="text-align: left;">{{$emp->employee->empID}} |  {{ $emp->employee->empFullName}}</td>
-                <td> &nbsp; {{\Carbon\Carbon::parse($emp->updated_at)->format('d/m/Y h:i A')}}</td>
+                <td>
+                    @if ($emp->status != null)&nbsp;
+                    {{\Carbon\Carbon::parse($emp->updated_at)->format('d/m/Y h:i A')}}
+                    @endif
+
+                    @if ($emp->status == null)
+                        {{ " - " }}
+                    @endif
+                </td>
                 @if ($emp->status != null)
                     <td> &nbsp;{{ $emp->status == 1 ? 'Approved' : 'Rejected'}}</td>
                 @endif
                 @if ($emp->status == null)
-                    <td> </td>
+                    <td> {{  "Pending Approval "}} </td>
                 @endif
             </tr>
         @endforeach
