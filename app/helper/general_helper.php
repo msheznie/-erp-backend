@@ -3326,6 +3326,10 @@ class Helper
                                         
                                         $approvedDocNameBody = $document->documentDescription . ' <b>' . $documentApproved->documentCode . '</b>';
 
+                                        if($document->documentSystemID == 108){
+                                            $approvedDocNameBody = "Tender " . ' <b>' . $documentApproved->documentCode . '</b>';
+                                        }
+
                                         // if (in_array($params["document"], self::documentListForClickHere())) {
                                         //     if (in_array($params["document"], [1, 50, 51])) {
                                         //         $redirectUrl =  env("PR_APPROVE_URL");
@@ -3347,6 +3351,17 @@ class Helper
                                             $ammendComment = self::getDocumentModifyRequestDetails($params['autoID']);
                                             $ammendText = '<b>Comment :</b> ' . $ammendComment['description'] . '<br>';
                                             $body .= $ammendText;
+                                        }
+
+                                        if ($document->documentSystemID == 108) {
+                                            $body .= '<p><b>Tender Title :</b> ' . $params["tender_title"] . '</p>';
+                                            $body .= '<p><b>Tender Description :</b> ' . $params["tender_description"] . '</p>';
+                                        }
+
+                                        if ($document->documentSystemID == 113) {
+                                            $type = ['Tender', 'RFQ', 'RFI', 'RFP'];
+                                            $body .= '<p><b>'. $type[$params["document_type"]] .' Title :</b> ' . $params["tender_title"] . '</p>';
+                                            $body .= '<p><b>'. $type[$params["document_type"]] . ' Description :</b> ' . $params["tender_description"] . '</p>';
                                         }
 
                                         $body .= '<a href="' . $redirectUrl . '">Click here to approve</a></p>';
@@ -5097,6 +5112,18 @@ class Helper
                             $subjectName = $document->documentDescription . ' ' . $currentApproved->documentCode;
                             $bodyName = $document->documentDescription . ' ' . '<b>' . $currentApproved->documentCode . '</b>';
 
+                            if($input["documentSystemID"] == 108){
+                                $subjectName = 'Tender ' . $currentApproved->documentCode;
+                                $bodyName = 'Tender ' . '<b>' . $currentApproved->documentCode . '</b>';
+                            }
+
+                            if($input["documentSystemID"] == 113){
+                                $tenderMaster = TenderMaster::find($input["id"]);
+                                $type = ['Tender', 'RFQ', 'RFI', 'RFP'];
+                                $subjectName = $type[$tenderMaster->document_type] . ' ' . $currentApproved->documentCode;
+                                $bodyName = $type[$tenderMaster->document_type] . ' ' .  '<b>' . $currentApproved->documentCode . '</b>';
+                            }
+
                             if ($sourceModel[$docInforArr["confirmedYN"]] == 1 || $sourceModel[$docInforArr["confirmedYN"]] == -1) {
 
                                 if ($approvalLevel->noOfLevels == $input["rollLevelOrder"]) { // if fully approved
@@ -5162,6 +5189,12 @@ class Helper
                                     //$body = '<p>' . $approvedDocNameBody . ' is pending for your approval. <br><br><a href="' . $redirectUrl . '">Click here to approve</a></p>';   
                                     $nextApprovalBody = '<p>' . $bodyName . ' Level ' . $currentApproved->rollLevelOrder . ' is approved and pending for your approval. <br><br>';
 
+                                    if($input["documentSystemID"] == 113){
+                                        $tenderMaster = TenderMaster::find($input["id"]);
+                                        $type = ['Tender', 'RFQ', 'RFI', 'RFP'];
+                                        $nextApprovalBody .= '<p><b>'. $type[$tenderMaster->document_type]. ' Title :</b> ' . $tenderMaster->title . '</p>' . '<p><b> ' . $type[$tenderMaster->document_type]. ' Description :</b> ' . $tenderMaster->description . '</p>';
+                                    }
+
                                     if ($input["documentSystemID"] == 117)
                                     {
                                         $ammendComment = self::getDocumentModifyRequestDetails($input['documentSystemCode']);
@@ -5193,6 +5226,12 @@ class Helper
 
                                     $subject = $subjectName . " Level " . $currentApproved->rollLevelOrder . " is approved and sent to next level approval";
                                     $body = '<p>'.$bodyName . " Level " . $currentApproved->rollLevelOrder . " is approved and sent to next level approval to below employees <br>" . $nextApproveNameList;
+
+                                    if($input["documentSystemID"] == 113){
+                                        $tenderMaster = TenderMaster::find($input["id"]);
+                                        $type = ['Tender', 'RFQ', 'RFI', 'RFP'];
+                                        $body .= '<p><b>'. $type[$tenderMaster->document_type]. ' Title :</b> ' . $tenderMaster->title . '</p>' . '<p><b> ' . $type[$tenderMaster->document_type]. ' Description :</b> ' . $tenderMaster->description . '</p>';
+                                    }
                                 }
 
 
