@@ -2579,8 +2579,11 @@ ORDER BY
                 ->where('tender_id', $request['tenderMasterId'])
                 ->first();
 
-            $result = CalendarDatesDetail::find($calendarDatesDetail->id);
-            $result->delete();
+            if(isset($calendarDatesDetail->id)){
+                $result = CalendarDatesDetail::find($calendarDatesDetail->id);
+                $result->delete();
+            }
+
             DB::commit();
             return ['success' => true, 'message' => 'Successfully deleted', 'data' => $calendarDatesDetail];
         } catch (\Exception $e) {
