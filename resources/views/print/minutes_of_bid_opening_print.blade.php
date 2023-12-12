@@ -272,26 +272,32 @@
             <td style="text-align: left; width: 40%">&nbsp;<strong>Approved Date & Time</strong></td>
             <td style="text-align: left; width: 20%">&nbsp;<strong>Action</strong></td>
         </tr>
-        @foreach ($SrmTenderBidEmployeeDetails as $emp)
-            <tr>
-                <td style="text-align: left;">{{$emp->employee->empID}} |  {{ $emp->employee->empFullName}}</td>
-                <td>
-                    @if ($emp->status != null)&nbsp;
-                    {{\Carbon\Carbon::parse($emp->updated_at)->format('d/m/Y h:i A')}}
-                    @endif
+        @if(count($SrmTenderBidEmployeeDetails) > 0)
+            @foreach ($SrmTenderBidEmployeeDetails as $emp)
+                <tr>
+                    <td style="text-align: left;">{{$emp->employee->empID}} |  {{ $emp->employee->empFullName}}</td>
+                    <td>
+                        @if ($emp->status != null)&nbsp;
+                        {{\Carbon\Carbon::parse($emp->updated_at)->format('d/m/Y h:i A')}}
+                        @endif
 
-                    @if ($emp->status == null)
-                        {{ " - " }}
+                        @if ($emp->status == null)
+                            {{ " - " }}
+                        @endif
+                    </td>
+                    @if ($emp->status != null)
+                        <td> &nbsp;{{ $emp->status == 1 ? 'Approved' : 'Rejected'}}</td>
                     @endif
-                </td>
-                @if ($emp->status != null)
-                    <td> &nbsp;{{ $emp->status == 1 ? 'Approved' : 'Rejected'}}</td>
-                @endif
-                @if ($emp->status == null)
-                    <td> {{  "Pending Approval "}} </td>
-                @endif
+                    @if ($emp->status == null)
+                        <td> {{  "Pending Approval "}} </td>
+                    @endif
+                </tr>
+            @endforeach
+        @else
+            <tr>
+                <td colspan="3">No records found.</td>
             </tr>
-        @endforeach
+        @endif
     </table>
 </div>
 
