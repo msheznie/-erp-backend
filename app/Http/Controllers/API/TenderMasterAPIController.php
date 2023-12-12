@@ -1079,7 +1079,7 @@ ORDER BY
                     }
                 } else {
 
-                    if ($bid_sub_date > $bid_opening_date) {
+                    if ($bid_sub_date >= $bid_opening_date) {
                         if (isset($bid_opening_date) && $rfq) {
                             return ['success' => false, 'message' => 'Bid Opening from date and time should greater than bid submission to date and time'];
                         } elseif (!$rfq) {
