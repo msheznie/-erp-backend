@@ -102,13 +102,12 @@ class EmpProfileCreateNotificationService
         $this->insertToLogTb(['Document Code' => $this->documentCode, 'Message' => 'Email Function Triggered']);
         $msg = '';
         $logType = 'info';
+        $mailTo = '';
+        $name = '';
+        $applicableCatDesc = '';
 
         foreach ($this->notifyList as $val) {
 
-            $mailTo = '';
-            $name = '';
-            $applicableCatDesc = '';
-            
             $applicableCatDesc = 'Employee';
             $mailTo = $val['employee']['empEmail'];
             $name = $val['employee']['empFullName'];
