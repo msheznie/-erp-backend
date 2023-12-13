@@ -1475,9 +1475,9 @@ ORDER BY
                             $versionUpdate['tender_edit_confirm_id'] = $documentModifyRequest['id'];
                             TenderMaster::where('id', $input['id'])->update($versionUpdate);
 
-                            $params = array('autoID' => $documentModifyRequest['id'], 'company' => $input["company_id"], 'document' => 118, 'reference_document_id' => 108);
+                            $params = array('autoID' => $documentModifyRequest['id'], 'company' => $input["company_id"], 'document' => 118, 'reference_document_id' => 108, 'tender_title' => $input['title'], 'tender_description' => $input['description'], 'document_type' => $tenderMaster->document_type);
                         } else {
-                            $params = array('autoID' => $input['id'], 'company' => $input["company_id"], 'document' => $input["document_system_id"]);
+                            $params = array('autoID' => $input['id'], 'company' => $input["company_id"], 'document' => $input["document_system_id"], 'tender_title' => $input['title'], 'tender_description' => $input['description'], 'document_type' => $tenderMaster->document_type);
                         }
 
 
