@@ -69,6 +69,11 @@ class CustomerInvoiceUploadSubJob implements ShouldQueue
 
         DB::beginTransaction();
         try {
+
+            $uploadCICounter = UploadCustomerInvoice::find($uploadCustomerInvoice->id);
+            $cICount = $uploadCICounter->counter;
+            $totalInvoices = $uploadCICounter->totalInvoices;
+
             $CustomerInvoiceCreate = CustomerInvoiceService::customerInvoiceCreate($db,$uploadMasterData, $ciData);
 
             if(!$CustomerInvoiceCreate['status']){
@@ -76,12 +81,11 @@ class CustomerInvoiceUploadSubJob implements ShouldQueue
                 $excelRow = $CustomerInvoiceCreate['excelRow'];
                 throw new CustomerInvoiceException($errorMsg, $excelRow);
             } else {
-                $counter = UploadCustomerInvoice::where('id', $uploadCustomerInvoice->id)->first();
-                $newCount = $counter->counter + 1;
-                $counter->counter = $newCount;
-                $counter->save();
+                $uploadCICounter->increment('counter');
+                $uploadCICounter->save();
+                $newCounterValue = $uploadCICounter->counter;
 
-                if ($newCount == $counter->totalInvoices) {
+                if ($newCounterValue == $totalInvoices) {
                     UploadCustomerInvoice::where('id', $uploadCustomerInvoice->id)->update(['uploadStatus' => 1]);
                 }
             }
