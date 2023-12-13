@@ -133,7 +133,7 @@ class CustomerInvoiceUpload implements ShouldQueue
 
             foreach($detailRows as $invoiceNo => $ciData){
                 if($invoiceNo != null){
-                    CustomerInvoiceUploadSubJob::dispatch($db, $ciData, $employee, $uploadData)->onQueue('single');            
+                    CustomerInvoiceUploadSubJob::dispatch($db, $ciData, $employee, $uploadData);            
                 }    
             }
 
