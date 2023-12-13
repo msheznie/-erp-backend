@@ -94,6 +94,8 @@ class CustomerInvoiceUploadSubJob implements ShouldQueue
                     'error_line' => $excelRow,
                     'log_message' => $errorMessage
                 ]);
+
+                CustomerInvoiceService::processDeleteCustomerInvoiceUpload($uploadCustomerInvoice->id);
                 DB::commit();
             } catch (\Exception $innerException) {
                 // Log the inner exception
@@ -119,6 +121,8 @@ class CustomerInvoiceUploadSubJob implements ShouldQueue
                 'error_line' => $e->getLine(),
                 'log_message' => $e->getMessage()
             ]);
+
+            CustomerInvoiceService::processDeleteCustomerInvoiceUpload($uploadCustomerInvoice->id);
         }
     }
 }
