@@ -54,6 +54,7 @@ class CustomerInvoiceUploadSubJob implements ShouldQueue
      */
     public function handle()
     {
+        $db = $this->db;
         CommonJobService::db_switch($db);
         Log::useFiles(storage_path().'/logs/customer_invoice_bulk_insert.log');
         
@@ -61,7 +62,6 @@ class CustomerInvoiceUploadSubJob implements ShouldQueue
         ini_set('memory_limit', -1);
         $ciData = $this->uploadData;
         $uploadMasterData = $this->uploadMasterData;
-        $db = $this->db;
 
         $uploadCustomerInvoice = $uploadMasterData['uploadCustomerInvoice'];
         $logUploadCustomerInvoice = $uploadMasterData['logUploadCustomerInvoice'];
