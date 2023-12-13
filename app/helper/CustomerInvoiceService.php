@@ -1446,4 +1446,15 @@ class CustomerInvoiceService
         return $detailRows;
     }
 
+    public static function processDeleteCustomerInvoiceUpload($customerInvoiceUploadID)
+    {
+        $customerInvoiceUploadDetails = CustomerInvoiceUploadDetail::where('customerInvoiceUploadID',$customerInvoiceUploadID)->get();
+
+        foreach ($customerInvoiceUploadDetails as $customerInvoiceUploadDetail) {
+            $deleteCustomerInvoice  = self::deleteCustomerInvoice($customerInvoiceUploadDetail);
+            if(isset($deleteCustomerInvoice['status']) && !$deleteCustomerInvoice['status'])
+                return ['status' => false];
+        }
+    }
+
 }

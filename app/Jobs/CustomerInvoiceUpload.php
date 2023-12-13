@@ -124,11 +124,17 @@ class CustomerInvoiceUpload implements ShouldQueue
                             'error_line' => isset($rowData[20]) ? $rowData[20] : "",
                             'log_message' => $errorMsg
                         ]);
+
+                        CustomerInvoiceService::processDeleteCustomerInvoiceUpload($uploadCustomerInvoice->id);
                         return;
-                    } else {
-                        CustomerInvoiceUploadSubJob::dispatch($db, $detailValue, $employee, $uploadData)->onQueue('single');                
                     }
                 }
+            }
+
+            foreach($detailRows as $invoiceNo => $ciData){
+                if($invoiceNo != null){
+                    CustomerInvoiceUploadSubJob::dispatch($db, $ciData, $employee, $uploadData)->onQueue('single');            
+                }    
             }
 
             DB::commit();
