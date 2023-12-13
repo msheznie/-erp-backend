@@ -5117,7 +5117,7 @@ class Helper
                                 $bodyName = 'Tender ' . '<b>' . $currentApproved->documentCode . '</b>';
                             }
 
-                            if($input["documentSystemID"] == 113){
+                            if($input["documentSystemID"] == 113 || $input["documentSystemID"] == 108){
                                 $tenderMaster = TenderMaster::find($input["id"]);
                                 $type = ['Tender', 'RFQ', 'RFI', 'RFP'];
                                 $subjectName = $type[$tenderMaster->document_type] . ' ' . $currentApproved->documentCode;
@@ -5189,7 +5189,7 @@ class Helper
                                     //$body = '<p>' . $approvedDocNameBody . ' is pending for your approval. <br><br><a href="' . $redirectUrl . '">Click here to approve</a></p>';   
                                     $nextApprovalBody = '<p>' . $bodyName . ' Level ' . $currentApproved->rollLevelOrder . ' is approved and pending for your approval. <br><br>';
 
-                                    if($input["documentSystemID"] == 113){
+                                    if($input["documentSystemID"] == 113 || $input["documentSystemID"] == 108){
                                         $tenderMaster = TenderMaster::find($input["id"]);
                                         $type = ['Tender', 'RFQ', 'RFI', 'RFP'];
                                         $nextApprovalBody .= '<p><b>'. $type[$tenderMaster->document_type]. ' Title :</b> ' . $tenderMaster->title . '</p>' . '<p><b> ' . $type[$tenderMaster->document_type]. ' Description :</b> ' . $tenderMaster->description . '</p>';
@@ -5227,7 +5227,7 @@ class Helper
                                     $subject = $subjectName . " Level " . $currentApproved->rollLevelOrder . " is approved and sent to next level approval";
                                     $body = '<p>'.$bodyName . " Level " . $currentApproved->rollLevelOrder . " is approved and sent to next level approval to below employees <br>" . $nextApproveNameList;
 
-                                    if($input["documentSystemID"] == 113){
+                                    if($input["documentSystemID"] == 113 || $input["documentSystemID"] == 108){
                                         $tenderMaster = TenderMaster::find($input["id"]);
                                         $type = ['Tender', 'RFQ', 'RFI', 'RFP'];
                                         $body .= '<p><b>'. $type[$tenderMaster->document_type]. ' Title :</b> ' . $tenderMaster->title . '</p>' . '<p><b> ' . $type[$tenderMaster->document_type]. ' Description :</b> ' . $tenderMaster->description . '</p>';
