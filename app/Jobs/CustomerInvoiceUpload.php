@@ -112,6 +112,7 @@ class CustomerInvoiceUpload implements ShouldQueue
             }
 
             $detailRows = collect($detailRows)->groupBy(6);
+            $customerInvoiceCount = 0;
             foreach($detailRows as $invoiceNo => $detailValue){
                 if($invoiceNo != null){
                     $ifExistCustomerInvoiceDirect = CustomerInvoiceDirect::where('customerInvoiceNo',$invoiceNo)->first();
@@ -128,12 +129,16 @@ class CustomerInvoiceUpload implements ShouldQueue
                         CustomerInvoiceService::processDeleteCustomerInvoiceUpload($uploadCustomerInvoice->id);
                         return;
                     }
+
+                    $customerInvoiceCount++;
                 }
             }
+            
+            UploadCustomerInvoice::where('id', $uploadCustomerInvoice->id)->update(['totalInvoices' => $customerInvoiceCount]);
 
             foreach($detailRows as $invoiceNo => $ciData){
                 if($invoiceNo != null){
-                    CustomerInvoiceUploadSubJob::dispatch($db, $ciData, $employee, $uploadData);            
+                    CustomerInvoiceUploadSubJob::dispatch($db, $ciData, $employee, $uploadData)->onQueue('single');            
                 }    
             }
 
