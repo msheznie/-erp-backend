@@ -2250,9 +2250,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             'uploadedCompany' =>  $input['companySystemID'],
         ];
 
-
-        CustomerInvoiceUpload::dispatch($db, $uploadData);
-
+        CustomerInvoiceUpload::dispatch($db, $uploadData)->onQueue('single');
 
         return $this->sendResponse([], 'Customer Invoice uploaded successfully');
 
