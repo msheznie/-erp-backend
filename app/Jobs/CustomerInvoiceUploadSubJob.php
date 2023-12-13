@@ -76,7 +76,14 @@ class CustomerInvoiceUploadSubJob implements ShouldQueue
                 $excelRow = $CustomerInvoiceCreate['excelRow'];
                 throw new CustomerInvoiceException($errorMsg, $excelRow);
             } else {
-                UploadCustomerInvoice::where('id', $uploadCustomerInvoice->id)->update(['uploadStatus' => 1]);
+                $counter = UploadCustomerInvoice::where('id', $uploadCustomerInvoice->id)->first();
+                $newCount = $counter->counter + 1;
+                $counter->counter = $newCount;
+                $counter->save();
+
+                if ($newCount == $counter->totalInvoices) {
+                    UploadCustomerInvoice::where('id', $uploadCustomerInvoice->id)->update(['uploadStatus' => 1]);
+                }
             }
 
             DB::commit();

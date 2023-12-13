@@ -673,7 +673,7 @@ class CustomerInvoiceService
 
         }
 
-        UploadCustomerInvoice::where('id', $uploadCustomerInvoice->id)->update(['uploadStatus' => 1]);
+        // UploadCustomerInvoice::where('id', $uploadCustomerInvoice->id)->update(['uploadStatus' => 1]);
 		return ['status' => true];
 	}
 
@@ -1415,7 +1415,6 @@ class CustomerInvoiceService
         $highestColumn = $sheet->getHighestColumn();
         $detailRows = [];
         $rowNumber = 13;
-        Log::info('cdcd');   
         for ($row = $startRow; $row <= $highestRow; ++$row) {
             $rowData = [];
             for ($col = 'A'; $col <= $highestColumn; ++$col) {

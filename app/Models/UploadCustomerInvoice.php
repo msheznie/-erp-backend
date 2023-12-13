@@ -96,6 +96,7 @@ class UploadCustomerInvoice extends Model
         'uploadedDate',
         'uploadedBy',
         'uploadStatus',
+        'totalInvoices',
         'counter',
         'companySystemID'
     ];
@@ -111,6 +112,7 @@ class UploadCustomerInvoice extends Model
         'uploadedDate' => 'date',
         'uploadedBy' => 'string',
         'uploadStatus' => 'integer',
+        'totalInvoices' => 'integer',
         'counter' => 'integer',
         'companySystemID' => 'integer'
     ];
