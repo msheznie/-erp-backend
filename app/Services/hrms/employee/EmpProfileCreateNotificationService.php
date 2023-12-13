@@ -143,7 +143,7 @@ class EmpProfileCreateNotificationService
             }
             else
             {
-                $msg = "Employee profile creation notification not sent for {$applicableCatDesc} {$name} ";
+                $msg = "Employee profile creation notification not sent for inactive employee {$applicableCatDesc} {$name} ";
                 $this->insertToLogTb(['Document Code' => $this->documentCode, 'Message' => $msg]); 
             }
         }
