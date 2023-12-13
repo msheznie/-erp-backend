@@ -3326,8 +3326,9 @@ class Helper
                                         
                                         $approvedDocNameBody = $document->documentDescription . ' <b>' . $documentApproved->documentCode . '</b>';
 
-                                        if($document->documentSystemID == 108){
-                                            $approvedDocNameBody = "Tender " . ' <b>' . $documentApproved->documentCode . '</b>';
+                                        if($document->documentSystemID == 108 || $document->documentSystemID == 113){
+                                            $type = ['Tender', 'RFQ', 'RFI', 'RFP'];
+                                            $approvedDocNameBody = $type[$params["document_type"]]. ' ' . ' <b>' . $documentApproved->documentCode . '</b>';
                                         }
 
                                         // if (in_array($params["document"], self::documentListForClickHere())) {
@@ -3353,12 +3354,7 @@ class Helper
                                             $body .= $ammendText;
                                         }
 
-                                        if ($document->documentSystemID == 108) {
-                                            $body .= '<p><b>Tender Title :</b> ' . $params["tender_title"] . '</p>';
-                                            $body .= '<p><b>Tender Description :</b> ' . $params["tender_description"] . '</p>';
-                                        }
-
-                                        if ($document->documentSystemID == 113) {
+                                        if ($document->documentSystemID == 113 || $document->documentSystemID == 108) {
                                             $type = ['Tender', 'RFQ', 'RFI', 'RFP'];
                                             $body .= '<p><b>'. $type[$params["document_type"]] .' Title :</b> ' . $params["tender_title"] . '</p>';
                                             $body .= '<p><b>'. $type[$params["document_type"]] . ' Description :</b> ' . $params["tender_description"] . '</p>';
@@ -3367,6 +3363,12 @@ class Helper
                                         $body .= '<a href="' . $redirectUrl . '">Click here to approve</a></p>';
 
                                         $subject = "Pending " . $document->documentDescription . " approval " . $documentApproved->documentCode;
+
+                                        if($document->documentSystemID == 108 || $document->documentSystemID == 113){
+                                            $type = ['Tender', 'RFQ', 'RFI', 'RFP'];
+                                            $subject = "Pending " . $type[$params["document_type"]] . " approval " . $documentApproved->documentCode;
+                                        }
+
                                         $pushNotificationMessage = $document->documentDescription . " " . $documentApproved->documentCode . " is pending for your approval.";
                                         foreach ($approvalList as $da) {
                                             if ($da->employee) {
@@ -5111,11 +5113,6 @@ class Helper
 
                             $subjectName = $document->documentDescription . ' ' . $currentApproved->documentCode;
                             $bodyName = $document->documentDescription . ' ' . '<b>' . $currentApproved->documentCode . '</b>';
-
-                            if($input["documentSystemID"] == 108){
-                                $subjectName = 'Tender ' . $currentApproved->documentCode;
-                                $bodyName = 'Tender ' . '<b>' . $currentApproved->documentCode . '</b>';
-                            }
 
                             if($input["documentSystemID"] == 113 || $input["documentSystemID"] == 108){
                                 $tenderMaster = TenderMaster::find($input["id"]);
