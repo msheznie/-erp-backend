@@ -23,14 +23,13 @@ class CustomerInvoiceUploadSubJob implements ShouldQueue
 
     protected $db;
     protected $uploadData;
-    protected $employeeData;
     protected $uploadMasterData;
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($db, $uploadData, $employee, $uploadMasterData)
+    public function __construct($db, $uploadData, $uploadMasterData)
     {
         if(env('QUEUE_DRIVER_CHANGE','database') == 'database'){
             if(env('IS_MULTI_TENANCY',false)){
@@ -43,7 +42,6 @@ class CustomerInvoiceUploadSubJob implements ShouldQueue
         }
         $this->db = $db;
         $this->uploadData = $uploadData;
-        $this->employeeData = $employee;
         $this->uploadMasterData = $uploadMasterData;
     }
 
