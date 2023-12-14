@@ -429,6 +429,12 @@ class CustomerInvoiceService
                 'logUploadCustomerInvoice'=> $logUploadCustomerInvoice->id
             ];
 
+            $checkUploadStatus = UploadCustomerInvoice::where('id', $uploadCustomerInvoice->id)->first();
+
+            if ($checkUploadStatus->uploadStatus == 0) {
+                return ['status' => false];
+            }
+
             $directInvoiceHeader = $CustomerInvoiceService->createDirectInvoiceHeader($DirectInvoiceHeaderData);
 
             if ($directInvoiceHeader['status']) {
@@ -673,7 +679,6 @@ class CustomerInvoiceService
 
         }
 
-        // UploadCustomerInvoice::where('id', $uploadCustomerInvoice->id)->update(['uploadStatus' => 1]);
 		return ['status' => true];
 	}
 
