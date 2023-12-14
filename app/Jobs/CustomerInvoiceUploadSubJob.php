@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\helper\CommonJobService;
 use App\helper\CustomerInvoiceService;
+use App\Jobs\DeleteCustomerInvoiceDelete;
 use App\Models\LogUploadCustomerInvoice;
 use App\Models\UploadCustomerInvoice;
 use App\Models\CustomerInvoiceDirect;
@@ -105,7 +106,7 @@ class CustomerInvoiceUploadSubJob implements ShouldQueue
                     'log_message' => $errorMessage
                 ]);
 
-                CustomerInvoiceService::processDeleteCustomerInvoiceUpload($uploadCustomerInvoice->id);
+                DeleteCustomerInvoiceDelete::dispatch($db, $uploadCustomerInvoice->id)->onQueue('single');
                 DB::commit();
             } catch (\Exception $innerException) {
                 // Log the inner exception
@@ -132,7 +133,7 @@ class CustomerInvoiceUploadSubJob implements ShouldQueue
                 'log_message' => $e->getMessage()
             ]);
 
-            CustomerInvoiceService::processDeleteCustomerInvoiceUpload($uploadCustomerInvoice->id);
+            DeleteCustomerInvoiceDelete::dispatch($db, $uploadCustomerInvoice->id)->onQueue('single');
         }
     }
 }
