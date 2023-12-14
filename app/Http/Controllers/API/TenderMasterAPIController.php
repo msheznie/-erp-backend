@@ -871,6 +871,11 @@ ORDER BY
             return $this->updateCalenderDates($input);
         }
 
+        $condition = $this->validateDates($input['id']);
+        if(isset($condition['success']) && $condition['success'] == false){
+            return $this->validateDates($input['id']);
+        }
+
         $rfq = false;
 
         if (isset($input['rfq'])) {
@@ -1564,6 +1569,83 @@ ORDER BY
         }
     }
 
+    private function validateDates($id){
+        $currentDate = Carbon::now();
+        $calendarDates = CalendarDatesDetail::where('tender_id', $id)
+            ->whereHas('calendarDates', function ($query) {
+                $query->where('is_default', 0);
+            })
+            ->get()
+            ->toArray();
+
+        foreach ($calendarDates as $calDate) {
+                $fromTime = ($calDate['from_time']) ? new Carbon($calDate['from_time']) : null;
+                $toTime = ($calDate['to_time']) ? new Carbon($calDate['to_time']) : null;
+
+                if (empty($fromTime)) {
+                    return ['success' => false, 'message' => 'From time cannot be empty'];
+                }
+
+                if (empty($toTime)) {
+                    if (!empty($calDate['to_date']) && $rfq) {
+                        return ['success' => false, 'message' => 'To time cannot be empty'];
+                    } elseif (!$rfq) {
+                        return ['success' => false, 'message' => 'To time cannot be empty'];
+                    }
+                }
+
+                if (!empty($calDate['from_date'])) {
+                    $frm_date = new Carbon($calDate['from_date']);
+                    $frm_date = ($calDate['from_time']) ? $frm_date->format('Y-m-d') . ' ' . $fromTime->format('H:i:s') : $frm_date->format('Y-m-d');
+                } else {
+                    $frm_date = null;
+                }
+                if (!empty($calDate['to_date'])) {
+                    $to_date = new Carbon($calDate['to_date']);
+                    $to_date = ($calDate['to_time']) ? $to_date->format('Y-m-d') . ' ' . $toTime->format('H:i:s') : $to_date->format('Y-m-d');
+                } else {
+                    $to_date = null;
+                }
+                if (!empty($to_date) && empty($frm_date)) {
+                    return ['success' => false, 'message' => 'From date cannot be empty'];
+                }
+
+                if (!empty($frm_date) && empty($to_date)) {
+                    if (!empty($toTime) && $rfq) {
+                        return ['success' => false, 'message' => 'To date cannot be empty'];
+                    } elseif (!$rfq) {
+                        return ['success' => false, 'message' => 'To date cannot be empty'];
+                    }
+                }
+
+                if (!empty($frm_date) && !empty($to_date)) {
+                    if ($frm_date > $to_date) {
+                        return ['success' => false, 'message' => 'From date and time cannot be greater than the To date and time'];
+                    }
+                }
+
+                if (!empty($frm_date)) {
+                    if ($frm_date < $currentDate) {
+                        return ['success' => false, 'message' => 'From date and time should greater than current date and time'];
+                    }
+                }
+
+                if (!empty($to_date)) {
+                    if ($to_date < $currentDate) {
+                        return ['success' => false, 'message' => 'To date and time should greater than current date and time'];
+                    }
+                }
+
+                if (!empty($to_date) || !empty($frm_date)) {
+                    if (($frm_date > $to_date) && !empty($to_date) && $rfq) {
+                        return ['success' => false, 'message' => 'From date and time should greater than to date and time'];
+                    } elseif ($frm_date > $to_date && !$rfq) {
+                        return ['success' => false, 'message' => 'From date and time should greater than to date and time'];
+                    }
+                }
+        }
+    }
+
     public function updateCalenderDates($input)
     {
         $rfq = false;
@@ -1575,7 +1657,9 @@ ORDER BY
         $currenctDate = Carbon::now();
         if (isset($input['calendarDates'])) {
             if (count($input['calendarDates']) > 0) {
+                $lastCalDate = end($input['calendarDates']);
                 foreach ($input['calendarDates'] as $calDate) {
+                if ($calDate === $lastCalDate) {
                     $fromTime = ($calDate['from_time']) ? new Carbon($calDate['from_time']) : null;
                     $toTime = ($calDate['to_time']) ? new Carbon($calDate['to_time']) : null;
 
@@ -1642,6 +1726,7 @@ ORDER BY
                         }
                     }
                 }
+            }
 
                
                 $calenderDetails = $this->deleteCalenderDetails($input['id'], $input['company_id']);
@@ -1678,15 +1763,15 @@ ORDER BY
                     }
 
                     if (!$rfq && $calenderDateDetails->is_default == 1 && isset($document_sales_start_date) && $document_sales_start_date > $frm_date ) {
-                        return ['success' => false, 'message' => 'Pre-bid Clarification from date and time should greater than document sale from date and time'];
+                      //  return ['success' => false, 'message' => 'Pre-bid Clarification from date and time should greater than document sale from date and time'];
                     }
 
                     if (!$rfq && $calenderDateDetails->is_default == 1 && isset($bid_submission_closing_date) && $frm_date > $bid_submission_closing_date ) {
-                        return ['success' => false, 'message' => 'Pre-bid Clarification from date and time should less than bid submission to date and time'];
+                        //return ['success' => false, 'message' => 'Pre-bid Clarification from date and time should less than bid submission to date and time'];
                     }
 
                     if (!$rfq && $calenderDateDetails->is_default == 1 && isset($bid_submission_closing_date) &&  $to_date > $bid_submission_closing_date) {
-                        return ['success' => false, 'message' => 'Pre-bid Clarification to date and time should less than Bid Submission to date and time'];
+                       // return ['success' => false, 'message' => 'Pre-bid Clarification to date and time should less than Bid Submission to date and time'];
                     }
 
                     $calDt['tender_id'] = $input['id'];
@@ -2596,6 +2681,7 @@ ORDER BY
 
     public function updateCalenderDate(Request $request)
     {
+        $currentDate = Carbon::now();
         $employee = \Helper::getEmployeeInfo();
 
         $rfx = isset($request['rfq']) ? true : false;
@@ -2637,6 +2723,18 @@ ORDER BY
         if (!empty($frm_date) && empty($to_date) && !$rfx) {
             return ['success' => false, 'message' => 'To date cannot be empty'];
         }
+
+        /*if (!empty($frm_date)) {
+            if ($frm_date < $currentDate) {
+                return ['success' => false, 'message' => 'From date and time should greater than current date and time'];
+            }
+        }
+
+        if (!empty($to_date)) {
+            if ($to_date < $currentDate) {
+                return ['success' => false, 'message' => 'To date and time should greater than current date and time'];
+            }
+        }*/
 
         if (!empty($frm_date) && !empty($to_date)) {
             if ($frm_date > $to_date) {
