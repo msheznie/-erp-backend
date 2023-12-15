@@ -1005,6 +1005,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
 
     if (env("LOG_ENABLE", false)) {
         Route::get('logs', '\Rap2hpoutre\LaravelLogViewer\LogViewerController@index');
+        Route::get('/phpinfo', function () { phpinfo(); });
     }
 });
 
