@@ -107,7 +107,9 @@ class CustomerInvoiceUploadSubJob implements ShouldQueue
                     'log_message' => $errorMessage
                 ]);
 
-                DeleteCustomerInvoiceUpload::dispatch($db, $uploadCustomerInvoice->id)->onQueue('single');
+                CustomerInvoiceService::processDeleteCustomerInvoiceUpload($uploadCustomerInvoice->id);
+
+                // DeleteCustomerInvoiceUpload::dispatch($db, $uploadCustomerInvoice->id)->onQueue('single');
                 DB::commit();
             } catch (\Exception $innerException) {
                 // Log the inner exception
@@ -134,7 +136,8 @@ class CustomerInvoiceUploadSubJob implements ShouldQueue
                 'log_message' => $e->getMessage()
             ]);
 
-            DeleteCustomerInvoiceUpload::dispatch($db, $uploadCustomerInvoice->id)->onQueue('single');
+            CustomerInvoiceService::processDeleteCustomerInvoiceUpload($uploadCustomerInvoice->id);
+            // DeleteCustomerInvoiceUpload::dispatch($db, $uploadCustomerInvoice->id)->onQueue('single');
         }
     }
 }
