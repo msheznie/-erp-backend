@@ -633,7 +633,7 @@ class TenderBidFormatMasterAPIController extends AppBaseController
         $id = $input['id'];
         $bit_format_id = $input['tender_id'];
 
-        $result = TenderBidFormatDetail::where('tender_id',$bit_format_id)->whereIn('field_type', [2, 3])->get();
+        $result = TenderBidFormatDetail::where('tender_id',$bit_format_id)->where('id','!=',$id)->whereIn('field_type', [2, 3,4])->get();
 
 
         $formula = TenderBidFormatDetail::where('tender_id',$bit_format_id)->where('id',$id)->where('field_type',4)->Select('formula_string')->first();
