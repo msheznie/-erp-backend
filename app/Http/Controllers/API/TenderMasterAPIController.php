@@ -1577,7 +1577,7 @@ ORDER BY
             })
             ->get()
             ->toArray();
-        Log::info($calendarDates);
+
         foreach ($calendarDates as $calDate) {
                 $fromTime = ($calDate['from_time']) ? new Carbon($calDate['from_time']) : null;
                 $toTime = ($calDate['to_time']) ? new Carbon($calDate['to_time']) : null;
@@ -1760,18 +1760,6 @@ ORDER BY
                         $toTime = new Carbon($calDate['to_time']);
                         $to_date = new Carbon($calDate['to_date']);
                         $to_date = ($calDate['to_time']) ? $to_date->format('Y-m-d') . ' ' . $toTime->format('H:i:s') : $to_date->format('Y-m-d');
-                    }
-
-                    if (!$rfq && $calenderDateDetails->is_default == 1 && isset($document_sales_start_date) && $document_sales_start_date > $frm_date ) {
-                      //  return ['success' => false, 'message' => 'Pre-bid Clarification from date and time should greater than document sale from date and time'];
-                    }
-
-                    if (!$rfq && $calenderDateDetails->is_default == 1 && isset($bid_submission_closing_date) && $frm_date > $bid_submission_closing_date ) {
-                        //return ['success' => false, 'message' => 'Pre-bid Clarification from date and time should less than bid submission to date and time'];
-                    }
-
-                    if (!$rfq && $calenderDateDetails->is_default == 1 && isset($bid_submission_closing_date) &&  $to_date > $bid_submission_closing_date) {
-                       // return ['success' => false, 'message' => 'Pre-bid Clarification to date and time should less than Bid Submission to date and time'];
                     }
 
                     $calDt['tender_id'] = $input['id'];
@@ -2724,7 +2712,7 @@ ORDER BY
             return ['success' => false, 'message' => 'To date cannot be empty'];
         }
 
-        /*if (!empty($frm_date)) {
+        if (!empty($frm_date)) {
             if ($frm_date < $currentDate) {
                 return ['success' => false, 'message' => 'From date and time should greater than current date and time'];
             }
@@ -2734,7 +2722,7 @@ ORDER BY
             if ($to_date < $currentDate) {
                 return ['success' => false, 'message' => 'To date and time should greater than current date and time'];
             }
-        }*/
+        }
 
         if (!empty($frm_date) && !empty($to_date)) {
             if ($frm_date > $to_date) {
