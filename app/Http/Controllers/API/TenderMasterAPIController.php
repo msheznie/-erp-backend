@@ -871,15 +871,15 @@ ORDER BY
             return $this->updateCalenderDates($input);
         }
 
-        $condition = $this->validateDates($input['id']);
-        if(isset($condition['success']) && $condition['success'] == false){
-            return $this->validateDates($input['id']);
-        }
-
         $rfq = false;
 
         if (isset($input['rfq'])) {
             $rfq = ($input['rfq'] == true) ? true : false;
+        }
+
+        $condition = $this->validateDates($input['id'], $rfq);
+        if(isset($condition['success']) && $condition['success'] == false){
+            return $this->validateDates($input['id'], $rfq);
         }
 
         $site_visit_date = null;
@@ -1569,7 +1569,7 @@ ORDER BY
         }
     }
 
-    private function validateDates($id){
+    private function validateDates($id, $rfq){
         $currentDate = Carbon::now();
         $calendarDates = CalendarDatesDetail::where('tender_id', $id)
             ->whereHas('calendarDates', function ($query) {
@@ -1577,7 +1577,7 @@ ORDER BY
             })
             ->get()
             ->toArray();
-
+        Log::info($calendarDates);
         foreach ($calendarDates as $calDate) {
                 $fromTime = ($calDate['from_time']) ? new Carbon($calDate['from_time']) : null;
                 $toTime = ($calDate['to_time']) ? new Carbon($calDate['to_time']) : null;
