@@ -2224,35 +2224,43 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             'uploadStatus' => -1
         );
 
-        $uploadCustomerInvoice = UploadCustomerInvoice::create($uploadArray);
+        DB::beginTransaction();
+        try {
 
-        $uploadLogArray = array(
-            'companySystemID' => $input['companySystemID'],
-            'customerInvoiceUploadID' => $uploadCustomerInvoice->id,
-        );
+            $uploadCustomerInvoice = UploadCustomerInvoice::create($uploadArray);
 
-        $logUploadCustomerInvoice = LogUploadCustomerInvoice::create($uploadLogArray);
+            $uploadLogArray = array(
+                'companySystemID' => $input['companySystemID'],
+                'customerInvoiceUploadID' => $uploadCustomerInvoice->id,
+            );
+
+            $logUploadCustomerInvoice = LogUploadCustomerInvoice::create($uploadLogArray);
 
 
 
-        $db = isset($request->db) ? $request->db : "";
+            $db = isset($request->db) ? $request->db : "";
 
-        $disk = 'local';
+            $disk = 'local';
 
-        Storage::disk($disk)->put($originalFileName, $decodeFile);
+            Storage::disk($disk)->put($originalFileName, $decodeFile);
 
-        $objPHPExcel = PHPExcel_IOFactory::load(Storage::disk($disk)->path($originalFileName));
+            $objPHPExcel = PHPExcel_IOFactory::load(Storage::disk($disk)->path($originalFileName));
 
-        $uploadData = ['objPHPExcel' => $objPHPExcel,
-            'uploadCustomerInvoice' => $uploadCustomerInvoice,
-            'logUploadCustomerInvoice' => $logUploadCustomerInvoice,
-            'employee' => $employee,
-            'uploadedCompany' =>  $input['companySystemID'],
-        ];
+            $uploadData = ['objPHPExcel' => $objPHPExcel,
+                'uploadCustomerInvoice' => $uploadCustomerInvoice,
+                'logUploadCustomerInvoice' => $logUploadCustomerInvoice,
+                'employee' => $employee,
+                'uploadedCompany' =>  $input['companySystemID'],
+            ];
 
-        CustomerInvoiceUpload::dispatch($db, $uploadData);
+            CustomerInvoiceUpload::dispatch($db, $uploadData);
 
-        return $this->sendResponse([], 'Customer Invoice uploaded successfully');
+            DB::commit();
+            return $this->sendResponse([], 'Customer Invoice uploaded successfully');
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
 
     }
 
