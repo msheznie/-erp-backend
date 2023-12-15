@@ -650,20 +650,6 @@ class CustomerInvoiceService
                         $errorMsg = $confirm["message"];
                         return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
 
-                    } else {
-                        $documentApproveds = DocumentApproved::where('documentSystemCode', $directInvoiceHeaderData->custInvoiceDirectAutoID)->where('documentSystemID', 20)->get();
-                        foreach ($documentApproveds as $documentApproved) {
-                            $documentApproved["approvedComments"] = "Invoice created from customer invoice upload";
-                            $documentApproved["db"] = $db;
-                            $documentApproved["fromUpload"] = true;
-                            $documentApproved["approvedBy"] = $approvedEmployee->employeeSystemID;
-                            $approve = \Helper::approveDocument($documentApproved);
-
-                            if (!$approve["success"]) {
-                                $errorMsg = $approve['message'];
-                                return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
-                            }
-                        }
                     }
                 }
 
@@ -674,6 +660,7 @@ class CustomerInvoiceService
             $CIUploadDetailData['companySystemID']= $uploadedCompany;
             $CIUploadDetailData['customerInvoiceUploadID']= $uploadCustomerInvoice->id;
             $CIUploadDetailData['custInvoiceDirectID'] = $customerInvoiceDirects->custInvoiceDirectAutoID;
+            $CIUploadDetailData['approvedByUserSystemID'] = $approvedEmployee ? $approvedEmployee->employeeSystemID : null;
 
             $createCIUploadDetail = CustomerInvoiceUploadDetail::create($CIUploadDetailData);
 
@@ -1456,8 +1443,9 @@ class CustomerInvoiceService
 
         foreach ($customerInvoiceUploadDetails as $customerInvoiceUploadDetail) {
             $deleteCustomerInvoice  = self::deleteCustomerInvoice($customerInvoiceUploadDetail);
-            if(isset($deleteCustomerInvoice['status']) && !$deleteCustomerInvoice['status'])
+            if(isset($deleteCustomerInvoice['status']) && !$deleteCustomerInvoice['status']) { 
                 return ['status' => false];
+            }
         }
     }
 

@@ -1,12 +1,13 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Jobs\CustomerInvoiceUpload;
 
 use App\helper\CommonJobService;
 use App\helper\CustomerInvoiceService;
 use App\Models\LogUploadCustomerInvoice;
 use App\Models\UploadCustomerInvoice;
 use App\Models\CustomerInvoiceDirect;
+use App\Jobs\CustomerInvoiceUpload\CustomerInvoiceUploadSubJob;
 use App\Services\WebPushNotificationService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;

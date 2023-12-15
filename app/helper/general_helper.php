@@ -3362,20 +3362,22 @@ class Helper
                                             }
                                         }
                                         
-                                        $sendEmail = \Email::sendEmail($emails);
-                                        if (!$sendEmail["success"]) {
-                                            return ['success' => false, 'message' => $sendEmail["message"]];
+                                        $notifyConfirm = (isset($params['fromUpload']) && $params['fromUpload']) ? false : true;
+
+                                        if ($notifyConfirm) {
+                                            $sendEmail = \Email::sendEmail($emails);
+                                            if (!$sendEmail["success"]) {
+                                                return ['success' => false, 'message' => $sendEmail["message"]];
+                                            }
+
+                                            $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, 1);
+
+                                            $webPushData = [
+                                                'title' => $pushNotificationMessage,
+                                                'body' => '',
+                                                'url' => $redirectUrl,
+                                            ];
                                         }
-
-                                        
-
-                                        $jobPushNotification = PushNotification::dispatch($pushNotificationArray, $pushNotificationUserIds, 1);
-
-                                        $webPushData = [
-                                            'title' => $pushNotificationMessage,
-                                            'body' => '',
-                                            'url' => $redirectUrl,
-                                        ];
 
                                         // WebPushNotificationService::sendNotification($webPushData, 1, $pushNotificationUserIds);
 

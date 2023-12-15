@@ -92,7 +92,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\Storage;
 use App\helper\ItemTracking;
-use App\Jobs\CustomerInvoiceUpload;
+use App\Jobs\CustomerInvoiceUpload\CustomerInvoiceUpload;
 use App\Models\CustomerContactDetails;
 use App\Models\CustomerInvoiceLogistic;
 use App\Models\DeliveryTermsMaster;
@@ -2253,6 +2253,24 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         CustomerInvoiceUpload::dispatch($db, $uploadData);
 
         return $this->sendResponse([], 'Customer Invoice uploaded successfully');
+
+    }
+
+    public function checkCustomerInvoiceUploadStatus(Request $request)
+    {
+        $input = $request->all();
+
+        $checkStatus = CustomerInvoiceUploadDetail::where('custInvoiceDirectID', $input['customerInvoiceID'])
+                                                  ->whereHas('uploaded_data', function($query) {
+                                                        $query->where('uploadStatus', 1);
+                                                  })
+                                                  ->first();
+
+        if ($checkStatus) {
+            return $this->sendResponse([], 'Customer Invoice can be edit successfully');
+        } else {
+            return $this->sendError("Unable to edit customer invoice. Upload is currently in progress.");
+        }
 
     }
 

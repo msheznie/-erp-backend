@@ -974,6 +974,8 @@ Route::group(['middleware' => ['tenant','locale']], function () {
             Route::resource('upload_customer_invoices', 'UploadCustomerInvoiceAPIController');
             Route::resource('log_upload_customer_invoices', 'LogUploadCustomerInvoiceAPIController');
             Route::resource('customer_invoice_upload_details', 'CustomerInvoiceUploadDetailAPIController');
+
+            Route::post('checkCustomerInvoiceUploadStatus', 'CustomerInvoiceDirectAPIController@checkCustomerInvoiceUploadStatus');
         });
     });
 
