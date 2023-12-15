@@ -2492,7 +2492,7 @@ class SRMService
 
 
                          $formula_cal = PirceBidFormula::process($details_obj,$tender_id);
-                      
+
 
                         foreach($formula_cal as $val)
                         {
@@ -3468,7 +3468,7 @@ class SRMService
 
 
 
-            $formula_cal = PirceBidFormula::process($details);
+            $formula_cal = PirceBidFormula::process($details,$tenderId);
 
             foreach($formula_cal as $val)
             {
@@ -3525,7 +3525,7 @@ class SRMService
         $detail = $request->input('extra.detail');
         $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
 
-
+        $tenderMainWork = PricingScheduleDetail::where('id', $detail['main_work_id'])->first();
 
         DB::beginTransaction();
         try {
@@ -3562,7 +3562,7 @@ class SRMService
                     $mainWork['updated_by'] = $supplierRegId;
                     BidMainWork::where('id', $bidMainWork['id'])->update($mainWork);
                 } else {
-                    $tenderMainWork = PricingScheduleDetail::where('id', $detail['main_work_id'])->first();
+
                     $mainWork['main_works_id'] = $detail['main_work_id'];
                     $mainWork['bid_master_id'] = $bidMasterId;
                     $mainWork['tender_id'] = $tenderMainWork['tender_id'];
@@ -3605,7 +3605,7 @@ class SRMService
 
 
 
-            $formula_cal = PirceBidFormula::process($details);
+            $formula_cal = PirceBidFormula::process($details,$tenderMainWork['tender_id']);
 
             foreach($formula_cal as $val)
             {
@@ -3852,7 +3852,7 @@ class SRMService
                     }, $outcome->toArray());
 
 
-                    $formula_cal = PirceBidFormula::process($details_obj);
+                    $formula_cal = PirceBidFormula::process($details_obj,$tenderId);
 
                     foreach($formula_cal as $val)
                     {
