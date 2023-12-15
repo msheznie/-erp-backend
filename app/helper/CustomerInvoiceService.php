@@ -310,12 +310,12 @@ class CustomerInvoiceService
                     return ['status' => false, 'message' => $errorMsg, 'excelRow' =>$excelRow];
                 }
 
-                $document = DocumentMaster::where('documentSystemID', 18)->first();
+                $document = DocumentMaster::where('documentSystemID', 20)->first();
 
                 // get approval rolls
                 $approvalLevel = ApprovalLevel::with('approvalrole' )
                                                 ->where('companySystemID', $uploadedCompany)
-                                                ->where('documentSystemID', 18)
+                                                ->where('documentSystemID', 20)
                                                 ->where('departmentSystemID', $document["departmentSystemID"])
                                                 ->where('isActive', -1)
                                                 ->first();
@@ -346,7 +346,7 @@ class CustomerInvoiceService
                                     })
                                     ->where('companySystemID', $uploadedCompany)
                                     ->where('employeeID',$approvedEmployee->empID)
-                                    ->where('documentSystemID', 18)
+                                    ->where('documentSystemID', 20)
                                     ->where('isActive', 1)
                                     ->where('removedYN', 0)
                                     ->first();
@@ -362,12 +362,12 @@ class CustomerInvoiceService
 
                 //Check Approval Acces
 
-                $document = DocumentMaster::where('documentSystemID', 18)->first();
+                $document = DocumentMaster::where('documentSystemID', 20)->first();
 
                 // get approval rolls
                 $approvalLevel = ApprovalLevel::with('approvalrole' )
                                                 ->where('companySystemID', $uploadedCompany)
-                                                ->where('documentSystemID', 18)
+                                                ->where('documentSystemID', 20)
                                                 ->where('departmentSystemID', $document["departmentSystemID"])
                                                 ->where('isActive', -1)
                                                 ->first();
@@ -398,7 +398,7 @@ class CustomerInvoiceService
                                     })
                                     ->where('companySystemID', $uploadedCompany)
                                     ->where('employeeID',$approvedEmployee->empID)
-                                    ->where('documentSystemID', 18)
+                                    ->where('documentSystemID', 20)
                                     ->where('isActive', 1)
                                     ->where('removedYN', 0)
                                     ->first();
