@@ -5,6 +5,7 @@ namespace App\Services\hrms\employee;
 use Carbon\Carbon;
 use App\Models\HrmsEmployeeManager;
 use App\Models\NotificationCompanyScenario;
+use App\Models\SrpEmployeeDetails;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 class EmpProfileCreateNotificationService
@@ -108,33 +109,45 @@ class EmpProfileCreateNotificationService
 
         foreach ($this->notifyList as $val) {
 
-            $applicableCatDesc = 'Employee';
-            $mailTo = $val['employee']['empEmail'];
-            $name = $val['employee']['empFullName'];
+             $count = SrpEmployeeDetails::where('empConfirmedYN', 1)
+            ->where('isDischarged', 0)
+            ->where('EIdNo', $val['employee']['employeeSystemID'])
+            ->count();
             
+            $applicableCatDesc = 'Employee';
+            
+            $name = $val['employee']['empFullName'];
+            if($count > 0){
+                $mailTo = $val['employee']['empEmail'];
+                $mailBody = "Dear {$name},<br/>";
+                $mailBody .= $this->email_body();
+        
+                $subject = 'Employee profile creation notification';
+        
+                $emails = [
+                    'companySystemID' => $this->companyId,
+                    'alertMessage' => $subject,
+                    'empEmail' => $mailTo,
+                    'emailAlertMessage' => $mailBody
+                ];
+                $sendEmail = \Email::sendEmailErp($emails);
 
-            $mailBody = "Dear {$name},<br/>";
-            $mailBody .= $this->email_body();
-    
-            $subject = 'Employee profile creation notification';
-    
-            $emails = [
-                'companySystemID' => $this->companyId,
-                'alertMessage' => $subject,
-                'empEmail' => $mailTo,
-                'emailAlertMessage' => $mailBody
-            ];
-            $sendEmail = \Email::sendEmailErp($emails);
-
-            if (!$sendEmail["success"]) {
-                $msg = "Employee profile creation notification not sent for {$applicableCatDesc} {$name} "; 
-                $logType = 'error';
-                $this->insertToLogTb(['Document Code' => $this->documentCode, 'Message' => $msg], $logType); 
-            } else {
-                $msg = "Employee profile creation notification sent for {$applicableCatDesc} {$name} ";
+                if (!$sendEmail["success"]) {
+                    $msg = "Employee profile creation notification not sent for {$applicableCatDesc} {$name} "; 
+                    $logType = 'error';
+                    $this->insertToLogTb(['Document Code' => $this->documentCode, 'Message' => $msg], $logType); 
+                } else {
+                    $msg = "Employee profile creation notification sent for {$applicableCatDesc} {$name} ";
+                    $this->insertToLogTb(['Document Code' => $this->documentCode, 'Message' => $msg]); 
+                }
+            }
+            else
+            {
+                $msg = "Employee profile creation notification not sent for inactive employee {$applicableCatDesc} {$name} ";
                 $this->insertToLogTb(['Document Code' => $this->documentCode, 'Message' => $msg]); 
             }
         }
+
     }
 
     public function email_body()
