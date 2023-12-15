@@ -76,9 +76,11 @@ class CustomerInvoiceUploadSubJob implements ShouldQueue
             $CustomerInvoiceCreate = CustomerInvoiceService::customerInvoiceCreate($db,$uploadMasterData, $ciData);
 
             if(!$CustomerInvoiceCreate['status']){
-                $errorMsg = isset($CustomerInvoiceCreate['message']) ? $CustomerInvoiceCreate['message'] : "Error occured";
-                $excelRow = isset($CustomerInvoiceCreate['excelRow']) ? $CustomerInvoiceCreate['excelRow'] : 0;
-                throw new CustomerInvoiceException($errorMsg, $excelRow);
+                if (isset($CustomerInvoiceCreate['message'])) {
+                    $errorMsg = isset($CustomerInvoiceCreate['message']) ? $CustomerInvoiceCreate['message'] : "Error occured";
+                    $excelRow = isset($CustomerInvoiceCreate['excelRow']) ? $CustomerInvoiceCreate['excelRow'] : 0;
+                    throw new CustomerInvoiceException($errorMsg, $excelRow);
+                } 
             } else {
                 $uploadCICounter->increment('counter');
                 $uploadCICounter->save();
