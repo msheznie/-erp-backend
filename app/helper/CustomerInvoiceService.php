@@ -1443,8 +1443,9 @@ class CustomerInvoiceService
 
         foreach ($customerInvoiceUploadDetails as $customerInvoiceUploadDetail) {
             $deleteCustomerInvoice  = self::deleteCustomerInvoice($customerInvoiceUploadDetail);
-            if(isset($deleteCustomerInvoice['status']) && !$deleteCustomerInvoice['status'])
+            if(isset($deleteCustomerInvoice['status']) && !$deleteCustomerInvoice['status']) { 
                 return ['status' => false];
+            }
         }
     }
 
