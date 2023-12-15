@@ -5931,7 +5931,7 @@ class Helper
 
                                     if($input["documentSystemID"] == 107 )
                                     {
-                                        $sub = "<p>Dear Supplier". ',</p><p>Please be informed that your KYC has been rejected for below reason by '. $empInfo->empName .".". "<br><br> " . $input["rejectedComments"]."."." <br><br> Thank You.</p>";
+                                        $sub = "<p>Dear Supplier". ',</p><p>Please be informed that your KYC form has been referred back for the following reason by the '. $empInfo->empName .".". "<br><br><b> " . '"' . $input["rejectedComments"].".".'"'." </b><br><br> Please click on ".'"Amend"'." button to do the changes for KYC and resubmit for approval.<br><br> Thank You.</p>";
                                         $msg = " Registration Rejected";
                                     }
                                     else if($input["documentSystemID"] == 106)
