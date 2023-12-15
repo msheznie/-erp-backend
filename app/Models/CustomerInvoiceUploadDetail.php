@@ -72,6 +72,7 @@ class CustomerInvoiceUploadDetail extends Model
     public $fillable = [
         'companySystemID',
         'customerInvoiceUploadID',
+        'approvedByUserSystemID',
         'custInvoiceDirectID'
     ];
 
@@ -84,6 +85,7 @@ class CustomerInvoiceUploadDetail extends Model
         'id' => 'integer',
         'companySystemID' => 'integer',
         'customerInvoiceUploadID' => 'integer',
+        'approvedByUserSystemID' => 'integer',
         'custInvoiceDirectID' => 'integer'
     ];
 
@@ -96,5 +98,8 @@ class CustomerInvoiceUploadDetail extends Model
         
     ];
 
-    
+    public function uploaded_data()
+    {
+        return $this->belongsTo('App\Models\UploadCustomerInvoice', 'customerInvoiceUploadID', 'id');
+    }
 }
