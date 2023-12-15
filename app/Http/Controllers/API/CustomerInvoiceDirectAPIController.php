@@ -2253,12 +2253,6 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 'uploadedCompany' =>  $input['companySystemID'],
             ];
 
-            $details = CustomerInvoiceService::processExcelData($uploadData);
-
-            $detailRows = collect($details)->groupBy(6);
-
-            return $detailss = collect($detailRows)->chunk(5);
-
             CustomerInvoiceUpload::dispatch($db, $uploadData);
 
             DB::commit();
