@@ -66,7 +66,7 @@ class SrmDepartmentMasterAPIController extends AppBaseController
         $this->srmDepartmentMasterRepository->pushCriteria(new LimitOffsetCriteria($request));
         $srmDepartmentMasters = $this->srmDepartmentMasterRepository->all();
 
-        return $this->sendResponse($srmDepartmentMasters->toArray(), 'Srm Department Masters retrieved successfully');
+        return $this->sendResponse($srmDepartmentMasters->toArray(), 'Department retrieved successfully');
     }
 
     /**
@@ -130,7 +130,7 @@ class SrmDepartmentMasterAPIController extends AppBaseController
             ->where('description', '=', $input['description'])->first();
 
         if (!empty($departmentExist)) {
-            return $this->sendError('Department description \'' . $input['description'] . '\' already exists.');
+            return $this->sendError('Department Description \'' . $input['description'] . '\' already exists.');
         }
 
         $input['created_at'] = Carbon::now();
@@ -139,7 +139,7 @@ class SrmDepartmentMasterAPIController extends AppBaseController
 
         $srmDepartmentMaster = $this->srmDepartmentMasterRepository->create($input);
 
-        return $this->sendResponse($srmDepartmentMaster->toArray(), 'Department Master saved successfully');
+        return $this->sendResponse($srmDepartmentMaster->toArray(), 'Department saved successfully');
     }
 
     /**
@@ -187,10 +187,10 @@ class SrmDepartmentMasterAPIController extends AppBaseController
         $srmDepartmentMaster = SrmDepartmentMaster::find($id);
 
         if (empty($srmDepartmentMaster)) {
-            return $this->sendError('Srm Department Master not found');
+            return $this->sendError('Department not found');
         }
 
-        return $this->sendResponse($srmDepartmentMaster->toArray(), 'Department Master retrieved successfully');
+        return $this->sendResponse($srmDepartmentMaster->toArray(), 'Department retrieved successfully');
     }
 
     /**
@@ -256,7 +256,7 @@ class SrmDepartmentMasterAPIController extends AppBaseController
         $srmDepartmentMaster = SrmDepartmentMaster::find($id);
 
         if (empty($srmDepartmentMaster)) {
-            return $this->sendError('Department Master not found');
+            return $this->sendError('Department not found');
         }
 
         $input = $this->convertArrayToValue($input);
@@ -274,7 +274,7 @@ class SrmDepartmentMasterAPIController extends AppBaseController
             ->first();
 
         if (!empty($departmentExist)) {
-            return $this->sendError('Department description \'' . $input['description'] . '\' already exists.');
+            return $this->sendError('Department Description \'' . $input['description'] . '\' already exists.');
         }
 
         $input['updated_by'] = Helper::getEmployeeSystemID();
@@ -282,7 +282,7 @@ class SrmDepartmentMasterAPIController extends AppBaseController
 
         $srmDepartmentMaster = SrmDepartmentMaster::where('id', $id)->update($input);
 
-        return $this->sendResponse($srmDepartmentMaster, 'Department Master updated successfully');
+        return $this->sendResponse($srmDepartmentMaster, 'Department updated successfully');
     }
 
     /**
@@ -330,12 +330,12 @@ class SrmDepartmentMasterAPIController extends AppBaseController
         $srmDepartmentMaster = $this->srmDepartmentMasterRepository->findWithoutFail($id);
 
         if (empty($srmDepartmentMaster)) {
-            return $this->sendError('Department Master not found');
+            return $this->sendError('Department not found');
         }
 
         $srmDepartmentMaster->delete();
 
-        return $this->sendSuccess('Department Master deleted successfully');
+        return $this->sendSuccess('Department deleted successfully');
     }
 
     public function getAllDepartments(Request $request)
@@ -368,7 +368,7 @@ class SrmDepartmentMasterAPIController extends AppBaseController
         $srmDepartmentMaster = SrmDepartmentMaster::find($input['id']);
 
         if (empty($srmDepartmentMaster)) {
-            return $this->sendError('Department Master not found');
+            return $this->sendError('Department not found');
         }
 
         $input['updated_by'] = Helper::getEmployeeSystemID();
@@ -377,7 +377,7 @@ class SrmDepartmentMasterAPIController extends AppBaseController
         $srmDepartmentMaster = SrmDepartmentMaster::where('id', $input['id'])->update($input);
 
         if($srmDepartmentMaster){
-                return ['success' => true, 'message' => 'Department Master updated successfully'];
+                return ['success' => true, 'message' => 'Department updated successfully'];
             } else {
             return ['success' => false, 'message' => 'Unexpected Error'];
         }
