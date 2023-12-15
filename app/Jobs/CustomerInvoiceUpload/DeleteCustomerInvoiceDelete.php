@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Jobs\CustomerInvoiceUpload;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
@@ -10,7 +10,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use App\helper\CommonJobService;
 use App\helper\CustomerInvoiceService;
 
-class DeleteCustomerInvoiceDelete implements ShouldQueue
+class DeleteCustomerInvoiceUpload implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 

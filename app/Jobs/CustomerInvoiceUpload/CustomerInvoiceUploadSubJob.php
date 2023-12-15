@@ -1,10 +1,11 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Jobs\CustomerInvoiceUpload;
 
 use App\helper\CommonJobService;
 use App\helper\CustomerInvoiceService;
-use App\Jobs\DeleteCustomerInvoiceDelete;
+use App\Jobs\CustomerInvoiceUpload\DeleteCustomerInvoiceUpload;
+use App\Jobs\CustomerInvoiceUpload\ApproveCustomerInvoiceUpload;
 use App\Models\LogUploadCustomerInvoice;
 use App\Models\UploadCustomerInvoice;
 use App\Models\CustomerInvoiceDirect;
@@ -86,7 +87,7 @@ class CustomerInvoiceUploadSubJob implements ShouldQueue
                 $newCounterValue = $uploadCICounter->counter;
 
                 if ($newCounterValue == $totalInvoices) {
-                    UploadCustomerInvoice::where('id', $uploadCustomerInvoice->id)->update(['uploadStatus' => 1]);
+                    ApproveCustomerInvoiceUpload::dispatch($db, $uploadCustomerInvoice->id, $logUploadCustomerInvoice->id)->onQueue('single');
                 }
             }
 
@@ -106,7 +107,7 @@ class CustomerInvoiceUploadSubJob implements ShouldQueue
                     'log_message' => $errorMessage
                 ]);
 
-                DeleteCustomerInvoiceDelete::dispatch($db, $uploadCustomerInvoice->id)->onQueue('single');
+                DeleteCustomerInvoiceUpload::dispatch($db, $uploadCustomerInvoice->id)->onQueue('single');
                 DB::commit();
             } catch (\Exception $innerException) {
                 // Log the inner exception
@@ -133,7 +134,7 @@ class CustomerInvoiceUploadSubJob implements ShouldQueue
                 'log_message' => $e->getMessage()
             ]);
 
-            DeleteCustomerInvoiceDelete::dispatch($db, $uploadCustomerInvoice->id)->onQueue('single');
+            DeleteCustomerInvoiceUpload::dispatch($db, $uploadCustomerInvoice->id)->onQueue('single');
         }
     }
 }
