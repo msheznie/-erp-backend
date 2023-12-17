@@ -42,7 +42,6 @@ Update the following configurations in your .env file:
 - Mail configuration
 - Storage configuration
    
- Install Node.js dependencies: `npm install`
 ## Usage
 
 This project serves as the backend for an ERP application and integrates with various third-party applications through its APIs. To get started, follow the installation steps mentioned above.
@@ -77,3 +76,20 @@ To process jobs in the background, it's recommended to run the queue server. Sin
 ```bash
 php artisan queue:work database --tries=3
 ```
+### Conventional Commits
+To use conventional commits for better versioning and changelog management, install Node.js dependencies by running:
+```bash
+npm install
+```
+After making changes, commit them using:
+```bash
+npm run commit
+```
+Follow the interactive prompts to create a standardized commit message based on the [Conventional Commits specification](https://www.conventionalcommits.org/en/v1.0.0/)
+
+### Pull Request Titles
+
+When submitting a pull request, please ensure that the title follows the conventional commit format. The format should be as follows:
+
+```markdown
+feat(inventory|procurement|sourcing management|supplier management|custom report|sales & marketing|POS|treasury management|logistics|configuration|approval setup|navigation|group report|system admin|asset management|general ledger|accounts receivable|accounts payable): A short message [Jira issue no]
