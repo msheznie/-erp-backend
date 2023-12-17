@@ -24,7 +24,7 @@ Ensure the following PHP configurations in your php.ini file:
 ## Installation
 
 1. Clone the repository: `git clone git@github.com:pbsgears/Gears_BackEnd.git`
-2. Navigate to the project directory: `Gears_BackEnd`
+2. Navigate to the project directory: `cd Gears_BackEnd`
 3. Install PHP dependencies: `composer install`
 4. Copy the example environment file: `cp .env.example .env`
 5. Generate an application key: `php artisan key:generate`
