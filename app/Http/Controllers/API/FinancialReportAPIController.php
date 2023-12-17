@@ -81,8 +81,16 @@ class FinancialReportAPIController extends AppBaseController
         }
         $companyFinanceYear = $companyFinanceYear->groupBy('bigginingDate')->orderBy('bigginingDate', 'DESC')->get();
 
-        $departments1 = collect(\Helper::getCompanyServiceline($selectedCompanyId));
-        $departments2 = collect(SegmentMaster::where('serviceLineSystemID', 24)->get());
+        $departments1 = collect(\Helper::getCompanyServicelineWithMaster($selectedCompanyId));
+      
+
+        $departments2Info = DB::table('serviceline')->selectRaw('serviceline.companySystemID,serviceline.serviceLineSystemID,serviceline.ServiceLineCode,serviceline.serviceLineMasterCode,CONCAT(case when serviceline.masterID IS NULL then serviceline.ServiceLineCode else parents.ServiceLineCode end," - ",serviceline.ServiceLineDes) as ServiceLineDes')
+                                            ->leftJoin('serviceline as parents', 'serviceline.masterID', '=', 'parents.serviceLineSystemID')
+                                            ->where('serviceline.serviceLineSystemID', 24)
+                                            ->where('serviceline.isFinalLevel', 1)
+                                            ->where('serviceline.isDeleted', 0)
+                                            ->get();
+        $departments2 = collect($departments2Info);
         $departments = $departments1->merge($departments2)->all();
 
         $controlAccount = ChartOfAccountsAssigned::whereIN('companySystemID', $companiesByGroup)->get([

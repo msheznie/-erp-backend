@@ -141,6 +141,25 @@ class Helper
         return $serviceline;
     }
 
+    public static function getCompanyServicelineWithMaster($company)
+    {
+        $companiesByGroup = "";
+        if (self::checkIsCompanyGroup($company)) {
+            $companiesByGroup = self::getGroupCompany($company);
+        } else {
+            $companiesByGroup = (array)$company;
+        }
+
+        $serviceline = DB::table('serviceline')->selectRaw('serviceline.companySystemID,serviceline.serviceLineSystemID,serviceline.ServiceLineCode,serviceline.serviceLineMasterCode,CONCAT(case when serviceline.masterID IS NULL then serviceline.ServiceLineCode else parents.ServiceLineCode end," - ",serviceline.ServiceLineDes) as ServiceLineDes')
+                         ->leftJoin('serviceline as parents', 'serviceline.masterID', '=', 'parents.serviceLineSystemID')
+                         ->whereIN('serviceline.companySystemID', $companiesByGroup)
+                         ->where('serviceline.isFinalLevel', 1)
+                         ->where('serviceline.isDeleted', 0)
+                        ->get();
+        return $serviceline;
+    }
+
+
 
     /**
      * Get all companies related to a group
