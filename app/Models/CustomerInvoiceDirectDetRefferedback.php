@@ -243,7 +243,9 @@ class CustomerInvoiceDirectDetRefferedback extends Model
         'VATAmount',
         'VATAmountLocal',
         'VATAmountRpt',
-        'mfqInvoiceDetailID'
+        'mfqInvoiceDetailID',
+        'glSystemID',
+        'isDiscount'
     ];
 
     /**

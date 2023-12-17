@@ -188,6 +188,7 @@ class CustomerInvoiceDirectDetail extends Model
         'serviceLineCode',
         'customerID',
         'glCode',
+        'glSystemID',
         'projectID',
         'glCodeDes',
         'accountType',
@@ -291,6 +292,10 @@ class CustomerInvoiceDirectDetail extends Model
     public function unit()
     {
         return $this->belongsTo('App\Models\Unit', 'unitOfMeasure', 'UnitID');
+    }
+
+    public function chart_Of_account() {
+        return $this->belongsTo('App\Models\ChartOfAccount', 'glSystemID','chartOfAccountSystemID' );
     }
 
     public function performadetails()

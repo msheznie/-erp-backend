@@ -45,3 +45,41 @@ Route::group([],function (){
     Route::post('exportPoEmployeePerformance', 'ProcumentOrderAPIController@exportPoEmployeePerformance')->name("Export po employee performance");
 });
 
+//General Ledger
+
+//Financials
+Route::group([],function (){
+    Route::get('getFRFilterData', 'FinancialReportAPIController@getFRFilterData')->name("Get financial report filter data");
+    Route::post('validateFRReport', 'FinancialReportAPIController@validateFRReport')->name("Validate financial report");
+    Route::post('getSubsidiaryCompanies', 'FinancialReportAPIController@getSubsidiaryCompanies')->name("Get subsidiary companies");
+    Route::group(['middleware' => ['max_memory_limit', 'max_execution_limit']], function () { 
+        Route::post('generateFRReport', 'FinancialReportAPIController@generateFRReport')->name("Generate financial report");
+    });
+    Route::post('exportFinanceReport', 'FinancialReportAPIController@exportFinanceReport')->name("Export financial report");
+    Route::post('exportFinanceReportPDF', 'FinancialReportAPIController@pdfExportReport')->name("Export financial report pdf");
+    Route::post('reportTemplateGLDrillDown', 'FinancialReportAPIController@reportTemplateGLDrillDown')->name("Report template gl drill down");
+    Route::post('reportTemplateGLDrillDownExport', 'FinancialReportAPIController@reportTemplateGLDrillDownExport')->name("Export report template gl drill down");
+});
+
+//General Ledger
+Route::group([],function (){
+    Route::get('getAFRFilterChartOfAccounts', 'FinancialReportAPIController@getAFRFilterChartOfAccounts')->name("Get afr filter chart of accounts");
+    Route::post('exportFRReport', 'FinancialReportAPIController@exportReport')->name("Export fr report");
+    Route::post('generateGeneralLedgerReportPDF', 'FinancialReportAPIController@pdfExportReport')->name("Generate general ledger report pdf");
+});
+
+//Trial Balance
+Route::group([],function (){
+    Route::post('generateFinancialTrialBalanceReportPDF', 'FinancialReportAPIController@pdfExportReport')->name("Generate financial trial balance report pdf");
+    Route::post('getTBUnmatchedData', 'FinancialReportAPIController@getTBUnmatchedData')->name("Get tb unmatched data");
+});
+
+//Inter Company Report
+Route::group([],function (){
+    Route::get('getICFilterFormData', 'FinancialReportAPIController@getICFilterFormData')->name("Get inter company filter form data");
+    Route::post('validateICReport', 'FinancialReportAPIController@validateICReport')->name("Validate inter company report");
+    Route::post('generateICReport', 'FinancialReportAPIController@generateICReport')->name("Generate inter company report");
+    Route::post('exportICReport', 'FinancialReportAPIController@exportICReport')->name("Export inter company report");
+    Route::post('getICDrillDownData', 'FinancialReportAPIController@getICDrillDownData')->name("Get inter company drill down data");
+});
+

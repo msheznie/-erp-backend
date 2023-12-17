@@ -430,8 +430,14 @@ class PaySupplierInvoiceMasterAPIController extends AppBaseController
             $input = $this->convertArrayToValue($input);
             $PayMasterAutoId = $input['PayMasterAutoId'];
 
+            if(!empty($input['projectID'])){
+                $projectID = $input['projectID'];
+            } else {
+                $projectID = null;
+            }
+
             $update_array = [
-                'projectID' => $input['projectID']
+                'projectID' => $projectID
             ];
 
             $paymentVoucherProjectUpdate = PaySupplierInvoiceMaster::where('PayMasterAutoId', $PayMasterAutoId)->update($update_array);

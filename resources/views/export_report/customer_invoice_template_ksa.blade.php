@@ -64,26 +64,36 @@
                                         {{\App\helper\Helper::dateFormat($request->date_of_supply) }}
                                     @endif</b></td>
     </tr>
-    <tr>
-        <td colspan="1"></td>
-        <td colspan="16"> <b>Contract / PO No : 
-                                @if(!empty($request->invoicedetails) )
-                                    {{isset($request->invoicedetails[0]->clientContractID)?$request->invoicedetails[0]->clientContractID:''}}
-                                @endif
-                                @if($request->line_poNumber && isset($request->item_invoice) && $request->item_invoice)
-                                    {{$request->PONumber}}
-                                @endif
-                            </b></td>
-        <td colspan="8"> <b>رقم العقد/أمر الشراء : @if(!empty($request->invoicedetails) )
-                                    {{isset($request->invoicedetails[0]->clientContractID)?$request->invoicedetails[0]->clientContractID:''}}
-                                @endif
-                                @if($request->line_poNumber && isset($request->item_invoice) && $request->item_invoice)
-                                    {{$request->PONumber}}
-                                @endif
-
-                            </b></td>
-    </tr>
-
+    @if(preg_match('/[^\p{L}\p{N}]/u', $request->PONumber))
+        <tr>
+            <td colspan="1"></td>
+            <td colspan="14"> <b>Contract / PO No : 
+                                    @if($request->line_poNumber)
+                                        {{$request->PONumber}}
+                                    @endif
+                                </b></td>
+            <td colspan="8"> <b>
+                    @if($request->line_poNumber)
+                        {{$request->PONumber}}
+                    @endif
+                </b> : <b>رقم العقد/أمر الشراء 
+                                </b></td>
+        </tr>
+    @else
+        <tr>
+            <td colspan="1"></td>
+            <td colspan="16"> <b>Contract / PO No : 
+                                    @if($request->line_poNumber)
+                                        {{$request->PONumber}}
+                                    @endif
+                                </b></td>
+            <td colspan="8"> <b>رقم العقد/أمر الشراء : 
+                                    @if($request->line_poNumber)
+                                        {{$request->PONumber}}
+                                    @endif
+                                </b></td>
+        </tr>
+    @endif
     <br>
     <br>
 

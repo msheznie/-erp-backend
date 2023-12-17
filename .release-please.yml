@@ -1,0 +1,3 @@
+package-managers:
+  - composer
+release-type: semantic
