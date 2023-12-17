@@ -73,6 +73,7 @@ use App\Models\SegmentMaster;
 use App\Models\ShiftDetails;
 use App\Models\StockTransfer;
 use App\Models\Taxdetail;
+use App\Models\TaxMaster;
 use App\Models\TaxVatCategories;
 use App\Models\VatSubCategoryType;
 use App\Models\WarehouseMaster;
@@ -540,15 +541,21 @@ class ShiftDetailsAPIController extends AppBaseController
 
 
         $posTaxes = DB::table('pos_source_taxmaster')
-            ->selectRaw('taxMasterAutoID, taxDescription, taxShortCode')
-            ->where('pos_source_taxmaster.taxType', 1)
+            ->selectRaw('taxMasterAutoID, taxDescription, taxShortCode, taxType')
+            ->whereIn('pos_source_taxmaster.taxType', [0,1])
             ->where('pos_source_taxmaster.erp_tax_master_id', 0)
             ->where('pos_source_taxmaster.companyID', $companySystemID)
             ->get();
 
-        $taxes = TaxVatCategories::selectRaw('taxVatSubCategoriesAutoID as value, subCategoryDescription as label')
+        $taxesVat = TaxVatCategories::selectRaw('taxVatSubCategoriesAutoID as value, subCategoryDescription as label')
             ->join('erp_taxmaster_new', 'erp_taxmaster_new.taxMasterAutoID', '=', 'erp_tax_vat_sub_categories.taxMasterAutoID')
             ->where('erp_taxmaster_new.companySystemID', $companySystemID)
+            ->where('erp_taxmaster_new.taxCategory', 2)
+            ->get();
+
+        $taxesOther = DB::table('erp_taxmaster_new')->selectRaw('taxMasterAutoID as value, taxDescription as label')
+            ->where('erp_taxmaster_new.companySystemID', $companySystemID)
+            ->where('erp_taxmaster_new.taxCategory', 1)
             ->get();
 
         $posPayments = DB::table('pos_source_paymentglconfigdetail')
@@ -593,7 +600,8 @@ class ShiftDetailsAPIController extends AppBaseController
             'posCustomers' => $posCustomers,
             'customers' => $customers,
             'posTaxes' => $posTaxes,
-            'taxes' => $taxes,
+            'taxesVat' => $taxesVat,
+            'taxesOther' => $taxesOther,
             'posPayments' => $posPayments,
             'isAvailable' => $isAvailable,
             'posLog' => $posLog,
@@ -623,12 +631,17 @@ class ShiftDetailsAPIController extends AppBaseController
 
         $taxPOSId = $request->taxPOSId;
         $taxERPId = $request->taxERPId;
+        $taxType = $request->taxType;
 
-        $tax = TaxVatCategories::find($taxERPId);
-        if(empty($tax)){
-            return $this->sendError("No vat sub category found");
+        if($taxType == 0) {
+            $tax = TaxVatCategories::find($taxERPId);
+            if (empty($tax)) {
+                return $this->sendError("No vat sub category found");
+            }
+            $output = POSSOURCETaxMaster::where('taxMasterAutoID', $taxPOSId)->update(['erp_tax_master_id' => $tax->taxMasterAutoID, 'erp_vat_sub_category' => $taxERPId]);
+        } else {
+            $output = POSSOURCETaxMaster::where('taxMasterAutoID', $taxPOSId)->update(['erp_tax_master_id' => $taxERPId, 'erp_vat_sub_category' => 0]);
         }
-        $output = POSSOURCETaxMaster::where('taxMasterAutoID', $taxPOSId)->update(['erp_tax_master_id' => $tax->taxMasterAutoID, 'erp_vat_sub_category' => $taxERPId]);
 
         return $this->sendResponse($output, "Shift Details retrieved successfully");
     }
