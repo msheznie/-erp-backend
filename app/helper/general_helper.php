@@ -8576,6 +8576,15 @@ class Helper
                         }, 'segment'])
                         ->get();
                     break;
+                case 97:
+                    $output = Models\StockCountDetail::where('stockCountAutoID', $documentSystemCode)
+                        ->whereHas('master', function ($query) use ($companySystemID, $documentSystemID) {
+                            $query->where('companySystemID', $companySystemID)
+                                ->where('documentSystemID', $documentSystemID);
+                        })
+                        ->with(['master', 'uom'])
+                        ->get();
+                    break;
 
                 default:
                     $output = [];
