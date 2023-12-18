@@ -347,8 +347,20 @@ class TenderBidFormatMasterAPIController extends AppBaseController
            $result = TenderBidFormatMaster::create($data);
 
            if($result){
-               DB::commit();
-               return ['success' => true, 'message' => 'Successfully saved', 'data' => $result];
+               $detail_data = [
+                   'tender_id' =>   $result['id'],
+                   'label' => "Final Total",
+                   'field_type' => 4,
+                   'is_disabled' => 0,
+                   'boq_applicable' => 0,
+                   'finalTotalYn' => 1,
+                   'created_by' => $employee->employeeSystemID
+               ];
+               $detail_result = TenderBidFormatDetail::create($detail_data);
+               if($detail_result) {
+                   DB::commit();
+                   return ['success' => true, 'message' => 'Successfully saved', 'data' => $result];
+               }
            }
 
         } catch (\Exception $e) {
