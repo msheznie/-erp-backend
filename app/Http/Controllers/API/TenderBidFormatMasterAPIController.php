@@ -674,7 +674,8 @@ class TenderBidFormatMasterAPIController extends AppBaseController
                         $val1 = 1;
                         $cont = $cont.$val1;
              
-                    }else if ($elementType == '#') {
+                    }
+                    else if ($elementType == '#') {
                     $elementArr = explode('#', $formula_row);
                     $val1 = 1;
                     $cont = $cont.$val1;
