@@ -51,9 +51,13 @@ class AttendanceComputationService
     public $dayType = 0; //[1=> normalDay, 2=> holiday, 3 => weekend]  
 
     public $isCrossDay;
+
     public $crossDayCutOffTime;
+
     public $uploadType;
+
     public $clockOutFloorId;
+
     public function __construct($data, $companyId)
     {
         Log::useFiles(CommonJobService::get_specific_log_file('attendance-clockIn'));
@@ -163,9 +167,28 @@ class AttendanceComputationService
 
         $t1 = new DateTime($this->onDutyTime);
         $t2 = new DateTime($this->offDutyTime);
+
+        if($this->isCrossDay){
+            return $this->calculateCrossDayShiftHours($t1, $t2);
+        }
+
         $this->shiftHours_obj = $t1->diff($t2);
         $hours = $this->shiftHours_obj->format('%h');
         $minutes = $this->shiftHours_obj->format('%i');
+
+        $this->shiftHours = ($hours * 60) + $minutes;
+    }
+
+    public function calculateCrossDayShiftHours($onDuty, $offDuty){
+
+        $nextDayOnTime = new DateTime($this->cutOfWorkHrsPrvious);
+        $currentDayOffTime = new DateTime($this->cutOfWorkHrsNext);
+
+        $currentDayShiftHr = $onDuty->diff($currentDayOffTime);
+        $nextDayShiftHr = $nextDayOnTime->diff($offDuty);
+
+        $hours = $currentDayShiftHr->h + $nextDayShiftHr->h;
+        $minutes = $currentDayShiftHr->m + $nextDayShiftHr->m;
 
         $this->shiftHours = ($hours * 60) + $minutes;
     }
