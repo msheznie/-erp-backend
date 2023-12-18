@@ -77,7 +77,7 @@ use App\Mail\EmailForQueuing;
 use Illuminate\Support\Facades\Hash;
 use App\helper\CreateExcel;
 use App\helper\email;
-use Illuminate\Support\Facades\Request as LaravelRequest;
+use Illuminate\Http\Request as LaravelRequest;
 /**
  * Class SupplierMasterController
  * @package App\Http\Controllers\API
@@ -1829,8 +1829,7 @@ class SupplierMasterAPIController extends AppBaseController
         if(isset($company->CompanyName)){
            $companyName =  $company->CompanyName;
         }
-
-        $data['domain'] = $this->getDomain();
+        $data['domain'] = $this->getDomain($request);
         $request->merge($data);
 
         $logo = $company->getLogoUrlAttribute();
@@ -2011,9 +2010,9 @@ class SupplierMasterAPIController extends AppBaseController
         return $this->sendResponse(['errorMessages' => $errorMessages, 'successMessages' => $successMessages, 'amendable'=> $amendable], "validated successfully");
     }
 
-    public function getDomain()
+    public function getDomain($request)
     {
-        $url = $_SERVER['HTTP_HOST'];
+        $url =  $request->getHttpHost();
         $parsedUrl = parse_url($url);
         $host = $parsedUrl['host'];
         $parts = explode('.', $host);
