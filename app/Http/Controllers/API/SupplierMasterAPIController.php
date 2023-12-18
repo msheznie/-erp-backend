@@ -1831,7 +1831,6 @@ class SupplierMasterAPIController extends AppBaseController
         }
         $data['domain'] = $this->getDomain($request);
         $request->merge($data);
-
         $logo = $company->getLogoUrlAttribute();
 
         // Generate Hash Token for the current timestamp
@@ -2012,11 +2011,9 @@ class SupplierMasterAPIController extends AppBaseController
 
     public function getDomain($request)
     {
-        $url =  $request->getHttpHost();
-        $parsedUrl = parse_url($url);
-        $host = $parsedUrl['host'];
-        $parts = explode('.', $host);
-        $subdomain = $parts[0];
-        return $subdomain;
+        $url = $request->getHttpHost();
+        $url_array = explode('.', $url);
+        $subDomain = $url_array[0];
+        return $subDomain;
     }
 }
