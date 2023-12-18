@@ -128,6 +128,7 @@ class PirceBidFormula
 
 
             }
+
         return $details1;
     }
 
@@ -156,7 +157,7 @@ class PirceBidFormula
             ->where('tender_id',$tender_id)
             ->where('bid_format_detail_id',$id)
             ->first();
-        return $formula['formula_string'];
+        return self::decodeFormula($formula['formula_string'],$tender_id);
     }
 
 

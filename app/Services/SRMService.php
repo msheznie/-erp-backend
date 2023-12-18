@@ -2449,7 +2449,7 @@ class SRMService
                 foreach($details as $detail)
                 {
 
-                    /*foreach($detail->pricing_shedule_details as $bid)
+                    foreach($detail->pricing_shedule_details as $bid)
                     {
                             $data['bid_format_detail_id'] = $bid->id;
                             $data['schedule_id'] = $bid->pricing_schedule_master_id;
@@ -2463,7 +2463,7 @@ class SRMService
 
 
 
-                    }*/
+                    }
 
                     if(count($detail->pricing_shedule_details) > 0)
                     {
