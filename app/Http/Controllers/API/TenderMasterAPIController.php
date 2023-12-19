@@ -2622,8 +2622,7 @@ ORDER BY
         DB::beginTransaction();
         try {
             $calenderDateTypeId = $request['calenderDateTypeId'];
-
-            if(isset($request['is_default'])){
+            if(isset($request['is_default']) && $request['is_default'] != 0){
                 $calendarDates = CalendarDates::select('id')->where('is_default', $request['is_default'])->first();
                 $calenderDateTypeId = $calendarDates->id;
                 $tenderMaster = TenderMaster::find($request['tenderMasterId']);
