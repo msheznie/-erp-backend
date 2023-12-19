@@ -130,6 +130,11 @@ class FinanceItemCategorySub extends Model
         return $this->belongsTo(\App\Models\ChartOfAccount::class,'financeGLcodePLSystemID','chartOfAccountSystemID');
     }
 
+    public function cogs_gl_code_pl()
+    {
+        return $this->belongsTo(\App\Models\ChartOfAccount::class,'financeCogsGLcodePLSystemID','chartOfAccountSystemID');
+    }
+
     public function finance_gl_code_revenue()
     {
         return $this->belongsTo(\App\Models\ChartOfAccount::class,'financeGLcodeRevenueSystemID','chartOfAccountSystemID');
