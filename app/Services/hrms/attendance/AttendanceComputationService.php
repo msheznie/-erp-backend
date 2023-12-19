@@ -51,12 +51,10 @@ class AttendanceComputationService
     public $dayType = 0; //[1=> normalDay, 2=> holiday, 3 => weekend]  
 
     public $isCrossDay;
-
     public $crossDayCutOffTime;
-
     public $uploadType;
-
     public $clockOutFloorId;
+
 
     public function __construct($data, $companyId)
     {
