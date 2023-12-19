@@ -130,9 +130,11 @@
 <div class="footer">
     <table style="width:100%; border: none">
         <tr>
-            <td width="40%" style="border: none"><span
-                        class="font-weight-bold">Printed By :</span> {{$employeeData->empName}}
-            </td>
+            @if($employeeData && $employeeData->empName)
+                <td width="40%" style="border: none">
+                    <span class="font-weight-bold">Printed By :</span>  {{$employeeData->empName}}
+                </td>
+            @endif
         </tr>
     </table>
     <table style="width:100%; border: none">
@@ -192,11 +194,11 @@
     <table style="width:100%; font-size: 12px;">
         <tbody>
         <tr>
-            <td style="width: 15%"><strong>Tender Code:</strong></td>
+            <td style="width: 10%"><strong>Tender Code:</strong></td>
             <td>{{ $tenderMaster->tender_code }}</td>
             <td style="width: 15%"><strong>Envelope:</strong></td>
             <td>{{ $tenderMaster->envelop_type->name }}</td>
-            <td style="width: 20%"><strong>Number of Alternative Solutions:</strong></td>
+            <td style="width: 18%"><strong>Number of Alternative Solutions:</strong></td>
             <td>{{ $tenderMaster->no_of_alternative_solutions }}</td>
         </tr>
         <tr>
@@ -240,43 +242,51 @@
             @endif
             @if ($isNegotiation == 0)
             <td><strong>No of Bids Submitted:</strong></td>
-            <td colspan="5">{{ $tenderBids }}</td>
+            <td>{{ $tenderBids }}</td>
+            <td><strong>Bid Opening Date:</strong></td>
+            <td colspan="3">{{\Carbon\Carbon::parse($tenderMaster->bid_opening_date)->format('d/m/Y h:i A')}}</td>
             @endif
             @if ($isNegotiation == 1)
             <td><strong>No of Bids Submitted:</strong></td>
-            <td colspan="3">{{ $tenderBids }}</td>
+            <td>{{ $tenderBids }}</td>
+            <td><strong>Bid Opening Date:</strong></td>
+            <td colspan="1">{{ '-' }}</td>
             @endif
         </tr>
         </tbody>
     </table>
     <br/>
-    <h4>Suppliers Submit the Bids</h4>
+    <h4>Suppliers List</h4>
     <table style="width:100%; font-size: 12px;">
         <tr>
             <td style="text-align: center; width: 10%"><strong>#</strong></td>
             <td style="text-align: left; width: 90%">&nbsp;<strong>Supplier Name</strong></td>
         </tr>
-        @foreach ($tenderBidsSupplierList as $item)
+        @forelse ($tenderBidsSupplierList as $item)
             <tr>
-                <td style="text-align: center;">{{ $loop->index+1 }}</td>
+                <td style="text-align: center;">{{ $loop->index + 1 }}</td>
                 <td> &nbsp;{{ $item->SupplierRegistrationLink->name }}</td>
             </tr>
-        @endforeach
+        @empty
+            <tr>
+                <td colspan="2" style="text-align: center;"> {{ 'No Records Found' }}</td>
+            </tr>
+        @endforelse
     </table>
 
     <br />
     <h4>Bid Opening Approver Details</h4>
     <table style="width:100%; font-size: 12px;">
         <tr>
-            <td style="text-align: left; width: 40%"><strong>Employee</strong></td>
-            <td style="text-align: left; width: 40%">&nbsp;<strong>Approved Date & Time</strong></td>
-            <td style="text-align: left; width: 20%">&nbsp;<strong>Action</strong></td>
+            <td style="text-align: center; width: 40%"><strong>Employee</strong></td>
+            <td style="text-align: center; width: 40%">&nbsp;<strong>Approved Date & Time</strong></td>
+            <td style="text-align: center; width: 20%">&nbsp;<strong>Action</strong></td>
         </tr>
         @if(count($SrmTenderBidEmployeeDetails) > 0)
             @foreach ($SrmTenderBidEmployeeDetails as $emp)
                 <tr>
                     <td style="text-align: left;">{{$emp->employee->empID}} |  {{ $emp->employee->empFullName}}</td>
-                    <td>
+                    <td style="text-align: center;">
                         @if ($emp->status != null)&nbsp;
                         {{\Carbon\Carbon::parse($emp->updated_at)->format('d/m/Y h:i A')}}
                         @endif
@@ -286,10 +296,10 @@
                         @endif
                     </td>
                     @if ($emp->status != null)
-                        <td> &nbsp;{{ $emp->status == 1 ? 'Approved' : 'Rejected'}}</td>
+                        <td style="text-align: center;">  &nbsp;{{ $emp->status == 1 ? 'Approved' : 'Rejected'}}</td>
                     @endif
                     @if ($emp->status == null)
-                        <td> {{  "Pending Approval "}} </td>
+                        <td style="text-align: center;"> {{  "Pending Approval "}} </td>
                     @endif
                 </tr>
             @endforeach
