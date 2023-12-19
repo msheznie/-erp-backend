@@ -2116,11 +2116,11 @@ class ShiftDetailsAPIController extends AppBaseController
                 if ($isPostGroupBy == 0) {
 
                     $bankGL = DB::table('pos_source_invoice')
-                        ->selectRaw('SUM(pos_source_invoice.netTotal) as amount, pos_source_invoice.invoiceID as invoiceID, pos_source_invoicepayments.GLCode as glCode, pos_source_invoice.shiftID as shiftId, pos_source_invoice.companyID as companyID')
+                        ->selectRaw('SUM(pos_source_invoicepayments.amount) as amount, pos_source_invoice.invoiceID as invoiceID, pos_source_invoicepayments.GLCode as glCode, pos_source_invoice.shiftID as shiftId, pos_source_invoice.companyID as companyID')
                         ->join('pos_source_invoicepayments', 'pos_source_invoicepayments.invoiceID', '=', 'pos_source_invoice.invoiceID')
                         ->where('pos_source_invoice.shiftID', $shiftId)
-                        ->groupBy('pos_source_invoice.shiftID')
                         ->groupBy('pos_source_invoice.invoiceID')
+                        ->groupBy('pos_source_invoicepayments.paymentConfigMasterID')
                         ->groupBy('pos_source_invoicepayments.GLCode')
                         ->where('pos_source_invoice.isCreditSales', 0)
                         ->get();
