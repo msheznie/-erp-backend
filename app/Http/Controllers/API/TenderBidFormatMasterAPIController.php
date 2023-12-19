@@ -375,7 +375,7 @@ class TenderBidFormatMasterAPIController extends AppBaseController
         $input = $request->all();
 
         $data['master'] = TenderBidFormatMaster::where('id',$input['id'])->where('company_id',$input['companySystemID'])->first();
-        $data['detail'] = TenderBidFormatDetail::where('tender_id',$input['id'])->get();
+        $data['detail'] = TenderBidFormatDetail::where('tender_id',$input['id'])->orderBy('finalTotalYn', 'ASC')->get();
         $data['tenderType'] = TenderFieldType::get();
         $pricebid = self::priceBidExistInTender($input['id']);
         if(!empty($pricebid)){
