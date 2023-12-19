@@ -3055,7 +3055,12 @@ class SRMService
             },'bid_format_detail' =>function ($q) use ($bidMasterId) {
                 $q->where('bid_master_id', $bidMasterId);
                 $q->orWhere('bid_master_id', null);
-            }]);
+            },
+                'tender_bid_format_detail' => function ($q) {
+                    $q->select('id', 'tender_id', 'label', 'field_type', 'finalTotalYn');
+                    $q->where('finalTotalYn', 1);
+                }
+            ]);
         }])->where('tender_id', $tenderId)->get();
 
         $data['bidSubmitted'] = $this->getBidMasterData($bidMasterId);
