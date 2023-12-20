@@ -377,12 +377,14 @@ class PricingScheduleMasterAPIController extends AppBaseController
         
         //check if formula is empty or not
 
-        $pricing_shedule_details = TenderBidFormatDetail::where('tender_id', $input['price_bid_format_id'])->where('field_type',4)->where('formula_string',"");
 
-        if($pricing_shedule_details->count() > 0)
+        if(TenderBidFormatDetail::where('tender_id', $input['price_bid_format_id'])->where('field_type',4)->where('finalTotalYn', 0)->where('formula_string',"")->count() > 0)
         {
-            
             return ['success' => false, 'message' => 'Pricing Bid format should have a defined formula'];
+        }
+        else if(TenderBidFormatDetail::where('tender_id', $input['price_bid_format_id'])->where('field_type',4)->where('finalTotalYn', 1)->where('formula_string',"")->count() > 0)
+        {
+            return ['success' => false, 'message' => 'Formula is required for the “Final Total” total line'];
         }
 
 
