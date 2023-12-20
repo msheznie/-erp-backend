@@ -326,6 +326,8 @@ class CustomerMasterRefferedBack extends Model
         'createdPcID',
         'modifiedPc',
         'modifiedUser',
+        'customer_registration_no',
+        'customer_registration_expiry_date',
         'timeStamp'
     ];
 
@@ -381,6 +383,8 @@ class CustomerMasterRefferedBack extends Model
         'createdUserID' => 'string',
         'createdPcID' => 'string',
         'modifiedPc' => 'string',
+        'customer_registration_no' => 'string',
+        'customer_registration_expiry_date' => 'string',
         'modifiedUser' => 'string'
     ];
 

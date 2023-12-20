@@ -164,7 +164,7 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
                 ->first();
                 if(!empty($assetExistUnApproved)){ 
                     if($assetRequest->type == 1) {
-                        $msg ='The asset '.$assetExistUnApproved->assetMaster->faCode.' has already been assigned to '.$assetExistUnApproved->assetRequestMaster->employee->Ename1.'. Are you sure you want to transfer it to '.$assetRequest->employee->Ename1.'';
+                        $msg ='Some of the assets have already been assigned to employees. Are you sure you want to initiate the transfer';
                         return $this->sendResponse(['id' => false], $msg);
 
                     }
@@ -569,6 +569,12 @@ class ERPAssetTransferDetailAPIController extends AppBaseController
             $q->select(['DepartmentDescription','departmentSystemID']);
         }])->first();
         return $this->sendResponse($deparment, 'Department reterived');
+    }
+
+    public function getCurrentAssigneeOfAsset(Request $request) {
+        $input = $request->all();
+        $employee = FixedAssetMaster::where('faID',$input['assetID'])->with(['assignedEmployee'])->first();
+        return $this->sendResponse($employee, 'Assignee reterived');
     }
 
     public function UpdateReturnStatus(Request $request) {

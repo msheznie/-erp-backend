@@ -51,6 +51,8 @@ class CommonJobService
                 return storage_path() . '/logs/return_to_work_service.log';      
             case 'emp_create_profile':
                 return storage_path() . '/logs/emp_create_profile_service.log';
+            case 'item-wac-amount':
+                return storage_path() . '/logs/item_wac_amount_service.log';
 
         }
     }
