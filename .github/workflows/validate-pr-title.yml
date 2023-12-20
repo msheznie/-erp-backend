@@ -35,7 +35,7 @@ jobs:
           echo "PR title: ${pr_title}"
 
           # Define the regex pattern for the PR title
-          PR_TITLE_PATTERN="^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)\((inventory|procurement|sourcing management|supplier management|custom report|sales & marketing|POS|treasury management|logistics|configuration|approval setup|navigation|group report|system admin|asset management|general ledger|accounts receivable|accounts payable)\): (.+) \[([A-Z]+-[0-9]+)\]$"
+          PR_TITLE_PATTERN="^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)\((inventory|procurement|sourcing management|supplier management|custom report|sales & marketing|POS|treasury management|logistics|configuration|approval setup|navigation|group report|common|system admin|asset management|general ledger|accounts receivable|accounts payable)\): (.+) \[([A-Z]+-[0-9]+)\]$"
 
           if [[ ! "${pr_title}" =~ ${PR_TITLE_PATTERN} ]]; then
              echo "error: invalid PR title"
