@@ -2,6 +2,7 @@
 
 namespace App\Services\hrms\attendance;
 
+use App\enums\shift\Shifts;
 use DateTime;
 use App\helper\CommonJobService;
 use Illuminate\Support\Facades\DB;
@@ -49,6 +50,12 @@ class AttendanceComputationService
     public $onDuty_dt;
     public $dayType = 0; //[1=> normalDay, 2=> holiday, 3 => weekend]  
 
+    public $isCrossDay;
+    public $crossDayCutOffTime;
+    public $uploadType;
+    public $clockOutFloorId;
+
+
     public function __construct($data, $companyId)
     {
         Log::useFiles(CommonJobService::get_specific_log_file('attendance-clockIn'));
@@ -63,6 +70,8 @@ class AttendanceComputationService
         $this->isFlexibleHour = trim($data['isFlexyHour']);
         $this->flexibleHourFrom = trim($data['flexyHrFrom']);
         $this->flexibleHourTo = trim($data['flexyHrTo']);
+        $this->isCrossDay = $data['is_cross_day'];
+        $this->crossDayCutOffTime = $data['crossDayCutOffTime'];
     }
 
     public function execute()
@@ -72,6 +81,10 @@ class AttendanceComputationService
 
         if ($this->dayType == 1) {
             $this->calculateShiftHours();
+        }
+
+        if($this->data['shiftType'] == Shifts::ROTA && $this->isCrossDay){
+            $this->setRotaShiftClockInAndClockOut();
         }
 
         $this->calculateWorkedHours();
@@ -104,6 +117,44 @@ class AttendanceComputationService
         }
     }
 
+    function setRotaShiftClockInAndClockOut(){
+        $this->clockIn = '';
+        $this->clockOut = '';
+
+        $currentDate = date('Y-m-d', strtotime($this->data['att_date']));
+        $nextDate = date('Y-m-d', strtotime($this->data['att_date'] . "+1 day"));
+        $currentDateWithCutTime = $currentDate.' '.trim($this->crossDayCutOffTime);
+        $nextDateWithCutTime = $nextDate.' '.trim($this->crossDayCutOffTime);
+
+        $attTempRec = DB::table('srp_erp_pay_empattendancetemptable as t')
+            ->select('t.autoID', 't.emp_id', 't.attDate', 't.in_out', 't.attTime', 'l.floorID', 't.uploadType')
+            ->join("srp_erp_empattendancelocation AS l", function ($join) {
+                $join->on("l.deviceID", "=", "t.device_id")
+                    ->on("t.empMachineID", "=", "l.empMachineID");
+            })
+            ->where('t.companyID', $this->companyId)
+            ->where('t.emp_id', $this->data['emp_id'])
+            ->whereBetween('t.attDate', [$currentDate, $nextDate])
+            ->whereBetween('t.attDateTime', [$currentDateWithCutTime, $nextDateWithCutTime])
+            ->where('t.isUpdated', 0)
+            ->orderBy('t.attDate', 'asc')
+            ->orderBy('t.attTime', 'asc')
+            ->get();
+        $firstRecord = $attTempRec->first();
+        $lastRecord = $attTempRec->last();
+        $countRecord = $attTempRec->count();
+
+        if(!empty($firstRecord)){
+            $this->clockIn = $firstRecord->attTime;
+        }
+
+        if($countRecord > 1){
+            $this->clockOut = $lastRecord->attTime;
+            $this->uploadType = $lastRecord->uploadType;
+            $this->clockOutFloorId = $lastRecord->floorID;
+        }
+    }
+
     public function calculateShiftHours()
     {
         if (empty($this->onDutyTime) || empty($this->offDutyTime)) {
@@ -114,9 +165,28 @@ class AttendanceComputationService
 
         $t1 = new DateTime($this->onDutyTime);
         $t2 = new DateTime($this->offDutyTime);
+
+        if($this->isCrossDay){
+            return $this->calculateCrossDayShiftHours($t1, $t2);
+        }
+
         $this->shiftHours_obj = $t1->diff($t2);
         $hours = $this->shiftHours_obj->format('%h');
         $minutes = $this->shiftHours_obj->format('%i');
+
+        $this->shiftHours = ($hours * 60) + $minutes;
+    }
+
+    public function calculateCrossDayShiftHours($onDuty, $offDuty){
+
+        $nextDayOnTime = new DateTime($this->cutOfWorkHrsPrvious);
+        $currentDayOffTime = new DateTime($this->cutOfWorkHrsNext);
+
+        $currentDayShiftHr = $onDuty->diff($currentDayOffTime);
+        $nextDayShiftHr = $nextDayOnTime->diff($offDuty);
+
+        $hours = $currentDayShiftHr->h + $nextDayShiftHr->h;
+        $minutes = $currentDayShiftHr->m + $nextDayShiftHr->m;
 
         $this->shiftHours = ($hours * 60) + $minutes;
     }
@@ -147,8 +217,13 @@ class AttendanceComputationService
             return;
         }
 
-        if ($this->data['shiftType'] == 1) { //if open shift
+        if ($this->data['shiftType'] == Shifts::OPEN) { //if open shift
             $this->openShiftCalculateWorkedHours();
+            return;
+        }
+
+        if ($this->data['shiftType'] == Shifts::ROTA && $this->isCrossDay) { //if rota shift
+            $this->rotaShiftCalculateWorkedHours();
             return;
         }
 
@@ -267,6 +342,71 @@ class AttendanceComputationService
 
         $this->calculateRealTime();
         $this->calculateOfficialWorkTime();
+    }
+
+    public function rotaShiftCalculateWorkedHours()
+    {
+        if($this->isFlexibleHourBaseComputation){
+            return $this->basedOnFlexibleHoursComputation();
+        }
+
+        $this->otherComputation();
+        $this->calculateIsCrossDayRotaShiftActualWorkingHrs();
+
+        $this->calculateOfficialWorkTime();
+        if($this->holidayData['true_false'] == 1 || $this->presentAbsentType == 5){
+            $this->officialWorkTime = 0;
+        }
+
+        if ($this->totalWorkingHours && $this->shiftHours) {
+            $this->rotaShiftCommonComputations();
+        }
+
+        $this->calculateRealTime();
+        $this->lateHoursComputation();
+
+    }
+
+    function rotaShiftCommonComputations(){
+
+        if ($this->dayType != 1) {
+            return; //if holiday or weekend no need to compute the OT or shortage (early-out) hours
+        }
+
+        if ($this->totalWorkingHours < $this->shiftHours) {
+            //compute shortage
+            $this->earlyHours = $this->shiftHours - $this->totalWorkingHours;
+
+        } else {
+            //compute OT
+            $this->overTimeHours = $this->totalWorkingHours - $this->shiftHours;
+
+        }
+    }
+
+    function calculateIsCrossDayRotaShiftActualWorkingHrs()
+    {
+
+        $t1 = ($this->isShiftHoursSet && ($this->offDutyTime <= $this->clockOut))
+            ? new DateTime($this->offDutyTime)
+            : new DateTime($this->clockOut);
+
+        $t2 = ($this->isShiftHoursSet && ($this->onDutyTime >= $this->clockIn))
+            ? new DateTime($this->onDutyTime)
+            : new DateTime($this->clockIn);
+
+        $currentDayOffTime = new DateTime($this->cutOfWorkHrsNext);
+
+
+        $currentDayDifference = $currentDayOffTime->diff($t2);
+
+
+        $nextDayClockIn = new DateTime($this->cutOfWorkHrsPrvious);
+        $nextDayDifference = $t1->diff($nextDayClockIn);
+        $hours = $nextDayDifference->format('%h')+$currentDayDifference->format('%h');
+        $minutes = $nextDayDifference->format('%i')+$currentDayDifference->format('%i');
+        $this->totalWorkingHours =  ($hours * 60) + $minutes;
+
     }
 
     public function generalComputation()

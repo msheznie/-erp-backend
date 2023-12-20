@@ -23,6 +23,7 @@ use App\Services\hrms\attendance\AttendanceWeeklySummaryService;
 use App\helper\BirthdayWishService;
 use App\Jobs\HrDocNotificationJob;
 use App\Jobs\ReturnToWorkNotificationJob;
+use App\Jobs\EmpProfileCreateNotificationJob;
 use App\Jobs\TravelRequestNotificationJob;
 use App\Models\Company;
 use App\Models\NotificationCompanyScenario;
@@ -219,6 +220,19 @@ class HRJobInvokeAPIController extends AppBaseController
 
         ReturnToWorkNotificationJob::dispatch($dbName, $companyId, $id, $masterDetails); 
         return $this->sendResponse([], 'Return to work notification scenario added to queue');
+    }
+
+    function sendEmpProfileCreateNotifications(Request $request){
+        $input = $request->all();  
+        $tenantId = $input['tenantId'];
+        $dbName = CommonJobService::get_tenant_db($tenantId);
+        $companyId = $input['companyId'];
+        $id = $input['id'];   
+        $masterDetails = $input['masterDetails'];
+
+        EmpProfileCreateNotificationJob::dispatch($dbName, $companyId, $id, $masterDetails); 
+
+        return $this->sendResponse([], 'Employee profile creation notification scenario added to queue');
     }
 
     function hrNotificationDebug(Request $request)
