@@ -979,7 +979,7 @@ Route::group(['middleware' => ['tenant','locale']], function () {
     Route::get('validateSupplierRegistrationLink', 'SupplierMasterAPIController@validateSupplierRegistrationLink');
     Route::get('getSupplierRegisterFormData', 'SupplierMasterAPIController@getSupplierRegisterFormData');
     Route::post('registerSupplier', 'SupplierMasterAPIController@registerSupplier');
-
+    Route::post('getSubCategoriesByMultipleMasterCategory', 'SupplierCategorySubAPIController@getSubCategoriesByMultipleMasterCategory');
     
     Route::get('loginwithToken', 'UserAPIController@loginwithToken');
     Route::post('login', 'AuthAPIController@auth');
@@ -1077,3 +1077,8 @@ if (env("LOG_ENABLE", false)) {
  * End external related routes
  */
 
+
+
+Route::resource('register_supplier_business_category_assigns', 'RegisterSupplierBusinessCategoryAssignAPIController');
+
+Route::resource('register_supplier_subcategory_assigns', 'RegisterSupplierSubcategoryAssignAPIController');

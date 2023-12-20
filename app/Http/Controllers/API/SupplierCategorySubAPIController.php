@@ -288,4 +288,11 @@ class SupplierCategorySubAPIController extends AppBaseController
 
         return $this->sendResponse(['errorMessages' => $errorMessages, 'successMessages' => $successMessages, 'amendable'=> $amendable], "validated successfully");
     }
+
+
+    public function getSubCategoriesByMultipleMasterCategory(Request $request){
+        $input = $request->all();
+        $businessSubCategories = SupplierCategorySub::whereIn('supMasterCategoryID',$input)->where('isActive',1)->get();
+        return $this->sendResponse($businessSubCategories, 'Sub category retrieved successfully');
+    }
 }
