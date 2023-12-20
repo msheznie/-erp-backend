@@ -411,6 +411,10 @@ class FinanceItemCategorySubAPIController extends AppBaseController
            if(!$cogs_gl_code) {
                return $this->sendError("Please select 'COGS GL Code'",500);
            }
+       } else{
+           if(!$balance_sheet_gl_code){
+               return $this->sendError("Please select 'Balance Sheet GL Code'",500);
+           }
        }
         
         $financeGLcodebBS = ChartOfAccount::find(isset($input['financeGLcodebBSSystemID']) ? $input['financeGLcodebBSSystemID'] : null);
