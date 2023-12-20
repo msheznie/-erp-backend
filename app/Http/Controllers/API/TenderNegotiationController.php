@@ -274,15 +274,17 @@ class TenderNegotiationController extends AppBaseController
             foreach($srmTenderBidEmployeeDetails as $srmTenderBidEmployeeDetail) {
                 $employee = ($srmTenderBidEmployeeDetail) ? $srmTenderBidEmployeeDetail->employee : null;
                     if(isset($employee) &&  $employee->empEmail) {
-                        $dataEmail['empEmail'] = $employee->empEmail;
-                        $dataEmail['companySystemID'] = $employee->empCompanySystemID;
-                        $redirectUrl = env('ERP_APPROVE_URL');
-                        $companyName = (Auth::user()->employee && Auth::user()->employee->company) ? Auth::user()->employee->company->CompanyName : null ;
-                        // $temp = "Hi  $employee->empFullName , <br><br>The tender ". $tenderMaster->tender_code ."  has been available for the negotitaion approval.<br><br> The Follwing bid submission are available $table <a href=$redirectUrl>Click here to approve</a> <br><br>Thank you.";
-                        $temp = "Hi  $employee->empFullName , <br><br>The tender ". $tenderMaster->tender_code ."  has been available for the negotitaion approval.<br><br><a href=$redirectUrl>Click here to approve</a> <br><br>Thank you.";
-                        $dataEmail['alertMessage'] = $tenderMaster->tender_code." - Tender negotiation for approval";
-                        $dataEmail['emailAlertMessage'] = $temp;
-                        $sendEmail = \Email::sendEmailErp($dataEmail);
+                        if(($employee->discharegedYN == 0) && ($employee->ActivationFlag == -1) && ($employee->empLoginActive == 1) && ($employee->empActive == 1)){
+                            $dataEmail['empEmail'] = $employee->empEmail;
+                            $dataEmail['companySystemID'] = $employee->empCompanySystemID;
+                            $redirectUrl = env('ERP_APPROVE_URL');
+                            $companyName = (Auth::user()->employee && Auth::user()->employee->company) ? Auth::user()->employee->company->CompanyName : null ;
+                            // $temp = "Hi  $employee->empFullName , <br><br>The tender ". $tenderMaster->tender_code ."  has been available for the negotitaion approval.<br><br> The Follwing bid submission are available $table <a href=$redirectUrl>Click here to approve</a> <br><br>Thank you.";
+                            $temp = "Hi  $employee->empFullName , <br><br>The tender ". $tenderMaster->tender_code ."  has been available for the negotitaion approval.<br><br><a href=$redirectUrl>Click here to approve</a> <br><br>Thank you.";
+                            $dataEmail['alertMessage'] = $tenderMaster->tender_code." - Tender negotiation for approval";
+                            $dataEmail['emailAlertMessage'] = $temp;
+                            $sendEmail = \Email::sendEmailErp($dataEmail);
+                        }
                     }
             }
         }

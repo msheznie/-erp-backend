@@ -979,26 +979,28 @@ class LeaveDataMasterAPIController extends AppBaseController
         foreach ($managers as $manager) {
 
             $empManager = Employee::where('empID', $manager->managerID)->first();
-            $alert["companyID"] = $empManager->empCompanyID;
-            $alert["documentSystemID"] = $input['documentSystemID'];
-            $alert["companySystemID"] = $input['companySystemID'];
-            $alert["empSystemID"] = $input['empSystemID'];
-            $alert["empID"] = $manager->managerID;
-            $alert["docID"] = 'LA';
-            $alert["docApprovedYN"] = 0;
-            $alert["docSystemCode"] = $input['leavedatamasterID'];
-            $alert["docCode"] = $leaveDataMasters->leaveDataMasterCode;
-            $alert["alertMessage"] = "Pending " . $myDocumentName . " approval " . $leaveDataMasters->leaveDataMasterCode;
-            $alert["alertDateTime"] = date('Y-m-d');
-            $alert["alertViewedYN"] = 0;
-            $alert["alertViewedDateTime"] = Null;
-            $alert["empName"] = $empManager->empName;
-            $alert["empEmail"] = $empManager->empEmail;
-            $alert["emailAlertMessage"] = "Hi " . $empManager->empName . ",<p>" . $myDocumentName . " <b> LA </b> is pending for your approval from <b>" . $employee->empName . "<b/>.<a href=http://gears.gulfenergy-int.com/portal/leave_approval.php>Click here to approve.</a>.<font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!<br>This is an auto generated email. Please do not reply to this email because we are not monitoring this inbox.</font>";
-            $alert["isEmailSend"] = 0;
-            $alert["timeStamp"] = date('Y-m-d');
+            if(($empManager->discharegedYN == 0) && ($empManager->ActivationFlag == -1) && ($empManager->empLoginActive == 1) && ($empManager->empActive == 1)){
+                $alert["companyID"] = $empManager->empCompanyID;
+                $alert["documentSystemID"] = $input['documentSystemID'];
+                $alert["companySystemID"] = $input['companySystemID'];
+                $alert["empSystemID"] = $input['empSystemID'];
+                $alert["empID"] = $manager->managerID;
+                $alert["docID"] = 'LA';
+                $alert["docApprovedYN"] = 0;
+                $alert["docSystemCode"] = $input['leavedatamasterID'];
+                $alert["docCode"] = $leaveDataMasters->leaveDataMasterCode;
+                $alert["alertMessage"] = "Pending " . $myDocumentName . " approval " . $leaveDataMasters->leaveDataMasterCode;
+                $alert["alertDateTime"] = date('Y-m-d');
+                $alert["alertViewedYN"] = 0;
+                $alert["alertViewedDateTime"] = Null;
+                $alert["empName"] = $empManager->empName;
+                $alert["empEmail"] = $empManager->empEmail;
+                $alert["emailAlertMessage"] = "Hi " . $empManager->empName . ",<p>" . $myDocumentName . " <b> LA </b> is pending for your approval from <b>" . $employee->empName . "<b/>.<a href=http://gears.gulfenergy-int.com/portal/leave_approval.php>Click here to approve.</a>.<font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!<br>This is an auto generated email. Please do not reply to this email because we are not monitoring this inbox.</font>";
+                $alert["isEmailSend"] = 0;
+                $alert["timeStamp"] = date('Y-m-d');
 
-            $sendEmail = \Email::sendEmailErp($alert);
+                $sendEmail = \Email::sendEmailErp($alert);
+            }
 
             $pushNotificationMessage = "Pending " . $myDocumentName . " approval " . $leaveDataMasters->leaveDataMasterCode;
             $pushNotificationUserIds[] = $input['empSystemID'];
@@ -1016,26 +1018,29 @@ class LeaveDataMasterAPIController extends AppBaseController
 
         $pushNotificationUserIds = [];
         $pushNotificationArray = [];
-        $alert["companyID"] = $employee->empCompanyID;
-        $alert["documentSystemID"] = $input['documentSystemID'];
-        $alert["companySystemID"] = $input['companySystemID'];
-        $alert["empSystemID"] = $input['empSystemID'];
-        $alert["empID"] = $manager->managerID;
-        $alert["docID"] = 'LA';
-        $alert["docApprovedYN"] = 0;
-        $alert["docSystemCode"] = $input['leavedatamasterID'];
-        $alert["docCode"] = $leaveDataMasters->leaveDataMasterCode;
-        $alert["alertMessage"] = "Leave Application (" . $leaveDataMasters->leaveDataMasterCode . ") Submitted";
-        $alert["alertDateTime"] = date('Y-m-d');
-        $alert["alertViewedYN"] = 0;
-        $alert["alertViewedDateTime"] = Null;
-        $alert["empName"] = $employee->empName;
-        $alert["empEmail"] = $employee->empEmail;
-        $alert["emailAlertMessage"] = "Hi " . $employee->empName . ",<p>Your Leave Application <b>" . $leaveDataMasters->leaveDataMasterCode . "<b/> has been submitted to <b>" . $empManager->empName . "<b/> for Approval.<br><p style='color:#FF0000'><b>Note : Employees are strictly instructed not to go on the applied leave until they receive an approval of the leave application from their Supervisor/Manager.<b/></p><br><font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!<br>This is an auto generated email. Please do not reply to this email because we are not monitoring this inbox.</font>";
-        $alert["isEmailSend"] = 0;
-        $alert["timeStamp"] = date('Y-m-d');
 
-        $sendEmail = \Email::sendEmailErp($alert);
+        if(($employee->discharegedYN == 0) && ($employee->ActivationFlag == -1) && ($employee->empLoginActive == 1) && ($employee->empActive == 1)){
+            $alert["companyID"] = $employee->empCompanyID;
+            $alert["documentSystemID"] = $input['documentSystemID'];
+            $alert["companySystemID"] = $input['companySystemID'];
+            $alert["empSystemID"] = $input['empSystemID'];
+            $alert["empID"] = $manager->managerID;
+            $alert["docID"] = 'LA';
+            $alert["docApprovedYN"] = 0;
+            $alert["docSystemCode"] = $input['leavedatamasterID'];
+            $alert["docCode"] = $leaveDataMasters->leaveDataMasterCode;
+            $alert["alertMessage"] = "Leave Application (" . $leaveDataMasters->leaveDataMasterCode . ") Submitted";
+            $alert["alertDateTime"] = date('Y-m-d');
+            $alert["alertViewedYN"] = 0;
+            $alert["alertViewedDateTime"] = Null;
+            $alert["empName"] = $employee->empName;
+            $alert["empEmail"] = $employee->empEmail;
+            $alert["emailAlertMessage"] = "Hi " . $employee->empName . ",<p>Your Leave Application <b>" . $leaveDataMasters->leaveDataMasterCode . "<b/> has been submitted to <b>" . $empManager->empName . "<b/> for Approval.<br><p style='color:#FF0000'><b>Note : Employees are strictly instructed not to go on the applied leave until they receive an approval of the leave application from their Supervisor/Manager.<b/></p><br><font size='1.5'><i><p><br><br><br>SAVE PAPER - THINK BEFORE YOU PRINT!<br>This is an auto generated email. Please do not reply to this email because we are not monitoring this inbox.</font>";
+            $alert["isEmailSend"] = 0;
+            $alert["timeStamp"] = date('Y-m-d');
+
+            $sendEmail = \Email::sendEmailErp($alert);
+        }
 
         $pushNotificationMessage = "Leave Application (" . $leaveDataMasters->leaveDataMasterCode . ") Submitted";
         $pushNotificationUserIds[] = $input['empSystemID'];

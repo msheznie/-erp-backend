@@ -134,12 +134,14 @@ class ReversalDocument
         if($approvedUsers) {
             foreach($approvedUsers as $employee) {
                 if ($employee && !is_null($employee->empEmail)) {
-                    $dataEmail['empEmail'] = $employee->empEmail;
-                    $dataEmail['companySystemID'] = $employee->companySystemID;
-                    $temp = "<p>Dear " . $employee->empName . ',</p><p>Please be informed that '.$employee->documentID.' '.$employee->documentCode.' has been reversed by '.$reversedBy.'</p>';
-                    $dataEmail['alertMessage'] = $employee->documentID." Document Reversed";
-                    $dataEmail['emailAlertMessage'] = $temp;
-                    $sendEmail = \Email::sendEmailErp($dataEmail);
+                    if(($employee->discharegedYN == 0) && ($employee->ActivationFlag == -1) && ($employee->empLoginActive == 1) && ($employee->empActive == 1)){
+                        $dataEmail['empEmail'] = $employee->empEmail;
+                        $dataEmail['companySystemID'] = $employee->companySystemID;
+                        $temp = "<p>Dear " . $employee->empName . ',</p><p>Please be informed that '.$employee->documentID.' '.$employee->documentCode.' has been reversed by '.$reversedBy.'</p>';
+                        $dataEmail['alertMessage'] = $employee->documentID." Document Reversed";
+                        $dataEmail['emailAlertMessage'] = $temp;
+                        $sendEmail = \Email::sendEmailErp($dataEmail);
+                    }
                 }
             }
         }

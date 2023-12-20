@@ -61,20 +61,22 @@ class TravelRequestNotificationService
     
 
         foreach ($this->notifyList as $val) {
-            $dataEmail['empEmail'] = $val['employee']['empEmail'];
-            $dataEmail['companySystemID'] = $this->companyId;
-            $temp = '<p>Dear ' . $val['employee']['empFullName'] . ', <br /></p><p> Please find the attached document
+            if(($val['employee']['discharegedYN'] == 0) && ($val['employee']['ActivationFlag'] == -1) && ($val['employee']['empLoginActive'] == 1) && ($val['employee']['empActive'] == 1)){
+                $dataEmail['empEmail'] = $val['employee']['empEmail'];
+                $dataEmail['companySystemID'] = $this->companyId;
+                $temp = '<p>Dear ' . $val['employee']['empFullName'] . ', <br /></p><p> Please find the attached document
             '.$this->documentCode.' for your further arrangements and action.</p>';
-            $dataEmail['emailAlertMessage'] = $temp;
-            $dataEmail['alertMessage'] = 'Travel Request - '.$this->documentCode.'';
-            $sendEmail = \Email::sendEmailErp($dataEmail);
-            if (!$sendEmail["success"]) {
-                $msg = "Travel request notification not sent for {$val['employee']['empID']} | {$val['employee']['empFullName']} "; 
-                $logType = 'error';
-            }else { 
-                $msg = "Travel request notification sent for {$val['employee']['empID']} | {$val['employee']['empFullName']} ";
+                $dataEmail['emailAlertMessage'] = $temp;
+                $dataEmail['alertMessage'] = 'Travel Request - '.$this->documentCode.'';
+                $sendEmail = \Email::sendEmailErp($dataEmail);
+                if (!$sendEmail["success"]) {
+                    $msg = "Travel request notification not sent for {$val['employee']['empID']} | {$val['employee']['empFullName']} ";
+                    $logType = 'error';
+                }else {
+                    $msg = "Travel request notification sent for {$val['employee']['empID']} | {$val['employee']['empFullName']} ";
+                }
+                $this->insertToLogTb(['Document Code'=> $this->documentCode ,'Message'=> $msg],$logType);
             }
-            $this->insertToLogTb(['Document Code'=> $this->documentCode ,'Message'=> $msg],$logType); 
         }
     }
 
