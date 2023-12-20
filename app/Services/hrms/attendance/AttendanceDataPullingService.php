@@ -1,6 +1,9 @@
 <?php
 namespace App\Services\hrms\attendance;
 
+use App\enums\modules\Modules;
+use App\enums\shift\Shifts;
+use App\Services\hrms\modules\HrModuleAssignService;
 use Collator;
 use Exception;
 use Carbon\Carbon;
@@ -23,6 +26,8 @@ class AttendanceDataPullingService{
     private $dateTime;
     private $pulledVia;
 
+    private $isShiftModule;
+
 
     public function __construct($companyId, $pullingDate, $isClockOutPulling)
     {
@@ -44,6 +49,9 @@ class AttendanceDataPullingService{
         DB::beginTransaction();
 
         try{
+
+            $moduleAssignServiceObj = new HrModuleAssignService(Modules::SHIFT, $this->companyId);
+            $this->isShiftModule = $moduleAssignServiceObj->__destruct();
 
             if($this->isClockOutPulling){
                 $this->deleteEntries();
@@ -229,29 +237,20 @@ class AttendanceDataPullingService{
     }
 
     function step3(){
+        $shiftQuery = $this->getShiftSubQuery();
+
         $q = "SELECT t.emp_id, e.ECode, e.Ename2, t.att_date, t.clock_in, t.clock_out, t.location_in, t.location_out, 
         t.upload_type, t.device_id_in, t.machine_id_in, t.machine_id_out, lm.leaveMasterID, lm.leaveHalfDay, 
         shd.onDutyTime, shd.offDutyTime, shd.weekDayNo, IF (IFNULL(shd.isHalfDay, 0), 1, 0) AS isHalfDay, 
         IF(IFNULL(calenders.holiday_flag, 0), 1, 0) AS isHoliday, shd.isWeekend, shd.gracePeriod, shd.isFlexyHour, 
         shd.flexyHrFrom, shd.flexyHrTo, e.isCheckInMust, shd.shiftID, shd.shiftType, shd.workingHour,
-        t.company_id
+        t.company_id, shd.is_cross_day, '12:00:00' as crossDayCutOffTime
         FROM attendance_temporary_tbl AS t
         JOIN (
             SELECT EIdNo, ECode, Ename2, isCheckin AS isCheckInMust
             FROM srp_employeesdetails WHERE Erp_companyID = {$this->companyId}
         ) AS e ON e.EIdNo = t.emp_id        
-        LEFT JOIN (
-        	SELECT * FROM srp_erp_pay_shiftemployees
-        	WHERE companyID = {$this->companyId} AND ('{$this->pullingDate}' BETWEEN startDate and endDate )
-            AND srp_erp_pay_shiftemployees.isActive = 1
-        ) AS she ON she.empID = e.EIdNo
-        LEFT JOIN (
-            SELECT sm.shiftID, sd.onDutyTime, sd.offDutyTime, sd.isHalfDay, sd.weekDayNo, sd.isWeekend, 
-            sd.gracePeriod, sm.isFlexyHour, sd.flexyHrFrom, sd.flexyHrTo, sm.shiftType, sd.workingHour 
-            FROM srp_erp_pay_shiftdetails AS sd 
-            JOIN srp_erp_pay_shiftmaster AS sm ON  sm.shiftID = sd.shiftID 
-            WHERE sm.companyID = {$this->companyId}
-        ) AS shd ON shd.shiftID = she.shiftID AND shd.weekDayNo = WEEKDAY(t.att_date) 
+        {$shiftQuery}
         LEFT JOIN ( 
             SELECT leaveMasterID, empID, startDate, endDate, ishalfDay as leaveHalfDay
             FROM srp_erp_leavemaster WHERE companyID = {$this->companyId} AND approvedYN = 1
@@ -292,38 +291,61 @@ class AttendanceDataPullingService{
             $shiftHours = ($row['shiftType'] == 1)? $row['workingHour']: $obj->shiftHours;
             $shiftHours = (empty($shiftHours))? 0: $shiftHours;
             $shiftId = (empty($row['shiftID']))? 0: $row['shiftID'];
+            $isCrossDay = (empty($row['is_cross_day']))? 0: $row['is_cross_day'];
+            $clockIn = $isCrossDay ? $obj->clockIn : $row['clock_in'];
+            $clockOut = $isCrossDay ? $obj->clockOut : $row['clock_out'];
+            $uploadType = $isCrossDay ? $obj->uploadType : $row['upload_type'];
+            $clockOutFloorId = $isCrossDay ? $obj->clockOutFloorId : $row['location_out'];
 
-           
-             $this->data[] = [ 
-                'empID'=> $empId, 'deviceID'=> $row['device_id_in'], 'machineID'=> $row['machine_id_in'],
-                'attendanceDate'=> $attDate, 'shift_id'=> $shiftId, 'floorID'=> $row['location_in'], 
-                'clockoutFloorID'=> $row['location_out'], 'gracePeriod'=> $obj->gracePeriod, 
-                'onDuty'=> $row['onDutyTime'], 'offDuty'=> $row['offDutyTime'],                
+            $this->data[] = [
+                'empID' => $empId,
+                'deviceID' => $row['device_id_in'],
+                'machineID' => $row['machine_id_in'],
+                'attendanceDate' => $attDate,
+                'shift_id' => $shiftId,
+                'floorID' => $row['location_in'],
+                'clockoutFloorID' => $clockOutFloorId,
+                'gracePeriod' => $obj->gracePeriod,
+                'onDuty' => $row['onDutyTime'],
+                'offDuty' => $row['offDutyTime'],
 
-                'checkIn'=> $row['clock_in'], 'checkOut'=> $row['clock_out'], 'presentTypeID'=> $obj->presentAbsentType,
+                'checkIn' => $clockIn,
+                'checkOut' => $clockOut,
+                'presentTypeID' => $obj->presentAbsentType,
 
-                'normalTime'=> ($row['isHalfDay'] == 1)? 0.5: 1,
-                'lateHours'=> $obj->lateHours, 'lateFee'=> $obj->lateFee, 'earlyHours'=> $obj->earlyHours,   
-                'OTHours'=> $obj->overTimeHours, 'realTime'=> $obj->realTime, 'shift_hours'=> $shiftHours,
-                
-                
-                'isNormalDay'=> $obj->normalDayData['true_false'], 'NDaysOT'=> $obj->normalDayData['hours'], 
-                'normalDay'=> $obj->normalDayData['realTime'], 
-                
-                'isWeekEndDay'=> $obj->weekendData['true_false'], 'weekendOTHours'=> $obj->weekendData['hours'], 
-                'weekend'=> $obj->weekendData['realTime'], 
-                
-                'isHoliday'=> $obj->holidayData['true_false'], 'holidayOTHours'=> $obj->holidayData['hours'], 
-                'holiday'=> $obj->holidayData['realTime'],                 
-                
-                'mustCheck'=> $row['isCheckInMust'],                
-                'isMultipleOcc'=> $this->moreThan2RecordsExists($empId),
-                'flexyHrFrom'=> $flexibleHourFrom, 'flexyHrTo'=> $flexibleHourTo,
-                'companyID'=> $this->companyId, 'companyCode'=> $companyCode, 'uploadType'=> $row['upload_type'],
-                'pulled_by'=> 0, 'pulled_at'=> $this->dateTime, 'pulled_via'=> $this->pulledVia,'actual_time' => $obj->totalWorkingHours, 
-                'official_work_time' =>   $obj->officialWorkTime
-            ];  
-            
+                'normalTime' => ($row['isHalfDay'] == 1) ? 0.5 : 1,
+                'lateHours' => $obj->lateHours,
+                'lateFee' => $obj->lateFee,
+                'earlyHours' => $obj->earlyHours,
+                'OTHours' => $obj->overTimeHours,
+                'realTime' => $obj->realTime,
+                'shift_hours' => $shiftHours,
+
+                'isNormalDay' => $obj->normalDayData['true_false'],
+                'NDaysOT' => $obj->normalDayData['hours'],
+                'normalDay' => $obj->normalDayData['realTime'],
+
+                'isWeekEndDay' => $obj->weekendData['true_false'],
+                'weekendOTHours' => $obj->weekendData['hours'],
+                'weekend' => $obj->weekendData['realTime'],
+
+                'isHoliday' => $obj->holidayData['true_false'],
+                'holidayOTHours' => $obj->holidayData['hours'],
+                'holiday' => $obj->holidayData['realTime'],
+
+                'mustCheck' => $row['isCheckInMust'],
+                'isMultipleOcc' => $this->moreThan2RecordsExists($empId),
+                'flexyHrFrom' => $flexibleHourFrom,
+                'flexyHrTo' => $flexibleHourTo,
+                'companyID' => $this->companyId,
+                'companyCode' => $companyCode,
+                'uploadType' => $uploadType,
+                'pulled_by' => 0, 'pulled_at' => $this->dateTime,
+                'pulled_via' => $this->pulledVia,
+                'actual_time' => $obj->totalWorkingHours,
+                'official_work_time' => $obj->officialWorkTime
+            ];
+
             $obj = null;
         }
 
@@ -405,6 +427,64 @@ class AttendanceDataPullingService{
 
     function log_suffix($line_no) : string{
         return " | companyId: $this->companyId \t on file:  " . __CLASS__ ." \tline no : {$line_no}";
+    }
+
+    function getShiftSubQuery(){
+
+        if($this->isShiftModule){
+            $shFixed = Shifts::FIXED;
+            $shRota = Shifts::ROTA;
+
+            $fixedJoin = "SELECT sm.shiftID, sd.onDutyTime, sd.offDutyTime, sd.isHalfDay, sd.weekDayNo, sd.isWeekend, 
+                sd.gracePeriod, sm.isFlexyHour, sd.flexyHrFrom, sd.flexyHrTo, sm.shiftType, sd.workingHour, 
+                sd.is_cross_day, she.schedule_date, sm.leave_deduction_rate, she.emp_id
+                FROM hr_shift_schedule_details AS she 
+                JOIN srp_erp_pay_shiftmaster AS sm ON  sm.shiftID = she.shift_id 
+                JOIN srp_erp_pay_shiftdetails AS sd ON sd.shiftID = sm.shiftID 
+                AND sd.weekDayNo = WEEKDAY(she.schedule_date)
+                WHERE sm.companyID = {$this->companyId}
+                AND sm.shiftType = {$shFixed} ";
+
+            $rotaUnion = " UNION ALL 
+                SELECT sm.shiftID, sd.onDutyTime, sd.offDutyTime, sd.isHalfDay, sd.weekDayNo, sd.isWeekend, 
+                sd.gracePeriod, sm.isFlexyHour, sd.flexyHrFrom, sd.flexyHrTo, sm.shiftType, sd.workingHour, 
+                sd.is_cross_day, she.schedule_date, sm.leave_deduction_rate, she.emp_id 
+                FROM hr_shift_schedule_details AS she 
+                JOIN srp_erp_pay_shiftmaster AS sm ON  sm.shiftID = she.shift_id 
+                JOIN srp_erp_pay_shiftdetails AS sd ON sd.shiftID = sm.shiftID 
+                WHERE sm.companyID = {$this->companyId}
+                AND sm.shiftType = {$shRota} ";
+
+            $OffDayUnion = " UNION ALL 
+                SELECT shift_id AS shiftID, '' AS onDutyTime, '' AS offDutyTime, 0 AS isHalfDay,
+                WEEKDAY(she.schedule_date) AS weekDayNo, 1 AS isWeekend, 
+                '' AS gracePeriod, 1 AS isFlexyHour, '' AS flexyHrFrom, '' AS flexyHrTo, -1 AS shiftType, 
+                0 AS workingHour, 0 AS is_cross_day,
+                she.schedule_date, 1 AS leave_deduction_rate, she.emp_id 
+                FROM hr_shift_schedule_details AS she
+                WHERE she.company_id = {$this->companyId} 
+                AND she.shift_id = 0 
+                GROUP BY schedule_date, shift_id, emp_id ";
+
+
+            return "LEFT JOIN({$fixedJoin} {$rotaUnion} {$OffDayUnion}) AS shd ON shd.emp_id = e.EIdNo 
+                    AND t.att_date = shd.schedule_date";
+        }
+
+        return "
+            LEFT JOIN (
+                SELECT * FROM srp_erp_pay_shiftemployees
+                WHERE companyID = {$this->companyId} AND ('{$this->pullingDate}' BETWEEN startDate and endDate ) 
+                AND srp_erp_pay_shiftemployees.isActive = 1 
+            ) AS she ON she.empID = e.EIdNo
+            LEFT JOIN(
+                SELECT sm.shiftID, sd.onDutyTime, sd.offDutyTime, sd.isHalfDay, sd.weekDayNo, sd.isWeekend, 
+                sd.gracePeriod, sm.isFlexyHour, sd.flexyHrFrom, sd.flexyHrTo, sm.shiftType, sd.workingHour, 
+                sd.is_cross_day 
+                FROM srp_erp_pay_shiftdetails AS sd 
+                JOIN srp_erp_pay_shiftmaster AS sm ON  sm.shiftID = sd.shiftID 
+                WHERE sm.companyID = {$this->companyId}
+            ) AS shd ON shd.shiftID = she.shiftID AND shd.weekDayNo = WEEKDAY(t.att_date) ";
     }
 
     public function insertToLogTb($logData, $logType = 'info'){
