@@ -551,11 +551,13 @@ class ShiftDetailsAPIController extends AppBaseController
             ->join('erp_taxmaster_new', 'erp_taxmaster_new.taxMasterAutoID', '=', 'erp_tax_vat_sub_categories.taxMasterAutoID')
             ->where('erp_taxmaster_new.companySystemID', $companySystemID)
             ->where('erp_taxmaster_new.taxCategory', 2)
+            ->where('erp_tax_vat_sub_categories.isActive', 1)
             ->get();
 
         $taxesOther = DB::table('erp_taxmaster_new')->selectRaw('taxMasterAutoID as value, taxDescription as label')
             ->where('erp_taxmaster_new.companySystemID', $companySystemID)
             ->where('erp_taxmaster_new.taxCategory', 1)
+            ->where('erp_taxmaster_new.isActive', 1)
             ->get();
 
         $posPayments = DB::table('pos_source_paymentglconfigdetail')
