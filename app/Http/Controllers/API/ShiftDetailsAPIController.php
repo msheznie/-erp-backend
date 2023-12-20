@@ -1606,11 +1606,30 @@ class ShiftDetailsAPIController extends AppBaseController
 
                         $addToCusInvItemDetails['localCurrencyID'] = $item->companyLocalCurrencyID;
                         $addToCusInvItemDetails['localCurrencyER'] = $item->companyLocalExchangeRate;
-                        $addToCusInvItemDetails['issueCostLocal'] = $item->cost / $item->itemQty;
+
+                        if($item->itemQty != 0 || $item->itemQty != null)
+                        {
+                            $addToCusInvItemDetails['issueCostLocal'] = $item->cost / $item->itemQty;
+                        }
+                        else
+                        {
+                            $addToCusInvItemDetails['issueCostLocal'] = 0;
+                        }
+
                         $addToCusInvItemDetails['issueCostLocalTotal'] = $item->cost * $item->qty;
                         $addToCusInvItemDetails['reportingCurrencyID'] = $item->companyReportingCurrencyID;
                         $addToCusInvItemDetails['reportingCurrencyER'] = $item->companyReportingExchangeRate;
-                        $addToCusInvItemDetails['issueCostRpt'] = ($item->cost / $item->itemQty) / $item->companyReportingExchangeRate;
+
+                        if($item->itemQty != 0 || $item->itemQty != null)
+                        { 
+                           $addToCusInvItemDetails['issueCostRpt'] = ($item->cost / $item->itemQty) / $item->companyReportingExchangeRate;
+                        }
+                        else
+                        {
+                           $addToCusInvItemDetails['issueCostRpt'] = 0;
+                        }
+
+
                         $addToCusInvItemDetails['issueCostRptTotal'] = $item->cost * $item->qty / $item->companyReportingExchangeRate;
                         $addToCusInvItemDetails['sellingCurrencyID'] = $item->transactionCurrencyID;
                         $addToCusInvItemDetails['sellingCurrencyER'] = $item->transactionExchangeRate;
