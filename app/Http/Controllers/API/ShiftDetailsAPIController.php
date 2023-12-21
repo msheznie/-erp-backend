@@ -2145,7 +2145,7 @@ class ShiftDetailsAPIController extends AppBaseController
                         ->get();
 
                     $invItemsPL = DB::table('pos_source_invoicedetail')
-                        ->selectRaw('SUM(pos_source_invoicedetail.totalCost) as amount, pos_source_invoice.invoiceID as invoiceID, pos_source_invoice.shiftID as shiftId, pos_source_invoice.companyID as companyID, pos_source_invoicedetail.itemAutoID as itemID, itemmaster.financeCategorySub as financeCategorySub,  financeitemcategorysub.financeGLcodebBSSystemID as bsGLCode, financeitemcategorysub.financeGLcodePLSystemID as plGLCode, itemmaster.financeCategoryMaster as categoryID, pos_source_invoicedetail.qty as qty, pos_source_invoicedetail.UOMID as uom, pos_source_invoice.wareHouseAutoID as wareHouseID, financeitemcategorysub.includePLForGRVYN as glYN')
+                        ->selectRaw('SUM(pos_source_invoicedetail.totalCost) as amount, pos_source_invoice.invoiceID as invoiceID, pos_source_invoice.shiftID as shiftId, pos_source_invoice.companyID as companyID, pos_source_invoicedetail.itemAutoID as itemID, itemmaster.financeCategorySub as financeCategorySub,  financeitemcategorysub.financeGLcodebBSSystemID as bsGLCode, financeitemcategorysub.financeCogsGLcodePLSystemID as plGLCode, itemmaster.financeCategoryMaster as categoryID, pos_source_invoicedetail.qty as qty, pos_source_invoicedetail.UOMID as uom, pos_source_invoice.wareHouseAutoID as wareHouseID, financeitemcategorysub.includePLForGRVYN as glYN')
                         ->join('pos_source_invoice', 'pos_source_invoice.invoiceID', '=', 'pos_source_invoicedetail.invoiceID')
                         ->join('itemmaster', 'itemmaster.itemCodeSystem', '=', 'pos_source_invoicedetail.itemAutoID')
                         ->join('financeitemcategorysub', 'financeitemcategorysub.itemCategorySubID', '=', 'itemmaster.financeCategorySub')
@@ -2153,7 +2153,7 @@ class ShiftDetailsAPIController extends AppBaseController
                         ->where('pos_source_invoice.shiftID', $shiftId)
                         ->where('itemassigned.companySystemID', $shiftDetails->companyID)
                         ->where('pos_source_invoice.isCreditSales', 0)
-                        ->groupBy('financeitemcategorysub.financeGLcodebBSSystemID')
+                        ->groupBy('financeitemcategorysub.financeCogsGLcodePLSystemID')
                         ->groupBy('pos_source_invoicedetail.invoiceID')
                         ->get();
 
@@ -2167,7 +2167,7 @@ class ShiftDetailsAPIController extends AppBaseController
                         ->where('pos_source_invoice.shiftID', $shiftId)
                         ->where('itemassigned.companySystemID', $shiftDetails->companyID)
                         ->where('pos_source_invoice.isCreditSales', 0)
-                        ->groupBy('financeitemcategorysub.financeGLcodePLSystemID')
+                        ->groupBy('financeitemcategorysub.financeGLcodebBSSystemID')
                         ->groupBy('pos_source_invoicedetail.invoiceID')
                         ->get();
 
