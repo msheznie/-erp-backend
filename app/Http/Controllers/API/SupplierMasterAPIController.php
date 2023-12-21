@@ -1418,16 +1418,24 @@ class SupplierMasterAPIController extends AppBaseController
                     }
                 }
 
-                foreach ($input['businessCategoryID'] as $key => $value) {
-                    $masterCategory = [
-                        'supplierID' => $resMaster->id,
-                        'supCategoryMasterID' => $value['id'],
-                    ];
-                    $resContact = RegisterSupplierBusinessCategoryAssign::create($masterCategory);
-                  }
+                // foreach ($input['businessCategoryID'] as $key => $value) {
+                //     $masterCategory = [
+                //         'supplierID' => $resMaster->id,
+                //         'supCategoryMasterID' => $value['id'],
+                //     ];
+                //     $resContact = RegisterSupplierBusinessCategoryAssign::create($masterCategory);
+                //   }
                   
 
                   foreach ($input['businessSubCategoryID'] as $key => $value) {
+
+                    $mainCategory = SupplierCategorySub::where('supCategorySubID',$value['id'])->select('supCategorySubID','supMasterCategoryID')->first();
+
+                    RegisterSupplierBusinessCategoryAssign::updateOrCreate(
+                        ['supplierID' => $resMaster->id,'supCategoryMasterID' => $mainCategory->supMasterCategoryID],
+                        ['supplierID' => $resMaster->id,'supCategoryMasterID' => $mainCategory->supMasterCategoryID]
+                    );
+
                     $subCategory = [
                         'supplierID' => $resMaster->id,
                         'supSubCategoryID' => $value['id'],
