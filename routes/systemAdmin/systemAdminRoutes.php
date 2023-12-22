@@ -245,6 +245,9 @@ Route::group([], function() {
 	Route::resource('registered_supp_contact_details', 'RegisteredSupplierContactDetailAPIController');
 	Route::resource('registered_supplier_attachments', 'RegisteredSupplierAttachmentAPIController');
 
+	Route::resource('register_supplier_category_assigns', 'RegisterSupplierBusinessCategoryAssignAPIController');
+	Route::resource('register_supplier_subcategory_assigns', 'RegisterSupplierSubcategoryAssignAPIController');
+
 });
 
 //Document Amend
