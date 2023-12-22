@@ -270,6 +270,8 @@ class ItemAssignedAPIController extends AppBaseController
 
     public function exportItemAssignedByCompanyReport(Request $request)
     {
+        ini_set('max_execution_time', 1800);
+        ini_set('memory_limit', -1);
         $input = $request->all();
         $data = array();
         $output = ($this->getAssignedItemsByCompanyQry($input))->orderBy('idItemAssigned', 'DES')->get();
