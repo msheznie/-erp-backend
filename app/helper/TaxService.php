@@ -601,9 +601,11 @@ class TaxService
                                         $query->selectRaw("SUM(GRVcostPerUnitLocalCur*noQty) as localAmount, SUM(GRVcostPerUnitComRptCur*noQty) as rptAmount,SUM(GRVcostPerUnitSupTransCur*noQty) as transAmount,SUM(VATAmount*noQty) as transVATAmount,SUM(VATAmountLocal*noQty) as localVATAmount ,SUM(VATAmountRpt*noQty) as rptVATAmount ,grvAutoID,supplierItemCurrencyID as supplierTransactionCurrencyID,foreignToLocalER as supplierTransactionER,erp_grvdetails.companyReportingCurrencyID,erp_grvdetails.companyReportingER,erp_grvdetails.localCurrencyID,erp_grvdetails.localCurrencyER");
                                     }])->find($grvAutoID);
 
-            $vatData['masterVATTrans'] = $masterData->details[0]->transVATAmount;
-            $vatData['masterVATLocal'] = $masterData->details[0]->localVATAmount;
-            $vatData['masterVATRpt'] = $masterData->details[0]->rptVATAmount;
+            if (isset($masterData->details[0])){
+                $vatData['masterVATTrans'] = $masterData->details[0]->transVATAmount;
+                $vatData['masterVATLocal'] = $masterData->details[0]->localVATAmount;
+                $vatData['masterVATRpt'] = $masterData->details[0]->rptVATAmount;
+            }
 
         } else {
             $masterData = GRVMaster::with(['details' => function ($query) {
