@@ -3984,14 +3984,16 @@ WHERE
             $tender->save();
 
             foreach ($emails as $mail) {
-                $name = $mail->employee->empFullName; 
-                $documentType = ($tender->document_type == 0) ? 'Tender' : 'RFX';
-                $body = "Hi $name , <br><br> The $documentType $tender->tender_code has been available for the final employee committee approval for $documentType awarding. <br><br> <a href=$redirectUrl>Click here to approve</a> <br><br>Thank you.";
-                $dataEmail['empEmail'] = $mail->employee->empUserName;
-                $dataEmail['companySystemID'] = $request['companySystemID'];
-                $dataEmail['alertMessage'] = "Employee Committee Approval";
-                $dataEmail['emailAlertMessage'] = $body;
-                $sendEmail = \Email::sendEmailErp($dataEmail);
+                if(($mail->employee->discharegedYN == 0) && ($mail->employee->ActivationFlag == -1) && ($mail->employee->empLoginActive == 1) && ($mail->employee->empActive == 1)){
+                    $name = $mail->employee->empFullName;
+                    $documentType = ($tender->document_type == 0) ? 'Tender' : 'RFX';
+                    $body = "Hi $name , <br><br> The $documentType $tender->tender_code has been available for the final employee committee approval for $documentType awarding. <br><br> <a href=$redirectUrl>Click here to approve</a> <br><br>Thank you.";
+                    $dataEmail['empEmail'] = $mail->employee->empUserName;
+                    $dataEmail['companySystemID'] = $request['companySystemID'];
+                    $dataEmail['alertMessage'] = "Employee Committee Approval";
+                    $dataEmail['emailAlertMessage'] = $body;
+                    $sendEmail = \Email::sendEmailErp($dataEmail);
+                }
             }
 
             DB::commit();

@@ -134,12 +134,14 @@ class CancelDocument
         if($approvedUsers) {
             foreach($approvedUsers as $employee) {
                 if ($employee && !is_null($employee->empEmail)) {
-                    $dataEmail['empEmail'] = $employee->empEmail;
-                    $dataEmail['companySystemID'] = $employee->companySystemID;
-                    $temp = "<p>Dear " . $employee->empName . ',</p><p>Please be informed that '.$employee->documentID.' '.$employee->documentCode.' has been cancelled by '.$cancelledBy.'</p>';
-                    $dataEmail['alertMessage'] = $employee->documentID." Document Cancelled";
-                    $dataEmail['emailAlertMessage'] = $temp;
-                    $sendEmail = \Email::sendEmailErp($dataEmail);
+                    if(($employee->discharegedYN == 0) && ($employee->ActivationFlag == -1) && ($employee->empLoginActive == 1) && ($employee->empActive == 1)){
+                        $dataEmail['empEmail'] = $employee->empEmail;
+                        $dataEmail['companySystemID'] = $employee->companySystemID;
+                        $temp = "<p>Dear " . $employee->empName . ',</p><p>Please be informed that '.$employee->documentID.' '.$employee->documentCode.' has been cancelled by '.$cancelledBy.'</p>';
+                        $dataEmail['alertMessage'] = $employee->documentID." Document Cancelled";
+                        $dataEmail['emailAlertMessage'] = $temp;
+                        $sendEmail = \Email::sendEmailErp($dataEmail);
+                    }
                 }
             }
         }
@@ -148,24 +150,28 @@ class CancelDocument
         if(isset($array->created_by)) {
             $user = $array->created_by;
                 if ($user && !is_null($user->empEmail)) {
-                    $dataEmail['empEmail'] = $user->empEmail;
-                    $dataEmail['companySystemID'] = $array->companySystemID;
-                    $temp = "<p>Dear " . $user->empName . ',</p><p>Please be informed that '.$array->documentID.' '.$array->doc_code.' has been cancelled by '.$cancelledBy.'</p>';
-                    $dataEmail['alertMessage'] = $array->documentID." Document Cancelled";
-                    $dataEmail['emailAlertMessage'] = $temp;
-                    $sendEmail = \Email::sendEmailErp($dataEmail);
+                    if(($user->discharegedYN == 0) && ($user->ActivationFlag == -1) && ($user->empLoginActive == 1) && ($user->empActive == 1)){
+                        $dataEmail['empEmail'] = $user->empEmail;
+                        $dataEmail['companySystemID'] = $array->companySystemID;
+                        $temp = "<p>Dear " . $user->empName . ',</p><p>Please be informed that '.$array->documentID.' '.$array->doc_code.' has been cancelled by '.$cancelledBy.'</p>';
+                        $dataEmail['alertMessage'] = $array->documentID." Document Cancelled";
+                        $dataEmail['emailAlertMessage'] = $temp;
+                        $sendEmail = \Email::sendEmailErp($dataEmail);
+                    }
                 }
         }
 
         if(isset($array->confirmed_by)) {
             $user = $array->confirmed_by;
                 if ($user && !is_null($user->empEmail)) {
-                    $dataEmail['empEmail'] = $user->empEmail;
-                    $dataEmail['companySystemID'] = $array->companySystemID;
-                    $temp = "<p>Dear " . $user->empName . ',</p><p>Please be informed that '.$array->documentID.' '.$array->doc_code.' has been cancelled by '.$cancelledBy.'</p>';
-                    $dataEmail['alertMessage'] = $array->documentID." Document Cancelled";
-                    $dataEmail['emailAlertMessage'] = $temp;
-                    $sendEmail = \Email::sendEmailErp($dataEmail);
+                    if(($user->discharegedYN == 0) && ($user->ActivationFlag == -1) && ($user->empLoginActive == 1) && ($user->empActive == 1)){
+                        $dataEmail['empEmail'] = $user->empEmail;
+                        $dataEmail['companySystemID'] = $array->companySystemID;
+                        $temp = "<p>Dear " . $user->empName . ',</p><p>Please be informed that '.$array->documentID.' '.$array->doc_code.' has been cancelled by '.$cancelledBy.'</p>';
+                        $dataEmail['alertMessage'] = $array->documentID." Document Cancelled";
+                        $dataEmail['emailAlertMessage'] = $temp;
+                        $sendEmail = \Email::sendEmailErp($dataEmail);
+                    }
                 }
         }
 
