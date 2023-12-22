@@ -156,7 +156,7 @@ class PoPaymentTermsAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        if (in_array('advance_payment_request', $input)) {
+        if (array_key_exists('advance_payment_request', $input)) {
             unset($input['advance_payment_request']);
         }
 
