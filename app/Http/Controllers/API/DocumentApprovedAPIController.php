@@ -17,7 +17,18 @@ use App\Http\Requests\API\CreateDocumentApprovedAPIRequest;
 use App\Http\Requests\API\UpdateDocumentApprovedAPIRequest;
 use App\Models\ApprovalLevel;
 use App\Models\DocumentApproved;
+use App\Models\SupplierRegistrationLink;
+use App\Repositories\BookInvSuppMasterRepository;
 use App\Repositories\DocumentApprovedRepository;
+use App\Repositories\DocumentAttachmentsRepository;
+use App\Repositories\PaySupplierInvoiceMasterRepository;
+use App\Repositories\SupplierInvoiceItemDetailRepository;
+use App\Repositories\TenderBidClarificationsRepository;
+use App\Services\InvoiceService;
+use App\Services\POService;
+use App\Services\Shared\SharedService;
+use App\Services\SRMService;
+use App\Services\SupplierService;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use App\Models\DocumentModifyRequest;
@@ -3161,6 +3172,9 @@ WHERE
 
     public function approveDocument(Request $request)
     {
+        $apiKey = $request->input('api_key');
+        $request->except('api_key');
+
 		if($request->input('documentSystemID') && ($request->input('documentSystemID') == 117 || $request->input('documentSystemID') == 118) ){ 
 				$id = $request->input('documentSystemCode');
 				$documentModifyRequestRepo = app(DocumentModifyRequestRepository::class); 
@@ -3176,7 +3190,39 @@ WHERE
 				$result = $controller->approveEditDocument($request);
 				return $result;
 
-		}else { 
+		}else if($request->input('documentSystemID') && ($request->input('documentSystemID') == 108 || $request->input('documentSystemID') == 113)){
+            $requestData['id'] = $request->input('documentSystemCode');
+            $request->merge($requestData);
+            $approve = \Helper::approveDocument($request);
+            if (!$approve["success"]) {
+                return $this->sendError($approve["message"], 404, ['type' => isset($approve["type"]) ? $approve["type"] : ""]);
+            } else {
+                return $this->sendResponse(array(), $approve["message"]);
+            }
+        }else if ($request->input('documentSystemID') && ($request->input('documentSystemID') == 107 )){
+            $requestData['id'] =$request->input('documentSystemCode');
+            $requestData['api_key'] =$apiKey;
+            $requestData['uuid'] = $this->getSupplierUUID($requestData['id']);
+            $request->merge($requestData);
+            $bookInvoiceSupMasterRepo = app(BookInvSuppMasterRepository::class);
+            $POService = new POService();
+            $supplierService = new SupplierService();
+            $sharedService =new SharedService();
+            $invoiceService = new InvoiceService();
+            $supplierInvoiceItemDetailRepo = app(SupplierInvoiceItemDetailRepository::class);
+            $tenderBidClarificationsRepo = app(TenderBidClarificationsRepository::class);
+            $documentAttachmentsRepo = app(DocumentAttachmentsRepository::class);
+            $paySupplierInvoiceMasterRepository = app(PaySupplierInvoiceMasterRepository::class);
+
+            $srmService = new SRMService($bookInvoiceSupMasterRepo,$POService,$supplierService,$sharedService,$invoiceService,$supplierInvoiceItemDetailRepo,
+            $tenderBidClarificationsRepo,$documentAttachmentsRepo,$paySupplierInvoiceMasterRepository);
+
+            $controller = new SupplierRegistrationApprovalController($srmService);
+
+            $result = $controller->approveSupplierKYC($request);
+            return $result;
+
+        }else {
 			$approve = \Helper::approveDocument($request);
 			if (!$approve["success"]) {
 				return $this->sendError($approve["message"], 404, ['type' => isset($approve["type"]) ? $approve["type"] : ""]);
@@ -3249,4 +3295,13 @@ WHERE
 		->where('id',$id)
 		->first();
 	}
+
+    public function getSupplierUUID($id)
+    {
+        $supReg = SupplierRegistrationLink::select('uuid')
+            ->where('id',$id)
+            ->first();
+
+        return $supReg['uuid'];
+    }
 }
