@@ -2044,13 +2044,28 @@ class PurchaseRequestAPIController extends AppBaseController
      */
     public function rejectPurchaseRequest(Request $request)
     {
-        $reject = \Helper::rejectDocument($request);
-        if (!$reject["success"]) {
-            return $this->sendError($reject["message"]);
-        } else {
-            return $this->sendResponse(array(), $reject["message"]);
-        }
+        $apiKey = $request->input('api_key');
+        $request->except('api_key');
 
+        if ($request->input('documentSystemID') && ($request->input('documentSystemID') == 107 ))
+        {
+            $documentApprovedRepo = app(DocumentApprovedRepository::class);
+            $controller = new DocumentApprovedAPIController($documentApprovedRepo);
+            $controllerApprovalStatus =  $controller->getController(); 
+            $requestData['id'] =$request->input('documentSystemCode');
+            $requestData['api_key'] =$apiKey;
+            $requestData['uuid'] = $controller->getSupplierUUID($requestData['id']);
+            $request->merge($requestData);
+            $result = $controllerApprovalStatus->rejectSupplierKYC($request);
+            return $result;
+        }else {
+            $reject = \Helper::rejectDocument($request);
+            if (!$reject["success"]) {
+                return $this->sendError($reject["message"]);
+            } else {
+                return $this->sendResponse(array(), $reject["message"]);
+            }
+        }
     }
 
     /**

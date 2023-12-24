@@ -3204,24 +3204,9 @@ WHERE
             $requestData['api_key'] =$apiKey;
             $requestData['uuid'] = $this->getSupplierUUID($requestData['id']);
             $request->merge($requestData);
-            $bookInvoiceSupMasterRepo = app(BookInvSuppMasterRepository::class);
-            $POService = new POService();
-            $supplierService = new SupplierService();
-            $sharedService =new SharedService();
-            $invoiceService = new InvoiceService();
-            $supplierInvoiceItemDetailRepo = app(SupplierInvoiceItemDetailRepository::class);
-            $tenderBidClarificationsRepo = app(TenderBidClarificationsRepository::class);
-            $documentAttachmentsRepo = app(DocumentAttachmentsRepository::class);
-            $paySupplierInvoiceMasterRepository = app(PaySupplierInvoiceMasterRepository::class);
-
-            $srmService = new SRMService($bookInvoiceSupMasterRepo,$POService,$supplierService,$sharedService,$invoiceService,$supplierInvoiceItemDetailRepo,
-            $tenderBidClarificationsRepo,$documentAttachmentsRepo,$paySupplierInvoiceMasterRepository);
-
-            $controller = new SupplierRegistrationApprovalController($srmService);
-
+            $controller =  $this->getController();
             $result = $controller->approveSupplierKYC($request);
             return $result;
-
         }else {
 			$approve = \Helper::approveDocument($request);
 			if (!$approve["success"]) {
@@ -3303,5 +3288,23 @@ WHERE
             ->first();
 
         return $supReg['uuid'];
+    }
+
+    public function getController(){
+        $bookInvoiceSupMasterRepo = app(BookInvSuppMasterRepository::class);
+        $POService = new POService();
+        $supplierService = new SupplierService();
+        $sharedService =new SharedService();
+        $invoiceService = new InvoiceService();
+        $supplierInvoiceItemDetailRepo = app(SupplierInvoiceItemDetailRepository::class);
+        $tenderBidClarificationsRepo = app(TenderBidClarificationsRepository::class);
+        $documentAttachmentsRepo = app(DocumentAttachmentsRepository::class);
+        $paySupplierInvoiceMasterRepository = app(PaySupplierInvoiceMasterRepository::class);
+
+        $srmService = new SRMService($bookInvoiceSupMasterRepo,$POService,$supplierService,$sharedService,$invoiceService,$supplierInvoiceItemDetailRepo,
+            $tenderBidClarificationsRepo,$documentAttachmentsRepo,$paySupplierInvoiceMasterRepository);
+
+        $controller = new SupplierRegistrationApprovalController($srmService);
+        return $controller;
     }
 }
