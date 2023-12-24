@@ -2051,7 +2051,7 @@ class PurchaseRequestAPIController extends AppBaseController
         {
             $documentApprovedRepo = app(DocumentApprovedRepository::class);
             $controller = new DocumentApprovedAPIController($documentApprovedRepo);
-            $controllerApprovalStatus =  $controller->getController(); 
+            $controllerApprovalStatus =  $controller->getController();
             $requestData['id'] =$request->input('documentSystemCode');
             $requestData['api_key'] =$apiKey;
             $requestData['uuid'] = $controller->getSupplierUUID($requestData['id']);
