@@ -76,6 +76,12 @@ To process jobs in the background, it's recommended to run the queue server. Sin
 ```bash
 php artisan queue:work database --tries=3
 ```
+Additionally, we have jobs specifically designed to run on a single worker, please run the following command:
+```bash
+php artisan queue:work database --tries=3 --queue=single
+```
+This ensures that the queue server handles jobs with the 'single' queue designation separately,
+
 ### Conventional Commits
 To use conventional commits for better versioning and changelog management, install Node.js dependencies by running:
 ```bash
