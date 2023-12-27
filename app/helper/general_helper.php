@@ -8947,4 +8947,12 @@ class Helper
 
     }
 
+    public static function getDomainForSrmDocuments($request)
+    {
+        $url = $request->getHttpHost();
+        $url_array = explode('.', $url);
+        $subDomain = $url_array[0];
+        return $subDomain;
+    }
+
 }

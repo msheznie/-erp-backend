@@ -1829,7 +1829,7 @@ class SupplierMasterAPIController extends AppBaseController
         if(isset($company->CompanyName)){
            $companyName =  $company->CompanyName;
         }
-        $data['domain'] = $this->getDomain($request);
+        $data['domain'] =  Helper::getDomainForSrmDocuments($request);
         $request->merge($data);
         $logo = $company->getLogoUrlAttribute();
 
@@ -1852,6 +1852,7 @@ class SupplierMasterAPIController extends AppBaseController
             } else if ($isExist['STATUS'] === 0){
                 $loginUrl = env('SRM_LINK') . $isExist['token'] . '/' . $apiKey;
                 $updateRec['token_expiry_date_time'] = Carbon::now()->addHours(96);
+                $updateRec['sub_domain'] =  Helper::getDomainForSrmDocuments($request);
                 $isUpdated = SupplierRegistrationLink::where('id', $isExist['id'])->update($updateRec);
                 if ($isUpdated) {
                     Mail::to($email)->send(new EmailForQueuing("Registration Link", "Dear Supplier,"."<br /><br />"." Please find the below link to register at ". $companyName ." supplier portal. It will expire in 96 hours. "."<br /><br />"."Click Here: "."</b><a href='".$loginUrl."'>".$loginUrl."</a><br /><br />"." Thank You"."<br /><br /><b>"));
@@ -2007,13 +2008,5 @@ class SupplierMasterAPIController extends AppBaseController
         }
 
         return $this->sendResponse(['errorMessages' => $errorMessages, 'successMessages' => $successMessages, 'amendable'=> $amendable], "validated successfully");
-    }
-
-    public function getDomain($request)
-    {
-        $url = $request->getHttpHost();
-        $url_array = explode('.', $url);
-        $subDomain = $url_array[0];
-        return $subDomain;
     }
 }

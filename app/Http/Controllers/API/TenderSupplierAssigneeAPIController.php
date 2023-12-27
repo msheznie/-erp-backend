@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\API;
 
+use App\helper\Helper;
 use App\Http\Requests\API\CreateTenderSupplierAssigneeAPIRequest;
 use App\Http\Requests\API\UpdateTenderSupplierAssigneeAPIRequest;
 use App\Models\TenderSupplierAssignee;
@@ -357,6 +358,7 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
         $loginUrl = env('SRM_LINK');
         $urlArray = explode('/', $loginUrl);
         $urlArray = array_filter($urlArray);
+        $subDomain = Helper::getDomainForSrmDocuments($request);
         array_pop($urlArray);
 
         $getSupplierAssignedData = TenderSupplierAssignee::with(['supplierAssigned'])
@@ -382,6 +384,8 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
                         ->first();
 
                     if (!empty($isExist)) {
+                        $update['sub_domain'] = $subDomain;
+                        SupplierRegistrationLink::where('id', $isExist['id'])->update($update);
                         if($isExist['STATUS'] === 1){
                             $urlString = implode('//', $urlArray) . '/';
                             TenderSupplierAssignee::find($val['id'])
@@ -401,7 +405,7 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
                     } else {
                         $isCreated = $this->registrationLinkRepository->save(request()->merge([
                             'name' => $name, 'email' => $email, 'registration_number' => $regNo, 'company_id' => $companyId,
-                            'is_bid_tender' => $isBidTender, 'created_via' => 1
+                            'is_bid_tender' => $isBidTender, 'created_via' => 1, 'sub_domain' => $subDomain
                         ]), $token);
                         $loginUrl = env('SRM_LINK') . $token . '/' . $apiKey;
                         if ($isCreated['status'] == true) {

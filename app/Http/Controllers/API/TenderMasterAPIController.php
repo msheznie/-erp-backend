@@ -2326,6 +2326,11 @@ ORDER BY
         }
         $token = md5(Carbon::now()->format('YmdHisu'));
         $apiKey = $request->input('api_key');
+
+        $data['domain'] =  Helper::getDomainForSrmDocuments($request);
+        $request->merge($data);
+
+
         $isCreated = $this->registrationLinkRepository->save($request, $token);
         $loginUrl = env('SRM_LINK') . $token . '/' . $apiKey;
         if ($isCreated['status'] == true) {
