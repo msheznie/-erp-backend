@@ -446,6 +446,7 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
         $urlArray = explode('/', $loginUrl);
         $urlArray = array_filter($urlArray);
         array_pop($urlArray);
+        $subDomain = Helper::getDomainForSrmDocuments($request);
 
         $getSupplierAssignedData = TenderSupplierAssignee::with(['supplierAssigned'])
             ->where('tender_master_id', $tenderId)
@@ -469,6 +470,8 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
                 ->first();
 
             if (!empty($isExist)) {
+                $update['sub_domain'] = $subDomain;
+                SupplierRegistrationLink::where('id', $isExist['id'])->update($update);
                 if($isExist['STATUS'] === 1){
                     $urlString = implode('//', $urlArray) . '/';
                     $this->sendSupplierEmailInvitation($email, $companyName, $urlString, $tenderId, $companySystemId, 1, $rfx);
@@ -488,7 +491,7 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
             } else {
                 $isCreated = $this->registrationLinkRepository->save(request()->merge([
                     'name' => $name, 'email' => $email, 'registration_number' => $regNo, 'company_id' => $companySystemId,
-                    'is_bid_tender' => $isBidTender, 'created_via' => 1
+                    'is_bid_tender' => $isBidTender, 'created_via' => 1,'sub_domain'=>$subDomain
                 ]), $token);
 
                 if ($isCreated['status'] == true) {
