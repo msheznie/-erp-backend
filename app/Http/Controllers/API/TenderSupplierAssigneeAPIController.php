@@ -368,7 +368,7 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
             ->get();
         DB::beginTransaction();
         try{
-            if (count($getSupplierAssignedData) > 0) {
+            if (count($getSupplierAssignedData) > 0) { ;
                 foreach ($getSupplierAssignedData as $val) {
                     $token = md5(Carbon::now()->format('YmdHisu'));
                     $name = (!is_null($val['supplierAssigned']['supplierName'])) ? $val['supplierAssigned']['supplierName'] : $val['supplier_name'];
@@ -402,10 +402,10 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
                             }
                         }
                         DB::commit();
-                    } else {
+                    } else { 
                         $isCreated = $this->registrationLinkRepository->save(request()->merge([
                             'name' => $name, 'email' => $email, 'registration_number' => $regNo, 'company_id' => $companyId,
-                            'is_bid_tender' => $isBidTender, 'created_via' => 1, 'sub_domain' => $subDomain
+                            'is_bid_tender' => $isBidTender, 'created_via' => 1, 'domain' => $subDomain
                         ]), $token);
                         $loginUrl = env('SRM_LINK') . $token . '/' . $apiKey;
                         if ($isCreated['status'] == true) {
