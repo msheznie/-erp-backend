@@ -2423,7 +2423,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
 
         if (!$bankID && $id) {
-            $bankID = $master->bankID;
+            if($master){
+                $bankID = $master->bankID;
+            }
         }
 
         $output['portMasters'] = PortMaster::where('is_deleted', 0)->get();
