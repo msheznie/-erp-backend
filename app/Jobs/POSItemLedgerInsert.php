@@ -68,13 +68,13 @@ class POSItemLedgerInsert implements ShouldQueue
                             ->where('pos_source_invoicedetail.itemAutoID', $item->itemAutoId)
                             ->first();
                         $data['unitOfMeasure'] = $item->uom;
-                        $data['inOutQty'] = $item->qty * -1;
+                        $data['inOutQty'] = $invItems->defaultQty * -1;
                         if ($invItems) {
                             $data['wareHouseSystemCode'] = $invItems->wareHouseID;
                             $data['wacLocalCurrencyID'] = $invItems->companyLocalCurrencyID;
-                            $data['wacLocal'] = $invItems->companyLocalAmount;
+                            $data['wacLocal'] = $invItems->totalCost / $invItems->defaultQty;
                             $data['wacRptCurrencyID'] = $invItems->companyReportingCurrencyID;
-                            $data['wacRpt'] = $invItems->transactionAmount / $invItems->companyReportingExchangeRate;
+                            $data['wacRpt'] = $invItems->totalCost / $invItems->defaultQty / $invItems->companyReportingExchangeRate;
                         }
                         $data['transactionDate'] = \Helper::currentDateTime();
                         $data['timestamp'] = \Helper::currentDateTime();
