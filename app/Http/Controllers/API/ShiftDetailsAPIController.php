@@ -2398,7 +2398,7 @@ class ShiftDetailsAPIController extends AppBaseController
                         'documentCode' => $documentCode,
                         'glCode' => $gl->glCode,
                         'logId' => $logs['id'],
-                        'amount' => $gl->amount
+                        'amount' => round($gl->amount,3)
                     );
 
                 }
@@ -2413,7 +2413,7 @@ class ShiftDetailsAPIController extends AppBaseController
                         'documentCode' => $documentCode,
                         'glCode' => $gl->glCode,
                         'logId' => $logs['id'],
-                        'amount' => $gl->amount * -1
+                        'amount' => round($gl->amount * -1,3)
                     );
 
                 }
@@ -2428,7 +2428,7 @@ class ShiftDetailsAPIController extends AppBaseController
                         'documentCode' => $documentCode,
                         'glCode' => $gl->outputVatGLCode,
                         'logId' => $logs['id'],
-                        'amount' => $gl->taxAmount * -1
+                        'amount' => round($gl->taxAmount * -1,3)
                     );
 
                 }
@@ -2458,7 +2458,7 @@ class ShiftDetailsAPIController extends AppBaseController
                         'bankAccId' => $item->bankID,
                         'logId' => $logs->id,
                         'isReturnYN' => 0,
-                        'amount' => $item->amount
+                        'amount' => round($item->amount,3)
                     );
 
                 }
@@ -2481,7 +2481,7 @@ class ShiftDetailsAPIController extends AppBaseController
                             'documentCode' => $documentCode,
                             'glCode' => $gl->plGLCode,
                             'logId' => $logs['id'],
-                            'amount' => $gl->amount
+                            'amount' => round($gl->amount,3)
                         );
                     }
                 }
@@ -2497,7 +2497,7 @@ class ShiftDetailsAPIController extends AppBaseController
                                 'documentCode' => $documentCode,
                                 'glCode' => $gl->plGLCode,
                                 'logId' => $logs['id'],
-                                'amount' => $gl->amount * -1
+                                'amount' => round($gl->amount * -1,3)
                             );
                         } else {
                             $inventoryGLArray[] = array(
@@ -2507,7 +2507,7 @@ class ShiftDetailsAPIController extends AppBaseController
                                 'documentCode' => $documentCode,
                                 'glCode' => $gl->bsGLCode,
                                 'logId' => $logs['id'],
-                                'amount' => $gl->amount * -1
+                                'amount' => round($gl->amount * -1,3)
                             );
                         }
                     }
