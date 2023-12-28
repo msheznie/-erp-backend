@@ -946,6 +946,7 @@ class ShiftDetailsAPIController extends AppBaseController
                     $input['customerGLCode'] = $customer->custGLaccount;
                     $input['customerGLSystemID'] = $customer->custGLAccountSystemID;
                     $input['documentType'] = 11;
+                    $input['isPOS'] = 1;
                     $input['createdUserID'] = \Helper::getEmployeeID();
                     $input['createdPcID'] = getenv('COMPUTERNAME');
                     $input['modifiedUser'] = \Helper::getEmployeeID();
