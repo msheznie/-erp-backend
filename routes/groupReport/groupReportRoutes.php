@@ -65,6 +65,7 @@ Route::group([],function (){
 Route::group([],function (){
     Route::get('getAFRFilterChartOfAccounts', 'FinancialReportAPIController@getAFRFilterChartOfAccounts')->name("Get afr filter chart of accounts");
     Route::post('exportFRReport', 'FinancialReportAPIController@exportReport')->name("Export fr report");
+    Route::post('exportGLReport', 'FinancialReportAPIController@exportGLReport')->name("Export general ledger report");
     Route::post('generateGeneralLedgerReportPDF', 'FinancialReportAPIController@pdfExportReport')->name("Generate general ledger report pdf");
 });
 
