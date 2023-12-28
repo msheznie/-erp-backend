@@ -100,12 +100,12 @@
     <tr>
         <td colspan="1"></td>
         <td colspan="16"> <b>CUSTOMER NAME : {{$request->customer->ReportTitle}}</b></td>
-        <td colspan="8"><b>أسم العميل : {{$request->customer->ReportTitle}}</b></td>
+        <td colspan="8"><b>أسم العميل : {{$request->customer->customerSecondLanguage}}</b></td>
     </tr>
     <tr>
         <td colspan="1"></td>
         <td colspan="16"> <b>ADDRESS : {{$request->customer->customerAddress1}}</b></td>
-        <td colspan="8"> <b>عنوان العميل : {{$request->customer->customerAddress1}}</b></td>
+        <td colspan="8"> <b>عنوان العميل : {{$request->customer->addressOneSecondLanguage}}</b></td>
     </tr>
    <tr>
         <td colspan="1"></td>
@@ -174,7 +174,7 @@
                             <td colspan="2">{{isset($item->invoiceQty)? $item->invoiceQty:0}}</td>
                             <td colspan="2">{{number_format($item->salesPrice,$numberFormatting)}}</td>
                             <td colspan="3">{{number_format($item->invoiceAmount,$numberFormatting)}}</td>
-                            <td colspan="3">{{$item->VATPercentage}}</td>
+                            <td colspan="3">{{number_format($item->VATPercentage, 0)}}</td>
                             <td colspan="3">{{number_format(($totalVatamount),$numberFormatting)}}</td>
                             <td colspan="3">{{number_format($item->invoiceAmount+$totalVatamount,$numberFormatting)}}</td>
                         </tr>
@@ -197,7 +197,7 @@
                     {{$taxPercent = ($request->tax) ? $request->tax->taxPercent : 0}}
                     <tr>
                         <td colspan="1"></td>
-                        <td colspan="16" style="text-align: left; border-right: none !important;"><b>Value Added Tax {{$taxPercent}}% (ضريبة القيمة المضافة )</b></td>
+                        <td colspan="16" style="text-align: left; border-right: none !important;"><b>Value Added Tax {{number_format($taxPercent, 0)}}% (ضريبة القيمة المضافة )</b></td>
                         <td colspan="3" style="text-align: center; border-left: none !important"><b>{{empty($request->currency) ? '' : $request->currency->CurrencyCode}}</b></td>
                         <td colspan="3" class="text-right">{{number_format($taxAmount, $numberFormatting)}}</td>
                     </tr>
@@ -228,7 +228,7 @@
                         {{$taxPercent = ($request->tax) ? $request->tax->taxPercent : 0}}
                         <tr>
                             <td colspan="1"></td>
-                            <td colspan="16" style="text-align: left; border-right: none !important;"><b>Value Added Tax {{$taxPercent}}% (ضريبة القيمة المضافة )</b></td>
+                            <td colspan="16" style="text-align: left; border-right: none !important;"><b>Value Added Tax {{number_format($taxPercent, 0)}}% (ضريبة القيمة المضافة )</b></td>
                             <td colspan="3" style="text-align: center; border-left: none !important"><b>{{empty($request->local_currency) ? '' : $request->local_currency->CurrencyCode}}</b></td>
                             <td colspan="3" class="text-right">{{number_format($taxAmount, $numberFormatting)}}</td>
                         </tr>
@@ -606,9 +606,9 @@
                                                     {{$det->employee->details->designation->designation}}
                                                 @endif
                                             @endif
-                                            <br><br>
+                                            <br>
                                             @if($det->employee)
-                                                {{ \App\helper\Helper::convertDateWithTime($det->approvedDate)}}
+                                                {{ \App\helper\Helper::dateFormat($det->approvedDate)}}
                                             @endif
                                         @endif
                                         </b>
@@ -617,6 +617,12 @@
                             </tr>
 
                             @if ($request->isPerforma == 0)
+                                <tr>
+                                    <td>
+                                        <br>
+                                        <br>
+                                    </td>
+                                </tr>
                                 <tr>
                                     <td colspan="1"></td>
                                     <td colspan="3" width="100px"><span class="font-weight-bold"><b>Created By</b> </span></td>
